@@ -157,33 +157,9 @@ class UserEventProcessor
 		$users = array_unique(array_merge($members, $deletedMembers));
 		(new PushSender())->sendUserCounters($users);
 
-		$this->setMarketingEvents($users);
-
 		if (!empty($efficiencyUpdated))
 		{
 			(new Counter\Processor\EfficiencyProcessor())->recount($efficiencyUpdated);
-		}
-	}
-
-	/**
-	 * @param array $userIds
-	 */
-	private function setMarketingEvents(array $userIds)
-	{
-		foreach ($userIds as $userId)
-		{
-			$marketingManager = new EventManager((int) $userId);
-
-			$counter = Counter::getInstance($userId);
-			$counters = $counter->getCounters(Counter\Role::ALL);
-			if ((int)$counters['total']['counter'] > 0)
-			{
-				$marketingManager->add(QrMobileEvent::class);
-			}
-			else
-			{
-				$marketingManager->drop(QrMobileEvent::class);
-			}
 		}
 	}
 

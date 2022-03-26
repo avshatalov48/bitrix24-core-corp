@@ -7,8 +7,11 @@
  */
 namespace Bitrix\Crm\WebForm\Internals;
 
+use Bitrix\Crm\Ads\AdsForm;
+use Bitrix\Crm\Ads\Internals\AdsFormLinkTable;
 use Bitrix\Main\ORM;
 use Bitrix\Main\Context;
+use Bitrix\Main\ORM\Fields\Relations\OneToMany;
 use Bitrix\Main\Security\Random;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
@@ -194,6 +197,12 @@ class FormTable extends ORM\Data\DataManager
 				'values' => array('N','Y')
 			),
 
+			'IS_WHATSAPP_FORM' => array(
+				'data_type' => 'boolean',
+				'default_value' => 'N',
+				'values' => array('N','Y')
+			),
+
 			'CALL_TEXT' => array(
 				'data_type' => 'string',
 			),
@@ -217,6 +226,10 @@ class FormTable extends ORM\Data\DataManager
 			'LANDING' => array(
 				'data_type' => LandingTable::class,
 				'reference' => array('=this.ID' => 'ref.FORM_ID'),
+			),
+			'ADS_OPTIONS' => array(
+				'data_type' => AdsFormLinkTable::class,
+				'reference' => array('=this.ID' => 'ref.WEBFORM_ID'),
 			),
 		);
 	}
@@ -290,7 +303,7 @@ class FormTable extends ORM\Data\DataManager
 		$formId = $data['primary']['ID'];
 
 		// delete Ads links
-		Ads\AdsForm::unlinkForm($formId);
+		AdsForm::unlinkForm($formId);
 		$landingRows = LandingTable::getList([
 			'select' => ['ID'],
 			'filter' => ['=FORM_ID' => $formId]

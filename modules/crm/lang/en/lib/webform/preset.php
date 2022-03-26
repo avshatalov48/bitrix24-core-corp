@@ -20,3 +20,4 @@ $MESS["CRM_WEBFORM_PRESET_ITEM_FB_DESCRIPTION"] = "Please share your feedback in
 $MESS["CRM_WEBFORM_PRESET_ITEM_FB_NAME"] = "Feedback form";
 $MESS["CRM_WEBFORM_PRESET_ITEM_IMOL_REG_DESCRIPTION"] = "Please introduce yourself";
 $MESS["CRM_WEBFORM_PRESET_ITEM_IMOL_REG_NAME"] = "Contact information form for use with Open Channels";
+$MESS["CRM_WEBFORM_PRESET_ITEM_WA_DESCRIPTION"] = "Enter your phone number and our manager will contact you in WhatsApp";

@@ -150,7 +150,6 @@ class StageHistory extends Controller
 			'TYPE_ID',
 			'OWNER_ID',
 			'CREATED_TIME',
-			'RESPONSIBLE_ID',
 		];
 
 		switch ($entityTypeId)

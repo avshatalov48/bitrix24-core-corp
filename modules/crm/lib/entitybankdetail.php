@@ -288,6 +288,45 @@ class EntityBankDetail
 		return (is_array($row)? $row : null);
 	}
 
+	public function exists(int $id, int $entityTypeId = 0, int $entityId = 0): bool
+	{
+		$filter = ['=ID' => $id];
+
+		if ($entityTypeId !== 0)
+		{
+			if ($entityTypeId < 0)
+			{
+				$entityTypeId = 0;
+			}
+			$filter['=ENTITY_TYPE_ID'] = $entityTypeId;
+
+			if ($entityId !== 0)
+			{
+				if ($entityId < 0)
+				{
+					$entityId = 0;
+				}
+				$filter['=ENTITY_ID'] = $entityId;
+			}
+		}
+
+		$res = $this->getList(
+			[
+				'order' => ['SORT' => 'ASC', 'ID' => 'ASC'],
+				'filter' => $filter,
+				'select' => ['ID'],
+				'limit' => 1
+			]
+		);
+		$row = $res->fetch();
+		if (is_array($row))
+		{
+			return true;
+		}
+
+		return false;
+	}
+
 	/**
 	 * @param $entityTypeId
 	 * @param $entityId

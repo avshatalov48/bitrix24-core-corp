@@ -9,8 +9,13 @@
 				"meta-user": "#dbf188",
 				group: "#ade7e4",
 				project: "#ade7e4",
+				"project-tag": "#b8c0c9",
 				groupExtranet: "#ffa900",
 				department: "#e2e3e5",
+				section: "#ccbcbe",
+				product: "#e3e1da",
+				contractor: "#8E52EC",
+				store: "#8E52EC",
 			},
 			subtitle: {
 				userExtranet: "#ca8600",
@@ -52,6 +57,7 @@
 			super(context);
 			this.context = context;
 			this.options = options;
+			this.preselectedItems = [];
 			this.emptyResults = [];
 			this.recentLoaded = false;
 			this.searchFields = ['position','secondName', 'lastName', 'name'];
@@ -77,6 +83,13 @@
 		setOptions(options) {
 			this.options = options;
 			this.cache = new BasePickerCache(this.cacheId());
+		}
+
+		setPreselectedItems(preselectedItems)
+		{
+			this.preselectedItems = preselectedItems;
+
+			return this;
 		}
 
 		cacheId() {
@@ -107,6 +120,7 @@
 			return {
 				"id": "mobile",
 				"context": this.context,
+				"preselectedItems": this.preselectedItems,
 				entities
 			};
 		}
@@ -163,7 +177,6 @@
 			})
 		}
 
-
 		loadRecent(justLoad = false)
 		{
 			if (justLoad === false)
@@ -176,35 +189,55 @@
 			}
 
 			BX.ajax.runAction('ui.entityselector.load', {
-				json: {dialog: this.getAjaxDialog()},
-				getParameters: {context: this.context}
-			}).then(response =>
-			{
-				let recentItems = this.getRecentFromResponse(response.data.dialog)
-				let items = this.prepareItems(recentItems);
-				this.cache.save(items, "recent", {saveDisk: true});
-				if(justLoad === false)
+				json: {
+					dialog: this.getAjaxDialog(),
+				},
+				getParameters: {
+					context: this.context,
+				},
+			}).then((response) => {
+				let recentItems = this.getRecentFromResponse(response.data.dialog);
+				recentItems = this.prepareItems(recentItems);
+
+				this.cache.save(recentItems, 'recent', {saveDisk: true});
+				if (justLoad === false)
 				{
-					this.listener.onRecentResult(items, false);
+					this.listener.onRecentResult(recentItems, false);
 					this.recentLoaded = true;
 				}
-
-			})
+			});
 		}
 
-		getRecentFromResponse(dialog) {
-			return dialog.recentItems
-				.map(pair => {
-				let entityId = pair[0]
-				let id = pair[1]
-				return dialog.items.find( item => item.entityId === entityId && item.id === id)
-			})
+		getRecentFromResponse(dialog)
+		{
+			const preselectedItems = (dialog.preselectedItems || []);
+			const recentItems = (dialog.recentItems || []);
+			const resultItems = [
+				...preselectedItems,
+				...recentItems.filter((item) => {
+					const [entityId, id] = item;
+					return !preselectedItems.find(item => item[0] === entityId && item[1].toString() === id.toString());
+				}),
+			];
+
+			return resultItems
+				.map((item) => {
+					const [entityId, id] = item;
+					return dialog.items.find(item => item.entityId === entityId && item.id.toString() === id.toString());
+				})
 				.filter(item => typeof item !== 'undefined')
 				.sort((item1, item2) => {
-					if (item1.entityId === "meta-user") return -1
-					if (item2.entityId === "meta-user") return 1
-					return 0
+					if (item1.entityId === 'meta-user')
+					{
+						return -1;
+					}
+					if (item2.entityId === 'meta-user')
+					{
+						return 1;
+					}
+					return 0;
 				})
+			;
 		}
 
 		prepareSelected(selected)
@@ -363,6 +396,34 @@
 			if (this.isSingleChoose())
 				item.type = "info";
 			return item;
+		}
+
+		addToRecentCache(item)
+		{
+			if (this.cache)
+			{
+				this.cache.save(
+					[
+						...this.prepareItems([item]),
+						...this.cache.get("recent", true),
+					],
+					"recent",
+					{saveDisk: true}
+				);
+			}
+		}
+
+		isInRecentCache(item)
+		{
+			if (this.cache)
+			{
+				const preparedItem = this.prepareItems([item])[0];
+				const cache = this.cache.get('recent', true);
+
+				return (cache.find(item => item.id === preparedItem.id) !== undefined);
+			}
+
+			return false;
 		}
 	}
 

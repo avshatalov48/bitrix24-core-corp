@@ -263,7 +263,7 @@ class File extends BaseObject
 			return $this->file;
 		}
 
-		$this->file = \CFile::getByID($this->fileId)->fetch();
+		$this->file = \CFile::GetFileArray($this->fileId);
 
 		if(!$this->file)
 		{
@@ -1499,6 +1499,36 @@ class File extends BaseObject
 		$data = $query->exec()->fetch();
 
 		return !empty($data['ID']);
+	}
+
+	/**
+	 * @param array{id: int, type: string} $entity
+	 * @param array{allowEdit: bool, isEditable: bool, createdBy: int} $options
+	 * @return AttachedObject|null
+	 * @throws Main\NotImplementedException
+	 */
+	final public function attachToEntity(array $entity, array $options): ?AttachedObject
+	{
+		$userFieldManager = Driver::getInstance()->getUserFieldManager();
+		[$connectorClass, $moduleId] = $userFieldManager->getConnectorDataByEntityType($entity['type']);
+
+		$errorCollection = new ErrorCollection();
+		$attachedObject = Disk\AttachedObject::add([
+			'MODULE_ID' => $moduleId,
+			'OBJECT_ID' => $this->getId(),
+			'ENTITY_ID' => $entity['id'],
+			'ENTITY_TYPE' => $connectorClass,
+			'IS_EDITABLE' => (int)$options['isEditable'],
+			'ALLOW_EDIT' => (int)$options['allowEdit'],
+			'CREATED_BY' => $options['createdBy'],
+		], $errorCollection);
+
+		if (!$attachedObject)
+		{
+			$this->errorCollection->add($errorCollection->getValues());
+		}
+
+		return $attachedObject;
 	}
 
 	protected function updateLinksAttributes(array $attr)

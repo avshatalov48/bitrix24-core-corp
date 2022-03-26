@@ -1,10 +1,7 @@
-<?
-use Bitrix\Main\Localization\Loc;
+<?php
 
-use Bitrix\Tasks\Util;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Util\Calendar;
-use Bitrix\Tasks\Integration\CRM;
-use Bitrix\Tasks\UI;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
@@ -45,7 +42,7 @@ return new \Bitrix\Tasks\UI\Component\TemplateHelper(null, $this, array(
 				$value = floor($value / 60);
 			}
 
-			return $value.' '.Loc::getMessage('TASKS_COMMON_'.$unit.'_F'.UI::getPluralForm($value));
+			return $value.' '.Loc::getMessagePlural('TASKS_COMMON_' . $unit, $value);
 		}
 	),
 ));

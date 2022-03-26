@@ -188,94 +188,137 @@ final class Driver
 			];
 		}
 
-		$taxesItems = [
-			[
-				'ID' => 'cat_vat_admin',
-				'TEXT' => Loc::getMessage('SALESCENTER_DRIVER_TOP_PANEL_TAXES_VAT_RATES'),
-				'PARENT_ID' => 'taxes',
-				'SORT' => 90,
-				'ON_CLICK' => 'window.open(\''.$pages['cat_vat_admin'].'\', \'_blank\');',
-			],
-		];
+		$taxesItems = [];
+
+		if (isset($pages['cat_vat_admin']))
+		{
+			$taxesItems = [
+				[
+					'ID' => 'cat_vat_admin',
+					'TEXT' => Loc::getMessage('SALESCENTER_DRIVER_TOP_PANEL_TAXES_VAT_RATES'),
+					'PARENT_ID' => 'taxes',
+					'SORT' => 90,
+					'ON_CLICK' => 'window.open(\''.$pages['cat_vat_admin'].'\', \'_blank\');',
+				],
+			];
+		}
 
 		if($this->isExtendedTaxesSettingsEnabled())
 		{
-			$taxesItems = array_merge($taxesItems, [
-				[
+			if (isset($pages['sale_tax']))
+			{
+				$taxesItems[] = [
 					'ID' => 'sale_tax',
 					'TEXT' => Loc::getMessage('SALESCENTER_DRIVER_TOP_PANEL_TAXES_LIST'),
 					'PARENT_ID' => 'taxes',
 					'SORT' => 100,
 					'ON_CLICK' => 'window.open(\''.$pages['sale_tax'].'\', \'_blank\');',
-				],
-				[
+				];
+			}
+
+			if (isset($pages['sale_tax_rate']))
+			{
+				$taxesItems[] = [
 					'ID' => 'sale_tax_rate',
 					'TEXT' => Loc::getMessage('SALESCENTER_DRIVER_TOP_PANEL_TAXES_RATES'),
 					'PARENT_ID' => 'taxes',
 					'SORT' => 110,
 					'ON_CLICK' => 'window.open(\''.$pages['sale_tax_rate'].'\', \'_blank\');',
-				],
-				[
+				];
+			}
+
+			if (isset($pages['sale_tax_exempt']))
+			{
+				$taxesItems[] = [
 					'ID' => 'sale_tax_exempt',
 					'TEXT' => Loc::getMessage('SALESCENTER_DRIVER_TOP_PANEL_TAXES_EXEMPT'),
 					'PARENT_ID' => 'taxes',
 					'SORT' => 120,
 					'ON_CLICK' => 'window.open(\''.$pages['sale_tax_exempt'].'\', \'_blank\');',
-				],
-			]);
+				];
+			}
 		}
 
-		$items[] = [
-			'TEXT' => Loc::getMessage('SALESCENTER_DRIVER_TOP_PANEL_SETTINGS'),
-			'ID' => 'settings',
-			'PARENT_ID' => '',
-			'SORT' => 70,
-			'ITEMS' => [
-				[
-					'ID' => 'taxes',
-					'TEXT' => Loc::getMessage('SALESCENTER_DRIVER_TOP_PANEL_TAXES'),
-					'PARENT_ID' => 'settings',
-					'SORT' => 80,
-					'ITEMS' => $taxesItems,
-				],
-				[
-					'ID' => 'prices',
-					'TEXT' => Loc::getMessage('SALESCENTER_DRIVER_TOP_PANEL_PRICES'),
-					'PARENT_ID' => 'settings',
-					'SORT' => 130,
-					'ITEMS' => [
-						[
-							'ID' => 'cat_group_admin',
-							'TEXT' => Loc::getMessage('SALESCENTER_DRIVER_TOP_PANEL_PRICES_TYPE'),
-							'PARENT_ID' => 'prices',
-							'SORT' => 140,
-							'ON_CLICK' => 'window.open(\''.$pages['cat_group_admin'].'\', \'_blank\');',
-						],
-						[
-							'ID' => 'cat_round_list',
-							'TEXT' => Loc::getMessage('SALESCENTER_DRIVER_TOP_PANEL_PRICES_ROUND'),
-							'PARENT_ID' => 'prices',
-							'SORT' => 150,
-							'ON_CLICK' => 'window.open(\''.$pages['cat_round_list'].'\', \'_blank\');',
-						],
-						[
-							'ID' => 'cat_extra',
-							'TEXT' => Loc::getMessage('SALESCENTER_DRIVER_TOP_PANEL_PRICES_EXTRA'),
-							'PARENT_ID' => 'prices',
-							'SORT' => 160,
-							'ON_CLICK' => 'window.open(\''.$pages['cat_extra'].'\', \'_blank\');',
-						],
-					],
-				],
-				[
-					'ID' => 'cat_measure_list',
-					'TEXT' => Loc::getMessage('SALESCENTER_DRIVER_TOP_PANEL_MEASURE_RATES'),
-					'PARENT_ID' => 'settings',
-					'SORT' => 170,
-					'ON_CLICK' => 'window.open(\''.$pages['cat_measure_list'].'\', \'_blank\');',
-				],
-			],
-		];
+		$settingsItems = [];
+
+		if (!empty($taxesItems))
+		{
+			$settingsItems[] = [
+				'ID' => 'taxes',
+				'TEXT' => Loc::getMessage('SALESCENTER_DRIVER_TOP_PANEL_TAXES'),
+				'PARENT_ID' => 'settings',
+				'SORT' => 80,
+				'ITEMS' => $taxesItems,
+			];
+		}
+
+		$pricesItems = [];
+
+		if (isset($pages['cat_group_admin']))
+		{
+			$pricesItems[] = [
+				'ID' => 'cat_group_admin',
+				'TEXT' => Loc::getMessage('SALESCENTER_DRIVER_TOP_PANEL_PRICES_TYPE'),
+				'PARENT_ID' => 'prices',
+				'SORT' => 140,
+				'ON_CLICK' => 'window.open(\''.$pages['cat_group_admin'].'\', \'_blank\');',
+			];
+		}
+
+		if (isset($pages['cat_round_list']))
+		{
+			$pricesItems[] = [
+				'ID' => 'cat_round_list',
+				'TEXT' => Loc::getMessage('SALESCENTER_DRIVER_TOP_PANEL_PRICES_ROUND'),
+				'PARENT_ID' => 'prices',
+				'SORT' => 150,
+				'ON_CLICK' => 'window.open(\''.$pages['cat_round_list'].'\', \'_blank\');',
+			];
+		}
+
+		if (isset($pages['cat_extra']))
+		{
+			$pricesItems[] = [
+				'ID' => 'cat_extra',
+				'TEXT' => Loc::getMessage('SALESCENTER_DRIVER_TOP_PANEL_PRICES_EXTRA'),
+				'PARENT_ID' => 'prices',
+				'SORT' => 160,
+				'ON_CLICK' => 'window.open(\''.$pages['cat_extra'].'\', \'_blank\');',
+			];
+		}
+
+		if (!empty($pricesItems))
+		{
+			$settingsItems[] = [
+				'ID' => 'prices',
+				'TEXT' => Loc::getMessage('SALESCENTER_DRIVER_TOP_PANEL_PRICES'),
+				'PARENT_ID' => 'settings',
+				'SORT' => 130,
+				'ITEMS' => $pricesItems,
+			];
+		}
+
+		if (isset($pages['cat_measure_list']))
+		{
+			$settingsItems[] = [
+				'ID' => 'cat_measure_list',
+				'TEXT' => Loc::getMessage('SALESCENTER_DRIVER_TOP_PANEL_MEASURE_RATES'),
+				'PARENT_ID' => 'settings',
+				'SORT' => 170,
+				'ON_CLICK' => 'window.open(\''.$pages['cat_measure_list'].'\', \'_blank\');',
+			];
+		}
+
+		if (!empty($settingsItems))
+		{
+			$items[] = [
+				'TEXT' => Loc::getMessage('SALESCENTER_DRIVER_TOP_PANEL_SETTINGS'),
+				'ID' => 'settings',
+				'PARENT_ID' => '',
+				'SORT' => 70,
+				'ITEMS' => $settingsItems,
+			];
+		}
 
 
 		return $items;

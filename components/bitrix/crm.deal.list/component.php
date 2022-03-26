@@ -788,7 +788,26 @@ if ($arParams['IS_RECURRING'] !== 'Y')
 
 $CCrmUserType->ListAddHeaders($arResult['HEADERS']);
 
-$arResult['HEADERS_SECTIONS'] = \Bitrix\Crm\Component\EntityList\ClientDataProvider\GridDataProvider::getHeadersSections();
+Crm\Service\Container::getInstance()->getParentFieldManager()->prepareGridHeaders(
+	\CCrmOwnerType::Deal,
+	$arResult['HEADERS']
+);
+
+if ($bInternal)
+{
+	$arResult['HEADERS_SECTIONS'] = [
+		[
+			'id' => 'DEAL',
+			'name' => Loc::getMessage("CRM_COLUMN_DEAL"),
+			'default' => true,
+			'selected' => true,
+		],
+	];
+}
+else
+{
+	$arResult['HEADERS_SECTIONS'] = \Bitrix\Crm\Component\EntityList\ClientDataProvider\GridDataProvider::getHeadersSections();
+}
 
 $arBPData = array();
 if ($isBizProcInstalled)
@@ -1178,6 +1197,12 @@ foreach ($arFilter as $k => $v)
 {
 	if(in_array($k, $arImmutableFilters, true))
 	{
+		continue;
+	}
+
+	if (Crm\Service\ParentFieldManager::isParentFieldName($k))
+	{
+		$arFilter[$k] = Crm\Service\ParentFieldManager::transformEncodedFilterValueIntoInteger($k, $v);
 		continue;
 	}
 
@@ -2503,6 +2528,12 @@ if (!$bInternal)
 	$companyDataProvider->appendResult($arResult['DEAL']);
 }
 $userDataProvider->appendResult($arResult['DEAL']);
+
+$parentFieldValues = Crm\Service\Container::getInstance()->getParentFieldManager()->loadParentElementsByChildren(
+	\CCrmOwnerType::Deal,
+	$arResult['DEAL']
+);
+
 foreach($arResult['DEAL'] as &$arDeal)
 {
 	$entityID = $arDeal['ID'];
@@ -2919,6 +2950,21 @@ foreach($arResult['DEAL'] as &$arDeal)
 		$activitylessItems[] = $entityID;
 	}
 
+	if (isset($parentFieldValues[$arDeal['ID']]))
+	{
+		foreach ($parentFieldValues[$arDeal['ID']] as $parentEntityTypeId => $parentEntity)
+		{
+			if ($isInExportMode)
+			{
+				$arDeal[$parentEntity['code']] = $parentEntity['title'];
+			}
+			else
+			{
+				$arDeal[$parentEntity['code']] = $parentEntity['value'];
+			}
+		}
+	}
+
 	$arResult['DEAL'][$entityID] = $arDeal;
 }
 unset($arDeal);
@@ -2937,7 +2983,9 @@ if(!empty($activitylessItems))
 }
 
 $arResult['DEAL'] = $CCrmUserType->normalizeBooleanValues($arResult['DEAL']);
+/** @var $displayFields Crm\Service\Display\Field[] */
 $displayFields = [];
+
 foreach ($CCrmUserType->GetAbstractFields() as $userFieldId => $userFieldData)
 {
 	$displayFields[$userFieldId] = Crm\Service\Display\Field::createFromUserField($userFieldId, $userFieldData);
@@ -2955,7 +3003,7 @@ if ($isInExportMode)
 	// in export mode money fields shouldn't be formatted
 	foreach ($displayFields as $displayField)
 	{
-		if ($displayField->isUserField() && $displayField->getType() == 'money')
+		if ($displayField->isUserField() && $displayField->getType() === 'money')
 		{
 			$displayField->setDisplayRawValue(true);
 		}
@@ -2981,11 +3029,15 @@ else
 	$displayFields = array_intersect_key($displayFields, array_flip($visibleGridColumns));
 }
 
+$context = ($isInExportMode ? Crm\Service\Display\Field::EXPORT_CONTEXT : Crm\Service\Display\Field::GRID_CONTEXT);
+foreach ($displayFields as $displayField)
+{
+	$displayField->setContext($context);
+}
+
 $displayOptions =
 	(new Crm\Service\Display\Options())
-		->setReturnMultipleFieldsAsSingle(true)
 		->setMultipleFieldsDelimiter($isInExportMode ? ', ' : '<br />')
-		->setUseTextMode($isInExportMode)
 		->setGridId($arResult['GRID_ID'])
 		->setFileUrlTemplate('/bitrix/components/bitrix/crm.deal.show/show_file.php?ownerId=#owner_id#&fieldName=#field_name#&fileId=#file_id#')
 ;
@@ -3027,6 +3079,7 @@ if (!$restriction->hasPermission())
 		$arResult['RESTRICTED_VALUE_CLICK_CALLBACK'] = $restriction->prepareInfoHelperScript();
 	}
 }
+
 $displayValues =
 	(new Bitrix\Crm\Service\Display(CCrmOwnerType::Deal, $displayFields, $displayOptions))
 		->setItems($arResult['DEAL'])
@@ -3091,15 +3144,34 @@ if($arResult['ENABLE_TOOLBAR'])
 		{
 			$addParams['company_id'] = $internalContext['COMPANY_ID'];
 		}
-	}
 
-	if(!empty($addParams))
+		if(!empty($addParams))
+		{
+			$arResult['DEAL_ADD_URL_PARAMS'] = $addParams;
+			$arResult['PATH_TO_DEAL_ADD'] = CHTTP::urlAddParams(
+				$arResult['PATH_TO_DEAL_ADD'],
+				$addParams
+			);
+		}
+	}
+	else
 	{
-		$arResult['DEAL_ADD_URL_PARAMS'] = $addParams;
-		$arResult['PATH_TO_DEAL_ADD'] = CHTTP::urlAddParams(
-			$arResult['PATH_TO_DEAL_ADD'],
-			$addParams
-		);
+		$parentEntityTypeId = (int)($arParams['PARENT_ENTITY_TYPE_ID'] ?? 0);
+		$parentEntityId = (int)($arParams['PARENT_ENTITY_ID'] ?? 0);
+		if (\CCrmOwnerType::IsDefined($parentEntityTypeId) && $parentEntityId > 0)
+		{
+			$parentItemIdentifier = new Crm\ItemIdentifier($parentEntityTypeId, $parentEntityId);
+			$arResult['PATH_TO_DEAL_ADD'] = Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl(
+				\CCrmOwnerType::Deal,
+				0,
+				null,
+				$parentItemIdentifier
+			);
+			$arResult['DEAL_ADD_URL_PARAMS'] = [
+				'parentTypeId' => $parentItemIdentifier->getEntityTypeId(),
+				'parentId' => $parentItemIdentifier->getEntityId(),
+			];
+		}
 	}
 }
 

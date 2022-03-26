@@ -190,13 +190,40 @@ this.BX = this.BX || {};
 	      }
 
 	      CommentActionController.isAjaxRunning = true;
-	      CommentActionController.showNotification(action);
+
+	      if (action !== 'taskComplete') {
+	        CommentActionController.showNotification(action);
+	      }
+
 	      var defaultData = {
 	        taskId: taskId
 	      };
+	      data = babelHelpers.objectSpread({}, data, defaultData);
+
+	      if (!data.params) {
+	        data.params = {};
+	      }
+
+	      data.params.PLATFORM = 'web';
 	      main_core.ajax.runAction(CommentActionController.ajaxActions[action], {
-	        data: babelHelpers.objectSpread({}, data, defaultData)
+	        data: data
 	      }).then(function () {
+	        if (action === 'taskComplete') {
+	          CommentActionController.showNotification(action);
+	        }
+
+	        CommentActionController.isAjaxRunning = false;
+	      }, function (response) {
+	        if (response && response.errors) {
+	          var errorMsg = {
+	            MESSAGE: response.errors[0].message,
+	            DATA: {
+	              ui: 'notification'
+	            }
+	          };
+	          BX.Tasks.alert([errorMsg]);
+	        }
+
 	        CommentActionController.isAjaxRunning = false;
 	      });
 	    }

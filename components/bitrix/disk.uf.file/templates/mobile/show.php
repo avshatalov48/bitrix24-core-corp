@@ -190,7 +190,7 @@ if (!empty($arResult['FILES']))
 			if (in_array(tolower($file["EXTENSION"]), array("exe")))
 			{
 				?><span <?=$attributes?> class="post-item-attached-file-link"><?
-					?><span><?=htmlspecialcharsbx($file['NAME_WO_EXTENSION'])?></span><?
+					?><span class="post-item-attached-file-name"><?=htmlspecialcharsbx($file['NAME_WO_EXTENSION'])?></span><?
 					?><span class="post-item-attached-file-extension">.<?=htmlspecialcharsbx($file['EXTENSION'])?></span><?
 					?><span class="post-item-attached-file-size"><?=$file['SIZE']?></span><?
 				?></span><?
@@ -203,7 +203,7 @@ if (!empty($arResult['FILES']))
 					?>onclick="app.openDocument({'url' : '<?=$file['DOWNLOAD_URL']?>'}); return BX.PreventDefault(event);" <?
 					?>href="javascript:void(0);" <?
 					?>class="post-item-attached-file-link"><?
-						?><span><?=htmlspecialcharsbx($file['NAME_WO_EXTENSION'])?></span><?
+						?><span class="post-item-attached-file-name"><?=htmlspecialcharsbx($file['NAME_WO_EXTENSION'])?></span><?
 						?><span class="post-item-attached-file-extension">.<?=htmlspecialcharsbx($file['EXTENSION'])?></span><?
 						?><span class="post-item-attached-file-size"><?=$file['SIZE']?></span><?
 				?></a><?

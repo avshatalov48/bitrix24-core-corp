@@ -87,14 +87,20 @@ class OpenLineManager
 		}
 
 		$query = "
-			SELECT MESSAGE, AUTHOR_ID
+			SELECT 
+				MESSAGE, 
+				AUTHOR_ID,
+				FILE.ID as MESSAGE_FILE,
+				ATTACH.ID as MESSAGE_ATTACH
 			FROM
 			   b_imopenlines_session S
 			   INNER JOIN b_im_message M ON 
-				  M.CHAT_ID = S.CHAT_ID 
-				  AND M.ID+0 >= S.START_ID 
-				  AND ( M.ID+0 <= S.END_ID OR S.END_ID = 0 ) 
-				  AND M.AUTHOR_ID > 0
+					M.CHAT_ID = S.CHAT_ID 
+					AND M.ID+0 >= S.START_ID 
+					AND ( M.ID+0 <= S.END_ID OR S.END_ID = 0 ) 
+					AND M.AUTHOR_ID > 0
+				LEFT JOIN b_im_message_param as FILE ON FILE.MESSAGE_ID = M.ID and FILE.PARAM_NAME = 'FILE_ID'
+				LEFT JOIN b_im_message_param as ATTACH ON ATTACH.MESSAGE_ID = M.ID and ATTACH.PARAM_NAME = 'ATTACH'
 			WHERE S.ID = ".$sessionID."
 			ORDER BY M.ID+0 ASC
 		";
@@ -107,7 +113,12 @@ class OpenLineManager
 		$results = array();
 		while ($messageFields = $dbResult->fetch())
 		{
-			$messageFields['MESSAGE'] = Im\Text::removeBbCodes($messageFields['MESSAGE']);
+			$messageFields['MESSAGE'] = Im\Text::parse($messageFields['MESSAGE']);
+			$messageFields['MESSAGE'] = Im\Text::removeBbCodes(
+				$messageFields['MESSAGE'],
+				$messageFields['MESSAGE_FILE'] > 0,
+				$messageFields['MESSAGE_ATTACH'] > 0
+			);
 			$messageFields['IS_EXTERNAL'] = Im\User::getInstance($messageFields['AUTHOR_ID'])->isConnector();
 
 			$results[] = $messageFields;

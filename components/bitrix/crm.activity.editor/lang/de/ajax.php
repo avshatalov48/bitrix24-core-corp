@@ -7,6 +7,7 @@ $MESS["CRM_ACTIVITY_EMAIL_CREATION_CANCELED"] = "Erstellung einer E-Mail-Nachric
 $MESS["CRM_ACTIVITY_EMAIL_EMPTY_FROM_FIELD"] = "Geben Sie bitte den Absender an.";
 $MESS["CRM_ACTIVITY_EMAIL_EMPTY_TO_FIELD"] = "Geben Sie bitte den Empfänger an.";
 $MESS["CRM_ACTIVITY_EMAIL_MAX_SIZE_EXCEED"] = "Maximal zulässige Größe des Anhangs überschritten (#SIZE#)";
+$MESS["CRM_ACTIVITY_EMAIL_MESSAGE_TO_MANY_RECIPIENTS"] = "Sie können nicht mehr als 10 Empfänger hinzufügen";
 $MESS["CRM_ACTIVITY_INVALID_EMAIL"] = "Die E-Mail-Adresse '#VALUE#' ist nicht korrekt.";
 $MESS["CRM_ACTIVITY_RESPONSIBLE_NOT_FOUND"] = "Für diese Aktivität wurden keine Verantwortlichen gefunden.";
 $MESS["CRM_CALL_ACTION_DEFAULT_SUBJECT"] = "Neuer Anruf (#DATE#)";

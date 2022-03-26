@@ -70,6 +70,7 @@ $MESS["CRM_COMPANY_USER_TYPE_DOCGEN_LOGO_TITLE"] = "Logo";
 $MESS["CRM_COMPANY_USER_TYPE_DOCGEN_STAMP_TITLE"] = "Company stamp";
 $MESS["CRM_ERROR_FIELD_INCORRECT"] = "The field \"%FIELD_NAME%\" is incorrect.";
 $MESS["CRM_ERROR_FIELD_IS_MISSING"] = "The field \"%FIELD_NAME%\" is required.";
+$MESS["CRM_ERROR_FIELD_MY_COMPANY_IN_CUSTOM_CATEGORY"] = "Your company details may only be used with the default category";
 $MESS["CRM_FIELD_COMPARE_ADDRESS"] = "Changed the field \"Address\"";
 $MESS["CRM_FIELD_COMPARE_ADDRESS_LEGAL"] = "Changed the field \"Legal Address\"";
 $MESS["CRM_FIELD_COMPARE_ASSIGNED_BY_ID"] = "The \"Responsible Person\" field was modified.";

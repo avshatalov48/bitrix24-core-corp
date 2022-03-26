@@ -22,7 +22,12 @@ $configEditButtonID = 'editConfig';
 $configEditModeContainer = 'configEditModeContainer';
 $configViewModeContainer = 'configViewModeContainer';
 $scanButtonID = 'scanButton';
+$stopButtonID = 'stopButton';
+$returnToScanButtonID1 = 'rescanButton1';
+$returnToScanButtonID2 = 'rescanButton2';
+$returnToScanButtonID3 = 'rescanButton3';
 $mergeButtonID = 'mergeButton';
+$mergeStopButtonID = 'mergeStopButton';
 $mergeSummaryButtonID = 'mergeSummaryButton';
 $conflictResolvingButtonID = 'conflictResolvingButton';
 $conflictResolvingAlternateButtonID = 'conflictResolvingAlternateButton';
@@ -60,6 +65,7 @@ $backToListLinkId = 'backToEntityList';
 	<div class="crm-dedupe-wizard-start-control-box">
 		<div id="<?=htmlspecialcharsbx($scanButtonID)?>" class="ui-btn ui-btn-primary crm-dedupe-wizard-start-btn"><?=GetMessage('CRM_DEDUPE_WIZARD_START_SEARCH')?></div>
 		<div id="<?=htmlspecialcharsbx($progressBarWrapperID)?>" class="crm-dedupe-wizard-status-bar"></div>
+		<div id="<?=htmlspecialcharsbx($stopButtonID)?>" class="ui-btn ui-btn-primary crm-dedupe-wizard-start-btn"><?=GetMessage('CRM_DEDUPE_WIZARD_STOP_SEARCH')?></div>
 	</div>
 	<div class="crm-dedupe-wizard-start-description">
 		<p><?=GetMessage('CRM_DEDUPE_WIZARD_REBUILD_DEDUPE_INDEX')?></p>
@@ -83,12 +89,16 @@ $backToListLinkId = 'backToEntityList';
 	</div>
 	<div class="crm-dedupe-wizard-start-control-box crm-dedupe-wizard-start-control-box-ready-to-merge-state">
 		<div class="crm-dedupe-wizard-start-control-box-item">
+			<div id="<?=htmlspecialcharsbx($returnToScanButtonID1)?>" class="ui-btn ui-btn-light crm-dedupe-wizard-start-btn"><?=GetMessage('CRM_DEDUPE_WIZARD_RETURN_TO_SCAN')?></div>
+		</div>
+		<div class="crm-dedupe-wizard-start-control-box-item">
 			<div id="<?=htmlspecialcharsbx($mergeButtonID)?>" class="ui-btn ui-btn-primary crm-dedupe-wizard-merge-btn"><?=GetMessage('CRM_DEDUPE_WIZARD_MERGE_AUTO')?></div>
 		</div>
 		<div class="crm-dedupe-wizard-start-control-box-item">
 			<div id="<?=htmlspecialcharsbx($conflictResolvingAlternateButtonID)?>" class="ui-btn ui-btn-light crm-dedupe-wizard-start-btn"><?=GetMessage('CRM_DEDUPE_WIZARD_MANUAL_MERGE')?></div>
 		</div>
 		<div id="<?=htmlspecialcharsbx($mergeProgressBarWrapperID)?>" class="crm-dedupe-wizard-status-bar"></div>
+		<div id="<?=htmlspecialcharsbx($mergeStopButtonID)?>" class="ui-btn ui-btn-primary crm-dedupe-wizard-start-btn"><?=GetMessage('CRM_DEDUPE_WIZARD_STOP_MERGE')?></div>
 	</div>
 	<div class="crm-dedupe-wizard-start-description">
 		<div class="crm-dedupe-wizard-merge-block-auto"><p><?=GetMessage('CRM_DEDUPE_WIZARD_MERGING_LEGEND')?></p></div>
@@ -136,6 +146,7 @@ $backToListLinkId = 'backToEntityList';
 			<div class="crm-dedupe-wizard-start-icon-circle"></div>
 		</div>
 	</div>
+	<div id="<?=htmlspecialcharsbx($returnToScanButtonID3)?>" class="ui-btn ui-btn-light crm-dedupe-wizard-restart-btn"><?=GetMessage('CRM_DEDUPE_WIZARD_RETURN_TO_SCAN')?></div>
 	<div id="<?=htmlspecialcharsbx($conflictResolvingButtonID)?>" class="ui-btn ui-btn-primary crm-dedupe-wizard-start-btn"><?=GetMessage('CRM_DEDUPE_WIZARD_MANUAL_MERGE')?></div>
 	<div class="crm-dedupe-wizard-start-link-container">
 		<a id="<?=htmlspecialcharsbx($conflictResolvingListButtonID)?>" href="#" class="crm-dedupe-wizard-start-link crm-dedupe-wizard-start-link-light-grey"><?=GetMessage('CRM_DEDUPE_WIZARD_SHOW_DEDUPE_LIST')?></a>
@@ -155,6 +166,9 @@ $backToListLinkId = 'backToEntityList';
 			<div class="crm-dedupe-wizard-start-icon-like"></div>
 			<div class="crm-dedupe-wizard-start-icon-circle"></div>
 		</div>
+	</div>
+	<div class="crm-dedupe-wizard-start-control-box-item">
+		<div id="<?=htmlspecialcharsbx($returnToScanButtonID2)?>" class="ui-btn ui-btn-light crm-dedupe-wizard-restart-btn"><?=GetMessage('CRM_DEDUPE_WIZARD_RETURN_TO_SCAN')?></div>
 	</div>
 	<?if ($arResult['PATH_TO_ENTITY_LIST']):?>
 	<a href="<?=$arResult['PATH_TO_ENTITY_LIST']?>" id="<?=htmlspecialcharsbx($backToListLinkId)?>" class="ui-btn ui-btn-primary"><?=GetMessage('CRM_DEDUPE_WIZARD_BACK_TO_LIST')?></a>
@@ -181,89 +195,95 @@ $backToListLinkId = 'backToEntityList';
 					dedupeListUrl: "<?=CUtil::JSEscape($arResult['PATH_TO_DEDUPE_LIST'])?>",
 					contextId: "<?=CUtil::JSEscape($arResult['CONTEXT_ID'])?>",
 					dedupeSettingsPath: "<?=CUtil::JSEscape($arResult['PATH_TO_DEDUPE_SETTINGS'])?>",
-					steps:
-						{
-							scanning: BX.Crm.DedupeWizardScanning.create(
-								"scanning",
-								{
-									wrapperId: "scanning",
-									buttonId: "<?=CUtil::JSEscape($scanButtonID)?>",
-									titleWrapperId: "scanningTitle",
-									configTitleId: "<?=CUtil::JSEscape($configTitleID)?>",
-									configTitleTextId: "<?=CUtil::JSEscape($configTitleTextID)?>",
-									configEditButtonId: "<?=CUtil::JSEscape($configEditButtonID)?>",
-									configEditModeContainer: "<?=CUtil::JSEscape($configEditModeContainer)?>",
-									configViewModeContainer: "<?=CUtil::JSEscape($configViewModeContainer)?>",
-									progressBarWrapperId: "<?=CUtil::JSEscape($progressBarWrapperID)?>",
-									nextStepId: "merging",
-									messages:
-										{
-											emptyConfig: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_EMPTY_CONFIGURATION')?>",
-										}
-								}
-							),
-							merging: BX.Crm.DedupeWizardMerging.create(
-								"merging",
-								{
-									wrapperId: "merging",
-									buttonId: "<?=CUtil::JSEscape($mergeButtonID)?>",
-									alternateButtonId: "<?=CUtil::JSEscape($conflictResolvingAlternateButtonID)?>",
-									listButtonId: "<?=CUtil::JSEscape($mergeListButtonID)?>",
-									titleWrapperId: "mergingTitle",
-									subtitleWrapperId: "mergingSubtitle",
-									progressBarWrapperId: "<?=CUtil::JSEscape($mergeProgressBarWrapperID)?>",
-									messages:
-										{
-											duplicatesFound: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_DUPLICATES_FOUND')?>",
-											matchesFound: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_MATCHES_FOUND_NEW')?>"
-										}
-								}
-							),
-							mergingSummary: BX.Crm.DedupeWizardMergingSummary.create(
-								"mergingSummary",
-								{
-									wrapperId: "mergingSummary",
-									buttonId: "<?=CUtil::JSEscape($mergeSummaryButtonID)?>",
-									titleWrapperId: "mergingSummaryTitle",
-									subtitleWrapperId: "mergingSummarySubtitle",
-									messages:
-										{
-											duplicatesProcessed: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_DUPLICATES_PROCESSED')?>",
-											matchesProcessed: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_MATCHES_PROCESSED_NEW')?>"
-										}
-								}
-							),
-							conflictResolving: BX.Crm.DedupeWizardConflictResolving.create(
-								"conflictResolving",
-								{
-									wrapperId: "conflictResolving",
-									buttonId: "<?=CUtil::JSEscape($conflictResolvingButtonID)?>",
-									alternateButtonId: "<?=CUtil::JSEscape($conflictResolvingAlternateButtonID)?>",
-									listButtonId: "<?=CUtil::JSEscape($conflictResolvingListButtonID)?>",
-									titleWrapperId: "conflictResolvingTitle",
-									subtitleWrapperId: "conflictResolvingSubtitle",
-									messages:
-										{
-											duplicatesConflicted: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_DUPLICATES_CONFLICTED')?>",
-											matchesConflicted: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_MATCHES_CONFLICTED_NEW')?>"
-										}
-								}
-							),
-							finish: BX.Crm.DedupeWizardMergingFinish.create(
-								"finish",
-								{
-									wrapperId: "finish",
-									titleWrapperId: "finishTitle",
-									subtitleWrapperId: "finishSubtitle",
-									backToListLinkId: "<?=CUtil::JSEscape($backToListLinkId)?>",
-									messages:
-										{
-											duplicatesComplete: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_DUPLICATES_COMPLETE')?>",
-											duplicatesCompleteEmpty: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_DUPLICATES_COMPLETE_EMPTY')?>"
-										}
-								}
-							)
-						}
+					steps: {
+						scanning: BX.Crm.DedupeWizardScanning.create(
+							"scanning",
+							{
+								wrapperId: "scanning",
+								buttonId: "<?=CUtil::JSEscape($scanButtonID)?>",
+								stopButtonId: "<?=CUtil::JSEscape($stopButtonID)?>",
+								titleWrapperId: "scanningTitle",
+								configTitleId: "<?=CUtil::JSEscape($configTitleID)?>",
+								configTitleTextId: "<?=CUtil::JSEscape($configTitleTextID)?>",
+								configEditButtonId: "<?=CUtil::JSEscape($configEditButtonID)?>",
+								configEditModeContainer: "<?=CUtil::JSEscape($configEditModeContainer)?>",
+								configViewModeContainer: "<?=CUtil::JSEscape($configViewModeContainer)?>",
+								progressBarWrapperId: "<?=CUtil::JSEscape($progressBarWrapperID)?>",
+								nextStepId: "merging",
+								messages:
+									{
+										emptyConfig: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_EMPTY_CONFIGURATION')?>",
+									}
+							}
+						),
+						merging: BX.Crm.DedupeWizardMerging.create(
+							"merging",
+							{
+								wrapperId: "merging",
+								returnToScanButtonId: "<?=CUtil::JSEscape($returnToScanButtonID1)?>",
+								buttonId: "<?=CUtil::JSEscape($mergeButtonID)?>",
+								alternateButtonId: "<?=CUtil::JSEscape($conflictResolvingAlternateButtonID)?>",
+								listButtonId: "<?=CUtil::JSEscape($mergeListButtonID)?>",
+								stopButtonId: "<?=CUtil::JSEscape($mergeStopButtonID)?>",
+								titleWrapperId: "mergingTitle",
+								subtitleWrapperId: "mergingSubtitle",
+								progressBarWrapperId: "<?=CUtil::JSEscape($mergeProgressBarWrapperID)?>",
+								messages:
+									{
+										duplicatesFound: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_DUPLICATES_FOUND')?>",
+										matchesFound: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_MATCHES_FOUND_NEW')?>"
+									}
+							}
+						),
+						mergingSummary: BX.Crm.DedupeWizardMergingSummary.create(
+							"mergingSummary",
+							{
+								wrapperId: "mergingSummary",
+								buttonId: "<?=CUtil::JSEscape($mergeSummaryButtonID)?>",
+								titleWrapperId: "mergingSummaryTitle",
+								subtitleWrapperId: "mergingSummarySubtitle",
+								messages:
+									{
+										duplicatesProcessed: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_DUPLICATES_PROCESSED')?>",
+										matchesProcessed: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_MATCHES_PROCESSED_NEW')?>"
+									}
+							}
+						),
+						conflictResolving: BX.Crm.DedupeWizardConflictResolving.create(
+							"conflictResolving",
+							{
+								wrapperId: "conflictResolving",
+								buttonId: "<?=CUtil::JSEscape($conflictResolvingButtonID)?>",
+								alternateButtonId: "<?=CUtil::JSEscape($conflictResolvingAlternateButtonID)?>",
+								listButtonId: "<?=CUtil::JSEscape($conflictResolvingListButtonID)?>",
+								titleWrapperId: "conflictResolvingTitle",
+								subtitleWrapperId: "conflictResolvingSubtitle",
+								returnToScanButtonId: "<?=CUtil::JSEscape($returnToScanButtonID3)?>",
+								messages:
+									{
+										duplicatesConflicted: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_DUPLICATES_CONFLICTED')?>",
+										matchesConflicted: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_MATCHES_CONFLICTED_NEW')?>"
+									}
+							}
+						),
+						finish: BX.Crm.DedupeWizardMergingFinish.create(
+							"finish",
+							{
+								wrapperId: "finish",
+								titleWrapperId: "finishTitle",
+								subtitleWrapperId: "finishSubtitle",
+								returnToScanButtonId: "<?=CUtil::JSEscape($returnToScanButtonID2)?>",
+								backToListLinkId: "<?=CUtil::JSEscape($backToListLinkId)?>",
+								messages:
+									{
+										duplicatesComplete: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_DUPLICATES_COMPLETE')?>",
+										duplicatesCompleteEmpty: "<?=GetMessageJS('CRM_DEDUPE_WIZARD_DUPLICATES_COMPLETE_EMPTY')?>"
+									}
+							}
+						)
+					},
+					indexAgentState: <?=CUtil::PhpToJSObject($arResult['INDEX_AGENT_STATE'])?>,
+					mergeAgentState: <?=CUtil::PhpToJSObject($arResult['MERGE_AGENT_STATE'])?>
 				}
 			);
 			wizard.layout();

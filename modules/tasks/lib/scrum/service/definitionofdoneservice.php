@@ -50,7 +50,9 @@ class DefinitionOfDoneService implements Errorable
 		}
 		catch (\Exception $exception)
 		{
-			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_MERGE_LIST));
+			$this->errorCollection->setError(
+				new Error($exception->getMessage(), self::ERROR_COULD_NOT_MERGE_LIST)
+			);
 		}
 
 		return $result;

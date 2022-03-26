@@ -20,6 +20,7 @@ class DuplicateIndexType
 	const COMMUNICATION_BITRIX24 = 	0x100;
 	const COMMUNICATION_OPENLINE = 	0x200;
 	const COMMUNICATION_VIBER = 	0x800000;
+	const COMMUNICATION_SLUSER = 	0x1000000;
 
 	const RQ_INN = 					0x400;
 	const RQ_OGRN = 				0x800;
@@ -27,19 +28,19 @@ class DuplicateIndexType
 	const RQ_BIN = 					0x2000;
 	const RQ_EDRPOU = 				0x4000;
 	const RQ_VAT_ID = 				0x8000;
-	//       reserved 65536
-	//       reserved 131072
-	//       reserved 262144
-	//       reserved 524288
+	//       reserved 0x10000
+	//       reserved 0x20000
+	//       reserved 0x40000
+	//       reserved 0x80000
 	const RQ_ACC_NUM = 				0x100000;
 	const RQ_IBAN = 				0x200000;
 	const RQ_IIK = 					0x400000;
 
 	const BANK_DETAIL = 			0x700000; 	/*  RQ_ACC_NUM|RQ_IBAN|RQ_IIK  */
 	const REQUISITE = 				0xFC00; 	/*  RQ_INN|RQ_OGRN|RQ_OGRNIP|RQ_BIN|RQ_EDRPOU|RQ_VAT_ID  */
-	const COMMUNICATION = 			0x8003FC; 	/*  COMMUNICATION_PHONE|COMMUNICATION_EMAIL|COMMUNICATION_FACEBOOK|COMMUNICATION_TELEGRAM|COMMUNICATION_VK|COMMUNICATION_SKYPE|COMMUNICATION_BITRIX24|COMMUNICATION_OPENLINE|COMMUNICATION_VIBER */
+	const COMMUNICATION = 			0x18003FC; 	/*  COMMUNICATION_PHONE|COMMUNICATION_EMAIL|COMMUNICATION_FACEBOOK|COMMUNICATION_TELEGRAM|COMMUNICATION_VK|COMMUNICATION_SKYPE|COMMUNICATION_BITRIX24|COMMUNICATION_OPENLINE|COMMUNICATION_VIBER */
 	const DENOMINATION = 			0x3; 		/*  PERSON|ORGANIZATION  */
-	const ALL = 					0xF0FFFF;	/*  PERSON|ORGANIZATION|COMMUNICATION_PHONE|COMMUNICATION_EMAIL|COMMUNICATION_FACEBOOK|COMMUNICATION_TELEGRAM|COMMUNICATION_VK|COMMUNICATION_SKYPE|COMMUNICATION_BITRIX24|COMMUNICATION_OPENLINE|COMMUNICATION_VIBER|RQ_INN|RQ_OGRN|RQ_OGRNIP|RQ_BIN|RQ_EDRPOU|RQ_VAT_ID|RQ_ACC_NUM|RQ_IBAN|RQ_IIK  */
+	const ALL = 					0x1F0FFFF;	/*  PERSON|ORGANIZATION|COMMUNICATION_PHONE|COMMUNICATION_EMAIL|COMMUNICATION_FACEBOOK|COMMUNICATION_TELEGRAM|COMMUNICATION_VK|COMMUNICATION_SKYPE|COMMUNICATION_BITRIX24|COMMUNICATION_OPENLINE|COMMUNICATION_VIBER|RQ_INN|RQ_OGRN|RQ_OGRNIP|RQ_BIN|RQ_EDRPOU|RQ_VAT_ID|RQ_ACC_NUM|RQ_IBAN|RQ_IIK  */
 
 	const PERSON_NAME = 'PERSON';
 	const ORGANIZATION_NAME = 'ORGANIZATION';
@@ -52,6 +53,7 @@ class DuplicateIndexType
 	const COMMUNICATION_BITRIX24_NAME = 'COMMUNICATION_BITRIX24';
 	const COMMUNICATION_OPENLINE_NAME = 'COMMUNICATION_OPENLINE';
 	const COMMUNICATION_VIBER_NAME = 'COMMUNICATION_VIBER';
+	const COMMUNICATION_SLUSER_NAME = 'COMMUNICATION_SLUSER';
 	const RQ_INN_NAME = 'RQ_INN';
 	const RQ_OGRN_NAME = 'RQ_OGRN';
 	const RQ_OGRNIP_NAME = 'RQ_OGRNIP';
@@ -90,6 +92,7 @@ class DuplicateIndexType
 			|| $typeID === self::COMMUNICATION_BITRIX24
 			|| $typeID === self::COMMUNICATION_OPENLINE
 			|| $typeID === self::COMMUNICATION_VIBER
+			|| $typeID === self::COMMUNICATION_SLUSER
 			|| $typeID === self::RQ_INN
 			|| $typeID === self::RQ_OGRN
 			|| $typeID === self::RQ_OGRNIP
@@ -167,6 +170,10 @@ class DuplicateIndexType
 		if(($typeID & self::COMMUNICATION_VIBER) !== 0)
 		{
 			$results[] = self::COMMUNICATION_VIBER_NAME;
+		}
+		if(($typeID & self::COMMUNICATION_SLUSER) !== 0)
+		{
+			$results[] = self::COMMUNICATION_SLUSER_NAME;
 		}
 		if(($typeID & self::RQ_INN) !== 0)
 		{
@@ -291,6 +298,10 @@ class DuplicateIndexType
 		{
 			return self::COMMUNICATION_VIBER;
 		}
+		if($typeName ===  self::COMMUNICATION_SLUSER_NAME)
+		{
+			return self::COMMUNICATION_SLUSER;
+		}
 		if($typeName ===  self::RQ_INN_NAME)
 		{
 			return self::RQ_INN;
@@ -339,19 +350,20 @@ class DuplicateIndexType
 		if(!self::$allDescriptions[LANGUAGE_ID])
 		{
 			Main\Localization\Loc::loadMessages(__FILE__);
-			self::$allDescriptions[LANGUAGE_ID] = array(
-				self::PERSON => array('' => GetMessage('CRM_DUP_INDEX_TYPE_PERSON')),
-				self::ORGANIZATION => array('' => GetMessage('CRM_DUP_INDEX_TYPE_ORGANIZATION')),
-				self::COMMUNICATION_PHONE => array('' => GetMessage('CRM_DUP_INDEX_TYPE_COMM_PHONE')),
-				self::COMMUNICATION_EMAIL => array('' => GetMessage('CRM_DUP_INDEX_TYPE_COMM_EMAIL')),
-				self::COMMUNICATION_FACEBOOK => array('' => GetMessage('CRM_DUP_INDEX_TYPE_COMM_FACEBOOK')),
-				self::COMMUNICATION_TELEGRAM => array('' => GetMessage('CRM_DUP_INDEX_TYPE_COMM_TELEGRAM')),
-				self::COMMUNICATION_VK => array('' => GetMessage('CRM_DUP_INDEX_TYPE_COMM_VK')),
-				self::COMMUNICATION_SKYPE => array('' => GetMessage('CRM_DUP_INDEX_TYPE_COMM_SKYPE')),
-				self::COMMUNICATION_BITRIX24 => array('' => GetMessage('CRM_DUP_INDEX_TYPE_COMM_BITRIX24')),
-				self::COMMUNICATION_OPENLINE => array('' => GetMessage('CRM_DUP_INDEX_TYPE_COMM_OPENLINE')),
-				self::COMMUNICATION_VIBER => array('' => GetMessage('CRM_DUP_INDEX_TYPE_COMM_VIBER'))
-			);
+			self::$allDescriptions[LANGUAGE_ID] = [
+				self::PERSON => ['' => GetMessage('CRM_DUP_INDEX_TYPE_PERSON')],
+				self::ORGANIZATION => ['' => GetMessage('CRM_DUP_INDEX_TYPE_ORGANIZATION')],
+				self::COMMUNICATION_PHONE => ['' => GetMessage('CRM_DUP_INDEX_TYPE_COMM_PHONE')],
+				self::COMMUNICATION_EMAIL => ['' => GetMessage('CRM_DUP_INDEX_TYPE_COMM_EMAIL')],
+				self::COMMUNICATION_FACEBOOK => ['' => GetMessage('CRM_DUP_INDEX_TYPE_COMM_FACEBOOK')],
+				self::COMMUNICATION_TELEGRAM => ['' => GetMessage('CRM_DUP_INDEX_TYPE_COMM_TELEGRAM')],
+				self::COMMUNICATION_VK => ['' => GetMessage('CRM_DUP_INDEX_TYPE_COMM_VK')],
+				self::COMMUNICATION_SKYPE => ['' => GetMessage('CRM_DUP_INDEX_TYPE_COMM_SKYPE')],
+				self::COMMUNICATION_BITRIX24 => ['' => GetMessage('CRM_DUP_INDEX_TYPE_COMM_BITRIX24')],
+				self::COMMUNICATION_OPENLINE => ['' => GetMessage('CRM_DUP_INDEX_TYPE_COMM_OPENLINE')],
+				self::COMMUNICATION_VIBER => ['' => GetMessage('CRM_DUP_INDEX_TYPE_COMM_VIBER')],
+				self::COMMUNICATION_SLUSER => ['' => GetMessage('CRM_DUP_INDEX_TYPE_COMM_SLUSER')],
+			];
 
 			$requisite = new EntityRequisite();
 			foreach ($requisite->getDuplicateCriterionFieldsDescriptions() as $fieldName => $descriptions)
@@ -408,6 +420,7 @@ class DuplicateIndexType
 			|| $typeID === self::COMMUNICATION_BITRIX24
 			|| $typeID === self::COMMUNICATION_OPENLINE
 			|| $typeID === self::COMMUNICATION_VIBER
+			|| $typeID === self::COMMUNICATION_SLUSER
 			|| $typeID === self::RQ_INN
 			|| $typeID === self::RQ_OGRN
 			|| $typeID === self::RQ_OGRNIP
@@ -486,6 +499,10 @@ class DuplicateIndexType
 		if(($typeID & self::COMMUNICATION_VIBER) !== 0)
 		{
 			$result[] = self::COMMUNICATION_VIBER;
+		}
+		if(($typeID & self::COMMUNICATION_SLUSER) !== 0)
+		{
+			$result[] = self::COMMUNICATION_SLUSER;
 		}
 		if(($typeID & self::RQ_INN) !== 0)
 		{
@@ -615,6 +632,10 @@ class DuplicateIndexType
 		{
 			return self::COMMUNICATION_VIBER;
 		}
+		elseif($commTypeID === CommunicationType::SLUSER)
+		{
+			return self::COMMUNICATION_SLUSER;
+		}
 		return self::UNDEFINED;
 	}	/**
 	 * Try to convert duplicate index type into communication type
@@ -659,6 +680,10 @@ class DuplicateIndexType
 		elseif($typeID === self::COMMUNICATION_VIBER)
 		{
 			return CommunicationType::VIBER;
+		}
+		elseif($typeID === self::COMMUNICATION_SLUSER)
+		{
+			return CommunicationType::SLUSER;
 		}
 		return CommunicationType::UNDEFINED;
 	}

@@ -3,12 +3,13 @@
 namespace Bitrix\Crm\Service;
 
 use Bitrix\Crm\Category\Entity\Category;
+use Bitrix\Crm\Category\PermissionEntityTypeHelper;
 use Bitrix\Crm\EO_Status_Collection;
 use Bitrix\Crm\Item;
-use Bitrix\Main\DB\SqlExpression;
+use Bitrix\Crm\Security\AttributesProvider;
+use Bitrix\Crm\Security\Manager;
 use Bitrix\Crm\Security\QueryBuilder;
 use Bitrix\Main\Loader;
-use Bitrix\Crm\Security\AttributesProvider;
 
 class UserPermissions
 {
@@ -16,6 +17,8 @@ class UserPermissions
 	public const OPERATION_ADD = 'ADD';
 	public const OPERATION_UPDATE = 'WRITE';
 	public const OPERATION_DELETE = 'DELETE';
+	public const OPERATION_EXPORT = 'EXPORT';
+	public const OPERATION_IMPORT = 'IMPORT';
 
 	public const PERMISSION_NONE = \CCrmPerms::PERM_NONE;
 	public const PERMISSION_SELF = \CCrmPerms::PERM_SELF;
@@ -27,9 +30,17 @@ class UserPermissions
 
 	public const ATTRIBUTES_OPENED = 'O';
 
+	/** @var int */
 	protected $userId;
+	/**
+	 * @var \CCrmPerms|null
+	 * Please, don't use this property directly, as it can be null. Use the method instead
+	 * @see UserPermissions::getCrmPermissions()
+	 */
 	protected $crmPermissions;
+	/** @var bool */
 	protected $isAdmin;
+	/** @var AttributesProvider|null */
 	protected $attributesProvider;
 
 	public function setCrmPermissions(\CCrmPerms $crmPermissions): UserPermissions
@@ -73,22 +84,25 @@ class UserPermissions
 		}
 
 		$currentUser = \CCrmSecurityHelper::GetCurrentUser();
-		if((int)$currentUser->GetID() === $this->getUserId())
+		if ((int)$currentUser->GetID() === $this->getUserId())
 		{
 			$this->isAdmin = $currentUser->isAdmin();
-		}
-		if ($this->isAdmin)
-		{
-			return $this->isAdmin; //true
+			if (!$this->isAdmin)
+			{
+				$this->isAdmin = in_array(1, $currentUser->GetUserGroupArray(), false);
+			}
+
+			return $this->isAdmin;
 		}
 
 		try
 		{
-			if(
+			if (
 				\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24')
-				&& Loader::IncludeModule('bitrix24'))
+				&& Loader::IncludeModule('bitrix24')
+			)
 			{
-				if(
+				if (
 					class_exists('CBitrix24')
 					&& method_exists('CBitrix24', 'IsPortalAdmin')
 				)
@@ -100,11 +114,11 @@ class UserPermissions
 			else
 			{
 				// Check user group 1 ('Portal admins')
-				$arGroups = $currentUser->GetUserGroup($this->getUserId());
-				$this->isAdmin = in_array(1, $arGroups);
+				$arGroups = $currentUser::GetUserGroup($this->getUserId());
+				$this->isAdmin = in_array(1, $arGroups, false);
 			}
 		}
-		catch(\Exception $e)
+		catch (\Exception $exception)
 		{
 		}
 
@@ -113,12 +127,12 @@ class UserPermissions
 
 	public function canWriteConfig(): bool
 	{
-		return $this->getCrmPermissions()->havePerm('CONFIG', static::PERMISSION_CONFIG, 'WRITE');
+		return $this->getCrmPermissions()->havePerm('CONFIG', static::PERMISSION_CONFIG, static::OPERATION_UPDATE);
 	}
 
 	public function canReadConfig(): bool
 	{
-		return $this->getCrmPermissions()->havePerm('CONFIG', static::PERMISSION_CONFIG, 'READ');
+		return $this->getCrmPermissions()->havePerm('CONFIG', static::PERMISSION_CONFIG, static::OPERATION_READ);
 	}
 
 	/**
@@ -137,37 +151,126 @@ class UserPermissions
 			$factory = Container::getInstance()->getFactory($entityTypeId);
 			if ($factory && $factory->isCategoriesSupported())
 			{
-				foreach ($factory->getCategories() as $category)
-				{
-					$entityName = static::getPermissionEntityType($entityTypeId, $category->getId());
-					if (\CCrmAuthorizationHelper::CheckReadPermission($entityName, 0))
-					{
-						return true;
-					}
-				}
-
-				return false;
+				return $this->hasPermissionInAtLeastOneCategory($factory, static::OPERATION_READ);
 			}
 		}
 
 		$entityName = static::getPermissionEntityType($entityTypeId, $categoryId);
 
-		return \CCrmAuthorizationHelper::CheckReadPermission($entityName, 0);
+		return \CCrmAuthorizationHelper::CheckReadPermission($entityName, 0, $this->getCrmPermissions());
 	}
 
+	/**
+	 * Returns true if user can create a new entity type
+	 *
+	 * @return bool
+	 */
 	public function canAddType(): bool
 	{
 		return $this->canWriteConfig();
 	}
 
+	/**
+	 * Returns true if user can update settings of type $entityTypeId
+	 *
+	 * @param int $entityTypeId
+	 * @return bool
+	 */
 	public function canUpdateType(int $entityTypeId): bool
 	{
+		if ($entityTypeId === \CCrmOwnerType::SmartInvoice)
+		{
+			return false;
+		}
+
 		return $this->canWriteConfig();
+	}
+
+	/**
+	 * Return true if user can export items of type $entityTypeId and $categoryId.
+	 *
+	 * @param int $entityTypeId
+	 * @param int $categoryId
+	 * @return bool
+	 */
+	public function canExportType(int $entityTypeId, int $categoryId = 0): bool
+	{
+		if ($this->isAdmin())
+		{
+			return true;
+		}
+		if ($categoryId === 0)
+		{
+			$factory = Container::getInstance()->getFactory($entityTypeId);
+			if ($factory && $factory->isCategoriesSupported())
+			{
+				return $this->hasPermissionInAtLeastOneCategory($factory, static::OPERATION_EXPORT);
+			}
+		}
+
+		$entityName = static::getPermissionEntityType($entityTypeId, $categoryId);
+
+		return \CCrmAuthorizationHelper::CheckExportPermission($entityName, $this->getCrmPermissions());
+	}
+
+	public function canImportItem(Item $item): bool
+	{
+		return $this->getPermissionType($item, static::OPERATION_IMPORT) !== static::PERMISSION_NONE;
 	}
 
 	public function canAddItem(Item $item): bool
 	{
 		return $this->getPermissionType($item, static::OPERATION_ADD) !== static::PERMISSION_NONE;
+	}
+
+	/**
+	 * Returns true if user has permission to add new item to type $entityTypeId and $categoryId
+	 * If category is not specified, checks access for at least one category
+	 *
+	 * @param int $entityTypeId
+	 * @param int $categoryId
+	 * @return bool
+	 */
+	protected function canAddToType(int $entityTypeId, int $categoryId = 0): bool
+	{
+		if ($categoryId === 0)
+		{
+			$factory = Container::getInstance()->getFactory($entityTypeId);
+
+			if ($factory && $factory->isCategoriesSupported())
+			{
+				return $this->hasPermissionInAtLeastOneCategory($factory, static::OPERATION_ADD);
+			}
+		}
+
+		$entityName = static::getPermissionEntityType($entityTypeId, $categoryId);
+
+		return !$this->getCrmPermissions()->HavePerm(
+			$entityName,
+			BX_CRM_PERM_NONE,
+			static::OPERATION_ADD
+		);
+	}
+
+	protected function hasPermissionInAtLeastOneCategory(Factory $factory, string $operation): bool
+	{
+		foreach ($factory->getCategories() as $category)
+		{
+			$categoryEntityName = static::getPermissionEntityType($factory->getEntityTypeId(), $category->getId());
+
+			$hasPermissionInCategory = !$this->getCrmPermissions()->HavePerm(
+				$categoryEntityName,
+				BX_CRM_PERM_NONE,
+				$operation,
+			);
+
+			if ($hasPermissionInCategory)
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -181,27 +284,55 @@ class UserPermissions
 	 */
 	public function checkAddPermissions(int $entityTypeId, int $categoryId = 0, ?string $stageId = null): bool
 	{
+		if (is_null($stageId))
+		{
+			return $this->canAddToType($entityTypeId, $categoryId);
+		}
+
 		$entityName = static::getPermissionEntityType($entityTypeId, $categoryId);
 
 		$attributes = [];
-		if ($stageId)
+		$stageAttribute = $this->getStageIdAttributeByEntityTypeId($entityTypeId, $stageId);
+		if ($stageAttribute)
 		{
-			$stageAttribute = $this->getStageIdAttributeByEntityTypeId($entityTypeId, $stageId);
-			if ($stageAttribute)
-			{
-				$attributes[] = $stageAttribute;
-			}
-
-			$permission = $this->getCrmPermissions()->GetPermType($entityName, static::OPERATION_ADD, $attributes);
-
-			return $permission > static::PERMISSION_NONE;
+			$attributes[] = $stageAttribute;
 		}
 
-		return !$this->getCrmPermissions()->HavePerm(
-			$entityName,
-			BX_CRM_PERM_NONE,
-			static::OPERATION_ADD
-		);
+		$permission = $this->getCrmPermissions()->GetPermType($entityName, static::OPERATION_ADD, $attributes);
+
+		return $permission > static::PERMISSION_NONE;
+	}
+
+	/**
+	 * Return true if user has permission to export element with $id of type $entityTypeId in category $categoryId.
+	 *
+	 * @param int $entityTypeId
+	 * @param int $id
+	 * @param int $categoryId
+	 * @return bool
+	 */
+	public function checkExportPermissions(int $entityTypeId, int $id = 0, int $categoryId = 0): bool
+	{
+		$canExportType = $this->canExportType($entityTypeId, $categoryId);
+		if (!$canExportType)
+		{
+			return false;
+		}
+
+		if ($id === 0)
+		{
+			return $canExportType;
+		}
+
+		if ($id > 0 && $categoryId === 0)
+		{
+			$categoryId = $this->getItemCategoryIdOrDefault($entityTypeId, $id);
+		}
+		$entityName = static::getPermissionEntityType($entityTypeId, $categoryId);
+		$attributes = Manager::resolveController($entityName)->getPermissionAttributes($entityName, [$id]);
+		$entityAttributes = $attributes[$id] ?? [];
+
+		return $this->getCrmPermissions()->CheckEnityAccess($entityName, static::OPERATION_EXPORT, $entityAttributes);
 	}
 
 	/**
@@ -267,6 +398,11 @@ class UserPermissions
 	 */
 	public function checkUpdatePermissions(int $entityTypeId, int $id, int $categoryId = 0): bool
 	{
+		if ($categoryId === 0)
+		{
+			$categoryId = $this->getItemCategoryIdOrDefault($entityTypeId, $id);
+		}
+
 		$entityName = static::getPermissionEntityType($entityTypeId, $categoryId);
 
 		return \CCrmAuthorizationHelper::CheckUpdatePermission(
@@ -291,11 +427,22 @@ class UserPermissions
 	 * Returns true if user has permission to delete item with $id of type $entityTypeId in $categoryId.
 	 *
 	 * @param int $entityTypeId
+	 * @param int $id
 	 * @param int $categoryId
 	 * @return bool
 	 */
 	public function checkDeletePermissions(int $entityTypeId, int $id, int $categoryId = 0): bool
 	{
+		if ($categoryId === 0)
+		{
+			$factory = Container::getInstance()->getFactory($entityTypeId);
+
+			if ($factory && $factory->isCategoriesSupported())
+			{
+				return $this->hasPermissionInAtLeastOneCategory($factory, static::OPERATION_DELETE);
+			}
+		}
+
 		$entityName = static::getPermissionEntityType($entityTypeId, $categoryId);
 
 		return \CCrmAuthorizationHelper::CheckDeletePermission(
@@ -303,6 +450,17 @@ class UserPermissions
 			$id,
 			$this->getCrmPermissions()
 		);
+	}
+
+	protected function getItemCategoryIdOrDefault(int $entityTypeId, int $id): int
+	{
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+		if ($factory && $factory->isCategoriesSupported())
+		{
+			return ($factory->getItemCategoryId($id) ?? 0);
+		}
+
+		return 0;
 	}
 
 	/**
@@ -325,11 +483,7 @@ class UserPermissions
 
 		if ($id > 0 && $categoryId === 0)
 		{
-			$factory = Container::getInstance()->getFactory($entityTypeId);
-			if ($factory && $factory->isCategoriesSupported())
-			{
-				$categoryId = $factory->getItemCategoryId($id) ?? 0;
-			}
+			$categoryId = $this->getItemCategoryIdOrDefault($entityTypeId, $id);
 		}
 		$entityName = static::getPermissionEntityType($entityTypeId, $categoryId);
 
@@ -371,7 +525,7 @@ class UserPermissions
 	 */
 	public function filterAvailableForReadingCategories(array $categories): array
 	{
-		return array_filter($categories, [$this, 'canViewItemsInCategory']);
+		return array_values(array_filter($categories, [$this, 'canViewItemsInCategory']));
 	}
 
 	public function getPermissionType(Item $item, string $operationType = self::OPERATION_READ): string
@@ -398,10 +552,10 @@ class UserPermissions
 		}
 
 		$stageFieldName = $item->getEntityFieldNameIfExists(Item::FIELD_NAME_STAGE_ID);
-		if($stageFieldName)
+		if ($stageFieldName)
 		{
 			$stageId = $item->getStageId();
-			if($stageId)
+			if ($stageId)
 			{
 				$attributes[] = $this->combineStageIdAttribute($stageFieldName, $item->getStageId());
 			}
@@ -415,11 +569,8 @@ class UserPermissions
 			}
 		}
 
-		$userAttributes = \Bitrix\Crm\Service\Container::getInstance()
-			->getUserPermissions((int)$assignedById)
-			->getAttributesProvider()
-			->getEntityAttributes()
-		;
+		$attributesProvider = Container::getInstance()->getUserPermissions((int)$assignedById)->getAttributesProvider();
+		$userAttributes = $attributesProvider->getEntityAttributes();
 
 		return array_merge($attributes, $userAttributes['INTRANET']);
 	}
@@ -431,33 +582,44 @@ class UserPermissions
 
 	public static function getPermissionEntityType(int $entityTypeId, int $categoryId = 0): string
 	{
-		$name = \CCrmOwnerType::ResolveName($entityTypeId);
-
-		if($categoryId > 0)
-		{
-			$name .= '_C' . $categoryId;
-		}
-
-		return $name;
+		return (new PermissionEntityTypeHelper($entityTypeId))->getPermissionEntityTypeForCategory($categoryId);
 	}
 
 	public static function getEntityNameByPermissionEntityType(string $permissionEntityType): ?string
 	{
-		if(\Bitrix\Crm\Category\DealCategory::hasPermissionEntity($permissionEntityType))
+		$entityTypesWithCategories = [
+			\CCrmOwnerType::Deal,
+			\CCrmOwnerType::Contact,
+			\CCrmOwnerType::Company,
+		];
+
+		foreach ($entityTypesWithCategories as $entityTypeIdWithCategory)
 		{
-			return \CCrmOwnerType::DealName;
+			if ((new PermissionEntityTypeHelper($entityTypeIdWithCategory))->doesPermissionEntityTypeBelongToEntity($permissionEntityType))
+			{
+				return \CCrmOwnerType::ResolveName($entityTypeIdWithCategory);
+			}
 		}
 
 		if (mb_strpos($permissionEntityType, \CCrmOwnerType::DynamicTypePrefixName) === 0)
 		{
-			[$prefix, $entityTypeId, ] = explode('_', $permissionEntityType);
+			[$prefix, $entityTypeId, $categoryPostfix] = explode('_', $permissionEntityType);
 
-			return $prefix . '_' . $entityTypeId;
+			return \CCrmOwnerType::ResolveName((int)$entityTypeId);
 		}
 
 		if (\CCrmOwnerType::ResolveID($permissionEntityType) !== \CCrmOwnerType::Undefined)
 		{
 			return $permissionEntityType;
+		}
+
+		foreach (\CCrmOwnerType::getDynamicTypeBasedStaticEntityTypeIds() as $entityTypeId)
+		{
+			$entityName = \CCrmOwnerType::ResolveName($entityTypeId);
+			if (mb_strpos($permissionEntityType, $entityName) === 0)
+			{
+				return $entityName;
+			}
 		}
 
 		return null;
@@ -466,19 +628,34 @@ class UserPermissions
 	public static function getCategoryIdFromPermissionEntityType(string $permissionEntityType): ?int
 	{
 		$dealCategoryId = \Bitrix\Crm\Category\DealCategory::convertFromPermissionEntityType($permissionEntityType);
-		if($dealCategoryId !== -1)
+		if ($dealCategoryId !== -1)
 		{
 			return $dealCategoryId;
 		}
 
 		if (mb_strpos($permissionEntityType, \CCrmOwnerType::DynamicTypePrefixName) === 0)
 		{
-			[$prefix, $entityTypeId, $categoryId] = explode('_', $permissionEntityType);
-			if ((string)$categoryId !== '')
-			{
-				$categoryId = (int)mb_substr($categoryId, 1);
+			[$prefix, $entityTypeId, $categoryPostfix] = explode('_', $permissionEntityType);
 
-				return $categoryId;
+			// is like 'C12'
+			if ((string)$categoryPostfix !== '')
+			{
+				return (int)mb_substr($categoryPostfix, 1);
+			}
+		}
+
+		foreach (\CCrmOwnerType::getDynamicTypeBasedStaticEntityTypeIds() as $entityTypeId)
+		{
+			$entityName = \CCrmOwnerType::ResolveName($entityTypeId);
+			if (mb_strpos($permissionEntityType, $entityName) === 0)
+			{
+				[, $categoryId] = explode($entityName . '_', $permissionEntityType);
+				if ((string)$categoryId !== '')
+				{
+					$categoryId = (int)mb_substr($categoryId, 1);
+
+					return $categoryId;
+				}
 			}
 		}
 
@@ -507,26 +684,26 @@ class UserPermissions
 			return (array)$filter;
 		}
 
-		if (!$result->hasAccess())
+		if ($result->hasAccess())
+		{
+			$expression = $result->getSqlExpression();
+		}
+		else
 		{
 			// access denied
 			$expression = [0];
 		}
-		else
-		{
-			$expression = $result->getSqlExpression();
-		}
 
-		if (!is_array($filter))
+		if (is_array($filter))
 		{
 			$filter = [
+				$filter,
 				'@' . $primary => $expression,
 			];
 		}
 		else
 		{
 			$filter = [
-				$filter,
 				'@' . $primary => $expression,
 			];
 		}

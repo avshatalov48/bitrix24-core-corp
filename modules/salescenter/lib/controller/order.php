@@ -13,6 +13,7 @@ use Bitrix\Crm;
 use Bitrix\SalesCenter\Integration\Bitrix24Manager;
 use Bitrix\SalesCenter\Integration\CrmManager;
 use Bitrix\SalesCenter\Integration\ImOpenLinesManager;
+use Bitrix\SalesCenter\Integration\LandingManager;
 use Bitrix\SalesCenter\Integration\LocationManager;
 use Bitrix\SalesCenter\Integration\SaleManager;
 use Bitrix\Salescenter;
@@ -93,10 +94,18 @@ class Order extends Base
 	{
 		$basketItems = $this->processBasketItems($basketItems);
 
-		$order = $this->buildOrder([
-			'orderId' => $orderId,
-			'basketItems' => $basketItems
-		 ]);
+		$order = $this->buildOrder(
+			[
+				'orderId' => $orderId,
+				'basketItems' => $basketItems,
+			],
+			[
+				'orderErrorsFilter' => [
+					'SALE_BASKET_AVAILABLE_QUANTITY',
+					'SALE_BASKET_ITEM_WRONG_AVAILABLE_QUANTITY',
+				],
+			]
+		);
 
 		if ($order === null)
 		{
@@ -223,7 +232,6 @@ class Order extends Base
 		$order = $this->buildOrder(
 			$options,
 			[
-				'orderErrorsFilter' => ['DELIVERY_CALCULATION'],
 				'builderScenario' => Salescenter\Builder\SettingsContainer::BUILDER_SCENARIO_SHIPMENT,
 			]
 		);
@@ -243,8 +251,13 @@ class Order extends Base
 			return null;
 		}
 
+		$deliveryPriceResult = $shipment->calculateDelivery();
+		if (!$deliveryPriceResult->isSuccess())
+		{
+			$this->addErrors($deliveryPriceResult->getErrors());
+		}
 		return [
-			'deliveryPrice' => $shipment->getPrice(),
+			'deliveryPrice' => $deliveryPriceResult->getPrice(),
 		];
 	}
 
@@ -385,243 +398,6 @@ class Order extends Base
 		}
 
 		return Salescenter\Builder\SettingsContainer::BUILDER_SCENARIO_PAYMENT;
-	}
-
-	/**
-	 * @param $dealId
-	 * @param $products
-	 * @param $order
-	 * @throws Main\ArgumentException
-	 */
-	protected function syncOrderProductsWithDeal($dealId, $products, $order)
-	{
-		$result = [];
-
-		if (\CCrmSaleHelper::isWithOrdersMode())
-		{
-			if ($this->getCountBindingOrders($dealId) > 1)
-			{
-				$result = \CCrmDeal::LoadProductRows($dealId);
-			}
-
-			$sort = $this->getMaxProductDealSort($result);
-
-			foreach ($products as $product)
-			{
-				$sort += 10;
-				$item = [
-					'PRODUCT_ID' => $product['skuId'] ?? $product['productId'],
-					'PRODUCT_NAME' => $product['name'],
-					'PRICE' => $product['price'],
-					'PRICE_ACCOUNT' => $product['price'],
-					'PRICE_EXCLUSIVE' => $product['priceExclusive'],
-					'PRICE_NETTO' => $product['basePrice'],
-					'PRICE_BRUTTO' => $product['price'],
-					'QUANTITY' => $product['quantity'],
-					'MEASURE_CODE' => $product['measureCode'],
-					'MEASURE_NAME' => $product['measureName'],
-					'TAX_RATE' => $product['taxRate'],
-					'TAX_INCLUDED' => $product['taxIncluded'],
-					'SORT' => $sort,
-				];
-
-				if (!empty($product['discount']))
-				{
-					$item['DISCOUNT_TYPE_ID'] =
-						(int)$product['discountType'] === \Bitrix\Crm\Discount::MONETARY
-							? \Bitrix\Crm\Discount::MONETARY
-							: \Bitrix\Crm\Discount::PERCENTAGE
-					;
-					$item['DISCOUNT_RATE'] = $product['discountRate'];
-					$item['DISCOUNT_SUM'] = $product['discount'];
-				}
-
-				$result[] = $item;
-			}
-		}
-		else
-		{
-			$result = \CCrmDeal::LoadProductRows($dealId);
-
-			foreach ($products as $product)
-			{
-				$productId = $product['skuId'] ?? $product['productId'];
-
-				if (
-					!empty($product['additionalFields']['originBasketId'])
-					&& $product['additionalFields']['originBasketId'] !== $product['code']
-				)
-				{
-					$basketItem = $order->getBasket()->getItemByBasketCode($product['additionalFields']['originBasketId']);
-
-					if ($basketItem)
-					{
-						$index = $this->searchProduct($result, $basketItem->getProductId());
-						if ($index !== false)
-						{
-							$result[$index]['QUANTITY'] = $basketItem->getQuantity();
-						}
-					}
-				}
-				elseif (
-					!empty($product['additionalFields']['originProductId'])
-					&& $product['additionalFields']['originProductId'] !== $productId
-				)
-				{
-					$index = $this->searchProduct($result, $product['additionalFields']['originProductId']);
-					if ($index !== false)
-					{
-						$result[$index]['PRODUCT_ID'] = $productId;
-						if ($result[$index]['QUANTITY'] < $product['quantity'])
-						{
-							$result[$index]['QUANTITY'] = $product['quantity'];
-						}
-
-						continue;
-					}
-				}
-				else
-				{
-					$index = $this->searchProduct($result, $productId);
-					if ($index !== false)
-					{
-						$basketItem = $order->getBasket()->getItemByXmlId($product['innerId']);
-						if ($basketItem)
-						{
-							if ($result[$index]['QUANTITY'] < $basketItem->getQuantity())
-							{
-								$result[$index]['QUANTITY'] = $basketItem->getQuantity();
-							}
-
-							$result[$index]['PRICE'] = $product['price'];
-							$result[$index]['PRICE_EXCLUSIVE'] = $product['priceExclusive'];
-							$result[$index]['PRICE_ACCOUNT'] = $product['price'];
-							$result[$index]['PRICE_NETTO'] = $product['basePrice'];
-							$result[$index]['PRICE_BRUTTO'] = $product['price'];
-
-							if (!empty($product['discount']))
-							{
-								$result[$index]['DISCOUNT_TYPE_ID'] =
-									(int)$product['discountType'] === Crm\Discount::MONETARY
-										? Crm\Discount::MONETARY
-										: Crm\Discount::PERCENTAGE
-								;
-								$result[$index]['DISCOUNT_RATE'] = $product['discountRate'];
-								$result[$index]['DISCOUNT_SUM'] = $product['discount'];
-							}
-
-							continue;
-						}
-					}
-				}
-
-				$item = [
-					'PRODUCT_ID' => $productId,
-					'PRODUCT_NAME' => $product['name'],
-					'PRICE' => $product['price'],
-					'PRICE_ACCOUNT' => $product['price'],
-					'PRICE_EXCLUSIVE' => $product['priceExclusive'],
-					'PRICE_NETTO' => $product['basePrice'],
-					'PRICE_BRUTTO' => $product['price'],
-					'QUANTITY' => $product['quantity'],
-					'MEASURE_CODE' => $product['measureCode'],
-					'MEASURE_NAME' => $product['measureName'],
-					'TAX_RATE' => $product['taxRate'],
-					'TAX_INCLUDED' => $product['taxIncluded'],
-				];
-
-				if (!empty($product['discount']))
-				{
-					$item['DISCOUNT_TYPE_ID'] =
-						(int)$product['discountType'] === Crm\Discount::MONETARY
-							? Crm\Discount::MONETARY
-							: Crm\Discount::PERCENTAGE
-					;
-					$item['DISCOUNT_RATE'] = $product['discountRate'];
-					$item['DISCOUNT_SUM'] = $product['discount'];
-				}
-
-				$result[] = $item;
-			}
-		}
-
-		if ($result)
-		{
-			\CCrmDeal::SaveProductRows($dealId, $result);
-		}
-	}
-
-	protected function getMaxProductDealSort($products)
-	{
-		$sort = 0;
-		foreach ($products as $product)
-		{
-			if ($product['SORT'] > $sort)
-			{
-				$sort = $product['SORT'];
-			}
-		}
-
-		return $sort;
-	}
-
-	protected function getCountBindingOrders($dealId)
-	{
-		$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
-
-		/** @var Crm\Order\DealBinding $dealBinding */
-		$dealBinding = $registry->get(ENTITY_CRM_ORDER_DEAL_BINDING);
-
-		return $dealBinding::getList([
-			'select' => ['ORDER_ID'],
-			'filter' => [
-				'=DEAL_ID' => $dealId
-			],
-			'count_total' => true
-		])->getCount();
-	}
-
-	private function searchProduct(array $productList, int $productId)
-	{
-		if ($productId === 0)
-		{
-			return false;
-		}
-
-		foreach ($productList as $index => $item)
-		{
-			if ($productId === (int)$item['PRODUCT_ID'])
-			{
-				return $index;
-			}
-		}
-
-		return false;
-	}
-
-	protected function getBasketItemByProductId(Crm\Order\Order $order, $productId)
-	{
-		foreach ($order->getBasket() as $basketItem)
-		{
-			if ((int)$basketItem->getField('PRODUCT_ID') === (int)$productId)
-			{
-				return $basketItem;
-			}
-		}
-
-		return null;
-	}
-
-	protected function getBasketByOrderId($orderId)
-	{
-		if ($orderId > 0)
-		{
-			$order = Crm\Order\Order::load($orderId);
-
-			return $order->getBasket();
-		}
-
-		return null;
 	}
 
 	/**
@@ -773,7 +549,62 @@ class Order extends Base
 					new Error(Loc::getMessage('SALESCENTER_CONTROLLER_ORDER_SEND_SMS_ERROR'))
 				);
 			}
+			else
+			{
+				$this->processDocumentSelectorOptions($paymentId, $options);
+			}
 		}
+	}
+
+	protected function processDocumentSelectorOptions(int $paymentId, array $options): Main\Result
+	{
+		$result = new Main\Result();
+
+		$documentGenerator = Crm\Integration\DocumentGeneratorManager::getInstance();
+		$entityTypeId = (int)($options['ownerTypeId'] ?? 0);
+		if (
+			$entityTypeId > 0
+			&& $documentGenerator->isEntitySupportsPaymentDocumentBinding($entityTypeId)
+		)
+		{
+			$boundDocumentId = (int)($options['boundDocumentId'] ?? 0);
+			if (!$boundDocumentId)
+			{
+				$selectedTemplateId = (int)($options['selectedTemplateId'] ?? 0);
+				if (!($selectedTemplateId > 0))
+				{
+					return $result->addError(new Error('Could not create new document: selectedTemplateId is not specified'));
+				}
+				$entityId = (int)($options['ownerId'] ?? 0);
+				if (!$entityId)
+				{
+					return $result->addError(new Error('Could not create new document: ownerId is not specified'));
+				}
+
+				$createDocumentResult = $documentGenerator->createDocumentForItem(
+					new Crm\ItemIdentifier(
+						$entityTypeId,
+						$entityId,
+					),
+					$selectedTemplateId,
+					$paymentId,
+				);
+				if ($createDocumentResult->isSuccess())
+				{
+					$boundDocumentId = $createDocumentResult->getData()['id'];
+				}
+				else
+				{
+					return $result->addErrors($createDocumentResult->getErrors());
+				}
+			}
+			if ($boundDocumentId > 0)
+			{
+				return $documentGenerator->bindDocumentToPayment($boundDocumentId, $paymentId);
+			}
+		}
+
+		return $result;
 	}
 
 	/**
@@ -805,8 +636,22 @@ class Order extends Base
 
 		$options['basketItems'] = $basketItems;
 
+		$isEnabledAutomaticReservation = Sale\Configuration::isEnableAutomaticReservation();
+		if ($isEnabledAutomaticReservation)
+		{
+			Sale\Configuration::disableAutomaticReservation();
+		}
+
 		/** @var Crm\Order\Order $order */
-		$order = $this->buildOrder($options);
+		$order = $this->buildOrder(
+			$options,
+			[
+				'orderErrorsFilter' => [
+					'SALE_BASKET_AVAILABLE_QUANTITY',
+					'SALE_BASKET_ITEM_WRONG_AVAILABLE_QUANTITY'
+				],
+			]
+		);
 		if ($order === null)
 		{
 			return [];
@@ -816,47 +661,24 @@ class Order extends Base
 		$payment = $this->findNewPayment($order);
 
 		$result = $order->save();
+
+		if ($isEnabledAutomaticReservation)
+		{
+			Sale\Configuration::enableAutomaticReservation();
+		}
+
 		if ($result->isSuccess())
 		{
-			$dealId = $order->getDealBinding()->getDealId();
-			if ($dealId)
-			{
-				if (!empty($options['sessionId']) && (int)$options['ownerId'] <= 0)
-				{
-					$this->onAfterDealAdd($dealId, $options['sessionId']);
-				}
-
-				$this->syncOrderProductsWithDeal($dealId, $basketItems, $order);
-
-				if (isset($options['stageOnOrderPaid']))
-				{
-					CrmManager::getInstance()->saveTriggerOnOrderPaid(
-						$dealId,
-						$options['stageOnOrderPaid']
-					);
-				}
-
-				if (isset($options['stageOnDeliveryFinished']))
-				{
-					CrmManager::getInstance()->saveTriggerOnDeliveryFinished(
-						$dealId,
-						$options['stageOnDeliveryFinished']
-					);
-				}
-
-				$dealPrimaryContactId = $this->getDealPrimaryContactId($dealId);
-				if ($shipment && $dealPrimaryContactId)
-				{
-					$this->tryToFillContactDeliveryAddress($dealPrimaryContactId, $shipment->getId());
-				}
-			}
-
-			if ($shipment)
-			{
-				$this->saveDeliveryAddressFrom($shipment->getId());
-			}
-
 			Bitrix24Manager::getInstance()->increasePaymentsCount();
+
+			$binding = $order->getEntityBinding();
+
+			$entityTypeId = $binding ? $binding->getOwnerTypeId() : 0;
+			$entityId = $binding ? $binding->getOwnerId() : 0;
+
+			$productManager = new Crm\Order\ProductManager($entityTypeId, $entityId);
+			$productManager->setOrder($order)->syncOrderProducts($basketItems);
+
 			$data = [
 				'order' => [
 					'number' => $order->getField('ACCOUNT_NUMBER'),
@@ -864,8 +686,51 @@ class Order extends Base
 					'paymentId' => $payment ? $payment->getId() : null,
 					'shipmentId' => $shipment ? $shipment->getId() : null,
 				],
-				'deal' => $this->getDealData((int)$dealId)
 			];
+
+			if (isset($options['stageOnOrderPaid']))
+			{
+				CrmManager::getInstance()->saveTriggerOnOrderPaid(
+					$entityId,
+					$entityTypeId,
+					$options['stageOnOrderPaid']
+				);
+			}
+
+			if (isset($options['stageOnDeliveryFinished']))
+			{
+				CrmManager::getInstance()->saveTriggerOnDeliveryFinished(
+					$entityId,
+					$entityTypeId,
+					$options['stageOnDeliveryFinished']
+				);
+			}
+
+			if ($entityTypeId === \CCrmOwnerType::Deal)
+			{
+				if (!empty($options['sessionId']) && (int)$options['ownerId'] <= 0)
+				{
+					$this->onAfterDealAdd($entityId, $options['sessionId']);
+				}
+
+				$dealPrimaryContactId = $this->getDealPrimaryContactId($entityId);
+				if ($shipment && $dealPrimaryContactId)
+				{
+					$this->tryToFillContactDeliveryAddress($dealPrimaryContactId, $shipment->getId());
+				}
+
+				// back compatibility ??
+				$data['deal'] = $this->getEntityData($entityTypeId, $entityId);
+			}
+
+			$this->processDocumentSelectorOptions($payment->getId(), $options);
+
+			$data['entity'] = $this->getEntityData($entityTypeId, $entityId);
+
+			if ($shipment)
+			{
+				$this->saveDeliveryAddressFrom($shipment->getId());
+			}
 
 			if ($options['sendingMethod'] === 'sms')
 			{
@@ -885,9 +750,17 @@ class Order extends Base
 				if ($payment)
 				{
 					$r = new Main\Result();
-					if ($dealId && (int)$options['ownerId'] <= 0)
+
+					$binding = $order->getEntityBinding();
+					if ($binding->getOwnerTypeId() === \CCrmOwnerType::Deal)
 					{
-						$r = ImOpenLinesManager::getInstance()->sendDealNotify($dealId, $options['dialogId']);
+						$dealId = $order->getEntityBinding()->getOwnerId();
+
+						if ($dealId && (int)$options['ownerId'] <= 0)
+						{
+							$r = ImOpenLinesManager::getInstance()->sendDealNotify($dealId, $options['dialogId']);
+						}
+
 					}
 
 					if ($r->isSuccess())
@@ -1001,11 +874,21 @@ class Order extends Base
 		$options['basketItems'] = $basketItems;
 		$options['withoutPayment'] = true;
 
+		$isEnabledAutomaticReservation = Sale\Configuration::isEnableAutomaticReservation();
+		if ($isEnabledAutomaticReservation)
+		{
+			Sale\Configuration::disableAutomaticReservation();
+		}
+
 		/** @var Crm\Order\Order $order */
 		$order = $this->buildOrder(
 			$options,
 			[
 				'builderScenario' => Salescenter\Builder\SettingsContainer::BUILDER_SCENARIO_SHIPMENT,
+				'orderErrorsFilter' => [
+					'SALE_BASKET_AVAILABLE_QUANTITY',
+					'SALE_BASKET_ITEM_WRONG_AVAILABLE_QUANTITY',
+				],
 			]
 		);
 		if ($order === null)
@@ -1016,22 +899,28 @@ class Order extends Base
 		$shipment = $this->findNewShipment($order);
 
 		$result = $order->save();
+
+		if ($isEnabledAutomaticReservation)
+		{
+			Sale\Configuration::enableAutomaticReservation();
+		}
+
 		if ($result->isSuccess())
 		{
-			$dealId = $order->getDealBinding()->getDealId();
+			$dealId = 0;
 
 			if ($shipment)
 			{
-				if ($dealId)
-				{
-					$dealPrimaryContactId = $this->getDealPrimaryContactId($dealId);
-					if ($dealPrimaryContactId)
-					{
-						$this->tryToFillContactDeliveryAddress($dealPrimaryContactId, $shipment->getId());
-					}
+				$binding = $order->getEntityBinding();
 
-					$this->syncOrderProductsWithDeal($dealId, $basketItems, $order);
+				$dealPrimaryContactId = $this->getDealPrimaryContactId($binding->getOwnerId());
+				if ($dealPrimaryContactId)
+				{
+					$this->tryToFillContactDeliveryAddress($dealPrimaryContactId, $shipment->getId());
 				}
+
+				$productManager = new Crm\Order\ProductManager($binding->getOwnerTypeId(), $binding->getOwnerId());
+				$productManager->setOrder($order)->syncOrderProducts($basketItems);
 
 				$this->saveDeliveryAddressFrom($shipment->getId());
 			}
@@ -1102,10 +991,36 @@ class Order extends Base
 		}
 
 		$clientInfo = $this->getClientInfo($options);
-		if (isset($clientInfo['DEAL_ID']) && $clientInfo['DEAL_ID'] > 0)
+		if (isset($clientInfo['OWNER_ID']) && isset($clientInfo['OWNER_TYPE_ID']))
 		{
-			$result['DEAL_ID'] = $clientInfo['DEAL_ID'];
-			unset($clientInfo['DEAL_ID']);
+			if (
+				$options['context'] !== 'chat'
+				|| !CrmManager::getInstance()->isOwnerEntityInFinalStage($clientInfo['OWNER_ID'], $clientInfo['OWNER_TYPE_ID'])
+			)
+			{
+				$result['OWNER_ID'] = $clientInfo['OWNER_ID'];
+				$result['OWNER_TYPE_ID'] = $clientInfo['OWNER_TYPE_ID'];
+			}
+
+			unset($clientInfo['OWNER_ID']);
+			unset($clientInfo['OWNER_TYPE_ID']);
+		}
+
+		if (!empty($options['assignedById']))
+		{
+			$result['RESPONSIBLE_ID'] = $options['assignedById'];
+		}
+		elseif (isset($clientInfo['OWNER_ID'], $clientInfo['OWNER_TYPE_ID']))
+		{
+			$factory = Crm\Service\Container::getInstance()->getFactory($result['OWNER_TYPE_ID']);
+			if ($factory)
+			{
+				$item = $factory->getItem($result['OWNER_ID']);
+				if ($item)
+				{
+					$result['RESPONSIBLE_ID'] = $item->getAssignedById();
+				}
+			}
 		}
 
 		$result['CLIENT'] = $clientInfo;
@@ -1123,6 +1038,10 @@ class Order extends Base
 				elseif ($options['context'] === 'sms')
 				{
 					$platformCode = Crm\Order\TradingPlatform\Activity::TRADING_PLATFORM_CODE;
+				}
+				elseif ($options['context'] === 'dynamic')
+				{
+					$platformCode = Crm\Order\TradingPlatform\DynamicEntity::getCodeByEntityTypeId($options['ownerTypeId']);
 				}
 
 				if ($platformCode)
@@ -1198,7 +1117,8 @@ class Order extends Base
 	{
 		$result = [
 			'ALLOW_DELIVERY' => 'Y',
-			'RESPONSIBLE_ID' =>	$data['deliveryResponsibleId'] ?? 0,
+			'RESPONSIBLE_ID' => $data['deliveryResponsibleId'] ?? 0,
+			'IS_REALIZATION' => 'N',
 		];
 
 		if (!empty($data['deliveryId']))
@@ -1265,17 +1185,27 @@ class Order extends Base
 		return $result;
 	}
 
-	protected function getDealData(int $dealId)
+	protected function getDealData(int $entityId): array
+	{
+		return $this->getEntityData(\CCrmOwnerType::Deal, $entityId);
+	}
+
+	protected function getEntityData(int $entityTypeId, int $entityId): array
 	{
 		return [
-			'PRODUCT_LIST' => $this->getProductList($dealId)
+			'PRODUCT_LIST' => $this->getEntityProductList($entityTypeId, $entityId)
 		];
 	}
 
-	protected function getProductList($dealId)
+	private function getEntityProductList(int $entityTypeId, int $entityId): array
 	{
-		$products = \CCrmProductRow::LoadRows('D', $dealId);
+		$productManager = new Crm\Order\ProductManager($entityTypeId, $entityId);
+		$productList = $productManager->getEntityProductList();
+		return $this->prepareProductList($productList);
+	}
 
+	private function prepareProductList(array $products): array
+	{
 		$result = [];
 		foreach ($products as $product)
 		{
@@ -1361,27 +1291,40 @@ class Order extends Base
 	public function sendOrdersAction(array $orderIds, array $options)
 	{
 		$sentOrders = [];
+		$orderTitle = '';
 		$sessionId = $dialogId = false;
 		if(Bitrix24Manager::getInstance()->isPaymentsLimitReached())
 		{
 			$this->addError(new Error(Loc::getMessage('SALESCENTER_CONTROLLER_ORDER_PAYMENTS_LIMIT_REACHED')));
 			return null;
 		}
-		if(isset($options['sessionId']))
+
+		$context = $options['context'] ?? '';
+
+		if ($context === 'chat')
 		{
-			$sessionId = intval($options['sessionId']);
-			ImOpenLinesManager::getInstance()->setSessionId($sessionId);
+			if(isset($options['sessionId']))
+			{
+				$sessionId = (int)$options['sessionId'];
+				ImOpenLinesManager::getInstance()->setSessionId($sessionId);
+			}
+			$dialogId = ImOpenLinesManager::getInstance()->getDialogId();
+			if(!$dialogId)
+			{
+				$this->addError(new Error('Dialog not found'));
+			}
+			elseif(!$sessionId)
+			{
+				$this->addError(new Error('Session not found'));
+			}
 		}
-		$dialogId = ImOpenLinesManager::getInstance()->getDialogId();
-		if(!$dialogId)
+
+		if (!empty($this->getErrors()))
 		{
-			$this->addError(new Error('Dialog not found'));
+			return ['orders' => $sentOrders];
 		}
-		elseif(!$sessionId)
-		{
-			$this->addError(new Error('Session not found'));
-		}
-		elseif(Main\Loader::includeModule('sale'))
+
+		if (Main\Loader::includeModule('sale'))
 		{
 			$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
 			/** @var Sale\Order $orderClass */
@@ -1393,27 +1336,100 @@ class Order extends Base
 				if(!$order)
 				{
 					$this->addError(new Error('Order not found'));
+					return ['orders' => $sentOrders];
 				}
-				elseif(ImOpenLinesManager::getInstance()->getUserId() != $order->getUserId())
+
+				if ($context === 'chat')
 				{
-					$this->addError(new Error('Wrong user'));
-				}
-				else
-				{
-					$sendResult = ImOpenLinesManager::getInstance()->sendOrderMessage($order, $dialogId);
-					if(!$sendResult->isSuccess())
+					$sendResult = $this->sendOrderByIm($order, $dialogId);
+					if ($sendResult->isSuccess())
 					{
-						$this->addErrors($sendResult->getErrors());
+						$sentOrders[] = $sendResult->getData()['ORDER'];
 					}
 					else
 					{
-						$sentOrders[] = $order->getField('ACCOUNT_NUMBER');
+						$this->addErrors($sendResult->getErrors());
+					}
+				}
+				elseif ($context === 'sms')
+				{
+					$sendResult = $this->sendOrderBySms($order);
+					if ($sendResult->isSuccess())
+					{
+						$sentOrders[] = $sendResult->getData()['ORDER'];
+						$orderTitle = $sendResult->getData()['TEXT'];
+					}
+					else
+					{
+						$this->addErrors($sendResult->getErrors());
 					}
 				}
 			}
 		}
 
-		return ['orders' => $sentOrders];
+		return [
+			'orders' => $sentOrders,
+			'orderTitle' => $orderTitle,
+		];
+	}
+
+	private function sendOrderByIm(Sale\Order $order, $dialogId): Main\Result
+	{
+		$result = new Main\Result();
+
+		if(ImOpenLinesManager::getInstance()->getUserId() != $order->getUserId())
+		{
+			$result->addError(new Error('Wrong user'));
+		}
+		else
+		{
+			$sendResult = ImOpenLinesManager::getInstance()->sendOrderMessage($order, $dialogId);
+			if(!$sendResult->isSuccess())
+			{
+				$this->addErrors($sendResult->getErrors());
+			}
+			else
+			{
+				$result->setData(['ORDER' => $order->getField('ACCOUNT_NUMBER')]);
+			}
+		}
+
+		return $result;
+	}
+
+	private function sendOrderBySms(Sale\Order $order): Main\Result
+	{
+		$result = new Main\Result();
+
+		if(LandingManager::getInstance()->isOrderPublicUrlAvailable())
+		{
+			$urlParams = [
+				'orderId' => $order->getId(),
+				'access' => $order->getHash()
+			];
+
+			$urlInfo = LandingManager::getInstance()->getOrderPublicUrlInfo($urlParams);
+
+			if($urlInfo)
+			{
+				$smsTemplate = CrmManager::getInstance()->getSmsTemplate();
+				$smsTitle = str_replace('#LINK#', $urlInfo['shortUrl'], $smsTemplate);
+				$result->setData([
+					'TEXT' => $smsTitle,
+					'ORDER' => $order->getField('ACCOUNT_NUMBER')
+				]);
+			}
+			else
+			{
+				$result->addError(new Error('Error retrieving url info'));
+			}
+		}
+		else
+		{
+			$result->addError(new Error('Public url is not available'));
+		}
+
+		return $result;
 	}
 
 	/**
@@ -1424,6 +1440,7 @@ class Order extends Base
 	public function sendPaymentsAction(array $paymentIds, array $options)
 	{
 		$sentPayments = [];
+		$paymentTitle = '';
 		$sessionId = $dialogId = false;
 
 		if (Bitrix24Manager::getInstance()->isPaymentsLimitReached())
@@ -1432,22 +1449,33 @@ class Order extends Base
 			return null;
 		}
 
-		if (isset($options['sessionId']))
+		$context = $options['context'] ?? '';
+
+		if ($context === 'chat')
 		{
-			$sessionId = (int)$options['sessionId'];
-			ImOpenLinesManager::getInstance()->setSessionId($sessionId);
+			if (isset($options['sessionId']))
+			{
+				$sessionId = (int)$options['sessionId'];
+				ImOpenLinesManager::getInstance()->setSessionId($sessionId);
+			}
+
+			$dialogId = ImOpenLinesManager::getInstance()->getDialogId();
+			if (!$dialogId)
+			{
+				$this->addError(new Error('Dialog not found'));
+			}
+			elseif (!$sessionId)
+			{
+				$this->addError(new Error('Session not found'));
+			}
 		}
 
-		$dialogId = ImOpenLinesManager::getInstance()->getDialogId();
-		if (!$dialogId)
+		if (!empty($this->getErrors()))
 		{
-			$this->addError(new Error('Dialog not found'));
+			return ['payments' => $sentPayments];
 		}
-		elseif (!$sessionId)
-		{
-			$this->addError(new Error('Session not found'));
-		}
-		elseif (Main\Loader::includeModule('sale'))
+
+		if (Main\Loader::includeModule('sale'))
 		{
 			$registry = Sale\Registry::getInstance(Sale\Registry::REGISTRY_TYPE_ORDER);
 
@@ -1476,30 +1504,102 @@ class Order extends Base
 				{
 					$this->addError(new Error('Order '. $orderId .' not found'));
 				}
-				elseif (ImOpenLinesManager::getInstance()->getUserId() != $order->getUserId())
+
+				$payment = $order->getPaymentCollection()->getItemById($paymentId);
+
+				if ($context === 'chat')
 				{
-					$this->addError(new Error('Wrong user'));
-				}
-				else
-				{
-					$payment = $order->getPaymentCollection()->getItemById($paymentId);
-					if ($payment)
+					$sendResult = $this->sendPaymentByIm($payment, $dialogId);
+					if ($sendResult->isSuccess())
 					{
-						$sendResult = ImOpenLinesManager::getInstance()->sendPaymentMessage($payment, $dialogId);
-						if ($sendResult->isSuccess())
-						{
-							$sentPayments[] = $payment->getField('ACCOUNT_NUMBER');
-						}
-						else
-						{
-							$this->addErrors($sendResult->getErrors());
-						}
+						$sentPayments[] = $sendResult->getData()['PAYMENT'];
+					}
+					else
+					{
+						$this->addErrors($sendResult->getErrors());
+					}
+				}
+				elseif ($context === 'sms')
+				{
+					$sendResult = $this->sendPaymentBySms($payment);
+					if ($sendResult->isSuccess())
+					{
+						$sentPayments[] = $sendResult->getData()['PAYMENT'];
+						$paymentTitle = $sendResult->getData()['TEXT'];
+					}
+					else
+					{
+						$this->addErrors($sendResult->getErrors());
 					}
 				}
 			}
 		}
 
-		return ['payments' => $sentPayments];
+		return [
+			'payments' => $sentPayments,
+			'paymentTitle' => $paymentTitle,
+		];
+	}
+
+	private function sendPaymentByIm(Sale\Payment $payment, $dialogId): Main\Result
+	{
+		$result = new Main\Result();
+
+		if (ImOpenLinesManager::getInstance()->getUserId() != $payment->getOrder()->getUserId())
+		{
+			$result->addError(new Error('Wrong user'));
+		}
+		else
+		{
+			$sendResult = ImOpenLinesManager::getInstance()->sendPaymentMessage($payment, $dialogId);
+			if ($sendResult->isSuccess())
+			{
+				$result->setData(['PAYMENT' => $payment->getField('ACCOUNT_NUMBER')]);
+			}
+			else
+			{
+				$result->addErrors($sendResult->getErrors());
+			}
+		}
+
+		return $result;
+	}
+
+	private function sendPaymentBySms(Sale\Payment $payment): Main\Result
+	{
+		$result = new Main\Result();
+
+		if(LandingManager::getInstance()->isOrderPublicUrlAvailable())
+		{
+			$order = $payment->getOrder();
+			$urlParams = [
+				'orderId' => $order->getId(),
+				'paymentId' => $payment->getId(),
+				'access' => $order->getHash()
+			];
+
+			$urlInfo = LandingManager::getInstance()->getOrderPublicUrlInfo($urlParams);
+
+			if($urlInfo)
+			{
+				$smsTemplate = CrmManager::getInstance()->getSmsTemplate();
+				$smsTitle = str_replace('#LINK#', $urlInfo['shortUrl'], $smsTemplate);
+				$result->setData([
+					'TEXT' => $smsTitle,
+					'PAYMENT' => $order->getField('ACCOUNT_NUMBER')
+				]);
+			}
+			else
+			{
+				$result->addError(new Error('Error retrieving url info'));
+			}
+		}
+		else
+		{
+			$result->addError(new Error('Public url is not available'));
+		}
+
+		return $result;
 	}
 
 	/**

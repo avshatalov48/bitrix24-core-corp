@@ -163,7 +163,6 @@ BX.namespace('Tasks.Component');
 						scope: this.control('open-form'),
 						id: this.id()+'socnet-sel',
 						mode: 'all',
-						query: this.parent().getQuery(),
 						useSearch: true,
 						useAdd: false,
 						controlBind: this.option('controlBind'),
@@ -245,7 +244,6 @@ BX.namespace('Tasks.Component');
 
 					// deselect it again
 					this.getSelector().close();
-					// this.getSelector().deselectItem(id);
 				}
 			},
 

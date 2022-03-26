@@ -1,6 +1,8 @@
 <?php
 namespace Bitrix\Crm\Filter;
 
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
@@ -40,6 +42,11 @@ class ContactDataProvider extends Main\Filter\EntityDataProvider
 		if($name === null)
 		{
 			$name = \CCrmContact::GetFieldCaption($fieldID);
+		}
+		if (!$name && ParentFieldManager::isParentFieldName($fieldID))
+		{
+			$parentEntityTypeId = ParentFieldManager::getEntityTypeIdFromFieldName($fieldID);
+			$name = \CCrmOwnerType::GetDescription($parentEntityTypeId);
 		}
 
 		return $name;
@@ -281,6 +288,15 @@ class ContactDataProvider extends Main\Filter\EntityDataProvider
 			);
 		}
 		//endregion
+
+		$parentFields = Container::getInstance()->getParentFieldManager()->getParentFieldsOptionsForFilterProvider(
+			\CCrmOwnerType::Contact
+		);
+		foreach ($parentFields as $code => $parentField)
+		{
+			$result[$code] = $this->createField($code, $parentField);
+		}
+
 		return $result;
 	}
 
@@ -371,6 +387,14 @@ class ContactDataProvider extends Main\Filter\EntityDataProvider
 				array('ENTITY_TYPE_ID' => \CCrmOwnerType::Contact)
 			);
 		}
+		elseif (ParentFieldManager::isParentFieldName($fieldID))
+		{
+			return Container::getInstance()->getParentFieldManager()->prepareParentFieldDataForFilterProvider(
+				\CCrmOwnerType::Contact,
+				$fieldID
+			);
+		}
+
 		return null;
 	}
 

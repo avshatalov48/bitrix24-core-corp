@@ -2,6 +2,7 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Crm;
+use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Internals\AccountNumberGenerator;
@@ -350,28 +351,7 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 				)
 			);
 
-			$this->arResult['TABS'][] = array(
-				'id' => 'tab_event',
-				'name' => Loc::getMessage('CRM_ORDER_PAYMENT_TAB_EVENT'),
-				'loader' => array(
-					'serviceUrl' => '/bitrix/components/bitrix/crm.event.view/lazyload.ajax.php?&site'.SITE_ID.'&'.bitrix_sessid_get(),
-					'componentData' => array(
-						'template' => '',
-						'contextId' => "ORDER_PAYMENT_{$this->entityID}_EVENT",
-						'params' => array(
-							'AJAX_OPTION_ADDITIONAL' => "ORDER_PAYMENT_{$this->entityID}_EVENT",
-							'ENTITY_TYPE' => 'ORDER_PAYMENT',
-							'ENTITY_ID' => $this->entityID,
-							'PATH_TO_USER_PROFILE' => $this->arResult['PATH_TO_USER_PROFILE'],
-							'TAB_ID' => 'tab_event',
-							'INTERNAL' => 'Y',
-							'SHOW_INTERNAL_FILTER' => 'Y',
-							'PRESERVE_HISTORY' => true,
-							'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE']
-						)
-					)
-				)
-			);
+			$this->arResult['TABS'][] = $this->getEventTabParams();
 		}
 		else
 		{
@@ -381,11 +361,7 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 				'enabled' => false
 			);
 
-			$this->arResult['TABS'][] = array(
-				'id' => 'tab_event',
-				'name' => Loc::getMessage('CRM_ORDER_PAYMENT_TAB_EVENT'),
-				'enabled' => false
-			);
+			$this->arResult['TABS'][] = $this->getEventTabParams();
 		}
 		//endregion
 
@@ -616,12 +592,6 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 					'formatted' => 'FORMATTED_SUM',
 					'formattedWithCurrency' => 'FORMATTED_SUM_WITH_CURRENCY'
 				)
-			),
-			array(
-				'name' => 'COMPANY',
-				'type' => Loc::getMessage('CRM_ORDER_PAYMENT_FIELD_COMPANY'),
-				'editable' => false,
-				'transferable' => false
 			),
 			array(
 				'name' => 'XML_ID',
@@ -1243,5 +1213,15 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 		}
 
 		return $result;
+	}
+
+	protected function getEventTabParams(): array
+	{
+		return CCrmComponentHelper::getEventTabParams(
+			$this->entityID,
+			Loc::getMessage('CRM_ORDER_PAYMENT_TAB_EVENT'),
+			CCrmOwnerType::OrderPaymentName,
+			$this->arResult
+		);
 	}
 }

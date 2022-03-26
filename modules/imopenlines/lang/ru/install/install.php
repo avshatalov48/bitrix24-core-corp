@@ -1,5 +1,4 @@
 <?
-$MESS["IMOPENLINES_DB_NOT_SUPPORTED"] = "Модуль поддерживает работу только с СУБД MySQL";
 $MESS["IMOPENLINES_MODULE_NAME"] = "Открытые линии";
 $MESS["IMOPENLINES_MODULE_DESCRIPTION"] = "Модуль открытые линии.";
 $MESS["IMOPENLINES_INSTALL_TITLE"] = "Установка модуля \"Открытые линии\"";

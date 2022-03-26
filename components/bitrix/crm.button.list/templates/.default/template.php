@@ -126,6 +126,22 @@ CJSCore::Init(array('clipboard'));
 									</div><!--intranet-button-list-widget-content-inner-item-->
 								<?endif;?>
 							</div><!--intranet-button-list-widget-content-inner-item-->
+
+							<?if($arResult['SUPPORTING']['whatsapp']):?>
+							<div class="intranet-button-list-widget-content-inner-block" title="<?=htmlspecialcharsbx($arResult['TYPE_LIST']['whatsapp'])?>">
+								<?if($item['ITEMS']['whatsapp']):?>
+									<div class="intranet-button-list-widget-content-inner-item intranet-button-list-widget-active">
+										<div class="intranet-button-list-widget-content-inner-item-image intranet-button-list-whatsapp"></div>
+										<div class="intranet-button-list-widget-content-inner-item-text"><?=htmlspecialcharsbx($item['ITEMS']['whatsapp']['NAME'])?></div>
+									</div><!--intranet-button-list-widget-content-inner-item-->
+								<?else:?>
+									<div class="intranet-button-list-widget-content-inner-item">
+										<div class="intranet-button-list-widget-content-inner-item-image intranet-button-list-whatsapp"></div>
+										<div class="intranet-button-list-widget-content-inner-item-text"><?=Loc::getMessage('CRM_BUTTON_LIST_NOT_SELECTED')?></div>
+									</div><!--intranet-button-list-widget-content-inner-item-->
+								<?endif;?>
+							</div><!--intranet-button-list-widget-content-inner-item-->
+							<?endif;?>
 						</div><!--intranet-button-list-widget-content-inner-->
 					</div>
 				</div><!--intranet-button-list-widget-content-->

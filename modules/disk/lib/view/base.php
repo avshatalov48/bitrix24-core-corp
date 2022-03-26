@@ -149,7 +149,7 @@ class Base
 		$fileId = (int)$fileId;
 		if($fileId > 0)
 		{
-			return \CFile::getByID($fileId)->fetch();
+			return \CFile::GetFileArray($fileId);
 		}
 
 		return false;

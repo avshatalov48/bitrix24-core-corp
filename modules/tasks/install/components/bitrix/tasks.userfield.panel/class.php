@@ -1,4 +1,4 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Main\Localization\Loc;
@@ -17,10 +17,379 @@ Loc::loadMessages(__FILE__);
 CBitrixComponent::includeComponentClass("bitrix:tasks.base");
 
 class TasksUserFieldPanelComponent extends TasksBaseComponent
+	implements \Bitrix\Main\Errorable, \Bitrix\Main\Engine\Contract\Controllerable
 {
 	protected $state = null;
 	protected $ctrl = null;
 	protected $stateCtrl = null;
+
+	protected $errorCollection;
+
+	public function configureActions()
+	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return [];
+		}
+
+		return [
+			'saveField' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'deleteField' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'setState' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'getFieldHtml' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			]
+		];
+	}
+
+	public function __construct($component = null)
+	{
+		parent::__construct($component);
+		$this->init();
+	}
+
+	protected function init()
+	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$this->setUserId();
+		$this->errorCollection = new \Bitrix\Tasks\Util\Error\Collection();
+	}
+
+	protected function setUserId()
+	{
+		$this->userId = (int) \Bitrix\Tasks\Util\User::getId();
+	}
+
+	public function getErrorByCode($code)
+	{
+		// TODO: Implement getErrorByCode() method.
+	}
+
+	public function getErrors()
+	{
+		if (!empty($this->componentId))
+		{
+			return parent::getErrors();
+		}
+		return $this->errorCollection->toArray();
+	}
+
+	public function saveFieldAction($id = 0, array $data, array $parameters = [])
+	{
+		$id = (int) $id;
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$ufController = static::getControllerByEntity($data['ENTITY_CODE']);
+		if (!$ufController)
+		{
+			$this->errorCollection->add('ILLEGAL_ARGUMENT.ENTITY_CODE', Loc::getMessage('TASKS_TUFE_UF_UNKNOWN_ENTITY_CODE'));
+			return [];
+		}
+
+		$type = $data['USER_TYPE_ID'];
+		$label = trim((string)$data['LABEL']);
+
+		if (!is_array($parameters['RELATED_ENTITIES']))
+		{
+			$parameters['RELATED_ENTITIES'] = array();
+		}
+		else
+		{
+			$parameters['RELATED_ENTITIES'] = array_diff($parameters['RELATED_ENTITIES'], array($data['ENTITY_CODE']));
+		}
+
+		if (!\Bitrix\Tasks\Util\User::isSuper())
+		{
+			$this->errorCollection->add('ACTION_NOT_ALLOWED', Loc::getMessage('TASKS_TUFE_UF_ADMIN_RESTRICTED'));
+			return [];
+		}
+		if ($label == '')
+		{
+			$this->errorCollection->add('ILLEGAL_ARGUMENT.LABEL', Loc::getMessage('TASKS_TUFE_EMPTY_LABEL'));
+			return [];
+		}
+		if (
+			!Restriction::canManage($ufController->getEntityCode())
+			&& TaskLimit::isLimitExceeded(TaskLimit::isLimitExist() ? 0 : 100)
+		)
+		{
+			$this->errorCollection->add('ACTION_RESTRICTED', Loc::getMessage('TASKS_TUFE_UF_MANAGING_RESTRICTED'));
+			return [];
+		}
+		if ($data['MANDATORY'] == 'Y' && !Restriction::canCreateMandatory($ufController->getEntityCode()))
+		{
+			$this->errorCollection->add('ACTION_RESTRICTED', Loc::getMessage('TASKS_TUFE_UF_USAGE_RESTRICTED_MANDATORY'));
+			return [];
+		}
+
+		if ($id) // update existing field
+		{
+			$userField = \CUserTypeEntity::GetByID($id);
+			$userFieldLabels = $userField['EDIT_FORM_LABEL'];
+
+			$editFormLabel = array(
+				LANGUAGE_ID => $label
+			);
+
+			foreach (static::getLanguages() as $languageId)
+			{
+				if (!array_key_exists($languageId, $userFieldLabels))
+				{
+					$editFormLabel[$languageId] = $label;
+				}
+			}
+
+			$field = array(
+				'MANDATORY' => ($data['MANDATORY']? 'Y' : 'N'),
+				'EDIT_FORM_LABEL' => $editFormLabel,
+			);
+
+			$updateResult = $ufController->updateField($id, $field);
+			if (!$updateResult->getErrors()->isEmpty())
+			{
+				$this->errorCollection->add('INTERNAL_ERROR', Loc::getMessage('TASKS_TUFE_UF_UNEXPECTED_ERROR'));
+				return [];
+			}
+			else
+			{
+				$fData = $ufController->getField($id);
+				if ($fData !== null)
+				{
+					$this->updateRelatedFields($fData['FIELD_NAME'], $parameters['RELATED_ENTITIES'], $field);
+				}
+			}
+		}
+		else // create a new one
+		{
+			if (!in_array($type, array('string', 'double', 'boolean', 'datetime')))
+			{
+				$this->errorCollection->add('ILLEGAL_ARGUMENT.USER_TYPE_ID', Loc::getMessage('TASKS_TUFE_UF_UNKNOWN_TYPE'));
+				return [];
+			}
+
+			$freeName = static::getFreeFieldName($data['ENTITY_CODE'], $parameters['RELATED_ENTITIES']);
+			if (!$freeName)
+			{
+				$this->errorCollection->add('INTERNAL_ERROR', Loc::getMessage('TASKS_TUFE_UF_NAME_GENERATION_FAILED'));
+				return [];
+			}
+
+			$editFormLabel = array(
+				LANGUAGE_ID => $label
+			);
+
+			foreach (static::getLanguages() as $languageId)
+			{
+				$editFormLabel[$languageId] = $label;
+			}
+
+			$field = array(
+				'FIELD_NAME' => $freeName,
+				'USER_TYPE_ID' => $type,
+				'XML_ID' => '',
+				'MULTIPLE' => ($data['MULTIPLE']? 'Y' : 'N'),
+				'MANDATORY' => ($data['MANDATORY']? 'Y' : 'N'),
+				'SHOW_FILTER' => 'Y',
+				'SHOW_IN_LIST' => 'Y',
+				'EDIT_IN_LIST' => 'Y',
+				'IS_SEARCHABLE' => 'Y',
+				'EDIT_FORM_LABEL' => $editFormLabel,
+			);
+
+			$addResult = $ufController->addField($field);
+			if (!$addResult->getErrors()->isEmpty())
+			{
+				$this->errorCollection->add('INTERNAL_ERROR', Loc::getMessage('TASKS_TUFE_UF_UNEXPECTED_ERROR'));
+				return [];
+			}
+
+			$data['ID'] = $id = $addResult->getData();
+
+			// also get html
+			$fieldData = array();
+			$scheme = $ufController->getScheme();
+			foreach ($scheme as $code => $fData)
+			{
+				if ($fData['ID'] == $id)
+				{
+					$fieldData = $fData;
+				}
+			}
+
+			$inputPrefix = trim((string)$parameters['INPUT_PREFIX']);
+			if ($inputPrefix)
+			{
+				$fieldData['FIELD_NAME'] = $inputPrefix.'['.$fieldData['FIELD_NAME'].']';
+			}
+
+			$data['FIELD_HTML'] = $this->getFieldUIHtml($fieldData);
+
+			$this->addRelatedFields($parameters['RELATED_ENTITIES'], $field);
+		}
+
+		return $data;
+	}
+
+	public function deleteFieldAction($id, array $parameters = [])
+	{
+		if(!intval($id))
+		{
+			$this->errorCollection->add('ILLEGAL_ARGUMENT.ID', Loc::getMessage('TASKS_TUFE_UF_UNKNOWN_ID'));
+			return [];
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		if(!\Bitrix\Tasks\Util\User::isSuper())
+		{
+			$this->errorCollection->add('ACTION_NOT_ALLOWED', Loc::getMessage('TASKS_TUFE_UF_ADMIN_RESTRICTED'));
+			return [];
+		}
+
+		$data = \CUserTypeEntity::GetByID($id);
+		if(!$data)
+		{
+			$this->errorCollection->add('FIELD_NOT_FOUND', Loc::getMessage('TASKS_TUFE_UF_NOT_FOUND'));
+			return [];
+		}
+
+		$ufController = static::getControllerByEntity($data['ENTITY_ID']);
+		if(!$ufController)
+		{
+			$this->errorCollection->add('ILLEGAL_ARGUMENT.ENTITY_CODE', Loc::getMessage('TASKS_TUFE_UF_UNKNOWN_ENTITY_CODE'));
+			return [];
+		}
+
+		$deleteResult = $ufController->deleteField($id);
+		if(!$deleteResult->getErrors()->isEmpty())
+		{
+			$this->errorCollection->add('INTERNAL_ERROR', Loc::getMessage('TASKS_TUFE_UF_UNEXPECTED_ERROR'));
+			return [];
+		}
+
+		Restriction::canUse($ufController->getEntityCode(), 0, true);
+
+		return [];
+	}
+
+	public function setStateAction(array $state, $entityCode, $dropAll = false)
+	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$ufController = static::getControllerByEntity($entityCode);
+		if(!$ufController)
+		{
+			$this->errorCollection->add('ILLEGAL_ARGUMENT.ENTITY_CODE', Loc::getMessage('TASKS_TUFE_UF_UNKNOWN_ENTITY_CODE'));
+			return [];
+		}
+
+		if(!Restriction::canUse($ufController->getEntityCode(), 0, true))
+		{
+			$this->errorCollection->add('ACTION_RESTRICTED', Loc::getMessage('TASKS_TUFE_UF_USAGE_RESTRICTED'));
+			return [];
+		}
+
+		if($dropAll && !\Bitrix\Tasks\Util\User::isSuper())
+		{
+			$this->errorCollection->add('ACTION_NOT_ALLOWED', Loc::getMessage('TASKS_TUFE_UF_ADMIN_RESTRICTED'));
+			return [];
+		}
+
+		$ctrl = static::getStateController($ufController);
+		if($dropAll)
+		{
+			$ctrl->removeForAllUsers();
+		}
+		$ctrl->set($state);
+
+		return [];
+	}
+
+	public function getFieldHTMLAction($id, $entityCode, $entityId = 0, array $parameters = [])
+	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$item = static::getItemControllerByEntity($entityCode, $entityId);
+		$ufController = static::getControllerByEntity($entityCode);
+
+		if(!$item || !$ufController)
+		{
+			$this->errorCollection->add('ILLEGAL_ARGUMENT.ENTITY_CODE', Loc::getMessage('TASKS_TUFE_UF_UNKNOWN_ENTITY_CODE'));
+			return '';
+		}
+
+		if(!Restriction::canUse($ufController->getEntityCode()))
+		{
+			$this->errorCollection->add('ACTION_RESTRICTED', Loc::getMessage('TASKS_TUFE_UF_USAGE_RESTRICTED'));
+			return '';
+		}
+
+		$scheme = $ufController->getScheme();
+		$code = '';
+		foreach($scheme as $ufCode => $ufField)
+		{
+			if($ufField['ID'] == $id)
+			{
+				$code = $ufCode;
+				break;
+			}
+		}
+
+		if($code == '')
+		{
+			$this->errorCollection->add('ILLEGAL_ARGUMENT.ID', Loc::getMessage('TASKS_TUFE_UF_UNKNOWN_ID'));
+			return '';
+		}
+
+		$value = $item[$code]; // we need to use item, because we have to check rights
+
+		$fieldData = $scheme[$code];
+		$fieldData['VALUE'] = $value;
+		$inputPrefix = trim((string) $parameters['INPUT_PREFIX']);
+		if($inputPrefix)
+		{
+			$fieldData['FIELD_NAME'] = $inputPrefix.'['.$fieldData['FIELD_NAME'].']';
+		}
+
+		$html = $this->getFieldUIHtml($fieldData, !$entityId);
+
+		return $html;
+	}
 
 	protected function checkParameters()
 	{
@@ -246,173 +615,6 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 		return new TasksUserFieldPanelComponentState($ufController);
 	}
 
-	public static function getAllowedMethods()
-	{
-		return array(
-			'saveField',
-			'deleteField',
-			'setState',
-			'getFieldHTML',
-		);
-	}
-
-	public static function saveField($id = 0, array $data, array $parameters = array())
-	{
-		$result = new Result();
-
-		$ufController = static::getControllerByEntity($data['ENTITY_CODE']);
-		if (!$ufController)
-		{
-			$result->addError('ILLEGAL_ARGUMENT.ENTITY_CODE', Loc::getMessage('TASKS_TUFE_UF_UNKNOWN_ENTITY_CODE'));
-		}
-
-		$type = $data['USER_TYPE_ID'];
-		$label = trim((string)$data['LABEL']);
-
-		if (!is_array($parameters['RELATED_ENTITIES']))
-		{
-			$parameters['RELATED_ENTITIES'] = array();
-		}
-		else
-		{
-			$parameters['RELATED_ENTITIES'] = array_diff($parameters['RELATED_ENTITIES'], array($data['ENTITY_CODE']));
-		}
-
-		if (!\Bitrix\Tasks\Util\User::isSuper())
-		{
-			$result->addError('ACTION_NOT_ALLOWED', Loc::getMessage('TASKS_TUFE_UF_ADMIN_RESTRICTED'));
-		}
-		if ($label == '')
-		{
-			$result->addError('ILLEGAL_ARGUMENT.LABEL', Loc::getMessage('TASKS_TUFE_EMPTY_LABEL'));
-		}
-		if (
-			!Restriction::canManage($ufController->getEntityCode())
-			&& TaskLimit::isLimitExceeded(TaskLimit::isLimitExist() ? 0 : 100)
-		)
-		{
-			$result->addError('ACTION_RESTRICTED', Loc::getMessage('TASKS_TUFE_UF_MANAGING_RESTRICTED'));
-		}
-		if ($data['MANDATORY'] == 'Y' && !Restriction::canCreateMandatory($ufController->getEntityCode()))
-		{
-			$result->addError('ACTION_RESTRICTED', Loc::getMessage('TASKS_TUFE_UF_USAGE_RESTRICTED_MANDATORY'));
-		}
-
-		if ($id) // update existing field
-		{
-			if ($result->isSuccess())
-			{
-				$userField = \CUserTypeEntity::GetByID($id);
-				$userFieldLabels = $userField['EDIT_FORM_LABEL'];
-
-				$editFormLabel = array(
-					LANGUAGE_ID => $label
-				);
-
-				foreach (static::getLanguages() as $languageId)
-				{
-					if (!array_key_exists($languageId, $userFieldLabels))
-					{
-						$editFormLabel[$languageId] = $label;
-					}
-				}
-
-				$field = array(
-					'MANDATORY' => ($data['MANDATORY']? 'Y' : 'N'),
-					'EDIT_FORM_LABEL' => $editFormLabel,
-				);
-
-				$updateResult = $ufController->updateField($id, $field);
-				if (!$updateResult->getErrors()->isEmpty())
-				{
-					$result->adoptErrors($updateResult);
-				}
-				else
-				{
-					$fData = $ufController->getField($id);
-					if ($fData !== null)
-					{
-						static::updateRelatedFields($fData['FIELD_NAME'], $parameters['RELATED_ENTITIES'], $field, $result);
-					}
-				}
-			}
-		}
-		else // create a new one
-		{
-			if (!in_array($type, array('string', 'double', 'boolean', 'datetime')))
-			{
-				$result->addError('ILLEGAL_ARGUMENT.USER_TYPE_ID', Loc::getMessage('TASKS_TUFE_UF_UNKNOWN_TYPE'));
-			}
-
-			$freeName = static::getFreeFieldName($data['ENTITY_CODE'], $parameters['RELATED_ENTITIES']);
-			if (!$freeName)
-			{
-				$result->addError('INTERNAL_ERROR', Loc::getMessage('TASKS_TUFE_UF_NAME_GENERATION_FAILED'));
-			}
-
-			if ($result->isSuccess())
-			{
-				$editFormLabel = array(
-					LANGUAGE_ID => $label
-				);
-
-				foreach (static::getLanguages() as $languageId)
-				{
-					$editFormLabel[$languageId] = $label;
-				}
-
-				$field = array(
-					'FIELD_NAME' => $freeName,
-					'USER_TYPE_ID' => $type,
-					'XML_ID' => '',
-					'MULTIPLE' => ($data['MULTIPLE']? 'Y' : 'N'),
-					'MANDATORY' => ($data['MANDATORY']? 'Y' : 'N'),
-					'SHOW_FILTER' => 'Y',
-					'SHOW_IN_LIST' => 'Y',
-					'EDIT_IN_LIST' => 'Y',
-					'IS_SEARCHABLE' => 'Y',
-					'EDIT_FORM_LABEL' => $editFormLabel,
-				);
-
-				$addResult = $ufController->addField($field);
-				if (!$addResult->getErrors()->isEmpty())
-				{
-					$result->adoptErrors($addResult);
-				}
-
-				if ($result->isSuccess())
-				{
-					$data['ID'] = $id = $addResult->getData();
-
-					// also get html
-					$fieldData = array();
-					$scheme = $ufController->getScheme();
-					foreach ($scheme as $code => $fData)
-					{
-						if ($fData['ID'] == $id)
-						{
-							$fieldData = $fData;
-						}
-					}
-
-					$inputPrefix = trim((string)$parameters['INPUT_PREFIX']);
-					if ($inputPrefix)
-					{
-						$fieldData['FIELD_NAME'] = $inputPrefix.'['.$fieldData['FIELD_NAME'].']';
-					}
-
-					$data['FIELD_HTML'] = static::getFieldUIHtml($fieldData);
-
-					static::addRelatedFields($parameters['RELATED_ENTITIES'], $field, $result);
-				}
-			}
-		}
-
-		$result->setData($data);
-
-		return $result;
-	}
-
 	public static function deleteField($id, array $parameters = array())
 	{
 		$result = new Result();
@@ -464,101 +666,6 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 		return $result;
 	}
 
-	public static function getFieldHTML($id, $entityCode, $entityId = 0, array $parameters = array())
-	{
-		$result = new Result();
-		$html = '';
-
-		$item = static::getItemControllerByEntity($entityCode, $entityId);
-		$ufController = static::getControllerByEntity($entityCode);
-
-		if(!$item || !$ufController)
-		{
-			$result->addError('ILLEGAL_ARGUMENT.ENTITY_CODE', Loc::getMessage('TASKS_TUFE_UF_UNKNOWN_ENTITY_CODE'));
-		}
-		else
-		{
-			if(!Restriction::canUse($ufController->getEntityCode()))
-			{
-				$result->addError('ACTION_RESTRICTED', Loc::getMessage('TASKS_TUFE_UF_USAGE_RESTRICTED'));
-			}
-		}
-
-		if($result->isSuccess())
-		{
-			$scheme = $ufController->getScheme();
-			$code = '';
-			foreach($scheme as $ufCode => $ufField)
-			{
-				if($ufField['ID'] == $id)
-				{
-					$code = $ufCode;
-					break;
-				}
-			}
-
-			if($code == '')
-			{
-				$result->addError('ILLEGAL_ARGUMENT.ID', Loc::getMessage('TASKS_TUFE_UF_UNKNOWN_ID'));
-			}
-			else
-			{
-				// todo: $item->setUserFieldController($ufController) should be used here, when implemented
-				// todo: $item[$code] leads to *, UF_* in select query. Optimize it by calling getData() in un-greedy mode (when implemented)
-				$value = $item[$code]; // we need to use item, because we have to check rights
-
-				$fieldData = $scheme[$code];
-				$fieldData['VALUE'] = $value;
-				$inputPrefix = trim((string) $parameters['INPUT_PREFIX']);
-				if($inputPrefix)
-				{
-					$fieldData['FIELD_NAME'] = $inputPrefix.'['.$fieldData['FIELD_NAME'].']';
-				}
-
-				$html = static::getFieldUIHtml($fieldData, !$entityId);
-			}
-		}
-
-		$result->setData($html);
-		return $result;
-	}
-
-	public static function setState(array $state, $entityCode, $dropAll = false)
-	{
-		$result = new Result();
-
-		$ufController = static::getControllerByEntity($entityCode);
-		if(!$ufController)
-		{
-			$result->addError('ILLEGAL_ARGUMENT.ENTITY_CODE', Loc::getMessage('TASKS_TUFE_UF_UNKNOWN_ENTITY_CODE'));
-		}
-		else
-		{
-			if(!Restriction::canUse($ufController->getEntityCode(), 0, true))
-			{
-				$result->addError('ACTION_RESTRICTED', Loc::getMessage('TASKS_TUFE_UF_USAGE_RESTRICTED'));
-			}
-			else
-			{
-				if($dropAll && !\Bitrix\Tasks\Util\User::isSuper())
-				{
-					$result->addError('ACTION_NOT_ALLOWED', Loc::getMessage('TASKS_TUFE_UF_ADMIN_RESTRICTED'));
-				}
-				else
-				{
-					$ctrl = static::getStateController($ufController);
-					if($dropAll)
-					{
-						$ctrl->removeForAllUsers();
-					}
-					$ctrl->set($state);
-				}
-			}
-		}
-
-		return $result;
-	}
-
 	private static function getFreeFieldName($mainEntity, $relatedEntities = array())
 	{
 		$name = '';
@@ -594,7 +701,7 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 	 * @param $field
 	 * @param Result $result
 	 */
-	private static function addRelatedFields($relatedEntities, $field, $result)
+	private function addRelatedFields($relatedEntities, $field)
 	{
 		foreach($relatedEntities as $relatedEntity)
 		{
@@ -606,7 +713,7 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 
 				if(!$saveResult->getErrors()->isEmpty())
 				{
-					$result->addWarning('INTERNAL_ERROR', Loc::getMessage('TASKS_TUFE_UF_RELATED_FIELDS_CREATING_ERROR'));
+					$this->errorCollection->add('INTERNAL_ERROR', Loc::getMessage('TASKS_TUFE_UF_RELATED_FIELDS_CREATING_ERROR'));
 				}
 			}
 		}
@@ -616,9 +723,8 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 	 * @param $name
 	 * @param $relatedEntities
 	 * @param $field
-	 * @param Result $result
 	 */
-	private static function updateRelatedFields($name, $relatedEntities, $field, $result)
+	private function updateRelatedFields($name, $relatedEntities, $field)
 	{
 		foreach($relatedEntities as $relatedEntity)
 		{
@@ -633,14 +739,14 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 
 					if(!$saveResult->getErrors()->isEmpty())
 					{
-						$result->addWarning('INTERNAL_ERROR', Loc::getMessage('TASKS_TUFE_UF_RELATED_FIELDS_UPDATING_ERROR'));
+						$this->errorCollection->add('INTERNAL_ERROR', Loc::getMessage('TASKS_TUFE_UF_RELATED_FIELDS_UPDATING_ERROR'));
 					}
 				}
 			}
 		}
 	}
 
-	private static function getFieldUIHtml($fieldData, $preferDefault = false)
+	private function getFieldUIHtml($fieldData, $preferDefault = false)
 	{
 		if(empty($fieldData))
 		{

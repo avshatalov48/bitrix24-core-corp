@@ -6,6 +6,7 @@ namespace Bitrix\Crm\Recycling;
 
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Model\Dynamic\Type;
+use Bitrix\Crm\Model\Dynamic\TypeTable;
 use Bitrix\Crm\RelationIdentifier;
 use Bitrix\Crm\Service\Container;
 
@@ -30,8 +31,19 @@ class DynamicBinderManager
 	{
 		if(self::$instance === null)
 		{
+			$dynamicTypes = Container::getInstance()->getDynamicTypesMap()->load()->getTypes();
+			$dynamicBasedTypes = TypeTable::getList([
+				'select' => ['*'],
+				'filter' => [
+					'@ENTITY_TYPE_ID' => \CCrmOwnerType::getDynamicTypeBasedStaticEntityTypeIds(),
+				],
+			])->fetchCollection();
+
+			$types = array_merge($dynamicTypes, $dynamicBasedTypes->getAll());
+
 			$instance = new self();
-			$instance->setDynamicTypes(Container::getInstance()->getDynamicTypesMap()->load()->getTypes());
+			$instance->setDynamicTypes($types);
+
 			self::$instance = $instance;
 		}
 		return self::$instance;
@@ -64,7 +76,7 @@ class DynamicBinderManager
 
 			if (!empty($dynamicIds))
 			{
-				$slots[\CCrmOwnerType::ResolveName($entityTypeId) . '_IDS'] = $dynamicIds;
+				$slots[$this->compileSlotKey($entityTypeId)] = $dynamicIds;
 			}
 		}
 		return $slots;
@@ -80,14 +92,15 @@ class DynamicBinderManager
 
 		foreach ($recyclingData as $name => $ids)
 		{
-			if (preg_match('/DYNAMIC_(\d*)_IDS/', $name, $matches))
+			$entityTypeId = $this->extractEntityTypeIdFromSlotKey($name);
+			if (\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
 			{
 				foreach ($ids as $id)
 				{
 					$relations[] = new Relation(
 						$this->getAssociatedEntityTypeId(),
 						$this->getEntityId(),
-						$matches[1],
+						$entityTypeId,
 						$id
 					);
 				}
@@ -103,9 +116,8 @@ class DynamicBinderManager
 		foreach ($this->dynamicTypes as $type)
 		{
 			$entityTypeId = $type->getEntityTypeId();
-			$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeId);
 
-			if (empty($slots[$entityTypeName . '_IDS']))
+			if (empty($slots[$this->compileSlotKey($entityTypeId)]))
 			{
 				continue;
 			}
@@ -113,7 +125,7 @@ class DynamicBinderManager
 			DynamicBinder::getInstance($entityTypeId)->unbindEntities(
 				$this->getAssociatedEntityTypeId(),
 				$this->getEntityId(),
-				$slots[$entityTypeName . '_IDS']
+				$slots[$this->compileSlotKey($entityTypeId)]
 			);
 		}
 	}
@@ -227,5 +239,18 @@ class DynamicBinderManager
 	{
 		$this->associatedEntityTypeId = $associatedEntityTypeId;
 		return $this;
+	}
+
+	protected function compileSlotKey(int $entityTypeId): string
+	{
+		return (\CCrmOwnerType::ResolveName($entityTypeId) . '_IDS');
+	}
+
+	protected function extractEntityTypeIdFromSlotKey(string $slotKey): int
+	{
+		$lengthWithoutSuffix = mb_strlen($slotKey) - mb_strlen('_IDS');
+		$entityTypeName = mb_substr($slotKey, 0, $lengthWithoutSuffix);
+
+		return \CCrmOwnerType::ResolveID($entityTypeName);
 	}
 }

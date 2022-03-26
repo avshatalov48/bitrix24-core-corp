@@ -1,4 +1,9 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 if (!\Bitrix\Main\Loader::includeModule('mobileapp'))
 {
@@ -14,13 +19,15 @@ $arParams["THUMB_SIZE"] = array("width" => 70, "height" => 70); // thumb
 $arParams["MAX_SIZE"] = array("width" => 550, "height" => 832); // inline
 $arParams["SMALL_SIZE"] = array("width" => 75, "height" => 100); // inline rough
 
-$arParams["HTML_SIZE"] = (!!$arParams["HTML_SIZE"] ? $arParams["HTML_SIZE"] : false); // inline from parser
+$arParams["HTML_SIZE"] = ($arParams["HTML_SIZE"] ?: false); // inline from parser
 
-$images = $files = $deletedFiles = [];
+$images = [];
+$files = [];
+$deletedFiles = [];
 
-$arResult['deviceWidth'] = (CMobile::getInstance()->getDevice() ? intval(CMobile::getInstance()->getDevicewidth()) : 1336);
-$arResult['deviceHeight'] = (CMobile::getInstance()->getDevice() ? intval(CMobile::getInstance()->getDeviceheight()) : 768);
-$arResult['devicePixelRatio'] = (CMobile::getInstance()->getDevice() ? intval(CMobile::getInstance()->getPixelRatio()) : 1);
+$arResult['deviceWidth'] = (CMobile::getInstance()->getDevice() ? (int)CMobile::getInstance()->getDevicewidth() : 1336);
+$arResult['deviceHeight'] = (CMobile::getInstance()->getDevice() ? (int)CMobile::getInstance()->getDeviceheight() : 768);
+$arResult['devicePixelRatio'] = (CMobile::getInstance()->getDevice() ? (float)CMobile::getInstance()->getPixelRatio() : 1);
 
 $max_dimension = max([ $arResult['deviceWidth'], $arResult['deviceHeight'] ]);
 if ($max_dimension < 650)
@@ -59,11 +66,11 @@ foreach ($arResult['FILES'] as $id => $file)
 		$file["PATH"] = $file["PATH"].(mb_strpos($file["PATH"], "?") === false ? "?" : "&")."mobile_action=disk_uf_view";
 	}
 
-	if($file['IS_MARK_DELETED'])
+	if ($file['IS_MARK_DELETED'])
 	{
 		$arResult["FILES"][$id] = $deletedFiles[$id] = $file;
 	}
-	elseif (array_key_exists("IMAGE", $file))
+	elseif (isset($file['IMAGE']))
 	{
 		$src = $file["PREVIEW_URL"].(mb_strpos($file["PREVIEW_URL"], "?") === false ? "?" : "&")."cache_image=Y&mobile_action=disk_uf_view";
 		$arParams["THUMB_SIZE"]["signature"] = \Bitrix\Disk\Security\ParameterSigner::getImageSignature($file["ID"], $arParams["THUMB_SIZE"]["width"], $arParams["THUMB_SIZE"]["height"]);
@@ -92,10 +99,10 @@ foreach ($arResult['FILES'] as $id => $file)
 		);
 
 		$arSize = is_array($arParams["SIZE"][$file["ID"]]) ? $arParams["SIZE"][$file["ID"]] : array();
-		$arSize = array(
-			"width" => intval(array_key_exists("width", $arSize) ? $arSize["width"] : $arSize["WIDTH"]),
-			"height" => intval(array_key_exists("height", $arSize) ? $arSize["height"] : $arSize["HEIGHT"])
-		);
+		$arSize = [
+			'width' => (int)($arSize['width'] ?? $arSize['WIDTH']),
+			'height' => (int)($arSize['height'] ?? $arSize['HEIGHT'])
+		];
 
 		$bExactly = ($arSize["width"] > 0 && $arSize["height"] > 0);
 
@@ -180,7 +187,10 @@ foreach ($arResult['FILES'] as $id => $file)
 
 		// gallery
 
-		$max_real_dimension = max(array(intval($file["IMAGE"]["WIDTH"]), intval($file["IMAGE"]["HEIGHT"])));
+		$max_real_dimension = max([
+			(int)$file['IMAGE']['WIDTH'],
+			(int)$file['IMAGE']['HEIGHT'],
+		]);
 		$arParams["SCREEN_SIZE"] = (
 			$max_real_dimension > $max_dimension
 				? array("width" => $max_dimension, "height" => $max_dimension)
@@ -246,18 +256,18 @@ foreach ($arResult['FILES'] as $id => $file)
 	}
 }
 
-if ($this->__page == "show")
+if ($this->__page === "show")
 {
 	$arResult['IMAGES'] = $images;
 	$arResult['FILES'] = $files;
 	$arResult['DELETED_FILES'] = $deletedFiles;
 
 	$arResult['IMAGES_COUNT'] = 0;
-	foreach($images as $image)
+	foreach ($images as $image)
 	{
 		if (
 			empty($file['HIDDEN'])
-			|| $file['HIDDEN'] != 'Y'
+			|| $file['HIDDEN'] !== 'Y'
 		)
 		{
 			$arResult['IMAGES_COUNT']++;
@@ -265,5 +275,5 @@ if ($this->__page == "show")
 	}
 
 	$arResult['FILES_LIMIT'] = 3;
-	$arResult['IMAGES_LIMIT'] = intval(floor(($arResult['deviceWidth']/$arResult['devicePixelRatio'] - 34 ) / 58)) * 3;
+	$arResult['IMAGES_LIMIT'] = (int)floor(($arResult['deviceWidth'] / $arResult['devicePixelRatio'] - 34) / 58) * 3;
 }

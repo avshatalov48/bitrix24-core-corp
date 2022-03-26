@@ -1555,19 +1555,68 @@ BX.Disk.FolderListClass = (function (){
 			return;
 		}
 
-		BX.ajax.runAction('disk.api.commonActions.restoreCollection', {
-			analyticsLabel: 'folder.list',
-			data: {
-				objectCollection: selectedRows
-			}
-		}).then(function (response) {
-			if (response.status === 'success')
-			{
-				var firstObjectId = response.data.restoredObjectIds.pop();
-				window.document.location = BX.Disk.getUrlToShowObjectInGrid(firstObjectId);
-			}
+		var self = this;
+		var messageDescription = BX.message('DISK_TRASHCAN_TRASH_RESTORE_DESCR_MULTIPLE');
+		var buttons = [
+			new BX.PopupWindowCustomButton({
+				text: BX.message('DISK_TRASHCAN_ACT_RESTORE'),
+				className: "ui-btn ui-btn-success",
+				events: {
+					click: function (e) {
+						this.addClassName('ui-btn-clock');
 
-		}.bind(this));
+						BX.ajax.runAction('disk.api.commonActions.restoreCollection', {
+							analyticsLabel: 'folder.list',
+							data: {
+								objectCollection: selectedRows
+							}
+						}).then(function (response) {
+
+							if (response.status === 'success')
+							{
+								if (response.data.restoredObjectIds.length > 1)
+								{
+									BX.Disk.showModalWithStatusAction({
+										status: 'success',
+										message: BX.message('DISK_TRASHCAN_TRASH_RESTORE_SUCCESS')
+									});
+									this.commonGrid.reload();
+								}
+								else
+								{
+									var firstObjectId = response.data.restoredObjectIds.pop();
+									window.document.location = BX.Disk.getUrlToShowObjectInGrid(firstObjectId);
+								}
+							}
+
+							BX.PopupWindowManager.getCurrentPopup().close();
+						}.bind(self));
+					}
+				}
+			}),
+			new BX.PopupWindowCustomButton({
+				text: BX.message('DISK_JS_BTN_CANCEL'),
+				className: 'ui-btn ui-btn-link',
+				events: {
+					click: function (e)
+					{
+						BX.PopupWindowManager.getCurrentPopup().destroy();
+					}
+				}
+			})
+		];
+
+		BX.Disk.modalWindow({
+			modalId: 'bx-link-unlink-confirm',
+			title: BX.message('DISK_TRASHCAN_TRASH_RESTORE_TITLE'),
+			contentClassName: 'tac',
+			contentStyle: {
+				paddingTop: '70px',
+				paddingBottom: '70px'
+			},
+			content: messageDescription.replace('#NAME#', name),
+			buttons: buttons
+		});
 	};
 
 	FolderListClass.prototype.openConfirmRestore = function (parameters)
@@ -5045,15 +5094,17 @@ BX.Disk.FolderListClass = (function (){
 		getActionById: function (id, menuItemId)
 		{
 			var item = this.getItemById(id);
-			if (item)
+			if (!item)
 			{
-				var actions = item.getActions();
-				for (var i = 0; i < actions.length; i++)
+				return null;
+			}
+
+			var actions = item.getActions() || [];
+			for (var i = 0; i < actions.length; i++)
+			{
+				if (actions[i].id && actions[i].id === menuItemId)
 				{
-					if (actions[i].id && actions[i].id === menuItemId)
-					{
-						return actions[i];
-					}
+					return actions[i];
 				}
 			}
 

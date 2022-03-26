@@ -11,6 +11,20 @@ use Bitrix\Crm\WebForm;
  */
 class Form extends Main\Engine\JsonController
 {
+
+	private const EMBED_DEFAULT_WIDGETS_DISPLAY_COUNT = 10;
+	private const EMBED_DEFAULT_OPENLINES_DISPLAY_COUNT = 10;
+
+	private const ERROR_CODE_FORM_READ_ACCESS_DENIED = 1;
+	private const ERROR_CODE_FORM_WRITE_ACCESS_DENIED = 2;
+	private const ERROR_CODE_WIDGET_READ_ACCESS_DENIED = 3;
+	private const ERROR_CODE_WIDGET_WRITE_ACCESS_DENIED = 4;
+	private const ERROR_CODE_OPENLINES_READ_ACCESS_DENIED = 5;
+	private const ERROR_CODE_OPENLINES_WRITE_ACCESS_DENIED = 6;
+
+	// check for modify permission if set to false
+	private const EMBED_OPENLINES_SHOW_ALL = true;
+
 	/**
 	 * List forms action.
 	 *
@@ -19,7 +33,10 @@ class Form extends Main\Engine\JsonController
 	 */
 	public function listAction($filter = ['active' => true])
 	{
-		$this->checkFormAccess();
+		if (!$this->checkFormAccess())
+		{
+			return [];
+		}
 
 		$ormFilter = [];
 		if (isset($filter['active']))
@@ -48,8 +65,107 @@ class Form extends Main\Engine\JsonController
 	 */
 	public function getAction($id)
 	{
-		$this->checkFormAccess();
+		if (!$this->checkFormAccess())
+		{
+			return [];
+		}
+
 		return WebForm\Options::create($id)->getArray();
+	}
+
+	/**
+	 * Delete form action.
+	 *
+	 * @param int $id Form ID.
+	 *
+	 * @return bool
+	 */
+	public function deleteAction($id)
+	{
+		if (!$this->checkFormAccess(true))
+		{
+			$this->addError((new Main\Error('Access denied.', self::ERROR_CODE_FORM_WRITE_ACCESS_DENIED)));
+			return false;
+		}
+
+		return WebForm\Form::delete($id);
+	}
+
+	/**
+	 * Reset all the statistic counters in counters column.
+	 *
+	 * @param $formId
+	 *
+	 * @return bool
+	 * @throws Main\AccessDeniedException
+	 */
+	public function resetCountersAction($id)
+	{
+		if (!$this->checkFormAccess(true))
+		{
+			$this->addError((new Main\Error('Access denied.', self::ERROR_CODE_FORM_WRITE_ACCESS_DENIED)));
+			return false;
+		}
+		// TODO: merge all counters
+		return WebForm\Form::resetCounters($id);
+	}
+
+	/**
+	 * Copy form action.
+	 *
+	 * @param int $id Form ID.
+	 *
+	 * @return bool
+	 */
+	public function copyAction($id)
+	{
+		if (!$this->checkFormAccess(true))
+		{
+			$this->addError((new Main\Error('Access denied.', self::ERROR_CODE_FORM_WRITE_ACCESS_DENIED)));
+			return false;
+		}
+
+		return WebForm\Form::copy($id, Main\Engine\CurrentUser::get()->getId());
+	}
+
+	/**
+	 * Activate form action.
+	 *
+	 * @param int $id Form ID.
+	 * @param bool $mode Mode.
+	 *
+	 * @return bool
+	 */
+	public function activateAction($id, $mode)
+	{
+		if (!$this->checkFormAccess(true))
+		{
+			$this->addError((new Main\Error('Access denied.', self::ERROR_CODE_FORM_WRITE_ACCESS_DENIED)));
+			return false;
+		}
+
+		return WebForm\Form::activate($id, $mode, Main\Engine\CurrentUser::get()->getId());
+	}
+
+	/**
+	 * Activate list of forms action.
+	 *
+	 * @param array $list ID list.
+	 * @param bool $mode Mode.
+	 *
+	 * @return void
+	 */
+	public function activateListAction(array $list, $mode = true)
+	{
+		if (!$this->checkFormAccess(true))
+		{
+			$this->addError((new Main\Error('Access denied.', self::ERROR_CODE_FORM_WRITE_ACCESS_DENIED)));
+			return;
+		}
+		foreach ($list as $id)
+		{
+			WebForm\Form::activate($id, $mode, Main\Engine\CurrentUser::get()->getId());
+		}
 	}
 
 	/**
@@ -59,8 +175,271 @@ class Form extends Main\Engine\JsonController
 	 */
 	public function getDictAction()
 	{
-		$this->checkFormAccess();
-		return WebForm\Options\Dictionary::instance()->toArray();
+		if (!$this->checkFormAccess())
+		{
+			return [];
+		}
+
+		return WebForm\Options\Dictionary::instance()->toArray() + [
+			'permissions' => [
+				'userField' => [
+					'add' => Crm\Service\Container::getInstance()->getUserPermissions()->canWriteConfig(),
+				],
+				'form' => [
+					'edit' => $this->getFormAccess(true),
+				],
+			],
+		];
+	}
+
+	/**
+	 * @param int $formId
+	 * @return array
+	 * @throws Main\AccessDeniedException
+	 */
+	public function getEmbedAction($formId)
+	{
+		if (!$this->getFormAccess())
+		{
+			$this->addError(new Main\Error('Access denied.', self::ERROR_CODE_FORM_READ_ACCESS_DENIED));
+			return ['error' => ['status' => 'access denied', 'code' => self::ERROR_CODE_FORM_READ_ACCESS_DENIED]];
+		}
+
+		$form = new WebForm\Form($formId);
+		$formData = $form->get();
+
+		$views = $formData['FORM_SETTINGS']['VIEWS'];
+		$dict = $this->getDictForEmbed();
+		$viewOptions = $this->buildViewOptions($this->getAvailableViewOptions(), $dict);
+		$scripts = WebForm\Script::getListContext($formData, []); // embed codes
+		$pubLink = WebForm\Script::getUrlContext($formData); // public form link
+
+		return [
+			'dict' => [
+				'viewOptions' => $dict,
+			],
+			'embed' => [
+				'scripts' => array_change_key_case($scripts, CASE_LOWER),
+				'pubLink' => $pubLink,
+				'viewValues' => array_change_key_case($views, CASE_LOWER),
+				'viewOptions' => array_change_key_case($viewOptions, CASE_LOWER),
+			],
+		];
+	}
+
+	public function setViewOptionAction(int $formId, string $type, string $key, $value)
+	{
+		if (!$this->getFormAccess(true))
+		{
+			$this->addError(new Main\Error('Access denied.', self::ERROR_CODE_FORM_WRITE_ACCESS_DENIED));
+			return ['error' => ['status' => 'access denied', 'code' => self::ERROR_CODE_FORM_WRITE_ACCESS_DENIED]];
+		}
+
+		$rules = $this->getAvailableViewOptions();
+		if (!in_array($key, $rules[$type], true))
+		{
+			$this->addError(new Main\Error('bad key/value'));
+			return [];
+		}
+		$value = filter_var($value, FILTER_SANITIZE_STRING);
+
+		$options = WebForm\Options::create($formId);
+		$data = $options->getArray();
+		$data['embedding']['views'][$type][$key] = $value;
+		$options->merge($data);
+		$result = $options->save();
+		$this->addErrors($result->getErrors());
+
+		$form = new WebForm\Form($formId);
+		$form->buildScript();
+
+		return [
+			'formId' => $formId,
+			'type' => $type,
+			'key' => $key,
+			'value' => $value,
+		];
+	}
+
+	/**
+	 * @param int $formId
+	 * @return array
+	 * @throws Main\AccessDeniedException
+	 */
+	public function getWidgetsForEmbedAction(int $formId, int $count = self::EMBED_DEFAULT_WIDGETS_DISPLAY_COUNT)
+	{
+		if (!$this->getFormAccess())
+		{
+			$this->addError(new Main\Error('Access denied.', self::ERROR_CODE_FORM_READ_ACCESS_DENIED));
+			return ['error' => ['status' => 'access denied', 'code' => self::ERROR_CODE_FORM_READ_ACCESS_DENIED]];
+		}
+
+		if (!$this->getSiteButtonAccess())
+		{
+			$this->addError(new Main\Error('Access denied.', self::ERROR_CODE_WIDGET_READ_ACCESS_DENIED));
+			return ['error' => ['status' => 'access denied', 'code' => self::ERROR_CODE_WIDGET_READ_ACCESS_DENIED]];
+		}
+
+		$form = new WebForm\Form($formId);
+		$formType = self::getFormType($form);
+
+		$widgets = $this->loadWidgetsDataForEmbed($formId, $count + 1, $formType); // +1 to check for additional widgets
+
+		$showMoreLink = false;
+		if (count($widgets) > $count)
+		{
+			$showMoreLink = true;
+			array_pop($widgets); // +1 to check for additional widgets
+		}
+
+		return [
+			'widgets' => $widgets,
+			'url' => [
+				'allWidgets' => \CCrmUrlUtil::ToAbsoluteUrl(Crm\SiteButton\Manager::getUrl()),
+			],
+			'showMoreLink' => $showMoreLink,
+			'formName' => $form->getName(),
+			'formType' => $formType,
+		];
+	}
+
+	public function assignWidgetToFormAction(int $formId, int $buttonId, string $assigned)
+	{
+		if (!$this->getFormAccess(true))
+		{
+			$this->addError(new Main\Error('Access denied.', self::ERROR_CODE_FORM_WRITE_ACCESS_DENIED));
+			return ['error' => ['status' => 'access denied', 'code' => self::ERROR_CODE_FORM_WRITE_ACCESS_DENIED]];
+		}
+
+		if (!$this->getSiteButtonAccess(true))
+		{
+			$this->addError(new Main\Error('Access denied.', self::ERROR_CODE_WIDGET_WRITE_ACCESS_DENIED));
+			return ['error' => ['status' => 'access denied', 'code' => self::ERROR_CODE_WIDGET_WRITE_ACCESS_DENIED]];
+		}
+
+		$isAssigned = $assigned === 'Y';
+
+		$form = new WebForm\Form($formId);
+		$formType = self::getFormType($form);
+
+		$button = new Crm\SiteButton\Button($buttonId);
+		if ($isAssigned)
+		{
+			$result = $button->setToForm($formId, $formType, true, true);
+		}
+		else
+		{
+			$result = $button->unsetFromForm($formId, $formType, true);
+		}
+
+		if (! $result)
+		{
+			$this->addError(new Main\Error('CRM_FORM_ASSIGN_GENERAL_ERROR'));
+		}
+
+		Crm\SiteButton\Manager::updateScriptCache($buttonId);
+
+		return [
+			'assigned' => $isAssigned,
+			'formId' => $formId,
+			'formName' => $form->getName(),
+			'formType' => $formType,
+			'buttonId' => $buttonId,
+		];
+	}
+
+	public function getOpenlinesForEmbedAction(int $formId, int $count = self::EMBED_DEFAULT_OPENLINES_DISPLAY_COUNT)
+	{
+		if (!$this->getFormAccess())
+		{
+			$this->addError(new Main\Error('Access denied.', self::ERROR_CODE_FORM_READ_ACCESS_DENIED));
+			return ['error' => ['status' => 'access denied', 'code' => self::ERROR_CODE_FORM_READ_ACCESS_DENIED]];
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('imopenlines'))
+		{
+			$this->addError(new Main\Error('Module openlines not installed.', self::ERROR_CODE_OPENLINES_READ_ACCESS_DENIED));
+			return ['error' => ['status' => 'access denied', 'code' => self::ERROR_CODE_OPENLINES_READ_ACCESS_DENIED]];
+		}
+
+		$config = new \Bitrix\Imopenlines\Config();
+
+		$requestOptions = self::EMBED_OPENLINES_SHOW_ALL
+			? []
+			: ['CHECK_PERMISSION' => \Bitrix\ImOpenlines\Security\Permissions::ACTION_MODIFY]
+		;
+		$openlines = $config->getList(
+			[
+				'select' => ['ID', 'LINE_NAME', 'USE_WELCOME_FORM', 'WELCOME_FORM_ID', 'WELCOME_FORM_DELAY'],
+				'filter' => ['=ACTIVE' => 'Y', '=TEMPORARY' => 'N'],
+				'limit' => $count + 1, // +1 to check for additional lines
+			],
+			$requestOptions
+		);
+
+		$form = new WebForm\Form($formId);
+
+		$showMoreLink = false;
+		if (count($openlines) > $count)
+		{
+			$showMoreLink = true;
+			array_pop($openlines); // +1 to check for additional lines
+		}
+
+		$openlines = $this->prepareOpenlinesDataForEmbed($formId, $openlines);
+
+		$openlinesUrl = \Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24')
+			? '/contact_center/openlines'
+			: '/services/contact_center/openlines';
+
+		return [
+			'formName' => $form->getName(),
+			'lines' => $openlines,
+			'url' => [
+				'allLines' => \CCrmUrlUtil::ToAbsoluteUrl($openlinesUrl),
+			],
+			'showMoreLink' => $showMoreLink,
+		];
+	}
+
+	public function assignOpenlinesToFormAction(int $formId, int $lineId, string $assigned, string $afterMessage = 'N')
+	{
+		if (!$this->getFormAccess(true))
+		{
+			$this->addError(new Main\Error('Access denied.', self::ERROR_CODE_FORM_WRITE_ACCESS_DENIED));
+			return ['error' => ['status' => 'access denied', 'code' => self::ERROR_CODE_FORM_WRITE_ACCESS_DENIED]];
+		}
+
+		if (!$this->getOpenlineModifyAccess($lineId))
+		{
+			$this->addError(new Main\Error('Access denied.', self::ERROR_CODE_OPENLINES_WRITE_ACCESS_DENIED, ['lineId' => $lineId]));
+			return ['error' => ['status' => 'access denied', 'code' => self::ERROR_CODE_OPENLINES_WRITE_ACCESS_DENIED, 'lineId' => $lineId]];
+		}
+
+		$isAssigned = $assigned === 'Y';
+		$isAfter = $afterMessage === 'Y';
+
+		$config = new \Bitrix\Imopenlines\Config();
+
+		$updateResult = $config->update($lineId, [
+			"USE_WELCOME_FORM" => $isAssigned ? 'Y' : 'N',
+			"WELCOME_FORM_ID" => $formId,
+			"WELCOME_FORM_DELAY" => $isAfter ? 'Y' : 'N', // 'Y' - after first message, 'N' - before
+		]);
+
+		$form = new WebForm\Form($formId);
+
+		if (! $updateResult->isSuccess())
+		{
+			$this->addErrors($updateResult->getErrors());
+		}
+
+		return [
+			'assigned' => $isAssigned,
+			'formId' => $formId,
+			'formName' => $form->getName(),
+			'lineId' => $lineId,
+		];
 	}
 
 	/**
@@ -71,7 +450,10 @@ class Form extends Main\Engine\JsonController
 	 */
 	public function saveAction(array $options)
 	{
-		$this->checkFormAccess(true);
+		if (!$this->checkFormAccess(true))
+		{
+			return [];
+		}
 
 		$formOptions = WebForm\Options::createFromArray($options);
 		(new WebForm\FieldSynchronizer())->replaceOptionFields($formOptions);
@@ -94,7 +476,46 @@ class Form extends Main\Engine\JsonController
 	 */
 	public function prepareAction(array $options, array $preparing)
 	{
-		$this->checkFormAccess(true);
+		if (!$this->checkFormAccess())
+		{
+			return [];
+		}
+
+		if (!empty($preparing['templateId']))
+		{
+			$preparing = Main\DI\ServiceLocator::getInstance()
+				->get('crm.service.webform.scenario')
+				->prepareForm($preparing['templateId'], $options)
+			;
+		}
+
+		if (!empty($preparing['integration']))
+		{
+			$preparing['fields'] = [];
+			$fieldList = [];
+			$cases = $preparing['integration']['cases'] ?? [];
+			foreach ($cases as $case)
+			{
+				foreach (($case['fieldsMapping'] ?? []) as $field)
+				{
+					if (!$field['crmFieldKey'])
+					{
+						continue;
+					}
+
+					$fieldList[] = $field['crmFieldKey'];
+				}
+			}
+
+			$preparing['fields'] = array_map(
+				function ($name)
+				{
+					return ['name' => $name];
+				},
+				array_unique($fieldList)
+			);
+			$options['data']['fields'] = [];
+		}
 
 		if (!empty($preparing['fields']) && is_array($preparing['fields']))
 		{
@@ -106,18 +527,24 @@ class Form extends Main\Engine\JsonController
 					continue;
 				}
 
-				$fieldNames[] = $field['name'];
+				$fieldNames[$field['name']] = $field;
 			}
 
 			if (!empty($options['data']['fields']))
 			{
-				$options['data']['fields'] = array_filter(
-					$options['data']['fields'],
-					function ($field) use ($fieldNames)
+				$fields = array_map(
+					static function ($field) use ($fieldNames) : ?array
 					{
-						return in_array($field['name'], $fieldNames);
-					}
+						if (!$fieldNew = $fieldNames[$field['name']])
+						{
+							return null;
+						}
+
+						return array_replace_recursive($field, $fieldNew);
+					},
+					$options['data']['fields'],
 				);
+				$options['data']['fields'] = array_filter($fields);
 			}
 		}
 
@@ -179,7 +606,7 @@ class Form extends Main\Engine\JsonController
 					continue;
 				}
 
-				if (!empty($field['name']) && in_array($field['name'], $fieldNames))
+				if (!empty($field['name']) && in_array($field['name'], $fieldNames) && !$field['inPreparing'])
 				{
 					continue;
 				}
@@ -187,6 +614,7 @@ class Form extends Main\Engine\JsonController
 				if (!empty($field['name']) || !empty($field['type']))
 				{
 					//if (in_array($field['type'], ['br', 'hr', '']))
+					$field['inPreparing'] = false;
 					$formOptions->getConfig()->appendField($field);
 				}
 			}
@@ -206,8 +634,18 @@ class Form extends Main\Engine\JsonController
 	 */
 	public function checkAction(array $options)
 	{
-		$this->checkFormAccess(true);
+		if (!$this->checkFormAccess())
+		{
+			return [];
+		}
 
+		if ($options['templateId'] && !$options['id'])
+		{
+			return Main\DI\ServiceLocator::getInstance()
+				->get('crm.service.webform.scenario')
+				->check($options['templateId'])
+			;
+		}
 
 		$schemeId = (int) $options['document']['scheme'] ?? null;
 		if (!$schemeId || empty($options['data']['fields']) || !is_array($options['data']['fields']))
@@ -282,16 +720,302 @@ class Form extends Main\Engine\JsonController
 	 */
 	public function setEditorAction($editorId)
 	{
-		$this->checkFormAccess();
+		if (!$this->checkFormAccess(true))
+		{
+			return;
+		}
+
 		Crm\Settings\WebFormSettings::getCurrent()->setEditorId($editorId);
+	}
+
+	/**
+	 * Get captcha action.
+	 *
+	 * @return array
+	 * @throws Main\AccessDeniedException
+	 */
+	public function getCaptchaAction(): array
+	{
+		if (!$this->checkFormAccess())
+		{
+			return [];
+		}
+
+		return [
+			'key' => WebForm\ReCaptcha::getKey(2),
+			'secret' => WebForm\ReCaptcha::getSecret(2),
+			'canChange' => $this->getFormAccess(true),
+			'hasDefaults' => WebForm\ReCaptcha::getDefaultKey(2) && WebForm\ReCaptcha::getDefaultSecret(2),
+		];
+	}
+
+	/**
+	 * Set captcha action.
+	 *
+	 * @param string $key Key.
+	 * @param string $secret Secret.
+	 * @return array
+	 * @throws Main\AccessDeniedException
+	 */
+	public function setCaptchaAction(string $key, string $secret): array
+	{
+		if (!$this->checkFormAccess(true))
+		{
+			return [];
+		}
+
+		if (!$key || !$secret)
+		{
+			$key = '';
+			$secret = '';
+		}
+
+		$oldKey = WebForm\ReCaptcha::getKey(2);
+		$oldSecret = WebForm\ReCaptcha::getSecret(2);
+
+		WebForm\ReCaptcha::setKey($key, $secret, 2);
+		if ($key !== $oldKey || $secret !== $oldSecret)
+		{
+			$app = Crm\UI\Webpack\Form\App::instance();
+			if ($app->build())
+			{
+				Crm\UI\Webpack\Form::addCheckResourcesAgent();
+			}
+		}
+
+		return $this->getCaptchaAction();
 	}
 
 	protected function checkFormAccess($write = false)
 	{
-		$access = new \CCrmPerms($this->getCurrentUser()->getId());
-		if($access->havePerm('WEBFORM', BX_CRM_PERM_NONE, $write ? 'WRITE' : 'READ'))
+		if(!$this->getFormAccess($write))
+		{
+			$this->addError(new Main\Error('Access denied.', 510));
+			return false;
+		}
+
+		return true;
+	}
+
+	protected function checkSiteButtonAccess($write = false)
+	{
+		if(!$this->getSiteButtonAccess($write))
 		{
 			throw new Main\AccessDeniedException();
 		}
+	}
+
+	protected function getFormAccess($write = false): bool
+	{
+		return $write
+			? WebForm\Manager::checkWritePermission()
+			: WebForm\Manager::checkReadPermission()
+		;
+	}
+
+	protected function getSiteButtonAccess($write = false): bool
+	{
+		return $write
+			? Crm\SiteButton\Manager::checkWritePermission()
+			: Crm\SiteButton\Manager::checkReadPermission()
+		;
+	}
+
+	protected function getOpenlineModifyAccess(int $lineId)
+	{
+		if (\Bitrix\Main\Loader::includeModule('imopenlines'))
+		{
+			return \Bitrix\Imopenlines\Config::canEditLine($lineId);
+		}
+
+		return false;
+	}
+
+	private function getFormNames(array $formIds): array
+	{
+		$formIds = array_unique($formIds);
+		$result = WebForm\Internals\FormTable::getList([
+			'select' => ['ID', 'NAME'],
+			'filter' => [
+				'=ID' => $formIds,
+			],
+		]);
+		$rows = $result->fetchAll();
+		$formNames = [];
+		foreach ($rows as $row)
+		{
+			$formNames[$row['ID']] = $row['NAME'];
+		}
+		return $formNames;
+	}
+
+	private function loadWidgetsDataForEmbed(int $formId, int $count, string $formType): array
+	{
+		$result = $otherWidgets = [];
+		$widgets = \Bitrix\Crm\SiteButton\Internals\ButtonTable::getList(['filter' => ['=ACTIVE' => 'Y']]);
+
+		if (!$widgets) {
+			return [];
+		}
+
+		$counted = 0;
+		foreach ($widgets as $data)
+		{
+			$button = new Crm\SiteButton\Button();
+			$button->loadByData($data);
+			$buttonId = $button->getId();
+			$formIds = $button->getWebFormIdList();
+
+			if (in_array($formId, $formIds, true))
+			{ // collect related widgets
+				$result[$buttonId] = $this->constructEmbedWidgetsDataSet($buttonId, $button, $formType, true);
+				$counted++;
+			}
+			else
+			{ // collect all other widgets
+				$otherWidgets[$buttonId] = $this->constructEmbedWidgetsDataSet($buttonId, $button, $formType, false);
+			}
+
+			if ($counted === $count)
+			{
+				break;
+			}
+		}
+
+		// merge some more widgets
+		$resultCount = count($result);
+		if ($resultCount < $count)
+		{
+			$needMore = $count - $resultCount;
+			$moreWidgets = array_slice($otherWidgets, 0, $needMore);
+			array_push($result, ...$moreWidgets);
+		}
+
+		// fetch all related form names
+		$allRelatedFormIds = [];
+		foreach ($result as $data)
+		{
+			$allRelatedFormIds[] = $data['relatedFormIds'];
+		}
+		$allRelatedFormIds = array_merge([], ...$allRelatedFormIds);
+		$formNames = $this->getFormNames($allRelatedFormIds);
+		foreach ($result as $btnId => $btnData)
+		{
+			foreach ($btnData['relatedFormIds'] as $frmId)
+			{
+				$result[$btnId]['relatedFormNames'][$frmId] = $formNames[$frmId] ?? 'form #' . $frmId;
+			}
+		}
+
+		return $result;
+	}
+
+	private function constructEmbedWidgetsDataSet(int $buttonId, Crm\SiteButton\Button $button, string $formType, bool $checked)
+	{
+		$relatedIds = $button->getWebFormIdList($formType);
+		return [
+			'id' => $buttonId,
+			'name' => $button->getName(),
+			'checked' => $checked,
+			'relatedFormIds' => $relatedIds,
+			'relatedFormNames' => [],
+		];
+	}
+
+	private static function getFormType(WebForm\Form $form): string
+	{
+		if ($form->isWhatsApp())
+		{
+			return Crm\SiteButton\Manager::ENUM_TYPE_WHATSAPP;
+		}
+
+		// The whatsapp form is also a callback form, the order is important
+		if ($form->isCallback())
+		{
+			return Crm\SiteButton\Manager::ENUM_TYPE_CALLBACK;
+		}
+
+		return Crm\SiteButton\Manager::ENUM_TYPE_CRM_FORM;
+	}
+
+	private function buildViewOptions(array $rules, array $dict): array
+	{
+		$result = [];
+		foreach ($rules as $typeName => $typeData)
+		{
+			foreach ($typeData as $option)
+			{
+				$dictValues = $dict[$option . 's'] ?? [];
+				foreach ($dictValues as $value)
+				{
+					$result[$typeName][$option][] = $value['id'];
+				}
+			}
+		}
+		return $result;
+	}
+
+	/**
+	 * Form embed option rules
+	 *
+	 * @return array
+	 */
+	private function getAvailableViewOptions(): array
+	{
+		return [
+			'inline' => [],
+			'click' => ['type', 'position', 'vertical'],
+			'auto' => ['type', 'position', 'vertical', 'delay'],
+		];
+	}
+
+	/**
+	 * Dict for embed options
+	 *
+	 * @return array
+	 */
+	private function getDictForEmbed(): array
+	{
+		$dict = WebForm\Options\Dictionary::instance()->getViews();
+
+		// add delay options in seconds from 3 to 120
+		if (! isset($dict['delays']))
+		{
+			$secondsLoc = Main\Localization\Loc::getMessage('CRM_WEBFORM_SCRIPT_SEC');
+			$dict['delays'] = array_map(
+				static function ($val) use ($secondsLoc) {
+					return ['id' => (string)$val, 'name' => $val.' '.$secondsLoc];
+				},
+				[3,5,7,10,15,20,25,30,40,60,120]
+			);
+		}
+
+		return $dict;
+	}
+
+	private function prepareOpenlinesDataForEmbed(int $formId, array $data): array
+	{
+		$newData = [];
+		$relatedFormIds = array_column($data, 'WELCOME_FORM_ID');
+		$relatedFormIds = array_filter($relatedFormIds);
+		$formNames = $this->getFormNames($relatedFormIds);
+
+		foreach ($data as $row)
+		{
+			$relatedFormId = is_numeric($row['WELCOME_FORM_ID']) ? (int)$row['WELCOME_FORM_ID'] : null;
+			$formName = ($relatedFormId && isset($formNames[$relatedFormId])) ? $formNames[$relatedFormId] : '';
+			$formEnabled = $row['USE_WELCOME_FORM'] === 'Y';
+			$newData[(int)$row['ID']] = [
+				'checked' => $formEnabled && $formId === $relatedFormId,
+				'id' => (int)$row['ID'],
+				'name' => htmlspecialcharsbx($row['LINE_NAME']),
+				'formEnabled' => $formEnabled,
+				'formId' => $relatedFormId,
+				'formName' => $formName,
+				'formDelay' => $row['WELCOME_FORM_DELAY'] === 'Y',
+			];
+		}
+
+		return $newData;
 	}
 }

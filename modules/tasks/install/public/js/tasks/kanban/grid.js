@@ -20,6 +20,7 @@ BX.Tasks.Kanban.Grid = function(options)
 
 	this.gridHeader = Boolean(options.gridHeader);
 	this.parentTaskId = parseInt(options.parentTaskId, 10);
+	this.parentTaskName = options.parentTaskName;
 	this.parentTaskCompleted = Boolean(options.parentTaskCompleted);
 
 	this.neighborGrids = [];
@@ -39,7 +40,6 @@ BX.Tasks.Kanban.Grid = function(options)
 
 	BX.addCustomEvent("BX.Main.Filter:apply", BX.delegate(this.onApplyFilter, this));
 	BX.addCustomEvent("onTaskTimerChange", BX.delegate(this.onTaskTimerChange, this));
-	BX.addCustomEvent("onTasksGroupSelectorChange", BX.delegate(this.onTasksGroupSelectorChange, this));
 	BX.addCustomEvent("onTaskSortChanged", BX.delegate(this.onTaskSortChanged, this));
 	BX.addCustomEvent("onPullEvent-im", BX.delegate(this.tasksTaskPull, this));
 	BX.addCustomEvent("onPullEvent-tasks", BX.delegate(this.tasksTaskPull, this));
@@ -657,6 +657,37 @@ BX.Tasks.Kanban.Grid.prototype = {
 					{
 						this.removeItem(item);
 					}
+
+					if (this.isChildScrumGrid())
+					{
+						var actionToCheck = (this.getFinishColumn().getId() === targetColumnId)
+							? 'complete'
+							: 'renew'
+						;
+
+						if (
+							this.isParentTaskCompleted() && actionToCheck === 'renew'
+							|| !this.isParentTaskCompleted() && actionToCheck === 'complete'
+						)
+						{
+							this.ajax({
+								action: 'needUpdateParentTaskStatus',
+								parentTaskId: this.parentTaskId,
+								actionToCheck: actionToCheck
+							}, function(response) {
+								if (!response.error && response.can)
+								{
+									this.updateParentTaskStatus(item, actionToCheck);
+								}
+								else if (response.error)
+								{
+									BX.Kanban.Utils.showErrorDialog(response.error, true);
+								}
+							}.bind(this), function(error) {
+								BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
+							}.bind(this));
+						}
+					}
 				}
 				else if (data)
 				{
@@ -668,6 +699,60 @@ BX.Tasks.Kanban.Grid.prototype = {
 				BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
 			}.bind(this)
 		);
+	},
+
+	updateParentTaskStatus: function(item, actionToUpdate)
+	{
+		var isCompleteAction = actionToUpdate === 'complete';
+		var parentTaskName = BX.util.htmlspecialchars(this.parentTaskName);
+
+		(new BX.UI.Dialogs.MessageBox({
+			message: isCompleteAction
+				? BX.message('TASKS_SCRUM_KANBAN_PARENT_COMPLETE_MESSAGE').replace(/#name#/g, parentTaskName)
+				: BX.message('TASKS_SCRUM_KANBAN_PARENT_RENEW_MESSAGE')
+					.replace("#name#", parentTaskName)
+					.replace("#sub-name#", BX.util.htmlspecialchars(item.data.name))
+			,
+			buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,
+			okCaption: isCompleteAction
+				? BX.message('TASKS_SCRUM_KANBAN_PARENT_COMPLETE_OK_CAPTION')
+				: BX.message('TASKS_SCRUM_KANBAN_PARENT_RENEW_OK_CAPTION')
+			,
+			cancelCaption: isCompleteAction
+				? BX.message('TASKS_SCRUM_KANBAN_PARENT_COMPLETE_CANCEL_CAPTION')
+				: BX.message('TASKS_SCRUM_KANBAN_PARENT_RENEW_CANCEL_CAPTION')
+			,
+			minWidth: 300,
+			onOk: function (messageBox) {
+				messageBox.close();
+				this.ajax({
+					action: (isCompleteAction ? 'completeParentTask' : 'renewParentTask'),
+					taskId: this.parentTaskId,
+					finishColumnId: this.getFinishColumn().getId(),
+					newColumnId: this.getNewColumn().getId()
+				}, function(data) {
+					if (data && !data.error)
+					{
+						if (isCompleteAction)
+						{
+							this.parentTaskCompleted = true;
+							BX.onCustomEvent(this, 'Kanban.Grid:onCompleteParentTask', [this]);
+						}
+						else
+						{
+							this.parentTaskCompleted = false;
+							BX.onCustomEvent(this, 'Kanban.Grid:onRenewParentTask', [this]);
+						}
+					}
+					else if (data)
+					{
+						BX.Kanban.Utils.showErrorDialog(data.error, true);
+					}
+				}.bind(this), function(error) {
+					BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
+				}.bind(this));
+			}.bind(this),
+		})).show();
 	},
 
 	/**
@@ -696,20 +781,6 @@ BX.Tasks.Kanban.Grid.prototype = {
 	isParentTaskCompleted: function()
 	{
 		return this.parentTaskCompleted;
-	},
-
-	isAllChildTasksCompleted: function()
-	{
-		var isAllTasksCompleted = true;
-
-		Object.keys(this.getItems()).forEach(function (itemId) {
-			if (!this.getItems()[itemId].getColumn().isFinishType())
-			{
-				isAllTasksCompleted = false;
-			}
-		}. bind(this));
-
-		return isAllTasksCompleted;
 	},
 
 	/**
@@ -864,56 +935,6 @@ BX.Tasks.Kanban.Grid.prototype = {
 				task.render();
 			}
 		}
-	},
-
-	/**
-	 * Hook on group selector.
-	 * @param {Object} currentGroup
-	 * @returns {void}
-	 */
-	onTasksGroupSelectorChange: function(currentGroup)
-	{
-		// replace groupId var
-		var gridData = this.getData();
-		gridData.params.GROUP_ID = currentGroup.id;
-		if (currentGroup.sprintId)
-		{
-			gridData.params.SPRINT_ID = currentGroup.sprintId;
-		}
-		this.setData(gridData);
-		// remove all columns
-		var columns = this.getColumns();
-		for (var i = 0, c = columns.length; i < c; i++)
-		{
-			this.removeColumn(columns[i]);
-		}
-		// and make query
-		this.ajax({
-				action: "changeGroup"
-			},
-			function(data)
-			{
-				// refill some settings
-				gridData.admins = data.admins;
-				gridData.newTaskOrder = data.newTaskOrder;
-				gridData.rights.canAddColumn = data.canAddColumn;
-				gridData.rights.canEditColumn = data.canEditColumn;
-				gridData.rights.canRemoveColumn = data.canRemoveColumn;
-				gridData.rights.canAddItem = data.canAddItem;
-				gridData.rights.canSortItem = data.canSortItem;
-				this.setData(gridData);
-				// for demo
-				data.canAddColumn = true;
-				data.canEditColumn = true;
-				// reload
-				this.removeItems();
-				this.loadData(data);
-			}.bind(this),
-			function(error)
-			{
-				BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
-			}.bind(this)
-		);
 	},
 
 	/**
@@ -1568,6 +1589,20 @@ BX.Tasks.Kanban.Grid.prototype = {
 	isChildTask: function(taskData)
 	{
 		return (taskData['PARENT_ID'] === this.parentTaskId);
+	},
+
+	updateTotals: function()
+	{
+		this.getColumns().forEach(function(column) {
+			var total = 0;
+			this.getNeighborGrids()
+				.forEach(function(neighborGrid) {
+					total += neighborGrid.getColumn(column.getId()).getTotal();
+				})
+			;
+			column.setTotal(total);
+			column.render();
+		}.bind(this));
 	},
 
 	getColumnsWidth: function()

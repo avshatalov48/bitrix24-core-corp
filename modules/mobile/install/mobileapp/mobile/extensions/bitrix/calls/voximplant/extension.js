@@ -75,9 +75,9 @@
 			this.muted = params.muted === true;
 
 			this.logToken = params.logToken || "";
-			if (CallEngine.getLogService() && this.logToken)
+			if (callEngine.getLogService() && this.logToken)
 			{
-				this.logger = new CallLogger(CallEngine.getLogService(), this.logToken);
+				this.logger = new CallLogger(callEngine.getLogService(), this.logToken);
 			}
 
 			this.voximplantCall = null;
@@ -137,7 +137,7 @@
 		log()
 		{
 			let text = CallUtil.getLogMessage.apply(CallUtil, arguments);
-			if (console && CallEngine.debugFlag)
+			if (console && callEngine.debugFlag)
 			{
 				let a = ["Call log [" + CallUtil.getTimeForLog() + "]: "];
 				console.log.apply(this, a.concat(Array.prototype.slice.call(arguments)));
@@ -567,7 +567,7 @@
 					this.voximplantCall.hangup();
 				} catch (e)
 				{
-					console.error(e);
+					CallUtil.error(e);
 				}
 			}
 
@@ -582,13 +582,13 @@
 					return resolve();
 				}
 
-				VoximplantCall.getClient().then((client) =>
+				VIClientWrapper.getClient().then((client) =>
 				{
 					//client.printLogs = true;
 					client.on(VIClient.Events.LogMessage, this.__onSDKLogMessageHandler);
 					try
 					{
-						if (typeof(JNVICameraManager.setResolutionConstraints) === 'function')
+						if (typeof (JNVICameraManager.setResolutionConstraints) === 'function')
 						{
 							//JNVICameraManager.setResolutionConstraints(1280, 720);
 							JNVICameraManager.setResolutionConstraints(960, 540); //force 16:9 aspect ratio
@@ -600,7 +600,7 @@
 						);
 					} catch (e)
 					{
-						console.error(e);
+						CallUtil.error(e);
 						return reject(e);
 					}
 
@@ -644,7 +644,7 @@
 					let onCallFailed = (call, error) =>
 					{
 						this.log("Could not attach to conference", error);
-						console.trace("Could not attach to conference", error);
+						CallUtil.error("Could not attach to conference", error);
 						this.voximplantCall.off(JNVICall.Events.Connected, onCallConnected);
 						this.voximplantCall.off(JNVICall.Events.Failed, onCallFailed);
 						reject(error);
@@ -760,6 +760,7 @@
 			}
 			return result;
 		};
+
 		__onPeerStateChanged(e)
 		{
 			this.eventEmitter.emit(BX.Call.Event.onUserStateChanged, [
@@ -876,7 +877,7 @@
 			else if (params.code == 486)
 			{
 				this.peers[senderId].setBusy(true);
-				console.error("user " + senderId + " is busy");
+				CallUtil.error("user " + senderId + " is busy");
 			}
 
 			if (this.ready && this.type == BX.Call.Type.Instant && !this.isAnyoneParticipating())
@@ -1017,7 +1018,7 @@
 			{
 				delete error.call;
 			}
-			console.error("onFatalError", error);
+			CallUtil.error("onFatalError", error);
 			this.log("onFatalError", error);
 
 			this.ready = false;
@@ -1148,7 +1149,7 @@
 			}
 			else if (eventName === "scenarioLogUrl")
 			{
-				console.warn("scenario log url: " + message.logUrl);
+				CallUtil.warn("scenario log url: " + message.logUrl);
 			}
 			else
 			{
@@ -1201,72 +1202,214 @@
 				this.signaling = null;
 			}
 		}
+	}
+
+	class VIClientWrapper
+	{
+		static #accessToken;
+		static #accessTokenTtl;
+
+		static get token()
+		{
+			if (this.#accessToken && this.#accessTokenTtl && Date.now() < this.#accessTokenTtl)
+			{
+				return this.#accessToken;
+			}
+			else
+			{
+				return null;
+			}
+		}
+
+		static setAccessToken(accessToken, accessExpire)
+		{
+			this.#accessToken = accessToken;
+			this.#accessTokenTtl = Date.now() + (accessExpire * 1000)
+		}
+
+		static get server()
+		{
+			return BX.componentParameters.get('voximplantServer', '');
+		}
+
+		static set server(value)
+		{
+			BX.componentParameters.set('voximplantServer', value);
+		}
+
+		static get login()
+		{
+			return BX.componentParameters.get('voximplantLogin', '');
+		}
+
+		static set login(value)
+		{
+			BX.componentParameters.set('voximplantLogin', value);
+		}
+
+		static getAuthorization()
+		{
+			return new Promise((resolve, reject) =>
+			{
+				if (this.server)
+				{
+					return resolve({server: this.server, login: this.login});
+				}
+				else
+				{
+					CallUtil.log("Calling voximplant.authorization.get");
+					BX.rest.callMethod("voximplant.authorization.get").then((response) =>
+					{
+						let data = response.data();
+						this.server = data.SERVER;
+						this.login = data.LOGIN;
+
+						return resolve({server: this.server, login: this.login});
+					}).catch((response) =>
+					{
+						console.error(response);
+						reject(response);
+					});
+				}
+			})
+		}
+
+		static tryLoginWithToken(client)
+		{
+			return new Promise((resolve, reject) =>
+			{
+				if (!("loginWithAccessToken" in client))
+				{
+					return reject();
+				}
+
+				if (this.token)
+				{
+					CallUtil.log("Trying to login with saved access token");
+					this.getAuthorization().then((result) =>
+					{
+						let login = result.login;
+						let server = result.server;
+
+						client.loginWithAccessToken(`${login}@${server}`, this.token).then((result) =>
+						{
+							CallUtil.log("success", result);
+							console.log(result);
+							if ("params" in result && "accessToken" in result.params)
+							{
+								this.setAccessToken(result.params.accessToken, result.params.accessExpire);
+							}
+
+							resolve();
+						}).catch(e =>
+						{
+							console.error(e);
+							reject(e);
+						});
+					}).catch(e =>
+					{
+						console.error(e);
+						reject(e);
+
+					})
+				}
+				else
+				{
+					return reject();
+				}
+			});
+		}
+
+		static tryLoginWithOneTimeKey(client)
+		{
+			return new Promise((resolve, reject) =>
+			{
+				this.getAuthorization().then((result) =>
+				{
+					let login = result.login;
+					let server = result.server;
+
+					client.requestOneTimeKey(`${login}@${server}`).then(oneTimeKey =>
+					{
+						CallUtil.warn("ontimekey received");
+						BX.rest.callMethod("voximplant.authorization.signOneTimeKey", {KEY: oneTimeKey}).then((response) =>
+						{
+							CallUtil.warn("ontimekey signed");
+							let data = response.data();
+
+							client.loginWithOneTimeKey(`${login}@${server}`, data.HASH)
+								.then((result) =>
+								{
+									console.log("login success", result);
+									if ("params" in result && "accessToken" in result.params)
+									{
+										this.setAccessToken(result.params.accessToken, result.params.accessExpire);
+									}
+
+									resolve(client);
+								})
+								.catch(error =>
+								{
+									BX.rest.callMethod('voximplant.authorization.onError');
+
+									reject(error);
+								});
+						}).catch((response) =>
+						{
+							CallUtil.error(response);
+						});
+					});
+				})
+			});
+		}
 
 		// return connected and authenticated client
 		static getClient()
 		{
 			return new Promise((resolve, reject) =>
 			{
-				BX.rest.callMethod("voximplant.authorization.get").then((response) =>
+				let client = VIClient.getInstance();
+
+				if (client.getClientState() === "LOGGED_IN")
 				{
-					let data = response.data();
-					let login = data.LOGIN;
-					let server = data.SERVER;
-					let client = VIClient.getInstance();
+					return resolve(client);
+				}
 
-					if (client.getClientState() === "LOGGED_IN")
-					{
-						return resolve(client);
-					}
+				let onConnected = (client) =>
+				{
+					CallUtil.warn("connected");
 
-					let onConnected = (client) =>
-					{
-						console.warn("connected");
+					client.off(VIClient.Events.Failed, onFailed);
+					client.off(VIClient.Events.Connected, onConnected);
 
-						client.off(VIClient.Events.Failed, onFailed);
-						client.off(VIClient.Events.Connected, onConnected);
-
-						client.requestOneTimeKey(`${login}@${server}`).then(oneTimeKey =>
+					this.tryLoginWithToken(client)
+						.then(() => resolve(client))
+						.catch(() =>
 						{
-							console.warn("ontimekey received");
-							BX.rest.callMethod("voximplant.authorization.signOneTimeKey", {KEY: oneTimeKey}).then((response) =>
-							{
-								console.warn("ontimekey signed");
-								let data = response.data();
+							this.tryLoginWithOneTimeKey(client)
+								.then(() => resolve(client))
+								.catch(e => reject(e))
+						})
+				};
+				let onFailed = (client, error) =>
+				{
+					CallUtil.error(client, error);
+					client.off(VIClient.Events.Failed, onFailed);
+					client.off(VIClient.Events.Connected, onConnected);
+					reject(error);
+				};
 
-								client.loginWithOneTimeKey(`${login}@${server}`, data.HASH)
-									.then(function ()
-									{
-										console.log("login success", arguments);
-										resolve(client);
-									})
-									.catch(error => reject(error));
-							}).catch((response) =>
-							{
-								console.error(response);
-							});
-						});
-					};
-					let onFailed = (client, error) =>
-					{
-						console.error(client, error);
-						client.off(VIClient.Events.Failed, onFailed);
-						client.off(VIClient.Events.Connected, onConnected);
-						reject(error);
-					};
-
-					if (client.getClientState() === "CONNECTED")
-					{
-						onConnected(client);
-					}
-					else
-					{
-						client.on(VIClient.Events.Failed, onFailed);
-						client.on(VIClient.Events.Connected, onConnected);
-						client.connect();
-						//client.connectWithConnectivityCheck(false, ["web-gw-yy-01-148.voximplant.com"]); // todo: remove
-					}
-				});
+				if (client.getClientState() === "CONNECTED")
+				{
+					onConnected(client);
+				}
+				else
+				{
+					client.on(VIClient.Events.Failed, onFailed);
+					client.on(VIClient.Events.Connected, onConnected);
+					client.connect();
+					//client.connectWithConnectivityCheck(false, ["web-gw-yy-01-148.voximplant.com"]); // todo: remove
+				}
 			});
 		}
 	}
@@ -1443,7 +1586,7 @@
 			data.callInstanceId = this.call.instanceId;
 			data.senderId = this.call.userId;
 			data.callId = this.call.id;
-			data.requestId = CallEngine.getUuidv4();
+			data.requestId = callEngine.getUuidv4();
 
 			this.call.log("Sending p2p signaling event " + eventName + "; " + JSON.stringify(data));
 			BX.PULL.sendMessage(data.userId, "im", eventName, data, expiry);
@@ -1461,7 +1604,7 @@
 				data = {};
 			}
 			data.eventName = eventName;
-			data.requestId = CallEngine.getUuidv4();
+			data.requestId = callEngine.getUuidv4();
 
 			this.call.voximplantCall.sendMessage(JSON.stringify(data));
 		}
@@ -1475,8 +1618,8 @@
 
 			data.callId = this.call.id;
 			data.callInstanceId = this.call.instanceId;
-			data.requestId = CallEngine.getUuidv4();
-			return CallEngine.getRestClient().callMethod(signalName, data);
+			data.requestId = callEngine.getUuidv4();
+			return callEngine.getRestClient().callMethod(signalName, data);
 		}
 
 		__sendPullEventOrCallRest(eventName, restMethod, data, expiry)
@@ -1493,7 +1636,7 @@
 				}
 			}).catch(error =>
 			{
-				console.error(error);
+				CallUtil.error(error);
 				this.call.log(error);
 			});
 		}
@@ -1840,6 +1983,7 @@
 		}
 	}
 
+	window.VIClientWrapper = VIClientWrapper;
 	window.VoximplantCall = VoximplantCall;
 })
 ();

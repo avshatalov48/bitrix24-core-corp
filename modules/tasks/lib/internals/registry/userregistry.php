@@ -20,12 +20,15 @@ class UserRegistry
 	public const MODE_GROUP_ALL = 'all';
 	public const MODE_GROUP = 'group';
 	public const MODE_PROJECT = 'project';
+	public const MODE_SCRUM = 'scrum';
+	public const MODE_EXCLUDE_SCRAM = 'ex_scram';
 
 	private static $instance = [];
 
 	private $userId;
 	private $userGroups = [];
 	private $userProjects = [];
+	private $userScrum = [];
 	private $userWorkgroups = [];
 
 	/**
@@ -47,17 +50,25 @@ class UserRegistry
 	 */
 	public function getUserGroups(string $mode = self::MODE_GROUP_ALL): array
 	{
-		if ($mode === self::MODE_GROUP)
+		switch ($mode)
 		{
-			return $this->userWorkgroups;
+			case self::MODE_GROUP:
+				$groups = $this->userWorkgroups;
+				break;
+			case self::MODE_PROJECT:
+				$groups = $this->userProjects;
+				break;
+			case self::MODE_SCRUM:
+				$groups = $this->userScrum;
+				break;
+			case self::MODE_EXCLUDE_SCRAM:
+				$groups = array_replace($this->userProjects, $this->userWorkgroups);
+				break;
+			default:
+				$groups = $this->userGroups;
 		}
 
-		if ($mode === self::MODE_PROJECT)
-		{
-			return $this->userProjects;
-		}
-
-		return $this->userGroups;
+		return $groups;
 	}
 
 	/**
@@ -117,6 +128,7 @@ class UserRegistry
 			->addSelect('GROUP_ID')
 			->addSelect('ROLE')
 			->addSelect('WORKGROUP.PROJECT', 'PROJECT')
+			->addSelect('WORKGROUP.SCRUM_MASTER_ID', 'SCRUM_MASTER')
 			->registerRuntimeField(
 				new Reference(
 					'WORKGROUP',
@@ -134,7 +146,11 @@ class UserRegistry
 		foreach ($res as $row)
 		{
 			$this->userGroups[$row['GROUP_ID']] = $row['ROLE'];
-			if ($row['PROJECT'] === 'Y')
+			if ((int)$row['SCRUM_MASTER'] > 0)
+			{
+				$this->userScrum[$row['GROUP_ID']] = $row['ROLE'];
+			}
+			elseif ($row['PROJECT'] === 'Y')
 			{
 				$this->userProjects[$row['GROUP_ID']] = $row['ROLE'];
 			}

@@ -75,7 +75,7 @@ if (!$arResult['USE_ASYNC_ADD_PRODUCT'])
 
 $showChoiceButton = true;
 $newProductCardEnabled = \Bitrix\Main\Loader::includeModule('catalog')
-	&& \Bitrix\Catalog\Config\State::isProductCardSliderEnabled();
+	&& \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isFullCatalogEnabled();
 ?>
 <div id="<?=$containerID?>" class="crm-items-list-wrap<?=$additionalClasses?>" data-tabs="<?=$dataTabs?>"><?
 $choiceProductBtnID = $arResult['PREFIX'].'_select_product_button';
@@ -814,3 +814,26 @@ BX.namespace("BX.Crm");
 BX.Crm["<?=$jsEventsManagerId?>"] = BX.Crm.PageEventsManagerClass.create({id: "<?=$arResult['COMPONENT_ID']?>"});
 
 </script>
+
+<?
+if ($arResult['USE_ASYNC_ADD_PRODUCT'])
+{
+	$GLOBALS['APPLICATION']->IncludeComponent(
+		'bitrix:main.lookup.input',
+		'empty',
+		[
+		],
+		$component,
+		['HIDE_ICONS' => 'Y']
+	);
+	$GLOBALS['APPLICATION']->IncludeComponent(
+		'bitrix:main.tree.selector',
+		'empty',
+		[
+			'INPUT_NAME' => 'empty',
+			'ONSELECT' => 'false',
+		],
+		$component,
+		['HIDE_ICONS' => 'Y']
+	);
+}

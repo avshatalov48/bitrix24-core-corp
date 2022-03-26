@@ -35,7 +35,7 @@ if (typeof(BX.FilterEntitySelector) === "undefined")
 					scope: field,
 					id: this.getId() + "-selector",
 					mode: this.getSetting("mode"),
-					query: query ? query : false,
+					query: false,
 					useSearch: true,
 					useAdd: false,
 					parent: this,
@@ -169,9 +169,29 @@ function DeleteTemplate(templateId)
 			deleteTemplate: function(templateId) {
 				var self = this;
 
-				this.callRemote('task.template.delete', { id: templateId }).then(function(result) {
-					self.reloadGrid();
-				});
+				BX.ajax.runComponentAction('bitrix:tasks.task.template', 'delete', {
+					mode: 'class',
+					data: {
+						templateId: templateId
+					}
+				}).then(
+					function(response)
+					{
+						if (
+							!response.status
+							|| response.status !== 'success'
+						)
+						{
+							return;
+						}
+
+						self.reloadGrid();
+					}.bind(this),
+					function(response)
+					{
+
+					}.bind(this)
+				);
 			},
 			reloadGrid: function() {
 				var grid = this.getGrid();
@@ -228,18 +248,30 @@ function DeleteTemplate(templateId)
 
 			deleteItems: function(itemIds, isAllSelected)
 			{
-				this.callRemote('this.processGroupActions', {'ACTION':'delete', 'IDS':itemIds, 'isAllSelected':isAllSelected})
-					.then(function(result){
-						if(result.isSuccess())
-						{
-							this.reloadGrid();
-						}
-					},
-					function(result){
-						alert('Error');
+				BX.ajax.runComponentAction('bitrix:tasks.templates.list', 'batchDelete', {
+					mode: 'class',
+					data: {
+						ids: itemIds,
+						isAllSelected: isAllSelected
 					}
-				);
+				}).then(
+					function(response)
+					{
+						if (
+							!response.status
+							|| response.status !== 'success'
+						)
+						{
+							return;
+						}
 
+						this.reloadGrid();
+					}.bind(this),
+					function(response)
+					{
+
+					}.bind(this)
+				);
 			}
 		}
 	});

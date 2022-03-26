@@ -60,6 +60,16 @@ $taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
 			</div>
 		<? endif ?>
 
+		<?php foreach ((array)$taskData['SE_PARAMETER'] as $param): ?>
+			<?php if ((int)$param['CODE'] !== \Bitrix\Tasks\Internals\Task\ParameterTable::PARAM_RESULT_REQUIRED || $param['VALUE'] !== 'Y') { continue; } ?>
+			<div class="task-detail-sidebar-item task-detail-sidebar-item-report">
+				<div class="task-detail-sidebar-item-report-content">
+					<div class="ui-icon ui-icon-common-info"><i></i></div>
+					<div class="task-detail-sidebar-item-report-text"><?= Loc::getMessage('TASK_RESULT_SIDEBAR_HINT'); ?></div>
+				</div>
+			</div>
+		<?php endforeach; ?>
+
 		<div class="task-detail-sidebar-item task-detail-sidebar-item-reminder">
 			<div class="task-detail-sidebar-item-title"><?=Loc::getMessage("TASKS_SIDEBAR_REMINDER")?>:</div>
 			<div class="task-detail-sidebar-item-value"><span id="task-detail-reminder-add"><?=Loc::getMessage("TASKS_REMINDER_TITLE")?></span></div>

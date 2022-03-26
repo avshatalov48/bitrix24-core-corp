@@ -1183,7 +1183,7 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 			{
 				this._manager = BX.CrmInvoiceStatusManager.current;
 			}
-			else if(BX.CrmEntityType.isDynamicTypeByName(this._entityType))
+			else if(BX.CrmEntityType.isUseDynamicTypeBasedApproachByName(this._entityType))
 			{
 				this._manager = BX.CrmItemStatusManager.current;
 			}
@@ -1719,7 +1719,7 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 			{
 				return;
 			}
-			if (BX.CrmEntityType.isDynamicTypeByName(type))
+			if (BX.CrmEntityType.isUseDynamicTypeBasedApproachByName(type))
 			{
 				BX.ajax.runAction(serviceUrl, {
 						data: {
@@ -1734,34 +1734,43 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 						this._onSaveRequestSuccess(response.data);
 					}.bind(this))
 					.catch(function(response) {
-						var CheckErrors = {};
+						var isRequiredFieldsError = false;
+						var checkErrors = {};
 						var errorMessage = '';
 						for (var i in response.errors)
 						{
 							if (response.errors[i].code === 'CRM_FIELD_ERROR_REQUIRED')
 							{
-								CheckErrors[response.errors[i].customData.fieldName] = response.errors[i].message;
-								if (errorMessage === '')
-								{
-									errorMessage = response.errors[i].message;
-								}
-								else
-								{
-									errorMessage = errorMessage + ', ' + response.errors[i].message;
-								}
+								checkErrors[response.errors[i].customData.fieldName] = response.errors[i].message;
+								isRequiredFieldsError = true;
+							}
+							if (errorMessage === '')
+							{
+								errorMessage = response.errors[i].message;
+							}
+							else
+							{
+								errorMessage = errorMessage + ', ' + response.errors[i].message;
 							}
 						}
 
-						var errors =
-							{
-								'CHECK_ERRORS': CheckErrors,
-								'ERROR': errorMessage,
-								'ID': this.getEntityId(),
-								'TYPE': this.getEntityType(),
-								'VALUE': this.getCurrentStepId(),
-							};
+						var errors = {
+							'CHECK_ERRORS': checkErrors,
+							'ERROR': errorMessage,
+							'ID': this.getEntityId(),
+							'TYPE': this.getEntityType(),
+							'VALUE': this.getCurrentStepId(),
+						};
 
-						this._onSaveRequestSuccess(errors);
+						if (isRequiredFieldsError)
+						{
+							this._onSaveRequestSuccess(errors);
+						}
+						else
+						{
+							console.log(errorMessage);
+							this._onSaveRequestFailure(errors);
+						}
 					}.bind(this));
 			}
 			else
@@ -1800,7 +1809,7 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 						fieldNames: Object.keys(checkErrors),
 						initData: BX.prop.getObject(data, "EDITOR_INIT_DATA", null),
 						context: BX.prop.getObject(data, "CONTEXT", null),
-						isController: this._entityType === 'QUOTE' || BX.CrmEntityType.isDynamicTypeByName(this.getEntityType()),
+						isController: BX.CrmEntityType.isUseFactoryBasedApproachByName(this.getEntityType()),
 						stageId: BX.prop.getString(data, 'VALUE', null)
 					}
 				);

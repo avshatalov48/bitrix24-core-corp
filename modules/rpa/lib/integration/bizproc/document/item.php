@@ -1,4 +1,6 @@
-<?php /** @noinspection PhpFullyQualifiedNameUsageInspection */
+<?php
+
+/** @noinspection PhpFullyQualifiedNameUsageInspection */
 
 namespace Bitrix\Rpa\Integration\Bizproc\Document;
 
@@ -383,6 +385,17 @@ class Item implements \IBPWorkflowDocument
 		return (int) $itemId;
 	}
 
+	public static function getDocumentTypeName($documentType): string
+	{
+		$type = static::getType($documentType);
+		if (!$type)
+		{
+			return '';
+		}
+
+		return $type['TITLE'];
+	}
+
 	public static function createAutomationTarget($documentType)
 	{
 		return Factory::createTarget(static::makeComplexType($documentType));
@@ -431,7 +444,7 @@ class Item implements \IBPWorkflowDocument
 
 	public static function getDocumentResponsible($documentId)
 	{
-		//TODO – make some perf optimization
+		//TODO: make some perf optimization
 		return static::getDocument($documentId)['CREATED_BY'];
 	}
 

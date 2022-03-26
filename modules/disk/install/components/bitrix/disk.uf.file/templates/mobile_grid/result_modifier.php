@@ -1,6 +1,11 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
 
-use \Bitrix\Disk\Security\ParameterSigner;
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Disk\Security\ParameterSigner;
 
 if (!\Bitrix\Main\Loader::includeModule('mobileapp'))
 {
@@ -52,11 +57,14 @@ $previewSize = [
 	'height' => 250
 ];
 
-$images = $files = $deletedFiles = [];
+$images = [];
+$inlineImages = [];
+$files = [];
+$deletedFiles = [];
 
-$arResult['deviceWidth'] = (CMobile::getInstance()->getDevice() ? intval(CMobile::getInstance()->getDevicewidth()) : 1336);
-$arResult['deviceHeight'] = (CMobile::getInstance()->getDevice() ? intval(CMobile::getInstance()->getDeviceheight()) : 768);
-$arResult['devicePixelRatio'] = (CMobile::getInstance()->getDevice() ? intval(CMobile::getInstance()->getPixelRatio()) : 1);
+$arResult['deviceWidth'] = (CMobile::getInstance()->getDevice() ? (int)CMobile::getInstance()->getDevicewidth() : 1336);
+$arResult['deviceHeight'] = (CMobile::getInstance()->getDevice() ? (int)CMobile::getInstance()->getDeviceheight() : 768);
+$arResult['devicePixelRatio'] = (CMobile::getInstance()->getDevice() ? (float)CMobile::getInstance()->getPixelRatio() : 1);
 
 $deviceDimension = max([
 	$arResult['deviceWidth'],
@@ -80,11 +88,11 @@ $imageCounter = 0;
 
 foreach ($arResult['FILES'] as $id => $file)
 {
-	if($file['IS_MARK_DELETED'])
+	if ($file['IS_MARK_DELETED'])
 	{
 		$deletedFiles[$id] = $file;
 	}
-	elseif (array_key_exists('IMAGE', $file))
+	elseif (isset($file['IMAGE']))
 	{
 		$imageCounter++;
 
@@ -112,8 +120,8 @@ foreach ($arResult['FILES'] as $id => $file)
 		// gallery
 
 		$sourceDimension = max([
-			intval($file['IMAGE']['WIDTH']),
-			intval($file['IMAGE']['HEIGHT'])
+			(int)$file['IMAGE']['WIDTH'],
+			(int)$file['IMAGE']['HEIGHT']
 		]);
 		$screenSize = [
 			'width' => $sourceDimension,
@@ -127,7 +135,7 @@ foreach ($arResult['FILES'] as $id => $file)
 			];
 		}
 
-		\CFile::ScaleImage(
+		CFile::ScaleImage(
 			$file['IMAGE']['WIDTH'], $file['IMAGE']['HEIGHT'],
 			$screenSize,
 			BX_RESIZE_IMAGE_PROPORTIONAL,
@@ -161,7 +169,19 @@ foreach ($arResult['FILES'] as $id => $file)
 			$file['PREVIEW'] = __mobileGridFormatImage($file['ID'], $src, $previewSize, false);
 		}
 
-		$images[$id] = $file;
+		if (
+			!empty($arParams['arUserField'])
+			&& !empty($arParams['arUserField']['VALUE_INLINE'])
+			&& is_array($arParams['arUserField']['VALUE_INLINE'])
+			&& in_array($file['ID'], $arParams['arUserField']['VALUE_INLINE'])
+		)
+		{
+			$inlineImages[] = $file;
+		}
+		else
+		{
+			$images[$id] = $file;
+		}
 	}
 	else
 	{
@@ -176,7 +196,9 @@ foreach ($arResult['FILES'] as $id => $file)
 		$files[$id] = $file;
 	}
 }
+
 $arResult['IMAGES'] = array_values($images);
+$arResult['INLINE_IMAGES'] = array_values($inlineImages);
 $arResult['FILES'] = $files;
 $arResult['FILES_LIMIT'] = 3;
 $arResult['DELETED_FILES'] = $deletedFiles;

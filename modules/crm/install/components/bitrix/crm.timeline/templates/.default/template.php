@@ -28,7 +28,8 @@ Bitrix\Main\UI\Extension::load(
 		'crm.delivery.taxi',
 		'crm.timeline',
 		'sidepanel',
-		'crm.restriction.bitrix24'
+		'crm.restriction.bitrix24',
+		'ui.hint',
 	]
 );
 
@@ -90,6 +91,7 @@ $waitCancelButtonID = "{$prefix}_wait_cancel_button";
 
 $smsContainerID = "{$prefix}_sms_container";
 $smsInputID = "{$prefix}_sms";
+$smsTemplatesContainerId = "{$prefix}_sms_templates_container";
 $smsButtonID = "{$prefix}_sms_button";
 $smsCancelButtonID = "{$prefix}_sms_cancel_button";
 $fileUploaderZoneId = "diskuf-selectdialog-{$prefix}";
@@ -144,7 +146,11 @@ if(!empty($arResult['ERRORS']))
 				{
 					$menuItems[] = [
 							"ID" => "sms",
-							"TEXT" => GetMessage("CRM_TIMELINE_SMS_TITLE"),
+							"TEXT" =>
+								(\Bitrix\Main\Loader::includeModule('messageservice') && \Bitrix\MessageService\Sender\Sms\Ednaru::isSupported())
+									? GetMessage("CRM_TIMELINE_SMS_TITLE2")
+									: GetMessage("CRM_TIMELINE_SMS_TITLE")
+							,
 							"TITLE" => GetMessage("CRM_TIMELINE_SMS") ,
 						] + $baseMenuItem;
 				}
@@ -185,14 +191,17 @@ if(!empty($arResult['ERRORS']))
 						"ON_CLICK" => ($arResult['STATUS_ZOOM'] ? "BX.onCustomEvent('".$prefix."_menu', ['#ID#']);" : "BX.Crm.Zoom.onNotConnectedHandler({$arResult["USER_ID"]})")
 					] + $baseMenuItem;
 				}
-				elseif (Bitrix\Main\Loader::includeModule("bitrix24"))
+				elseif (
+					Bitrix\Main\Loader::includeModule("bitrix24")
+					&& (!isset($arParams['~ENABLE_ZOOM']) || $arParams['~ENABLE_ZOOM'])
+				)
 				{
 					$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
 					$menuItems[] = [
 						"ID" => "zoom",
 						"TEXT" => GetMessage("CRM_TIMELINE_ZOOM"),
 						"TITLE" => GetMessage("CRM_TIMELINE_ZOOM"),
-						"CLASS" => "crm-zoom-tariff-lock",
+						"IS_LOCKED" => true,
 						"ON_CLICK" => "BX.Crm.Zoom.onNotAvailableHandler()",
 					] + $baseMenuItem;
 				}
@@ -222,8 +231,7 @@ if(!empty($arResult['ERRORS']))
 							'TEXT' => GetMessage('CRM_TIMELINE_VISIT'),
 							'TITLE' => GetMessage('CRM_TIMELINE_VISIT'),
 						] + ($arResult['IS_VISIT_RESTRICTED'] ? [
-							'CLASS' => 'crm-tariff-lock-ahead',
-							'CLASS_SUBMENU_ITEM' => 'crm-tariff-lock-ahead'
+							'IS_LOCKED' => true,
 						] : [] ) + $baseMenuItem;
 				}
 
@@ -262,7 +270,7 @@ if(!empty($arResult['ERRORS']))
 					$menuBarObjectId = mb_strtolower(implode('_', $menuBarObjectIdParts));
 					$mode = CCrmAuthorizationHelper::CheckConfigurationUpdatePermission() ? 'common' : false;
 				}
-				?><?$APPLICATION->IncludeComponent(
+				?><div class="crm-entity-stream-section-menu"><?$APPLICATION->IncludeComponent(
 					"bitrix:main.interface.buttons",
 					"",
 					array(
@@ -272,8 +280,9 @@ if(!empty($arResult['ERRORS']))
 							return $item;
 						}, $menuItems),
 						"EDIT_MODE" => $mode,
+						"THEME" => "compact",
 					)
-				);?>
+				);?></div>
 				<div id="<?=htmlspecialcharsbx($commentContainerID)?>" class="crm-entity-stream-content-new-detail">
 					<textarea id="<?=htmlspecialcharsbx($commentInputID)?>" rows="1" class="crm-entity-stream-content-new-comment-textarea" placeholder="<?=GetMessage('CRM_TIMELINE_COMMENT_PLACEHOLDER')?>"></textarea>
 					<div class="crm-entity-stream-content-new-comment-btn-container">
@@ -361,6 +370,16 @@ if(!empty($arResult['ERRORS']))
 						</div>
 					</div>
 					<textarea id="<?=htmlspecialcharsbx($smsInputID)?>" class="crm-entity-stream-content-new-sms-textarea" rows='1' placeholder="<?=GetMessage('CRM_TIMELINE_SMS_ENTER_MESSAGE')?>"></textarea>
+					<div class="crm-entity-stream-content-new-sms-templates" id="<?=$smsTemplatesContainerId?>">
+						<div class="ui-ctl-label-text">
+							<?=\Bitrix\Main\Localization\Loc::getMessage('CRM_TIMELINE_SMS_TEMPLATE_LIST_TITLE')?><span class="ui-hint" data-role="hint"><span class="ui-hint-icon"></span></span>
+						</div>
+						<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100" data-role="template-selector">
+							<div class="ui-ctl-element" data-role="template-title"></div>
+							<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+						</div>
+						<div class="crm-entity-stream-content-new-sms-preview" data-role="preview"></div>
+					</div>
 					<?php
 					if($arResult['ENABLE_FILES_EXTERNAL_LINK'])
 					{
@@ -419,7 +438,7 @@ if(!empty($arResult['ERRORS']))
 							<?=GetMessage('CRM_TIMELINE_SEND')?>
 						</button>
 						<a id="<?=htmlspecialcharsbx($smsCancelButtonID)?>" href="#" class="ui-btn ui-btn-xs ui-btn-link"><?=GetMessage('CRM_TIMELINE_CANCEL_BTN')?></a>
-						<div class="crm-entity-stream-content-sms-symbol-counter"><?=GetMessage("CRM_TIMELINE_SMS_SYMBOLS")?><?
+						<div class="crm-entity-stream-content-sms-symbol-counter" data-role="message-length-counter-wrap"><?=GetMessage("CRM_TIMELINE_SMS_SYMBOLS")?><?
 							?><span class="crm-entity-stream-content-sms-symbol-counter-number" data-role="message-length-counter" data-length-max="200">0</span><?
 							?><?=GetMessage("CRM_TIMELINE_SMS_SYMBOLS_FROM")?><?
 							?><span class="crm-entity-stream-content-sms-symbol-counter-number">200</span>
@@ -486,6 +505,18 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 			echo 'var IntranetExtensions = ' . \CUtil::phpToJSObject($menuExtensions) . ";\n\n";
 		}
 	}
+	$finalSummaryPhraseCodes = [
+		'summary' => 'CRM_TIMELINE_FINAL_SUMMARY_TITLE',
+		'documents' => 'CRM_TIMELINE_FINAL_SUMMARY_DOCUMENTS_TITLE',
+	];
+	if ($arResult['ENTITY_TYPE_ID'] === \CCrmOwnerType::SmartInvoice)
+	{
+		$finalSummaryPhraseCodes = [
+			'summary' => 'CRM_TIMELINE_FINAL_SUMMARY_INVOICE_TITLE',
+			'documents' => 'CRM_TIMELINE_FINAL_SUMMARY_DOCUMENTS_INVOICE_TITLE',
+		];
+	}
+
 	?>
 	BX.ready(
 		function()
@@ -634,7 +665,7 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 				taskRemove: "<?=GetMessageJS('CRM_TIMELINE_TASK_DELETION_CONFIRM')?>",
 				emailRemove: "<?=GetMessageJS('CRM_TIMELINE_EMAIL_DELETION_CONFIRM')?>",
 				commentRemove: "<?=GetMessageJS('CRM_TIMELINE_COMMENT_DELETION_CONFIRM')?>",
-				deliveryRemove: "<?=GetMessageJS('CRM_TIMELINE_DELIVERY_DELETION_CONFIRM')?>",
+				deliveryRemove: "<?=GetMessageJS('CRM_TIMELINE_DELIVERY_ACTIVITY_DELETION_CONFIRM')?>",
 				outgoingCallRemove: "<?=GetMessageJS('CRM_TIMELINE_OUTGOING_CALL_DELETION_CONFIRM')?>",
 				incomingCallRemove: "<?=GetMessageJS('CRM_TIMELINE_INCOMING_CALL_DELETION_CONFIRM')?>",
 				document: "<?=GetMessageJS('CRM_TIMELINE_DOCUMENT')?>",
@@ -642,16 +673,8 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 				zoomCreatedMessage: '<?=GetMessageJS("CRM_TIMELINE_ZOOM_CREATED_CONFERENCE_MESSAGE")?>',
 				zoomCreatedCopyInviteLink: '<?=GetMessageJS("CRM_TIMELINE_ZOOM_CREATED_COPY_INVITE_LINK")?>',
 				zoomCreatedStartConference: '<?=GetMessageJS("CRM_TIMELINE_ZOOM_CREATED_START_CONFERENCE")?>',
-			};
-
-			BX.CrmTimelineWaitHelper.messages =
-			{
-				dayNominative: "<?=GetMessageJS('CRM_TIMELINE_WAIT_DAY_NOMINATIVE')?>",
-				dayGenitiveSingular: "<?=GetMessageJS('CRM_TIMELINE_WAIT_DAY_GENITIVE_SINGULAR')?>",
-				dayGenitivePlural: "<?=GetMessageJS('CRM_TIMELINE_WAIT_DAY_GENITIVE_PLURAL')?>",
-				weekNominative: "<?=GetMessageJS('CRM_TIMELINE_WAIT_WEEK_NOMINATIVE')?>",
-				weekGenitiveSingular: "<?=GetMessageJS('CRM_TIMELINE_WAIT_WEEK_GENITIVE_SINGULAR')?>",
-				weekGenitivePlural: "<?=GetMessageJS('CRM_TIMELINE_WAIT_WEEK_GENITIVE_PLURAL')?>"
+				storeDocument: "<?=GetMessageJS('CRM_TIMELINE_STORE_DOCUMENT_TITLE')?>",
+				storeDocumentDescription: "<?=GetMessageJS('CRM_TIMELINE_STORE_DOCUMENT_DESCRIPTION')?>",
 			};
 
 			BX.CrmTimelineWaitEditor.messages =
@@ -736,7 +759,7 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 
 			BX.CrmHistoryItemFinalSummary.messages =
 				{
-					title: "<?=GetMessageJS('CRM_TIMELINE_FINAL_SUMMARY_TITLE')?>",
+					title: "<?=GetMessageJS($finalSummaryPhraseCodes['summary'])?>",
 					orderPaid: "<?=GetMessageJS('CRM_TIMELINE_FINAL_SUMMARY_ORDER_PAID_2')?>",
 					basketBasePrice: "<?=GetMessageJS('CRM_TIMELINE_FINAL_SUMMARY_BASKET_BASE_PRICE')?>",
 					basketPrice: "<?=GetMessageJS('CRM_TIMELINE_FINAL_SUMMARY_BASKET_PRICE')?>",
@@ -746,7 +769,7 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 
 			BX.CrmHistoryItemFinalSummaryDocuments.messages =
 				{
-					title: "<?=GetMessageJS('CRM_TIMELINE_FINAL_SUMMARY_DOCUMENTS_TITLE')?>",
+					title: "<?=GetMessageJS($finalSummaryPhraseCodes['documents'])?>",
 				};
 
 			BX.CrmHistoryItemOrcderCheck.messages =
@@ -759,7 +782,37 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 					sendedTitle: "<?=GetMessageJS('CRM_TIMELINE_ORDER_CHECK_SENT_TITLE')?>",
 				};
 
+			BX.CrmHistoryItemStoreDocumentCreation.messages =
+				{
+					arrivalDocument: "<?=GetMessageJS('CRM_TIMELINE_ARRIVAL_DOCUMENT_CREATION')?>",
+					storeAdjustmentDocument: "<?=GetMessageJS('CRM_TIMELINE_STORE_ADJUSTMENT_DOCUMENT_CREATION')?>",
+					movingDocument: "<?=GetMessageJS('CRM_TIMELINE_MOVING_DOCUMENT_CREATION')?>",
+					deductDocument: "<?=GetMessageJS('CRM_TIMELINE_DEDUCT_DOCUMENT_CREATION')?>",
+					shipmentDocument: "<?=GetMessageJS('CRM_TIMELINE_SHIPMENT_DOCUMENT_CREATION')?>",
+				};
+
+			BX.CrmHistoryItemStoreDocumentModification.messages =
+				{
+					arrivalDocument: "<?=GetMessageJS('CRM_TIMELINE_ARRIVAL_DOCUMENT')?>",
+					storeAdjustmentDocument: "<?=GetMessageJS('CRM_TIMELINE_STORE_ADJUSTMENT_DOCUMENT')?>",
+					movingDocument: "<?=GetMessageJS('CRM_TIMELINE_MOVING_DOCUMENT')?>",
+					shipmentDocument: "<?=GetMessageJS('CRM_TIMELINE_SHIPMENT_DOCUMENT')?>",
+					deductDocument: "<?=GetMessageJS('CRM_TIMELINE_DEDUCT_DOCUMENT')?>",
+					arrivalModification: "<?=GetMessageJS('CRM_TIMELINE_ARRIVAL_DOCUMENT_MODIFICATION')?>",
+					storeAdjustmentModification: "<?=GetMessageJS('CRM_TIMELINE_STORE_ADJUSTMENT_DOCUMENT_MODIFICATION')?>",
+					movingModification: "<?=GetMessageJS('CRM_TIMELINE_MOVING_DOCUMENT_MODIFICATION')?>",
+					deductModification: "<?=GetMessageJS('CRM_TIMELINE_DEDUCT_DOCUMENT_MODIFICATION')?>",
+					shipmentModification: "<?=GetMessageJS('CRM_TIMELINE_SHIPMENT_DOCUMENT_MODIFICATION')?>",
+					conductError: "<?=GetMessageJS('CRM_TIMELINE_CONDUCT_ERROR')?>",
+				};
+
 			BX.message({
+				"CRM_TIMELINE_WAIT_DAY_PLURAL_0": '<?=GetMessageJS("CRM_TIMELINE_WAIT_DAY_PLURAL_0")?>',
+				"CRM_TIMELINE_WAIT_DAY_PLURAL_1": '<?=GetMessageJS("CRM_TIMELINE_WAIT_DAY_PLURAL_1")?>',
+				"CRM_TIMELINE_WAIT_DAY_PLURAL_2": '<?=GetMessageJS("CRM_TIMELINE_WAIT_DAY_PLURAL_2")?>',
+				"CRM_TIMELINE_WAIT_WEEK_PLURAL_0": '<?=GetMessageJS("CRM_TIMELINE_WAIT_WEEK_PLURAL_0")?>',
+				"CRM_TIMELINE_WAIT_WEEK_PLURAL_1": '<?=GetMessageJS("CRM_TIMELINE_WAIT_WEEK_PLURAL_1")?>',
+				"CRM_TIMELINE_WAIT_WEEK_PLURAL_2": '<?=GetMessageJS("CRM_TIMELINE_WAIT_WEEK_PLURAL_2")?>',
 				"CRM_TIMELINE_CALL_TRANSCRIPT": '<?=GetMessageJS("CRM_TIMELINE_CALL_TRANSCRIPT")?>',
 				"CRM_TIMELINE_CALL_TRANSCRIPT_PENDING": '<?=GetMessageJS("CRM_TIMELINE_CALL_TRANSCRIPT_PENDING")?>',
 				"CRM_TIMELINE_SMS_REST_MARKETPLACE": '<?=GetMessageJS("CRM_TIMELINE_SMS_REST_MARKETPLACE")?>',
@@ -767,6 +820,7 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 				"CRM_TIMELINE_SMS_SENDER": '<?=GetMessageJS("CRM_TIMELINE_SMS_SENDER")?>',
 				"CRM_TIMELINE_SMS_FROM": '<?=GetMessageJS("CRM_TIMELINE_SMS_FROM")?>',
 				"CRM_TIMELINE_SMS_TO": '<?=GetMessageJS("CRM_TIMELINE_SMS_TO")?>',
+				"CRM_TIMELINE_SMS_TEMPLATES_NOT_FOUND": '<?=GetMessageJS("CRM_TIMELINE_SMS_TEMPLATES_NOT_FOUND")?>',
 				"CRM_TIMELINE_BIZPROC_CREATED": '<?=GetMessageJS("CRM_TIMELINE_BIZPROC_CREATED")?>',
 				"CRM_TIMELINE_BIZPROC_COMPLETED": '<?=GetMessageJS("CRM_TIMELINE_BIZPROC_COMPLETED")?>',
 				"CRM_TIMELINE_BIZPROC_TERMINATED": '<?=GetMessageJS("CRM_TIMELINE_BIZPROC_TERMINATED")?>',
@@ -850,6 +904,7 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 					editorWaitConfig: <?=CUtil::PhpToJSObject($arResult['WAIT_CONFIG'])?>,
 					editorSmsContainer: "<?=CUtil::JSEscape($smsContainerID)?>",
 					editorSmsInput: "<?=CUtil::JSEscape($smsInputID)?>",
+					editorSmsTemplatesContainer: "<?=CUtil::JSEscape($smsTemplatesContainerId)?>",
 					editorSmsButton: "<?=CUtil::JSEscape($smsButtonID)?>",
 					editorSmsCancelButton: "<?=CUtil::JSEscape($smsCancelButtonID)?>",
 					editorSmsConfig: <?=CUtil::PhpToJSObject($arResult['SMS_CONFIG'])?>,

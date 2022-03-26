@@ -5,6 +5,8 @@ $MESS["CRM_MODULE_NOT_INSTALLED_CURRENCY"] = "Модуль currency не уст�
 $MESS["CRM_MODULE_NOT_INSTALLED_SALE"] = "Модуль sale не установлен.";
 $MESS["CRM_MODULE_NOT_INSTALLED_CATALOG"] = "Модуль catalog не установлен.";
 $MESS["CRM_MODULE_NOT_INSTALLED_REST"] = "Модуль rest не установлен.";
+$MESS["CRM_MODULE_NOT_INSTALLED_LANDING"] = "Модуль landing не установлен.";
+$MESS["CRM_MODULE_ERROR_NOT_FOUNT"] = "Форма не найдена";
 $MESS["CRM_PERMISSION_DENIED"] = "Доступ запрещен";
 $MESS["CRM_WEBFORM_EDIT_TITLE"] = "Редактирование CRM-формы";
 $MESS["CRM_WEBFORM_EDIT_TITLE_ADD"] = "Создание CRM-формы";
@@ -23,4 +25,5 @@ $MESS["CRM_WEBFORM_EDIT_PRESET_MACROS_FORM_ID_DESC"] = "Код формы";
 $MESS["CRM_WEBFORM_EDIT_PRESET_MACROS_FORM_NAME"] = "Название формы";
 $MESS["CRM_WEBFORM_EDIT_PRESET_MACROS_FORM_NAME_DESC"] = "Название формы";
 $MESS["CRM_WEBFORM_EDIT_SECOND_SHORT"] = "сек";
+$MESS['CRM_WEBFORM_SCENARIO_NAME_TEMPLATE'] = '#NAME# от #DATE#';
 ?>

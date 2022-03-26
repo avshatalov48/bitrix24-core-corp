@@ -7,7 +7,9 @@
  */
 namespace Bitrix\Crm;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Entity;
+use Bitrix\Main\Entity\IntegerField;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Fields\Relations\CascadePolicy;
 use Bitrix\Main\ORM\Fields\Relations\OneToMany;
@@ -47,6 +49,8 @@ class CompanyTable extends Entity\DataManager
 
 	public static function getMap()
 	{
+		Container::getInstance()->getLocalization()->loadMessages();
+
 		global $DB;
 
 		return array(
@@ -308,9 +312,27 @@ class CompanyTable extends Entity\DataManager
 			'SEARCH_CONTENT' => array(
 				'data_type' => 'string'
 			),
+			(new IntegerField('CATEGORY_ID'))
+				->configureDefaultValue([static::class, 'getDefaultCategoryId'])
+				->configureTitle(Loc::getMessage('CRM_COMMON_CLIENT_CATEGORY'))
+		,
 			(new OneToMany('CONTACT_BINDINGS', Binding\ContactCompanyTable::class, 'COMPANY'))
 				->configureCascadeDeletePolicy(CascadePolicy::FOLLOW),
 		);
+	}
+
+	public static function getDefaultCategoryId(): ?int
+	{
+		$factory = static::getFactory();
+
+		if($factory)
+		{
+			$category = static::getFactory()->getDefaultCategory();
+
+			return $category ? $category->getId() : null;
+		}
+
+		return null;
 	}
 
 	public static function disableUserFieldsCheck(): void
@@ -327,5 +349,15 @@ class CompanyTable extends Entity\DataManager
 		}
 
 		parent::checkUfFields($object, $ufdata, $result);
+	}
+
+	protected static function getEntityTypeId(): int
+	{
+		return \CCrmOwnerType::Company;
+	}
+
+	protected static function getFactory(): \Bitrix\Crm\Service\Factory
+	{
+		return Container::getInstance()->getFactory(static::getEntityTypeId());
 	}
 }

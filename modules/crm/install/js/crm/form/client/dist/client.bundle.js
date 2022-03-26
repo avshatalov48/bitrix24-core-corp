@@ -111,6 +111,16 @@ this.BX.Crm = this.BX.Crm || {};
 	        });
 	      }
 	    }
+	  }, {
+	    key: "check",
+	    value: function check(options) {
+	      return request({
+	        action: 'check',
+	        data: {
+	          options: options
+	        }
+	      });
+	    }
 	  }], [{
 	    key: "getInstance",
 	    value: function getInstance() {

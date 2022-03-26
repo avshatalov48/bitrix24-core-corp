@@ -12,10 +12,12 @@ use Bitrix\Main;
 use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\SalesCenter;
 use Bitrix\Crm\UI\Webpack;
 use Bitrix\Crm\SiteButton;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\WebForm\Internals;
 
 Loc::loadMessages(__FILE__);
 
@@ -47,11 +49,12 @@ class Form
 	protected $errors = array();
 	protected $isEmbeddedAvailableChanged = false;
 	protected $forceBuild = false;
+	protected $integration;
 
 	public function __construct($id = null, array $params = null)
 	{
 		$this->params = self::$defaultParams;
-
+		$this->integration = new Options\Integration($this);
 		if($id)
 		{
 			$this->load($id);
@@ -81,6 +84,16 @@ class Form
 	public function get()
 	{
 		return $this->params;
+	}
+
+	public function getIntegration()
+	{
+		return $this->integration;
+	}
+
+	public function getName(): string
+	{
+		return $this->params['NAME'] ?? '';
 	}
 
 	public function merge($params)
@@ -174,6 +187,7 @@ class Form
 			return false;
 		}
 
+		(new self($formId))->getIntegration()->delete();
 		$deleteResult = Internals\FormTable::delete($formId);
 		if($deleteResult->isSuccess())
 		{
@@ -200,6 +214,11 @@ class Form
 	public function isCallback()
 	{
 		return $this->params['IS_CALLBACK_FORM'] == 'Y';
+	}
+
+	public function isWhatsApp()
+	{
+		return $this->params['IS_WHATSAPP_FORM'] == 'Y';
 	}
 
 	public function checkSecurityCode($code)
@@ -321,6 +340,7 @@ class Form
 		}
 		$this->params['ASSIGNED_BY_ID'] = array_unique($responsibles);
 		$this->params['ASSIGNED_WORK_TIME'] = $responsibleQueue->isWorkTimeCheckEnabled() ? 'Y' : 'N';
+		$this->params['INTEGRATION'] = $this->getIntegration()->load();
 
 		return true;
 	}
@@ -384,6 +404,9 @@ class Form
 		$presetFields = $result['PRESET_FIELDS'];
 		unset($result['PRESET_FIELDS']);
 
+
+		unset($result['INTEGRATION']);
+
 		$assignedById = $result['ASSIGNED_BY_ID'];
 		$assignedWorkTime = $result['ASSIGNED_WORK_TIME'];
 		$result['ASSIGNED_BY_ID'] = null;
@@ -409,6 +432,9 @@ class Form
 
 		if($onlyCheck)
 		{
+			/*INTEGRATION*/
+			$this->prepareResult('INTEGRATION',$this->getIntegration()->checkData());
+
 			if(!in_array($result['ENTITY_SCHEME'], $this->getAllowedEntitySchemes()))
 			{
 				$this->errors[] = Loc::getMessage('CRM_WEBFORM_FORM_ERROR_SCHEME');
@@ -547,6 +573,8 @@ class Form
 			$this->prepareResult('PRESET_FIELDS', $presetFieldResult);
 		}
 
+		/*INTEGRATION*/
+		$this->prepareResult('INTEGRATION',$this->getIntegration()->save());
 
 		/* FIELDS */
 		$existedFieldList = array();
@@ -674,11 +702,10 @@ class Form
 
 	public function buildScript()
 	{
-		$result = Webpack\Form::instance($this->id)->build();
-		if (Manager::isEmbeddingAvailable() && $this->isEmbeddingAvailable()
-			&& ($this->isEmbeddingEnabled() || $this->isEmbeddedAvailableChanged))
+		$resourceBooking = Webpack\Form\ResourceBooking::instance();
+		if (Main\ModuleManager::isModuleInstalled('calendar') && !$resourceBooking->isBuilt())
 		{
-			SiteButton\Manager::updateScriptCacheWithForm($this->getId());
+			$resourceBooking->build();
 		}
 
 		$app = Webpack\Form\App::instance();
@@ -688,6 +715,13 @@ class Form
 			{
 				Webpack\Form::addCheckResourcesAgent();
 			}
+		}
+
+		$result = Webpack\Form::instance($this->id)->build();
+		if (Manager::isEmbeddingAvailable() && $this->isEmbeddingAvailable()
+			&& ($this->isEmbeddingEnabled() || $this->isEmbeddedAvailableChanged))
+		{
+			SiteButton\Manager::updateScriptCacheWithForm($this->getId());
 		}
 
 		$this->forceBuild = false;
@@ -779,7 +813,7 @@ class Form
 		return $options;
 	}
 
-	protected function prepareResult($sect, Main\Entity\Result $entityResult, $replaceList = null)
+	protected function prepareResult($sect, Main\Result $entityResult, $replaceList = null)
 	{
 		if($entityResult->isSuccess())
 		{
@@ -943,6 +977,7 @@ class Form
 					'entity_field_name' => $field['ENTITY_FIELD_NAME'],
 					'caption' => $field['CAPTION'] ? $field['CAPTION'] : $field['ENTITY_FIELD_CAPTION'],
 					'required' => $field['REQUIRED'] == 'Y' ? true : false,
+					'autocomplete' => $field['SETTINGS_DATA']['AUTOCOMPLETE'] == 'Y' ? true : false,
 					'multiple' => $field['MULTIPLE'] == 'Y' ? true : false,
 					'multiple_original' => $field['MULTIPLE_ORIGINAL'],
 					'hidden' => false,
@@ -1073,6 +1108,16 @@ class Form
 	}
 
 	/**
+	 * Get refill options.
+	 *
+	 * @return array
+	 */
+	public function getRefill()
+	{
+		return ($this->params['FORM_SETTINGS']['REFILL'] ?? ['ACTIVE' => 'N', 'CAPTION' => '']);
+	}
+
+	/**
 	 * Get success text.
 	 *
 	 * @return string
@@ -1080,6 +1125,16 @@ class Form
 	public function getSuccessText()
 	{
 		return $this->params['RESULT_SUCCESS_TEXT'];
+	}
+
+	/**
+	 * Get failure text.
+	 *
+	 * @return string
+	 */
+	public function getFailureText()
+	{
+		return $this->params['RESULT_FAILURE_TEXT'];
 	}
 
 	public function getLanguageId()
@@ -1312,8 +1367,6 @@ class Form
 				$isHidden = $dep['do']['action'] == 'hide';
 			}
 
-
-			$isHidden = true;
 			if($field['type'] == 'section')
 			{
 				foreach($sectionFields[$field['name']] as $sectionFieldName)
@@ -1356,10 +1409,6 @@ class Form
 		$activityFields = array();
 		foreach($resultFields as $fieldKey => $field)
 		{
-			if($field['hidden'])
-			{
-				continue;
-			}
 
 			if(!isset($field['values'][0]) || (!$field['values'][0] && $field['values'][0] !== '0'))
 			{
@@ -1396,6 +1445,18 @@ class Form
 			{
 				$activityFieldValues = $field['values'];
 			}
+
+			if ($field['type'] === Internals\FieldTable::TYPE_ENUM_DATETIME)
+			{
+				$activityFieldValues = array_map(
+					function ($fieldValue)
+					{
+						return DateTime::createFromUserTime($fieldValue)->getTimestamp();
+					},
+					$activityFieldValues
+				);
+			}
+
 			$activityFields[] = array(
 				'type' => $field['type'],
 				'code' => $field['name'],
@@ -1476,6 +1537,7 @@ class Form
 			'DUPLICATE_MODE' => $this->params['DUPLICATE_MODE'],
 			'PRESET_FIELDS' => $this->params['PRESET_FIELDS'],
 			'COMMON_FIELDS' => isset($resultParameters['COMMON_FIELDS']) ? $resultParameters['COMMON_FIELDS'] : array(),
+			'AGREEMENTS' => $resultParameters['AGREEMENTS'] ?? [],
 			'COMMON_DATA' => $resultParameters['COMMON_DATA'],
 			'PLACEHOLDERS' => isset($resultParameters['PLACEHOLDERS']) ? $resultParameters['PLACEHOLDERS'] : array(),
 			'DISABLE_FIELD_CHECKING' => $resultParameters['DISABLE_FIELD_CHECKING'] ?? false,
@@ -1533,6 +1595,17 @@ class Form
 						'CRM_ENTITY_LIST' => $result->getResultEntity()->getResultEntities()
 					));
 				}
+			}
+			if ($this->isWhatsApp())
+			{
+				WhatsApp::sendEvent(array(
+					'FORM_ID' => $this->id,
+					'LANG_ID' => $this->getLanguageId(),
+					'CRM_ENTITY_TYPE' => $fieldPhoneEntityTypeName,
+					'CRM_ENTITY_ID' => $result->getResultEntity()->getEntityIdByTypeName($fieldPhoneEntityTypeName),
+					'PHONE_NUMBER' => $fieldPhoneValue,
+					'CRM_ENTITY_LIST' => $result->getResultEntity()->getResultEntities()
+				));
 			}
 
 			$redirectUrl = $this->params['RESULT_SUCCESS_URL'];
@@ -1631,39 +1704,28 @@ class Form
 		}
 	}
 
-	public static function getCounters($formId, $formEntityScheme = null)
+	public static function getCounters($formId, $schemeId = null)
 	{
 		$result = array(
 			'ENTITY' => array(),
 			'COMMON' => array()
 		);
 		$entityList = Entity::getList();
-		if($formEntityScheme)
+		$scheme = Entity::getSchemes($schemeId);
+		if($scheme)
 		{
-			$entitySchemes = Entity::getSchemes();
-			if($entitySchemes[$formEntityScheme])
+			foreach($entityList as $entityName => $entityCaption)
 			{
-				foreach($entityList as $entityName => $entityCaption)
+				if(!in_array($entityName, $scheme['ENTITIES']))
 				{
-
-					if(!in_array($entityName, $entitySchemes[$formEntityScheme]['ENTITIES']))
-					{
-						unset($entityList[$entityName]);
-						continue;
-					}
-
-					$entityTypeId = \CCrmOwnerType::resolveID($entityName);
-					if ($entityTypeId && \CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
-					{
-						$result['ENTITY'][] = array(
-							'ENTITY_NAME' => $entityName,
-							'ENTITY_CAPTION' => \CCrmOwnerType::GetDescription($entityTypeId),
-							'VALUE' => false,
-						);
-					}
+					unset($entityList[$entityName]);
 				}
 			}
 		}
+
+		$entityNameMap = [
+			\CCrmOwnerType::InvoiceName => \CCrmOwnerType::OrderName
+		];
 
 		$entityFieldMap = Internals\FormCounterTable::getEntityFieldsMap();
 		$counters = Internals\FormCounterTable::getByFormId($formId);
@@ -1672,16 +1734,43 @@ class Form
 			if(isset($entityFieldMap[$counter]))
 			{
 				$entityName = $entityFieldMap[$counter];
+
+				$isDynamic = $entityName === 'DYNAMIC';
+				if ($isDynamic && ($scheme['DYNAMIC'] ?? false))
+				{
+					$entityName = \CCrmOwnerType::resolveName($scheme['MAIN_ENTITY']) ?: $entityName;
+				}
+
 				if(!isset($entityList[$entityName]))
 				{
 					continue;
 				}
 
 				$entityCaption = $entityList[$entityName];
+				$entityTypeId = \CCrmOwnerType::resolveID($entityName);
+				$entityName = $entityNameMap[$entityName] ?? $entityName;
+
+				$link = $isDynamic
+					? "/crm/type/{$entityTypeId}/list/category/0/"
+					: Option::get(
+						'crm',
+						'path_to_'.mb_strtolower($entityNameMap[$entityName] ?? $entityName) . '_list',
+						''
+					)
+				;
+
+				$link .= mb_strpos($link, '?') === false ? '?' : '&';
+				$link .= 'WEBFORM_ID[]=' . $formId . '&apply_filter=Y';
+				if (!$link || $entityName === \CCrmOwnerType::OrderName)
+				{
+					$link = null;
+				}
+
 				$result['ENTITY'][] = array(
 					'ENTITY_NAME' => $entityName,
 					'ENTITY_CAPTION' => $entityCaption,
 					'VALUE' => $value,
+					'LINK' => $link,
 				);
 			}
 			else

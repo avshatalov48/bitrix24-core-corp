@@ -1,13 +1,20 @@
 <?php
 
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
-use Bitrix\Crm\Order\Permissions\Order;
 use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Crm\UserField\Types\ElementType;
 use Bitrix\Main\Loader;
-use Bitrix\Main\Page\Asset;
 use Bitrix\Crm\UserField\DataModifiers;
+use Bitrix\Main\Text\HtmlFilter;
+
+/**
+ * @var array $arResult
+ * @var array $arParams
+ */
 
 if(!Loader::includeModule('crm'))
 {
@@ -64,11 +71,13 @@ $arResult['USE_SYMBOLIC_ID'] = (count($supportedTypes) > 1);
 $arResult['LIST_PREFIXES'] = array_flip(ElementType::getEntityTypeNames());
 
 $arResult['SELECTOR_ENTITY_TYPES'] = [
-	'DEAL' => 'deals',
-	'CONTACT' => 'contacts',
-	'COMPANY' => 'companies',
-	'LEAD' => 'leads',
-	'ORDER' => 'orders'
+	\CCrmOwnerType::DealName => 'deals',
+	\CCrmOwnerType::ContactName => 'contacts',
+	\CCrmOwnerType::CompanyName => 'companies',
+	\CCrmOwnerType::LeadName => 'leads',
+	\CCrmOwnerType::OrderName => 'orders',
+	\CCrmOwnerType::CommonDynamicName => 'dynamics',
+	\CCrmOwnerType::SmartInvoiceName => 'smart_invoices',
 ];
 
 foreach($arResult['value'] as $key => $value)
@@ -80,24 +89,43 @@ foreach($arResult['value'] as $key => $value)
 
 	if($arResult['USE_SYMBOLIC_ID'])
 	{
-		$code = '';
-		foreach($arResult['LIST_PREFIXES'] as $type => $prefix)
+		[$type, $entityId] = explode('_', $value);
+		if (empty($entityId) && (int)$type > 0)
 		{
-			if(preg_match('/^' . $prefix . '_(\d+)$/i', $value, $matches))
-			{
-				$code = $arResult['SELECTOR_ENTITY_TYPES'][$type];
-				break;
-			}
+			$entityId = $type;
+			$entityTypeName = reset($supportedTypes);
+			$value = \CCrmOwnerTypeAbbr::ResolveByTypeName($entityTypeName) . '_' . $entityId;
+		}
+		else
+		{
+			$entityTypeName = ElementType::getLongEntityType($type);
+		}
+		$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
+
+		$code = '';
+		if (isset($arResult['LIST_PREFIXES'][$entityTypeName]))
+		{
+			$code = $arResult['SELECTOR_ENTITY_TYPES'][$entityTypeName];
+		}
+		elseif (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		{
+			$code = $arResult['SELECTOR_ENTITY_TYPES'][\CCrmOwnerType::CommonDynamicName] . '_' . $entityTypeId;
 		}
 	}
-	else
+	elseif(preg_match('/(\d+)$/i', $value, $matches))
 	{
 		foreach($arParams['ENTITY_TYPE'] as $entityType)
 		{
 			if(!empty($entityType))
 			{
-				$value = $arResult['LIST_PREFIXES'][$entityType] . '_' . $value;
-				$code = $arResult['SELECTOR_ENTITY_TYPES'][$entityType];
+				$entityTypeId = \CCrmOwnerType::ResolveId($entityType);
+				$value = \CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId) . '_' . $matches[0];
+				$code = (
+				\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId)
+					? $arResult['SELECTOR_ENTITY_TYPES'][\CCrmOwnerType::CommonDynamicName] . '_' . $entityTypeId
+					: $arResult['SELECTOR_ENTITY_TYPES'][$entityType]
+				);
+
 				break;
 			}
 		}
@@ -107,6 +135,17 @@ foreach($arResult['value'] as $key => $value)
 	{
 		$arResult['SELECTED_LIST'][$value] = $code;
 	}
+}
+
+$typesMap = \Bitrix\Crm\Service\Container::getInstance()->getDynamicTypesMap()->load([
+	'isLoadStages' => false,
+]);
+
+$types = $typesMap->getTypes();
+foreach($types as $type)
+{
+	$code = $arResult['SELECTOR_ENTITY_TYPES'][\CCrmOwnerType::CommonDynamicName] . '_' . $type->getEntityTypeId();
+	$arResult['DYNAMIC_TYPE_TITLES'][mb_strtoupper($code)] = HtmlFilter::encode($type->getTitle());
 }
 
 $arParams['createNewEntity'] = (

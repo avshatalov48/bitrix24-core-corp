@@ -366,9 +366,8 @@ class CCrmEvent
 			}
 		}
 
-		global $DBType;
 		$lb = new CCrmEntityListBuilder(
-			$DBType,
+			'mysql',
 			'b_crm_event',
 			'CE',
 			self::GetFields(),

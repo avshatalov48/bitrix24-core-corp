@@ -41,7 +41,8 @@ export default {
 					this.$root.$app.options.deliveryList.items),
 				installed:			this.$root.$app.options.deliveryList.isInstalled,
 				initialCollapseState: this.$root.$app.options.isDeliveryCollapsed ? this.$root.$app.options.isDeliveryCollapsed === 'Y' : this.$root.$app.options.deliveryList.isInstalled,
-			}
+			},
+			automation:{}
 		};
 
 		if (this.$root.$app.options.isAutomationAvailable)
@@ -49,7 +50,7 @@ export default {
 			stages.automation = {
 				status:						Status.complete,
 				stageOnDeliveryFinished:	this.$root.$app.options.stageOnDeliveryFinished,
-				items:						this.$root.$app.options.dealStageList,
+				items:						this.$root.$app.options.entityStageList,
 				initialCollapseState: 		this.$root.$app.options.isAutomationCollapsed ? this.$root.$app.options.isAutomationCollapsed === 'Y' : false,
 			};
 		}

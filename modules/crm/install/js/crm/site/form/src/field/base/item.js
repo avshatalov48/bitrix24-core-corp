@@ -46,6 +46,11 @@ class Item extends Event
 	{
 		return value;
 	}
+
+	getComparableValue(): ?string
+	{
+		return this.value;
+	}
 }
 
 export {Item, Options}

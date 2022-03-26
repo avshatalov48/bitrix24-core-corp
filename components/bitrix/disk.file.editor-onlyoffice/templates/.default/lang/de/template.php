@@ -1,5 +1,15 @@
 <?php
 $MESS["DISK_FILE_EDITOR_ONLYOFFICE_BADGE_NEW_EDITOR_BITRIX24"] = "Neu";
+$MESS["DISK_FILE_EDITOR_ONLYOFFICE_CLOUD_ERROR_COMMON_DESCR"] = "Die Datei konnte leider nicht geöffnet werden. Versuchen Sie bitte erneut.";
+$MESS["DISK_FILE_EDITOR_ONLYOFFICE_CLOUD_ERROR_COMMON_TITLE"] = "Datei kann nicht geöffnet werden";
+$MESS["DISK_FILE_EDITOR_ONLYOFFICE_CLOUD_ERROR_DEMO_RESTRICTION_DESCR"] = "Ihre Testversion ist abgelaufen. Sie sollten eine Bitrix24 Lizenz kaufen, um die Dokumente weiterhin nutzen zu können.";
+$MESS["DISK_FILE_EDITOR_ONLYOFFICE_CLOUD_ERROR_DEMO_RESTRICTION_TITLE"] = "Datei kann nicht geöffnet werden";
+$MESS["DISK_FILE_EDITOR_ONLYOFFICE_CLOUD_ERROR_RESTRICTION_DESCR"] = "#LIMIT# Nutzer bearbeiten derzeit Dokumente. Das ist die maximale Anzahl der Nutzer, die das gleichzeitig machen können. Sie können im Editor arbeiten, wenn jemand das Dokument schließt oder in den Ansichtsmodus wechselt.";
+$MESS["DISK_FILE_EDITOR_ONLYOFFICE_CLOUD_ERROR_RESTRICTION_TITLE"] = "Editor ist nicht verfügbar";
+$MESS["DISK_FILE_EDITOR_ONLYOFFICE_CUSTOM_ERROR_FILE_TITLE"] = "Datei kann nicht geöffnet werden";
+$MESS["DISK_FILE_EDITOR_ONLYOFFICE_CUSTOM_ERROR_LARGE_FILE_DESCR"] = "Die Datei ist leider zu groß und kann daher nicht geöffnet werden. Sie können das Dokument herunterladen, bearbeiten und die neue Version auf den Drive hochladen, wenn erforderlich.";
+$MESS["DISK_FILE_EDITOR_ONLYOFFICE_CUSTOM_ERROR_LARGE_FILE_TITLE"] = "Datei kann nicht geöffnet werden";
+$MESS["DISK_FILE_EDITOR_ONLYOFFICE_CUSTOM_ERROR_RIGHTS_OR_NOT_FOUND_DESCR"] = "Datei ist nicht gefunden oder Zugriff ist verweigert. Kontaktieren Sie bitte den Besitzer oder den Administrator des Accounts.";
 $MESS["DISK_FILE_EDITOR_ONLYOFFICE_DISCARD_CHANGES"] = "Die vorgenommenen Änderungen können evtl. verloren gehen.";
 $MESS["DISK_FILE_EDITOR_ONLYOFFICE_ERROR_WITH_TABLE_NOTICE"] = "Leider können die Tabellen mit Bitrix24 vorübergehend weder erstellt noch bearbeitet werden. Sie können das Dokument herunterladen oder es mit einer Software eines Dritt-Anbieters bearbeiten.";
 $MESS["DISK_FILE_EDITOR_ONLYOFFICE_HEADER_BTN_DOWNLOAD"] = "Herunterladen";

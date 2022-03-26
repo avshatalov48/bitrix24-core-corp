@@ -145,7 +145,7 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 			{
 				return;
 			}
-			
+
 			var toolbarContainer = this.getToolbarContainer();
 			if(!toolbarContainer)
 			{
@@ -613,6 +613,30 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 			else if(typeID === BX.CrmActivityType.provider && BX.CrmActivityProvider)
 			{
 				var providerID = item.getSetting('providerID', '');
+
+				if (providerID === 'STORE_DOCUMENT')
+				{
+					var ownerId = parseInt(item.getSetting('ownerID', 0));
+					if(ownerId <= 0)
+					{
+						return;
+					}
+
+					var dealOpenPath = BX.message("CMR_DEAL_DETAILS_PATH");
+					dealOpenPath = dealOpenPath.replace("#deal_id#", ownerId);
+					dealOpenPath = BX.util.add_url_param(dealOpenPath, { "IFRAME": "Y", "IFRAME_TYPE": "SIDE_SLIDER" });
+
+					if (BX.SidePanel)
+					{
+						BX.SidePanel.Instance.open(dealOpenPath);
+					}
+					else
+					{
+						window.top.location.href = dealOpenPath;
+					}
+
+					return;
+				}
 
 				if (providerID === 'REST_APP')
 				{
@@ -3167,6 +3191,7 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 		contact: 'C',
 		company: 'CO',
 		order: 'O',
+		smartInvoice: 'SI',
 		dynamicPrefix: 'T',
 		resolve: function(name)
 		{
@@ -3189,6 +3214,10 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 			else if (name === 'ORDER')
 			{
 				return this.order;
+			}
+			else if (name === 'SMART_INVOICE')
+			{
+				return this.smartInvoice;
 			}
 			else if (name.indexOf('DYNAMIC_') === 0)
 			{
@@ -3801,7 +3830,7 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 			if (BX.CrmActivityProvider)
 			{
 				var activity = BX.CrmActivityProvider.create(this._settings, this._editor, this._options);
-			
+
 				window.setTimeout(
 					function() { activity.openDialog(mode);},
 					10
@@ -4846,7 +4875,7 @@ if(typeof(BX.CrmActivityEditor) == 'undefined')
 		_prepareViewDlgContent: function(dlgId)
 		{
 			var enableInstantEdit = this.getOption('enableInstantEdit', true);
-			
+
 			var type = this.getType();
 			var cfg = this._dlgCfg;
 			var codeSalt = this._salt;

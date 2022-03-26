@@ -22,6 +22,15 @@ if (isset($arResult['hideBorder']) && $arResult['hideBorder'] === true)
 	);
 }
 
+if (isset($arResult['spotlight']) && is_array($arResult['spotlight']))
+{
+	$APPLICATION->includeComponent(
+		"bitrix:spotlight",
+		"",
+		$arResult['spotlight'],
+	);
+}
+
 ?>
 <?php if (!empty($arResult['communications']['buttons'])):?>
 	<script>

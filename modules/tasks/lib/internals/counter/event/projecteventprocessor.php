@@ -17,6 +17,7 @@ use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Counter\CounterController;
 use Bitrix\Tasks\Internals\Counter\CounterDictionary;
 use Bitrix\Tasks\Internals\Counter\Push\GroupSender;
+use Bitrix\Tasks\Internals\Counter\Push\PushSender;
 
 class ProjectEventProcessor
 {
@@ -40,6 +41,7 @@ class ProjectEventProcessor
 		$recountComments = [];
 		$projectPermUpdated = [];
 		$pushList = [];
+		$personalPush = [];
 
 		foreach ($events as $event)
 		{
@@ -61,8 +63,18 @@ class ProjectEventProcessor
 					(new CounterController($event->getUserId()))->readProject($groupId);
 					$pushList[] = [
 						'EVENT' => $eventType,
-						'USER_ID' => $event->getUserId()
+						'USER_ID' => $event->getUserId(),
 					];
+					$personalPush[] = $event->getUserId();
+					break;
+
+				case EventDictionary::EVENT_AFTER_SCRUM_READ_ALL:
+					(new CounterController($event->getUserId()))->readScrum($groupId);
+					$pushList[] = [
+						'EVENT' => $eventType,
+						'USER_ID' => $event->getUserId(),
+					];
+					$personalPush[] = $event->getUserId();
 					break;
 
 				case EventDictionary::EVENT_PROJECT_DELETE:
@@ -116,6 +128,7 @@ class ProjectEventProcessor
 				EventDictionary::EVENT_PROJECT_USER_DELETE,
 				EventDictionary::EVENT_AFTER_COMMENTS_READ_ALL,
 				EventDictionary::EVENT_AFTER_PROJECT_READ_ALL,
+				EventDictionary::EVENT_AFTER_SCRUM_READ_ALL,
 			];
 			$taskEventsForUsers = [
 				EventDictionary::EVENT_AFTER_TASK_MUTE,
@@ -207,6 +220,11 @@ class ProjectEventProcessor
 				'EVENT' => EventDictionary::EVENT_PROJECT_PERM_UPDATE,
 				'GROUP_ID' => $groupId
 			];
+		}
+
+		if (!empty($personalPush))
+		{
+			(new PushSender())->sendUserCounters(array_unique($personalPush));
 		}
 
 		if (!empty($pushList))

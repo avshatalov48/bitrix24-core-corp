@@ -103,6 +103,7 @@ class Preset
 			}
 
 			$this->addButton($preset);
+
 		}
 
 		if(!$this->hasErrors())

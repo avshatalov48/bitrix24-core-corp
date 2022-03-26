@@ -24,11 +24,20 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 			'Title' => '',
 			'DynamicTypeId' => 0,
 			'DynamicEntitiesFields' => [],
+
+			// return
+			'ItemId' => null,
 		];
 
 		$this->SetPropertiesTypes([
 			'DynamicTypeId' => ['Type' => FieldType::INT],
 		]);
+	}
+
+	protected function reInitialize()
+	{
+		parent::reInitialize();
+		$this->ItemId = 0;
 	}
 
 	protected function prepareProperties(): void
@@ -49,7 +58,8 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 	{
 		$errors = parent::checkProperties();
 
-		if (!CCrmOwnerType::isPossibleDynamicTypeId($this->DynamicTypeId))
+		$documentType = CCrmBizProcHelper::ResolveDocumentType($this->DynamicTypeId);
+		if (!isset($documentType))
 		{
 			$errors->setError(new Error(Loc::getMessage('CRM_CDA_DYNAMIC_TYPE_ID_ERROR')));
 		}
@@ -70,11 +80,28 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 			}
 		}
 
-		$entityType = CCrmOwnerType::ResolveName($this->DynamicTypeId);
-		$creationResult = Document\Dynamic::CreateDocument($entityType, $fieldsValues);
+		$documentType = CCrmBizProcHelper::ResolveDocumentType($this->DynamicTypeId);
+		try
+		{
+			$creationResult = static::getDocumentService()->CreateDocument($documentType, $fieldsValues);
+		}
+		catch (\Bitrix\Main\NotImplementedException $exception)
+		{
+			$creationResult = false;
+		}
+
 		if (is_string($creationResult))
 		{
 			$errorCollection->setError(new Error($creationResult));
+		}
+		elseif ($creationResult === false)
+		{
+			$errorCollection->setError(new Error(Loc::getMessage('CRM_CDA_ITEM_CREATION_ERROR')));
+		}
+		elseif (is_int($creationResult))
+		{
+			$this->ItemId = $creationResult;
+			$this->preparedProperties['ItemId'] = $creationResult;
 		}
 
 		return $errorCollection;
@@ -116,40 +143,25 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 
 	public static function getPropertiesDialogMap(?PropertiesDialog $dialog = null): array
 	{
-		$typesMap = Crm\Service\Container::getInstance()->getDynamicTypesMap();
-		$typesMap->load([
-			'isLoadStages' => false,
-			'isLoadCategories' => false,
-		]);
+		$typesMap = Crm\Service\Container::getInstance()->getTypesMap();
 
 		$typeNames = [];
-		$dynamicEntitiesFields = [];
-		foreach ($typesMap->getTypes() as $typeId => $type)
+		$entitiesFields = [];
+		foreach ($typesMap->getFactories() as $factory)
 		{
-			$typeNames[$typeId] = $type->getTitle();
+			$entityTypeId = $factory->getEntityTypeId();
+			$documentType = CCrmBizProcHelper::ResolveDocumentType($entityTypeId);
 
-			$entityTypeId = $type->getEntityTypeId();
-			$dynamicEntitiesFields[$entityTypeId] = [];
-			foreach (Document\Dynamic::getEntityFields($entityTypeId) as $fieldId => $field)
+			if (isset($documentType) && static::isTypeSupported($entityTypeId))
 			{
-				if ($field['Editable'] && !static::isInternalField($fieldId) || static::isRequiredFieldId($fieldId))
-				{
-					$dynamicEntitiesFields[$entityTypeId]["{$entityTypeId}_{$fieldId}"] = [
-						'Name' => $field['Name'],
-						'FieldName' => $entityTypeId . '_' . mb_strtolower($fieldId),
-						'Type' => $field['Type'],
-						'Options' => $field['Options'] ?? null,
-						'Default' => $field['Default'] ?? null,
-						'Settings' => $field['Settings'] ?? null,
-						'Multiple' => $field['Multiple'] ?? false,
-					];
-				}
+				$typeNames[$entityTypeId] = static::getDocumentService()->getDocumentTypeName($documentType);
+				$entitiesFields[$entityTypeId] = static::getEntityFields($entityTypeId);
 			}
 		}
 
 		return [
 			'DynamicTypeId' => [
-				'Name' => Loc::getMessage('CRM_CDA_DYNAMIC_TYPE_ID'),
+				'Name' => Loc::getMessage('CRM_CDA_TYPE_ID'),
 				'FieldName' => 'dynamic_type_id',
 				'Type' => FieldType::SELECT,
 				'Options' => $typeNames,
@@ -157,12 +169,46 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 			],
 			'DynamicEntitiesFields' => [
 				'FieldName' => 'dynamic_entities_fields',
-				'Map' => $dynamicEntitiesFields,
+				'Map' => $entitiesFields,
 				'Getter' => function($dialog, $property, $currentActivity, $compatible) {
 					return $currentActivity['Properties']['DynamicEntitiesFields'];
 				},
 			],
 		];
+	}
+
+	private static function isTypeSupported(int $entityTypeId): bool
+	{
+		return Crm\Automation\Factory::isSupported($entityTypeId) && $entityTypeId !== CCrmOwnerType::Order;
+	}
+
+	private static function getEntityFields(int $entityTypeId): array
+	{
+		$documentType = CCrmBizProcHelper::ResolveDocumentType($entityTypeId);
+		$documentService = static::getDocumentService();
+		$entityFields = [];
+
+		foreach ($documentService->GetDocumentFields($documentType) as $fieldId => $field)
+		{
+			$isIgnoredField = !$field['Editable'] || static::isInternalField($fieldId) || static::isMultiField($field);
+
+			if (!$isIgnoredField || static::isRequiredFieldId($fieldId))
+			{
+				$entityFieldId = "{$entityTypeId}_{$fieldId}";
+
+				$entityFields[$entityFieldId] = $field;
+				$entityFields[$entityFieldId]['FieldName'] = $entityTypeId . '_' . mb_strtolower($fieldId);
+			}
+		}
+
+		return $entityFields;
+	}
+
+	private static function isMultiField(array $field): bool
+	{
+		$fieldTypes = ['phone', 'email', 'web', 'im'];
+
+		return in_array($field['Type'] ?? '', $fieldTypes, true);
 	}
 
 	protected static function isInternalField(string $fieldId): bool

@@ -1,0 +1,2 @@
+<?php
+$MESS["CRM_ENTITY_SUMMARY_ORDER"] = "Заказ №#ORDER_ID# от #ORDER_DATE#";

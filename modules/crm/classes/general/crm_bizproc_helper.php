@@ -38,6 +38,10 @@ class CCrmBizProcHelper
 		{
 			$docName = \Bitrix\Crm\Integration\BizProc\Document\Quote::class;
 		}
+		elseif ($ownerTypeID === CCrmOwnerType::SmartInvoice)
+		{
+			$docName = \Bitrix\Crm\Integration\BizProc\Document\SmartInvoice::class;
+		}
 		elseif(CCrmOwnerType::isPossibleDynamicTypeId($ownerTypeID))
 		{
 			$docName = \Bitrix\Crm\Integration\BizProc\Document\Dynamic::class;

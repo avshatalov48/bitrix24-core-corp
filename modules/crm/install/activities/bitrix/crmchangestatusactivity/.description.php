@@ -16,7 +16,7 @@ if (
 
 $arActivityDescription = [
 	'NAME'           => GetMessage('CRM_CHANGE_STATUS_NAME'),
-	'DESCRIPTION'    => GetMessage('CRM_CHANGE_STATUS_DESC'),
+	'DESCRIPTION'    => GetMessage('CRM_CHANGE_STATUS_DESC_1'),
 	'TYPE'           => ['activity', 'robot_activity'],
 	'CLASS'          => 'CrmChangeStatusActivity',
 	'JSCLASS'        => 'BizProcActivity',
@@ -32,7 +32,7 @@ $arActivityDescription = [
 			['crm', 'Bitrix\Crm\Integration\BizProc\Document\Order'],
 			['crm', 'Bitrix\Crm\Integration\BizProc\Document\Dynamic'],
 			['crm', 'Bitrix\Crm\Integration\BizProc\Document\Quote'],
-			//['crm', 'Bitrix\Crm\Integration\BizProc\Document\Invoice'],
+			['crm', 'Bitrix\Crm\Integration\BizProc\Document\SmartInvoice'],
 		],
 	],
 	'ROBOT_SETTINGS' => [

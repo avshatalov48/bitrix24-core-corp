@@ -1,4 +1,7 @@
-<?
+<?php
+
+use Bitrix\Main\Localization\Loc;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 class CBPCrmWaitActivity extends CBPActivity
@@ -27,7 +30,7 @@ class CBPCrmWaitActivity extends CBPActivity
 			return CBPActivityExecutionStatus::Closed;
 
 		$documentId = $this->GetDocumentId();
-		list($ownerTypeName, $ownerId) = explode('_', $documentId[2]);
+		[$ownerTypeName, $ownerId] = explode('_', $documentId[2]);
 		$ownerTypeId = CCrmOwnerType::ResolveID($ownerTypeName);
 		$responsibleId = CCrmOwnerType::GetResponsibleID($ownerTypeId, $ownerId, false);
 
@@ -48,7 +51,7 @@ class CBPCrmWaitActivity extends CBPActivity
 
 			if (!isset($document[$targetField]))
 			{
-				$this->WriteToTrackingService(GetMessage("CRM_WAIT_ACTIVITY_EXECUTE_ERROR_WAIT_TARGET"), 0, CBPTrackingType::Error);
+				$this->WriteToTrackingService(GetMessage("CRM_WAIT_ACTIVITY_EXECUTE_ERROR_WAIT_TARGET_1"), 0, CBPTrackingType::Error);
 				return CBPActivityExecutionStatus::Closed;
 			}
 
@@ -56,7 +59,7 @@ class CBPCrmWaitActivity extends CBPActivity
 			$time = $targetDate !== '' ? MakeTimeStamp($targetDate) : false;
 			if(!$time)
 			{
-				$this->WriteToTrackingService(GetMessage("CRM_WAIT_ACTIVITY_EXECUTE_ERROR_WAIT_TARGET_TIME"), 0, CBPTrackingType::Error);
+				$this->WriteToTrackingService(GetMessage("CRM_WAIT_ACTIVITY_EXECUTE_ERROR_WAIT_TARGET_TIME_1"), 0, CBPTrackingType::Error);
 				return CBPActivityExecutionStatus::Closed;
 			}
 
@@ -251,36 +254,15 @@ class CBPCrmWaitActivity extends CBPActivity
 		if(($duration % 7) === 0)
 		{
 			$duration = $duration / 7;
-			$result = $this->getNumberDeclension($duration,
-				GetMessage('CRM_WAIT_ACTIVITY_WEEK_NOMINATIVE'),
-				GetMessage('CRM_WAIT_ACTIVITY_WEEK_GENITIVE_SINGULAR'),
-				GetMessage('CRM_WAIT_ACTIVITY_WEEK_GENITIVE_PLURAL')
-			);
+			$result = Loc::getMessagePlural('CRM_WAIT_ACTIVITY_WEEK', $duration);
 
 		}
 		else
 		{
-			$result = $this->getNumberDeclension($duration,
-				GetMessage('CRM_WAIT_ACTIVITY_DAY_NOMINATIVE'),
-				GetMessage('CRM_WAIT_ACTIVITY_DAY_GENITIVE_SINGULAR'),
-				GetMessage('CRM_WAIT_ACTIVITY_DAY_GENITIVE_PLURAL')
-			);
+			$result = Loc::getMessagePlural('CRM_WAIT_ACTIVITY_DAY', $duration);
 		}
 
 		return $duration . ' ' . $result;
-	}
-
-	private function getNumberDeclension($val, $nominative, $genitiveSingular, $genitivePlural)
-	{
-		if ($val > 20)
-			$val = ($val % 10);
-
-		if ($val == 1)
-			return $nominative;
-		elseif ($val > 1 && $val < 5)
-			return $genitiveSingular;
-		else
-			return $genitivePlural;
 	}
 
 	private static function getTargetFields(array $documentType)

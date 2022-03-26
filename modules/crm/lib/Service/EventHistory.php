@@ -100,6 +100,13 @@ class EventHistory
 		return $this->add(static::EVENT_TYPE_UPDATE, $eventData);
 	}
 
+	public function registerExport(TrackedObject $trackedObject): Result
+	{
+		$eventData = $trackedObject->prepareExportEventData();
+
+		return $this->add(static::EVENT_TYPE_EXPORT, $eventData);
+	}
+
 	/**
 	 * Adds new event record in the DB
 	 *

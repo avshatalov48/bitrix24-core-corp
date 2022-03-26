@@ -56,7 +56,7 @@ class DynamicController extends BaseController
 	 */
 	public function getSuspendedEntityTypeID(): int
 	{
-		return \CCrmOwnerType::getSuspendedDynamicTypeId($this->getEntityTypeID());
+		return \CCrmOwnerType::ResolveSuspended($this->getEntityTypeID());
 	}
 
 	/**
@@ -143,16 +143,16 @@ class DynamicController extends BaseController
 		$contacts = $item->getContactBindings();
 		if(!empty($contacts))
 		{
-			foreach($contacts as $item)
+			foreach($contacts as $contact)
 			{
-				$slots['CONTACT_IDS'][] = (int)$item['CONTACT_ID'];
+				$slots['CONTACT_IDS'][] = (int)$contact['CONTACT_ID'];
 			}
 		}
 
 		$slots = array_merge($slots, $this->prepareActivityData($entityId, $params));
 
 		return [
-			'TITLE' => $params['FIELDS']['TITLE'],
+			'TITLE' => $item->getHeading(),
 			'SLOTS' => $slots
 		];
 	}
@@ -378,6 +378,35 @@ class DynamicController extends BaseController
 		$factory = Crm\Service\Container::getInstance()->getFactory($this->getEntityTypeID());
 
 		$item = $factory->createItem();
+		// remove parent field values, because actual values will be restored in recoverCustomRelations
+		foreach ($fields as $name => $value)
+		{
+			if (Crm\Service\ParentFieldManager::isParentFieldName($name))
+			{
+				unset($fields[$name]);
+			}
+			$field = $factory->getFieldsCollection()->getField($name);
+			if (
+				$field
+				&& $field->getType() === Crm\Field::TYPE_DATETIME
+				&& !$field->isValueEmpty($value)
+			)
+			{
+				if (is_array($value))
+				{
+					$values = [];
+					foreach ($value as $singleValue)
+					{
+						$values[] = Main\Type\DateTime::createFromUserTime($singleValue);
+					}
+					$fields[$name] = $values;
+				}
+				else
+				{
+					$fields[$name] = Main\Type\DateTime::createFromUserTime($value);
+				}
+			}
+		}
 		$item->setFromCompatibleData($fields);
 
 		if($item)

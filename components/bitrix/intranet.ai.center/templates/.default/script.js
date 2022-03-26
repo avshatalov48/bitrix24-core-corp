@@ -45,6 +45,10 @@ BX.Intranet.AI.Center.prototype =
 		{
 			this.openScoring(tile);
 		}
+		else if (tile.id === "face-tracker")
+		{
+			this.openFaceTracker(tile);
+		}
 	},
 
 	openAssistantApp: function(tile)
@@ -66,6 +70,11 @@ BX.Intranet.AI.Center.prototype =
 	openFaceCard: function(tile)
 	{
 		BX.SidePanel.Instance.open(tile.data.url);
+	},
+
+	openFaceTracker: function(tile)
+	{
+		BX.SidePanel.Instance.open(tile.data.url, { allowChangeHistory: false });
 	},
 
 	openScoring: function(tile)

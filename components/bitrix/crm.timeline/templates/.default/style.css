@@ -221,7 +221,8 @@
 
 .crm-entity-stream-section-icon-store { background-position: center -1249px; }
 
-.crm-entity-stream-section-icon-task { background-position: center -124px; }
+.crm-entity-stream-section-icon-task,
+.crm-entity-stream-section-icon-store-document { background-position: center -124px; }
 
 .crm-entity-stream-section-icon-meeting { background-position: center -155px; }
 
@@ -554,7 +555,10 @@
 .crm-entity-stream-content-event-missing,
 .crm-entity-stream-content-event-successful,
 .crm-entity-stream-content-event-payment-error,
-.crm-entity-stream-content-event-sent {
+.crm-entity-stream-content-event-sent,
+.crm-entity-stream-content-event-draft,
+.crm-entity-stream-content-event-conducted,
+.crm-entity-stream-content-event-cancelled {
 	display: inline-block;
 	margin: 0 5px 3px 0;
 	padding: 1px 8px 0;
@@ -584,14 +588,21 @@
 
 .crm-entity-stream-content-event-paid,
 .crm-entity-stream-content-event-shipped,
-.crm-entity-stream-content-event-successful {
+.crm-entity-stream-content-event-successful,
+.crm-entity-stream-content-event-conducted {
 	background-color: #e3f6c8;
 	color: #589308;
 }
 
-.crm-entity-stream-content-event-sent {
+.crm-entity-stream-content-event-sent,
+.crm-entity-stream-content-event-draft {
 	background-color: #e8e9eb;
 	color: #7a818c;
+}
+
+.crm-entity-stream-content-event-cancelled {
+	background-color: rgba(255, 169, 0, 0.37);
+	color: #B47A00;
 }
 
 .crm-entity-stream-content-event-done {
@@ -1092,6 +1103,39 @@
 }
 
 .crm-entity-stream-content-new-sms-textarea:focus { outline: none; }
+
+.crm-entity-stream-content-new-sms-templates
+{
+	padding: 10px 14px 10px 16px;
+}
+
+.crm-entity-stream-content-new-sms-templates .ui-ctl-label-text {
+	color: #a8adb4;
+}
+
+.crm-entity-stream-content-new-sms-preview
+{
+	background: #e0f7fe;
+	padding: 12px;
+	color: #333;
+	border-radius: 4px;
+	margin-top: 18px;
+	position: relative;
+}
+
+.crm-entity-stream-content-new-sms-preview:after {
+	position: absolute;
+	top: -10px;
+	display: block;
+	box-sizing: content-box;
+	width: 0;
+	height: 0;
+	border: 5px solid transparent;
+	content: '';
+	left: 14px;
+	border-bottom-color: #e0f7fe;
+	border-right-color: #e0f7fe;
+}
 
 .crm-entity-stream-content-new-sms-connect-link {
 	position: absolute;
@@ -3479,55 +3523,6 @@ span + .crm-entity-stream-content-delivery-phone-ext {
 
 /*delivery end*/
 
-.crm-entity-stream-section-content .main-buttons {
-	height: 47px;
-}
-.crm-entity-stream-section-content .main-buttons:after {
-	content: '';
-	display: block;
-	position: absolute;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	height: 1px;
-	width: 100%;
-	z-index: 1;
-	background-color: #e2e3e6;
-}
-.crm-entity-stream-section-content .main-buttons-item-link {
-	font-size: 14px;
-	height: 46px;
-	line-height: 46px;
-	font-family: inherit;
-}
-.crm-entity-stream-section-content .main-buttons-item {
-	border-bottom: 1px solid transparent;
-	height: 46px;
-	line-height: 46px;
-	margin: 0 20px 0 0;
-}
-
-.crm-entity-stream-section-content .main-buttons-item-more {
-	margin: 0;
-}
-
-.crm-entity-stream-section-content .main-buttons-item-active {
-	height: 46px!important;
-	border-bottom: 1px solid #1058d0;
-	z-index: 2;
-}
-.crm-entity-stream-section-content .main-buttons-item-more.main-buttons-item:after {
-	top: 30px;
-}
-.crm-entity-stream-section-content .main-buttons-item.crm-zoom-tariff-lock {
-	padding-left: 13px;
-	background: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5IiBoZWlnaHQ9IjEyIiB2aWV3Qm94PSIwIDAgOSAxMiI+ICA8cGF0aCBmaWxsPSIjMjhCQUU5IiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik03Ljk1Miw1IEw5LDUgTDksMTIgTDAsMTIgTDAsNSBMMS4wNTIsNSBMMS4wNTIsMy40MTIgQzEuMTE1MzMxNjcsMS41NTIzMjI3NCAyLjY0MTI0NDY2LDAuMDc3NDkwNDI1MSA0LjUwMiwwLjA3NzQ5MDQyNTEgQzYuMzYyNzU1MzQsMC4wNzc0OTA0MjUxIDcuODg4NjY4MzMsMS41NTIzMjI3NCA3Ljk1MiwzLjQxMiBMNy45NTIsNSBaIE02Ljk5NjQyNzgzLDUgTDcuMDA4LDMuNDEyIEM2LjkwMzAwMjI5LDIuMDc3Mjc1NzMgNS44MzU3NDU5MywxLjAyMTA4MzQ0IDQuNSwwLjkzIEMzLjE2NDI1NDA3LDEuMDIxMDgzNDQgMi4wOTY5OTc3MSwyLjA3NzI3NTczIDEuOTkyLDMuNDEyIEwyLjAwNTA0MDUzLDUgTDYuOTk2NDI3ODMsNSBaIE01LjAxOSw4Ljg3OSBMNS4wMTksMTAuMTY2IEwzLjk4MSwxMC4xNjYgTDMuOTgxLDguODc5IEMzLjc4NzY5NDg0LDguNzI1MzU2MDEgMy42NzUwMzA3Nyw4LjQ5MTkyNzg1IDMuNjc1LDguMjQ1IEMzLjY3NSw3Ljc4OTM2NTA4IDQuMDQ0MzY1MDgsNy40MiA0LjUsNy40MiBDNC45NTU2MzQ5Miw3LjQyIDUuMzI1LDcuNzg5MzY1MDggNS4zMjUsOC4yNDUgQzUuMzI0OTY5MjMsOC40OTE5Mjc4NSA1LjIxMjMwNTE2LDguNzI1MzU2MDEgNS4wMTksOC44NzkgTDUuMDE5LDguODc5IFoiLz48L3N2Zz4=) no-repeat center left;
-}
-
-.crm-entity-stream-section-content .main-buttons-item-drag-button {
-	top: -1px;
-}
-
 .crm-entity-stream-courier {
 	display: flex;
 	align-items: center;
@@ -3813,4 +3808,12 @@ span + .crm-entity-stream-content-delivery-phone-ext {
 	border-bottom: 1px solid rgba(82,92,105,.14);
 	font: 14px Helvetica, Arial, sans-serif;
 	color: #333;
+}
+
+.crm-entity-stream-section-planned-store-document .crm-entity-stream-content-detail-title {
+	margin-bottom: 10px;
+}
+.document-status-label {
+	text-transform: uppercase;
+	margin-right: 0;
 }

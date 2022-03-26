@@ -55,6 +55,8 @@ class ActionDictionary
 
 		ACTION_TASK_ROBOT_EDIT				= 'task_robot_edit',
 
+		ACTION_TASK_RESULT_EDIT				= 'task_result_edit',
+
 		ACTION_TASK_ADMIN					= 'task_admin';
 
 	public static function getLegacyActionMap(): array

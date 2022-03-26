@@ -177,6 +177,14 @@ abstract class TrackedObject
 		]);
 	}
 
+	public function prepareExportEventData(): EventHistoryData
+	{
+		return new EventHistoryData([
+			'ENTITY_TYPE' => $this->getEntityType(),
+			'ENTITY_ID' => $this->getEntityId(),
+		]);
+	}
+
 	/**
 	 * @return EventHistoryData[]
 	 * @throws ArgumentException

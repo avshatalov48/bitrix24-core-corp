@@ -46,6 +46,7 @@ export class CompletedSprints extends EventEmitter
 		this.isActiveLoad = false;
 
 		this.node = null;
+		this.listNode = null;
 	}
 
 	render(): HTMLElement
@@ -64,11 +65,11 @@ export class CompletedSprints extends EventEmitter
 			</div>
 		`;
 
-		const listNode = this.node.querySelector('.tasks-scrum__sprints--completed-list');
+		this.listNode = this.node.querySelector('.tasks-scrum__sprints--completed-list');
 
-		Event.bind(listNode, 'transitionend', this.onTransitionEnd.bind(this));
+		Event.bind(this.listNode, 'transitionend', this.onTransitionEnd.bind(this));
 
-		const observerTargetNode = listNode.querySelector('.tasks-scrum-completed-sprints-observer-target');
+		const observerTargetNode = this.listNode.querySelector('.tasks-scrum-completed-sprints-observer-target');
 
 		this.bindLoad(observerTargetNode);
 
@@ -109,11 +110,9 @@ export class CompletedSprints extends EventEmitter
 		{
 			Dom.addClass(node, '--up');
 
-			const listNode = this.node.querySelector('.tasks-scrum__sprints--completed-list');
+			Dom.addClass(this.listNode, '--visible');
 
-			Dom.addClass(listNode, '--visible');
-
-			if (!this.sprintsUploaded)
+			if (!this.isSprintsUploaded() && this.loader === null)
 			{
 				this.loader = this.showLoader();
 			}
@@ -158,6 +157,11 @@ export class CompletedSprints extends EventEmitter
 		`;
 	}
 
+	isSprintsUploaded(): boolean
+	{
+		return this.sprintsUploaded;
+	}
+
 	bindLoad(loader: HTMLElement)
 	{
 		if (typeof IntersectionObserver === `undefined`)
@@ -190,12 +194,14 @@ export class CompletedSprints extends EventEmitter
 			return;
 		}
 
+		this.statsUploaded = true;
+
 		this.requestSender.getCompletedSprintsStats()
 			.then((response) => {
-				this.statsUploaded = true;
 				this.updateStats(response.data);
 			})
 			.catch((response) => {
+				this.statsUploaded = false;
 				this.requestSender.showErrorAlert(response);
 			})
 		;
@@ -205,7 +211,7 @@ export class CompletedSprints extends EventEmitter
 	{
 		this.isActiveLoad = true;
 
-		if (this.sprintsUploaded)
+		if (this.isSprintsUploaded() && this.loader === null)
 		{
 			this.loader = this.showLoader();
 		}
@@ -246,12 +252,10 @@ export class CompletedSprints extends EventEmitter
 
 	showLoader(): Loader
 	{
-		const listNode = this.node.querySelector('.tasks-scrum__sprints--completed-list');
-
-		const listPosition = Dom.getPosition(listNode);
+		const listPosition = Dom.getPosition(this.listNode);
 
 		const loader = new Loader({
-			target: listNode,
+			target: this.listNode,
 			size: 60,
 			mode: 'inline',
 			offset: {
@@ -276,8 +280,6 @@ export class CompletedSprints extends EventEmitter
 
 	createSprints(sprints: Array)
 	{
-		const listNode = this.node.querySelector('.tasks-scrum__sprints--completed-list');
-
 		sprints.forEach((sprintData: SprintParams) => {
 			sprintData.isShortView = 'Y';
 			const sprint = Sprint.buildSprint(sprintData);
@@ -286,7 +288,7 @@ export class CompletedSprints extends EventEmitter
 
 			Dom.insertBefore(
 				sprint.render(),
-				listNode.querySelector('.tasks-scrum-completed-sprints-observer-target')
+				this.listNode.querySelector('.tasks-scrum-completed-sprints-observer-target')
 			);
 			sprint.onAfterAppend();
 
@@ -294,14 +296,24 @@ export class CompletedSprints extends EventEmitter
 		});
 	}
 
+	addSprint(sprint: Sprint)
+	{
+		this.entityStorage.addSprint(sprint);
+
+		Dom.insertBefore(sprint.render(), this.listNode.firstElementChild);
+
+		sprint.onAfterAppend();
+
+		this.emit('createSprint', sprint);
+	}
+
 	showList()
 	{
 		const parentNode = this.node.querySelector('.tasks-scrum__sprints--completed');
-		const listNode = this.node.querySelector('.tasks-scrum__sprints--completed-list');
 
 		Dom.addClass(parentNode, '--open');
 
-		listNode.style.height = `${ listNode.scrollHeight }px`;
+		this.listNode.style.height = `${ this.listNode.scrollHeight }px`;
 
 		this.emit('adjustWidth');
 	}
@@ -309,28 +321,25 @@ export class CompletedSprints extends EventEmitter
 	hideList()
 	{
 		const parentNode = this.node.querySelector('.tasks-scrum__sprints--completed');
-		const listNode = this.node.querySelector('.tasks-scrum__sprints--completed-list');
 
 		Dom.removeClass(parentNode, '--open');
 
-		listNode.style.height = `${ listNode.scrollHeight }px`;
-		listNode.clientHeight;
-		listNode.style.height = '0';
+		this.listNode.style.height = `${ this.listNode.scrollHeight }px`;
+		this.listNode.clientHeight;
+		this.listNode.style.height = '0';
 	}
 
 	onTransitionEnd()
 	{
-		const listNode = this.node.querySelector('.tasks-scrum__sprints--completed-list');
-
-		const isHide = (listNode.style.height === '0px');
+		const isHide = (this.listNode.style.height === '0px');
 
 		if (isHide)
 		{
-			Dom.removeClass(listNode, '--visible');
+			Dom.removeClass(this.listNode, '--visible');
 		}
 		else
 		{
-			listNode.style.height = 'auto';
+			this.listNode.style.height = 'auto';
 		}
 
 		this.emit('adjustWidth');

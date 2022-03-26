@@ -49,7 +49,7 @@ class SalesCenterCashboxPanel extends CBitrixComponent implements Controllerable
 			return;
 		}
 
-		if(!SaleManager::getInstance()->isManagerAccess())
+		if(!SaleManager::getInstance()->isManagerAccess(true))
 		{
 			$this->showError(Loc::getMessage('SCP_ACCESS_DENIED'));
 			return;

@@ -389,7 +389,7 @@ class StatusTable extends Entity\DataManager
 	 */
 	public static function getStatusesByEntityId(string $entityId): array
 	{
-		if (!defined('CACHED_b_crm_status') || CACHED_b_crm_status === false)
+		if (defined('CACHED_b_crm_status') && CACHED_b_crm_status === false)
 		{
 			return static::loadStatusesByEntityId($entityId);
 		}

@@ -308,6 +308,24 @@ if (check_bitrix_sessid())
 						'pause' => 'pauseExecution'
 					);
 
+					$taskId = (int) filter_input(INPUT_POST, 'id');
+					if (
+						$_POST['mode'] === 'close'
+						&& \Bitrix\Tasks\Internals\Task\Result\ResultManager::requireResult($taskId)
+						&& !\Bitrix\Tasks\Internals\Task\Result\ResultManager::hasResult($taskId)
+					)
+					{
+						$jsonReply = [
+							'status' => 'failure',
+							'message' => Loc::getMessage('TASKS_GANTT_RESULT_REQUIRED'),
+						];
+						$APPLICATION->RestartBuffer();
+						header('Content-Type: application/x-javascript; charset=' . LANG_CHARSET);
+						echo CUtil::PhpToJsObject($jsonReply);
+						CMain::FinalActions();
+						exit();
+					}
+
 					$arFields = array();
 					if ($_POST["mode"] == "mark" && in_array($_POST["mark"], array("NULL", "P", "N")))
 					{

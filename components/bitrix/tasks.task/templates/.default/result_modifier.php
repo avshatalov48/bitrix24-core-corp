@@ -10,9 +10,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 use Bitrix\Main\Localization\Loc;
 
-use Bitrix\Tasks\Manager;
 use Bitrix\Tasks\Util\Type;
 use Bitrix\Tasks\Util\User;
+use Bitrix\Tasks\Component\Task\TasksTaskFormState;
 
 Loc::loadMessages(dirname(__FILE__).'/template.php');
 
@@ -319,7 +319,10 @@ $arResult['TEMPLATE_DATA']['BLOCKS']['CLASSES'] = array();
 $allAdditionalChosen = true;
 $hasAdditionalUnchosenFilled = false;
 $additionalBlocks = array();
-if(is_array($arResult['COMPONENT_DATA']['STATE']['BLOCKS']) && is_array($arResult['DATA']['TASK']) && !empty($arResult['DATA']['TASK']))
+if(
+	is_array($arResult['COMPONENT_DATA']['STATE']['BLOCKS'])
+	&& is_array($arResult['DATA']['TASK']) && !empty($arResult['DATA']['TASK'])
+)
 {
 	$baseBlocks = array(
 		'SE_CHECKLIST' => true,
@@ -504,6 +507,8 @@ if ($parentTaskId && $relatedTasks[$parentTaskId])
 	$arResult['DATA']['CURRENT_TASKS']['PARENT'][] = $relatedTasks[$parentTaskId];
 }
 
+$validParams = \Bitrix\Tasks\Internals\Task\ParameterTable::paramsList();
+
 $params = array();
 if(Bitrix\Tasks\Util\Type::isIterable($taskData['SE_PARAMETER']))
 {
@@ -513,7 +518,7 @@ if(Bitrix\Tasks\Util\Type::isIterable($taskData['SE_PARAMETER']))
 	}
 }
 
-foreach(array(1, 2) as $propCode)
+foreach($validParams as $propCode)
 {
 	$params[$propCode]['TITLE'] = Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_PARAMETER_'.$propCode);
 	$params[$propCode]['HINT'] = Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_PARAMETER_HINT_'.$propCode);
@@ -523,12 +528,19 @@ foreach(array(1, 2) as $propCode)
 	{
 		$params[$propCode]['CODE'] = rand(100, 999).rand(100, 999);
 	}
-}
 
-$arResult['TEMPLATE_DATA']['PARAMS'] = array(
-	1 => $params[1],
-	2 => $params[2],
-);
+	if (
+		!array_key_exists('VALUE', $params[$propCode])
+		&& isset($arResult['COMPONENT_DATA']['STATE']['FLAGS'])
+		&& is_array($arResult['COMPONENT_DATA']['STATE']['FLAGS'])
+		&& array_key_exists('TASK_PARAM_'.$propCode, $arResult['COMPONENT_DATA']['STATE']['FLAGS'])
+	)
+	{
+		$params[$propCode]['VALUE'] = $arResult['COMPONENT_DATA']['STATE']['FLAGS']['TASK_PARAM_'.$propCode] ? 'Y' : 'N' ;
+	}
+
+	$arResult['TEMPLATE_DATA']['PARAMS'][$propCode] = $params[$propCode];
+}
 
 $project = array();
 if($taskData['SE_PROJECT'] && count($taskData['SE_PROJECT']))
@@ -562,6 +574,7 @@ $params = [
 $tasksDdRes = CTasks::GetList($order, $filter, $select, $params);
 while ($task = $tasksDdRes->Fetch())
 {
+	$task['TITLE'] = \Bitrix\Main\Text\Emoji::decode($task['TITLE']);
 	$lastTasks[] = $task;
 }
 

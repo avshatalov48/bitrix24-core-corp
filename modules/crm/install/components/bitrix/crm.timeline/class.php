@@ -143,7 +143,12 @@ class CCrmTimelineComponent extends CBitrixComponent
 			array()
 		);
 
-		if (!Zoom::isAvailable())
+		if (isset($this->arParams['~ENABLE_ZOOM']))
+		{
+			$this->arResult['ENABLE_ZOOM'] = (bool)$this->arParams['~ENABLE_ZOOM'];
+			$this->arResult['STATUS_ZOOM'] = true;
+		}
+		elseif (!Zoom::isAvailable())
 		{
 			$this->arResult['ENABLE_ZOOM'] = false;
 			$this->arResult['STATUS_ZOOM'] = false;
@@ -656,7 +661,10 @@ class CCrmTimelineComponent extends CBitrixComponent
 			$filter['CREATED_from'] = Main\Type\DateTime::tryParse($filter['CREATED_from']);
 		}
 
-		if($offsetTime instanceof DateTime && (!isset($filter['CREATED_to']) || $offsetTime < $filter['CREATED_to']))
+		if(
+			$offsetTime instanceof DateTime
+			&& (!isset($filter['CREATED_to']) || $offsetTime->getTimestamp() < $filter['CREATED_to']->getTimestamp())
+		)
 		{
 			$filter['CREATED_to'] = $offsetTime;
 		}
@@ -674,11 +682,14 @@ class CCrmTimelineComponent extends CBitrixComponent
 		);
 
 		if (
-			$this->entityTypeID === \CCrmOwnerType::Deal
-			&& !\CCrmSaleHelper::isWithOrdersMode()
+			!\CCrmSaleHelper::isWithOrdersMode()
+			&& (
+				$this->entityTypeID === \CCrmOwnerType::Deal
+				|| \CCrmOwnerType::isPossibleDynamicTypeId($this->entityTypeID)
+			)
 		)
 		{
-			$orderFilter = $this->getExcludingOrderFilter($this->entityID);
+			$orderFilter = $this->getExcludingOrderFilter($this->entityID, $this->entityTypeID);
 			$query->whereNot($orderFilter);
 		}
 
@@ -808,21 +819,11 @@ class CCrmTimelineComponent extends CBitrixComponent
 		return $chatData;
 	}
 
-	private function getExcludingOrderFilter(int $dealId)
+	private function getExcludingOrderFilter(int $ownerId, int $ownerTypeId)
 	{
-		$orderList = [];
-
-		$dealListIterator = Crm\Order\DealBinding::getList([
-			'select' => ['ORDER_ID'],
-			'filter' => ['DEAL_ID' => $dealId],
-		]);
-		while ($deal = $dealListIterator->fetch())
-		{
-			$orderList[] = $deal['ORDER_ID'];
-		}
-
 		$orderFilter = Query::filter();
 
+		$orderList = Crm\Binding\OrderEntityTable::getOrderIdsByOwner($ownerId, $ownerTypeId);
 		if ($orderList)
 		{
 			$orderFilter->whereIn('ASSOCIATED_ENTITY_ID', $orderList);

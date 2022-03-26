@@ -43,9 +43,11 @@ if(typeof(BX.Crm.DedupeWizard) === "undefined")
 			this._contextId = BX.prop.getString(this._settings, "contextId", "");
 			this._typeInfos = BX.prop.getObject(this._settings, "typeInfos", {});
 			this._config = BX.prop.getObject(this._settings, "config", {});
+			this._indexAgentState = BX.prop.getObject(this._settings, "indexAgentState", {});
+			this._mergeAgentState = BX.prop.getObject(this._settings, "mergeAgentState", {});
 			this._dedupeSettingsPath = BX.prop.getString(this._settings, "dedupeSettingsPath", "");
 			this._mergeMode = 'auto';
-			
+
 			this._steps = BX.prop.getObject(this._settings, "steps", {});
 			for(var key in this._steps)
 			{
@@ -79,9 +81,37 @@ if(typeof(BX.Crm.DedupeWizard) === "undefined")
 			this._config = config;
 			BX.onCustomEvent(this, "onConfigChange");
 		},
+		getIndexAgentState: function ()
+		{
+			return this._indexAgentState;
+		},
+		clearMergeAgentState: function ()
+		{
+			return this._mergeAgentState = {};
+		},
+		setIndexAgentState: function(agentState)
+		{
+			this._indexAgentState = agentState;
+			BX.onCustomEvent(this, "onSetIndexAgentState");
+		},
+		getMergeAgentState: function ()
+		{
+			return this._mergeAgentState;
+		},
+		setMergeAgentState: function(agentState)
+		{
+			this._mergeAgentState = agentState;
+			BX.onCustomEvent(this, "onSetMergeAgentState");
+		},
 		getMessage: function(name)
 		{
 			return BX.prop.getString(BX.Crm.DedupeWizard.messages, name, name);
+		},
+		restart: function()
+		{
+
+
+			this._steps["scanning"].restart();
 		},
 		getContextId: function()
 		{
@@ -429,6 +459,21 @@ if(typeof(BX.Crm.DedupeWizardStep) === "undefined")
 				0
 			);
 		},
+		goToScan: function()
+		{
+			this.getWrapper().style.display = "none";
+			this.deleteAgents();
+			this._wizard.restart();
+		},
+		deleteAgents: function()
+		{
+			BX.ajax.runComponentAction("bitrix:crm.dedupe.wizard", "deleteMergeBackground", {
+				data: { entityTypeName: BX.CrmEntityType.resolveName(this._wizard.getEntityTypeId()) }
+			});
+			BX.ajax.runComponentAction("bitrix:crm.dedupe.wizard", "deleteRebuildIndexBackground", {
+				data: { entityTypeName: BX.CrmEntityType.resolveName(this._wizard.getEntityTypeId()) }
+			});
+		},
 		end: function()
 		{
 			this.getWrapper().style.display = "none";
@@ -453,27 +498,86 @@ if(typeof(BX.Crm.DedupeWizardScanning) === "undefined")
 	{
 		BX.Crm.DedupeWizardScanning.superclass.constructor.apply(this);
 
-		this._indexRebuildContext = "";
 		this._configHandler = BX.delegate(this.onConfigButtonClick, this);
 		this._scanStartHandler = BX.delegate(this.onScanStartButtonClick, this);
+		this._scanStopHandler = BX.delegate(this.onScanStopButtonClick, this);
 		this._isScanRunning = false;
 
 		BX.addCustomEvent(window, 'SidePanel.Slider:onMessage', this.onSliderMessage.bind(this));
 	};
 	BX.extend(BX.Crm.DedupeWizardScanning, BX.Crm.DedupeWizardStep);
 
-	/*
-	BX.Crm.DedupeWizardScanning.prototype.initialize = function(id, settings)
-	{
-		BX.Crm.DedupeWizardScanning.superclass.initialize.apply(this, arguments);
-	};
-	*/
 	BX.Crm.DedupeWizardScanning.prototype.start = function()
 	{
 		BX.Crm.DedupeWizardScanning.superclass.start.apply(this, arguments);
 		this.layout();
 	};
+	BX.Crm.DedupeWizardScanning.prototype.restart = function()
+	{
+		BX.Crm.DedupeWizardScanning.superclass.start.apply(this, arguments);
+		this.layoutBeforeStart();
+	};
 	BX.Crm.DedupeWizardScanning.prototype.layout = function()
+	{
+		var indexAgentState = this.getIndexAgentState();
+		var nextStatus = BX.prop.getString(indexAgentState, "NEXT_STATUS", "")
+		var status = BX.prop.getString(indexAgentState, "STATUS", "")
+		var layoutComplete = false;
+
+		if (nextStatus === 'STATUS_UNDEFINED')
+		{
+			if (status === 'STATUS_INACTIVE' || status === 'STATUS_STOPPED')
+			{
+				this.layoutBeforeStart();
+				layoutComplete = true;
+			}
+			else if (status === 'STATUS_FINISHED')
+			{
+				this._wizard.setTotalItemCount(BX.prop.getInteger(indexAgentState, "FOUND_ITEMS", 0));
+				this._wizard.setTotalEntityCount(BX.prop.getInteger(indexAgentState, "TOTAL_ENTITIES", 0));
+
+				window.setTimeout(function(){ this.end(); }.bind(this),  0);
+
+				layoutComplete = true;
+			}
+		}
+
+		if (!layoutComplete)
+		{
+			this.layoutAfterStart();
+		}
+	};
+	BX.Crm.DedupeWizardScanning.prototype.layoutAfterStart = function()
+	{
+		this.adjustConfigurationTitle();
+		this.prepareProgressBar();
+		BX(BX.prop.getString(this._settings, "buttonId")).style.display = "none";
+		document.body.querySelector(".crm-dedupe-wizard-start-control-box").classList.remove(
+			"crm-dedupe-wizard-start-control-box-default-state"
+		);
+		document.body.querySelector(".crm-dedupe-wizard-start-icon-scanning").classList.add(
+			"crm-dedupe-wizard-start-icon-refresh-repeat-animation"
+		);
+		this.setIsScanRunning(true);
+
+		var indexAgentState = this.getIndexAgentState();
+		var totalItems = BX.prop.getInteger(indexAgentState, "TOTAL_ITEMS", 0);
+		var processedItems = BX.prop.getInteger(indexAgentState, "PROCESSED_ITEMS", 0);
+		if(processedItems > 0 && totalItems > 0)
+		{
+			this.setProgressBarValue(100 * processedItems/totalItems);
+		}
+
+		var stopButton = BX(BX.prop.getString(this._settings, "stopButtonId"));
+		if (stopButton)
+		{
+			stopButton.style.display = "";
+			BX.bind(stopButton, "click", this._scanStopHandler);
+		}
+
+		this.rebuildIndex(false);
+	};
+	BX.Crm.DedupeWizardScanning.prototype.layoutBeforeStart = function()
 	{
 		this.adjustConfigurationTitle();
 
@@ -481,8 +585,20 @@ if(typeof(BX.Crm.DedupeWizardScanning) === "undefined")
 		var button = BX(BX.prop.getString(this._settings, "buttonId"));
 		if(button)
 		{
+			button.style.display = "";
 			buttonBox.classList.add('crm-dedupe-wizard-start-control-box-default-state');
+			document.body.querySelector(".crm-dedupe-wizard-start-icon-scanning").classList.remove(
+				"crm-dedupe-wizard-start-icon-refresh-repeat-animation"
+			);
 			BX.bind(button, "click", this._scanStartHandler);
+		}
+
+		var stopButton = BX(BX.prop.getString(this._settings, "stopButtonId"));
+		if (stopButton)
+		{
+			stopButton.style.display = "none";
+			stopButton.classList.remove("ui-btn-light");
+			BX.bind(stopButton, "click", this._scanStopHandler);
 		}
 
 		var configButton = BX(BX.prop.getString(this._settings, "configEditButtonId"));
@@ -582,22 +698,27 @@ if(typeof(BX.Crm.DedupeWizardScanning) === "undefined")
 	};
 	BX.Crm.DedupeWizardScanning.prototype.onScanStartButtonClick = function(e)
 	{
-		this._indexRebuildContext = BX.util.getRandomString(8);
-		if(this.rebuildIndex())
+		if(this.rebuildIndex(true))
 		{
 			this.prepareProgressBar();
 
 			BX(BX.prop.getString(this._settings, "buttonId")).style.display = "none";
+			BX(BX.prop.getString(this._settings, "stopButtonId")).style.display = "";
 			document.body.querySelector(".crm-dedupe-wizard-start-control-box").classList.remove("crm-dedupe-wizard-start-control-box-default-state");
 			document.body.querySelector(".crm-dedupe-wizard-start-icon-scanning").classList.add("crm-dedupe-wizard-start-icon-refresh-repeat-animation");
 		}
+	};
+	BX.Crm.DedupeWizardScanning.prototype.onScanStopButtonClick = function(e)
+	{
+		this.stopRebuildIndex();
 	};
 	BX.Crm.DedupeWizardScanning.prototype.getNextStepId = function()
 	{
 		return this._wizard.getTotalItemCount() > 0 ? "merging" : "finish";
 	};
-	BX.Crm.DedupeWizardScanning.prototype.rebuildIndex = function()
+	BX.Crm.DedupeWizardScanning.prototype.rebuildIndex = function(userInitiated)
 	{
+		userInitiated = !!userInitiated;
 		var config = this._wizard.getConfig();
 		var selectedTypeNames = BX.prop.getArray(config, "typeNames", []);
 		var currentScope = BX.prop.getString(config, "scope", "");
@@ -615,49 +736,133 @@ if(typeof(BX.Crm.DedupeWizardScanning) === "undefined")
 		}
 
 		this.setIsScanRunning(true);
-		BX.ajax.runComponentAction("bitrix:crm.dedupe.wizard", "rebuildIndex", {
+		BX.ajax.runComponentAction("bitrix:crm.dedupe.wizard", "rebuildIndexBackground", {
 			data:
 				{
-					contextId: this._indexRebuildContext,
 					entityTypeName: BX.CrmEntityType.resolveName(this._wizard.getEntityTypeId()),
 					types: selectedTypeNames,
-					scope: currentScope
+					scope: currentScope,
+					tryStart: userInitiated ? "Y" : "N"
 				}
 		}).then(
 			function(response)
 			{
 				var data = response.data;
+				var isActive = (BX.prop.getString(data, "IS_ACTIVE", "N") === "Y");
 				var status = BX.prop.getString(data, "STATUS", "");
+				var isStatusActive = (
+					status === "STATUS_INACTIVE"
+					|| status === "STATUS_PENDING_START"
+					|| status === "STATUS_RUNNING"
+					|| status === "STATUS_PENDING_STOP"
+				);
 
-				var totalItems = BX.prop.getInteger(data, "TOTAL_ITEMS", 0);
-				var processedItems = BX.prop.getInteger(data, "PROCESSED_ITEMS", 0);
+				if (userInitiated)
+				{
+					this.clearMergeAgentState();
+				}
 
-				if(status === "PROGRESS")
+				if (!isActive && isStatusActive
+				)
+				{
+					status = "STATUS_STOPPED";
+					isStatusActive = false;
+				}
+
+				if (isStatusActive)
 				{
 					window.setTimeout(
-						function () { this.rebuildIndex(); }.bind(this),
-						400
+						function () { this.rebuildIndex(false); }.bind(this),
+						3000
 					);
 
-					if(processedItems > 0 && totalItems > 0)
+					if (status === "STATUS_RUNNING" || status === "STATUS_PENDING_STOP")
 					{
-						this.setProgressBarValue(100 * processedItems/totalItems);
+						var totalItems = BX.prop.getInteger(data, "TOTAL_ITEMS", 0);
+						var processedItems = BX.prop.getInteger(data, "PROCESSED_ITEMS", 0);
+						if(processedItems > 0 && totalItems > 0)
+						{
+							this.setProgressBarValue(100 * processedItems/totalItems);
+						}
 					}
 				}
-				else if(status === "COMPLETED")
+				else if(status === "STATUS_FINISHED" || status === "STATUS_STOPPED")
 				{
-					this.setProgressBarValue(100);
+					if (status === "STATUS_FINISHED")
+					{
+						this.setProgressBarValue(100);
+					}
+
+					var stopButton = BX(BX.prop.getString(this._settings, "stopButtonId"));
+					if (stopButton)
+					{
+						stopButton.style.display = "none";
+						BX.unbind(stopButton, "click", this._scanStopHandler);
+					}
 
 					this._wizard.setTotalItemCount(BX.prop.getInteger(data, "FOUND_ITEMS", 0));
 					this._wizard.setTotalEntityCount(BX.prop.getInteger(data, "TOTAL_ENTITIES", 0));
 
 					this.setIsScanRunning(false);
-					this._wizard.enableCloseConfirmation(true);
-					window.setTimeout(function(){ this.end(); }.bind(this),  200);
+
+					if (status === "STATUS_FINISHED")
+					{
+						window.setTimeout(function(){ this.end(); }.bind(this),  200);
+					}
+					else if (status === "STATUS_STOPPED")
+					{
+						window.setTimeout(function(){ this.restart(); }.bind(this),  200);
+					}
 				}
 			}.bind(this)
 		).catch(
 			function(){ this.setIsScanRunning(false); }.bind(this)
+		);
+
+		return true;
+	};
+	BX.Crm.DedupeWizardScanning.prototype.stopRebuildIndex = function()
+	{
+		var stopButton = BX(BX.prop.getString(this._settings, "stopButtonId"));
+		if (stopButton)
+		{
+			stopButton.classList.add("ui-btn-light");
+			BX.unbind(stopButton, "click", this._scanStopHandler);
+		}
+
+		BX.ajax.runComponentAction("bitrix:crm.dedupe.wizard", "stopRebuildIndexBackground", {
+			data: { entityTypeName: BX.CrmEntityType.resolveName(this._wizard.getEntityTypeId()) }
+		}).then(
+			function(response)
+			{
+				var stopButton = BX(BX.prop.getString(this._settings, "stopButtonId"));
+				if (stopButton)
+				{
+					var data = BX.prop.getObject(response, "data", {});
+					if (
+						data["STATUS"] === "STATUS_PENDING_STOP"
+						|| data["STATUS"] === "STATUS_STOPPEND"
+						|| data['NEXT_STATUS'] === "STATUS_PENDING_STOP"
+					)
+					{
+						stopButton.style.display = "none";
+					}
+					else
+					{
+						stopButton.classList.remove("ui-btn-light");
+						BX.bind(stopButton, "click", this._scanStopHandler);
+					}
+				}
+			}.bind(this)
+		).catch(
+			function() {
+				var stopButton = BX(BX.prop.getString(this._settings, "stopButtonId"));
+				if (stopButton)
+				{
+					stopButton.classList.remove("ui-btn-light");
+					BX.bind(stopButton, "click", this._scanStopHandler);
+				}
+			}.bind(this)
 		);
 
 		return true;
@@ -668,6 +873,17 @@ if(typeof(BX.Crm.DedupeWizardScanning) === "undefined")
 		{
 			var data = event.getData();
 			this._wizard.setConfig(data.config);
+		}
+	};
+	BX.Crm.DedupeWizardScanning.prototype.getIndexAgentState = function()
+	{
+		return (this._wizard) ? this._wizard.getIndexAgentState() : {};
+	};
+	BX.Crm.DedupeWizardScanning.prototype.clearMergeAgentState = function()
+	{
+		if (this._wizard)
+		{
+			this._wizard.clearMergeAgentState();
 		}
 	};
 	BX.Crm.DedupeWizardScanning.create = function(id, settings)
@@ -692,8 +908,10 @@ if(typeof(BX.Crm.DedupeWizardMerging) === "undefined")
 		this._mergedItemCount = 0;
 		this._conflictedItemCount = 0;
 
+		this._returnToScanHandler = BX.delegate(this.onReturnToScanButtonClick, this);
 		this._automaticMergeStartHandler = BX.delegate(this.onAutomaticMergeStartButtonClick, this);
 		this._manualMergeStartHandler = BX.delegate(this.onManualMergeStartButtonClick, this);
+		this._mergeStopHandler = BX.delegate(this.onMergeStopButtonClick, this);
 	};
 	BX.extend(BX.Crm.DedupeWizardMerging, BX.Crm.DedupeWizardStep);
 	/*
@@ -716,15 +934,88 @@ if(typeof(BX.Crm.DedupeWizardMerging) === "undefined")
 	};
 	BX.Crm.DedupeWizardMerging.prototype.layout = function()
 	{
+		var mergeAgentState = this.getMergeAgentState();
+		var nextStatus = BX.prop.getString(mergeAgentState, "NEXT_STATUS", "");
+		var status = BX.prop.getString(mergeAgentState, "STATUS", "");
+		var isBeforeStart =  (
+			(nextStatus === 'STATUS_UNDEFINED' || nextStatus === "")
+			&& (status === 'STATUS_INACTIVE' || status === 'STATUS_STOPPED' || status === "")
+		);
+		var isFinished =  (nextStatus === 'STATUS_UNDEFINED' && status === 'STATUS_FINISHED');
+		var isStopped =  (nextStatus === 'STATUS_UNDEFINED' && status === 'STATUS_STOPPED');
+		var isRunning =  !(isBeforeStart || isFinished || isStopped);
+
+		if (isBeforeStart)
+		{
+			this.layoutBeforeStart();
+		}
+		else if (isFinished)
+		{
+			this.setMergeResult(mergeAgentState);
+			window.setTimeout(function(){ this.end(); }.bind(this),  0);
+		}
+		else if (isRunning)
+		{
+			var buttonBox = BX(this.getId()).querySelector('.crm-dedupe-wizard-start-control-box');
+			var returnToScanButton = BX(BX.prop.getString(this._settings, "returnToScanButtonId"));
+			var autoMergeButton = BX(BX.prop.getString(this._settings, "buttonId"));
+			var manualMergeButton = BX(BX.prop.getString(this._settings, "alternateButtonId"));
+			var icon = document.body.querySelector('.crm-dedupe-wizard-start-icon-merging');
+			if(autoMergeButton)
+			{
+				if (buttonBox)
+				{
+					buttonBox.classList.remove('crm-dedupe-wizard-start-control-box-default-state');
+					buttonBox.classList.remove('crm-dedupe-wizard-start-control-box-ready-to-merge-state');
+				}
+
+				autoMergeButton.style.display = 'none';
+
+				if(returnToScanButton)
+				{
+					returnToScanButton.style.display = 'none';
+				}
+
+				if(manualMergeButton)
+				{
+					manualMergeButton.style.display = 'none';
+				}
+
+				icon.classList.add('crm-dedupe-wizard-start-icon-refresh-repeat-animation');
+			}
+
+			this.layoutAfterStart();
+		}
+	};
+	BX.Crm.DedupeWizardMerging.prototype.prepareStopButton = function(show)
+	{
+		var stopButton = BX(BX.prop.getString(this._settings, "stopButtonId"));
+		if (stopButton)
+		{
+			stopButton.style.display = (!!show) ? "" : "none";
+			BX.bind(stopButton, "click", this._mergeStopHandler);
+		}
+	};
+	BX.Crm.DedupeWizardMerging.prototype.layoutBeforeStart = function()
+	{
 		this.getTitleWrapper().innerHTML = this.getMessage("duplicatesFound").replace("#COUNT#", this._totalEntityCount);
 		this.getSubtitleWrapper().innerHTML = this.getMessage("matchesFound").replace("#COUNT#", this._totalItemCount);
 		var buttonBox = BX(this.getId()).querySelector('.crm-dedupe-wizard-start-control-box');
+		var returnToScanButton = BX(BX.prop.getString(this._settings, "returnToScanButtonId"));
 		var autoMergeButton = BX(BX.prop.getString(this._settings, "buttonId"));
 		var manualMergeButton = BX(BX.prop.getString(this._settings, "alternateButtonId"));
+		var stopButton = BX(BX.prop.getString(this._settings, "stopButtonId"));
 		var icon = document.body.querySelector('.crm-dedupe-wizard-start-icon-merging');
+
+		if (returnToScanButton)
+		{
+			returnToScanButton.style.display = "";
+			BX.bind(returnToScanButton, "click", this._returnToScanHandler);
+		}
 
 		if(autoMergeButton)
 		{
+			autoMergeButton.style.display = "";
 			buttonBox.classList.add('crm-dedupe-wizard-start-control-box-default-state');
 			BX.bind(autoMergeButton, "click", this._automaticMergeStartHandler);
 			BX.bind(autoMergeButton, "click", function() {
@@ -732,8 +1023,20 @@ if(typeof(BX.Crm.DedupeWizardMerging) === "undefined")
 				buttonBox.classList.remove('crm-dedupe-wizard-start-control-box-ready-to-merge-state');
 				autoMergeButton.style.display = 'none';
 
+				if(returnToScanButton)
+				{
+					returnToScanButton.style.display = 'none';
+				}
+
 				if(manualMergeButton)
+				{
 					manualMergeButton.style.display = 'none';
+				}
+
+				if(stopButton)
+				{
+					stopButton.style.display = '';
+				}
 
 				icon.classList.add('crm-dedupe-wizard-start-icon-refresh-repeat-animation');
 			});
@@ -741,26 +1044,62 @@ if(typeof(BX.Crm.DedupeWizardMerging) === "undefined")
 
 		if(manualMergeButton)
 		{
+			manualMergeButton.style.display = "";
 			BX.bind(manualMergeButton, "click", this._manualMergeStartHandler);
 			BX.bind(manualMergeButton, "click", function() {
 				buttonBox.classList.remove('crm-dedupe-wizard-start-control-box-default-state');
 				buttonBox.classList.remove('crm-dedupe-wizard-start-control-box-ready-to-merge-state');
 				manualMergeButton.style.display = 'none';
 
+				if(returnToScanButton)
+				{
+					returnToScanButton.style.display = 'none';
+				}
+
 				if(autoMergeButton)
+				{
 					autoMergeButton.style.display = 'none';
+				}
+
+				if(stopButton)
+				{
+					stopButton.style.display = 'none';
+				}
 
 				icon.classList.add('crm-dedupe-wizard-start-icon-refresh-repeat-animation');
 			});
 		}
 
-		var listButtonId = BX(BX.prop.getString(this._settings, "listButtonId"));
-		if(listButtonId)
+		var listButton = BX(BX.prop.getString(this._settings, "listButtonId"));
+		if(listButton)
 		{
-			BX.bind(listButtonId, "click", this.onListButtonClick.bind(this));
+			listButton.style.display = "";
+			BX.bind(listButton, "click", this.onListButtonClick.bind(this));
+		}
+
+		this.prepareStopButton(false);
+	};
+	BX.Crm.DedupeWizardMerging.prototype.layoutAfterStart = function(userInitiated)
+	{
+		userInitiated = !!userInitiated;
+		this._currentItemIndex = 0;
+		this._wizard.setMergeMode('auto');
+		this.prepareProgressBar();
+		this.prepareStopButton(true);
+		this.updateMergeProgress(this.getMergeAgentState());
+		this.mergeBackground(userInitiated);
+	};
+	BX.Crm.DedupeWizardMerging.prototype.updateMergeProgress = function(mergeAgentState)
+	{
+		this._mergedItemCount = BX.prop.getInteger(mergeAgentState, "MERGED_ITEMS", 0);
+		this._conflictedItemCount = BX.prop.getInteger(mergeAgentState, "CONFLICTED_ITEMS", 0);
+		this._currentItemIndex = BX.prop.getInteger(mergeAgentState, "PROCESSED_ITEMS", 0);
+		if(this._currentItemIndex > 0 && this._totalItemCount > 0)
+		{
+			this.setProgressBarValue(100 * this._currentItemIndex/this._totalItemCount);
 		}
 	};
-	BX.Crm.DedupeWizardMerging.prototype.merge = function()
+	BX.Crm.DedupeWizardMerging.prototype.merge = function(userInitiated)
 	{
 		var config = this._wizard.getConfig();
 		var selectedTypeNames = BX.prop.getArray(config, "typeNames", []);
@@ -804,6 +1143,7 @@ if(typeof(BX.Crm.DedupeWizardMerging) === "undefined")
 				}
 
 				this._currentItemIndex++;
+
 				if(status !== "COMPLETED")
 				{
 					window.setTimeout(
@@ -815,33 +1155,138 @@ if(typeof(BX.Crm.DedupeWizardMerging) === "undefined")
 				}
 				else
 				{
-					this._wizard.setMergedItemCount(
-						this._wizard.getTotalItemCount() - BX.prop.getInteger(data, "TOTAL_ITEMS", 0)
-					);
-					this._wizard.setMergedEntityCount(
-						this._wizard.getTotalEntityCount() - BX.prop.getInteger(data, "TOTAL_ENTITIES", 0)
-					);
-
-					this._wizard.setConflictedItemCount(
-						this._wizard.getTotalItemCount() - this._wizard.getMergedItemCount()
-					);
-					this._wizard.setConflictedEntityCount(
-						this._wizard.getTotalEntityCount() - this._wizard.getMergedEntityCount()
-					);
-
+					this.setMergeResult(data);
 					this.setProgressBarValue(100);
 					window.setTimeout(function(){ this.end(); }.bind(this),  200);
 				}
 			}.bind(this)
 		);
 	};
+	BX.Crm.DedupeWizardMerging.prototype.mergeBackground = function(userInitiated)
+	{
+		var config = this._wizard.getConfig();
+		var selectedTypeNames = BX.prop.getArray(config, "typeNames", []);
+		var currentScope = BX.prop.getString(config, "scope", "");
+
+		BX.ajax.runComponentAction("bitrix:crm.dedupe.wizard", "mergeBackground", {
+			data:
+				{
+					entityTypeName: BX.CrmEntityType.resolveName(this._wizard.getEntityTypeId()),
+					types: selectedTypeNames,
+					scope: currentScope,
+					tryStart: !!userInitiated ? "Y" : "N"
+				}
+		}).then(
+			function(response)
+			{
+				var data = BX.prop.getObject(response, "data", {});
+				var isActive = (BX.prop.getString(data, "IS_ACTIVE", "N") === "Y");
+				var status = BX.prop.getString(data, "STATUS", "");
+
+				var isStatusActive = (
+					status === "STATUS_INACTIVE"
+					|| status === "STATUS_PENDING_START"
+					|| status === "STATUS_RUNNING"
+					|| status === "STATUS_PENDING_STOP"
+				);
+
+				if (!isActive && isStatusActive
+				)
+				{
+					status = "STATUS_STOPPED";
+					isStatusActive = false;
+				}
+
+				if (isStatusActive)
+				{
+					window.setTimeout(
+						function () { this.mergeBackground(); }.bind(this),
+						3000
+					);
+
+					if (status === "STATUS_RUNNING" || status === "STATUS_PENDING_STOP")
+					{
+						this.updateMergeProgress(data);
+					}
+				}
+				else if(status === "STATUS_FINISHED" || status === "STATUS_STOPPED")
+				{
+					this.setMergeResult(data);
+
+					var stopButton = BX(BX.prop.getString(this._settings, "stopButtonId"));
+					if (stopButton)
+					{
+						stopButton.style.display = "none";
+						BX.unbind(stopButton, "click", this._mergeStopHandler);
+					}
+
+					if (status === 'STATUS_STOPPED')
+					{
+						this.updateMergeProgress(data);
+						window.setTimeout(function(){ this.goToScan(); }.bind(this),  200);
+					}
+					else
+					{
+						this.setProgressBarValue(100);
+						window.setTimeout(function(){ this.end(); }.bind(this),  200);
+					}
+				}
+			}.bind(this)
+		);
+	};
+	BX.Crm.DedupeWizardMerging.prototype.stopMergeBackground = function()
+	{
+		var stopButton = BX(BX.prop.getString(this._settings, "stopButtonId"));
+		if (stopButton)
+		{
+			stopButton.classList.add("ui-btn-light");
+			BX.unbind(stopButton, "click", this._mergeStopHandler);
+		}
+
+		BX.ajax.runComponentAction("bitrix:crm.dedupe.wizard", "stopMergeBackground", {
+			data: { entityTypeName: BX.CrmEntityType.resolveName(this._wizard.getEntityTypeId()) }
+		}).then(
+			function(response)
+			{
+				var stopButton = BX(BX.prop.getString(this._settings, "stopButtonId"));
+				if (stopButton)
+				{
+					var data = BX.prop.getObject(response, "data", {});
+					if (
+						data["STATUS"] === "STATUS_PENDING_STOP"
+						|| data["STATUS"] === "STATUS_STOPPEND"
+						|| data['NEXT_STATUS'] === "STATUS_PENDING_STOP"
+					)
+					{
+						stopButton.style.display = "none";
+					}
+					else
+					{
+						stopButton.classList.remove("ui-btn-light");
+						BX.bind(stopButton, "click", this._mergeStopHandler);
+					}
+				}
+			}.bind(this)
+		).catch(
+			function() {
+				var stopButton = BX(BX.prop.getString(this._settings, "stopButtonId"));
+				if (stopButton)
+				{
+					stopButton.classList.remove("ui-btn-light");
+					BX.bind(stopButton, "click", this._mergeStopHandler);
+				}
+			}.bind(this)
+		);
+
+		return true;
+	};
+	BX.Crm.DedupeWizardMerging.prototype.onReturnToScanButtonClick = function(e)
+	{
+		this.goToScan();
+	};
 	BX.Crm.DedupeWizardMerging.prototype.onAutomaticMergeStartButtonClick = function(e)
 	{
-		this._currentItemIndex = 0;
-
-		this._wizard.setMergeMode('auto');
-		this.prepareProgressBar();
-		this.merge();
+		this.layoutAfterStart(true);
 	};
 	BX.Crm.DedupeWizardMerging.prototype.onManualMergeStartButtonClick = function(e)
 	{
@@ -850,6 +1295,10 @@ if(typeof(BX.Crm.DedupeWizardMerging) === "undefined")
 		this._wizard.setMergeMode('manual');
 		this.prepareProgressBar();
 		this.merge();
+	};
+	BX.Crm.DedupeWizardMerging.prototype.onMergeStopButtonClick = function(e)
+	{
+		this.stopMergeBackground();
 	};
 	BX.Crm.DedupeWizardMerging.prototype.onListButtonClick = function(e)
 	{
@@ -863,6 +1312,26 @@ if(typeof(BX.Crm.DedupeWizardMerging) === "undefined")
 			return "mergingSummary";
 		}
 		return this._wizard.getConflictedItemCount() > 0 ? "conflictResolving" : "finish";
+	};
+	BX.Crm.DedupeWizardMerging.prototype.getMergeAgentState = function()
+	{
+		return (this._wizard) ? this._wizard.getMergeAgentState() : {};
+	};
+	BX.Crm.DedupeWizardMerging.prototype.setMergeResult = function(resultData)
+	{
+		this._wizard.setMergedItemCount(
+			this._wizard.getTotalItemCount() - BX.prop.getInteger(resultData, "TOTAL_ITEMS", 0)
+		);
+		this._wizard.setMergedEntityCount(
+			this._wizard.getTotalEntityCount() - BX.prop.getInteger(resultData, "TOTAL_ENTITIES", 0)
+		);
+
+		this._wizard.setConflictedItemCount(
+			this._wizard.getTotalItemCount() - this._wizard.getMergedItemCount()
+		);
+		this._wizard.setConflictedEntityCount(
+			this._wizard.getTotalEntityCount() - this._wizard.getMergedEntityCount()
+		);
 	};
 	BX.Crm.DedupeWizardMerging.create = function(id, settings)
 	{
@@ -920,6 +1389,7 @@ if(typeof(BX.Crm.DedupeWizardConflictResolving) === "undefined")
 	{
 		BX.Crm.DedupeWizardConflictResolving.superclass.constructor.apply(this);
 
+		this._returnToScanHandler = BX.delegate(this.onReturnToScanButtonClick, this);
 		this._buttonClickHandler = BX.delegate(this.onButtonClick, this);
 		this._externalEventHandler = null;
 		this._contextId = "";
@@ -940,12 +1410,18 @@ if(typeof(BX.Crm.DedupeWizardConflictResolving) === "undefined")
 			BX.bind(button, "click", this._buttonClickHandler);
 		}
 
+		var returnToScanButton = BX(BX.prop.getString(this._settings, "returnToScanButtonId"));
+		if (returnToScanButton)
+		{
+			BX.bind(returnToScanButton, "click", this._returnToScanHandler);
+		}
+
 		var listButtonId = BX(BX.prop.getString(this._settings, "listButtonId"));
 		if(listButtonId)
 		{
 			BX.bind(listButtonId, "click", this.onListButtonClick.bind(this));
 		}
-		if (this._wizard.getMergeMode() == 'manual')
+		if (this._wizard.getMergeMode() === 'manual')
 		{
 			this._buttonClickHandler();
 		}
@@ -954,6 +1430,10 @@ if(typeof(BX.Crm.DedupeWizardConflictResolving) === "undefined")
 	{
 		this.getTitleWrapper().innerHTML = this.getMessage("duplicatesConflicted").replace("#COUNT#", this._wizard.getConflictedEntityCount());
 		this.getSubtitleWrapper().innerHTML = this.getMessage("matchesConflicted").replace("#COUNT#", this._wizard.getConflictedItemCount());
+	};
+	BX.Crm.DedupeWizardConflictResolving.prototype.onReturnToScanButtonClick = function(e)
+	{
+		this.goToScan();
 	};
 	BX.Crm.DedupeWizardConflictResolving.prototype.onButtonClick = function(e)
 	{
@@ -1037,6 +1517,8 @@ if(typeof(BX.Crm.DedupeWizardMergingFinish) === "undefined")
 	BX.Crm.DedupeWizardMergingFinish = function()
 	{
 		BX.Crm.DedupeWizardMergingFinish.superclass.constructor.apply(this);
+
+		this._returnToScanHandler = BX.delegate(this.onReturnToScanButtonClick, this);
 	};
 	BX.extend(BX.Crm.DedupeWizardMergingFinish, BX.Crm.DedupeWizardStep);
 
@@ -1059,11 +1541,23 @@ if(typeof(BX.Crm.DedupeWizardMergingFinish) === "undefined")
 			this.getSubtitleWrapper().innerHTML = this.getMessage("duplicatesCompleteEmpty");
 		}
 
+		this.deleteAgents();
+
+		var returnToScanButton = BX(BX.prop.getString(this._settings, "returnToScanButtonId"));
+		if (returnToScanButton)
+		{
+			BX.bind(returnToScanButton, "click", this._returnToScanHandler);
+		}
+
 		var backToListLinkId = BX(BX.prop.getString(this._settings, "backToListLinkId"));
 		if(backToListLinkId)
 		{
 			BX.bind(backToListLinkId, "click", this.onListButtonClick.bind(this));
 		}
+	};
+	BX.Crm.DedupeWizardMergingFinish.prototype.onReturnToScanButtonClick = function(e)
+	{
+		this.goToScan();
 	};
 	BX.Crm.DedupeWizardMergingFinish.prototype.onListButtonClick = function(e)
 	{

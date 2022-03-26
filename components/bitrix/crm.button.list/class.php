@@ -5,6 +5,7 @@ use Bitrix\Crm\SiteButton\Manager;
 use Bitrix\Crm\SiteButton\Preset;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Type\Date;
+use Bitrix\Crm\WebForm;
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 	die();
@@ -59,6 +60,10 @@ class CCrmSiteButtonListComponent extends \CBitrixComponent
 		$replaceListNew = array('id' => 0, 'button_id' => 0);
 		$this->arResult['PATH_TO_BUTTON_NEW'] = CComponentEngine::makePathFromTemplate($this->arParams['PATH_TO_BUTTON_EDIT'], $replaceListNew);
 		$this->arResult['SHOW_PLUGINS'] = false;
+		$this->arResult['SUPPORTING'] = [
+			'whatsapp' => WebForm\WhatsApp::canUse(),
+			'callback' => WebForm\Callback::canUse(),
+		];
 	}
 
 	public function checkParams()

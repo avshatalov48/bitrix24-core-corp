@@ -9,7 +9,6 @@
 namespace Bitrix\Tasks\Access\Rule;
 
 use Bitrix\Tasks\Access\ActionDictionary;
-use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Tasks\Access\Model\TemplateModel;
 use Bitrix\Tasks\Access\Permission\PermissionDictionary;
 use Bitrix\Main\Access\AccessibleItem;
@@ -30,6 +29,11 @@ class ChecklistAddRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		if ($this->user->isAdmin())
 		{
 			return true;
+		}
+
+		if ($task instanceOf TemplateModel)
+		{
+			return $this->controller->check(ActionDictionary::ACTION_TEMPLATE_EDIT, $task, $params);
 		}
 
 		if (

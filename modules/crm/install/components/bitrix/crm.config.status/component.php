@@ -170,6 +170,7 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() &&
 				$arAdd['COLOR'] = $arField['COLOR'];
 				$arAdd['SEMANTICS'] = $arField['SEMANTICS'];
 				$arAdd['STATUS_ID'] = $arField['STATUS_ID'] ?? null;
+				$arAdd['CATEGORY_ID'] = $arField['CATEGORY_ID'] ?? null;
 
 				$id = $CCrmStatus->Add($arAdd);
 				$arCurrentData = $CCrmStatus->GetStatusById($id);
@@ -227,9 +228,18 @@ foreach(CCrmStatus::GetEntityTypes() as $entityId => $arEntityType)
 	if(isset($arEntityType['SEMANTIC_INFO']) && is_array($arEntityType['SEMANTIC_INFO']))
 	{
 		$arResult['ENTITY'][$entityId] = $arEntityType['SEMANTIC_INFO'];
+		if (isset($arEntityType['CATEGORY_ID']))
+		{
+			$arResult['ENTITY'][$entityId]['CATEGORY_ID'] = $arEntityType['CATEGORY_ID'];
+		}
 
+		$entityTypeId = (int)($arEntityType['ENTITY_TYPE_ID'] ?? 0);
 		$parentEntityID = isset($arEntityType['PARENT_ID']) ? $arEntityType['PARENT_ID'] : '';
 		$addCaption = GetMessage("CRM_STATUS_ADD_{$entityId}");
+		if (\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
+		{
+			$addCaption = GetMessage("CRM_STATUS_ADD_DEAL_STAGE");
+		}
 		if($addCaption == '' && $parentEntityID !== '')
 		{
 			$addCaption = GetMessage("CRM_STATUS_ADD_{$parentEntityID}");

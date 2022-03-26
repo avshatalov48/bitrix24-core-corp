@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Integration\Landing;
 
+use Bitrix\Landing\Internals\LandingTable;
 use Bitrix\Landing\Landing;
 use Bitrix\Landing\Subtype;
 use Bitrix\Landing\Rights;
@@ -41,6 +42,9 @@ class FormLanding
 
 	/** @var static */
 	protected static $instance;
+
+	/** @var static */
+	protected static $landingSites = [];
 
 	private $deletingLandingId;
 
@@ -300,7 +304,28 @@ class FormLanding
 			return null;
 		}
 
-		$siteId = $this->getSiteId();
+		if (empty(static::$landingSites))
+		{
+			$sites = WebForm\Internals\LandingTable::getList([
+				'select' => [
+					'SITE_ID' => 'LANDING.SITE_ID',
+					'LANDING_ID',
+				],
+			]);
+
+			foreach ($sites as $site)
+			{
+				static::$landingSites[$site['LANDING_ID']] = $site['SITE_ID'];
+			}
+		}
+
+		$siteId = static::$landingSites[$landingId] ?? false;
+
+		if (!$siteId)
+		{
+			$siteId = $this->getSiteId();
+		}
+
 		if (!$siteId)
 		{
 			$siteId = 0;

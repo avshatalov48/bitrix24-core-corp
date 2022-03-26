@@ -170,11 +170,15 @@ class Meeting extends Activity\Provider\Base
 		}
 		if (!empty($activity['LOCATION']))
 		{
+			if (Main\Loader::includeModule('calendar'))
+			{
+				$activity['LOCATION'] = \CCalendar::GetTextLocation($activity['LOCATION']);
+			}
+
 			$html .= '<div class="crm-task-list-meet-inner">
 					<div class="crm-task-list-meet-item">'.Loc::getMessage('CRM_ACTIVITY_PROVIDER_MEETING_PLANNER_PLACE_LABEL').':</div>
 					<div class="crm-task-list-meet-element">'.htmlspecialcharsbx($activity['LOCATION']).'</div>
 				</div>';
-
 		}
 		$html .= '</div>';
 

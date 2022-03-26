@@ -291,4 +291,38 @@ class LeadConversionScheme
 		}
 		return $result;
 	}
+
+	public static function getEntityTypeIds(int $schemeId): array
+	{
+		if ($schemeId === static::DEAL_CONTACT_COMPANY)
+		{
+			return [\CCrmOwnerType::Deal, \CCrmOwnerType::Contact, \CCrmOwnerType::Company];
+		}
+		if ($schemeId === static::DEAL_CONTACT)
+		{
+			return [\CCrmOwnerType::Deal, \CCrmOwnerType::Contact];
+		}
+		if ($schemeId === static::DEAL_COMPANY)
+		{
+			return [\CCrmOwnerType::Deal, \CCrmOwnerType::Company];
+		}
+		if ($schemeId === static::DEAL)
+		{
+			return [\CCrmOwnerType::Deal];
+		}
+		if ($schemeId === static::CONTACT_COMPANY)
+		{
+			return [\CCrmOwnerType::Contact, \CCrmOwnerType::Company];
+		}
+		if ($schemeId === static::CONTACT)
+		{
+			return [\CCrmOwnerType::Contact];
+		}
+		if ($schemeId === static::COMPANY)
+		{
+			return [\CCrmOwnerType::Company];
+		}
+
+		return [];
+	}
 }

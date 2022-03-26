@@ -25,7 +25,9 @@ class TasksInterfaceHeaderComponent extends TasksBaseComponent
 		self::tryParseStringParameter($this->arParams['SHOW_VIEW_MODE'], 'Y');
 		self::tryParseStringParameter($this->arParams['SHOW_FILTER'], 'Y');
 		self::tryParseStringParameter($this->arParams['PROJECT_VIEW'], 'N');
-		self::tryParseArrayParameter($this->arParams['POPUP_MENU_ITEMS'], array());
+		self::tryParseStringParameter($this->arParams['SCOPE'], '');
+		self::tryParseArrayParameter($this->arParams['POPUP_MENU_ITEMS'], []);
+
 		return parent::checkParameters();
 	}
 }

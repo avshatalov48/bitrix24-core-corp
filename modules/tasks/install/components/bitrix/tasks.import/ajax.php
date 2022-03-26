@@ -445,6 +445,7 @@ class TasksImportAjaxController extends Main\Engine\Controller
 			'TASK_CONTROL',
 			'PARAM_1',
 			'PARAM_2',
+			'PARAM_3',
 			'ALLOW_TIME_TRACKING',
 		];
 		foreach ($booleanValuesToCheck as $key)
@@ -474,16 +475,20 @@ class TasksImportAjaxController extends Main\Engine\Controller
 		}
 
 		$taskProperties['SE_PARAMETER'] = [
-			0 => [
-				'CODE' => 1,
+			[
+				'CODE' => \Bitrix\Tasks\Internals\Task\ParameterTable::PARAM_SUBTASKS_TIME,
 				'VALUE' => $taskProperties['PARAM_1'],
 			],
-			1 => [
-				'CODE' => 2,
+			[
+				'CODE' => \Bitrix\Tasks\Internals\Task\ParameterTable::PARAM_SUBTASKS_AUTOCOMPLETE,
 				'VALUE' => $taskProperties['PARAM_2'],
 			],
+			[
+				'CODE' => \Bitrix\Tasks\Internals\Task\ParameterTable::PARAM_RESULT_REQUIRED,
+				'VALUE' => $taskProperties['PARAM_3'],
+			],
 		];
-		unset($taskProperties['PARAM_1'], $taskProperties['PARAM_2']);
+		unset($taskProperties['PARAM_1'], $taskProperties['PARAM_2'], $taskProperties['PARAM_3']);
 
 		return $taskProperties;
 	}

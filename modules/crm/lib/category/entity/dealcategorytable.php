@@ -3,6 +3,7 @@ namespace Bitrix\Crm\Category\Entity;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Deal;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Main\Entity;
 use Bitrix\Main\ORM\Event;
@@ -47,11 +48,6 @@ class DealCategoryTable extends Entity\DataManager
 			'NAME' => [
 				'data_type' => 'string'
 			],
-			'IS_LOCKED' => [
-				'data_type' => 'boolean',
-				'values' => ['N', 'Y'],
-				'default_value' => 'N'
-			],
 			'SORT' => [
 				'data_type' => 'integer'
 			],
@@ -61,7 +57,26 @@ class DealCategoryTable extends Entity\DataManager
 			'ORIGINATOR_ID' => [
 				'data_type' => 'string'
 			],
+			// @deprecated
+			// Previously used for tariff limits reasons
+			// Currently not used
+			'IS_LOCKED' => [
+				'data_type' => 'boolean',
+				'values' => ['N', 'Y'],
+				'default_value' => 'N'
+			],
 		];
+	}
+
+	public static function onBeforeAdd(Event $event)
+	{
+		if (\Bitrix\Crm\Restriction\RestrictionManager::getDealCategoryLimitRestriction()->isExceeded())
+		{
+			Container::getInstance()->getLocalization()->loadMessages();
+			$result = new Main\Orm\EventResult(Main\EventResult::ERROR);
+			$result->addError(new Main\ORM\EntityError(Main\Localization\Loc::getMessage('CRM_FEATURE_RESTRICTION_ERROR')));
+			$event->addResult($result);
+		}
 	}
 
 	public static function onAfterAdd(Event $event)

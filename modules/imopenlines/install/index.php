@@ -121,13 +121,6 @@ Class imopenlines extends CModule
 
 		$this->errors = false;
 
-		if($DB->type !== 'MYSQL')
-		{
-			$this->errors = [
-				GetMessage('IMOPENLINES_DB_NOT_SUPPORTED'),
-			];
-		}
-
 		if ($params['PUBLIC_URL'] <> '' && mb_strlen($params['PUBLIC_URL']) < 12)
 		{
 			if (!$this->errors)
@@ -138,7 +131,7 @@ Class imopenlines extends CModule
 		}
 
 		if(!$this->errors && !$DB->Query("SELECT 'x' FROM b_imopenlines_config", true))
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/imopenlines/install/db/".mb_strtolower($DB->type)."/install.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/imopenlines/install/db/mysql/install.sql");
 
 		if($this->errors !== false)
 		{
@@ -223,6 +216,7 @@ Class imopenlines extends CModule
 		$eventManager->registerEventHandler('imopenlines', 'OnChatFinish', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish');
 
 		$eventManager->registerEventHandler('crm', 'onSiteFormFilledOpenlines', 'imopenlines', '\Bitrix\ImOpenLines\Widget\FormHandler', 'onOpenlinesFormFilled');
+		$eventManager->registerEventHandler('crm', 'onSiteFormFillOpenlines', 'imopenlines', '\Bitrix\ImOpenLines\Widget\FormHandler', 'onOpenlinesFormFill');
 
 		CAgent::AddAgent('\Bitrix\ImOpenLines\Integrations\Report\Statistics\Manager::calculateStatisticsInQueue();', 'imopenlines', 'N');
 
@@ -377,7 +371,7 @@ Class imopenlines extends CModule
 		$this->errors = false;
 
 		if (!$arParams['savedata'])
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/imopenlines/install/db/".mb_strtolower($DB->type)."/uninstall.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/imopenlines/install/db/mysql/uninstall.sql");
 
 		if(is_array($this->errors))
 			$arSQLErrors = $this->errors;

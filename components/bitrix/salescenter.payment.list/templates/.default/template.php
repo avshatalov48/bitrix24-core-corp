@@ -20,7 +20,9 @@ global $APPLICATION;
 
 $this->SetViewTarget('inside_pagetitle', 10000);
 ?>
+<?php if (!$arResult['hideSendButton']): ?>
 	<button class="ui-btn ui-btn-md ui-btn-light-border <?=(!$arResult['isSitePublished'] || !$arResult['isOrderPublicUrlAvailable'] || $arResult['disableSendButton'] || $arResult['isPaymentsLimitReached']) ? ' ui-btn-disabled' : ''?>" onclick="BX.Salescenter.Payments.sendGridPayments();"><?= Main\Localization\Loc::getMessage('SPL_TEMPLETE_SALESCENTER_SEND_PAYMENT') ?></button>
+<?php endif; ?>
 <?php
 $this->EndViewTarget();
 
@@ -48,6 +50,7 @@ $APPLICATION->IncludeComponent('bitrix:crm.order.payment.list', '', [
 
 $initJsData = [
 	'gridId' => $arResult['grid']['fullId'],
+	'context' => $arResult['context'],
 	'sessionId' => $arParams['sessionId'],
 	'isPaymentsLimitReached' => $arResult['isPaymentsLimitReached'],
 ];
@@ -56,6 +59,9 @@ $messages = Main\Localization\Loc::loadLanguageFile(__FILE__);
 	<script>
 		BX.ready(function()
 		{
+			<?php if ($arResult['context'] === 'sms'): ?>
+			BX.hide(document.getElementById('send_to_chat'));
+			<?php endif; ?>
 			BX.message(<?=CUtil::PhpToJSObject($messages)?>);
 			BX.message(<?=CUtil::PhpToJSObject($arResult['messages'])?>);
 			BX.Salescenter.Manager.init(<?=\CUtil::PhpToJSObject($arResult);?>);

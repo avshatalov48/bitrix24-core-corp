@@ -11,7 +11,7 @@ use Bitrix\Crm\DealTable;
 use Bitrix\Crm\Entry\AddException;
 use Bitrix\Crm\Entry\UpdateException;
 use Bitrix\Crm\Entry\DeleteException;
-use Bitrix\Crm\RolePermission;
+use Bitrix\Crm\Security\Role\RolePermission;
 
 class DealCategory
 {
@@ -46,13 +46,16 @@ class DealCategory
 					'TYPE' => 'string',
 					'ATTRIBUTES' => array(\CCrmFieldInfoAttr::Required)
 				),
-				'IS_LOCKED' => array(
-					'TYPE' => 'char',
-					'ATTRIBUTES' => array(\CCrmFieldInfoAttr::ReadOnly)
-				),
 				'SORT' => array(
 					'TYPE' => 'integer'
-				)
+				),
+				// @deprecated
+				// Previously used for tariff limits reasons
+				// Currently not used
+				'IS_LOCKED' => array(
+					'TYPE' => 'char',
+					'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly, \CCrmFieldInfoAttr::Deprecated]
+				),
 			);
 		}
 		return self::$fieldInfos;
@@ -103,12 +106,9 @@ class DealCategory
 		{
 			return false;
 		}
+		$category = DealCategoryTable::query()->setSelect(['ID'])->where('ID', $ID)->fetch();
 
-		/** @var Main\DB\Result $dbResult */
-		$dbResult = DealCategoryTable::getList(array('select' => array('ID', 'IS_LOCKED'), 'filter' => array('=ID' => $ID)));
-
-		$fields = $dbResult->fetch();
-		return is_array($fields) && (!isset($fields['IS_LOCKED']) || $fields['IS_LOCKED'] === 'N');
+		return is_array($category);
 	}
 
 	/**
@@ -343,7 +343,6 @@ class DealCategory
 			/** @var Main\DB\Result $dbResult */
 			$dbResult = DealCategoryTable::getList(
 				array(
-					'filter' => array('=IS_LOCKED' => 'N'),
 					'order' => array('SORT' => 'ASC', 'ID' => 'ASC')
 				)
 			);
@@ -483,9 +482,6 @@ class DealCategory
 		$data['SORT'] = isset($fields['SORT']) ? max((int)$fields['SORT'], 0) : 0;
 		$data['CREATED_DATE'] = new Date();
 
-		$limit = RestrictionManager::getDealCategoryLimit();
-		$data['IS_LOCKED'] = ($limit > 0 && $limit <= self::getCount()) ? 'Y' : 'N';
-
 		if (isset($fields['ORIGIN_ID']))
 		{
 			$data['ORIGIN_ID'] = $fields['ORIGIN_ID'];
@@ -566,12 +562,6 @@ class DealCategory
 		if(isset($fields['SORT']))
 		{
 			$data['SORT'] = max((int)$fields['SORT'], 0);
-		}
-
-		$limit = RestrictionManager::getDealCategoryLimit();
-		if($limit > 0 && $limit <= self::getCount())
-		{
-			unset($data['IS_LOCKED']);
 		}
 
 		if(empty($data))
@@ -708,6 +698,7 @@ class DealCategory
 						'PREFIX' => $prefix,
 						'FIELD_ATTRIBUTE_SCOPE' => FieldAttributeManager::getEntityScopeByCategory($ID),
 						'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
+						'CATEGORY_ID' => $ID,
 					);
 			}
 			elseif($enableDefault)
@@ -719,6 +710,7 @@ class DealCategory
 						'SEMANTIC_INFO' => \CCrmStatus::GetDealStageSemanticInfo(),
 						'FIELD_ATTRIBUTE_SCOPE' => FieldAttributeManager::getEntityScopeByCategory(),
 						'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
+						'CATEGORY_ID' => 0,
 					);
 			}
 		}
@@ -1104,16 +1096,18 @@ class DealCategory
 
 	/**
 	 * Convert deal category entry ID to permission entity type.
-	 * @param int $ID Entry ID.
+	 *
+	 * @param int $id Entry ID.
 	 * @return string
 	 */
-	public static function convertToPermissionEntityType($ID)
+	public static function convertToPermissionEntityType($id)
 	{
-		if(!is_int($ID))
+		if(!is_int($id))
 		{
-			$ID = (int)$ID;
+			$id = (int)$id;
 		}
-		return $ID > 0 ? "DEAL_C{$ID}" : 'DEAL';
+
+		return (new PermissionEntityTypeHelper(\CCrmOwnerType::Deal))->getPermissionEntityTypeForCategory($id);
 	}
 
 	/**
@@ -1125,17 +1119,7 @@ class DealCategory
 	 */
 	public static function convertFromPermissionEntityType($entityType)
 	{
-		if($entityType === 'DEAL')
-		{
-			return 0;
-		}
-
-		if(!(preg_match("/DEAL_C(\d+)/", $entityType, $m) === 1 && is_array($m) && count($m) === 2))
-		{
-			return -1;
-		}
-
-		return (int)$m[1];
+		return (new PermissionEntityTypeHelper(\CCrmOwnerType::Deal))->extractCategoryFromPermissionEntityType((string)$entityType);
 	}
 
 	/**
@@ -1259,69 +1243,6 @@ class DealCategory
 			}
 		}
 		return $infos;
-	}
-
-	/**
-	 * Apply restrictions for deal gategory limit
-	 * @param $limit
-	 * @throws Main\NotSupportedException
-	 */
-	public static function applyMaximumLimitRestrictions($limit)
-	{
-		if(!is_int($limit))
-		{
-			$limit = (int)$limit;
-		}
-
-		$connection = Main\Application::getConnection();
-		if($limit <= 0)
-		{
-			//There is no limit
-			$connection->queryExecute("UPDATE b_crm_deal_category SET IS_LOCKED = 'N'");
-		}
-		elseif($limit === 1)
-		{
-			//All user categories are disabled
-			$connection->queryExecute("UPDATE b_crm_deal_category SET IS_LOCKED = 'Y'");
-		}
-		else
-		{
-			$sqlLimit = ($limit - 1);
-			$queries = array();
-			if($connection instanceof Main\DB\MysqlCommonConnection)
-			{
-				$queries[] = "
-					UPDATE b_crm_deal_category C
-						LEFT JOIN
-							(SELECT ID FROM b_crm_deal_category ORDER BY SORT ASC, ID ASC LIMIT {$sqlLimit}) T
-						ON C.ID = T.ID
-					SET C.IS_LOCKED = (CASE WHEN T.ID IS NULL THEN 'Y' ELSE 'N' END)";
-			}
-			elseif($connection instanceof Main\DB\MssqlConnection)
-			{
-				$queries[] = "
-					UPDATE C
-						SET C.IS_LOCKED = (CASE WHEN T.ID IS NULL THEN 'Y' ELSE 'N' END)
-						FROM  B_CRM_DEAL_CATEGORY C
-							LEFT JOIN (SELECT TOP {$sqlLimit} ID FROM B_CRM_DEAL_CATEGORY ORDER BY SORT ASC, ID ASC) T
-							ON C.ID = T.ID";
-			}
-			elseif($connection instanceof Main\DB\OracleConnection)
-			{
-				$queries[] = "UPDATE B_CRM_DEAL_CATEGORY SET IS_LOCKED = 'Y' WHERE ID IN (SELECT ID FROM B_CRM_DEAL_CATEGORY WHERE ROWNUM > {$sqlLimit} ORDER BY SORT ASC, ID ASC)";
-				$queries[] = "UPDATE B_CRM_DEAL_CATEGORY SET IS_LOCKED = 'N' WHERE ID IN (SELECT ID FROM B_CRM_DEAL_CATEGORY WHERE ROWNUM <= {$sqlLimit} ORDER BY SORT ASC, ID ASC)";
-			}
-			else
-			{
-				$dbType = $connection->getType();
-				throw new Main\NotSupportedException("The '{$dbType}' is not supported in current context");
-			}
-
-			foreach($queries as $query)
-			{
-				$connection->queryExecute($query);
-			}
-		}
 	}
 
 	/**

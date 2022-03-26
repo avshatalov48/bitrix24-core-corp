@@ -707,11 +707,16 @@ B24.Timemanager = {
 					offsetTop : 10,
 					autoHide : true,
 					offsetLeft : -60,
-					zIndex : -1,
 					events : {
-						onPopupClose : BX.proxy(function() {
+						onClose : function() {
 							BX.removeClass(this.layout.block, "timeman-block-active");
-						}, this)
+						}.bind(this),
+						onFirstShow: function(event) {
+							var popup = event.getTarget();
+							BX.Event.EventEmitter.subscribe('BX.Main.InterfaceButtons:onMenuShow', function() {
+								popup.close();
+							});
+						}
 					}
 				}
 			});
@@ -1187,7 +1192,7 @@ B24.PopupBlur = function() {
 	BX.PopupWindow.apply(this, arguments);
 	this.setBlurBg();
 
-	BX.addCustomEvent("OnThemePickerApplyTheme", this.setBlurBg.bind(this));
+	BX.Event.EventEmitter.subscribe("BX.Intranet.Bitrix24:ThemePicker:onThemeApply", this.setBlurBg.bind(this));
 }
 
 B24.PopupBlur.prototype = {

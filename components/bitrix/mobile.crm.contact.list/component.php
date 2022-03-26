@@ -75,7 +75,9 @@ if (in_array("FULL_ADDRESS", $select))
 if (in_array("COMPANY_ID", $select))
 	$select = array_merge($select, array('COMPANY_TITLE'));
 
-$filter = array();
+$filter = [
+	'@CATEGORY_ID' => 0,
+];
 
 $arResult['FILTER_PRESETS'] = array(
 	'all' => array('name' => GetMessage('M_CRM_CONTACT_LIST_FILTER_NONE'), 'fields' => array()),

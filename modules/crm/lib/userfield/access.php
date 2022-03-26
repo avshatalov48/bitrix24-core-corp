@@ -3,6 +3,8 @@
 namespace Bitrix\Crm\UserField;
 
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Factory\SmartInvoice;
+use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\UserField\UserFieldAccess;
 use Bitrix\Main\UserFieldTable;
@@ -25,10 +27,12 @@ class Access extends UserFieldAccess
 			\CCrmInvoice::GetUserFieldEntityID(),
 		];
 
-		$dynamicTypes = Container::getInstance()->getDynamicTypesMap()->load([
-			'isLoadStages' => false,
-			'isLoadCategories' => false,
-		])->getTypes();
+		if (InvoiceSettings::getCurrent()->isSmartInvoiceEnabled())
+		{
+			$entityIds[] = SmartInvoice::USER_FIELD_ENTITY_ID;
+		}
+
+		$dynamicTypes = Container::getInstance()->getDynamicTypesMap()->getTypesCollection();
 		foreach ($dynamicTypes as $type)
 		{
 			$entityIds[] = ServiceLocator::getInstance()->get('crm.type.factory')->getUserFieldEntityId($type->getId());

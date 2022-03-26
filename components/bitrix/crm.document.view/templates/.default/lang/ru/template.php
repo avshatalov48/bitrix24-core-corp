@@ -6,6 +6,7 @@ $MESS["CRM_DOCUMENT_VIEW_PUBLIC_LINK"] = "Публичная ссылка";
 $MESS["CRM_DOCUMENT_VIEW_SEND_EMAIL"] = "на email";
 $MESS["CRM_DOCUMENT_VIEW_SEND_SMS"] = "по sms";
 $MESS["CRM_DOCUMENT_VIEW_TRANSFORMATION_PROGRESS"] = "Пожалуйста, дождитесь окончания конвертации";
+$MESS["CRM_DOCUMENT_VIEW_TRANSFORMATION_NO_PDF_ERROR"] = "Нет pdf файла документа. Скорее всего, при конвертации произошла ошибка.";
 $MESS["CRM_DOCUMENT_VIEW_EDIT_TEMPLATE"] = "Редактировать шаблон";
 $MESS["CRM_DOCUMENT_VIEW_EDIT_DOCUMENT"] = "Редактировать документ";
 $MESS["CRM_DOCUMENT_VIEW_SHOW_FULL_DOCUMENT"] = "Показать весь документ";

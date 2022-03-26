@@ -201,7 +201,7 @@ BX.ready(function()
 		fieldsMap[item.typeName] = item;
 	}
 
-	var menuItems = function(prefix, typeId, handler, level)
+	var menuItems = function(prefix, typeId, handler, level, entityName)
 	{
 		if (typeof typeId == 'undefined' || !BX.type.isFunction(handler))
 			return [];
@@ -212,18 +212,33 @@ BX.ready(function()
 		if (typeof fieldsMap[typeId] != 'undefined')
 		{
 			var map = fieldsMap[typeId];
-			prefix = prefix ? [prefix, map.typeName].join('.') : map.typeName;
+			prefix = prefix ? [prefix, entityName].join('.') : map.typeName;
 
 			for (var i = 0, code; i < map.fields.length; i++)
 			{
 				code = map.fields[i].id;
 				if (code.match(/^UF_/))
+				{
 					code += '('+map.fields[i].name+')';
+				}
+
+				var subItems = [];
+				if (map.fields[i].typeId)
+				{
+					if (level < 2)
+					{
+						subItems = menuItems(prefix, map.fields[i].typeId, handler, level + 1, code);
+					}
+					else
+					{
+						continue;
+					}
+				}
 
 				items.push({
 					text: map.fields[i].name,
 					value: '#'+[prefix, code].join('.')+'#',
-					items: level < 2 ? menuItems(prefix, map.fields[i].id, handler, level+1) : [],
+					items: subItems,
 					onclick: handler
 				});
 			}

@@ -171,8 +171,7 @@ abstract class ClientDataProvider
 		$rawIdFieldId = $this->fieldHelper->addPrefixToFieldId(self::RAW_ID_FIELD);
 		$result = [
 			$rawIdFieldId =>
-				(new Field($rawIdFieldId))
-					->setType('number')
+				(Field::createByType('number', $rawIdFieldId))
 					->setTitle($this->fieldHelper->getFieldName(self::ID_FIELD))
 		];
 
@@ -387,15 +386,18 @@ abstract class ClientDataProvider
 		$selectFields = [];
 		$selectMultifields = [];
 
-		$multifieldTypes = \CCrmFieldMulti::GetEntityTypeList();
+		$multifieldTypes = array_merge(
+			\CCrmFieldMulti::GetEntityTypeList(),
+			\CCrmFieldMulti::GetEntityComplexList()
+		);
 
 		foreach ($this->realSelectFields as $fieldId)
 		{
-			if (isset($multifieldTypes[$fieldId])) // not a multifield
+			if (isset($multifieldTypes[$fieldId]))
 			{
 				$selectMultifields[] = $fieldId;
 			}
-			else
+			else // not a multifield
 			{
 				$selectFields[] = $fieldId;
 			}
@@ -457,7 +459,7 @@ abstract class ClientDataProvider
 		}
 		else
 		{
-			$this->multifieldsManager->PrepareListHeaders($result);
+			$this->multifieldsManager->PrepareListHeaders($result, ['LINK']);
 		}
 		foreach ($result as &$field)
 		{

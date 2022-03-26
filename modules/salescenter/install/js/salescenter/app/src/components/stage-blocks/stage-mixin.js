@@ -1,6 +1,6 @@
 import {StatusTypes as Status} from 'salescenter.component.stage-block';
 
-let StageMixin = {
+const StageMixin = {
 	computed:
 		{
 			statusClassMixin()

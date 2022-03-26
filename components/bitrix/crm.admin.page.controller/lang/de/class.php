@@ -1,0 +1,27 @@
+<?php
+$MESS["CRM_SHOP_MENU_ITEM_EXPERT_SETTINGS"] = "Erweiterte Einstellungen";
+$MESS["CRM_SHOP_MENU_ITEM_GOODS"] = "Produkte";
+$MESS["SHOP_MENU_BUYER_GROUP_TITLE"] = "Kundengruppen";
+$MESS["SHOP_MENU_CATALOG_GOODS"] = "Produktkatalog";
+$MESS["SHOP_MENU_CONTACT_CENTER"] = "Contact Center";
+$MESS["SHOP_MENU_CRM_CLIENTS"] = "Kunden";
+$MESS["SHOP_MENU_CRM_COMPANIES"] = "Unternehmen";
+$MESS["SHOP_MENU_CRM_CONTACTS"] = "Kontakte";
+$MESS["SHOP_MENU_DEALS_TITLE"] = "Aufträge";
+$MESS["SHOP_MENU_DISCOUNTS_AND_SALES"] = "Rabatte und Sonderangebote";
+$MESS["SHOP_MENU_GOODS_DOCUMENTS"] = "Bestand";
+$MESS["SHOP_MENU_ORDER_FORM_SETTINGS_TITLE"] = "Checkout-Formular konfigurieren";
+$MESS["SHOP_MENU_ORDER_TITLE"] = "Bestellungen";
+$MESS["SHOP_MENU_PRODUCT_MARKETING_COUPONS"] = "Gutscheine";
+$MESS["SHOP_MENU_PRODUCT_MARKETING_DISCOUNT"] = "Warenkorbregeln";
+$MESS["SHOP_MENU_PRODUCT_MARKETING_TITLE"] = "CRM-Marketing";
+$MESS["SHOP_MENU_QUICK_START_SETTINGS"] = "Einstellungen";
+$MESS["SHOP_MENU_SETTINGS_SALE_SETTINGS"] = "Onlineshopparameter";
+$MESS["SHOP_MENU_SETTINGS_STATUS"] = "Status";
+$MESS["SHOP_MENU_SETTINGS_STATUS_ORDER"] = "Bestellstatus";
+$MESS["SHOP_MENU_SETTINGS_STATUS_ORDER_SHIPMENT"] = "Lieferstatus";
+$MESS["SHOP_MENU_SETTINGS_USER_FIELDS"] = "Benutzerdefinierte Felder";
+$MESS["SHOP_MENU_SHOP_MARKETING"] = "Onlineshop-Marketing";
+$MESS["SHOP_MENU_SHOP_TITLE"] = "Onlineshops";
+$MESS["SHOP_MENU_SITES"] = "Websites";
+$MESS["SHOP_MENU_WEBFORMS"] = "Onlineformulare";

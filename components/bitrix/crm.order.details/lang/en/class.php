@@ -53,3 +53,4 @@ $MESS["CRM_ORDER_TAB_SHIPMENT"] = "Shipments";
 $MESS["CRM_ORDER_TAB_TREE"] = "Linked entities";
 $MESS["CRM_ORDER_TITLE"] = "Order ID (#ID#), ##ACCOUNT_NUMBER#";
 $MESS["CRM_ORDER_TITLE2"] = "Order ##ACCOUNT_NUMBER#";
+$MESS["CATALOG_MODULE_NOT_INSTALLED"] = "The Commercial Catalog module is not installed.";

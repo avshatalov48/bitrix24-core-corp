@@ -34,7 +34,6 @@ $APPLICATION->IncludeComponent(
 			"sale_discount_edit" => $selfFolderUrl."sale_discount_edit.php",
 			"sale_discount_preset_detail" => $selfFolderUrl."sale_discount_preset_detail.php",
 			"sale_discount_coupon_edit" => $selfFolderUrl."sale_discount_coupon_edit.php",
-			"sale_discount_preset_list" => $selfFolderUrl."sale_discount_preset_list.php",
 			"sale_delivery_service_edit" => $selfFolderUrl."sale_delivery_service_edit.php",
 			"sale_delivery_eservice_edit" => $selfFolderUrl."sale_delivery_eservice_edit.php",
 			"sale_pay_system_edit" => $selfFolderUrl."sale_pay_system_edit.php",
@@ -63,7 +62,6 @@ $APPLICATION->IncludeComponent(
 			"sale_business_value_ptypes",
 			"menu_catalog_edit",
 			"form_order_settings",
-			"sale_discount_preset_list",
 		),
 	)
 );

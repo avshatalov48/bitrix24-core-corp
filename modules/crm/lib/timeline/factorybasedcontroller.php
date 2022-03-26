@@ -132,8 +132,8 @@ abstract class FactoryBasedController extends EntityController
 	{
 		$authorFieldNames = [
 			// field names here are sorted by priority. First not empty value returned
-			Item::FIELD_NAME_CREATED_BY,
 			Item::FIELD_NAME_UPDATED_BY,
+			Item::FIELD_NAME_CREATED_BY,
 			Item::FIELD_NAME_ASSIGNED,
 		];
 

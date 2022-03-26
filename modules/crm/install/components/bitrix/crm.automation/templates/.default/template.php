@@ -23,6 +23,8 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 		'MARKETPLACE_ROBOT_CATEGORY' => 'crm_bots',
 		'MARKETPLACE_TRIGGER_PLACEMENT' => 'CRM_ROBOT_TRIGGERS',
 		'ROBOTS_LIMIT' => $arResult['ROBOTS_LIMIT'],
+		'IS_TEMPLATES_SCHEME_SUPPORTED' => $arResult['IS_TEMPLATES_SCHEME_SUPPORTED'] ?? true,
+		'CATEGORY_SELECTOR' => $arParams['~CATEGORY_SELECTOR'],
 ], $this);
 ?>
 <script>

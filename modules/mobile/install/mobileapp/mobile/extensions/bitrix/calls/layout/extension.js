@@ -869,7 +869,7 @@
 			else
 			{
 				style = (isLandscape) ? Object.assign({}, styles.localVideo, styles.localVideoLandscape) : styles.localVideo;
-				style.marginTop = (isLandscape ? 5 : 0) + device.screen.safeArea.top;
+				style.marginTop = (isLandscape ? 5 : 0) + getSafeArea().top;
 				if (isLandscape)
 				{
 					style.marginRight = 5;
@@ -974,7 +974,7 @@
 					testId: 'callsArrowLeft',
 					style: {
 						display: this.state.panelVisible ? "flex" : "none",
-						marginLeft: (device.screen.safeArea.left || 4),
+						marginLeft: (getSafeArea().left || 4),
 						...styles.leftArrow,
 					},
 					resizeMode: "center",
@@ -1003,7 +1003,7 @@
 					testId: 'callsArrowRight',
 					style: {
 						display: this.state.panelVisible ? "flex" : "none",
-						marginRight: (device.screen.safeArea.right || 4),
+						marginRight: (getSafeArea().right || 4),
 						...styles.rightArrow,
 					},
 					resizeMode: "center",
@@ -1406,7 +1406,7 @@
 						alignSelf: "flex-end",
 						resizeMode: "cover",
 						justifyContent: "center",
-						marginBottom: device.screen.safeArea.bottom > 0 ? Math.min(device.screen.safeArea.bottom, 10) : 0,
+						marginBottom: getSafeArea().bottom > 0 ? Math.min(getSafeArea().bottom, 10) : 0,
 					},
 				},
 				this.button(
@@ -1522,8 +1522,8 @@
 				{
 					style: {
 						display: this.state.showParticipants ? "flex" : "none",
-						marginTop: (isLandscape ? 5 : 0) + device.screen.safeArea.top,
-						marginLeft: 16 + device.screen.safeArea.left,
+						marginTop: (isLandscape ? 5 : 0) + getSafeArea().top,
+						marginLeft: 16 + getSafeArea().left,
 						...styles.participantsButton,
 					},
 					onClick: () => this.showParticipantsMenu(),
@@ -1625,7 +1625,7 @@
 			return View(
 				{
 					style: {
-						bottom: (isLandscape ? 99 : 146) + (device.screen.safeArea.bottom > 0 ? Math.min(device.screen.safeArea.bottom, 10) : 0),
+						bottom: (isLandscape ? 99 : 146) + (getSafeArea().bottom > 0 ? Math.min(getSafeArea().bottom, 10) : 0),
 						...styles.userSelector,
 						...(this.state.panelVisible ? {} : {
 							display: "none",
@@ -1659,8 +1659,8 @@
 			return View(
 				{
 					style: {
-						left: 16 + device.screen.safeArea.left,
-						bottom: 89 + (device.screen.safeArea.bottom > 0 ? Math.min(device.screen.safeArea.bottom, 10) : 0),
+						left: 16 + getSafeArea().left,
+						bottom: 89 + (getSafeArea().bottom > 0 ? Math.min(getSafeArea().bottom, 10) : 0),
 						...styles.centralUser,
 						...(this.state.panelVisible ? {} : {
 							display: "none",
@@ -2139,6 +2139,23 @@
 	{
 		return typeof (url) !== "string" || url == "" || url.endsWith(blankAvatar);
 	};
+
+	function getSafeArea()
+	{
+		if (device.screen.safeArea)
+		{
+			return device.screen.safeArea;
+		}
+		else
+		{
+			return {
+				top: 0,
+				bottom: 0,
+				left: 0,
+				right: 0,
+			}
+		}
+	}
 
 	window.CallLayout = CallLayout;
 	window.CallLayout.Event = EventName;

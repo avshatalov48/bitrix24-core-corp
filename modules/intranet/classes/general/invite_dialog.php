@@ -1196,11 +1196,12 @@ class CIntranetInviteDialog
 					&& is_array($arGroupName)
 					&& isset($arGroupName[$match[1]])
 					&& $arGroupName[$match[1]] <> ''
-					&& CModule::IncludeModule("extranet")
-					&& (
-						CSocNetUser::IsCurrentUserModuleAdmin(SITE_ID, false)
-						|| $APPLICATION->GetGroupRight("socialnetwork", false, "Y", "Y", array(CExtranet::GetExtranetSiteID(), false)) >= "K"
-					)
+					&& Loader::includeModule('extranet')
+					&& Loader::includeModule('socialnetwork')
+					&& \Bitrix\Socialnetwork\Helper\Workgroup::canCreate([
+						'siteId' => CExtranet::GetExtranetSiteID(),
+						'checkAdminSession' => false,
+					])
 				)
 				{
 					// check and create group, for extranet only

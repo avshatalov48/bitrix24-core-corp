@@ -8,7 +8,6 @@
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
-use Bitrix\Tasks\UI\Filter as TaskUiFilter;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -20,6 +19,10 @@ if (!empty($arResult['ERRORS']))
 	ShowError(implode("\n", $arResult['ERRORS']));
 	return;
 }
+
+$taskService = new \Bitrix\Tasks\Scrum\Service\TaskService($arParams['USER_ID']);
+
+$filterInstance = $taskService->getFilterInstance($arParams['GROUP_ID'], $arParams['IS_COMPLETED_SPRINT'] === 'Y');
 
 $messages = Loc::loadLanguageFile(__FILE__);
 
@@ -46,7 +49,7 @@ $data = $arResult['DATA'];
 
 	BX.Tasks.Scrum.Kanban = new BX.Tasks.Scrum.KanbanManager({
 		signedParameters: '<?=$this->getComponent()->getSignedParameters()?>',
-		filterId: '<?=TaskUiFilter\Task::getFilterId()?>',
+		filterId: '<?=$filterInstance->getId()?>',
 		defaultPresetId:'<?=$arResult['DEFAULT_PRESET_KEY']?>',
 		ajaxComponentPath: '<?=$this->getComponent()->getPath()?>/ajax.php',
 		ajaxComponentParams: {

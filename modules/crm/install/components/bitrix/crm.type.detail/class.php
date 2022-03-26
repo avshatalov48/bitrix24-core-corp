@@ -6,7 +6,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm\Component\Base;
-use Bitrix\Crm\Conversion\ConversionManager;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Model\Dynamic\Type;
 use Bitrix\Crm\RelationIdentifier;
@@ -133,7 +132,6 @@ class CrmTypeDetailComponent extends Base
 		$this->arResult['presets'] = Service\Container::getInstance()->getTypePresetBroker()->getList();
 		$this->arResult['presetCategories'] = Service\Container::getInstance()->getTypePresetBroker()->getCategories();
 		$this->arResult['listUrl'] = Service\Container::getInstance()->getRouter()->getTypeListUrl()->getUri();
-		$this->arResult['conversionParams'] = $this->getConversionParams();
 		$this->arResult['relations'] = $this->getRelations();
 		$this->arResult['isCustomSectionsAvailable'] = Integration\IntranetManager::isCustomSectionsAvailable();
 		$this->arResult['linkedUserFields'] = $this->getLinkedUserFields();
@@ -144,37 +142,6 @@ class CrmTypeDetailComponent extends Base
 	public function getType(): Type
 	{
 		return $this->type;
-	}
-
-	protected function getConversionParams(): array
-	{
-		$source = [];
-		foreach (ConversionManager::getSourceCandidates($this->type->getEntityTypeId()) as $srcCandidateEntityTypeId)
-		{
-			$source[] = [
-				'title' => $this->getEntityTitle($srcCandidateEntityTypeId),
-				'isChecked' =>
-					ConversionManager::isSourceExists($this->type->getEntityTypeId(), $srcCandidateEntityTypeId),
-				'entityTypeId' => $srcCandidateEntityTypeId,
-			];
-
-		}
-
-		$destination = [];
-		foreach (ConversionManager::getDestinationCandidates($this->type->getEntityTypeId()) as $dstCandidateEntityTypeId)
-		{
-			$destination[] = [
-				'title' => $this->getEntityTitle($dstCandidateEntityTypeId),
-				'isChecked' =>
-					ConversionManager::isDestinationExists($this->type->getEntityTypeId(), $dstCandidateEntityTypeId),
-				'entityTypeId' => $dstCandidateEntityTypeId,
-			];
-		}
-
-		return [
-			'source' => $source,
-			'destination' => $destination,
-		];
 	}
 
 	protected function getRelations(): array

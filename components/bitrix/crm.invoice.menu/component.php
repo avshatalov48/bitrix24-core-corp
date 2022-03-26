@@ -101,15 +101,15 @@ if($arParams['TYPE'] === 'list')
 		$arResult['BUTTONS'][] = $addButton;
 	}
 
-//		if ($bImport)
-//		{
-//			$arResult['BUTTONS'][] = array(
-//				'TEXT' => GetMessage('INVOICE_IMPORT'),
-//				'TITLE' => GetMessage('INVOICE_IMPORT_TITLE'),
-//				'LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_INVOICE_IMPORT'], array()),
-//				'ICON' => 'btn-import'
-//			);
-//		}
+		if ($bImport)
+		{
+			$arResult['BUTTONS'][] = array(
+				'TEXT' => GetMessage('INVOICE_IMPORT'),
+				'TITLE' => GetMessage('INVOICE_IMPORT_TITLE'),
+				'LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_INVOICE_IMPORT'], array()),
+				'ICON' => 'btn-import'
+			);
+		}
 
 		if ($bExport)
 		{
@@ -229,6 +229,16 @@ if($arParams['TYPE'] === 'list')
 				'TITLE' => $text,
 				'ONCLICK' => 'BX.Crm.Page.openSlider("'.$link.'");'
 			);
+		}
+
+		if (\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isSmartInvoiceEnabled())
+		{
+			$smartInvoiceTitle = \CCrmOwnerType::GetCategoryCaption(\CCrmOwnerType::SmartInvoice);
+			$arResult['BUTTONS'][] = [
+				'TEXT' => $smartInvoiceTitle,
+				'TITLE' => $smartInvoiceTitle,
+				'LINK' => \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getItemListUrlInCurrentView(\CCrmOwnerType::SmartInvoice),
+			];
 		}
 
 		if(count($arResult['BUTTONS']) > 1)
@@ -485,19 +495,19 @@ if (($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show') && $bDelete && 
 	);
 }
 
-//	if ($bAdd)
-//	{
-//		$arResult['BUTTONS'][] = array(
-//			'TEXT' => GetMessage('INVOICE_ADD'),
-//			'TITLE' => GetMessage('INVOICE_ADD_TITLE'),
-//			'LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_INVOICE_EDIT'],
-//				array(
-//					'invoice_id' => 0
-//				)
-//			),
-//			'ICON' => 'btn-new'
-//		);
-//	}
+	// if ($bAdd)
+	// {
+	// 	$arResult['BUTTONS'][] = array(
+	// 		'TEXT' => GetMessage('INVOICE_ADD'),
+	// 		'TITLE' => GetMessage('INVOICE_ADD_TITLE'),
+	// 		'LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_INVOICE_EDIT'],
+	// 			array(
+	// 				'invoice_id' => 0
+	// 			)
+	// 		),
+	// 		'ICON' => 'btn-new'
+	// 	);
+	// }
 
 $this->IncludeComponentTemplate();
 ?>

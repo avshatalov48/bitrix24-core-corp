@@ -3,6 +3,7 @@
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Location\Admin\LocationHelper as Helper;
 
+//echo '<pre>'; print_r($arResult); die();
 Loc::loadMessages(__FILE__);
 ?>
 
@@ -125,14 +126,28 @@ Loc::loadMessages(__FILE__);
 
 						<?if(is_array($arResult['FORM_DATA']['EXTERNAL']) && !empty($arResult['FORM_DATA']['EXTERNAL'])):?>
 
-							<?foreach($arResult['FORM_DATA']['EXTERNAL'] as $id => $ext):?>
-								<tr>
+							<?foreach($arResult['FORM_DATA']['EXTERNAL'] as $id => $ext):
+								$isYandexMarketOnUaPortal = (
+									$arResult['PORTAL_ZONE'] === 'ua'
+									&& (int)$ext['SERVICE_ID'] === $arResult['YANDEX_MARKET_ES_ID']
+								);
+							?>
+								<tr style="<?=($isYandexMarketOnUaPortal ? 'visibility:hidden; position:absolute;' : '')?>;">
 									<?foreach($arResult['EXTERNAL_TABLE_COLUMNS'] as $code => $void):?>
 										<?$value = Helper::makeSafeDisplay($ext[$code], $code);?>
 										<td>
 											<?if($code == 'SERVICE_ID'):?>
 												<select name="EXTERNAL[<?=$ext['ID']?>][<?=$code?>]">
-													<?foreach($arResult['EXTERNAL_SERVICES'] as $sId => $serv):?>
+													<?foreach($arResult['EXTERNAL_SERVICES'] as $sId => $serv):
+														if (
+															$arResult['PORTAL_ZONE'] === 'ua'
+															&& !$isYandexMarketOnUaPortal
+															&& (int)$serv['ID'] === $arResult['YANDEX_MARKET_ES_ID']
+														)
+														{
+															continue;
+														}
+													?>
 														<option value="<?=intval($serv['ID'])?>"<?=($serv['ID'] == $value ? ' selected' : '')?>><?=htmlspecialcharsbx($serv['CODE'])?></option>
 													<?endforeach?>
 												</select>
@@ -161,7 +176,15 @@ Loc::loadMessages(__FILE__);
 								<td></td>
 								<td>
 									<select name="EXTERNAL[n{{column_id}}][SERVICE_ID]">
-										<?foreach($arResult['EXTERNAL_SERVICES'] as $sId => $serv):?>
+										<?foreach($arResult['EXTERNAL_SERVICES'] as $sId => $serv):
+											if (
+												$arResult['PORTAL_ZONE'] === 'ua'
+												&& (int)$serv['ID'] === $arResult['YANDEX_MARKET_ES_ID']
+											)
+											{
+												continue;
+											}
+										?>
 											<option value="<?=intval($serv['ID'])?>"><?=htmlspecialcharsbx($serv['CODE'])?></option>
 										<?endforeach?>
 									</select>

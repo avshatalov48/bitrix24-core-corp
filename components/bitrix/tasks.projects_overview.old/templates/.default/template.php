@@ -121,9 +121,9 @@ $APPLICATION->IncludeComponent(
 									?><span class="task-project-party"><?php
 										if ($arProject['NOT_HEADS_COUNT'])
 										{
-											echo CTasksTools::getMessagePlural(
-												$arProject['NOT_HEADS_COUNT'],
+											echo \Bitrix\Main\Localization\Loc::getMessagePlural(
 												'TASKS_PROJECTS_MEMBERS',
+												(int)$arProject['NOT_HEADS_COUNT'],
 												array(
 													'#SPAN#'  => '<span id="' . $listId . '" class="task-project-party-list">',
 													'#COUNT#' =>  $arProject['NOT_HEADS_COUNT'],

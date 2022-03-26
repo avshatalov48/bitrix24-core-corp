@@ -6,7 +6,7 @@ use Bitrix\Crm\Binding\DealContactTable;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\DealTable;
 use Bitrix\Crm\Integration\DocumentGenerator\Value\Money;
-use Bitrix\Crm\Order\DealBinding;
+use Bitrix\Crm\Order;
 use Bitrix\DocumentGenerator\DataProvider\ArrayDataProvider;
 use Bitrix\DocumentGenerator\DataProvider\Filterable;
 use Bitrix\DocumentGenerator\DataProviderManager;
@@ -300,19 +300,20 @@ class Deal extends ProductsDataProvider implements Filterable
 			if ($dealId > 0)
 			{
 				// always get the last order
-				$dealBinding = DealBinding::getList([
+				$binding = Order\EntityBinding::getList([
 					'select' => ['ORDER_ID'],
 					'filter' => [
-						'=DEAL_ID' => $dealId,
+						'=OWNER_ID' => $dealId,
+						'=OWNER_TYPE_ID' => \CCrmOwnerType::Deal,
 					],
 					'order' => [
 						'ORDER_ID' => 'DESC',
 					],
 					'limit' => 1,
 				])->fetch();
-				if ($dealBinding)
+				if ($binding)
 				{
-					$this->order = \Bitrix\Crm\Order\Order::load((int)$dealBinding['ORDER_ID']);
+					$this->order = \Bitrix\Crm\Order\Order::load((int)$binding['ORDER_ID']);
 				}
 			}
 		}

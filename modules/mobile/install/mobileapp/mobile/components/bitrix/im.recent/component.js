@@ -105,8 +105,7 @@ RecentList.init = function()
 
 	this.cache.database = new ReactDatabase(ChatDatabaseName, this.userId, this.languageId);
 
-	this.dialogCache = new ChatDialogCache();
-
+	// this.dialogCache = new ChatDialogCache();
 	//if (!Application.storage.getObject('settings.chat', {vueChat: true}).vueChat)
 	//{
 	//	this.dialogCache.setDatabase(this.cache.database);
@@ -208,7 +207,6 @@ RecentList.init = function()
 			if (this.cache.inited)
 			{
 				this.push.updateList();
-				this.push.updateNotificationList();
 				this.refresh();
 			}
 		});
@@ -237,7 +235,7 @@ RecentList.isDialogOpen = function()
 	return PageManager.getNavigator().getAll().length > 1
 };
 
-RecentList.openDialog = function(dialogId, dialogTitleParams, waitHistory)
+RecentList.openDialog = function(dialogId, dialogTitleParams)
 {
 	/*
 	clearTimeout(this.openDialogTimeout);
@@ -247,7 +245,7 @@ RecentList.openDialog = function(dialogId, dialogTitleParams, waitHistory)
 		if (typeof history != "undefined" && Object.keys(history).length > 0)
 		{
 			this.openDialogTimeout = setTimeout(() =>{
-				this.openDialog(dialogId, dialogTitleParams, true);
+				this.openDialog(dialogId, dialogTitleParams);
 			}, 150);
 
 			return true;
@@ -258,14 +256,13 @@ RecentList.openDialog = function(dialogId, dialogTitleParams, waitHistory)
 	let titleParams = {};
 
 	let element = this.getElement(dialogId, true);
-
-	if (element.unread)
-	{
-		this.action.read(dialogId);
-	}
-
 	if (element)
 	{
+		if (element.unread)
+		{
+			this.action.read(dialogId);
+		}
+
 		titleParams = {
 			text: element.title,
 			imageUrl: encodeURI(element.avatar.url),
@@ -298,6 +295,12 @@ RecentList.openDialog = function(dialogId, dialogTitleParams, waitHistory)
 		titleParams.imageUrl = this.imagePath + '/avatar_general_x3.png';
 	}
 
+	if (element.type === 'chat' && element.chat.entity_type === 'SUPPORT24_QUESTION')
+	{
+		titleParams.imageUrl = this.imagePath + '/avatar_24_question_x3.png';
+		titleParams.detailText = '';
+	}
+
 	if (element.type === 'notification' || dialogId === 'notify')
 	{
 		if (BX.componentParameters.get('NEXT_NAVIGATION', 'N') === 'Y')
@@ -308,7 +311,7 @@ RecentList.openDialog = function(dialogId, dialogTitleParams, waitHistory)
 			}
 			BX.postComponentEvent("onTabChange", ["notifications"], "im.navigation");
 		}
-		else if (Application.getApiVersion() < 39 || BX.componentParameters.get('NEXT_NOTIFICATIONS', 'N') === 'N')
+		else
 		{
 			let pageParams = {
 				unique : true,
@@ -318,28 +321,9 @@ RecentList.openDialog = function(dialogId, dialogTitleParams, waitHistory)
 			BX.postWebEvent("onNotifyRefresh", {});
 			PageManager.openPage(pageParams);
 		}
-		else
-		{
-			PageManager.openComponent('JSStackComponent', {
-				componentCode: 'im.notify',
-				scriptPath: `/mobileapp/jn/im.notify/?version=${BX.componentParameters.get('WIDGET_CHAT_USERS_VERSION', '1.0.0')}`,
-				title: BX.message('IM_LIST_NOTIFICATIONS'),
-				rootWidget: {
-					name: 'layout',
-					settings: {
-						objectName: 'layoutWidget',
-					}
-				},
-				params: {
-					STORED_EVENTS : this.pull.getNotifyStoredEvents(),
-					WIDGET_CHAT_USERS_VERSION : BX.componentParameters.get('WIDGET_CHAT_USERS_VERSION', '1.0.0'),
-				}
-			});
-		}
 
 		return true;
 	}
-
 
 	if (Application.getApiVersion() >= 25 && Application.isWebComponentSupported())
 	{
@@ -405,51 +389,16 @@ RecentList.openDialog = function(dialogId, dialogTitleParams, waitHistory)
 			backgroundType: 'LIGHT_GRAY'
 		});
 
-		let element = this.getElement(dialogId, true);
+		let isLines = (
+			RecentList.isOpenlinesRecent()
+			|| element && (element.chat && element.chat.type === 'lines' || typeof element.lines !== 'undefined')
+			|| dialogTitleParams && dialogTitleParams.chatType === 'lines'
+		);
 
 		if (
-			!RecentList.isOpenlinesRecent()
-			&& Application.getApiVersion() >= 29
-			&& (
-				/^[0-9]+$/.test(dialogId) // digit
-				|| !element
-				|| (element.chat.type !== 'lines' || typeof element.lines === 'undefined')
-			)
+			isLines
+			|| Application.getApiVersion() < 29
 		)
-		{
-			if (!ChatDialogBackground[mobileConfig.backgroundType])
-			{
-				mobileConfig.backgroundType = 'LIGHT_GRAY';
-			}
-
-			let backgroundConfig = Object.assign({}, ChatDialogBackground[mobileConfig.backgroundType]);
-			backgroundConfig.url = currentDomain+backgroundConfig.url;
-
-			pageParams = {
-				page_id: 'im-'+dialogId,
-				data : this.getOpenDialogParams(dialogId, true, true),
-				url : "/mobile/web_mobile_component/im.dialog.vue/?version="+BX.componentParameters.get('COMPONENT_CHAT_DIALOG_VUE_VERSION', '1.0.0'),
-				titleParams: titleParams,
-				animated: withAnimation,
-				useSystemSwipeBehavior: mobileConfig.quoteEnable && !mobileConfig.quoteFromRight,
-				textPanelParams:
-				{
-					smileButton: {},
-					attachButton: {},
-					useImageButton: true,
-					useAudioMessages: true,
-					placeholder: BX.message('IM_M_TEXTAREA'),
-					mentionDataSource:
-					{
-						outsection: "NO",
-						url: env.siteDir+"/mobile/index.php?mobile_action=get_user_list&use_name_format=Y&with_bots"
-					}
-				},
-				background: backgroundConfig
-			};
-			BX.postComponentEvent("onTabChange", ["chats"], "im.navigation");
-		}
-		else
 		{
 			pageParams = {
 				page_id: 'im-'+dialogId,
@@ -469,10 +418,47 @@ RecentList.openDialog = function(dialogId, dialogTitleParams, waitHistory)
 					}
 				},
 			};
-			BX.postComponentEvent("onTabChange", ["openlines"], "im.navigation");
+		}
+		else
+		{
+			if (!ChatDialogBackground[mobileConfig.backgroundType])
+			{
+				mobileConfig.backgroundType = 'LIGHT_GRAY';
+			}
+
+			let backgroundConfig = Object.assign({}, ChatDialogBackground[mobileConfig.backgroundType]);
+			backgroundConfig.url = currentDomain+backgroundConfig.url;
+
+			pageParams = {
+				page_id: 'im-'+dialogId,
+				data : this.getOpenDialogParams(dialogId, true, true),
+				url : "/mobile/web_mobile_component/im.dialog.vue/?version="+BX.componentParameters.get('COMPONENT_CHAT_DIALOG_VUE_VERSION', '1.0.0'),
+				customInsets: true,
+				titleParams: titleParams,
+				animated: withAnimation,
+				useSystemSwipeBehavior: mobileConfig.quoteEnable && !mobileConfig.quoteFromRight,
+				textPanelParams:
+				{
+					smileButton: {},
+					attachButton: {},
+					useImageButton: true,
+					useAudioMessages: true,
+					placeholder: BX.message('IM_M_TEXTAREA'),
+					mentionDataSource:
+					{
+						outsection: "NO",
+						url: env.siteDir+"/mobile/index.php?mobile_action=get_user_list&use_name_format=Y&with_bots"
+					}
+				},
+				background: backgroundConfig
+			};
 		}
 
 		PageManager.openWebComponent(pageParams);
+
+		let tab = isLines ? ["openlines"] : ["chats"];
+
+		BX.postComponentEvent("onTabChange", tab, "im.navigation");
 	}
 	else
 	{
@@ -1826,6 +1812,7 @@ RecentList.cache.init = function ()
 	else
 	{
 		this.inited = true;
+		this.push.actionExecute();
 		this.base.redraw();
 	}
 
@@ -2057,110 +2044,6 @@ RecentList.push.updateList = function()
 	return true;
 };
 
-RecentList.push.updateNotificationList = function()
-{
-	if (!this.base.isRecent())
-	{
-		return false;
-	}
-
-	const pushList = this.notifyManager.get();
-	if (!pushList || pushList.length <= 0)
-	{
-		console.info('RecentList.push.updateNotificationList: push list is empty');
-		return true;
-	}
-
-	console.info('RecentList.push.updateList: parse push notifications', pushList);
-
-	for (const pushTag in pushList)
-	{
-		if (pushList.hasOwnProperty(pushTag))
-		{
-			pushList[pushTag].forEach(push => {
-				if (!push.data || push.data.cmd !== 'notifyAdd')
-				{
-					return false;
-				}
-
-				let senderMessage = '';
-				if (typeof push.senderMessage !== 'undefined')
-				{
-					senderMessage = push.senderMessage;
-				}
-				else if (typeof push.aps !== 'undefined' && push.aps.alert.body)
-				{
-					senderMessage = push.aps.alert.body;
-				}
-
-				if (!senderMessage)
-				{
-					return false;
-				}
-
-				const event = {
-					module_id: 'im',
-					command: push.data.cmd,
-					params: ChatDataConverter.prepareNotificationPushFormat(push.data)
-				};
-
-				if (typeof event.params.text === 'undefined')
-				{
-					event.params.text  = senderMessage.toString()
-						.replace(/&/g, '&amp;')
-						.replace(/"/g, '&quot;')
-						.replace(/</g, '&lt;')
-						.replace(/>/g, '&gt;');
-				}
-
-				const notifyStoredEvent = ChatUtils.objectClone(event.params);
-
-				// checks if im.notify is loaded
-				// if yes - we generate event for im.notify component. Component will emit p&p event from it.
-				// if no - we pass push events as component params and im.notify will use it as p&p event after start.
-				jnComponent.getState('im.notify')
-					.then(components => {
-						let isNotificationVisible = false;
-						if (components.length > 0)
-						{
-							for (let i = 0; i < components.length; i++)
-							{
-								if (components[i].code === 'im.notify' && components[i].isViewVisible === true)
-								{
-									isNotificationVisible = true;
-								}
-							}
-						}
-						if (isNotificationVisible)
-						{
-							BX.postComponentEvent('notification::push::get', [notifyStoredEvent]);
-						}
-						else
-						{
-							this.pull.notifyStoredEvents = this.pull.notifyStoredEvents.filter(element => element.id !== notifyStoredEvent.id);
-							this.pull.notifyStoredEvents.push(notifyStoredEvent);
-						}
-					})
-					.catch(() => {
-						this.pull.notifyStoredEvents = this.pull.notifyStoredEvents.filter(element => element.id !== notifyStoredEvent.id);
-						this.pull.notifyStoredEvents.push(notifyStoredEvent);
-					});
-
-				// update preview in recent list
-				const element = this.base.list.find(element => element && element.id.toString() === 'notify');
-				if (!element || element.message.id < event.params.id)
-				{
-					this.pull.eventExecute(event);
-				}
-			});
-		}
-	}
-
-	this.notifyManager.clear();
-
-	return true;
-};
-
 RecentList.push.actionExecute = function()
 {
 	if (Application.isBackground())
@@ -2184,7 +2067,7 @@ RecentList.push.actionExecute = function()
 		let user = parseInt(pushParams.ACTION.substr(8));
 		if (user > 0)
 		{
-			this.base.openDialog(user, null, true);
+			this.base.openDialog(user);
 		}
 	}
 	else if (pushParams.ACTION && pushParams.ACTION.substr(0, 8) === 'IM_CHAT_')
@@ -2193,6 +2076,12 @@ RecentList.push.actionExecute = function()
 		{
 			if (this.base.isOpenlinesOperator() && pushParams.CHAT_TYPE === 'L')
 			{
+				if (!PageManager.getNavigator().isActiveTab())
+				{
+					PageManager.getNavigator().makeTabActive();
+				}
+
+				BX.postComponentEvent("onTabChange", ["openlines"], "im.navigation");
 				return false;
 			}
 		}
@@ -2207,7 +2096,7 @@ RecentList.push.actionExecute = function()
 		let chatId = parseInt(pushParams.ACTION.substr(8));
 		if (chatId > 0)
 		{
-			this.base.openDialog('chat' + chatId, null, true);
+			this.base.openDialog('chat' + chatId);
 		}
 	}
 	else if (pushParams.ACTION && pushParams.ACTION === 'IM_NOTIFY')
@@ -2490,17 +2379,17 @@ RecentList.pull.eventExecute = function(data)
 			}
 			this.action.writing(recipientId, false);
 
-			this.base.dialogCache.getDialog(recipientId).then(dialog =>
-			{
-				dialog.unreadList.push(params.message.id);
-				this.base.dialogCache.updateDialog(dialog.id, {unreadList: dialog.unreadList});
-			});
-
-			this.base.dialogCache.addMessage(recipientId, this.base.dialogCache.getMessageFormat({
-				message: messageOriginal,
-				files: params.files? params.files: {},
-				users: params.users? params.users: {}
-			}));
+			// this.base.dialogCache.getDialog(recipientId).then(dialog =>
+			// {
+			// 	dialog.unreadList.push(params.message.id);
+			// 	this.base.dialogCache.updateDialog(dialog.id, {unreadList: dialog.unreadList});
+			// });
+			//
+			// this.base.dialogCache.addMessage(recipientId, this.base.dialogCache.getMessageFormat({
+			// 	message: messageOriginal,
+			// 	files: params.files? params.files: {},
+			// 	users: params.users? params.users: {}
+			// }));
 
 			if (extra && extra.server_time_ago <= 5 && params.message.senderId != this.base.userId)
 			{
@@ -2535,17 +2424,17 @@ RecentList.pull.eventExecute = function(data)
 				user: { idle: false, last_activity_date: new Date()}
 			});
 
-			this.base.dialogCache.getDialog(params.message.recipientId).then(dialog =>
-			{
-				dialog.unreadList.push(params.message.id);
-				this.base.dialogCache.updateDialog(dialog.id, {unreadList: dialog.unreadList});
-			});
-
-			this.base.dialogCache.addMessage(params.message.recipientId, this.base.dialogCache.getMessageFormat({
-				message: messageOriginal,
-				files: params.files? params.files: {},
-				users: params.users? params.users: {}
-			}));
+			// this.base.dialogCache.getDialog(params.message.recipientId).then(dialog =>
+			// {
+			// 	dialog.unreadList.push(params.message.id);
+			// 	this.base.dialogCache.updateDialog(dialog.id, {unreadList: dialog.unreadList});
+			// });
+			//
+			// this.base.dialogCache.addMessage(params.message.recipientId, this.base.dialogCache.getMessageFormat({
+			// 	message: messageOriginal,
+			// 	files: params.files? params.files: {},
+			// 	users: params.users? params.users: {}
+			// }));
 
 			if (
 				extra && extra.server_time_ago <= 5
@@ -2596,39 +2485,39 @@ RecentList.pull.eventExecute = function(data)
 			user: { idle: false, last_activity_date: new Date(params.date)}
 		});
 
-		this.base.dialogCache.getDialog(params.dialogId).then(dialog =>
-		{
-			if (params.dialogId.toString().startsWith('chat'))
-			{
-				if (command == 'readMessageChatOpponent')
-				{
-					dialog.readList[params.userId] = {
-						messageId: params.lastId,
-						date: new Date(params.date)
-					};
-				}
-				else
-				{
-					delete dialog.readList[params.userId];
-				}
-			}
-			else
-			{
-				if (command == 'readMessageOpponent')
-				{
-					dialog.readList[params.dialogId] = {
-						messageId: params.lastId,
-						date: new Date(params.date)
-					};
-				}
-				else
-				{
-					dialog.readList[params.dialogId] = {};
-				}
-			}
-
-			this.base.dialogCache.updateDialog(params.dialogId, {readList: dialog.readList});
-		});
+		// this.base.dialogCache.getDialog(params.dialogId).then(dialog =>
+		// {
+		// 	if (params.dialogId.toString().startsWith('chat'))
+		// 	{
+		// 		if (command == 'readMessageChatOpponent')
+		// 		{
+		// 			dialog.readList[params.userId] = {
+		// 				messageId: params.lastId,
+		// 				date: new Date(params.date)
+		// 			};
+		// 		}
+		// 		else
+		// 		{
+		// 			delete dialog.readList[params.userId];
+		// 		}
+		// 	}
+		// 	else
+		// 	{
+		// 		if (command == 'readMessageOpponent')
+		// 		{
+		// 			dialog.readList[params.dialogId] = {
+		// 				messageId: params.lastId,
+		// 				date: new Date(params.date)
+		// 			};
+		// 		}
+		// 		else
+		// 		{
+		// 			dialog.readList[params.dialogId] = {};
+		// 		}
+		// 	}
+		//
+		// 	this.base.dialogCache.updateDialog(params.dialogId, {readList: dialog.readList});
+		// });
 	}
 	else if (
 		command == 'readMessage' || command == 'readMessageChat' ||
@@ -2657,10 +2546,10 @@ RecentList.pull.eventExecute = function(data)
 			counter: params.counter
 		});
 
-		if (command == 'readMessage' || command == 'readMessageChat')
-		{
-			this.base.dialogCache.updateDialog(params.dialogId, {unreadList: []});
-		}
+		// if (command == 'readMessage' || command == 'readMessageChat')
+		// {
+		// 	this.base.dialogCache.updateDialog(params.dialogId, {unreadList: []});
+		// }
 	}
 	else if (command == 'readAllChats')
 	{
@@ -2700,18 +2589,18 @@ RecentList.pull.eventExecute = function(data)
 		this.base.updateElement(element.id, element);
 		this.action.writing(element.id, false);
 
-		if (command == 'messageDeleteComplete')
-		{
-			this.base.dialogCache.deleteMessage(params.dialogId, params.id);
-		}
-		else
-		{
-			this.base.dialogCache.updateMessage(params.dialogId, this.base.dialogCache.getUpdateMessageFormat({
-				message: {id: params.id, text: params.text, params: params.params},
-				hasFiles: element.message.file,
-				hasAttach: element.message.attach
-			}));
-		}
+		// if (command == 'messageDeleteComplete')
+		// {
+		// 	this.base.dialogCache.deleteMessage(params.dialogId, params.id);
+		// }
+		// else
+		// {
+		// 	this.base.dialogCache.updateMessage(params.dialogId, this.base.dialogCache.getUpdateMessageFormat({
+		// 		message: {id: params.id, text: params.text, params: params.params},
+		// 		hasFiles: element.message.file,
+		// 		hasAttach: element.message.attach
+		// 	}));
+		// }
 	}
 	else if (command == 'dialogChange')
 	{
@@ -4014,7 +3903,7 @@ RecentList.event.init = function ()
 		onOpenProfile: this.onOpenProfile,
 		onOpenDialog: this.onOpenDialog,
 		onDialogIsOpen: this.onDialogIsOpen,
-		onLoadLastMessage: this.onLoadLastMessage,
+		//onLoadLastMessage: this.onLoadLastMessage,
 		"chatdialog::init::complete": this.onDialogInitComplete,
 		"chatdialog::counter::change": this.onDialogCounterChange,
 		"chatdialog::notification::readAll": this.onNotificationReadAll,
@@ -4068,10 +3957,10 @@ RecentList.event.onOpenProfile = function(event)
 RecentList.event.onDialogIsOpen = function(event)
 {
 	this.base.updateElement(event.dialogId, {counter: 0});
-	if (this.base.dialogCache.dialogs.has(event.dialogId.toString()))
-	{
-		this.base.dialogCache.dialogs.get(event.dialogId.toString()).unreadList = [];
-	}
+	// if (this.base.dialogCache.dialogs.has(event.dialogId.toString()))
+	// {
+	// 	this.base.dialogCache.dialogs.get(event.dialogId.toString()).unreadList = [];
+	// }
 };
 
 RecentList.event.onDialogInitComplete = function(event)
@@ -4110,8 +3999,8 @@ RecentList.event.onLoadLastMessage = function(event)
 		return true;
 	}
 
-	this.base.dialogCache.dialogs.delete(event.dialogId);
-	this.base.dialogCache.getDialog(event.dialogId, false);
+	// this.base.dialogCache.dialogs.delete(event.dialogId);
+	// this.base.dialogCache.getDialog(event.dialogId, false);
 };
 
 RecentList.event.onItemSelected = function(listElement)
@@ -4400,9 +4289,11 @@ RecentList.search.openChat = function (chat)
 		description: chat.description,
 	};
 
-	// TODO: delete when the mobile chat learns about open lines, call chats and others.
 	if (chat.customData['imChat'])
 	{
+		dialogParams.chatType = chat.customData['imChat'].TYPE;
+
+		// TODO: delete when the mobile chat learns about open lines, call chats and others.
 		if (chat.customData['imChat'].TYPE === 'open')
 		{
 			dialogParams.description = BX.message('MOBILE_EXT_CHAT_SELECTOR_CHANNEL_SUBTITLE');
@@ -4411,15 +4302,6 @@ RecentList.search.openChat = function (chat)
 		{
 			dialogParams.description = BX.message('MOBILE_EXT_CHAT_SELECTOR_GROUP_SUBTITLE');
 		}
-	}
-	else if (
-		chat.customData['imBot']
-		&& chat.customData['imUser']
-		&& typeof chat.customData['imUser'].WORK_POSITION === 'string'
-		&& chat.customData['imUser'].WORK_POSITION !== ''
-	)
-	{
-		dialogParams.description = chat.customData['imUser'].WORK_POSITION;
 	}
 
 	this.base.openDialog(dialogId, dialogParams);

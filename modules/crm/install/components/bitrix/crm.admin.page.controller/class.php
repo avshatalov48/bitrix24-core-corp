@@ -1,4 +1,4 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 /**
@@ -9,12 +9,12 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
  * @global CMain $APPLICATION
  */
 
-use Bitrix\Main\Context;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\SystemException;
+use Bitrix\Catalog;
 use Bitrix\Crm;
+use Bitrix\Iblock;
 use Bitrix\Crm\Settings\OrderSettings;
 
 class CCrmAdminPageController extends \CBitrixComponent implements Controllerable
@@ -22,13 +22,13 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 	private $pageList = array();
 	private $listMenuItems = array();
 
-	/** @var \Bitrix\Crm\Product\Url\ShopBuilder */
-	private $urlBuilder = null;
+	/** @var Catalog\Url\ShopBuilder */
+	private $urlBuilder;
 
 	/** @var string */
-	private $currentPage = null;
+	private $currentPage;
 
-	private $currentPageParams = null;
+	private $currentPageParams;
 
 	public function configureActions()
 	{
@@ -54,30 +54,36 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 		$params["INTERNAL_PAGE"] = (!empty($params["INTERNAL_PAGE"]) ? $params["INTERNAL_PAGE"] : "N");
 
 		$params["MENU_ITEMS"] = array();
+		$params['MENU_MODE'] = isset($params['MENU_MODE']) && $params['MENU_MODE'] === 'Y';
 
 		return $params;
 	}
 
 	public function executeComponent()
 	{
-		try
+		if (!$this->checkRequiredParams())
 		{
-			$this->checkRequiredParams();
-
-			$this->initUrlBuilder();
-
-			$this->initCurrentPage();
-
-			$this->prepareMenuToRender();
-
-			$this->formatResult();
-
-			$this->includeComponentTemplate();
+			return null;
 		}
-		catch(SystemException $e)
+
+		$this->initUrlBuilder();
+
+		$this->initCurrentPage();
+
+		$this->prepareMenuToRender();
+
+		$this->formatResult();
+
+		if ($this->arParams['MENU_MODE'])
 		{
-			ShowError($e->getMessage());
+			return [
+				'ITEMS' => $this->createFileMenuItems($this->arResult["MENU_ITEMS"]),
+			];
 		}
+
+		$this->includeComponentTemplate();
+
+		return null;
 	}
 
 	/**
@@ -95,7 +101,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 	 *
 	 * @return array List shop urls.
 	 */
-	public function getShopUrls()
+	public function getShopUrls(): array
 	{
 		$this->prepareMenuToRender();
 
@@ -104,10 +110,9 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 		return $this->getUrlsFromMenu($finalMenu);
 	}
 
-	public function getCatalogSectionsAction()
+	public function getCatalogSectionsAction(): array
 	{
-		$request = Context::getCurrent()->getRequest();
-		$post = $request->getPostList()->toArray();
+		$post = $this->request->getPostList()->toArray();
 
 		if (!$this->checkRequiredCatalogParams($post))
 		{
@@ -118,26 +123,41 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 
 		if ($this->checkRequiredModules())
 		{
-			$this->initUrlBuilder();;
+			if (
+				!CCrmSaleHelper::isShopAccess('admin')
+				&& !CCrmSaleHelper::isShopAccess('manager')
+			)
+			{
+				return $items;
+			}
 
-			$iblockId = (int) $post["iblock_id"];
+			$iblockId = (int)$post["iblock_id"];
+			if (!$this->checkIblockId($iblockId))
+			{
+				return $items;
+			}
+
+			$this->initUrlBuilder();
 			$this->urlBuilder->setIblockId($iblockId);
 			$this->urlBuilder->setUrlParams([]);
 			$queryObject = CIBlockSection::getList(
 				["LEFT_MARGIN" => "ASC"],
 				[
-					"IBLOCK_ID" => $post["iblock_id"],
-					"SECTION_ID" => $post["section_id"],
+					"IBLOCK_ID" => $iblockId,
+					"SECTION_ID" => (int)($post["section_id"] ?? 0),
 				],
 				false,
-				["ID", "NAME", "LEFT_MARGIN", "RIGHT_MARGIN"]
+				[
+					"ID",
+					"NAME",
+				]
 			);
 			while ($section = $queryObject->fetch())
 			{
 				$item = [
 					"text" => htmlspecialcharsEx($section["NAME"]),
 					"title" => htmlspecialcharsEx($section["NAME"]),
-					"href" => $this->getSectionUrl($iblockId, $section["ID"], $post["selfFolder"]),
+					"href" => $this->getSectionUrl((int)$section["ID"]),
 				];
 				if ($this->hasSectionChild($iblockId, $section["ID"]))
 				{
@@ -157,9 +177,51 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 		return $items;
 	}
 
-	private function checkRequiredCatalogParams(array $post)
+	private function checkIblockId(int $iblockId): bool
 	{
-		if (!intval($post["iblock_id"]))
+		if ($iblockId <= 0)
+		{
+			return false;
+		}
+		if ($iblockId === Crm\Product\Catalog::getDefaultId())
+		{
+			return true;
+		}
+		$row = Iblock\IblockTable::getList([
+			'select' => ['ID', 'XML_ID'],
+			'filter' => ['=ID' => $iblockId],
+		])->fetch();
+		if (empty($row))
+		{
+			return false;
+		}
+		if (strncmp($row['XML_ID'], 'crm_external_', 13) === 0)
+		{
+			return false;
+		}
+		$row = Catalog\CatalogIblockTable::getList([
+			'select' => ['IBLOCK_ID'],
+			'filter' => [
+				'LOGIC' => 'OR',
+				'=PRODUCT_IBLOCK_ID' => $iblockId,
+				[
+					'=IBLOCK_ID' => $iblockId,
+					'=PRODUCT_IBLOCK_ID' => 0,
+				],
+			],
+			'limit' => 1,
+		])->fetch();
+		if (!empty($row))
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	private function checkRequiredCatalogParams(array $post): bool
+	{
+		if (!(int)$post["iblock_id"])
 		{
 			return false;
 		}
@@ -184,7 +246,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 	{
 		if ($this->checkRequiredModules() && $this->urlBuilder === null)
 		{
-			$this->urlBuilder = new Crm\Product\Url\ShopBuilder();
+			$this->urlBuilder = new Catalog\Url\ShopBuilder();
 		}
 	}
 
@@ -214,7 +276,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 		return ($queryObject->fetch());
 	}
 
-	private function getSectionUrl($iblockId, $sectionId, $selfFolder)
+	private function getSectionUrl(?int $sectionId): string
 	{
 		return $this->urlBuilder->getSectionListUrl($sectionId);
 	}
@@ -253,16 +315,26 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 		 * Catalog goods list menu item
 		 */
 		$catalogListId = null;
-		foreach ($this->listMenuItems as $menuItemId => $menuItem)
+		if ($this->checkRequiredModules())
 		{
-			if (!preg_match('/^menu_catalog_goods_[0-9]+$/', $menuItemId))
-			{
-				continue;
-			}
-
-			$catalogListId = $menuItemId;
-			break;
+			$catalogListId = Crm\Product\Catalog::getDefaultId();
 		}
+
+		if ($catalogListId !== null)
+		{
+			$catalogListId = 'menu_catalog_goods_'.$catalogListId;
+		}
+
+		/* NEW MENU
+		if (isset($this->listMenuItems['menu_catalog_store']) || isset($this->listMenuItems[$catalogListId]))
+		{
+			$this->listMenuItems['menu_sale_goods_and_documents'] = [
+				'ID' => 'menu_sale_goods_and_documents',
+				'PARENT_ID' => null,
+				'SORT' => 200,
+				'TEXT' => Loc::getMessage('SHOP_MENU_GOODS_DOCUMENTS'),
+			];
+		}*/
 
 		/**
 		 * Mutating
@@ -275,14 +347,46 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 			if ($menuItemId === 'menu_sale_buyers')
 			{
 				$this->listMenuItems[$menuItemId]['IS_DISABLED'] = true;
+
+				/* NEW MENU
+				$this->listMenuItems[$menuItemId] = array_merge(
+					$menuItem,
+					[
+						'SORT' => 150,
+						'PARENT_ID' => 'menu_sale_settings_all'
+					]
+				);*/
 			}
 
-			/**
-			 * Catalog store
-			 */
-			if ($menuItemId === 'menu_catalog_store')
+			if ($this->checkRequiredModules())
 			{
-				$this->listMenuItems[$menuItemId]['IS_DISABLED'] = true;
+				if (
+					Loader::includeModule('intranet') // TODO: erase this code row after remove public files from intranet wizard 'portal'
+					&& Catalog\Config\Feature::isInventoryManagementEnabled()
+				)
+				{
+					if ($menuItemId === 'menu_catalog_store')
+					{
+						/* NEW MENU
+						$this->listMenuItems[$menuItemId]['PARENT_ID'] = 'menu_sale_goods_and_documents';
+						$this->listMenuItems[$menuItemId]['SORT'] = 100;
+						*/
+						$this->listMenuItems[$menuItemId]['URL'] = '/shop/documents/';
+						$this->listMenuItems[$menuItemId]['ON_CLICK'] = 'event.preventDefault();BX.SidePanel.Instance.open("/shop/documents/?inventoryManagementSource=shop", {cacheable: false, customLeftBoundary: 0});';
+					}
+
+					if ($this->listMenuItems[$menuItemId]['PARENT_ID'] === 'menu_catalog_store')
+					{
+						unset($this->listMenuItems[$menuItemId]);
+						continue;
+					}
+				}
+				/* NEW MENU
+				else if ($menuItemId === 'menu_catalog_store')
+				{
+					$this->listMenuItems[$menuItemId]['PARENT_ID'] = 'menu_sale_goods_and_documents';
+					$this->listMenuItems[$menuItemId]['SORT'] = 100;
+				}*/
 			}
 
 			/**
@@ -295,10 +399,13 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 					[
 						'SORT' => 600,
 						'IS_DISABLED' => true,
+
+						/* NEW MENU
+						'PARENT_ID' => 'menu_sale_settings_all',
+						'SORT' => 250,
+						*/
 					]
 				);
-
-				$this->listMenuItems[$menuItemId]['IS_DISABLED'] = true;
 			}
 
 			/**
@@ -311,6 +418,11 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 					[
 						'PARENT_ID' => null,
 						'TEXT' => Loc::getMessage('CRM_SHOP_MENU_ITEM_GOODS'),
+						/* NEW MENU
+						'PARENT_ID' => 'menu_sale_goods_and_documents',
+						'SORT' => 50,
+						'TEXT' => Loc::getMessage('SHOP_MENU_CATALOG_GOODS'),
+						*/
 					]
 				);
 			}
@@ -324,6 +436,9 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 					$menuItem,
 					[
 						'IS_DISABLED' => true,
+						/* NEW MENU
+						'PARENT_ID' => 'menu_sale_settings_all',
+						*/
 						'TEXT' => Loc::getMessage('CRM_SHOP_MENU_ITEM_EXPERT_SETTINGS'),
 					]
 				);
@@ -334,11 +449,26 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 			 */
 			if ($menuItemId === 'sale_pay_system')
 			{
+				/* NEW MENU
+				$this->listMenuItems['sale_pay_system_root'] = array_merge(
+					$menuItem,
+					[
+						'ID' => 'sale_pay_system_root',
+						'PARENT_ID' => null,
+						'SORT' => 350,
+					]
+				);
+				*/
+
 				$this->listMenuItems[$menuItemId] = array_merge(
 					$menuItem,
 					[
 						'PARENT_ID' => 'menu_sale_quick_start_settings',
 						'SORT' => 290,
+						/* NEW MENU
+						'PARENT_ID' => 'sale_pay_system_root',
+						'SORT' => 50,
+						*/
 					]
 				);
 			}
@@ -352,6 +482,10 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 					$menuItem,
 					[
 						'PARENT_ID' => 'menu_sale_quick_start_settings',
+						/* NEW MENU
+						'PARENT_ID' => 'sale_pay_system_root',
+						'SORT' => 100,
+						*/
 					]
 				);
 			}
@@ -366,17 +500,22 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 					[
 						'PARENT_ID' => 'menu_sale_quick_start_settings',
 						'SORT' => 310,
+
+						/* NEW MENU
+						'PARENT_ID' => 'sale_pay_system_root',
+						'SORT' => 150,
+						*/
 					]
 				);
 			}
 		}
 	}
 
-	private function getUrlsFromMenu(array $menu)
+	private function getUrlsFromMenu(array $menu): array
 	{
 		$shopUrls = [];
 
-		foreach ($menu as $itemId => $item)
+		foreach ($menu as $item)
 		{
 			if (!empty($item["URL"]))
 			{
@@ -393,20 +532,23 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 	/**
 	 * Check required params.
 	 *
-	 * @throws SystemException
+	 * @return bool
 	 */
-	protected function checkRequiredParams()
+	protected function checkRequiredParams(): bool
 	{
 		if (empty($this->arParams["MENU_ID"]))
 		{
-			throw new SystemException("Error: MENU_ID parameter missing.");
+			ShowError("Error: MENU_ID parameter missing.");
+			return false;
 		}
+
+		return true;
 	}
 
 	/**
 	 * @return array
 	 */
-	protected function getMenu()
+	protected function getMenu(): array
 	{
 		$_REQUEST["public_menu"] = "Y";
 		require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/interface/admin_lib.php");
@@ -502,52 +644,54 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 		}
 	}
 
-	protected function getAdditionalList()
+	protected function getAdditionalList(): array
 	{
 		$marketingUrl = SITE_DIR . "marketing/?marketing_title=Y";
 
-		$result = array(
-			array(
+		$result = [
+			[
+				// NEW MENU "parent_menu" => "menu_sale_settings_all",
 				"parent_menu" => "global_menu_store",
+				// NEW MENU "sort" => 50,
 				"sort" => 250,
-				"text" => GetMessage("SHOP_MENU_PRODUCT_MARKETING_TITLE"),
-				"title" => GetMessage("SHOP_MENU_PRODUCT_MARKETING_TITLE"),
+				// NEW MENU "text" => Loc::getMessage("SHOP_MENU_SHOP_MARKETING"),
+				"text" => Loc::getMessage("SHOP_MENU_PRODUCT_MARKETING_TITLE"),
 				"additional" => "Y",
 				"url" => SITE_DIR . "marketing/",
 				"url_constant" => true,
 				"on_click" => 'BX.SidePanel.Instance.open("' . CUtil::JSescape($marketingUrl) . '");',
 				"items_id" => "menu_sale_discounts",
-				"items" => array(
-					array(
+				"items" => [
+					[
 						"parent_menu" => "menu_sale_discounts",
 						"sort" => 250.1,
 						"text" => GetMessage("SHOP_MENU_DISCOUNTS_AND_SALES"),
 						"title" => GetMessage("SHOP_MENU_DISCOUNTS_AND_SALES"),
 						"url" => "sale_discount_preset_list.php",
 						"items_id" => "sale_discount_preset_list",
-					),
-					array(
+					],
+					[
 						"parent_menu" => "menu_sale_discounts",
 						"sort" => 250.2,
 						"text" => GetMessage("SHOP_MENU_PRODUCT_MARKETING_COUPONS"),
 						"title" => GetMessage("SHOP_MENU_PRODUCT_MARKETING_COUPONS"),
 						"url" => "sale_discount_coupons.php",
 						"items_id" => "sale_discount_coupons",
-					)
-				)
-			),
-			array(
+					]
+				]
+			],
+			[
 				"parent_menu" => "global_menu_store",
+				// NEW MENU "sort" => 400,
 				"sort" => 275,
 				"text" => GetMessage("SHOP_MENU_QUICK_START_SETTINGS"),
 				"title" => GetMessage("SHOP_MENU_QUICK_START_SETTINGS"),
 				"additional" => "Y",
 				"url" => null,
+				// NEW MENU "items_id" => "menu_sale_settings_all",
 				"items_id" => "menu_sale_quick_start_settings",
-				"items" => array(
-				)
-			),
-			array(
+			],
+			[
 				"parent_menu" => "menu_sale_buyers",
 				"sort" => 401,
 				"text" => GetMessage("SHOP_MENU_BUYER_GROUP_TITLE"),
@@ -556,8 +700,8 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 				"url" => "/shop/buyer_group/",
 				"url_constant" => true,
 				"items_id" => "buyer_group_settings",
-			),
-			array(
+			],
+			[
 				"parent_menu" => "menu_sale_settings",
 				"sort" => 710.05,
 				"text" => GetMessage("SHOP_MENU_SETTINGS_SALE_SETTINGS"),
@@ -566,8 +710,8 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 				"url" => "/crm/configs/sale/?type=common",
 				"url_constant" => true,
 				"items_id" => "csc_sale_settings",
-			),
-			array(
+			],
+			[
 				"parent_menu" => "menu_sale_settings",
 				"sort" => 710.1,
 				"text" => GetMessage("SHOP_MENU_ORDER_FORM_SETTINGS_TITLE"),
@@ -576,8 +720,8 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 				"url" => "/shop/orderform/",
 				"url_constant" => true,
 				"items_id" => "form_order_settings",
-			),
-			array(
+			],
+			[
 				"parent_menu" => "menu_sale_settings",
 				"sort" => 709.1,
 				"text" => GetMessage("SHOP_MENU_SETTINGS_STATUS"),
@@ -585,8 +729,8 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 				"additional" => "Y",
 				"url_constant" => true,
 				"items_id" => "crm_sale_status",
-				"items" => array(
-					array(
+				"items" => [
+					[
 						"parent_menu" => "crm_sale_status",
 						"sort" => 709.2,
 						"text" => GetMessage("SHOP_MENU_SETTINGS_STATUS_ORDER"),
@@ -594,8 +738,8 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 						"url" => "/crm/configs/sale/?type=order",
 						"url_constant" => true,
 						"items_id" => "crm_sale_status_orders",
-					),
-					array(
+					],
+					[
 						"parent_menu" => "crm_sale_status",
 						"sort" => 709.3,
 						"text" => GetMessage("SHOP_MENU_SETTINGS_STATUS_ORDER_SHIPMENT"),
@@ -603,10 +747,10 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 						"url" => "/crm/configs/sale/?type=shipment",
 						"url_constant" => true,
 						"items_id" => "crm_sale_status_shipment",
-					),
-				)
-			),
-			array(
+					],
+				]
+			],
+			[
 				"parent_menu" => "menu_sale_settings",
 				"sort" => 711,
 				"text" => GetMessage("SHOP_MENU_SETTINGS_USER_FIELDS"),
@@ -615,8 +759,8 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 				"url" => "/crm/configs/sale/?type=fields",
 				"url_constant" => true,
 				"items_id" => "userfield_edit",
-			),
-			array(
+			],
+			[
 				"parent_menu" => "menu_sale_settings",
 				"sort" => 730,
 				"text" => GetMessage("SHOP_MENU_PRODUCT_MARKETING_DISCOUNT"),
@@ -624,13 +768,48 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 				"additional" => "Y",
 				"url" => "sale_discount.php",
 				"items_id" => "sale_discount",
-			),
-		);
+			],
+		];
+
+		/* NEW MENU
+		if (
+			Loader::includeModule('landing')
+			&& Landing\Rights::hasAdditionalRight(Landing\Rights::ADDITIONAL_RIGHTS['menu24'])
+		)
+		{
+			$result[] = [
+				'parent_menu' => 'global_menu_store',
+				'sort' => 50,
+				'text' => Loc::getMessage('SHOP_MENU_SITES'),
+				'title' => Loc::getMessage('SHOP_MENU_SITES'),
+				'additional' => 'Y',
+				'url' => '/sites/',
+				'url_constant' => true,
+				'items_id' => 'sites',
+			];
+		}
+		*/
+
+		if (CCrmSaleHelper::isShopAccess("admin"))
+		{
+			$result[] = array(
+				"parent_menu" => "global_menu_store",
+				// NEW MENU "sort" => 100,
+				"sort" => 150,
+				"text" => GetMessage("SHOP_MENU_SHOP_TITLE"),
+				"title" => GetMessage("SHOP_MENU_SHOP_TITLE"),
+				"additional" => "Y",
+				"url" => "/shop/stores/",
+				"url_constant" => true,
+				"items_id" => "stores",
+			);
+		}
 
 		if (\CCrmSaleHelper::isWithOrdersMode())
 		{
 			$result[] = array(
 				"parent_menu" => "global_menu_store",
+				// NEW MENU "sort" => 150,
 				"sort" => 100,
 				"text" => GetMessage("SHOP_MENU_ORDER_TITLE"),
 				"title" => GetMessage("SHOP_MENU_ORDER_TITLE"),
@@ -641,19 +820,86 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 			);
 		}
 
-		if (CCrmSaleHelper::isShopAccess("admin"))
+		/* NEW MENU
+		$isAdmin = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isAdmin();
+		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
+
+		$clientSubItems = [];
+		if ($isAdmin || CCrmContact::CheckReadPermission(0, $userPermissions))
 		{
-			$result[] = array(
-				"parent_menu" => "global_menu_store",
-				"sort" => 150,
-				"text" => GetMessage("SHOP_MENU_SHOP_TITLE"),
-				"title" => GetMessage("SHOP_MENU_SHOP_TITLE"),
-				"additional" => "Y",
-				"url" => "/shop/stores/",
-				"url_constant" => true,
-				"items_id" => "stores",
+			$contactListUrl = SITE_DIR . 'crm/contact/list/';
+			$clientSubItems[] = array(
+				'parent_menu' => 'crm_clients',
+				'sort' => 50,
+				'text' => Loc::getMessage('SHOP_MENU_CRM_CONTACTS'),
+				'additional' => 'Y',
+				'on_click' => 'BX.SidePanel.Instance.open("' . CUtil::JSescape($contactListUrl) . '"); return false;',
+				'url' => $contactListUrl,
+				'url_constant' => true,
+				'items_id' => 'crm_contacts',
 			);
 		}
+
+		if ($isAdmin || CCrmCompany::CheckReadPermission(0, $userPermissions))
+		{
+			$companyListUrl = SITE_DIR . 'crm/company/list/';
+			$clientSubItems[] = array(
+				'parent_menu' => 'crm_clients',
+				'sort' => 100,
+				'text' => Loc::getMessage('SHOP_MENU_CRM_COMPANIES'),
+				'additional' => 'Y',
+				'on_click' => 'BX.SidePanel.Instance.open("' . CUtil::JSescape($companyListUrl) . '"); return false;',
+				'url' => $companyListUrl,
+				'url_constant' => true,
+				'items_id' => 'crm_companies',
+			);
+		}
+
+		$contactCenterUrl =
+			ModuleManager::isModuleInstalled('bitrix24') ? '/contact_center/' : SITE_DIR . 'services/contact_center/'
+		;
+		$clientSubItems[] = array(
+			'parent_menu' => 'crm_clients',
+			'sort' => 150,
+			'text' => Loc::getMessage('SHOP_MENU_CONTACT_CENTER'),
+			'additional' => 'Y',
+			'on_click' => 'BX.SidePanel.Instance.open("' . CUtil::JSescape($contactCenterUrl) . '"); return false;',
+			'url' => $contactCenterUrl,
+			'url_constant' => true,
+			'items_id' => 'contact_center',
+		);
+
+		if (!empty($clientSubItems))
+		{
+			$result[] = [
+				'parent_menu' => 'global_menu_store',
+				'sort' => 250,
+				'text' => Loc::getMessage('SHOP_MENU_CRM_CLIENTS'),
+				'additional' => 'Y',
+				'url' => $clientSubItems[0]['url'] ?? '',
+				'on_click' => $clientSubItems[0]['on_click'] ?? '',
+				'url_constant' => true,
+				'items_id' => 'crm_clients',
+				'items' => $clientSubItems,
+			];
+		}
+
+		if ($isAdmin || !$userPermissions->havePerm('WEBFORM', BX_CRM_PERM_NONE, 'READ'))
+		{
+			$webformsUrl = SITE_DIR . 'crm/webform/';
+
+			$result[] = [
+				'parent_menu' => 'global_menu_store',
+				'sort' => 300,
+				'text' => Loc::getMessage('SHOP_MENU_WEBFORMS'),
+				'additional' => 'Y',
+				'url' => $webformsUrl,
+				'on_click' => 'BX.SidePanel.Instance.open("' . CUtil::JSescape($webformsUrl) . '");',
+				'url_constant' => true,
+				'items_id' => 'webforms',
+			];
+		}
+		*/
 
 		return $result;
 	}
@@ -670,7 +916,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 			$items = $menu;
 		}
 
-		foreach ($items as $itemId => $item)
+		foreach ($items as $item)
 		{
 			$pageId = (!empty($item["items_id"]) ? $item["items_id"] : "");
 			if ($pageId)
@@ -685,10 +931,10 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 					"COUNTER" => 0,
 					"COUNTER_ID" => "",
 					"IS_ACTIVE" => false,
-					"IS_LOCKED" => false,
+					"IS_LOCKED" => $item['is_locked'] ?? false,
 					"IS_DISABLED" => false,
 					"ON_CLICK" => $item["on_click"] ?? null,
-					"SORT" => $item["sort"] ? $item["sort"] : 0
+					"SORT" => $item["sort"] ?: 0
 				);
 
 				if (!empty($item["ajax_options"]))
@@ -741,7 +987,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 		array_multisort($sortData, SORT_ASC, $this->listMenuItems);
 	}
 
-	protected function getPagePath()
+	protected function getPagePath(): array
 	{
 		$pageId = $this->getPageId();
 
@@ -762,12 +1008,12 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 		}
 	}
 
-	protected function getInternalPagePath($pageId)
+	protected function getInternalPagePath($pageId): array
 	{
 		if (!empty($this->arParams["INTERNAL_PAGE_LIST"][$pageId]))
 		{
 			$pageParams = "";
-			$requestUrl = Context::getCurrent()->getRequest()->getRequestUri();
+			$requestUrl = $this->request->getRequestUri();
 			$explode = explode("?", $requestUrl);
 			if (count($explode) == 2)
 			{
@@ -780,8 +1026,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 		{
 			if ($this->getPagePathForAjaxPages($pageId))
 			{
-				$request = Context::getCurrent()->getRequest();
-				$explode = explode("?", $request->getRequestUri());
+				$explode = explode("?", $this->request->getRequestUri());
 				$pageParams = "";
 				if (count($explode) == 2)
 				{
@@ -799,7 +1044,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 
 	protected function getPageId()
 	{
-		$requestUrl = Bitrix\Main\Context::getCurrent()->getRequest()->getRequestedPage();
+		$requestUrl = $this->request->getRequestedPage();
 
 		$folder404 = str_replace("\\", "/", $this->arParams["SEF_FOLDER"]);
 		if ($folder404 != "/")
@@ -823,14 +1068,42 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 		$this->arResult = array();
 		$this->arResult["MENU_ID"] = $this->arParams["MENU_ID"];
 		$this->arResult["MENU_ITEMS"] = $this->getFinalMenu();
-		list($this->arResult["PAGE_ID"], $this->arResult["PAGE_PATH"],
-			$this->arResult["PAGE_PARAMS"]) = $this->getPagePath();
+		[$this->arResult["PAGE_ID"], $this->arResult["PAGE_PATH"],
+			$this->arResult["PAGE_PARAMS"]] = $this->getPagePath();
 		$this->arResult["SEF_FOLDER"] = $this->arParams["SEF_FOLDER"];
 		$this->arResult["CONNECT_PAGE"] = $this->arParams["CONNECT_PAGE"] === "Y";
 		$this->arResult["INTERNAL_PAGE"] = $this->arParams["INTERNAL_PAGE"];
 	}
 
-	private function getFinalMenu()
+	protected function createFileMenuItems($items, $depthLevel = 1): array
+	{
+		$result = [];
+		foreach ($items as $item)
+		{
+			$hasChildren = isset($item['ITEMS']) && is_array($item['ITEMS']) && !empty($item['ITEMS']);
+
+			$result[] = [
+				$item['NAME'] ?? $item['TEXT'],
+				$item['URL'],
+				[],
+				[
+					'DEPTH_LEVEL' => $depthLevel,
+					'FROM_IBLOCK' => true,
+					'IS_PARENT' => $hasChildren,
+					'ON_CLICK' => $item['ON_CLICK'] ?? null,
+				]
+			];
+
+			if ($hasChildren)
+			{
+				$result = array_merge($result, $this->createFileMenuItems($item['ITEMS'], $depthLevel + 1));
+			}
+		}
+
+		return $result;
+	}
+
+	private function getFinalMenu(): array
 	{
 		$listMenu = $this->getMenuItems($this->listMenuItems);
 		foreach ($listMenu as &$menu)
@@ -891,7 +1164,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 		return $result;
 	}
 
-	private function getMenuItems(array &$listMenuItems, $parentPageId = "")
+	private function getMenuItems(array &$listMenuItems, $parentPageId = ""): array
 	{
 		$ignorePageList = static::getIgnorePageList();
 
@@ -1007,7 +1280,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 							$value = urldecode(mb_substr($block, $eqpos+1));
 						}
 
-						$requestValue = isset($this->currentPageParams[$name]) ? $this->currentPageParams[$name] : '';
+						$requestValue = $this->currentPageParams[$name] ?? '';
 						if ($requestValue != $value)
 						{
 							$found = false;
@@ -1026,14 +1299,14 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 		return $result;
 	}
 
-	private function isAssociativeArray($array)
+	private function isAssociativeArray($array): bool
 	{
 		if (!is_array($array) || empty($array))
 			return false;
 		return array_keys($array) !== range(0, count($array) - 1);
 	}
 
-	private function getAjaxOptions(array $inputOptions)
+	private function getAjaxOptions(array $inputOptions): array
 	{
 		$ajaxOptions = [];
 
@@ -1069,7 +1342,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 		return $ajaxOptions;
 	}
 
-	private function getPagePathForAjaxPages($pageId)
+	private function getPagePathForAjaxPages($pageId): string
 	{
 		if (mb_strpos($pageId, "menu_catalog_category") !== false)
 		{

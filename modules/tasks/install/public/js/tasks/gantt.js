@@ -2951,14 +2951,25 @@ GanttTask.prototype.onItemNameClick = function(event)
 
 GanttTask.prototype.onItemMenuClick = function(event)
 {
-	var menu = BX.PopupMenu.create(this.id, this.layout.menu, this.menuItems, {
-		offsetLeft : 8,
-		bindOptions : { forceBindPosition : true },
-		events : { onPopupClose: BX.proxy(this.onItemMenuClose, this) },
-		chart : this.chart,
-		task : this
-	});
-
+	var menu = BX.PopupMenu.create(
+		this.id,
+		this.layout.menu,
+		this.menuItems,
+		{
+			offsetLeft: 8,
+			bindOptions: {
+				forceBindPosition: true
+			},
+			events: {
+				onPopupClose: function() {
+					this.destroy();
+				},
+				onPopupDestroy: BX.proxy(this.onItemMenuClose, this)
+			},
+			chart: this.chart,
+			task: this
+		}
+	);
 	menu.getPopupWindow().setBindElement(this.layout.menu);
 	menu.show();
 

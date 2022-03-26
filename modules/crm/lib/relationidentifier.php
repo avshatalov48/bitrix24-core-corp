@@ -50,6 +50,22 @@ class RelationIdentifier
 		return $this->childEntityTypeId;
 	}
 
+	public function __toString(): string
+	{
+		$parentTypeName = \CCrmOwnerType::ResolveName($this->parentEntityTypeId);
+		$childTypeName = \CCrmOwnerType::ResolveName($this->childEntityTypeId);
+
+		return
+			"Relation ID: Parent Type {$this->parentEntityTypeId} ({$parentTypeName}), "
+			. "Child Type {$this->childEntityTypeId} ({$childTypeName})"
+		;
+	}
+
+	public function getHash(): string
+	{
+		return "relation_id_parent_type_{$this->parentEntityTypeId}_child_type_{$this->childEntityTypeId}";
+	}
+
 	private function setParentEntityTypeId(int $parentEntityTypeId): RelationIdentifier
 	{
 		$this->validateEntityTypeId($parentEntityTypeId);

@@ -1,7 +1,3 @@
-/**
- * @bxjs_lang_path component.php
- */
-
 include('InAppNotifier');
 
 (() => {
@@ -12,44 +8,6 @@ include('InAppNotifier');
 
 	class Util
 	{
-		static showError(message = null, title = '')
-		{
-			if (
-				message !== null
-				&& PageManager.getNavigator().isVisible()
-				&& PageManager.getNavigator().isActiveTab()
-			)
-			{
-				InAppNotifier.showNotification({message, title, backgroundColor: '#333333'});
-			}
-		}
-
-		static resolveErrorMessageByAnswer(answer = null)
-		{
-			let messageError = BX.message('TASKS_SOME_THING_WENT_WRONG');
-
-			if (answer && answer.ex)
-			{
-				switch (answer.ex.status)
-				{
-					case -2:
-						messageError = BX.message('TASKS_NO_INTERNET_CONNECTION');
-						break;
-
-					case 0:
-						messageError = BX.message('TASKS_UNEXPECTED_ANSWER');
-						break;
-
-					default:
-						messageError = BX.message('TASKS_SOME_THING_WENT_WRONG');
-						break;
-				}
-			}
-			console.log('Error', answer);
-
-			return messageError;
-		}
-
 		static debounce(fn, timeout, ctx)
 		{
 			let timer = 0;
@@ -60,47 +18,118 @@ include('InAppNotifier');
 		}
 	}
 
-	class Request
+	class WelcomeScreen
 	{
-		constructor(namespace = 'tasks.task.')
+		static get type()
 		{
-			this.restNamespace = namespace;
+			return {
+				empty: 'empty',
+				privateProject: 'privateProject',
+			};
 		}
 
-		call(methodName, params)
+		constructor(list)
 		{
-			const method = this.restNamespace + methodName;
-
-			this.abortCurrentRequest();
-
-			return new Promise((resolve, reject) => {
-				console.log({method, params});
-
-				BX.rest.callMethod(method, params || {}, (response) => {
-					if (response.error())
-					{
-						console.log(response.error());
-						reject(response);
-					}
-					else
-					{
-						resolve(response.answer);
-					}
-				}, this.onRequestCreate.bind(this));
-			});
+			this.list = list;
 		}
 
-		onRequestCreate(ajax)
+		isEnabled()
 		{
-			this.currentAjaxObject = ajax;
+			return (apiVersion >= 40);
 		}
 
-		abortCurrentRequest()
+		show(type = WelcomeScreen.type.privateProject)
 		{
-			if (this.currentAjaxObject != null)
+
+			if (this.isEnabled() && Object.values(WelcomeScreen.type).includes(type))
 			{
-				this.currentAjaxObject.abort();
+				let upperText;
+				let lowerText;
+				let iconName;
+
+				if (type === WelcomeScreen.type.privateProject)
+				{
+					upperText = BX.message('MOBILE_TASKS_LIST_WELCOME_SCREEN_PRIVATE_PROJECT_TITLE');
+					lowerText = BX.message('MOBILE_TASKS_LIST_WELCOME_SCREEN_PRIVATE_PROJECT_SUBTITLE');
+					iconName = 'ws_private_project';
+				}
+				else
+				{
+					upperText = BX.message('MOBILE_TASKS_LIST_WELCOME_SCREEN_EMPTY_TITLE');
+					lowerText = BX.message('MOBILE_TASKS_LIST_WELCOME_SCREEN_EMPTY_SUBTITLE');
+					iconName = 'ws_create_task';
+				}
+
+				this.list.list.welcomeScreen.show({upperText, lowerText, iconName});
 			}
+		}
+
+		hide()
+		{
+			if (this.isEnabled())
+			{
+				this.list.list.welcomeScreen.hide();
+			}
+		}
+	}
+
+	class JoinButton
+	{
+		/**
+		 * @param {TaskList} list
+		 */
+		constructor(list)
+		{
+			this.list = list;
+		}
+
+		isEnabled()
+		{
+			return (apiVersion >= 40);
+		}
+
+		showForOpened()
+		{
+			if (this.isEnabled())
+			{
+				this.list.list.showJoinButton({type: 'openProject'});
+			}
+		}
+
+		showForPrivate(isRequested = false)
+		{
+			if (this.isEnabled())
+			{
+				if (isRequested)
+				{
+					this.list.list.showJoinButton({state: 'requested'});
+				}
+				else
+				{
+					this.list.list.showJoinButton({type: 'privateProject'});
+				}
+			}
+		}
+
+		onClick()
+		{
+			(new RequestExecutor('socialnetwork.api.usertogroup.join', {
+				params: {
+					groupId: this.list.groupId,
+				},
+			}))
+				.call()
+				.then((response) => {
+					if (
+						!this.list.group.isOpened
+						&& response.result.success
+						&& !response.result.confirmationNeeded
+					)
+					{
+						this.list.initAccessibleList();
+					}
+				})
+			;
 		}
 	}
 
@@ -116,69 +145,40 @@ include('InAppNotifier');
 			return SectionHandler.instance;
 		}
 
+		static get sections()
+		{
+			return {
+				new: 'new',
+				pinned: 'pinned',
+				default: 'default',
+				more: 'more',
+				empty: 'empty',
+			};
+		}
+
 		constructor()
 		{
-			console.log('init SectionHandler');
 			this.clear();
 		}
 
 		clear()
 		{
-			this.items = {
-				new: {
-					id: 'new',
-					title: '',
-					foldable: false,
-					folded: false,
-					badgeValue: 0,
-					sortItemParams: {activityDate: 'desc'},
-					backgroundColor: '#FFFFFF',
-					styles: {title: {font: {size: 18}}},
-				},
-				pinned: {
-					id: 'pinned',
-					title: '',
-					foldable: false,
-					folded: false,
-					badgeValue: 0,
-					sortItemParams: {activityDate: 'desc'},
-					backgroundColor: '#FFFFFF',
-					styles: {title: {font: {size: 18}}},
-				},
-				default: {
-					id: 'default',
-					title: '',
-					foldable: false,
-					folded: false,
-					badgeValue: 0,
-					sortItemParams: {activityDate: 'desc'},
-					backgroundColor: '#FFFFFF',
-					styles: {title: {font: {size: 18}}},
-				},
-				empty: {
-					id: 'empty',
-					title: '',
-					foldable: false,
-					folded: false,
-					badgeValue: 0,
-					backgroundColor: '#FFFFFF',
-					styles: {title: {font: {size: 18}}},
-				},
-			};
-		}
-
-		add(item)
-		{
-			const {id} = item;
-
-			this.items[id] = {
-				id: id || 'default',
-				title: item.title || '',
-				foldable: item.foldable || false,
-				folded: item.folded || false,
-				badgeValue: (this.has(id) ? (this.items[id].badgeValue || 0) : 0) + (item.badgeValue || 0),
-				backgroundColor: item.backgroundColor || '#FFFFFF',
+			const defaultSectionParams = {
+				title: '',
+				foldable: false,
+				folded: false,
+				badgeValue: 0,
+				sortItemParams: {activityDate: 'desc'},
+				backgroundColor: '#ffffff',
 				styles: {title: {font: {size: 18}}},
+			};
+
+			this.items = {
+				new: {...{id: SectionHandler.sections.new}, ...defaultSectionParams},
+				pinned: {...{id: SectionHandler.sections.pinned}, ...defaultSectionParams},
+				default: {...{id: SectionHandler.sections.default}, ...defaultSectionParams},
+				more: {...{id: SectionHandler.sections.more}, ...defaultSectionParams},
+				empty: {...{id: SectionHandler.sections.empty}, ...defaultSectionParams},
 			};
 		}
 
@@ -192,7 +192,7 @@ include('InAppNotifier');
 
 		has(id)
 		{
-			return id in this.items;
+			return (id in this.items);
 		}
 
 		get list()
@@ -201,93 +201,13 @@ include('InAppNotifier');
 		}
 	}
 
-	class Order
-	{
-		static get fields()
-		{
-			return {
-				activityDate: [
-					{field: 'ACTIVITY_DATE', direction: 'DESC'},
-					{field: 'ID', direction: 'DESC'},
-				],
-				deadline: [
-					{field: 'DEADLINE', direction: 'ASC,NULLS'},
-					{field: 'ID', direction: 'DESC'},
-				],
-			};
-		}
-
-		static get sectionOrderFields()
-		{
-			return {
-				activityDate: 'desc',
-				deadline: 'asc',
-			};
-		}
-
-		constructor()
-		{
-			this.order = BX.componentParameters.get('ORDER', 'activityDate');
-		}
-
-		get()
-		{
-			const order = {};
-
-			Order.fields[this.order].forEach((fieldData) => {
-				order[fieldData.field] = fieldData.direction;
-			});
-
-			return order;
-		}
-
-		getForSearch()
-		{
-			const order = {};
-
-			Order.fields.activityDate.forEach((fieldData) => {
-				order[fieldData.field] = fieldData.direction;
-			});
-
-			return order;
-		}
-
-		changeOrder()
-		{
-			this.order = Object.keys(Order.fields).filter(key => key !== this.order)[0];
-		}
-
-		isDeadline()
-		{
-			return this.checkOrder('deadline');
-		}
-
-		isActivityDate()
-		{
-			return this.checkOrder('activityDate');
-		}
-
-		checkOrder(order)
-		{
-			return this.order === order;
-		}
-
-		get order()
-		{
-			return this._order || 'activityDate';
-		}
-
-		set order(order)
-		{
-			this._order = order;
-		}
-	}
-
 	class Cache
 	{
-		constructor(storageName)
+		constructor(cacheKey)
 		{
-			this.storageName = storageName;
+			this.cacheKey = cacheKey;
+
+			this.storage = Application.sharedStorage('tasksTaskList');
 			this.defaultData = {};
 		}
 
@@ -297,17 +217,25 @@ include('InAppNotifier');
 			{
 				caches.set(id, (new Cache(id)));
 			}
+
 			return caches.get(id);
 		}
 
 		get()
 		{
-			return Application.storage.getObject(this.storageName, this.defaultData);
+			const cache = this.storage.get(this.cacheKey);
+
+			if (typeof cache === 'string')
+			{
+				return JSON.parse(cache);
+			}
+
+			return this.defaultData;
 		}
 
 		set(data)
 		{
-			Application.storage.setObject(this.storageName, data);
+			this.storage.set(this.cacheKey, JSON.stringify(data));
 		}
 
 		update(key, value)
@@ -317,453 +245,18 @@ include('InAppNotifier');
 			this.set(currentCache);
 		}
 
+		clear()
+		{
+			this.set({});
+		}
+
 		setDefaultData(defaultData)
 		{
 			this.defaultData = defaultData;
 		}
 	}
 
-	class Filter
-	{
-		static getColumn(matrix, column)
-		{
-			const columnItems = [];
-
-			for (let i = 0; i < matrix.length; i++)
-			{
-				columnItems.push(matrix[i][column]);
-			}
-
-			return columnItems;
-		}
-
-		static get roleType()
-		{
-			return {
-				all: 'view_all',
-				responsible: 'view_role_responsible',
-				accomplice: 'view_role_accomplice',
-				originator: 'view_role_originator',
-				auditor: 'view_role_auditor',
-			};
-		}
-
-		static get counterType()
-		{
-			return {
-				none: 'none',
-				expired: 'expired',
-				newComments: 'new_comments',
-				supposedlyCompleted: 'supposedly_completed',
-			};
-		}
-
-		static getPresetsMap()
-		{
-			return {
-				[Filter.roleType.all]: [Filter.counterType.expired, Filter.counterType.newComments],
-				[Filter.roleType.responsible]: [Filter.counterType.expired, Filter.counterType.newComments],
-				[Filter.roleType.accomplice]: [Filter.counterType.expired, Filter.counterType.newComments],
-				[Filter.roleType.originator]: [Filter.counterType.expired, Filter.counterType.newComments],
-				[Filter.roleType.auditor]: [Filter.counterType.expired, Filter.counterType.newComments],
-			};
-		}
-
-		/**
-		 * @param {string} role
-		 * @param {Task} task
-		 * @return {string[]}
-		 */
-		static getCountersByRole(role, task)
-		{
-			const counterMap = {
-				[Filter.counterType.none]: task.isMember(),
-				[Filter.counterType.expired]: task.isExpired && !task.isMuted,
-				[Filter.counterType.newComments]: task.newCommentsCount > 0 && !task.isMuted,
-				[Filter.counterType.supposedlyCompleted]: task.isWaitCtrl,
-			};
-			switch (role)
-			{
-				case Filter.roleType.all:
-					counterMap[Filter.counterType.supposedlyCompleted] = (
-						counterMap[Filter.counterType.supposedlyCompleted] && task.isPureCreator()
-					);
-					break;
-
-				case Filter.roleType.responsible:
-					counterMap[Filter.counterType.none] = (
-						counterMap[Filter.counterType.none] && task.isResponsible()
-					);
-					counterMap[Filter.counterType.supposedlyCompleted] = (
-						counterMap[Filter.counterType.supposedlyCompleted] && task.isResponsible()
-					);
-					break;
-
-				case Filter.roleType.accomplice:
-					counterMap[Filter.counterType.none] = (
-						counterMap[Filter.counterType.none] && task.isAccomplice()
-					);
-					counterMap[Filter.counterType.supposedlyCompleted] = (
-						counterMap[Filter.counterType.supposedlyCompleted] && task.isAccomplice()
-					);
-					break;
-
-				case Filter.roleType.originator:
-					counterMap[Filter.counterType.none] = (
-						counterMap[Filter.counterType.none] && task.isPureCreator()
-					);
-					counterMap[Filter.counterType.expired] = (
-						counterMap[Filter.counterType.expired] && task.isPureCreator()
-					);
-					counterMap[Filter.counterType.newComments] = (
-						counterMap[Filter.counterType.newComments] && task.isPureCreator()
-					);
-					counterMap[Filter.counterType.supposedlyCompleted] = (
-						counterMap[Filter.counterType.supposedlyCompleted] && task.isPureCreator()
-					);
-					break;
-
-				case Filter.roleType.auditor:
-					counterMap[Filter.counterType.none] = (
-						counterMap[Filter.counterType.none] && task.isAuditor()
-					);
-					counterMap[Filter.counterType.supposedlyCompleted] = (
-						counterMap[Filter.counterType.supposedlyCompleted] && task.isAuditor()
-					);
-					break;
-
-				default:
-					break;
-			}
-
-			return {
-				existing: Object.keys(counterMap).filter(counter => counterMap[counter]),
-				notExisting: Object.keys(counterMap).filter(counter => !counterMap[counter]),
-			};
-		}
-
-		constructor(list, currentUser, owner, groupId)
-		{
-			this.list = list;
-			this.currentUser = currentUser;
-			this.owner = owner;
-			this.groupId = groupId || 0;
-
-			this.role = BX.componentParameters.get('ROLE', Filter.roleType.all);
-			this.counter = BX.componentParameters.get('COUNTER', Filter.counterType.none);
-			this.showCompleted = BX.componentParameters.get('SHOW_COMPLETED', false);
-
-			this.counters = {};
-			this.cache = Cache.getInstance('tasks.task.list.filter.counters');
-
-			this.setCounterValue(this.cache.get().counterValue || 0);
-			this.setVisualCounters();
-
-			ChatReadyCheck.wait().then(() => this.updateCounters());
-		}
-
-		updateCounters()
-		{
-			if (!this.isMyList())
-			{
-				return;
-			}
-
-			console.log('UPDATE COUNTERS');
-
-			const action = `${(new Request()).restNamespace}counters.get`;
-			const batchOperations = {};
-
-			Object.keys(Filter.getPresetsMap()).forEach((role) => {
-				batchOperations[role] = [action, {
-					type: role,
-					userId: this.owner.id || this.currentUser.id,
-					groupId: this.groupId,
-				}];
-			});
-
-			BX.rest.callBatch(batchOperations, (result) => {
-				if (!result.view_all.answer.result)
-				{
-					return;
-				}
-
-				this.counters = {};
-
-				Object.keys(Filter.getPresetsMap()).forEach((role) => {
-					const subPresets = Filter.getPresetsMap()[role];
-					const counter = result[role].answer.result;
-
-					this.counters[role] = {};
-					this.counters[`${role}_total`] = 0;
-
-					subPresets.forEach((subPresetType) => {
-						const subCounter = counter[subPresetType];
-						const subCounterValue = (subCounter ? Number(subCounter.counter) : 0);
-
-						this.counters[role][subPresetType] = subCounterValue;
-						this.counters[`${role}_total`] += subCounterValue;
-					});
-				});
-
-				this.setVisualCounters();
-				this.saveCache();
-			});
-		}
-
-		pseudoUpdateCounters(value, task = null)
-		{
-			if (!this.isMyList() || (task && task.isMuted))
-			{
-				return;
-			}
-
-			this.counters.view_all_total += value;
-			if (this.counters.view_all_total < 0)
-			{
-				this.counters.view_all_total = 0;
-			}
-
-			this.setVisualCounters();
-		}
-
-		onUserCounter(data)
-		{
-			return new Promise((resolve) => {
-				if (Number(this.currentUser.id) !== Number(data.userId) || !this.isMyList())
-				{
-					resolve();
-					return;
-				}
-
-				const counters = data[0];
-
-				if (!counters[this.role])
-				{
-					console.log({error: `${this.role} not found in counters`, counters});
-				}
-
-				this.counters = {};
-
-				Object.keys(Filter.getPresetsMap()).forEach((presetType) => {
-					const subPresets = Filter.getPresetsMap()[presetType];
-					const counter = counters[presetType];
-
-					this.counters[presetType] = counter;
-					this.counters[`${presetType}_total`] = 0;
-
-					subPresets.forEach((subPresetType) => {
-						const subCounter = counter[subPresetType];
-						const subCounterValue = (subCounter ? Number(subCounter) : 0);
-
-						this.counters[`${presetType}_total`] += subCounterValue;
-					});
-				});
-
-				this.setVisualCounters();
-				this.saveCache();
-
-				resolve();
-			});
-		}
-
-		setVisualCounters(value)
-		{
-			const counterValue = value || this.getCounterValue();
-
-			this.setDownMenuTasksCounter(counterValue);
-			this.setListTopButtonCounter(counterValue);
-		}
-
-		setDownMenuTasksCounter(value)
-		{
-			if (this.isMyList())
-			{
-				Application.setBadges({tasks: value});
-			}
-		}
-
-		setListTopButtonCounter(value)
-		{
-			if (this.isMyList())
-			{
-				Application.setBadges({[`tasks_list_more_button_${this.owner.id}_${this.role}`]: value});
-			}
-		}
-
-		getCounterValue(type = Filter.roleType.all, subType = 'total')
-		{
-			if (!this.counters[type] && !this.counters[`${type}_${subType}`])
-			{
-				return 0;
-			}
-
-			if (subType === 'total')
-			{
-				return this.counters[`${type}_${subType}`] || 0;
-			}
-
-			return this.counters[type][subType] || 0;
-		}
-
-		setCounterValue(value)
-		{
-			this.counters.view_all_total = (this.isMyList() ? value : 0);
-		}
-
-		saveCache()
-		{
-			if (this.isMyList())
-			{
-				this.cache.set({counterValue: this.getCounterValue()});
-			}
-		}
-
-		get()
-		{
-			const filterRoleMap = {
-				[Filter.roleType.responsible]: 'R',
-				[Filter.roleType.accomplice]: 'A',
-				[Filter.roleType.originator]: 'O',
-				[Filter.roleType.auditor]: 'U',
-			};
-			const currentUserId = this.owner.id || this.currentUser.id;
-			const filter = {
-				MEMBER: currentUserId,
-				ZOMBIE: 'N',
-				CHECK_PERMISSIONS: 'Y',
-				IS_PINNED: 'N',
-			};
-
-			if (filterRoleMap[this.role])
-			{
-				filter.ROLE = filterRoleMap[this.role];
-			}
-
-			if (!this.isMyList())
-			{
-				delete filter.IS_PINNED;
-			}
-
-			if (this.groupId > 0)
-			{
-				filter.GROUP_ID = this.groupId;
-				delete filter.MEMBER;
-			}
-
-			if (!this.showCompleted)
-			{
-				filter['::SUBFILTER-STATUS-OR'] = {
-					'::LOGIC': 'OR',
-					'::SUBFILTER-1': {
-						REAL_STATUS: [2, 3, 4, 6],
-					},
-					'::SUBFILTER-2': {
-						WITH_NEW_COMMENTS: 'Y',
-					},
-				};
-			}
-
-			switch (this.counter)
-			{
-				case Filter.counterType.newComments:
-					filter.WITH_NEW_COMMENTS = 'Y';
-					filter.IS_MUTED = 'N';
-					break;
-
-				case Filter.counterType.expired:
-					filter.REAL_STATUS = [2, 3];
-					filter.IS_MUTED = 'N';
-					filter['<=DEADLINE'] = (new Date()).toISOString();
-					break;
-
-				case Filter.counterType.supposedlyCompleted:
-					if (this.role === Filter.roleType.all || this.role === Filter.roleType.originator)
-					{
-						filter.CREATED_BY = currentUserId;
-						filter['!RESPONSIBLE_ID'] = currentUserId;
-					}
-					else if (this.role === Filter.roleType.responsible)
-					{
-						filter.RESPONSIBLE_ID = currentUserId;
-					}
-					else if (this.role === Filter.roleType.accomplice)
-					{
-						filter.ACCOMPLICE = currentUserId;
-					}
-					else if (this.role === Filter.roleType.auditor)
-					{
-						filter.AUDITOR = currentUserId;
-					}
-					filter.REAL_STATUS = 4;
-					break;
-
-				case Filter.counterType.none:
-				default:
-					break;
-			}
-
-			return filter;
-		}
-
-		getForPinned()
-		{
-			const filter = this.get();
-			filter.IS_PINNED = 'Y';
-
-			return filter;
-		}
-
-		getForSearch(text)
-		{
-			const filter = {
-				SEARCH_INDEX: text,
-				MEMBER: this.currentUser.id,
-			};
-
-			if (!this.showCompleted)
-			{
-				filter['::SUBFILTER-STATUS-OR'] = {
-					'::LOGIC': 'OR',
-					'::SUBFILTER-1': {
-						REAL_STATUS: [2, 3, 4, 6],
-					},
-					'::SUBFILTER-2': {
-						WITH_NEW_COMMENTS: 'Y',
-					},
-				};
-			}
-
-			return filter;
-		}
-
-		isMyList()
-		{
-			return Number(this.currentUser.id) === Number(this.owner.id) && !this.groupId;
-		}
-
-		getRole()
-		{
-			return this.role;
-		}
-
-		setRole(role)
-		{
-			this.role = role;
-		}
-
-		getCounter()
-		{
-			return this.counter;
-		}
-
-		setCounter(counter)
-		{
-			this.counter = counter;
-		}
-	}
-
-	class TasksListCache extends Cache
+	class TasksCache extends Cache
 	{
 		constructor(storageName)
 		{
@@ -775,7 +268,7 @@ include('InAppNotifier');
 		{
 			if (!caches.has(id))
 			{
-				caches.set(id, (new TasksListCache(id)));
+				caches.set(id, (new TasksCache(id)));
 			}
 			return caches.get(id);
 		}
@@ -825,8 +318,9 @@ include('InAppNotifier');
 			}
 
 			const {task, taskData} = tasks[Object.keys(tasks)[0]];
+			const groupId = parseInt(BX.componentParameters.get('GROUP_ID', 0), 10);
 			const roleMap = {
-				[Filter.roleType.all]: task.isMember(),
+				[Filter.roleType.all]: (groupId > 0 && groupId === Number(task.groupId) || task.isMember()),
 				[Filter.roleType.responsible]: task.isResponsible(),
 				[Filter.roleType.accomplice]: task.isAccomplice(),
 				[Filter.roleType.originator]: task.isPureCreator(),
@@ -856,8 +350,9 @@ include('InAppNotifier');
 
 			Object.keys(tasks).forEach((taskId) => {
 				const {task, taskData} = tasks[taskId];
+				const groupId = parseInt(BX.componentParameters.get('GROUP_ID', 0), 10);
 				const roleMap = {
-					[Filter.roleType.all]: task.isMember(),
+					[Filter.roleType.all]: (groupId > 0 && groupId === Number(task.groupId) || task.isMember()),
 					[Filter.roleType.responsible]: task.isResponsible(),
 					[Filter.roleType.accomplice]: task.isAccomplice(),
 					[Filter.roleType.originator]: task.isPureCreator(),
@@ -943,9 +438,9 @@ include('InAppNotifier');
 					Object.keys(cache[role]).forEach((counter) => {
 						if (Object.values(Filter.counterType).includes(counter))
 						{
-							const pinned = cache[role][counter].filter(task => task.sectionCode === 'pinned');
-							const others = cache[role][counter].filter(task => task.sectionCode !== 'pinned');
-							cache[role][counter] = pinned.sort(TasksListCache.compare).concat(others.sort(TasksListCache.compare));
+							const pinned = cache[role][counter].filter(task => task.sectionCode === SectionHandler.sections.pinned);
+							const others = cache[role][counter].filter(task => task.sectionCode !== SectionHandler.sections.pinned);
+							cache[role][counter] = pinned.sort(TasksCache.compare).concat(others.sort(TasksCache.compare));
 						}
 					});
 				}
@@ -967,6 +462,1030 @@ include('InAppNotifier');
 		}
 	}
 
+	class Order
+	{
+		static get fields()
+		{
+			return {
+				activityDate: [
+					{field: 'ACTIVITY_DATE', direction: 'DESC'},
+					{field: 'ID', direction: 'DESC'},
+				],
+				deadline: [
+					{field: 'DEADLINE', direction: 'ASC,NULLS'},
+					{field: 'ID', direction: 'DESC'},
+				],
+			};
+		}
+
+		static get sectionOrderFields()
+		{
+			return {
+				activityDate: 'desc',
+				deadline: 'asc',
+			};
+		}
+
+		constructor()
+		{
+			this.order = BX.componentParameters.get('ORDER', 'activityDate');
+		}
+
+		get()
+		{
+			const order = {};
+
+			Order.fields[this.order].forEach((fieldData) => {
+				order[fieldData.field] = fieldData.direction;
+			});
+
+			return order;
+		}
+
+		getForSearch()
+		{
+			const order = {};
+
+			Order.fields.activityDate.forEach((fieldData) => {
+				order[fieldData.field] = fieldData.direction;
+			});
+
+			return order;
+		}
+
+		changeOrder()
+		{
+			this.order = Object.keys(Order.fields).filter(key => key !== this.order)[0];
+		}
+
+		isDeadline()
+		{
+			return this.checkOrder('deadline');
+		}
+
+		isActivityDate()
+		{
+			return this.checkOrder('activityDate');
+		}
+
+		checkOrder(order)
+		{
+			return this.order === order;
+		}
+
+		get order()
+		{
+			return this._order || 'activityDate';
+		}
+
+		set order(order)
+		{
+			this._order = order;
+		}
+	}
+
+	class Filter
+	{
+		static getColumn(matrix, column)
+		{
+			const columnItems = [];
+
+			for (let i = 0; i < matrix.length; i++)
+			{
+				columnItems.push(matrix[i][column]);
+			}
+
+			return columnItems;
+		}
+
+		static get roleType()
+		{
+			return {
+				all: 'view_all',
+				responsible: 'view_role_responsible',
+				accomplice: 'view_role_accomplice',
+				originator: 'view_role_originator',
+				auditor: 'view_role_auditor',
+			};
+		}
+
+		static get counterType()
+		{
+			return {
+				none: 'none',
+				expired: 'expired',
+				newComments: 'new_comments',
+				supposedlyCompleted: 'supposedly_completed',
+			};
+		}
+
+		static getPresetsMap()
+		{
+			return {
+				[Filter.roleType.all]: [Filter.counterType.expired, Filter.counterType.newComments],
+				[Filter.roleType.responsible]: [Filter.counterType.expired, Filter.counterType.newComments],
+				[Filter.roleType.accomplice]: [Filter.counterType.expired, Filter.counterType.newComments],
+				[Filter.roleType.originator]: [Filter.counterType.expired, Filter.counterType.newComments],
+				[Filter.roleType.auditor]: [Filter.counterType.expired, Filter.counterType.newComments],
+			};
+		}
+
+		/**
+		 * @param {string} role
+		 * @param {Task} task
+		 * @return {string[]}
+		 */
+		static getCountersByRole(role, task)
+		{
+			const groupId = parseInt(BX.componentParameters.get('GROUP_ID', 0), 10);
+			const counterMap = {
+				[Filter.counterType.none]: (groupId > 0 && groupId === Number(task.groupId) || task.isMember()),
+				[Filter.counterType.expired]: (task.getCounterMyExpiredCount() > 0),
+				[Filter.counterType.newComments]: (task.getCounterMyNewCommentsCount() > 0),
+				[Filter.counterType.supposedlyCompleted]: task.isWaitCtrl,
+			};
+			switch (role)
+			{
+				case Filter.roleType.all:
+					counterMap[Filter.counterType.supposedlyCompleted] = (
+						counterMap[Filter.counterType.supposedlyCompleted] && task.isPureCreator()
+					);
+					break;
+
+				case Filter.roleType.responsible:
+					counterMap[Filter.counterType.none] = (
+						counterMap[Filter.counterType.none] && task.isResponsible()
+					);
+					counterMap[Filter.counterType.supposedlyCompleted] = (
+						counterMap[Filter.counterType.supposedlyCompleted] && task.isResponsible()
+					);
+					break;
+
+				case Filter.roleType.accomplice:
+					counterMap[Filter.counterType.none] = (
+						counterMap[Filter.counterType.none] && task.isAccomplice()
+					);
+					counterMap[Filter.counterType.supposedlyCompleted] = (
+						counterMap[Filter.counterType.supposedlyCompleted] && task.isAccomplice()
+					);
+					break;
+
+				case Filter.roleType.originator:
+					counterMap[Filter.counterType.none] = (
+						counterMap[Filter.counterType.none] && task.isPureCreator()
+					);
+					counterMap[Filter.counterType.expired] = (
+						counterMap[Filter.counterType.expired] && task.isPureCreator()
+					);
+					counterMap[Filter.counterType.newComments] = (
+						counterMap[Filter.counterType.newComments] && task.isPureCreator()
+					);
+					counterMap[Filter.counterType.supposedlyCompleted] = (
+						counterMap[Filter.counterType.supposedlyCompleted] && task.isPureCreator()
+					);
+					break;
+
+				case Filter.roleType.auditor:
+					counterMap[Filter.counterType.none] = (
+						counterMap[Filter.counterType.none] && task.isAuditor()
+					);
+					counterMap[Filter.counterType.supposedlyCompleted] = (
+						counterMap[Filter.counterType.supposedlyCompleted] && task.isAuditor()
+					);
+					break;
+
+				default:
+					break;
+			}
+
+			return {
+				existing: Object.keys(counterMap).filter(counter => counterMap[counter]),
+				notExisting: Object.keys(counterMap).filter(counter => !counterMap[counter]),
+			};
+		}
+
+		constructor(list, currentUser, owner, groupId)
+		{
+			this.list = list;
+			this.currentUser = currentUser;
+			this.owner = owner;
+			this.groupId = (groupId || 0);
+
+			this.role = BX.componentParameters.get('ROLE', Filter.roleType.all);
+			this.counter = BX.componentParameters.get('COUNTER', Filter.counterType.none);
+			this.showCompleted = BX.componentParameters.get('SHOW_COMPLETED', false);
+
+			this.counters = {};
+			this.cache = Cache.getInstance(`filterCounters_${this.groupId}`);
+
+			this.setCounterValue(this.cache.get().counterValue || 0);
+			this.setVisualCounters();
+
+			ChatReadyCheck.wait().then(() => this.updateCounters());
+		}
+
+		updateCounters()
+		{
+			if (this.isAnotherUserList())
+			{
+				return;
+			}
+
+			console.log('UPDATE COUNTERS');
+
+			const batchOperations = {};
+
+			Object.keys(Filter.getPresetsMap()).forEach((role) => {
+				batchOperations[role] = ['tasks.task.counters.get', {
+					type: role,
+					userId: this.owner.id || this.currentUser.id,
+					groupId: this.groupId,
+				}];
+			});
+
+			BX.rest.callBatch(batchOperations, (result) => {
+				if (!result.view_all.answer.result)
+				{
+					return;
+				}
+
+				this.counters = {};
+
+				Object.keys(Filter.getPresetsMap()).forEach((role) => {
+					const subPresets = Filter.getPresetsMap()[role];
+					const counter = result[role].answer.result;
+
+					this.counters[role] = {};
+					this.counters[`${role}_total`] = 0;
+
+					subPresets.forEach((subPresetType) => {
+						const subCounter = counter[subPresetType];
+						const subCounterValue = (subCounter ? Number(subCounter.counter) : 0);
+
+						this.counters[role][subPresetType] = subCounterValue;
+						this.counters[`${role}_total`] += subCounterValue;
+					});
+				});
+
+				this.setVisualCounters();
+				this.saveCache();
+			});
+		}
+
+		pseudoUpdateCounters(value, task = null)
+		{
+			if (this.isAnotherUserList() || (task && task.isMuted))
+			{
+				return;
+			}
+
+			this.counters.view_all_total += value;
+			if (this.counters.view_all_total < 0)
+			{
+				this.counters.view_all_total = 0;
+			}
+
+			this.setVisualCounters();
+		}
+
+		onUserCounter(data)
+		{
+			return new Promise((resolve) => {
+				if (Number(this.currentUser.id) !== Number(data.userId) || this.isAnotherUserList())
+				{
+					resolve();
+					return;
+				}
+
+				const counters = data[this.groupId];
+
+				if (!counters[this.role])
+				{
+					console.log({error: `${this.role} not found in counters`, counters});
+				}
+
+				this.counters = {};
+
+				Object.keys(Filter.getPresetsMap()).forEach((presetType) => {
+					const subPresets = Filter.getPresetsMap()[presetType];
+					const counter = counters[presetType];
+
+					this.counters[presetType] = counter;
+					this.counters[`${presetType}_total`] = 0;
+
+					subPresets.forEach((subPresetType) => {
+						const subCounter = counter[subPresetType];
+						const subCounterValue = (subCounter ? Number(subCounter) : 0);
+
+						this.counters[`${presetType}_total`] += subCounterValue;
+					});
+				});
+
+				this.setVisualCounters();
+				this.saveCache();
+
+				resolve();
+			});
+		}
+
+		setVisualCounters(value)
+		{
+			const counterValue = (value || this.getCounterValue());
+
+			this.setDownMenuTasksCounter(counterValue);
+			this.setListTopButtonCounter(counterValue);
+			this.setTasksTabCounter(counterValue);
+		}
+
+		setDownMenuTasksCounter(value)
+		{
+			if (this.isMyList())
+			{
+				Application.setBadges({tasks: value});
+			}
+		}
+
+		setListTopButtonCounter(value)
+		{
+			if (!this.isAnotherUserList())
+			{
+				Application.setBadges({[`tasksTaskListMoreButton_${this.owner.id}_${this.groupId}`]: value});
+			}
+		}
+
+		setTasksTabCounter(value)
+		{
+			if (this.list.isTabsMode)
+			{
+				if (this.isMyList())
+				{
+					BX.postComponentEvent('tasks.list:setVisualCounter', [{value}], 'tasks.tabs');
+				}
+				else if (this.isGroupList())
+				{
+					BX.postComponentEvent('tasks.list:setVisualCounter', [{
+						value,
+						guid: this.list.tabsGuid,
+					}]);
+				}
+			}
+		}
+
+		getCounterValue(type = Filter.roleType.all, subType = 'total')
+		{
+			if (!this.counters[type] && !this.counters[`${type}_${subType}`])
+			{
+				return 0;
+			}
+
+			if (subType === 'total')
+			{
+				return this.counters[`${type}_${subType}`] || 0;
+			}
+
+			return this.counters[type][subType] || 0;
+		}
+
+		setCounterValue(value)
+		{
+			this.counters.view_all_total = (!this.isAnotherUserList() ? value : 0);
+		}
+
+		saveCache()
+		{
+			if (!this.isAnotherUserList())
+			{
+				this.cache.set({counterValue: this.getCounterValue()});
+			}
+		}
+
+		get()
+		{
+			const filterRoleMap = {
+				[Filter.roleType.responsible]: 'R',
+				[Filter.roleType.accomplice]: 'A',
+				[Filter.roleType.originator]: 'O',
+				[Filter.roleType.auditor]: 'U',
+			};
+			const currentUserId = (this.owner.id || this.currentUser.id);
+			const filter = {
+				MEMBER: currentUserId,
+				ZOMBIE: 'N',
+				CHECK_PERMISSIONS: 'Y',
+				IS_PINNED: 'N',
+			};
+
+			if (filterRoleMap[this.role])
+			{
+				filter.ROLE = filterRoleMap[this.role];
+			}
+
+			if (!this.isMyList())
+			{
+				delete filter.IS_PINNED;
+			}
+
+			if (this.groupId > 0)
+			{
+				filter.GROUP_ID = this.groupId;
+				delete filter.MEMBER;
+			}
+
+			if (!this.showCompleted)
+			{
+				filter['::SUBFILTER-STATUS-OR'] = {
+					'::LOGIC': 'OR',
+					'::SUBFILTER-1': {
+						REAL_STATUS: [2, 3, 4, 6],
+					},
+					'::SUBFILTER-2': {
+						WITH_NEW_COMMENTS: 'Y',
+						REAL_STATUS: 5,
+					},
+				};
+			}
+
+			switch (this.counter)
+			{
+				case Filter.counterType.newComments:
+					if (this.groupId > 0)
+					{
+						filter.MEMBER = currentUserId;
+					}
+					filter.WITH_NEW_COMMENTS = 'Y';
+					filter.IS_MUTED = 'N';
+					break;
+
+				case Filter.counterType.expired:
+					if (this.groupId > 0)
+					{
+						filter.MEMBER = currentUserId;
+					}
+					filter.REAL_STATUS = [2, 3];
+					filter.IS_MUTED = 'N';
+					filter['<=DEADLINE'] = (new Date()).toISOString();
+					break;
+
+				case Filter.counterType.supposedlyCompleted:
+					if (this.role === Filter.roleType.all || this.role === Filter.roleType.originator)
+					{
+						filter.CREATED_BY = currentUserId;
+						filter['!RESPONSIBLE_ID'] = currentUserId;
+					}
+					else if (this.role === Filter.roleType.responsible)
+					{
+						filter.RESPONSIBLE_ID = currentUserId;
+					}
+					else if (this.role === Filter.roleType.accomplice)
+					{
+						filter.ACCOMPLICE = currentUserId;
+					}
+					else if (this.role === Filter.roleType.auditor)
+					{
+						filter.AUDITOR = currentUserId;
+					}
+					filter.REAL_STATUS = 4;
+					break;
+
+				case Filter.counterType.none:
+				default:
+					break;
+			}
+
+			return filter;
+		}
+
+		getForPinned()
+		{
+			const filter = this.get();
+			filter.IS_PINNED = 'Y';
+
+			return filter;
+		}
+
+		getForSearch(text)
+		{
+			const filter = {
+				SEARCH_INDEX: text,
+				MEMBER: this.currentUser.id,
+			};
+
+			if (!this.showCompleted)
+			{
+				filter['::SUBFILTER-STATUS-OR'] = {
+					'::LOGIC': 'OR',
+					'::SUBFILTER-1': {
+						REAL_STATUS: [2, 3, 4, 6],
+					},
+					'::SUBFILTER-2': {
+						WITH_NEW_COMMENTS: 'Y',
+					},
+				};
+			}
+
+			return filter;
+		}
+
+		isGroupList()
+		{
+			return (this.groupId > 0);
+		}
+
+		isAnotherUserList()
+		{
+			return (Number(this.currentUser.id) !== Number(this.owner.id));
+		}
+
+		isMyList()
+		{
+			return (!this.isGroupList() && !this.isAnotherUserList());
+		}
+
+		getRole()
+		{
+			return this.role;
+		}
+
+		setRole(role)
+		{
+			this.role = role;
+		}
+
+		getCounter()
+		{
+			return this.counter;
+		}
+
+		setCounter(counter)
+		{
+			this.counter = counter;
+		}
+	}
+
+	class MenuPopup
+	{
+		/**
+		 * @param {TaskList} list
+		 */
+		constructor(list)
+		{
+			this.list = list;
+			this.filter = list.filter;
+			this.order = list.order;
+		}
+
+		show()
+		{
+			const menuItems = this.prepareItems();
+			const menuSections = this.prepareSections();
+
+			if (!this.popupMenu)
+			{
+				this.popupMenu = dialogs.createPopupMenu();
+			}
+			this.popupMenu.setData(menuItems, menuSections, (eventName, item) => {
+				if (eventName === 'onItemSelected')
+				{
+					this.onItemSelected(item);
+				}
+			});
+			this.popupMenu.show();
+		}
+
+		prepareSections()
+		{
+			return [{id: SectionHandler.sections.default}];
+		}
+
+		prepareItems()
+		{
+
+		}
+
+		onItemSelected()
+		{
+
+		}
+	}
+
+	class OptionMenu extends MenuPopup
+	{
+		prepareItems()
+		{
+			const urlPrefix = `${pathToComponent}images/mobile-tasks-list-popup-`;
+
+			return [
+				{
+					id: Filter.roleType.all,
+					title: BX.message('TASKS_POPUP_MENU_ROLE_ALL'),
+					iconUrl: `${urlPrefix}role-all.png`,
+					iconName: 'finished_tasks',
+					sectionCode: SectionHandler.sections.default,
+					checked: (this.filter.getRole() === Filter.roleType.all),
+					counterValue: this.filter.getCounterValue(),
+					counterStyle: {
+						backgroundColor: '#FF5752',
+					},
+				},
+				{
+					id: Filter.roleType.responsible,
+					title: BX.message('TASKS_POPUP_MENU_ROLE_RESPONSIBLE'),
+					iconUrl: `${urlPrefix}role-responsible.png`,
+					sectionCode: SectionHandler.sections.default,
+					checked: (this.filter.getRole() === Filter.roleType.responsible),
+					counterValue: this.filter.getCounterValue(Filter.roleType.responsible),
+					counterStyle: {
+						backgroundColor: '#FF5752',
+					},
+				},
+				{
+					id: Filter.roleType.accomplice,
+					title: BX.message('TASKS_POPUP_MENU_ROLE_ACCOMPLICE'),
+					iconUrl: `${urlPrefix}role-accomplice.png`,
+					sectionCode: SectionHandler.sections.default,
+					checked: (this.filter.getRole() === Filter.roleType.accomplice),
+					counterValue: this.filter.getCounterValue(Filter.roleType.accomplice),
+					counterStyle: {
+						backgroundColor: '#FF5752',
+					},
+				},
+				{
+					id: Filter.roleType.originator,
+					title: BX.message('TASKS_POPUP_MENU_ROLE_ORIGINATOR'),
+					iconUrl: `${urlPrefix}role-originator.png`,
+					sectionCode: SectionHandler.sections.default,
+					checked: (this.filter.getRole() === Filter.roleType.originator),
+					counterValue: this.filter.getCounterValue(Filter.roleType.originator),
+					counterStyle: {
+						backgroundColor: '#FF5752',
+					},
+				},
+				{
+					id: Filter.roleType.auditor,
+					title: BX.message('TASKS_POPUP_MENU_ROLE_AUDITOR'),
+					iconUrl: `${urlPrefix}role-auditor.png`,
+					sectionCode: SectionHandler.sections.default,
+					checked: (this.filter.getRole() === Filter.roleType.auditor),
+					counterValue: this.filter.getCounterValue(Filter.roleType.auditor),
+					counterStyle: {
+						backgroundColor: '#FF5752',
+					},
+				},
+				{
+					id: 'toggleOrder',
+					title: BX.message(
+						this.order.isDeadline() ? 'TASKS_POPUP_MENU_ORDER_ACTIVITY' : 'TASKS_POPUP_MENU_ORDER_DEADLINE'
+					),
+					iconName: 'term',
+					sectionCode: SectionHandler.sections.default,
+					showTopSeparator: true,
+				},
+				{
+					id: 'toggleCompletedTasks',
+					title: BX.message(`TASKS_POPUP_MENU_${(!this.filter.showCompleted ? 'SHOW' : 'HIDE')}_CLOSED_TASKS`),
+					iconUrl: `${urlPrefix}${(!this.filter.showCompleted ? 'show' : 'hide')}-completed.png`,
+					sectionCode: SectionHandler.sections.default,
+					disable: this.order.isDeadline(),
+				},
+				{
+					id: 'readAll',
+					title: BX.message('TASKS_POPUP_MENU_READ_ALL'),
+					iconName: 'read',
+					sectionCode: SectionHandler.sections.default,
+				},
+			];
+		}
+
+		onItemSelected(item)
+		{
+			const {id} = item;
+
+			switch (id)
+			{
+				case Filter.roleType.all:
+				case Filter.roleType.responsible:
+				case Filter.roleType.accomplice:
+				case Filter.roleType.originator:
+				case Filter.roleType.auditor:
+					this.onRoleClick(id);
+					break;
+
+				case 'toggleOrder':
+					this.onDeadlineSwitchClick();
+					break;
+
+				case 'readAll':
+					this.onReadAllClick();
+					break;
+
+				case 'toggleCompletedTasks':
+					this.onToggleCompleted();
+					break;
+			}
+		}
+
+		onRoleClick(newRole)
+		{
+			const currentRole = this.filter.getRole();
+
+			if (currentRole === newRole)
+			{
+				this.filter.setRole(Filter.roleType.all);
+			}
+			else
+			{
+				this.filter.setRole(newRole);
+			}
+
+			this.list.updateTitle();
+			this.list.reload(0, true);
+		}
+
+		onDeadlineSwitchClick()
+		{
+			this.order.changeOrder();
+			if (this.order.isDeadline())
+			{
+				this.filter.showCompleted = false;
+			}
+
+			this.list.updateTitle();
+			this.list.reload(0, true);
+		}
+
+		onToggleCompleted()
+		{
+			this.filter.showCompleted = !this.filter.showCompleted;
+			this.list.reload();
+		}
+
+		onReadAllClick()
+		{
+			this.list.pseudoReadTasks([...this.list.taskList.keys()], true);
+
+			(new RequestExecutor('tasks.task.comment.readAll', {
+				groupId: this.list.groupId || null,
+				userId: this.list.owner.id || this.list.currentUser.id,
+				role: this.filter.getRole(),
+			}))
+				.call()
+				.then((response) => {
+					console.log(response);
+					if (response.result === true)
+					{
+						Notify.showIndicatorSuccess({
+							text: BX.message('TASKS_LIST_READ_ALL_NOTIFICATION'),
+							hideAfter: 1500,
+						});
+					}
+				})
+			;
+		}
+	}
+
+	class MoreMenu extends MenuPopup
+	{
+		prepareItems()
+		{
+			const urlPrefix = `${pathToComponent}images/mobile-tasks-list-popup-`;
+			const roles = [
+				{
+					id: Filter.roleType.all,
+					title: BX.message('TASKS_POPUP_MENU_ROLE_ALL'),
+					iconUrl: `${urlPrefix}role-all.png`,
+					iconName: 'finished_tasks',
+					sectionCode: SectionHandler.sections.default,
+					checked: (this.filter.getRole() === Filter.roleType.all),
+					counterValue: this.filter.getCounterValue(),
+					counterStyle: {
+						backgroundColor: '#FF5752',
+					},
+				},
+				{
+					id: Filter.roleType.responsible,
+					title: BX.message('TASKS_POPUP_MENU_ROLE_RESPONSIBLE'),
+					iconUrl: `${urlPrefix}role-responsible.png`,
+					sectionCode: SectionHandler.sections.default,
+					checked: (this.filter.getRole() === Filter.roleType.responsible),
+					counterValue: this.filter.getCounterValue(Filter.roleType.responsible),
+					counterStyle: {
+						backgroundColor: '#FF5752',
+					},
+				},
+				{
+					id: Filter.roleType.accomplice,
+					title: BX.message('TASKS_POPUP_MENU_ROLE_ACCOMPLICE'),
+					iconUrl: `${urlPrefix}role-accomplice.png`,
+					sectionCode: SectionHandler.sections.default,
+					checked: (this.filter.getRole() === Filter.roleType.accomplice),
+					counterValue: this.filter.getCounterValue(Filter.roleType.accomplice),
+					counterStyle: {
+						backgroundColor: '#FF5752',
+					},
+				},
+				{
+					id: Filter.roleType.originator,
+					title: BX.message('TASKS_POPUP_MENU_ROLE_ORIGINATOR'),
+					iconUrl: `${urlPrefix}role-originator.png`,
+					sectionCode: SectionHandler.sections.default,
+					checked: (this.filter.getRole() === Filter.roleType.originator),
+					counterValue: this.filter.getCounterValue(Filter.roleType.originator),
+					counterStyle: {
+						backgroundColor: '#FF5752',
+					},
+				},
+				{
+					id: Filter.roleType.auditor,
+					title: BX.message('TASKS_POPUP_MENU_ROLE_AUDITOR'),
+					iconUrl: `${urlPrefix}role-auditor.png`,
+					sectionCode: SectionHandler.sections.default,
+					checked: (this.filter.getRole() === Filter.roleType.auditor),
+					counterValue: this.filter.getCounterValue(Filter.roleType.auditor),
+					counterStyle: {
+						backgroundColor: '#FF5752',
+					},
+				},
+			];
+			const counters = [
+				{
+					id: Filter.counterType.newComments,
+					title: BX.message('TASKS_POPUP_MENU_COUNTER_NEW_COMMENTS'),
+					sectionCode: SectionHandler.sections.default,
+					checked: (this.filter.getCounter() === Filter.counterType.newComments),
+					counterValue: this.filter.getCounterValue(this.filter.getRole(), Filter.counterType.newComments),
+					counterStyle: {
+						backgroundColor: '#9DCF00',
+					},
+				},
+				{
+					id: Filter.counterType.expired,
+					title: BX.message('TASKS_POPUP_MENU_COUNTER_EXPIRED'),
+					sectionCode: SectionHandler.sections.default,
+					checked: (this.filter.getCounter() === Filter.counterType.expired),
+					counterValue: this.filter.getCounterValue(this.filter.getRole(), Filter.counterType.expired),
+					counterStyle: {
+						backgroundColor: '#FF5752',
+					},
+				},
+				{
+					id: Filter.counterType.supposedlyCompleted,
+					title: BX.message('TASKS_POPUP_MENU_COUNTER_SUPPOSEDLY_COMPLETED'),
+					sectionCode: SectionHandler.sections.default,
+					checked: (this.filter.getCounter() === Filter.counterType.supposedlyCompleted),
+				},
+			];
+			const actions = [
+				{
+					id: 'toggleOrder',
+					title: BX.message(
+						this.order.isDeadline() ? 'TASKS_POPUP_MENU_ORDER_ACTIVITY' : 'TASKS_POPUP_MENU_ORDER_DEADLINE'
+					),
+					iconName: 'term',
+					sectionCode: SectionHandler.sections.default,
+					showTopSeparator: true,
+				},
+				{
+					id: 'toggleCompletedTasks',
+					title: BX.message(`TASKS_POPUP_MENU_${(!this.filter.showCompleted ? 'SHOW' : 'HIDE')}_CLOSED_TASKS`),
+					iconUrl: `${urlPrefix}${(!this.filter.showCompleted ? 'show' : 'hide')}-completed.png`,
+					sectionCode: SectionHandler.sections.default,
+					disable: this.order.isDeadline(),
+				},
+				{
+					id: 'readAll',
+					title: BX.message('TASKS_POPUP_MENU_READ_ALL'),
+					iconName: 'read',
+					sectionCode: SectionHandler.sections.default,
+					showTopSeparator: true,
+				},
+			];
+			const menuItems = [];
+
+			roles.forEach((role) => {
+				menuItems.push(role);
+				if (role.id === this.filter.getRole())
+				{
+					counters.forEach(counter => menuItems.push(counter));
+				}
+			});
+			actions.forEach(action => menuItems.push(action));
+
+			return menuItems;
+		}
+
+		onItemSelected(item)
+		{
+			switch (item.id)
+			{
+				case Filter.roleType.all:
+				case Filter.roleType.responsible:
+				case Filter.roleType.accomplice:
+				case Filter.roleType.originator:
+				case Filter.roleType.auditor:
+					this.onRoleClick(item.id);
+					break;
+
+				case Filter.counterType.expired:
+				case Filter.counterType.newComments:
+				case Filter.counterType.supposedlyCompleted:
+					this.onCounterClick(item.id);
+					break;
+
+				case 'toggleOrder':
+					this.onDeadlineSwitchClick();
+					break;
+
+				case 'toggleCompletedTasks':
+					this.onToggleCompleted();
+					break;
+
+				case 'readAll':
+					this.onReadAllClick();
+					break;
+			}
+		}
+
+		onRoleClick(newRole)
+		{
+			newRole = (this.filter.getRole() === newRole ? Filter.roleType.all : newRole);
+			this.filter.setRole(newRole);
+			this.filter.setCounter(Filter.counterType.none);
+
+			this.list.updateTitle();
+			this.list.setTopButtons();
+			this.list.reload(0, true);
+		}
+
+		onCounterClick(newCounter)
+		{
+			newCounter = (this.filter.getCounter() === newCounter ? Filter.counterType.none : newCounter);
+			this.filter.setCounter(newCounter);
+
+			this.list.updateTitle();
+			this.list.setTopButtons();
+			this.list.reload(0, true);
+		}
+
+		onDeadlineSwitchClick()
+		{
+			this.order.changeOrder();
+			if (this.order.isDeadline())
+			{
+				this.filter.showCompleted = false;
+			}
+
+			this.list.updateTitle();
+			this.list.reload(0, true);
+		}
+
+		onToggleCompleted()
+		{
+			this.filter.showCompleted = !this.filter.showCompleted;
+			this.list.reload();
+		}
+
+		onReadAllClick()
+		{
+			this.list.pseudoReadTasks([...this.list.taskList.keys()], true);
+
+			let readAllFunction = this.getReadAllForProject();
+			if (!this.list.isGroupList() || this.filter.getRole() !== Filter.roleType.all)
+			{
+				readAllFunction = this.getReadAllByRole();
+			}
+			readAllFunction.call().then(response => this.onReadAllSuccess(response.result));
+		}
+
+		onReadAllSuccess(result)
+		{
+			if (result)
+			{
+				Notify.showIndicatorSuccess({
+					text: BX.message('TASKS_LIST_READ_ALL_NOTIFICATION'),
+					hideAfter: 1500,
+				});
+			}
+		}
+
+		getReadAllForProject()
+		{
+			const options = {
+				groupId: this.list.groupId,
+			};
+			return (new RequestExecutor('tasks.task.comment.readProject', options));
+		}
+
+		getReadAllByRole()
+		{
+			const options = {
+				groupId: (this.list.groupId || null),
+				userId: (this.list.owner.id || this.list.currentUser.id),
+				role: this.filter.getRole(),
+			};
+			return (new RequestExecutor('tasks.task.comment.readAll', options));
+		}
+	}
+
 	class Options
 	{
 		constructor()
@@ -974,7 +1493,7 @@ include('InAppNotifier');
 			const now = new Date();
 			now.setDate(now.getDate() - 1);
 
-			this.cache = Cache.getInstance('tasks.task.list.options');
+			this.cache = Cache.getInstance('options');
 			this.cache.setDefaultData({
 				swipeShowHelper: {
 					value: 0,
@@ -984,7 +1503,6 @@ include('InAppNotifier');
 					lastTime: now.getTime(),
 					value: result.deadlines,
 				},
-				efficiency: false,
 			});
 		}
 
@@ -1001,6 +1519,508 @@ include('InAppNotifier');
 		update(optionName, optionValue)
 		{
 			this.cache.update(optionName, optionValue);
+		}
+	}
+
+	class Search
+	{
+		static get cacheKeys()
+		{
+			return {
+				tasks: 'tasks',
+				lastActiveProjects: 'lastActiveProjects',
+				lastSearchedProjects: 'lastSearchedProjects',
+			};
+		}
+
+		/**
+		 * @param {TaskList} list
+		 */
+		constructor(list)
+		{
+			this.list = list;
+
+			this.minSize = parseInt(BX.componentParameters.get('MIN_SEARCH_SIZE', 3), 10);
+			this.maxTaskCount = 50;
+			this.maxProjectCount = 15;
+			this.text = '';
+
+			this.taskList = new Map();
+			this.projectList = new Map();
+			this.commonProjectList = new Map();
+
+			this.debounceFunction = this.getDebounceFunction();
+
+			this.cache = Cache.getInstance('search');
+			this.fillCacheWithLastActiveProjects();
+		}
+
+		fillCacheWithLastActiveProjects()
+		{
+			if (apiVersion >= 41)
+			{
+				return;
+			}
+
+			(new RequestExecutor('mobile.tasks.group.lastActive.get'))
+				.call()
+				.then((response) => {
+					const cacheKey = Search.cacheKeys.lastActiveProjects;
+					this.cache.update(cacheKey, response.result.slice(0, this.maxProjectCount + 1));
+				})
+			;
+		}
+
+		getDebounceFunction()
+		{
+			return Util.debounce((text) => {
+				console.log('Search:fnUserTypeText');
+
+				const searchResultItems = [].concat(
+					this.renderProjectItems(),
+					this.renderTaskItems(),
+					this.renderLoadingItems()
+				);
+				const sections = [
+					{id: 'project'},
+					{id: 'default', title: BX.message('TASKS_LIST_SEARCH_SECTION_SEARCH_RESULTS')},
+				];
+				this.setSearchResultItems(searchResultItems, sections);
+
+				const batchOperations = {
+					projects: ['mobile.tasks.group.search', {
+						searchText: text,
+					}],
+					tasks: ['tasks.task.list', {
+						select: TaskList.selectFields,
+						filter: this.list.filter.getForSearch(text),
+						order: this.list.order.getForSearch(),
+						params: TaskList.queryParams,
+					}],
+				};
+				BX.rest.callBatch(batchOperations, response => this.onSearchSuccess(response));
+			}, 100, this);
+		}
+
+		onSearchSuccess(response)
+		{
+			const projects = response.projects.answer.result;
+			const {tasks} = response.tasks.answer.result;
+
+			this.projectList.clear();
+			this.taskList.clear();
+
+			this.fillProjectList(projects);
+			this.fillTaskList(tasks);
+			this.renderList();
+		}
+
+		fillProjectList(rows)
+		{
+			rows.forEach((row) => {
+				this.projectList.set(row.id, row);
+				this.commonProjectList.set(row.id, row);
+			});
+		}
+
+		fillTaskList(rows)
+		{
+			rows.forEach((row) => {
+				const rowId = row.id.toString();
+				let task;
+
+				if (this.list.taskList.has(rowId))
+				{
+					task = this.list.taskList.get(rowId);
+				}
+				else
+				{
+					task = new Task(this.list.currentUser);
+					task.setData(row);
+				}
+				this.taskList.set(task.id, task);
+			});
+		}
+
+		renderList(fromCache = false)
+		{
+			console.log('Search:renderList', {tasks: this.taskList.size, projects: this.projectList.size});
+
+			let searchResultItems = this.renderProjectItems();
+			let nextItems = this.renderEmptyResultItems();
+
+			if (this.taskList.size > 0)
+			{
+				nextItems = this.renderTaskItems();
+			}
+			else if (fromCache)
+			{
+				nextItems = this.renderEmptyCacheItems();
+			}
+			searchResultItems = searchResultItems.concat(nextItems);
+
+			const title = (fromCache ? 'TASKS_LIST_SEARCH_SECTION_LAST' : 'TASKS_LIST_SEARCH_SECTION_SEARCH_RESULTS');
+			const sections = [
+				{id: 'project'},
+				{id: 'default', title: BX.message(title), backgroundColor: '#ffffff'},
+			];
+			console.log({title: 'search', searchResultItems, sections});
+			this.setSearchResultItems(searchResultItems, sections);
+		}
+
+		renderProjectItems()
+		{
+			if (apiVersion >= 41)
+			{
+				return [];
+			}
+
+			const projectItems = [];
+
+			this.projectList.forEach((project) => {
+				projectItems.push({
+					id: project.id,
+					title: project.name,
+					imageUrl: project.image,
+					type: 'project',
+				});
+			});
+
+			if (projectItems.length < 1)
+			{
+				return [];
+			}
+			return [{type: 'carousel', sectionCode: 'project', childItems: projectItems}];
+		}
+
+		renderTaskItems()
+		{
+			const taskItems = [];
+
+			this.taskList.forEach((task) => {
+				const item = this.list.getItemDataFromTask(task, false);
+				item.sectionCode = 'default';
+				taskItems.push(item);
+			});
+
+			return taskItems;
+		}
+
+		renderLoadingItems()
+		{
+			return [{
+				id: 0,
+				type: 'loading',
+				title: BX.message('TASKS_LIST_BUTTON_NEXT_PROCESS'),
+				sectionCode: 'default',
+				unselectable: true,
+			}];
+		}
+
+		renderEmptyCacheItems()
+		{
+			return [{
+				id: 0,
+				type: 'button',
+				title: BX.message('TASKS_LIST_SEARCH_HINT'),
+				sectionCode: 'default',
+				unselectable: true,
+			}];
+		}
+
+		renderEmptyResultItems()
+		{
+			console.log('Empty');
+			return [{
+				id: 0,
+				type: 'button',
+				title: BX.message('TASKS_LIST_SEARCH_EMPTY_RESULT'),
+				sectionCode: 'default',
+				unselectable: true,
+			}];
+		}
+
+		setSearchResultItems(items, sections)
+		{
+			this.list.list.setSearchResultItems(items, sections);
+		}
+
+		onUserTypeText(event)
+		{
+			console.log('Search:onUserTypeText');
+
+			BX.onViewLoaded(() => {
+				const text = event.text.trim();
+				if (this.text === text)
+				{
+					return;
+				}
+				this.text = text;
+				if (this.text.length < this.minSize)
+				{
+					this.projectList.clear();
+					this.taskList.clear();
+
+					if (this.text === '')
+					{
+						this.loadProjectsFromCache();
+						this.loadTasksFromCache();
+					}
+					else
+					{
+						this.fillProjectList(this.getLocalSearchedProjects(this.text));
+						this.fillTaskList(this.getLocalSearchedTasks(this.text));
+					}
+					this.renderList(this.text === '');
+					return;
+				}
+				this.debounceFunction(this.text);
+			});
+		}
+
+		getLocalSearchedProjects(text)
+		{
+			const localSearchedProjects = [];
+			const added = {};
+
+			this.commonProjectList.forEach((project) => {
+				added[project.id] = false;
+				const searchString = `${project.name}`.toLowerCase();
+				searchString.split(' ').forEach((word) => {
+					if (!added[project.id] && word.search(text.toLowerCase()) === 0)
+					{
+						localSearchedProjects.push(project);
+						added[project.id] = true;
+					}
+				});
+			});
+
+			return localSearchedProjects;
+		}
+
+		getLocalSearchedTasks(text)
+		{
+			const localSearchedTasks = [];
+			const added = {};
+
+			this.list.taskList.forEach((task) => {
+				added[task.id] = false;
+				const searchString = `${task.title} ${task.creator.name} ${task.responsible.name}`.toLowerCase();
+				searchString.split(' ').forEach((word) => {
+					if (!added[task.id] && word.search(text.toLowerCase()) === 0)
+					{
+						localSearchedTasks.push(task);
+						added[task.id] = true;
+					}
+				});
+			});
+
+			return localSearchedTasks;
+		}
+
+		onSearchShow()
+		{
+			this.loadProjectsFromCache();
+			this.loadTasksFromCache();
+
+			this.renderList(true);
+		}
+
+		loadProjectsFromCache()
+		{
+			console.log('Search:loadProjectsFromCache');
+
+			const cache = this.cache.get();
+			const lastSearchedProjects = cache[Search.cacheKeys.lastSearchedProjects] || [];
+			let lastActiveProjects = cache[Search.cacheKeys.lastActiveProjects] || [];
+
+			const ids = lastSearchedProjects.map(project => Number(project.id));
+			lastActiveProjects = lastActiveProjects.filter(project => !ids.includes(Number(project.id)));
+
+			let projects = lastSearchedProjects;
+			if (projects.length < this.maxProjectCount)
+			{
+				const count = this.maxProjectCount - projects.length + 1;
+				projects = projects.concat(lastActiveProjects.slice(0, count));
+			}
+			if (projects.length)
+			{
+				this.fillProjectList(projects);
+				return true;
+			}
+
+			return false;
+		}
+
+		loadTasksFromCache()
+		{
+			console.log('Search:loadTasksFromCache');
+
+			const tasks = this.cache.get()[Search.cacheKeys.tasks] || [];
+			if (tasks.length)
+			{
+				this.fillTaskList(tasks);
+				return true;
+			}
+
+			return false;
+		}
+
+		onSearchHide()
+		{
+			this.taskList.clear();
+			this.projectList.clear();
+		}
+
+		onSearchItemSelected(event)
+		{
+			if (event.type === 'task')
+			{
+				this.onTaskSelected(event.id.toString());
+			}
+			else if (event.type === 'project')
+			{
+				this.onProjectSelected(event);
+			}
+		}
+
+		onTaskSelected(taskId)
+		{
+			if (!this.taskList.has(taskId))
+			{
+				return;
+			}
+
+			(new RequestExecutor('tasks.task.list', {
+				select: TaskList.selectFields,
+				filter: {ID: taskId},
+				params: TaskList.queryParams,
+			}))
+				.call()
+				.then((response) => {
+					const rows = response.result.tasks || [];
+					const row = rows[0];
+					if (row)
+					{
+						const cacheKey = Search.cacheKeys.tasks;
+						let cachedTasks = this.cache.get()[cacheKey] || [];
+						cachedTasks = cachedTasks.filter(item => Number(item.id) !== Number(taskId));
+						this.cache.update(cacheKey, [row].concat(cachedTasks.slice(0, this.maxTaskCount)));
+
+						setTimeout(() => {
+							const task = new Task(this.list.currentUser);
+							task.setData(row);
+
+							const newTaskList = new Map([[taskId, task]]);
+							this.taskList.forEach((value, key) => newTaskList.set(key, value));
+							this.taskList = newTaskList;
+
+							if (this.text.length < this.minSize)
+							{
+								this.renderList(this.text === '');
+							}
+						}, 500);
+					}
+				})
+			;
+
+			this.taskList.get(taskId).open();
+		}
+
+		onProjectSelected(data)
+		{
+			const project = {
+				id: data.id,
+				name: data.title,
+				image: data.imageUrl,
+			};
+			const cacheKey = Search.cacheKeys.lastSearchedProjects;
+			let projects = this.cache.get()[cacheKey] || [];
+			projects = projects.filter(item => Number(item.id) !== Number(project.id));
+			this.cache.update(cacheKey, [project].concat(projects.slice(0, this.maxProjectCount)));
+
+			if (apiVersion >= 41)
+			{
+				let projectFromList = null;
+				this.list.taskList.forEach((task) => {
+					if (Number(task.group.id) === Number(data.id))
+					{
+						projectFromList = task.group;
+					}
+				});
+
+				const projectItem = {
+					id: project.id,
+					title: project.name,
+					params: {
+						avatar: (projectFromList ? projectFromList.image : project.image),
+						initiatedByType: (
+							projectFromList && projectFromList.additionalData
+								? projectFromList.additionalData.initiatedByType
+								: null
+						),
+						features: (
+							projectFromList && projectFromList.additionalData
+								? projectFromList.additionalData.features
+								: []
+						),
+						membersCount: (projectFromList ? projectFromList.membersCount : 0),
+						role: (
+							projectFromList && projectFromList.additionalData
+								? projectFromList.additionalData.role
+								: null
+						),
+						opened: project.opened || false,
+					},
+				};
+
+				const projectData = {
+					siteId: BX.componentParameters.get('SITE_ID', env.siteId),
+					siteDir: BX.componentParameters.get('SITE_DIR', env.siteDir),
+					projectId: project.id,
+					action: 'view',
+					item: projectItem,
+					newsPathTemplate: this.list.projectNewsPathTemplate,
+					calendarWebPathTemplate: this.list.projectCalendarWebPathTemplate,
+					currentUserId: parseInt(this.list.owner.id),
+				};
+
+				BX.postComponentEvent('projectbackground::project::action', [ projectData ], 'background');
+			}
+			else
+			{
+				BX.postComponentEvent('taskbackground::task::action', [{
+					groupId: project.id,
+					groupName: project.name,
+					groupImageUrl: project.image,
+					ownerId: this.list.owner.id,
+					getProjectData: true,
+				}]);
+			}
+
+			setTimeout(() => {
+				const newProjectList = new Map([[project.id, project]]);
+				this.projectList.forEach((value, key) => newProjectList.set(key, value));
+				this.projectList = newProjectList;
+
+				const newCommonProjectList = new Map([[project.id, project]]);
+				this.commonProjectList.forEach((value, key) => newCommonProjectList.set(key, value));
+				this.commonProjectList = newCommonProjectList;
+
+				if (this.text.length < this.minSize)
+				{
+					this.renderList(this.text === '');
+				}
+			}, 500);
+		}
+
+		removeTask(taskId)
+		{
+			if (this.taskList.has(taskId))
+			{
+				this.taskList.delete(taskId);
+				this.list.list.removeItem(taskId);
+			}
 		}
 	}
 
@@ -1046,17 +2066,25 @@ include('InAppNotifier');
 					method: this.list.onPullCommentReadAll,
 					context: this.list,
 				},
-				user_option_changed: {
-					method: this.list.onUserOptionChanged,
+				project_read_all: {
+					method: this.list.onPullProjectReadAll,
 					context: this.list,
 				},
-				user_efficiency_counter: {
-					method: this.list.onUserEfficiencyCounter,
+				user_option_changed: {
+					method: this.list.onPullUserOptionChanged,
 					context: this.list,
 				},
 				user_counter: {
 					method: this.list.filter.onUserCounter,
 					context: this.list.filter,
+				},
+				task_result_create: {
+					method: this.list.onPullTaskResultCreate,
+					context: this.list,
+				},
+				task_result_delete: {
+					method: this.list.onPullTaskResultDelete,
+					context: this.list,
 				},
 			};
 		}
@@ -1078,7 +2106,7 @@ include('InAppNotifier');
 		{
 			const commonCommands = [
 				'comment_read_all',
-				'user_efficiency_counter',
+				'project_read_all',
 				'user_counter',
 			];
 			this.queue = new Set([...this.queue].filter(event => commonCommands.includes(event.command)));
@@ -1375,6 +2403,9 @@ include('InAppNotifier');
 		}
 	}
 
+	/**
+	 * @class TaskList
+	 */
 	class TaskList
 	{
 		static getItemDataFromUser(user)
@@ -1409,13 +2440,25 @@ include('InAppNotifier');
 				'COMMENTS_COUNT',
 				'AUDITORS',
 				'ACCOMPLICES',
-				'NEW_COMMENTS_COUNT',
 				'FAVORITE',
 				'NOT_VIEWED',
 				'GROUP_ID',
 				'IS_MUTED',
 				'IS_PINNED',
+				'COUNTERS',
 			];
+		}
+
+		static get queryParams()
+		{
+			return {
+				RETURN_ACCESS: 'Y',
+				RETURN_USER_INFO: 'Y',
+				RETURN_GROUP_INFO: 'Y',
+				SEND_PULL: 'Y',
+				MODE: 'mobile',
+				WITH_RESULT_INFO: 'Y',
+			};
 		}
 
 		static get statusList()
@@ -1426,7 +2469,7 @@ include('InAppNotifier');
 		static get titles()
 		{
 			return {
-				[Filter.roleType.all]: BX.message('TASKS_LIST_HEADER_ROLE_ALL'),
+				[Filter.roleType.all]: BX.message('TASKS_LIST_HEADER_ROLE_ALL_V2'),
 				[Filter.roleType.responsible]: BX.message('TASKS_LIST_HEADER_ROLE_RESPONSIBLE'),
 				[Filter.roleType.accomplice]: BX.message('TASKS_LIST_HEADER_ROLE_ACCOMPLICE'),
 				[Filter.roleType.originator]: BX.message('TASKS_LIST_HEADER_ROLE_ORIGINATOR'),
@@ -1435,13 +2478,94 @@ include('InAppNotifier');
 			};
 		}
 
-		constructor(list, owner)
+		static get projectRoles()
+		{
+			return {
+				owner: 'A',
+				moderator: 'E',
+				member: 'K',
+				request: 'Z',
+			};
+		}
+
+		static get initiatorTypes()
+		{
+			return {
+				group: 'G',
+				user: 'U',
+			};
+		}
+
+		constructor(list, owner, params)
 		{
 			console.log('taskList.constructor');
 
+			this.initCommon(list, owner, params);
+
+			if (this.group.getData)
+			{
+				this.fillProjectData().then(() => {
+					if (!this.group.id || this.group.isOpened || this.isMember())
+					{
+						this.initAccessibleList(params);
+					}
+					else
+					{
+						this.initInaccessibleList();
+					}
+				});
+			}
+			else if (!this.group.id || this.group.isOpened || this.isMember())
+			{
+				this.initAccessibleList(params);
+			}
+			else
+			{
+				this.initInaccessibleList();
+			}
+		}
+
+		fillProjectData()
+		{
+			return new Promise((resolve, reject) => {
+				(new RequestExecutor('socialnetwork.api.workgroup.get', {
+					params: {
+						select: [
+							'AVATAR',
+							'AVATAR_TYPES',
+							'USER_DATA',
+						],
+						groupId: this.group.id,
+					},
+				}))
+					.call()
+					.then(
+						(response) => {
+							const {result} = response;
+							this.group = {
+								id: parseInt(result.ID, 10),
+								name: result.NAME,
+								imageUrl: (result.AVATAR || (result.AVATAR_TYPES[(result.AVATAR_TYPE || 'folder')].mobileUrl)),
+								isOpened: (result.OPENED === 'Y'),
+								role: result.USER_DATA.ROLE,
+								initiatedByType: result.USER_DATA.INITIATED_BY_TYPE,
+							};
+							resolve();
+						},
+						() => reject(),
+					)
+				;
+			});
+		}
+
+		initCommon(list, owner, params)
+		{
 			this.list = list;
 			this.owner = {id: owner};
 			this.currentUser = result.settings.userInfo;
+			this.isTabsMode = params.isTabsMode;
+			this.projectNewsPathTemplate = (params.projectNewsPathTemplate || '');
+			this.projectCalendarWebPathTemplate = (params.projectCalendarWebPathTemplate || '');
 
 			this.taskList = new Map();
 			this.newTaskList = new Map();
@@ -1453,26 +2577,44 @@ include('InAppNotifier');
 				id: this.groupId,
 				name: data.groupName,
 				imageUrl: data.groupImageUrl,
+				isOpened: data.groupOpened,
+				role: data.relationRole,
+				initiatedByType: data.relationInitiatedByType,
+				getData: data.getProjectData,
 			};
+
+			this.search = new Search(this);
+			this.welcomeScreen = new WelcomeScreen(this);
+			this.joinButton = new JoinButton(this);
+
+			BX.onViewLoaded(() => {
+				this.setListListeners();
+			});
+		}
+
+		initAccessibleList()
+		{
+			this.tabsGuid = BX.componentParameters.get('TABS_GUID', '');
 
 			this.start = 0;
 			this.pageSize = 50;
 			this.canShowSwipeActions = true;
 			this.isRepeating = false;
 
-			this.filter = new Filter(this.list, this.currentUser, this.owner, this.groupId);
+			this.filter = new Filter(this, this.currentUser, this.owner, this.groupId);
 			this.order = new Order();
 			this.options = new Options();
 
+			// this.optionMenu = new OptionMenu(this);
+			this.moreMenu = new MoreMenu(this);
+
 			this.pull = new Pull(this);
 			this.push = new Push(this);
-			this.search = new Search(this);
 			this.fileStorage = new TaskUploadFilesStorage();
 
-			this.cache = TasksListCache.getInstance(`tasks.task.list_v3_${owner}`);
+			this.cache = TasksCache.getInstance(`tasksList_${this.owner.id}_${this.groupId}`);
 
 			this.getTaskLimitExceeded();
-			this.getEfficiencyCounter();
 			this.checkDeadlinesUpdate();
 
 			BX.addCustomEvent('onPullEvent-tasks', (command, params) => {
@@ -1490,21 +2632,62 @@ include('InAppNotifier');
 					},
 				]);
 
-				this.filter.updateCounters();
-
 				this.setTopButtons();
 				this.setFloatingButton();
-				this.setListListeners();
+				this.setJoinButton();
 				this.bindEvents();
+
+				this.filter.updateCounters();
 
 				this.loadTasksFromCache();
 				this.reload();
 			});
 		}
 
+		initInaccessibleList()
+		{
+			BX.onViewLoaded(() => {
+				this.welcomeScreen.show();
+
+				if (this.group.role !== TaskList.projectRoles.request)
+				{
+					this.joinButton.showForPrivate();
+				}
+				else if (this.group.initiatedByType === TaskList.initiatorTypes.group)
+				{
+					this.joinButton.showForOpened();
+				}
+				else
+				{
+					this.joinButton.showForPrivate(true);
+				}
+			});
+		}
+
+		isMember()
+		{
+			const memberRoles = [
+				TaskList.projectRoles.owner,
+				TaskList.projectRoles.moderator,
+				TaskList.projectRoles.member,
+			];
+
+			return memberRoles.includes(this.group.role);
+		}
+
 		isMyList()
 		{
-			return Number(this.currentUser.id) === Number(this.owner.id) && !this.groupId;
+			return (!this.isGroupList() && !this.isAnotherUserList());
+		}
+
+		isGroupList()
+		{
+			return (this.groupId > 0);
+		}
+
+		isAnotherUserList()
+		{
+			return (Number(this.currentUser.id) !== Number(this.owner.id));
 		}
 
 		setListListeners()
@@ -1556,6 +2739,10 @@ include('InAppNotifier');
 					callback: this.onItemChecked,
 					context: this,
 				},
+				onClickJoinButton: {
+					callback: this.joinButton.onClick,
+					context: this.joinButton,
+				},
 			};
 
 			this.list.setListener((event, data) => {
@@ -1569,12 +2756,22 @@ include('InAppNotifier');
 
 		bindEvents()
 		{
-			BX.addCustomEvent('onAppActiveBefore', () => this.onAppActiveBefore());
-			BX.addCustomEvent('onAppActive', () => this.onAppActive());
-			BX.addCustomEvent('onAppPaused', () => this.onAppPaused());
 			BX.addCustomEvent('task.view.onCommentsRead', eventData => this.onCommentsRead(eventData));
-			BX.addCustomEvent('task.list.onToggleCompleted', () => this.onToggleCompleted());
 			BX.addCustomEvent('onFileUploadStatusChanged', this.onFileUploadStatusChange.bind(this));
+
+			if (this.isTabsMode && this.isMyList())
+			{
+				BX.addCustomEvent('tasks.tabs:onTabSelected', eventData => this.onTabSelected(eventData));
+				BX.addCustomEvent('tasks.tabs:onAppActiveBefore', () => this.onAppActiveBefore());
+				BX.addCustomEvent('tasks.tabs:onAppActive', () => this.onAppActive());
+				BX.addCustomEvent('tasks.tabs:onAppPaused', () => this.onAppPaused());
+			}
+			else
+			{
+				BX.addCustomEvent('onAppActiveBefore', () => this.onAppActiveBefore());
+				BX.addCustomEvent('onAppActive', () => this.onAppActive());
+				BX.addCustomEvent('onAppPaused', () => this.onAppPaused());
+			}
 
 			if (apiVersion >= 34)
 			{
@@ -1586,8 +2783,8 @@ include('InAppNotifier');
 
 		setTopButtons()
 		{
-			const isMainScreen = this.filter.getRole() === Filter.roleType.all
-				&& this.filter.getCounter() === Filter.counterType.none;
+			const isDefaultRole = this.filter.getRole() === Filter.roleType.all;
+			const isDefaultCounter = this.filter.getCounter() === Filter.counterType.none;
 
 			this.list.setRightButtons([
 				{
@@ -1595,9 +2792,9 @@ include('InAppNotifier');
 					callback: () => this.list.showSearchBar(),
 				},
 				{
-					type: (isMainScreen ? 'more' : 'more_active'),
-					badgeCode: `tasks_list_more_button_${this.owner.id}_${this.filter.getRole()}`,
-					callback: () => this.initPopupMenu(),
+					type: (isDefaultRole && isDefaultCounter ? 'more' : 'more_active'),
+					badgeCode: `tasksTaskListMoreButton_${this.owner.id}_${this.groupId}`,
+					callback: () => this.moreMenu.show(),
 				},
 			]);
 			this.filter.setVisualCounters();
@@ -1607,10 +2804,54 @@ include('InAppNotifier');
 		{
 			if (apiVersion >= 40)
 			{
+				this.getCanCreateTask().then(
+					response => this.renderFloatingButton(response.result),
+					response => console.error(response)
+				);
+			}
+		}
+
+		getCanCreateTask()
+		{
+			return new Promise((resolve, reject) => {
+				if (!this.groupId)
+				{
+					resolve({result: true});
+					return;
+				}
+
+				(new RequestExecutor('mobile.tasks.group.getCanCreateTask', {
+					groupId: this.groupId,
+				}))
+					.call()
+					.then(
+						response => resolve(response),
+						response => reject(response)
+					)
+				;
+			});
+		}
+
+		renderFloatingButton(isExist = false)
+		{
+			if (isExist)
+			{
 				this.list.setFloatingButton({
 					icon: 'plus',
 					callback: () => this.list.showAudioInput(),
 				});
+			}
+			else
+			{
+				this.list.setFloatingButton({});
+			}
+		}
+
+		setJoinButton()
+		{
+			if (this.group.id > 0 && this.group.isOpened && !this.isMember())
+			{
+				this.joinButton.showForOpened();
 			}
 		}
 
@@ -1634,7 +2875,9 @@ include('InAppNotifier');
 					console.log('tasks cache is empty');
 					return;
 				}
-				this.list.setItems(cachedTasks, null, BX.componentParameters.get('ANIMATE_CACHE_TASKS_LOADING', true));
+				cachedTasks = cachedTasks.map(task => ({...task, checkable: false}));
+
+				this.list.setItems(cachedTasks, null, false);
 			});
 		}
 
@@ -1658,35 +2901,28 @@ include('InAppNotifier');
 					select = select.filter(field => field !== 'IS_PINNED');
 				}
 
-				const {restNamespace} = new Request();
 				const batchOperations = {
-					all: [`${restNamespace}list`, {
+					all: ['tasks.task.list', {
 						select,
 						filter: this.filter.get(),
 						order: this.order.get(),
 						start: taskListOffset,
 						params: {
-							RETURN_ACCESS: 'Y',
-							RETURN_USER_INFO: 'Y',
-							RETURN_GROUP_INFO: 'Y',
-							SEND_PULL: 'Y',
-							COUNT_TOTAL: 'N',
+							...TaskList.queryParams,
+							...{COUNT_TOTAL: 'N'},
 						},
 					}],
 				};
 
 				if (!taskListOffset && this.isMyList())
 				{
-					batchOperations.pinned = [`${restNamespace}list`, {
+					batchOperations.pinned = ['tasks.task.list', {
 						select,
 						filter: this.filter.getForPinned(),
 						order: this.order.get(),
 						params: {
-							RETURN_ACCESS: 'Y',
-							RETURN_USER_INFO: 'Y',
-							RETURN_GROUP_INFO: 'Y',
-							SEND_PULL: 'Y',
-							COUNT_TOTAL: 'N',
+							...TaskList.queryParams,
+							...{COUNT_TOTAL: 'N'},
 						},
 					}];
 				}
@@ -1762,21 +2998,15 @@ include('InAppNotifier');
 
 			if (clear)
 			{
-				console.log('sections.clear');
 				sectionHandler.clear();
 			}
 
-			sectionHandler.setSortItemParams('default', {
+			sectionHandler.setSortItemParams(SectionHandler.sections.default, {
 				[this.order.order]: Order.sectionOrderFields[this.order.order],
 			});
-			sectionHandler.setSortItemParams('pinned', {
+			sectionHandler.setSortItemParams(SectionHandler.sections.pinned, {
 				[this.order.order]: Order.sectionOrderFields[this.order.order],
 			});
-
-			if (!sectionHandler.has('more'))
-			{
-				sectionHandler.add({id: 'more'});
-			}
 
 			this.list.setSections(sectionHandler.list);
 		}
@@ -1802,18 +3032,14 @@ include('InAppNotifier');
 		{
 			if (items.length <= 0)
 			{
-				this.list.setItems([{
-					id: '-none-',
-					title: BX.message('TASKS_LIST_NOTHING_NOT_FOUND'),
-					type: 'button',
-					sectionCode: 'default',
-					unselectable: true,
-				}]);
+				this.welcomeScreen.show(WelcomeScreen.type.empty);
 				return;
 			}
 
 			if (isFirstPage)
 			{
+				this.welcomeScreen.hide();
+
 				const itemsWithHandledActions = this.handleSwipeActionsShow(items);
 				this.list.setItems(itemsWithHandledActions, null, true);
 				setTimeout(() => {
@@ -1832,7 +3058,7 @@ include('InAppNotifier');
 					id: '-more-',
 					title: BX.message('TASKS_LIST_BUTTON_NEXT'),
 					type: 'button',
-					sectionCode: 'more',
+					sectionCode: SectionHandler.sections.more,
 				}]);
 			}
 		}
@@ -1874,6 +3100,19 @@ include('InAppNotifier');
 			}
 		}
 
+		onTabSelected(data)
+		{
+			if (data.tabId === 'tasks.list')
+			{
+				this.onAppActiveBefore();
+				this.onAppActive();
+			}
+			else
+			{
+				this.onAppPaused();
+			}
+		}
+
 		onAppPaused()
 		{
 			this.pauseTime = new Date();
@@ -1885,7 +3124,12 @@ include('InAppNotifier');
 
 		onAppActiveBefore()
 		{
-			BX.onViewLoaded(() => this.push.updateList());
+			BX.onViewLoaded(() => {
+				if (this.push)
+				{
+					this.push.updateList();
+				}
+			});
 		}
 
 		onAppActive()
@@ -1898,7 +3142,7 @@ include('InAppNotifier');
 				const timePassed = this.activationTime.getTime() - this.pauseTime.getTime();
 				const minutesPassed = Math.abs(Math.round(timePassed / 60000));
 
-				if (minutesPassed > 30)
+				if (minutesPassed > 29)
 				{
 					this.runOnAppActiveRepeatedActions();
 				}
@@ -1909,7 +3153,6 @@ include('InAppNotifier');
 			}
 
 			this.getTaskLimitExceeded();
-			this.getEfficiencyCounter();
 			this.checkDeadlinesUpdate();
 		}
 
@@ -1938,31 +3181,27 @@ include('InAppNotifier');
 					];
 					if (taskIds.length)
 					{
-						promises.push(this.updateRecentUpdatedTasks(taskIds));
+						promises.push(this.updateTasks(taskIds));
 					}
 					Promise.allSettled(promises).then(() => this.updateTitle());
 				}
 			}, 1000);
 		}
 
-		updateRecentUpdatedTasks(taskIds)
+		updateTasks(taskIds)
 		{
 			return new Promise((resolve, reject) => {
-				(new Request())
-					.call('list', {
-						select: TaskList.selectFields,
-						filter: {
-							ID: taskIds,
-						},
-						params: {
-							RETURN_ACCESS: 'Y',
-							RETURN_USER_INFO: 'Y',
-							RETURN_GROUP_INFO: 'Y',
-						},
-					})
+				const {IS_PINNED, ...filter} = {...this.filter.get(), ID: taskIds};
+
+				(new RequestExecutor('tasks.task.list', {
+					select: TaskList.selectFields,
+					filter,
+					params: TaskList.queryParams,
+				}))
+					.call()
 					.then(
 						(response) => {
-							this.onRecentUpdatedTasksDataLoaded(taskIds, response);
+							this.onUpdateTasksSuccess(taskIds, response.result.tasks);
 							resolve();
 						},
 						(response) => {
@@ -1974,34 +3213,13 @@ include('InAppNotifier');
 			});
 		}
 
-		onRecentUpdatedTasksDataLoaded(taskIds, response)
+		onUpdateTasksSuccess(taskIds, tasks)
 		{
-			const {tasks} = response.result;
-
 			taskIds.forEach((taskId) => {
-				const taskData = tasks.find(task => task.id === taskId);
+				const taskData = tasks.find(task => Number(task.id) === Number(taskId));
 				if (taskData)
 				{
-					if (this.taskList.has(taskId))
-					{
-						const task = this.taskList.get(taskId);
-						task.setData(taskData);
-
-						this.isTaskSuitList(task)
-							? this.updateItem(taskId, task)
-							: this.removeItem(taskId)
-						;
-					}
-					else
-					{
-						const task = new Task(this.currentUser);
-						task.setData(taskData);
-
-						this.isTaskSuitList(task)
-							? this.addItem(task)
-							: this.removeItem(taskId)
-						;
-					}
+					this.updateTaskListItem(taskId, taskData);
 				}
 				else if (this.taskList.has(taskId))
 				{
@@ -2010,10 +3228,70 @@ include('InAppNotifier');
 			});
 		}
 
+		updateTaskListItem(taskId, row, sectionId = SectionHandler.sections.default)
+		{
+			const isMyNewTask = (this.newTaskList.has(row.guid) || this.newTaskList.has(row.id));
+
+			if (this.taskList.has(taskId))
+			{
+				const task = this.taskList.get(taskId);
+				task.setData(row);
+
+				(this.isTaskSuitList(task) || isMyNewTask)
+					? this.updateItem(taskId, task)
+					: this.removeItem(taskId)
+				;
+			}
+			else if (!isMyNewTask)
+			{
+				const task = new Task(this.currentUser);
+				task.setData(row);
+
+				this.isTaskSuitList(task)
+					? this.addItem(task, sectionId)
+					: this.removeItem(taskId)
+				;
+			}
+		}
+
+		isTaskSuitList(task)
+		{
+			return (this.isTaskSuitFilter(task) && this.isTaskSuitGroup(task));
+		}
+
+		isTaskSuitFilter(task)
+		{
+			const role = this.filter.getRole();
+			const roleMap = {
+				[Filter.roleType.all]: ((this.groupId > 0 && this.groupId === Number(task.groupId)) || task.isMember()),
+				[Filter.roleType.responsible]: task.isResponsible(),
+				[Filter.roleType.accomplice]: task.isAccomplice(),
+				[Filter.roleType.originator]: task.isPureCreator(),
+				[Filter.roleType.auditor]: task.isAuditor(),
+			};
+
+			if (roleMap[role])
+			{
+				const counter = this.filter.getCounter();
+				const {existing} = Filter.getCountersByRole(role, task);
+
+				return existing.includes(counter);
+			}
+
+			return false;
+		}
+
+		isTaskSuitGroup(task)
+		{
+			return ((this.groupId > 0 && this.groupId === Number(task.groupId)) || !this.groupId);
+		}
+
 		runOnAppActiveRepeatedActions()
 		{
 			this.filter.updateCounters();
 			this.reload();
+
+			this.setFloatingButton();
 
 			this.search.fillCacheWithLastActiveProjects();
 			this.pull.setCanExecute(true);
@@ -2021,10 +3299,13 @@ include('InAppNotifier');
 
 		getTaskLimitExceeded()
 		{
-			(new Request()).call('limit.isExceeded').then((response) => {
-				console.log('taskList:limit.isExceeded', response.result);
-				this.taskLimitExceeded = response.result || false;
-			});
+			(new RequestExecutor('tasks.task.limit.isExceeded'))
+				.call()
+				.then((response) => {
+					console.log('taskList:limit.isExceeded', response.result);
+					this.taskLimitExceeded = response.result || false;
+				})
+			;
 		}
 
 		checkDeadlinesUpdate()
@@ -2035,58 +3316,38 @@ include('InAppNotifier');
 
 			if (dayChanged)
 			{
-				(new Request('mobile.tasks.'))
-					.call('deadlines.get')
-					.then(response => this.options.update('deadlines', {
-						lastTime: now.getTime(),
-						value: response.result,
-					}));
+				(new RequestExecutor('mobile.tasks.deadlines.get'))
+					.call()
+					.then((response) => {
+						this.options.update('deadlines', {
+							lastTime: now.getTime(),
+							value: response.result,
+						});
+					})
+				;
 			}
-		}
-
-		getEfficiencyCounter()
-		{
-			this.efficiency = false;
-
-			if (!this.isMyList())
-			{
-				return;
-			}
-
-			this.efficiency = this.options.get().efficiency;
-
-			(new Request('mobile.tasks.'))
-				.call('efficiency.get', {
-					userId: this.owner.id,
-				})
-				.then((response) => {
-					this.efficiency = response.result;
-					this.options.update('efficiency', this.efficiency);
-				});
-		}
-
-		onUserEfficiencyCounter(eventData)
-		{
-			console.log('onUserEfficiencyCounter', eventData, this.isMyList());
-
-			if (!this.isMyList())
-			{
-				return;
-			}
-
-			const {value} = eventData;
-			this.efficiency = value;
-			this.options.update('efficiency', this.efficiency);
 		}
 
 		onTabsSelected(tabName)
 		{
-			const isMainScreen = this.filter.getRole() === Filter.roleType.all
-				&& this.filter.getCounter() === Filter.counterType.none;
+			const isDefaultRole = this.filter.getRole() === Filter.roleType.all;
+			const isDefaultCounter = this.filter.getCounter() === Filter.counterType.none;
 
-			if (tabName !== 'tasks' && (!isMainScreen || this.order.isDeadline()))
+			if (tabName !== 'tasks' && (!isDefaultRole || !isDefaultCounter || this.order.isDeadline()))
 			{
-				setTimeout(() => this.list.back(), 300);
+				setTimeout(() => {
+					this.filter.setRole(Filter.roleType.all);
+					this.filter.setCounter(Filter.counterType.none);
+
+					if (this.order.isDeadline())
+					{
+						this.order.changeOrder();
+					}
+
+					this.updateTitle();
+					this.setTopButtons();
+					this.reload();
+				}, 300);
 			}
 		}
 
@@ -2097,87 +3358,28 @@ include('InAppNotifier');
 			const taskId = String(eventData.taskId);
 			if (this.taskList.has(taskId))
 			{
-				this.updateItem(taskId, {newCommentsCount: 0});
+				this.taskList.get(taskId).pseudoRead();
+				this.updateItem(taskId);
 			}
 		}
 
-		onUserOptionChanged(data)
+		onPullUserOptionChanged(data)
 		{
 			return new Promise((resolve, reject) => {
-				if (Number(data.USER_ID) !== Number(this.currentUser.id))
+				if (Number(data.USER_ID) === Number(this.currentUser.id))
 				{
-					resolve();
-					return;
-				}
-
-				const taskId = data.TASK_ID.toString();
-				const added = data.ADDED;
-
-				switch (Number(data.OPTION))
-				{
-					case Task.userOptions.muted:
-						this.onMuteChanged(taskId, added);
-						resolve();
-						break;
-
-					case Task.userOptions.pinned:
-						this.onPinChanged(taskId, added).then(() => resolve()).catch(() => reject());
-						break;
-
-					default:
-						break;
-				}
-			});
-		}
-
-		onMuteChanged(taskId, added)
-		{
-			if (this.taskList.has(taskId))
-			{
-				this.updateItem(taskId, {isMuted: added});
-			}
-		}
-
-		onPinChanged(taskId, added)
-		{
-			return new Promise((resolve, reject) => {
-				if (this.taskList.has(taskId))
-				{
-					this.updateItem(taskId, {isPinned: added});
-					resolve();
-				}
-				else if (added)
-				{
-					(new Request())
-						.call('get', {taskId})
-						.then(
-							(response) => {
-								this.updateTaskListItem(taskId, response.result.task, 'pinned');
-								resolve();
-							},
-							(response) => {
-								console.log(response);
-								reject();
-							}
-						);
+					this.updateTasks([data.TASK_ID.toString()]).then(() => resolve(), () => reject());
 				}
 			});
 		}
 
 		onPullView(data)
 		{
-			return new Promise((resolve) => {
-				if (Number(data.USER_ID) !== Number(this.currentUser.id))
+			return new Promise((resolve, reject) => {
+				if (Number(data.USER_ID) === Number(this.currentUser.id))
 				{
-					return;
+					this.updateTasks([data.TASK_ID.toString()]).then(() => resolve(), () => reject());
 				}
-
-				const taskId = data.TASK_ID.toString();
-				if (this.taskList.has(taskId))
-				{
-					this.updateItem(taskId, {newCommentsCount: 0});
-				}
-				resolve();
 			});
 		}
 
@@ -2204,48 +3406,68 @@ include('InAppNotifier');
 				taskComments.add(messageId);
 				this.comments.set(entityId, taskComments);
 
-				(new Request())
-					.call('get', {taskId: entityId})
-					.then(
-						(response) => {
-							this.updateTaskListItem(entityId, response.result.task);
-							resolve();
-						},
-						(response) => {
-							console.log(response);
-							reject();
-						}
-					);
+				this.updateTasks([entityId]).then(() => resolve(), () => reject());
 			});
 		}
 
 		onPullCommentReadAll(data)
 		{
 			return new Promise((resolve) => {
-				const groupId = Number(data.GROUP_ID);
 				const userId = Number(data.USER_ID);
+				const groupId = Number(data.GROUP_ID);
+				const role = (data.ROLE || Filter.roleType.all);
 
-				if (
-					(groupId > 0 && groupId !== this.groupId)
-					|| (userId > 0 && userId !== this.owner.id)
-				)
+				if (userId > 0 && userId !== this.owner.id)
 				{
 					resolve();
 					return;
 				}
 
-				const items = [];
-				const tasks = {};
+				const taskIdsToRead = [];
 
-				this.taskList.forEach((task) => {
-					task.newCommentsCount = 0;
-					const item = this.getItemDataFromTask(task);
-					items.push(item);
-					tasks[task.id] = {task, taskData: item};
+				this.taskList.forEach((task, id) => {
+					const roleCondition = {
+						[Filter.roleType.all]: task.isMember(),
+						[Filter.roleType.responsible]: task.isResponsible(),
+						[Filter.roleType.accomplice]: task.isAccomplice(),
+						[Filter.roleType.originator]: task.isPureCreator(),
+						[Filter.roleType.auditor]: task.isAuditor(),
+					};
+					const groupCondition = (!groupId || Number(task.groupId) === groupId);
+					if (roleCondition[role] && groupCondition)
+					{
+						taskIdsToRead.push(id);
+					}
 				});
-				this.list.setItems(items, null, true);
-				this.cache.setTaskData(tasks);
 
+				this.pseudoReadTasks(taskIdsToRead);
+				resolve();
+			});
+		}
+
+		onPullProjectReadAll(data)
+		{
+			return new Promise((resolve) => {
+				const userId = Number(data.USER_ID);
+				const groupId = Number(data.GROUP_ID);
+
+				if (userId > 0 && userId !== this.owner.id)
+				{
+					resolve();
+					return;
+				}
+
+				const taskIdsToRead = [];
+
+				this.taskList.forEach((task, id) => {
+					// TODO: check if this is not scrum project
+					if (groupId ? Number(task.groupId) === groupId : Number(task.groupId) > 0)
+					{
+						taskIdsToRead.push(id);
+					}
+				});
+
+				this.pseudoReadTasks(taskIdsToRead);
 				resolve();
 			});
 		}
@@ -2262,27 +3484,7 @@ include('InAppNotifier');
 					return;
 				}
 
-				const taskId = data.TASK_ID.toString();
-				const select = TaskList.selectFields;
-
-				if (this.taskList.has(taskId))
-				{
-					resolve();
-					return;
-				}
-
-				(new Request())
-					.call('get', {taskId, select})
-					.then(
-						(response) => {
-							this.updateTaskListItem(taskId, response.result.task);
-							resolve();
-						},
-						(response) => {
-							console.log(response);
-							reject();
-						}
-					);
+				this.updateTasks([data.TASK_ID.toString()]).then(() => resolve(), () => reject());
 			});
 		}
 
@@ -2298,104 +3500,8 @@ include('InAppNotifier');
 					return;
 				}
 
-				const taskId = data.TASK_ID.toString();
-				const select = TaskList.selectFields;
-
-				(new Request())
-					.call('get', {taskId, select})
-					.then(
-						(response) => {
-							this.updateTaskListItem(taskId, response.result.task);
-							resolve();
-						},
-						(response) => {
-							console.log('onPullUpdate.get.error', response);
-							reject();
-						}
-					);
+				this.updateTasks([data.TASK_ID.toString()]).then(() => resolve(), () => reject());
 			});
-		}
-
-		updateTaskListItem(taskId, row, sectionId = 'default')
-		{
-			const isMyNewTask = this.newTaskList.has(row.guid) || this.newTaskList.has(row.id);
-
-			if (this.taskList.has(taskId))
-			{
-				const task = this.taskList.get(taskId);
-				task.setData(row);
-
-				if (this.isTaskSuitList(task) || isMyNewTask)
-				{
-					this.updateItem(taskId, task);
-				}
-				else
-				{
-					this.removeItem(taskId);
-				}
-			}
-			else if (!isMyNewTask)
-			{
-				const task = new Task(this.currentUser);
-				task.setData(row);
-
-				if (this.isTaskSuitList(task))
-				{
-					if (this.taskList.has(task.id))
-					{
-						this.updateItem(task.id, task);
-					}
-					else
-					{
-						this.addItem(task, sectionId);
-					}
-				}
-			}
-		}
-
-		/**
-		 * @param {Task} task
-		 * @return {boolean}
-		 */
-		isTaskSuitList(task)
-		{
-			return this.isTaskSuitFilter(task)
-				&& this.isTaskSuitGroup(task);
-		}
-
-		/**
-		 * @param {Task} task
-		 * @return {boolean}
-		 */
-		isTaskSuitFilter(task)
-		{
-			const role = this.filter.getRole();
-			const roleMap = {
-				[Filter.roleType.all]: task.isMember(),
-				[Filter.roleType.responsible]: task.isResponsible(),
-				[Filter.roleType.accomplice]: task.isAccomplice(),
-				[Filter.roleType.originator]: task.isPureCreator(),
-				[Filter.roleType.auditor]: task.isAuditor(),
-			};
-
-			if (roleMap[role])
-			{
-				const counter = this.filter.getCounter();
-				const {existing} = Filter.getCountersByRole(role, task);
-
-				return existing.includes(counter);
-			}
-
-			return false;
-		}
-
-		/**
-		 * @param {Task} task
-		 * @return {boolean}
-		 */
-		isTaskSuitGroup(task)
-		{
-			return (this.groupId > 0 && this.groupId === Number(task.groupId)) || !this.groupId;
 		}
 
 		onPullDelete(data)
@@ -2407,6 +3513,31 @@ include('InAppNotifier');
 				this.search.removeTask(taskId);
 				this.removeItem(taskId);
 
+				resolve();
+			});
+		}
+
+		onPullTaskResultCreate(data)
+		{
+			return this.updateTaskResultData(data);
+		}
+
+		onPullTaskResultDelete(data)
+		{
+			return this.updateTaskResultData(data);
+		}
+
+		updateTaskResultData(data)
+		{
+			return new Promise((resolve) => {
+				const taskId = String(data.taskId);
+				if (this.taskList.has(taskId))
+				{
+					this.taskList.get(taskId).updateData({
+						taskRequireResult: data.taskRequireResult,
+						taskHasResult: data.taskHasResult,
+					});
+				}
 				resolve();
 			});
 		}
@@ -2440,14 +3571,20 @@ include('InAppNotifier');
 			task.files = attachedFiles.disk;
 
 			this.newTaskList.set(task.guid);
-			this.addItem(task, 'new');
+			this.addItem(task, SectionHandler.sections.new);
 
 			const oldTaskId = task.id;
-			task.save().then(() => {
-				this.newTaskList.set(task.id);
-				this.attachFiles(attachedFiles, task.id);
-				this.updateItem(oldTaskId, {id: task.id});
-			}, e => console.error(e));
+			task.save().then(
+				() => {
+					this.newTaskList.set(task.id);
+					this.attachFiles(attachedFiles, task.id);
+					this.updateItem(oldTaskId, {id: task.id});
+				},
+				() => {
+					this.newTaskList.delete(task.guid);
+					this.removeItem(oldTaskId);
+				}
+			);
 		}
 
 		prepareNewItemAttachedFiles(attachedFiles)
@@ -2549,7 +3686,7 @@ include('InAppNotifier');
 			let itemData = task.getTaskInfo(withActions);
 
 			itemData.backgroundColor = Task.backgroundColors.default;
-			itemData.sectionCode = 'default';
+			itemData.sectionCode = SectionHandler.sections.default;
 			itemData.type = 'task';
 			itemData.sortValues = {
 				deadline: task.deadline || 9999999999999,
@@ -2560,7 +3697,7 @@ include('InAppNotifier');
 			if (task.isPinned)
 			{
 				itemData.backgroundColor = Task.backgroundColors.pinned;
-				itemData.sectionCode = 'pinned';
+				itemData.sectionCode = SectionHandler.sections.pinned;
 			}
 
 			if (withActions)
@@ -2605,7 +3742,7 @@ include('InAppNotifier');
 								id: action.identifier,
 								title: action.title,
 								iconUrl: Task.popupImageUrls[action.identifier],
-								sectionCode: 'default',
+								sectionCode: SectionHandler.sections.default,
 							});
 						}
 					});
@@ -2631,7 +3768,7 @@ include('InAppNotifier');
 			return itemData;
 		}
 
-		addItem(task, sectionId = 'default')
+		addItem(task, sectionId = SectionHandler.sections.default)
 		{
 			BX.onViewLoaded(() => {
 				const taskId = task.id;
@@ -2640,11 +3777,11 @@ include('InAppNotifier');
 					return;
 				}
 
-				this.removeItem('-none-');
+				this.welcomeScreen.hide();
 
 				const taskData = this.getItemDataFromTask(task);
 				taskData.sectionCode = sectionId;
-				if (sectionId === 'new')
+				if (sectionId === SectionHandler.sections.new)
 				{
 					if (apiVersion >= 38)
 					{
@@ -2659,7 +3796,7 @@ include('InAppNotifier');
 			});
 		}
 
-		updateItem(id, fields)
+		updateItem(id, fields = {})
 		{
 			BX.onViewLoaded(() => {
 				const taskId = id.toString();
@@ -2687,7 +3824,9 @@ include('InAppNotifier');
 
 				const taskData = this.getItemDataFromTask(task);
 				taskData.sectionCode = (
-					this.newTaskList.has(task.guid) || this.newTaskList.has(task.id) ? 'new' : taskData.sectionCode
+					this.newTaskList.has(task.guid) || this.newTaskList.has(task.id)
+						? SectionHandler.sections.new
+						: taskData.sectionCode
 				);
 
 				console.log(`updateItem #${id}`, taskData);
@@ -2702,6 +3841,11 @@ include('InAppNotifier');
 				this.taskList.delete(id);
 				this.list.removeItem({id});
 				this.cache.removeTask(id);
+
+				if (this.taskList.size === 0)
+				{
+					this.welcomeScreen.show(WelcomeScreen.type.empty);
+				}
 			});
 		}
 
@@ -2712,19 +3856,52 @@ include('InAppNotifier');
 				return;
 			}
 
-			let projectName = '';
+			let project = null;
 			this.taskList.forEach((task) => {
 				if (Number(task.group.id) === Number(data.id))
 				{
-					projectName = task.group.name;
+					project = task.group;
 				}
 			});
-			BX.postComponentEvent('taskbackground::task::action', [{
-				groupId: data.id,
-				groupName: projectName,
-				groupImageUrl: data.imageUrl,
-				ownerId: this.owner.id,
-			}]);
+
+			if (apiVersion >= 41)
+			{
+				const item = {
+					id: data.id,
+					title: (project ? project.name : ''),
+					params: {
+						avatar: (project ? project.image : data.imageUrl),
+						initiatedByType: (project && project.additionalData ? project.additionalData.initiatedByType : null),
+						features: (project && project.additionalData ? project.additionalData.features : []),
+						membersCount: project.membersCount,
+						role: (project && project.additionalData ? project.additionalData.role : null),
+						opened: project.opened || false,
+					},
+				};
+
+				const projectData = {
+					siteId: BX.componentParameters.get('SITE_ID', env.siteId),
+					siteDir: BX.componentParameters.get('SITE_DIR', env.siteDir),
+					projectId: data.id,
+					action: 'view',
+					item: item,
+					newsPathTemplate: this.projectNewsPathTemplate,
+					calendarWebPathTemplate: this.projectCalendarWebPathTemplate,
+					currentUserId: parseInt(this.owner.id),
+				};
+
+				BX.postComponentEvent('projectbackground::project::action', [ projectData ], 'background');
+			}
+			else
+			{
+				BX.postComponentEvent('taskbackground::task::action', [{
+					groupId: data.id,
+					groupName: project.name,
+					groupImageUrl: data.imageUrl,
+					ownerId: this.owner.id,
+					getProjectData: true,
+				}]);
+			}
 		}
 
 		onItemSelected(item)
@@ -2745,9 +3922,10 @@ include('InAppNotifier');
 			else if (this.taskList.has(taskId))
 			{
 				const task = this.taskList.get(taskId);
+				this.filter.pseudoUpdateCounters(-task.getCounterMyNewCommentsCount(), task);
 
-				this.filter.pseudoUpdateCounters(-task.newCommentsCount, task);
-				this.updateItem(taskId, {newCommentsCount: 0});
+				task.pseudoRead();
+				this.updateItem(taskId);
 
 				task.open();
 			}
@@ -2767,11 +3945,21 @@ include('InAppNotifier');
 			}
 			else
 			{
-				this.updateItem(task.id, {
-					status: Task.statusList.completed,
-					activityDate: Date.now(),
-				});
-				task.complete();
+				if (!task.isRequireResult || task.isHasResult)
+				{
+					this.updateItem(task.id, {
+						status: Task.statusList.completed,
+						activityDate: Date.now(),
+					});
+					task.complete();
+				}
+				else
+				{
+					const oldStatus = task.status;
+					task.complete().then(() => {}, () => task.status = oldStatus);
+					task.status = oldStatus;
+					this.updateItem(task.id);
+				}
 			}
 		}
 
@@ -2866,15 +4054,23 @@ include('InAppNotifier');
 		onMoreAction(task)
 		{
 			const taskItemData = this.getItemDataFromTask(task);
-			const actionsPopup = dialogs.createPopupMenu();
-			actionsPopup.setData(taskItemData.params.popupActions, [{id: 'default'}], (eventName, item) => {
-				if (eventName === 'onItemSelected')
-				{
-					this.onActionsPopupItemSelected(item, task);
+
+			if (!this.popupMenu)
+			{
+				this.popupMenu = dialogs.createPopupMenu();
+			}
+			this.popupMenu.setData(
+				taskItemData.params.popupActions,
+				[{id: SectionHandler.sections.default}],
+				(eventName, item) => {
+					if (eventName === 'onItemSelected')
+					{
+						this.onActionsPopupItemSelected(item, task);
+					}
 				}
-			});
-			actionsPopup.setPosition('center');
-			actionsPopup.show();
+			);
+			this.popupMenu.setPosition('center');
+			this.popupMenu.show();
 		}
 
 		onActionsPopupItemSelected(item, task)
@@ -3000,11 +4196,8 @@ include('InAppNotifier');
 			dialogs.showDatePicker(pickerParams, (eventName, ts) => {
 				if (ts > 0 && ts !== task.deadline)
 				{
-					const oldCounterValue = task.getMessageInfo().count;
 					this.updateItem(task.id, {deadline: ts, activityDate: Date.now()});
-					const newCounterValue = task.getMessageInfo().count;
-					this.filter.pseudoUpdateCounters(newCounterValue - oldCounterValue, task);
-					task.saveDeadline();
+					void task.saveDeadline();
 				}
 			});
 		}
@@ -3123,8 +4316,11 @@ include('InAppNotifier');
 						task.responsible = TaskList.getItemDataFromUser(user);
 						if (!task.isMember(this.currentUser.id))
 						{
-							this.removeItem(task.id);
-							this.filter.pseudoUpdateCounters(-task.getMessageInfo().count, task);
+							if (!this.groupId)
+							{
+								this.removeItem(task.id);
+							}
+							this.filter.pseudoUpdateCounters(-task.getCounterMyCount(), task);
 						}
 						else
 						{
@@ -3217,7 +4413,7 @@ include('InAppNotifier');
 		onMuteAction(task)
 		{
 			this.updateItem(task.id, {isMuted: true});
-			this.filter.pseudoUpdateCounters(-task.getMessageInfo().count);
+			this.filter.pseudoUpdateCounters(-task.getCounterMyCount());
 			task.mute();
 		}
 
@@ -3227,7 +4423,7 @@ include('InAppNotifier');
 		onUnmuteAction(task)
 		{
 			this.updateItem(task.id, {isMuted: false});
-			this.filter.pseudoUpdateCounters(task.getMessageInfo().count);
+			this.filter.pseudoUpdateCounters(task.getCounterMyCount());
 			task.unmute();
 		}
 
@@ -3240,8 +4436,11 @@ include('InAppNotifier');
 
 			if (!task.isMember(this.currentUser.id))
 			{
-				this.removeItem(task.id);
-				this.filter.pseudoUpdateCounters(-task.getMessageInfo().count, task);
+				if (!this.groupId)
+				{
+					this.removeItem(task.id);
+				}
+				this.filter.pseudoUpdateCounters(-task.getCounterMyCount(), task);
 			}
 
 			task.stopWatch();
@@ -3258,11 +4457,12 @@ include('InAppNotifier');
 					if (item.code === 'YES')
 					{
 						this.removeItem(task.id);
-						this.filter.pseudoUpdateCounters(-task.getMessageInfo().count, task);
+						this.filter.pseudoUpdateCounters(-task.getCounterMyCount(), task);
 
-						(new Request())
-							.call('delete', {taskId: task.id})
-							.then(response => {}, response => console.log(response));
+						(new RequestExecutor('tasks.task.delete', {taskId: task.id}))
+							.call()
+							.then(() => {}, response => console.log(response))
+						;
 					}
 				},
 				items: [
@@ -3295,331 +4495,9 @@ include('InAppNotifier');
 		 */
 		onReadAction(task)
 		{
-			this.filter.pseudoUpdateCounters(-task.newCommentsCount, task);
-			this.updateItem(task.id, {newCommentsCount: 0});
-			task.read();
-		}
-
-		// popupMenu
-		initPopupMenu()
-		{
-			const menuItems = this.preparePopupMenuItems();
-			const menuSections = [{id: 'default'}];
-
-			if (!this.popupMenu)
-			{
-				this.popupMenu = dialogs.createPopupMenu();
-			}
-			this.popupMenu.setData(menuItems, menuSections, (eventName, item) => {
-				if (eventName === 'onItemSelected')
-				{
-					this.onPopupMenuItemSelected(item);
-				}
-			});
-			this.popupMenu.show();
-		}
-
-		preparePopupMenuItems()
-		{
-			const urlPrefix = `${pathToComponent}images/mobile-tasks-list-popup-`;
-			const roleItems = [
-				{
-					id: Filter.roleType.all,
-					title: BX.message('TASKS_POPUP_MENU_ROLE_ALL'),
-					iconUrl: `${urlPrefix}role-all.png`,
-					iconName: 'finished_tasks',
-					sectionCode: 'default',
-					checked: this.filter.getRole() === Filter.roleType.all,
-					counterValue: this.filter.getCounterValue(),
-					counterStyle: {
-						backgroundColor: '#FF5752',
-					},
-				},
-				{
-					id: Filter.roleType.responsible,
-					title: BX.message('TASKS_POPUP_MENU_ROLE_RESPONSIBLE'),
-					iconUrl: `${urlPrefix}role-responsible.png`,
-					sectionCode: 'default',
-					checked: this.filter.getRole() === Filter.roleType.responsible,
-					counterValue: this.filter.getCounterValue(Filter.roleType.responsible),
-					counterStyle: {
-						backgroundColor: '#FF5752',
-					},
-				},
-				{
-					id: Filter.roleType.accomplice,
-					title: BX.message('TASKS_POPUP_MENU_ROLE_ACCOMPLICE'),
-					iconUrl: `${urlPrefix}role-accomplice.png`,
-					sectionCode: 'default',
-					checked: this.filter.getRole() === Filter.roleType.accomplice,
-					counterValue: this.filter.getCounterValue(Filter.roleType.accomplice),
-					counterStyle: {
-						backgroundColor: '#FF5752',
-					},
-				},
-				{
-					id: Filter.roleType.originator,
-					title: BX.message('TASKS_POPUP_MENU_ROLE_ORIGINATOR'),
-					iconUrl: `${urlPrefix}role-originator.png`,
-					sectionCode: 'default',
-					checked: this.filter.getRole() === Filter.roleType.originator,
-					counterValue: this.filter.getCounterValue(Filter.roleType.originator),
-					counterStyle: {
-						backgroundColor: '#FF5752',
-					},
-				},
-				{
-					id: Filter.roleType.auditor,
-					title: BX.message('TASKS_POPUP_MENU_ROLE_AUDITOR'),
-					iconUrl: `${urlPrefix}role-auditor.png`,
-					sectionCode: 'default',
-					checked: this.filter.getRole() === Filter.roleType.auditor,
-					counterValue: this.filter.getCounterValue(Filter.roleType.auditor),
-					counterStyle: {
-						backgroundColor: '#FF5752',
-					},
-				},
-			];
-			const counterItems = [
-				{
-					id: Filter.counterType.newComments,
-					title: BX.message('TASKS_POPUP_MENU_COUNTER_NEW_COMMENTS'),
-					sectionCode: 'default',
-					checked: this.filter.getCounter() === Filter.counterType.newComments,
-					counterValue: this.filter.getCounterValue(this.filter.getRole(), Filter.counterType.newComments),
-					counterStyle: {
-						backgroundColor: '#9DCF00',
-					},
-				},
-				{
-					id: Filter.counterType.expired,
-					title: BX.message('TASKS_POPUP_MENU_COUNTER_EXPIRED'),
-					sectionCode: 'default',
-					checked: this.filter.getCounter() === Filter.counterType.expired,
-					counterValue: this.filter.getCounterValue(this.filter.getRole(), Filter.counterType.expired),
-					counterStyle: {
-						backgroundColor: '#FF5752',
-					},
-				},
-				{
-					id: Filter.counterType.supposedlyCompleted,
-					title: BX.message('TASKS_POPUP_MENU_COUNTER_SUPPOSEDLY_COMPLETED'),
-					sectionCode: 'default',
-					checked: this.filter.getCounter() === Filter.counterType.supposedlyCompleted,
-				},
-			];
-			const actionItems = [
-				{
-					id: 'toggleOrder',
-					title: BX.message(
-						this.order.isDeadline() ? 'TASKS_POPUP_MENU_ORDER_ACTIVITY' : 'TASKS_POPUP_MENU_ORDER_DEADLINE'
-					),
-					iconName: 'term',
-					sectionCode: 'default',
-					showTopSeparator: true,
-				},
-				{
-					id: 'toggleCompletedTasks',
-					title: BX.message(`TASKS_POPUP_MENU_${(!this.filter.showCompleted ? 'SHOW' : 'HIDE')}_CLOSED_TASKS`),
-					iconUrl: `${urlPrefix}${(!this.filter.showCompleted ? 'show' : 'hide')}-completed.png`,
-					sectionCode: 'default',
-					disable: this.order.isDeadline(),
-				},
-				{
-					id: 'readAll',
-					title: BX.message('TASKS_POPUP_MENU_READ_ALL'),
-					iconName: 'read',
-					sectionCode: 'default',
-				},
-			];
-			const menuItems = [];
-
-			roleItems.forEach((roleItem) => {
-				menuItems.push(roleItem);
-				if (roleItem.id === this.filter.getRole())
-				{
-					counterItems.forEach(counterItem => menuItems.push(counterItem));
-				}
-			});
-			actionItems.forEach(actionItem => menuItems.push(actionItem));
-
-			if (
-				apiVersion >= 38
-				&& this.efficiency !== false
-				&& this.efficiency >= 0
-			)
-			{
-				menuItems.push({
-					id: 'efficiency',
-					title: BX.message('TASKS_POPUP_MENU_EFFICIENCY'),
-					iconUrl: `${urlPrefix}efficiency.png`,
-					sectionCode: 'default',
-					counterValue: `${this.efficiency}%`,
-					counterStyle: {
-						backgroundColor: '#9DCF00',
-					},
-				});
-			}
-
-			return menuItems;
-		}
-
-		onPopupMenuItemSelected(item)
-		{
-			switch (item.id)
-			{
-				case Filter.roleType.all:
-				case Filter.roleType.responsible:
-				case Filter.roleType.accomplice:
-				case Filter.roleType.originator:
-				case Filter.roleType.auditor:
-					this.onRoleClick(item.id);
-					break;
-
-				case Filter.counterType.expired:
-				case Filter.counterType.newComments:
-				case Filter.counterType.supposedlyCompleted:
-					this.onCounterClick(item.id);
-					break;
-
-				case 'toggleOrder':
-					this.onDeadlineSwitchClick();
-					break;
-
-				case 'readAll':
-					this.onReadAllClick();
-					break;
-
-				case 'toggleCompletedTasks':
-					BX.postComponentEvent('task.list.onToggleCompleted', []);
-					break;
-
-				case 'efficiency':
-					this.openEfficiencyPage();
-					break;
-
-				default:
-					this.reload(0, true);
-					break;
-			}
-		}
-
-		openEfficiencyPage()
-		{
-			BX.postComponentEvent('taskbackground::efficiency::open', [{
-				userId: this.owner.id,
-				groupId: this.groupId,
-			}]);
-		}
-
-		onReadAllClick()
-		{
-			const items = [];
-			let newCommentsRead = 0;
-
-			this.taskList.forEach((task) => {
-				newCommentsRead += task.newCommentsCount;
-				task.newCommentsCount = 0;
-				items.push(this.getItemDataFromTask(task));
-			});
-			this.list.setItems(items, null, true);
-			this.filter.pseudoUpdateCounters(-newCommentsRead);
-
-			(new Request())
-				.call('comment.readAll', {
-					groupId: this.groupId || null,
-					userId: this.owner.id || this.currentUser.id,
-					role: this.filter.getRole(),
-				})
-				.then((response) => {
-					console.log(response);
-					if (response.result === true)
-					{
-						Notify.showIndicatorSuccess({
-							text: BX.message('TASKS_LIST_READ_ALL_NOTIFICATION'),
-							hideAfter: 1500,
-						});
-					}
-				});
-		}
-
-		onToggleCompleted()
-		{
-			this.filter.showCompleted = !this.filter.showCompleted;
-			this.reload();
-		}
-
-		onDeadlineSwitchClick()
-		{
-			const {siteId, siteDir, languageId} = env;
-			const currentRole = this.filter.getRole();
-			const currentCounter = this.filter.getCounter();
-
-			if (currentRole !== Filter.roleType.all || currentCounter !== Filter.counterType.none)
-			{
-				this.order.changeOrder();
-				this.updateTitle();
-
-				if (this.order.isDeadline())
-				{
-					this.filter.showCompleted = false;
-				}
-
-				this.setTopButtons();
-				this.reload(0, true);
-
-				return;
-			}
-
-			if (this.order.isDeadline())
-			{
-				this.list.back();
-				return;
-			}
-
-			const newOrder = Object.keys(Order.fields).filter(key => key !== this.order.order)[0];
-			const params = {
-				COMPONENT_CODE: 'tasks.list',
-				ROLE: currentRole,
-				ORDER: newOrder,
-				DATA: BX.componentParameters.get('DATA', {}),
-				SHOW_COMPLETED: false,
-				ANIMATE_CACHE_TASKS_LOADING: false,
-				SITE_ID: siteId,
-				LANGUAGE_ID: languageId,
-				SITE_DIR: siteDir,
-			};
-
-			if (this.groupId > 0)
-			{
-				params.GROUP_ID = this.groupId;
-			}
-			else
-			{
-				params.USER_ID = this.owner.id;
-			}
-
-			PageManager.openComponent('JSStackComponent', {
-				canOpenInDefault: false,
-				scriptPath: availableComponents['tasks.list'].publicUrl,
-				componentCode: 'tasks.list',
-				params,
-				// title: this.getFutureTitle(currentRole, newOrder),
-				rootWidget: {
-					name: 'tasks.list',
-					settings: {
-						objectName: 'list',
-						useSearch: true,
-						useLargeTitleMode: true,
-					},
-				},
-			});
-		}
-
-		getFutureTitle(role, order)
-		{
-			const subHeader = (order === 'deadline' ? BX.message('TASKS_LIST_SUB_HEADER_DEADLINES') : '');
-			return TaskList.titles[role].replace('#DEADLINES#', subHeader);
+			this.filter.pseudoUpdateCounters(-task.getCounterMyNewCommentsCount(), task);
+			void task.read();
+			this.updateItem(task.id);
 		}
 
 		updateTitle(useProgress = false)
@@ -3648,606 +4526,47 @@ include('InAppNotifier');
 			}
 
 			this.list.setTitle(titleParams);
+
+			BX.postComponentEvent('tasks.list:updateTitle', [{
+				useProgress,
+				guid: this.tabsGuid,
+			}]);
 		}
 
-		onRoleClick(newRole)
+		pseudoReadTasks(taskIds, pseudoUpdateCounters = false)
 		{
-			const {siteId, siteDir, languageId} = env;
-			const currentRole = this.filter.getRole();
-			const currentCounter = this.filter.getCounter();
-
-			if (
-				currentRole === newRole
-				|| (newRole === Filter.roleType.all && this.order.isActivityDate())
-			)
-			{
-				this.list.back();
-				return;
-			}
-
-			if (
-				currentRole !== Filter.roleType.all
-				|| currentCounter !== Filter.counterType.none
-				|| (
-					currentRole === Filter.roleType.all
-					&& currentCounter === Filter.counterType.none
-					&& this.order.isDeadline()
-				)
-			)
-			{
-				this.filter.setRole(newRole);
-				this.filter.setCounter(Filter.counterType.none);
-
-				this.updateTitle();
-				this.setTopButtons();
-				this.reload(0, true);
-
-				return;
-			}
-
-			const params = {
-				COMPONENT_CODE: 'tasks.list',
-				ROLE: newRole,
-				ORDER: this.order.order,
-				DATA: BX.componentParameters.get('DATA', {}),
-				SHOW_COMPLETED: this.filter.showCompleted,
-				ANIMATE_CACHE_TASKS_LOADING: false,
-				SITE_ID: siteId,
-				LANGUAGE_ID: languageId,
-				SITE_DIR: siteDir,
-			};
-
-			if (this.groupId > 0)
-			{
-				params.GROUP_ID = this.groupId;
-			}
-			else
-			{
-				params.USER_ID = this.owner.id;
-			}
-
-			PageManager.openComponent('JSStackComponent', {
-				canOpenInDefault: false,
-				scriptPath: availableComponents['tasks.list'].publicUrl,
-				componentCode: 'tasks.list',
-				params,
-				// title: this.getFutureTitle(newRole, this.order.order),
-				rootWidget: {
-					name: 'tasks.list',
-					settings: {
-						objectName: 'list',
-						useSearch: true,
-						useLargeTitleMode: true,
-					},
-				},
-			});
-		}
-
-		onCounterClick(newCounter)
-		{
-			const {siteId, siteDir, languageId} = env;
-			const currentRole = this.filter.getRole();
-			const currentCounter = this.filter.getCounter();
-
-			if (currentCounter === newCounter)
-			{
-				if (currentRole === Filter.roleType.all && this.order.isActivityDate())
-				{
-					this.list.back();
-				}
-				else
-				{
-					this.filter.setCounter(Filter.counterType.none);
-					this.reload(0, true);
-				}
-				return;
-			}
-
-			if (
-				currentRole !== Filter.roleType.all
-				|| currentCounter !== Filter.counterType.none
-				|| (
-					currentRole === Filter.roleType.all
-					&& currentCounter === Filter.counterType.none
-					&& this.order.isDeadline()
-				)
-			)
-			{
-				this.filter.setCounter(newCounter);
-
-				this.updateTitle();
-				this.setTopButtons();
-				this.reload(0, true);
-
-				return;
-			}
-
-			const params = {
-				COMPONENT_CODE: 'tasks.list',
-				ROLE: currentRole,
-				COUNTER: newCounter,
-				ORDER: this.order.order,
-				DATA: BX.componentParameters.get('DATA', {}),
-				SHOW_COMPLETED: this.filter.showCompleted,
-				ANIMATE_CACHE_TASKS_LOADING: false,
-				SITE_ID: siteId,
-				LANGUAGE_ID: languageId,
-				SITE_DIR: siteDir,
-			};
-
-			if (this.groupId > 0)
-			{
-				params.GROUP_ID = this.groupId;
-			}
-			else
-			{
-				params.USER_ID = this.owner.id;
-			}
-
-			PageManager.openComponent('JSStackComponent', {
-				canOpenInDefault: false,
-				scriptPath: availableComponents['tasks.list'].publicUrl,
-				componentCode: 'tasks.list',
-				params,
-				// title: this.getFutureTitle(currentRole, this.order.order),
-				rootWidget: {
-					name: 'tasks.list',
-					settings: {
-						objectName: 'list',
-						useSearch: true,
-						useLargeTitleMode: true,
-					},
-				},
-			});
-		}
-	}
-
-	class Search
-	{
-		static get cacheKeys()
-		{
-			return {
-				tasks: 'tasks',
-				lastActiveProjects: 'lastActiveProjects',
-				lastSearchedProjects: 'lastSearchedProjects',
-			};
-		}
-
-		/**
-		 * @param {TaskList} list
-		 */
-		constructor(list)
-		{
-			this.list = list;
-
-			this.minSize = parseInt(BX.componentParameters.get('MIN_SEARCH_SIZE', 3), 10);
-			this.maxTaskCount = 50;
-			this.maxProjectCount = 15;
-			this.text = '';
-
-			this.taskList = new Map();
-			this.projectList = new Map();
-			this.commonProjectList = new Map();
-
-			this.debounceFunction = this.getDebounceFunction();
-
-			this.cache = Cache.getInstance(`tasks.task.search_${this.list.owner.id}`);
-			this.fillCacheWithLastActiveProjects();
-		}
-
-		fillCacheWithLastActiveProjects()
-		{
-			(new Request('mobile.tasks.'))
-				.call('group.lastActive.get')
-				.then((response) => {
-					const cacheKey = Search.cacheKeys.lastActiveProjects;
-					this.cache.update(cacheKey, response.result.slice(0, this.maxProjectCount + 1));
-				})
-			;
-		}
-
-		getDebounceFunction()
-		{
-			return Util.debounce((text) => {
-				console.log('Search:fnUserTypeText');
-
-				const searchResultItems = [].concat(
-					this.renderProjectItems(),
-					this.renderTaskItems(),
-					this.renderLoadingItems()
-				);
-				const sections = [
-					{id: 'project'},
-					{id: 'default', title: BX.message('TASKS_LIST_SEARCH_SECTION_SEARCH_RESULTS')},
-				];
-				this.setSearchResultItems(searchResultItems, sections);
-
-				const batchOperations = {
-					projects: ['mobile.tasks.group.search', {
-						searchText: text,
-					}],
-					tasks: ['tasks.task.list', {
-						select: TaskList.selectFields,
-						filter: this.list.filter.getForSearch(text),
-						order: this.list.order.getForSearch(),
-						params: {
-							RETURN_ACCESS: 'Y',
-							RETURN_USER_INFO: 'Y',
-							RETURN_GROUP_INFO: 'Y',
-							SEND_PULL: 'Y',
-						},
-					}],
-				};
-				BX.rest.callBatch(batchOperations, response => this.onSearchSuccess(response));
-			}, 100, this);
-		}
-
-		onSearchSuccess(response)
-		{
-			const projects = response.projects.answer.result;
-			const {tasks} = response.tasks.answer.result;
-
-			this.projectList.clear();
-			this.taskList.clear();
-
-			this.fillProjectList(projects);
-			this.fillTaskList(tasks);
-			this.renderList();
-		}
-
-		fillProjectList(rows)
-		{
-			rows.forEach((row) => {
-				this.projectList.set(row.id, row);
-				this.commonProjectList.set(row.id, row);
-			});
-		}
-
-		fillTaskList(rows)
-		{
-			rows.forEach((row) => {
-				const rowId = row.id.toString();
-				let task;
-
-				if (this.list.taskList.has(rowId))
-				{
-					task = this.list.taskList.get(rowId);
-				}
-				else
-				{
-					task = new Task(this.list.currentUser);
-					task.setData(row);
-				}
-				this.taskList.set(task.id, task);
-			});
-		}
-
-		renderList(fromCache = false)
-		{
-			console.log('Search:renderList', {tasks: this.taskList.size, projects: this.projectList.size});
-
-			let searchResultItems = this.renderProjectItems();
-			let nextItems = this.renderEmptyResultItems();
-
-			if (this.taskList.size > 0)
-			{
-				nextItems = this.renderTaskItems();
-			}
-			else if (fromCache)
-			{
-				nextItems = this.renderEmptyCacheItems();
-			}
-			searchResultItems = searchResultItems.concat(nextItems);
-
-			const title = (fromCache ? 'TASKS_LIST_SEARCH_SECTION_LAST' : 'TASKS_LIST_SEARCH_SECTION_SEARCH_RESULTS');
-			const sections = [
-				{id: 'project'},
-				{id: 'default', title: BX.message(title), backgroundColor: '#ffffff'},
-			];
-			console.log({title: 'search', searchResultItems, sections});
-			this.setSearchResultItems(searchResultItems, sections);
-		}
-
-		renderProjectItems()
-		{
-			const projectItems = [];
-
-			this.projectList.forEach((project) => {
-				projectItems.push({
-					id: project.id,
-					title: project.name,
-					imageUrl: project.image,
-					type: 'project',
-				});
-			});
-
-			if (projectItems.length < 1)
-			{
-				return [];
-			}
-			return [{type: 'carousel', sectionCode: 'project', childItems: projectItems}];
-		}
-
-		renderTaskItems()
-		{
-			const taskItems = [];
+			const items = [];
+			const tasks = {};
+			let newCommentsRead = 0;
 
 			this.taskList.forEach((task) => {
-				const item = this.list.getItemDataFromTask(task, false);
-				item.sectionCode = 'default';
-				taskItems.push(item);
-			});
-
-			return taskItems;
-		}
-
-		renderLoadingItems()
-		{
-			return [{
-				id: 0,
-				type: 'loading',
-				title: BX.message('TASKS_LIST_BUTTON_NEXT_PROCESS'),
-				sectionCode: 'default',
-				unselectable: true,
-			}];
-		}
-
-		renderEmptyCacheItems()
-		{
-			return [{
-				id: 0,
-				type: 'button',
-				title: BX.message('TASKS_LIST_SEARCH_HINT'),
-				sectionCode: 'default',
-				unselectable: true,
-			}];
-		}
-
-		renderEmptyResultItems()
-		{
-			console.log('Empty');
-			return [{
-				id: 0,
-				type: 'button',
-				title: BX.message('TASKS_LIST_SEARCH_EMPTY_RESULT'),
-				sectionCode: 'default',
-				unselectable: true,
-			}];
-		}
-
-		setSearchResultItems(items, sections)
-		{
-			this.list.list.setSearchResultItems(items, sections);
-		}
-
-		onUserTypeText(event)
-		{
-			console.log('Search:onUserTypeText');
-
-			BX.onViewLoaded(() => {
-				const text = event.text.trim();
-				if (this.text === text)
+				const taskId = String(task.id);
+				if (taskIds.includes(taskId))
 				{
-					return;
-				}
-				this.text = text;
-				if (this.text.length < this.minSize)
-				{
-					this.projectList.clear();
-					this.taskList.clear();
+					newCommentsRead += task.getCounterMyNewCommentsCount();
+					task.pseudoRead();
 
-					if (this.text === '')
-					{
-						this.loadProjectsFromCache();
-						this.loadTasksFromCache();
-					}
-					else
-					{
-						this.fillProjectList(this.getLocalSearchedProjects(this.text));
-						this.fillTaskList(this.getLocalSearchedTasks(this.text));
-					}
-					this.renderList(this.text === '');
-					return;
-				}
-				this.debounceFunction(this.text);
-			});
-		}
-
-		getLocalSearchedProjects(text)
-		{
-			const localSearchedProjects = [];
-			const added = {};
-
-			this.commonProjectList.forEach((project) => {
-				added[project.id] = false;
-				const searchString = `${project.name}`.toLowerCase();
-				searchString.split(' ').forEach((word) => {
-					if (!added[project.id] && word.search(text.toLowerCase()) === 0)
-					{
-						localSearchedProjects.push(project);
-						added[project.id] = true;
-					}
-				});
-			});
-
-			return localSearchedProjects;
-		}
-
-		getLocalSearchedTasks(text)
-		{
-			const localSearchedTasks = [];
-			const added = {};
-
-			this.list.taskList.forEach((task) => {
-				added[task.id] = false;
-				const searchString = `${task.title} ${task.creator.name} ${task.responsible.name}`.toLowerCase();
-				searchString.split(' ').forEach((word) => {
-					if (!added[task.id] && word.search(text.toLowerCase()) === 0)
-					{
-						localSearchedTasks.push(task);
-						added[task.id] = true;
-					}
-				});
-			});
-
-			return localSearchedTasks;
-		}
-
-		onSearchShow()
-		{
-			this.loadProjectsFromCache();
-			this.loadTasksFromCache();
-
-			this.renderList(true);
-		}
-
-		loadProjectsFromCache()
-		{
-			console.log('Search:loadProjectsFromCache');
-
-			const cache = this.cache.get();
-			const lastSearchedProjects = cache[Search.cacheKeys.lastSearchedProjects] || [];
-			let lastActiveProjects = cache[Search.cacheKeys.lastActiveProjects] || [];
-
-			const ids = lastSearchedProjects.map(project => Number(project.id));
-			lastActiveProjects = lastActiveProjects.filter(project => !ids.includes(Number(project.id)));
-
-			let projects = lastSearchedProjects;
-			if (projects.length < this.maxProjectCount)
-			{
-				const count = this.maxProjectCount - projects.length + 1;
-				projects = projects.concat(lastActiveProjects.slice(0, count));
-			}
-			if (projects.length)
-			{
-				this.fillProjectList(projects);
-				return true;
-			}
-
-			return false;
-		}
-
-		loadTasksFromCache()
-		{
-			console.log('Search:loadTasksFromCache');
-
-			const tasks = this.cache.get()[Search.cacheKeys.tasks] || [];
-			if (tasks.length)
-			{
-				this.fillTaskList(tasks);
-				return true;
-			}
-
-			return false;
-		}
-
-		onSearchHide()
-		{
-			this.taskList.clear();
-			this.projectList.clear();
-		}
-
-		onSearchItemSelected(event)
-		{
-			if (event.type === 'task')
-			{
-				this.onTaskSelected(event.id.toString());
-			}
-			else if (event.type === 'project')
-			{
-				this.onProjectSelected(event);
-			}
-		}
-
-		onTaskSelected(taskId)
-		{
-			if (!this.taskList.has(taskId))
-			{
-				return;
-			}
-
-			(new Request()).call('list', {
-				select: TaskList.selectFields,
-				filter: {ID: taskId},
-				params: {
-					RETURN_ACCESS: 'Y',
-					RETURN_USER_INFO: 'Y',
-					RETURN_GROUP_INFO: 'Y',
-					SEND_PULL: 'Y',
-				},
-			}).then((response) => {
-				const rows = response.result.tasks || [];
-				const row = rows[0];
-				if (row)
-				{
-					const cacheKey = Search.cacheKeys.tasks;
-					let cachedTasks = this.cache.get()[cacheKey] || [];
-					cachedTasks = cachedTasks.filter(item => Number(item.id) !== Number(taskId));
-					this.cache.update(cacheKey, [row].concat(cachedTasks.slice(0, this.maxTaskCount)));
-
-					setTimeout(() => {
-						const task = new Task(this.list.currentUser);
-						task.setData(row);
-
-						const newTaskList = new Map([[taskId, task]]);
-						this.taskList.forEach((value, key) => newTaskList.set(key, value));
-						this.taskList = newTaskList;
-
-						if (this.text.length < this.minSize)
-						{
-							this.renderList(this.text === '');
-						}
-					}, 500);
+					const taskItem = this.getItemDataFromTask(task);
+					items.push({
+						filter: {id: taskId},
+						element: taskItem,
+					});
+					tasks[taskId] = {task, taskData: taskItem};
 				}
 			});
+			this.list.updateItems(items);
+			this.cache.setTaskData(tasks);
 
-			this.taskList.get(taskId).open();
-		}
-
-		onProjectSelected(data)
-		{
-			const project = {
-				id: data.id,
-				name: data.title,
-				image: data.imageUrl,
-			};
-			const cacheKey = Search.cacheKeys.lastSearchedProjects;
-			let projects = this.cache.get()[cacheKey] || [];
-			projects = projects.filter(item => Number(item.id) !== Number(project.id));
-			this.cache.update(cacheKey, [project].concat(projects.slice(0, this.maxProjectCount)));
-
-			BX.postComponentEvent('taskbackground::task::action', [{
-				groupId: data.id,
-				groupName: data.title,
-				groupImageUrl: data.imageUrl,
-				ownerId: this.list.owner.id,
-			}]);
-
-			setTimeout(() => {
-				const newProjectList = new Map([[project.id, project]]);
-				this.projectList.forEach((value, key) => newProjectList.set(key, value));
-				this.projectList = newProjectList;
-
-				const newCommonProjectList = new Map([[project.id, project]]);
-				this.commonProjectList.forEach((value, key) => newCommonProjectList.set(key, value));
-				this.commonProjectList = newCommonProjectList;
-
-				if (this.text.length < this.minSize)
-				{
-					this.renderList(this.text === '');
-				}
-			}, 500);
-		}
-
-		removeTask(taskId)
-		{
-			if (this.taskList.has(taskId))
+			if (pseudoUpdateCounters)
 			{
-				this.taskList.delete(taskId);
-				this.list.list.removeItem(taskId);
+				this.filter.pseudoUpdateCounters(-newCommentsRead);
 			}
 		}
 	}
 
-	return new TaskList(list, parseInt(BX.componentParameters.get('USER_ID', 0), 10));
+	return new TaskList(list, parseInt(BX.componentParameters.get('USER_ID', 0), 10), {
+		projectNewsPathTemplate: BX.componentParameters.get('PROJECT_NEWS_PATH_TEMPLATE', ''),
+		projectCalendarWebPathTemplate: BX.componentParameters.get('PROJECT_CALENDAR_WEB_PATH_TEMPLATE', ''),
+		isTabsMode: BX.componentParameters.get('IS_TABS_MODE', false),
+	});
 })();

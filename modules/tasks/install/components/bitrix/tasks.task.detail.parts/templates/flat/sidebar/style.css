@@ -99,3 +99,26 @@
 .task-detail-sidebar-item-videocall {
 	margin: 15px 0 33px;
 }
+
+.task-detail-sidebar-item-report {
+	padding: 8px 0;
+	display: flex;
+}
+
+.task-detail-sidebar-item-report-content {
+	display: flex;
+	align-items: center;
+	padding: 5px 19px 5px 7px;
+	background: rgba(47,198,246,.1);
+	border-radius: 48px;
+}
+
+.task-detail-sidebar-item-report .ui-icon {
+	--ui-icon-size: 21px;
+	margin-right: 7px;
+}
+
+.task-detail-sidebar-item-report .ui-icon > i {
+	background-color: #2FC6F6;
+	box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.07);
+}

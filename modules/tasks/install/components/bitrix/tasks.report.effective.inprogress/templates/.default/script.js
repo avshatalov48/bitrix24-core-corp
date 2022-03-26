@@ -32,7 +32,13 @@ BX.Tasks.TasksReportEffectiveInProgress.prototype = {
 	{
 		if (isLimit)
 		{
-			BX.UI.InfoHelper.show('limit_tasks_efficiency');
+			BX.UI.InfoHelper.show('limit_tasks_efficiency', {
+				isLimit: true,
+				limitAnalyticsLabels: {
+					module: 'tasks',
+					source: 'inProgress'
+				},
+			});
 		}
 	}
 };

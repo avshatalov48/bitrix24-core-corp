@@ -86,6 +86,7 @@ $MESS["CRM_KANBAN_PLUS_TITLE_DEAL"] = "Quick Deal";
 $MESS["CRM_KANBAN_PLUS_TITLE_DYNAMIC"] = "Quick item";
 $MESS["CRM_KANBAN_PLUS_TITLE_LEAD"] = "Quick Lead";
 $MESS["CRM_KANBAN_PLUS_TITLE_QUOTE"] = "Quick quote";
+$MESS["CRM_KANBAN_PLUS_TITLE_SMART_INVOICE"] = "Quick invoice";
 $MESS["CRM_KANBAN_POPUP_AT_LEAST_ONE_FIELD"] = "The form must have at least one field";
 $MESS["CRM_KANBAN_POPUP_CANCEL"] = "Cancel";
 $MESS["CRM_KANBAN_POPUP_SAVE"] = "Save";

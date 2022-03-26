@@ -14,6 +14,7 @@ if (!CCrmAuthorizationHelper::CheckConfigurationUpdatePermission($currentUserPer
 	return;
 }
 
+use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Crm\Statistics;
 
 $listID = isset($arParams['LIST_ID']) ? $arParams['LIST_ID'] : '';
@@ -43,12 +44,15 @@ $arResult['LIMIT'] = array(
 	'ENTITY' => Statistics\StatisticEntryManager::getSlotLimit()
 );
 $arResult['TOTAL'] = 0;
-$arResult['ITEMS'] = array();
-$typeNames = array(
+$arResult['ITEMS'] = [];
+$typeNames = [
 	Statistics\DealSumStatisticEntry::TYPE_NAME,
 	Statistics\LeadSumStatisticEntry::TYPE_NAME,
-	Statistics\InvoiceSumStatisticEntry::TYPE_NAME
-);
+];
+if (InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
+{
+	$typeNames[] = Statistics\InvoiceSumStatisticEntry::TYPE_NAME;
+}
 foreach($typeNames as $typeName)
 {
 	$arResult['ITEMS'][] = Statistics\StatisticEntryManager::prepareSlotBingingData($typeName);

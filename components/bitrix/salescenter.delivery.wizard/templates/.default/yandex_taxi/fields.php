@@ -1,7 +1,12 @@
 <?
-use Bitrix\Main\Localization\Loc;
+use \Bitrix\Main\Localization\Loc;
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+
+Loc::loadLanguageFile(__FILE__);
+
+/** @var \Bitrix\SalesCenter\Delivery\Handlers\Base $handler */
+$handler = $arResult['handler'];
 
 $tokenValue = $arResult['edit']
 	? (isset($arResult['service']['CONFIG']['MAIN']['OAUTH_TOKEN']) ? $arResult['service']['CONFIG']['MAIN']['OAUTH_TOKEN'] : ''):
@@ -14,10 +19,11 @@ $tokenValue = $arResult['edit']
 			<?=Loc::getMessage('DELIVERY_SERVICE_YANDEX_TAXI_TOKEN')?>
 		</h2>
 		<label for="" class="ui-ctl-label-text">
-			<?=Loc::getMessage('DELIVERY_SERVICE_YANDEX_TAXI_TOKEN_LABEL')?> (<?=Loc::getMessage('DELIVERY_SERVICE_YANDEX_TAXI_ACCOUNT_BALANCE_NOTICE')?>)
+			<?=Loc::getMessage('DELIVERY_SERVICE_YANDEX_TAXI_TOKEN_LABEL')?>
+			(<?=Loc::getMessage('DELIVERY_SERVICE_ACCOUNT_BALANCE_NOTICE', ['#SERVICE_NAME#' => $handler->getName()])?>)
 		</label>
 		<div class="ui-ctl ui-ctl-textbox ui-ctl-w75" style="margin-bottom: 17px;">
-			<input value="<?=htmlspecialcharsbx($tokenValue)?>" placeholder="<?=Loc::getMessage('DELIVERY_SERVICE_YANDEX_TAXI_TOKEN_PLACEHOLDER')?>" required type="text" name="OAUTH_TOKEN" class="ui-ctl-element" />
+			<input value="<?=htmlspecialcharsbx($tokenValue)?>" placeholder="AgAAAADwyXIkAAAPeCbgc3eEsklvvwh8uKMUBKk" required type="text" name="OAUTH_TOKEN" class="ui-ctl-element" />
 		</div>
 		<a href="https://helpdesk.bitrix24.ru/open/11604358" class="ui-link ui-link-dashed">
 			<?=Loc::getMessage('DELIVERY_SERVICE_YANDEX_TAXI_WHERE_TO_FIND_TOKEN')?>

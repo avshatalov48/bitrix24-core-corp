@@ -69,7 +69,14 @@ if ($postId && $blogGroupId && $hasAccess)
 else
 {
 	$arReturn = array(
-		'ERROR_CODE' => !$USER->isAuthorized() ? 'NO_AUTH' : !$blogGroupId ? 'NO_BLOG' : !$postId ? 'NO_POST' : 'NO_RIGHTS'
+		'ERROR_CODE' => (
+			!$USER->isAuthorized()
+				? 'NO_AUTH'
+				: (!$blogGroupId
+					? 'NO_BLOG'
+					: (!$postId ? 'NO_POST' : 'NO_RIGHTS')
+				)
+		)
 	);
 }
 

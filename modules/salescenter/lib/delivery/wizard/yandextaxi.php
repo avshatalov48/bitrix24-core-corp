@@ -6,7 +6,6 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Sale\Handlers\Delivery\YandexTaxi\Api\Api;
-use Sale\Handlers\Delivery\YandexTaxi\Api\RequestEntity\TariffsOptions;
 use Sale\Handlers\Delivery\YandexTaxi\Common\RegionCoordinatesMapper;
 use Sale\Handlers\Delivery\YandexTaxi\Common\RegionFinder;
 use Sale\Handlers\Delivery\YandexTaxi\TariffsChecker;
@@ -120,9 +119,15 @@ class YandexTaxi extends Base
 
 			if (empty($availableTariffs))
 			{
+				/** @var \Bitrix\Sale\Delivery\Services\Base $handlerClass */
+				$handlerClass = $this->handler->getHandlerClass();
+
 				return $validationResult->addError(
 					new Error(
-						Loc::getMessage('SALESCENTER_CONTROLLER_DELIVERY_INSTALLATION_YANDEX_ERROR_TARIFF_NOT_SUPPORTED')
+						Loc::getMessage(
+							'SALESCENTER_CONTROLLER_DELIVERY_INSTALLATION_YANDEX_ERROR_TARIFF_NOT_SUPPORTED',
+							['#SERVICE_NAME#' => $handlerClass::getClassTitle()]
+						)
 					)
 				);
 			}

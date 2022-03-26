@@ -4,11 +4,14 @@ namespace Bitrix\Crm\Service\Operation;
 
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Context;
+use Bitrix\Crm\Statistics;
 
 class Settings
 {
 	/** @var Context */
 	protected $context;
+	/** @var Statistics\OperationFacade|null */
+	protected $statisticsFacade;
 
 	protected $isCheckLimitsEnabled = true;
 	protected $isCheckAccessEnabled = true;
@@ -18,11 +21,13 @@ class Settings
 	protected $isBizProcEnabled = true;
 	protected $isFieldProcessionEnabled = true;
 	protected $isSaveToHistoryEnabled = true;
+	protected $isSaveToTimelineEnabled = true;
 	/** @var ItemIdentifier[] */
 	protected $itemsThatExcludedFromTimelineRelationEventsRegistration = [];
 	protected $isBeforeSaveActionsEnabled = true;
 	protected $isAfterSaveActionsEnabled = true;
 	protected $isCheckWorkflowsEnabled = true;
+	protected $isDeferredCleaningEnabled = true;
 
 	/**
 	 * Settings constructor.
@@ -54,6 +59,18 @@ class Settings
 	public function setContext(Context $context): self
 	{
 		$this->context = $context;
+
+		return $this;
+	}
+
+	public function getStatisticsFacade(): ?Statistics\OperationFacade
+	{
+		return $this->statisticsFacade;
+	}
+
+	public function setStatisticsFacade(?Statistics\OperationFacade $statisticsFacade): self
+	{
+		$this->statisticsFacade = $statisticsFacade;
 
 		return $this;
 	}
@@ -276,6 +293,25 @@ class Settings
 		return $this->isSaveToHistoryEnabled;
 	}
 
+	public function enableSaveToTimeline(): self
+	{
+		$this->isSaveToTimelineEnabled = true;
+
+		return $this;
+	}
+
+	public function disableSaveToTimeline(): self
+	{
+		$this->isSaveToTimelineEnabled = false;
+
+		return $this;
+	}
+
+	public function isSaveToTimelineEnabled(): bool
+	{
+		return $this->isSaveToTimelineEnabled;
+	}
+
 	/**
 	 * Exclude the specified items from being registered in this item's timeline as bound item
 	 *
@@ -440,6 +476,25 @@ class Settings
 	public function disableCheckRequiredUserFields(): self
 	{
 		$this->iscCheckRequiredUserFields = false;
+
+		return $this;
+	}
+
+	public function isDeferredCleaningEnabled(): bool
+	{
+		return $this->isDeferredCleaningEnabled;
+	}
+
+	public function enableDeferredCleaning(): self
+	{
+		$this->isDeferredCleaningEnabled = true;
+
+		return $this;
+	}
+
+	public function disableDeferredCleaning(): self
+	{
+		$this->isDeferredCleaningEnabled = false;
 
 		return $this;
 	}

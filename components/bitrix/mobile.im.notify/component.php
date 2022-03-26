@@ -12,7 +12,7 @@ if (!CModule::IncludeModule('im'))
 session_write_close();
 
 $CIMNotify = new CIMNotify(false);
-$result = $CIMNotify->GetNotifyList();
+$result = $CIMNotify->GetNotifyList(['PAGE' => 0]);
 
 $GLOBALS["APPLICATION"]->SetPageProperty("BodyClass", "ml-notify");
 $GLOBALS["APPLICATION"]->SetPageProperty("Viewport", "user-scalable=no, initial-scale=1.0, maximum-scale=1.0, width=290");

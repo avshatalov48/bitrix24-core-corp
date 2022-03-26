@@ -3,6 +3,8 @@ use Bitrix\Disk\File;
 use Bitrix\Disk\Folder;
 use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Disk\Internals\Error\Error;
+use Bitrix\Disk\Storage;
+use Bitrix\Disk\ProxyType;
 use Bitrix\Main\Localization\Loc;
 
 define('STOP_STATISTICS', true);
@@ -74,12 +76,20 @@ class DiskFileUploadAjaxController extends \Bitrix\Disk\Internals\Controller
 
 		/** @var Folder $folder */
 		$folder = Folder::loadById((int)$this->request->getPost('targetFolderId'), array('STORAGE'));
-		if(!$folder)
+		if (!$folder)
 		{
 			$error = Loc::getMessage('DISK_FILE_UPLOAD_ERROR_COULD_NOT_FIND_FOLDER');
 
 			return false;
 		}
+
+		if ($this->shouldBeBlockMove($folder->getStorage()))
+		{
+			$error = Loc::getMessage('DISK_FILE_UPLOAD_ERROR_COULD_NOT_FIND_FOLDER');
+
+			return false;
+		}
+
 		unset($file["isNotUnique"]);
 		if ($createFile)
 		{
@@ -141,6 +151,17 @@ class DiskFileUploadAjaxController extends \Bitrix\Disk\Internals\Controller
 		$file["fileId"] = $fileModel->getId();
 
 		return (empty($error));
+	}
+
+	private function shouldBeBlockMove(Storage $storage): bool
+	{
+		$proxyType = $storage->getProxyType();
+		if (!($proxyType instanceof ProxyType\Common))
+		{
+			return false;
+		}
+
+		return !Bitrix24Manager::isFeatureEnabled('disk_common_storage');
 	}
 
 	protected function processActionUpdateFile($hash, &$fileData, &$package, &$upload, &$error)

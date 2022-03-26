@@ -292,18 +292,18 @@ class EmailAttachment
 	/**
 	 * Performs dropping entity.
 	 *
-	 * @return boolean
+	 * @return int
 	 */
 	public function clearEntity()
 	{
 		if (!$this->canClearEntity())
 		{
-			return false;
+			return -1;
 		}
 
 		$query = $this->prepareQuery();
 
-		$success = true;
+		$dropped = -1;
 
 		if ($this->prepareFilter($query))
 		{
@@ -324,6 +324,7 @@ class EmailAttachment
 
 			$res = $query->exec();
 
+			$dropped = 0;
 			while ($activity = $res->fetch())
 			{
 				$this->setProcessOffset($activity['ID']);
@@ -381,6 +382,7 @@ class EmailAttachment
 						if (\CCrmActivity::Delete($activity['ID'], false, false))
 						{
 							$this->incrementDroppedEntityCount();
+							$dropped ++;
 						}
 						else
 						{
@@ -397,13 +399,16 @@ class EmailAttachment
 
 				if ($this->hasTimeLimitReached())
 				{
-					$success = false;
 					break;
 				}
 			}
 		}
+		else
+		{
+			$this->collectError(new Main\Error('Filter error', self::ERROR_DELETION_FAILED));
+		}
 
-		return $success;
+		return $dropped;
 	}
 
 	/**
@@ -470,18 +475,18 @@ class EmailAttachment
 	/**
 	 * Performs dropping entity attachments.
 	 *
-	 * @return boolean
+	 * @return int
 	 */
 	public function clearFiles()
 	{
 		if (!$this->canClearEntity())
 		{
-			return false;
+			return -1;
 		}
 
 		$query = $this->prepareQuery();
 
-		$success = true;
+		$dropped = -1;
 
 		if ($this->prepareFilter($query))
 		{
@@ -502,6 +507,7 @@ class EmailAttachment
 
 			$res = $query->exec();
 
+			$dropped = 0;
 			while ($activity = $res->fetch())
 			{
 				$this->setProcessOffset($activity['ID']);
@@ -534,13 +540,14 @@ class EmailAttachment
 								$file = \Bitrix\Disk\File::getById($row['ELEMENT_ID']);
 								if ($file instanceof \Bitrix\Disk\File)
 								{
-									if(!$file->delete(\Bitrix\Disk\SystemUser::SYSTEM_USER_ID))
+									if (!$file->delete(\Bitrix\Disk\SystemUser::SYSTEM_USER_ID))
 									{
 										$this->collectError($file->getErrors());
 									}
 								}
 							}
 							$this->incrementDroppedFileCount();
+							$dropped ++;
 						}
 						else
 						{
@@ -562,13 +569,16 @@ class EmailAttachment
 
 				if ($this->hasTimeLimitReached())
 				{
-					$success = false;
 					break;
 				}
 			}
 		}
+		else
+		{
+			$this->collectError(new Main\Error('Filter error', self::ERROR_DELETION_FAILED));
+		}
 
-		return $success;
+		return $dropped;
 	}
 
 	/**

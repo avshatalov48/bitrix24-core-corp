@@ -432,18 +432,15 @@ class Order extends Entity
 		$result = parent::getExtraDisplayedFields();
 
 		$result['PAYMENT'] =
-			(new Field('PAYMENT'))
-				->setType('string')
+			(Field::createByType('string', 'PAYMENT'))
 				->setWasRenderedAsHtml(true)
 		;
 		$result['SHIPMENT'] =
-			(new Field('SHIPMENT'))
-				->setType('string')
+			(Field::createByType('string', 'SHIPMENT'))
 				->setWasRenderedAsHtml(true)
 		;
 		$result['USER'] =
-			(new Field('USER'))
-				->setType('user')
+			(Field::createByType('user', 'USER'))
 				->setDisplayParams([
 					'SHOW_URL_TEMPLATE' => '/shop/settings/sale_buyers_profile/?USER_ID=#user_id#&lang=' . LANGUAGE_ID
 				])

@@ -30,7 +30,13 @@ BX.Tasks.TasksReportEffectiveDetail.prototype = {
 	{
 		if (taskLimitExceeded)
 		{
-			BX.UI.InfoHelper.show('limit_tasks_efficiency');
+			BX.UI.InfoHelper.show('limit_tasks_efficiency', {
+				isLimit: true,
+				limitAnalyticsLabels: {
+					module: 'tasks',
+					source: 'violations'
+				},
+			});
 		}
 	}
 };

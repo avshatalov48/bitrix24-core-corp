@@ -465,6 +465,7 @@ BX.CrmConfigStatusClass = (function ()
 		var	color = this.getDefaultColor();
 		var name = BX.message('CRM_STATUS_NEW');
 		var semantics = '';
+		var categoryId = CrmConfigStatusClass.getCategoryId(this.entityId);
 
 		if(parentNode.id == 'final-storage-'+this.entityId)
 		{
@@ -498,7 +499,8 @@ BX.CrmConfigStatusClass = (function ()
 			NAME: name,
 			ENTITY_ID: this.entityId,
 			COLOR: color,
-			SEMANTICS: semantics
+			SEMANTICS: semantics,
+			CATEGORY_ID: categoryId
 		};
 
 		parentNode.insertBefore(this.createStructureHtml(id), element);
@@ -930,6 +932,14 @@ BX.CrmConfigStatusClass = (function ()
 						type: 'hidden',
 						name: 'LIST['+this.entityId+']['+fieldObject.ID+'][SEMANTICS]',
 						value: fieldObject.SEMANTICS
+					}
+				}),
+				BX.create('input', {
+					props: {id: 'stage-categoryId-' + fieldObject.ID},
+					attrs: {
+						type: 'hidden',
+						name: 'LIST['+this.entityId+']['+fieldObject.ID+'][CATEGORY_ID]',
+						value: fieldObject.CATEGORY_ID
 					}
 				})
 			]
@@ -1513,6 +1523,7 @@ BX.CrmConfigStatusClass = (function ()
 	};
 
 	CrmConfigStatusClass.semanticEntityTypes = [];
+	CrmConfigStatusClass.entityInfos = [];
 
 	CrmConfigStatusClass.hasSemantics = function(entityTypeId)
 	{
@@ -1530,6 +1541,17 @@ BX.CrmConfigStatusClass = (function ()
 			}
 		}
 		return false;
+	};
+
+	CrmConfigStatusClass.getCategoryId = function(entityId)
+	{
+		var entityInfos = this.entityInfos;
+		if(!entityInfos || !entityInfos[entityId])
+		{
+			return null;
+		}
+
+		return entityInfos[entityId]['CATEGORY_ID'] || null;
 	};
 
 	return CrmConfigStatusClass;

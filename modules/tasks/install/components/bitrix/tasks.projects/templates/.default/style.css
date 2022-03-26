@@ -541,3 +541,88 @@
         background-color: #ffffff;
     }
 }
+
+#TASKS_GRID_SCRUM .main-grid-empty-block-description {
+	max-width: 700px;
+}
+
+.tasks-scrum__transfer--contant {
+	margin-bottom: 19%;
+}
+
+.tasks-scrum__transfer--title,
+.tasks-scrum__transfer--description {
+	color: #333;
+	font-family: 'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+.tasks-scrum__transfer--title {
+	font-size: 24px;
+}
+
+.tasks-scrum__transfer--description {
+	margin-bottom: 20px;
+}
+
+.tasks-scrum__transfer--content {
+	padding: 19px 48px;
+	background: #d9f6ff;
+	border-radius: 10px;
+}
+
+.tasks-scrum__transfer--info {
+	padding: 18px 56px;
+	border-bottom: 1px solid rgba(82,92,105,.08);
+	margin-bottom: 14px;
+	line-height: 32px;
+}
+
+.tasks-scrum__transfer--info-systems {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-wrap: wrap;
+	font-size: 12px;
+	line-height: 29px;
+	color: #a8adb4;
+}
+
+.tasks-scrum__transfer--info-systems-item {
+	display: flex;
+	align-items: center;
+	margin: 0 7px;
+}
+
+.tasks-scrum-members-popup-label {
+	display: flex;
+	margin: 5px 0 8px 0;
+	text-align: center;
+}
+
+.tasks-scrum-members-popup-label:before,
+.tasks-scrum-members-popup-label:after {
+	display: block;
+	content: "";
+	flex: 1;
+	min-width: 15px;
+	position: relative;
+	top: 8px;
+	height: 1px;
+	background-color: #f0f1f2;
+}
+
+.tasks-scrum-members-popup-label-text {
+	position: relative;
+	top: 2px;
+	padding: 0 12px;
+	background: #fff;
+	color: #b1b6bc;
+	font-size: 9px;
+	font-weight: bold;
+	text-transform: uppercase;
+	white-space: nowrap;
+	overflow-x: hidden;
+	text-overflow: ellipsis;
+	text-align: center;
+	box-sizing: border-box;
+}

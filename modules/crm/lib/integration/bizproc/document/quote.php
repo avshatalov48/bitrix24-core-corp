@@ -47,7 +47,7 @@ class Quote extends Item
 		return $fields;
 	}
 
-	protected static function convertFieldId(string $fieldId, int $convertTo = self::CONVERT_TO_BP): string
+	public static function convertFieldId(string $fieldId, int $convertTo = self::CONVERT_TO_BP): string
 	{
 		if ($convertTo === static::CONVERT_TO_DOCUMENT && $fieldId === \Bitrix\Crm\Item::FIELD_NAME_STAGE_ID)
 		{

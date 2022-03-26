@@ -78,6 +78,8 @@ $arResult['TOOLBAR_ID'] = $toolbarID;
 
 $arResult['BUTTONS'] = array();
 
+$isInSlider = ($arParams['IN_SLIDER'] === 'Y');
+
 $currentCategoryID = isset($arResult['CATEGORY_ID']) ? $arResult['CATEGORY_ID'] : -1;
 
 $bConfig = false;
@@ -174,6 +176,9 @@ if($arParams['TYPE'] === 'details')
 				'TYPE' => 'toolbar-conv-scheme',
 				'PARAMS' => array(
 					'NAME' => 'deal_converter',
+					'CONTAINER_ID' => $arParams['CONVERSION_CONTAINER_ID'],
+					'LABEL_ID' => $arParams['CONVERSION_LABEL_ID'],
+					'BUTTON_ID' => $arParams['CONVERSION_BUTTON_ID'],
 					'ENTITY_TYPE_ID' => CCrmOwnerType::Deal,
 					'ENTITY_TYPE_NAME' => CCrmOwnerType::DealName,
 					'ENTITY_ID' => $arParams['ELEMENT_ID'],
@@ -452,7 +457,7 @@ if($arParams['TYPE'] === 'list')
 		}
 	}
 
-	if ($bImport)
+	if ($bImport && !$isInSlider)
 	{
 		$importUrl = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_DEAL_IMPORT'], array());
 		if($arResult['CATEGORY_ID'] >= 0)
@@ -474,7 +479,7 @@ if($arParams['TYPE'] === 'list')
 			'ICON' => 'btn-migration'
 		);
 	}
-	if ($bExport)
+	if ($bExport && !$isInSlider)
 	{
 		if($bImport)
 		{
@@ -587,7 +592,7 @@ if($arParams['TYPE'] === 'list')
 
 	if (
 		Recurring\Manager::isAllowedExpose(Recurring\Manager::DEAL)
-		&& !($_REQUEST['IFRAME'] == 'Y' && $_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER')
+		&& !$isInSlider
 	)
 	{
 		if ($arParams['IS_RECURRING'] === 'Y')
@@ -618,6 +623,7 @@ if($arParams['TYPE'] === 'list')
 		\Bitrix\Main\Loader::includeModule('rest')
 		&& is_callable('\Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl')
 		&& ($bAdd || $bWrite || $bConfig)
+		&& !$isInSlider
 	)
 	{
 		$url = \Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl('crm_deal', 'setting_list');
@@ -628,7 +634,7 @@ if($arParams['TYPE'] === 'list')
 		];
 	}
 
-	if ($bConfig)
+	if ($bConfig && !$isInSlider)
 	{
 		CCrmComponentHelper::RegisterScriptLink('/bitrix/js/crm/common.js');
 		$arResult['BUTTONS'][] = array(
@@ -646,7 +652,7 @@ if($arParams['TYPE'] === 'list')
 		];
 	}
 
-	if(is_array($arParams['ADDITIONAL_SETTINGS_MENU_ITEMS']))
+	if(is_array($arParams['ADDITIONAL_SETTINGS_MENU_ITEMS']) && !$isInSlider)
 	{
 		$arResult['BUTTONS'] = array_merge($arResult['BUTTONS'], $arParams['ADDITIONAL_SETTINGS_MENU_ITEMS']);
 	}

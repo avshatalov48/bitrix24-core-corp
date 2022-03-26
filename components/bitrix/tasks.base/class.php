@@ -997,7 +997,7 @@ abstract class TasksBaseComponent extends CBitrixComponent
 	 *
 	 * @return array
 	 */
-	private static function getApplicationResources()
+	public static function getApplicationResources()
 	{
 		global $APPLICATION;
 
@@ -1060,6 +1060,7 @@ abstract class TasksBaseComponent extends CBitrixComponent
             'WIDGET' => '',
             'REPORT' =>  '',
             'PROJECTS' => '/company/personal/user/#user_id#/tasks/projects/',
+            'SCRUM' => '/company/personal/user/#user_id#/tasks/scrum/',
             'PLAN' => '',
 
             'VIEW_LIST' =>  '',

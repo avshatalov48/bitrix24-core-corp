@@ -84,6 +84,7 @@
 		static get sections()
 		{
 			return {
+				default: 'default',
 				owners: 'owners',
 				moderators: 'moderators',
 				departments: 'departments',
@@ -111,6 +112,10 @@
 			};
 
 			this.items = {
+				default: {
+					...{id: SectionHandler.sections.default},
+					...defaultSectionParams,
+				},
 				owners: {
 					...{id: SectionHandler.sections.owners},
 					...defaultSectionParams,
@@ -347,85 +352,67 @@
 
 		show()
 		{
-			const menuItems = this.prepareItems();
-			const menuSections = this.prepareSections();
-
-			if (!this.popupMenu)
-			{
-				this.popupMenu = dialogs.createPopupMenu();
-			}
-			this.popupMenu.setData(menuItems, menuSections, (eventName, item) => {
-				if (eventName === 'onItemSelected')
-				{
-					this.onItemSelected(item);
-				}
-			});
-			this.popupMenu.show();
-		}
-
-		prepareSections()
-		{
-			return [{id: 'default'}];
-		}
-
-		prepareItems()
-		{
-			return [
+			const actions = [
 				{
 					id: 'addMembers',
 					title: BX.message('MOBILE_PROJECT_MEMBER_LIST_FILTER_ADD_MEMBERS'),
-					sectionCode: 'default',
-					iconUrl: `${imagePrefix}more-add-members.png`,
-					disable: !this.list.canInvite,
+					sectionCode: 'action',
+					data: {
+						svgIcon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M17.1257 5.42838H19.0769V7.82727H21.5758V9.7941H19.0769V12.3123H17.1257V9.7941H14.7465V7.82727H17.1257V5.42838Z" fill="#82888F"/><path d="M15.0596 18.1339C15.7375 17.9091 16.1091 17.1961 15.9716 16.4905L15.7784 15.4988C15.6812 14.8788 14.9664 14.1829 13.3676 13.774C12.8259 13.6246 12.311 13.3929 11.8412 13.0871C11.7385 13.0291 11.7541 12.4927 11.7541 12.4927L11.2392 12.4151C11.2392 12.3716 11.1951 11.7283 11.1951 11.7283C11.8112 11.5236 11.7479 10.3157 11.7479 10.3157C12.1391 10.5304 12.3939 9.57454 12.3939 9.57454C12.8567 8.24658 12.1635 8.32688 12.1635 8.32688C12.2848 7.51619 12.2848 6.69226 12.1635 5.88158C11.8553 3.1923 7.21492 3.92237 7.76514 4.80068C6.40895 4.55362 6.71841 7.60545 6.71841 7.60545L7.01257 8.39574C6.60484 8.6573 6.68491 8.95746 6.77435 9.29277C6.81164 9.43255 6.85055 9.57844 6.85643 9.73019C6.88485 10.4918 7.35607 10.3339 7.35607 10.3339C7.38511 11.5909 8.01184 11.7546 8.01184 11.7546C8.12956 12.5439 8.05618 12.4096 8.05618 12.4096L7.49846 12.4763C7.50601 12.6558 7.49122 12.8355 7.45443 13.0115C7.13039 13.1543 6.93201 13.268 6.73558 13.3805C6.5345 13.4957 6.33548 13.6097 6.0058 13.7527C4.74672 14.2984 3.48398 14.6038 3.24072 15.5593C3.18478 15.7791 3.10399 16.1569 3.02633 16.5565C2.89499 17.2323 3.26494 17.9 3.91345 18.1174C5.49455 18.6475 7.25066 18.9599 9.104 19H9.91858C11.7526 18.9604 13.4914 18.6539 15.0596 18.1339Z" fill="#82888F"/></svg>',
+					},
+					isDisabled: !this.list.canInvite,
+					onClickCallback: () => new Promise((resolve) => {
+						contextMenu.close(() => this.onAddMembersClick());
+						resolve();
+					}),
 				},
 				{
 					id: 'waiting',
 					title: BX.message('MOBILE_PROJECT_MEMBER_LIST_FILTER_WAITING'),
-					sectionCode: 'default',
-					checked: (this.filter.getRequestInitiatingType() === ProjectMember.requestInitiatingType.user),
-					disable: !this.list.isOwner,
+					sectionCode: 'filter',
+					isSelected: (this.filter.getRequestInitiatingType() === ProjectMember.requestInitiatingType.user),
+					isDisabled: !this.list.isOwner,
+					onClickCallback: () => new Promise((resolve) => {
+						contextMenu.close(() => this.onWaitingClick());
+						resolve();
+					}),
 				},
 				{
 					id: 'invited',
 					title: BX.message('MOBILE_PROJECT_MEMBER_LIST_FILTER_INVITED'),
-					sectionCode: 'default',
-					checked: (this.filter.getRequestInitiatingType() === ProjectMember.requestInitiatingType.group),
+					sectionCode: 'filter',
+					isSelected: (this.filter.getRequestInitiatingType() === ProjectMember.requestInitiatingType.group),
+					onClickCallback: () => new Promise((resolve) => {
+						contextMenu.close(() => this.onInvitedClick());
+						resolve();
+					}),
 				},
 				{
 					id: 'clearFilter',
 					title: BX.message('MOBILE_PROJECT_MEMBER_LIST_FILTER_CLEAR_FILTER'),
-					sectionCode: 'default',
-					iconUrl: `${imagePrefix}more-clear-filter.png`,
-					disable: !this.filter.getRequestInitiatingType(),
+					sectionCode: 'clear',
+					data: {
+						svgIcon: '<svg width="14" height="13" viewBox="0 0 14 13" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11.5832 0.0833041L13.4166 1.91663L2.41664 12.9166L0.583314 11.0832L11.5832 0.0833041Z" fill="#525C69"/><path d="M13.4166 11.0832L11.5832 12.9166L0.583314 1.91662L2.41664 0.0833032L13.4166 11.0832Z" fill="#525C69"/></svg>',
+					},
+					isDisabled: !this.filter.getRequestInitiatingType(),
+					onClickCallback: () => new Promise((resolve) => {
+						contextMenu.close(() => this.onClearFilterClick());
+						resolve();
+					}),
 				}
 			];
-		}
-
-		onItemSelected(item)
-		{
-			switch (item.id)
-			{
-				case 'addMembers':
-					this.onAddMembersClick();
-					break;
-
-				case 'waiting':
-					this.onWaitingClick();
-					break;
-
-				case 'invited':
-					this.onInvitedClick();
-					break;
-
-				case 'clearFilter':
-					this.onClearFilterClick();
-					break;
-			}
+			const contextMenu = new ContextMenu({
+				params: {
+					showCancelButton: false,
+				},
+				actions,
+			});
+			contextMenu.show(this.list.list);
 		}
 
 		onAddMembersClick()
 		{
-			(new RecipientSelector('GROUP_INVITE', ['user']))
+			(new RecipientSelector('GROUP_INVITE', ['user', 'department']))
 				.setTitle(BX.message('MOBILE_PROJECT_MEMBER_LIST_FILTER_ADD_MEMBERS'))
 				.open()
 				.then((recipients) => {
@@ -730,6 +717,10 @@
 
 		onRepeatInviteAction(member)
 		{
+			Notify.showIndicatorSuccess({
+				text: BX.message('MOBILE_PROJECT_MEMBER_LIST_ACTION_INVITE_NOTIFICATION'),
+				hideAfter: 1500,
+			});
 			member.repeatInvite().then(() => this.list.reload());
 		}
 
@@ -1163,12 +1154,6 @@
 			this.updateTitle(true);
 
 			const batchOperations = {
-				group: ['socialnetwork.api.workgroup.get', {
-					params: {
-						groupId: this.projectId,
-						select: ['DEPARTMENTS'],
-					},
-				}],
 				users: ['socialnetwork.api.usertogroup.list', {
 					select: ProjectMemberList.select,
 					filter: this.filter.getForMembers(),
@@ -1179,6 +1164,12 @@
 
 			if (!this.filter.getRequestInitiatingType())
 			{
+				batchOperations.group = ['socialnetwork.api.workgroup.get', {
+					params: {
+						groupId: this.projectId,
+						select: ['DEPARTMENTS'],
+					},
+				}];
 				batchOperations.headers = ['socialnetwork.api.usertogroup.list', {
 					select: ProjectMemberList.select,
 					filter: this.filter.getForHeaders(),
@@ -1355,6 +1346,18 @@
 
 		renderMemberListItems(items, isFirstPage, isNextPageExist)
 		{
+			if (items.length <= 0)
+			{
+				this.list.setItems([{
+					id: '-none-',
+					title: BX.message('MOBILE_PROJECT_MEMBER_LIST_NOTHING_FOUND'),
+					type: 'button',
+					sectionCode: SectionHandler.sections.default,
+					unselectable: true,
+				}]);
+				return;
+			}
+
 			if (isFirstPage)
 			{
 				this.list.setItems(items);
@@ -1415,7 +1418,7 @@
 
 				if (this.memberList.has(userId))
 				{
-					this.memberList.get(userId).open();
+					this.memberList.get(userId).open(this.list);
 				}
 			}
 		}

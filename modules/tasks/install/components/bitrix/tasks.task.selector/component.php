@@ -46,6 +46,14 @@ $dbRes = CTasks::GetList($arOrder, $arFilter, $arSelect, $arGetListParams);
 $arResult["LAST_TASKS"] = array();
 while ($arRes = $dbRes->GetNext())
 {
+	if (array_key_exists('TITLE', $arRes))
+	{
+		$arRes['TITLE'] = \Bitrix\Main\Text\Emoji::decode($arRes['TITLE']);
+	}
+	if (array_key_exists('DESCRIPTION', $arRes) && $arRes['DESCRIPTION'] !== '')
+	{
+		$arRes['DESCRIPTION'] = \Bitrix\Main\Text\Emoji::decode($arRes['DESCRIPTION']);
+	}
 	$arResult["LAST_TASKS"][] = $arRes;
 }
 
@@ -67,7 +75,17 @@ if (sizeof($arParams["VALUE"]))
 	);
 
 	while ($arRes = $dbRes->GetNext())
+	{
+		if (array_key_exists('TITLE', $arRes))
+		{
+			$arRes['TITLE'] = \Bitrix\Main\Text\Emoji::decode($arRes['TITLE']);
+		}
+		if (array_key_exists('DESCRIPTION', $arRes) && $arRes['DESCRIPTION'] !== '')
+		{
+			$arRes['DESCRIPTION'] = \Bitrix\Main\Text\Emoji::decode($arRes['DESCRIPTION']);
+		}
 		$arResult["CURRENT_TASKS"][] = $arRes;
+	}
 }
 
 $APPLICATION->AddHeadScript($this->GetPath().'/templates/.default/tasks.js');

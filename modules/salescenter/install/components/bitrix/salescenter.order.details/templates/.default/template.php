@@ -1,4 +1,4 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 
@@ -6,7 +6,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Text\HtmlFilter;
 
-Extension::load("ui.fonts.ruble");
+Extension::load(["ui.fonts.ruble", "ui.icons.disk", "ui.icons.generator"]);
 
 CJSCore::Init(array('clipboard', 'fx'));
 
@@ -19,7 +19,7 @@ if (!empty($arResult['ERRORS']['FATAL']))
 	{
 		?>
 		<div class="page-description"><?= $error ?></div>
-		<?
+		<?php
 	}
 }
 else
@@ -30,7 +30,7 @@ else
 		{
 			?>
 			<div class="page-description"><?= $error ?></div>
-			<?
+			<?php
 		}
 	}
 	?>
@@ -53,7 +53,7 @@ else
 			<!--region cart-->
 			<div class="order-list-container">
 				<div class="order-list">
-					<? foreach ($arResult['BASKET'] as $basketItem)
+					<?php foreach ($arResult['BASKET'] as $basketItem)
 					{
 						$src = htmlspecialcharsbx($basketItem['PICTURE']['SRC']);
 						if ($basketItem['PICTURE']['SRC'] == '')
@@ -164,7 +164,54 @@ else
 				</div>
 			</div>
 			<!--endregion-->
-			<?
+
+			<?php if ($arResult['DOCUMENT']):
+				$pdfId = $arResult['DOCUMENT']['pdf']['id'] ?? 0;
+				$docxId = $arResult['DOCUMENT']['docx']['id'] ?? 0;
+				$extension = $pdfId > 0 ? 'pdf' : 'docx';
+				?>
+				<div class="page-section order-document-container">
+					<div class="page-section-title"><?=Loc::getMessage('SPOD_DOCUMENT_TITLE');?></div>
+					<div class="order-document">
+						<div class="order-document-file-icon"></div>
+						<script>
+							BX.ready(function()
+							{
+								var iconExtension = new BX.UI.Icons.Generator.FileIcon({
+									size: 37,
+									align: "left",
+									name: "<?=$extension;?>"
+								});
+
+							iconExtension.renderTo(document.body.querySelector(".order-document-file-icon"));
+							});
+						</script>
+						<div class="order-document-description">
+							<div class="order-document-title"><?=htmlspecialcharsbx($arResult['DOCUMENT']['title']);?></div>
+							</div>
+						</div>
+						<div class="order-document-actions">
+							<?php if ($extension === 'pdf'):?>
+								<div class="order-document-actions-action">
+								<a target="_blank" href="<?=$arResult['DOCUMENT']['showUrl'];?>"><?=Loc::getMessage('SPOD_DOCUMENT_ACTION_OPEN');?></a>
+								</div>
+							<?php endif;?>
+							<div class="order-document-actions-action">
+							<a target="_blank" href="<?=$arResult['DOCUMENT'][$extension]['url'];?>"><?=Loc::getMessage('SPOD_DOCUMENT_ACTION_DOWNLOAD');?></a>
+							</div>
+							<div
+								class="order-document-actions-action"
+								data-role="document-share-action"
+								data-title="<?=CUtil::JSEscape($arResult['DOCUMENT'][$extension]['title']);?>"
+								data-url="<?=CUtil::JSEscape($arResult['DOCUMENT'][$extension]['url']);?>"
+							>
+								<a href="javascript:void(0);"><?=Loc::getMessage('SPOD_DOCUMENT_ACTION_SHARE');?></a>
+							</div>
+						</div>
+					</div>
+			<?endif;?>
+
+			<?php
 			if ($arResult['PAYMENT'])
 			{
 				$paymentComponentParams = [
@@ -191,7 +238,29 @@ else
 			</div>
 		</div>
 	</section>
-	<?
+	<script>
+		BX.ready(function() {
+			var shareAction = document.querySelector('[data-role="document-share-action"]');
+			if (shareAction)
+			{
+				var shareData = {
+					title: shareAction.dataset.title,
+					url: shareAction.dataset.url,
+				};
+				if (navigator.share && navigator.canShare && navigator.canShare(shareData))
+				{
+					BX.bind(shareAction, 'click', function() {
+						navigator.share(shareData)
+					});
+				}
+				else
+				{
+					BX.remove(shareAction);
+				}
+			}
+		});
+	</script>
+	<?php
 }
 ?>
 

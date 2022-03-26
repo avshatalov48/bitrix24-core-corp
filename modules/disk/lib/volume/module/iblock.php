@@ -45,7 +45,7 @@ class Iblock extends Volume\Module\Module
 			}
 		}
 
-		$filter = $this->getFilter(array('!@IBLOCK_ID' => $excludeIblockIds));
+		$filter = $this->getFilter($excludeIblockIds ? ['!@IBLOCK_ID' => $excludeIblockIds] : []);
 
 		$includeIblockIds = array();
 		if (isset($filter['@IBLOCK_ID']))
@@ -72,22 +72,28 @@ class Iblock extends Volume\Module\Module
 		}
 
 		// iblock filter
-		$filterIblockSql = Volume\QueryHelper::prepareWhere(
-			$this->getFilter(array('!@IBLOCK_ID' => $excludeIblockIds)),
-			array('IBLOCK_ID' => 'iblock.ID')
-		);
+		$filterIblockSql = '1 = 1';
+		$filterSectionSql = '1 = 1';
+		$filterElementSql = '1 = 1';
+		if (!empty($excludeIblockIds))
+		{
+			$filterIblockSql = Volume\QueryHelper::prepareWhere(
+				$this->getFilter(['!@IBLOCK_ID' => $excludeIblockIds]),
+				['IBLOCK_ID' => 'iblock.ID']
+			);
 
-		// section filter
-		$filterSectionSql = Volume\QueryHelper::prepareWhere(
-			$this->getFilter(array('!@IBLOCK_ID' => $excludeIblockIds)),
-			array('IBLOCK_ID' => 'section.IBLOCK_ID')
-		);
+			// section filter
+			$filterSectionSql = Volume\QueryHelper::prepareWhere(
+				$this->getFilter(['!@IBLOCK_ID' => $excludeIblockIds]),
+				['IBLOCK_ID' => 'section.IBLOCK_ID']
+			);
 
-		// element filter
-		$filterElementSql = Volume\QueryHelper::prepareWhere(
-			$this->getFilter(array('!@IBLOCK_ID' => $excludeIblockIds)),
-			array('IBLOCK_ID' => 'element.IBLOCK_ID')
-		);
+			// element filter
+			$filterElementSql = Volume\QueryHelper::prepareWhere(
+				$this->getFilter(['!@IBLOCK_ID' => $excludeIblockIds]),
+				['IBLOCK_ID' => 'element.IBLOCK_ID']
+			);
+		}
 
 		// Scan User fields specific to module
 		$entityUserFieldSource = $this->prepareUserFieldSourceSql(array(
@@ -124,7 +130,6 @@ class Iblock extends Volume\Module\Module
 						b_file f
 						INNER JOIN b_iblock iblock on iblock.PICTURE = f.ID
 					WHERE 
-						1 = 1
 						{$filterIblockSql}
 					GROUP BY
 						iblock.ID
@@ -145,7 +150,6 @@ class Iblock extends Volume\Module\Module
 						INNER JOIN b_iblock_section section
 							on section.PICTURE = f.ID
 					WHERE
-						1 = 1
 						{$filterSectionSql}
 					GROUP BY
 						section.IBLOCK_ID
@@ -165,7 +169,6 @@ class Iblock extends Volume\Module\Module
 						INNER JOIN b_iblock_section section
 							on section.DETAIL_PICTURE = f.ID
 					WHERE
-						1 = 1
 						{$filterSectionSql}
 					GROUP BY
 						section.IBLOCK_ID
@@ -186,7 +189,6 @@ class Iblock extends Volume\Module\Module
 						INNER JOIN b_iblock_element element 
 							on element.PREVIEW_PICTURE = f.ID
 					WHERE
-						1 = 1
 						{$filterElementSql}
 					GROUP BY
 						element.IBLOCK_ID
@@ -206,7 +208,6 @@ class Iblock extends Volume\Module\Module
 						INNER JOIN b_iblock_element element
 							on element.DETAIL_PICTURE = f.ID
 					WHERE
-						1 = 1
 						{$filterElementSql}
 					GROUP BY
 						element.IBLOCK_ID
@@ -235,7 +236,6 @@ class Iblock extends Volume\Module\Module
 							on f.ID = property.VALUE_NUM  
 							and property.VALUE_NUM > 0
 					WHERE
-						1 = 1
 						{$filterElementSql}
 					GROUP BY
 						element.IBLOCK_ID

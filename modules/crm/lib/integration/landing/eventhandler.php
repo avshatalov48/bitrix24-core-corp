@@ -45,9 +45,8 @@ class EventHandler
 		$result = new Main\Entity\EventResult;
 		if ($event->getParameter('delete') === 'Y')
 		{
-			$formLanding = new FormLanding();
-			$siteId = $event->getParameter('id');
-			if ($siteId === $formLanding->getSiteId())
+			$landingId = $event->getParameter('id');
+			if (!FormLanding::getInstance()->canDelete($landingId))
 			{
 				$result->setErrors([
 					new \Bitrix\Main\Entity\EntityError(

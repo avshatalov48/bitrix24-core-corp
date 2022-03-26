@@ -10,6 +10,8 @@ use Bitrix\Crm\Timeline\ModificationEntry;
 use Bitrix\Crm\Timeline\RestorationEntry;
 use Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\Crm\Timeline\UnlinkEntry;
+use Bitrix\Crm\Timeline\FinalSummaryEntry;
+use Bitrix\Crm\Timeline\FinalSummaryDocumentsEntry;
 use Bitrix\Main\ArgumentException;
 
 class Facade
@@ -21,6 +23,8 @@ class Facade
 	public const LINK = LinkEntry::class;
 	public const UNLINK = UnlinkEntry::class;
 	public const MARK = MarkEntry::class;
+	public const FINAL_SUMMARY = FinalSummaryEntry::class;
+	public const FINAL_SUMMARY_DOCUMENTS = FinalSummaryDocumentsEntry::class;
 
 	/** @var TimelineEntry */
 	protected $timelineEntryClass = TimelineEntry::class;

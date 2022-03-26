@@ -26,6 +26,7 @@ class Manager
 	const ENUM_TYPE_OPEN_LINE = 'openline';
 	const ENUM_TYPE_CRM_FORM = 'crmform';
 	const ENUM_TYPE_CALLBACK = 'callback';
+	const ENUM_TYPE_WHATSAPP = 'whatsapp';
 
 	protected static $selectWidgets = true;
 
@@ -232,6 +233,22 @@ class Manager
 			{
 				Script::saveCache($button);
 			}
+		}
+	}
+
+	/**
+	 * Updates widget script cache for the open line with the given id and activity flag.
+	 *
+	 * @param int $lineId Id of the open line.
+	 * @param bool $active Is line active.
+	 * @throws \Exception
+	 */
+	public static function updateScriptCacheWithLineId(int $lineId, bool $active): void
+	{
+		$widgets = self::getWidgetsByOpenlineId($lineId);
+		foreach ($widgets as $widget)
+		{
+			self::changeOpenlinePresenceForWidget($widget, $active);
 		}
 	}
 
@@ -470,9 +487,24 @@ class Manager
 		}
 	}
 
+	/**
+	 * Event handler for openline deletion
+	 * @throws \Exception
+	 */
+	public static function onImopenlineDelete(\Bitrix\Main\Event $eventData): void
+	{
+		$lineId = (int)$eventData->getParameter('line');
+		$widgets = self::getWidgetsByOpenlineId($lineId);
+		foreach ($widgets as $widget)
+		{
+			// processing affected widgets, place your methods here
+			self::deleteRelatedOpenlineForWidget($widget);
+		}
+	}
+
 	private static function getWidgetsByOpenlineId(int $lineId): array
 	{
-		$result = []; // TODO: use collections
+		$result = [];
 		$widgets = Internals\ButtonTable::getList();
 		if ($widgets)
 		{
@@ -499,6 +531,18 @@ class Manager
 	private static function changeOpenlinePresenceForWidget(Button $widget, bool $active): void
 	{
 		if ($widget->changeOpenLineActivity($active))
+		{
+			self::updateScriptCache($widget->getId());
+		}
+	}
+
+	/**
+	 * @param Button $widget
+	 * @throws \Exception
+	 */
+	private static function deleteRelatedOpenlineForWidget(Button $widget): void
+	{
+		if ($widget->deleteOpenLineItem())
 		{
 			self::updateScriptCache($widget->getId());
 		}

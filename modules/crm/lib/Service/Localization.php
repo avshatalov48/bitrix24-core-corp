@@ -15,4 +15,21 @@ class Localization
 	{
 		return Loc::loadLanguageFile(__DIR__ . DIRECTORY_SEPARATOR .  '..' . DIRECTORY_SEPARATOR .  '..' . DIRECTORY_SEPARATOR . 'kanban.php');
 	}
+
+	public function appendOldVersionSuffix(?string $title): string
+	{
+		$message = Loc::getMessage(
+			'CRM_OLD_VERSION_SUFFIX',
+			[
+				'#TITLE#' => $title
+			]
+		);
+
+		if (!$message)
+		{
+			$message = $title . ' (old version)';
+		}
+
+		return (string)$message;
+	}
 }

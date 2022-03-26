@@ -1,41 +1,18 @@
-<?
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
-IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/bizproc/.left.menu_ext.php");
+<?php
 
-$aMenuLinks = Array(
-	Array(
-		GetMessage("MENU_BIZPROC_TASKS"),
-		"/company/personal/bizproc/",
-		Array(),
-		Array("counter_id" => "bp_tasks", "menu_item_id" => "menu_bizproc"),
-		""
-	)
-);
-if (CModule::IncludeModule("lists") && CLists::isFeatureEnabled())
+use Bitrix\Main\IO\File;
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
-	$aMenuLinks[] = Array(
-		GetMessage("MENU_MY_PROCESS"),
-		"/company/personal/processes/",
-		Array(),
-		Array("menu_item_id" => "menu_my_processes"),
-		""
-	);
+	die();
 }
-if (CModule::IncludeModule("lists") && CLists::isFeatureEnabled())
+
+/* NEW MENU
+$automationMenu = $_SERVER['DOCUMENT_ROOT'] . '/automation/.left.menu_ext.php';
+*/
+
+$automationMenu = $_SERVER['DOCUMENT_ROOT'] . '/bizproc/.sub.menu_ext.php';
+if (File::isFileExists($automationMenu))
 {
-	$aMenuLinks[] = Array(
-		GetMessage("MENU_PROCESS_STREAM2"),
-		"/bizproc/processes/",
-		Array(),
-		Array("menu_item_id" => "menu_processes"),
-		""
-	);
+	include($automationMenu);
 }
-$aMenuLinks[] = Array(
-	GetMessage("MENU_BIZPROC_ACTIVE"),
-	"/bizproc/bizproc/",
-	Array(),
-	Array("menu_item_id" => "menu_bizproc_active"),
-	""
-);
-?>

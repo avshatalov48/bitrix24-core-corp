@@ -190,6 +190,7 @@ class TasksInterfaceCountersComponent extends \CBitrixComponent
 		$foreignCounters = [
 			CounterDictionary::COUNTER_SONET_FOREIGN_EXPIRED,
 			CounterDictionary::COUNTER_SONET_FOREIGN_COMMENTS,
+			CounterDictionary::COUNTER_SCRUM_FOREIGN_COMMENTS,
 		];
 		$currentCounters = array_keys($this->arResult['COUNTERS']);
 
@@ -264,6 +265,7 @@ class TasksInterfaceCountersComponent extends \CBitrixComponent
 			CounterDictionary::COUNTER_PROJECTS_TOTAL_COMMENTS,
 			CounterDictionary::COUNTER_GROUPS_TOTAL_COMMENTS,
 			CounterDictionary::COUNTER_SONET_TOTAL_COMMENTS,
+			CounterDictionary::COUNTER_SCRUM_TOTAL_COMMENTS,
 		]))
 		{
 			return Counter\Template\CounterStyle::STYLE_GREEN;
@@ -277,19 +279,6 @@ class TasksInterfaceCountersComponent extends \CBitrixComponent
 		{
 			return Counter\Template\CounterStyle::STYLE_RED;
 		}
-
-//		if (
-//			$value
-//			&& in_array($counter, [
-//				CounterDictionary::COUNTER_PROJECTS_FOREIGN_EXPIRED,
-//				CounterDictionary::COUNTER_GROUPS_FOREIGN_EXPIRED,
-//				CounterDictionary::COUNTER_SONET_FOREIGN_EXPIRED,
-//			])
-//			&& Counter::getInstance((int)$this->arParams['TARGET_USER_ID'])->hasMajorForeignExpired()
-//		)
-//		{
-//			return Counter\Template\CounterStyle::STYLE_RED;
-//		}
 
 		return Counter\Template\CounterStyle::STYLE_GRAY;
 	}
@@ -324,6 +313,9 @@ class TasksInterfaceCountersComponent extends \CBitrixComponent
 			CounterDictionary::COUNTER_SONET_TOTAL_COMMENTS => 'NEW_COMMENTS',
 			CounterDictionary::COUNTER_SONET_FOREIGN_EXPIRED => 'PROJECT_EXPIRED',
 			CounterDictionary::COUNTER_SONET_FOREIGN_COMMENTS => 'PROJECT_NEW_COMMENTS',
+			// scrum's list
+			CounterDictionary::COUNTER_SCRUM_TOTAL_COMMENTS => 'NEW_COMMENTS',
+			CounterDictionary::COUNTER_SCRUM_FOREIGN_COMMENTS => 'PROJECT_NEW_COMMENTS',
 		];
 
 		return (array_key_exists($counter, $map) ? (string)$map[$counter] : '');
@@ -422,7 +414,12 @@ class TasksInterfaceCountersComponent extends \CBitrixComponent
 			return $counter;
 		}
 
-		if (in_array($counter, [CounterDictionary::COUNTER_GROUP_EXPIRED, CounterDictionary::COUNTER_GROUP_COMMENTS]))
+		$nonRolesCounters = [
+			CounterDictionary::COUNTER_GROUP_EXPIRED,
+			CounterDictionary::COUNTER_GROUP_COMMENTS
+		];
+
+		if (in_array($counter, $nonRolesCounters))
 		{
 			return null;
 		}

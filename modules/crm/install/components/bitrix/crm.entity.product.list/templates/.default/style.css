@@ -712,21 +712,35 @@
 	transition: 100ms all ease-out;
 }
 
-.crm-entity-product-container .main-grid-editor-text,
-.crm-entity-product-container .main-grid-editor-textarea,
-.crm-entity-product-list-wrapper .main-grid-editor-text,
-.crm-entity-product-list-wrapper .main-grid-editor-textarea {
+.crm-entity-product-container .crm-entity-product-list-wrapper .main-grid-editor-text,
+.crm-entity-product-container .crm-entity-product-list-wrapper .main-grid-editor-textarea,
+.crm-entity-product-list-wrapper .crm-entity-product-list-wrapper .main-grid-editor-text,
+.crm-entity-product-list-wrapper .crm-entity-product-list-wrapper .main-grid-editor-textarea {
 	margin-left: 0;
 	height: 39px;
 }
 
-.crm-entity-product-list-wrapper .main-grid-editor-money-price,
 .crm-entity-product-list-wrapper .main-grid-editor-money-price {
 	height: 37px;
+	padding: 0px;
+	margin-right: 8px;
+}
+
+.crm-entity-product-list-wrapper .ui-ctl-element[disabled] .main-grid-editor-money-price {
+	background: inherit;
+	cursor: not-allowed;
+}
+
+.crm-entity-product-list-wrapper .ui-ctl-element[disabled] .ui-hint-icon {
+	cursor: pointer;
+}
+
+.crm-entity-product-list-wrapper .main-grid-editor-money-currency[data-disabled] .main-dropdown-inner{
+	border-bottom: none;
 }
 
 .crm-entity-product-list-wrapper .catalog-product-field-inner {
-	width: calc(100% - 30px);
+	width: calc(100% - 80px);
 }
 
 /*endregion*/
@@ -771,18 +785,18 @@ select.crm-entity-product-control-select-field:hover {
 	border-color: var(--ui-field-color-primary);
 }
 
-.main-grid-delete-button {
-	position: relative;
-	top: 7px;
-	display: inline-block;
-	width: 16px;
-	height: 16px;
-	background: url(/bitrix/js/ui/buttons/icons/images/ui-remove-black.svg) no-repeat center center;
-	opacity: .3;
-	cursor: pointer;
-	-webkit-transition: opacity 200ms ease;
-	-o-transition: opacity 200ms ease;
-	transition: opacity 200ms ease;
+.crm-entity-product-list-wrapper .main-grid-row-edit .main-grid-cell-action .main-grid-cell-content {
+	padding-top: 9px;
+}
+
+.crm-entity-product-list-wrapper .main-grid-cell-content {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+}
+
+.crm-entity-product-list-wrapper .main-grid-row-edit .main-grid-cell-content {
+	display: block;
 }
 
 .main-grid-delete-button:hover { opacity: .7; }
@@ -796,7 +810,11 @@ select.crm-entity-product-control-select-field:hover {
 }
 
 .main-grid-cell-head[data-name="MAIN_INFO"] {
-	min-width: 420px;
+	min-width: 420px !important;
+}
+
+.main-grid-cell-head[data-name="STORE_INFO"] {
+	min-width: 300px !important;
 }
 
 .catalog-product-edit {
@@ -817,6 +835,29 @@ select.crm-entity-product-control-select-field:hover {
 	display: -ms-flexbox;
 	display: flex;
 }
+
+.crm-entity-product-list-locked-header {
+	background: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI5IiBoZWlnaHQ9IjEyIj48cGF0aCBmaWxsPSIjMjhCQUU5IiBmaWxsLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik03Ljk1MiA1SDl2N0gwVjVoMS4wNTJWMy40MTJhMy40NTIgMy40NTIgMCAwMTYuOSAwVjV6bS0uOTU2IDBsLjAxMi0xLjU4OEEyLjcgMi43IDAgMDA0LjUuOTNhMi43IDIuNyAwIDAwLTIuNTA4IDIuNDgyTDIuMDA1IDVoNC45OTF6TTUuMDIgOC44Nzl2MS4yODdIMy45ODFWOC44NzlhLjgxLjgxIDAgMDEtLjMwNi0uNjM0LjgyNS44MjUgMCAxMTEuNjUgMCAuODEuODEgMCAwMS0uMzA2LjYzNHoiLz48L3N2Zz4=) no-repeat center left;
+	cursor: pointer;
+	padding-left: 13px;
+	padding-top: 5px;
+}
+
+.crm-entity-product-list-locked-field {
+	cursor: pointer !important;
+}
+
+.crm-entity-product-list-reserve-date, .crm-entity-product-list-reserve-date:hover {
+	cursor: pointer;
+	border-bottom-width: 1px;
+	border-bottom-style: dotted;
+}
+
+.crm-entity-product-list-wrapper .main-grid-editor-text:focus::-moz-placeholder { color: transparent; }
+.crm-entity-product-list-wrapper .main-grid-editor-text:focus:-ms-input-placeholder { color: transparent; }
+.crm-entity-product-list-wrapper .main-grid-editor-text:focus::-webkit-input-placeholder { color: transparent; }
+.crm-entity-product-list-wrapper .main-grid-editor-text:focus:-moz-placeholder { color: transparent; }
+
 .crm-product-list-payment-side-table {
 	width: 50%;
 	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;

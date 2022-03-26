@@ -17,13 +17,15 @@ class QuoteConverter extends EntityConverter
 	/** @var QuoteConversionMapper|null  */
 	private $mapper = null;
 
-	public function __construct(QuoteConversionConfig $config = null)
+	public function __construct(EntityConversionConfig $config = null)
 	{
 		if($config === null)
 		{
 			$config = new QuoteConversionConfig();
 		}
 		parent::__construct($config);
+
+		$this->setSourceFactory(Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Quote));
 	}
 	/**
 	 * Initialize converter.
@@ -33,10 +35,7 @@ class QuoteConverter extends EntityConverter
 	 */
 	public function initialize()
 	{
-		if($this->currentPhase === QuoteConversionPhase::INTERMEDIATE)
-		{
-			$this->currentPhase = QuoteConversionPhase::DEAL_CREATION;
-		}
+		$this->determineStartingPhase();
 
 		if(!\CCrmQuote::Exists($this->entityID))
 		{
@@ -133,6 +132,7 @@ class QuoteConverter extends EntityConverter
 	{
 		switch($this->currentPhase)
 		{
+			case static::PHASE_NEW_API:
 			case QuoteConversionPhase::INTERMEDIATE:
 				$this->currentPhase = QuoteConversionPhase::DEAL_CREATION;
 				return true;
@@ -162,6 +162,11 @@ class QuoteConverter extends EntityConverter
 	 */
 	public function executePhase()
 	{
+		if (parent::executePhase())
+		{
+			return true;
+		}
+
 		if($this->currentPhase === QuoteConversionPhase::DEAL_CREATION
 			|| $this->currentPhase === QuoteConversionPhase::INVOICE_CREATION)
 		{
@@ -179,7 +184,7 @@ class QuoteConverter extends EntityConverter
 			$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
 			$config = $this->config->getItem($entityTypeID);
 
-			if(!$config->isActive())
+			if(!$config || !$config->isActive())
 			{
 				return false;
 			}

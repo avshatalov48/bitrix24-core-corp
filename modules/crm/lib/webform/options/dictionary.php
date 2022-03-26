@@ -8,7 +8,7 @@
 
 namespace Bitrix\Crm\WebForm\Options;
 
-use Bitrix\Crm\Settings\LeadSettings;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main;
 use Bitrix\Crm;
@@ -29,9 +29,9 @@ class Dictionary
 	/**
 	 * Get instance.
 	 *
-	 * @return static
+	 * @return self
 	 */
-	public static function instance()
+	public static function instance(): self
 	{
 		if (!self::$instance)
 		{
@@ -46,7 +46,7 @@ class Dictionary
 	 *
 	 * @return array
 	 */
-	public function toArray()
+	public function toArray(): array
 	{
 		return [
 			'languages' => $this->getLanguages(),
@@ -58,6 +58,7 @@ class Dictionary
 			'payment' => $this->getPayment(),
 			'document' => $this->getDocument(),
 			'callback' => $this->getCallback(),
+			'whatsapp' => $this->getWhatsApp(),
 			'captcha' => $this->getCaptcha(),
 			'templates' => [],
 			'personalization' => $this->getPersonalization(),
@@ -74,6 +75,10 @@ class Dictionary
 				['id' => 'audio/*', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_AUDIO')],
 				['id' => 'video/*', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_VIDEO')],
 			],
+			'integration' => $this->getIntegration(),
+			'scenarios' => Main\DI\ServiceLocator::getInstance()->get('crm.service.webform.scenario')->getScenarioList(),
+			'scenarioCategories' => Main\DI\ServiceLocator::getInstance()->get('crm.service.webform.scenario')->getScenarioCategoryList(),
+			'sidebarButtons' => Main\DI\ServiceLocator::getInstance()->get('crm.service.webform.scenario')->getSidebarMenuItems(),
 		];
 	}
 
@@ -82,7 +87,7 @@ class Dictionary
 	 *
 	 * @return array
 	 */
-	public function getRestriction()
+	public function getRestriction(): array
 	{
 		return [
 			'helper' => Crm\Restriction\RestrictionManager::getWebformRestriction()->prepareInfoHelperScript()
@@ -94,7 +99,7 @@ class Dictionary
 	 *
 	 * @return array
 	 */
-	public function getLanguages()
+	public function getLanguages(): array
 	{
 		$languages = [];
 		foreach (SiteButton\Manager::getLanguages() as $languageId => $language)
@@ -110,7 +115,7 @@ class Dictionary
 	 *
 	 * @return array
 	 */
-	public function getCurrencies()
+	public function getCurrencies(): array
 	{
 		$currency = \CCrmCurrency::GetCurrencyFormatParams(\CCrmCurrency::GetBaseCurrencyID());
 		return [
@@ -127,7 +132,7 @@ class Dictionary
 	 *
 	 * @return array
 	 */
-	public function getViews()
+	public function getViews(): array
 	{
 		return [
 			'types' => [
@@ -140,8 +145,8 @@ class Dictionary
 				['id' => 'right', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_VIEW_POS_RIGHT')],
 			],
 			'verticals' => [
-				['id' => 'bottom', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_VIEW_VERT_TOP')],
-				['id' => 'top', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_VIEW_VERT_BOTTOM')],
+				['id' => 'bottom', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_VIEW_VERT_BOTTOM')],
+				['id' => 'top', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_VIEW_VERT_TOP')],
 			],
 		];
 	}
@@ -151,7 +156,7 @@ class Dictionary
 	 *
 	 * @return array
 	 */
-	public function getPayment()
+	public function getPayment(): array
 	{
 		return [
 			'enabled' => WebForm\Manager::isOrdersAvailable(),
@@ -166,7 +171,7 @@ class Dictionary
 	 * @return array
 	 * @throws Main\ArgumentException
 	 */
-	public function getDocument()
+	public function getDocument(): array
 	{
 		$schemes = [];
 		foreach (WebForm\Entity::getSchemes() as $schemeId => $scheme)
@@ -235,7 +240,7 @@ class Dictionary
 				'categories' => $dealCategories
 			],
 			'lead' => [
-				'enabled' => LeadSettings::getCurrent()->isEnabled()
+				'enabled' => Crm\Settings\LeadSettings::getCurrent()->isEnabled()
 			],
 			'dynamic' => $dynamic,
 		];
@@ -245,11 +250,10 @@ class Dictionary
 	 * Get callback dict.
 	 *
 	 * @return array
-	 * @throws Main\LoaderException
 	 */
-	public function getCallback()
+	public function getCallback(): array
 	{
-		$isEnabled = Main\Loader::includeModule('voximplant');
+		$isEnabled = WebForm\Callback::canUse();
 		$numbers = [];
 		if ($isEnabled)
 		{
@@ -266,14 +270,38 @@ class Dictionary
 	}
 
 	/**
+	 * Get whatsapp dict.
+	 *
+	 * @return array
+	 */
+	public function getWhatsApp(): array
+	{
+		return [
+			'enabled' => WebForm\WhatsApp::canUse(),
+			'setup' => [
+				'completed' => WebForm\WhatsApp::isSetupCompleted(),
+				'link' => WebForm\WhatsApp::getSetupLink(),
+			],
+			'messages' => WebForm\WhatsApp::getMessages(),
+			'loc' => [
+				'disabled' => 'Module not installed',
+			],
+			'help' => WebForm\WhatsApp::getHelpId(),
+		];
+	}
+
+
+	/**
 	 * Get captcha.
 	 *
 	 * @return array
 	 */
-	public function getCaptcha()
+	public function getCaptcha(): array
 	{
+		$hasOwn = WebForm\ReCaptcha::getKey(2) && WebForm\ReCaptcha::getSecret(2);
+		$hasDefaults = WebForm\ReCaptcha::getDefaultKey(2) && WebForm\ReCaptcha::getDefaultSecret(2);
 		return [
-			'hasDefaults' => WebForm\ReCaptcha::getDefaultKey(2) && WebForm\ReCaptcha::getDefaultSecret(2),
+			'hasKeys' => $hasDefaults || $hasOwn,
 		];
 	}
 
@@ -282,7 +310,7 @@ class Dictionary
 	 *
 	 * @return array
 	 */
-	public function getSign()
+	public function getSign(): array
 	{
 		return [
 			'canRemove' => WebForm\Form::canRemoveCopyright(),
@@ -294,7 +322,7 @@ class Dictionary
 	 *
 	 * @return array
 	 */
-	public function getPersonalization()
+	public function getPersonalization(): array
 	{
 		return [
 			'list' => [
@@ -313,7 +341,7 @@ class Dictionary
 	 *
 	 * @return array
 	 */
-	public function getProperties()
+	public function getProperties(): array
 	{
 		return [
 			'list' => [
@@ -356,7 +384,7 @@ class Dictionary
 	 *
 	 * @return array
 	 */
-	public function getDeps()
+	public function getDeps(): array
 	{
 		$groupTypes = [];
 		foreach (WebForm\Internals\FieldDepGroupTable::getDepGroupTypes() as $groupTypeId => $groupTypeName)
@@ -404,11 +432,17 @@ class Dictionary
 						'id' => '=',
 						'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_COND_OP_EQUAL'),
 						'fieldTypes' => [],
+						'excludeFieldTypes' => [
+							WebForm\Internals\FieldTable::TYPE_ENUM_BOOL
+						],
 					],
 					[
 						'id' => '!=',
 						'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_COND_OP_NOTEQUAL'),
 						'fieldTypes' => [],
+						'excludeFieldTypes' => [
+							WebForm\Internals\FieldTable::TYPE_ENUM_BOOL
+						],
 					],
 					[
 						'id' => '>',
@@ -432,12 +466,12 @@ class Dictionary
 					],
 					[
 						'id' => 'empty',
-						'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_COND_OP_EMPTY'),
+						'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_COND_OP_EMPTY1'),
 						'fieldTypes' => [],
 					],
 					[
 						'id' => 'any',
-						'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_COND_OP_ANY'),
+						'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_COND_OP_ANY1'),
 						'fieldTypes' => [],
 					],
 					[
@@ -459,6 +493,44 @@ class Dictionary
 					['id' => 'hide', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_COND_ACTION_HIDE')],
 				]
 			]
+		];
+	}
+
+	private function changeArrayKeysToCamelCase(array $array) : array
+	{
+		$new = [];
+		foreach ($array as $key => $item)
+		{
+			if (is_array($item))
+			{
+				$item = $this->changeArrayKeysToCamelCase($item);
+			}
+
+			if (is_string($key))
+			{
+				$key = mb_strtolower($key);
+				$key = ucwords($key,"_");
+				$key = str_replace("_","",$key);
+				$key = lcfirst($key);
+			}
+
+			$new[$key] = $item;
+		}
+
+		return $new;
+	}
+
+	public function getIntegration(): array
+	{
+		$providers = array_values(Crm\Ads\AdsForm::getProviders());
+
+		return [
+			'canUse' => Crm\Ads\AdsForm::canUse(),
+			'directions' => [
+				["code" => "export", "id" => Crm\Ads\Internals\AdsFormLinkTable::LINK_DIRECTION_EXPORT],
+				["code" => "import", "id" => Crm\Ads\Internals\AdsFormLinkTable::LINK_DIRECTION_IMPORT],
+			],
+			'providers' => $this->changeArrayKeysToCamelCase($providers),
 		];
 	}
 }

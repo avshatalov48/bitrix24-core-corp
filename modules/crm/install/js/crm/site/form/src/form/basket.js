@@ -25,9 +25,12 @@ class Basket
 
 	items(): Array<Object>
 	{
-		return this.#fields.reduce((accumulator, field) => {
+		return this.#fields
+		.filter((field) => field.visible)
+		.reduce((accumulator, field) => {
 			return accumulator.concat(field.selectedItems());
-		}, []).filter((item) => item.price);
+		}, [])
+		.filter((item) => item.price);
 	}
 
 	formatMoney(val)

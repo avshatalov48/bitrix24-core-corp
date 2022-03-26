@@ -167,6 +167,7 @@ class SearchAction extends Search\SearchAction
 		while ($task = $taskDbResult->Fetch())
 		{
 			$task['MESSAGE_ID'] = 0;
+			$task['TITLE'] = \Bitrix\Main\Text\Emoji::decode($task['TITLE']);
 			$result[$task['ID']] = $task;
 		}
 

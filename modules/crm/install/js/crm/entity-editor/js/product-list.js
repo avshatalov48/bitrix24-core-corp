@@ -165,15 +165,41 @@ if (typeof BX.Crm.EntityProductListController === "undefined")
 		}
 	};
 
-	BX.Crm.EntityProductListController.prototype.changeSumTotal = function (totals, needMarkAsChanged)
+	BX.Crm.EntityProductListController.prototype.changeSumTotal = function (totals, needMarkAsChanged, enableSaveButton)
 	{
+		enableSaveButton = typeof enableSaveButton !== 'undefined' ?  enableSaveButton : true;
+
 		this.adjustTotals(totals, needMarkAsChanged);
 		this._prevProductCount = this._curProductCount;
 		this._curProductCount = this.productList ? this.productList.getProductCount() : 0;
 
+		if (enableSaveButton)
+		{
+			this.enableSaveButton();
+		}
+	};
+
+	BX.Crm.EntityProductListController.prototype.validate = function ()
+	{
+		if (this.productList && (this.isChanged() || this._editor.isNew()))
+		{
+			return this.productList.validateSubmit();
+		}
+	};
+
+	BX.Crm.EntityProductListController.prototype.enableSaveButton = function ()
+	{
 		if (this._editor._toolPanel)
 		{
 			this._editor._toolPanel.enableSaveButton();
+		}
+	};
+
+	BX.Crm.EntityProductListController.prototype.disableSaveButton = function ()
+	{
+		if (this._editor._toolPanel)
+		{
+			this._editor._toolPanel.disableSaveButton();
 		}
 	};
 
@@ -190,9 +216,9 @@ if (typeof BX.Crm.EntityProductListController === "undefined")
 		this.markAsChanged();
 		this.notifyOpportunityControl();
 
-		if (this._editor._toolPanel && disableSaveButton)
+		if (disableSaveButton)
 		{
-			this._editor._toolPanel.disableSaveButton();
+			this.disableSaveButton();
 		}
 	};
 

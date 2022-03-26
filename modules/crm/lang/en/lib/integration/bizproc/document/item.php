@@ -1,4 +1,5 @@
 <?php
+$MESS["CRM_BP_DOCUMENT_ITEM_ENTITY_TYPE_ERROR"] = "SPA of this type was not found";
 $MESS["CRM_BP_DOCUMENT_ITEM_FIELD_CONTACTS"] = "Contacts";
 $MESS["CRM_BP_DOCUMENT_ITEM_FIELD_IS_MANUAL_OPPORTUNITY"] = "Calculate amount manually";
 $MESS["CRM_ENTITY_EXISTENCE_ERROR"] = "Entity ID #DOCUMENT_ID# does not exist";

@@ -33,7 +33,7 @@ class CrmReportSalesDynamicsGridComponent extends \CBitrixComponent
 		$this->filterOptions = $filterOptions = new Filter\Options($this->widget->getFilterId(), []);
 		$this->gridOptions = new Grid\Options($this->gridId);
 
-		$this->arParams['NAME_TEMPLATE'] = empty($this->arParams['NAME_TEMPLATE']) ? \CAllSite::GetNameFormat(false) : str_replace(array("#NOBR#","#/NOBR#"), array("",""), $this->arParams["NAME_TEMPLATE"]);
+		$this->arParams['NAME_TEMPLATE'] = empty($this->arParams['NAME_TEMPLATE']) ? \CSite::GetNameFormat(false) : str_replace(array("#NOBR#","#/NOBR#"), array("",""), $this->arParams["NAME_TEMPLATE"]);
 
 		$this->prepareResult();
 

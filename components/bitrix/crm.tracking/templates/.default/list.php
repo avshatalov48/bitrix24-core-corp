@@ -5,6 +5,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 /** @var array $arResult*/
 /** @var array $arParams*/
 
+$currentMenuItem = 'list';
 include __DIR__ . '/common/menu.php';
 
 global $APPLICATION;

@@ -408,7 +408,11 @@ $oListState = CTaskListState::getInstance(\Bitrix\Tasks\Util\User::getId());
 
 // backward compatibility begin
 $viewType = "tree";
-if ((isset($_GET["VIEW"]) && $_GET["VIEW"] == "1") || $bExcel)
+if (
+	(isset($_GET["VIEW"]) && $_GET["VIEW"] == "1")
+	|| $bExcel
+	|| (isset($_GET["VIEW"]) && $_GET["VIEW"] == "2")
+)
 {
 	$viewType = "list";
 	try
@@ -423,23 +427,6 @@ if ((isset($_GET["VIEW"]) && $_GET["VIEW"] == "1") || $bExcel)
 	catch (TasksException $e)
 	{
 		CTaskAssert::logError('[0xe9474b52] ');
-	}
-}
-elseif(isset($_GET["VIEW"]) && $_GET["VIEW"] == "2")
-{
-	$viewType = "gantt";
-	try
-	{
-		$oListState->setSection(CTaskListState::VIEW_SECTION_ROLES);
-		$oListState->setUserRole(CTaskListState::VIEW_ROLE_RESPONSIBLE);
-		$oListState->setViewMode(CTaskListState::VIEW_MODE_GANTT);
-		$oListState->switchOnSubmode(CTaskListState::VIEW_SUBMODE_WITH_SUBTASKS);
-		$oListState->switchOnSubmode(CTaskListState::VIEW_SUBMODE_WITH_GROUPS);
-		$oListState->saveState();
-	}
-	catch (TasksException $e)
-	{
-		CTaskAssert::logError('[0x24311058] ');
 	}
 }
 elseif(isset($_GET["VIEW"]) && $_GET["VIEW"] == "0")
@@ -592,16 +579,15 @@ else
 // There is backward compatibility code:
 if ( ! (isset($_GET['VIEW']) || isset($arParams['VIEW_MODE'])) )
 {
-	if ($arResult['VIEW_STATE']['VIEW_SELECTED']['ID'] === CTaskListState::VIEW_MODE_LIST)
+	if (
+		$arResult['VIEW_STATE']['VIEW_SELECTED']['ID'] === CTaskListState::VIEW_MODE_LIST
+		|| $arResult['VIEW_STATE']['VIEW_SELECTED']['ID'] === CTaskListState::VIEW_MODE_GANTT
+	)
 	{
 		if ($arResult['VIEW_STATE']['SUBMODES']['VIEW_SUBMODE_WITH_SUBTASKS']['SELECTED'] === 'Y')
 			$viewType = 'tree';
 		else
 			$viewType = 'list';
-	}
-	elseif ($arResult['VIEW_STATE']['VIEW_SELECTED']['ID'] === CTaskListState::VIEW_MODE_GANTT)
-	{
-		$viewType = 'gantt';
 	}
 	else
 		$viewType = 'tree';
@@ -1392,18 +1378,6 @@ foreach ($arTaskItems as $oTaskItem)
 }
 $arGroupsIDs = array_unique($arGroupsIDs);
 
-if($viewType == "gantt")
-{
-	$res = \Bitrix\Tasks\Task\DependenceTable::getListByLegacyTaskFilter($arFilter);
-	while($item = $res->fetch())
-	{
-		if(isset($arResult["TASKS"][$item['TASK_ID']]))
-		{
-			$arResult["TASKS"][$item['TASK_ID']]['LINKS'][] = $item;
-		}
-	}
-}
-
 // Fill files list
 if (count($arTasksIDs))
 {
@@ -1538,11 +1512,6 @@ if (isset($arParams["SET_NAVCHAIN"]) && $arParams["SET_NAVCHAIN"] != "N")
 	}
 }
 
-//if($arResult['VIEW_STATE']['VIEWS']['VIEW_MODE_GANTT']['SELECTED'] == 'Y')
-//{
-//	$ganttPerformed = CUserOptions::SetOption('tasks', 'gant_performed', true);
-//}
-
 $site = CSite::GetByID(SITE_ID)->fetch();
 $weekDay = $site['WEEK_START'];
 $weekDaysMap = array(
@@ -1633,10 +1602,6 @@ else
 
 		CMain::FinalActions(); // to make events work on bitrix24
 		die();
-	}
-	elseif ($viewType == "gantt")
-	{
-		$this->IncludeComponentTemplate('gantt');
 	}
 	else
 	{

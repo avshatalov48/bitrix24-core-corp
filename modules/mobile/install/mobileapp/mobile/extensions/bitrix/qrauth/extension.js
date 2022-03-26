@@ -35,6 +35,31 @@
 			opacity: 0.5,
 			color: "#000000",
 			fontSize: 12,
+		},
+		guideView: {
+			marginTop: 12,
+			marginLeft: 18,
+			marginRight: 18,
+			marginBottom: 30,
+		},
+		guideTitle: {
+			fontSize: 18,
+			paddingBottom: 18,
+		},
+		hintView: {
+			flex: 1,
+			alignItems: 'center',
+			flexDirection: 'row',
+		},
+		hintImage: {
+			width: 23,
+			height: 23,
+		},
+		hintText: {
+			flex:1,
+			fontSize: 15,
+			color: '#333333',
+			marginLeft: 18,
 		}
 	}
 	const guideStepsTitles = [
@@ -45,26 +70,29 @@
 
 	class QRCodeGuide extends LayoutComponent
 	{
-		constructor({showHint})
+		constructor({showHint, hintText})
 		{
-			super({showHint});
-			this.setState({showHint: Boolean(showHint)})
+			super({showHint, hintText});
+			this.setState({
+				showHint: Boolean(showHint),
+				hintText: hintText,
+			})
 		}
 
 		render() {
-			let {showHint} = this.state
-			return View({},
-				showHint ? this.hint() : null,
-				View({
-						style: {
-							marginTop: 12,
-							marginLeft: 18,
-							marginRight: 18,
-							marginBottom:30,
-						}
+			const {showHint, hintText} = this.state;
+			return View(
+				{},
+				(showHint ? this.hint(hintText) : null),
+				View(
+					{
+						style: styles.guideView,
 					},
-					Text({ style:{fontSize: 18, paddingBottom: 18}, text:BX.message("QR_HOW_TO_AUTH")+"↓"}),
-					cloud && Application.getApiVersion() >=41 ? this.demoVideo(): null,
+					Text({
+						style: styles.guideTitle,
+						text: BX.message('QR_HOW_TO_AUTH') + '↓'
+					}),
+					(cloud && Application.getApiVersion() >= 41 ? this.demoVideo() : null),
 					this.guideSteps(guideStepsTitles)
 				)
 			);
@@ -105,32 +133,29 @@
 				))
 		}
 
-		hint(){
-			return View({
-				style: styles.hint
-				},View({
-						style: {
-							flex: 1,
-							alignItems: 'center',
-							flexDirection: 'row'
-						}
+		hint(hintText)
+		{
+			return View(
+				{
+					style: styles.hint,
+				},
+				View(
+					{
+						style: styles.hintView,
 					},
 					Image({
 						resizeMode: 'contain',
-						style: {
-							width: 23,
-							height: 23
-						},
-						svg: {uri:`${currentDomain}${pathToExtension}images/hint.svg?2`}
+						style: styles.hintImage,
+						svg: {
+							uri:`${currentDomain}${pathToExtension}images/hint.svg?2`
+						}
 					}),
-				Text({
-					style: {flex:1, fontSize: 15, color: "#333333", marginLeft: 18},
-					text: BX.message("QR_SCANNER_HINT")
-				})
-
+					Text({
+						style: styles.hintText,
+						text: hintText || BX.message('QR_SCANNER_HINT'),
+					})
 				)
-
-			)
+			);
 		}
 
 		guidePoint(number, text, showBorder = false)
@@ -167,25 +192,69 @@
 	 */
 	class QRCodeAuthComponent extends LayoutComponent
 	{
+		static open(parentWidget, {redirectUrl, showHint, hintText, title, description})
+		{
+			if (Application.getApiVersion() < 41)
+			{
+				parentWidget = PageManager;
+			}
+
+			parentWidget.openWidget('layout', {
+				backdrop: {
+					bounceEnable: true,
+					mediumPositionHeight: 500,
+				},
+				title,
+				onReady: (layout) => {
+					layout.showComponent(
+						new QRCodeAuthComponent({
+							redirectUrl,
+							showHint,
+							hintText,
+							parentWidget: layout,
+						}, description)
+					);
+				},
+				onError: error => console.log(error),
+			})
+		}
+
 		/**
 		 *
 		 * @param props
 		 * @param {LayoutComponent} description
 		 */
-		constructor({redirectUrl, showHint}, description)
+		constructor({redirectUrl, showHint, hintText, parentWidget}, description)
 		{
 			super({redirectUrl, showHint});
 			this.description = description;
 			this.redirectUrl = redirectUrl ? redirectUrl : "";
-			this.showHint = Boolean(showHint)
+			this.showHint = Boolean(showHint);
+			this.hintText = hintText ? hintText : "";
+			this.parent = (Application.getApiVersion() < 41 ? PageManager : (parentWidget || PageManager));
 		}
 
 		render()
 		{
-			return View({ style: { flexDirection: 'column' } },
-				this.description,
-				new QRCodeGuide({showHint: this.showHint}),
-				this.scanButton()
+			return ScrollView(
+				{},
+				View(
+					{
+						style: {
+							flexDirection: 'column',
+							paddingBottom: 60,
+						},
+						safeArea: {
+							bottom: true,
+						}
+					},
+					this.description,
+					new QRCodeGuide({
+						showHint: this.showHint,
+						hintText: this.hintText
+					}),
+					this.scanButton()
+				)
 			);
 		}
 
@@ -204,7 +273,7 @@
 						alignItems: "center"
 					},
 					onClick:()=>{
-						PageManager.openWidget("layout",{
+						this.parent.openWidget("layout",{
 							title: BX.message("STEP_CAMERA_TITLE"),
 							onReady:ui => {
 								let component = new QRCodeScannerComponent({redirectUrl: this.redirectUrl, ui})
@@ -270,19 +339,22 @@
 			if(external)
 			{
 				return View({
-					style: {
-						justifyContent:'top',
-						padding:50,
-						alignItems:'center'
-					}
-				}, Image({
-					style:{
-						opacity: 0.8,
-						width:200,
-						height:200
-					},
-					svg:{uri: `${currentDomain}${pathToExtension}images/qr.svg`}
-				}))
+						style: {
+							justifyContent: 'top',
+							alignItems: 'center'
+						}
+					}, View({style:{flex:1, justifyContent:"center"}}, Image({
+						style: {
+							opacity: 0.8,
+							width: 200,
+							selfAlign:"center",
+							height: 200
+						},
+						svg: {uri: `${currentDomain}${pathToExtension}images/qr.svg`}
+					})),
+					this.successView()
+				)
+
 			}
 			else
 			{
@@ -314,30 +386,34 @@
 					error: error => console.error(error),
 					ref: ref => this.cameraRef = ref
 				}),
-				View({
-						style:{
-							position: "absolute",
-							height: "100%",
-							width: "100%",
-							opacity: 0.0,
-							borderRadius:12,
-							justifyContent: "center",
-							backgroundColor:"#9DCF00"
-						},
-						ref: view => {
-							this.successOverlay = view;
-						}
-					},Image({
-						style:{
-							alignSelf:'center',
-							alignItems: "center",
-							resizeMode:'contain',
-							width:180,
-							height:180
-						},
-						svg:{uri: `${currentDomain}${pathToExtension}images/success.svg?2`}
-					})
-				)
+				this.successView()
+			)
+		}
+
+		successView() {
+			return View({
+					style:{
+						position: "absolute",
+						height: "100%",
+						width: "100%",
+						opacity: 0.0,
+						borderRadius:12,
+						justifyContent: "center",
+						backgroundColor:"#9DCF00"
+					},
+					ref: view => {
+						this.successOverlay = view;
+					}
+				},Image({
+					style:{
+						alignSelf:'center',
+						alignItems: "center",
+						resizeMode:'contain',
+						width:180,
+						height:180
+					},
+					svg:{uri: `${currentDomain}${pathToExtension}images/success.svg?2`}
+				})
 			)
 		}
 
@@ -347,7 +423,7 @@
 		{
 			if(this.cameraRef)
 				this.cameraRef.setScanEnabled(false);
-			Notify.showIndicatorLoading();
+			setTimeout(()=>{notify.showIndicatorLoading()}, 100)
 
 			qrauth.authorizeByUrl(value, this.redirectUrl)
 				.then(() => {

@@ -8,8 +8,6 @@ class Options
 	private $fileEntityTypeId;
 	private $fileUrlTemplate;
 	private $gridId;
-	private $useTextMode = false;
-	private $needReturnMultipleFieldsAsSingle = true;
 	private $multipleFieldsDelimiter = ', ';
 	private $restrictedItemIds = [];
 	private $restrictedFieldsToShow = [];

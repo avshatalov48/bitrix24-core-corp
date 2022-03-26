@@ -78,7 +78,7 @@ if (isset($arSettings['LEAD']) && $arSettings['LEAD'] == 'Y')
 if (isset($arSettings['CONTACT']) && $arSettings['CONTACT'] == 'Y')
 {
 	$arResult['ENTITY_TYPE'][] = 'contact';
-	$IDs = CCrmContact::GetTopIDs(50, 'DESC', $userPermissions);
+	$IDs = CCrmContact::GetTopIDsInCategory(0, 50, 'DESC', $userPermissions);
 	if (!empty($IDs))
 	{
 		$obRes = CCrmContact::GetListEx(
@@ -129,7 +129,7 @@ if (isset($arSettings['CONTACT']) && $arSettings['CONTACT'] == 'Y')
 if (isset($arSettings['COMPANY']) && $arSettings['COMPANY'] == 'Y')
 {
 	$arResult['ENTITY_TYPE'][] = 'company';
-	$IDs = CCrmCompany::GetTopIDs(50, 'DESC', $userPermissions);
+	$IDs = CCrmCompany::GetTopIDsInCategory(0, 50, 'DESC', $userPermissions);
 	if (!empty($IDs))
 	{
 		$arCompanyTypeList = CCrmStatus::GetStatusListEx('COMPANY_TYPE');

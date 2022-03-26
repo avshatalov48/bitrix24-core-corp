@@ -1019,6 +1019,15 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 		/** @var Bitrix\Location\Entity\Source $source */
 		foreach ($arResult['LOCATION_SOURCES'] as $source):
 			$sourceCode = $source->getCode();
+
+			if (
+				$sourceCode === \Bitrix\Location\Entity\Source\Factory::OSM_SOURCE_CODE
+				&& !isModuleInstalled('bitrix24')
+			)
+			{
+				continue;
+			}
+
 			$config = $source->getConfig();
 			$note = Loc::getMessage(
 				sprintf(

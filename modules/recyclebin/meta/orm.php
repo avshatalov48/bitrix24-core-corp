@@ -188,18 +188,6 @@ namespace Bitrix\Recyclebin\Internals\Models {
 }
 namespace Bitrix\Recyclebin\Internals\Models {
 	/**
-	 * @method static EO_Recyclebin_Query query()
-	 * @method static EO_Recyclebin_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Recyclebin_Result getById($id)
-	 * @method static EO_Recyclebin_Result getList(array $parameters = array())
-	 * @method static EO_Recyclebin_Entity getEntity()
-	 * @method static \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin_Collection createCollection()
-	 * @method static \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin wakeUpObject($row)
-	 * @method static \Bitrix\Recyclebin\Internals\Models\EO_Recyclebin_Collection wakeUpCollection($rows)
-	 */
-	class RecyclebinTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -352,18 +340,6 @@ namespace Bitrix\Recyclebin\Internals\Models {
 }
 namespace Bitrix\Recyclebin\Internals\Models {
 	/**
-	 * @method static EO_RecyclebinData_Query query()
-	 * @method static EO_RecyclebinData_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_RecyclebinData_Result getById($id)
-	 * @method static EO_RecyclebinData_Result getList(array $parameters = array())
-	 * @method static EO_RecyclebinData_Entity getEntity()
-	 * @method static \Bitrix\Recyclebin\Internals\Models\EO_RecyclebinData createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Recyclebin\Internals\Models\EO_RecyclebinData_Collection createCollection()
-	 * @method static \Bitrix\Recyclebin\Internals\Models\EO_RecyclebinData wakeUpObject($row)
-	 * @method static \Bitrix\Recyclebin\Internals\Models\EO_RecyclebinData_Collection wakeUpCollection($rows)
-	 */
-	class RecyclebinDataTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *
@@ -515,18 +491,6 @@ namespace Bitrix\Recyclebin\Internals\Models {
 	}
 }
 namespace Bitrix\Recyclebin\Internals\Models {
-	/**
-	 * @method static EO_RecyclebinFile_Query query()
-	 * @method static EO_RecyclebinFile_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_RecyclebinFile_Result getById($id)
-	 * @method static EO_RecyclebinFile_Result getList(array $parameters = array())
-	 * @method static EO_RecyclebinFile_Entity getEntity()
-	 * @method static \Bitrix\Recyclebin\Internals\Models\EO_RecyclebinFile createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Recyclebin\Internals\Models\EO_RecyclebinFile_Collection createCollection()
-	 * @method static \Bitrix\Recyclebin\Internals\Models\EO_RecyclebinFile wakeUpObject($row)
-	 * @method static \Bitrix\Recyclebin\Internals\Models\EO_RecyclebinFile_Collection wakeUpCollection($rows)
-	 */
-	class RecyclebinFileTable extends \Bitrix\Main\ORM\Data\DataManager {}
 	/**
 	 * Common methods:
 	 * ---------------

@@ -54,11 +54,15 @@ class ControlPanel
 				});
 			}
 
-			if (!top.window["adminSidePanel"] || !BX.is_subclass_of(top.window["adminSidePanel"], top.BX.adminSidePanel))
+			var adminSidePanel = top.BX.adminSidePanel || BX.adminSidePanel;
+			if (adminSidePanel)
 			{
-				top.window["adminSidePanel"] = new top.BX.adminSidePanel({
-					publicMode: true
-				});
+				if (!top.window["adminSidePanel"] || !BX.is_subclass_of(top.window["adminSidePanel"], adminSidePanel))
+				{
+					top.window["adminSidePanel"] = new adminSidePanel({
+						publicMode: true
+					});
+				}
 			}
 		});
 	}

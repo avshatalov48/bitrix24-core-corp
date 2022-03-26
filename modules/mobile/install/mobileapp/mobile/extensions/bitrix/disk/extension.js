@@ -22,9 +22,9 @@ include("InAppNotifier");
 		 */
 		constructor(params = {})
 		{
-
 			this._title = null;
 			this.userId = params.userId;
+			this.destroyOnRemove = typeof params["destroyOnRemove"] !== "undefined" ? Boolean(params["destroyOnRemove"]) : true;
 			this.entityType = params.entityType || "user";
 			this.ownerId = params.ownerId || this.userId;
 			this.firstLoad = true;
@@ -54,16 +54,16 @@ include("InAppNotifier");
 				]);
 
 				let buttons = [
+					{type: "search", callback: () => {
+							this.list.showSearchBar();
+						}},
 					{
 						type: "more",
-						callback: () => this.popupMenu.show()
+						callback: () => {
+							this.popupMenu.show();
+						}
 
 					}];
-				if (Application.getPlatform() !== "ios")
-				{
-					buttons.unshift({type: "search", callback: () => this.list.showSearchBar()});
-				}
-
 				this.list.setRightButtons(buttons);
 
 
@@ -147,9 +147,11 @@ include("InAppNotifier");
 						}
 						else if (item.params.type === "folder")
 						{
-							PageManager.openWidget(
+							let opener = Application.getApiVersion() >= 41 ? this.list : PageManager;
+							opener.openWidget(
 								"list",
 								{
+									useSearch:true,
 									onReady: list =>
 									{
 
@@ -753,8 +755,10 @@ include("InAppNotifier");
 
 		destroy()
 		{
-			this._popupMenu = null;
-			this._list = null;
+			if (this.destroyOnRemove) {
+				this._popupMenu = null;
+				this._list = null;
+			}
 		}
 
 		static prepareItem(item)
@@ -1042,6 +1046,10 @@ include("InAppNotifier");
 					this.searchRequest
 						.updateOptions({searchQuery :data.text})
 						.setHandler((result, error) => {
+							if (result.data) {
+								result = result.data
+								error = result.error
+							}
 
 							if (result.items)
 							{

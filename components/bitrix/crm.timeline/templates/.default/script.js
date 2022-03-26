@@ -189,6 +189,7 @@ if(typeof(BX.CrmTimelineManager) === "undefined")
 						config: this.getSetting("editorSmsConfig", {}),
 						container: this.getSetting("editorSmsContainer"),
 						input: this.getSetting("editorSmsInput"),
+						templatesContainer: this.getSetting("editorSmsTemplatesContainer"),
 						button: this.getSetting("editorSmsButton"),
 						cancelButton: this.getSetting("editorSmsCancelButton")
 					}
@@ -2006,6 +2007,32 @@ if(typeof(BX.CrmHistory) === "undefined")
 			return BX.CrmHistoryItem.create(data["ID"], settings);
 		}
 	};
+	BX.CrmHistory.prototype.createStoreDocumentItem = function(data)
+	{
+		var entityId = BX.prop.getInteger(data, "ASSOCIATED_ENTITY_TYPE_ID", 0);
+		var typeId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
+		if(entityId !== BX.CrmEntityType.enumeration.storeDocument && entityId !== BX.CrmEntityType.enumeration.shipmentDocument)
+		{
+			return null;
+		}
+
+		var settings = {
+			history: this._history,
+			fixedHistory: this._fixedHistory,
+			container: this._wrapper,
+			activityEditor: this._activityEditor,
+			data: data
+		};
+
+		if (typeId === BX.CrmTimelineType.creation)
+		{
+			return BX.CrmHistoryItemStoreDocumentCreation.create(data["ID"], settings);
+		}
+		else if (typeId === BX.CrmTimelineType.modification)
+		{
+			return BX.CrmHistoryItemStoreDocumentModification.create(data["ID"], settings);
+		}
+	};
 	BX.CrmHistory.prototype.createExternalNotificationItem = function(data)
 	{
 		var typeId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
@@ -2085,6 +2112,10 @@ if(typeof(BX.CrmHistory) === "undefined")
 		else if(typeId === BX.CrmTimelineType.order)
 		{
 			return this.createOrderEntityItem(data);
+		}
+		else if(typeId === BX.CrmTimelineType.storeDocument)
+		{
+			return this.createStoreDocumentItem(data);
 		}
 		else if(typeId === BX.CrmTimelineType.externalNotification)
 		{
@@ -2783,6 +2814,7 @@ if(typeof BX.CrmSchedule === "undefined")
 	};
 	BX.CrmSchedule.prototype.refreshLayout = function()
 	{
+		BX.onCustomEvent('BX.CrmSchedule:onBeforeRefreshLayout', [this]);
 		var length = this._items.length;
 		if(length === 0)
 		{
@@ -3126,6 +3158,18 @@ if(typeof BX.CrmSchedule === "undefined")
 							activityEditor: this._activityEditor,
 							data: data,
 
+						}
+					);
+				}
+				else if(providerId === 'STORE_DOCUMENT')
+				{
+					return BX.CrmScheduleItemStoreDocument.create(
+						itemId,
+						{
+							schedule: this,
+							container: this._wrapper,
+							activityEditor: this._activityEditor,
+							data: data
 						}
 					);
 				}
@@ -4344,23 +4388,13 @@ if(typeof BX.CrmTimelineWaitHelper === "undefined")
 				}
 			}
 
-			if(type === "W")
+			if (type === "W")
 			{
-				result = BX.CrmMessageHelper.getCurrent().getNumberDeclension(
-					duration,
-					this.getMessage("weekNominative"),
-					this.getMessage("weekGenitiveSingular"),
-					this.getMessage("weekGenitivePlural")
-				);
+				result = BX.Loc.getMessagePlural('CRM_TIMELINE_WAIT_WEEK', duration);
 			}
 			else
 			{
-				result = BX.CrmMessageHelper.getCurrent().getNumberDeclension(
-					duration,
-					this.getMessage("dayNominative"),
-					this.getMessage("dayGenitiveSingular"),
-					this.getMessage("dayGenitivePlural")
-				);
+				result = BX.Loc.getMessagePlural('CRM_TIMELINE_WAIT_DAY', duration);
 			}
 
 			if(enableNumber)
@@ -4825,6 +4859,17 @@ if(typeof BX.CrmTimelineSmsEditor === "undefined")
 
 		this._paymentId = null;
 		this._shipmentId = null;
+
+		this._templateId = null;
+		this._templatesContainer = null;
+		this._templateFieldHintNode = null;
+		this._templateSelectorNode = null;
+		this._templateTemplateTitleNode = null;
+		this._templatePreviewNode = null;
+		this._templateSelectorMenuId = 'CrmTimelineSmsEditorTemplateSelector';
+		this._templateFieldHintHandler = BX.delegate(this.onTemplateHintIconClick, this);
+		this._templateSeletorClickHandler = BX.delegate(this.onTemplateSelectClick, this);
+		this._selectTemplateHandler = BX.delegate(this.onSelectTemplate, this);
 	};
 	BX.extend(BX.CrmTimelineSmsEditor, BX.CrmTimelineBaseEditor);
 	BX.CrmTimelineSmsEditor.prototype.doInitialize = function()
@@ -4862,6 +4907,7 @@ if(typeof BX.CrmTimelineSmsEditor === "undefined")
 		this._clientContainerNode = this._container.querySelector('[data-role="client-container"]');
 		this._clientSelectorNode = this._container.querySelector('[data-role="client-selector"]');
 		this._toSelectorNode = this._container.querySelector('[data-role="to-selector"]');
+		this._messageLengthCounterWrapperNode = this._container.querySelector('[data-role="message-length-counter-wrap"]');
 		this._messageLengthCounterNode = this._container.querySelector('[data-role="message-length-counter"]');
 		this._salescenterStarter = this._container.querySelector('[data-role="salescenter-starter"]');
 		this._smsDetailSwitcher = this._container.querySelector('[data-role="sms-detail-switcher"]');
@@ -4872,6 +4918,23 @@ if(typeof BX.CrmTimelineSmsEditor === "undefined")
 		this._fileUploadLabel = this._container.querySelector('[data-role="sms-file-upload-label"]');
 		this._fileSelectorBitrix = this._container.querySelector('[data-role="sms-file-selector-bitrix"]');
 		this._fileExternalLinkDisabledContent = this._container.querySelector('[data-role="sms-file-external-link-disabled"]');
+
+		this._templatesContainer = BX(this.getSetting("templatesContainer"));
+		if (this._templatesContainer)
+		{
+			this._templateFieldHintNode = this._templatesContainer.querySelector('[data-role="hint"]');
+			this._templateSelectorNode = this._templatesContainer.querySelector('[data-role="template-selector"]');
+			this._templateTemplateTitleNode = this._templatesContainer.querySelector('[data-role="template-title"]');
+			this._templatePreviewNode = this._templatesContainer.querySelector('[data-role="preview"]');
+		}
+		if (this._templateFieldHintNode)
+		{
+			BX.bind(this._templateFieldHintNode, "click", this._templateFieldHintHandler);
+		}
+		if (this._templateSelectorNode)
+		{
+			BX.bind(this._templateSelectorNode, "click", this._templateSeletorClickHandler);
+		}
 
 		if (this._canUse && this._senders.length > 0)
 		{
@@ -4986,7 +5049,7 @@ if(typeof BX.CrmTimelineSmsEditor === "undefined")
 			{
 				var url = BX.Uri.addParam(item.sender.manageUrl, {'IFRAME': 'Y'});
 				var slider = BX.SidePanel.Instance.getTopSlider();
-				BX.SidePanel.Instance.open(url, {
+				var options = {
 					events: {
 						onClose: function()
 						{
@@ -5003,7 +5066,12 @@ if(typeof BX.CrmTimelineSmsEditor === "undefined")
 							}
 						}
 					}
-				});
+				};
+				if (item.sender.id === 'ednaru')
+				{
+					options.width = 700;
+				}
+				BX.SidePanel.Instance.open(url, options);
 				return;
 			}
 
@@ -5019,12 +5087,50 @@ if(typeof BX.CrmTimelineSmsEditor === "undefined")
 		this._fromList = sender.fromList;
 		this._senderSelectorNode.textContent = sender.shortName ? sender.shortName : sender.name;
 
+		this._templateId = null;
+		if (sender.isTemplatesBased)
+		{
+			this.showNode(this._templatesContainer);
+			this.hideNode(this._messageLengthCounterWrapperNode);
+			this.hideNode(this._fileSelectorButton);
+			this.hideNode(this._documentSelectorButton);
+			this.hideNode(this._input);
+			this.toggleTemplateSelectAvailability();
+			this.toggleSaveButton();
+			this._hideButtonsOnBlur = false;
+			this.onFocus();
+		}
+		else
+		{
+			this.hideNode(this._templatesContainer);
+			this.showNode(this._messageLengthCounterWrapperNode);
+			this.showNode(this._fileSelectorButton);
+			this.showNode(this._documentSelectorButton);
+			this.showNode(this._input);
+			this.setMessageLengthCounter();
+			this._hideButtonsOnBlur = true;
+		}
+
 		var visualFn = sender.id === 'rest' ? 'hide' : 'show';
 		BX[visualFn](this._fromContainerNode);
 
 		if (setAsDefault)
 		{
 			BX.userOptions.save("crm", "sms_manager_editor", "senderId", this._senderId);
+		}
+	};
+	BX.CrmTimelineSmsEditor.prototype.showNode = function(node)
+	{
+		if (node)
+		{
+			node.style.display = "";
+		}
+	};
+	BX.CrmTimelineSmsEditor.prototype.hideNode = function(node)
+	{
+		if (node)
+		{
+			node.style.display = "none";
 		}
 	};
 	BX.CrmTimelineSmsEditor.prototype.initFromSelector = function()
@@ -5221,15 +5327,53 @@ if(typeof BX.CrmTimelineSmsEditor === "undefined")
 		var classFn = length >= this._messageLengthMax ? 'addClass' : 'removeClass';
 		BX[classFn](this._messageLengthCounterNode, 'crm-entity-stream-content-sms-symbol-counter-number-overhead');
 
-		classFn = length <= 0 ? 'addClass' : 'removeClass';
-		BX[classFn](this._saveButton, 'ui-btn-disabled');
+		this.toggleSaveButton();
+	};
+	BX.CrmTimelineSmsEditor.prototype.toggleSaveButton = function()
+	{
+		var sender = this.getSelectedSender();
+		var enabled;
+		if (!sender || !sender.isTemplatesBased)
+		{
+			enabled = this._input.value.length > 0;
+		}
+		else
+		{
+			enabled = !!this._templateId;
+		}
+		if (enabled)
+		{
+			BX.removeClass(this._saveButton, 'ui-btn-disabled');
+		}
+		else
+		{
+			BX.addClass(this._saveButton, 'ui-btn-disabled');
+		}
 	};
 	BX.CrmTimelineSmsEditor.prototype.save = function()
 	{
-		var text = this._input.value;
-		if(text === "")
+		var sender = this.getSelectedSender();
+
+		var text = '';
+		var templateId = '';
+
+		if (!sender || !sender.isTemplatesBased)
 		{
-			return;
+			text = this._input.value;
+			if (text === '')
+			{
+				return;
+			}
+		}
+		else
+		{
+			var template = this.getSelectedTemplate();
+			if (!template)
+			{
+				return;
+			}
+			text = template.PREVIEW;
+			templateId = template.ID;
 		}
 
 		if (!this._communications.length)
@@ -5262,6 +5406,7 @@ if(typeof BX.CrmTimelineSmsEditor === "undefined")
 						"MESSAGE_FROM": this._from,
 						"MESSAGE_TO": this._to,
 						"MESSAGE_BODY": text,
+						"MESSAGE_TEMPLATE": templateId,
 						"OWNER_TYPE_ID": this._ownerTypeId,
 						"OWNER_ID": this._ownerId,
 						"TO_ENTITY_TYPE_ID": this._commEntityTypeId,
@@ -5314,7 +5459,8 @@ if(typeof BX.CrmTimelineSmsEditor === "undefined")
 				disableSendButton: this._canSendMessage ? '' : 'y',
 				context: 'sms',
 				ownerTypeId: this._ownerTypeId,
-				ownerId: this._ownerId
+				ownerId: this._ownerId,
+				mode: this._ownerTypeId === BX.CrmEntityType.enumeration.deal ? 'payment_delivery' : 'payment',
 			}).then(function(result)
 			{
 				if(result && result.get('action'))
@@ -5588,6 +5734,200 @@ if(typeof BX.CrmTimelineSmsEditor === "undefined")
 	BX.CrmTimelineSmsEditor.prototype.showFilesExternalLinkFeaturePopup = function()
 	{
 		this.getFeaturePopup(this._fileExternalLinkDisabledContent).show();
+	};
+
+	BX.CrmTimelineSmsEditor.prototype.onTemplateHintIconClick = function()
+	{
+		if (this._senderId === 'ednaru')
+		{
+			top.BX.Helper.show("redirect=detail&code=14214014");
+		}
+	};
+
+	BX.CrmTimelineSmsEditor.prototype.showTemplateSelectDropdown = function(items)
+	{
+		var menuItems = [];
+		if (BX.Type.isArray(items))
+		{
+			if (items.length)
+			{
+				items.forEach(function(item)
+				{
+					menuItems.push({
+						value: item.ID,
+						text: item.TITLE,
+						onclick: this._selectTemplateHandler
+					})
+				}.bind(this));
+
+				BX.PopupMenu.show({
+					id: this._templateSelectorMenuId,
+					bindElement: this._templateSelectorNode,
+					items: menuItems,
+					angle: false,
+					width: this._templateSelectorNode.offsetWidth,
+				});
+			}
+		}
+		else if (this._senderId)
+		{
+			var loaderMenuId = this._templateSelectorMenuId + 'loader';
+			var loaderMenuLoaderId = this._templateSelectorMenuId + 'loader';
+
+			BX.PopupMenu.show({
+				id: loaderMenuId,
+				bindElement: this._templateSelectorNode,
+				items: [{
+					html: '<div id="' + loaderMenuLoaderId + '"></div>',
+				}],
+				angle: false,
+				width: this._templateSelectorNode.offsetWidth,
+				height: 60,
+				events: {
+					onDestroy: function() {
+						this.hideLoader();
+					}.bind(this)
+				}
+			});
+			this.showLoader(BX(loaderMenuLoaderId));
+
+			if (!this._isRequestRunning)
+			{
+				this._isRequestRunning = true;
+				var senderId = this._senderId;
+				BX.ajax.runAction(
+					'messageservice.Sender.getTemplates',
+					{
+						data: {
+							id: senderId,
+							context: {
+								module: 'crm',
+								entityTypeId: this._manager._ownerTypeId,
+								entityId: this._manager._ownerId,
+							}
+						}
+					}
+				)
+					.then(function(response)
+					{
+						this._isRequestRunning = false;
+						var sender = this._senders.find(function(sender)
+						{
+							return (sender.id === senderId);
+						}.bind(this));
+
+						if (sender)
+						{
+							sender.templates = response.data.templates;
+							this.toggleTemplateSelectAvailability();
+							if (BX.PopupMenu.getMenuById(loaderMenuId))
+							{
+								BX.PopupMenu.getMenuById(loaderMenuId).close();
+								this.showTemplateSelectDropdown(sender.templates);
+							}
+						}
+					}.bind(this))
+					.catch(function(response)
+					{
+						this._isRequestRunning = false;
+						if (BX.PopupMenu.getMenuById(loaderMenuId))
+						{
+							if (response && response.errors && response.errors[0] && response.errors[0].message)
+							{
+								alert(response.errors[0].message);
+							}
+							BX.PopupMenu.getMenuById(loaderMenuId).close();
+						}
+					}.bind(this))
+				;
+			}
+		}
+
+	};
+
+	BX.CrmTimelineSmsEditor.prototype.getSelectedSender = function()
+	{
+		return this._senders.find(function(sender) {
+			return (sender.id === this._senderId);
+		}.bind(this));
+	};
+
+	BX.CrmTimelineSmsEditor.prototype.getSelectedTemplate = function()
+	{
+		var sender = this.getSelectedSender();
+		if (!this._templateId || !sender || !sender.templates)
+		{
+			return null;
+		}
+
+		var template = sender.templates.find(function(template) {
+			return template.ID == this._templateId;
+		}.bind(this))
+
+		return template ? template : null;
+	}
+
+	BX.CrmTimelineSmsEditor.prototype.onTemplateSelectClick = function()
+	{
+		var sender = this.getSelectedSender();
+
+		if (sender)
+		{
+			this.showTemplateSelectDropdown(sender.templates);
+		}
+	};
+
+	BX.CrmTimelineSmsEditor.prototype.onSelectTemplate = function(e, item)
+	{
+		this._templateId = item.value;
+		this.applySelectedTemplate();
+		this.toggleSaveButton();
+		var menu = BX.PopupMenu.getMenuById(this._templateSelectorMenuId);
+		if (menu)
+		{
+			menu.close();
+		}
+	};
+
+	BX.CrmTimelineSmsEditor.prototype.toggleTemplateSelectAvailability = function()
+	{
+		var sender = this.getSelectedSender();
+		if (sender && BX.Type.isArray(sender.templates) && !sender.templates.length)
+		{
+			BX.addClass(this._templateSelectorNode, 'ui-ctl-disabled');
+			this._templateTemplateTitleNode.textContent = BX.message('CRM_TIMELINE_SMS_TEMPLATES_NOT_FOUND');
+		}
+		else
+		{
+			BX.removeClass(this._templateSelectorNode, 'ui-ctl-disabled');
+			this.applySelectedTemplate();
+		}
+	};
+	BX.CrmTimelineSmsEditor.prototype.applySelectedTemplate = function()
+	{
+		var sender = this.getSelectedSender();
+		if (!this._templateId || !sender || !sender.templates)
+		{
+			this.hideNode(this._templatePreviewNode);
+			this._templateTemplateTitleNode.textContent = '';
+		}
+		else
+		{
+			var template = this.getSelectedTemplate();
+			if (template)
+			{
+				var preview = BX.Text.encode(template.PREVIEW).replace(/\n/g, '<br>');
+
+				this.showNode(this._templatePreviewNode);
+				this._templatePreviewNode.innerHTML = preview;
+				this._templateTemplateTitleNode.textContent = template.TITLE;
+			}
+			else
+			{
+				this.hideNode(this._templatePreviewNode);
+				this._templateTemplateTitleNode.textContent = '';
+			}
+		}
 	};
 
 	BX.CrmTimelineSmsEditor.items = {};
@@ -6004,6 +6344,7 @@ if(typeof(BX.CrmTimelineType) === "undefined")
 		finalSummary: 18,
 		delivery: 19,
 		finalSummaryDocuments: 20,
+		storeDocument: 21,
 	};
 }
 if(typeof(BX.CrmTimelineMarkType) === "undefined")
@@ -7143,6 +7484,7 @@ if(typeof(BX.CrmTimelineItem) === "undefined")
 		{
 			var anchor = this._wrapper.previousSibling;
 			this._wrapper = BX.remove(this._wrapper);
+			this._playerWrappers = {};
 			this.layout({ anchor: anchor });
 		},
 		clearCachedData: function()
@@ -8294,6 +8636,10 @@ if(typeof(BX.CrmHistoryItemComment) === "undefined")
 			event.data.files.forEach(function(file){
 				if (file.extension === 'mp3')
 				{
+					if (this._playerWrappers[file.id])
+					{
+						return;
+					}
 					var callInfoWrapper = BX.create("DIV",
 						{
 							attrs: {
@@ -8318,7 +8664,7 @@ if(typeof(BX.CrmHistoryItemComment) === "undefined")
 				}
 			}.bind(this));
 		}
-	},
+	};
 	BX.CrmHistoryItemComment.prototype.prepareContent = function()
 	{
 		var comment = this.getTextDataParam("COMMENT", "");
@@ -9472,8 +9818,37 @@ if(typeof(BX.CrmHistoryItemCreation) === "undefined")
 			return title.replace(/#TITLE#/gi, this.cutOffText(BX.prop.getString(entityData, "SUBJECT")), 64);
 		}
 
-		var msg = this.getMessage(BX.CrmEntityType.resolveName(this.getAssociatedEntityTypeId()).toLowerCase());
-		if(!BX.type.isNotEmptyString(msg))
+		if (entityTypeId === BX.CrmEntityType.enumeration.storeDocument)
+		{
+			var docType = BX.prop.getString(entityData, "DOC_TYPE");
+			if (docType === 'A')
+			{
+				return this.getMessage('arrivalDocument');
+			}
+			if (docType === 'S')
+			{
+				return this.getMessage('storeAdjustmentDocument');
+			}
+			if (docType === 'M')
+			{
+				return this.getMessage('movingDocument');
+			}
+			if (docType === 'D')
+			{
+				return this.getMessage('deductDocument');
+			}
+			if (docType === 'W')
+			{
+				return this.getMessage('shipmentDocument');
+			}
+
+			return '';
+		}
+
+		var entityTypeName = BX.CrmEntityType.resolveName(this.getAssociatedEntityTypeId()).toLowerCase();
+		var msg = this.getMessage(entityTypeName);
+		var isMessageNotFound = (msg === entityTypeName);
+		if(!BX.type.isNotEmptyString(msg) || isMessageNotFound)
 		{
 			msg = this.getTextDataParam("TITLE");
 		}
@@ -9603,11 +9978,7 @@ if(typeof(BX.CrmHistoryItemCreation) === "undefined")
 	BX.CrmHistoryItemCreation.prototype.getMessage = function(name)
 	{
 		var m = BX.CrmHistoryItemCreation.messages;
-		// Provokes to use this.getTextDataParam("TITLE") for dynamic type
-		if (BX.CrmEntityType.isDynamicTypeByName(name.toUpperCase()))
-		{
-			return '';
-		}
+
 		return m.hasOwnProperty(name) ? m[name] : name;
 	};
 	if(typeof(BX.CrmHistoryItemCreation.messages) === "undefined")
@@ -12090,7 +12461,7 @@ if(typeof(BX.CrmHistoryItemOpenLine) === "undefined")
 							        ? "crm-entity-stream-content-detail-IM-message-incoming"
 								    : "crm-entity-stream-content-detail-IM-message-outgoing"
 							},
-							text: BX.prop.getString(message, "MESSAGE", "")
+							html: BX.prop.getString(message, "MESSAGE", "")
 						}
 					)
 				);
@@ -12808,7 +13179,7 @@ if(typeof(BX.CrmHistoryItemConversion) === "undefined")
 												BX.create("SPAN",
 													{
 														attrs: { className: "crm-entity-stream-content-detail-status-text" },
-														text: BX.CrmEntityType.getCaption(entityInfo['ENTITY_TYPE_ID'])
+														text: entityInfo['ENTITY_TYPE_CAPTION']
 													}
 												)
 											]
@@ -13668,18 +14039,27 @@ if(typeof(BX.CrmHistoryItemOrderModification) === "undefined")
 	{
 		BX.loadExt('salescenter.manager').then(function()
 		{
-			var fields = this.getObjectDataParam('FIELDS'),
-				dealId = BX.prop.get(fields, 'DEAL_ID', 0),
+			var
+				fields = this.getObjectDataParam('FIELDS'),
+				ownerTypeId = BX.prop.get(fields, 'OWNER_TYPE_ID', BX.CrmEntityType.enumeration.deal),
+				ownerId = BX.prop.get(fields, 'OWNER_ID', 0),
 				paymentId = BX.prop.get(fields, 'PAYMENT_ID', 0),
 				shipmentId = BX.prop.get(fields, 'SHIPMENT_ID', 0),
-				orderId = BX.prop.get(fields, 'ORDER_ID', 0);
+				orderId = BX.prop.get(fields, 'ORDER_ID', 0)
+			;
+
+			// compatibility
+			if (!ownerId)
+			{
+				ownerId = BX.prop.get(fields, 'DEAL_ID', 0);
+			}
 
 			BX.Salescenter.Manager.openApplication({
 				disableSendButton: '',
 				context: 'deal',
-				ownerTypeId: BX.CrmEntityType.enumeration.deal,
-				ownerId: dealId,
-				mode: 'payment_delivery',
+				ownerTypeId: ownerTypeId,
+				ownerId: ownerId,
+				mode: ownerTypeId === BX.CrmEntityType.enumeration.deal ? 'payment_delivery' : 'payment',
 				templateMode: 'view',
 				orderId: orderId,
 				paymentId: paymentId,
@@ -14148,6 +14528,353 @@ if(typeof(BX.CrmHistoryItemOrderModification) === "undefined")
 	};
 }
 
+if(typeof(BX.CrmHistoryItemStoreDocumentCreation) === "undefined")
+{
+	BX.CrmHistoryItemStoreDocumentCreation = function()
+	{
+		BX.CrmHistoryItemStoreDocumentCreation.superclass.constructor.apply(this);
+	};
+	BX.extend(BX.CrmHistoryItemStoreDocumentCreation, BX.CrmHistoryItemOrderCreation);
+	BX.CrmHistoryItemStoreDocumentCreation.prototype.doInitialize = function()
+	{
+		BX.CrmHistoryItemStoreDocumentCreation.superclass.doInitialize.apply(this);
+		if(!(this._activityEditor instanceof BX.CrmActivityEditor))
+		{
+			throw "BX.CrmHistoryItemStoreDocumentCreation. The field 'activityEditor' is not assigned.";
+		}
+	};
+	BX.CrmHistoryItemStoreDocumentCreation.prototype.getIconClassName = function()
+	{
+		return "crm-entity-stream-section-icon crm-entity-stream-section-icon-info";
+	};
+	BX.CrmHistoryItemStoreDocumentCreation.prototype.getTitle = function()
+	{
+		var entityData = this.getAssociatedEntityData();
+		var docType = BX.prop.getString(entityData, "DOC_TYPE");
+		if (docType === 'A')
+		{
+			return this.getMessage('arrivalDocument');
+		}
+		if (docType === 'S')
+		{
+			return this.getMessage('storeAdjustmentDocument');
+		}
+		if (docType === 'M')
+		{
+			return this.getMessage('movingDocument');
+		}
+		if (docType === 'D')
+		{
+			return this.getMessage('deductDocument');
+		}
+		if (docType === 'W')
+		{
+			return this.getMessage('shipmentDocument');
+		}
+
+		return '';
+	};
+	BX.CrmHistoryItemStoreDocumentCreation.prototype.getWrapperClassName = function()
+	{
+		return "crm-entity-stream-section-createStoreDocumentEntity";
+	};
+	BX.CrmHistoryItemStoreDocumentCreation.prototype.prepareContentDetails = function()
+	{
+		var entityData = this.getAssociatedEntityData();
+		var title = BX.prop.getString(entityData, "TITLE", "");
+		var nodes = [];
+
+		if(title === '')
+		{
+			return nodes;
+		}
+
+		var titleNode = BX.create('span', {text: title});
+		var nodeText = title;
+
+		var titleTemplate = BX.prop.getString(this._data, 'TITLE_TEMPLATE', '');
+		if (titleTemplate)
+		{
+			var docType = BX.prop.getString(entityData, "DOC_TYPE");
+			if (docType === 'W')
+			{
+				if (this.getOwnerTypeId() === BX.CrmEntityType.enumeration.deal)
+				{
+					var documentDetailUrl = BX.prop.getString(this._data, 'DETAIL_LINK', '');
+					var documentLinkTag = '<a href="' + documentDetailUrl + '">' + title + '</a>';
+					titleNode.innerHTML = titleTemplate.replace('#TITLE#', documentLinkTag);
+				}
+				else
+				{
+					titleNode.innerHTML = titleTemplate.replace('#TITLE#', title);
+				}
+			}
+			else
+			{
+				titleNode.innerHTML = titleTemplate.replace('#TITLE#', title);
+			}
+		}
+
+		nodes.push(BX.create("DIV", {
+			attrs: { className: "crm-entity-stream-content-detail-description" },
+			children: [titleNode],
+		}));
+
+		return nodes;
+	};
+	BX.CrmHistoryItemStoreDocumentCreation.prototype.getMessage = function(name)
+	{
+		var m = BX.CrmHistoryItemStoreDocumentCreation.messages;
+		return m.hasOwnProperty(name) ? m[name] : name;
+	};
+	if(typeof(BX.CrmHistoryItemStoreDocumentCreation.messages) === "undefined")
+	{
+		BX.CrmHistoryItemStoreDocumentCreation.messages = {};
+	}
+	BX.CrmHistoryItemStoreDocumentCreation.create = function(id, settings)
+	{
+		var self = new BX.CrmHistoryItemStoreDocumentCreation();
+		self.initialize(id, settings);
+		return self;
+	};
+}
+
+if(typeof(BX.CrmHistoryItemStoreDocumentModification) === "undefined")
+{
+	BX.CrmHistoryItemStoreDocumentModification = function()
+	{
+		BX.CrmHistoryItemStoreDocumentModification.superclass.constructor.apply(this);
+	};
+	BX.extend(BX.CrmHistoryItemStoreDocumentModification, BX.CrmHistoryItemModification);
+	BX.CrmHistoryItemStoreDocumentModification.prototype.doInitialize = function()
+	{
+		BX.CrmHistoryItemStoreDocumentModification.superclass.doInitialize.apply(this);
+		if(!(this._activityEditor instanceof BX.CrmActivityEditor))
+		{
+			throw "BX.CrmHistoryItemStoreDocumentModification. The field 'activityEditor' is not assigned.";
+		}
+	};
+	BX.CrmHistoryItemStoreDocumentModification.prototype.getIconClassName = function()
+	{
+		return "crm-entity-stream-section-icon crm-entity-stream-section-icon-info";
+	};
+	BX.CrmHistoryItemStoreDocumentModification.prototype.getTitle = function()
+	{
+		var error = this.getTextDataParam("ERROR");
+		if (error === 'CONDUCT')
+		{
+			return this.getMessage('conductError');
+		}
+		var entityData = this.getAssociatedEntityData();
+		var field = this.getTextDataParam("FIELD");
+		var docType = BX.prop.getString(entityData, "DOC_TYPE");
+		if (docType === 'A')
+		{
+			if (field === 'STATUS')
+			{
+				return this.getMessage('arrivalDocument');
+			}
+			else
+			{
+				return this.getMessage('arrivalModification');
+			}
+		}
+		if (docType === 'S')
+		{
+			if (field === 'STATUS')
+			{
+				return this.getMessage('storeAdjustmentDocument');
+			}
+			else
+			{
+				return this.getMessage('storeAdjustmentModification');
+			}
+		}
+		if (docType === 'M')
+		{
+			if (field === 'STATUS')
+			{
+				return this.getMessage('movingDocument');
+			}
+			else
+			{
+				return this.getMessage('movingModification');
+			}
+		}
+		if (docType === 'D')
+		{
+			if (field === 'STATUS')
+			{
+				return this.getMessage('deductDocument');
+			}
+			else
+			{
+				return this.getMessage('deductModification');
+			}
+		}
+		if (docType === 'W')
+		{
+			if (field === 'STATUS')
+			{
+				return this.getMessage('shipmentDocument');
+			}
+			else
+			{
+				return this.getMessage('shipmentModification');
+			}
+		}
+
+		return '';
+	};
+	BX.CrmHistoryItemStoreDocumentModification.prototype.getStatusInfo = function()
+	{
+		var statusInfo = {};
+		var statusName = this.getTextDataParam('STATUS_TITLE');
+		var classCode = this.getTextDataParam('STATUS_CLASS');
+		{
+			statusInfo.message = statusName;
+			statusInfo.className = "crm-entity-stream-content-event-" + classCode;
+		}
+
+		return statusInfo;
+	};
+	BX.CrmHistoryItemStoreDocumentModification.prototype.getHeaderChildren = function()
+	{
+		var children = [
+			BX.create("DIV",
+				{
+					attrs: { className: "crm-entity-stream-content-event-title" },
+					events: { click: this._headerClickHandler },
+					text: this.getTitle(),
+				}
+			)
+		];
+		var statusInfo = this.getStatusInfo();
+		if (BX.type.isNotEmptyObject(statusInfo))
+		{
+			children.push(
+				BX.create("SPAN",
+					{
+						attrs: { className: statusInfo.className },
+						text: statusInfo.message
+					}
+				));
+		}
+		children.push(
+			BX.create("SPAN",
+				{
+					attrs: { className: "crm-entity-stream-content-event-time" },
+					text: this.formatTime(this.getCreatedTime())
+				}
+			));
+		return children;
+	};
+	BX.CrmHistoryItemStoreDocumentModification.prototype.prepareContent = function()
+	{
+		var wrapper = BX.create("DIV", { attrs: { className: "crm-entity-stream-section crm-entity-stream-section-history" } });
+
+		wrapper.appendChild(
+			BX.create("DIV", { attrs: { className: "crm-entity-stream-section-icon crm-entity-stream-section-icon-info" } })
+		);
+
+		var content = BX.create("DIV", { attrs: { className: "crm-entity-stream-content-event" } });
+		var header = BX.create("DIV",
+			{
+				attrs: { className: "crm-entity-stream-content-header" },
+				children: this.getHeaderChildren()
+			}
+		);
+
+		var entityData = this.getAssociatedEntityData();
+		var title = BX.prop.getString(entityData, "TITLE", "");
+		var error = this.getTextDataParam("ERROR");
+		var contentChildren = [];
+
+		if(error)
+		{
+			var errorMessage = this.getTextDataParam("ERROR_MESSAGE");
+			contentChildren.push(BX.create("DIV", {
+				attrs: { className: "crm-entity-stream-content-detail-description" },
+				children: errorMessage
+			}));
+		}
+		else if(title !== "")
+		{
+			var titleNode = BX.create('span', {text: title});
+			var nodeText = title;
+
+			var titleTemplate = BX.prop.getString(this._data, 'TITLE_TEMPLATE', '');
+			if (titleTemplate)
+			{
+				var docType = BX.prop.getString(entityData, "DOC_TYPE");
+				if (docType === 'W')
+				{
+					if (this.getOwnerTypeId() === BX.CrmEntityType.enumeration.deal)
+					{
+						var documentDetailUrl = BX.prop.getString(this._data, 'DETAIL_LINK', '');
+						var documentLinkTag = '<a href="' + documentDetailUrl + '">' + title + '</a>';
+						titleNode.innerHTML = titleTemplate.replace('#TITLE#', documentLinkTag);
+					}
+					else
+					{
+						titleNode.innerHTML = titleTemplate.replace('#TITLE#', title);
+					}
+				}
+				else
+				{
+					titleNode.innerHTML = titleTemplate.replace('#TITLE#', title);
+				}
+			}
+
+			contentChildren.push(BX.create("DIV", {
+				attrs: { className: "crm-entity-stream-content-detail-description" },
+				children: [titleNode],
+			}));
+		}
+
+		content.appendChild(header);
+		content.appendChild(
+			BX.create("DIV",
+				{
+					attrs: { className: "crm-entity-stream-content-detail" },
+					children:
+						[
+							BX.create("DIV",
+								{
+									attrs: { className: "crm-entity-stream-content-detail-info" },
+									children: contentChildren
+								})
+						]
+				})
+		);
+
+		//region Author
+		var authorNode = this.prepareAuthorLayout();
+		if(authorNode)
+		{
+			content.appendChild(authorNode);
+		}
+		//endregion
+
+		wrapper.appendChild(
+			BX.create("DIV", { attrs: { className: "crm-entity-stream-section-content" }, children: [ content ] })
+		);
+
+		return wrapper;
+	};
+	BX.CrmHistoryItemStoreDocumentModification.prototype.getMessage = function(name)
+	{
+		var m = BX.CrmHistoryItemStoreDocumentModification.messages;
+		return m.hasOwnProperty(name) ? m[name] : name;
+	};
+	BX.CrmHistoryItemStoreDocumentModification.create = function(id, settings)
+	{
+		var self = new BX.CrmHistoryItemStoreDocumentModification();
+		self.initialize(id, settings);
+		return self;
+	};
+}
+
 if (typeof(BX.CrmHistoryItemFinalSummary) === "undefined")
 {
 	BX.CrmHistoryItemFinalSummary = function()
@@ -14578,8 +15305,10 @@ if (typeof(BX.CrmHistoryItemFinalSummaryDocuments) === "undefined")
 		if (data.RESULT)
 		{
 			var summaryOptions = {
-				'DEAL_ID': data.ASSOCIATED_ENTITY_ID,
+				'OWNER_ID': data.ASSOCIATED_ENTITY_ID,
+				'OWNER_TYPE_ID': data.ASSOCIATED_ENTITY_TYPE_ID,
 				'PARENT_CONTEXT': this,
+				'CONTEXT': BX.CrmEntityType.resolveName(data.ASSOCIATED_ENTITY_TYPE_ID).toLowerCase(),
 			};
 			var timelineSummaryDocuments = new BX.Crm.TimelineSummaryDocuments(summaryOptions);
 			timelineSummaryDocuments.setOptions(data.RESULT.TIMELINE_SUMMARY_OPTIONS);
@@ -15863,6 +16592,210 @@ if(typeof(BX.CrmScheduleItemTask) === "undefined")
 	};
 }
 
+if(typeof(BX.CrmScheduleItemStoreDocument) === "undefined")
+{
+	BX.CrmScheduleItemStoreDocument = function()
+	{
+		BX.CrmScheduleItemStoreDocument.superclass.constructor.apply(this);
+	};
+	BX.extend(BX.CrmScheduleItemStoreDocument, BX.CrmScheduleItemActivity);
+	BX.CrmScheduleItemStoreDocument.prototype.getWrapperClassName = function()
+	{
+		return "crm-entity-stream-section-planned-store-document";
+	};
+	BX.CrmScheduleItemStoreDocument.prototype.getIconClassName = function()
+	{
+		return "crm-entity-stream-section-icon crm-entity-stream-section-icon-store-document";
+	};
+	BX.CrmScheduleItemStoreDocument.prototype.getTypeDescription = function()
+	{
+		return this.getMessage("storeDocument");
+	};
+	BX.CrmScheduleItemStoreDocument.prototype.getPrepositionText = function(direction)
+	{
+		return this.getMessage("reciprocal");
+	};
+	BX.CrmScheduleItemStoreDocument.prototype.getRemoveMessage = function()
+	{
+		var entityData = this.getAssociatedEntityData();
+		var title = BX.prop.getString(entityData, "SUBJECT", "");
+		title = BX.util.htmlspecialchars(title);
+		return this.getMessage('taskRemove').replace("#TITLE#", title);
+	};
+	BX.CrmScheduleItemStoreDocument.prototype.isEditable = function()
+	{
+		return false;
+	};
+	BX.CrmScheduleItemStoreDocument.prototype.prepareContent = function(options)
+	{
+		var deadline = this.getDeadline();
+		var timeText = deadline ? this.formatDateTime(deadline) : this.getMessage("termless");
+
+		var entityData = this.getAssociatedEntityData();
+		var direction = BX.prop.getInteger(entityData, "DIRECTION", 0);
+		var isDone = this.isDone();
+
+		var wrapperClassName = this.getWrapperClassName();
+		if(wrapperClassName !== "")
+		{
+			wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-planned" + " " + wrapperClassName;
+		}
+		else
+		{
+			wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-planned";
+		}
+
+		var wrapper = BX.create("DIV", { attrs: { className: wrapperClassName } });
+
+		var iconClassName = this.getIconClassName();
+		if(this.isCounterEnabled())
+		{
+			iconClassName += " crm-entity-stream-section-counter";
+		}
+		wrapper.appendChild(BX.create("DIV", { attrs: { className: iconClassName } }));
+
+		//region Context Menu
+		if(this.isContextMenuEnabled())
+		{
+			wrapper.appendChild(this.prepareContextMenuButton());
+		}
+		//endregion
+
+		var contentWrapper = BX.create("DIV",
+			{ attrs: { className: "crm-entity-stream-section-content" } }
+		);
+		wrapper.appendChild(contentWrapper);
+
+		//region Details
+		var contentInnerWrapper = BX.create("DIV",
+			{
+				attrs: { className: "crm-entity-stream-content-event" }
+			}
+		);
+		contentWrapper.appendChild(contentInnerWrapper);
+
+		this._deadlineNode = BX.create("SPAN",
+			{ attrs: { className: "crm-entity-stream-content-event-time" }, text: timeText }
+		);
+
+		var headerWrapper = BX.create("DIV",
+			{
+				attrs: { className: "crm-entity-stream-content-header" }
+			}
+		);
+		headerWrapper.appendChild(BX.create("SPAN",
+			{
+				attrs:
+					{
+						className: "crm-entity-stream-content-event-title"
+					},
+				text: this.getTypeDescription(direction)
+			}
+		));
+
+		var statusNode = this.getStatusNode();
+		if (statusNode)
+		{
+			headerWrapper.appendChild(statusNode);
+		}
+		headerWrapper.appendChild(this._deadlineNode);
+
+		contentInnerWrapper.appendChild(headerWrapper);
+
+		var detailWrapper = BX.create("DIV",
+			{
+				attrs: { className: "crm-entity-stream-content-detail" }
+			}
+		);
+		contentInnerWrapper.appendChild(detailWrapper);
+
+		detailWrapper.appendChild(
+			BX.create("DIV",
+				{
+					attrs: {className: "crm-entity-stream-content-detail-description"},
+					children: [
+						BX.create("SPAN", { text: this.getMessage("storeDocumentDescription") }),
+						BX.create("A", {
+							attrs: {
+								className: "crm-entity-stream-content-detail-target",
+								href: "#",
+							},
+							events: {
+								click: BX.delegate(function (e) {
+									top.BX.Helper.show('redirect=detail&code=14828480');
+									e.preventDefault ? e.preventDefault() : (e.returnValue = false);
+								})
+							},
+							text: " " + BX.message('CRM_TIMELINE_DETAILS'),
+						})
+					]
+				}
+			)
+		);
+
+		var additionalDetails = this.prepareDetailNodes();
+		if(BX.type.isArray(additionalDetails))
+		{
+			for(var i = 0, length = additionalDetails.length; i < length; i++)
+			{
+				detailWrapper.appendChild(additionalDetails[i]);
+			}
+		}
+		//endregion
+		//region Set as Done Button
+		var setAsDoneButton = BX.create("INPUT",
+			{
+				attrs:
+					{
+						type: "checkbox",
+						className: "crm-entity-stream-planned-apply-btn",
+						checked: isDone
+					},
+				events: { change: this._setAsDoneButtonHandler }
+			}
+		);
+
+		if(!this.canComplete())
+		{
+			setAsDoneButton.disabled = true;
+		}
+
+		var buttonContainer = BX.create("DIV",
+			{
+				attrs: { className: "crm-entity-stream-content-detail-planned-action" },
+				children: [ setAsDoneButton ]
+			}
+		);
+		contentInnerWrapper.appendChild(buttonContainer);
+		//endregion
+
+		//region Author
+		var authorNode = this.prepareAuthorLayout();
+		if(authorNode)
+		{
+			contentInnerWrapper.appendChild(authorNode);
+		}
+		//endregion
+
+		//region  Actions
+		this._actionContainer = BX.create("DIV",
+			{
+				attrs: { className: "crm-entity-stream-content-detail-action" }
+			}
+		);
+		contentInnerWrapper.appendChild(this._actionContainer);
+		//endregion
+
+		return wrapper;
+	};
+	BX.CrmScheduleItemStoreDocument.create = function(id, settings)
+	{
+		var self = new BX.CrmScheduleItemStoreDocument();
+		self.initialize(id, settings);
+		return self;
+	};
+}
+
 if(typeof(BX.CrmScheduleItemWebForm) === "undefined")
 {
 	BX.CrmScheduleItemWebForm = function()
@@ -16367,7 +17300,7 @@ if(typeof(BX.CrmScheduleItemActivityOpenLine) === "undefined")
 							        ? "crm-entity-stream-content-detail-IM-message-incoming"
 								    : "crm-entity-stream-content-detail-IM-message-outgoing"
 							},
-							text: BX.prop.getString(message, "MESSAGE", "")
+							html: BX.prop.getString(message, "MESSAGE", "")
 						}
 					)
 				);
@@ -17764,7 +18697,11 @@ if(typeof(BX.CrmTimelineAudioPlaybackRateSelector) === "undefined")
 		var popupMenu = BX.Main.MenuManager.getMenuById(this.menuId);
 		if(popupMenu)
 		{
-			 popupMenu.bindElement = node;
+			var popupWindow = popupMenu.getPopupWindow();
+			if (popupWindow)
+			{
+				popupWindow.setBindElement(node);
+			}
 		}
 		else
 		{

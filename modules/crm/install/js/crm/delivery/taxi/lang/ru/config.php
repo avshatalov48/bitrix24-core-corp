@@ -23,5 +23,5 @@ $MESS["TIMELINE_DELIVERY_TAXI_DELIVERY_SMS_PROVIDER_ISSUE_DETAIL"] = "SMS про
 $MESS["TIMELINE_DELIVERY_TAXI_DELIVERY_SMS_PROVIDER_SETUP"] = "Настроить";
 $MESS["TIMELINE_DELIVERY_TAXI_DELIVERY_RETURNED_FINISH_TITLE"] = "Водитель вернул груз";
 $MESS["TIMELINE_DELIVERY_TAXI_DELIVERY_RETURN"] = "ВОЗВРАТ";
-$MESS["TIMELINE_DELIVERY_TAXI_PAID_CANCELLATION"] = "Платная отмена заказа. Подробности можно узнать в личном кабинете Яндекс Go.";
+$MESS["TIMELINE_DELIVERY_TAXI_PAID_CANCELLATION"] = "Платная отмена заказа. Подробности можно узнать в личном кабинете Яндекс Доставка.";
 $MESS["TIMELINE_DELIVERY_TAXI_EXPECTED_PRICE_NOT_RECEIVED_FULL"] = "Расчетная стоимость не получена";

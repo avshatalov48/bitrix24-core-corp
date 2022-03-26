@@ -11,12 +11,15 @@ BX.Voximplant.Start = {
 	partnersGrid: null,
 	applicationUrlTemplate: '',
 	tariffsUrl: '',
+	crmFormCreateUrl: '',
+	crmFormListUrl: '',
 	isRestOnly: null,
 	balanceMenu: null,
 	isTelephonyAvailable: null,
 
 	balanceElements: [], // Element[]
 	lines: [],
+	crmIntegrationMenuItems: [],
 
 	init: function(config)
 	{
@@ -25,15 +28,19 @@ BX.Voximplant.Start = {
 		var mainMenuItems = BX.prop.getArray(config, "mainMenuItems", []);
 		var settingsMenuItems = BX.prop.getArray(config, "settingsMenuItems", []);
 		var partnersMenuItems = BX.prop.getArray(config, "partnersMenuItems", []);
+		var crmIntegrationMenuItems = BX.prop.getArray(config, "crmIntegrationMenuItems", []);
 
 		this.mainMenuItems = mainMenuItems.map(this.parseMenuItem, this);
 		this.settingsMenuItems = settingsMenuItems.map(this.parseMenuItem, this);
+		this.crmIntegrationMenuItems = crmIntegrationMenuItems.map(this.parseMenuItem, this);
 		this.partnersMenuItems = partnersMenuItems.map(this.parseMenuItem, this);
 		this.lines = config.lines;
 
 		this.applicationUrlTemplate = config.applicationUrlTemplate || '';
 		this.tariffsUrl = config.tariffsUrl || '';
 		this.isRestOnly = config.isRestOnly === 'Y';
+		this.crmFormListUrl = config.crmFormListUrl || '';
+		this.crmFormCreateUrl = config.crmFormCreateUrl || '';
 
 		if(this.mainMenuItems.length > 0)
 		{
@@ -59,6 +66,19 @@ BX.Voximplant.Start = {
 				itemType: 'BX.Voximplant.Start.TileGridItem3'
 			});
 			this.settingsGrid.draw();
+		}
+
+		if (this.crmIntegrationMenuItems.length > 0)
+		{
+			this.crmIntegrationGrid = new BX.TileGrid.Grid({
+				id: 'voximplant_grid_tile',
+				container: BX('voximplant-grid-crm-block'),
+				items: this.crmIntegrationMenuItems,
+				itemHeight: 98,
+				itemMinWidth: 179,
+				itemType: 'BX.Voximplant.Start.TileGridItem3'
+			});
+			this.crmIntegrationGrid.draw();
 		}
 
 		if(this.partnersMenuItems.length > 0)
@@ -530,7 +550,70 @@ BX.Voximplant.Start = {
 			cacheable: false
 		});
 	},
+	onCrmCallbackFormClick: function(e)
+	{
+		if (this.integrationConfigure)
+		{
+			this.integrationConfigure.close();
 
+			return;
+		}
+
+		var tile = BX.Voximplant.Start.crmIntegrationGrid.getItem('crmFormCallback').getContainer();
+		this.integrationConfigure = new BX.PopupMenuWindow(
+			'crm-form-integration',
+			tile,
+			[
+				{
+					text: BX.message("VOX_START_CRM_INTEGRATION_FORM_CREATE"),
+					onclick: this.onCrmCallbackFormCreateClick.bind(this)
+				},
+				{
+					text: BX.message("VOX_START_CRM_INTEGRATION_FORM_LIST"),
+					onclick: this.onCrmCallbackFormListClick.bind(this)
+				},
+				{
+					text: BX.message("VOX_START_CRM_INTEGRATION_FORM_HELP"),
+					onclick: this.onCrmCallbackFormHelpClick.bind(this)
+				}
+			],
+			{
+				events: {
+					onClose: function()
+					{
+						this.integrationConfigure.destroy();
+					}.bind(this),
+					onDestroy: function()
+					{
+						this.integrationConfigure = null;
+					}.bind(this)
+				}
+			}
+		);
+
+		this.integrationConfigure.show();
+	},
+	onCrmCallbackFormCreateClick: function(e)
+	{
+		top.location.href = this.crmFormCreateUrl;
+	},
+	onCrmCallbackFormListClick: function(e)
+	{
+		BX.SidePanel.Instance.open(
+			this.crmFormListUrl,
+			{
+				allowChangeHistory: false,
+			}
+		);
+	},
+	onCrmCallbackFormHelpClick: function(e)
+	{
+		top.BX.Helper.show("redirect=detail&code=6875449");
+	},
+	onCrmEmptyCallbackFormHelpClick: function(e)
+	{
+		top.BX.Helper.show("redirect=detail&code=6875449");
+	},
 	onSipPhonesButtonClick: function(e)
 	{
 		top.BX.Helper.show("redirect=detail&code=12932720");
@@ -860,7 +943,7 @@ BX.Voximplant.Start.TileGridItem2.prototype =
 		});
 
 		this.layout.description.appendChild(this.layout.descriptionWrapper);
-		
+
 		var nodeHeight = this.layout.description.offsetHeight;
 		var text = this.description;
 

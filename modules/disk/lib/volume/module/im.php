@@ -110,11 +110,11 @@ class Im extends Volume\Module\Module
 		}
 		if (count($storageListId) > 0 && count($folderListId) > 0)
 		{
-			$agr = new \Bitrix\Disk\Volume\Folder();
+			$agr = new \Bitrix\Disk\Volume\FolderTree;
 			$agr
 				->setOwner($this->getOwner())
 				->addFilter('@STORAGE_ID', $storageListId)
-				->addFilter('@PARENT_ID', $folderListId)
+				->addFilter('@FOLDER_ID', $folderListId)
 				->purify()
 				->measure(array(self::DISK_FILE));
 		}
@@ -281,11 +281,11 @@ class Im extends Volume\Module\Module
 
 				if (count($folderIds) > 0)
 				{
-					$folder = new Volume\Folder();
+					$folder = new Volume\FolderTree;
 					$folder
 						->setOwner($this->getOwner())
 						->addFilter('=STORAGE_ID', $storage->getId())
-						->addFilter('@PARENT_ID', $folderIds)
+						->addFilter('@FOLDER_ID', $folderIds)
 						->loadTotals();
 
 					if ($folder->getTotalCount() > 0)
@@ -321,69 +321,64 @@ class Im extends Volume\Module\Module
 	 */
 	public static function getFragment(array $filter)
 	{
-		if($filter['INDICATOR_TYPE'] == Volume\Folder::className())
+		if ($filter['INDICATOR_TYPE'] == Volume\Folder::className() || $filter['INDICATOR_TYPE'] == Volume\FolderTree::className())
 		{
 			if (\Bitrix\Main\Loader::includeModule(self::getModuleId()))
 			{
-				$chatList = \Bitrix\Im\Model\ChatTable::getList(array(
-					'select' => array(
-						'ID' => 'ID',
-						//'TITLE' => 'TITLE',
-						//'AVATAR' => 'AVATAR',
-						//'AUTHOR_ID' => 'AUTHOR_ID',
-						//'COLOR' => 'COLOR',
-						//'CHAT_TYPE' => 'TYPE',
-						//'AUTHOR_NAME' => 'AUTHOR.NAME',
-						//'AUTHOR_LAST_NAME' => 'AUTHOR.LAST_NAME',
-					),
-					'filter' => Array('=DISK_FOLDER_ID' => $filter['FOLDER_ID'])
-				));
+				$chatList = \Bitrix\Im\Model\ChatTable::getList([
+					'select' => ['ID'],
+					'filter' => ['=DISK_FOLDER_ID' => $filter['FOLDER_ID']]
+				]);
 				if ($chat = $chatList->fetch())
 				{
 					$chatId = $chat['ID'];
 
 					// Chat specific
-					$chatData = \CIMChat::GetChatData(array('ID' => $chatId, 'PHOTO_SIZE' => 50));
-
-					if ($chatData['chat'][$chatId]['avatar'] === '/bitrix/js/im/images/blank.gif')
+					$chatData = \CIMChat::getChatData(['ID' => $chatId, 'PHOTO_SIZE' => 50]);
+					if ($chatData && isset($chatData['chat'], $chatData['chat'][$chatId]))
 					{
-						$chatData['chat'][$chatId]['avatar'] = '';
-					}
-					if ($chatData['chat'][$chatId]['owner'] > 0)
-					{
-						$chatOwner = \Bitrix\Im\User::getInstance($chatData['chat'][$chatId]['owner']);
-						if ($chatOwner instanceof \Bitrix\Im\User)
+						if ($chatData['chat'][$chatId]['avatar'] === '/bitrix/js/im/images/blank.gif')
 						{
-							$chatData['chat'][$chatId]['owner_name'] = $chatOwner->getFullName();
-
-							if ($chatOwner->isActive() !== true)
+							$chatData['chat'][$chatId]['avatar'] = '';
+						}
+						if ($chatData['chat'][$chatId]['owner'] > 0)
+						{
+							$chatOwner = \Bitrix\Im\User::getInstance($chatData['chat'][$chatId]['owner']);
+							if ($chatOwner instanceof \Bitrix\Im\User)
 							{
-								// user fired
-								Loc::loadMessages(__DIR__.'/socialnetwork.php');
+								$chatData['chat'][$chatId]['owner_name'] = $chatOwner->getFullName();
 
-								if ($chatOwner->getGender() === 'F')
+								if ($chatOwner->isActive() !== true)
 								{
-									$chatData['chat'][$chatId]['owner_name'] = Loc::getMessage(
-										'DISK_VOLUME_MODULE_SONET_FIRED_F',
-										array('#USER_NAME#' => $chatData['chat'][$chatId]['owner_name'])
-									);
-								}
-								else
-								{
-									$chatData['chat'][$chatId]['owner_name'] = Loc::getMessage(
-										'DISK_VOLUME_MODULE_SONET_FIRED_M',
-										array('#USER_NAME#' => $chatData['chat'][$chatId]['owner_name'])
-									);
+									// user fired
+									Loc::loadMessages(__DIR__.'/socialnetwork.php');
+
+									if ($chatOwner->getGender() === 'F')
+									{
+										$chatData['chat'][$chatId]['owner_name'] = Loc::getMessage(
+											'DISK_VOLUME_MODULE_SONET_FIRED_F',
+											['#USER_NAME#' => $chatData['chat'][$chatId]['owner_name']]
+										);
+									}
+									else
+									{
+										$chatData['chat'][$chatId]['owner_name'] = Loc::getMessage(
+											'DISK_VOLUME_MODULE_SONET_FIRED_M',
+											['#USER_NAME#' => $chatData['chat'][$chatId]['owner_name']]
+										);
+									}
 								}
 							}
 						}
+						$filter['SPECIFIC'] = [
+							'chat' => $chatData['chat'][$chatId],
+						];
+						if (is_array($chatData['userInChat'][$chatId]))
+						{
+							$filter['SPECIFIC']['userInChat'] = $chatData['userInChat'][$chatId];
+							$filter['SPECIFIC']['userCount'] = count($chatData['userInChat'][$chatId]);
+						}
 					}
-
-					$filter['SPECIFIC'] = array(
-						'chat' => $chatData['chat'][$chatId],
-						'userInChat' => $chatData['userInChat'][$chatId],
-						'userCount' => count($chatData['userInChat'][$chatId]),
-					);
 				}
 			}
 
@@ -399,7 +394,7 @@ class Im extends Volume\Module\Module
 	 */
 	public static function getTitle(Volume\Fragment $fragment)
 	{
-		if($fragment->getIndicatorType() == Volume\Folder::className())
+		if ($fragment->getIndicatorType() == Volume\Folder::className() || $fragment->getIndicatorType() == Volume\FolderTree::className())
 		{
 			$specific = $fragment->getSpecific();
 			if ($specific['chat']['TITLE'] != '')
@@ -446,7 +441,7 @@ class Im extends Volume\Module\Module
 	public static function getUpdateTime(Volume\Fragment $fragment)
 	{
 		$timestampUpdate = null;
-		if($fragment->getIndicatorType() == Volume\Folder::className())
+		if ($fragment->getIndicatorType() == Volume\Folder::className() || $fragment->getIndicatorType() == Volume\FolderTree::className())
 		{
 			$specific = $fragment->getSpecific();
 			if ($specific['chat']['LAST_MESSAGE_ID'] > 0)

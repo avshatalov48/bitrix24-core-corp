@@ -957,6 +957,16 @@ export class Manager
 		Manager.openHelper(event, 'redirect=detail&code=11274792', 'pay_deal');
 	}
 
+	static openHowPayDynamicEntityWorks(event)
+	{
+		Manager.openHelper(event, 'redirect=detail&code=11274792', 'pay_dynamic_entity');
+	}
+
+	static openHowPaySmartInvoiceWorks(event)
+	{
+		Manager.openHelper(event, 'redirect=detail&code=11274792', 'pay_smart_invoice');
+	}
+
 	static openFormPagesHelp(event)
 	{
 		Manager.openHelper(event, 'redirect=detail&code=9606749', 'forms');

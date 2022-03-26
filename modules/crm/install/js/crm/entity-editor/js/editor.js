@@ -574,7 +574,7 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 					enableFocusGain: !this._isEmbedded
 				};
 
-			if(i === 0 && enableInlineEditSpotlight && mode === BX.UI.EntityEditorMode.view)
+			if(i === 0 && enableInlineEditSpotlight && mode === BX.UI.EntityEditorMode.view && !this.isReadOnly())
 			{
 				layoutOptions["lighting"] =
 					{
@@ -929,6 +929,8 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 
 		if(redirectUrl !== "" && !this._isEmbedded)
 		{
+			eventParams.redirectUrl = redirectUrl;
+			BX.onCustomEvent(window, "beforeCrmEntityRedirect", [eventParams]);
 			window.location.replace(
 				BX.util.add_url_param(
 					redirectUrl,
@@ -966,7 +968,10 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 			}
 
 			this.refreshLayout({ reset: true });
-			this.hideToolPanel();
+			if (!this.isToolPanelAlwaysVisible())
+			{
+				this.hideToolPanel();
+			}
 		}
 	};
 	BX.Crm.EntityEditor.prototype.onAfterFormSubmit = function(sender, eventArgs)

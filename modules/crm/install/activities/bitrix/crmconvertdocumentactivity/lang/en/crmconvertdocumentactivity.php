@@ -1,5 +1,5 @@
 <?php
-$MESS["CRM_CVTDA_ALREADY_CONVERTED"] = "Document is already converted. Operation has been aborted.";
+$MESS["CRM_CVTDA_ALREADY_CONVERTED_1"] = "Element is already converted. Operation has been aborted.";
 $MESS["CRM_CVTDA_COMPANY"] = "Company";
 $MESS["CRM_CVTDA_CONTACT"] = "Contact";
 $MESS["CRM_CVTDA_DEAL"] = "Deal";

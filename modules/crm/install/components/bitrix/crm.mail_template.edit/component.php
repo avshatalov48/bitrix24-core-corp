@@ -296,16 +296,30 @@ $arResult['FIELDS']['tab_1'][] = array(
 	'VALUE' => isset($element['SUBJECT']) ? htmlspecialcharsbx($element['SUBJECT']) : ''
 );
 
-$arResult['OWNER_TYPES'] = CCrmOwnerType::GetDescriptions(
-	array(
-		CCrmOwnerType::Lead,
-		CCrmOwnerType::Deal,
-		CCrmOwnerType::Contact,
-		CCrmOwnerType::Company,
-		CCrmOwnerType::Invoice,
-		CCrmOwnerType::Quote,
-	)
-);
+$types = [
+	CCrmOwnerType::Lead,
+	CCrmOwnerType::Deal,
+	CCrmOwnerType::Contact,
+	CCrmOwnerType::Company,
+	CCrmOwnerType::Quote,
+];
+if (\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
+{
+	$types[] = \CCrmOwnerType::Invoice;
+}
+$types[] = \CCrmOwnerType::SmartInvoice;
+$typesMap = \Bitrix\Crm\Service\Container::getInstance()->getDynamicTypesMap()->load([
+	'isLoadStages' => false,
+	'isLoadCategories' => false,
+]);
+foreach ($typesMap->getTypes() as $type)
+{
+	if ($type->getIsClientEnabled())
+	{
+		$types[] = $type->getEntityTypeId();
+	}
+}
+$arResult['OWNER_TYPES'] = CCrmOwnerType::GetDescriptions($types);
 
 $arResult['FIELDS']['tab_1'][] = array(
 	'ID' => 'ENTITY_TYPE_ID',

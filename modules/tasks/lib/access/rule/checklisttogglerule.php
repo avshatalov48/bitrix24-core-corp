@@ -33,6 +33,11 @@ class ChecklistToggleRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return true;
 		}
 
+		if ($task instanceof TemplateModel)
+		{
+			return $this->controller->check(ActionDictionary::ACTION_CHECKLIST_EDIT, $task, $params);
+		}
+
 		$checklist = $this->getModelFromParams($params);
 		if ($checklist->getEntityId() !== $task->getId())
 		{

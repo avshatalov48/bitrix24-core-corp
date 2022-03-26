@@ -64,6 +64,9 @@ export class Settings
 
 				return this.render();
 			})
+			.catch((response) => {
+				this.requestSender.showErrorAlert(response);
+			})
 		;
 	}
 
@@ -166,6 +169,7 @@ export class Settings
 		const loader = this.showLoader(listContainer);
 
 		this.requestSender.getChecklist({
+			groupId: this.groupId,
 			typeId: type.getId()
 		})
 		.then((response) => {
@@ -285,6 +289,7 @@ export class Settings
 		}
 
 		return this.requestSender.saveSettings({
+			groupId: this.groupId,
 			typeId: type.getId(),
 			requiredOption: this.getRequiredOptionValue(),
 			items: this.getChecklistItems()

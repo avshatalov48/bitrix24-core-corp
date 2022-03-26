@@ -79,6 +79,11 @@ class Item extends BaseItem
 		{
 			this.value.changeablePrice = true;
 		}
+
+		if (!options.price && !options.label && !options.value)
+		{
+			this.selected = false;
+		}
 	}
 
 	get price()
@@ -136,6 +141,11 @@ class Item extends BaseItem
 	getDiscounts(): Number
 	{
 		return this.discount * this.value.quantity;
+	}
+
+	getComparableValue(): ?string
+	{
+		return this.value.id + '';
 	}
 }
 

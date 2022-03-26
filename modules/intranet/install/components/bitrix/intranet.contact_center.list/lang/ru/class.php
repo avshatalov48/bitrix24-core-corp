@@ -1,2 +1,5 @@
 <?php
 $MESS["ICCL_MARKETPLACE_APPLICATION_NOT_FOUND_ERROR"] = "Приложение не найдено";
+$MESS["CONTACT_CENTER_CRM_FORMS_CREATE"] = "Создать форму";
+$MESS["CONTACT_CENTER_CRM_FORMS_VIEW_ALL"] = "Список форм";
+$MESS["CONTACT_CENTER_CRM_FORMS_HELP"] = "Как это работает";

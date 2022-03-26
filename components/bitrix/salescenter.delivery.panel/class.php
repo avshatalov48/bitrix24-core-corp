@@ -10,6 +10,7 @@ use Bitrix\Main,
 	Bitrix\Rest,
 	Bitrix\SalesCenter;
 use Bitrix\Sale\Delivery\Services\Table;
+use Bitrix\SalesCenter\Integration\SaleManager;
 
 /**
  * Class SalesCenterDeliveryPanel
@@ -55,10 +56,16 @@ class SalesCenterDeliveryPanel extends CBitrixComponent implements Main\Engine\C
 	{
 		if(!Loader::includeModule('salescenter'))
 		{
-			ShowError(Loc::getMessage('SDP_SALESCENTER_MODULE_ERROR'));
+			$this->showError(Loc::getMessage('SDP_SALESCENTER_MODULE_ERROR'));
 			return;
 		}
 		Loader::includeModule('sale');
+
+		if(!SaleManager::getInstance()->isManagerAccess(true))
+		{
+			$this->showError(Loc::getMessage('SDP_ACCESS_DENIED'));
+			return;
+		}
 
 		$this->prepareResult();
 

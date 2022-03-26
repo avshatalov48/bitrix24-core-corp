@@ -24,8 +24,7 @@ class TaskModel
 		$members,
 		$groupId,
 		$status,
-		$group,
-		$isDeleted;
+		$group;
 
 	/**
 	 * @param int $taskId

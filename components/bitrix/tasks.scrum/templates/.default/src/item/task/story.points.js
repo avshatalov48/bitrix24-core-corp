@@ -1,4 +1,4 @@
-import {Event, Tag, Text, Dom} from 'main.core';
+import {Event, Tag, Text, Dom, Loc} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 
 import {StoryPointsStorage} from '../../utility/story.points.storage';
@@ -23,7 +23,10 @@ export class StoryPoints  extends EventEmitter
 		const value = Text.encode(this.storyPointsStorage.getPoints());
 
 		this.node = Tag.render`
-			<div class="tasks-scrum__item--story-points ${this.storyPointsStorage.isEmpty() ? '--empty' : ''}">
+			<div
+				class="tasks-scrum__item--story-points ${this.storyPointsStorage.isEmpty() ? '--empty' : ''}"
+				title="${Loc.getMessage('TASKS_SCRUM_SPRINT_HEADER_STORY_POINTS')}"
+			>
 				<div class="tasks-scrum__item--story-points-content">
 					<div class="tasks-scrum__item--story-points-element">
 						${this.storyPointsStorage.isEmpty() ? '-' : value}

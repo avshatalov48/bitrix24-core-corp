@@ -236,7 +236,7 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 
 	protected function parseComponentVariables(): void
 	{
-		if (!\Bitrix\Catalog\Config\State::isProductCardSliderEnabled())
+		if (!\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isFullCatalogEnabled())
 		{
 			LocalRedirect(CComponentEngine::MakePathFromTemplate($this->arParams['PATH_TO_PRODUCT_LIST']));
 		}

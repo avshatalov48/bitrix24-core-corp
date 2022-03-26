@@ -55,7 +55,7 @@ class OneDriveResumableUpload extends ResumableUpload
 		$this->setBearer($http);
 		$http->setHeader('Content-Type', 'application/json; charset=UTF-8');
 
-		$postFields = json_encode($this->getPostFieldsForUpload($this->fileData));
+		$postFields = Json::encode($this->getPostFieldsForUpload($this->fileData));
 		if($http->post($this->uploadPath . static::SUFFIX_TO_CREATE_UPLOAD_SESSION, $postFields) === false)
 		{
 			$errorString = implode('; ', array_keys($http->getError()));

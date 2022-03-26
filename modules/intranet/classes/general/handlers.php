@@ -1923,7 +1923,7 @@ RegisterModuleDependences('main', 'OnBeforeProlog', 'intranet', 'CIntranetEventH
 			);
 			$menuItem["ID"] = crc32($menuItem["LINK"]);
 
-			$adminOption = COption::GetOptionString("intranet", "left_menu_items_to_all_".SITE_ID);
+			$adminOption = COption::GetOptionString("intranet", "left_menu_items_marketplace_".SITE_ID);
 
 			if (!empty($adminOption))
 			{
@@ -1956,7 +1956,7 @@ RegisterModuleDependences('main', 'OnBeforeProlog', 'intranet', 'CIntranetEventH
 				$adminOption = array($menuItem);
 			}
 
-			COption::SetOptionString("intranet", "left_menu_items_to_all_".SITE_ID, serialize($adminOption), false, SITE_ID);
+			COption::SetOptionString("intranet", "left_menu_items_marketplace_".SITE_ID, serialize($adminOption), false, SITE_ID);
 
 			if (defined("BX_COMP_MANAGED_CACHE"))
 			{
@@ -1983,7 +1983,7 @@ RegisterModuleDependences('main', 'OnBeforeProlog', 'intranet', 'CIntranetEventH
 			$itemId =  crc32(SITE_DIR."marketplace/app/".$appInfo["ID"]."/");
 			$itemIdCode =  crc32(SITE_DIR."marketplace/app/".$appInfo["CODE"]."/");
 
-			$adminOption = COption::GetOptionString("intranet", "left_menu_items_to_all_".SITE_ID);
+			$adminOption = COption::GetOptionString("intranet", "left_menu_items_marketplace_".SITE_ID);
 
 			if (!empty($adminOption))
 			{
@@ -1995,12 +1995,12 @@ RegisterModuleDependences('main', 'OnBeforeProlog', 'intranet', 'CIntranetEventH
 						unset($adminOption[$key]);
 						if (empty($adminOption))
 						{
-							COption::RemoveOption("intranet", "left_menu_items_to_all_".SITE_ID);
+							COption::RemoveOption("intranet", "left_menu_items_marketplace_".SITE_ID);
 							break;
 						}
 						else
 						{
-							COption::SetOptionString("intranet", "left_menu_items_to_all_".SITE_ID, serialize($adminOption), false, SITE_ID);
+							COption::SetOptionString("intranet", "left_menu_items_marketplace_".SITE_ID, serialize($adminOption), false, SITE_ID);
 						}
 					}
 				}

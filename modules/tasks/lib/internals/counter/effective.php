@@ -34,84 +34,76 @@ class EffectiveTable extends DataManager
 
 	public static function getMap()
 	{
-		return array(
-			'ID' => array(
+		return [
+			'ID' => [
 				'data_type' => 'integer',
 				'primary' => true,
-				'autocomplete' => true
-			),
-
-			'DATETIME' => array(
+				'autocomplete' => true,
+			],
+			'DATETIME' => [
 				'data_type' => 'datetime',
-				'required' => true
-			),
-			'DATETIME_REPAIR' => array(
-				'data_type' => 'datetime',
-				'required' => false
-			),
-			'USER_TYPE' => array(
-				'data_type' => 'string',
-				'required' => false
-			),
-			'USER_ID' => array(
-				'data_type' => 'integer',
-				'required' => true
-			),
-			'GROUP_ID' => array(
-				'data_type' => 'integer',
-				'required' => false
-			),
-
-			'EFFECTIVE' => array(
-				'data_type' => 'integer'
-			),
-
-			'TASK_ID' => array(
-				'data_type' => 'integer',
-				'required' => false
-			),
-
-			'TASK_TITLE' => array(
-				'data_type' => 'string',
-				'required' => false,
-				'default' => 'N'
-			),
-			'TASK_DEADLINE' => array(
+				'required' => true,
+			],
+			'DATETIME_REPAIR' => [
 				'data_type' => 'datetime',
 				'required' => false,
-				'default' => 'N'
-			),
-
-
-			'IS_VIOLATION' => array(
+			],
+			'USER_ID' => [
+				'data_type' => 'integer',
+				'required' => true,
+			],
+			'USER_TYPE' => [
 				'data_type' => 'string',
 				'required' => false,
-				'default'=> 'N'
-			),
-
+			],
+			'GROUP_ID' => [
+				'data_type' => 'integer',
+				'required' => false,
+			],
+			'EFFECTIVE' => [
+				'data_type' => 'integer',
+			],
+			'TASK_ID' => [
+				'data_type' => 'integer',
+				'required' => false,
+			],
+			'TASK_TITLE' => [
+				'data_type' => 'string',
+				'required' => false,
+				'default' => 'N',
+				'save_data_modification' => ['\Bitrix\Main\Text\Emoji', 'getSaveModificator'],
+				'fetch_data_modification' => ['\Bitrix\Main\Text\Emoji', 'getFetchModificator'],
+			],
+			'TASK_DEADLINE' => [
+				'data_type' => 'datetime',
+				'required' => false,
+				'default' => 'N',
+			],
+			'IS_VIOLATION' => [
+				'data_type' => 'string',
+				'required' => false,
+				'default'=> 'N',
+			],
 			// references
-			'USER' => array(
+			'USER' => [
 				'data_type' => 'Bitrix\Main\UserTable',
-				'reference' => array('=this.USER_ID' => 'ref.ID')
-			),
-
-			'GROUP' => array(
+				'reference' => ['=this.USER_ID' => 'ref.ID'],
+			],
+			'GROUP' => [
 				'data_type' => 'Bitrix\Socialnetwork\WorkgroupTable',
-				'reference' => array('=this.GROUP_ID' => 'ref.ID')
-			),
-
-			'TASK' => array(
+				'reference' => ['=this.GROUP_ID' => 'ref.ID'],
+			],
+			'TASK' => [
 				'data_type' => 'Bitrix\Tasks\TaskTable',
-				'reference' => array('=this.TASK_ID' => 'ref.ID')
-			),
-
-			'RECYCLE' => array(
+				'reference' => ['=this.TASK_ID' => 'ref.ID'],
+			],
+			'RECYCLE' => [
 				'data_type' => 'Bitrix\Recyclebin\Internals\Models\RecyclebinTable',
 				'reference' => [
 					'=ref.ENTITY_TYPE' => ['?', Manager::TASKS_RECYCLEBIN_ENTITY],
-					'=this.TASK_ID' => 'ref.ENTITY_ID'
-				]
-			)
-		);
+					'=this.TASK_ID' => 'ref.ENTITY_ID',
+				],
+			],
+		];
 	}
 }

@@ -6,8 +6,8 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
 $cmpParams = [
 	'ENTITY_TYPE_ID' => CCrmOwnerType::Deal,
-	'ENTITY_CATEGORY' => isset($arResult['VARIABLES']['category_id'])
-		? $arResult['VARIABLES']['category_id'] : 0,
+	'ENTITY_CATEGORY' => $arResult['VARIABLES']['category_id'] ?? 0,
+	'ENTITY_ID' => isset($_GET['id']) ? (int)$_GET['id'] : null,
 	'SET_TITLE' => 'Y'
 ];
 
@@ -17,19 +17,37 @@ if ($_REQUEST['IFRAME'] == 'Y' && $_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER')
 	$APPLICATION->IncludeComponent(
 		'bitrix:ui.sidepanel.wrapper',
 		'',
-		array(
+		[
 			'POPUP_COMPONENT_NAME' => 'bitrix:crm.config.automation',
 			'POPUP_COMPONENT_TEMPLATE_NAME' => '',
-			'POPUP_COMPONENT_PARAMS' => $cmpParams
-		)
+			'POPUP_COMPONENT_PARAMS' => $cmpParams,
+			'POPUP_COMPONENT_USE_BITRIX24_THEME' => 'Y',
+			'DEFAULT_THEME_ID' => 'light:robots',
+			'USE_PADDING' => false,
+		]
 	);
 }
 else
 {
-	$APPLICATION->IncludeComponent(
-		'bitrix:crm.config.automation',
-		'',
-		$cmpParams
-	);
+	include 'list.php';
+	Bitrix\Main\UI\Extension::load('sidepanel');
+	?>
+	<script>
+		BX.ready(function()
+		{
+			var a = document.querySelector('.crm-robot-btn');
+			if (a && BX.SidePanel)
+			{
+				var url = a.href;
+
+				<?php if (!empty($_GET['id'])): ?>
+				url += '?id=<?=(int)$_GET['id']?>';
+				<?php endif ?>
+
+				BX.SidePanel.Instance.open(url, { customLeftBoundary: 0 });
+			}
+		});
+	</script>
+	<?php
 }
 

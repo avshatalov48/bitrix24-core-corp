@@ -5,10 +5,6 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 if(!CModule::IncludeModule("intranet"))
 	return;
 
-$arCurPhpVer = Explode(".", PhpVersion());
-if (intval($arCurPhpVer[0]) < 5)
-	return;
-
 \Bitrix\Main\Entity\Base::destroy(\Bitrix\Main\UserTable::getEntity());
 
 COption::SetOptionString("intranet", "iblock_type", "structure");

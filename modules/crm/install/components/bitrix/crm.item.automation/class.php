@@ -24,6 +24,7 @@ class CrmItemAutomation extends \Bitrix\Crm\Component\Base
 	{
 		$this->fillParameterFromRequest('categoryId', $arParams);
 		$this->fillParameterFromRequest('entityTypeId', $arParams);
+		$this->fillParameterFromRequest('id', $arParams);
 
 		return parent::onPrepareComponentParams($arParams);
 	}
@@ -32,6 +33,11 @@ class CrmItemAutomation extends \Bitrix\Crm\Component\Base
 	{
 		parent::init();
 		if ($this->getErrors())
+		{
+			return;
+		}
+
+		if (!$this->isIframe())
 		{
 			return;
 		}
@@ -88,9 +94,12 @@ class CrmItemAutomation extends \Bitrix\Crm\Component\Base
 			return false;
 		}
 
-		$this->arResult['DOCUMENT_NAME'] = CCrmBizProcHelper::ResolveDocumentName($this->entityTypeId);
-		$this->arResult['DOCUMENT_TYPE'] = CCrmOwnerType::ResolveName($this->entityTypeId);
-		$this->arResult['DOCUMENT_ID'] = $this->arResult['DOCUMENT_TYPE'] . '_' . 0;
+		if (!$this->isIframe())
+		{
+			$this->includeComponentTemplate('list');
+			return false;
+		}
+
 		$this->arResult['ENTITY_TYPE_ID'] = $this->entityTypeId;
 		$this->arResult['PAGE_TITLE'] = Loc::getMessage('CRM_ITEM_AUTOMATION_TITLE', [
 			'#ENTITY#' => htmlspecialcharsbx($this->description),

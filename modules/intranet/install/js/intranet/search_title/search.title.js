@@ -562,11 +562,12 @@ BX.Intranet.SearchTitle = function(arParams)
 		var crmLead= [];
 		var crmQuote= [];
 		var crmInvoice= [];
+		var crmSmartInvoice = [];
 		var crmDynamic = [];
 		var diskItems= [];
 		var taskItems= [];
 		var crmContactMore = false, crmCompanyMore = false, crmDealMore = false, crmLeadMore = false,
-			crmInvoiceMore = false, crmQuoteMore = false, diskMore = false, taskMore = false;
+			crmInvoiceMore = false, crmSmartInvoiceMore = false, crmQuoteMore = false, diskMore = false, taskMore = false;
 
 		var itemsData = result && result.data && BX.type.isArray(result.data.items) ? result.data.items : [];
 		for (var i = 0; i < itemsData.length; i++)
@@ -643,6 +644,17 @@ BX.Intranet.SearchTitle = function(arParams)
 				else
 				{
 					crmInvoiceMore = true;
+				}
+			}
+			else if (itemData.type === 'SMART_INVOICE')
+			{
+				if (crmSmartInvoice.length < 10)
+				{
+					crmSmartInvoice.push(item);
+				}
+				else
+				{
+					crmSmartInvoiceMore = true;
 				}
 			}
 			else if (itemData.module === 'crm' && itemData.type.indexOf('DYNAMIC_') === 0)
@@ -740,12 +752,25 @@ BX.Intranet.SearchTitle = function(arParams)
 			BX.firstChild(_this.RESULT).insertBefore(moreBlock, BX("search-title-block-tools"));
 		}
 
-		this.BuildEntityBlock(crmInvoice, "CRM: " + BX.message("SEARCH_CRM_INVOICE"), "invoice", limits.invoice);
+		var invoiceCaption = BX.prop.getString(this.arParams.GLOBAL_SEARCH_CATEGORIES['invoice'], 'text', '');
+		this.BuildEntityBlock(crmInvoice, "CRM: " + invoiceCaption, "invoice", limits.invoice);
 		if (crmInvoiceMore)
 		{
 			item = {
 				"URL": this.arParams.GLOBAL_SEARCH_CATEGORIES["invoice"]["url"] + this.INPUT.value,
 				"ITEM_ID": "invoice_more"
+			};
+			var moreBlock = this.BuildMoreBlock(item);
+			BX.firstChild(_this.RESULT).insertBefore(moreBlock, BX("search-title-block-tools"));
+		}
+
+		var smartInvoiceCaption = BX.prop.getString(this.arParams.GLOBAL_SEARCH_CATEGORIES['smart_invoice'], 'text', '');
+		this.BuildEntityBlock(crmSmartInvoice, "CRM: " + smartInvoiceCaption, "smart_invoice", limits['smart_invoice']);
+		if (crmSmartInvoiceMore)
+		{
+			item = {
+				"URL": this.arParams.GLOBAL_SEARCH_CATEGORIES["smart_invoice"]["url"] + this.INPUT.value,
+				"ITEM_ID": "smart_invoice_more"
 			};
 			var moreBlock = this.BuildMoreBlock(item);
 			BX.firstChild(_this.RESULT).insertBefore(moreBlock, BX("search-title-block-tools"));

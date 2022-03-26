@@ -745,18 +745,6 @@ BX.namespace('Tasks.Util');
 				}
 			},
 
-            getQuery: function()
-            {
-                if(!this.instances.query)
-                {
-                    this.instances.query = new BX.Tasks.Util.Query({
-                        autoExec: true
-                    });
-                }
-
-                return this.instances.query;
-            },
-
             checkCanSync: function()
             {
                 return this.option('autoSync') && !this.vars.syncLock;
@@ -772,8 +760,7 @@ BX.namespace('Tasks.Util');
 
             syncAll: function(items)
             {
-                //var q = this.getQuery();
-                // do smth
+
             },
 
             extractItemValue: function(data)

@@ -1,1 +1,4 @@
-<? return ["stress"];
+<?
+return [
+	'extensions' => ['stress'],
+];

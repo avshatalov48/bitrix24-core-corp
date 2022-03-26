@@ -58,20 +58,61 @@ class Cleaner
 	/** @var int */
 	private $status = -1;
 
-	const TASK_STATUS_NONE = 0;
-	const TASK_STATUS_WAIT = 1;
-	const TASK_STATUS_RUNNING = 2;
-	const TASK_STATUS_DONE = 3;
-	const TASK_STATUS_CANCEL = 4;
+	public const TASK_STATUS_NONE = 0;
+	public const TASK_STATUS_WAIT = 1;
+	public const TASK_STATUS_RUNNING = 2;
+	public const TASK_STATUS_DONE = 3;
+	public const TASK_STATUS_CANCEL = 4;
 
-	const DROP_ENTITY = 'DROP_ENTITY';
-	const DROP_FILE = 'DROP_FILE';
-	const DROP_EVENT = 'DROP_EVENT';
-	const DROP_ACTIVITY = 'DROP_ACTIVITY';
+	public const DROP_ENTITY = 'DROP_ENTITY';
+	public const DROP_FILE = 'DROP_FILE';
+	public const DROP_EVENT = 'DROP_EVENT';
+	public const DROP_ACTIVITY = 'DROP_ACTIVITY';
 
 	// interval agent start
-	const AGENT_INTERVAL = 10;
+	public const AGENT_INTERVAL = 60;
 
+	/**
+	 * Disable agent run.
+	 * @var bool
+	 */
+	private static $runLock = false;
+
+	/**
+	 * Runs clean process.
+	 *
+	 * @param int $taskId Id of saved indicator result from b_disk_volume.
+	 *
+	 * @return string
+	 */
+	public static function isAllowRun($taskId)
+	{
+		// only one interaction per hit
+		if (self::isCronRun() === false)
+		{
+			if (self::$runLock === true)
+			{
+				// do nothing, repeat
+				return false;
+			}
+		}
+
+		// allow only one running task
+		$workerResult = Crm\VolumeTable::getList([
+			'select' => ['ID'],
+			'filter' => [
+				'!=ID' => $taskId,
+				'=AGENT_LOCK' => self::TASK_STATUS_RUNNING,
+			],
+			'limit' => 1,
+		]);
+		if ($workerResult->fetch())
+		{
+			return false;
+		}
+
+		return true;
+	}
 
 	/**
 	 * Runs clean process.
@@ -82,51 +123,48 @@ class Cleaner
 	 */
 	public static function runWorker($taskId)
 	{
-		// only one interaction per hit
-		if (self::isCronRun() === false)
+		if (!self::isAllowRun($taskId))
 		{
-			if (defined(__NAMESPACE__ . '\\CLEANER_RUN_WORKER_LOCK'))
-			{
-				// do nothing, repeat
-				return static::agentName($taskId);
-			}
+			// do nothing, repeat
+			return static::agentName($taskId);
 		}
 
 		$cleaner = new static();
 		if ($cleaner->loadTaskById($taskId) === false)
 		{
+			self::countWorker($cleaner->getOwnerId());
 			return '';// task not found
 		}
 
 		if (self::isRunningMode($cleaner->getStatus()) === false)
 		{
-			return '';// non running state
+			self::countWorker($cleaner->getOwnerId());
+			return '';// non-running state
 		}
 
 		$indicator = $cleaner->getIndicator();
-		if (!$indicator instanceof Volume\IVolumeIndicator)
+		if (
+			!$indicator instanceof Volume\IVolumeIndicator
+			|| !$indicator instanceof Volume\IVolumeClear
+		)
 		{
+			$cleaner->setStatus(self::TASK_STATUS_DONE)->fixState();
+			self::countWorker($cleaner->getOwnerId());
 			return '';
 		}
 
-		if (!$indicator instanceof Volume\IVolumeClear)
-		{
-			return '';
-		}
-
-		// running on hint
 		if (self::isCronRun())
 		{
+			// cron running
 			$indicator->startTimer(3600);
 		}
 		else
 		{
-			$indicator->startTimer();
-		}
+			// running on hint
+			$indicator->startTimer(300);
 
-		if (!defined(__NAMESPACE__ . '\\CLEANER_RUN_WORKER_LOCK'))
-		{
-			define(__NAMESPACE__ . '\\CLEANER_RUN_WORKER_LOCK', true);
+			// block further agent executions
+			self::$runLock = true;
 		}
 
 		if ($cleaner->getStatus() != self::TASK_STATUS_RUNNING)
@@ -174,36 +212,47 @@ class Cleaner
 			{
 				if (!$indicator->canClearEntity())
 				{
-					$cleaner->setLastError('Indicator can not drop entity');
-					$cleaner->raiseFatalError();
+					$cleaner->setLastError('Indicator can not drop entity')->raiseFatalError();
+					$taskDone = true;
 					break;
 				}
 
 				$countLeft = $cleaner->getCountToDrop($subTask) - $cleaner->getDroppedCount($subTask) - $cleaner->getFailCount();
+				if ($countLeft <= 0)
+				{
+					$taskDone = true;
+					break;
+				}
 				if ($countLeft <= $indicator::MAX_ENTITY_PER_INTERACTION)
 				{
-					$cleaner->setIterationCount($indicator->countEntity());
+					$countLeft = $indicator->countEntity();
+					if ($countLeft <= 0)
+					{
+						$taskDone = true;
+						break;
+					}
+					$cleaner->setIterationCount($countLeft);
 				}
 				else
 				{
 					$cleaner->setIterationCount($indicator::MAX_ENTITY_PER_INTERACTION);
 				}
 
-				if ($indicator->clearEntity())
+				$dropped = $indicator->clearEntity();
+				if ($dropped >= 0)
 				{
 					$taskDone = $cleaner->hasTaskFinished($subTask);
 				}
-				else
+				elseif ($indicator->hasErrors())
 				{
-					if ($indicator->hasTimeLimitReached())
-					{
-						$taskDone = false;
-					}
+					$cleaner->raiseFatalError();
+					$taskDone = true;
 				}
 
-				$cleaner->setLastId($indicator->getProcessOffset());
-				$cleaner->setDroppedCount($subTask, $indicator->getDroppedEntityCount());
-				$cleaner->setFailCount($indicator->getFailCount());
+				$cleaner
+					->setLastId($indicator->getProcessOffset())
+					->setDroppedCount($subTask, $indicator->getDroppedEntityCount())
+					->setFailCount($indicator->getFailCount());
 
 				if ($indicator->hasErrors())
 				{
@@ -221,42 +270,53 @@ class Cleaner
 			{
 				if (!($indicator instanceof Volume\IVolumeClearFile))
 				{
-					$cleaner->setLastError('Wrong parameter indicatorId');
-					$cleaner->raiseFatalError();
+					$cleaner->setLastError('Wrong parameter indicatorId')->raiseFatalError();
+					$taskDone = true;
 					break;
 				}
 				if (!$indicator->canClearFile())
 				{
-					$cleaner->setLastError('Indicator can not drop entity files.');
-					$cleaner->raiseFatalError();
+					$cleaner->setLastError('Indicator can not drop entity files.')->raiseFatalError();
+					$taskDone = true;
 					break;
 				}
 
 				$countLeft = $cleaner->getCountToDrop($subTask) - $cleaner->getDroppedCount($subTask) - $cleaner->getFailCount();
+				if ($countLeft <= 0)
+				{
+					$taskDone = true;
+					break;
+				}
 				if ($countLeft <= $indicator::MAX_FILE_PER_INTERACTION)
 				{
-					$cleaner->setIterationCount($indicator->countEntityWithFile());
+					$countLeft = $indicator->countEntityWithFile();
+					if ($countLeft <= 0)
+					{
+						$taskDone = true;
+						break;
+					}
+					$cleaner->setIterationCount($countLeft);
 				}
 				else
 				{
 					$cleaner->setIterationCount($indicator::MAX_FILE_PER_INTERACTION);
 				}
 
-				if ($indicator->clearFiles())
+				$dropped = $indicator->clearFiles();
+				if ($dropped >= 0)
 				{
 					$taskDone = $cleaner->hasTaskFinished($subTask);
 				}
-				else
+				elseif ($indicator->hasErrors())
 				{
-					if ($indicator->hasTimeLimitReached())
-					{
-						$taskDone = false;
-					}
+					$cleaner->raiseFatalError();
+					$taskDone = true;
 				}
 
-				$cleaner->setLastId($indicator->getProcessOffset());
-				$cleaner->setDroppedCount($subTask, $indicator->getDroppedFileCount());
-				$cleaner->setFailCount($indicator->getFailCount());
+				$cleaner
+					->setLastId($indicator->getProcessOffset())
+					->setDroppedCount($subTask, $indicator->getDroppedFileCount())
+					->setFailCount($indicator->getFailCount());
 
 				if ($indicator->hasErrors())
 				{
@@ -274,42 +334,53 @@ class Cleaner
 			{
 				if (!($indicator instanceof Volume\IVolumeClearEvent))
 				{
-					$cleaner->setLastError('Wrong parameter indicatorId');
-					$cleaner->raiseFatalError();
+					$cleaner->setLastError('Wrong parameter indicatorId')->raiseFatalError();
+					$taskDone = true;
 					break;
 				}
 				if (!$indicator->canClearEvent())
 				{
-					$cleaner->setLastError('Indicator can not drop entity events.');
-					$cleaner->raiseFatalError();
+					$cleaner->setLastError('Indicator can not drop entity events.')->raiseFatalError();
+					$taskDone = true;
 					break;
 				}
 
 				$countLeft = $cleaner->getCountToDrop($subTask) - $cleaner->getDroppedCount($subTask) - $cleaner->getFailCount();
+				if ($countLeft <= 0)
+				{
+					$taskDone = true;
+					break;
+				}
 				if ($countLeft <= $indicator::MAX_ENTITY_PER_INTERACTION)
 				{
-					$cleaner->setIterationCount($indicator->countEvent());
+					$countLeft = $indicator->countEvent();
+					if ($countLeft <= 0)
+					{
+						$taskDone = true;
+						break;
+					}
+					$cleaner->setIterationCount($countLeft);
 				}
 				else
 				{
 					$cleaner->setIterationCount($indicator::MAX_ENTITY_PER_INTERACTION);
 				}
 
-				if ($indicator->clearEvent())
+				$dropped = $indicator->clearEvent();
+				if ($dropped >= 0)
 				{
 					$taskDone = $cleaner->hasTaskFinished($subTask);
 				}
-				else
+				elseif ($indicator->hasErrors())
 				{
-					if ($indicator->hasTimeLimitReached())
-					{
-						$taskDone = false;
-					}
+					$cleaner->raiseFatalError();
+					$taskDone = true;
 				}
 
-				$cleaner->setLastId($indicator->getProcessOffset());
-				$cleaner->setDroppedCount($subTask, $indicator->getDroppedEventCount());
-				$cleaner->setFailCount($indicator->getFailCount());
+				$cleaner
+					->setLastId($indicator->getProcessOffset())
+					->setDroppedCount($subTask, $indicator->getDroppedEventCount())
+					->setFailCount($indicator->getFailCount());
 
 				if ($indicator->hasErrors())
 				{
@@ -327,46 +398,53 @@ class Cleaner
 			{
 				if (!($indicator instanceof Volume\IVolumeClearActivity))
 				{
-					$cleaner->setLastError('Wrong parameter indicatorId');
-					$cleaner->raiseFatalError();
+					$cleaner->setLastError('Wrong parameter indicatorId')->raiseFatalError();
+					$taskDone = true;
 					break;
 				}
 				if (!$indicator->canClearActivity())
 				{
-					$cleaner->setLastError('Indicator can not drop entity activity.');
-					$cleaner->raiseFatalError();
+					$cleaner->setLastError('Indicator can not drop entity activity.')->raiseFatalError();
+					$taskDone = true;
 					break;
 				}
 
 				$countLeft = $cleaner->getCountToDrop($subTask) - $cleaner->getDroppedCount($subTask) - $cleaner->getFailCount();
+				if ($countLeft <= 0)
+				{
+					$taskDone = true;
+					break;
+				}
 				if ($countLeft <= $indicator::MAX_ENTITY_PER_INTERACTION)
 				{
-					$cleaner->setIterationCount($indicator->countActivity());
+					$countLeft = $indicator->countActivity();
+					if ($countLeft <= 0)
+					{
+						$taskDone = true;
+						break;
+					}
+					$cleaner->setIterationCount($countLeft);
 				}
 				else
 				{
 					$cleaner->setIterationCount($indicator::MAX_ENTITY_PER_INTERACTION);
 				}
 
-				if ($indicator->clearActivity())
+				$dropped = $indicator->clearActivity();
+				if ($dropped >= 0)
 				{
 					$taskDone = $cleaner->hasTaskFinished($subTask);
 				}
-				else
+				elseif ($indicator->hasErrors())
 				{
-					if ($indicator->hasErrors())
-					{
-						$taskDone = true;
-					}
-					elseif ($indicator->hasTimeLimitReached())
-					{
-						$taskDone = false;
-					}
+					$cleaner->raiseFatalError();
+					$taskDone = true;
 				}
 
-				$cleaner->setLastId($indicator->getProcessOffset());
-				$cleaner->setDroppedCount($subTask, $indicator->getDroppedActivityCount());
-				$cleaner->setFailCount($indicator->getFailCount());
+				$cleaner
+					->setLastId($indicator->getProcessOffset())
+					->setDroppedCount($subTask, $indicator->getDroppedActivityCount())
+					->setFailCount($indicator->getFailCount());
 
 				if ($indicator->hasErrors())
 				{
@@ -386,15 +464,13 @@ class Cleaner
 			}
 		}
 
-
-
-		if($taskDone)
+		if ($taskDone)
 		{
 			// finish subtask
-			$cleaner->hasTaskFinished($subTask);
+			//$cleaner->hasTaskFinished($subTask);
 			$cleaner->setStatusSubTask($subTask, self::TASK_STATUS_DONE);
 
-			if($cleaner->hasTaskFinished(''))
+			if ($cleaner->hasTaskFinished(''))
 			{
 				$cleaner->setStatus(self::TASK_STATUS_DONE);
 			}
@@ -406,7 +482,7 @@ class Cleaner
 		// count statistic for progress bar
 		self::countWorker($cleaner->getOwnerId());
 
-		if($taskDone)
+		if ($taskDone)
 		{
 			return '';
 		}
@@ -553,17 +629,17 @@ class Cleaner
 					$nextExecutionTime = $now->format(Main\Type\DateTime::getFormat());
 				}
 
-				$agents = \CAgent::GetList(
+				$agents = \CAgent::getList(
 					array('ID' => 'DESC'),
 					array('=NAME' => static::agentName($taskId))
 				);
-				if ($agents->Fetch())
+				if ($agents->fetch())
 				{
 					$agentAdded = true;
 				}
 				else
 				{
-					$agentAdded = (bool)(\CAgent::AddAgent(
+					$agentAdded = (bool)(\CAgent::addAgent(
 							static::agentName($taskId),
 							'crm',
 							(self::canAgentUseCrontab() ? 'N' : 'Y'),
@@ -575,7 +651,6 @@ class Cleaner
 				}
 			}
 		}
-
 
 		// count statistic for progress bar
 		self::countWorker($ownerId);
@@ -651,7 +726,7 @@ class Cleaner
 	{
 		if ($this->getId() > 0)
 		{
-			$taskParams = array();
+			$taskParams = [];
 
 			// status changed
 			if ($this->getStatus() != (int)$this->getParam('AGENT_LOCK'))
@@ -659,29 +734,29 @@ class Cleaner
 				$taskParams['AGENT_LOCK'] = $this->getStatus();
 			}
 
-			if ($subTask == '' || $subTask == self::DROP_ENTITY)
+			if (($subTask == '' || $subTask == self::DROP_ENTITY) && $this->getIndicator())
 			{
 				$taskParams[self::DROP_ENTITY] = $this->getStatusSubTask(self::DROP_ENTITY);
-				$taskParams['DROPPED_ENTITY_COUNT'] = $this->indicator->getDroppedEntityCount();
+				$taskParams['DROPPED_ENTITY_COUNT'] = $this->getIndicator()->getDroppedEntityCount();
 			}
-			if (($subTask == '' || $subTask == self::DROP_FILE) && $this->indicator instanceof Volume\IVolumeClearFile)
+			if (($subTask == '' || $subTask == self::DROP_FILE) && $this->getIndicator() instanceof Volume\IVolumeClearFile)
 			{
 				$taskParams[self::DROP_FILE] = $this->getStatusSubTask(self::DROP_FILE);
-				$taskParams['DROPPED_FILE_COUNT'] = $this->indicator->getDroppedFileCount();
+				$taskParams['DROPPED_FILE_COUNT'] = $this->getIndicator()->getDroppedFileCount();
 			}
-			if (($subTask == '' || $subTask == self::DROP_EVENT) && $this->indicator instanceof Volume\IVolumeClearEvent)
+			if (($subTask == '' || $subTask == self::DROP_EVENT) && $this->getIndicator() instanceof Volume\IVolumeClearEvent)
 			{
 				$taskParams[self::DROP_EVENT] = $this->getStatusSubTask(self::DROP_EVENT);
-				$taskParams['DROPPED_EVENT_COUNT'] = $this->indicator->getDroppedEventCount();
+				$taskParams['DROPPED_EVENT_COUNT'] = $this->getIndicator()->getDroppedEventCount();
 			}
-			if (($subTask == '' || $subTask == self::DROP_ACTIVITY) && $this->indicator instanceof Volume\IVolumeClearActivity)
+			if (($subTask == '' || $subTask == self::DROP_ACTIVITY) && $this->getIndicator() instanceof Volume\IVolumeClearActivity)
 			{
 				$taskParams[self::DROP_ACTIVITY] = $this->getStatusSubTask(self::DROP_ACTIVITY);
-				$taskParams['DROPPED_ACTIVITY_COUNT'] = $this->indicator->getDroppedActivityCount();
+				$taskParams['DROPPED_ACTIVITY_COUNT'] = $this->getIndicator()->getDroppedActivityCount();
 			}
-			if ($this->indicator->getProcessOffset() > 0)
+			if ($this->getIndicator() && ($this->getIndicator()->getProcessOffset() > 0))
 			{
-				$taskParams['LAST_ID'] = $this->indicator->getProcessOffset();
+				$taskParams['LAST_ID'] = $this->getIndicator()->getProcessOffset();
 			}
 			if ($this->getFailCount() > 0)
 			{
@@ -742,17 +817,17 @@ class Cleaner
 		{
 			$this->param = $row;
 			$this->id = (int)$this->param['ID'];
-			$this->setLastId((int)$this->param['LAST_ID']);
-			$this->setOwnerId((int)$this->param['OWNER_ID']);
-			$this->setStatus((int)$this->param['AGENT_LOCK']);
-			$this->setIndicatorType($this->param['INDICATOR_TYPE']);
+			$this
+				->setLastId((int)$this->param['LAST_ID'])
+				->setOwnerId((int)$this->param['OWNER_ID'])
+				->setStatus((int)$this->param['AGENT_LOCK'])
+				->setIndicatorType($this->param['INDICATOR_TYPE'])
+				->setFailCount((int)$this->param['FAIL_COUNT']);
 
 			$this->droppedEntityCount = (int)$this->param['DROPPED_ENTITY_COUNT'];
 			$this->droppedFileCount = (int)$this->param['DROPPED_FILE_COUNT'];
 			$this->droppedEventCount = (int)$this->param['DROPPED_EVENT_COUNT'];
 			$this->droppedActivityCount = (int)$this->param['DROPPED_ACTIVITY_COUNT'];
-
-			$this->setFailCount((int)$this->param['FAIL_COUNT']);
 
 			return true;
 		}
@@ -798,7 +873,7 @@ class Cleaner
 
 	/**
 	 * Returns object indicator corresponding to task.
-	 * @return Volume\IVolumeIndicator|boolean
+	 * @return Volume\IVolumeIndicator|null
 	 * @throws Main\ArgumentNullException
 	 */
 	public function getIndicator()
@@ -833,26 +908,20 @@ class Cleaner
 
 				if (!empty($this->param['FILTER']))
 				{
-					$filter = unserialize(
-						$this->param['FILTER'],
-						[
-							'allowed_classes' => [
-								Main\Type\DateTime::class,
-								\DateTime::class
-							]
-						]
-					);
-					if ($filter === false || !is_array($filter))
+					$filter = $this->unserializeFilter($this->param['FILTER']);
+					if (!is_array($filter))
 					{
-						return false;
+						$this->setLastError('Filter error')->raiseFatalError();
+						return null;
 					}
 
 					$this->indicator->setFilter($filter);
 				}
 			}
-			catch(Main\ObjectException $ex)
+			catch (Main\ObjectException $ex)
 			{
-				return false;
+				$this->setLastError($ex->getMessage())->raiseFatalError();
+				return null;
 			}
 		}
 
@@ -871,11 +940,12 @@ class Cleaner
 	/**
 	 * Sets indicator type.
 	 * @param string $indicatorType Indicator class name.
-	 * @return void
+	 * @return self
 	 */
 	public function setIndicatorType($indicatorType)
 	{
 		$this->indicatorType = $indicatorType;
+		return $this;
 	}
 
 	/**
@@ -899,11 +969,12 @@ class Cleaner
 	/**
 	 * Sets task owner id.
 	 * @param int $ownerId Owner id.
-	 * @return void
+	 * @return self
 	 */
 	public function setOwnerId($ownerId)
 	{
 		$this->ownerId = $ownerId;
+		return $this;
 	}
 
 	/**
@@ -918,11 +989,12 @@ class Cleaner
 	/**
 	 * Sets last proceeded id.
 	 * @param int $lastId Last proceeded id.
-	 * @return void
+	 * @return self
 	 */
 	public function setLastId($lastId)
 	{
 		$this->lastId = $lastId;
+		return $this;
 	}
 
 	/**
@@ -942,11 +1014,12 @@ class Cleaner
 	/**
 	 * Sets task status.
 	 * @param int $status Task status.
-	 * @return void
+	 * @return self
 	 */
 	public function setStatus($status)
 	{
 		$this->status = $status;
+		return $this;
 	}
 
 	/**
@@ -969,7 +1042,7 @@ class Cleaner
 	 * Sets task status.
 	 * @param string $subTask Subtask code.
 	 * @param int $status Subtask status.
-	 * @return void
+	 * @return self
 	 */
 	public function setStatusSubTask($subTask, $status)
 	{
@@ -977,6 +1050,7 @@ class Cleaner
 		{
 			$this->param[$subTask] = $status;
 		}
+		return $this;
 	}
 
 	/**
@@ -998,11 +1072,12 @@ class Cleaner
 	 * Sets task parameter.
 	 * @param string $code Parameter code.
 	 * @param string $value Parameter value.
-	 * @return void
+	 * @return self
 	 */
 	public function setParam($code, $value)
 	{
 		$this->param[$code] = $value;
+		return $this;
 	}
 
 
@@ -1018,11 +1093,12 @@ class Cleaner
 	/**
 	 * Sets count loaded by filter for iteration.
 	 * @param int $iterationCount Count rows in result set.
-	 * @return void
+	 * @return self
 	 */
 	public function setIterationCount($iterationCount)
 	{
 		$this->iterationCount = $iterationCount;
+		return $this;
 	}
 
 	/**
@@ -1037,18 +1113,19 @@ class Cleaner
 	/**
 	 * Sets last error text occurred in iteration.
 	 * @param string $errorText Error text to save.
-	 * @return void
+	 * @return self
 	 */
 	public function setLastError($errorText)
 	{
 		$this->lastError = $errorText;
+		return $this;
 	}
 
 	/**
 	 * Sets dropped smt count.
 	 * @param string $subTask Sub task to check.
 	 * @param int $count Amount to set.
-	 * @return void
+	 * @return self
 	 */
 	public function setDroppedCount($subTask, $count)
 	{
@@ -1068,6 +1145,7 @@ class Cleaner
 		{
 			$this->droppedActivityCount = $count;
 		}
+		return $this;
 	}
 
 	/**
@@ -1101,11 +1179,12 @@ class Cleaner
 
 	/**
 	 * Set fatal error.
-	 * @return void
+	 * @return self
 	 */
 	public function raiseFatalError()
 	{
 		$this->fatalError = true;
+		return $this;
 	}
 
 	/**
@@ -1130,11 +1209,12 @@ class Cleaner
 	/**
 	 * Sets fail count.
 	 * @param int $count Amount to set.
-	 * @return void
+	 * @return self
 	 */
 	public function setFailCount($count)
 	{
 		$this->failCount = $count;
+		return $this;
 	}
 
 	/**
@@ -1325,7 +1405,7 @@ class Cleaner
 		);
 		if (!empty($optionSerialized))
 		{
-			return unserialize($optionSerialized, ['allowed_classes' => false]);
+			return \unserialize($optionSerialized, ['allowed_classes' => false]);
 		}
 
 		return null;
@@ -1381,5 +1461,42 @@ class Cleaner
 			'main.stepper.crm',
 			array('name' => self::class. $ownerId)
 		);
+	}
+
+	/**
+	 * Workaround about bug of protected field's null bite \0
+	 * @return array|null
+	 */
+	private function unserializeFilter(string $source): ?array
+	{
+		$options = [
+			'allowed_classes' => [
+				Main\Type\DateTime::class,
+				\DateTime::class
+			]
+		];
+		$filter = \unserialize($source, $options);
+		if ($filter !== false && is_array($filter))
+		{
+			return $filter;
+		}
+
+		// do some workaround
+		$reflect = new \ReflectionClass(Main\Type\DateTime::class);
+		$props = $reflect->getProperties(\ReflectionProperty::IS_PRIVATE | \ReflectionProperty::IS_PROTECTED);
+		foreach ($props as $prop)
+		{
+			$name = $prop->getName();
+			$len = strlen($prop->getName()) + 3;
+			$source = str_replace("s:".$len.":\"*".$name."\"", "s:".$len.":\"\0*\0".$name."\"", $source);
+		}
+
+		$filter = \unserialize($source, $options);
+		if ($filter === false || !is_array($filter))
+		{
+			return null;
+		}
+
+		return $filter;
 	}
 }

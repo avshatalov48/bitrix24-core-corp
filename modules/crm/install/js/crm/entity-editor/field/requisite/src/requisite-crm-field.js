@@ -15,6 +15,10 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 		this.presetMenu = null;
 		this._autocomplete = null;
 		this._tooltip = null;
+		this.isSearchMode = true;
+		this.requisitesDropdown = null;
+		this.bankDetailsDropdown = null;
+		this.selectModeEnabled = false;
 
 		this._changeRequisistesHandler = this.onChangeRequisites.bind(this);
 	}
@@ -28,7 +32,6 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 
 	doInitialize()
 	{
-
 		this._autocomplete = RequisiteAutocompleteField.create(this.getName(), {
 			searchAction: 'crm.requisite.entity.search',
 			canAddRequisite: true,
@@ -43,7 +46,7 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 		this.presetMenu = new PresetMenu(this.getName() + '_requisite_preset_menu', this.getPresetList());
 		this.presetMenu.subscribe('onSelect', this.onAddRequisiteFromMenu.bind(this));
 
-		let isReadonly = this.getEditor().isReadOnly();
+		const isReadonly = this.getEditor().isReadOnly();
 		this._tooltip = EntityEditorRequisiteTooltip.create(this.getName() + '_requisite_details', {
 			readonly: isReadonly,
 			canChangeDefaultRequisite: !isReadonly,
@@ -59,6 +62,24 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 		this.updateAutocompletePlaceholder();
 
 		EventEmitter.emit(this.getEditor(), 'onFieldInit', {field: this});
+	}
+
+	setSelectModeEnabled(selectModeEnabled: boolean): void
+	{
+		if (this.selectModeEnabled !== selectModeEnabled)
+		{
+			this.selectModeEnabled = selectModeEnabled;
+			if (this.isSelectModeEnabled())
+			{
+				this.isSearchMode = false;
+			}
+			this.refreshLayoutParts();
+		}
+	}
+
+	isSelectModeEnabled(): boolean
+	{
+		return this.selectModeEnabled && this.hasRequisites() && this.getRequisites().getList().length > 0;
 	}
 
 	setRequisites(requisiteList)
@@ -121,20 +142,50 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 
 	createTitleActionControls()
 	{
+		const actions = [];
+
 		if (this._mode !== BX.UI.EntityEditorMode.edit)
 		{
-			return [];
-		}
-		if (!this.isAutocompleteEnabled())
-		{
-			return [];
+			return actions;
 		}
 
-		return [
-			Tag.render`
+		if (this.isAutocompleteEnabled() && this.selectModeEnabled)
+		{
+			if (this.isSearchMode)
+			{
+				actions.push(Tag.render`
+					<span class="ui-link ui-link-secondary ui-entity-editor-block-title-link"
+						onclick="${this.toggleSearchMode.bind(this)}">${Loc.getMessage('REQUISITE_LABEL_DETAILS_SELECT')}</span>`
+				);
+			}
+			else
+			{
+				const fieldName = this.getClientResolverTitle();
+				const title = fieldName ? Loc.getMessage('REQUISITE_AUTOCOMPLETE_FILL_IN').toLowerCase().replace('#field_name#', fieldName) : '';
+
+				actions.push(Tag.render`
+					<span class="ui-link ui-link-secondary ui-entity-editor-block-title-link"
+						onclick="${this.toggleSearchMode.bind(this)}">${title}</span>`
+				);
+			}
+		}
+
+		if (this.hasRequisites())
+		{
+			actions.push(Tag.render`
 				<span class="ui-link ui-link-secondary ui-entity-editor-block-title-link"
 				 	onclick="${this.editDefaultRequisite.bind(this)}">${Loc.getMessage('REQUISITE_LABEL_DETAILS_TEXT')}</span>`
-		];
+			);
+		}
+
+		return actions;
+	}
+
+	toggleSearchMode()
+	{
+		this.isSearchMode = !this.isSearchMode;
+
+		this.refreshLayoutParts();
 	}
 
 	isNeedToDisplay(options)
@@ -170,16 +221,20 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 
 		if (this._mode === BX.UI.EntityEditorMode.edit)
 		{
-			if (this.isAutocompleteEnabled())
-			{
-				this._domNodes.addButton = null;
-				Dom.append(this.renderAutocompleteForm(), this._wrapper);
-			}
-			else
-			{
-				this._domNodes.addButton = this.renderAddButton();
-				Dom.append(this._domNodes.addButton, this._wrapper);
-			}
+			this._domNodes.addButton = this.renderAddButton();
+			this._domNodes.autocompleteForm = this.renderAutocompleteForm();
+			this._domNodes.requisiteSelectForm = this.renderRequisiteSelectForm();
+			this._domNodes.bankDetailSelectForm = this.renderBankDetailSelectForm();
+			Dom.append(this._domNodes.autocompleteForm, this._wrapper);
+			Dom.append(this._domNodes.requisiteSelectForm, this._wrapper);
+			Dom.append(this._domNodes.bankDetailSelectForm, this._wrapper);
+			Dom.append(this._domNodes.addButton, this._wrapper);
+
+			this.adjustNodesVisibility();
+			this.updateRequisitesDropdown();
+			this.updateBankDetailsDropdown();
+			this.updateRequisiteSelectorValue();
+			this.updateBankDetailsSelectorValue();
 		}
 		else // if(this._mode === BX.UI.EntityEditorMode.view)
 		{
@@ -223,6 +278,11 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 		this.updateSelectedRequisiteText();
 		this.refreshTitleLayout();
 		this.updateAutocompleteState();
+		this.adjustNodesVisibility();
+		this.updateRequisitesDropdown();
+		this.updateBankDetailsDropdown();
+		this.updateRequisiteSelectorValue();
+		this.updateBankDetailsSelectorValue();
 	}
 
 	hasContentToDisplay()
@@ -271,7 +331,8 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 					${this._domNodes.selectedRequisiteView}
 			</div>`;
 		this._tooltip.setBindElement(container, this.getEditor().getFormElement());
-		 return container;
+
+		return container;
 	}
 
 	updateSelectedRequisiteText()
@@ -296,33 +357,129 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 	renderAddButton()
 	{
 		return Tag.render`
-		<div class="ui-entity-editor-content-block crm-entity-widget-content-block-requisites">
-			<span class="crm-entity-widget-client-requisites-add-btn" onclick="${this.toggleNewRequisitePresetMenu.bind(this)}">${Loc.getMessage('CRM_EDITOR_ADD')}</span>
-		</div>`;
+			<div class="ui-entity-editor-content-block crm-entity-widget-content-block-requisites">
+				<span class="crm-entity-widget-client-requisites-add-btn" onclick="${this.toggleNewRequisitePresetMenu.bind(this)}">${Loc.getMessage('CRM_EDITOR_ADD')}</span>
+			</div>`;
 	}
 
 	renderAutocompleteForm()
 	{
-		let autocompleteContainer = Tag.render`
+		const autocompleteContainer = Tag.render`
 			<div class="crm-entity-widget-content-block-field-container crm-entity-widget-content-block-field-requisites"></div>`;
-		let hasResolvers = !!this.getClientResolverPropForPreset(this.getSelectedPresetId());
+		const hasResolvers = !!this.getClientResolverPropForPreset(this.getSelectedPresetId());
 		this._autocomplete.setEnabled(hasResolvers);
 		this._autocomplete.layout(autocompleteContainer);
 		this.updateAutocompleteState();
 
 		return Tag.render`
-		<div class="ui-entity-editor-content-block">
-			${autocompleteContainer}
-			<div class="crm-entity-widget-content-block-add-field">
-				<span class="crm-entity-widget-content-add-field" onclick="${this.toggleNewRequisitePresetMenu.bind(this)}">${Loc.getMessage('CRM_EDITOR_ADD')}</span>
-			</div>
-		</div>`;
+			<div class="ui-entity-editor-content-block">
+				${autocompleteContainer}
+				<div class="crm-entity-widget-content-block-add-field">
+					<span class="crm-entity-widget-content-add-field" onclick="${this.toggleNewRequisitePresetMenu.bind(this)}">${Loc.getMessage('CRM_EDITOR_ADD')}</span>
+				</div>
+			</div>`;
+	}
+
+	renderRequisiteSelectForm()
+	{
+		let isOpen = false;
+		const toggleDropdown = () => {
+			if (this.requisitesDropdown)
+			{
+				if (!isOpen)
+				{
+					this.requisitesDropdown.showPopupWindow();
+				}
+				else
+				{
+					this.requisitesDropdown.destroyPopupWindow();
+				}
+				isOpen = !isOpen;
+			}
+		};
+
+		const selectInput = Tag.render`<div class="ui-ctl-element" onclick="${toggleDropdown}"></div>`;
+
+		const selectContainer = Tag.render`
+			<div class="crm-entity-widget-content-block-field-container crm-entity-widget-content-block-field-requisites">
+				<div class="ui-ctl ui-ctl-w100 ui-ctl-after-icon">
+					<button class="ui-ctl-after ui-ctl-icon-angle" onclick="${toggleDropdown}"></button>
+					${selectInput}
+				</div>			
+			</div>`;
+
+		this.requisitesDropdown = new BX.UI.Dropdown(
+			{
+				targetElement: selectInput,
+				items: [],
+				isDisabled: true,
+				events: {
+					onSelect: this.onRequisiteSelect.bind(this)
+				}
+			}
+		);
+
+		return Tag.render`
+			<div class="ui-entity-editor-content-block">
+				${selectContainer}
+				<div class="crm-entity-widget-content-block-add-field">
+					<span class="crm-entity-widget-content-add-field" onclick="${this.toggleNewRequisitePresetMenu.bind(this)}">${Loc.getMessage('CRM_EDITOR_ADD_REQUISITE')}</span>
+				</div>
+			</div>`;
+	}
+
+	renderBankDetailSelectForm()
+	{
+		let isOpen = false;
+		const toggleDropdown = () => {
+			if (this.bankDetailsDropdown)
+			{
+				if (!isOpen)
+				{
+					this.bankDetailsDropdown.showPopupWindow();
+				}
+				else
+				{
+					this.bankDetailsDropdown.destroyPopupWindow();
+				}
+				isOpen = !isOpen;
+			}
+		};
+
+		const selectInput = Tag.render`<div class="ui-ctl-element" onclick="${toggleDropdown}"></div>`;
+
+		this._domNodes.bankDetailsSelectContainer = Tag.render`
+			<div class="crm-entity-widget-content-block-field-container crm-entity-widget-content-block-field-requisites">
+				<div class="ui-ctl ui-ctl-w100 ui-ctl-after-icon">
+					<button class="ui-ctl-after ui-ctl-icon-angle" onclick="${toggleDropdown}"></button>
+					${selectInput}
+				</div>			
+			</div>`;
+
+		this.bankDetailsDropdown = new BX.UI.Dropdown(
+			{
+				targetElement: selectInput,
+				items: [],
+				isDisabled: true,
+				events: {
+					onSelect: this.onBankDetailSelect.bind(this)
+				}
+			}
+		);
+
+		return Tag.render`
+			<div class="ui-entity-editor-content-block">
+				${this._domNodes.bankDetailsSelectContainer}
+				<div class="crm-entity-widget-content-block-add-field">
+					<span class="crm-entity-widget-content-add-field" onclick="${this.onAddBankDetailsClick.bind(this)}">${Loc.getMessage('CRM_EDITOR_ADD_BANK_DETAILS')}</span>
+				</div>
+			</div>`;
 	}
 
 	updateAutocompleteState()
 	{
 		let autocompleteValue = null;
-		let selectedRequisite = this.hasRequisites() ? this.getRequisites().getSelected() : null;
+		const selectedRequisite = this.hasRequisites() ? this.getRequisites().getSelected() : null;
 		if (selectedRequisite && !selectedRequisite.isAddressOnly())
 		{
 			autocompleteValue = selectedRequisite.getAutocompleteData();
@@ -333,13 +490,133 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 
 	updateAutocompletePlaceholder()
 	{
-		let selectedPresetId = this.getSelectedPresetId();
-		let clientResolverProp = this.getClientResolverPropForPreset(selectedPresetId);
+		const clientResolverPropTitle = this.getClientResolverTitle();
+		this._autocomplete.setEnabled(!!clientResolverPropTitle);
+		this._autocomplete.setPlaceholderText(clientResolverPropTitle);
+	}
 
-		this._autocomplete.setEnabled(!!clientResolverProp);
+	getClientResolverTitle()
+	{
+		const selectedPresetId = this.getSelectedPresetId();
+		const clientResolverProp = this.getClientResolverPropForPreset(selectedPresetId);
 
-		let title = BX.prop.getString(clientResolverProp, 'TITLE');
-		this._autocomplete.setPlaceholderText(title);
+		return BX.prop.getString(clientResolverProp, 'TITLE');
+	}
+
+	adjustNodesVisibility()
+	{
+		if (
+			!this._domNodes.autocompleteForm
+			|| !this._domNodes.requisiteSelectForm
+			|| !this._domNodes.bankDetailSelectForm
+			|| !this._domNodes.addButton
+		)
+		{
+			return;
+		}
+
+		if (this.isSearchMode && this.isAutocompleteEnabled())
+		{
+			this._domNodes.autocompleteForm.style.display = '';
+			this._domNodes.requisiteSelectForm.style.display = 'none';
+			this._domNodes.addButton.style.display = 'none';
+			this._domNodes.bankDetailSelectForm.style.display = 'none';
+		}
+		else if (
+			this.isSelectModeEnabled()
+			&& this.hasRequisites()
+			&&
+			(
+				this.getRequisites().getList().length > 1
+			 	|| (
+					this.getRequisites().getList().length > 0)
+					&& !this.getRequisites().getSelected().isAddressOnly()
+				)
+		)
+		{
+			this._domNodes.autocompleteForm.style.display = 'none';
+			this._domNodes.requisiteSelectForm.style.display = '';
+			this._domNodes.bankDetailSelectForm.style.display = '';
+			this._domNodes.addButton.style.display = 'none';
+
+			if (this._domNodes.bankDetailsSelectContainer)
+			{
+				const bankDetails = this.getRequisites().getSelected().getBankDetails();
+				if (!bankDetails.length)
+				{
+					this._domNodes.bankDetailsSelectContainer.style.display = 'none';
+				}
+				else
+				{
+					this._domNodes.bankDetailsSelectContainer.style.display = '';
+				}
+			}
+		}
+		else
+		{
+			this._domNodes.autocompleteForm.style.display = 'none';
+			this._domNodes.requisiteSelectForm.style.display = 'none';
+			this._domNodes.addButton.style.display = '';
+			this._domNodes.bankDetailSelectForm.style.display = 'none';
+		}
+	}
+
+	getSelectedRequisiteTitle()
+	{
+		let title = '';
+		if (!this.hasRequisites())
+		{
+			return title;
+		}
+
+		const selectedRequisite = this.getRequisites().getSelected();
+		if (selectedRequisite)
+		{
+			title = selectedRequisite.getTitle();
+		}
+
+		return title;
+	}
+
+	updateRequisiteSelectorValue()
+	{
+		if (!this.requisitesDropdown || !this.requisitesDropdown.targetElement)
+		{
+			return;
+		}
+
+		this.requisitesDropdown.targetElement.innerText = this.getSelectedRequisiteTitle();
+	}
+
+	updateBankDetailsSelectorValue()
+	{
+		if (!this.bankDetailsDropdown || !this.bankDetailsDropdown.targetElement)
+		{
+			return;
+		}
+
+		this.bankDetailsDropdown.targetElement.innerText = this.getSelectedBankDetailTitle();
+	}
+
+	getSelectedBankDetailTitle()
+	{
+		let title = '';
+		if (!this.hasRequisites())
+		{
+			return title;
+		}
+
+		const selectedRequisite = this.getRequisites().getSelected();
+		if (selectedRequisite)
+		{
+			const bankDetail = selectedRequisite.getBankDetailById(selectedRequisite.getSelectedBankDetailId());
+			if (bankDetail && bankDetail.title)
+			{
+				title = bankDetail.title;
+			}
+		}
+
+		return title;
 	}
 
 	getDefaultPresetId()
@@ -517,12 +794,13 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 	onChangeRequisites()
 	{
 		if (
-			(this._domNodes && Type.isDomNode(this._domNodes.addButton)) ||
+			(this._domNodes && Type.isDomNode(this._domNodes.addButton) && this._domNodes.addButton.style.display !== 'none') ||
 			(this.hasRequisites() && this.getRequisites().isEmpty()) ||
 			(this.hasRequisites() && this.getRequisites().getSelected().isAddressOnly())
 		)
 		{
-			this.refreshLayout();
+			// this.refreshLayout();
+			this.refreshLayoutParts();
 		}
 		else
 		{
@@ -531,14 +809,107 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 		this.updateAutocompletePlaceholder();
 	}
 
+	updateRequisitesDropdown()
+	{
+		if (!this.requisitesDropdown)
+		{
+			return;
+		}
+
+		const items = [];
+
+		if (this.hasRequisites())
+		{
+			this.getRequisites().getList().forEach((requisiteItem, index) => {
+				items.push({
+					id: requisiteItem.getRequisiteId(),
+					title: requisiteItem.getTitle(),
+					subTitle: requisiteItem.getSubtitle(),
+					index
+				});
+			});
+		}
+
+		this.requisitesDropdown.setItems(items);
+	}
+
+	updateBankDetailsDropdown()
+	{
+		if (!this.bankDetailsDropdown)
+		{
+			return;
+		}
+
+		const items = [];
+
+		if (this.hasRequisites() && this.getRequisites().getSelected())
+		{
+			const bankDetails = this.getRequisites().getSelected().getBankDetails();
+			if (bankDetails.length)
+			{
+				bankDetails.forEach((bankDetail, index) => {
+					items.push({
+						id: bankDetail.id,
+						title: bankDetail.title,
+						subTitle: bankDetail.value,
+						index
+					});
+				});
+			}
+		}
+
+		this.bankDetailsDropdown.setItems(items);
+	}
+
+	onRequisiteSelect(sender, {index})
+	{
+		if (!this.hasRequisites())
+		{
+			return;
+		}
+		if (index !== undefined)
+		{
+			const selectedRequisiteId = Number(this.getRequisites().getSelectedId());
+			if (selectedRequisiteId !== index)
+			{
+				this.getRequisites().setSelected(index);
+				this.markAsChanged();
+			}
+		}
+		if (this.requisitesDropdown)
+		{
+			this.requisitesDropdown.getPopupWindow().close();
+		}
+	}
+
+	onBankDetailSelect(sender, {index})
+	{
+		if (!this.hasRequisites() || !this.bankDetailsDropdown)
+		{
+			return;
+		}
+		if (index !== undefined)
+		{
+			const selectedRequisiteId = Number(this.getRequisites().getSelectedId())
+			const selectedBankDetailId = Number(this.getRequisites().getSelected().getSelectedBankDetailId());
+			if (selectedBankDetailId !== index)
+			{
+				this.getRequisites().setSelected(selectedRequisiteId, index);
+				this.markAsChanged();
+			}
+		}
+
+		this.bankDetailsDropdown.getPopupWindow().close();
+	}
+
 	onAddRequisiteFromMenu(event)
 	{
 		let data = event.getData();
-		let selectedRequisite = this.hasRequisites() ? this.getRequisites().getSelected() : null;
+		const selectedRequisite = this.hasRequisites() ? this.getRequisites().getSelected() : null;
 		// if hidden requisite is selected, it will be used instead of new:
 		if (null !== selectedRequisite && selectedRequisite.isAddressOnly())
 		{
-			this.editRequisite(this.getRequisites().indexOf(selectedRequisite), {
+			this.editRequisite(this.getRequisites().getSelectedId(), {
 				editorOptions: {
 					overriddenPresetId: data.value
 				}
@@ -592,8 +963,11 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 		let data = event.getData();
 		this.markAsChanged();
 		this._autocomplete.setLoading(true);
-
-		let selectedRequisiteId = this.hasRequisites() ? this.getRequisites().getSelectedId() : null;
+		if (this.selectModeEnabled)
+		{
+			this.isSearchMode = false;
+		}
+		const selectedRequisiteId = this.hasRequisites() ? this.getRequisites().getSelectedId() : null;
 
 		EventEmitter.emit(this, 'onFinishAutocomplete', {
 			id: selectedRequisiteId,
@@ -674,5 +1048,20 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 	{
 		this._tooltip.closeDebounced();
 		this._tooltip.cancelShowDebounced();
+	}
+
+	onAddBankDetailsClick(event)
+	{
+		event.preventDefault();
+		let selectedRequisiteId = this.hasRequisites() ? this.getRequisites().getSelectedId() : null;
+		if (null !== selectedRequisiteId)
+		{
+			this.editRequisite(selectedRequisiteId, {
+				autocompleteState: this._autocomplete.getState(),
+				editorOptions: {
+					addBankDetailsItem: true
+				},
+			});
+		}
 	}
 }

@@ -10,6 +10,8 @@ namespace Bitrix\Crm\WebForm;
 use Bitrix\Crm\Ads\Pixel\ConversionEventTriggers\WebFormTrigger;
 use Bitrix\Crm;
 use Bitrix\Crm\Automation;
+use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\EntityManageFacility;
 use Bitrix\Crm\Integration\UserConsent as CrmIntegrationUserConsent;
 use Bitrix\Crm\Integrity\ActualEntitySelector;
@@ -82,6 +84,7 @@ class ResultEntity
 	protected $trace;
 	protected $traceId;
 	protected $entities = [];
+	protected $agreements = [];
 
 	public static function getDuplicateModes()
 	{
@@ -247,12 +250,10 @@ class ResultEntity
 			$multiFields = \CCrmFieldMulti::GetEntityFields($entityTypeName, $rowId, null);
 			foreach($multiFields as $multiField)
 			{
-				$entityMultiFields[$multiField['TYPE_ID']] = array(
-					$multiField['ID'] => array(
+				$entityMultiFields[$multiField['TYPE_ID']][$multiField['ID']] = [
 						'VALUE' => $multiField['VALUE'],
 						'VALUE_TYPE' => $multiField['VALUE_TYPE'],
-					)
-				);
+				];
 			}
 			unset($multiFields);
 		}
@@ -269,7 +270,12 @@ class ResultEntity
 					false,
 					array('*', 'UF_*')
 				);
-				$entityFields = $entityFieldsDb->Fetch();
+
+				if (!$entityFields = $entityFieldsDb->Fetch())
+				{
+					return null;
+				}
+
 				if ($hasMultiFields)
 				{
 					$entityFields['FM'] = $entityMultiFields;
@@ -293,7 +299,7 @@ class ResultEntity
 				{
 					$entityFields['FM'] = $entityMultiFields;
 				}
-				
+
 				if (in_array($entityTypeName, [\CCrmOwnerType::DealName, \CCrmOwnerType::ContactName, \CCrmOwnerType::CompanyName]))
 				{
 					$fieldName = $entityTypeName === \CCrmOwnerType::ContactName ? 'NAME' : 'TITLE';
@@ -428,15 +434,29 @@ class ResultEntity
 	{
 		foreach($productList as $product)
 		{
-			$this->productRows[] = array(
+			$price = $product['PRICE'];
+			$taxRate = isset($product['VAT_RATE'])
+				? round(doubleval($product['VAT_RATE']) * 100, 2)
+				: null
+			;
+			if ($taxRate)
+			{
+				$isTaxIncluded = isset($product['VAT_INCLUDED']) && $product['VAT_INCLUDED'] === 'Y';
+				$price = $isTaxIncluded
+					? $product['PRICE']
+					: \CCrmProductRow::CalculateInclusivePrice($product['PRICE'], $taxRate)
+				;
+			}
+
+			$this->productRows[] = [
 				'PRODUCT_ID' => (int) $product['ID'],
 				'PRODUCT_NAME' => $product['NAME'],
-				'PRICE' => $product['PRICE'],
+				'PRICE' => $price,
 				'DISCOUNT_SUM' => $product['DISCOUNT'],
 				'QUANTITY' => ($product['QUANTITY'] ?? 1) ?: 1,
-				'VAT_INCLUDED' => isset($product['VAT_INCLUDED']) ? $product['VAT_INCLUDED'] : null,
-				'VAT_RATE' => isset($product['VAT_RATE']) ? $product['VAT_RATE'] : null,
-			);
+				'TAX_INCLUDED' => $product['VAT_INCLUDED'] ?? null,
+				'TAX_RATE' => $taxRate,
+			];
 		}
 	}
 
@@ -474,7 +494,7 @@ class ResultEntity
 		$result = 0;
 		foreach($this->productRows as $productRow)
 		{
-			$result += $productRow['PRICE'] - $productRow['DISCOUNT'];
+			$result += $productRow['QUANTITY'] * ($productRow['PRICE'] - $productRow['DISCOUNT']);
 		}
 
 		return $result;
@@ -554,6 +574,8 @@ class ResultEntity
 
 		$isEntityInvoice = $entityName == \CCrmOwnerType::InvoiceName;
 		$isEntityLead = $entityName == \CCrmOwnerType::LeadName;
+		$isEntityContact = $entityName === \CCrmOwnerType::ContactName;
+		$isEntityCompany = $entityName === \CCrmOwnerType::CompanyName;
 		$isEntityDynamic = !empty($params['DYNAMIC_ENTITY']);
 
 		if(!$isEntityInvoice)
@@ -590,6 +612,7 @@ class ResultEntity
 			{
 				$entityFields["CURRENCY_ID"] = $this->currencyId;
 				$entityFields["OPPORTUNITY"] = $this->getProductRowsSum();
+				$entityFields["IS_MANUAL_OPPORTUNITY"] = $entityFields["OPPORTUNITY"] > 0 ? 'Y' : 'N';
 			}
 
 			if($isNeedAddProducts && $isEntityInvoice)
@@ -695,6 +718,20 @@ class ResultEntity
 					];
 				}
 			}
+			/**add delivery address for company/contact/lead */
+			if ($isEntityCompany || $isEntityContact)
+			{
+				$addressFields = [
+					'ADDRESS_1' => $entityFields["DELIVERY_ADDRESS"] ?? null,
+				];
+
+				if (!EntityAddress::isEmpty($addressFields))
+				{
+					EntityAddress::register(
+						\CCrmOwnerType::ResolveID($entityName), $id, EntityAddressType::Delivery, $addressFields
+					);
+				}
+			}
 
 			$this->resultEntityPack[] = $resultEntityInfo;
 
@@ -755,18 +792,29 @@ class ResultEntity
 
 	protected function addLead($leadParams = array())
 	{
-		$params = array();
-		$params['SET_PRODUCTS'] = true;
-		$this->leadId = $this->addByEntityName(\CCrmOwnerType::LeadName, $params);
+		$this->addClient();
 
-		if ($this->leadId)
+		$params = [
+			'SET_PRODUCTS' => true
+		];
+
+		if ($this->companyId)
+		{
+			$params['FIELDS']['COMPANY_ID'] = $this->companyId;
+		}
+
+		if ($this->contactId)
+		{
+			$params['FIELDS']['CONTACT_ID'] = $this->contactId;
+		}
+
+		if ($this->leadId = $this->addByEntityName(\CCrmOwnerType::LeadName, $params))
 		{
 			WebFormTracker::getInstance()->registerLead($this->leadId, array('ORIGIN_ID' => $this->formId));
 		}
 
-		if($leadParams['ADD_INVOICE'])
+		if ($leadParams['ADD_INVOICE'])
 		{
-			$this->addClient();
 			$this->addInvoice();
 		}
 	}
@@ -789,8 +837,12 @@ class ResultEntity
 
 	protected function addClient($clientParams = array())
 	{
-		$isAddCompany = isset($this->fields[\CCrmOwnerType::CompanyName]) || $this->isInvoiceSettingsPayerCompany();
-		$isAddContact = isset($this->fields[\CCrmOwnerType::ContactName]) || $this->isInvoiceSettingsPayerContact();
+		$isSchemeHasOrder = $this->isSchemeHasOrder();
+		$isAddCompany = isset($this->fields[\CCrmOwnerType::CompanyName]);
+		$isAddContact =
+			isset($this->fields[\CCrmOwnerType::ContactName])
+			|| (!$isAddCompany && $isSchemeHasOrder)
+		;
 
 		if($isAddCompany)
 		{
@@ -880,6 +932,11 @@ class ResultEntity
 		{
 			$this->addInvoice();
 		}
+	}
+
+	private function isSchemeHasOrder() : bool
+	{
+		return isset($this->scheme) && Entity::isSchemeSupportEntity($this->scheme,\CCrmOwnerType::Invoice);
 	}
 
 	protected function getInvoiceSettingsPayer()
@@ -984,10 +1041,14 @@ class ResultEntity
 
 		$client = SalesCenter\Integration\CrmManager::getInstance()->getClientInfo($ownerTypeId, $ownerId);;
 
-		if(!empty($client['DEAL_ID']))
+		if(
+			!empty($client['OWNER_ID'])
+			&& !empty($client['OWNER_TYPE_ID'])
+		)
 		{
-			$formData['DEAL_ID'] = $client['DEAL_ID'];
-			unset($client['DEAL_ID']);
+			$formData['OWNER_ID'] = $client['OWNER_ID'];
+			$formData['OWNER_TYPE_ID'] = $client['OWNER_TYPE_ID'];
+			unset($client['OWNER_ID'], $client['OWNER_TYPE_ID']);
 		}
 
 		$formData['CLIENT'] = $client;
@@ -1149,22 +1210,7 @@ class ResultEntity
 			return;
 		}
 
-		$agreements = [];
-		if ($this->formData['AGREEMENT_ID'])
-		{
-			$agreements[] = $this->formData['AGREEMENT_ID'];
-		}
-
-		$rows = Internals\AgreementTable::getList([
-			'select' => ['AGREEMENT_ID'],
-			'filter' => ['=FORM_ID' => $this->formData['ID']]
-		]);
-		foreach ($rows as $row)
-		{
-			$agreements[] = $row['AGREEMENT_ID'];
-		}
-
-		foreach ($agreements as $agreementId)
+		foreach ($this->agreements as $agreementId)
 		{
 			Consent::addByContext(
 				$agreementId,
@@ -1309,6 +1355,7 @@ class ResultEntity
 				'FIELDS' => $this->activityFields,
 				'FORM' => array(
 					'IS_USED_USER_CONSENT' => $this->formData['USE_LICENCE'] == 'Y',
+					'AGREEMENTS' => $this->agreements,
 					'IP' => Context::getCurrent()->getRequest()->getRemoteAddress(),
 					'LINK' => Script::getUrlContext($this->formData)
 				),
@@ -1687,6 +1734,27 @@ class ResultEntity
 		$this->selector = $this->createSelector();
 		$this->performTrace();
 
+		$results = $this->fireEvent('onSiteFormFill', [
+			'id' => $this->getFormId(),
+			'fields' => $this->fields,
+			'properties' => $this->placeholders,
+			'assignedById' => $this->assignedById,
+		]);
+
+		foreach ($results as $result)
+		{
+			if ($result->getType() === \Bitrix\Main\EventResult::ERROR)
+			{
+				continue;
+			}
+
+			$resultData = $result->getParameters();
+			if (isset($resultData['assignedById']) && $resultData['assignedById'] > 0)
+			{
+				$this->assignedById = $resultData['assignedById'];
+			}
+		}
+
 		try
 		{
 			switch($schemeId)
@@ -1884,8 +1952,8 @@ class ResultEntity
 	/*
 	 * Set callback data.
 	 *
-	 * @param bool $isCallback Is callback form
-	 * @param string $callbackPhone Callback phone
+	 * @param bool $isCallback Is callback form.
+	 * @param string $callbackPhone Callback phone.
 	 */
 	public function setCallback($isCallback = false, $callbackPhone = null)
 	{
@@ -1896,8 +1964,7 @@ class ResultEntity
 	/*
 	 * Set callback data.
 	 *
-	 * @param bool $isCallback Is callback form
-	 * @param string $callbackPhone Callback phone
+	 * @param array $entities Entities.
 	 * @return void
 	 */
 	public function setEntities(array $entities)
@@ -1905,9 +1972,21 @@ class ResultEntity
 		$this->entities = $entities;
 	}
 
+	/*
+	 * Set applied agreements.
+	 *
+	 * @param array $agreements Agreements.
+	 * @return void
+	 */
+	public function setAgreements(array $agreements)
+	{
+		$this->agreements = $agreements;
+	}
+
 
 	/**
-	 * Get list of created or existed entities
+	 * Get list of created or existed entities.
+	 *
 	 * @return array
 	 */
 	public function getResultEntities()
@@ -2015,5 +2094,27 @@ class ResultEntity
 		}
 
 		return $entityFields;
+	}
+
+	/**
+	 * @param string $eventName
+	 * @param array $eventParams
+	 * @return Main\EventResult[]
+	 */
+	private function fireEvent(string $eventName, array $eventParams): array
+	{
+		$event = new Main\Event('crm', $eventName, $eventParams);
+		$event->send();
+		$results = $event->getResults();
+
+		$eventNamePostfix = $this->placeholders['eventNamePostfix'] ?? '';
+		if ($eventNamePostfix && preg_match('/\w+/', $eventNamePostfix))
+		{
+			$eventWithPostfix = new Main\Event('crm', $eventName. $eventNamePostfix, $eventParams);
+			$eventWithPostfix->send();
+			$results = array_merge($results, $eventWithPostfix->getResults());
+		}
+
+		return $results;
 	}
 }

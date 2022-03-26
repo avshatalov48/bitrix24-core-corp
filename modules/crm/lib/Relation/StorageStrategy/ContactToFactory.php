@@ -131,6 +131,39 @@ class ContactToFactory extends \Bitrix\Crm\Relation\StorageStrategy
 
 		$operation->disableCheckAccess();
 
+		$operation->excludeItemsFromTimelineRelationEventsRegistration([$parent]);
+
 		return $operation->launch();
+	}
+
+	protected function replaceBindings(ItemIdentifier $fromItem, ItemIdentifier $toItem): Result
+	{
+		$childItems = $this->childFactory->getItems([
+			'select' => [Item::FIELD_NAME_ID],
+			'filter' => [
+				'=' . Item::FIELD_NAME_CONTACT_BINDINGS . '.CONTACT_ID' => $fromItem->getEntityId(),
+			],
+		]);
+
+		$result = new Result();
+
+		foreach ($childItems as $childItem)
+		{
+			$childItem->unbindContacts(EntityBinding::prepareEntityBindings(
+				\CCrmOwnerType::Contact,
+				[$fromItem->getEntityId()]
+			));
+			$childItem->bindContacts(EntityBinding::prepareEntityBindings(
+				\CCrmOwnerType::Contact,
+				[$toItem->getEntityId()]
+			));
+			$saveResult = $childItem->save(false);
+			if (!$saveResult->isSuccess())
+			{
+				$result->addErrors($saveResult->getErrors());
+			}
+		}
+
+		return $result;
 	}
 }

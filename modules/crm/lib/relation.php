@@ -11,11 +11,8 @@ class Relation
 {
 	/** @var RelationIdentifier */
 	protected $relationIdentifier;
-	/** @var bool */
-	protected $isPredefined = false;
-	/** @var bool */
-	protected $isChildrenListEnabled = true;
-
+	/** @var Relation\Settings */
+	protected $settings;
 	/** @var StorageStrategy */
 	protected $storageStrategy;
 
@@ -25,6 +22,7 @@ class Relation
 	 * @param int $parentEntityTypeId
 	 * @param int $childEntityTypeId
 	 * @param bool $isChildrenListEnabled
+	 * @deprecated
 	 *
 	 * @return Relation
 	 */
@@ -34,10 +32,15 @@ class Relation
 		bool $isChildrenListEnabled = true
 	): Relation
 	{
+		$settings =
+			(new Relation\Settings())
+				->setIsChildrenListEnabled($isChildrenListEnabled)
+				->setIsPredefined(false)
+		;
+
 		return new static(
 			new RelationIdentifier($parentEntityTypeId, $childEntityTypeId),
-			false,
-			$isChildrenListEnabled
+			$settings
 		);
 	}
 
@@ -45,6 +48,7 @@ class Relation
 	 * Create a new Relation Object, that represents a predefined (set on the system level) relation
 	 *
 	 * @internal Client code should not create predefined relations since they all set on the system level
+	 * @deprecated
 	 *
 	 * @param int $parentEntityTypeId
 	 * @param int $childEntityTypeId
@@ -53,21 +57,25 @@ class Relation
 	 */
 	public static function createPredefined(int $parentEntityTypeId, int $childEntityTypeId): Relation
 	{
+		$settings =
+			(new Relation\Settings())
+				->setIsChildrenListEnabled(true)
+				->setIsPredefined(true)
+		;
+
 		return new static(
 			new RelationIdentifier($parentEntityTypeId, $childEntityTypeId),
-			true
+			$settings
 		);
 	}
 
-	protected function __construct(
+	public function __construct(
 		RelationIdentifier $identifier,
-		bool $isPredefined = false,
-		bool $isChildrenListEnabled = true
+		Relation\Settings $settings
 	)
 	{
 		$this->relationIdentifier = $identifier;
-		$this->isPredefined = $isPredefined;
-		$this->isChildrenListEnabled = $isChildrenListEnabled;
+		$this->settings = $settings;
 	}
 
 	/**
@@ -120,7 +128,7 @@ class Relation
 	 */
 	public function isPredefined(): bool
 	{
-		return $this->isPredefined;
+		return $this->settings->isPredefined();
 	}
 
 	/**
@@ -132,7 +140,7 @@ class Relation
 	 */
 	public function isChildrenListEnabled(): bool
 	{
-		return $this->isChildrenListEnabled;
+		return $this->settings->isChildrenListEnabled();
 	}
 
 	/**
@@ -141,7 +149,7 @@ class Relation
 	 */
 	public function setChildrenListEnabled(bool $isChildrenListEnabled): self
 	{
-		$this->isChildrenListEnabled = $isChildrenListEnabled;
+		$this->settings->setIsChildrenListEnabled($isChildrenListEnabled);
 
 		return $this;
 	}
@@ -220,6 +228,22 @@ class Relation
 	}
 
 	/**
+	 * Unbind the provided items
+	 *
+	 * @param ItemIdentifier $oldItem
+	 * @param ItemIdentifier $newItem
+	 *
+	 * @return Result
+	 */
+	public function replaceAllItemBindings(ItemIdentifier $oldItem, ItemIdentifier $newItem): Result
+	{
+		$this->validateParent($oldItem);
+		$this->validateParent($newItem);
+
+		return $this->getStorageStrategy()->replaceAllItemBindings($oldItem, $newItem);
+	}
+
+	/**
 	 * Returns ItemIdentifier objects of elements that are parents to the provided child
 	 * Only the items that are bound by this relation are taken into account
 	 *
@@ -269,5 +293,17 @@ class Relation
 				'child'
 			);
 		}
+	}
+
+	public function setSettings(Relation\Settings $settings): self
+	{
+		$this->settings = $settings;
+
+		return $this;
+	}
+
+	public function getSettings(): Relation\Settings
+	{
+		return $this->settings;
 	}
 }

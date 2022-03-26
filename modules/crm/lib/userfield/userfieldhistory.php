@@ -1,7 +1,11 @@
 <?php
+
 namespace Bitrix\Crm\UserField;
+
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Main\Type\DateTime;
+
 class UserFieldHistory
 {
 	/** @var DateTime[] $items*/
@@ -31,6 +35,13 @@ class UserFieldHistory
 		self::load();
 		self::$items[$entityTypeID] = new DateTime();
 		self::save();
+
+		// clear cache on any uf settings change
+		$factory = Container::getInstance()->getFactory((int)$entityTypeID);
+		if ($factory)
+		{
+			$factory->clearFieldsCollectionCache();
+		}
 	}
 	protected static function load()
 	{

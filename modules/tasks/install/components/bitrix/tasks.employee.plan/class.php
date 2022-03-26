@@ -1,9 +1,11 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UserTable;
-
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\TaskAccessController;
+use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Util\Result;
 use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Util\Error;
@@ -20,10 +22,166 @@ Loc::loadMessages(__FILE__);
 CBitrixComponent::includeComponentClass("bitrix:tasks.base");
 
 class TasksEmployeePlanComponent extends TasksBaseComponent
+	implements \Bitrix\Main\Errorable, \Bitrix\Main\Engine\Contract\Controllerable
 {
+	protected $errorCollection;
+
 	protected static function getPageSize()
 	{
 		return 15;
+	}
+
+	public function configureActions()
+	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return [];
+		}
+
+		return [
+			'getGridRegion' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+		];
+	}
+
+	public function __construct($component = null)
+	{
+		parent::__construct($component);
+		$this->init();
+	}
+
+	protected function init()
+	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$this->setUserId();
+		$this->errorCollection = new \Bitrix\Tasks\Util\Error\Collection();
+	}
+
+	protected function setUserId()
+	{
+		$this->userId = (int) \Bitrix\Tasks\Util\User::getId();
+	}
+
+	public function getErrorByCode($code)
+	{
+		// TODO: Implement getErrorByCode() method.
+	}
+
+	public function getErrors()
+	{
+		if (!empty($this->componentId))
+		{
+			return parent::getErrors();
+		}
+		return $this->errorCollection->toArray();
+	}
+
+	public function getGridRegionAction(array $filter = [], array $nav = [], array $parameters = ['GET_COUNT_TOTAL' => false])
+	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$res = UserTable::getList([
+			'select' => ['ID'],
+			'filter' => [
+				'=ID' => $this->userId,
+				'=IS_REAL_USER' => true,
+			],
+			'limit' => 1
+		])->fetch();
+
+		if (empty($res))
+		{
+			$this->addForbiddenError();
+			return null;
+		}
+
+		if(Extranet\User::isExtranet($this->userId))
+		{
+			$this->addForbiddenError();
+			return null;
+		}
+
+
+		$result = $this->getGridRegion($filter, $nav, $parameters);
+		$this->errorCollection = $result->getErrors();
+
+		$data = $result->getData();
+
+		if (isset($data['DATA']['TASKS']) && is_array($data['DATA']['TASKS']))
+		{
+			foreach ($data['DATA']['TASKS'] as $k => $task)
+			{
+				if (is_a($task['START_DATE_PLAN'], \Bitrix\Tasks\Util\Type\DateTime::class))
+				{
+					$data['DATA']['TASKS'][$k]['START_DATE_PLAN'] = $task['START_DATE_PLAN']->toString();
+				}
+				if (is_a($task['END_DATE_PLAN'], \Bitrix\Tasks\Util\Type\DateTime::class))
+				{
+					$data['DATA']['TASKS'][$k]['END_DATE_PLAN'] = $task['END_DATE_PLAN']->toString();
+				}
+			}
+		}
+
+		return $data;
+	}
+
+	private function addForbiddenError()
+	{
+		$this->errorCollection->add('ACTION_NOT_ALLOWED.RESTRICTED', Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'));
+	}
+
+	private function getGridRegion(array $filter = [], array $nav = [], array $parameters = ['GET_COUNT_TOTAL' => false])
+	{
+		$result = new Result();
+		$errors = $result->getErrors();
+
+		$args = static::prepareQueryParameters($filter);
+		$filterErrors = $args['ERRORS'];
+
+		$errors->load($filterErrors);
+
+		if(!$errors->checkHasFatals())
+		{
+			if($filterErrors->filter(array('CODE' => 'INVALID_FILTER'))->isEmpty())
+			{
+				static::saveFilter($filter);
+			}
+
+			// apply nav to user list
+			$limit = static::getPageSize();
+			$page = intval($nav['PAGE']);
+
+			$args['USER']['limit'] = $limit;
+			$args['USER']['offset'] = $page > 0 ? ($page - 1) * $limit : 0;
+
+			$region = static::getGridRegionData($args['USER'], $args['TASK']);
+			$data = array(
+				'DATA' => $region['DATA'],
+				'PAGE' => $page,
+				'PAGE_SIZE' => $limit,
+			);
+
+			if($parameters['GET_COUNT_TOTAL'])
+			{
+				$data['COUNT_TOTAL'] = static::getUserCount($args['USER']);
+			}
+
+			$result->setData($data);
+			$errors->load($region['ERRORS']);
+		}
+
+		return $result;
 	}
 
 	protected static function getMaximumDateRange()
@@ -54,7 +212,7 @@ class TasksEmployeePlanComponent extends TasksBaseComponent
 		$this->getFilterData();
 
 		// do query
-		$result = static::getGridRegion($this->arResult['FILTER'], array('PAGE' => 1), array('GET_COUNT_TOTAL' => true));
+		$result = $this->getGridRegion($this->arResult['FILTER'], array('PAGE' => 1), array('GET_COUNT_TOTAL' => true));
 
 		$this->errors->load($result->getErrors());
 
@@ -403,31 +561,27 @@ class TasksEmployeePlanComponent extends TasksBaseComponent
 
 			static::applyQueryParameters($qTask, $taskParameters);
 
-			$myEmployees = array();
-			$isSuperUser = User::isSuper();
-			if(!$isSuperUser)
+			$taskResult = $qTask->exec();
+			while ($task = $taskResult->fetch())
 			{
-				$myEmployees = array_flip(\Bitrix\Tasks\Integration\Intranet\User::getSubordinateSubDepartments());
+				$taskId = (int)$task['ID'];
+				$tasks[$taskId] = $task;
 			}
-			$myEmployees[User::getId()] = true;
 
-			$taskRes = $qTask->exec();
-			while($item = $taskRes->fetch())
+			TaskRegistry::getInstance()->load(array_keys($tasks), true);
+
+			foreach ($tasks as $taskId => $task)
 			{
 				// need to find out if i can view task or not
-				$canRead = $isSuperUser ||
-					(isset($myEmployees[$item['RESPONSIBLE_ID']])
-					|| isset($myEmployees[$item['CREATED_BY']])
-					|| isset($myEmployees[$item['ACCOMPLICE_ID']]));
-
-				$item['ACTION']['READ'] = $canRead;
-				if(!$canRead)
+				$canRead = TaskAccessController::can(User::getId(), ActionDictionary::ACTION_TASK_READ, $taskId);
+				if (!$canRead)
 				{
-					$item['TITLE'] = ''; // unable to see TITLE
+					$task['TITLE'] = ''; // unable to see TITLE
 				}
-
-				$tasks[] = $item;
+				$task['ACTION']['READ'] = $canRead;
+				$tasks[$taskId] = $task;
 			}
+			$tasks = array_values($tasks);
 		}
 
 		$result['DATA'] = array('USERS' => $users, 'TASKS' => $tasks);
@@ -497,57 +651,6 @@ class TasksEmployeePlanComponent extends TasksBaseComponent
 		}
 
 		return $result;
-	}
-
-	public static function getGridRegion(array $filter = array(), array $nav = array(), array $parameters = array('GET_COUNT_TOTAL' => false))
-	{
-		$result = new Result();
-		$errors = $result->getErrors();
-
-		$args = static::prepareQueryParameters($filter);
-		$filterErrors = $args['ERRORS'];
-
-		$errors->load($filterErrors);
-
-		if(!$errors->checkHasFatals())
-		{
-			if($filterErrors->filter(array('CODE' => 'INVALID_FILTER'))->isEmpty())
-			{
-				static::saveFilter($filter);
-			}
-
-			// apply nav to user list
-			$limit = static::getPageSize();
-			$page = intval($nav['PAGE']);
-
-			$args['USER']['limit'] = $limit;
-			$args['USER']['offset'] = $page > 0 ? ($page - 1) * $limit : 0;
-
-			$region = static::getGridRegionData($args['USER'], $args['TASK']);
-			$data = array(
-				'DATA' => $region['DATA'],
-				'PAGE' => $page,
-				'PAGE_SIZE' => $limit,
-			);
-
-			if($parameters['GET_COUNT_TOTAL'])
-			{
-				$data['COUNT_TOTAL'] = static::getUserCount($args['USER']);
-			}
-
-			$result->setData($data);
-			$errors->load($region['ERRORS']);
-		}
-
-		return $result;
-	}
-
-	public static function getAllowedMethods()
-	{
-		return array(
-			'getGridRegion',
-			//'getDepartmentUser',
-		);
 	}
 
 	private static function applyQueryParameters($query, array $parameters)

@@ -64,7 +64,7 @@ class CompleteOrder extends Order
 	public function getPath()
 	{
 		$statusId = $this->canUse() ? Sale\OrderStatus::getFinalStatus() : 'F';
-		return '/shop/orders/?STATUS_ID=' . $statusId . '&apply_filter=Y';
+		return '/shop/orders/list/?STATUS_ID=' . $statusId . '&apply_filter=Y';
 	}
 
 	/**

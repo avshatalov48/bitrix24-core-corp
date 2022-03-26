@@ -77,5 +77,11 @@ return [
 			],
 		],
 		'readonly' => true,
-	]
+	],
+	'b24documents' => [
+		'value' => [
+			'serverListEndpoint' => 'https://oo-proxy.bitrix.info/settings/config.json',
+		],
+		'readonly' => true,
+	],
 ];

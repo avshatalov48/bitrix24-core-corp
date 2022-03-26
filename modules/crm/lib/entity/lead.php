@@ -207,6 +207,15 @@ class Lead extends EntityBase
 				)
 			);
 		}
+		elseif($childEntityTypeID === \CCrmOwnerType::Quote)
+		{
+			$dbResult = Crm\QuoteTable::getList(
+				array(
+					'filter' => array('=LEAD_ID' => $ID),
+					'select' => array('ID')
+				)
+			);
+		}
 		else
 		{
 			$entityTypeName = \CCrmOwnerType::ResolveName($childEntityTypeID);
@@ -260,6 +269,13 @@ class Lead extends EntityBase
 			Main\Application::getConnection()->queryExecute(
 			/** @lang text*/
 				"UPDATE b_crm_deal SET LEAD_ID = {$ID} WHERE ID IN({$slug})"
+			);
+		}
+		elseif($childEntityTypeID === \CCrmOwnerType::Quote)
+		{
+			Main\Application::getConnection()->queryExecute(
+			/** @lang text*/
+				"UPDATE b_crm_quote SET LEAD_ID = {$ID} WHERE ID IN({$slug})"
 			);
 		}
 		else

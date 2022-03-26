@@ -74,9 +74,15 @@ BX.namespace('Tasks.Component');
 				var code = item.code;
 				if (code)
 				{
-					if (code === 'CREATE_SUB')
+					if (code === 'CREATE_SUB' && this.option('templateSubtaskLimitExceeded'))
 					{
-						BX.UI.InfoHelper.show('limit_tasks_templates_subtasks');
+						BX.UI.InfoHelper.show('limit_tasks_templates_subtasks', {
+							isLimit: true,
+							limitAnalyticsLabels: {
+								module: 'tasks',
+								source: 'templateView'
+							}
+						});
 						return;
 					}
 					this.fireEvent('button-click', [code]);

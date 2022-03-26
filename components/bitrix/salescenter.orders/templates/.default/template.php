@@ -5,21 +5,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 $this->SetViewTarget('inside_pagetitle', 10000);
 ?>
+<?php if (!$arResult['hideSendButton']): ?>
 <button class="ui-btn ui-btn-md ui-btn-light-border <?=(!$arResult['isSitePublished'] || !$arResult['isOrderPublicUrlAvailable'] || $arResult['disableSendButton'] || $arResult['isPaymentsLimitReached']) ? ' ui-btn-disabled' : ''?>" onclick="BX.Salescenter.Orders.sendGridOrders();"><?=\Bitrix\Main\Localization\Loc::getMessage('SALESCENTER_SEND_ORDER');?></button>
+<?php endif; ?>
 <button class="ui-btn ui-btn-md ui-btn-primary" onclick="<?= $arResult['addOrderOnClick'] ?>"><?=\Bitrix\Main\Localization\Loc::getMessage('SALESCENTER_ADD_ORDER');?></button>
 <?
 $this->EndViewTarget();
-
-/*$APPLICATION->IncludeComponent(
-	'bitrix:crm.interface.toolbar',
-	'slider',
-	array(
-		'TOOLBAR_ID' => 'salescenter_orders_toolbar',
-		'BUTTONS' => $arResult['toolbarButtons'],
-	),
-	$component,
-	array('HIDE_ICONS' => 'Y')
-);*/
 
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.order.list',
@@ -42,6 +33,9 @@ $APPLICATION->IncludeComponent(
 <script>
 	BX.ready(function()
 	{
+		<?php if ($arResult['context'] === 'sms'): ?>
+		BX.hide(document.getElementById('send_to_chat'));
+		<?php endif; ?>
 		<?='BX.message('.\CUtil::PhpToJSObject(\Bitrix\Main\Localization\Loc::loadLanguageFile(__FILE__)).');'?>
 		<?='BX.message('.\CUtil::PhpToJSObject($arResult['messages']).');'?>
 		BX.Salescenter.Manager.init(<?=\CUtil::PhpToJSObject($arResult);?>);

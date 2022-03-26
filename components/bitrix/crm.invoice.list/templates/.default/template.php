@@ -286,7 +286,7 @@ if($enableToolbar)
 			'TITLE' => $arResult['INTERNAL_ADD_BTN_TITLE'],
 			'ICON' => 'btn-new crm-invoice-command-add-invoice'
 		);
-
+	
 		if ($entityId > 0)
 		{
 			$addButton['LINK'] = CCrmUrlUtil::AddUrlParams(
@@ -297,12 +297,12 @@ if($enableToolbar)
 				array($entityType => $entityId)
 			);
 		}
-
+	
 		if($arResult['ADD_EVENT_NAME'] !== '')
 		{
 			$addButton['ONCLICK'] = "BX.onCustomEvent(window, '{$arResult['ADD_EVENT_NAME']}')";
 		}
-
+	
 		$toolbarButtons[] = $addButton;
 	}
 

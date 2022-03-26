@@ -45,7 +45,6 @@
 	BX.Call.Provider = {
 		Plain: 'Plain',
 		Voximplant: 'Voximplant',
-		Janus: 'Janus'
 	};
 
 	BX.Call.StreamTag = {
@@ -234,6 +233,10 @@
 		_onNativeIncomingCall(nativeCall)
 		{
 			console.log("_onNativeIncomingCall", nativeCall);
+			if (nativeCall.params.type !== 'internal')
+			{
+				return;
+			}
 			let isVideo = nativeCall.params.video;
 			let callId = nativeCall.params.call.ID;
 			let timestamp = nativeCall.params.ts;
@@ -929,6 +932,21 @@
 			return this.lpad(d.getHours(), 2, '0') + ":" + this.lpad(d.getMinutes(), 2, '0') + ":" + this.lpad(d.getSeconds(), 2, '0') + "." + d.getMilliseconds();
 		}
 
+		log()
+		{
+			console.log(this.getLogMessage.apply(this, arguments));
+		}
+
+		warn()
+		{
+			console.warn(this.getLogMessage.apply(this, arguments));
+		}
+
+		error()
+		{
+			console.error(this.getLogMessage.apply(this, arguments));
+		}
+
 		formatSeconds(timeInSeconds)
 		{
 			timeInSeconds = Math.floor(timeInSeconds);
@@ -1102,6 +1120,71 @@
 
 			return result;
 		}
+
+		isDeviceSupported()
+		{
+			return Application.getApiVersion() >= 36;
+		}
+
+		forceBackgroundConnectPull(timeoutSeconds = 10)
+		{
+			return new Promise((resolve, reject) => {
+
+				if (callEngine && (callEngine.pullStatus === 'online'))
+				{
+					resolve();
+					return;
+				}
+
+				var onConnectTimeout = function()
+				{
+					console.error("Timeout while waiting for p&p to connect");
+					BX.removeCustomEvent("onPullStatus", onPullStatus);
+					reject('connect timeout');
+				};
+				var connectionTimeout = setTimeout(onConnectTimeout, timeoutSeconds * 1000);
+
+				var onPullStatus = ({status, additional}) =>
+				{
+					if (!additional)
+					{
+						additional = {};
+					}
+					if (status === 'online')
+					{
+						BX.removeCustomEvent("onPullStatus", onPullStatus);
+						clearTimeout(connectionTimeout);
+						resolve();
+					}
+
+					if (status === 'offline' && additional.isError) // offline is fired on errors too
+					{
+						BX.removeCustomEvent("onPullStatus", onPullStatus);
+						clearTimeout(connectionTimeout);
+						reject('connect error');
+					}
+				};
+
+				BX.addCustomEvent("onPullStatus", onPullStatus);
+				BX.postComponentEvent("onPullForceBackgroundConnect", [], "communication");
+			});
+		}
+
+		showDeviceAccessConfirm(withVideo, acceptCallback = () => { }, declineCallback = () => { })
+		{
+			return new Promise((resolve) =>
+			{
+				navigator.notification.confirm(
+					withVideo ? BX.message("MOBILE_CALL_MICROPHONE_CAMERA_REQUIRED") : BX.message("MOBILE_CALL_MICROPHONE_REQUIRED"),
+					(button) => button == 1 ? acceptCallback() : declineCallback(),
+					withVideo ? BX.message("MOBILE_CALL_NO_MICROPHONE_CAMERA_ACCESS") : BX.message("MOBILE_CALL_NO_MICROPHONE_ACCESS"),
+					[
+						BX.message("MOBILE_CALL_MICROPHONE_SETTINGS"),
+						BX.message("MOBILE_CALL_MICROPHONE_CANCEL"),
+					],
+				);
+			});
+		}
 	}
 
 	class DeviceAccessError extends Error
@@ -1123,17 +1206,9 @@
 		}
 	}
 
-	if ('CallEngine' in window)
-	{
-		//window.CallEngine.destroy();
-	}
-
-	window.CallUtil = new CCallUtil;
 	window.DeviceAccessError = DeviceAccessError;
 	window.CallJoinedElseWhereError = CallJoinedElseWhereError;
-	setTimeout(() =>
-	{
-		window.CallEngine = new CallEngine();
-	}, 1000)
+	window.CallEngine = CallEngine;
+	window.CCallUtil = CCallUtil;
 })
 ();

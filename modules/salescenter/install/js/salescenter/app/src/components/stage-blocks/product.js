@@ -9,7 +9,7 @@ export default {
 			required: true
 		},
 		counter: {
-			type: String,
+			type: Number,
 			required: true
 		},
 		title: {

@@ -11,6 +11,8 @@ use Bitrix\Pull\Event;
  */
 class PushService
 {
+	public const MODULE_NAME = 'tasks';
+
 	private static $instance;
 	private static $isJobOn = false;
 

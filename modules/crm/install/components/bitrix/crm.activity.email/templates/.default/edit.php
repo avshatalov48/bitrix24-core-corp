@@ -244,7 +244,7 @@ if (!empty($arParams['TEMPLATES']))
 	}
 	elseif (
 		$activity['OWNER_TYPE_ID'] !== \CCrmOwnerType::Order
-		&& !\CCrmOwnerType::isPossibleDynamicTypeId($activity['OWNER_TYPE_ID'])
+		&& !\CCrmOwnerType::isUseDynamicTypeBasedApproach($activity['OWNER_TYPE_ID'])
 	)
 	{
 		$dealsField = array(

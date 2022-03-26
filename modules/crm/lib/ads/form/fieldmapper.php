@@ -147,4 +147,47 @@ class FieldMapper
 
 		return null;
 	}
+
+	/**
+	 * @param string $type
+	 * @return string[][]
+	 */
+	public static function getDefaultMap(string $type) : array
+	{
+		/**@var array<string,string[][]> $mappings*/
+		static $mappings;
+
+		$mappings = $mappings ?? [];
+
+		if (!array_key_exists($type,$mappings))
+		{
+			switch ($type)
+			{
+				case LeadAds\Service::TYPE_VKONTAKTE:
+					$map = [
+						['CRM_FIELD_TYPE' => 'CONTACT_NAME', 'ADS_FIELD_TYPE' => 'NAME'],
+						['CRM_FIELD_TYPE' => 'CONTACT_LAST_NAME', 'ADS_FIELD_TYPE' => 'LAST_NAME'],
+						['CRM_FIELD_TYPE' => 'CONTACT_EMAIL', 'ADS_FIELD_TYPE' => 'EMAIL'],
+						['CRM_FIELD_TYPE' => 'CONTACT_PHONE', 'ADS_FIELD_TYPE' => 'PHONE'],
+					];
+					break;
+				case LeadAds\Service::TYPE_FACEBOOK:
+					$map = [
+						['CRM_FIELD_TYPE' => 'CONTACT_PHONE', 'ADS_FIELD_TYPE' => 'PHONE'],
+						['CRM_FIELD_TYPE' => 'CONTACT_NAME', 'ADS_FIELD_TYPE' => 'FIRST_NAME'],
+						['CRM_FIELD_TYPE' => 'CONTACT_LAST_NAME', 'ADS_FIELD_TYPE' => 'LAST_NAME'],
+						['CRM_FIELD_TYPE' => 'CONTACT_EMAIL', 'ADS_FIELD_TYPE' => 'EMAIL'],
+						['CRM_FIELD_TYPE' => 'COMPANY_NAME', 'ADS_FIELD_TYPE' => 'COMPANY_NAME'],
+					];
+					break;
+				default:
+					$map = [];
+					break;
+			}
+
+			$mappings[$type] = $map;
+		}
+
+		return $mappings[$type];
+	}
 }

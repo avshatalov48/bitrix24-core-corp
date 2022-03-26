@@ -46,6 +46,18 @@ class Comment extends Base
 				$this->addError(new Error('Comment ',$commentId.' is not found'));
 				return null;
 			}
+			$item = $timeline->getItem();
+			if (!$item)
+			{
+				$this->addError(new Error('Comment ',$commentId.' is not found'));
+				return null;
+			}
+			$userPermissions = Driver::getInstance()->getUserPermissions();
+			if (!$userPermissions->canViewComment($item, $timeline))
+			{
+				$this->addError(new Error(Loc::getMessage('RPA_MODIFY_COMMENT_ACCESS_DENIED')));
+				return null;
+			}
 			$text = $timeline->getDescription();
 		}
 

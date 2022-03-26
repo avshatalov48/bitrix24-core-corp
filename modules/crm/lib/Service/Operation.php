@@ -4,6 +4,8 @@ namespace Bitrix\Crm\Service;
 
 use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Automation\Starter;
+use Bitrix\Crm\Counter\EntityCounterManager;
+use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Field\Collection;
 use Bitrix\Crm\Item;
@@ -11,6 +13,7 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Kanban\Entity;
 use Bitrix\Crm\Search\SearchContentBuilderFactory;
 use Bitrix\Crm\Service\Operation\Action;
+use Bitrix\Crm\Statistics;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentOutOfRangeException;
@@ -58,54 +61,6 @@ abstract class Operation
 		$this->settings = $settings;
 		$this->fieldsCollection = $fieldsCollection;
 		Container::getInstance()->getLocalization()->loadMessages();
-	}
-
-	/**
-	 * Returns an object that describes a configuration of this Operation
-	 *
-	 * @return Operation\Settings
-	 */
-	public function exportSettings(): Operation\Settings
-	{
-		return $this->settings;
-	}
-
-	/**
-	 * Set a new settings object that describes a configuration of this Operation
-	 *
-	 * @param Operation\Settings $settings
-	 *
-	 * @return $this
-	 */
-	public function importSettings(Operation\Settings $settings): self
-	{
-		$this->settings = $settings;
-
-		return $this;
-	}
-
-	/**
-	 * Returns a Context object from the current settings
-	 *
-	 * @return Context
-	 */
-	public function getContext(): Context
-	{
-		return $this->settings->getContext();
-	}
-
-	/**
-	 * Sets a new Context object to the current settings
-	 *
-	 * @param Context $context
-	 *
-	 * @return $this
-	 */
-	public function setContext(Context $context): self
-	{
-		$this->settings->setContext($context);
-
-		return $this;
 	}
 
 	public function getItem(): Item
@@ -229,11 +184,34 @@ abstract class Operation
 		{
 			$this->updatePermissions();
 			$this->updateSearchIndexes();
+
+			if ($this->isCountersUpdateNeeded())
+			{
+				$this->updateCounters();
+			}
+		}
+
+		$statisticsFacade = $this->getStatisticsFacade();
+		if ($result->isSuccess() && !is_null($statisticsFacade))
+		{
+			$registerStatisticsResult = $this->registerStatistics($statisticsFacade);
+			if (!$registerStatisticsResult->isSuccess())
+			{
+				$result->addErrors($registerStatisticsResult->getErrors());
+			}
 		}
 
 		if ($result->isSuccess() && $this->isSaveToHistoryEnabled())
 		{
-			$this->saveToHistory();
+			$saveToHistoryResult = $this->saveToHistory();
+			if (!$saveToHistoryResult->isSuccess())
+			{
+				$result->addErrors($saveToHistoryResult->getErrors());
+			}
+		}
+
+		if ($result->isSuccess() && $this->isSaveToTimelineEnabled())
+		{
 			$this->createTimelineRecord();
 		}
 
@@ -553,6 +531,67 @@ abstract class Operation
 		return $result;
 	}
 
+	//region Settings
+	/**
+	 * Returns an object that describes a configuration of this Operation
+	 *
+	 * @return Operation\Settings
+	 */
+	public function exportSettings(): Operation\Settings
+	{
+		return $this->settings;
+	}
+
+	/**
+	 * Set a new settings object that describes a configuration of this Operation
+	 *
+	 * @param Operation\Settings $settings
+	 *
+	 * @return $this
+	 */
+	public function importSettings(Operation\Settings $settings): self
+	{
+		$this->settings = $settings;
+
+		return $this;
+	}
+
+	/**
+	 * Returns a Context object from the current settings
+	 *
+	 * @return Context
+	 */
+	public function getContext(): Context
+	{
+		return $this->settings->getContext();
+	}
+
+	/**
+	 * Sets a new Context object to the current settings
+	 *
+	 * @param Context $context
+	 *
+	 * @return $this
+	 */
+	public function setContext(Context $context): self
+	{
+		$this->settings->setContext($context);
+
+		return $this;
+	}
+
+	public function getStatisticsFacade(): ?Statistics\OperationFacade
+	{
+		return $this->settings->getStatisticsFacade();
+	}
+
+	public function setStatisticsFacade(?Statistics\OperationFacade $statisticsFacade): self
+	{
+		$this->settings->setStatisticsFacade($statisticsFacade);
+
+		return $this;
+	}
+
 	public function disableAllChecks(): self
 	{
 		$this->settings->disableAllChecks();
@@ -712,6 +751,25 @@ abstract class Operation
 		return $this->settings->isSaveToHistoryEnabled();
 	}
 
+	public function enableSaveToTimeline(): self
+	{
+		$this->settings->enableSaveToTimeline();
+
+		return $this;
+	}
+
+	public function disableSaveToTimeline(): self
+	{
+		$this->settings->disableSaveToTimeline();
+
+		return $this;
+	}
+
+	public function isSaveToTimelineEnabled(): bool
+	{
+		return $this->settings->isSaveToTimelineEnabled();
+	}
+
 	/**
 	 * Exclude the specified items from being registered in this item's timeline as bound item
 	 *
@@ -793,6 +851,26 @@ abstract class Operation
 		return $this->settings->isCheckWorkflowsEnabled();
 	}
 
+	public function enableDeferredCleaning(): self
+	{
+		$this->settings->enableDeferredCleaning();
+
+		return $this;
+	}
+
+	public function disableDeferredCleaning(): self
+	{
+		$this->settings->disableDeferredCleaning();
+
+		return $this;
+	}
+
+	public function isDeferredCleaningEnabled(): bool
+	{
+		return $this->settings->isDeferredCleaningEnabled();
+	}
+	//endregion
+
 	protected function saveToHistory(): Result
 	{
 		return new Result();
@@ -806,9 +884,16 @@ abstract class Operation
 	{
 		if (!empty($this->actions[$placementCode]))
 		{
+			/** @var Action $action */
 			foreach($this->actions[$placementCode] as $action)
 			{
-				/** @var Action $action */
+				$action->setContext($this->getContext());
+
+				if ($placementCode === static::ACTION_AFTER_SAVE)
+				{
+					$action->setItemBeforeSave($this->itemBeforeSave);
+				}
+
 				$actionResult = $action->process($this->item);
 				if (!$actionResult->isSuccess())
 				{
@@ -832,7 +917,7 @@ abstract class Operation
 		$this->pullItem = Entity::getInstance($entityName)->createPullItem($data);
 
 		$params = ['TYPE' => $entityName];
-		if (!empty($data['CATEGORY_ID']))
+		if (isset($data['CATEGORY_ID']))
 		{
 			$params['CATEGORY_ID'] = $data['CATEGORY_ID'];
 		}
@@ -854,7 +939,7 @@ abstract class Operation
 	{
 		$userPermissions = Container::getInstance()->getUserPermissions($this->getContext()->getUserId());
 
-		$permissionEntityType = \Bitrix\Crm\Service\UserPermissions::getItemPermissionEntityType($this->item);
+		$permissionEntityType = UserPermissions::getItemPermissionEntityType($this->item);
 		$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
 			->setEntityAttributes($userPermissions->prepareItemPermissionAttributes($this->item))
 		;
@@ -880,7 +965,71 @@ abstract class Operation
 
 		\CCrmSearch::UpdateSearch($filter, \CCrmOwnerType::ResolveName($this->item->getEntityTypeId()), true);
 
-		SearchContentBuilderFactory::create($this->item->getEntityTypeId())->build($this->item->getId());
+		$builder = SearchContentBuilderFactory::create($this->item->getEntityTypeId());
+		$builder->build(
+			$this->item->getId(),
+			['checkExist' => true],
+		);
+	}
+
+	protected function isCountersUpdateNeeded(): bool
+	{
+		return false;
+	}
+
+	protected function updateCounters(): void
+	{
+		if (!$this->fieldsCollection || !$this->fieldsCollection->hasField(Item::FIELD_NAME_ASSIGNED))
+		{
+			return;
+		}
+
+		$userIds = $this->getUserIdsForCountersReset();
+		if (empty($userIds))
+		{
+			return;
+		}
+
+		EntityCounterManager::reset(
+			$this->getCountersCodes(),
+			$userIds,
+		);
+	}
+
+	protected function getCountersCodes(): array
+	{
+		$extra = ['EXTENDED_MODE' => true];
+
+		if ($this->item->isCategoriesSupported())
+		{
+			$extra['DEAL_CATEGORY_ID'] = $this->item->getCategoryId();
+		}
+
+		return EntityCounterManager::prepareCodes(
+			$this->item->getEntityTypeId(),
+			$this->getTypesOfCountersToReset(),
+			$extra,
+		);
+	}
+
+	protected function getTypesOfCountersToReset(): array
+	{
+		return [
+			EntityCounterType::PENDING,
+			EntityCounterType::OVERDUE,
+			EntityCounterType::IDLE,
+			EntityCounterType::ALL,
+		];
+	}
+
+	protected function getUserIdsForCountersReset(): array
+	{
+		return [];
+	}
+
+	protected function registerStatistics(Statistics\OperationFacade $statisticsFacade): Result
+	{
+		return new Result();
 	}
 
 	public function getStageDependantRequiredFields(Factory $factory): array

@@ -13,11 +13,14 @@ class IsNew extends Field
 	protected function processLogic(Item $item, Context $context = null): Result
 	{
 		$factory = Container::getInstance()->getFactory($item->getEntityTypeId());
-		if($factory && $factory->isStagesEnabled())
+
+		if($factory && $factory->isStagesSupported())
 		{
-			$stages = $factory->getStages($item->getCategoryId());
+			$stages = $factory->getStages($item->getCategoryId())->getAll();
 			$firstStage = reset($stages);
+
 			$isNew = ($firstStage && $firstStage->getStatusId() === $item->getStageId());
+
 			$item->set($this->getName(), $isNew);
 		}
 

@@ -7,6 +7,8 @@
 	BX.NotificationsWidget = function(options)
 	{
 		this.url = options.url;
+		this.onclick = options.onclick;
+
 		this.messages = options.messages;
 		this.disclaimerUrl = options.disclaimerUrl;
 		this.qrCode = null;
@@ -75,6 +77,7 @@
 							el('a', {
 								attrs: {
 									href: this.url,
+									onclick: this.onclick,
 									target: '_blank',
 								},
 								children: [

@@ -43,6 +43,7 @@ $MESS["TASKS_JS_MARK"] = "Score";
 $MESS["TASKS_JS_MARK_N"] = "Negative";
 $MESS["TASKS_JS_MARK_NONE"] = "None";
 $MESS["TASKS_JS_MARK_P"] = "Positive";
+$MESS["TASKS_LIST_ACTION_COPY_LINK_NOTIFICATION"] = "Task link has been copied to the Clipboard";
 $MESS["TASKS_LIST_ACTION_PING_NOTIFICATION"] = "Ping notification sent";
 $MESS["TASKS_LIST_ADD_TAG_FOOTER_LABEL"] = "Add tag:";
 $MESS["TASKS_LIST_CHOOSE_ACTION"] = "Select action";

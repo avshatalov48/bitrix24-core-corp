@@ -1345,7 +1345,6 @@
 
 .imopenlines-page-show {
 	animation: page-show .50s ease-out forwards;
-	animation-delay: 1s;
 }
 
 /*IE and Firefox fixes*/

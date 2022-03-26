@@ -247,9 +247,9 @@ $sectionInvolvement = \Bitrix\Intranet\UStat\UStat::getSectionsSummaryInvolvemen
 
 foreach ($sectionData as $_section => &$_sectionData)
 {
-	$_sectionData['involvement'] = round(
+	$_sectionData['involvement'] = ($sectionInvolvement['USERS_COUNT'] > 0 ? round(
 		$sectionInvolvement[$_section.'_USAGE'] / $sectionInvolvement['USERS_COUNT'] * 100
-	);
+	) : 0);
 }
 
 // get summary involvement for current section
@@ -310,7 +310,9 @@ while ($row = $result->fetch())
 			$row["PERSONAL_PHOTO_file"],
 			array("width" => 42, "height" => 42),
 			BX_RESIZE_IMAGE_EXACT,
-			false
+			false,
+			false,
+			true
 		);
 
 		if ($row["PERSONAL_PHOTO_resized"] !== false)

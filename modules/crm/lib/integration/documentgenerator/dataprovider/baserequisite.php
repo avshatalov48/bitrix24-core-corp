@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 
 \Bitrix\Main\Loader::includeModule('documentgenerator');
 
+use Bitrix\Crm\Requisite\Country;
 use Bitrix\DocumentGenerator\DataProvider;
 use Bitrix\DocumentGenerator\DataProviderManager;
 
@@ -94,12 +95,12 @@ abstract class BaseRequisite extends DataProvider
 	protected static function getRegionCountryIdMap()
 	{
 		return [
-			'ru' => 1,
-			'by' => 4,
-			'kz' => 6,
-			'ua' => 14,
-			'de' => 46,
-			'en' => 122,
+			'ru' => Country::ID_RUSSIA,
+			'by' => Country::ID_BELARUS,
+			'kz' => Country::ID_KAZAKHSTAN,
+			'ua' => Country::ID_UKRAINE,
+			'de' => Country::ID_GERMANY,
+			'en' => Country::ID_USA,
 		];
 	}
 
@@ -112,7 +113,7 @@ abstract class BaseRequisite extends DataProvider
 		$countryId = static::getRegionCountryIdMap()[$region];
 		if(!$countryId)
 		{
-			$countryId = 122;
+			$countryId = Country::ID_USA;
 		}
 
 		return $countryId;
@@ -143,6 +144,7 @@ abstract class BaseRequisite extends DataProvider
 			'SORT' => 'SORT',
 			'COUNTRY_ID' => 'COUNTRY_ID',
 			'RQ_ADDR' => 'RQ_ADDR',
+			'ADDRESS_ONLY' => 'ADDRESS_ONLY',
 		];
 	}
 }

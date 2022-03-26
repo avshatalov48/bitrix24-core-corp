@@ -6,6 +6,7 @@ use Bitrix\Bizproc\Document\ValueCollection;
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Crm;
+use Bitrix\Main\Localization\Loc;
 
 if (!Loader::includeModule('bizproc'))
 {
@@ -64,6 +65,10 @@ abstract class Base extends ValueCollection
 		elseif (strpos($fieldId, 'ASSIGNED_BY') === 0)
 		{
 			$this->loadAssignedByValues();
+		}
+		elseif (strpos($fieldId, 'PRODUCT_IDS') === 0)
+		{
+			$this->loadProductValues();
 		}
 		elseif (strpos($fieldId, 'FORMS.') === 0)
 		{
@@ -171,6 +176,48 @@ abstract class Base extends ValueCollection
 			true,
 			false
 		);
+	}
+
+	protected function loadProductValues(): void
+	{
+		$productRows = Crm\ProductRowTable::getList([
+			'select' => ['ID', 'PRODUCT_ID', 'CP_PRODUCT_NAME', 'SUM_ACCOUNT'],
+			'filter' => [
+				'=OWNER_TYPE' => \CCrmOwnerTypeAbbr::ResolveByTypeID($this->typeId),
+				'=OWNER_ID' => $this->id,
+			],
+			'order' => ['SORT' => 'ASC'],
+		])->fetchAll();
+
+		$this->document['PRODUCT_IDS'] = array_column($productRows, 'ID');
+		$this->document['PRODUCT_IDS_PRINTABLE'] = '';
+
+		if (!empty($productRows))
+		{
+			$this->document['PRODUCT_IDS_PRINTABLE'] = $this->getProductRowsPrintable($productRows);
+		}
+	}
+
+	protected function getProductRowsPrintable(array $rows): string
+	{
+		$text = sprintf(
+			'[table][tr][th]%s[/th][th]%s[/th][/tr]',
+			Loc::getMessage('CRM_DOCUMENT_FIELD_PRODUCT_NAME'),
+			Loc::getMessage('CRM_DOCUMENT_FIELD_PRODUCT_SUM')
+		);
+
+		$currencyId = \CCrmCurrency::GetAccountCurrencyID();
+
+		foreach ($rows as $row)
+		{
+			$text .= sprintf(
+				'[tr][td]%s[/td][td]%s[/td][/tr]',
+				$row['CP_PRODUCT_NAME'],
+				\CCrmCurrency::MoneyToString($row['SUM_ACCOUNT'], $currencyId)
+			);
+		}
+
+		return $text . '[/table]';
 	}
 
 	protected function loadCreatedByPrintable(): void

@@ -41,6 +41,8 @@ use Bitrix\Main\UserField;
  * @method setIsBizProcEnabled(bool $isBizProcEnabled)
  * @method bool|null getIsSetOpenPermissions()
  * @method setIsSetOpenPermissions(bool $isSetOpenPermissions)
+ * @method bool|null getIsPaymentsEnabled()
+ * @method setIsPaymentsEnabled(bool $isPaymentsEnabled)
  * @method int|null getEntityTypeId()
  * @method setEntityTypeId(int $entityTypeId)
  */

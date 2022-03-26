@@ -124,6 +124,7 @@ class LeadConversionMapper extends EntityConversionMapper
 			$map->createItem('EMAIL');
 			$map->createItem('WEB');
 			$map->createItem('IM');
+			$map->createItem('LINK');
 			$map->createItem('ASSIGNED_BY_ID');
 			$map->createItem('ORIGINATOR_ID');
 			$map->createItem('ORIGIN_ID');
@@ -155,6 +156,7 @@ class LeadConversionMapper extends EntityConversionMapper
 			$map->createItem('EMAIL');
 			$map->createItem('WEB');
 			$map->createItem('IM');
+			$map->createItem('LINK');
 			$map->createItem('ASSIGNED_BY_ID');
 			$map->createItem('ORIGINATOR_ID');
 			$map->createItem('ORIGIN_ID');
@@ -229,7 +231,7 @@ class LeadConversionMapper extends EntityConversionMapper
 			$options = array();
 		}
 
-		$multiFieldKeys = array('PHONE' => true, 'EMAIL' => true, 'WEB' => true, 'IM' => true);
+		$multiFieldKeys = array('PHONE' => true, 'EMAIL' => true, 'WEB' => true, 'IM' => true, 'LINK' => true);
 
 		$dstFields = array();
 		$dstEntityTypeID = $map->getDestinationEntityTypeID();

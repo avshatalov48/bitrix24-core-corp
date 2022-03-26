@@ -1,6 +1,9 @@
 <?php
 namespace Bitrix\Crm\Synchronization;
 use Bitrix\Crm\Entity\Traits\VisibilityConfig;
+use Bitrix\Crm\Model;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Main;
 use Bitrix\Main\Type\DateTime;
@@ -378,6 +381,24 @@ class UserFieldSynchronizer
 			$synchronizedFieldNameMap[$srcField['FIELD_NAME']] = $fieldName;
 		}
 
+		//remove this branch if proper bugfix exists and this workaround is no longer needed
+		if (!empty($fieldsToCreate) || !empty($fieldsToDelete))
+		{
+			$dstFactory = Container::getInstance()->getFactory((int)$dstEntityTypeID);
+			if ($dstFactory)
+			{
+				$dstDataClass = $dstFactory->getDataClass();
+
+				//rebuild entity so that new user fields are added to map and old fields are removed
+				Main\ORM\Entity::destroy($dstDataClass::getEntity());
+
+				if ($dstFactory instanceof Factory\Dynamic)
+				{
+					//if we do not recompile entity for dynamic type, some fields will be absent
+					Model\Dynamic\TypeTable::compileEntity($dstFactory->getType());
+				}
+			}
+		}
 
 		$historyItem = self::getHistoryItem($srcEntityTypeID, $dstEntityTypeID);
 		if($historyItem === null)

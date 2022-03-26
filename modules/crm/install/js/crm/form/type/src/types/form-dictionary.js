@@ -75,6 +75,13 @@ type Callback = {
 	from: Array;
 };
 
+type WhatsApp = {
+	enabled: boolean;
+	text: string;
+	isSetup: boolean;
+	setupLink: string;
+};
+
 type Captcha = {
 	hasDefaults: boolean;
 };
@@ -98,6 +105,7 @@ type DepConditionOperation = {
 	id: string;
 	name: string;
 	fieldTypes: Array<string>;
+	excludeFieldTypes: Array<string>;
 };
 
 type DepCondition = {
@@ -125,6 +133,40 @@ type Product = {
 	isRegionRussian: boolean;
 };
 
+type IntegrationDirection = {
+	id: number;
+	code: string;
+};
+
+type IntegrationProviderMapping = {
+	crmFieldType: string;
+	adsFieldType: string;
+};
+type IntegrationProvider = {
+	authUrl: string;
+	defaultMapping: Array<IntegrationProviderMapping>;
+	engineCode: string;
+	group: {
+		isAuthorized: boolean;
+		hasAuth: boolean;
+		authUrl: string;
+		groupId: Array<number>;
+	};
+	hasAuth: boolean;
+	icon: string;
+	isSupportAccount: boolean;
+	profile: Object;
+	type: string;
+	urlAccountList: string;
+	urlFormList: string;
+	urlInfo: string;
+};
+type Integration = {
+	canUse: boolean;
+	directions: Array<IntegrationDirection>;
+	providers: Array<IntegrationProvider>;
+};
+
 export type FormDictionary = {
 	languages: Array<Language>;
 	views: Views;
@@ -132,6 +174,7 @@ export type FormDictionary = {
 	payment: Payment;
 	document: Document;
 	callback: Callback;
+	whatsapp: WhatsApp;
 	captcha: Captcha;
 	templates: Array<string>;
 	personalization: Personalization;
@@ -139,5 +182,14 @@ export type FormDictionary = {
 	deps: Deps;
 	restriction: Restriction;
 	product: Product;
+	integration: Integration;
+	permissions: {
+		userField: {
+			add: boolean;
+		},
+		form: {
+			edit: boolean;
+		},
+	};
 	contentTypes: Array<EnumString>;
 };

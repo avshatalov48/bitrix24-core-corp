@@ -13,11 +13,6 @@ class DynamicProvider extends EntityProvider
 		$this->options['dynamicTypeId'] = (int)($options['entityTypeId'] ?? 0);
 	}
 
-	public function isAvailable(): bool
-	{
-		return Container::getInstance()->getUserPermissions()->canReadType($this->getEntityTypeId());
-	}
-
 	protected function getEntityTypeName(): string
 	{
 		return 'dynamic';

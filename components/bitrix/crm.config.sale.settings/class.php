@@ -1199,11 +1199,14 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 		);
 		if (Catalog\Config\Feature::isInventoryManagementEnabled())
 		{
+			$useStore = Catalog\Component\UseStore::isUsed() ?'Y':'N';
+
 			$options[] = array(
-				"id" => $this->optionPrefix."default_use_store_control",
-				"name" => Loc::getMessage("CRM_CF_USE_STORE_CONTROL"),
-				"type" => "checkbox",
-				"value" => Option::get("catalog", "default_use_store_control"),
+				"id" => "default_use_store_control",
+				"name" => Loc::getMessage("CRM_CF_USE_STORE_CONTROL_1"),
+				"type" => "label",
+				"value" => "<input class='' type='button' data-use-store-control='".$useStore."' id='store_use_settings' value='".
+					Loc::getMessage('CRM_CF_PRODUCT_SETTINGS_CHANGE')."'>",
 			);
 		}
 		else
@@ -1234,7 +1237,7 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 				}
 				$options[] = array(
 					"id" => $this->optionPrefix."default_use_store_control",
-					"name" => Loc::getMessage("CRM_CF_USE_STORE_CONTROL"),
+					"name" => Loc::getMessage("CRM_CF_USE_STORE_CONTROL_1"),
 					"type" => "custom",
 					"value" => $tarifLock
 				);

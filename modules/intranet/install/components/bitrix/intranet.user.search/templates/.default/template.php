@@ -45,7 +45,7 @@ function GetInput_<?=$name_x; ?>(doc)
 function OnSelect_<?=$name_x; ?>(value)
 {
 	var q;
-	if (BX.SidePanel.Instance && BX.SidePanel.Instance.getSliderByWindow(window))
+	if (BX.SidePanel && BX.SidePanel.Instance)
 		q = GetInput_<?=$name_x; ?>();
 	else
 		q = window.top != window.self ? GetInput_<?=$name_x; ?>(top.document) : GetInput_<?=$name_x; ?>();

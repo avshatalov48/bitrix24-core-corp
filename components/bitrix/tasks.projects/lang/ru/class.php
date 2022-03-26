@@ -27,6 +27,13 @@ $MESS['TASKS_PROJECTS_PRESET_MY'] = 'Мои проекты';
 $MESS['TASKS_PROJECTS_PRESET_ACTIVE_PROJECT'] = 'В работе';
 $MESS['TASKS_PROJECTS_PRESET_INACTIVE_PROJECT'] = 'Архивный';
 
+$MESS['TASKS_SCRUM_PRESET_MY'] = 'Мои';
+$MESS['TASKS_SCRUM_GRID_STUB_TITLE'] = 'Создайте скрам-команду';
+$MESS['TASKS_SCRUM_GRID_STUB_DESCRIPTION'] = 'Здесь будет список скрам-команд, в которых вы участвуете с коллегами.';
+$MESS['TASKS_SCRUM_GRID_STUB_MIGRATION_TITLE'] = 'Перенесите свой Скрам из других систем в Битрикс24';
+$MESS['TASKS_SCRUM_GRID_STUB_MIGRATION_BUTTON'] = 'Перенести';
+$MESS['TASKS_SCRUM_GRID_STUB_MIGRATION_OTHER'] = 'и другие';
+
 $MESS['TASKS_PROJECTS_GRID_STUB_TITLE'] = 'Создайте проект';
 $MESS['TASKS_PROJECTS_GRID_STUB_DESCRIPTION'] = 'Здесь будет список проектов, которые вы выполняете вместе с коллегами.';
 $MESS['TASKS_PROJECTS_GRID_STUB_NO_DATA_TITLE'] = 'По вашему запросу ничего не найдено';

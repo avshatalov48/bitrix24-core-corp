@@ -472,55 +472,41 @@ BX.namespace('Tasks.Component');
 
 			showNextGridPage: function()
 			{
-				this.callRemote('this.getGridRegion', {
-					filter: this.vars.lastFilter,
-					nav: {
-						PAGE: this.vars.lastPage + 1
-					},
-					parameters: {
-						GET_COUNT_TOTAL: this.vars.lastPage == 0
+				BX.ajax.runComponentAction('bitrix:tasks.employee.plan', 'getGridRegion', {
+					mode: 'class',
+					data: {
+						filter: this.vars.lastFilter,
+						nav: {
+							PAGE: this.vars.lastPage + 1
+						},
+						parameters: {
+							GET_COUNT_TOTAL: this.vars.lastPage === 0
+						}
 					}
-				}).then(function(r){
-
-					if(r.errors.filter({TYPE: 'FATAL'}).isEmpty())
+				}).then(
+					function(response)
 					{
+						if (
+							!response.status
+							|| response.status !== 'success'
+						)
+						{
+							BX.reload();
+							return;
+						}
+
 						this.vars.lastPage++;
-						this.appendGridData(r.data.DATA);
-						this.setGridVerticalCountTotal(r.data.COUNT_TOTAL);
+						this.appendGridData(response.data.DATA);
+						this.setGridVerticalCountTotal(response.data.COUNT_TOTAL);
 						this.toggleSearchLoading(false);
 						this.redrawGrid();
-					}
-					else
+
+					}.bind(this),
+					function(response)
 					{
-						BX.Tasks.alert(r.getErrors()).then(function(){
-							BX.reload();
-						});
-					}
-				});
-			},
-
-			getUserCollection: function()
-			{
-				if(!this.instances.d2u)
-				{
-					this.instances.d2u = new BX.Tasks.Util.RemoteCollection({
-						source: BX.delegate(function(depIds)
-						{
-							return this.callRemote('this.getDepartmentUser', {id: depIds[0]});
-						}, this),
-						transformer: function(data, ids)
-						{
-							var id = ids.shift();
-							var result = {};
-
-							result[id] = data;
-
-							return result;
-						}
-					});
-				}
-
-				return this.instances.d2u;
+						BX.reload();
+					}.bind(this)
+				);
 			}
 		}
 	});

@@ -107,6 +107,9 @@ class CCrmStatus
 	 */
 	public static function GetEntityTypes(): array
 	{
+		// force loading owner_type phrases
+		\CCrmOwnerType::GetAllDescriptions();
+
 		$arEntityType = [
 			'STATUS' => [
 				'ID' =>'STATUS',
@@ -120,12 +123,63 @@ class CCrmStatus
 			'EMPLOYEES' => ['ID' =>'EMPLOYEES', 'NAME' => GetMessage('CRM_STATUS_TYPE_EMPLOYEES')],
 			'INDUSTRY' => ['ID' =>'INDUSTRY', 'NAME' => GetMessage('CRM_STATUS_TYPE_INDUSTRY')],
 			'DEAL_TYPE' => ['ID' =>'DEAL_TYPE', 'NAME' => GetMessage('CRM_STATUS_TYPE_DEAL_TYPE')],
-			'INVOICE_STATUS' => [
+		];
+
+		$invoiceSettings = \Bitrix\Crm\Settings\InvoiceSettings::getCurrent();
+		if ($invoiceSettings->isOldInvoicesEnabled())
+		{
+			$arEntityType['INVOICE_STATUS'] = [
 				'ID' =>'INVOICE_STATUS',
 				'NAME' => GetMessage('CRM_STATUS_TYPE_INVOICE_STATUS'),
-				'SEMANTIC_INFO' => self::GetInvoiceStatusSemanticInfo()
-			]
-		];
+				'SEMANTIC_INFO' => self::GetInvoiceStatusSemanticInfo(),
+			];
+		}
+		if ($invoiceSettings->isSmartInvoiceEnabled())
+		{
+			$arEntityType['INVOICE_STATUS']['NAME'] = \Bitrix\Crm\Service\Container::getInstance()->getLocalization()->appendOldVersionSuffix(GetMessage('CRM_STATUS_TYPE_INVOICE_STATUS'));
+			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::SmartInvoice);
+			if ($factory)
+			{
+				if (!$factory->isCategoriesEnabled())
+				{
+					$category = $factory->getDefaultCategory();
+					if ($category)
+					{
+						$stagesEntityId = $factory->getStagesEntityId($category->getId());
+						$arEntityType[$stagesEntityId] = [
+							'ID' => $stagesEntityId,
+							'NAME' => Loc::getMessage('CRM_STATUS_TYPE_INVOICE_STATUS'),
+							'SEMANTIC_INFO' => [],
+							'PREFIX' => static::getDynamicEntityStatusPrefix(\CCrmOwnerType::SmartInvoice, $category->getId()),
+							'FIELD_ATTRIBUTE_SCOPE' => FieldAttributeManager::getEntityScopeByCategory($category->getId()),
+							'ENTITY_TYPE_ID' => \CCrmOwnerType::SmartInvoice,
+							'IS_ENABLED' => true,
+							'CATEGORY_ID' => $category->getId(),
+						];
+					}
+				}
+				else
+				{
+					foreach ($factory->getCategories() as $category)
+					{
+						$stagesEntityId = $factory->getStagesEntityId($category->getId());
+						$arEntityType[$stagesEntityId] = [
+							'ID' => $stagesEntityId,
+							'NAME' => Loc::getMessage('CRM_STATUS_TYPE_STATUS_WITH_CATEGORY', [
+								'#NAME#' => $factory->getEntityDescription(),
+								'#CATEGORY#' => $category->getName(),
+							]),
+							'SEMANTIC_INFO' => [],
+							'PREFIX' => static::getDynamicEntityStatusPrefix(\CCrmOwnerType::SmartInvoice, $category->getId()),
+							'FIELD_ATTRIBUTE_SCOPE' => FieldAttributeManager::getEntityScopeByCategory($category->getId()),
+							'ENTITY_TYPE_ID' => \CCrmOwnerType::SmartInvoice,
+							'IS_ENABLED' => true,
+							'CATEGORY_ID' => $category->getId(),
+						];
+					}
+				}
+			}
+		}
 
 		if(DealCategory::isCustomized())
 		{
@@ -139,6 +193,7 @@ class CCrmStatus
 				'SEMANTIC_INFO' => self::GetDealStageSemanticInfo(),
 				'FIELD_ATTRIBUTE_SCOPE' => FieldAttributeManager::getEntityScopeByCategory(),
 				'ENTITY_TYPE_ID' => CCrmOwnerType::Deal,
+				'CATEGORY_ID' => 0,
 			];
 		}
 
@@ -192,12 +247,16 @@ class CCrmStatus
 				$statusEntityId = $typesMap->getStagesEntityId($type->getEntityTypeId(), $category->getId());
 				$entities[$statusEntityId] = [
 					'ID' => $statusEntityId,
-					'NAME' => $type->getTitle() . '(' . $category->getName() . ')',
+					'NAME' => Loc::getMessage('CRM_STATUS_TYPE_STATUS_WITH_CATEGORY', [
+						'#NAME#' => $type->getTitle(),
+						'#CATEGORY#' => $category->getName(),
+					]),
 					'SEMANTIC_INFO' => [],
 					'PREFIX' => static::getDynamicEntityStatusPrefix($type->getEntityTypeId(), $category->getId()),
 					'FIELD_ATTRIBUTE_SCOPE' => FieldAttributeManager::getEntityScopeByCategory($category->getId()),
 					'ENTITY_TYPE_ID' => $type->getEntityTypeId(),
 					'IS_ENABLED' => $type->getIsStagesEnabled(),
+					'CATEGORY_ID' => $category->getId(),
 				];
 			}
 		}

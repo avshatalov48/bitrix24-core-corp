@@ -43,8 +43,6 @@ BX.namespace('Tasks.Component');
 		this.paths = this.parameters.paths || {};
 		this.createButtonMenu = [];
 
-		this.query = new BX.Tasks.Util.Query({url: "/bitrix/components/bitrix/tasks.task/ajax.php"});
-
 		this.checkListChanged = false;
 		this.showCloseConfirmation = false;
 
@@ -76,9 +74,7 @@ BX.namespace('Tasks.Component');
 
 		this.extendWatch();
 
-		var stayAtPage = parameters.componentData.EVENT_OPTIONS.STAY_AT_PAGE;
-		this.fireTaskEvent(stayAtPage);
-
+		this.handleEvent();
 		this.temporalCommentFix();
 
 		if (
@@ -195,12 +191,39 @@ BX.namespace('Tasks.Component');
 		});
 	};
 
-	BX.Tasks.Component.TaskView.prototype.fireTaskEvent = function(STAY_AT_PAGE) {
-		var STAY_AT_PAGE = STAY_AT_PAGE != false;
-		var self = this;
-		if(this.parameters.eventTaskUgly != null)
+	BX.Tasks.Component.TaskView.prototype.handleEvent = function()
+	{
+		var eventType = this.parameters.componentData.EVENT_TYPE;
+		var eventOptions = this.parameters.componentData.EVENT_OPTIONS;
+
+		if (eventType === 'ADD')
 		{
-			if (this.parameters.componentData.EVENT_TYPE == 'ADD')
+			var analyticsLabels = {
+				action: 'taskAdding',
+				source: 'addButton'
+			};
+			if (eventOptions.FIRST_GRID_TASK_CREATION_TOUR_GUIDE)
+			{
+				analyticsLabels.tourGuide = 'firstGridTaskCreation';
+			}
+			if (eventOptions.SCOPE)
+			{
+				analyticsLabels.scope = eventOptions.SCOPE;
+			}
+
+			BX.ajax.runAction('tasks.analytics.hit', {analyticsLabel: analyticsLabels});
+		}
+
+		this.fireTaskEvent(eventType, eventOptions);
+	};
+
+	BX.Tasks.Component.TaskView.prototype.fireTaskEvent = function(type, options)
+	{
+		var self = this;
+
+		if (this.parameters.eventTaskUgly != null)
+		{
+			if (type === 'ADD')
 			{
 				var top = window.top;
 				top.BX.UI.Notification.Center.notify({
@@ -214,11 +237,15 @@ BX.namespace('Tasks.Component');
 							}
 						}
 					}]
-
 				});
 			}
 
-			BX.Tasks.Util.fireGlobalTaskEvent(this.parameters.componentData.EVENT_TYPE, { ID: this.parameters.eventTaskUgly.id }, { STAY_AT_PAGE: STAY_AT_PAGE }, this.parameters.eventTaskUgly);
+			BX.Tasks.Util.fireGlobalTaskEvent(
+				type,
+				{ID: this.parameters.eventTaskUgly.id},
+				{STAY_AT_PAGE: (options.STAY_AT_PAGE != false)},
+				this.parameters.eventTaskUgly
+			);
 		}
 	};
 
@@ -256,59 +283,51 @@ BX.namespace('Tasks.Component');
 							return;
 						}
 
-						var query = new BX.Tasks.Util.Query({
-							autoExec: true
-						});
-
 						var submenu = this.getSubMenu();
 						submenu.removeMenuItem("loading");
 
-						query.add(
-							'task.template.find',
-							{
-								parameters: {
-									select: ['ID', 'TITLE'],
-									order: {ID: 'DESC'},
-									filter: {ZOMBIE: 'N'}
-								}
-							},
-							{},
-							BX.delegate(function(errors, data)
+						BX.ajax.runComponentAction('bitrix:tasks.templates.list', 'getList', {
+							mode: 'class',
+							data: {
+								select: ['ID', 'TITLE'],
+								order: {ID: 'DESC'},
+								filter: {ZOMBIE: 'N'}
+							}
+						}).then(
+							function(response)
 							{
 								this.subMenuLoaded = true;
 
-								if (!errors.checkHasErrors())
+								var tasksTemplateUrlTemplate = paths.newTask + (paths.newTask.indexOf('?') !== -1? '&' : '?') + 'TEMPLATE=';
+
+								var subMenu = [];
+								if (response.data.length > 0)
 								{
-
-									var tasksTemplateUrlTemplate = paths.newTask + (paths.newTask.indexOf('?') !== -1? '&' : '?') + 'TEMPLATE=';
-
-									var subMenu = [];
-									if (data.RESULT.DATA.length > 0)
+									BX.Tasks.each(response.data, function(item, k)
 									{
-										BX.Tasks.each(data.RESULT.DATA, function(item, k)
-										{
-											subMenu.push({
-												text: BX.util.htmlspecialchars(item.TITLE),
-												href: tasksTemplateUrlTemplate + item.ID
-											});
-										}.bind(this));
-									}
-									else
-									{
-										subMenu.push({text: self.messages.tasksAjaxEmpty});
-									}
-									this.addSubMenu(subMenu);
-									this.showSubMenu();
+										subMenu.push({
+											text: BX.util.htmlspecialchars(item.TITLE),
+											href: tasksTemplateUrlTemplate + item.ID
+										});
+									}.bind(this));
 								}
 								else
 								{
-									this.addSubMenu([
-										{text: self.messages.tasksAjaxErrorLoad}
-									]);
-
-									this.showSubMenu();
+									subMenu.push({text: self.messages.tasksAjaxEmpty});
 								}
-							}, this)
+								this.addSubMenu(subMenu);
+								this.showSubMenu();
+							}.bind(this),
+							function(response)
+							{
+								this.subMenuLoaded = true;
+
+								this.addSubMenu([
+									{text: self.messages.tasksAjaxErrorLoad}
+								]);
+
+								this.showSubMenu();
+							}.bind(this)
 						);
 					}
 				},
@@ -367,21 +386,22 @@ BX.namespace('Tasks.Component');
 	{
 		var self = this;
 		var treeStructure = BX.Tasks.CheckListInstance.getTreeStructure();
-		var args = {
-			items: treeStructure.getRequestData(),
-			taskId: this.taskId,
-			params: {
-				// openTime: this.openTime,
-				analyticsData: Object.assign(this.analyticsData, {
-					checklistCount: treeStructure.getDescendantsCount()
-				})
-			}
-		};
 
-		this.query.run('TasksTaskComponent.saveCheckList', args).then(function(result) {
-			if (result.isSuccess())
+		BX.ajax.runComponentAction('bitrix:tasks.widget.checklist.new', 'saveChecklist', {
+			mode: 'class',
+			data: {
+				taskId: this.taskId,
+				items: treeStructure.getRequestData(),
+				params: {
+					analyticsData: Object.assign(this.analyticsData, {
+						checklistCount: treeStructure.getDescendantsCount()
+					})
+				}
+			}
+		}).then(
+			function(response)
 			{
-				var data = result.getData();
+				var data = response.data;
 				var preventCheckListSave = data.PREVENT_CHECKLIST_SAVE;
 
 				if (preventCheckListSave)
@@ -393,7 +413,7 @@ BX.namespace('Tasks.Component');
 						buttons: [
 							new BX.PopupWindowButton({
 								className: 'popup-window-button',
-								text: 'Œ ',
+								text: 'OK',
 								events: {
 									click: function() {
 										popup.close();
@@ -440,13 +460,21 @@ BX.namespace('Tasks.Component');
 					BX.Tasks.CheckListInstance.deactivateLoading();
 
 					self.toggleFooterWrap(false);
+
+					this.isSaving = false;
 				}
-			}
+			}.bind(this)
+		).catch(
+			function(response)
+			{
+				if (response.errors)
+				{
+					BX.Tasks.alert(response.errors);
 
-			this.isSaving = false;
-		}.bind(this));
-
-		this.query.execute();
+					this.isSaving = false;
+				}
+			}.bind(this)
+		);
 	};
 
 	BX.Tasks.Component.TaskView.prototype.onCancelButtonClick = function(e)
@@ -501,22 +529,29 @@ BX.namespace('Tasks.Component');
 	BX.Tasks.Component.TaskView.prototype.onImportantButtonClick = function(node)
 	{
 		var priority = BX.data(node, 'priority');
-		var newPriority = priority == 2 ? 1 : 2;
+		var newPriority = (priority == 2) ? 1 : 2;
 
-		this.query.run('task.update', {
-			id: this.parameters.taskId,
-			taskId: this.parameters.taskId,
+		BX.ajax.runComponentAction('bitrix:tasks.task', 'setPriority', {
+			mode: 'class',
 			data: {
-				PRIORITY: newPriority
+				taskId: this.taskId,
+				priority: newPriority
 			}
-		}).then(function(result){
-			if(result.isSuccess())
+		}).then(
+			function(response)
 			{
 				BX.data(node, 'priority', newPriority);
 				BX.toggleClass(node, 'no');
-			}
-		}.bind(this));
-		this.query.execute();
+			}.bind(this)
+		).catch(
+			function(response)
+			{
+				if (response.errors)
+				{
+					BX.Tasks.alert(response.errors);
+				}
+			}.bind(this)
+		);
 	};
 
 	BX.Tasks.Component.TaskView.prototype.onCreateButtonClick = function()
@@ -574,22 +609,27 @@ BX.namespace('Tasks.Component');
 
 	BX.Tasks.Component.TaskView.prototype.onFavoriteClick = function()
 	{
-		var action = BX.hasClass(this.layout.favorite, "task-detail-favorite-active") ? "task.favorite.delete" : "task.favorite.add";
+		var action = BX.hasClass(this.layout.favorite, "task-detail-favorite-active") ? "deleteFavorite" : "addFavorite";
 
-		this.query.deleteAll();
-		this.query.add(
-			action,
-			{
+		BX.ajax.runComponentAction('bitrix:tasks.task', action, {
+			mode: 'class',
+			data: {
 				taskId: this.taskId
-			},
-			{
-				code: action
 			}
+		}).then(
+			function(response)
+			{
+				BX.toggleClass(this.layout.favorite, "task-detail-favorite-active");
+			}.bind(this)
+		).catch(
+			function(response)
+			{
+				if (response.errors)
+				{
+					BX.Tasks.alert(response.errors);
+				}
+			}.bind(this)
 		);
-
-		this.query.execute();
-
-		BX.toggleClass(this.layout.favorite, "task-detail-favorite-active");
 	};
 
 	BX.Tasks.Component.TaskView.prototype.initSwitcher = function()
@@ -658,21 +698,41 @@ BX.namespace('Tasks.Component');
 		{
 			this.switchTabStyle(tab);
 		}
-		else
+		else if (tabId === 'files')
 		{
-			var method = "TasksTaskComponent.get"+tabId.charAt(0).toUpperCase()+tabId.substr(1),
-				args = {params: this.paramsToLazyLoadTabs[tabId], taskId: this.parameters.taskId};
-			this.query.run(method, args).then(function(result) {
-				var data = result.getData();
-				if (data.html && BX.type.isNotEmptyString(data.html))
-				{
-					this.listTabIdUploadedContent[tabId] = true;
-					BX("task-"+tabId+"-block").innerHTML = data.html;
-					BX.ajax.processScripts(BX.processHTML(data.html).SCRIPT);
-					this.switchTabStyle(tab);
+			BX.ajax.runComponentAction('bitrix:tasks.task', 'getFiles', {
+				mode: 'class',
+				data: {
+					taskId: this.parameters.taskId
 				}
-			}.bind(this));
-			this.query.execute();
+			}).then(
+				function(response)
+				{
+					var data = response.data;
+					if (
+						data.asset
+						&& data.html
+						&& BX.type.isNotEmptyString(data.html)
+					)
+					{
+						BX.html(null, data.asset.join(' '))
+							.then(function(){
+								this.listTabIdUploadedContent[tabId] = true;
+								BX("task-"+tabId+"-block").innerHTML = data.html;
+								BX.ajax.processScripts(BX.processHTML(data.html).SCRIPT);
+								this.switchTabStyle(tab);
+							}.bind(this));
+					}
+				}.bind(this)
+			).catch(
+				function(response)
+				{
+					if (response.errors)
+					{
+						BX.Tasks.alert(response.errors);
+					}
+				}.bind(this)
+			);
 		}
 	};
 
@@ -714,22 +774,29 @@ BX.namespace('Tasks.Component');
 
 	BX.Tasks.Component.TaskView.prototype.setFileCount = function()
 	{
-		var args = {
-			taskId: this.taskId,
-			params: {
-				"FORUM_ID": this.paramsToLazyLoadTabs["files"]["FORUM_ID"],
-				"FORUM_TOPIC_ID": this.paramsToLazyLoadTabs["files"]["FORUM_TOPIC_ID"]
+		BX.ajax.runComponentAction('bitrix:tasks.task', 'getFileCount', {
+			mode: 'class',
+			data: {
+				taskId: this.taskId
 			}
-		};
-		this.query.run("TasksTaskComponent.getFileCount", args).then(function(result) {
-			var data = result.getData();
-			if (data.fileCount)
+		}).then(
+			function(response)
 			{
-				BX.findChildByClassName(
-					BX("task-files-switcher"), "task-switcher-text-counter").innerHTML = parseInt(data.fileCount);
-			}
-		}.bind(this));
-		this.query.execute();
+				if (response.data.fileCount)
+				{
+					BX.findChildByClassName(
+						BX("task-files-switcher"), "task-switcher-text-counter").innerHTML = parseInt(response.data.fileCount);
+				}
+			}.bind(this)
+		).catch(
+			function(response)
+			{
+				if (response.errors)
+				{
+					BX.Tasks.alert(response.errors);
+				}
+			}.bind(this)
+		);
 	};
 
 	BX.Tasks.Component.TaskView.prototype.initViewer = function()

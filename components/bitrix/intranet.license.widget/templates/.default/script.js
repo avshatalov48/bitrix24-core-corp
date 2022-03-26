@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports,ui_vue,main_core,main_loader,main_popup) {
+(function (exports,main_core_events,ui_vue,main_core,main_loader,main_popup) {
 	'use strict';
 
 	var LoaderComponent = {
@@ -358,18 +358,15 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  template: "\n\t\t<div>\n\t\t\t<LoaderComponent v-if=\"loading\" :size=\"100\" />\n\t\t\t<ContentComponent \n\t\t\t\tv-if=\"!loading && loaded\" \n\t\t\t\t:license=\"license\"\n\t\t\t\t:market=\"market\"\n\t\t\t\t:telephony=\"telephony\"\n\t\t\t\t:isAdmin=\"isAdmin\"\n\t\t\t\t:isCloud=\"isCloud\"\n\t\t\t\t:partner=\"partner\"\n\t\t\t>\n\t\t\t</ContentComponent>\n\t\t</div>\n\t"
 	};
 
-	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
-
-	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	var namespace = main_core.Reflection.namespace('BX.Intranet');
 
-	var _vue = /*#__PURE__*/new WeakMap();
+	var _vue = new WeakMap();
 
 	var LicenseWidget = /*#__PURE__*/function () {
 	  function LicenseWidget(params) {
 	    babelHelpers.classCallCheck(this, LicenseWidget);
 
-	    _classPrivateFieldInitSpec(this, _vue, {
+	    _vue.set(this, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -446,40 +443,22 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          }
 	        },
 	        methods: {
-	          onMouseOver: function onMouseOver(e) {
-	            clearTimeout(LicenceWidgetInstance.enterTimeout);
-	            LicenceWidgetInstance.enterTimeout = setTimeout(function () {
-	              LicenceWidgetInstance.enterTimeout = null;
-	              LicenceWidgetInstance.initPopup(e.target);
-	            }, 500);
-	          },
-	          onMouseOut: function onMouseOut() {
-	            if (LicenceWidgetInstance.enterTimeout !== null) {
-	              clearTimeout(LicenceWidgetInstance.enterTimeout);
-	              LicenceWidgetInstance.enterTimeout = null;
-	              return;
+	          togglePopup: function togglePopup(e) {
+	            if (LicenceWidgetInstance.popup && LicenceWidgetInstance.popup.isShown()) {
+	              return LicenceWidgetInstance.closePopup();
 	            }
 
-	            LicenceWidgetInstance.leaveTimeout = setTimeout(function () {
-	              LicenceWidgetInstance.closePopup();
-	            }, 500);
-	          },
-	          togglePopup: function togglePopup() {
-	            if (LicenceWidgetInstance.popup) {
-	              if (LicenceWidgetInstance.popup.isShown()) {
-	                LicenceWidgetInstance.closePopup();
-	              } else {
-	                LicenceWidgetInstance.popup.show();
-	              }
-	            }
+	            LicenceWidgetInstance.initPopup(e.target);
 	          }
 	        },
-	        template: "\n\t\t\t\t<button\n\t\t\t\t\tclass=\"ui-btn ui-btn-round ui-btn-themes license-btn\"\n\t\t\t\t\t:class=\"buttonClass\"\n\t\t\t\t\t@mouseover=\"onMouseOver\"\n\t\t\t\t\t@mouseout=\"onMouseOut\"\n\t\t\t\t\t@click=\"togglePopup\"\n\t\t\t\t>\n\t\t\t\t\t<span v-if=\"isLicenseExpired || isAlmostLocked\" class=\"license-btn-icon-battery\">\n\t\t\t\t\t\t<span class=\"license-btn-icon-battery-full\">\n\t\t\t\t\t\t\t<span class=\"license-btn-icon-battery-inner\">\n\t\t\t\t\t\t\t\t<span></span>\n\t\t\t\t\t\t\t\t<span></span>\n\t\t\t\t\t\t\t\t<span></span>\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<svg class=\"license-btn-icon-battery-cross\" xmlns=\"http://www.w3.org/2000/svg\" width=\"22\" height=\"18\">\n\t\t\t\t\t\t\t<path fill=\"#FFF\" fill-rule=\"evenodd\" d=\"M18.567.395c.42.42.42 1.1 0 1.52l-1.04 1.038.704.001a2 2 0 012 2v1.799a1.01 1.01 0 01.116-.007H21a1 1 0 011 1v2.495a1 1 0 01-1 1h-.653l-.116-.006v1.798a2 2 0 01-2 2L5.45 15.032l-2.045 2.045a1.075 1.075 0 11-1.52-1.52L17.047.395c.42-.42 1.1-.42 1.52 0zm-2.583 4.102l-8.991 8.99 10.836.002a1 1 0 00.994-.883l.006-.117v-6.99a1 1 0 00-1-1l-1.845-.002zm-5.031-1.543L9.409 4.498h-6.23a1 1 0 00-.993.884l-.006.116-.001 6.23-1.4 1.398v-.046L.777 4.954a2 2 0 012-2h8.175z\"/>\n\t\t\t\t\t\t</svg>\n\t\t\t\t\t</span>\n\t\t\t\t\t{{ buttonName }}\n\t\t\t\t</button>\n\t\t\t"
+	        template: "\n\t\t\t\t<button\n\t\t\t\t\tclass=\"ui-btn ui-btn-round ui-btn-themes license-btn\"\n\t\t\t\t\t:class=\"buttonClass\"\n\t\t\t\t\t@click=\"togglePopup\"\n\t\t\t\t>\n\t\t\t\t\t<span v-if=\"isLicenseExpired || isAlmostLocked\" class=\"license-btn-icon-battery\">\n\t\t\t\t\t\t<span class=\"license-btn-icon-battery-full\">\n\t\t\t\t\t\t\t<span class=\"license-btn-icon-battery-inner\">\n\t\t\t\t\t\t\t\t<span></span>\n\t\t\t\t\t\t\t\t<span></span>\n\t\t\t\t\t\t\t\t<span></span>\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<svg class=\"license-btn-icon-battery-cross\" xmlns=\"http://www.w3.org/2000/svg\" width=\"22\" height=\"18\">\n\t\t\t\t\t\t\t<path fill=\"#FFF\" fill-rule=\"evenodd\" d=\"M18.567.395c.42.42.42 1.1 0 1.52l-1.04 1.038.704.001a2 2 0 012 2v1.799a1.01 1.01 0 01.116-.007H21a1 1 0 011 1v2.495a1 1 0 01-1 1h-.653l-.116-.006v1.798a2 2 0 01-2 2L5.45 15.032l-2.045 2.045a1.075 1.075 0 11-1.52-1.52L17.047.395c.42-.42 1.1-.42 1.52 0zm-2.583 4.102l-8.991 8.99 10.836.002a1 1 0 00.994-.883l.006-.117v-6.99a1 1 0 00-1-1l-1.845-.002zm-5.031-1.543L9.409 4.498h-6.23a1 1 0 00-.993.884l-.006.116-.001 6.23-1.4 1.398v-.046L.777 4.954a2 2 0 012-2h8.175z\"/>\n\t\t\t\t\t\t</svg>\n\t\t\t\t\t</span>\n\t\t\t\t\t{{ buttonName }}\n\t\t\t\t</button>\n\t\t\t"
 	      }));
 	    }
 	  }, {
 	    key: "initPopup",
 	    value: function initPopup(bindElement) {
+	      var _this = this;
+
 	      if (!this.popup) {
 	        this.popup = new B24.PopupBlur({
 	          autoHide: true,
@@ -501,28 +480,21 @@ this.BX.Intranet = this.BX.Intranet || {};
 	            offset: 120
 	          },
 	          bindElement: bindElement,
-	          content: this.renderPopupContent()
+	          content: this.renderPopupContent(),
+	          cachable: false,
+	          events: {
+	            onFirstShow: function onFirstShow(event) {
+	              main_core_events.EventEmitter.subscribe('BX.Main.InterfaceButtons:onMenuShow', function () {
+	                if (_this.popup) {
+	                  _this.popup.close();
+	                }
+	              });
+	            }
+	          }
 	        });
-	        this.initEvents();
 	      }
 
 	      this.popup.show();
-	    }
-	  }, {
-	    key: "initEvents",
-	    value: function initEvents() {
-	      var _this = this;
-
-	      this.popup.getPopupContainer().addEventListener('mouseenter', function () {
-	        clearTimeout(_this.enterTimeout);
-	        clearTimeout(_this.leaveTimeout);
-	        clearTimeout(_this.popupLeaveTimeout);
-	      }); // this.popup.getPopupContainer().addEventListener('mouseleave', () =>
-	      // {
-	      // 	this.popupLeaveTimeout = setTimeout(() => {
-	      // 		this.closePopup();
-	      // 	}, 500);
-	      // });
 	    }
 	  }, {
 	    key: "renderPopupContent",
@@ -560,5 +532,5 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	namespace.LicenseWidget = LicenseWidget;
 
-}((this.BX.Intranet.LicenseWidget = this.BX.Intranet.LicenseWidget || {}),BX,BX,BX,BX.Main));
+}((this.BX.Intranet.LicenseWidget = this.BX.Intranet.LicenseWidget || {}),BX.Event,BX,BX,BX,BX.Main));
 //# sourceMappingURL=script.js.map

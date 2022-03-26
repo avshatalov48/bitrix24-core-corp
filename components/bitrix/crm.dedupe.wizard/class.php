@@ -1,5 +1,7 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+use Bitrix\Crm\Agent\Duplicate\Background\Helper;
 use Bitrix\Main;
 use Bitrix\Main\Engine\Router;
 use Bitrix\Main\Engine\UrlManager;
@@ -35,7 +37,11 @@ class CCrmDedupeWizardComponent extends CBitrixComponent
 
 	protected function initEntityType(): void
 	{
-		$this->entityTypeID = $this->arResult['ENTITY_TYPE_ID'] = isset($this->arParams['ENTITY_TYPE_ID']) ? (int)$this->arParams['ENTITY_TYPE_ID'] : CCrmOwnerType::Undefined;
+		$this->entityTypeID = $this->arResult['ENTITY_TYPE_ID'] =
+			isset($this->arParams['ENTITY_TYPE_ID'])
+			? (int)$this->arParams['ENTITY_TYPE_ID']
+			: CCrmOwnerType::Undefined
+		;
 		$this->entityTypeName = CCrmOwnerType::ResolveName($this->entityTypeID);
 	}
 
@@ -233,6 +239,12 @@ class CCrmDedupeWizardComponent extends CBitrixComponent
 		$this->arResult['TYPE_INFOS'] = $typeInfos;
 	}
 
+	protected function initAgentState()
+	{
+		$this->arResult['INDEX_AGENT_STATE'] = $this->getIndexAgentState();
+		$this->arResult['MERGE_AGENT_STATE'] = $this->getMergeAgentState();
+	}
+
 	public function executeComponent()
 	{
 		$this->initUser();
@@ -274,6 +286,8 @@ class CCrmDedupeWizardComponent extends CBitrixComponent
 
 		$this->initTypesAndScopes();
 
+		$this->initAgentState();
+
 		$this->includeComponentTemplate();
 	}
 
@@ -284,5 +298,23 @@ class CCrmDedupeWizardComponent extends CBitrixComponent
 			return $typeID;
 		}
 		return "{$typeID}|{$scope}";
+	}
+
+	protected function getIndexAgentState()
+	{
+		return Helper::getInstance()->getAgentState(
+			$this->userID,
+			CCrmOwnerType::ResolveName($this->entityTypeID),
+			'IndexRebuild'
+		);
+	}
+
+	protected function getMergeAgentState()
+	{
+		return Helper::getInstance()->getAgentState(
+			$this->userID,
+			CCrmOwnerType::ResolveName($this->entityTypeID),
+			'Merge'
+		);
 	}
 }

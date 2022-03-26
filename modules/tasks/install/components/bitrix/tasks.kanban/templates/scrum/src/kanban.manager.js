@@ -60,10 +60,11 @@ type KanbanParams = {
 	groupId: number,
 	kanbanHeader: boolean,
 	parentTaskId?: number,
+	parentTaskName?: string,
 	parentTaskCompleted?: boolean
 }
 
-type ApplyFilterResponse = {
+type Response = {
 	columns: Object,
 	items: Object,
 	parentTasks: {
@@ -99,6 +100,8 @@ export class KanbanManager
 			const [filterId, values, filterInstance, promise, params] = event.getCompatData();
 			this.onApplyFilter(filterId, values, filterInstance, promise, params);
 		});
+
+		EventEmitter.subscribe('onTasksGroupSelectorChange', this.onChangeSprint.bind(this));
 	}
 
 	drawKanban(renderTo: HTMLElement, params: KanbanParams)
@@ -117,12 +120,13 @@ export class KanbanManager
 		this.drawKanbanWithoutGrouping(renderTo, params);
 		this.drawKanbanInGroupingMode(renderTo, params);
 		this.fillNeighborKanbans();
+		this.updateHeaderColumns();
 
 		this.adjustGroupHeadersWidth();
-		EventEmitter.subscribe(this.kanban, 'Kanban.Grid:onColumnAddedAsync', () => {
+		EventEmitter.subscribe(this.kanbanHeader, 'Kanban.Grid:onColumnAddedAsync', () => {
 			this.adjustGroupHeadersWidth();
 		});
-		EventEmitter.subscribe(this.kanban, 'Kanban.Grid:onColumnRemovedAsync', () => {
+		EventEmitter.subscribe(this.kanbanHeader, 'Kanban.Grid:onColumnRemovedAsync', () => {
 			setTimeout(() => {
 				this.adjustGroupHeadersWidth();
 			}, 200);
@@ -166,7 +170,7 @@ export class KanbanManager
 				});
 
 				const container = kanbanNode.querySelector('.tasks-scrum-kanban-container');
-				this.drawKanbanGroupedByParentTasks(parentTaskId, container, params);
+				this.drawKanbanGroupedByParentTasks(this.parentTasks[parentTaskId], container, params);
 			}
 		}
 	}
@@ -190,16 +194,17 @@ export class KanbanManager
 		this.kanban.draw();
 	}
 
-	drawKanbanGroupedByParentTasks(parentTaskId: number, renderTo: HTMLElement, params: KanbanParams)
+	drawKanbanGroupedByParentTasks(parentTask: ParentTask, renderTo: HTMLElement, params: KanbanParams)
 	{
-		parentTaskId = parseInt(parentTaskId, 10);
+		const parentTaskId = parseInt(parentTask.id, 10);
 
 		const headerParams = Runtime.clone(params);
 
-		headerParams.columns = this.parentTasks[parentTaskId]['columns'];
-		headerParams.items = this.parentTasks[parentTaskId]['items'];
+		headerParams.columns = parentTask.columns;
+		headerParams.items = parentTask.items;
 		headerParams.parentTaskId = parentTaskId;
-		headerParams.parentTaskCompleted = (this.parentTasks[parentTaskId]['completed'] === 'Y');
+		headerParams.parentTaskName = parentTask.name;
+		headerParams.parentTaskCompleted = (parentTask.completed === 'Y');
 
 		const kanban = new BX.Tasks.Kanban.Grid(this.getKanbanParams(renderTo, headerParams));
 
@@ -211,7 +216,6 @@ export class KanbanManager
 			this.downGroupingVisibility(container);
 		}
 
-		// todo handle task complete push
 		EventEmitter.subscribe(kanban, 'Kanban.Grid:onCompleteParentTask', () => {
 			this.onCompleteParentTask(kanban);
 		});
@@ -234,6 +238,11 @@ export class KanbanManager
 		});
 	}
 
+	updateHeaderColumns()
+	{
+		this.kanbanHeader.updateTotals();
+	}
+
 	addNeighborKanban(kanban)
 	{
 		this.kanbanHeader.addNeighborGrid(kanban);
@@ -251,16 +260,17 @@ export class KanbanManager
 			isGroupingMode: true,
 			gridHeader: params.kanbanHeader,
 			parentTaskId: (params.parentTaskId ? params.parentTaskId : 0),
+			parentTaskName: (params.parentTaskName ? params.parentTaskName : ''),
 			parentTaskCompleted: (params.parentTaskCompleted ? params.parentTaskCompleted : false),
 			renderTo: renderTo,
 			itemType: 'BX.Tasks.Kanban.Item',
 			columnType: 'BX.Tasks.Kanban.Column',
-			canAddColumn: true,
-			canEditColumn: true,
-			canRemoveColumn: true,
-			canSortColumn: true,
-			canAddItem: true,
-			canSortItem: true,
+			canAddColumn: this.isActiveSprint,
+			canEditColumn: this.isActiveSprint,
+			canRemoveColumn: this.isActiveSprint,
+			canSortColumn: this.isActiveSprint,
+			canAddItem: (!params.addItemInSlider && this.isActiveSprint),
+			canSortItem: this.isActiveSprint,
 			bgColor: this.siteTemplateId,
 			columns: params.columns,
 			items: params.items,
@@ -278,12 +288,12 @@ export class KanbanManager
 				clientDate: BX.date.format(BX.date.convertBitrixFormat(Loc.getMessage('FORMAT_DATE'))),
 				clientTime: BX.date.format(BX.date.convertBitrixFormat(Loc.getMessage('FORMAT_DATETIME'))),
 				rights: {
-					canAddColumn: true,
-					canEditColumn: true,
-					canRemoveColumn: true,
-					canSortColumn: true,
-					canAddItem: true,
-					canSortItem: true
+					canAddColumn: this.isActiveSprint,
+					canEditColumn: this.isActiveSprint,
+					canRemoveColumn: this.isActiveSprint,
+					canSortColumn: this.isActiveSprint,
+					canAddItem: this.isActiveSprint,
+					canSortItem: this.isActiveSprint
 				},
 				admins: params.admins
 			},
@@ -313,7 +323,7 @@ export class KanbanManager
 
 		this.kanban.ajax({
 			action: 'applyFilter'
-		}, (data: ApplyFilterResponse) => {
+		}, (data: Response) => {
 			this.refreshKanban(this.kanban, data);
 			if (this.existsTasksGroupedBySubTasks(data))
 			{
@@ -332,13 +342,51 @@ export class KanbanManager
 		});
 	}
 
+	onChangeSprint(baseEvent: BaseEvent)
+	{
+		const [currentGroup] = baseEvent.getCompatData();
+
+		const gridData = this.kanban.getData();
+		gridData.params.SPRINT_ID = currentGroup.sprintId;
+
+		this.kanban.setData(gridData);
+
+		this.kanban.ajax({
+			action: 'changeSprint'
+		}, (data: Response) => {
+			this.kanbanHeader.getColumns().forEach((column) => this.kanbanHeader.removeColumn(column));
+			this.kanban.getColumns().forEach((column) => this.kanban.removeColumn(column));
+			this.kanbanGroupedByParentTasks
+				.forEach((parentTaskKanban) => {
+					this.removeParentTaskKanban(parentTaskKanban);
+				})
+			;
+			this.kanbanGroupedByParentTasks.clear();
+
+			this.refreshKanban(this.kanbanHeader, data);
+			this.refreshKanban(this.kanban, data);
+
+			if (this.existsTasksGroupedBySubTasks(data))
+			{
+				Object.entries(data.parentTasks)
+					.forEach((parentTask) => {
+						const [, parentTaskData] = parentTask;
+						this.createParentTaskKanban(parentTaskData);
+					})
+				;
+			}
+
+			this.adjustGroupHeadersWidth();
+		}, (error) => {});
+	}
+
 	refreshKanban(kanban, data)
 	{
 		kanban.removeItems();
 		kanban.loadData(data);
 	}
 
-	refreshParentTasksKanbans(data: ApplyFilterResponse)
+	refreshParentTasksKanbans(data: Response)
 	{
 		const parentTasksToRefresh = [];
 		const parentTasksToCreate = [];
@@ -406,7 +454,7 @@ export class KanbanManager
 		});
 
 		const container = kanbanNode.querySelector('.tasks-scrum-kanban-container');
-		this.drawKanbanGroupedByParentTasks(parentTaskData.id, container, this.inputKanbanParams);
+		this.drawKanbanGroupedByParentTasks(parentTaskData, container, this.inputKanbanParams);
 	}
 
 	hideParentTaskKanban(kanban)
@@ -416,6 +464,11 @@ export class KanbanManager
 		const container = kanban.getInnerContainer().closest('.tasks-scrum-parent-task-kanban');
 
 		this.hideElement(container);
+	}
+
+	removeParentTaskKanban(kanban)
+	{
+		Dom.remove(kanban.getInnerContainer().closest('.tasks-scrum-parent-task-kanban'));
 	}
 
 	fadeOutKanbans()
@@ -444,10 +497,8 @@ export class KanbanManager
 		;
 
 		Dom.append(Tag.render`
-			<div class="tasks-kanban-start">
-				<div class="tasks-kanban-start-title-sm">
+			<div class="tasks-kanban__start">
 					${message}
-				</div>
 			</div>
 		`, renderTo);
 	}
@@ -457,7 +508,7 @@ export class KanbanManager
 		return (!Type.isArray(this.parentTasks));
 	}
 
-	existsTasksGroupedBySubTasks(response: ApplyFilterResponse): boolean
+	existsTasksGroupedBySubTasks(response: Response): boolean
 	{
 		return (!Type.isArray(response.parentTasks));
 	}
@@ -496,7 +547,7 @@ export class KanbanManager
 	{
 		const groupHeaders = this.inputRenderTo.querySelectorAll('.tasks-scrum-kanban-group-header');
 		groupHeaders.forEach((groupHeader) => {
-			groupHeader.style.width = this.kanban.getColumnsWidth();
+			groupHeader.style.width = this.kanbanHeader.getColumnsWidth();
 		});
 	}
 

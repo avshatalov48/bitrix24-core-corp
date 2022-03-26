@@ -21,6 +21,7 @@ class Controller extends Event
 	identification: Type.Identification = {};
 	view: Type.View = {type: 'inline'};
 	provider: Object = {};
+	analyticsHandler: Object = {};
 	languages: Array = [];
 	language: string = 'en';
 	messages: Messages.Storage;
@@ -92,6 +93,8 @@ class Controller extends Event
 		);
 
 		this.provider = options.provider || {};
+		this.analyticsHandler = options.analyticsHandler || {};
+
 		if (this.provider.form)
 		{
 			this.loading = true;
@@ -150,8 +153,6 @@ class Controller extends Event
 		this.emit(Type.EventTypes.init);
 
 		this.render();
-
-
 	}
 
 	load()
@@ -160,6 +161,18 @@ class Controller extends Event
 		{
 			this.show();
 		}
+	}
+
+	reset()
+	{
+		this.#fields.forEach(field =>  {
+			field.reset();
+
+			if (this.#dependence)
+			{
+				this.#dependence.trigger(field, 'change')
+			}
+		});
 	}
 
 	show()
@@ -217,6 +230,7 @@ class Controller extends Event
 		formData.set('properties', JSON.stringify(this.#properties));
 		formData.set('consents', JSON.stringify(consents));
 		formData.set('recaptcha', this.recaptcha.getResponse());
+		formData.set('timeZoneOffset', new Date().getTimezoneOffset());
 
 		if (typeof this.provider.submit === 'string')
 		{
@@ -243,16 +257,24 @@ class Controller extends Event
 		promise.then((data: Type.SubmitResponse) => {
 			this.sent = true;
 			this.loading = false;
+
 			this.stateText = data.message || this.messages.get('stateSuccess');
+
+			if (!data.resultId)
+			{
+				this.error = true;
+				return;
+			}
 			this.emit(Type.EventTypes.sendSuccess, data);
 
-			let redirect = data.redirect || {};
+			const redirect = data.redirect || {};
 			if (redirect.url)
 			{
-				let handler = () => {
+				const handler = () => {
 					try { top.location = redirect.url; } catch (e) {}
 					window.location = redirect.url;
 				};
+
 				if (data.pay)
 				{
 					this.stateButton.text = this.messages.get('stateButtonPay');
@@ -260,6 +282,13 @@ class Controller extends Event
 				}
 
 				setTimeout(handler, (redirect.delay || 0) * 1000);
+			} else if (data.refill.active)
+			{
+				this.stateButton.text = data.refill.caption;
+				this.stateButton.handler = () => {
+					this.sent = false;
+					this.reset();
+				}
 			}
 
 		}).catch(e => {
@@ -272,7 +301,7 @@ class Controller extends Event
 		return false;
 	}
 
-	setValues(values: Object)
+	setValues(values: {[string]: string})
 	{
 		if (!values || typeof values !== 'object')
 		{
@@ -289,14 +318,13 @@ class Controller extends Event
 		}
 
 		this.#fields.forEach(field => {
-			if (!values[field.type] || !field.item())
+			const value = values[field.type] || values[field.name]
+			if (typeof value === 'undefined' || !field.item())
 			{
 				return;
 			}
 
-			let value = field.format(values[field.type]);
-			field.item().value = value;
-			field.item().selected = value !== 'undefined' && value !== '';
+			field.setValues(Array.isArray(value) ? value : [value]);
 		});
 	}
 

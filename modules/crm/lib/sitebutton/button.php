@@ -8,6 +8,7 @@
 
 namespace Bitrix\Crm\SiteButton;
 
+use Bitrix\Crm\WebForm\Form;
 use Bitrix\Main\Context;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Localization\Loc;
@@ -149,6 +150,11 @@ class Button
 		return $this->id;
 	}
 
+	public function getName(): string
+	{
+		return $this->data['NAME'] ?? '';
+	}
+
 	public function getItemByType($type)
 	{
 		if (!is_array($this->data['ITEMS']) || !isset($this->data['ITEMS'][$type]))
@@ -202,26 +208,44 @@ class Button
 		return $this->getItemByType(Manager::ENUM_TYPE_CRM_FORM);
 	}
 
-	public function getWebFormIdList()
+	public function getWebFormIdList(string $formType = null)
 	{
-		$list = [];
-		$item = $this->getCrmForm();
-		if ($item && !empty($item['EXTERNAL_ID']))
+		$aIds = $items = [];
+		switch ($formType)
 		{
-			$list[] = (int) $item['EXTERNAL_ID'];
-		}
-		$item = $this->getCallback();
-		if ($item && !empty($item['EXTERNAL_ID']))
-		{
-			$list[] = (int) $item['EXTERNAL_ID'];
+			case Manager::ENUM_TYPE_CRM_FORM:
+				$items[] = $this->getCrmForm();
+				break;
+			case Manager::ENUM_TYPE_WHATSAPP:
+				$items[] = $this->getWhatsApp();
+				break;
+			case Manager::ENUM_TYPE_CALLBACK:
+				$items[] = $this->getCallback();
+				break;
+			default:
+				$items[] = $this->getCrmForm();
+				$items[] = $this->getWhatsApp();
+				$items[] = $this->getCallback();
 		}
 
-		return $list;
+		foreach ($items as $item)
+		{
+			if ($item && !empty($item['EXTERNAL_ID']) && $item['ACTIVE'] === 'Y')
+			{
+				$aIds[] = (int)$item['EXTERNAL_ID'];
+			}
+		}
+
+		return $aIds;
 	}
 
 	public function getCallback()
 	{
 		return $this->getItemByType(Manager::ENUM_TYPE_CALLBACK);
+	}
+	public function getWhatsApp()
+	{
+		return $this->getItemByType(Manager::ENUM_TYPE_WHATSAPP);
 	}
 
 	public function hasActiveItem($type)
@@ -269,6 +293,77 @@ class Button
 			$updateResult = Internals\ButtonTable::update($this->getId(), $updatedFields);
 			return $updateResult->isSuccess();
 		}
+		return false;
+	}
+
+	/**
+	 * @throws \Exception
+	 */
+	public function deleteOpenLineItem(): bool
+	{
+		$items = $this->data['ITEMS'] ?? null;
+		if ($items && isset($items['openline']))
+		{
+			$items['openline']['ACTIVE'] = 'N';
+			$items['openline']['EXTERNAL_ID'] = '';
+			$items['openline']['CONFIG'] = [];
+			$updatedFields = ['ITEMS' => $items];
+			$this->mergeData($updatedFields);
+			$updateResult = Internals\ButtonTable::update($this->getId(), $updatedFields);
+			return $updateResult->isSuccess();
+		}
+
+		return false;
+	}
+
+	public function setToForm(int $formId, string $formType, bool $replace = true, bool $keepSettings = true)
+	{
+		$item = $this->getItemByType($formType);
+
+		if ($item)
+		{ // the widget is already assigned to a form of this type
+			if (isset($item['EXTERNAL_ID']) && (int)$item['EXTERNAL_ID'] === $formId)
+			{
+				// already assigned to this form
+				if (isset($item['ACTIVE']) && $item['ACTIVE'] === 'Y')
+				{
+					return true;
+				}
+
+				// activate item
+				return $this->setExternalItemActivity($formType, true);
+			}
+		}
+
+		return $this->addExternalItem($formType, $formId, $replace, $keepSettings);
+	}
+
+	public function unsetFromForm(int $formId, string $formType, bool $keepRelation = true)
+	{
+		$item = $this->getItemByType($formType);
+
+		if (! $item || (int)$item['EXTERNAL_ID'] !== $formId)
+		{
+			return false; // no such item
+		}
+
+		$items = $this->data['ITEMS'] ?? null;
+
+		if ($items) {
+			if ($keepRelation)
+			{
+				$items[$formType]['ACTIVE'] = 'N';
+			}
+			else
+			{
+				unset($items[$formType]);
+			}
+			$updatedFields = ['ITEMS' => $items];
+			$this->mergeData($updatedFields);
+			$result = Internals\ButtonTable::update($this->getId(), $updatedFields);
+			return $result->isSuccess();
+		}
+
 		return false;
 	}
 
@@ -435,5 +530,44 @@ class Button
 	public function hasFileErrors()
 	{
 		return $this->fileErrors;
+	}
+
+	private function setExternalItemActivity(string $formType, bool $active): bool
+	{
+		$items = $this->data['ITEMS'] ?? null;
+		if ($items)
+		{
+			$items[$formType]['ACTIVE'] = $active ? 'Y' : 'N';
+			$updatedFields = ['ITEMS' => $items];
+			$this->mergeData($updatedFields);
+			$result = Internals\ButtonTable::update($this->getId(), $updatedFields);
+			return $result->isSuccess();
+		}
+		return false;
+	}
+
+	private function addExternalItem(string $formType, int $externalId, bool $replace = true, bool $keepSettings = true): bool
+	{
+		$items = $this->data['ITEMS'] ?? [];
+
+		// another form already assigned, don't replace
+		if (isset($items[$formType]) && ! $replace)
+		{
+			return false;
+		}
+
+		$items[$formType]['EXTERNAL_ID'] = $externalId;
+		$items[$formType]['ACTIVE'] = 'Y';
+		if (! $keepSettings)
+		{
+			$items[$formType]['CONFIG'] = [];
+			$items[$formType]['PAGES'] = [];
+			$items[$formType]['WORK_TIME'] = [];
+		}
+
+		$updatedFields = ['ITEMS' => $items];
+		$this->mergeData($updatedFields);
+		$result = Internals\ButtonTable::update($this->getId(), $updatedFields);
+		return $result->isSuccess();
 	}
 }

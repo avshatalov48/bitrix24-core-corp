@@ -1,6 +1,12 @@
 <?php
 
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+/** @var array $arResult */
+/** @var array $arParams */
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\UserField\Types\ElementType;
@@ -16,9 +22,10 @@ if(!Loader::includeModule('crm'))
 	return;
 }
 
-if(is_array($arResult['value']) && count($arResult['value']) > 0)
-{
+$emptyEntityLabels = [];
 
+if(is_array($arResult['value']) && count($arResult['value']))
+{
 	$arParams['ENTITY_TYPE'] = DataModifiers\Element::getSupportedTypes(
 		$arParams['userField']['SETTINGS']
 	);
@@ -68,6 +75,7 @@ if(is_array($arResult['value']) && count($arResult['value']) > 0)
 		{
 			$arResult['value']['LEAD']['items'][$lead['ID']] = [
 				'ENTITY_TITLE' => $lead['TITLE'],
+				'ENTITY_TYPE_ID_WITH_ENTITY_ID' => 'LEAD_'.$lead['ID'],
 				'ENTITY_LINK' => CCrmOwnerType::GetEntityShowPath(
 					CCrmOwnerType::Lead,
 					$lead['ID']
@@ -114,11 +122,17 @@ if(is_array($arResult['value']) && count($arResult['value']) > 0)
 
 			$arResult['value']['CONTACT']['items'][$contact['ID']] = [
 				'ENTITY_TITLE' => $title,
+				'ENTITY_TYPE_ID_WITH_ENTITY_ID' => 'CONTACT_'.$contact['ID'],
 				'ENTITY_LINK' => CCrmOwnerType::GetEntityShowPath(
 					CCrmOwnerType::Contact,
 					$contact['ID']
 				)
 			];
+		}
+
+		if (empty($arResult['value']['CONTACT']['items']))
+		{
+			$emptyEntityLabels['CONTACT'] =  Loc::getMessage('CRM_ENTITY_ITEM_DELETED');
 		}
 	}
 
@@ -138,6 +152,7 @@ if(is_array($arResult['value']) && count($arResult['value']) > 0)
 		{
 			$arResult['value']['COMPANY']['items'][$company['ID']] = [
 				'ENTITY_TITLE' => $company['TITLE'],
+				'ENTITY_TYPE_ID_WITH_ENTITY_ID' => 'COMPANY_'.$company['ID'],
 				'ENTITY_LINK' => CCrmOwnerType::GetEntityShowPath(
 					CCrmOwnerType::Company,
 					$company['ID']
@@ -163,6 +178,7 @@ if(is_array($arResult['value']) && count($arResult['value']) > 0)
 		{
 			$arResult['value']['DEAL']['items'][$deal['ID']] = [
 				'ENTITY_TITLE' => $deal['TITLE'],
+				'ENTITY_TYPE_ID_WITH_ENTITY_ID' => 'DEAL_'.$deal['ID'],
 				'ENTITY_LINK' => CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Deal, $deal['ID']),
 			];
 		}
@@ -186,6 +202,7 @@ if(is_array($arResult['value']) && count($arResult['value']) > 0)
 		{
 			$arResult['value']['ORDER']['items'][$order['ID']] = [
 				'ENTITY_TITLE' => $order['ACCOUNT_NUMBER'],
+				'ENTITY_TYPE_ID_WITH_ENTITY_ID' => 'ORDER_'.$order['ID'],
 				'ENTITY_LINK' => CCrmOwnerType::GetEntityShowPath(
 					CCrmOwnerType::Order,
 					$order['ID']
@@ -204,12 +221,17 @@ if(is_array($arResult['value']) && count($arResult['value']) > 0)
 	{
 		$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
 
-		if (!\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		if (!\CCrmOwnerType::isUseFactoryBasedApproach($entityTypeId))
 		{
 			continue;
 		}
 
-		if (($factory = Container::getInstance()->getFactory($entityTypeId)) === null)
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+		if (!$factory)
+		{
+			continue;
+		}
+		if (isset($arResult['value'][$entityTypeName]))
 		{
 			continue;
 		}
@@ -229,7 +251,7 @@ if(is_array($arResult['value']) && count($arResult['value']) > 0)
 				$arResult['value'][$entityTypeName]['items'][$itemId] = [
 					'ENTITY_TYPE_ID' => $entityTypeId,
 					'ENTITY_TYPE_ID_WITH_ENTITY_ID' => $entityTypeId.'-'.$itemId,
-					'ENTITY_TITLE' => $item->getTitle(),
+					'ENTITY_TITLE' => $item->getHeading(),
 					'ENTITY_LINK' => Container::getInstance()->getRouter()->getItemDetailUrl($entityTypeId, $itemId),
 				];
 			}
@@ -260,4 +282,6 @@ if(is_array($arResult['value']) && count($arResult['value']) > 0)
 			'/bitrix/components/bitrix/crm.field.element/templates/main.view/mobile.js'
 		);
 	}
+
+	$arResult['emptyEntityLabels'] = $emptyEntityLabels;
 }

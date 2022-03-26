@@ -692,6 +692,12 @@ select {
 	padding: 10px;
 }
 
+.imconnector-restriction-note {
+	font: 13px/19px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #828B95;
+	margin-left: 30px;
+}
+
 #workarea-content {
 	background-color: transparent !important;
 }

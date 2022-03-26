@@ -122,6 +122,9 @@ class SalesCenterPaymentListComponent extends CBitrixComponent
 			$this->arResult['disableSendButton'] = true;
 		}
 
+		$this->arResult['context'] = $this->arParams['context'];
+		$this->arResult['hideSendButton'] = $this->arParams['context'] === 'sms';
+
 		$this->arResult['isPaymentsLimitReached'] = SalesCenter\Integration\Bitrix24Manager::getInstance()->isPaymentsLimitReached();
 		$this->arResult['messages'] = Main\Localization\Loc::loadLanguageFile(__FILE__);
 		$this->arResult['sessionId'] = $sessionId;
@@ -144,31 +147,34 @@ class SalesCenterPaymentListComponent extends CBitrixComponent
 				$orderIdList = $this->getOrderIdListByUserId($userId);
 			}
 		}
-		elseif ($this->arParams['ownerId'] > 0)
+		elseif ((int)$this->arParams['ownerTypeId'] === CCrmOwnerType::Contact || (int)$this->arParams['ownerTypeId'] === CCrmOwnerType::Company)
 		{
-			$orderIdList = $this->getOrderIdListByDealId($this->arParams['ownerId']);
+			$entityTypeId = (int)$this->arParams['ownerTypeId'];
+			$orderIdList = Bitrix\Crm\Order\Order::getList([
+				'select' => ['ID'],
+				'filter' => [
+					'=CLIENT.ENTITY_TYPE_ID' => $entityTypeId,
+					'=CLIENT.ENTITY_ID' => $this->arParams['ownerId'],
+				],
+				'runtime' => [
+					new Main\Entity\ReferenceField(
+						'CLIENT',
+						\Bitrix\Crm\Binding\OrderContactCompanyTable::getEntity(),
+						[
+							'=ref.ORDER_ID' => 'this.ID',
+						],
+						['join_type' => 'LEFT']
+					),
+				]
+			])->fetchAll();
+			$orderIdList = array_column($orderIdList, 'ID');
+		}
+		elseif ($this->arParams['ownerId'] > 0 && $this->arParams['ownerTypeId'] > 0)
+		{
+			$orderIdList = Crm\Binding\OrderEntityTable::getOrderIdsByOwner($this->arParams['ownerId'], $this->arParams['ownerTypeId']);
 		}
 
 		return $orderIdList;
-	}
-
-	private function getOrderIdListByDealId(int $dealId): array
-	{
-		$result = [];
-
-		$dealBindingIterator = Crm\Order\DealBinding::getList([
-			'select' => ['ORDER_ID'],
-			'filter' => [
-				'=DEAL_ID' => $dealId,
-			],
-			'order' => ['ORDER_ID' => 'DESC'],
-		]);
-		while ($dealBindingData = $dealBindingIterator->fetch())
-		{
-			$result[] = $dealBindingData['ORDER_ID'];
-		}
-
-		return $result;
 	}
 
 	private function getOrderIdListByUserId(int $userId): array

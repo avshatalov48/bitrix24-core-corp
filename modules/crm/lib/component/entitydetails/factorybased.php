@@ -9,6 +9,7 @@ use Bitrix\Crm\Controller\Entity;
 use Bitrix\Crm\EO_Status;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Format\Money;
+use Bitrix\Crm\Format\TextHelper;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\Item;
@@ -18,10 +19,12 @@ use Bitrix\Crm\Product\Url\ProductBuilder;
 use Bitrix\Crm\Relation;
 use Bitrix\Crm\RelationIdentifier;
 use Bitrix\Crm\Requisite\EntityLink;
+use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\EditorAdapter;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Service\Operation;
+use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Crm\UserField\UserFieldManager;
 use Bitrix\Main\Application;
 use Bitrix\Main\Engine\Contract\Controllerable;
@@ -47,6 +50,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 	public const TAB_NAME_TREE = 'tab_tree';
 	public const TAB_NAME_BIZPROC = 'tab_bizproc';
 	public const TAB_NAME_AUTOMATION = 'tab_automation';
+	public const TAB_NAME_ORDERS = 'tab_order';
 	public const TAB_LISTS_PREFIX = 'tab_lists_';
 
 	protected const MAX_ENTITIES_IN_TAB = 20;
@@ -195,6 +199,11 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 		$this->editorAdapter = $this->factory->getEditorAdapter();
 	}
 
+	protected function getFileHandlerUrl()
+	{
+		return Container::getInstance()->getRouter()->getFileUrlTemplate($this->getEntityTypeID());
+	}
+
 	public function initializeEditorAdapter(): void
 	{
 		$this->editorAdapter->setContext($this->getEditorContext());
@@ -277,7 +286,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 
 		$this->arResult['jsParams']['item'] = $this->item->jsonSerialize();
 
-		if (!$this->item->isNew())
+		if (!$this->item->isNew() && \Bitrix\Crm\Settings\HistorySettings::getCurrent()->isViewEventEnabled())
 		{
 			$trackedObject = $this->factory->getTrackedObject($this->item);
 			Container::getInstance()->getEventHistory()->registerView($trackedObject);
@@ -476,27 +485,46 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 			$entityName = $this->factory->getEntityName();
 			$entityId = $this->item->getId();
 
-			return [
+			$tabParams = [
 				'id' => static::TAB_NAME_EVENT,
 				'name' => Loc::getMessage('CRM_TYPE_ITEM_DETAILS_TAB_HISTORY'),
-				'loader' => [
-					'serviceUrl' => '/bitrix/components/bitrix/crm.event.view/lazyload.ajax.php?&site'.SITE_ID.'&'.bitrix_sessid_get(),
-					'componentData' => [
-						'template' => '',
-						'contextId' => $entityName."_{$entityId}_EVENT",
-						'params' => [
-							'AJAX_OPTION_ADDITIONAL' => $entityName."_{$entityId}_EVENT",
-							'ENTITY_TYPE' => $entityName,
-							'ENTITY_ID' => $entityId,
-							'TAB_ID' => static::TAB_NAME_EVENT,
-							'INTERNAL' => 'Y',
-							'SHOW_INTERNAL_FILTER' => 'Y',
-							'PRESERVE_HISTORY' => true,
-						],
-					],
-				],
-				'enabled' => !$this->item->isNew(),
 			];
+
+			if ($this->item->isNew())
+			{
+				$tabParams['enabled'] = false;
+			}
+			else
+			{
+				if (!RestrictionManager::isHistoryViewPermitted())
+				{
+					$tabParams['tariffLock']  = RestrictionManager::getHistoryViewRestriction()->prepareInfoHelperScript();
+				}
+				else
+				{
+					$tabParams['loader'] = [
+						'serviceUrl' =>
+							'/bitrix/components/bitrix/crm.event.view/lazyload.ajax.php?&site='
+							. SITE_ID . '&' . bitrix_sessid_get()
+						,
+						'componentData' => [
+							'template' => '',
+							'contextId' => $entityName."_{$entityId}_EVENT",
+							'params' => [
+								'AJAX_OPTION_ADDITIONAL' => $entityName."_{$entityId}_EVENT",
+								'ENTITY_TYPE' => $entityName,
+								'ENTITY_ID' => $entityId,
+								'TAB_ID' => static::TAB_NAME_EVENT,
+								'INTERNAL' => 'Y',
+								'SHOW_INTERNAL_FILTER' => 'Y',
+								'PRESERVE_HISTORY' => true,
+							],
+						],
+					];
+				}
+			}
+
+			return $tabParams;
 		}
 		if ($tabCode === static::TAB_NAME_PRODUCTS)
 		{
@@ -549,18 +577,31 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 			return [
 				'id' => static::TAB_NAME_AUTOMATION,
 				'name' => Loc::getMessage('CRM_TYPE_ITEM_DETAILS_TAB_AUTOMATION'),
+				'url' => Container::getInstance()->getRouter()
+					->getAutomationUrl($this->factory->getEntityTypeId(), $this->item->getCategoryId())
+					->addParams(['id' => $this->item->getId()]),
+				'enabled' => !$this->item->isNew(),
+			];
+		}
+		if ($tabCode === static::TAB_NAME_ORDERS)
+		{
+			return [
+				'id' => static::TAB_NAME_ORDERS,
+				'name' => \CCrmOwnerType::GetCategoryCaption(\CCrmOwnerType::Order),
 				'loader' => [
-					'serviceUrl' => '/bitrix/components/bitrix/crm.automation/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
+					'serviceUrl' => '/bitrix/components/bitrix/crm.order.list/lazyload.ajax.php?&site'.SITE_ID.'&'.bitrix_sessid_get(),
 					'componentData' => [
 						'template' => '',
 						'params' => [
-							'ENTITY_TYPE_ID' => $this->factory->getEntityTypeId(),
-							'ENTITY_ID' => $this->item->getId(),
-							'ENTITY_CATEGORY_ID' => $this->item->getCategoryId(),
-							'back_url' => \CCrmOwnerType::GetEntityShowPath(
-								$this->factory->getEntityTypeId(),
-								$this->item->getId()
-							)
+							'INTERNAL_FILTER' => [
+								'ASSOCIATED_ENTITY_ID' => $this->item->getId(),
+								'ASSOCIATED_ENTITY_TYPE_ID' => $this->factory->getEntityTypeId(),
+							],
+							'SUM_PAID_CURRENCY' => \Bitrix\Crm\Currency::getBaseCurrencyId(),
+							'GRID_ID_SUFFIX' => $this->getGuid(),
+							'TAB_ID' => static::TAB_NAME_ORDERS,
+							'PRESERVE_HISTORY' => true,
+							'BUILDER_CONTEXT' => ProductBuilder::TYPE_ID
 						]
 					]
 				],
@@ -616,6 +657,15 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 
 		$tabs[static::TAB_NAME_TREE] = [];
 
+		$relation = Container::getInstance()->getRelationManager()->getRelation(new RelationIdentifier(
+			$this->factory->getEntityTypeId(),
+			\CCrmOwnerType::Order
+		));
+		if ($relation && $relation->isChildrenListEnabled())
+		{
+			$tabs[static::TAB_NAME_ORDERS] = [];
+		}
+
 		return $tabs;
 	}
 
@@ -632,100 +682,61 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 		{
 			$locationId = $this->item->getLocationId();
 		}
-		if (EditorAdapter::isProductListEnabled())
-		{
-			$this->getApplication()->includeComponent(
-				'bitrix:crm.entity.product.list',
-				'.default',
-				[
-					'INTERNAL_FILTER' => [
-						'OWNER_ID' => $this->getEntityID(),
-						'OWNER_TYPE' => $this->getEntityTypeID(),
-					],
-					'PATH_TO_ENTITY_PRODUCT_LIST' => ProductList::getComponentUrl(
-						['site' => $this->getSiteId()],
-						bitrix_sessid_get()
-					),
-					'ACTION_URL' => ProductList::getLoaderUrl(
-						['site' => $this->getSiteId()],
-						bitrix_sessid_get()
-					),
-					'ENTITY_ID' => $this->getEntityID(),
-					'ENTITY_TYPE_NAME' => $this->getEntityName(),
-					'CUSTOM_SITE_ID' => $this->getSiteId(),
-					'CUSTOM_LANGUAGE_ID' => $this->getLanguageId(),
-					'ALLOW_EDIT' => $this->isReadOnly() ? 'N' : 'Y',
-					'ALLOW_ADD_PRODUCT' => $this->isReadOnly() ? 'N' : 'Y',
-					// 'ALLOW_CREATE_NEW_PRODUCT' => (!$this->arResult['READ_ONLY'] ? 'Y' : 'N'),
-					'ID' => $this->getProductEditorId(),
-					'PREFIX' => $this->getProductEditorId(),
-					'FORM_ID' => '',
-					'PERMISSION_TYPE' => $this->isReadOnly() ? 'READ' : 'WRITE',
-					'PERMISSION_ENTITY_TYPE' => $userPermissions::getPermissionEntityType($this->getEntityTypeID(), $this->categoryId),
-					'PERSON_TYPE_ID' => $accountingService->resolvePersonTypeId($this->item),
-					'CURRENCY_ID' => $this->item->getCurrencyId(),
-					'ALLOW_LD_TAX' => Container::getInstance()->getAccounting()->isTaxMode() ? 'Y' : 'N',
-					'LOCATION_ID' => $locationId,
-					'CLIENT_SELECTOR_ID' => '', //TODO: Add Client Selector
-					'PRODUCTS' => $this->getProductsData(),
-					'PRODUCT_DATA_FIELD_NAME' => $this->getProductDataFieldName(),
-					'BUILDER_CONTEXT' => ProductBuilder::TYPE_ID,
-					/*
-					'HIDE_MODE_BUTTON' => !$this->isEditMode ? 'Y' : 'N',
-					'TOTAL_SUM' => isset($this->entityData['OPPORTUNITY']) ? $this->entityData['OPPORTUNITY'] : null,
-					'TOTAL_TAX' => isset($this->entityData['TAX_VALUE']) ? $this->entityData['TAX_VALUE'] : null,
-					'PATH_TO_PRODUCT_EDIT' => $this->arResult['PATH_TO_PRODUCT_EDIT'],
-					'PATH_TO_PRODUCT_SHOW' => $this->arResult['PATH_TO_PRODUCT_SHOW'],
-					'INIT_LAYOUT' => 'N',
-					'INIT_EDITABLE' => $this->arResult['READ_ONLY'] ? 'N' : 'Y',
-					'ENABLE_MODE_CHANGE' => 'N',
-					'USE_ASYNC_ADD_PRODUCT' => 'Y',
-					*/
+
+		$this->getApplication()->includeComponent(
+			'bitrix:crm.entity.product.list',
+			'.default',
+			[
+				'INTERNAL_FILTER' => [
+					'OWNER_ID' => $this->getEntityID(),
+					'OWNER_TYPE' => $this->getEntityTypeID(),
 				],
-				false,
-				[
-					'HIDE_ICONS' => 'Y',
-					'ACTIVE_COMPONENT' => 'Y',
-				]
-			);
-		}
-		else
-		{
-			$this->getApplication()->includeComponent(
-				'bitrix:crm.product_row.list',
-				'',
-				[
-					'ID' => $this->getProductEditorId(),
-					'PREFIX' => $this->getProductEditorId(),
-					'FORM_ID' => '',
-					'OWNER_ID' => $this->item->getId(),
-					'OWNER_TYPE' => $this->factory->getEntityAbbreviation(),
-					'PERMISSION_TYPE' => $this->isReadOnly() ? 'READ' : 'WRITE',
-					'PERMISSION_ENTITY_TYPE' => $userPermissions::getPermissionEntityType($this->getEntityTypeID(), $this->categoryId),
-					'PERSON_TYPE_ID' => $accountingService->resolvePersonTypeId($this->item),
-					'CURRENCY_ID' => $this->item->getCurrencyId(),
-					'LOCATION_ID' => $locationId,
-					'ALLOW_LD_TAX' => Container::getInstance()->getAccounting()->isTaxMode() ? 'Y' : 'N',
-					'CLIENT_SELECTOR_ID' => '',
-					'PRODUCT_ROWS' => $this->getProductsData(),
-					'HIDE_MODE_BUTTON' => $this->isReadOnly() ? 'Y' : 'N',
-					'TOTAL_SUM' => $this->item->getOpportunity(),
-					'TOTAL_TAX' => $this->item->getTaxValue(),
-					'PRODUCT_DATA_FIELD_NAME' => $this->getProductDataFieldName(),
-					'PATH_TO_PRODUCT_EDIT' => $router->getProductEditUrlTemplate(),
-					'PATH_TO_PRODUCT_SHOW' => $router->getProductDetailUrlTemplate(),
-					'INIT_LAYOUT' => 'N',
-					'INIT_EDITABLE' => $this->isReadOnly() ? 'N' : 'Y',
-					'ENABLE_MODE_CHANGE' => 'N',
-					'USE_ASYNC_ADD_PRODUCT' => 'Y',
-				],
-				false,
-				[
-					'HIDE_ICONS' => 'Y',
-					'ACTIVE_COMPONENT'=>'Y',
-				]
-			);
-		}
+				'PATH_TO_ENTITY_PRODUCT_LIST' => ProductList::getComponentUrl(
+					['site' => $this->getSiteId()],
+					bitrix_sessid_get()
+				),
+				'ACTION_URL' => ProductList::getLoaderUrl(
+					['site' => $this->getSiteId()],
+					bitrix_sessid_get()
+				),
+				'ENTITY_ID' => $this->getEntityID(),
+				'ENTITY_TYPE_NAME' => $this->getEntityName(),
+				'CUSTOM_SITE_ID' => $this->getSiteId(),
+				'CUSTOM_LANGUAGE_ID' => $this->getLanguageId(),
+				'ALLOW_EDIT' => $this->isReadOnly() ? 'N' : 'Y',
+				'ALLOW_ADD_PRODUCT' => $this->isReadOnly() ? 'N' : 'Y',
+				// 'ALLOW_CREATE_NEW_PRODUCT' => (!$this->arResult['READ_ONLY'] ? 'Y' : 'N'),
+				'ID' => $this->getProductEditorId(),
+				'PREFIX' => $this->getProductEditorId(),
+				'FORM_ID' => '',
+				'PERMISSION_TYPE' => $this->isReadOnly() ? 'READ' : 'WRITE',
+				'PERMISSION_ENTITY_TYPE' => $userPermissions::getPermissionEntityType($this->getEntityTypeID(), $this->categoryId),
+				'PERSON_TYPE_ID' => $accountingService->resolvePersonTypeId($this->item),
+				'CURRENCY_ID' => $this->item->getCurrencyId(),
+				'ALLOW_LD_TAX' => Container::getInstance()->getAccounting()->isTaxMode() ? 'Y' : 'N',
+				'LOCATION_ID' => $locationId,
+				'CLIENT_SELECTOR_ID' => '', //TODO: Add Client Selector
+				'PRODUCTS' => $this->getProductsData(),
+				'PRODUCT_DATA_FIELD_NAME' => $this->getProductDataFieldName(),
+				'BUILDER_CONTEXT' => ProductBuilder::TYPE_ID,
+				/*
+				'HIDE_MODE_BUTTON' => !$this->isEditMode ? 'Y' : 'N',
+				'TOTAL_SUM' => isset($this->entityData['OPPORTUNITY']) ? $this->entityData['OPPORTUNITY'] : null,
+				'TOTAL_TAX' => isset($this->entityData['TAX_VALUE']) ? $this->entityData['TAX_VALUE'] : null,
+				'PATH_TO_PRODUCT_EDIT' => $this->arResult['PATH_TO_PRODUCT_EDIT'],
+				'PATH_TO_PRODUCT_SHOW' => $this->arResult['PATH_TO_PRODUCT_SHOW'],
+				'INIT_LAYOUT' => 'N',
+				'INIT_EDITABLE' => $this->arResult['READ_ONLY'] ? 'N' : 'Y',
+				'ENABLE_MODE_CHANGE' => 'N',
+				'USE_ASYNC_ADD_PRODUCT' => 'Y',
+				*/
+			],
+			false,
+			[
+				'HIDE_ICONS' => 'Y',
+				'ACTIVE_COMPONENT' => 'Y',
+			]
+		);
 
 		return ob_get_clean();
 	}
@@ -810,14 +821,30 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 
 	protected function getSettingsToolbarButton(): Buttons\SettingsButton
 	{
+		$items = [];
+		$itemCopyUrl = Container::getInstance()->getRouter()->getItemCopyUrl(
+			$this->getEntityTypeID(),
+			$this->item->getId(),
+		);
+		$userPermissions = Container::getInstance()->getUserPermissions();
+		if ($itemCopyUrl && $userPermissions->canAddItem($this->item))
+		{
+			$items[] = [
+				'text' => Loc::getMessage('CRM_COMMON_ACTION_COPY'),
+				'href' => $itemCopyUrl,
+			];
+		}
+		if ($userPermissions->canDeleteItem($this->item))
+		{
+			$items[] = [
+				'text' => Loc::getMessage('CRM_TYPE_ITEM_DELETE'),
+				'onclick' => new Buttons\JsEvent('BX.Crm.ItemDetailsComponent:onClickDelete'),
+			];
+		}
+
 		return new Buttons\SettingsButton([
 			'menu' => [
-				'items' => [
-					[
-						'text' => Loc::getMessage('CRM_TYPE_ITEM_DELETE'),
-						'onclick' => new Buttons\JsEvent('BX.Crm.ItemDetailsComponent:onClickDelete'),
-					],
-				],
+				'items' => $items,
 			],
 		]);
 	}
@@ -925,6 +952,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 			'ENTITY_DATA' => $this->editorAdapter->getEntityData(),
 			'ENABLE_SECTION_EDIT' => true,
 			'ENABLE_SECTION_CREATION' => true,
+			'ENABLE_PAGE_TITLE_CONTROLS' => true,
 			'ENABLE_USER_FIELD_CREATION' => $isUserFieldCreationEnabled,
 			'USER_FIELD_ENTITY_ID' => $userFieldEntityId,
 			'USER_FIELD_CREATE_PAGE_URL' => Container::getInstance()->getRouter()->getUserFieldDetailUrl(
@@ -1013,17 +1041,10 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 
 		if($this->factory->isLinkWithProductsEnabled())
 		{
-			if (EditorAdapter::isProductListEnabled())
-			{
-				$controllers[] = $this->editorAdapter::getProductListController(
-					$this->getProductEditorId(),
-					$this->item->getCurrencyId()
-				);
-			}
-			else
-			{
-				$controllers[] = $this->editorAdapter::getProductRowProxyController($this->getProductEditorId());
-			}
+			$controllers[] = $this->editorAdapter::getProductListController(
+				$this->getProductEditorId(),
+				$this->item->getCurrencyId()
+			);
 		}
 
 		return $controllers;
@@ -1137,28 +1158,46 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 			}
 		}
 
-		if ($this->factory->isClientEnabled())
+		if ($this->factory->isClientEnabled() && isset($data[EditorAdapter::FIELD_CLIENT_DATA_NAME]))
 		{
-			if(isset($data[EditorAdapter::FIELD_CLIENT_DATA_NAME]))
-			{
-				$result = $this->editorAdapter->saveClientData(
-					$this->item,
-					$data[EditorAdapter::FIELD_CLIENT_DATA_NAME]
-				);
+			$result = $this->editorAdapter->saveClientData(
+				$this->item,
+				$data[EditorAdapter::FIELD_CLIENT_DATA_NAME]
+			);
 
-				if ($result->isSuccess())
+			if ($result->isSuccess())
+			{
+				/** @var ItemIdentifier[] $processedEntities */
+				$processedEntities = $result->getData()['processedEntities'] ?? [];
+				foreach ($processedEntities as $identifier)
 				{
-					/** @var ItemIdentifier[] $processedEntities */
-					$processedEntities = $result->getData()['processedEntities'] ?? [];
-					foreach ($processedEntities as $identifier)
-					{
-						$this->addRecentlyUsedItem($identifier->getEntityTypeId(), $identifier->getEntityId());
-					}
+					$this->addRecentlyUsedItem($identifier->getEntityTypeId(), $identifier->getEntityId());
 				}
-				else
+				$requisiteBinding = (array)($result->getData()['requisiteBinding'] ?? []);
+				if (!empty($requisiteBinding))
 				{
-					$this->errorCollection->add($result->getErrors());
+					$data = array_merge($data, $requisiteBinding);
 				}
+			}
+			else
+			{
+				$this->errorCollection->add($result->getErrors());
+			}
+		}
+
+		if ($this->factory->isMyCompanyEnabled() && isset($data[EditorAdapter::FIELD_MY_COMPANY_DATA_NAME]))
+		{
+			$result = $this->editorAdapter->saveMyCompanyDataFromEmbeddedEditor(
+				$this->item,
+				$data[EditorAdapter::FIELD_MY_COMPANY_DATA_NAME]
+			);
+			if (!$result->isSuccess())
+			{
+				$this->errorCollection->add($result->getErrors());
+			}
+			else
+			{
+				$data = array_merge($data, $result->getData());
 			}
 		}
 
@@ -1197,8 +1236,6 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 		{
 			$this->saveRequisites($beforeSaveData, $data);
 		}
-
-		$this->editorAdapter->saveRelations($this->item, $data);
 
 		if ($this->factory->isCrmTrackingEnabled())
 		{
@@ -1265,6 +1302,12 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 		$userFields = $this->factory->getUserFields();
 		global $USER_FIELD_MANAGER;
 		$USER_FIELD_MANAGER->EditFormAddFields($userFields, $data, ['FORM' => $data]);
+		$parentTypeId = (int)($data['PARENT_TYPE_ID'] ?? 0);
+		$parentId = (int)($data['PARENT_ID'] ?? 0);
+		if ($parentTypeId > 0 && $parentId > 0)
+		{
+			$data[ParentFieldManager::getParentFieldName($parentTypeId)] = $parentId;
+		}
 		foreach ($data as $name => $value)
 		{
 			$field = $this->factory->getFieldsCollection()->getField($name);
@@ -1295,6 +1338,10 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 				{
 					$value = str_replace(',', '.', $value);
 				}
+			}
+			if ($field->getValueType() === Field::VALUE_TYPE_HTML)
+			{
+				$value = TextHelper::sanitizeHtml($value);
 			}
 
 			$setData[$name] = $value;

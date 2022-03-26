@@ -51,7 +51,7 @@ $arTabs[] = array(
 $arTabs[] = array(
 	'id' => 'tab_activity_config',
 	'name' => GetMessage('CRM_TAB_ACTIVITY_CONFIG'),
-	'title' => GetMessage('CRM_TAB_ACTIVITY_CONFIG_TITLE'),
+	'title' => GetMessage('CRM_TAB_ACTIVITY_CONFIG_TITLE2'),
 	'icon' => '',
 	'fields' => $arResult['FIELDS']['tab_activity_config']
 );
@@ -66,8 +66,8 @@ $arTabs[] = array(
 
 $arTabs[] = array(
 	'id' => 'tab_livefeed',
-	'name' => GetMessage('CRM_TAB_LIVEFEED'),
-	'title' => GetMessage('CRM_TAB_LIVEFEED_TITLE'),
+	'name' => GetMessage('CRM_TAB_LIVEFEED2'),
+	'title' => GetMessage('CRM_TAB_LIVEFEED_TITLE2'),
 	'icon' => '',
 	'fields' => $arResult['FIELDS']['tab_livefeed']
 );
@@ -176,6 +176,15 @@ endif;
 					BX.bind(nodeAutoGenRc, 'change', function() {
 						nodeAutoUsingFinishedLead.checked = false;
 						BX.CrmInterfaceFormUtil.showFormRow(!nodeAutoGenRc.checked, nodeAutoUsingFinishedLead);
+					});
+				}
+
+				var productPriceEditSetting = form.querySelector('input[type="checkbox"][name="ENABLE_ENTITY_CATALOG_PRICE_EDIT"]');
+				var productPriceSaveSetting = form.querySelector('input[type="checkbox"][name="ENABLE_ENTITY_CATALOG_PRICE_SAVE"]');
+				if (productPriceEditSetting && productPriceSaveSetting)
+				{
+					BX.bind(productPriceEditSetting, 'change', function() {
+						BX.CrmInterfaceFormUtil.showFormRow(productPriceEditSetting.checked, productPriceSaveSetting);
 					});
 				}
 			}

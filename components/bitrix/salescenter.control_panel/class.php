@@ -126,19 +126,23 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 	{
 		$items = [
 			$this->getSmsProviderTile(),
-			$this->getPaymentSystemsTile(),
 		];
 
-		if ($this->hasInternalDeliveryItems()
-			|| (RestManager::getInstance()->isEnabled() && $this->hasDeliveryMarketplaceApp())
-		)
+		if (SaleManager::getInstance()->isManagerAccess(true))
 		{
-			$items[] = $this->getDeliveryTile();
-		}
+			$items[] = $this->getPaymentSystemsTile();
 
-		if (Driver::getInstance()->isCashboxEnabled())
-		{
-			$items[] = $this->getCashboxesTile();
+			if ($this->hasInternalDeliveryItems()
+				|| (RestManager::getInstance()->isEnabled() && $this->hasDeliveryMarketplaceApp())
+			)
+			{
+				$items[] = $this->getDeliveryTile();
+			}
+
+			if (Driver::getInstance()->isCashboxEnabled())
+			{
+				$items[] = $this->getCashboxesTile();
+			}
 		}
 
 		$items[] = $this->getUserConsentTile();

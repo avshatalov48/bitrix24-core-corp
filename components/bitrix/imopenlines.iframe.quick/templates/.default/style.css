@@ -82,10 +82,6 @@
 	background-image: none !important;
 }
 
-.imopenlines-iframe-quick .main-buttons-item-active .main-buttons-item-link {
-	color: var(--menu-item-link-color);
-}
-
 .imopenlines-iframe-quick-dark .popup-window-angly-top:before,
 .imopenlines-iframe-quick-dark .popup-window-content {
 	background-color: var(--popup-bg) !important;
@@ -523,53 +519,6 @@
 .imopenlines-iframe-quick-menu {
 	margin: 0 0 10px;
 	width: 377px;
-}
-
-.imopenlines-iframe-quick-menu .main-buttons-inner-container {
-	padding: 0 3px;
-	height: 28px !important;
-	background: transparent;
-}
-
-.imopenlines-iframe-quick-menu .main-buttons { height: 28px; }
-
-.imopenlines-iframe-quick-menu .imopenlines-iframe-quick-menu-item,
-.imopenlines-iframe-quick-menu .main-buttons-item-link,
-.imopenlines-iframe-quick-menu .main-buttons-item-more { height: 24px; }
-
-.imopenlines-iframe-quick-menu .main-buttons-item { margin: 0 25px 0 0; }
-
-.imopenlines-iframe-quick-menu .main-buttons-item.main-buttons-item-more { margin: 0; }
-
-.imopenlines-iframe-quick-menu .main-buttons-item-link,
-.imopenlines-iframe-quick-menu .main-buttons-item-more {
-	color: var(--result-item-color);
-	font: bold 12px/24px "Helvetica Neue", Arial, Helvetica, sans-serif;
-}
-.imopenlines-iframe-quick-menu .main-buttons-item-link:hover,
-.imopenlines-iframe-quick-menu .main-buttons-item-more:hover {
-	color: var(--result-item-hover-color);
-}
-
-.imopenlines-iframe-quick-menu-item.main-buttons-item-active .main-buttons-item-link {
-	color: var(--menu-item-link-color);
-}
-
-.imopenlines-iframe-quick-menu-item.main-buttons-item-active {
-	height: 26px !important;
-	border-bottom: 2px solid var(--menu-item-link-color);
-}
-
-.imopenlines-iframe-quick-menu .main-buttons-item-more:hover { background: transparent; }
-
-.imopenlines-iframe-quick-menu .main-buttons-item-more.main-buttons-item:after { top: 16px; }
-
-.imopenlines-iframe-quick-menu .main-buttons-item-active.main-buttons-item-more.main-buttons-item:after {
-	border-color: var(--menu-item-link-color) transparent transparent transparent;
-}
-
-.imopenlines-iframe-quick-menu .main-buttons-item-more.main-buttons-item-more:hover:after {
-	border-color: #545c6a transparent transparent transparent;
 }
 
 .imopenlines-iframe-quick-search-notification {

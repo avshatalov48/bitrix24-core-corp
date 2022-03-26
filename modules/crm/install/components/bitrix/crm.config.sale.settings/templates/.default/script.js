@@ -1,3 +1,4 @@
+
 BX.CrmSaleSettings = (function ()
 {
 	var CrmSaleSettings = function (parameters)
@@ -1505,6 +1506,7 @@ BX.CrmSaleSettings = (function ()
 		this.cancelButtonId = "common_sale_settings_close_button";
 
 		this.useStoreControl = null;
+		this.useStoreMasterControl = null;
 		this.enableReservationControl = null;
 		this.hideNumeratorSettingsControl = null;
 		this.PCDefaultValuesButton = null;
@@ -1524,12 +1526,22 @@ BX.CrmSaleSettings = (function ()
 
 		BX.bind(BX(this.applyButtonId), "click", BX.proxy(this.saveSettings, this));
 
+		this.bindUseStoreMasterButton();
+		this.bindUseStoreMasterControl();
 		this.bindPCDefaultValuesButton();
-		this.bindUseStoreControl();
-		this.bindEnableReservationControl();
+		this.bindEnableReservationMasterControl();
 		this.bindHideNumeratorSettingsControl();
 		this.bindAddressControl();
 		this.bindWeightControl();
+	};
+
+	BX.Crm.CommonSaleSettings.prototype.bindUseStoreMasterButton = function()
+	{
+		this.UseStoreMasterButton = BX("store_use_settings");
+		if (this.UseStoreMasterButton)
+		{
+			BX.bind(this.UseStoreMasterButton, "click", BX.proxy(this.clickUseStoreMasterButton, this));
+		}
 	};
 
 	BX.Crm.CommonSaleSettings.prototype.bindPCDefaultValuesButton = function()
@@ -1541,6 +1553,11 @@ BX.CrmSaleSettings = (function ()
 		}
 	};
 
+	BX.Crm.CommonSaleSettings.prototype.bindUseStoreMasterControl = function()
+	{
+		this.useStoreMasterControl = BX.findChild(BX(this.formId), {"attribute" : {"id": 'store_use_settings'}}, true);
+	};
+
 	BX.Crm.CommonSaleSettings.prototype.bindUseStoreControl = function()
 	{
 		this.useStoreControl = BX.findChild(BX(this.formId), {"attr": {
@@ -1548,6 +1565,20 @@ BX.CrmSaleSettings = (function ()
 		if (this.useStoreControl)
 		{
 			BX.bind(this.useStoreControl, "click", BX.proxy(this.clickUseStoreControl, this));
+		}
+	};
+
+	BX.Crm.CommonSaleSettings.prototype.bindEnableReservationMasterControl = function()
+	{
+		this.enableReservationControl = BX.findChild(BX(this.formId), {"attr": {
+				name: this.optionPrefix+"enable_reservation", type: "checkbox"}}, true, false);
+		if (this.enableReservationControl)
+		{
+			if (this.useStoreMasterControl && this.useStoreMasterControl.dataset.useStoreControl == 'Y')
+			{
+				this.enableReservationControl.disabled = true;
+				this.setEnableReservationHidden("Y");
+			}
 		}
 	};
 
@@ -1745,6 +1776,22 @@ BX.CrmSaleSettings = (function ()
 		this.showProductSettings();
 	};
 
+	BX.Crm.CommonSaleSettings.prototype.clickUseStoreMasterButton = function()
+	{
+		this.slider.open('/bitrix/components/bitrix/catalog.warehouse.master.clear/slider.php')
+			.then(function()
+			{
+				window.top.BX.ajax.runAction(
+					'catalog.config.isUsedInventoryManagement',
+					{}
+				).then(function(response)
+				{
+					this.checkedReservationControl(response.data === true);
+					this.saveSettingsComponentAction()
+				}.bind(this));
+			}.bind(this))
+	};
+
 	BX.Crm.CommonSaleSettings.prototype.clickHideNumeratorSettingsControl = function()
 	{
 		if (!this.hideNumeratorSettingsControl)
@@ -1767,14 +1814,12 @@ BX.CrmSaleSettings = (function ()
 		}
 	};
 
-	BX.Crm.CommonSaleSettings.prototype.clickUseStoreControl = function(event)
+	BX.Crm.CommonSaleSettings.prototype.checkedReservationControl = function(checked)
 	{
-		var userStoreControl = event.currentTarget;
-
 		if (!this.enableReservationControl)
 		{
 			this.enableReservationControl = BX.findChild(BX(this.formId), {"attr": {
-				name: this.optionPrefix+"enable_reservation", type: "checkbox"}}, true, false);
+					name: this.optionPrefix+"enable_reservation", type: "checkbox"}}, true, false);
 		}
 
 		if (!this.enableReservationControl)
@@ -1782,7 +1827,7 @@ BX.CrmSaleSettings = (function ()
 			return;
 		}
 
-		if (userStoreControl.checked)
+		if (checked)
 		{
 			this.enableReservationControl.checked = true;
 			this.enableReservationControl.disabled = true;
@@ -1795,13 +1840,15 @@ BX.CrmSaleSettings = (function ()
 		}
 	};
 
+	BX.Crm.CommonSaleSettings.prototype.clickUseStoreControl = function(event)
+	{
+		var userStoreControl = event.currentTarget;
+
+		this.checkedReservationControl(userStoreControl.checked)
+	};
+
 	BX.Crm.CommonSaleSettings.prototype.initSlider = function()
 	{
-		if (!this.isFramePopup)
-		{
-			return;
-		}
-
 		this.slider = {
 			bindClose: function (element)
 			{
@@ -1811,9 +1858,33 @@ BX.CrmSaleSettings = (function ()
 			{
 				window.top.BX.SidePanel.Instance.close(false, callback);
 			},
-			open: function (url)
+			open: function (url, params)
 			{
-				window.top.BX.SidePanel.Instance.open(url);
+				var options = {cacheable: false, allowChangeHistory: false, events: {}};
+
+				if(BX.Type.isPlainObject(params))
+				{
+					if (params !== null && typeof(params) === "object" && params.hasOwnProperty('events'))
+					{
+						options.events = params.events
+					}
+				}
+
+				return new Promise(function (resolve)
+				{
+					if(BX.Type.isString(url) && url.length > 1)
+					{
+						options.events.onClose = function(event)
+						{
+							resolve(event.getSlider());
+						};
+						window.top.BX.SidePanel.Instance.open(url, options);
+					}
+					else
+					{
+						resolve();
+					}
+				}.bind(this));
 			},
 			reload: function ()
 			{
@@ -1830,12 +1901,17 @@ BX.CrmSaleSettings = (function ()
 		this.slider.bindClose(BX(this.cancelButtonId));
 	};
 
-	BX.Crm.CommonSaleSettings.prototype.saveSettings = function()
+	BX.Crm.CommonSaleSettings.prototype.saveSettingsComponentAction= function()
 	{
-		BX.ajax.runComponentAction("bitrix:crm.config.sale.settings", "saveCommonSettings", {
+		return BX.ajax.runComponentAction("bitrix:crm.config.sale.settings", "saveCommonSettings", {
 			mode: "class",
 			data: new FormData(BX(this.formId))
-		}).then(function (response) {
+		})
+	}
+
+	BX.Crm.CommonSaleSettings.prototype.saveSettings = function()
+	{
+		this.saveSettingsComponentAction().then(function (response) {
 			top.BX.UI.Notification.Center.notify({
 				content: BX.message("CRM_SALE_SETTINGS_SAVE_SUCCESS")
 			});

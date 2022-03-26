@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Security\Controller;
 
 use Bitrix\Crm;
+use Bitrix\Crm\Category\PermissionEntityTypeHelper;
 use Bitrix\Crm\Security\AccessAttribute\Manager;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\ArgumentException;
@@ -15,6 +16,16 @@ abstract class Base extends Crm\Security\Controller
 	public function isEntityTypeSupported(int $entityTypeId): bool
 	{
 		return ($this->getEntityTypeID() === $entityTypeId);
+	}
+
+	public function isPermissionEntityTypeSupported($entityType): bool
+	{
+		if ($this->hasCategories())
+		{
+			return (new PermissionEntityTypeHelper($this->getEntityTypeId()))->doesPermissionEntityTypeBelongToEntity($entityType);
+		}
+
+		return \CCrmOwnerType::ResolveName($this->getEntityTypeId()) === $entityType;
 	}
 
 	/**
@@ -233,6 +244,11 @@ abstract class Base extends Crm\Security\Controller
 
 	public function extractCategoryId(string $permissionEntityType): int
 	{
+		if ($this->hasCategories())
+		{
+			return (new PermissionEntityTypeHelper($this->getEntityTypeId()))->extractCategoryFromPermissionEntityType($permissionEntityType);
+		}
+
 		return 0;
 	}
 

@@ -149,7 +149,8 @@ if($componentPage === 'index')
 $request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
 if ($request->get('enableFactory') !== null)
 {
-	Crm\Settings\QuoteSettings::getCurrent()->setFactoryEnabled($request->get('enableFactory') === 'y');
+	$enableFactory = (string)$request->get('enableFactory');
+	Crm\Settings\QuoteSettings::getCurrent()->setFactoryEnabled(mb_strtoupper($enableFactory) === 'Y');
 }
 
 if (

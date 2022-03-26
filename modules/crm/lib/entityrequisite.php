@@ -12,6 +12,7 @@ use Bitrix\Main;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Localization\Translation;
+use Bitrix\Main\Result;
 use Bitrix\Main\Text\Encoding;
 use Bitrix\Location\Entity\Address;
 use CCrmFieldInfoAttr;
@@ -58,6 +59,10 @@ class EntityRequisite
 	const COMPANY_DIRECTOR = 'RQ_DIRECTOR';
 	const COMPANY_ACCOUNTANT = 'RQ_ACCOUNTANT';
 	const EDRPOU = 'RQ_EDRPOU';
+
+	public const XML_ID_DEFAULT_PRESET_RU_COMPANY = '#CRM_REQUISITE_PRESET_DEF_RU_COMPANY#';
+	public const XML_ID_DEFAULT_PRESET_RU_INDIVIDUAL = '#CRM_REQUISITE_PRESET_DEF_RU_INDIVIDUAL#';
+	public const XML_ID_DEFAULT_PRESET_RU_PERSON = '#CRM_REQUISITE_PRESET_DEF_RU_PERSON#';
 
 	private static $singleInstance = null;
 
@@ -178,7 +183,7 @@ class EntityRequisite
 			{
 				if (!$sqlWhere)
 					$sqlWhere = new \CSQLWhere();
-				list($fieldName,) = array_values($sqlWhere->MakeOperation($k));
+				[$fieldName,] = array_values($sqlWhere->MakeOperation($k));
 				if (!empty($fieldName))
 				{
 					if ($fieldName !== self::ADDRESS && isset($addressFieldsMap[$fieldName]))
@@ -2851,50 +2856,16 @@ class EntityRequisite
 		$entityTypeId = (int)$entityTypeId;
 		$entityId = (int)$entityId;
 
-		global $DB, $DBType;
+		global $DB;
 		$tableName = self::CONFIG_TABLE_NAME;
 		$entityTypeId = $DB->ForSql($entityTypeId);
 		$settingsValue = $DB->ForSql(serialize($settings));
 
-		switch(mb_strtoupper(strval($DBType)))
-		{
-			case 'MYSQL':
-				$sql =
-					"INSERT INTO {$tableName} (ENTITY_ID, ENTITY_TYPE_ID, SETTINGS)".PHP_EOL.
-					"  VALUES({$entityId}, {$entityTypeId}, '{$settingsValue}')".PHP_EOL.
-					"  ON DUPLICATE KEY UPDATE SETTINGS = '{$settingsValue}'".PHP_EOL;
-				$DB->Query($sql, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
-				break;
-			case 'MSSQL':
-				$updateSql =
-					"UPDATE {$tableName} SET SETTINGS = '{$settingsValue}'".PHP_EOL.
-					"WHERE ENTITY_ID = {$entityId} AND ENTITY_TYPE_ID = {$entityTypeId}".PHP_EOL;
-				$dbResult = $DB->Query($updateSql, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
-				if(is_object($dbResult) && $dbResult->AffectedRowsCount() == 0)
-				{
-					$insertSql =
-						"INSERT INTO {$tableName} (ENTITY_ID, ENTITY_TYPE_ID, SETTINGS)".PHP_EOL.
-						"VALUES ({$entityId}, {$entityTypeId}, '{$settingsValue}')".PHP_EOL;
-					$DB->Query($insertSql, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
-				}
-				break;
-			case 'ORACLE':
-				$sql =
-					"MERGE INTO {$tableName}".PHP_EOL.
-					"  USING (SELECT {$entityId} ENTITY_ID, {$entityTypeId} ENTITY_TYPE_ID FROM dual) source".PHP_EOL.
-					"    ON".PHP_EOL.
-					"    (".PHP_EOL.
-					"      source.ENTITY_ID = {$tableName}.ENTITY_ID".PHP_EOL.
-					"      AND source.ENTITY_TYPE_ID = {$tableName}.ENTITY_TYPE_ID".PHP_EOL.
-					"    )".PHP_EOL.
-					"WHEN MATCHED THEN".PHP_EOL.
-					"  UPDATE SET {$tableName}.SETTINGS = '{$settingsValue}'".PHP_EOL.
-					"WHEN NOT MATCHED THEN".PHP_EOL.
-					"  INSERT (ENTITY_ID, ENTITY_TYPE_ID, SETTINGS)".PHP_EOL.
-					"    VALUES ({$entityId}, {$entityTypeId}, '{$settingsValue}')".PHP_EOL;
-				$DB->Query($sql, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
-				break;
-		}
+		$sql =
+			"INSERT INTO {$tableName} (ENTITY_ID, ENTITY_TYPE_ID, SETTINGS)".PHP_EOL.
+			"  VALUES({$entityId}, {$entityTypeId}, '{$settingsValue}')".PHP_EOL.
+			"  ON DUPLICATE KEY UPDATE SETTINGS = '{$settingsValue}'".PHP_EOL;
+		$DB->Query($sql, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
 	}
 
 	public function getEntityRequisiteBindings(int $entityTypeId, int $entityId, ?int $companyId, ?int $contactId): array
@@ -2920,6 +2891,30 @@ class EntityRequisite
 		}
 
 		return (array) $this->getDefaultRequisiteInfoLinked($entityList);
+	}
+
+	public function getDefaultMyCompanyEntityRequisiteBindings(
+		int $entityTypeId,
+		int $entityId,
+		?int $myCompanyId
+	): array
+	{
+		$entityList = [
+			[
+				'ENTITY_TYPE_ID' => $entityTypeId,
+				'ENTITY_ID' => $entityId,
+			],
+		];
+
+		if ($myCompanyId > 0)
+		{
+			$entityList[] = [
+				'ENTITY_TYPE_ID' => \CCrmOwnerType::Company,
+				'ENTITY_ID' => $myCompanyId,
+			];
+		}
+
+		return (array)$this->getDefaultMyCompanyRequisiteInfoLinked($entityList);
 	}
 
 	public function getDefaultRequisiteInfoLinked($entityList)
@@ -3325,9 +3320,11 @@ class EntityRequisite
 		}
 	}
 
-	public static function saveFormData($entityTypeId, $entityId, $entityRequisites, $entityBankDetails)
+	public static function saveFormData($entityTypeId, $entityId, $entityRequisites, $entityBankDetails): Result
 	{
-		$addedRequisites = array();
+		$result = new Result();
+		$resultData = [];
+
 		if(!empty($entityRequisites))
 		{
 			$requisite = new self();
@@ -3335,7 +3332,15 @@ class EntityRequisite
 			{
 				if(isset($requisiteData['isDeleted']) && $requisiteData['isDeleted'] === true)
 				{
-					$requisite->delete($requisiteID);
+					$saveRequisiteResult = $requisite->delete($requisiteID);
+					if (!$saveRequisiteResult->isSuccess())
+					{
+						$result->addErrors($saveRequisiteResult->getErrors());
+					}
+					else
+					{
+						$resultData['deletedRequisites'][] = (int)$requisiteID;
+					}
 					continue;
 				}
 
@@ -3345,14 +3350,26 @@ class EntityRequisite
 
 				if((int)$requisiteID > 0)
 				{
-					$requisite->update($requisiteID, $requisiteFields);
+					$saveRequisiteResult = $requisite->update($requisiteID, $requisiteFields);
+					if ($saveRequisiteResult->isSuccess())
+					{
+						$resultData['updatedRequisites'][] = (int)$requisiteID;
+					}
+					else
+					{
+						$result->addErrors($saveRequisiteResult->getErrors());
+					}
 				}
 				else
 				{
-					$result = $requisite->add($requisiteFields);
-					if($result->isSuccess())
+					$saveRequisiteResult = $requisite->add($requisiteFields);
+					if ($saveRequisiteResult->isSuccess())
 					{
-						$addedRequisites[$requisiteID] = $result->getId();
+						$resultData['addedRequisites'][$requisiteID] = $saveRequisiteResult->getId();
+					}
+					else
+					{
+						$result->addErrors($saveRequisiteResult->getErrors());
 					}
 				}
 			}
@@ -3378,33 +3395,59 @@ class EntityRequisite
 						{
 							if ((int)$pseudoID > 0)
 							{
-								$bankDetail->delete($pseudoID);
+								$saveBankDetailsResult = $bankDetail->delete($pseudoID);
+								if ($saveBankDetailsResult->isSuccess())
+								{
+									$resultData['deletedBankDetails'][] = (int)$pseudoID;
+								}
+								else
+								{
+									$result->addErrors($saveBankDetailsResult->getErrors());
+								}
 							}
 							continue;
 						}
 
 						if ((int)$pseudoID > 0)
 						{
-							$bankDetail->update($pseudoID, $bankDetailFields);
+							$saveBankDetailsResult = $bankDetail->update($pseudoID, $bankDetailFields);
+							if ($saveBankDetailsResult->isSuccess())
+							{
+								$resultData['updatedBankDetails'][] = (int)$pseudoID;
+							}
+							else
+							{
+								$result->addErrors($saveBankDetailsResult->getErrors());
+							}
 						}
 						else
 						{
-							if ((int)$requisiteID <= 0 && isset($addedRequisites[$requisiteID]))
+							if ((int)$requisiteID <= 0 && isset($resultData['addedRequisites'][$requisiteID]))
 							{
-								$requisiteID = $addedRequisites[$requisiteID];
+								$requisiteID = $resultData['addedRequisites'][$requisiteID];
 							}
 
 							if ((int)$requisiteID > 0)
 							{
 								$bankDetailFields['ENTITY_ID'] = $requisiteID;
 								$bankDetailFields['ENTITY_TYPE_ID'] = \CCrmOwnerType::Requisite;
-								$bankDetail->add($bankDetailFields);
+								$saveBankDetailsResult = $bankDetail->add($bankDetailFields);
+								if ($saveBankDetailsResult->isSuccess())
+								{
+									$resultData['addedBankDetails'][$pseudoID] = $saveBankDetailsResult->getId();
+								}
+								else
+								{
+									$result->addErrors($saveBankDetailsResult->getErrors());
+								}
 							}
 						}
 					}
 				}
 			}
 		}
+
+		return $result->setData($resultData);
 	}
 
 	/**
@@ -3543,7 +3586,7 @@ class EntityRequisite
 					'COUNTRY_ID' => '1',
 					'NAME' => $requisite->getPhrase('CRM_REQUISITE_FIXED_PRESET_COMPANY_RU_TITLE', 1),
 					'ACTIVE' => 'Y',
-					'XML_ID' => '#CRM_REQUISITE_PRESET_DEF_RU_COMPANY#',
+					'XML_ID' => static::XML_ID_DEFAULT_PRESET_RU_COMPANY,
 					'SORT' => 500,
 					'SETTINGS' => [
 						'FIELDS' => [
@@ -3634,7 +3677,7 @@ class EntityRequisite
 					'COUNTRY_ID' => '1',
 					'NAME' => $requisite->getPhrase('CRM_REQUISITE_FIXED_PRESET_INDIVIDUAL_RU_TITLE', 1),
 					'ACTIVE' => 'Y',
-					'XML_ID' => '#CRM_REQUISITE_PRESET_DEF_RU_INDIVIDUAL#',
+					'XML_ID' => static::XML_ID_DEFAULT_PRESET_RU_INDIVIDUAL,
 					'SORT' => 500,
 					'SETTINGS' => [
 						'FIELDS' => [
@@ -3718,7 +3761,7 @@ class EntityRequisite
 					'COUNTRY_ID' => '1',
 					'NAME' => $requisite->getPhrase('CRM_REQUISITE_FIXED_PRESET_PERSON_RU_TITLE', 1),
 					'ACTIVE' => 'Y',
-					'XML_ID' => '#CRM_REQUISITE_PRESET_DEF_RU_PERSON#',
+					'XML_ID' => static::XML_ID_DEFAULT_PRESET_RU_PERSON,
 					'SORT' => 500,
 					'SETTINGS' => [
 						'FIELDS' => [

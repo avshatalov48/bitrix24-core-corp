@@ -98,7 +98,7 @@ if(CCrmOwnerType::ContactName == $effectiveEntityType)
 	$sort = $contactSort;
 	$select = $contactSelect;
 
-	$filter = array();
+	$filter = [];
 	if(isset($_REQUEST["search"]))
 	{
 		CUtil::JSPostUnescape();

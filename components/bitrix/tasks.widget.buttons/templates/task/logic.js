@@ -74,18 +74,6 @@ BX.namespace('Tasks.Component');
 				}
 			},
 
-			getQuery: function()
-			{
-				if(!this.instances.query)
-				{
-					this.instances.query = new BX.Tasks.Util.Query({
-						autoExec: true
-					});
-				}
-
-				return this.instances.query;
-			},
-
 			getDayPlan: function()
 			{
 				if(!this.instances.dayplan)
@@ -98,7 +86,6 @@ BX.namespace('Tasks.Component');
 					data[taskId] = taskData;
 
 					this.instances.dayplan = new BX.Tasks.DayPlan({
-						query: this.getQuery(),
 						registerDispatcher: true,
 						id: 'buttons-dayplan',
 						data: data // task data forward to make tick-tack emulation work. see inside for details
@@ -112,30 +99,25 @@ BX.namespace('Tasks.Component');
 				return this.instances.dayplan;
 			},
 
-			getUserSelector: function()
+			showUserSelector: function()
 			{
-				if(!this.instances.selector)
+				if (!this.userSelector)
 				{
-					this.instances.selector = new BX.Tasks.Integration.Socialnetwork.NetworkSelector({
-						scope: this.control('open-menu'),
-						mode: 'user',
-						query: this.getQuery(),
-						useSearch: true,
-						parent: this
+					this.userSelector = new BX.UI.EntitySelector.Dialog({
+						targetNode: this.control('open-menu'),
+						enableSearch: true,
+						multiple: false,
+						context: 'TASKS_MEMBER_SELECTOR_EDIT_responsible',
+						entities: [{id: 'user'}],
+						events: {
+							'Item:onSelect': function(event) {
+								var item = event.getData().item;
+								this.doDynamicAction('DELEGATE', {userId: item.getId()});
+							}.bind(this),
+						}
 					});
-					this.instances.selector.bindEvent('item-selected', BX.delegate(this.onSelectorItemSelected, this));
 				}
-
-				return this.instances.selector;
-			},
-
-			onSelectorItemSelected: function(item)
-			{
-				this.instances.selector.close();
-				if(item.id)
-				{
-					this.doDynamicAction('DELEGATE', {userId: item.id});
-				}
+				this.userSelector.show();
 			},
 
 			doMenuAction: function(menu, e, item)
@@ -144,37 +126,36 @@ BX.namespace('Tasks.Component');
 
 				if (code)
 				{
-					if (code == 'COPY')
+					if (code === 'COPY')
 					{
 						window.location = this.option('copyUrl');
 					}
-					else if (code == 'CREATE_SUBTASK')
+					else if (code === 'CREATE_SUBTASK')
 					{
-						BX.SidePanel.Instance.open(
-							this.option('createSubtaskUrl')
-						);
+						BX.SidePanel.Instance.open(this.option('createSubtaskUrl'));
+					}
+					else if (code === 'DELEGATE')
+					{
+						if (this.option('taskLimitExceeded'))
+						{
+							BX.UI.InfoHelper.show('limit_tasks_delegating', {
+								isLimit: true,
+								limitAnalyticsLabels: {
+									module: 'tasks',
+									source: 'taskView'
+								}
+							});
+							return;
+						}
+						this.showUserSelector();
+					}
+					else if (code === 'REST')
+					{
+						BX.SidePanel.Instance.open(item.callbackData.serviceUrl, item.callbackData.opt || {});
 					}
 					else
 					{
-						// do one of the dynamic actions
-						if (code == 'DELEGATE')
-						{
-							if (this.option('taskLimitExceeded'))
-							{
-								BX.UI.InfoHelper.show('limit_tasks_delegating');
-								return;
-							}
-
-							this.getUserSelector().open();
-						}
-						else if (code == 'REST')
-						{
-							BX.SidePanel.Instance.open(item.callbackData.serviceUrl, item.callbackData.opt || {});
-						}
-						else
-						{
-							this.doDynamicAction(code);
-						}
+						this.doDynamicAction(code);
 					}
 				}
 
@@ -199,6 +180,7 @@ BX.namespace('Tasks.Component');
 				else if(code == 'DAYPLAN.ADD')
 				{
 					this.getDayPlan().addToPlan(this.option('taskId'));
+					this.reFetchTaskData(code);
 				}
 				else if(code == 'DELETE')
 				{
@@ -225,7 +207,18 @@ BX.namespace('Tasks.Component');
 							});
 							this.scrumDod.subscribe('resolve', function() { taskCompletePromise.fulfill() });
 							this.scrumDod.subscribe('reject', function() { taskCompletePromise.reject() });
-							this.scrumDod.showList();
+							this.scrumDod.isNecessary()
+								.then(function(isNecessary) {
+									if (isNecessary)
+									{
+										this.scrumDod.showList();
+									}
+									else
+									{
+										taskCompletePromise.fulfill();
+									}
+								}.bind(this))
+							;
 						}.bind(this));
 					}
 					else
@@ -235,7 +228,6 @@ BX.namespace('Tasks.Component');
 
 					taskCompletePromise.then(function() {
 						this.doDynamicTaskAction(code, args);
-						this.reFetchTaskData(code);
 					}.bind(this));
 				}
 				else
@@ -243,7 +235,7 @@ BX.namespace('Tasks.Component');
 					this.doDynamicTaskAction(code, args);
 				}
 
-				this.reFetchTaskData(code);
+				this.togglePanelActivity(true);
 			},
 
 			doDynamicTaskAction: function(code, args)
@@ -251,45 +243,21 @@ BX.namespace('Tasks.Component');
 				var taskId = this.option('taskId');
 				var self = this;
 
+				var action = code.toLowerCase();
+
 				args = args || {};
 				args['id'] = taskId;
 
-				// add action
-				this.getQuery().add('task.' + code.toLowerCase(), args, {}, BX.delegate(function(errors, data)
-				{
-					if (data.OPERATION === 'task.delegate')
-					{
-						if (data.RESULT.ERRORS && data.RESULT.ERRORS.length > 0)
-						{
-							self.vars.delegateReload = false;
-
-							var buttons = [new BX.PopupWindowButton({
-								text : BX.message('IM_NOTIFY_CONFIRM_CLOSE'),
-								className : "popup-window-button",
-								events : { click : function(e) { this.popupWindow.close(); e.preventDefault(); } }
-							})];
-
-							var popup = new BX.PopupWindow('tasks-popup-error', null, {
-								autoHide : true,
-								closeByEsc : true,
-								events : {
-									onPopupClose : function() { this.destroy(); },
-									onPopupDestroy : BX.delegate(function() {
-										window.location.reload();
-									}, this)
-								},
-								content: BX.create("div", {
-									props : { className: "task-popup-error-content"},
-									html : data.RESULT.ERRORS[0]
-								}),
-								buttons : buttons
-							});
-							popup.show();
-						}
+				BX.ajax.runComponentAction('bitrix:tasks.task', action, {
+					mode: 'class',
+					data: {
+						taskId: taskId,
+						parameters: args
 					}
-					else if (!errors.checkHasErrors())
+				}).then(
+					function(response)
 					{
-						if (data.OPERATION ==='task.delete')
+						if (action === 'delete')
 						{
 							BX.Tasks.Util.fireGlobalTaskEvent('DELETE', {ID: taskId});
 
@@ -298,8 +266,26 @@ BX.namespace('Tasks.Component');
 								window.location = this.option('listUrl');
 							}
 						}
-					}
-				}, this));
+						else
+						{
+							this.reFetchTaskData(code);
+						}
+					}.bind(this)
+				).catch(
+					function(response)
+					{
+						if (response.errors)
+						{
+							if (action === 'delegate')
+							{
+								self.vars.delegateReload = false;
+							}
+
+							BX.Tasks.alert(response.errors);
+							this.togglePanelActivity(true);
+						}
+					}.bind(this)
+				);
 			},
 
 			reFetchTaskData: function(code)
@@ -309,16 +295,17 @@ BX.namespace('Tasks.Component');
 					var taskId = this.option('taskId');
 					var self = this;
 
-					this.getQuery().add('task.get', {id: taskId, parameters: {ENTITY_SELECT: ['DAYPLAN']}}, {code: 'task_data'}, BX.delegate(function(errors, data)
-					{
-						if (!errors.checkHasErrors())
+					BX.ajax.runComponentAction('bitrix:tasks.task', 'get', {
+						mode: 'class',
+						data: {
+							taskId: taskId,
+							parameters: {ENTITY_SELECT: ['DAYPLAN']}
+						}
+					}).then(
+						function(response)
 						{
 							if (code === 'DELEGATE' && self.vars.delegateReload)
 							{
-								// on DELEGATE we usually loose significant part of rights
-								// it forces us to redraw large parts of user interface
-								// todo: get rid of page reload here, do js-based redraw
-
 								window.location.reload();
 							}
 							else if(code === 'DEFER')
@@ -326,11 +313,20 @@ BX.namespace('Tasks.Component');
 								this.getDayPlan().stopTimer(taskId, false); // tell timeman to update widget, no sync
 							}
 
-							this.updateTaskData(data.RESULT.DATA);
+							this.updateTaskData(response.data.DATA);
 							this.updatePlanner(); // currently planner has no ability to catch task change by itself, so we have to TELL him manually
 							this.togglePanelActivity(true);
-						}
-					}, this));
+						}.bind(this)
+					).catch(
+						function(response)
+						{
+							if (response.errors)
+							{
+								BX.Tasks.alert(response.errors);
+								this.togglePanelActivity(true);
+							}
+						}.bind(this)
+					);
 				}
 				else
 				{
@@ -416,7 +412,7 @@ BX.namespace('Tasks.Component');
 				}
 
 				this.addToData(partialData);
-
+				this.reFetchTaskData('START_TIMER');
 				this.updateButtons();
 			},
 

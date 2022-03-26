@@ -37,7 +37,7 @@ class SearchContentBuilderFactory
 		{
 			return new OrderSearchContentBuilder();
 		}
-		elseif (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeID))
+		elseif (\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeID))
 		{
 			return new DynamicTypeSearchContentBuilder($entityTypeID);
 		}

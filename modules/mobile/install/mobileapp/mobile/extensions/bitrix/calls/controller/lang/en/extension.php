@@ -1,7 +1,9 @@
 <?php
 $MESS["MOBILE_CALL_ALREADY_FINISHED"] = "Call has already been ended";
 $MESS["MOBILE_CALL_ALREADY_JOINED"] = "You cannot connect to the call from multiple devices";
+$MESS["MOBILE_CALL_APP_REQUIRED"] = "Application is required";
 $MESS["MOBILE_CALL_ERROR"] = "Error";
+$MESS["MOBILE_CALL_INSTALL_JITSI_MEET"] = "Jitsi Meet application is required to connect to conference";
 $MESS["MOBILE_CALL_INTERNAL_ERROR"] = "Internal application error. Error code: #ERROR_CODE#";
 $MESS["MOBILE_CALL_JOIN_GROUP_CALL"] = "Connect to group call";
 $MESS["MOBILE_CALL_MICROPHONE_ACCESS_DENIED"] = "Access denied";
@@ -13,6 +15,8 @@ $MESS["MOBILE_CALL_MICROPHONE_SETTINGS"] = "Open Settings";
 $MESS["MOBILE_CALL_NO_CAMERA_WITH_LEGACY_APP"] = "Cannot enable or disable the camera because your contact's application is out of date and cannot toggle the camera during the call.";
 $MESS["MOBILE_CALL_NO_MICROPHONE_ACCESS"] = "Cannot access the microphone";
 $MESS["MOBILE_CALL_NO_MICROPHONE_CAMERA_ACCESS"] = "Cannot access the microphone and camera";
+$MESS["MOBILE_CALL_OPEN_APP_STORE"] = "Open App Store";
+$MESS["MOBILE_CALL_OPEN_PLAY_MARKET"] = "Open Play Market";
 $MESS["MOBILE_CALL_UNSUPPORTED_VERSION"] = "Your application is out of date. Please update to make calls.";
 $MESS["MOBILE_CALL_WITHOUT_VIDEO"] = "Without video";
 $MESS["MOBILE_CALL_WITH_VIDEO"] = "With video";

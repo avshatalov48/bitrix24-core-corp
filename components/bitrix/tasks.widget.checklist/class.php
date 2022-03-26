@@ -1,15 +1,14 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Tasks\Util\Type;
 use Bitrix\Tasks\Item;
 
-//use Bitrix\Main\Localization\Loc;
-//
-//Loc::loadMessages(__FILE__);
-
 CBitrixComponent::includeComponentClass("bitrix:tasks.base");
 
+/**
+ * Deprecated since tasks 22.500.0
+ */
 class TasksWidgetCheckListComponent extends TasksBaseComponent
 {
 	protected function checkParameters()

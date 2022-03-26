@@ -7,11 +7,6 @@ Loc::loadMessages(__FILE__);
 
 class CallBackTrigger extends BaseTrigger
 {
-	public static function isSupported($entityTypeId)
-	{
-		return $entityTypeId !== \CCrmOwnerType::Quote ? parent::isSupported($entityTypeId) : false;
-	}
-
 	protected static function areDynamicTypesSupported(): bool
 	{
 		return false;

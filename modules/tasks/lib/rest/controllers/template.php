@@ -28,18 +28,18 @@ class Template extends Base
 	 *
 	 * @return bool|int
 	 */
-	public function addAction(array $fields, array $params = array())
+	public function addAction(array $fields, array $params = [])
 	{
+		$currentUserId = CurrentUser::get()->getId();
 
-		if (!TemplateAccessController::can(CurrentUser::get()->getId(), ActionDictionary::ACTION_TEMPLATE_CREATE))
+		if (!TemplateAccessController::can($currentUserId, ActionDictionary::ACTION_TEMPLATE_CREATE))
 		{
 			return false;
 		}
 
-		$template = new \CTaskTemplates;
-		$templateId = $template->Add($fields, $params);
+		$fields = $this->filterFields($fields);
 
-		return $templateId;
+		return (new \CTaskTemplates())->Add($fields, $params);
 	}
 
 	/**
@@ -51,17 +51,18 @@ class Template extends Base
 	 *
 	 * @return bool
 	 */
-	public function updateAction($templateId, array $fields, array $params = array())
+	public function updateAction(int $templateId, array $fields, array $params = []): bool
 	{
-		if (!TemplateAccessController::can(CurrentUser::get()->getId(), ActionDictionary::ACTION_TEMPLATE_EDIT, $templateId))
+		$currentUserId = CurrentUser::get()->getId();
+
+		if (!TemplateAccessController::can($currentUserId, ActionDictionary::ACTION_TEMPLATE_EDIT, $templateId))
 		{
 			return false;
 		}
 
-		$template = new \CTaskTemplates;
-		$result = $template->Update($templateId, $fields, $params);
+		$fields = $this->filterFields($fields);
 
-		return $result;
+		return (new \CTaskTemplates())->Update($templateId, $fields, $params);
 	}
 
 	/**
@@ -72,9 +73,11 @@ class Template extends Base
 	 *
 	 * @return bool
 	 */
-	public function deleteAction($templateId, array $params = array())
+	public function deleteAction(int $templateId, array $params = []): bool
 	{
-		if (!TemplateAccessController::can(CurrentUser::get()->getId(), ActionDictionary::ACTION_TEMPLATE_EDIT, $templateId))
+		$currentUserId = CurrentUser::get()->getId();
+
+		if (!TemplateAccessController::can($currentUserId, ActionDictionary::ACTION_TEMPLATE_EDIT, $templateId))
 		{
 			return false;
 		}

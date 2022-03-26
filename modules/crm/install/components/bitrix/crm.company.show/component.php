@@ -12,6 +12,7 @@ CModule::IncludeModule('fileman');
 
 use Bitrix\Crm\CompanyAddress;
 use Bitrix\Crm\Format\AddressFormatter;
+use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Settings\CompanySettings;
 use Bitrix\Crm\EntityAddressType;
 
@@ -850,6 +851,9 @@ if (!$isMyCompanyMode && CCrmDeal::CheckReadPermission(0, $userPermissions))
 		)
 	);
 }
+
+$arResult['TAB_EVENT_TARIFF_LOCK'] = (!RestrictionManager::isHistoryViewPermitted()) ? 'Y' : 'N';
+
 $arResult['FIELDS']['tab_event'][] = array(
 	'id' => 'section_event',
 	'name' => GetMessage('CRM_SECTION_EVENT'),

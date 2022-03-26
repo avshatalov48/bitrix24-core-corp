@@ -57,15 +57,23 @@ if(typeof BX.Crm.EntityEditorSection === "undefined")
 
 		var data = child ? child.getData() : null;
 
-		this._visibilityConfigurator = BX.Crm.EntityFieldVisibilityConfigurator.create(
-			this._id,
-			{
-				editor: child ? child._editor : null,
-				config: child ? BX.prop.getObject(data, "visibilityConfigs", null) : null,
-				field: child ? child : null,
-				restriction: this._editor.getRestriction('userFieldAccessRights')}
-		);
-		params.visibilityConfigurator = this._visibilityConfigurator;
+		if (this.getEditor().canChangeCommonConfiguration())
+		{
+			this._visibilityConfigurator = BX.Crm.EntityFieldVisibilityConfigurator.create(
+				this._id,
+				{
+					editor: child ? child._editor : null,
+					config: child ? BX.prop.getObject(data, "visibilityConfigs", null) : null,
+					field: child ? child : null,
+					restriction: this._editor.getRestriction('userFieldAccessRights')
+				}
+			);
+			params.visibilityConfigurator = this._visibilityConfigurator;
+		}
+		else
+		{
+			this._visibilityConfigurator = null;
+		}
 
 		this._fieldConfigurator = this.getConfigurationFieldManager().createFieldConfigurator(params, this);
 
@@ -474,15 +482,21 @@ if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
 		this._isPayButtonVisible = BX.prop.getBoolean(this._schemeElement._options, "isPayButtonVisible", true);
 		this._isPayButtonControlVisible = (this._model.getField("IS_PAY_BUTTON_CONTROL_VISIBLE", 'Y') === 'Y');
 
-		var modeWithOrders = this._model.getField('MODE_WITH_ORDERS', true);
+		var ownerTypeId = BX.prop.getInteger(this.getModel()._settings, "entityTypeId", 0);
 		var isCopyMode = this._model.getField('IS_COPY_MODE', false);
 
-		if (!modeWithOrders && !isCopyMode)
+		var isShowPaymentDocuments = this._schemeElement.getDataBooleanParam("isShowPaymentDocuments", false);
+		if (!isCopyMode && isShowPaymentDocuments)
 		{
 			var paymentDocumentsOptions = {
-				DEAL_ID: this._model.getField('ID'),
+				IS_USED_INVENTORY_MANAGEMENT: this._model.getField('IS_USED_INVENTORY_MANAGEMENT', false),
+				IS_INVENTORY_MANAGEMENT_RESTRICTED: this._model.getField('IS_INVENTORY_MANAGEMENT_RESTRICTED', false),
+				OWNER_TYPE_ID: ownerTypeId,
+				OWNER_ID: this._model.getField('ID') ? parseInt(this._model.getField('ID')) : 0,
+				CONTEXT: this.getModel().getOwnerInfo().ownerType.toLowerCase(),
 				IS_DELIVERY_AVAILABLE: this._schemeElement.getDataBooleanParam('isDeliveryAvailable', false),
-				PARENT_CONTEXT: this
+				PARENT_CONTEXT: this,
+				PHRASES: this._schemeElement.getDataObjectParam('paymentDocumentsPhrases', {})
 			};
 			this._paymentDocumentsControl = new BX.Crm.EntityEditorPaymentDocuments(paymentDocumentsOptions);
 		}
@@ -521,6 +535,7 @@ if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
 		if(
 			this._mode === BX.UI.EntityEditorMode.view
 			&& this.isNeedToDisplay()
+			&& !this.getEditor().isEmbedded()
 		)
 		{
 			this._payButton = this.renderPayButton();
@@ -533,12 +548,12 @@ if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
 				BX.Dom.clean(this._innerWrapper);
 				this._innerWrapper.appendChild(this._payButton);
 			}
-		}
 
-		if (this.isNeedToDisplay() && this._paymentDocumentsControl)
-		{
-			this._wrapper.appendChild(this._paymentDocumentsControl.render());
-			this._paymentDocumentsControl.reloadModel();
+			if (this._paymentDocumentsControl)
+			{
+				this._wrapper.appendChild(this._paymentDocumentsControl.render());
+				this._paymentDocumentsControl.reloadModel();
+			}
 		}
 	};
 
@@ -551,45 +566,52 @@ if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
 
 		if (options === undefined)
 		{
+			var entityTypeId = BX.prop.getInteger(this.getModel()._settings, "entityTypeId", 0);
+			var ownerInfo = this.getModel().getOwnerInfo();
+
 			options = {
 				disableSendButton: this._schemeElement.getDataStringParam('disableSendButton', ''),
 				context: 'deal',
 				templateMode: 'create',
-				mode: 'payment_delivery',
+				mode: entityTypeId === BX.CrmEntityType.enumeration.deal ? 'payment_delivery' : 'payment',
 				analyticsLabel: 'salescenterClickButtonPay',
-				ownerTypeId: BX.CrmEntityType.enumeration.deal,
-				ownerId: this._model.getField('ID'),
+				ownerTypeId: entityTypeId,
+				ownerId: ownerInfo.ownerID,
 				orderId: orderId,
 			};
 		}
 
-		BX.loadExt('salescenter.manager').then(function()
-		{
-			BX.Salescenter.Manager.openApplication(options).then(function(result)
-			{
+		BX.loadExt('salescenter.manager').then(function() {
+			BX.Salescenter.Manager.openApplication(options).then(function(result) {
 				if (result)
 				{
-					if (result.get('deal') || result.get('order'))
+					if (result.get('deal') || result.get('order') || result.get('entity'))
 					{
 						this._editor.reload();
 					}
 
-					var deal = result.get('deal');
-					if (deal)
+					var entityTypeId = this.getModel().getEntityTypeId(), entity = null;
+					if (result.get('entity'))
 					{
-						if (deal.PRODUCT_LIST)
-						{
-							this._editor.tapController('PRODUCT_ROW_PROXY', function(controller) {
-								if (controller._externalEditor)
-								{
-									controller._externalEditor.reinitialize(deal.PRODUCT_LIST);
-								}
-							});
+						entity = result.get('entity');
+					}
+					else if (entityTypeId === BX.CrmEntityType.enumeration.deal)
+					{
+						entity = result.get('deal');
+					}
 
-							this._editor.tapController('PRODUCT_LIST', function(controller) {
-								controller.reinitializeProductList();
-							});
-						}
+					if (entity && entity.PRODUCT_LIST)
+					{
+						this._editor.tapController('PRODUCT_ROW_PROXY', function(controller) {
+							if (controller._externalEditor)
+							{
+								controller._externalEditor.reinitialize(entity.PRODUCT_LIST);
+							}
+						});
+
+						this._editor.tapController('PRODUCT_LIST', function(controller) {
+							controller.reinitializeProductList();
+						});
 					}
 
 					var order = result.get('order');
@@ -3076,6 +3098,11 @@ if(typeof BX.Crm.EntityEditorSubsection === "undefined")
 	};
 
 	BX.Crm.EntityEditorSubsection.prototype.isRequired = function()
+	{
+		return true;
+	};
+
+	BX.Crm.EntityEditorSubsection.prototype.isNeedToDisplay = function()
 	{
 		return true;
 	};
@@ -7596,7 +7623,7 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 						enableRequisite: false,
 						enableCommunications: this._editor.areCommunicationControlsEnabled(),
 						enableAddress: this.isClientFieldVisible('ADDRESS'),
-						enableTooltip: this.isClientFieldVisible('REQUISITES'),
+						enableTooltip: this._schemeElement.getDataBooleanParam("enableTooltip", true) && this.isClientFieldVisible('REQUISITES'),
 						mode: BX.UI.EntityEditorMode.view,
 						clientEditorFieldsParams: this.getClientEditorFieldsParams(contactInfo.getTypeName()),
 						canChangeDefaultRequisite: !useExternalRequisiteBinding,
@@ -7769,7 +7796,7 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 						enableRequisite: false,
 						enableCommunications: this._editor.areCommunicationControlsEnabled(),
 						enableAddress: this.isClientFieldVisible('ADDRESS'),
-						enableTooltip: this.isClientFieldVisible('REQUISITES'),
+						enableTooltip: this._schemeElement.getDataBooleanParam("enableTooltip", true) && this.isClientFieldVisible('REQUISITES'),
 						mode: BX.UI.EntityEditorMode.view,
 						clientEditorFieldsParams: this.getClientEditorFieldsParams(companyInfo.getTypeName()),
 						canChangeDefaultRequisite: !useExternalRequisiteBinding,
@@ -7849,7 +7876,9 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 					clientEditorFields: this.getClientVisibleFieldsList(BX.CrmEntityType.names.company),
 					clientEditorFieldsParams: this.getClientEditorFieldsParams(BX.CrmEntityType.names.company),
 					requisiteBinding: this._model.getField("REQUISITE_BINDING", {}),
-					isRequired: (this.isRequired() || this.isRequiredByAttribute())
+					isRequired: (this.isRequired() || this.isRequiredByAttribute()),
+					enableMyCompanyOnly: this._schemeElement.getDataBooleanParam('enableMyCompanyOnly', false),
+					enableRequisiteSelection: this._schemeElement.getDataBooleanParam('enableRequisiteSelection', false)
 				}
 			)
 		);
@@ -7939,6 +7968,15 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 			);
 		}
 
+		var enableRequisiteSelection =
+			this._schemeElement.getDataBooleanParam('enableRequisiteSelection', false)
+			&& this._contactSearchBoxes.length === 0
+			&& (
+				!this._companyInfos
+				|| this._companyInfos.length() === 0
+			)
+		;
+
 		return(
 			BX.Crm.EntityEditorClientSearchBox.create(
 				this._id,
@@ -7960,7 +7998,8 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 					clientEditorFields: this.getClientVisibleFieldsList(BX.CrmEntityType.names.contact),
 					clientEditorFieldsParams: this.getClientEditorFieldsParams(BX.CrmEntityType.names.contact),
 					requisiteBinding: this._model.getField("REQUISITE_BINDING", {}),
-					isRequired: (this.isRequired() || this.isRequiredByAttribute())
+					isRequired: (this.isRequired() || this.isRequiredByAttribute()),
+					enableRequisiteSelection: enableRequisiteSelection
 				}
 			)
 		);
@@ -8003,6 +8042,11 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 		{
 			return;
 		}
+		var isNeedToEnableRequisiteSelectionOnFirstContact = (
+			index === 0
+			&& searchBox._enableRequisiteSelection
+			&& this._contactSearchBoxes[1]
+		);
 
 		searchBox.removeResetListener(this._contactResetHandler);
 		searchBox.removeTitleChangeListener(this._contactNameChangeHandler);
@@ -8018,6 +8062,10 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 		for(var i = 0, length = this._contactSearchBoxes.length; i < length; i++)
 		{
 			this._contactSearchBoxes[i].enableDeletion(enableDeletion);
+		}
+		if (isNeedToEnableRequisiteSelectionOnFirstContact)
+		{
+			this.setRequisiteSelectionEnabledOnFirstContactSearchBox(true);
 		}
 	};
 	BX.Crm.EntityEditorClientLight.prototype.removeContactAllSearchBoxes = function()
@@ -8226,6 +8274,8 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 			this.removeCompany(previousEntityInfo);
 			this.markAsChanged();
 		}
+
+		this.setRequisiteSelectionEnabledOnFirstContactSearchBox(true);
 	};
 	BX.Crm.EntityEditorClientLight.prototype.onCompanyNameChange = function(sender)
 	{
@@ -8253,6 +8303,8 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 		}
 
 		this.markAsChanged();
+
+		this.setRequisiteSelectionEnabledOnFirstContactSearchBox(false);
 
 		if(!this._enableCompanyMultiplicity)
 		{
@@ -8380,12 +8432,24 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 		else
 		{
 			//Save immediately
-			this._editor.saveData(
-				{
+
+			var data;
+			if (this._schemeElement.getDataBooleanParam('enableMyCompanyOnly', false))
+			{
+				data = {
+					'MC_REQUISITE_ID': BX.prop.getInteger(eventArgs, "requisiteId", 0),
+					'MC_BANK_DETAIL_ID': BX.prop.getInteger(eventArgs, "bankDetailId", 0),
+					'MYCOMPANY_ID': this._model.getNumberField('MYCOMPANY_ID')
+				};
+			}
+			else
+			{
+				data = {
 					'REQUISITE_ID': BX.prop.getInteger(eventArgs, "requisiteId", 0),
 					'BANK_DETAIL_ID': BX.prop.getInteger(eventArgs, "bankDetailId", 0)
-				}
-			);
+				};
+			}
+			this._editor.saveData(data);
 
 			this._model.setField("REQUISITE_BINDING", null,  { enableNotification: false });
 		}
@@ -8475,6 +8539,19 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 		}
 
 		this.createDataElement("data", JSON.stringify(data));
+	};
+	BX.Crm.EntityEditorClientLight.prototype.setRequisiteSelectionEnabledOnFirstContactSearchBox = function(enableRequisiteSelection)
+	{
+		if (
+			this._layoutType === BX.Crm.EntityEditorClientLayoutType.companyContact
+			|| this._layoutType === BX.Crm.EntityEditorClientLayoutType.contactCompany
+		)
+		{
+			for (var index = 0; index < this._contactSearchBoxes.length; index++)
+			{
+				this._contactSearchBoxes[index].setSelectRequisiteSelectionEnabled(index === 0 && enableRequisiteSelection);
+			}
+		}
 	};
 	if(typeof(BX.Crm.EntityEditorClientLight.messages) === "undefined")
 	{
@@ -10000,6 +10077,67 @@ if(typeof BX.Crm.EntityEditorEntityTag === "undefined")
 	BX.Crm.EntityEditorEntityTag.create = function(id, settings)
 	{
 		var self = new BX.Crm.EntityEditorEntityTag();
+		self.initialize(id, settings);
+		return self;
+	};
+}
+if(typeof BX.Crm.EntityEditorDocumentNumber === "undefined")
+{
+	/**
+	 * @extends BX.Crm.EntityEditorText
+	 * @constructor
+	 */
+	BX.Crm.EntityEditorDocumentNumber = function()
+	{
+		BX.Crm.EntityEditorDocumentNumber.superclass.constructor.apply(this);
+	};
+	BX.extend(BX.Crm.EntityEditorDocumentNumber, BX.Crm.EntityEditorText);
+
+	BX.Crm.EntityEditorDocumentNumber.prototype.doPrepareContextMenuItems = function(menuItems)
+	{
+		BX.Crm.EntityEditorDocumentNumber.superclass.doPrepareContextMenuItems.apply(this, arguments);
+
+		var numeratorSettingsUrl = this._schemeElement.getDataStringParam("numeratorSettingsUrl", null);
+		if (numeratorSettingsUrl && BX.SidePanel && BX.SidePanel.Instance)
+		{
+			menuItems.push({ delimiter: true });
+
+			menuItems.push({
+				value: 'openNumeratorSettings',
+				text: this.getMessage('numeratorSettingsContextItem')
+			});
+		}
+	};
+	BX.Crm.EntityEditorDocumentNumber.prototype.processContextMenuCommand = function(e, command)
+	{
+		BX.Crm.EntityEditorDocumentNumber.superclass.processContextMenuCommand.apply(this, arguments);
+
+		if (command === 'openNumeratorSettings')
+		{
+			var numeratorSettingsUrl = this._schemeElement.getDataStringParam("numeratorSettingsUrl", null);
+			if (numeratorSettingsUrl && BX.SidePanel && BX.SidePanel.Instance)
+			{
+				BX.SidePanel.Instance.open(numeratorSettingsUrl, {width: 480});
+			}
+		}
+	};
+	BX.Crm.EntityEditorDocumentNumber.prototype.getMessage = function(name)
+	{
+		var ownMessage = BX.prop.getString(BX.Crm.EntityEditorDocumentNumber.messages, name, null);
+		if (ownMessage)
+		{
+			return ownMessage;
+		}
+
+		return BX.Crm.EntityEditorDocumentNumber.superclass.getMessage.call(this, name);
+	};
+	if (typeof(BX.Crm.EntityEditorDocumentNumber.messages) === "undefined")
+	{
+		BX.Crm.EntityEditorDocumentNumber.messages = {};
+	}
+	BX.Crm.EntityEditorDocumentNumber.create = function(id, settings)
+	{
+		var self = new BX.Crm.EntityEditorDocumentNumber();
 		self.initialize(id, settings);
 		return self;
 	};

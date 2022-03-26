@@ -3,7 +3,6 @@
 namespace Bitrix\Crm\Integration\BizProc\Document\ValueCollection;
 
 use Bitrix\Crm;
-use Bitrix\Main\Localization\Loc;
 
 class Deal extends Base
 {
@@ -19,10 +18,6 @@ class Deal extends Base
 		elseif ($fieldId === 'ORDER_IDS')
 		{
 			$this->loadOrderIdValues();
-		}
-		elseif (strpos($fieldId, 'PRODUCT_IDS') === 0)
-		{
-			$this->loadProductValues();
 		}
 		elseif (strpos($fieldId, 'CONTACT.') === 0)
 		{
@@ -81,57 +76,7 @@ class Deal extends Base
 
 	protected function loadOrderIdValues(): void
 	{
-		$orderIds = Crm\Binding\OrderDealTable::getList([
-			'select' => ['ORDER_ID'],
-			'filter' => [
-				'=DEAL_ID' => $this->id,
-			],
-			'order' => ['ORDER_ID' => 'DESC'],
-		])->fetchAll();
-
-		$this->document['ORDER_IDS'] = array_column($orderIds, 'ORDER_ID');
-	}
-
-	protected function loadProductValues(): void
-	{
-		$productRows = Crm\ProductRowTable::getList([
-			'select' => ['ID', 'PRODUCT_ID', 'CP_PRODUCT_NAME', 'SUM_ACCOUNT'],
-			'filter' => [
-				'=OWNER_TYPE' => \CCrmOwnerTypeAbbr::Deal,
-				'=OWNER_ID' => $this->id,
-			],
-			'order' => ['SORT' => 'ASC'],
-		])->fetchAll();
-
-		$this->document['PRODUCT_IDS'] = array_column($productRows, 'ID');
-		$this->document['PRODUCT_IDS_PRINTABLE'] = '';
-
-		if (!empty($productRows))
-		{
-			$this->document['PRODUCT_IDS_PRINTABLE'] = $this->getProductRowsPrintable($productRows);
-		}
-	}
-
-	protected function getProductRowsPrintable(array $rows): string
-	{
-		$text = sprintf(
-			'[table][tr][th]%s[/th][th]%s[/th][/tr]',
-			Loc::getMessage('CRM_DOCUMENT_FIELD_PRODUCT_NAME'),
-			Loc::getMessage('CRM_DOCUMENT_FIELD_PRODUCT_SUM')
-		);
-
-		$currencyId = \CCrmCurrency::GetAccountCurrencyID();
-
-		foreach ($rows as $row)
-		{
-			$text .= sprintf(
-				'[tr][td]%s[/td][td]%s[/td][/tr]',
-				$row['CP_PRODUCT_NAME'],
-				\CCrmCurrency::MoneyToString($row['SUM_ACCOUNT'], $currencyId)
-			);
-		}
-
-		return $text . '[/table]';
+		$this->document['ORDER_IDS'] = Crm\Binding\OrderEntityTable::getOrderIdsByOwner($this->id, \CCrmOwnerType::Deal);
 	}
 
 	protected function loadContactFieldValue($fieldId): void

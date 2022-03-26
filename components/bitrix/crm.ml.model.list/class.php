@@ -67,7 +67,10 @@ class CCrmMlModelListComponent extends CBitrixComponent
 		{
 			$model = Scoring::getModelByName($modelName);
 
-			$result[$modelName] = $model;
+			if ($model && $model->hasAccess())
+			{
+				$result[$modelName] = $model;
+			}
 		}
 		return $result;
 	}

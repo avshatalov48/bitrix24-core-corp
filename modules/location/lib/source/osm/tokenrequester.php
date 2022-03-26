@@ -129,7 +129,7 @@ final class TokenRequester extends BaseSender
 	{
 		$result = $this->performRequest('osmgateway.token.get');
 
-		if (!$result)
+		if (!$result->isSuccess())
 		{
 			return null;
 		}

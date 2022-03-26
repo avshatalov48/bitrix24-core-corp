@@ -580,6 +580,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 				$row['PHONE_NUMBER'] = static::formatPhoneNumber($row['PHONE_NUMBER']);
 				$row['CALL_START_DATE_RAW'] = $row['CALL_START_DATE'];
 				$row['CALL_START_DATE'] = $this->formatDate($row['CALL_START_DATE']);
+				$row['COMMENT'] = htmlspecialcharsbx($row['COMMENT']);
 
 				$t_row = array(
 					"data" => $row,
@@ -616,7 +617,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 			array("id" => "COST_TEXT", "name" => GetMessage("TELEPHONY_HEADER_COST"), "default" => true, "editable" => false),
 			array("id" => "TRANSCRIPT_COST_TEXT", "name" => GetMessage("TELEPHONY_HEADER_TRANSCRIPT_COST"), "default" => false, "editable" => false),
 			array("id" => "CALL_VOTE", "name" => GetMessage("TELEPHONY_HEADER_VOTE"), "default" => Voximplant\Limits::canVote(), "editable" => false),
-			array("id" => "RECORD", "name" => GetMessage("TELEPHONY_HEADER_RECORD"), "default" => false, "editable" => false),
+			array("id" => "RECORD", "name" => GetMessage("TELEPHONY_HEADER_RECORD_2"), "default" => false, "editable" => false),
 			array("id" => "LOG", "name" => GetMessage("TELEPHONY_HEADER_LOG"), "default" => false, "editable" => false),
 			array("id" => "CRM", "name" => GetMessage("TELEPHONY_HEADER_CRM"), "default" => true, "editable" => false),
 			array("id" => "COMMENT", "name" => GetMessage("TELEPHONY_HEADER_COMMENT"), "default" => true, "editable" => false),

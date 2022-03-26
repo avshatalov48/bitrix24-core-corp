@@ -23,18 +23,16 @@ const FieldProductSubItem = {
 				v-if="item.selected"
 			>
 				<div class="b24-form-control-product-quantity-remove"
-					v-if="item.price"
 					:style="{visibility: item.getNextDecQuantity() ? 'visible' : 'hidden'}"
 					@click="item.decQuantity()"
 				></div>
 				<div class="b24-form-control-product-quantity-counter">
+					{{ item.value.quantity }}
 					<span
-						v-if="item.price || item.quantity.unit"
-					>{{ item.value.quantity }}</span>
-					{{ item.quantity.unit }}
+						v-if="item.quantity.unit"
+					>{{ item.quantity.unit }}</span>
 				</div>
 				<div class="b24-form-control-product-quantity-add"
-					v-if="item.price"
 					:style="{visibility: item.getNextIncQuantity() ? 'visible' : 'hidden'}"
 					@click="item.incQuantity()"
 				></div>
@@ -175,9 +173,9 @@ const FieldProductPriceOnly = {
 		{
 			this.focusedItem = null;
 		},
-		onInput()
+		onInput(event)
 		{
-			let value = this.field.normalize(this.value);
+			let value = this.field.normalize(event.target.value);
 			value = this.field.format(value);
 			if (this.value !== value)
 			{

@@ -57,7 +57,10 @@ class CrmTrackingReportSourceComponent extends \CBitrixComponent
 			$parent = Tracking\Internals\SourceChildTable::getRowById($this->arParams['PARENT_ID']);
 			$siblings = Tracking\Internals\SourceChildTable::getList([
 				'select' => ['ID', 'LEVEL', 'TITLE'],
-				'filter' => ['=PARENT_ID' => $parent['PARENT_ID']],
+				'filter' => [
+					'=SOURCE_ID' => $this->arParams['SOURCE_ID'],
+					'=PARENT_ID' => $parent['PARENT_ID'],
+				],
 			]);
 			foreach ($siblings as $sibling)
 			{
@@ -199,6 +202,7 @@ class CrmTrackingReportSourceComponent extends \CBitrixComponent
 				'id' => 'title',
 				'name' => Tracking\Source\Level\Type::getCaption((int) $this->arParams['LEVEL']),
 				"default" => true,
+				'class' => 'crm-tracking-report-source-grid-column-code',
 			],
 			[
 				'id' => 'impressions',
@@ -258,7 +262,6 @@ class CrmTrackingReportSourceComponent extends \CBitrixComponent
 				'id' => 'roi',
 				'name' => Loc::getMessage('CRM_TRACKING_REPORT_SOURCE_COLUMN_ROI'),
 				'default' => true,
-				'align' => 'right',
 			],
 		];
 

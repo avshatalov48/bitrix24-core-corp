@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Mobile\AppTabs;
 
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Query\Filter;
 use Bitrix\Mobile\Tab\Tabable;
@@ -36,87 +37,183 @@ class Task implements Tabable
 	{
 		$apiVersion = Mobile::getApiVersion();
 
-		if ($apiVersion < 28 || (Mobile::getPlatform() == "ios" && Mobile::getSystemVersion() < 11))
+		if ($apiVersion < 28 || (Mobile::getPlatform() === 'ios' && Mobile::getSystemVersion() < 11))
 		{
 			return [
-				"sort" => 400,
-				"imageName" => "task",
-				"badgeCode" => "tasks",
-				"page" => ["url" => "{$this->context->siteDir}mobile/tasks/snmrouter/"],
+				'sort' => 400,
+				'imageName' => 'task',
+				'badgeCode' => 'tasks',
+				'page' => [
+					'url' => "{$this->context->siteDir}mobile/tasks/snmrouter/",
+				],
 			];
 		}
 
-		$data = [
-			"sort" => 400,
-			"imageName" => "task",
-			"badgeCode" => "tasks",
-			"id" => "tasks",
-			"component" => [
-				"name" => "JSStackComponent",
-				"title" => GetMessage("MD_COMPONENT_TASKS_LIST"),
-				"componentCode" => "tasks.list",
-				"scriptPath" => Manager::getComponentPath("tasks.list"),
-				"rootWidget" => [
-					"name" => "tasks.list",
-					"settings" => [
-						"useSearch" => true,
-						"useLargeTitleMode" => true,
-						"objectName" => "list",
-					],
-				],
-				"params" => [
-					"COMPONENT_CODE" => "tasks.list",
-					"USER_ID" => $this->context->userId,
-					"SITE_ID" => $this->context->siteId,
-					"SITE_DIR" => $this->context->siteDir,
-					"LANGUAGE_ID" => LANGUAGE_ID,
-					"PATH_TO_TASK_ADD" => "{$this->context->siteDir}mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#",
-					"MIN_SEARCH_SIZE" => Filter\Helper::getMinTokenSize(),
-					"MESSAGES" => [],
+		$taskListComponent = [
+			'name' => 'JSStackComponent',
+			'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_HEADER'),
+			'componentCode' => 'tasks.list',
+			'scriptPath' => Manager::getComponentPath('tasks.list'),
+			'rootWidget' => [
+				'name' => 'tasks.list',
+				'settings' => [
+					'objectName' => 'list',
+					'useSearch' => true,
+					'useLargeTitleMode' => true,
 				],
 			],
+			'params' => [
+				'COMPONENT_CODE' => 'tasks.list',
+				'USER_ID' => $this->context->userId,
+				'SITE_ID' => $this->context->siteId,
+				'SITE_DIR' => $this->context->siteDir,
+				'LANGUAGE_ID' => LANGUAGE_ID,
+				'PATH_TO_TASK_ADD' => "{$this->context->siteDir}mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#",
+				'PROJECT_NEWS_PATH_TEMPLATE' => \Bitrix\Mobile\Project\Helper::getProjectNewsPathTemplate([
+					'siteDir' => $this->context->siteDir,
+				]),
+				'PROJECT_CALENDAR_WEB_PATH_TEMPLATE' => \Bitrix\Mobile\Project\Helper::getProjectCalendarWebPathTemplate([
+					'siteId' => $this->context->siteId,
+					'siteDir' => $this->context->siteDir,
+				]),
+				'MIN_SEARCH_SIZE' => Filter\Helper::getMinTokenSize(),
+				'MESSAGES' => [],
+			],
 		];
-
 		if ($apiVersion >= 40)
 		{
-			$data["component"]["rootWidget"]["settings"]["inputPanel"] = [
-				"action" => 0,
-				"callback" => 0,
-				"useImageButton" => true,
-				"useAudioMessages" => true,
-				"smileButton" => [],
-				"message" => [
-					"placeholder" => Loc::getMessage("TAB_TASKS_INPUT_PANEL_NEW_TASK"),
+			$taskListComponent['rootWidget']['settings']['emptyListMode'] = true;
+			$taskListComponent['rootWidget']['settings']['inputPanel'] = [
+				'action' => 0,
+				'callback' => 0,
+				'useImageButton' => true,
+				'useAudioMessages' => true,
+				'smileButton' => [],
+				'message' => [
+					'placeholder' => Loc::getMessage('TAB_TASKS_INPUT_PANEL_NEW_TASK'),
 				],
-				"attachButton" => [
-					"items" => [
+				'attachButton' => [
+					'items' => [
 						[
-							"id" => "disk",
-							"name" => Loc::getMessage("TAB_TASKS_INPUT_PANEL_B24_DISK"),
-							"dataSource" => [
-								"multiple" => true,
-								"url" => "/mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId={$this->context->userId}",
+							'id' => 'disk',
+							'name' => Loc::getMessage('TAB_TASKS_INPUT_PANEL_B24_DISK'),
+							'dataSource' => [
+								'multiple' => true,
+								'url' => "/mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId={$this->context->userId}",
 							],
 						],
 					],
 				],
-				"attachFileSettings" => [
-					"resize" => [
-						"targetWidth" => -1,
-						"targetHeight" => -1,
-						"sourceType" => 1,
-						"encodingType" => 0,
-						"mediaType" => 2,
-						"allowsEdit" => false,
-						"saveToPhotoAlbum" => true,
-						"cameraDirection" => 0,
+				'attachFileSettings' => [
+					'resize' => [
+						'targetWidth' => -1,
+						'targetHeight' => -1,
+						'sourceType' => 1,
+						'encodingType' => 0,
+						'mediaType' => 2,
+						'allowsEdit' => false,
+						'saveToPhotoAlbum' => true,
+						'cameraDirection' => 0,
 					],
-					"maxAttachedFilesCount" => 100,
+					'maxAttachedFilesCount' => 100,
 				],
 			];
 		}
 
-		return $data;
+		$resultComponent = $taskListComponent;
+		if ($apiVersion >= 41)
+		{
+			$taskListComponent['params']['IS_TABS_MODE'] = true;
+			$taskListTab = [
+				'id' => 'tasks.list',
+				'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_TAB_TASKS'),
+				'component' => $taskListComponent,
+			];
+			$projectListTab = [
+				'id' => 'tasks.project.list',
+				'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_TAB_PROJECTS'),
+				'component' => [
+					'name' => 'JSStackComponent',
+					'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_HEADER'),
+					'componentCode' => 'tasks.project.list',
+					'scriptPath' => Manager::getComponentPath('tasks.project.list'),
+					'rootWidget' => [
+						'name' => 'tasks.list',
+						'settings' => [
+							'objectName' => 'list',
+							'useSearch' => true,
+							'useLargeTitleMode' => true,
+							'emptyListMode' => true,
+						],
+					],
+					'params' => [
+						'COMPONENT_CODE' => 'tasks.project.list',
+						'SITE_ID' => $this->context->siteId,
+						'SITE_DIR' => $this->context->siteDir,
+						'USER_ID' => $this->context->userId,
+						'PROJECT_NEWS_PATH_TEMPLATE' => \Bitrix\Mobile\Project\Helper::getProjectNewsPathTemplate([
+							'siteDir' => $this->context->siteDir,
+						]),
+						'PROJECT_CALENDAR_WEB_PATH_TEMPLATE' => \Bitrix\Mobile\Project\Helper::getProjectCalendarWebPathTemplate([
+							'siteId' => $this->context->siteId,
+							'siteDir' => $this->context->siteDir,
+						]),
+						'MIN_SEARCH_SIZE' => Filter\Helper::getMinTokenSize(),
+					],
+				],
+			];
+
+			$scrumTab = [
+				'id' => 'tasks.scrum.list',
+				'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_TAB_SCRUM'),
+				'selectable' => false,
+			];
+			$efficiencyTab = [
+				'id' => 'tasks.efficiency',
+				'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_TAB_EFFICIENCY'),
+				'selectable' => false,
+			];
+
+			$tabs = [
+				$taskListTab,
+				$projectListTab,
+				$efficiencyTab,
+			];
+
+			array_splice($tabs, 2, 0, [$scrumTab]);
+
+			$resultComponent = [
+				'name' => 'JSStackComponent',
+				'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_HEADER'),
+				'componentCode' => 'tasks.tabs',
+				'scriptPath' => Manager::getComponentPath('tasks.tabs'),
+				'rootWidget' => [
+					'name' => 'tabs',
+					'settings' => [
+						'objectName' => 'tabs',
+						'grabTitle' => true,
+						'grabButtons' => true,
+						'grabSearch' => true,
+						'tabs' => [
+							'items' => $tabs,
+						],
+					],
+				],
+				'params' => [
+					'COMPONENT_CODE' => 'tasks.tabs',
+					'USER_ID' => $this->context->userId,
+					'SITE_ID' => $this->context->siteId,
+				],
+			];
+		}
+
+		return [
+			'sort' => 400,
+			'imageName' => 'task',
+			'badgeCode' => 'tasks',
+			'id' => 'tasks',
+			'component' => $resultComponent,
+		];
 	}
 
 	public function getData()

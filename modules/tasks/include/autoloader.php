@@ -1,5 +1,4 @@
-<?
-global $DBType;
+<?php
 
 CModule::AddAutoloadClasses(
 	'tasks',
@@ -51,8 +50,8 @@ CModule::AddAutoloadClasses(
 		'CTaskColumnManager'                => 'classes/general/columnmanager.php',
 		'CTaskColumnPresetManager'          => 'classes/general/columnmanager.php',
 
-		'Bitrix\Tasks\Internals\DataBase\Helper'    => "lib/internals/database/helper/".ToLower($DBType).".php",
-		'\Bitrix\Tasks\Internals\DataBase\Helper'   => "lib/internals/database/helper/".ToLower($DBType).".php",
+		'Bitrix\Tasks\Internals\DataBase\Helper'    => "lib/internals/database/helper/mysql.php",
+		'\Bitrix\Tasks\Internals\DataBase\Helper'   => "lib/internals/database/helper/mysql.php",
 
 		'\Bitrix\Tasks\ActionNotAllowedException'				=> "lib/exception.php",
 		'\Bitrix\Tasks\ActionFailedException'					=> "lib/exception.php",

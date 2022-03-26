@@ -12,10 +12,9 @@ Main\Localization\Loc::loadMessages(__FILE__);
 
 class Dynamic extends RecyclableEntity
 {
-	private const
-		SHORT_PREFIX = 'crm_',
-		PREFIX = 'crm_dynamic_',
-		MODULE_ID = 'crm';
+	protected const SHORT_PREFIX = 'crm_';
+	protected const PREFIX = 'crm_dynamic_';
+	protected const MODULE_ID = 'crm';
 
 	public static function createRecycleBinEntity($entityId, ?int $entityTypeId = null): Recyclebin\Internals\Entity
 	{
@@ -46,9 +45,9 @@ class Dynamic extends RecyclableEntity
 		$data = [];
 		foreach($typesMap->getTypes() as $type)
 		{
-			$data[self::PREFIX . $type->getEntityTypeId()] = [
+			$data[static::getEntityName($type->getEntityTypeId())] = [
 				'NAME' => $type->getTitle(),
-				'HANDLER' => __CLASS__
+				'HANDLER' => __CLASS__,
 			];
 		}
 
@@ -101,7 +100,7 @@ class Dynamic extends RecyclableEntity
 		}
 
 		$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
-		if(!\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		if(!\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
 		{
 			return false;
 		}

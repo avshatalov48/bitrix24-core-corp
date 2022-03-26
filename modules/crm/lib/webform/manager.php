@@ -10,6 +10,7 @@ namespace Bitrix\Crm\WebForm;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Crm;
+use Bitrix\Main\Web\Uri;
 
 class Manager
 {
@@ -45,7 +46,18 @@ class Manager
 	 */
 	public static function checkReadPermission($userPermissions = null)
 	{
-		return \CCrmAuthorizationHelper::CheckReadPermission('WEBFORM', 0, $userPermissions);
+		return \CCrmAuthorizationHelper::checkReadPermission('WEBFORM', 0, $userPermissions);
+	}
+
+	/**
+	 * Check update permissions.
+	 *
+	 * @param null|\CCrmAuthorizationHelper $userPermissions User permissions.
+	 * @return bool
+	 */
+	public static function checkWritePermission($userPermissions = null)
+	{
+		return \CCrmAuthorizationHelper::checkUpdatePermission('WEBFORM', 0, $userPermissions);
 	}
 
 	/**
@@ -67,10 +79,94 @@ class Manager
 	 */
 	public static function getEditUrl($formId = 0, $landingOnly = false)
 	{
-		return ($formId && ($landingOnly || Crm\Settings\WebFormSettings::getCurrent()->isNewEditorEnabled()))
+		$url = str_replace('#form_id#', $formId, Option::get('crm', 'path_to_webform_edit', '/crm/webform/edit/#form_id#/'));
+
+		$landingUrl = $formId
 			? Internals\LandingTable::getLandingEditUrl($formId)
-			: str_replace('#form_id#', $formId, Option::get('crm', 'path_to_webform_edit', '/crm/webform/edit/#form_id#/'))
-		;
+			: null;
+
+		return ($landingUrl || $landingOnly)
+			? $landingUrl
+			: $url;
+	}
+
+	public static function getCallbackNewFormEditUrl() : string
+	{
+		return static::getCallbackEditUrl(0);
+	}
+
+	/**
+	 * Get Facebook integration scenario Form edit url
+	 * @param int $formId
+	 * @return string
+	 */
+	public static function getVkontakteIntegrationFormEditUrl(int $formId) : string
+	{
+		$editUrl = static::getEditUrl($formId);
+		$uri = new Uri($editUrl);
+		$uri->addParams(
+			$formId
+				? ['preset' => 'vk',]
+				: ['PRESET' => 'vk',]
+		);
+
+		return $uri->getUri();
+	}
+
+	/**
+	 * Get Facebook integration scenario Form edit url
+	 * @param int $formId
+	 * @return string
+	 */
+	public static function getFacebookIntegrationFormEditUrl(int $formId) : string
+	{
+		$editUrl = static::getEditUrl($formId);
+		$uri = new Uri($editUrl);
+		$uri->addParams(
+			$formId
+				? ['preset' => 'facebook',]
+				: ['PRESET' => 'facebook',]
+		);
+
+		return $uri->getUri();
+	}
+
+	/**
+	 * Get path to crm-form edit page
+	 * @param int $formId
+	 * @return string
+	 */
+	public static function getCallbackEditUrl(int $formId) : string
+	{
+		$editUrl = static::getEditUrl($formId);
+		$uri = new Uri($editUrl);
+		$uri->addParams(
+			$formId
+				? ['preset' => 'callback',]
+				: [
+				'ACTIVE' => 'Y',
+				'IS_CALLBACK_FORM' => 'Y',
+				'PRESET' => 'callback'
+			]
+		);
+
+		return $uri->getUri();
+	}
+
+	/**
+	 * @return string
+	 */
+	public static function getCallbackListUrl($additionalParameters = []) : string
+	{
+		$formEditUrl = Manager::getUrl();
+		$uri = new Uri($formEditUrl);
+		$uri->addParams(array_merge([
+			'apply_filter' => 'Y',
+			'IS_CALLBACK_FORM' => 'Y',
+			'PRESET' => 'Y'
+		], $additionalParameters));
+
+		return $uri->getUri();
 	}
 
 	/**
@@ -103,9 +199,8 @@ class Manager
 	 *
 	 * @return array
 	 */
-	public static function getListPlain()
+	public static function getListPlain(array $parameters = [])
 	{
-		$parameters = array();
 		$parameters["cache"] = array("ttl" => 3600);
 		return Internals\FormTable::getList($parameters)->fetchAll();
 	}
@@ -121,7 +216,7 @@ class Manager
 		if (!is_array($result))
 		{
 			$result = array();
-			$formList = self::getListPlain();
+			$formList = self::getListPlain(['select' => ['ID', 'NAME']]);
 			foreach ($formList as $form)
 			{
 				$result[$form['ID']] = $form['NAME'];
@@ -220,6 +315,121 @@ class Manager
 		else
 		{
 			return '';
+		}
+	}
+
+	/**
+	 * Handler for Bitrix\Catalog\Model\Price::OnAfterUpdate.
+	 *
+	 * @see \Bitrix\Catalog\Model\Price
+	 * @param \Bitrix\Catalog\Model\Event $event
+	 */
+	public static function onCatalogPriceAfterUpdate(\Bitrix\Catalog\Model\Event $event): void
+	{
+		if (Loader::includeModule('catalog'))
+		{
+			$priceId = $event->getParameter('id');
+			$data = \Bitrix\Catalog\Model\Price::getCacheItem($priceId);
+			if (isset($data['OLD_PRICE']) || isset($data['OLD_CURRENCY'])) // price changed
+			{
+				$productId = isset($data['PRODUCT_ID']) ? (int)$data['PRODUCT_ID'] : null;
+
+				if ($productId)
+				{
+					$oldPrice = isset($data['OLD_PRICE']) ? (float)$data['OLD_PRICE'] : null;
+					$newPrice = isset($data['PRICE']) ? (float)$data['PRICE'] : null;
+					$oldCurrency = $data['OLD_CURRENCY'] ?? null;
+					$newCurrency = $data['CURRENCY'] ?? null;
+
+					$oldPrice = self::getRoundedPrice($oldPrice, $oldCurrency);
+					$newPrice = self::getRoundedPrice($newPrice, $newCurrency);
+
+					if ($oldPrice !== $newPrice || $oldCurrency !== $newCurrency)
+					{
+						self::updateProductFormsWithNewPrice($productId, $oldPrice, $newPrice, $oldCurrency, $newCurrency);
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Workaround for precision issues from price update event.
+	 *
+	 * @param float $price
+	 * @param string $currency currency ISO code
+	 * @return float
+	 */
+	private static function getRoundedPrice(float $price, string $currency)
+	{
+		if (Loader::includeModule('currency'))
+		{
+			$price = \CCurrencyLang::CurrencyFormat($price, $currency, false);
+			$price = \CCurrencyLang::getUnFormattedValue($price, $currency);
+			return (float)str_replace(' ', '', $price);
+		}
+
+		return round($price, 2);
+	}
+
+	private static function updateProductFormsWithNewPrice(int $productId, float $oldPrice, float $newPrice, string $oldCurrency, string $newCurrency)
+	{
+		static $formFields; // cache fields
+
+		if (is_null($formFields))
+		{
+			// get all product form fields
+			$formFields = \Bitrix\Crm\WebForm\Internals\FieldTable::getList([
+				'select' => ['ID', 'FORM_ID', 'ITEMS'],
+				'filter' => [
+					'=TYPE' => 'product',
+				],
+			]);
+		}
+
+		static $forms = []; // cache forms
+
+		$updatedForms = [];
+		// update only fields related to updated price
+		foreach ($formFields as $field)
+		{
+			$formId = $field['FORM_ID'];
+			if (!array_key_exists($formId, $forms))
+			{
+				$forms[$formId] = new \Bitrix\Crm\WebForm\Form($formId);
+			}
+			$form = $forms[$formId];
+
+			$formCurrency = $form->getCurrencyId();
+			if ($formCurrency !== $oldCurrency || $formCurrency !== $newCurrency)
+			{
+				continue;
+			}
+
+			$items = $field['ITEMS'] ?? [];
+
+			$isUpdated = false;
+			foreach ($items as &$item)
+			{
+				// update if price in form matches catalog price
+				if ($productId === (int)$item['ID'] && $oldPrice === (float)$item['PRICE']) // && $item['CUSTOM_PRICE'] === 'N'
+				{
+					$item['PRICE'] = $newPrice;
+					$isUpdated = true;
+				}
+			}
+
+			if ($isUpdated)
+			{
+				\Bitrix\Crm\WebForm\Internals\FieldTable::update($field['ID'], ['ITEMS' => $items]);
+				$updatedForms[] = $formId;
+			}
+		}
+
+		// rebuild form cache
+		foreach ($updatedForms as $formId)
+		{
+			\Bitrix\Crm\WebForm\Manager::updateScriptCache($formId, 1);
 		}
 	}
 }

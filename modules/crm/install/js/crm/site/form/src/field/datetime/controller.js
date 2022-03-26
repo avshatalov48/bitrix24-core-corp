@@ -18,7 +18,7 @@ type Options = {
 
 class Controller extends BaseField.Controller
 {
-	format: string;
+	dateFormat: string;
 	sundayFirstly: Boolean;
 
 	static type(): string
@@ -35,7 +35,7 @@ class Controller extends BaseField.Controller
 	{
 		super(options);
 
-		this.format = options.format;
+		this.dateFormat = options.format;
 		this.sundayFirstly = !!options.sundayFirstly;
 	}
 

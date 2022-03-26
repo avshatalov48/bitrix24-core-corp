@@ -8,7 +8,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Crm;
 use Bitrix\Crm\Integration\Sender\Rc;
 use Bitrix\Crm\PhaseSemantics;
-use Bitrix\Crm\RolePermission;
+use Bitrix\Crm\Security\Role\RolePermission;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Error;
 use Bitrix\Main\IO\Path;
@@ -195,7 +195,7 @@ class SalesTunnels extends Bitrix\Crm\Component\Base implements Controllerable
 				$category['ID']
 			);
 
-			$permissions = Crm\RolePermission::getByEntityId($permissionEntityName);
+			$permissions = Crm\Security\Role\RolePermission::getByEntityId($permissionEntityName);
 			$access = null;
 			array_walk_recursive ($permissions, static function ($item) use (&$access) {
 				if ($access === null)
@@ -406,7 +406,16 @@ HTML;
 		{
 			return null;
 		}
-		$newCategory = $this->factory->createCategory($data);
+		$categoryParams = [];
+		if (isset($data['name']) && is_string($data['name']))
+		{
+			$categoryParams['name'] = $data['name'];
+		}
+		if (isset($data['sort']) && is_numeric($data['sort']))
+		{
+			$categoryParams['sort'] = $data['sort'];
+		}
+		$newCategory = $this->factory->createCategory($categoryParams);
 		$result = $newCategory->save();
 
 		if ($result->isSuccess())

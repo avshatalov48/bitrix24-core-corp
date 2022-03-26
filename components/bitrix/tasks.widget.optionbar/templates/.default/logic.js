@@ -38,12 +38,22 @@ BX.namespace('Tasks.Component');
 						flagNode.value = node.checked ? yesValue : noValue;
 					}
 
-					if (flagName === 'TASK_CONTROL' && flagNode.value === 'Y' && this.option('taskLimitExceeded'))
+					if (
+						flagName === 'TASK_CONTROL'
+						&& flagNode.value === 'Y'
+						&& this.option('taskLimitExceeded')
+					)
 					{
 						flagNode.value = noValue;
 						node.checked = false;
 
-						BX.UI.InfoHelper.show('limit_tasks_control');
+						BX.UI.InfoHelper.show('limit_tasks_control', {
+							isLimit: true,
+							limitAnalyticsLabels: {
+								module: 'tasks',
+								source: 'taskEdit'
+							}
+						});
 					}
 
 					this.fireEvent('toggle', [flagName, flagNode.value == yesValue]);

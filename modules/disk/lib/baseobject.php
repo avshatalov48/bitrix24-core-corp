@@ -10,6 +10,7 @@ use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\Disk\Internals\SharingTable;
 use Bitrix\Disk\Security\SecurityContext;
 use Bitrix\Disk\Ui\Avatar;
+use Bitrix\Im\Model\ChatTable;
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Entity\AddResult;
@@ -1465,25 +1466,30 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 
 	/**
 	 * Returns all sharings where the object is as source (real_object_id).
+	 *
+	 * @param array{TO_ENTITY: string} $options
 	 * @return Sharing[]
-	 * @throws \Bitrix\Main\NotImplementedException
 	 */
-	public function getSharingsAsReal()
+	public function getSharingsAsReal(array $options = [])
 	{
-		/** @var Sharing[] $sharings */
-		$sharings = Sharing::getModelList(array(
-			'with' => array('LINK_OBJECT'),
-			'filter' => array(
-				'REAL_OBJECT_ID' => $this->id,
-				'REAL_STORAGE_ID' => $this->storageId,
-				'!=STATUS' => SharingTable::STATUS_IS_DECLINED,
-			)
-		));
+		$filter = [
+			'REAL_OBJECT_ID' => $this->id,
+			'REAL_STORAGE_ID' => $this->storageId,
+			'!=STATUS' => SharingTable::STATUS_IS_DECLINED,
+		];
+		if (isset($options['TO_ENTITY']))
+		{
+			$filter['=TO_ENTITY'] = $options['TO_ENTITY'];
+		}
+
+		$sharings = Sharing::getModelList([
+			'with' => ['LINK_OBJECT'],
+			'filter' => $filter
+		]);
 		foreach($sharings as $sharing)
 		{
 			$sharing->setAttributes(array('REAL_OBJECT' => $this));
 		}
-		unset($sharing);
 
 		return $sharings;
 	}
@@ -1616,10 +1622,50 @@ abstract class BaseObject extends Internals\Model implements \JsonSerializable
 				}
 				unset($departmentId);
 			}
+			elseif($type == SharingTable::TYPE_TO_CHAT)
+			{
+				$chatNames = $this->getChatNames(array_values($members[$type]));
+				foreach ($chatNames as $chat)
+				{
+					/** @var Sharing $sharing */
+					$sharing = $membersToSharing[$type . '|' . $chat['id']];
+					$entityList[] = [
+						'sharingId' => $sharing->getId(),
+						'entityId' => $sharing->getToEntity(),
+						'name' => $chat['title'],
+						'right' => $sharing->getTaskName(),
+						'avatar' => Avatar::getDefaultGroup(),
+						'type' => 'chat',
+					];
+				}
+			}
 		}
-		unset($type);
 
 		return $entityList;
+	}
+
+	private function getChatNames(array $ids): array
+	{
+		if (!Loader::includeModule('im'))
+		{
+			return [];
+		}
+
+		$result = [];
+		$chats = ChatTable::getList([
+			'select' => ['ID', 'TITLE'],
+			'filter' => ['=ID' => $ids],
+		]);
+
+		foreach ($chats as $chat)
+		{
+			$result[$chat['ID']] = [
+				'id' => $chat['ID'],
+				'title' => $chat['TITLE'],
+			];
+		}
+
+		return $result;
 	}
 
 	/**

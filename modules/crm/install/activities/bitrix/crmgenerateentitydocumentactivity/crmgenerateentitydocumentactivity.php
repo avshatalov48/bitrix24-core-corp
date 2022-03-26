@@ -186,16 +186,24 @@ class CBPCrmGenerateEntityDocumentActivity
 		}
 
 		//If don`t need to wait for PDF - close activity
-		if (
-			!$isWaitForPdf
-			|| (
-				$isWaitForPdf
-				&& isset($documentData['isTransformationError'])
-				&& $documentData['isTransformationError'] === true
-			)
-		)
+		if (!$isWaitForPdf)
 		{
 			return CBPActivityExecutionStatus::Closed;
+		}
+		if (
+			$isWaitForPdf
+			&& isset($documentData['isTransformationError'])
+			&& $documentData['isTransformationError'] === true
+		)
+		{
+			$message = GetMessage('CRM_GEDA_TRANSFORMATION_ERROR') ?? 'Error trying to transform document: ';
+			$message .= $documentData['transformationErrorMessage'] ?? '';
+			$this->WriteToTrackingService(
+				$message,
+				0,
+				CBPTrackingType::Error
+			);
+			return CBPActivityExecutionStatus::Faulting;
 		}
 
 		//Subscribe for PDF generation event.

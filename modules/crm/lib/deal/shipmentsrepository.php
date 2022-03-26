@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Deal;
 
 use Bitrix\Crm\Order\DeliveryStage;
 use Bitrix\Crm\Order\ShipmentCollection;
+use Bitrix\Sale\Delivery;
 
 /**
  * Class provides several methods to fetch shipments, related to deals
@@ -35,7 +36,7 @@ final class ShipmentsRepository
 
 		$result = [];
 
-		$select = ['ID', 'ORDER_ID', 'DEDUCTED'];
+		$select = ['ID', 'ORDER_ID', 'DEDUCTED', 'DELIVERY_CLASS_NAME' => 'DELIVERY.CLASS_NAME'];
 		$where = ['=ORDER_ID' => $orderIds, '!SYSTEM' => 'Y'];
 		$orderBy = ['ORDER_ID' => 'desc', 'ID' => 'desc'];
 
@@ -46,6 +47,15 @@ final class ShipmentsRepository
 		]);
 		while ($shipment = $shipments->fetch())
 		{
+			$isEmptyDeliveryService = (
+				$shipment['DELIVERY_CLASS_NAME'] === '\\' . Delivery\Services\EmptyDeliveryService::class
+				|| is_subclass_of($shipment['DELIVERY_CLASS_NAME'], Delivery\Services\EmptyDeliveryService::class)
+			);
+			if ($isEmptyDeliveryService)
+			{
+				continue;
+			}
+
 			$orderId = (int)$shipment['ORDER_ID'];
 			$dealId = $orderToDealMap[$orderId];
 			if ($dealId && !isset($result[$dealId]))

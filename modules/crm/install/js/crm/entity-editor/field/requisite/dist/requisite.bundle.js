@@ -2,7 +2,11 @@ this.BX = this.BX || {};
 (function (exports,crm_entityEditor_field_requisite_autocomplete,main_popup,ui_dialogs_messagebox,crm_entityEditor_field_address,main_core,main_loader,crm_entityEditor_field_address_base,main_core_events) {
 	'use strict';
 
-	function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+
+	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
@@ -162,7 +166,11 @@ this.BX = this.BX || {};
 	    value: function add(item) {
 	      this._items.push(item);
 
-	      this.notifyListChanged();
+	      if (!item.isAddressOnly()) {
+	        this.setSelected(this._items.indexOf(item));
+	      } else {
+	        this.notifyListChanged();
+	      }
 	    }
 	  }, {
 	    key: "remove",
@@ -227,7 +235,7 @@ this.BX = this.BX || {};
 	        for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
 	          var item = _step3.value;
 	          var exportedItem = item.exportToModel();
-	          result.push(babelHelpers.objectSpread({}, exportedItem));
+	          result.push(_objectSpread({}, exportedItem));
 	        }
 	      } catch (err) {
 	        _iterator3.e(err);
@@ -257,7 +265,7 @@ this.BX = this.BX || {};
 	    key: "initialize",
 	    value: function initialize(value, settings) {
 	      if (main_core.Type.isPlainObject(value)) {
-	        this._data = babelHelpers.objectSpread({}, value);
+	        this._data = _objectSpread({}, value);
 	        this._data.isNew = false;
 	        this._data.isChanged = false;
 	        this._data.isDeleted = false;
@@ -291,7 +299,7 @@ this.BX = this.BX || {};
 	          addressData: {}
 	        };
 	        var extraData = BX.prop.getObject(settings, 'newRequisiteExtraFields', {});
-	        this._data = babelHelpers.objectSpread({}, this._data, extraData);
+	        this._data = _objectSpread(_objectSpread({}, this._data), extraData);
 	      }
 
 	      this._data.initialAddressDdta = null;
@@ -305,9 +313,6 @@ this.BX = this.BX || {};
 	      } catch (e) {
 	        this._data.value = {};
 	      }
-
-	      this._data.title = '';
-	      this._data.subtitle = '';
 
 	      if (main_core.Type.isPlainObject(this._data.value) && main_core.Type.isPlainObject(this._data.value.viewData)) {
 	        this._data.title = this._data.value.viewData.title;
@@ -331,7 +336,7 @@ this.BX = this.BX || {};
 	        this._data.bankDetails = this.prepareBankDetailsList(this._data.value.bankDetailViewDataList);
 	      }
 
-	      this._data.addressList = babelHelpers.objectSpread({}, BX.prop.getObject(this.getFields(), 'RQ_ADDR', {}));
+	      this._data.addressList = _objectSpread({}, BX.prop.getObject(this.getFields(), 'RQ_ADDR', {}));
 	    }
 	  }, {
 	    key: "prepareBankDetailsList",
@@ -505,7 +510,7 @@ this.BX = this.BX || {};
 	    key: "getFields",
 	    value: function getFields() {
 	      if (main_core.Type.isPlainObject(this._data.value) && main_core.Type.isPlainObject(this._data.value.fields)) {
-	        return babelHelpers.objectSpread({}, this._data.value.fields);
+	        return _objectSpread({}, this._data.value.fields);
 	      }
 
 	      return {};
@@ -645,7 +650,7 @@ this.BX = this.BX || {};
 	    key: "setAddressOnly",
 	    value: function setAddressOnly(isAddressOnly) {
 	      this._data.isAddressOnly = !!isAddressOnly;
-	      this.setFormData(babelHelpers.objectSpread({}, this.getFormData(), {
+	      this.setFormData(_objectSpread(_objectSpread({}, this.getFormData()), {}, {
 	        'ADDRESS_ONLY': isAddressOnly ? 'Y' : 'N'
 	      }));
 	    }
@@ -725,7 +730,8 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "exportToModel",
 	    value: function exportToModel() {
-	      var exportedItem = babelHelpers.objectSpread({}, this._data);
+	      var exportedItem = _objectSpread({}, this._data);
+
 	      delete exportedItem.value;
 	      delete exportedItem.addressList;
 	      delete exportedItem.bankDetails;
@@ -745,6 +751,9 @@ this.BX = this.BX || {};
 	}();
 	RequisiteListItem.newRequisitePattern = /n([0-9]+)/;
 
+	function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var EntityEditorRequisiteEditor = /*#__PURE__*/function () {
 	  function EntityEditorRequisiteEditor() {
 	    babelHelpers.classCallCheck(this, EntityEditorRequisiteEditor);
@@ -803,7 +812,8 @@ this.BX = this.BX || {};
 	      var requisite = this._requisiteList.getById(id);
 
 	      if (requisite) {
-	        var postData = babelHelpers.objectSpread({}, this.prepareSliderRequestParams(requisite));
+	        var postData = _objectSpread$1({}, this.prepareSliderRequestParams(requisite));
+
 	        postData.sessid = BX.bitrix_sessid();
 	        postData.mode = 'delete';
 	        postData.ACTION = 'SAVE';
@@ -874,11 +884,11 @@ this.BX = this.BX || {};
 	      }
 
 	      if (!requisite.isEmptyFormData()) {
-	        requestParams = babelHelpers.objectSpread({}, requestParams, requisite.getFormData());
+	        requestParams = _objectSpread$1(_objectSpread$1({}, requestParams), requisite.getFormData());
 	      }
 
 	      if (!requisite.isEmptyAddressData()) {
-	        requestParams = babelHelpers.objectSpread({}, requestParams, {
+	        requestParams = _objectSpread$1(_objectSpread$1({}, requestParams), {
 	          RQ_ADDR: requisite.getAddressesForSave()
 	        });
 	      }
@@ -1008,57 +1018,13 @@ this.BX = this.BX || {};
 	  return EntityEditorRequisiteEditor;
 	}();
 
-	function _templateObject5() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\" name=\"REQUISITES[", "][SIGN]\" value=\"", "\" >"]);
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5;
 
-	  _templateObject5 = function _templateObject5() {
-	    return data;
-	  };
+	function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 
-	  return data;
-	}
+	function _objectSpread$2(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$2(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$2(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 
-	function _templateObject4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["", ""]);
-
-	  _templateObject4 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\" name=\"REQUISITES[", "][DATA]\" value=\"", "\" >"]);
-
-	  _templateObject3 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\" name=\"REQUISITES[", "][DELETED]\" value=\"Y\" >"]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div></div>"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
 
@@ -1080,6 +1046,7 @@ this.BX = this.BX || {};
 	    _this._addressField = null;
 	    _this._isLoading = false;
 	    _this._formInputsWrapper = null;
+	    _this._enableRequisiteSelection = false;
 	    return _this;
 	  }
 
@@ -1104,6 +1071,8 @@ this.BX = this.BX || {};
 	          this._requisiteList.setSelected(this._requisiteList.indexOf(requisite), bankDetail ? requisite.getBankDetails().indexOf(bankDetail) : null);
 	        }
 	      }
+
+	      this._enableRequisiteSelection = BX.prop.getString(this._config, 'enableRequisiteSelection', false);
 	    }
 	  }, {
 	    key: "initRequisiteList",
@@ -1131,6 +1100,8 @@ this.BX = this.BX || {};
 	    value: function initRequisiteField() {
 	      if (this._requisiteField) {
 	        this._requisiteField.setRequisites(this._requisiteList);
+
+	        this._requisiteField.setSelectModeEnabled(this._enableRequisiteSelection);
 	      }
 	    }
 	  }, {
@@ -1155,6 +1126,17 @@ this.BX = this.BX || {};
 	        this._addressField.setCountryId(countryId);
 
 	        this._addressField.setAddressList(addressList);
+	      }
+	    }
+	  }, {
+	    key: "setSelectModeEnabled",
+	    value: function setSelectModeEnabled(enableRequisiteSelection) {
+	      if (this._enableRequisiteSelection !== enableRequisiteSelection) {
+	        this._enableRequisiteSelection = enableRequisiteSelection;
+
+	        if (this._requisiteField) {
+	          this._requisiteField.setSelectModeEnabled(this._enableRequisiteSelection);
+	        }
 	      }
 	    }
 	  }, {
@@ -1269,7 +1251,7 @@ this.BX = this.BX || {};
 	          requisiteId: newSelectedRequisite.getRequisiteId(),
 	          bankDetailId: selectedBankDetailId
 	        }
-	      }).then(function (response) {
+	      }).then(function () {
 	        _this3.stopLoading();
 	      }, function () {
 	        _this3.stopLoading();
@@ -1348,7 +1330,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "addEditorFormInputs",
 	    value: function addEditorFormInputs() {
-	      this._formInputsWrapper = main_core.Tag.render(_templateObject());
+	      this._formInputsWrapper = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div></div>"])));
 	      main_core.Dom.append(this._formInputsWrapper, this._editor.getFormElement());
 
 	      var _iterator2 = _createForOfIteratorHelper$1(this._requisiteList.getListWithDeleted()),
@@ -1359,7 +1341,7 @@ this.BX = this.BX || {};
 	          var requisite = _step2.value;
 
 	          if (requisite.isDeleted()) {
-	            main_core.Dom.append(main_core.Tag.render(_templateObject2(), requisite.getRequisiteId()), this._formInputsWrapper);
+	            main_core.Dom.append(main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\" name=\"REQUISITES[", "][DELETED]\" value=\"Y\" >"])), requisite.getRequisiteId()), this._formInputsWrapper);
 	            continue;
 	          }
 
@@ -1367,8 +1349,8 @@ this.BX = this.BX || {};
 	            continue;
 	          }
 
-	          var dataInput = main_core.Tag.render(_templateObject3(), requisite.getRequisiteId(), main_core.Tag.safe(_templateObject4(), requisite.getRequisiteData()));
-	          var signInput = main_core.Tag.render(_templateObject5(), requisite.getRequisiteId(), requisite.getRequisiteDataSign());
+	          var dataInput = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\" name=\"REQUISITES[", "][DATA]\" value=\"", "\" >"])), requisite.getRequisiteId(), main_core.Tag.safe(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["", ""])), requisite.getRequisiteData()));
+	          var signInput = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\" name=\"REQUISITES[", "][SIGN]\" value=\"", "\" >"])), requisite.getRequisiteId(), requisite.getRequisiteDataSign());
 	          main_core.Dom.append(dataInput, this._formInputsWrapper);
 	          main_core.Dom.append(signInput, this._formInputsWrapper);
 	        }
@@ -1436,6 +1418,16 @@ this.BX = this.BX || {};
 	          presetId: eventData.defaultPresetId
 	        };
 
+	        if (main_core.Type.isPlainObject(eventData.data)) {
+	          if (eventData.data.title) {
+	            extraFields.title = eventData.data.title;
+	          }
+
+	          if (eventData.data.subtitle) {
+	            extraFields.subtitle = eventData.data.subtitle;
+	          }
+	        }
+
 	        if (eventData.hasOwnProperty('autocompleteState')) {
 	          extraFields.autocompleteState = eventData.autocompleteState;
 	        }
@@ -1447,6 +1439,16 @@ this.BX = this.BX || {};
 	      } else {
 	        if (eventData.hasOwnProperty('autocompleteState')) {
 	          requisite.setAutocompleteState(eventData.autocompleteState);
+	        }
+
+	        if (main_core.Type.isPlainObject(eventData.data)) {
+	          if (eventData.data.title) {
+	            requisite._data.title = eventData.data.title;
+	          }
+
+	          if (eventData.data.subtitle) {
+	            requisite._data.subtitle = eventData.data.subtitle;
+	          }
 	        }
 	      }
 
@@ -1592,7 +1594,9 @@ this.BX = this.BX || {};
 	        if (main_core.Type.isPlainObject(formData.RQ_ADDR)) {
 	          var oldAddr = requisite.getAddressList();
 	          oldAddr = main_core.Type.isPlainObject(oldAddr) ? oldAddr : {};
-	          var addr = babelHelpers.objectSpread({}, oldAddr, formData.RQ_ADDR);
+
+	          var addr = _objectSpread$2(_objectSpread$2({}, oldAddr), formData.RQ_ADDR);
+
 	          requisite.setAddressData(addr);
 	          requisite.setAddressList(addr);
 	        }
@@ -1769,6 +1773,24 @@ this.BX = this.BX || {};
 	        _iterator5.f();
 	      }
 
+	      if (this._enableRequisiteSelection) {
+	        var selectedRequisite = this._requisiteList.getSelected();
+
+	        var selectedRequisiteId = null;
+	        var selectedBankDetailId = null;
+
+	        if (selectedRequisite) {
+	          selectedRequisiteId = selectedRequisite.getRequisiteId();
+	          var selectedBankDetail = selectedRequisite.getBankDetailById(selectedRequisite.getSelectedBankDetailId());
+	          selectedBankDetailId = main_core.Type.isNull(selectedBankDetail) ? null : selectedBankDetail.id;
+	        }
+
+	        data['REQUISITES']['BINDING'] = {
+	          requisiteId: selectedRequisiteId,
+	          bankDetailId: selectedBankDetailId
+	        };
+	      }
+
 	      return data;
 	    }
 	  }, {
@@ -1815,7 +1837,7 @@ this.BX = this.BX || {};
 	  return EntityEditorRequisiteController;
 	}(BX.Crm.EntityEditorController);
 
-	function _createForOfIteratorHelper$2(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$2(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper$2(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$2(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray$2(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$2(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$2(o, minLen); }
 
@@ -1921,95 +1943,7 @@ this.BX = this.BX || {};
 	  return PresetMenu;
 	}(main_core_events.EventEmitter);
 
-	function _templateObject9() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-rq-btn-container\">\n\t\t\t\t<span class=\"crm-rq-add-rq\" onclick=\"", "\">\n\t\t\t\t\t<span class=\"ui-btn crm-rq-btn ui-btn-icon-custom ui-btn-primary ui-btn-round\"></span> ", "\n\t\t\t\t</span>\n\t\t\t</div>"]);
-
-	  _templateObject9 = function _templateObject9() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject8() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-rq-org-description\">", "</div>"]);
-
-	  _templateObject8 = function _templateObject8() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject7() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"crm-rq-org-item", "\" onclick=\"", "\">\n\t\t\t\t\t\t<div class=\"crm-rq-org-info-container\">\n\t\t\t\t\t\t\t<div class=\"crm-rq-org-name\">", "</div>\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"]);
-
-	  _templateObject7 = function _templateObject7() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject6() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"crm-rq-wrapper\"\n\t\t\tonmouseenter=\"", "\"\n\t\t\tonmouseleave=\"", "\">\n\t\t\t<div class=\"crm-rq-org-list\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t\t", "\n\t\t</div>"]);
-
-	  _templateObject6 = function _templateObject6() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject5$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t\t<label class=\"crm-rq-org-requisite-item\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t\t<input type=\"radio\" data-requisite-id=\"", "\" data-bankdetails-id=\"", "\" class=\"crm-rq-org-requisite-btn\" ", " ", ">\n\t\t\t\t\t\t\t\t\t<span class=\"crm-rq-org-requisite-info\">", "</span>\n\t\t\t\t\t\t\t\t</label>"]);
-
-	  _templateObject5$1 = function _templateObject5() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject4$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"crm-rq-org-requisite-container\">\n\t\t\t\t\t\t<div class=\"crm-rq-org-requisite-title\">", "</div>\n\t\t\t\t\t\t<div class=\"crm-rq-org-requisite-list\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>"]);
-
-	  _templateObject4$1 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-rq-org-requisite-btn-container\">\n\t\t\t\t\t<span class=\"ui-link ui-link-secondary\" onclick=\"", "\">", "</span>\n\t\t\t\t\t<span class=\"ui-link ui-link-secondary\" data-requisite-id=\"", "\" onclick=\"", "\">", "</span>\n\t\t\t\t\t<span class=\"ui-link ui-link-secondary\" onclick=\"", "\">", "</span>\n\t\t\t\t</div>\n\t\t\t\t"]);
-
-	  _templateObject3$1 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-rq-org-requisite-btn-container\">\n\t\t\t\t\t<span class=\"ui-link ui-link-secondary\" onclick=\"", "\">", "</span>\n\t\t\t\t</div>\n\t\t\t\t"]);
-
-	  _templateObject2$1 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-rq-wrapper crm-rq-wrapper-loading\"></div>"]);
-
-	  _templateObject$1 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$1, _templateObject2$1, _templateObject3$1, _templateObject4$1, _templateObject5$1, _templateObject6, _templateObject7, _templateObject8, _templateObject9;
 	var EntityEditorRequisiteTooltip = /*#__PURE__*/function () {
 	  function EntityEditorRequisiteTooltip() {
 	    babelHelpers.classCallCheck(this, EntityEditorRequisiteTooltip);
@@ -2203,7 +2137,7 @@ this.BX = this.BX || {};
 
 	      if (this._isLoading) {
 	        var loader = new main_loader.Loader();
-	        var container = main_core.Tag.render(_templateObject$1());
+	        var container = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-rq-wrapper crm-rq-wrapper-loading\"></div>"])));
 	        loader.show(container);
 	        return container;
 	      }
@@ -2212,23 +2146,23 @@ this.BX = this.BX || {};
 
 	      var renderRequisiteEditButtonNode = function renderRequisiteEditButtonNode(id) {
 	        if (_this._isReadonly) {
-	          return main_core.Tag.render(_templateObject2$1(), _this.onEditRequisite.bind(_this, id), main_core.Loc.getMessage('REQUISITE_TOOLTIP_SHOW_DETAILS'));
+	          return main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-rq-org-requisite-btn-container\">\n\t\t\t\t\t<span class=\"ui-link ui-link-secondary\" onclick=\"", "\">", "</span>\n\t\t\t\t</div>\n\t\t\t\t"])), _this.onEditRequisite.bind(_this, id), main_core.Loc.getMessage('REQUISITE_TOOLTIP_SHOW_DETAILS'));
 	        } else {
-	          return main_core.Tag.render(_templateObject3$1(), _this.onEditRequisite.bind(_this, id), main_core.Loc.getMessage('REQUISITE_TOOLTIP_EDIT'), id, _this.onDeleteRequisite.bind(_this), main_core.Loc.getMessage('REQUISITE_TOOLTIP_DELETE'), _this.onAddBankDetails.bind(_this, id), main_core.Loc.getMessage('REQUISITE_TOOLTIP_ADD_BANK_DETAILS'));
+	          return main_core.Tag.render(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-rq-org-requisite-btn-container\">\n\t\t\t\t\t<span class=\"ui-link ui-link-secondary\" onclick=\"", "\">", "</span>\n\t\t\t\t\t<span class=\"ui-link ui-link-secondary\" data-requisite-id=\"", "\" onclick=\"", "\">", "</span>\n\t\t\t\t\t<span class=\"ui-link ui-link-secondary\" onclick=\"", "\">", "</span>\n\t\t\t\t</div>\n\t\t\t\t"])), _this.onEditRequisite.bind(_this, id), main_core.Loc.getMessage('REQUISITE_TOOLTIP_EDIT'), id, _this.onDeleteRequisite.bind(_this), main_core.Loc.getMessage('REQUISITE_TOOLTIP_DELETE'), _this.onAddBankDetails.bind(_this, id), main_core.Loc.getMessage('REQUISITE_TOOLTIP_ADD_BANK_DETAILS'));
 	        }
 	      };
 
 	      var renderRequisiteBankDetails = function renderRequisiteBankDetails(requisite, id) {
 	        var bandDetails = requisite.getBankDetails();
 	        var selectedBankDetailId = requisite.getSelectedBankDetailId();
-	        return bandDetails.length ? main_core.Tag.render(_templateObject4$1(), main_core.Loc.getMessage('REQUISITE_TOOLTIP_BANK_DETAILS_TITLE'), bandDetails.map(function (bankDetail, index) {
-	          return main_core.Tag.render(_templateObject5$1(), _this.onSetSelectedBankDetails.bind(_this), id, index, requisite.isSelected() && index === selectedBankDetailId ? ' checked' : '', _this._canChangeDefaultRequisite ? '' : ' disabled', main_core.Text.encode(bankDetail.value));
+	        return bandDetails.length ? main_core.Tag.render(_templateObject4$1 || (_templateObject4$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"crm-rq-org-requisite-container\">\n\t\t\t\t\t\t<div class=\"crm-rq-org-requisite-title\">", "</div>\n\t\t\t\t\t\t<div class=\"crm-rq-org-requisite-list\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>"])), main_core.Loc.getMessage('REQUISITE_TOOLTIP_BANK_DETAILS_TITLE'), bandDetails.map(function (bankDetail, index) {
+	          return main_core.Tag.render(_templateObject5$1 || (_templateObject5$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t\t<label class=\"crm-rq-org-requisite-item\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t\t<input type=\"radio\" data-requisite-id=\"", "\" data-bankdetails-id=\"", "\" class=\"crm-rq-org-requisite-btn\" ", " ", ">\n\t\t\t\t\t\t\t\t\t<span class=\"crm-rq-org-requisite-info\">", "</span>\n\t\t\t\t\t\t\t\t</label>"])), _this.onSetSelectedBankDetails.bind(_this), id, index, requisite.isSelected() && index === selectedBankDetailId ? ' checked' : '', _this._canChangeDefaultRequisite ? '' : ' disabled', main_core.Text.encode(bankDetail.value));
 	        }), renderRequisiteEditButtonNode(id)) : renderRequisiteEditButtonNode(id);
 	      };
 
-	      return main_core.Tag.render(_templateObject6(), this.onMouseEnter.bind(this), this.onMouseLeave.bind(this), requisites.map(function (requisite, index) {
-	        return main_core.Tag.render(_templateObject7(), requisite.isSelected() ? ' crm-rq-org-item-selected' : '', _this.onSetSelectedRequisite.bind(_this, index), main_core.Text.encode(requisite.getTitle()), requisite.getSubtitle().length ? main_core.Tag.render(_templateObject8(), main_core.Text.encode(requisite.getSubtitle())) : '', renderRequisiteBankDetails(requisite, index));
-	      }), this._isReadonly ? '' : main_core.Tag.render(_templateObject9(), this.onStartAddRequisite.bind(this), main_core.Loc.getMessage('REQUISITE_TOOLTIP_ADD')));
+	      return main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"crm-rq-wrapper\"\n\t\t\tonmouseenter=\"", "\"\n\t\t\tonmouseleave=\"", "\">\n\t\t\t<div class=\"crm-rq-org-list\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t\t", "\n\t\t</div>"])), this.onMouseEnter.bind(this), this.onMouseLeave.bind(this), requisites.map(function (requisite, index) {
+	        return main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"crm-rq-org-item", "\" onclick=\"", "\">\n\t\t\t\t\t\t<div class=\"crm-rq-org-info-container\">\n\t\t\t\t\t\t\t<div class=\"crm-rq-org-name\">", "</div>\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), requisite.isSelected() ? ' crm-rq-org-item-selected' : '', _this.onSetSelectedRequisite.bind(_this, index), main_core.Text.encode(requisite.getTitle()), requisite.getSubtitle().length ? main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-rq-org-description\">", "</div>"])), main_core.Text.encode(requisite.getSubtitle())) : '', renderRequisiteBankDetails(requisite, index));
+	      }), this._isReadonly ? '' : main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-rq-btn-container\">\n\t\t\t\t<span class=\"crm-rq-add-rq\" onclick=\"", "\">\n\t\t\t\t\t<span class=\"ui-btn crm-rq-btn ui-btn-icon-custom ui-btn-primary ui-btn-round\"></span> ", "\n\t\t\t\t</span>\n\t\t\t</div>"])), this.onStartAddRequisite.bind(this), main_core.Loc.getMessage('REQUISITE_TOOLTIP_ADD')));
 	    }
 	  }, {
 	    key: "setSelectedRequisite",
@@ -2372,71 +2306,13 @@ this.BX = this.BX || {};
 	  return EntityEditorRequisiteTooltip;
 	}();
 
-	function _createForOfIteratorHelper$3(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$3(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	var _templateObject$2, _templateObject2$2, _templateObject3$2, _templateObject4$2, _templateObject5$2, _templateObject6$1, _templateObject7$1, _templateObject8$1, _templateObject9$1, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14;
+
+	function _createForOfIteratorHelper$3(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$3(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray$3(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$3(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$3(o, minLen); }
 
 	function _arrayLikeToArray$3(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
-
-	function _templateObject6$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"ui-entity-editor-content-block\">\n\t\t\t", "\n\t\t\t<div class=\"crm-entity-widget-content-block-add-field\">\n\t\t\t\t<span class=\"crm-entity-widget-content-add-field\" onclick=\"", "\">", "</span>\n\t\t\t</div>\n\t\t</div>"]);
-
-	  _templateObject6$1 = function _templateObject6() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject5$2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-content-block-field-container crm-entity-widget-content-block-field-requisites\"></div>"]);
-
-	  _templateObject5$2 = function _templateObject5() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject4$2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"ui-entity-editor-content-block crm-entity-widget-content-block-requisites\">\n\t\t\t<span class=\"crm-entity-widget-client-requisites-add-btn\" onclick=\"", "\">", "</span>\n\t\t</div>"]);
-
-	  _templateObject4$2 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3$2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-entity-editor-content-block\" \n\t\t\t\tonclick=\"", "\"\n\t\t\t\tonmouseenter=\"", "\">\n\t\t\t\t\t", "\n\t\t\t</div>"]);
-
-	  _templateObject3$2 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2$2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<span></span>"]);
-
-	  _templateObject2$2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject$2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span class=\"ui-link ui-link-secondary ui-entity-editor-block-title-link\"\n\t\t\t\t \tonclick=\"", "\">", "</span>"]);
-
-	  _templateObject$2 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
 	var EntityEditorRequisiteField = /*#__PURE__*/function (_BX$Crm$EntityEditorF) {
 	  babelHelpers.inherits(EntityEditorRequisiteField, _BX$Crm$EntityEditorF);
 
@@ -2450,6 +2326,10 @@ this.BX = this.BX || {};
 	    _this.presetMenu = null;
 	    _this._autocomplete = null;
 	    _this._tooltip = null;
+	    _this.isSearchMode = true;
+	    _this.requisitesDropdown = null;
+	    _this.bankDetailsDropdown = null;
+	    _this.selectModeEnabled = false;
 	    _this._changeRequisistesHandler = _this.onChangeRequisites.bind(babelHelpers.assertThisInitialized(_this));
 	    return _this;
 	  }
@@ -2488,6 +2368,24 @@ this.BX = this.BX || {};
 	      main_core_events.EventEmitter.emit(this.getEditor(), 'onFieldInit', {
 	        field: this
 	      });
+	    }
+	  }, {
+	    key: "setSelectModeEnabled",
+	    value: function setSelectModeEnabled(selectModeEnabled) {
+	      if (this.selectModeEnabled !== selectModeEnabled) {
+	        this.selectModeEnabled = selectModeEnabled;
+
+	        if (this.isSelectModeEnabled()) {
+	          this.isSearchMode = false;
+	        }
+
+	        this.refreshLayoutParts();
+	      }
+	    }
+	  }, {
+	    key: "isSelectModeEnabled",
+	    value: function isSelectModeEnabled() {
+	      return this.selectModeEnabled && this.hasRequisites() && this.getRequisites().getList().length > 0;
 	    }
 	  }, {
 	    key: "setRequisites",
@@ -2550,15 +2448,33 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "createTitleActionControls",
 	    value: function createTitleActionControls() {
+	      var actions = [];
+
 	      if (this._mode !== BX.UI.EntityEditorMode.edit) {
-	        return [];
+	        return actions;
 	      }
 
-	      if (!this.isAutocompleteEnabled()) {
-	        return [];
+	      if (this.isAutocompleteEnabled() && this.selectModeEnabled) {
+	        if (this.isSearchMode) {
+	          actions.push(main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<span class=\"ui-link ui-link-secondary ui-entity-editor-block-title-link\"\n\t\t\t\t\t\tonclick=\"", "\">", "</span>"])), this.toggleSearchMode.bind(this), main_core.Loc.getMessage('REQUISITE_LABEL_DETAILS_SELECT')));
+	        } else {
+	          var fieldName = this.getClientResolverTitle();
+	          var title = fieldName ? main_core.Loc.getMessage('REQUISITE_AUTOCOMPLETE_FILL_IN').toLowerCase().replace('#field_name#', fieldName) : '';
+	          actions.push(main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<span class=\"ui-link ui-link-secondary ui-entity-editor-block-title-link\"\n\t\t\t\t\t\tonclick=\"", "\">", "</span>"])), this.toggleSearchMode.bind(this), title));
+	        }
 	      }
 
-	      return [main_core.Tag.render(_templateObject$2(), this.editDefaultRequisite.bind(this), main_core.Loc.getMessage('REQUISITE_LABEL_DETAILS_TEXT'))];
+	      if (this.hasRequisites()) {
+	        actions.push(main_core.Tag.render(_templateObject3$2 || (_templateObject3$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span class=\"ui-link ui-link-secondary ui-entity-editor-block-title-link\"\n\t\t\t\t \tonclick=\"", "\">", "</span>"])), this.editDefaultRequisite.bind(this), main_core.Loc.getMessage('REQUISITE_LABEL_DETAILS_TEXT')));
+	      }
+
+	      return actions;
+	    }
+	  }, {
+	    key: "toggleSearchMode",
+	    value: function toggleSearchMode() {
+	      this.isSearchMode = !this.isSearchMode;
+	      this.refreshLayoutParts();
 	    }
 	  }, {
 	    key: "isNeedToDisplay",
@@ -2592,13 +2508,19 @@ this.BX = this.BX || {};
 	      main_core.Dom.append(this.createTitleNode(this.getTitle()), this._wrapper);
 
 	      if (this._mode === BX.UI.EntityEditorMode.edit) {
-	        if (this.isAutocompleteEnabled()) {
-	          this._domNodes.addButton = null;
-	          main_core.Dom.append(this.renderAutocompleteForm(), this._wrapper);
-	        } else {
-	          this._domNodes.addButton = this.renderAddButton();
-	          main_core.Dom.append(this._domNodes.addButton, this._wrapper);
-	        }
+	        this._domNodes.addButton = this.renderAddButton();
+	        this._domNodes.autocompleteForm = this.renderAutocompleteForm();
+	        this._domNodes.requisiteSelectForm = this.renderRequisiteSelectForm();
+	        this._domNodes.bankDetailSelectForm = this.renderBankDetailSelectForm();
+	        main_core.Dom.append(this._domNodes.autocompleteForm, this._wrapper);
+	        main_core.Dom.append(this._domNodes.requisiteSelectForm, this._wrapper);
+	        main_core.Dom.append(this._domNodes.bankDetailSelectForm, this._wrapper);
+	        main_core.Dom.append(this._domNodes.addButton, this._wrapper);
+	        this.adjustNodesVisibility();
+	        this.updateRequisitesDropdown();
+	        this.updateBankDetailsDropdown();
+	        this.updateRequisiteSelectorValue();
+	        this.updateBankDetailsSelectorValue();
 	      } else // if(this._mode === BX.UI.EntityEditorMode.view)
 	        {
 	          main_core.Dom.append(this.renderSelectedRequisite(), this._wrapper);
@@ -2637,6 +2559,11 @@ this.BX = this.BX || {};
 	      this.updateSelectedRequisiteText();
 	      this.refreshTitleLayout();
 	      this.updateAutocompleteState();
+	      this.adjustNodesVisibility();
+	      this.updateRequisitesDropdown();
+	      this.updateBankDetailsDropdown();
+	      this.updateRequisiteSelectorValue();
+	      this.updateBankDetailsSelectorValue();
 	    }
 	  }, {
 	    key: "hasContentToDisplay",
@@ -2677,10 +2604,10 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "renderSelectedRequisite",
 	    value: function renderSelectedRequisite() {
-	      this._domNodes.selectedRequisiteView = main_core.Tag.render(_templateObject2$2());
+	      this._domNodes.selectedRequisiteView = main_core.Tag.render(_templateObject4$2 || (_templateObject4$2 = babelHelpers.taggedTemplateLiteral(["<span></span>"])));
 	      this.updateSelectedRequisiteText();
 	      this.updateAutocompleteState();
-	      var container = main_core.Tag.render(_templateObject3$2(), this.onViewStringClick.bind(this), this.onViewStringMouseEnter.bind(this), this._domNodes.selectedRequisiteView);
+	      var container = main_core.Tag.render(_templateObject5$2 || (_templateObject5$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-entity-editor-content-block\" \n\t\t\t\tonclick=\"", "\"\n\t\t\t\tonmouseenter=\"", "\">\n\t\t\t\t\t", "\n\t\t\t</div>"])), this.onViewStringClick.bind(this), this.onViewStringMouseEnter.bind(this), this._domNodes.selectedRequisiteView);
 
 	      this._tooltip.setBindElement(container, this.getEditor().getFormElement());
 
@@ -2708,12 +2635,12 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "renderAddButton",
 	    value: function renderAddButton() {
-	      return main_core.Tag.render(_templateObject4$2(), this.toggleNewRequisitePresetMenu.bind(this), main_core.Loc.getMessage('CRM_EDITOR_ADD'));
+	      return main_core.Tag.render(_templateObject6$1 || (_templateObject6$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-entity-editor-content-block crm-entity-widget-content-block-requisites\">\n\t\t\t\t<span class=\"crm-entity-widget-client-requisites-add-btn\" onclick=\"", "\">", "</span>\n\t\t\t</div>"])), this.toggleNewRequisitePresetMenu.bind(this), main_core.Loc.getMessage('CRM_EDITOR_ADD'));
 	    }
 	  }, {
 	    key: "renderAutocompleteForm",
 	    value: function renderAutocompleteForm() {
-	      var autocompleteContainer = main_core.Tag.render(_templateObject5$2());
+	      var autocompleteContainer = main_core.Tag.render(_templateObject7$1 || (_templateObject7$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-content-block-field-container crm-entity-widget-content-block-field-requisites\"></div>"])));
 	      var hasResolvers = !!this.getClientResolverPropForPreset(this.getSelectedPresetId());
 
 	      this._autocomplete.setEnabled(hasResolvers);
@@ -2721,7 +2648,69 @@ this.BX = this.BX || {};
 	      this._autocomplete.layout(autocompleteContainer);
 
 	      this.updateAutocompleteState();
-	      return main_core.Tag.render(_templateObject6$1(), autocompleteContainer, this.toggleNewRequisitePresetMenu.bind(this), main_core.Loc.getMessage('CRM_EDITOR_ADD'));
+	      return main_core.Tag.render(_templateObject8$1 || (_templateObject8$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-entity-editor-content-block\">\n\t\t\t\t", "\n\t\t\t\t<div class=\"crm-entity-widget-content-block-add-field\">\n\t\t\t\t\t<span class=\"crm-entity-widget-content-add-field\" onclick=\"", "\">", "</span>\n\t\t\t\t</div>\n\t\t\t</div>"])), autocompleteContainer, this.toggleNewRequisitePresetMenu.bind(this), main_core.Loc.getMessage('CRM_EDITOR_ADD'));
+	    }
+	  }, {
+	    key: "renderRequisiteSelectForm",
+	    value: function renderRequisiteSelectForm() {
+	      var _this2 = this;
+
+	      var isOpen = false;
+
+	      var toggleDropdown = function toggleDropdown() {
+	        if (_this2.requisitesDropdown) {
+	          if (!isOpen) {
+	            _this2.requisitesDropdown.showPopupWindow();
+	          } else {
+	            _this2.requisitesDropdown.destroyPopupWindow();
+	          }
+
+	          isOpen = !isOpen;
+	        }
+	      };
+
+	      var selectInput = main_core.Tag.render(_templateObject9$1 || (_templateObject9$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-ctl-element\" onclick=\"", "\"></div>"])), toggleDropdown);
+	      var selectContainer = main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-content-block-field-container crm-entity-widget-content-block-field-requisites\">\n\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-after-icon\">\n\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-angle\" onclick=\"", "\"></button>\n\t\t\t\t\t", "\n\t\t\t\t</div>\t\t\t\n\t\t\t</div>"])), toggleDropdown, selectInput);
+	      this.requisitesDropdown = new BX.UI.Dropdown({
+	        targetElement: selectInput,
+	        items: [],
+	        isDisabled: true,
+	        events: {
+	          onSelect: this.onRequisiteSelect.bind(this)
+	        }
+	      });
+	      return main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-entity-editor-content-block\">\n\t\t\t\t", "\n\t\t\t\t<div class=\"crm-entity-widget-content-block-add-field\">\n\t\t\t\t\t<span class=\"crm-entity-widget-content-add-field\" onclick=\"", "\">", "</span>\n\t\t\t\t</div>\n\t\t\t</div>"])), selectContainer, this.toggleNewRequisitePresetMenu.bind(this), main_core.Loc.getMessage('CRM_EDITOR_ADD_REQUISITE'));
+	    }
+	  }, {
+	    key: "renderBankDetailSelectForm",
+	    value: function renderBankDetailSelectForm() {
+	      var _this3 = this;
+
+	      var isOpen = false;
+
+	      var toggleDropdown = function toggleDropdown() {
+	        if (_this3.bankDetailsDropdown) {
+	          if (!isOpen) {
+	            _this3.bankDetailsDropdown.showPopupWindow();
+	          } else {
+	            _this3.bankDetailsDropdown.destroyPopupWindow();
+	          }
+
+	          isOpen = !isOpen;
+	        }
+	      };
+
+	      var selectInput = main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-ctl-element\" onclick=\"", "\"></div>"])), toggleDropdown);
+	      this._domNodes.bankDetailsSelectContainer = main_core.Tag.render(_templateObject13 || (_templateObject13 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-content-block-field-container crm-entity-widget-content-block-field-requisites\">\n\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-after-icon\">\n\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-angle\" onclick=\"", "\"></button>\n\t\t\t\t\t", "\n\t\t\t\t</div>\t\t\t\n\t\t\t</div>"])), toggleDropdown, selectInput);
+	      this.bankDetailsDropdown = new BX.UI.Dropdown({
+	        targetElement: selectInput,
+	        items: [],
+	        isDisabled: true,
+	        events: {
+	          onSelect: this.onBankDetailSelect.bind(this)
+	        }
+	      });
+	      return main_core.Tag.render(_templateObject14 || (_templateObject14 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-entity-editor-content-block\">\n\t\t\t\t", "\n\t\t\t\t<div class=\"crm-entity-widget-content-block-add-field\">\n\t\t\t\t\t<span class=\"crm-entity-widget-content-add-field\" onclick=\"", "\">", "</span>\n\t\t\t\t</div>\n\t\t\t</div>"])), this._domNodes.bankDetailsSelectContainer, this.onAddBankDetailsClick.bind(this), main_core.Loc.getMessage('CRM_EDITOR_ADD_BANK_DETAILS'));
 	    }
 	  }, {
 	    key: "updateAutocompleteState",
@@ -2740,14 +2729,108 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "updateAutocompletePlaceholder",
 	    value: function updateAutocompletePlaceholder() {
+	      var clientResolverPropTitle = this.getClientResolverTitle();
+
+	      this._autocomplete.setEnabled(!!clientResolverPropTitle);
+
+	      this._autocomplete.setPlaceholderText(clientResolverPropTitle);
+	    }
+	  }, {
+	    key: "getClientResolverTitle",
+	    value: function getClientResolverTitle() {
 	      var selectedPresetId = this.getSelectedPresetId();
 	      var clientResolverProp = this.getClientResolverPropForPreset(selectedPresetId);
+	      return BX.prop.getString(clientResolverProp, 'TITLE');
+	    }
+	  }, {
+	    key: "adjustNodesVisibility",
+	    value: function adjustNodesVisibility() {
+	      if (!this._domNodes.autocompleteForm || !this._domNodes.requisiteSelectForm || !this._domNodes.bankDetailSelectForm || !this._domNodes.addButton) {
+	        return;
+	      }
 
-	      this._autocomplete.setEnabled(!!clientResolverProp);
+	      if (this.isSearchMode && this.isAutocompleteEnabled()) {
+	        this._domNodes.autocompleteForm.style.display = '';
+	        this._domNodes.requisiteSelectForm.style.display = 'none';
+	        this._domNodes.addButton.style.display = 'none';
+	        this._domNodes.bankDetailSelectForm.style.display = 'none';
+	      } else if (this.isSelectModeEnabled() && this.hasRequisites() && (this.getRequisites().getList().length > 1 || this.getRequisites().getList().length > 0 && !this.getRequisites().getSelected().isAddressOnly())) {
+	        this._domNodes.autocompleteForm.style.display = 'none';
+	        this._domNodes.requisiteSelectForm.style.display = '';
+	        this._domNodes.bankDetailSelectForm.style.display = '';
+	        this._domNodes.addButton.style.display = 'none';
 
-	      var title = BX.prop.getString(clientResolverProp, 'TITLE');
+	        if (this._domNodes.bankDetailsSelectContainer) {
+	          var bankDetails = this.getRequisites().getSelected().getBankDetails();
 
-	      this._autocomplete.setPlaceholderText(title);
+	          if (!bankDetails.length) {
+	            this._domNodes.bankDetailsSelectContainer.style.display = 'none';
+	          } else {
+	            this._domNodes.bankDetailsSelectContainer.style.display = '';
+	          }
+	        }
+	      } else {
+	        this._domNodes.autocompleteForm.style.display = 'none';
+	        this._domNodes.requisiteSelectForm.style.display = 'none';
+	        this._domNodes.addButton.style.display = '';
+	        this._domNodes.bankDetailSelectForm.style.display = 'none';
+	      }
+	    }
+	  }, {
+	    key: "getSelectedRequisiteTitle",
+	    value: function getSelectedRequisiteTitle() {
+	      var title = '';
+
+	      if (!this.hasRequisites()) {
+	        return title;
+	      }
+
+	      var selectedRequisite = this.getRequisites().getSelected();
+
+	      if (selectedRequisite) {
+	        title = selectedRequisite.getTitle();
+	      }
+
+	      return title;
+	    }
+	  }, {
+	    key: "updateRequisiteSelectorValue",
+	    value: function updateRequisiteSelectorValue() {
+	      if (!this.requisitesDropdown || !this.requisitesDropdown.targetElement) {
+	        return;
+	      }
+
+	      this.requisitesDropdown.targetElement.innerText = this.getSelectedRequisiteTitle();
+	    }
+	  }, {
+	    key: "updateBankDetailsSelectorValue",
+	    value: function updateBankDetailsSelectorValue() {
+	      if (!this.bankDetailsDropdown || !this.bankDetailsDropdown.targetElement) {
+	        return;
+	      }
+
+	      this.bankDetailsDropdown.targetElement.innerText = this.getSelectedBankDetailTitle();
+	    }
+	  }, {
+	    key: "getSelectedBankDetailTitle",
+	    value: function getSelectedBankDetailTitle() {
+	      var title = '';
+
+	      if (!this.hasRequisites()) {
+	        return title;
+	      }
+
+	      var selectedRequisite = this.getRequisites().getSelected();
+
+	      if (selectedRequisite) {
+	        var bankDetail = selectedRequisite.getBankDetailById(selectedRequisite.getSelectedBankDetailId());
+
+	        if (bankDetail && bankDetail.title) {
+	          title = bankDetail.title;
+	        }
+	      }
+
+	      return title;
 	    }
 	  }, {
 	    key: "getDefaultPresetId",
@@ -2881,7 +2964,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showDeleteConfirmation",
 	    value: function showDeleteConfirmation(requisiteId) {
-	      var _this2 = this;
+	      var _this4 = this;
 
 	      BX.Crm.EditorAuxiliaryDialog.create("delete_requisite_confirmation", {
 	        title: main_core.Loc.getMessage('REQUISITE_LIST_ITEM_DELETE_CONFIRMATION_TITLE'),
@@ -2893,9 +2976,9 @@ this.BX = this.BX || {};
 	          callback: function callback(button) {
 	            button.getDialog().close();
 
-	            _this2.markAsChanged();
+	            _this4.markAsChanged();
 
-	            _this2.deleteRequisite(requisiteId);
+	            _this4.deleteRequisite(requisiteId);
 	          }
 	        }, {
 	          id: "no",
@@ -2910,7 +2993,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showClearConfirmation",
 	    value: function showClearConfirmation(requisiteId) {
-	      var _this3 = this;
+	      var _this5 = this;
 
 	      BX.Crm.EditorAuxiliaryDialog.create("hide_requisite_confirmation", {
 	        title: main_core.Loc.getMessage('REQUISITE_LIST_ITEM_HIDE_CONFIRMATION_TITLE'),
@@ -2922,7 +3005,7 @@ this.BX = this.BX || {};
 	          callback: function callback(button) {
 	            button.getDialog().close();
 
-	            _this3.hideRequisite(requisiteId);
+	            _this5.hideRequisite(requisiteId);
 	          }
 	        }, {
 	          id: "no",
@@ -2953,13 +3036,105 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "onChangeRequisites",
 	    value: function onChangeRequisites() {
-	      if (this._domNodes && main_core.Type.isDomNode(this._domNodes.addButton) || this.hasRequisites() && this.getRequisites().isEmpty() || this.hasRequisites() && this.getRequisites().getSelected().isAddressOnly()) {
-	        this.refreshLayout();
+	      if (this._domNodes && main_core.Type.isDomNode(this._domNodes.addButton) && this._domNodes.addButton.style.display !== 'none' || this.hasRequisites() && this.getRequisites().isEmpty() || this.hasRequisites() && this.getRequisites().getSelected().isAddressOnly()) {
+	        // this.refreshLayout();
+	        this.refreshLayoutParts();
 	      } else {
 	        this.refreshLayoutParts();
 	      }
 
 	      this.updateAutocompletePlaceholder();
+	    }
+	  }, {
+	    key: "updateRequisitesDropdown",
+	    value: function updateRequisitesDropdown() {
+	      if (!this.requisitesDropdown) {
+	        return;
+	      }
+
+	      var items = [];
+
+	      if (this.hasRequisites()) {
+	        this.getRequisites().getList().forEach(function (requisiteItem, index) {
+	          items.push({
+	            id: requisiteItem.getRequisiteId(),
+	            title: requisiteItem.getTitle(),
+	            subTitle: requisiteItem.getSubtitle(),
+	            index: index
+	          });
+	        });
+	      }
+
+	      this.requisitesDropdown.setItems(items);
+	    }
+	  }, {
+	    key: "updateBankDetailsDropdown",
+	    value: function updateBankDetailsDropdown() {
+	      if (!this.bankDetailsDropdown) {
+	        return;
+	      }
+
+	      var items = [];
+
+	      if (this.hasRequisites() && this.getRequisites().getSelected()) {
+	        var bankDetails = this.getRequisites().getSelected().getBankDetails();
+
+	        if (bankDetails.length) {
+	          bankDetails.forEach(function (bankDetail, index) {
+	            items.push({
+	              id: bankDetail.id,
+	              title: bankDetail.title,
+	              subTitle: bankDetail.value,
+	              index: index
+	            });
+	          });
+	        }
+	      }
+
+	      this.bankDetailsDropdown.setItems(items);
+	    }
+	  }, {
+	    key: "onRequisiteSelect",
+	    value: function onRequisiteSelect(sender, _ref) {
+	      var index = _ref.index;
+
+	      if (!this.hasRequisites()) {
+	        return;
+	      }
+
+	      if (index !== undefined) {
+	        var selectedRequisiteId = Number(this.getRequisites().getSelectedId());
+
+	        if (selectedRequisiteId !== index) {
+	          this.getRequisites().setSelected(index);
+	          this.markAsChanged();
+	        }
+	      }
+
+	      if (this.requisitesDropdown) {
+	        this.requisitesDropdown.getPopupWindow().close();
+	      }
+	    }
+	  }, {
+	    key: "onBankDetailSelect",
+	    value: function onBankDetailSelect(sender, _ref2) {
+	      var index = _ref2.index;
+
+	      if (!this.hasRequisites() || !this.bankDetailsDropdown) {
+	        return;
+	      }
+
+	      if (index !== undefined) {
+	        var selectedRequisiteId = Number(this.getRequisites().getSelectedId());
+	        var selectedBankDetailId = Number(this.getRequisites().getSelected().getSelectedBankDetailId());
+
+	        if (selectedBankDetailId !== index) {
+	          this.getRequisites().setSelected(selectedRequisiteId, index);
+	          this.markAsChanged();
+	        }
+	      }
+
+	      this.bankDetailsDropdown.getPopupWindow().close();
 	    }
 	  }, {
 	    key: "onAddRequisiteFromMenu",
@@ -2968,7 +3143,7 @@ this.BX = this.BX || {};
 	      var selectedRequisite = this.hasRequisites() ? this.getRequisites().getSelected() : null; // if hidden requisite is selected, it will be used instead of new:
 
 	      if (null !== selectedRequisite && selectedRequisite.isAddressOnly()) {
-	        this.editRequisite(this.getRequisites().indexOf(selectedRequisite), {
+	        this.editRequisite(this.getRequisites().getSelectedId(), {
 	          editorOptions: {
 	            overriddenPresetId: data.value
 	          }
@@ -3021,6 +3196,10 @@ this.BX = this.BX || {};
 	      this.markAsChanged();
 
 	      this._autocomplete.setLoading(true);
+
+	      if (this.selectModeEnabled) {
+	        this.isSearchMode = false;
+	      }
 
 	      var selectedRequisiteId = this.hasRequisites() ? this.getRequisites().getSelectedId() : null;
 	      main_core_events.EventEmitter.emit(this, 'onFinishAutocomplete', {
@@ -3097,6 +3276,21 @@ this.BX = this.BX || {};
 
 	      this._tooltip.cancelShowDebounced();
 	    }
+	  }, {
+	    key: "onAddBankDetailsClick",
+	    value: function onAddBankDetailsClick(event) {
+	      event.preventDefault();
+	      var selectedRequisiteId = this.hasRequisites() ? this.getRequisites().getSelectedId() : null;
+
+	      if (null !== selectedRequisiteId) {
+	        this.editRequisite(selectedRequisiteId, {
+	          autocompleteState: this._autocomplete.getState(),
+	          editorOptions: {
+	            addBankDetailsItem: true
+	          }
+	        });
+	      }
+	    }
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
@@ -3149,31 +3343,13 @@ this.BX = this.BX || {};
 	  return EntityEditorRequisiteAddressField;
 	}(crm_entityEditor_field_address.EntityEditorAddressField);
 
-	function _createForOfIteratorHelper$4(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$4(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	var _templateObject$3, _templateObject2$3;
+
+	function _createForOfIteratorHelper$4(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$4(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray$4(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$4(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$4(o, minLen); }
 
 	function _arrayLikeToArray$4(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
-
-	function _templateObject2$3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span class=\"ui-link ui-link-secondary ui-link-dotted\" onmouseup=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t</span>"]);
-
-	  _templateObject2$3 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject$3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-entity-widget-client-address\"></div>"]);
-
-	  _templateObject$3 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
 	var EntityEditorClientRequisites = /*#__PURE__*/function () {
 	  function EntityEditorClientRequisites() {
 	    babelHelpers.classCallCheck(this, EntityEditorClientRequisites);
@@ -3279,7 +3455,7 @@ this.BX = this.BX || {};
 	        return;
 	      }
 
-	      this._addressContainer = main_core.Tag.render(_templateObject$3());
+	      this._addressContainer = main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-entity-widget-client-address\"></div>"])));
 	      main_core.Dom.append(this._addressContainer, container);
 	      this.doAddressLayout();
 	    }
@@ -3321,7 +3497,7 @@ this.BX = this.BX || {};
 	            main_core.Dom.append(this._addressField.layout(false), this._addressContainer);
 	          }
 	        } else {
-	          var showAddressLink = main_core.Tag.render(_templateObject2$3(), this.onLoadAddressMouseUp.bind(this), main_core.Loc.getMessage('CLIENT_REQUISITES_ADDRESS_SHOW_ADDRESS'));
+	          var showAddressLink = main_core.Tag.render(_templateObject2$3 || (_templateObject2$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span class=\"ui-link ui-link-secondary ui-link-dotted\" onmouseup=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t</span>"])), this.onLoadAddressMouseUp.bind(this), main_core.Loc.getMessage('CLIENT_REQUISITES_ADDRESS_SHOW_ADDRESS'));
 	          main_core.Dom.append(showAddressLink, this._addressContainer);
 	        }
 	      }

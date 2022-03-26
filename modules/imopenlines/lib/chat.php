@@ -8,8 +8,8 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Entity\ReferenceField;
 
+use Bitrix\Im\User;
 use Bitrix\Im\Recent;
-use Bitrix\Im\User as ImUser;
 use Bitrix\Im\Model\ChatTable;
 use Bitrix\Im\Model\RelationTable;
 
@@ -176,10 +176,10 @@ class Chat
 					$connectorId != 'livechat' ||
 					!empty($user['NAME']))
 				{
-					$userName = ImUser::getInstance($params['USER_ID'])->getFullName(false);
+					$userName = User::getInstance($params['USER_ID'])->getFullName(false);
 				}
 				$chatColorCode = \Bitrix\Im\Color::getCodeByNumber($params['USER_ID']);
-				if (ImUser::getInstance($params['USER_ID'])->getGender() == 'M')
+				if (User::getInstance($params['USER_ID'])->getGender() == 'M')
 				{
 					$replaceColor = \Bitrix\Im\Color::getReplaceColors();
 					if (isset($replaceColor[$chatColorCode]))
@@ -227,13 +227,8 @@ class Chat
 	 * @param bool $skipSession
 	 * @param bool $skipMessage
 	 * @return Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
-	public function answer($userId, $skipSession = false, $skipMessage = false)
+	public function answer($userId, $skipSession = false, $skipMessage = false): Result
 	{
 		$result = new Result();
 		$result->setResult(true);
@@ -319,7 +314,7 @@ class Chat
 
 					if (!$skipMessage)
 					{
-						$userAnswer = ImUser::getInstance($userId);
+						$userAnswer = User::getInstance($userId);
 
 						Im::addMessage([
 							'FROM_USER_ID' => $userId,
@@ -362,13 +357,8 @@ class Chat
 	/**
 	 * @param $userId
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
-	public function intercept($userId)
+	public function intercept($userId): bool
 	{
 		$result = false;
 
@@ -384,18 +374,18 @@ class Chat
 
 			if($resultAnswer->isSuccess())
 			{
-				$previousOwner = ImUser::getInstance($previousOwnerId);
-				$newOwner = ImUser::getInstance($userId);
+				$previousOwner = User::getInstance($previousOwnerId);
+				$newOwner = User::getInstance($userId);
 
-				\CIMChat::AddMessage(Array(
+				\CIMChat::AddMessage([
 					"FROM_USER_ID" => $userId,
 					"TO_CHAT_ID" => $this->chat['ID'],
-					"MESSAGE" => Loc::getMessage('IMOL_CHAT_INTERCEPT_'.$newOwner->getGender(), Array(
+					"MESSAGE" => Loc::getMessage('IMOL_CHAT_INTERCEPT_'.$newOwner->getGender(), [
 						'#USER_1#' => '[USER='.$newOwner->getId().'][/USER]',
 						'#USER_2#' => '[USER='.$previousOwner->getId().'][/USER]'
-					)),
+					]),
 					"SYSTEM" => 'Y',
-				));
+				]);
 
 				$result = true;
 			}
@@ -439,7 +429,7 @@ class Chat
 
 					if ($userId)
 					{
-						$userSkip = ImUser::getInstance($userId);
+						$userSkip = User::getInstance($userId);
 
 						Im::addMessage(Array(
 							"FROM_USER_ID" => $userId,
@@ -469,13 +459,8 @@ class Chat
 	 * The end of the session of the bot.
 	 *
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
-	public function endBotSession()
+	public function endBotSession(): bool
 	{
 		$result = false;
 
@@ -485,12 +470,15 @@ class Chat
 			$resultLoadSession = $session->load([
 				'USER_CODE' => $this->chat['ENTITY_ID']
 			]);
-			if ($resultLoadSession && ImUser::getInstance($session->getData('OPERATOR_ID'))->isBot())
+			if (
+				$resultLoadSession
+				&& User::getInstance($session->getData('OPERATOR_ID'))->isBot()
+			)
 			{
-				if($this->validationAction($session->getData('CHAT_ID')))
+				if ($this->validationAction($session->getData('CHAT_ID')))
 				{
 					$chat = new \CIMChat(0);
-					if ($session->getConfig('WELCOME_BOT_LEFT') != Config::BOT_LEFT_CLOSE)
+					if ($session->getConfig('WELCOME_BOT_LEFT') !== Config::BOT_LEFT_CLOSE)
 					{
 						$chat->DeleteUser($this->chat['ID'], $session->getData('OPERATOR_ID'), false, true);
 					}
@@ -533,25 +521,20 @@ class Chat
 	/**
 	 * @param $params
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
-	public function transfer($params)
+	public function transfer($params): bool
 	{
 		$result = false;
 
-		if($this->isDataLoaded())
+		if ($this->isDataLoaded())
 		{
 			$keyLock = Queue\Queue::PREFIX_KEY_LOCK . $this->chat['ID'];
 
-			if(Tools\Lock::getInstance()->set($keyLock))
+			if (Tools\Lock::getInstance()->set($keyLock))
 			{
-				$mode = in_array($params['MODE'], [self::TRANSFER_MODE_AUTO, self::TRANSFER_MODE_BOT])? $params['MODE']: self::TRANSFER_MODE_MANUAL;
-				$selfExit = isset($params['LEAVE']) && $params['LEAVE'] == 'N'? false: true;
-				$skipCheck = isset($params['SKIP_CHECK']) && $params['SKIP_CHECK'] == 'Y';
+				$mode = in_array($params['MODE'], [self::TRANSFER_MODE_AUTO, self::TRANSFER_MODE_BOT], true) ? $params['MODE']: self::TRANSFER_MODE_MANUAL;
+				$selfExit = !(isset($params['LEAVE']) && $params['LEAVE'] === 'N');
+				$skipCheck = isset($params['SKIP_CHECK']) && $params['SKIP_CHECK'] === 'Y';
 
 				$session = new Session();
 				$resultLoadSession = $session->load([
@@ -559,7 +542,7 @@ class Chat
 				]);
 				if ($resultLoadSession)
 				{
-					if($this->validationAction($session->getData('CHAT_ID')))
+					if ($this->validationAction($session->getData('CHAT_ID')))
 					{
 						//Event
 						$event = new Event("imopenlines", "OnOperatorTransfer", [
@@ -575,7 +558,7 @@ class Chat
 
 						foreach($event->getResults() as $eventResult)
 						{
-							if ($eventResult->getType() != \Bitrix\Main\EventResult::SUCCESS)
+							if ($eventResult->getType() !== \Bitrix\Main\EventResult::SUCCESS)
 								continue;
 
 							$newValues = $eventResult->getParameters();
@@ -613,38 +596,33 @@ class Chat
 	 * @param Session $session
 	 * @param $mode
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
-	protected function transferToQueue($params, $session, $mode)
+	protected function transferToQueue($params, $session, $mode): bool
 	{
 		$result = false;
 
-		if($this->isDataLoaded())
+		if ($this->isDataLoaded())
 		{
-			$userFrom = ImUser::getInstance($params['FROM']);
+			$userFrom = User::getInstance($params['FROM']);
 
 			$lineFromId = $session->getConfig('ID');
 			$lineFrom = $session->getConfig('LINE_NAME');
 			$userCode = $session->getData('USER_CODE');
 
 			//Transfer the same queue
-			if($params['TO']  == 'queue')
+			if ($params['TO']  === 'queue')
 			{
 				$queueId = $lineFromId;
 			}
 			else
 			{
-				$queueId = intval(mb_substr($params['TO'], 5));
+				$queueId = (int)mb_substr($params['TO'], 5);
 			}
 
 			$config = ConfigTable::getById($queueId)->fetch();
 			if ($config)
 			{
-				$session->setOperatorId(0, true, $mode ==  self::TRANSFER_MODE_MANUAL ? false : true);
+				$session->setOperatorId(0, true, !($mode === self::TRANSFER_MODE_MANUAL));
 				$this->update(['AUTHOR_ID' => 0]);
 				$this->updateFieldData([Chat::FIELD_SESSION => ['LINE_ID' => $queueId]]);
 
@@ -652,16 +630,19 @@ class Chat
 				$relations = \CIMChat::GetRelationById($this->chat['ID']);
 				foreach ($relations as $relation)
 				{
-					if (ImUser::getInstance($relation['USER_ID'])->isConnector())
-						continue;
-
-					if (ImUser::getInstance($relation['USER_ID'])->isBot())
-						continue;
-
-					$chat->DeleteUser($this->chat['ID'], $relation['USER_ID'], false, true);
+					if (
+						!User::getInstance($relation['USER_ID'])->isConnector()
+						&& (
+							$relation['USER_ID'] != $params['FROM']
+							|| !User::getInstance($relation['USER_ID'])->isBot()
+						)
+					)
+					{
+						$chat->DeleteUser($this->chat['ID'], $relation['USER_ID'], false, true);
+					}
 				}
 
-				if($queueId == 0)
+				if ($queueId == 0)
 				{
 					$queueId = $lineFromId;
 				}
@@ -685,7 +666,10 @@ class Chat
 					'OPERATOR_FROM_CRM' => 'N'
 				];
 
-				if ($userFrom->isBot() && !$session->getData('DATE_OPERATOR'))
+				if (
+					$userFrom->isBot()
+					&& !$session->getData('DATE_OPERATOR')
+				)
 				{
 					$currentDate = new DateTime();
 					$updateData['DATE_OPERATOR'] = $currentDate;
@@ -696,11 +680,11 @@ class Chat
 
 				$lineTo = $session->getConfig('LINE_NAME');
 
-				if($params['TO']  == 'queue')
+				if ($params['TO']  === 'queue')
 				{
 					$message = Loc::getMessage('IMOL_CHAT_RETURNED_TO_QUEUE_NEW');
 				}
-				else if ($lineFromId == $queueId)
+				elseif ($lineFromId == $queueId)
 				{
 					$message = Loc::getMessage('IMOL_CHAT_SKIP_'.$userFrom->getGender(), [
 						'#USER#' => '[USER='.$userFrom->getId().'][/USER]',
@@ -718,9 +702,9 @@ class Chat
 				$session->transferToNextInQueue(false);
 
 				Im::addMessage([
-					"TO_CHAT_ID" => $this->chat['ID'],
-					"MESSAGE" => $message,
-					"SYSTEM" => 'Y',
+					'TO_CHAT_ID' => $this->chat['ID'],
+					'MESSAGE' => $message,
+					'SYSTEM' => 'Y',
 				]);
 
 				$result = true;
@@ -739,87 +723,92 @@ class Chat
 	 * @param $selfExit
 	 * @param $skipCheck
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
-	protected function transferToOperator($params, $session, $mode, $selfExit, $skipCheck)
+	protected function transferToOperator($params, $session, $mode, $selfExit, $skipCheck): bool
 	{
 		$result = false;
 
-		if($this->isDataLoaded())
+		if ($this->isDataLoaded())
 		{
-			$transferUserId = intval($params['TO']);
+			$transferUserId = (int)$params['TO'];
 
-			if($skipCheck ||
-				(
-					!ImUser::getInstance($transferUserId)->isBot() &&
-					!ImUser::getInstance($transferUserId)->isExtranet() &&
-					!ImUser::getInstance($transferUserId)->isConnector()
-				))
+			if (
+				$skipCheck
+				|| (
+					!User::getInstance($transferUserId)->isBot() &&
+					!User::getInstance($transferUserId)->isExtranet() &&
+					!User::getInstance($transferUserId)->isConnector()
+				)
+			)
 			{
 				$chat = new \CIMChat(0);
 				$relations = \CIMChat::GetRelationById($this->chat['ID']);
 				foreach ($relations as $relation)
 				{
-					if(
-						!ImUser::getInstance($relation['USER_ID'])->isConnector() &&
-						!ImUser::getInstance($relation['USER_ID'])->isBot() &&
+					if (
 						$relation['USER_ID'] != $params['FROM']
+						&& !User::getInstance($relation['USER_ID'])->isConnector()
+						&& !User::getInstance($relation['USER_ID'])->isBot()
 					)
 					{
 						$chat->DeleteUser($this->chat['ID'], $relation['USER_ID'], false, true);
 					}
 				}
 
-				if($params['FROM'] > 0 && $selfExit)
+				if ($params['FROM'] > 0 && $selfExit)
 				{
 					$chat->DeleteUser($this->chat['ID'], $params['FROM'], false, true);
 				}
 
-				if ($session->getConfig('ACTIVE') == 'Y')
+				if ($session->getConfig('ACTIVE') === 'Y')
 				{
-					$this->update(Array('AUTHOR_ID' => 0));
+					$this->update(['AUTHOR_ID' => 0]);
 				}
 				else
 				{
-					$this->update(Array('AUTHOR_ID' => $transferUserId));
+					$this->update(['AUTHOR_ID' => $transferUserId]);
 				}
-				if($transferUserId > 0)
+				if ($transferUserId > 0)
 				{
 					$chat->AddUser($this->chat['ID'], $transferUserId, false, true);
 				}
 
-				$userFrom = ImUser::getInstance($params['FROM']);
-				if($transferUserId > 0)
+				$userFrom = User::getInstance($params['FROM']);
+				if ($transferUserId > 0)
 				{
-					$userTo = ImUser::getInstance($transferUserId);
+					$userTo = User::getInstance($transferUserId);
 				}
 
-				Log::write(Array($params['FROM'], $transferUserId), 'TRANSFER TO USER');
+				Log::write([$params['FROM'], $transferUserId], 'TRANSFER TO USER');
 
-				if ($transferUserId > 0 && $params['FROM'] > 0 && ($mode == self::TRANSFER_MODE_MANUAL || $mode == self::TRANSFER_MODE_BOT))
+				if (
+					$transferUserId > 0
+					&& $params['FROM'] > 0
+					&&
+					(
+						$mode === self::TRANSFER_MODE_MANUAL
+						|| $mode === self::TRANSFER_MODE_BOT
+					)
+				)
 				{
 					$message = Loc::getMessage('IMOL_CHAT_TRANSFER_'.$userFrom->getGender(), [
-							'#USER_FROM#' => '[USER='.$userFrom->getId().'][/USER]',
-							'#USER_TO#' => '[USER='.$userTo->getId().'][/USER]']
+							'#USER_FROM#' => '[USER=' . $userFrom->getId() . '][/USER]',
+							'#USER_TO#' => '[USER=' . $userTo->getId() . '][/USER]']
 					);
 				}
-				else if(empty($transferUserId))
+				elseif (empty($transferUserId))
 				{
 					$message = Loc::getMessage('IMOL_CHAT_NO_OPERATOR_AVAILABLE_IN_QUEUE_NEW');
 				}
 				else
 				{
-					$message = Loc::getMessage('IMOL_CHAT_NEXT_IN_QUEUE_NEW', ['#USER_TO#' => '[USER='.$userTo->getId().'][/USER]']);
+					$message = Loc::getMessage('IMOL_CHAT_NEXT_IN_QUEUE_NEW', ['#USER_TO#' => '[USER=' . $userTo->getId() . '][/USER]']);
 				}
 
 				OperatorTransferTable::Add([
 					'CONFIG_ID' => $session->getData('CONFIG_ID'),
 					'SESSION_ID' => $session->getData('ID'),
-					'USER_ID' => intval($params['FROM']),
+					'USER_ID' => (int)$params['FROM'],
 					'TRANSFER_MODE' => $mode,
 					'TRANSFER_TYPE' => 'USER',
 					'TRANSFER_USER_ID' => $transferUserId
@@ -842,7 +831,7 @@ class Chat
 					$updateDataSession['TIME_BOT'] = $currentDate->getTimestamp()-$session->getData('DATE_CREATE')->getTimestamp();
 				}
 
-				if ($mode == self::TRANSFER_MODE_MANUAL)
+				if ($mode === self::TRANSFER_MODE_MANUAL)
 				{
 					$this->answer($transferUserId, false, true);
 					$updateDataSession['DATE_MODIFY'] = new DateTime();
@@ -1007,27 +996,25 @@ class Chat
 
 	/**
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
-	public function close()
+	public function close(): bool
 	{
 		$result = false;
 
 		if($this->isDataLoaded())
 		{
-			$relationList = RelationTable::getList(array(
-				"select" => array("ID", "USER_ID", "EXTERNAL_AUTH_ID" => "USER.EXTERNAL_AUTH_ID"),
-				"filter" => array(
-					"=CHAT_ID" => $this->chat['ID']
-				),
-			));
+			$relationList = RelationTable::getList([
+				'select' => ['ID', 'USER_ID', 'EXTERNAL_AUTH_ID' => 'USER.EXTERNAL_AUTH_ID'],
+				'filter' => [
+					'=CHAT_ID' => $this->chat['ID']
+				],
+			]);
 			while ($relation = $relationList->fetch())
 			{
-				if ($relation['EXTERNAL_AUTH_ID'] == "imconnector")
+				if ($relation['EXTERNAL_AUTH_ID'] === 'imconnector')
+				{
 					continue;
+				}
 
 				$this->leave($relation['USER_ID']);
 			}
@@ -1038,10 +1025,10 @@ class Chat
 				'WAIT_ACTION' => 'N'
 			]]);
 
-			$this->update(Array(
+			$this->update([
 				'AUTHOR_ID' => 0,
 				self::getFieldName(self::FIELD_SILENT_MODE) => 'N'
-			));
+			]);
 
 			$result = true;
 		}
@@ -1244,7 +1231,7 @@ class Chat
 						{
 							if(
 								$this->chat['AUTHOR_ID'] <= 0 &&
-								!ImUser::getInstance($userId)->isConnector()
+								!User::getInstance($userId)->isConnector()
 							)
 							{
 								$this->answer($userId);
@@ -1258,7 +1245,7 @@ class Chat
 								$session->getData('OPERATOR_ID') != $userId
 							)
 							{
-								$user = ImUser::getInstance($userId);
+								$user = User::getInstance($userId);
 								$message = Loc::getMessage('IMOL_CHAT_CLOSE_'.$user->getGender(), [
 									'#USER#' => '[USER=' . $user->getId() . '][/USER]',
 								]);
@@ -1351,7 +1338,7 @@ class Chat
 
 				if($queueManager && $queueManager->startLock())
 				{
-					$user = ImUser::getInstance($userId);
+					$user = User::getInstance($userId);
 					$message = Loc::getMessage('IMOL_CHAT_MARK_SPAM_'.$user->getGender(), [
 						'#USER#' => '[USER='.$user->getId().'][/USER]',
 					]);
@@ -1507,7 +1494,7 @@ class Chat
 
 			if (Tools\Lock::getInstance()->set($keyLock))
 			{
-				$user = ImUser::getInstance($userId);
+				$user = User::getInstance($userId);
 
 				$session = new Session();
 				$resultLoad = $session->load([
@@ -1537,7 +1524,7 @@ class Chat
 
 				if ($result->isSuccess())
 				{
-					if (ImUser::getInstance($userId)->isConnector())
+					if (User::getInstance($userId)->isConnector())
 					{
 						$mode = Session::MODE_INPUT;
 					}
@@ -1565,7 +1552,7 @@ class Chat
 							'CHECK_DATE_CLOSE' => $dateClose
 						];
 
-						if (ImUser::getInstance($userId)->isConnector())
+						if (User::getInstance($userId)->isConnector())
 						{
 							$sessionUpdate['DATE_FIRST_LAST_USER_ACTION'] = new DateTime();
 						}
@@ -1660,7 +1647,7 @@ class Chat
 						if (
 							$userId > 0
 							&& !$USER->IsAuthorized()
-							&& ImUser::getInstance($userId)->isConnector()
+							&& User::getInstance($userId)->isConnector()
 						)
 						{
 							if ($USER->Authorize($userId, false, false))
@@ -1769,7 +1756,7 @@ class Chat
 					$message = \CIMMessenger::GetById($messageId);
 					if ($message['CHAT_ID'] == $this->chat['ID'])
 					{
-						$user = ImUser::getInstance($userId);
+						$user = User::getInstance($userId);
 						Im::addMessage([
 							'TO_CHAT_ID' => $this->chat['ID'],
 							'SYSTEM' => 'Y',
@@ -1835,9 +1822,8 @@ class Chat
 	/**
 	 * @param bool $active
 	 * @return bool
-	 * @throws Main\LoaderException
 	 */
-	public function setSilentMode($active = true)
+	public function setSilentMode($active = true): bool
 	{
 		$result = false;
 
@@ -1850,15 +1836,15 @@ class Chat
 			}
 			else
 			{
-				ChatTable::update($this->chat['ID'], Array(
+				ChatTable::update($this->chat['ID'], [
 					self::getFieldName(self::FIELD_SILENT_MODE) => $active
-				));
+				]);
 
-				Im::addMessage(Array(
-					"TO_CHAT_ID" => $this->chat['ID'],
-					"MESSAGE" => Loc::getMessage($active? 'IMOL_CHAT_STEALTH_ON': 'IMOL_CHAT_STEALTH_OFF'),
-					"SYSTEM" => 'Y',
-				));
+				Im::addMessage([
+					'TO_CHAT_ID' => $this->chat['ID'],
+					'MESSAGE' => Loc::getMessage($active? 'IMOL_CHAT_STEALTH_ON': 'IMOL_CHAT_STEALTH_OFF'),
+					'SYSTEM' => 'Y',
+				]);
 
 				$result = true;
 			}
@@ -1885,21 +1871,15 @@ class Chat
 	/**
 	 * @param $params
 	 * @return Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\Db\SqlQueryException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
-	public function setPauseFlag($params)
+	public function setPauseFlag($params): Result
 	{
 		$result = new Result();
 
-		$pause = $params['ACTIVE'] == 'Y'? 'Y': 'N';
+		$pause = $params['ACTIVE'] === 'Y'? 'Y': 'N';
 		$sessionField = $this->getFieldData(self::FIELD_SESSION);
 
-		if ($sessionField['PAUSE'] == $pause)
+		if ($sessionField['PAUSE'] === $pause)
 		{
 			$result->setResult(true);
 		}
@@ -1914,8 +1894,8 @@ class Chat
 				if($this->validationAction($session->getData('CHAT_ID')))
 				{
 					if(
-						empty($params['USER_ID']) ||
-						$params['USER_ID'] == $session->getData('OPERATOR_ID')
+						empty($params['USER_ID'])
+						|| $params['USER_ID'] == $session->getData('OPERATOR_ID')
 					)
 					{
 						$queueManager = Queue::initialization($session);
@@ -2404,9 +2384,9 @@ class Chat
 			while ($relation = $relationList->fetch())
 			{
 				if (
-					!ImUser::getInstance($relation['USER_ID'])->isBot() &&
-					!ImUser::getInstance($relation['USER_ID'])->isNetwork() &&
-					(isset($fields[self::FIELD_LIVECHAT]) || !ImUser::getInstance($relation['USER_ID'])->isConnector())
+					!User::getInstance($relation['USER_ID'])->isBot() &&
+					!User::getInstance($relation['USER_ID'])->isNetwork() &&
+					(isset($fields[self::FIELD_LIVECHAT]) || !User::getInstance($relation['USER_ID'])->isConnector())
 				)
 				{
 					\CIMContactList::CleanChatCache($relation['USER_ID']);
@@ -2488,7 +2468,7 @@ class Chat
 				if (array_key_exists('AUTHOR_ID', $fields))
 				{
 					//CRM
-					if(!empty($fields['AUTHOR_ID']) && !ImUser::getInstance($fields['AUTHOR_ID'])->isBot())
+					if(!empty($fields['AUTHOR_ID']) && !User::getInstance($fields['AUTHOR_ID'])->isBot())
 					{
 						$session = new Session();
 						$loadSession = $session->load(Array(
@@ -2614,7 +2594,7 @@ class Chat
 			if (count($userList) == 1)
 			{
 				$toUserId = $userList[0];
-				$userName = ImUser::getInstance($toUserId)->getFullName(false);
+				$userName = User::getInstance($toUserId)->getFullName(false);
 
 				if($userCrm === true)
 				{
@@ -2726,12 +2706,8 @@ class Chat
 	 *
 	 * @param $loadChatId
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
-	protected function validationAction($loadChatId = 0)
+	protected function validationAction($loadChatId = 0): bool
 	{
 		$result = false;
 
@@ -2838,8 +2814,8 @@ class Chat
 				}
 				else
 				{
-					$userName = ImUser::getInstance($fromUserId)->getFullName(false);
-					$userGender = ImUser::getInstance($fromUserId)->getGender();
+					$userName = User::getInstance($fromUserId)->getFullName(false);
+					$userGender = User::getInstance($fromUserId)->getGender();
 
 					if($type == self::RATING_TYPE_HEAD)
 					{

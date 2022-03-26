@@ -12,6 +12,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 */
 
 use Bitrix\Crm\Integration;
+use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Tracking;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
@@ -33,7 +34,7 @@ Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/autorun_proc.c
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/batch_deletion.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/dialog.js');
 
-Bitrix\Main\UI\Extension::load("ui.progressbar");
+Bitrix\Main\UI\Extension::load(['ui.progressbar', 'ui.icons.b24']);
 
 ?><div id="batchDeletionWrapper"></div><?
 
@@ -42,6 +43,12 @@ if($arResult['NEED_TO_CONVERT_ADDRESSES']):
 endif;
 if($arResult['NEED_TO_CONVERT_UF_ADDRESSES']):
 	?><div id="convertContactUfAddressesWrapper"></div><?
+endif;
+if($arResult['NEED_TO_SHOW_DUP_INDEX_PROCESS']):
+	?><div id="backgroundContactIndexRebuildWrapper"></div><?
+endif;
+if($arResult['NEED_TO_SHOW_DUP_MERGE_PROCESS']):
+	?><div id="backgroundContactMergeWrapper"></div><?
 endif;
 
 if($arResult['NEED_FOR_REBUILD_DUP_INDEX']):
@@ -162,8 +169,8 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 			'TITLE' => GetMessage('CRM_CONTACT_DELETE_TITLE'),
 			'TEXT' => GetMessage('CRM_CONTACT_DELETE'),
 			'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
-				'{$gridManagerID}', 
-				BX.CrmUIGridMenuCommand.remove, 
+				'{$gridManagerID}',
+				BX.CrmUIGridMenuCommand.remove,
 				{ pathToRemove: '{$pathToRemove}' }
 			)"
 		);
@@ -204,13 +211,34 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 			}
 			$arEntitySubMenuItems[] = $quoteAction;
 		}
-		if($arResult['PERM_INVOICE'] && IsModuleInstalled('sale'))
+		if(
+			$arResult['PERM_INVOICE']
+			&& IsModuleInstalled('sale')
+			&& \Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled()
+		)
 		{
+			$localization = \Bitrix\Crm\Service\Container::getInstance()->getLocalization();
 			$arEntitySubMenuItems[] = array(
-				'TITLE' => GetMessage('CRM_DEAL_ADD_INVOICE_TITLE'),
-				'TEXT' => GetMessage('CRM_DEAL_ADD_INVOICE'),
+				'TITLE' => $localization->appendOldVersionSuffix(GetMessage('CRM_DEAL_ADD_INVOICE_TITLE')),
+				'TEXT' => $localization->appendOldVersionSuffix(GetMessage('CRM_DEAL_ADD_INVOICE')),
 				'ONCLICK' => "jsUtils.Redirect([], '".CUtil::JSEscape($arContact['PATH_TO_INVOICE_ADD'])."');"
 			);
+		}
+		if (\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkAddPermissions(\CCrmOwnerType::SmartInvoice))
+		{
+			$arEntitySubMenuItems[] = [
+				'TITLE' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::SmartInvoice),
+				'TEXT' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::SmartInvoice),
+				'HREF' => \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl(
+					\CCrmOwnerType::SmartInvoice,
+					0,
+					null,
+					new \Bitrix\Crm\ItemIdentifier(
+						\CCrmOwnerType::Contact,
+						$arContact['ID']
+					)
+				),
+			];
 		}
 
 		if(!empty($arEntitySubMenuItems))
@@ -226,15 +254,18 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 
 		if($arContact['EDIT'])
 		{
-			$arActions[] = $arActivityMenuItems[] = array(
-				'TITLE' => GetMessage('CRM_CONTACT_EVENT_TITLE'),
-				'TEXT' => GetMessage('CRM_CONTACT_EVENT'),
-				'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
-					'{$gridManagerID}', 
-					BX.CrmUIGridMenuCommand.createEvent, 
-					{ entityTypeName: BX.CrmEntityType.names.contact, entityId: {$arContact['ID']} }
-				)"
-			);
+			if (RestrictionManager::isHistoryViewPermitted())
+			{
+				$arActions[] = $arActivityMenuItems[] = array(
+					'TITLE' => GetMessage('CRM_CONTACT_EVENT_TITLE'),
+					'TEXT' => GetMessage('CRM_CONTACT_EVENT'),
+					'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
+						'{$gridManagerID}',
+						BX.CrmUIGridMenuCommand.createEvent,
+						{ entityTypeName: BX.CrmEntityType.names.contact, entityId: {$arContact['ID']} }
+					)"
+				);
+			}
 
 			if(IsModuleInstalled('subscribe'))
 			{
@@ -242,8 +273,8 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 					'TITLE' => GetMessage('CRM_CONTACT_ADD_EMAIL_TITLE'),
 					'TEXT' => GetMessage('CRM_CONTACT_ADD_EMAIL'),
 					'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
-						'{$gridManagerID}', 
-						BX.CrmUIGridMenuCommand.createActivity, 
+						'{$gridManagerID}',
+						BX.CrmUIGridMenuCommand.createActivity,
 						{ typeId: BX.CrmActivityType.email, settings: { ownerID: {$arContact['ID']} } }
 					)"
 				);
@@ -255,8 +286,8 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 					'TITLE' => GetMessage('CRM_CONTACT_ADD_CALL_TITLE'),
 					'TEXT' => GetMessage('CRM_CONTACT_ADD_CALL'),
 					'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
-						'{$gridManagerID}', 
-						BX.CrmUIGridMenuCommand.createActivity, 
+						'{$gridManagerID}',
+						BX.CrmUIGridMenuCommand.createActivity,
 						{ typeId: BX.CrmActivityType.call, settings: { ownerID: {$arContact['ID']} } }
 					)"
 				);
@@ -265,8 +296,8 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 					'TITLE' => GetMessage('CRM_CONTACT_ADD_MEETING_TITLE'),
 					'TEXT' => GetMessage('CRM_CONTACT_ADD_MEETING'),
 					'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
-						'{$gridManagerID}', 
-						BX.CrmUIGridMenuCommand.createActivity, 
+						'{$gridManagerID}',
+						BX.CrmUIGridMenuCommand.createActivity,
 						{ typeId: BX.CrmActivityType.meeting, settings: { ownerID: {$arContact['ID']} } }
 					)"
 				);
@@ -275,8 +306,8 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 					'TITLE' => GetMessage('CRM_CONTACT_ADD_CALL_TITLE'),
 					'TEXT' => GetMessage('CRM_CONTACT_ADD_CALL_SHORT'),
 					'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
-						'{$gridManagerID}', 
-						BX.CrmUIGridMenuCommand.createActivity, 
+						'{$gridManagerID}',
+						BX.CrmUIGridMenuCommand.createActivity,
 						{ typeId: BX.CrmActivityType.call, settings: { ownerID: {$arContact['ID']} } }
 					)"
 				);
@@ -285,8 +316,8 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 					'TITLE' => GetMessage('CRM_CONTACT_ADD_MEETING_TITLE'),
 					'TEXT' => GetMessage('CRM_CONTACT_ADD_MEETING_SHORT'),
 					'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
-						'{$gridManagerID}', 
-						BX.CrmUIGridMenuCommand.createActivity, 
+						'{$gridManagerID}',
+						BX.CrmUIGridMenuCommand.createActivity,
 						{ typeId: BX.CrmActivityType.meeting, settings: { ownerID: {$arContact['ID']} } }
 					)"
 				);
@@ -298,8 +329,8 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 					'TITLE' => GetMessage('CRM_CONTACT_TASK_TITLE'),
 					'TEXT' => GetMessage('CRM_CONTACT_TASK'),
 					'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
-						'{$gridManagerID}', 
-						BX.CrmUIGridMenuCommand.createActivity, 
+						'{$gridManagerID}',
+						BX.CrmUIGridMenuCommand.createActivity,
 						{ typeId: BX.CrmActivityType.task, settings: { ownerID: {$arContact['ID']} } }
 					)"
 				);
@@ -308,8 +339,8 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 					'TITLE' => GetMessage('CRM_CONTACT_TASK_TITLE'),
 					'TEXT' => GetMessage('CRM_CONTACT_TASK_SHORT'),
 					'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
-						'{$gridManagerID}', 
-						BX.CrmUIGridMenuCommand.createActivity, 
+						'{$gridManagerID}',
+						BX.CrmUIGridMenuCommand.createActivity,
 						{ typeId: BX.CrmActivityType.task, settings: { ownerID: {$arContact['ID']} } }
 					)"
 				);
@@ -377,17 +408,14 @@ foreach($arResult['CONTACT'] as $sKey =>  $arContact)
 		'data' => $arContact,
 		'editable' => !$arContact['EDIT'] ? ($arResult['INTERNAL'] ? 'N' : $arColumns) : 'Y',
 		'columns' => array(
-			'CONTACT_SUMMARY' => CCrmViewHelper::RenderClientSummary(
-				$arContact['PATH_TO_CONTACT_SHOW'],
-				$arContact['CONTACT_FORMATTED_NAME'],
-				Tracking\UI\Grid::enrichSourceName(
-					\CCrmOwnerType::Contact,
-					$arContact['ID'],
-					$arContact['CONTACT_TYPE_NAME']
-				),
-				isset($arContact['PHOTO']) ? $arContact['PHOTO'] : '',
-				'_top'
-			),
+			'CONTACT_SUMMARY' => (new \Bitrix\Crm\Service\Display\ClientSummary(\CCrmOwnerType::Contact, (int)$arContact['ID']))
+				->withUrl((string)$arContact['PATH_TO_CONTACT_SHOW'])
+				->withTitle((string)$arContact['CONTACT_FORMATTED_NAME'])
+				->withDescription((string)$arContact['CONTACT_TYPE_NAME'])
+				->withTracking(true)
+				->withPhoto((int)$arContact['~PHOTO'])
+				->render()
+			,
 			'CONTACT_COMPANY' => isset($arContact['COMPANY_INFO']) ? CCrmViewHelper::PrepareClientInfo($arContact['COMPANY_INFO']) : '',
 			'COMPANY_ID' => isset($arContact['COMPANY_INFO']) ? CCrmViewHelper::PrepareClientInfo($arContact['COMPANY_INFO']) : '',
 			'ASSIGNED_BY' => $arContact['~ASSIGNED_BY_ID'] > 0
@@ -845,6 +873,7 @@ $APPLICATION->IncludeComponent(
 	array(
 		'GRID_ID' => $arResult['GRID_ID'],
 		'HEADERS' => $arResult['HEADERS'],
+		'HEADERS_SECTIONS' => $arResult['HEADERS_SECTIONS'],
 		'ENABLE_FIELDS_SEARCH' => 'Y',
 		'SORT' => $arResult['SORT'],
 		'SORT_VARS' => $arResult['SORT_VARS'],
@@ -863,6 +892,7 @@ $APPLICATION->IncludeComponent(
 				'GET_FIELD' => '/bitrix/components/bitrix/crm.contact.list/filter.ajax.php?action=field&filter_id='.urlencode($arResult['GRID_ID']).'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
 			),
 			'ENABLE_FIELDS_SEARCH' => 'Y',
+			'HEADERS_SECTIONS' => $arResult['HEADERS_SECTIONS'],
 			'CONFIG' => [
 				'popupColumnsCount' => 4,
 				'popupWidth' => 800,
@@ -1316,4 +1346,57 @@ if($arResult['NEED_TO_CONVERT_UF_ADDRESSES'])
 		manager.runAfter(100);
 	});
 </script><?
+}
+
+if($arResult['NEED_TO_SHOW_DUP_INDEX_PROCESS'])
+{?>
+	<script type="text/javascript">
+		BX.ready(function () {
+			if (BX.AutorunProcessPanel.isExists("backgroundContactIndexRebuild"))
+			{
+				return;
+			}
+			BX.AutorunProcessManager.messages =
+				{
+					title: "<?=GetMessageJS('CRM_CONTACT_BACKGROUND_DUPLICATE_INDEX_REBUILD_TITLE')?>",
+					stateTemplate: "<?=GetMessageJS('CRM_CONTACT_BACKGROUND_DUPLICATE_INDEX_REBUILD_STATE')?>"
+				};
+			var manager = BX.AutorunProcessManager.create(
+				"backgroundContactIndexRebuild",
+				{
+					serviceUrl: "<?='/bitrix/components/bitrix/crm.contact.list/list.ajax.php?'.bitrix_sessid_get()?>",
+					actionName: "BACKGROUND_INDEX_REBUILD",
+					container: "backgroundContactIndexRebuildWrapper",
+					enableLayout: true
+				}
+			);
+			manager.runAfter(100);
+		});
+	</script><?
+}
+if($arResult['NEED_TO_SHOW_DUP_MERGE_PROCESS'])
+{?>
+	<script type="text/javascript">
+		BX.ready(function () {
+			if (BX.AutorunProcessPanel.isExists("backgroundContactMerge"))
+			{
+				return;
+			}
+			BX.AutorunProcessManager.messages =
+				{
+					title: "<?=GetMessageJS('CRM_CONTACT_BACKGROUND_DUPLICATE_MERGE_TITLE')?>",
+					stateTemplate: "<?=GetMessageJS('CRM_CONTACT_BACKGROUND_DUPLICATE_MERGE_STATE')?>"
+				};
+			var manager = BX.AutorunProcessManager.create(
+				"backgroundContactMerge",
+				{
+					serviceUrl: "<?='/bitrix/components/bitrix/crm.contact.list/list.ajax.php?'.bitrix_sessid_get()?>",
+					actionName: "BACKGROUND_MERGE",
+					container: "backgroundContactMergeWrapper",
+					enableLayout: true
+				}
+			);
+			manager.runAfter(100);
+		});
+	</script><?
 }

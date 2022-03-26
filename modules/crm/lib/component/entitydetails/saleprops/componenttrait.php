@@ -137,6 +137,7 @@ trait ComponentTrait
 			if($property['MULTIPLE'] !== 'Y')
 			{
 				$options['NOT_SELECTED'] = Loc::getMessage('CRM_ORDER_NOT_SELECTED');
+				$options['NOT_SELECTED_VALUE'] = '';
 			}
 			$data['items'] = \CCrmInstantEditorHelper::PrepareListOptions($list, $options);
 		}

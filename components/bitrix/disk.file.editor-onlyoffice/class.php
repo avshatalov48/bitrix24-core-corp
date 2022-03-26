@@ -9,25 +9,47 @@ use Bitrix\Disk\Internals\BaseComponent;
 use Bitrix\Disk\Internals\Engine\Contract\SidePanelWrappable;
 use Bitrix\Disk\User;
 use Bitrix\Disk\Document\OnlyOffice;
+use Bitrix\Main\Application;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main\Result;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+Loader::requireModule('disk');
+
 class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Controllerable
 {
 	/** @var User */
 	protected $currentUser;
+	/** @var OnlyOffice\Configuration */
+	protected $onlyOfficeConfiguration;
+
+	protected function processBeforeAction($actionName)
+	{
+		$this->onlyOfficeConfiguration = new OnlyOffice\Configuration();
+		if (!OnlyOffice\OnlyOfficeHandler::isEnabled())
+		{
+			return false;
+		}
+
+		return parent::processBeforeAction($actionName);
+	}
 
 	public function prepareParams()
 	{
 		parent::prepareParams();
+
+		if (!isset($this->arParams['EDITOR_MODE']))
+		{
+			$this->arParams['EDITOR_MODE'] = OnlyOffice\Editor\ConfigBuilder::VISUAL_MODE_USUAL;
+		}
 
 		if (CurrentUser::get()->getId())
 		{
@@ -46,6 +68,13 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 
 	protected function processActionDefault()
 	{
+		if (isset($this->arParams['TEMPLATE']) && $this->arParams['TEMPLATE'] === 'not-found')
+		{
+			$this->includeComponentTemplate('not-found');
+
+			return;
+		}
+
 		if (!isset($this->arParams['SHOW_BUTTON_OPEN_NEW_WINDOW']))
 		{
 			$this->arParams['SHOW_BUTTON_OPEN_NEW_WINDOW'] = true;
@@ -58,19 +87,23 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 		{
 			if (!$bitrix24Scenario->canUseEdit())
 			{
-				\ShowError("There is no access to edit document by Bitrix24.Documents.");
-
-				return;
+				$this->arResult['INFO_HELPER_CODE'] = 'limit_office_small_documents';
 			}
-		}
-		else
-		{
 			if (!$bitrix24Scenario->canUseView())
 			{
-				\ShowError("There is no access to view document by Bitrix24.Documents.");
-
-				return;
+				$this->arResult['INFO_HELPER_CODE'] = 'limit_office_no_document';
 			}
+		}
+		elseif (!$bitrix24Scenario->canUseView())
+		{
+			$this->arResult['INFO_HELPER_CODE'] = 'limit_office_no_document';
+		}
+
+		if (!empty($this->arResult['INFO_HELPER_CODE']))
+		{
+			$this->includeComponentTemplate('feature-restriction');
+
+			return;
 		}
 
 		$documentInfo = $documentSession->getInfo();
@@ -115,7 +148,7 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 			$allowRename = $documentSession->canUserRename(CurrentUser::get());
 		}
 
-		$configBuilder = new OnlyOffice\ConfigBuilder($documentSession);
+		$configBuilder = new OnlyOffice\Editor\ConfigBuilder($documentSession);
 		$configBuilder
 			->allowEdit($allowEdit)
 			->allowRename($allowRename)
@@ -126,7 +159,16 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 			->setDocumentUrl($onlyOfficeController->getActionUri('download', $sessionGetParams, true))
 		;
 
-		$this->arResult['SERVER'] = rtrim(ServiceLocator::getInstance()->get('disk.onlyofficeConfiguration')->getServer(), '/');
+		if ($this->arParams['EDITOR_MODE'] === OnlyOffice\Editor\ConfigBuilder::VISUAL_MODE_COMPACT)
+		{
+			$configBuilder
+				->hideRightMenu()
+				->hideRulers()
+				->setCompactHeader()
+				->setCompactToolbar()
+			;
+		}
+
 		$this->arResult['DOCUMENT_HANDLERS'] = $this->getDocumentHandlersForEditingFile();
 		$this->arResult['EDITOR'] = [
 			'MODE' => $configBuilder->getMode(),
@@ -205,7 +247,26 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 		$this->arResult['SHOULD_BLOCK_EXTERNAL_LINK_FEATURE'] = (bool)$featureBlocker;
 		$this->arResult['BLOCKER_EXTERNAL_LINK_FEATURE'] = $featureBlocker;
 
-		$this->arResult['EDITOR_JSON'] = Json::encode($configBuilder->build());
+		$editorJsonConfigResult = $this->getEditorJsonConfig($configBuilder);
+		if (!$editorJsonConfigResult->isSuccess())
+		{
+			$this->processCloudError($editorJsonConfigResult);
+
+			return;
+		}
+
+		$editorConfigData = $editorJsonConfigResult->getData();
+		$this->arResult['SERVER'] = $this->getServerByEditorConfig($editorConfigData);
+
+		if (Application::getInstance()->isUtfMode())
+		{
+			$this->arResult['EDITOR_JSON'] = Json::encode($editorConfigData);
+		}
+		else
+		{
+			$this->arResult['EDITOR_JSON'] = \CUtil::PhpToJSObject($editorConfigData);
+		}
+
 		$this->arResult['SHARING_CONTROL_TYPE'] = $this->getSharingControlType($documentSession);
 		$this->arResult['PULL_CONFIG'] = null;
 		$publicPullConfigurator = new Disk\Document\Online\PublicPullConfigurator();
@@ -353,5 +414,58 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 		}
 
 		return $list;
+	}
+
+	protected function getEditorJsonConfig(OnlyOffice\Editor\ConfigBuilder $configBuilder): Result
+	{
+		$cloudRegistrationData = (new OnlyOffice\Configuration())->getCloudRegistrationData();
+		if ($cloudRegistrationData)
+		{
+			$configSigner = new OnlyOffice\Cloud\SingDocumentConfig(
+				$cloudRegistrationData['serverHost']
+			);
+
+			return $configSigner->sign($configBuilder->build());
+		}
+
+		return (new Result())->setData($configBuilder->build());
+	}
+
+	protected function processCloudError(Result $result): void
+	{
+		$cloudErrorResult = [];
+
+		$errorCollection = $result->getErrorCollection();
+		/** @see \Bitrix\DocumentProxy\Controller\SignDocumentConfiguration::ERROR_CODE_EXCEEDED_LIMIT */
+		if ($errorCollection->getErrorByCode('exceeded_limit'))
+		{
+			$cloudErrorResult['LIMIT'] = [
+				'RESTRICTION' => true,
+				'LIMIT_VALUE' => $errorCollection->getErrorByCode('exceeded_limit')->getCustomData()['limit'],
+			];
+		}
+		/** @see \Bitrix\DocumentProxy\Engine\Filter\DemoRestriction::ERROR_DEMO_RESTRICTION */
+		if ($errorCollection->getErrorByCode('demo_restriction'))
+		{
+			$cloudErrorResult['DEMO'] = [
+				'END' => true,
+			];
+		}
+		$cloudErrorResult['ERRORS'] = $errorCollection->toArray();
+
+
+		$this->arResult['CLOUD_ERROR'] = $cloudErrorResult;
+
+		$this->includeComponentTemplate('cloud-error');
+	}
+
+	private function getServerByEditorConfig(array $editorConfigData): string
+	{
+		if (!empty($editorConfigData['_server']))
+		{
+			return $editorConfigData['_server'];
+		}
+
+		return rtrim(ServiceLocator::getInstance()->get('disk.onlyofficeConfiguration')->getServer(), '/');
 	}
 }

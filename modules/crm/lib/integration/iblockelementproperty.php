@@ -71,7 +71,9 @@ class IBlockElementProperty
 		if(!empty($value['VALUE']))
 		{
 			if(!is_array($value['VALUE']))
-				$value['VALUE'] = array($value['VALUE']);
+			{
+				$value['VALUE'] = [$value['VALUE']];
+			}
 			$listValue = $value['VALUE'];
 		}
 		elseif(is_array($value))
@@ -81,9 +83,13 @@ class IBlockElementProperty
 				if(isset($dataValue['VALUE']))
 				{
 					if(is_array($dataValue['VALUE']))
+					{
 						$listValue = $dataValue['VALUE'];
+					}
 					else
+					{
 						$listValue[] = $dataValue['VALUE'];
+					}
 				}
 				else
 				{
@@ -489,11 +495,34 @@ class IBlockElementProperty
 
 		if(!empty($listEntityValue))
 		{
-			global $APPLICATION;
-			$listEntityValue = $APPLICATION->ConvertCharset($listEntityValue, 'UTF-8', LANG_CHARSET);
-			$values = Json::decode($listEntityValue);
+			$listEntityValue = (array) $listEntityValue;
+
+			$values = [];
+			foreach ($listEntityValue as $listEntityVal)
+			{
+				if (!is_string($listEntityVal))
+				{
+					continue;
+				}
+
+				try
+				{
+					$value = Json::decode($listEntityVal);
+				}
+				catch (\Bitrix\Main\ArgumentException $e)
+				{
+					$value = null;
+				}
+
+				if (is_array($value))
+				{
+					$values = array_merge_recursive($values, $value);
+				}
+			}
 			if(empty($values))
+			{
 				return;
+			}
 
 			$usePrefix = self::isUsePrefix($property);
 

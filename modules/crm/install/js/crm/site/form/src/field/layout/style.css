@@ -15,4 +15,5 @@
 	color: #000;
 	color: var(--b24-text-color);
 	margin: 29px 0 15px;
+	word-break: break-word;
 }

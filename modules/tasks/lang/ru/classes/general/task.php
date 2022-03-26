@@ -88,6 +88,3 @@ $MESS['TASKS_FIELDS_DURATION_FACT']='Затрачено (фактически)';
 $MESS['TASKS_FIELDS_DURATION_TYPE']='DURATION_TYPE';
 
 $MESS['ERROR_TASKS_GUID_NON_UNIQUE']='GUID должен быть уникальным полем';
-$MESS['ERROR_TASKS_CHANGE_DEADLINE_NULL']='Вы не можете удалять крайний срок';
-$MESS['ERROR_TASKS_CHANGE_DEADLINE_COUNT_OVER']='Вы больше не можете изменять крайний срок';
-$MESS['ERROR_TASKS_CHANGE_DEADLINE_MAXTIME_OVER']='Вы не можете указать крайний срок дальше, чем #DEADLINE#';

@@ -1,8 +1,14 @@
-import {Type, Tag, Loc, Uri, ajax} from 'main.core';
+import {Type, Dom, Loc, Uri, ajax} from 'main.core';
 import {EventEmitter, BaseEvent} from 'main.core.events';
 import {Ajax} from 'mobile.ajax';
 
-import {Instance, BalloonNotifierInstance, NotificationBarInstance, PinnedPanelInstance} from './feed';
+import {
+	Instance,
+	BalloonNotifierInstance,
+	NextPageLoaderInstance,
+	NotificationBarInstance,
+	PinnedPanelInstance,
+} from './feed';
 
 class Page
 {
@@ -184,6 +190,7 @@ class Page
 		Instance.setRefreshNeeded(false);
 		Instance.setRefreshStarted(true);
 		BalloonNotifierInstance.hideRefreshNeededNotifier();
+		NextPageLoaderInstance.startWaiter();
 		NotificationBarInstance.hideAll();
 
 		this.isBusyRefreshing = true;
@@ -229,6 +236,7 @@ class Page
 				this.setPageNumber(1);
 				Instance.setRefreshStarted(false);
 				Instance.setRefreshNeeded(false);
+				NextPageLoaderInstance.stopWaiter();
 
 				if (document.getElementById('lenta_notifier'))
 				{
@@ -352,6 +360,7 @@ class Page
 
 				Instance.setRefreshStarted(false);
 				Instance.setRefreshNeeded(false);
+				NextPageLoaderInstance.stopWaiter();
 
 				if (document.getElementById('lenta_notifier'))
 				{
@@ -407,7 +416,12 @@ class Page
 			}
 			else // next
 			{
-				document.getElementById('lenta_wrapper').insertBefore(Tag.render`<div>${block.CONTENT}</div>`, document.getElementById('next_post_more'));
+				document.getElementById('lenta_wrapper').insertBefore(
+					Dom.create('div', {
+						html: block.CONTENT
+					}),
+					document.getElementById('next_post_more')
+				);
 			}
 
 			htmlWasInserted = true;

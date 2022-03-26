@@ -74,6 +74,39 @@
 	overflow: hidden;
 }
 
-.tasks-scrum-kanban-header-target-observer.--with-margin {
-	margin-bottom: 45px;
+.tasks-scrum-wrapper #workarea-content {
+	position: relative;
+}
+
+.tasks-kanban__start {
+	margin: 0;
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	    -ms-flex-align: center;
+	        align-items: center;
+	-webkit-box-pack: center;
+	    -ms-flex-pack: center;
+	        justify-content: center;
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	-webkit-box-sizing: border-box;
+	        box-sizing: border-box;
+	padding: 0 25px 5%;
+	color: #535b69;
+	background-color: rgba(255,255,255,.67);
+	font: 31px/42px 'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
+}
+
+.bitrix24-default-theme .tasks-kanban__start,
+.bitrix24-dark-theme .tasks-kanban__start {
+	background-color: rgba(255,255,255,.3);
+}
+
+.tasks-scrum-wrapper .ui-page-slider-workarea {
+	min-height: calc(100vh - 65px - 80px - 151px);
 }

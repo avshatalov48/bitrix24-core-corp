@@ -178,6 +178,7 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 				)
 				&& mb_strpos($status['ENTITY_ID'], 'DEAL_STAGE') !== 0
 				&& mb_strpos($status['ENTITY_ID'], 'DYNAMIC_') !== 0
+				&& mb_strpos($status['ENTITY_ID'], 'SMART_INVOICE_') !== 0
 			)
 			{
 				continue;
@@ -250,9 +251,13 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 		{
 			return $row;
 		}
-		if (isset($row['TITLE']))
+		if (!empty($row['TITLE']))
 		{
 			$row['NAME'] = $row['TITLE'];
+		}
+		if (empty($row['NAME']) && !empty($row['HEADING']))
+		{
+			$row['NAME'] = $row['HEADING'];
 		}
 		if (isset($row['ASSIGNED_BY_ID']) && $row['ASSIGNED_BY_ID'] > 0)
 		{
@@ -426,6 +431,11 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 
 	protected function getDocument($document): array
 	{
+		if (!\Bitrix\Main\Loader::includeModule('documentgenerator'))
+		{
+			return $document;
+		}
+
 		if (empty($document))
 		{
 			return $document;
@@ -751,8 +761,8 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 				if ($entityTypeId === 'order')
 				{
 					$runtime[] =
-						new Bitrix\Main\Entity\ReferenceField('DEAL',
-							'\Bitrix\Crm\Binding\OrderDealTable',
+						new Bitrix\Main\Entity\ReferenceField('ORDER_ENTITY',
+							'\Bitrix\Crm\Binding\OrderEntityTable',
 							['=this.ID' => 'ref.ORDER_ID'],
 							['join_type' => 'LEFT']
 						);
@@ -795,7 +805,7 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 
 	protected function loadDynamicElements(int $entityTypeId, array $filter, int $pageNumber, int $pageSize): array
 	{
-		if (!\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		if (!\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
 		{
 			return [];
 		}
@@ -818,7 +828,9 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 		$items = $factory->getItemsFilteredByPermissions($params);
 		foreach ($items as $item)
 		{
-			$result[] = $item->getCompatibleData();
+			$compatibleData = $item->getCompatibleData();
+			$compatibleData['HEADING'] = $item->getHeading();
+			$result[] = $compatibleData;
 		}
 
 		if (!$factory->isStagesEnabled())
@@ -851,6 +863,11 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 		$entityTypeId = \CCrmOwnerType::ResolveID($entityType);
 
 		if ($entityId <= 0 || empty($entityType) || !$entityTypeId)
+		{
+			return;
+		}
+
+		if (!Container::getInstance()->getUserPermissions()->checkReadPermissions($entityTypeId, $entityId))
 		{
 			return;
 		}

@@ -32,7 +32,7 @@ class SalesCenterPaySystemAjaxController extends \Bitrix\Main\Engine\Controller
 	{
 		Loader::includeModule('salescenter');
 
-		if(!SaleManager::getInstance()->isFullAccess())
+		if(!SaleManager::getInstance()->isFullAccess(true))
 		{
 			Loc::loadMessages(__DIR__.'/class.php');
 			$this->addError(new Error(Loc::getMessage("SP_SALESCENTER_SALE_ACCESS_DENIED")));

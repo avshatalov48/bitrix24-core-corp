@@ -6,6 +6,7 @@ $APPLICATION->IncludeComponent(
 	"",
 	array(
 		"POPUP_COMPONENT_NAME" => "bitrix:crm.1c.start",
+		"POPUP_COMPONENT_USE_BITRIX24_THEME" => "Y",
 		"POPUP_COMPONENT_TEMPLATE_NAME" => "",
 		"POPUP_COMPONENT_PARAMS" => array(
 			"SEF_MODE" => "Y",

@@ -11,6 +11,7 @@ class CIntranetUserProfileSecurityComponent extends \CBitrixComponent
 {
 	public function onPrepareComponentParams($params)
 	{
+		$params['USER_ID'] = (int)$params['USER_ID'];
 		return $params;
 	}
 
@@ -26,7 +27,7 @@ class CIntranetUserProfileSecurityComponent extends \CBitrixComponent
 		global $USER;
 
 		$menuItems = array();
-		$isOwnProfile = $this->arParams["USER_ID"] === $USER->GetID();
+		$isOwnProfile = $this->arParams["USER_ID"] === (int)$USER->GetID();
 		$isAdminRights = (
 			$this->arResult["IS_CLOUD"] && \CBitrix24::IsPortalAdmin(\Bitrix\Main\Engine\CurrentUser::get()->getId())
 			|| \Bitrix\Main\Engine\CurrentUser::get()->isAdmin()

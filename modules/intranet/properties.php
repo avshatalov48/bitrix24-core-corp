@@ -36,6 +36,10 @@ class CIEmployeeProperty
 
 		if ($adminSidePanelHelper->isPublicSidePanel())
 		{
+			\Bitrix\Main\UI\Extension::load([
+				'admin_interface',
+				'sidepanel'
+			]);
 			$titleUserId = $USER->GetID();
 		}
 		else
@@ -587,9 +591,27 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 	 */
 	public static function GetUIFilterProperty($property, $strHTMLControlName, &$field)
 	{
-		$field['type'] = 'custom_entity';
-		$field['filterable'] = '';
-		$field['selector'] = ['type' => 'user'];
+		//TODO: change this code to common engine properties description in future
+		global $USER;
+
+		$canViewUserList = false;
+		if (isset($USER) && $USER instanceof CUser)
+				{
+					$canViewUserList = (
+						$USER->CanDoOperation('view_subordinate_users')
+						|| $USER->CanDoOperation('view_all_users')
+					);
+		}
+		if ($canViewUserList)
+		{
+			$field['type'] = 'custom_entity';
+			$field['filterable'] = '';
+			$field['selector'] = ['type' => 'user'];
+		}
+		else
+		{
+			$field = null;
+		}
 	}
 
 	public static function GetUIEntityEditorProperty($settings, $value)

@@ -50,6 +50,10 @@ class LeadRelationManager extends BaseRelationManager
 			? $recyclingData['CHILD_DEAL_IDS'] : [];
 		unset($recyclingData['CHILD_DEAL_IDS']);
 
+		$childQuoteIds = isset($recyclingData['CHILD_QUOTE_IDS']) && is_array($recyclingData['CHILD_QUOTE_IDS'])
+			? $recyclingData['CHILD_QUOTE_IDS'] : [];
+		unset($recyclingData['CHILD_QUOTE_IDS']);
+
 		$relations = [];
 		$this->prepareActivityRelations(
 			\CCrmOwnerType::Lead,
@@ -120,6 +124,19 @@ class LeadRelationManager extends BaseRelationManager
 			}
 		}
 
+		if (!empty($childQuoteIds))
+		{
+			foreach ($childQuoteIds as $quoteId)
+			{
+				$relations[] = new Relation(
+					\CCrmOwnerType::Lead,
+					$entityID,
+					\CCrmOwnerType::Quote,
+					$quoteId
+				);
+			}
+		}
+
 		return $relations;
 	}
 	public function prepareRecoveryFields(array &$fields, RelationMap $map)
@@ -174,6 +191,14 @@ class LeadRelationManager extends BaseRelationManager
 		if(!empty($dealIDs))
 		{
 			Crm\Entity\Lead::setChildEntityIDs($entityID, \CCrmOwnerType::Deal, $dealIDs);
+		}
+
+		$quoteIds = Crm\Entity\Quote::selectExisted(
+			$map->getDestinationEntityIDs(\CCrmOwnerType::Quote)
+		);
+		if(!empty($quoteIds))
+		{
+			Crm\Entity\Lead::setChildEntityIDs($entityID, \CCrmOwnerType::Quote, $quoteIds);
 		}
 	}
 }

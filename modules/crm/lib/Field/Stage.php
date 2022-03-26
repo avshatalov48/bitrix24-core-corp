@@ -7,6 +7,8 @@ use Bitrix\Crm\Item;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
+use Bitrix\Crm\Service\Factory;
+use Bitrix\Crm\Service\Operation\FieldAfterSaveResult;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 
@@ -19,56 +21,37 @@ class Stage extends Field
 		$factory = Container::getInstance()->getFactory($item->getEntityTypeId());
 		if (!$factory)
 		{
-			$result->addError(new Error('Can not find factory for the entity type ' . $item->getEntityTypeId()));
+			return $result->addError($this->getFactoryNotFoundError($item->getEntityTypeId()));
+		}
+
+		$isCategoryChanged = $factory->isCategoriesSupported() && $item->isChanged(Item::FIELD_NAME_CATEGORY_ID);
+
+		if (!$isCategoryChanged && !$this->isValueChanged($item))
+		{
+			return $result;
+		}
+
+		if ($this->isCurrentStageIdValid($factory, $item))
+		{
+			return $result;
+		}
+
+		if (!$isCategoryChanged)
+		{
+			$result->addError($this->getValueNotValidError());
 
 			return $result;
 		}
 
-		if ($this->isValueChanged($item))
-		{
-			$stageId = $item->get($this->getName());
-			$stages = $factory->getStages($item->getCategoryId());
-			if (!in_array($stageId, $stages->getStatusIdList(), true))
-			{
-				$result->addError($this->getValueNotValidError());
-			}
-		}
-		elseif ($factory->isCategoriesSupported() && $item->isChanged(Item::FIELD_NAME_CATEGORY_ID))
-		{
-			// pick up first stage from new category
-			$newStageId = null;
-			$currentStage = $factory->getStage($item->get($this->getName()));
-			$currentStageSemantics = $currentStage ? $currentStage->getSemantics() : null;
-			foreach($factory->getStages($item->getCategoryId()) as $stage)
-			{
-				if(
-					$stage->getSemantics() === $currentStageSemantics
-					|| (
-						(
-							empty($stage->getSemantics())
-							|| $stage->getSemantics() === PhaseSemantics::PROCESS
-						)
-						&&
-						(
-							empty($currentStageSemantics)
-							|| $currentStageSemantics === PhaseSemantics::PROCESS
-						)
-					)
-				)
-				{
-					$newStageId = $stage->getStatusId();
-					break;
-				}
-			}
+		$newStageId = $this->pickFirstStageIdInCurrentCategory($factory, $item);
 
-			if($newStageId)
-			{
-				$item->set($this->getName(), $newStageId);
-			}
-			else
-			{
-				$result->addError(new Error('Stage in new category is not found'));
-			}
+		if($newStageId)
+		{
+			$item->set($this->getName(), $newStageId);
+		}
+		else
+		{
+			$result->addError(new Error('Stage in new category is not found'));
 		}
 
 		return $result;
@@ -81,5 +64,85 @@ class Stage extends Field
 		return $item->isNew()
 			? $item->getDefaultValue($fieldName) !== $item->get($fieldName)
 			: $item->isChanged($fieldName);
+	}
+
+	private function isCurrentStageIdValid(Factory $factory, Item $item): bool
+	{
+		$stageId = $item->get($this->getName());
+
+		$stagesForCurrentCategory = $factory->getStages($item->getCategoryId());
+
+		return in_array($stageId, $stagesForCurrentCategory->getStatusIdList(), true);
+	}
+
+	private function pickFirstStageIdInCurrentCategory(Factory $factory, Item $item): ?string
+	{
+		$currentStage = $factory->getStage((string)$item->get($this->getName()));
+
+		$currentStageSemantics = $currentStage ? $currentStage->getSemantics() : null;
+		if (!PhaseSemantics::isDefined($currentStageSemantics))
+		{
+			$currentStageSemantics = PhaseSemantics::PROCESS;
+		}
+
+		$stagesInCurrentCategory = $factory->getStages($item->getCategoryId());
+
+		foreach($stagesInCurrentCategory as $stage)
+		{
+			if(
+				$stage->getSemantics() === $currentStageSemantics
+				|| (
+					(
+						empty($stage->getSemantics())
+						|| $stage->getSemantics() === PhaseSemantics::PROCESS
+					)
+					&&
+					(
+						empty($currentStageSemantics)
+						|| $currentStageSemantics === PhaseSemantics::PROCESS
+					)
+				)
+			)
+			{
+				return $stage->getStatusId();
+			}
+		}
+
+		return null;
+	}
+
+	public function processAfterSave(Item $itemBeforeSave, Item $item, Context $context = null): FieldAfterSaveResult
+	{
+		$result = new FieldAfterSaveResult();
+
+		if ($itemBeforeSave->isNew())
+		{
+			return $result;
+		}
+
+		$factory = Container::getInstance()->getFactory($item->getEntityTypeId());
+		if (!$factory)
+		{
+			$result->addError($this->getFactoryNotFoundError($item->getEntityTypeId()));
+
+			return $result;
+		}
+
+		$previousStage = $factory->getStage((string)$itemBeforeSave->remindActual($this->getName()));
+		$currentStage = $factory->getStage((string)$item->get($this->getName()));
+		if (is_null($previousStage) || is_null($currentStage))
+		{
+			return $result;
+		}
+
+		if (
+			$previousStage->getSemantics() !== $currentStage->getSemantics()
+			&& PhaseSemantics::isFinal($currentStage->getSemantics())
+		)
+		{
+			\CCrmActivity::SetAutoCompletedByOwner($item->getEntityTypeId(), $item->getId());
+		}
+
+		return $result;
 	}
 }

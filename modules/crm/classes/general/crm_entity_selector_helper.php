@@ -11,6 +11,23 @@ IncludeModuleLangFile(__FILE__);
 
 class CCrmEntitySelectorHelper
 {
+	public static function getIdWithEntityPrefix($id, string $entityName): string
+	{
+		return \CCrmOwnerTypeAbbr::ResolveByTypeName($entityName) . '_' . $id;
+	}
+
+	public static function getHiddenTitle(string $entityName): ?string
+	{
+		$message = Loc::getMessage('CRM_ENT_SEL_HLP_HIDDEN_' . $entityName);
+
+		if (!$message)
+		{
+			$message = Loc::getMessage('CRM_ENT_SEL_HLP_HIDDEN_DYNAMIC');
+		}
+
+		return $message;
+	}
+
 	public static function PrepareEntityInfo($entityTypeName, $entityID, $options = array())
 	{
 		$enableSlider = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled();
@@ -38,6 +55,16 @@ class CCrmEntitySelectorHelper
 			isset($options['IS_HIDDEN'])
 			&& ($options['IS_HIDDEN'] === true || $options['IS_HIDDEN'] === 'Y')
 		);
+
+		$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
+		$serviceUserPermissions = Container::getInstance()->getUserPermissions($userPermissions->GetUserID());
+		if (!$isHidden)
+		{
+			if ($entityTypeId > 0)
+			{
+				$isHidden = !$serviceUserPermissions->checkReadPermissions($entityTypeId, $entityID);
+			}
+		}
 
 		if($isHidden)
 		{
@@ -101,47 +128,256 @@ class CCrmEntitySelectorHelper
 		$permissionsKey = $bEntityEditorFormat ? 'permissions' : 'PERMISSIONS';
 		$canUpdateKey = $bEntityEditorFormat ? 'canUpdate' : 'CAN_UPDATE';
 
-		$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
+		if ($bEntityEditorFormat && $bEntityPrefixEnabled)
+		{
+			$result['id'] = static::getIdWithEntityPrefix($result['id'], $entityTypeName);
+		}
+		if ($isHidden)
+		{
+			$result[$titleKey] = static::getHiddenTitle($entityTypeName);
+			$result[$advancedInfoKey]['hasEditRequisiteData'] = true;
 
+			return $result;
+		}
+		$result[$permissionsKey] = [
+			$canUpdateKey => $serviceUserPermissions->checkUpdatePermissions($entityTypeId, $entityID),
+		];
 		if($entityTypeName === 'CONTACT')
 		{
-			if ($bEntityEditorFormat && $bEntityPrefixEnabled)
-				$result['id'] = 'C_'.$result['id'];
+			$arImages = array();
+			$arLargeImages = array();
+			$contactTypes = CCrmStatus::GetStatusList('CONTACT_TYPE');
 
-			if(!$isHidden && !CCrmContact::CheckReadPermission($entityID))
+			$obRes = CCrmContact::GetListEx(
+				array(),
+				array('=ID'=> $entityID, 'CHECK_PERMISSIONS' => 'N'),
+				false,
+				false,
+				array('HONORIFIC', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'COMPANY_TITLE', 'POST', 'PHOTO', 'TYPE_ID')
+			);
+			if($arRes = $obRes->Fetch())
 			{
-				$isHidden = true;
-			}
+				$photoID = intval($arRes['PHOTO']);
+				if ($photoID > 0 && !isset($arImages[$photoID]))
+				{
+					$arImages[$photoID] = CFile::ResizeImageGet($photoID, array('width' => 25, 'height' => 25), BX_RESIZE_IMAGE_EXACT);
+					$arLargeImages[$photoID] = CFile::ResizeImageGet($photoID, array('width' => 38, 'height' => 38), BX_RESIZE_IMAGE_EXACT);
+				}
+				$result[$titleKey] = CCrmContact::PrepareFormattedName(
+					array(
+						'HONORIFIC' => isset($arRes['HONORIFIC']) ? $arRes['HONORIFIC'] : '',
+						'NAME' => isset($arRes['NAME']) ? $arRes['NAME'] : '',
+						'LAST_NAME' => isset($arRes['LAST_NAME']) ? $arRes['LAST_NAME'] : '',
+						'SECOND_NAME' => isset($arRes['SECOND_NAME']) ? $arRes['SECOND_NAME'] : ''
+					),
+					isset($options['NAME_TEMPLATE']) ? $options['NAME_TEMPLATE'] : ''
+				);
 
-			if($isHidden)
-			{
-				$result[$titleKey] = GetMessage('CRM_ENT_SEL_HLP_HIDDEN_CONTACT');
-				$result[$advancedInfoKey]['hasEditRequisiteData'] = true;
+				$result[$urlKey] = CComponentEngine::MakePathFromTemplate(
+					COption::GetOptionString('crm', $enableSlider ? 'path_to_contact_details' : 'path_to_contact_show'),
+					array(
+						'contact_id' => $entityID
+					)
+				);
+
+				$result[$descKey] = isset($arRes['POST']) && $arRes['POST'] !== ''
+					? $arRes['POST']
+					: (isset($arRes['COMPANY_TITLE']) ? $arRes['COMPANY_TITLE'] : '');
+
+				$result[$imageKey] = isset($arImages[$photoID]['src']) ? $arImages[$photoID]['src'] : '';
+				$result[$largeImageKey] = isset($arLargeImages[$photoID]['src']) ? $arLargeImages[$photoID]['src'] : '';
+
+				// advanced info
+				$advancedInfo = array();
+				if (isset($arRes['TYPE_ID']) && $arRes['TYPE_ID'] != '' && isset($contactTypes[$arRes['TYPE_ID']]))
+				{
+					$advancedInfo[$contactTypeKey] = array(
+						$contactTypeIdKey => $arRes['TYPE_ID'],
+						$contactTypeNameKey => $contactTypes[$arRes['TYPE_ID']]
+					);
+				}
+				if (!empty($advancedInfo))
+					$result[$advancedInfoKey] = $advancedInfo;
+
+				if($requireMultifields)
+				{
+					// advanced info - phone number, e-mail
+					$obRes = CCrmFieldMulti::GetList(array('ID' => 'asc'), array('ENTITY_ID' => 'CONTACT', 'ELEMENT_ID' => $entityID));
+					while($arRes = $obRes->Fetch())
+					{
+						if ($arRes['TYPE_ID'] === 'PHONE'
+							|| $arRes['TYPE_ID'] === 'EMAIL'
+							|| ($arRes['TYPE_ID'] === 'IM' && preg_match('/^imol\|/', $arRes['VALUE']) === 1)
+						)
+						{
+							$formattedValue = $arRes['TYPE_ID'] === 'PHONE'
+								? \Bitrix\Main\PhoneNumber\Parser::getInstance()->parse($arRes['VALUE'])->format()
+								: $arRes['VALUE'];
+
+							if (!is_array($result[$advancedInfoKey]))
+								$result[$advancedInfoKey] = array();
+							if (!is_array($result[$advancedInfoKey][$multiFieldsKey]))
+								$result[$advancedInfoKey][$multiFieldsKey] = array();
+							$result[$advancedInfoKey][$multiFieldsKey][] = array(
+								'ID' => $normalizeMultifields ? $arRes['ID'] : $entityID,
+								'ENTITY_ID' => $normalizeMultifields ? $entityID : $arRes['ID'],
+								'ENTITY_TYPE_NAME' => $entityTypeName,
+								'TYPE_ID' => $arRes['TYPE_ID'],
+								'VALUE_TYPE' => $arRes['VALUE_TYPE'],
+								'VALUE' => $arRes['VALUE'],
+								'VALUE_FORMATTED' => $formattedValue,
+								'COMPLEX_ID' => $arRes['COMPLEX_ID'],
+								'COMPLEX_NAME' => \CCrmFieldMulti::GetEntityNameByComplex($arRes['COMPLEX_ID'], false)
+							);
+						}
+					}
+				}
+
+				if($requireBindings)
+				{
+					$result[$advancedInfoKey][$bindingDataKey][CCrmOwnerType::CompanyName] =
+						\Bitrix\Crm\Binding\ContactCompanyTable::getContactCompanyIDs($entityID);
+				}
+
+				// requisites
+				if ($requireRequisiteData)
+				{
+					$requisiteDataParams =
+						$requireEditRequisiteData ?
+							[
+								'VIEW_FORMATTED' => true,
+								'ADDRESS_AS_JSON' => true,
+							]
+							:
+							[
+								'VIEW_DATA_ONLY' => true
+							];
+
+					$result[$advancedInfoKey][$requisiteDataKey] = self::PrepareRequisiteData(
+						CCrmOwnerType::Contact, $entityID, $requisiteDataParams
+					);
+				}
+				$result[$advancedInfoKey]['hasEditRequisiteData'] = $requireEditRequisiteData;
 			}
 			else
 			{
-				$result[$permissionsKey] = array($canUpdateKey => \CCrmContact::CheckUpdatePermission($entityID, $userPermissions));
+				$result['notFound'] = true;
+			}
+		}
+		elseif($entityTypeName === 'COMPANY')
+		{
+			$arImages = array();
+			$arLargeImages = array();
 
-				$arImages = array();
-				$arLargeImages = array();
-				$contactTypes = CCrmStatus::GetStatusList('CONTACT_TYPE');
+			$arCompanyTypeList = CCrmStatus::GetStatusListEx('COMPANY_TYPE');
+			$arCompanyIndustryList = CCrmStatus::GetStatusListEx('INDUSTRY');
 
-				$obRes = CCrmContact::GetListEx(
-					array(),
-					array('=ID'=> $entityID, 'CHECK_PERMISSIONS' => 'N'),
-					false,
-					false,
-					array('HONORIFIC', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'COMPANY_TITLE', 'POST', 'PHOTO', 'TYPE_ID')
+			$obRes = CCrmCompany::GetListEx(
+				array(),
+				array('=ID'=> $entityID, 'CHECK_PERMISSIONS' => 'N'),
+				false,
+				false,
+				array('TITLE', 'COMPANY_TYPE', 'INDUSTRY', 'LOGO')
+			);
+
+			if($arRes = $obRes->Fetch())
+			{
+				$result[$titleKey] = $arRes['TITLE'];
+
+				$result[$urlKey] = CComponentEngine::MakePathFromTemplate(
+					COption::GetOptionString('crm', $enableSlider ? 'path_to_company_details' : 'path_to_company_show'),
+					array(
+						'company_id' => $entityID
+					)
 				);
-				if($arRes = $obRes->Fetch())
+
+				$arDesc = Array();
+				if (isset($arCompanyTypeList[$arRes['COMPANY_TYPE']]))
+					$arDesc[] = $arCompanyTypeList[$arRes['COMPANY_TYPE']];
+				if (isset($arCompanyIndustryList[$arRes['INDUSTRY']]))
+					$arDesc[] = $arCompanyIndustryList[$arRes['INDUSTRY']];
+				$result[$descKey] = implode(', ', $arDesc);
+
+				$logoID = intval($arRes['LOGO']);
+				if ($logoID > 0 && !isset($arImages[$logoID]))
 				{
-					$photoID = intval($arRes['PHOTO']);
-					if ($photoID > 0 && !isset($arImages[$photoID]))
+					$arImages[$logoID] = CFile::ResizeImageGet($logoID, array('width' => 25, 'height' => 25), BX_RESIZE_IMAGE_EXACT);
+					$arLargeImages[$logoID] = CFile::ResizeImageGet($logoID, array('width' => 38, 'height' => 38), BX_RESIZE_IMAGE_EXACT);
+				}
+				$result[$imageKey] = isset($arImages[$logoID]['src']) ? $arImages[$logoID]['src'] : '';
+				$result[$largeImageKey] = isset($arLargeImages[$logoID]['src']) ? $arLargeImages[$logoID]['src'] : '';
+
+				if($requireMultifields)
+				{
+					// advanced info - phone number, e-mail
+					$obRes = CCrmFieldMulti::GetList(array('ID' => 'asc'), array('ENTITY_ID' => 'COMPANY', 'ELEMENT_ID' => $entityID));
+					while($arRes = $obRes->Fetch())
 					{
-						$arImages[$photoID] = CFile::ResizeImageGet($photoID, array('width' => 25, 'height' => 25), BX_RESIZE_IMAGE_EXACT);
-						$arLargeImages[$photoID] = CFile::ResizeImageGet($photoID, array('width' => 38, 'height' => 38), BX_RESIZE_IMAGE_EXACT);
+						if ($arRes['TYPE_ID'] === 'PHONE' || $arRes['TYPE_ID'] === 'EMAIL')
+						{
+							$formattedValue = $arRes['TYPE_ID'] === 'PHONE'
+								? \Bitrix\Main\PhoneNumber\Parser::getInstance()->parse($arRes['VALUE'])->format()
+								: $arRes['VALUE'];
+
+							if (!is_array($result[$advancedInfoKey]))
+								$result[$advancedInfoKey] = array();
+							if (!is_array($result[$advancedInfoKey][$multiFieldsKey]))
+								$result[$advancedInfoKey][$multiFieldsKey] = array();
+							$result[$advancedInfoKey][$multiFieldsKey][] = array(
+								'ID' => $normalizeMultifields ? $arRes['ID'] : $entityID,
+								'ENTITY_ID' => $normalizeMultifields ? $entityID : $arRes['ID'],
+								'ENTITY_TYPE_NAME' => $entityTypeName,
+								'TYPE_ID' => $arRes['TYPE_ID'],
+								'VALUE_TYPE' => $arRes['VALUE_TYPE'],
+								'VALUE' => $arRes['VALUE'],
+								'VALUE_FORMATTED' => $formattedValue,
+								'COMPLEX_ID' => $arRes['COMPLEX_ID'],
+								'COMPLEX_NAME' => \CCrmFieldMulti::GetEntityNameByComplex($arRes['COMPLEX_ID'], false)
+							);
+						}
 					}
-					$result[$titleKey] = CCrmContact::PrepareFormattedName(
+				}
+			}
+			else
+			{
+				$result['notFound'] = true;
+			}
+
+			// requisites
+			if ($requireRequisiteData)
+			{
+				$requisiteDataParams =
+					$requireEditRequisiteData ?
+					[
+						'VIEW_FORMATTED' => true,
+						'ADDRESS_AS_JSON' => true,
+					]
+					:
+					[
+						'VIEW_DATA_ONLY' => true
+					];
+
+				$result[$advancedInfoKey][$requisiteDataKey] = self::PrepareRequisiteData(
+					CCrmOwnerType::Company, $entityID, $requisiteDataParams
+				);
+			}
+			$result[$advancedInfoKey]['hasEditRequisiteData'] = $requireEditRequisiteData;
+		}
+		elseif($entityTypeName === 'LEAD')
+		{
+			$obRes = CCrmLead::GetListEx(
+				array(),
+				array('=ID'=> $entityID),
+				false,
+				false,
+				array('TITLE', 'HONORIFIC', 'NAME', 'SECOND_NAME', 'LAST_NAME')
+			);
+			if($arRes = $obRes->Fetch())
+			{
+				$result[$titleKey] = isset($arRes['TITLE']) ? $arRes['TITLE'] : '';
+				if($result[$titleKey] === '')
+				{
+					$result[$titleKey] = CCrmLead::PrepareFormattedName(
 						array(
 							'HONORIFIC' => isset($arRes['HONORIFIC']) ? $arRes['HONORIFIC'] : '',
 							'NAME' => isset($arRes['NAME']) ? $arRes['NAME'] : '',
@@ -150,467 +386,166 @@ class CCrmEntitySelectorHelper
 						),
 						isset($options['NAME_TEMPLATE']) ? $options['NAME_TEMPLATE'] : ''
 					);
+				}
 
-					$result[$urlKey] = CComponentEngine::MakePathFromTemplate(
-						COption::GetOptionString('crm', $enableSlider ? 'path_to_contact_details' : 'path_to_contact_show'),
-						array(
-							'contact_id' => $entityID
-						)
-					);
+				$result[$urlKey] = CComponentEngine::MakePathFromTemplate(
+					COption::GetOptionString('crm', $enableSlider ? 'path_to_lead_details' : 'path_to_lead_show'),
+					array(
+						'lead_id' => $entityID
+					)
+				);
 
-					$result[$descKey] = isset($arRes['POST']) && $arRes['POST'] !== ''
-						? $arRes['POST']
-						: (isset($arRes['COMPANY_TITLE']) ? $arRes['COMPANY_TITLE'] : '');
+				$result[$descKey] = CCrmLead::PrepareFormattedName(
+					array(
+						'HONORIFIC' => isset($arRes['HONORIFIC']) ? $arRes['HONORIFIC'] : '',
+						'NAME' => isset($arRes['NAME']) ? $arRes['NAME'] : '',
+						'SECOND_NAME' => isset($arRes['SECOND_NAME']) ? $arRes['SECOND_NAME'] : '',
+						'LAST_NAME' => isset($arRes['LAST_NAME']) ? $arRes['LAST_NAME'] : ''
+					)
+				);
 
-					$result[$imageKey] = isset($arImages[$photoID]['src']) ? $arImages[$photoID]['src'] : '';
-					$result[$largeImageKey] = isset($arLargeImages[$photoID]['src']) ? $arLargeImages[$photoID]['src'] : '';
-
-					// advanced info
-					$advancedInfo = array();
-					if (isset($arRes['TYPE_ID']) && $arRes['TYPE_ID'] != '' && isset($contactTypes[$arRes['TYPE_ID']]))
+				if($requireMultifields)
+				{
+					// advanced info - phone number, e-mail
+					$obRes = CCrmFieldMulti::GetList(array('ID' => 'asc'), array('ENTITY_ID' => 'LEAD', 'ELEMENT_ID' => $entityID));
+					while($arRes = $obRes->Fetch())
 					{
-						$advancedInfo[$contactTypeKey] = array(
-							$contactTypeIdKey => $arRes['TYPE_ID'],
-							$contactTypeNameKey => $contactTypes[$arRes['TYPE_ID']]
-						);
-					}
-					if (!empty($advancedInfo))
-						$result[$advancedInfoKey] = $advancedInfo;
-
-					if($requireMultifields)
-					{
-						// advanced info - phone number, e-mail
-						$obRes = CCrmFieldMulti::GetList(array('ID' => 'asc'), array('ENTITY_ID' => 'CONTACT', 'ELEMENT_ID' => $entityID));
-						while($arRes = $obRes->Fetch())
+						if ($arRes['TYPE_ID'] === 'PHONE' || $arRes['TYPE_ID'] === 'EMAIL')
 						{
-							if ($arRes['TYPE_ID'] === 'PHONE'
-								|| $arRes['TYPE_ID'] === 'EMAIL'
-								|| ($arRes['TYPE_ID'] === 'IM' && preg_match('/^imol\|/', $arRes['VALUE']) === 1)
-							)
-							{
-								$formattedValue = $arRes['TYPE_ID'] === 'PHONE'
-									? \Bitrix\Main\PhoneNumber\Parser::getInstance()->parse($arRes['VALUE'])->format()
-									: $arRes['VALUE'];
+							$formattedValue = $arRes['TYPE_ID'] === 'PHONE'
+								? \Bitrix\Main\PhoneNumber\Parser::getInstance()->parse($arRes['VALUE'])->format()
+								: $arRes['VALUE'];
 
-								if (!is_array($result[$advancedInfoKey]))
-									$result[$advancedInfoKey] = array();
-								if (!is_array($result[$advancedInfoKey][$multiFieldsKey]))
-									$result[$advancedInfoKey][$multiFieldsKey] = array();
-								$result[$advancedInfoKey][$multiFieldsKey][] = array(
-									'ID' => $normalizeMultifields ? $arRes['ID'] : $entityID,
-									'ENTITY_ID' => $normalizeMultifields ? $entityID : $arRes['ID'],
-									'ENTITY_TYPE_NAME' => $entityTypeName,
-									'TYPE_ID' => $arRes['TYPE_ID'],
-									'VALUE_TYPE' => $arRes['VALUE_TYPE'],
-									'VALUE' => $arRes['VALUE'],
-									'VALUE_FORMATTED' => $formattedValue,
-									'COMPLEX_ID' => $arRes['COMPLEX_ID'],
-									'COMPLEX_NAME' => \CCrmFieldMulti::GetEntityNameByComplex($arRes['COMPLEX_ID'], false)
-								);
-							}
+							if (!is_array($result[$advancedInfoKey]))
+								$result[$advancedInfoKey] = array();
+							if (!is_array($result[$advancedInfoKey][$multiFieldsKey]))
+								$result[$advancedInfoKey][$multiFieldsKey] = array();
+							$result[$advancedInfoKey][$multiFieldsKey][] = array(
+								'ID' => $normalizeMultifields ? $arRes['ID'] : $entityID,
+								'ENTITY_ID' => $normalizeMultifields ? $entityID : $arRes['ID'],
+								'ENTITY_TYPE_NAME' => $entityTypeName,
+								'TYPE_ID' => $arRes['TYPE_ID'],
+								'VALUE_TYPE' => $arRes['VALUE_TYPE'],
+								'VALUE' => $arRes['VALUE'],
+								'VALUE_FORMATTED' => $formattedValue,
+								'COMPLEX_ID' => $arRes['COMPLEX_ID'],
+								'COMPLEX_NAME' => \CCrmFieldMulti::GetEntityNameByComplex($arRes['COMPLEX_ID'], false)
+							);
 						}
 					}
-
-					if($requireBindings)
-					{
-						$result[$advancedInfoKey][$bindingDataKey][CCrmOwnerType::CompanyName] =
-							\Bitrix\Crm\Binding\ContactCompanyTable::getContactCompanyIDs($entityID);
-					}
-
-					// requisites
-					if ($requireRequisiteData)
-					{
-						$requisiteDataParams =
-							$requireEditRequisiteData ?
-								[
-									'VIEW_FORMATTED' => true,
-									'ADDRESS_AS_JSON' => true,
-								]
-								:
-								[
-									'VIEW_DATA_ONLY' => true
-								];
-
-						$result[$advancedInfoKey][$requisiteDataKey] = self::PrepareRequisiteData(
-							CCrmOwnerType::Contact, $entityID, $requisiteDataParams
-						);
-					}
-					$result[$advancedInfoKey]['hasEditRequisiteData'] = $requireEditRequisiteData;
 				}
-				else
-				{
-					$result['notFound'] = true;
-				}
-			}
-		}
-		elseif($entityTypeName === 'COMPANY')
-		{
-			if ($bEntityEditorFormat && $bEntityPrefixEnabled)
-				$result['id'] = 'CO_'.$result['id'];
-
-			if(!$isHidden && !CCrmCompany::CheckReadPermission($entityID))
-			{
-				$isHidden = true;
-			}
-
-			if($isHidden)
-			{
-				$result[$titleKey] = GetMessage('CRM_ENT_SEL_HLP_HIDDEN_COMPANY');
-				$result[$advancedInfoKey]['hasEditRequisiteData'] = true;
 			}
 			else
 			{
-				$result[$permissionsKey] = array($canUpdateKey => \CCrmCompany::CheckUpdatePermission($entityID, $userPermissions));
-
-				$arImages = array();
-				$arLargeImages = array();
-
-				$arCompanyTypeList = CCrmStatus::GetStatusListEx('COMPANY_TYPE');
-				$arCompanyIndustryList = CCrmStatus::GetStatusListEx('INDUSTRY');
-
-				$obRes = CCrmCompany::GetListEx(
-					array(),
-					array('=ID'=> $entityID, 'CHECK_PERMISSIONS' => 'N'),
-					false,
-					false,
-					array('TITLE', 'COMPANY_TYPE', 'INDUSTRY', 'LOGO')
-				);
-
-				if($arRes = $obRes->Fetch())
-				{
-					$result[$titleKey] = $arRes['TITLE'];
-
-					$result[$urlKey] = CComponentEngine::MakePathFromTemplate(
-						COption::GetOptionString('crm', $enableSlider ? 'path_to_company_details' : 'path_to_company_show'),
-						array(
-							'company_id' => $entityID
-						)
-					);
-
-					$arDesc = Array();
-					if (isset($arCompanyTypeList[$arRes['COMPANY_TYPE']]))
-						$arDesc[] = $arCompanyTypeList[$arRes['COMPANY_TYPE']];
-					if (isset($arCompanyIndustryList[$arRes['INDUSTRY']]))
-						$arDesc[] = $arCompanyIndustryList[$arRes['INDUSTRY']];
-					$result[$descKey] = implode(', ', $arDesc);
-
-					$logoID = intval($arRes['LOGO']);
-					if ($logoID > 0 && !isset($arImages[$logoID]))
-					{
-						$arImages[$logoID] = CFile::ResizeImageGet($logoID, array('width' => 25, 'height' => 25), BX_RESIZE_IMAGE_EXACT);
-						$arLargeImages[$logoID] = CFile::ResizeImageGet($logoID, array('width' => 38, 'height' => 38), BX_RESIZE_IMAGE_EXACT);
-					}
-					$result[$imageKey] = isset($arImages[$logoID]['src']) ? $arImages[$logoID]['src'] : '';
-					$result[$largeImageKey] = isset($arLargeImages[$logoID]['src']) ? $arLargeImages[$logoID]['src'] : '';
-
-					if($requireMultifields)
-					{
-						// advanced info - phone number, e-mail
-						$obRes = CCrmFieldMulti::GetList(array('ID' => 'asc'), array('ENTITY_ID' => 'COMPANY', 'ELEMENT_ID' => $entityID));
-						while($arRes = $obRes->Fetch())
-						{
-							if ($arRes['TYPE_ID'] === 'PHONE' || $arRes['TYPE_ID'] === 'EMAIL')
-							{
-								$formattedValue = $arRes['TYPE_ID'] === 'PHONE'
-									? \Bitrix\Main\PhoneNumber\Parser::getInstance()->parse($arRes['VALUE'])->format()
-									: $arRes['VALUE'];
-
-								if (!is_array($result[$advancedInfoKey]))
-									$result[$advancedInfoKey] = array();
-								if (!is_array($result[$advancedInfoKey][$multiFieldsKey]))
-									$result[$advancedInfoKey][$multiFieldsKey] = array();
-								$result[$advancedInfoKey][$multiFieldsKey][] = array(
-									'ID' => $normalizeMultifields ? $arRes['ID'] : $entityID,
-									'ENTITY_ID' => $normalizeMultifields ? $entityID : $arRes['ID'],
-									'ENTITY_TYPE_NAME' => $entityTypeName,
-									'TYPE_ID' => $arRes['TYPE_ID'],
-									'VALUE_TYPE' => $arRes['VALUE_TYPE'],
-									'VALUE' => $arRes['VALUE'],
-									'VALUE_FORMATTED' => $formattedValue,
-									'COMPLEX_ID' => $arRes['COMPLEX_ID'],
-									'COMPLEX_NAME' => \CCrmFieldMulti::GetEntityNameByComplex($arRes['COMPLEX_ID'], false)
-								);
-							}
-						}
-					}
-				}
-				else
-				{
-					$result['notFound'] = true;
-				}
-
-				// requisites
-				if ($requireRequisiteData)
-				{
-					$requisiteDataParams =
-						$requireEditRequisiteData ?
-						[
-							'VIEW_FORMATTED' => true,
-							'ADDRESS_AS_JSON' => true,
-						]
-						:
-						[
-							'VIEW_DATA_ONLY' => true
-						];
-
-					$result[$advancedInfoKey][$requisiteDataKey] = self::PrepareRequisiteData(
-						CCrmOwnerType::Company, $entityID, $requisiteDataParams
-					);
-				}
-				$result[$advancedInfoKey]['hasEditRequisiteData'] = $requireEditRequisiteData;
-			}
-		}
-		elseif($entityTypeName === 'LEAD')
-		{
-			if ($bEntityEditorFormat && $bEntityPrefixEnabled)
-				$result['id'] = 'L_'.$result['id'];
-
-			if($isHidden)
-			{
-				$result[$titleKey] = GetMessage('CRM_ENT_SEL_HLP_HIDDEN_LEAD');
-			}
-			else
-			{
-				$result[$permissionsKey] = array($canUpdateKey => \CCrmLead::CheckUpdatePermission($entityID, $userPermissions));
-
-				$obRes = CCrmLead::GetListEx(
-					array(),
-					array('=ID'=> $entityID),
-					false,
-					false,
-					array('TITLE', 'HONORIFIC', 'NAME', 'SECOND_NAME', 'LAST_NAME')
-				);
-				if($arRes = $obRes->Fetch())
-				{
-					$result[$titleKey] = isset($arRes['TITLE']) ? $arRes['TITLE'] : '';
-					if($result[$titleKey] === '')
-					{
-						$result[$titleKey] = CCrmLead::PrepareFormattedName(
-							array(
-								'HONORIFIC' => isset($arRes['HONORIFIC']) ? $arRes['HONORIFIC'] : '',
-								'NAME' => isset($arRes['NAME']) ? $arRes['NAME'] : '',
-								'LAST_NAME' => isset($arRes['LAST_NAME']) ? $arRes['LAST_NAME'] : '',
-								'SECOND_NAME' => isset($arRes['SECOND_NAME']) ? $arRes['SECOND_NAME'] : ''
-							),
-							isset($options['NAME_TEMPLATE']) ? $options['NAME_TEMPLATE'] : ''
-						);
-					}
-
-					$result[$urlKey] = CComponentEngine::MakePathFromTemplate(
-						COption::GetOptionString('crm', $enableSlider ? 'path_to_lead_details' : 'path_to_lead_show'),
-						array(
-							'lead_id' => $entityID
-						)
-					);
-
-					$result[$descKey] = CCrmLead::PrepareFormattedName(
-						array(
-							'HONORIFIC' => isset($arRes['HONORIFIC']) ? $arRes['HONORIFIC'] : '',
-							'NAME' => isset($arRes['NAME']) ? $arRes['NAME'] : '',
-							'SECOND_NAME' => isset($arRes['SECOND_NAME']) ? $arRes['SECOND_NAME'] : '',
-							'LAST_NAME' => isset($arRes['LAST_NAME']) ? $arRes['LAST_NAME'] : ''
-						)
-					);
-
-					if($requireMultifields)
-					{
-						// advanced info - phone number, e-mail
-						$obRes = CCrmFieldMulti::GetList(array('ID' => 'asc'), array('ENTITY_ID' => 'LEAD', 'ELEMENT_ID' => $entityID));
-						while($arRes = $obRes->Fetch())
-						{
-							if ($arRes['TYPE_ID'] === 'PHONE' || $arRes['TYPE_ID'] === 'EMAIL')
-							{
-								$formattedValue = $arRes['TYPE_ID'] === 'PHONE'
-									? \Bitrix\Main\PhoneNumber\Parser::getInstance()->parse($arRes['VALUE'])->format()
-									: $arRes['VALUE'];
-
-								if (!is_array($result[$advancedInfoKey]))
-									$result[$advancedInfoKey] = array();
-								if (!is_array($result[$advancedInfoKey][$multiFieldsKey]))
-									$result[$advancedInfoKey][$multiFieldsKey] = array();
-								$result[$advancedInfoKey][$multiFieldsKey][] = array(
-									'ID' => $normalizeMultifields ? $arRes['ID'] : $entityID,
-									'ENTITY_ID' => $normalizeMultifields ? $entityID : $arRes['ID'],
-									'ENTITY_TYPE_NAME' => $entityTypeName,
-									'TYPE_ID' => $arRes['TYPE_ID'],
-									'VALUE_TYPE' => $arRes['VALUE_TYPE'],
-									'VALUE' => $arRes['VALUE'],
-									'VALUE_FORMATTED' => $formattedValue,
-									'COMPLEX_ID' => $arRes['COMPLEX_ID'],
-									'COMPLEX_NAME' => \CCrmFieldMulti::GetEntityNameByComplex($arRes['COMPLEX_ID'], false)
-								);
-							}
-						}
-					}
-				}
-				else
-				{
-					$result['notFound'] = true;
-				}
+				$result['notFound'] = true;
 			}
 		}
 		elseif($entityTypeName === 'DEAL')
 		{
-			if ($bEntityEditorFormat && $bEntityPrefixEnabled)
-				$result['id'] = 'D_'.$result['id'];
-
-			if($isHidden)
+			$obRes = CCrmDeal::GetListEx(
+				array(),
+				array('=ID'=> $entityID),
+				false,
+				false,
+				array('TITLE', 'COMPANY_TITLE', 'CONTACT_FULL_NAME')
+			);
+			if($arRes = $obRes->Fetch())
 			{
-				$result[$titleKey] = GetMessage('CRM_ENT_SEL_HLP_HIDDEN_DEAL');
+				$result[$titleKey] = $arRes['TITLE'];
+
+				$result[$urlKey] = CComponentEngine::MakePathFromTemplate(
+					COption::GetOptionString('crm', $enableSlider ? 'path_to_deal_details' : 'path_to_deal_show'),
+					array(
+						'deal_id' => $entityID
+					)
+				);
+
+				$clientTitle = (!empty($arRes['COMPANY_TITLE'])) ? $arRes['COMPANY_TITLE'] : '';
+				$clientTitle .= (($clientTitle !== '' && !empty($arRes['CONTACT_FULL_NAME'])) ? ', ' : '').
+					$arRes['CONTACT_FULL_NAME'];
+				$result[$descKey] = $clientTitle;
 			}
 			else
 			{
-				$result[$permissionsKey] = array($canUpdateKey => \CCrmDeal::CheckUpdatePermission($entityID, $userPermissions));
-
-				$obRes = CCrmDeal::GetListEx(
-					array(),
-					array('=ID'=> $entityID),
-					false,
-					false,
-					array('TITLE', 'COMPANY_TITLE', 'CONTACT_FULL_NAME')
-				);
-				if($arRes = $obRes->Fetch())
-				{
-					$result[$titleKey] = $arRes['TITLE'];
-
-					$result[$urlKey] = CComponentEngine::MakePathFromTemplate(
-						COption::GetOptionString('crm', $enableSlider ? 'path_to_deal_details' : 'path_to_deal_show'),
-						array(
-							'deal_id' => $entityID
-						)
-					);
-
-					$clientTitle = (!empty($arRes['COMPANY_TITLE'])) ? $arRes['COMPANY_TITLE'] : '';
-					$clientTitle .= (($clientTitle !== '' && !empty($arRes['CONTACT_FULL_NAME'])) ? ', ' : '').
-						$arRes['CONTACT_FULL_NAME'];
-					$result[$descKey] = $clientTitle;
-				}
-				else
-				{
-					$result['notFound'] = true;
-				}
+				$result['notFound'] = true;
 			}
 		}
 		elseif($entityTypeName === 'QUOTE')
 		{
-			if ($bEntityEditorFormat && $bEntityPrefixEnabled)
-				$result['id'] = 'Q_'.$result['id'];
-
-			if($isHidden)
+			$obRes = CCrmQuote::GetList(
+				array(), array('=ID'=> $entityID), false, false,
+				array('QUOTE_NUMBER', 'TITLE', 'COMPANY_TITLE', 'CONTACT_FULL_NAME')
+			);
+			if($arRes = $obRes->Fetch())
 			{
-				$result[$titleKey] = GetMessage('CRM_ENT_SEL_HLP_HIDDEN_QUOTE');
+				$result[$titleKey] = empty($arRes['TITLE']) ? $arRes['QUOTE_NUMBER'] : $arRes['QUOTE_NUMBER'].' - '.$arRes['TITLE'];
+
+				$result[$urlKey] = Container::getInstance()->getRouter()->getItemDetailUrl(\CCrmOwnerType::Quote, $entityID);
+
+				$clientTitle = (!empty($arRes['COMPANY_TITLE'])) ? $arRes['COMPANY_TITLE'] : '';
+				$clientTitle .= (($clientTitle !== '' && !empty($arRes['CONTACT_FULL_NAME'])) ? ', ' : '').$arRes['CONTACT_FULL_NAME'];
+				$result[$descKey] = $clientTitle;
 			}
 			else
 			{
-				$result[$permissionsKey] = array($canUpdateKey => \CCrmQuote::CheckUpdatePermission($entityID, $userPermissions));
-
-				$obRes = CCrmQuote::GetList(
-					array(), array('=ID'=> $entityID), false, false,
-					array('QUOTE_NUMBER', 'TITLE', 'COMPANY_TITLE', 'CONTACT_FULL_NAME')
-				);
-				if($arRes = $obRes->Fetch())
-				{
-					$result[$titleKey] = empty($arRes['TITLE']) ? $arRes['QUOTE_NUMBER'] : $arRes['QUOTE_NUMBER'].' - '.$arRes['TITLE'];
-
-					$result[$urlKey] = Container::getInstance()->getRouter()->getItemDetailUrl(\CCrmOwnerType::Quote, $entityID);
-
-					$clientTitle = (!empty($arRes['COMPANY_TITLE'])) ? $arRes['COMPANY_TITLE'] : '';
-					$clientTitle .= (($clientTitle !== '' && !empty($arRes['CONTACT_FULL_NAME'])) ? ', ' : '').$arRes['CONTACT_FULL_NAME'];
-					$result[$descKey] = $clientTitle;
-				}
-				else
-				{
-					$result['notFound'] = true;
-				}
+				$result['notFound'] = true;
 			}
 		}
 		elseif($entityTypeName === 'ORDER')
 		{
-			if ($bEntityEditorFormat && $bEntityPrefixEnabled)
-				$result['id'] = 'O_'.$result['id'];
+			$order = Order::getList([
+				'select' => ['ID', 'ACCOUNT_NUMBER'],
+				'filter' => [
+					'=ID'=> $entityID,
+				],
+			])->fetchRaw();
 
-			if($isHidden)
+			if ($order)
 			{
-				$result[$titleKey] = Loc::getMessage('CRM_ENT_SEL_HLP_HIDDEN_ORDER');
+				$result[$titleKey] = Loc::getMessage(
+					'CRM_ENT_SEL_HLP_ORDER_SUMMARY',
+					[
+						'#ORDER_NUMBER#' => (
+							isset($order['ACCOUNT_NUMBER'])
+							? htmlspecialcharsbx($order['ACCOUNT_NUMBER'])
+							: $order['ID']
+						),
+					]
+				);
+				$result[$urlKey] = CComponentEngine::MakePathFromTemplate(
+					COption::GetOptionString('crm', 'path_to_order_details'),
+					[
+						'order_id' => $entityID,
+					]
+				);
 			}
 			else
 			{
-				$result[$permissionsKey] = [
-					$canUpdateKey => EntityAuthorization::checkUpdatePermission(
-						\CCrmOwnerType::Order, $entityID, $userPermissions
-					),
-				];
-
-				$order = Order::getList([
-					'select' => ['ID', 'ACCOUNT_NUMBER'],
-					'filter' => [
-						'=ID'=> $entityID,
-					],
-				])->fetchRaw();
-
-				if ($order)
-				{
-					$result[$titleKey] = Loc::getMessage(
-						'CRM_ENT_SEL_HLP_ORDER_SUMMARY',
-						[
-							'#ORDER_NUMBER#' => (
-								isset($order['ACCOUNT_NUMBER'])
-								? htmlspecialcharsbx($order['ACCOUNT_NUMBER'])
-								: $order['ID']
-							),
-						]
-					);
-					$result[$urlKey] = CComponentEngine::MakePathFromTemplate(
-						COption::GetOptionString('crm', 'path_to_order_details'),
-						[
-							'order_id' => $entityID,
-						]
-					);
-				}
-				else
-				{
-					$result['notFound'] = true;
-				}
+				$result['notFound'] = true;
 			}
 		}
-		elseif(\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		elseif(\CCrmOwnerType::isUseFactoryBasedApproach($entityTypeId))
 		{
-			if ($bEntityEditorFormat && $bEntityPrefixEnabled)
+			$factory = Container::getInstance()->getFactory($entityTypeId);
+			if (!$factory)
 			{
-				$result['id'] = 'DY_' . $entityTypeId . '-' . $result['id'];
+				return $result;
 			}
 
-			if($isHidden)
+			$item = $factory->getItem($entityID);
+
+			if (!$item)
 			{
-				$result[$titleKey] = GetMessage('CRM_ENT_SEL_HLP_HIDDEN_DYNAMIC');
+				$result['notFound'] = true;
+				return $result;
 			}
-			else
-			{
-				$factory = Container::getInstance()->getFactory($entityTypeId);
-				if (!$factory)
-				{
-					return $result;
-				}
 
-				$item = $factory->getItem($entityID);
+			$result[$titleKey] = $item->getHeading();
 
-				if (!$item)
-				{
-					$result['notFound'] = true;
-					return $result;
-				}
-
-				$result[$permissionsKey] = [
-					$canUpdateKey => Container::getInstance()->getUserPermissions()->canUpdateItem($item),
-				];
-
-				$result[$titleKey] = $item->getTitle();
-
-				$result[$urlKey] = Container::getInstance()
-					->getRouter()
-					->getItemDetailUrl($entityTypeId, $entityID)
-				;
-			}
+			$result[$urlKey] = Container::getInstance()
+				->getRouter()
+				->getItemDetailUrl($entityTypeId, $entityID)
+			;
 		}
 
 		return $result;
@@ -660,7 +595,7 @@ class CCrmEntitySelectorHelper
 
 			if($typeName === 'CONTACT')
 			{
-				$entityIDs = CCrmContact::GetTopIDs($count, 'DESC', $userPermissions);
+				$entityIDs = CCrmContact::GetTopIDsInCategory(0, $count, 'DESC', $userPermissions);
 				if(!empty($entityIDs))
 				{
 					$contactTypes = CCrmStatus::GetStatusList('CONTACT_TYPE');
@@ -760,13 +695,13 @@ class CCrmEntitySelectorHelper
 			{
 				if(empty($companiesFilter))
 				{
-					$entityIDs = CCrmCompany::GetTopIDs($count, 'DESC', $userPermissions);
+					$entityIDs = CCrmCompany::GetTopIDsInCategory(0, $count, 'DESC', $userPermissions);
 				}
 				else
 				{
 					$dbResult = CCrmCompany::GetListEx(
 						array('ID' => 'DESC'),
-						$companiesFilter,
+						array_merge($companiesFilter, ['@CATEGORY_ID' => 0,]),
 						false,
 						array('nTopCount' => $count),
 						array('ID')

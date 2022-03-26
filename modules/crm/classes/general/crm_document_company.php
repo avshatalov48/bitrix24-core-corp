@@ -405,7 +405,11 @@ class CCrmDocumentCompany extends CCrmDocument implements IBPWorkflowDocument
 		$ID = $CCrmEntity->Add(
 			$arFields,
 			true,
-			array('REGISTER_SONET_EVENT' => true, 'CURRENT_USER' => static::getSystemUserId())
+			[
+				'DISABLE_USER_FIELD_CHECK' => true,
+				'REGISTER_SONET_EVENT' => true,
+				'CURRENT_USER' => static::getSystemUserId(),
+			]
 		);
 
 		if ($ID <= 0)
@@ -677,5 +681,10 @@ class CCrmDocumentCompany extends CCrmDocument implements IBPWorkflowDocument
 			CCrmOwnerType::CompanyName,
 			CCrmOwnerTypeAbbr::Company
 		);
+	}
+
+	public static function createAutomationTarget($documentType)
+	{
+		return Crm\Automation\Factory::createTarget(\CCrmOwnerType::Company);
 	}
 }

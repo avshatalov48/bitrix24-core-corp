@@ -8,4 +8,5 @@ $MESS["TASKS_MARK_NONE"] = "Нет оценки";
 $MESS["TASKS_MARK_P"] = "Положительная";
 $MESS["TASKS_MARK_N"] = "Отрицательная";
 $MESS["TASKS_DOUBLE_CLICK"] = "Двойной щелчок - Просмотреть";
+$MESS["TASKS_GANTT_RESULT_REQUIRED"] = "Постановщик запросил результат работы.<br> Оставьте комментарий к задаче и отметьте его как отчет.";
 ?>

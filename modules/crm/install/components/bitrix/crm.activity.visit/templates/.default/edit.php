@@ -54,21 +54,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 							</div>
 						</div>
 					</div><!--crm-activity-visit-sidebar-photo-button-->
-					<div class="crm-activity-visit-sidebar-social crm-activity-visit-block-disable" data-role="faceid-social">
-						<div class="crm-activity-visit-sidebar-social-inner">
-							<div class="crm-activity-visit-sidebar-social-item">
-								<div class="crm-activity-visit-main-user-info-control-social">
-									<div class="crm-activity-visit-hidden" data-role="faceid-vk-profile">
-										<span class="crm-activity-visit-main-user-info-control-social-name"><?=GetMessage('CRM_ACTIVITY_VISIT_VK')?></span>
-										<a href="#" class="crm-activity-visit-main-user-info-control-social-item" target="_blank" data-role="faceid-vk-profile-link">VK.com/userprofile</a>
-									</div>
-									<span class="crm-activity-visit-main-user-info-control-social-item" data-role="faceid-button-search-social">
-										<?=GetMessage('CRM_ACTIVITY_VISIT_SEARCH_VK')?>
-									</span>
-								</div>
-							</div>
-						</div>
-					</div><!--crm-activity-visit-sidebar-social-->
 				</div><!--crm-activity-visit-faceid-inner-->
 			</div><!--crm-activity-visit-faceid-container-->
 		<? endif ?>

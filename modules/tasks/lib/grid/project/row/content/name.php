@@ -2,6 +2,7 @@
 
 namespace Bitrix\Tasks\Grid\Project\Row\Content;
 
+use Bitrix\Main\Loader;
 use Bitrix\Tasks\Grid\Project\Row\Content;
 use Bitrix\Tasks\UI;
 
@@ -21,9 +22,28 @@ class Name extends Content
 
 		$photo = ($row['IMAGE'] ? "<i style='background-image: url(\"{$row['IMAGE']}\")'></i>" : "<i></i>");
 
+		$iconClassList = [
+			'tasks-projects-icon',
+		];
+
+		if (
+			!$row['IMAGE']
+			&& !empty($row['AVATAR_TYPE'])
+			&& Loader::includeModule('socialnetwork')
+		)
+		{
+			$iconClassList[] = 'sonet-common-workgroup-avatar';
+			$iconClassList[] = '--' . htmlspecialcharsbx(\Bitrix\Socialnetwork\Helper\Workgroup::getAvatarTypeWebCssClass($row['AVATAR_TYPE']));
+		}
+		else
+		{
+			$iconClassList[] = 'ui-icon';
+			$iconClassList[] = 'ui-icon-common-user-group';
+		}
+
 		return "
 			<div class='tasks-projects-box'>
-				<div class='ui-icon ui-icon-common-user-group tasks-projects-icon'>$photo</div>
+				<div class='" . implode(' ', $iconClassList) . "'>$photo</div>
 				<a
 					class='tasks-projects-text'
 					href='{$path}'

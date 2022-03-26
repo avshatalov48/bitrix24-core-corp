@@ -176,11 +176,7 @@
 			});
 
 			let buttons = [];
-			if (Application.getPlatform() !== "ios")
-			{
-				buttons.push({type: "search", callback: () => menu.showSearchBar()});
-			}
-
+			buttons.push({type: "search", callback: () => menu.showSearchBar()});
 			buttons.push({type: "more", callback: () => this.popup.show()});
 			menu.setRightButtons(buttons);
 		},

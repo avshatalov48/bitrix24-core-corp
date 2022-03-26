@@ -47,7 +47,7 @@ class WebFormSettings
 	 */
 	public function getEditorId()
 	{
-		return $this->editor->get();
+		return self::EditorLanding;
 	}
 
 	/**
@@ -57,7 +57,7 @@ class WebFormSettings
 	 */
 	public function isNewEditorEnabled()
 	{
-		return $this->editor->get() === self::EditorLanding;
+		return true;
 	}
 
 	/**

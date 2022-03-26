@@ -45,8 +45,8 @@ class Helper
 		$row = PhoneTable::getList(array(
 			'select' => array('USER_ID'),
 			'filter' => array(
-				'PHONE_NUMBER' => $phoneNumber,
-				'PHONE_MNEMONIC' => 'UF_PHONE_INNER',
+				'=PHONE_NUMBER' => $phoneNumber,
+				'=PHONE_MNEMONIC' => 'UF_PHONE_INNER',
 				'=USER.ACTIVE' => 'Y',
 				'=USER.IS_REAL_USER' => 'Y'
 			)
@@ -757,7 +757,7 @@ class Helper
 				'DEFAULT_MENU_NAME' => 'REST_APP.LANG_DEFAULT.MENU_NAME'
 			),
 			'filter' => array(
-				'EVENT_NAME' => $eventName
+				'=EVENT_NAME' => $eventName
 			)
 		));
 

@@ -415,4 +415,75 @@ if(typeof BX.Crm.QuoteModel === "undefined")
 		return self;
 	};
 }
+
+if(typeof BX.Crm.SmartInvoiceModel === "undefined")
+{
+	/**
+	 * @extends BX.Crm.FactoryBasedModel
+	 * @memberOf BX.Crm
+	 * @constructor
+	 */
+	BX.Crm.SmartInvoiceModel = function()
+	{
+		BX.Crm.SmartInvoiceModel.superclass.constructor.apply(this);
+	};
+
+	BX.extend(BX.Crm.SmartInvoiceModel, BX.Crm.FactoryBasedModel);
+
+	/**
+	 * @return {boolean}
+	 */
+	BX.Crm.SmartInvoiceModel.prototype.isCaptionEditable = function()
+	{
+		return false;
+	};
+
+	/**
+	 * Quote caption and quote TITLE field are separate entities and should not be confused
+	 *
+	 * @return {string}
+	 */
+	BX.Crm.SmartInvoiceModel.prototype.getCaption = function()
+	{
+		var caption = BX.Loc.getMessage(
+			'CRM_SMART_INVOICE_TITLE',
+			{
+				'#NUMBER#': this.getField('ACCOUNT_NUMBER'),
+				'#BEGINDATE#': this.getField('BEGINDATE')
+			}
+		);
+
+		return BX.Type.isString(caption) ? caption : '';
+	};
+
+	/**
+	 * You can't change smart invoice caption
+	 *
+	 * @param {string} caption
+	 */
+	BX.Crm.SmartInvoiceModel.prototype.setCaption = function(caption)
+	{
+	};
+
+	/**
+	 * You can't change smart invoice caption
+	 *
+	 * @param {Object} data
+	 */
+	BX.Crm.SmartInvoiceModel.prototype.prepareCaptionData = function(data)
+	{
+	};
+
+	/**
+	 * @param {string} id
+	 * @param {Object} settings
+	 * @return {BX.Crm.QuoteModel}
+	 */
+	BX.Crm.SmartInvoiceModel.create = function(id, settings)
+	{
+		var self = new BX.Crm.SmartInvoiceModel();
+		self.initialize(id, settings);
+		return self;
+	};
+}
 //endregion

@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Category\Entity;
 
 use Bitrix\Crm\Entry\EntryException;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Error;
 use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\Result;
@@ -96,6 +97,7 @@ class DealCategory extends Category
 		try
 		{
 			\Bitrix\Crm\Category\DealCategory::delete($this->getId());
+			Container::getInstance()->getFactory($this->getEntityTypeId())->clearCategoriesCache();
 		}
 		catch (EntryException $exception)
 		{

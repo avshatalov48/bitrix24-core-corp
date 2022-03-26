@@ -65,7 +65,7 @@
 			}
 
 			BXMobileApp.addCustomEvent("onTaskWasUpdated", BX.delegate(function(taskId, objectId, data) {
-			
+
 				if (!data)
 				{
 					objectId = taskId[1];
@@ -97,12 +97,15 @@
 				}
 				if (this.task['ID'] == taskId && objectId !== this.variable("objectId"))
 				{
-					if (data["OPERATION"] == "task.dayplan.timer.start" ||
-						data["OPERATION"] == "task.dayplan.timer.stop" ||
-						data["OPERATION"] == "task.complete")
-						this.actSuccess(data, true);
-					else
-						this.actSuccess(data, false);
+					if (
+						data["OPERATION"] === "task.dayplan.timer.start"
+						|| data["OPERATION"] === "task.dayplan.timer.stop"
+						|| data["OPERATION"] === "task.complete"
+					) {
+						this.actSuccess(data["OPERATION"], data, true);
+					} else {
+						this.actSuccess("get", data, false);
+					}
 				}
 			}, this));
 
@@ -111,12 +114,12 @@
 				BX.bind(BX("favorites" + this.task['ID']), "click", BX.proxy(function(){
 					if (this.task['ACTION']['ADD_FAVORITE'])
 					{
-						this.act('favorite.add');
+						this.act('addFavorite');
 						BX.addClass(BX("favorites" + this.task['ID']), "active");
 					}
 					else if (this.task['ACTION']['DELETE_FAVORITE'])
 					{
-						this.act('favorite.delete');
+						this.act('deleteFavorite');
 						BX.removeClass(BX("favorites" + this.task['ID']), "active");
 					}
 				}, this));
@@ -195,25 +198,11 @@
 							)
 						});
 					}
-					else if (action == 'ACCEPT') {
-						menu_items.push({
-							name: BX.message('MB_TASKS_TASK_DETAIL_BTN_ACCEPT_TASK'),
-							icon: 'check',
-							action: BX.proxy(function () { this.act('accept'); }, this)
-						});
-					}
 					else if (action == 'START') {
 						menu_items.push({
 							name: BX.message('MB_TASKS_TASK_DETAIL_BTN_START_TASK'),
 							icon: 'play',
 							action: BX.proxy(function () { this.act('start'); }, this)
-						});
-					}
-					else if (action == 'DECLINE') {
-						menu_items.push({
-							name: BX.message('MB_TASKS_TASK_DETAIL_BTN_DECLINE_TASK'),
-							icon: 'cancel',
-							action: BX.proxy(function () { this.act('decline'); }, this)
 						});
 					}
 					else if (action == 'RENEW') {
@@ -281,14 +270,14 @@
 						menu_items.push({
 							name: BX.message('MB_TASKS_TASK_DETAIL_BTN_ADD_FAVORITE_TASK'),
 							image: '/bitrix/templates/mobile_app/images/tasks/menu/favorite.png',
-							action: BX.proxy(function () { this.act('favorite.add'); }, this)
+							action: BX.proxy(function () { this.act('addFavorite'); }, this)
 						});
 					}
 					else if (action == 'DELETE_FAVORITE') {
 						menu_items.push({
 							name: BX.message('MB_TASKS_TASK_DETAIL_BTN_DELETE_FAVORITE_TASK'),
 							image: '/bitrix/templates/mobile_app/images/tasks/menu/favorite.png',
-							action: BX.proxy(function () { this.act('favorite.delete'); }, this)
+							action: BX.proxy(function () { this.act('deleteFavorite'); }, this)
 						});
 					}
 				}
@@ -296,79 +285,132 @@
 			return (menu_items);
 		},
 
-		act : function(action, data) {
-			if (this.task.isBusy)
-				return;
-			if (this.appCtrls && this.appCtrls.menu)
-				this.appCtrls.menu.hide();
+		act : function(action, data, withAuth) {
 
-			//this.task.isBusy = true;
+			if (this.task.isBusy)
+			{
+				return;
+			}
+
+			if (this.appCtrls && this.appCtrls.menu)
+			{
+				this.appCtrls.menu.hide();
+			}
 
 			window.app.showPopupLoader();
-			// UUID generation
 
-			var url = BX.util.add_url_param(BX.message("TASK_PATH_TO_AJAX"), {act : action, id : this.task["ID"]});
-			(new BX.Tasks.Util.Query({url: url})).
-				add('task.' + action, {
-					id: this.task["ID"],
-					taskid : this.task["ID"],
-					userid : (data ? data["userid"] : false),
-					objectId : this.variable("objectId"),
-					parameters : { RETURN_ENTITY: true}
-				}, {}, {onExecuted: BX.proxy(function(response){
-					if (response && response.response && response.response.status == 'failed')
-					{
-						window.app.BasicAuth( {
-							success: BX.proxy(function() {
-								(new BX.Tasks.Util.Query({url: url})).
-									add('task.' + action, {
-										id: this.task["ID"],
-										taskid: this.task["ID"],
-										userid : (data ? data["userid"] : false),
-										objectId : this.variable("objectId"),
-										parameters : { RETURN_ENTITY: true}
-									}, {}, {onExecuted: this.actExecute }).
-									execute();
-								}, this),
-							failure: this.actFailure
-						});
-					}
-					else
-						this.actExecute.apply(this, arguments);
-				}, this)}).
-				execute();
-		},
-		actExecute : function(errors, data) {
-			window.app.hidePopupLoader();
-			if (errors && errors.length > 0)
+			var params = {
+				userId: data ? data["userid"] : false
+			};
+
+			if (withAuth)
 			{
-				for (var ii = 0; ii < errors.length; ii++)
-					errors[ii] = (errors[ii]["MESSAGE"] || errors[ii]["CODE"]);
-				window.app.alert({text: errors.join(". "), title : BX.message("MB_TASKS_TASK_ERROR_TITLE")});
-			}
-			else if (data["OPERATION"] == "task.delete")
-			{
-				window.BXMobileApp.onCustomEvent(
-					"onTaskWasRemoved",
-					[this.task["ID"], this.variable("objectId"), data],
-					true,
-					true
-				);
+				window.app.BasicAuth( {
+					success: BX.proxy(function() {
+						BX.ajax.runComponentAction('bitrix:tasks.task', action, {
+							mode: 'class',
+							data: {
+								taskId: this.task["ID"],
+								parameters: params
+							}
+						}).then(
+							function(response)
+							{
+								this.task.isBusy = false;
+								window.app.hidePopupLoader();
+								this.actExecute(action, response);
+							}.bind(this),
+							function(response)
+							{
+								this.task.isBusy = false;
+								window.app.hidePopupLoader();
+								this.actFailure();
+							}.bind(this)
+						);
+					}, this),
+					failure: this.actFailure
+				});
 			}
 			else
 			{
+				BX.ajax.runComponentAction('bitrix:tasks.task', action, {
+					mode: 'class',
+					data: {
+						taskId: this.task["ID"],
+						parameters: params
+					},
+					onrequeststart: function (xhr) {
+						this.xhr = xhr;
+					}.bind(this),
+				}).then(
+					function(response)
+					{
+						this.task.isBusy = false;
+						window.app.hidePopupLoader();
+						this.actExecute(action, response);
+					}.bind(this),
+					function(response)
+					{
+						this.task.isBusy = false;
+						window.app.hidePopupLoader();
+
+						if (this.xhr && this.xhr.status && this.xhr.status === 401)
+						{
+							this.act(action, data, true);
+						}
+						else if (response.errors && response.errors.length)
+						{
+							this.actError(response.errors);
+						}
+						else
+						{
+							this.actFailure();
+						}
+					}.bind(this)
+				);
+			}
+		},
+		actError: function(errors) {
+			if (errors && errors.length > 0)
+			{
+				for (var ii = 0; ii < errors.length; ii++)
+					errors[ii] = (errors[ii]["message"] || errors[ii]["code"]);
+				window.app.alert({text: errors.join(". "), title : BX.message("MB_TASKS_TASK_ERROR_TITLE")});
+			}
+		},
+		actExecute : function(action, response) {
+			window.app.hidePopupLoader();
+
+			if (response.errors && response.errors.length)
+			{
+				this.actError(response.errors);
+				return;
+			}
+
+			if (action === "delete")
+			{
 				window.BXMobileApp.onCustomEvent(
-					"onTaskWasPerformed",
-					[this.task["ID"], this.variable("objectId"), data],
+					"onTaskWasRemoved",
+					[this.task["ID"], this.variable("objectId"), response.data],
 					true,
 					true
 				);
-				this.actSuccess(data, true);
+				return;
 			}
+
+			window.BXMobileApp.onCustomEvent(
+				"onTaskWasPerformed",
+				[this.task["ID"], this.variable("objectId"), response.data],
+				true,
+				true
+			);
+			this.actSuccess(action, response.data, true);
+
 		},
-		actSuccess : function(data, specify) {
+		actSuccess : function(action, data, specify) {
 			var ii, reset = false;
-			if (data["OPERATION"] == "task.favorite.delete")
+
+			if (action === "deleteFavorite")
 			{
 				reset = true;
 				this.task['ACTION']['DELETE_FAVORITE'] = false;
@@ -376,7 +418,7 @@
 				if (BX("favorites" + this.task['ID']))
 					BX.removeClass(BX("favorites" + this.task['ID']), "active");
 			}
-			else if (data["OPERATION"] == "task.favorite.add")
+			else if (action === "addFavorite")
 			{
 				reset = true;
 				this.task['ACTION']['DELETE_FAVORITE'] = true;
@@ -384,11 +426,11 @@
 				if (BX("favorites" + this.task['ID']))
 					BX.addClass(BX("favorites" + this.task['ID']), "active");
 			}
-			else if (data["OPERATION"] == "task.delegate")
+			else if (action === "delegate")
 			{
 				BX.reload();
 			}
-			else if (data["OPERATION"] == "task.get")
+			else if (action === "get")
 			{
 				this.task['ACTION'] = {};
 				for (ii in data["RESULT"]["CAN"]["ACTION"])
@@ -396,8 +438,8 @@
 					if (data["RESULT"]["CAN"]["ACTION"].hasOwnProperty(ii))
 					{
 						this.task['ACTION'][ii.toUpperCase()] = (
-							data["RESULT"]["CAN"]["ACTION"][ii] == "YES" ||
-							data["RESULT"]["CAN"]["ACTION"][ii] == "true" ||
+							data["RESULT"]["CAN"]["ACTION"][ii] === "YES" ||
+							data["RESULT"]["CAN"]["ACTION"][ii] === "true" ||
 							data["RESULT"]["CAN"]["ACTION"][ii] === true);
 					}
 				}
@@ -413,12 +455,13 @@
 			}
 			else if (specify === true)
 			{
-				var url = BX.util.add_url_param(BX.message("TASK_PATH_TO_AJAX"), {act : 'get', id : this.task["ID"]});
-				(new BX.Tasks.Util.Query({url: url})).add('task.get', {id: this.task["ID"], "jsAction" : "perform"}, {}, {onExecuted: this.actExecute}).execute();
+				this.act('get', data);
 			}
-			
+
 			if (reset)
+			{
 				this.resetMenu(this.getDefaultMenu());
+			}
 		},
 		actFailure : function() {
 			window.app.alert({text: BX.message("TASKS_LIST_GROUP_ACTION_ERROR1"), title : BX.message("MB_TASKS_TASK_ERROR_TITLE")});

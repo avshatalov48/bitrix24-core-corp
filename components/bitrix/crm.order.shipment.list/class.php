@@ -858,7 +858,7 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 			$arOrderShipment['SHIPMENT_SUMMARY'] = Loc::getMessage(
 				'CRM_SHIPMENT_SUMMARY',
 				array(
-					'#NUMBER#' => $arOrderShipment['ID'],
+					'#NUMBER#' => $arOrderShipment['ACCOUNT_NUMBER'],
 					'#DATE#' => $arOrderShipment['DATE_INSERT']
 			));
 			$arOrderShipment['PRICE_DELIVERY_CURRENCY'] = CCrmCurrency::MoneyToString($arOrderShipment['PRICE_DELIVERY'], $arOrderShipment['CURRENCY']);

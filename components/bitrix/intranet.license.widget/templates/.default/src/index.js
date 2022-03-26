@@ -1,4 +1,5 @@
 import {Reflection, Event} from 'main.core';
+import { EventEmitter } from 'main.core.events'
 import {Vue} from 'ui.vue';
 import {Popup} from "main.popup";
 import {PopupWrapperComponent} from "./components/popup-wrapper";
@@ -105,52 +106,19 @@ class LicenseWidget
 					},
 				},
 			methods: {
-				onMouseOver (e)
+				togglePopup(e)
 				{
-					clearTimeout(LicenceWidgetInstance.enterTimeout);
-					LicenceWidgetInstance.enterTimeout = setTimeout(() =>
-						{
-							LicenceWidgetInstance.enterTimeout = null;
-							LicenceWidgetInstance.initPopup(e.target);
-						}, 500
-					);
-				},
-				onMouseOut()
-				{
-					if (LicenceWidgetInstance.enterTimeout !== null)
+					if (LicenceWidgetInstance.popup && LicenceWidgetInstance.popup.isShown())
 					{
-						clearTimeout(LicenceWidgetInstance.enterTimeout);
-						LicenceWidgetInstance.enterTimeout = null;
-						return;
+						return LicenceWidgetInstance.closePopup();
 					}
-
-					LicenceWidgetInstance.leaveTimeout = setTimeout(() =>
-						{
-							LicenceWidgetInstance.closePopup();
-						}, 500
-					);
-				},
-				togglePopup()
-				{
-					if (LicenceWidgetInstance.popup)
-					{
-						if (LicenceWidgetInstance.popup.isShown())
-						{
-							LicenceWidgetInstance.closePopup();
-						}
-						else
-						{
-							LicenceWidgetInstance.popup.show();
-						}
-					}
+					LicenceWidgetInstance.initPopup(e.target);
 				},
 			},
 			template: `
 				<button
 					class="ui-btn ui-btn-round ui-btn-themes license-btn"
 					:class="buttonClass"
-					@mouseover="onMouseOver"
-					@mouseout="onMouseOut"
 					@click="togglePopup"
 				>
 					<span v-if="isLicenseExpired || isAlmostLocked" class="license-btn-icon-battery">
@@ -193,28 +161,21 @@ class LicenseWidget
 				angle: { position: 'top', offset: 120 },
 				bindElement: bindElement,
 				content: this.renderPopupContent(),
+				cachable: false,
+				events: {
+					onFirstShow: (event) => {
+						EventEmitter.subscribe('BX.Main.InterfaceButtons:onMenuShow', () => {
+							if (this.popup)
+							{
+								this.popup.close();
+							}
+						});
+					},
+				},
 			});
-			this.initEvents();
 		}
 
 		this.popup.show();
-	}
-
-	initEvents()
-	{
-		this.popup.getPopupContainer().addEventListener('mouseenter', () =>
-		{
-			clearTimeout(this.enterTimeout);
-			clearTimeout(this.leaveTimeout);
-			clearTimeout(this.popupLeaveTimeout);
-		});
-
-		// this.popup.getPopupContainer().addEventListener('mouseleave', () =>
-		// {
-		// 	this.popupLeaveTimeout = setTimeout(() => {
-		// 		this.closePopup();
-		// 	}, 500);
-		// });
 	}
 
 	renderPopupContent()

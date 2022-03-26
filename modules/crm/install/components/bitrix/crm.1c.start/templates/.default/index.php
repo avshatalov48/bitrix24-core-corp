@@ -11,7 +11,7 @@ $APPLICATION->SetTitle(Bitrix\Main\Localization\Loc::getMessage("CRM_1C_START_IN
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
 
-\Bitrix\Main\UI\Extension::load("ui.icons.service", "ui.feedback.form");
+\CJSCore::Init(["ui.icons.service", 'ui.forms', 'ui.buttons', 'ui.feedback.form']);
 
 if (!is_array($arResult["ITEMS"]) || empty($arResult["ITEMS"]))
 	return;

@@ -1,12 +1,12 @@
 <?php
 namespace Bitrix\Intranet\Integration;
 
+use Bitrix\Intranet\Secretary;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Util\User;
-use Bitrix\Intranet\ControlButton;
 
 Loc::loadMessages(__FILE__);
 
@@ -99,7 +99,8 @@ final class Tasks
 
 	private static function getBeforeAddCallback(int $userId): \Closure
 	{
-		return static function (&$fields) use ($userId) {
+		return static function (&$fields) use ($userId)
+		{
 			if (!(int)$fields['RESPONSIBLE_ID'])
 			{
 				$fields['RESPONSIBLE_ID'] = $userId;
@@ -246,6 +247,6 @@ final class Tasks
 			return;
 		}
 
-		ControlButton::udpateChatUsers($chatId, $addedUsers, $deletedUsers);
+		Secretary::updateChatUsers($chatId, $addedUsers, $deletedUsers);
 	}
 }

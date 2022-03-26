@@ -17,7 +17,7 @@
 
 BX.INTRANET_USTAT_LAST_PARAMETERS = null;
 
-BX.ready(function() {
+BX.ready(function() {setTimeout(function() {
 	BX.bind(BX('user-indicator-pulse'), 'click', openIntranetUStat);
 
 	BX.bind(BX('pulse-close-btn'), 'click', function(){
@@ -25,7 +25,7 @@ BX.ready(function() {
 	});
 
 	// escape
-	BX.bind(BX('pulse-main-wrap'), 'keydown', function(e){
+	BX.bind(BX('pulse-main-wrap'), 'keydown', function(e) {
 		if (e.keyCode == 27)
 		{
 			if (pulse_popup.isOpen())
@@ -42,6 +42,7 @@ BX.ready(function() {
 			}
 		}
 	});
+}, 100)
 });
 
 // init ustat containers
@@ -69,8 +70,11 @@ div.innerHTML = div.innerHTML + '<div class="pulse-close-btn" id="pulse-close-bt
 	'</div>'+
 	'<div class="pulse-loading-first-anim-text"><?=GetMessageJS('INTRANET_USTAT_WIDGET_LOADING')?></div>'+
 	'</div>';
-
-document.getElementById('page-wrapper').insertBefore(div, document.getElementById('page-inner'));
+var header = document.getElementById('header');
+if (header)
+{
+	header.parentNode.appendChild(div);
+}
 
 function openIntranetUStat()
 {
@@ -508,7 +512,7 @@ var pulse_loading = {
 
 	close : function()
 	{
-		this.easing(this.pulse_block, 'height', 647, 0, 250, 'px', 1, null, 'cubic');
+		this.easing(this.pulse_block, 'height', 592, 0, 250, 'px', 1, null, 'cubic');
 
 		if(this.anim_status)
 			this.load_done();

@@ -20,6 +20,8 @@ use Bitrix\Tasks\Util\Collection;
  */
 class Counter
 {
+	private const DEFAULT_LIMIT = 4999;
+
 	private static $instance = [];
 
 	private $userId;
@@ -50,7 +52,7 @@ class Counter
 		$limit = \COption::GetOptionString("tasks", "tasksCounterLimit", "");
 		if ($limit === "")
 		{
-			return null;
+			return self::DEFAULT_LIMIT;
 		}
 		return (int)$limit;
 	}
@@ -342,6 +344,16 @@ class Counter
 				}
 				break;
 
+			case CounterDictionary::COUNTER_SCRUM_TOTAL_COMMENTS:
+			case CounterDictionary::COUNTER_SCRUM_FOREIGN_COMMENTS:
+				if (self::isSonetEnable())
+				{
+					$counters = $this->getRawCounters(CounterDictionary::META_PROP_SCRUM);
+					$type = CounterDictionary::MAP_SCRUM_TOTAL[$name];
+					$value = (isset($counters[$type][0]) && $counters[$type][0]) ? $counters[$type][0] : 0;
+				}
+				break;
+
 			default:
 				$value = $this->getState()->getValue($name, $groupId);
 				break;
@@ -363,7 +375,8 @@ class Counter
 
 		$counters = [];
 
-		foreach ($this->getState() as $row)
+		$state = $this->getState();
+		foreach ($state as $row)
 		{
 			$id = $row['TASK_ID'];
 			if (!$taskId)

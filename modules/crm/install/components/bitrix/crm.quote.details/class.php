@@ -60,6 +60,11 @@ class CrmQuoteDetailsComponent extends FactoryBased
 			return;
 		}
 
+		if ($this->isPreviewItemBeforeCopyMode())
+		{
+			$this->item->unset(Item\Quote::FIELD_NAME_NUMBER);
+		}
+
 		if (!\CCrmOwnerType::IsSliderEnabled($this->getEntityTypeID()))
 		{
 			$url = Container::getInstance()->getRouter()->getItemDetailUrl($this->getEntityTypeID(), $this->getEntityID());
@@ -91,7 +96,7 @@ class CrmQuoteDetailsComponent extends FactoryBased
 
 	protected function getTitle(): string
 	{
-		if ($this->isCopyMode())
+		if ($this->isPreviewItemBeforeCopyMode())
 		{
 			return Loc::getMessage('CRM_QUOTE_DETAILS_TITLE_COPY');
 		}
@@ -272,54 +277,88 @@ class CrmQuoteDetailsComponent extends FactoryBased
 
 		$convertButton = $this->getConversionToolbarButton();
 
-		$restrictions = \Bitrix\Crm\Restriction\RestrictionManager::getConversionRestriction();
-		// Restrictions are relevant only to quote conversion
-		if (!$restrictions->hasPermission())
+		$conversionConfig = ConversionManager::getConfig($this->factory->getEntityTypeId());
+		if (!$conversionConfig)
 		{
-			return [
-				'lockScript' => $restrictions->prepareInfoHelperScript(),
-				'buttonId' => $convertButton->getMainButton()->getAttribute('id'),
-				'menuButtonId' => $convertButton->getMenuButton()->getAttribute('id'),
-			];
+			return [];
 		}
 
-		$schemeId = ConversionManager::getCurrentSchemeID($this->factory->getEntityTypeId());
-		$conversionSchemeName = ConversionManager::getSchemeClass($this->getEntityTypeID())::resolveName($schemeId);
-
-		return [
-			'scheme' => [
-				'messages' => ConversionManager::getSchemeClass($this->getEntityTypeID())::getJavaScriptDescriptions()
-			],
+		$conversionParams = [
 			'schemeSelector' => [
 				'entityId' => $this->item->getId(),
-				'scheme' => $conversionSchemeName,
 				'containerId' => $convertButton->getMainButton()->getAttribute('id'),
 				'labelId' => $convertButton->getMainButton()->getAttribute('id'),
 				'buttonId' => $convertButton->getMenuButton()->getAttribute('id'),
-				'originUrl' => $this->getApplication()->getCurPage(),
 			],
 			'converter' => [
-				'messages' => [
-					'accessDenied' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_ACCESS_DENIED'),
-					'generalError' => Loc::getMessage('CRM_COMMON_ERROR_GENERAL'),
-					'dialogTitle' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_DIALOG_TITLE'),
-					'syncEditorLegend' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_SYNC_LEGEND'),
-					'syncEditorFieldListTitle' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_SYNC_FIELD_LIST'),
-					'syncEditorEntityListTitle' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_SYNC_ENTITY_LIST'),
-					'continueButton' => Loc::getMessage('CRM_COMMON_CONTINUE'),
-					'cancelButton' => Loc::getMessage('CRM_COMMON_CANCEL'),
-				],
-				'permissions' => ConversionManager::getConversionPermissions($this->item),
-				'settings' => [
+				'configItems' => $conversionConfig->toJson(),
+				'scheme' => $conversionConfig->getScheme()->toJson(true),
+				'params' => [
 					'serviceUrl' => \Bitrix\Main\Engine\UrlManager::getInstance()->createByBitrixComponent($this, 'convert', [
 						'entityTypeId' => $this->factory->getEntityTypeId(),
 						'entityId' => $this->item->getId(),
 						'sessid' => bitrix_sessid(),
 					]),
-					'config' => ConversionManager::getConfig($this->factory->getEntityTypeId())->toJavaScript()
+					'messages' => [
+						'accessDenied' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_ACCESS_DENIED'),
+						'generalError' => Loc::getMessage('CRM_COMMON_ERROR_GENERAL'),
+						'dialogTitle' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_DIALOG_TITLE'),
+						'syncEditorLegend' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_SYNC_LEGEND'),
+						'syncEditorFieldListTitle' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_SYNC_FIELD_LIST'),
+						'syncEditorEntityListTitle' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_SYNC_ENTITY_LIST'),
+						'continueButton' => Loc::getMessage('CRM_COMMON_CONTINUE'),
+						'cancelButton' => Loc::getMessage('CRM_COMMON_CANCEL'),
+					],
 				],
 			],
 		];
+
+		$restrictions = \Bitrix\Crm\Restriction\RestrictionManager::getConversionRestriction();
+		// Restrictions are relevant only to quote conversion
+		if (!$restrictions->hasPermission())
+		{
+			$conversionParams['lockScript'] = $restrictions->prepareInfoHelperScript();
+		}
+
+		return $conversionParams;
+
+
+		// return [
+		// 	'scheme' => [
+		// 		'messages' => $conversionConfig->getScheme()->getJavaScriptDescriptions(),
+		// 	],
+		// 	'schemeSelector' => [
+		// 		'entityId' => $this->item->getId(),
+		// 		'entityTypeId' => $this->getEntityTypeID(),
+		// 		'scheme' => $conversionSchemeName,
+		// 		'containerId' => $convertButton->getMainButton()->getAttribute('id'),
+		// 		'labelId' => $convertButton->getMainButton()->getAttribute('id'),
+		// 		'buttonId' => $convertButton->getMenuButton()->getAttribute('id'),
+		// 		'originUrl' => $this->getApplication()->getCurPage(),
+		// 	],
+		// 	'converter' => [
+		// 		'messages' => [
+		// 			'accessDenied' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_ACCESS_DENIED'),
+		// 			'generalError' => Loc::getMessage('CRM_COMMON_ERROR_GENERAL'),
+		// 			'dialogTitle' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_DIALOG_TITLE'),
+		// 			'syncEditorLegend' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_SYNC_LEGEND'),
+		// 			'syncEditorFieldListTitle' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_SYNC_FIELD_LIST'),
+		// 			'syncEditorEntityListTitle' => Loc::getMessage('CRM_QUOTE_DETAILS_CONVERSION_SYNC_ENTITY_LIST'),
+		// 			'continueButton' => Loc::getMessage('CRM_COMMON_CONTINUE'),
+		// 			'cancelButton' => Loc::getMessage('CRM_COMMON_CANCEL'),
+		// 		],
+		// 		'permissions' => ConversionManager::getConversionPermissions($this->item),
+		// 		'settings' => [
+		// 			'serviceUrl' => \Bitrix\Main\Engine\UrlManager::getInstance()->createByBitrixComponent($this, 'convert', [
+		// 				'entityTypeId' => $this->factory->getEntityTypeId(),
+		// 				'entityId' => $this->item->getId(),
+		// 				'sessid' => bitrix_sessid(),
+		// 			]),
+		// 			'config' => $conversionConfig->toJavaScript(),
+		// 			'scheme' => $conversionConfig->getScheme()->toJson(),
+		// 		],
+		// 	],
+		// ];
 	}
 
 	protected function getJsMessages(): array
@@ -354,22 +393,30 @@ class CrmQuoteDetailsComponent extends FactoryBased
 
 	protected function getSettingsToolbarButton(): Buttons\SettingsButton
 	{
+		$items = [];
+		$itemCopyUrl = Container::getInstance()->getRouter()->getItemCopyUrl(
+			$this->getEntityTypeID(),
+			$this->item->getId(),
+		);
+		$userPermissions = Container::getInstance()->getUserPermissions();
+		if ($itemCopyUrl && $userPermissions->canAddItem($this->item))
+		{
+			$items[] = [
+				'text' => Loc::getMessage('CRM_COMMON_ACTION_COPY'),
+				'href' => $itemCopyUrl,
+			];
+		}
+		if ($userPermissions->canDeleteItem($this->item))
+		{
+			$items[] = [
+				'text' => Loc::getMessage('CRM_QUOTE_DETAILS_DELETE'),
+				'onclick' => new Buttons\JsEvent('BX.Crm.ItemDetailsComponent:onClickDelete'),
+			];
+		}
+
 		return new Buttons\SettingsButton([
 			'menu' => [
-				'items' => [
-					[
-						'text' => Loc::getMessage('CRM_COMMON_ACTION_COPY'),
-						'href' => Container::getInstance()->getRouter()->getItemCopyUrl(
-							$this->getEntityTypeID(),
-							$this->item->getId(),
-							$this->categoryId
-						),
-					],
-					[
-						'text' => Loc::getMessage('CRM_QUOTE_DETAILS_DELETE'),
-						'onclick' => new Buttons\JsEvent('BX.Crm.ItemDetailsComponent:onClickDelete'),
-					],
-				],
+				'items' => $items,
 			],
 		]);
 	}
@@ -438,14 +485,8 @@ class CrmQuoteDetailsComponent extends FactoryBased
 
 	protected function getConversionToolbarButton(): Buttons\Split\Button
 	{
-		$schemeId = ConversionManager::getCurrentSchemeID($this->factory->getEntityTypeId());
-		$schemeDescription = ConversionManager::getSchemeClass($this->factory->getEntityTypeId())::getDescription($schemeId);
-
 		$convertButton = new Bitrix\UI\Buttons\Split\Button([
 			'color' => Buttons\Color::PRIMARY,
-			'mainButton' => [
-				'text' => $schemeDescription
-			],
 		]);
 
 		$convertButton->getMainButton()->addAttribute('id', 'crm-quote-details-convert-main-button');
@@ -579,7 +620,7 @@ class CrmQuoteDetailsComponent extends FactoryBased
 		{
 			return [
 				'id' => static::TAB_NAME_INVOICES,
-				'name' => Loc::getMessage('CRM_COMMON_INVOICES'),
+				'name' => \CCrmOwnerType::GetCategoryCaption(\CCrmOwnerType::Invoice),
 				'loader' => [
 					'serviceUrl' => '/bitrix/components/bitrix/crm.invoice.list/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
 					'componentData' => [
@@ -608,10 +649,16 @@ class CrmQuoteDetailsComponent extends FactoryBased
 	{
 		$codes = parent::getTabCodes();
 
-		return array_merge($codes, [
+		$ownCodes = [
 			static::TAB_NAME_DEALS => [],
-			static::TAB_NAME_INVOICES => [],
-		]);
+		];
+
+		if (\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
+		{
+			$ownCodes[static::TAB_NAME_INVOICES] = [];
+		}
+
+		return array_merge($codes, $ownCodes);
 	}
 
 	public function initializeEditorAdapter(): void
@@ -702,6 +749,10 @@ class CrmQuoteDetailsComponent extends FactoryBased
 		if (!empty($configJsParams))
 		{
 			$configs = ConversionManager::getConfigFromJavaScript($this->factory->getEntityTypeId(), $configJsParams);
+			if ($configs)
+			{
+				$configs->save();
+			}
 		}
 		else
 		{
@@ -752,7 +803,7 @@ class CrmQuoteDetailsComponent extends FactoryBased
 			'REQUIRED_ACTION' => [
 				'NAME' => 'SYNCHRONIZE',
 				'DATA' => [
-					'CONFIG' => $configs->toJavaScript(),
+					'CONFIG' => $configs->toJson(),
 					'FIELD_NAMES' => $fieldNames,
 				]
 			]
@@ -817,7 +868,7 @@ class CrmQuoteDetailsComponent extends FactoryBased
 				['name' => 'QUOTE_NUMBER'],
 				['name' => 'TITLE'],
 				['name' => 'OPPORTUNITY_WITH_CURRENCY'],
-				['name' => 'MYCOMPANY_TITLE']
+				['name' => 'MYCOMPANY_ID']
 			]
 		];
 		$scheme[] = [

@@ -247,152 +247,6 @@
 		};
 		return d;
 		})(),
-		checkListViewMode = (function () {
-			var d = function(select, eventNode, container) {
-				checkListViewMode.superclass.constructor.apply(this, arguments);
-				this.actCallback = BX.delegate(this.actCallback, this);
-				this.queue = [];
-			};
-			BX.extend(d, checkListEditMode);
-			d.prototype.fireEvent = function(id, eventName, params) {
-				this.queue.push([BX.proxy(function(){
-					var node = BX("checkListItem" + id);
-					if (node && node.form)
-					{
-						if (eventName == "remove")
-							this.remove(id, {checked: node.checked, isSeparator:node.getAttribute('bx-separator')});
-						else if (eventName == "toggle")
-							this.toggle(id, node);
-						else
-						{
-							var data = {
-								TITLE : node.form.elements["data[SE_CHECKLIST][" + id + "][TITLE]"].value,
-								IS_COMPLETE : node.form.elements["data[SE_CHECKLIST][" + id + "][IS_COMPLETE]"].checked ? "Y" : "N",
-								SORT_INDEX : node.form.elements["data[SE_CHECKLIST][" + id + "][SORT_INDEX]"].value
-							};
-							if (eventName == "modify" && (this.getId(id) + "").indexOf("n") === 0)
-								this.create(id, data, params);
-							else
-								this.modify(id, data);
-						}
-					}
-				}, this), arguments]);
-				this.startQueue();
-			};
-			d.prototype.getQuery = function()
-			{
-				if (!this.query)
-				{
-					this.query = new BX.Tasks.Util.Query({url : BX.util.add_url_param(BX.message("TASK_PATH_TO_AJAX"), {act : 'checklist', id : this.taskId})});
-				}
-
-				return this.query;
-			};
-			d.prototype.statusQueue = "ready";
-			d.prototype.startQueue = function()
-			{
-				if (this.statusQueue === "ready")
-				{
-					this.statusQueue = "busy";
-					this.checkQueue();
-				}
-			};
-			d.prototype.checkQueue = function()
-			{
-				var f = this.queue.shift();
-				if (f && BX.type.isFunction(f[0]))
-				{
-					f[0].apply(this, f[1]);
-				}
-				else
-				{
-					this.statusQueue = "ready";
-				}
-			};
-			d.prototype.actCallback = function(errors){
-				if (errors && errors.length > 0)
-				{
-					for (var ii = 0; ii < errors.length; ii++)
-						errors[ii] = (errors[ii]["MESSAGE"] || errors[ii]["CODE"]);
-					window.app.alert({text: errors.join(". "), title : BX.message("MB_TASKS_TASK_ERROR_TITLE")});
-				}
-				this.checkQueue();
-			};
-			d.prototype.create = function(id, data) {
-				BX.onCustomEvent('onMobileTaskViewCheckListAdd', {id:id, data:data});
-				this.
-				getQuery().
-				add('task.checklist.add', {data : {
-						TASK_ID: this.taskId,
-						TITLE: data.TITLE,
-						IS_COMPLETE: data.IS_COMPLETE,
-						SORT_INDEX: data.SORT_INDEX
-					}}, {}, BX.proxy(function(errors, result){
-					if (errors && errors.length > 0)
-					{
-						for (var ii = 0; ii < errors.length; ii++)
-							errors[ii] = (errors[ii]["MESSAGE"] || errors[ii]["CODE"]);
-						window.app.alert({text: errors.join(". "), title : BX.message("MB_TASKS_TASK_ERROR_TITLE")});
-						BX.remove(BX("checkListItem" + id + "Label"));
-					}
-					else
-					{
-						BXMobileApp.Events.postToComponent('onMobileTaskViewCheckListAdd', {checklistItem: result["RESULT"]["DATA"]});
-
-						this.ids[id] = result["RESULT"]["DATA"]["ID"];
-					}
-					this.checkQueue();
-				}, this)).
-				execute();
-			};
-			d.prototype.modify = function(id, data) {
-				var realId = this.getId(id);
-				this.
-				getQuery().
-				add(
-					'task.checklist.update',
-					{id: realId, data : {
-						TITLE: data.TITLE
-					}},
-					{},
-					this.actCallback).
-				execute();
-			};
-			d.prototype.remove = function(id, data) {
-				var realId = this.getId(id);
-				var isSeparator = data.isSeparator || 'N';
-				var isChecked = data.checked || false;
-
-				delete this.ids[id];
-
-				BXMobileApp.Events.postToComponent('onMobileTaskViewCheckListRemove', {id:id, checked: isChecked, isSeparator:isSeparator});
-
-				BX.onCustomEvent('onMobileTaskViewCheckListRemove', [{length: Object.keys(this.ids).length}]);
-
-				this.
-				getQuery().
-				add(
-					'task.checklist.delete',
-					{id: realId},
-					{},
-					this.actCallback()
-				).
-				execute();
-			};
-			d.prototype.toggle = function(id, node) {
-				var realId = this.getId(id);
-				var actionName = 'tasks.task.checklist.' + (node.checked ? 'complete' : 'renew');
-				var actionData = {
-					taskId: this.taskId,
-					checkListItemId: realId
-				};
-
-				BX.ajax.runAction(actionName, {data: actionData}).then(function() {
-					this.statusQueue = "ready";
-				}.bind(this));
-			};
-			return d;
-		})(),
 		titleTask = (function () {
 		var d = function(id) {
 			this.click = BX.delegate(this.click, this);
@@ -609,49 +463,159 @@
 						this.stopTimer();
 					return BX.PreventDefault(e);
 				},
-				startTimer: function(stopPrevious)
+				startTimer: function(stopPrevious, withAuth)
 				{
-					window.app.showPopupLoader();
-					this.getQuery().add('task.dayplan.timer.start', {taskId: this.id, stopPrevious: stopPrevious || false}, {}, BX.delegate(function(errors, data) {
-						window.app.hidePopupLoader();
-						var error = errors.getByCode('OTHER_TASK_ON_TIMER');
-						if (error)
+					if (withAuth)
+					{
+						window.app.BasicAuth( {
+							success: BX.proxy(function() {
+								BX.ajax.runComponentAction('bitrix:tasks.task', 'startTimer', {
+									mode: 'class',
+									data: {
+										taskId: this.id,
+										stopPrevious: stopPrevious || false
+									}
+								}).then(
+									function(response)
+									{
+										window.app.hidePopupLoader();
+										this.start();
+										window.BXMobileApp.onCustomEvent("onTaskWasPerformed", [this.id, this.objectId], true, true);
+									}.bind(this),
+									function(response)
+									{
+										window.app.hidePopupLoader();
+										window.app.alert({text : BX.message("MB_TASKS_TASK_ERROR3"), title : BX.message("MB_TASKS_TASK_ERROR_TITLE")});
+									}.bind(this)
+								);
+							}, this),
+							failure: function(){
+								window.app.alert({text : BX.message("MB_TASKS_TASK_ERROR3"), title : BX.message("MB_TASKS_TASK_ERROR_TITLE")});
+							}
+						});
+						return;
+					}
+
+					BX.ajax.runComponentAction('bitrix:tasks.task', 'startTimer', {
+						mode: 'class',
+						data: {
+							taskId: this.id,
+							stopPrevious: stopPrevious || false
+						},
+						onrequeststart: function (xhr) {
+							this.xhr = xhr;
+						}.bind(this),
+					}).then(
+						function(response)
 						{
-							var d = error.data();
-							window.app.confirm({
-								title: BX.message("TASKS_TT_ERROR1_TITLE"),
-								text: BX.message("TASKS_TT_ERROR1_DESC").replace("#TITLE#", d["TASK"]["TITLE"]),
-								callback: (BX.proxy(function(stopPr){return BX.proxy(function(index) {
-									if (index <= 1)
-										this.startTimer(stopPr);
-								}, this)}, this))(d["TASK"]["ID"]),
-								buttons: [BX.message("TASKS_TT_CONTINUE"), BX.message("TASKS_TT_CANCEL")]
-							});
-						}
-						else
-						{
+							window.app.hidePopupLoader();
+
 							this.start();
-							window.BXMobileApp.onCustomEvent("onTaskWasPerformed", [this.id, this.objectId, data], true, true);
-						}
-					}, this));
+							window.BXMobileApp.onCustomEvent("onTaskWasPerformed", [this.id, this.objectId], true, true);
+						}.bind(this),
+						function(response)
+						{
+							window.app.hidePopupLoader();
+
+							if (this.xhr && this.xhr.status && this.xhr.status === 401)
+							{
+								this.startTimer(stopPrevious, true);
+							}
+							else if (
+								response.errors
+								&& response.errors.length
+							)
+							{
+								var error = response.errors.getByCode('OTHER_TASK_ON_TIMER');
+								if (error)
+								{
+									var d = error.data();
+									window.app.confirm({
+										title: BX.message("TASKS_TT_ERROR1_TITLE"),
+										text: BX.message("TASKS_TT_ERROR1_DESC").replace("#TITLE#", d["TASK"]["TITLE"]),
+										callback: (BX.proxy(function(stopPr){return BX.proxy(function(index) {
+											if (index <= 1)
+												this.startTimer(stopPr);
+										}, this)}, this))(d["TASK"]["ID"]),
+										buttons: [BX.message("TASKS_TT_CONTINUE"), BX.message("TASKS_TT_CANCEL")]
+									});
+								}
+							}
+							else
+							{
+
+							}
+						}.bind(this)
+					);
 				},
-				stopTimer: function()
+				stopTimer: function(withAuth)
 				{
-					window.app.showPopupLoader();
-					this.getQuery().add('task.dayplan.timer.stop', {taskId: this.id}, {}, BX.delegate(function(errors, data) {
-						window.app.hidePopupLoader();
-						if (errors && errors.length > 0)
+					if (withAuth)
+					{
+						window.app.BasicAuth( {
+							success: BX.proxy(function() {
+								BX.ajax.runComponentAction('bitrix:tasks.task', 'stopTimer', {
+									mode: 'class',
+									data: {
+										taskId: this.id
+									}
+								}).then(
+									function(response)
+									{
+										window.app.hidePopupLoader();
+										this.stop();
+										window.BXMobileApp.onCustomEvent("onTaskWasPerformed", [this.id, this.objectId], true, true);
+									}.bind(this),
+									function(response)
+									{
+										window.app.hidePopupLoader();
+									}.bind(this)
+								);
+							}, this),
+							failure: function(){
+
+							}
+						});
+						return;
+					}
+
+					BX.ajax.runComponentAction('bitrix:tasks.task', 'stopTimer', {
+						mode: 'class',
+						data: {
+							taskId: this.id
+						},
+						onrequeststart: function (xhr) {
+							this.xhr = xhr;
+						}.bind(this),
+					}).then(
+						function(response)
 						{
-							for (var ii = 0; ii < errors.length; ii++)
-								errors[ii] = (errors[ii]["MESSAGE"] || errors[ii]["CODE"]);
-							window.app.alert({text: errors.join(". "), title : BX.message("MB_TASKS_TASK_ERROR_TITLE")});
-						}
-						else
-						{
+							window.app.hidePopupLoader();
 							this.stop();
-							window.BXMobileApp.onCustomEvent("onTaskWasPerformed", [this.id, this.objectId, data], true, true);
-						}
-					}, this));
+							window.BXMobileApp.onCustomEvent("onTaskWasPerformed", [this.id, this.objectId], true, true);
+						}.bind(this),
+						function(response)
+						{
+							window.app.hidePopupLoader();
+							if (this.xhr && this.xhr.status && this.xhr.status === 401)
+							{
+								this.stopTimer(true);
+							}
+							else if (
+								response.errors
+								&& response.errors.length
+							)
+							{
+								for (var ii = 0; ii < response.errors.length; ii++)
+									response.errors[ii] = response.errors[ii]["message"];
+								window.app.alert({text: response.errors.join(". "), title : BX.message("MB_TASKS_TASK_ERROR_TITLE")});
+							}
+							else
+							{
+
+							}
+						}.bind(this)
+					);
 				},
 				start : function() {
 					this.node.checked = true;
@@ -679,14 +643,6 @@
 						t[i] = '00'.substring(0, 2 - t[i].length) + t[i];
 					}
 					node.innerHTML = t.join(":");
-				},
-				getQuery : function()
-				{
-					if (!this.query)
-					{
-						this.query = new BX.Tasks.Util.Query({url : BX.util.add_url_param(BX.message("TASK_PATH_TO_AJAX"), {act : 'dayplan', id : this.id}), autoExec : true});
-					}
-					return this.query;
 				}
 			};
 			return d;
@@ -813,7 +769,6 @@
 		initRestricted: function(obj)
 		{
 			this.restricted = true;
-			new checkListViewMode(this.task["ID"], this.task["CHECKLIST"]);
 			new timetracker(this.task["ID"], this.task);
 
 			var i = obj.elements.length;
@@ -949,59 +904,97 @@
 			var formData = BX.ajax.prepareForm(obForm).data;
 			var data = this.prepareFromData(obForm, formData.data);
 			var taskId = this.task['ID'];
-			var url = BX.util.add_url_param(BX.message("TASK_PATH_TO_AJAX"), {act : "update", id : taskId});
-			var params = {id: taskId, userid: BX.message("USER_ID"), taskid: taskId, data: data, parameters: {RETURN_ENTITY: true}};
+			var action = taskId > 0 ? 'legacyUpdate' : 'legacyAdd';
 
-			(new BX.Tasks.Util.Query({url: url})).add((taskId > 0 ? 'task.update' : 'task.add'), params, {}, {
-				onExecuted: BX.proxy(function(response) {
-					if (response && response.response && response.response.status == 'failed')
-					{
-						window.app.BasicAuth( {
-							success: BX.proxy(function() {
-								(new BX.Tasks.Util.Query({url: url})).
-									add('task.update', params, {}, {onExecuted: this.actExecute }).
-									execute();
-								}, this),
-							failure: function(){
-								window.app.alert({text : BX.message("MB_TASKS_TASK_ERROR3"), title : BX.message("MB_TASKS_TASK_ERROR_TITLE")});
+			this.sendQuery(action, data);
+		},
 
+		sendQuery: function(action, data, withAuth)
+		{
+			if (withAuth)
+			{
+				window.app.BasicAuth( {
+					success: BX.proxy(function() {
+						BX.ajax.runComponentAction('bitrix:tasks.task', action, {
+							mode: 'class',
+							data: {
+								taskId: this.task["ID"],
+								data: data,
+								parameters: {RETURN_ENTITY: true, PLATFORM: 'mobile'}
 							}
-						});
+						}).then(
+							function(response)
+							{
+								this.actExecute(response);
+							}.bind(this),
+							function(response)
+							{
+								window.app.alert({text : BX.message("MB_TASKS_TASK_ERROR3"), title : BX.message("MB_TASKS_TASK_ERROR_TITLE")});
+							}.bind(this)
+						);
+					}, this),
+					failure: function(){
+						window.app.alert({text : BX.message("MB_TASKS_TASK_ERROR3"), title : BX.message("MB_TASKS_TASK_ERROR_TITLE")});
+					}
+				});
+				return;
+			}
+
+			BX.ajax.runComponentAction('bitrix:tasks.task', action, {
+				mode: 'class',
+				data: {
+					taskId: this.task["ID"],
+					data: data,
+					parameters: {RETURN_ENTITY: true, PLATFORM: 'mobile'}
+				},
+				onrequeststart: function (xhr) {
+					this.xhr = xhr;
+				}.bind(this),
+			}).then(
+				function(response)
+				{
+					try
+					{
+						var formName = this.option("formId");
+						if(this.task["ID"] == "0")
+						{
+							formName = "MOBILE_TASK_CREATE";
+						}
+
+						fabric.Answers.sendCustomEvent("TASK/"+formName, {});
+
+						if(this.changes)
+						{
+							Object.keys(this.changes).forEach((function(field){
+								fabric.Answers.sendCustomEvent("TASK/"+this.option("formId")+"/"+field, {});
+							}).bind(this))
+						}
+					}
+					catch (e)
+					{
+
+					}
+
+					setTimeout((function() {
+						this.actExecute(response);
+					}).bind(this), 500);
+				}.bind(this),
+				function(response)
+				{
+					if (this.xhr && this.xhr.status && this.xhr.status === 401)
+					{
+						this.sendQuery(action, data, true);
+					}
+					else if (response.errors && response.errors.length)
+					{
+
 					}
 					else
 					{
-						try
-						{
-							if((!response instanceof BX.Tasks.Util.Query.ErrorCollection) || response.length == 0)
-							{
-								var formName = this.option("formId");
-								if(this.task["ID"] == "0")
-								{
-									formName = "MOBILE_TASK_CREATE";
-								}
 
-								fabric.Answers.sendCustomEvent("TASK/"+formName, {});
-
-								if(this.changes)
-								{
-									Object.keys(this.changes).forEach((function(field){
-										fabric.Answers.sendCustomEvent("TASK/"+this.option("formId")+"/"+field, {});
-									}).bind(this))
-								}
-							}
-						}
-						catch (e)
-						{
-							//
-						}
-
-						var args = arguments;
-						setTimeout((function() {
-							this.actExecute.apply(this, args);
-						}).bind(this), 500);
 					}
-				}, this)
-			}).execute();
+				}.bind(this)
+			);
 		},
 
 		prepareFromData: function(form, data)
@@ -1078,7 +1071,6 @@
 
 		savePriority: function(id, value)
 		{
-			console.log('savePriority', id, value);
 			BX.ajax.runAction('tasks.task.update', {
 				data: {
 					taskId: id,
@@ -1087,32 +1079,32 @@
 					}
 				}
 			}).then(function (response) {
-				console.log(response);
+
 			}, function (response) {
-				console.log(response);
+
 			});
 		},
 
-		actExecute: function(errorConnection, data)
+		actExecute: function(response)
 		{
-			/*
-			@ errorConnection BX.Tasks.Util.Query.ErrorCollection
-			 */
 			BXMobileApp.UI.Page.LoadingScreen.hide();
-			if (errorConnection.checkHasErrors())
+
+			if (
+				response.errors
+				&& response.errors.length
+			)
 			{
-				var errors = [];
-				for (var ii = 0; ii < errorConnection.length; ii++)
+				for (var ii = 0; ii < response.errors.length; ii++)
 				{
-					errors.push(errorConnection[ii]["MESSAGE"]);
+					errors.push(response.errors[ii]["message"]);
 				}
 				window.app.alert({text: errors.join(". "), title : BX.message("MB_TASKS_TASK_ERROR_TITLE")});
 			}
-			else
+			else if (response.data)
 			{
 				window.BXMobileApp.onCustomEvent(
 					(this.task["ID"] > 0 ? "onTaskWasUpdated" : "onTaskWasCreated"),
-					[this.task["ID"], this.variable("id"), data["RESULT"]["DATA"], data, this.restricted],
+					[this.task["ID"], this.variable("id"), response.data.DATA, response.data, this.restricted],
 					true,
 					true
 				);

@@ -22,6 +22,7 @@ $APPLICATION->AddHeadScript('/bitrix/js/main/popup_menu.js');
 $APPLICATION->AddHeadScript('/bitrix/js/main/admin_tools.js');
 CUtil::InitJSCore(array("window", "ajax", "bp_selector"));
 require_once($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/main/interface/admin_lib.php");
+\Bitrix\Main\UI\Extension::load(['bizproc.globals']);
 //////////////////////////////////////////////////////////////////////////////
 
 $ID = $arResult["ID"];
@@ -40,6 +41,17 @@ $menu[] = array(
 	"LINK"=>"javascript:BCPShowParams();",
 	"ICON"=>"btn_settings",
 );
+
+$menu[] = [
+	'TEXT' => \Bitrix\Main\Localization\Loc::getMessage('BIZPROC_WFEDIT_MENU_GLOBAL_VARIABLES'),
+	'TITLE' => \Bitrix\Main\Localization\Loc::getMessage('BIZPROC_WFEDIT_MENU_GLOBAL_VARIABLES_TITLE'),
+	'LINK' => 'javascript:globals.showGlobalVariables();',
+];
+$menu[] = [
+	'TEXT' => \Bitrix\Main\Localization\Loc::getMessage('BIZPROC_WFEDIT_MENU_GLOBAL_CONSTANTS'),
+	'TITLE' => \Bitrix\Main\Localization\Loc::getMessage('BIZPROC_WFEDIT_MENU_GLOBAL_CONSTANTS_TITLE'),
+	'LINK' => 'javascript:globals.showGlobalConstants();',
+];
 
 $menu[] = array("SEPARATOR"=>"Y");
 
@@ -201,7 +213,7 @@ function BCPShowParams()
 			JSToPHP(arWorkflowParameters, 'arWorkflowParameters')  + '&' +
 			JSToPHP(arWorkflowVariables, 'arWorkflowVariables')  + '&' +
 			JSToPHP(arWorkflowConstants, 'arWorkflowConstants')  + '&' +
-			JSToPHP(Array(rootActivity.Serialize()), 'arWorkflowTemplate'), 
+			JSToPHP(Array(rootActivity.Serialize()), 'arWorkflowTemplate'),
 	'height': 500,
 	'width': 800,
 	'resizable' : false
@@ -212,6 +224,11 @@ function BCPShowParams()
 	}));
 	<? } ?>
 }
+
+var globals =  new BX.Disk.Component.BizprocEditComponent({
+	signedDocumentType: '<?= CUtil::JSEscape($arResult['DOCUMENT_TYPE_SIGNED']) ?>'
+});
+
 </script>
 <div style="background-color: #FFFFFF;">
 <?

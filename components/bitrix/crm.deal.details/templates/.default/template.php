@@ -14,7 +14,10 @@ $guid = $arResult['GUID'];
 $prefix = mb_strtolower($guid);
 $activityEditorID = "{$prefix}_editor";
 
-\Bitrix\Main\UI\Extension::load(["crm.scoringbutton"]);
+\Bitrix\Main\UI\Extension::load([
+	'crm.scoringbutton',
+	'crm.conversion',
+]);
 
 //region LEGEND
 if(isset($arResult['LEGEND']))
@@ -60,6 +63,9 @@ $APPLICATION->IncludeComponent(
 			? $arResult['ENTITY_DATA']['MULTIFIELD_DATA'] : array(),
 		'OWNER_INFO' => $arResult['ENTITY_INFO'],
 		'CONVERSION_PERMITTED' => $arResult['CONVERSION_PERMITTED'],
+		'CONVERSION_CONTAINER_ID' => $arResult['CONVERSION_CONTAINER_ID'],
+		'CONVERSION_LABEL_ID' => $arResult['CONVERSION_LABEL_ID'],
+		'CONVERSION_BUTTON_ID' => $arResult['CONVERSION_BUTTON_ID'],
 		'IS_RECURRING' => $arResult['ENTITY_DATA']['IS_RECURRING'],
 		'BIZPROC_STARTER_DATA' => $arResult['BIZPROC_STARTER_DATA'],
 		'TYPE' => 'details',
@@ -88,7 +94,7 @@ $APPLICATION->IncludeComponent(
 	<? endif; ?>
 </script><?
 
-$editorContext = array('PARAMS' => $arResult['CONTEXT_PARAMS']);
+$editorContext = $arResult['CONTEXT'];
 if(isset($arResult['ORIGIN_ID']) && $arResult['ORIGIN_ID'] !== '')
 {
 	$editorContext['ORIGIN_ID'] = $arResult['ORIGIN_ID'];
@@ -153,35 +159,87 @@ $APPLICATION->IncludeComponent(
 	)
 );
 
-if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && isset($arResult['CONVERSION_CONFIG'])):
+/** @var \Bitrix\Crm\Conversion\EntityConversionConfig|null $conversionConfig */
+$conversionConfig = $arResult['CONVERSION_CONFIG'] ?? null;
+
+if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && $conversionConfig):
 ?><script type="text/javascript">
 		BX.ready(
 			function()
 			{
-				BX.CrmDealConversionScheme.messages =
-					<?=CUtil::PhpToJSObject(\Bitrix\Crm\Conversion\DealConversionScheme::getJavaScriptDescriptions(false))?>;
+				var converter = BX.Crm.Conversion.Manager.Instance.initializeConverter(
+					BX.CrmEntityType.enumeration.deal,
+					{
+						configItems: <?= CUtil::PhpToJSObject($conversionConfig->toJson()) ?>,
+						scheme: <?= CUtil::PhpToJSObject($conversionConfig->getScheme()->toJson(true)) ?>,
+						params: {
+							serviceUrl: "<?='/bitrix/components/bitrix/crm.deal.details/ajax.php?action=convert&'.bitrix_sessid_get()?>",
+							messages: {
+								accessDenied: "<?=GetMessageJS("CRM_DEAL_CONV_ACCESS_DENIED")?>",
+								generalError: "<?=GetMessageJS("CRM_DEAL_CONV_GENERAL_ERROR")?>",
+								dialogTitle: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_TITLE")?>",
+								syncEditorLegend: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_SYNC_LEGEND")?>",
+								syncEditorFieldListTitle: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_SYNC_FILED_LIST_TITLE")?>",
+								syncEditorEntityListTitle: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_SYNC_ENTITY_LIST_TITLE")?>",
+								continueButton: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_CONTINUE_BTN")?>",
+								cancelButton: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_CANCEL_BTN")?>"
+							}
+						}
+					}
+				);
 
-				BX.CrmDealConverter.messages =
+				var schemeSelector = new BX.Crm.Conversion.SchemeSelector(
+					converter,
+					{
+						entityId: <?= (int)$arResult['ENTITY_ID'] ?>,
+						containerId: '<?= CUtil::JSEscape($arResult['CONVERSION_CONTAINER_ID']) ?>',
+						labelId: '<?= CUtil::JSEscape($arResult['CONVERSION_LABEL_ID']) ?>',
+						buttonId: '<?= CUtil::JSEscape($arResult['CONVERSION_BUTTON_ID']) ?>'
+					}
+				);
+
+				schemeSelector.enableAutoConversion();
+
+				var convertByEvent = function(dstEntityTypeId)
 				{
-					accessDenied: "<?=GetMessageJS("CRM_DEAL_CONV_ACCESS_DENIED")?>",
-					generalError: "<?=GetMessageJS("CRM_DEAL_CONV_GENERAL_ERROR")?>",
-					dialogTitle: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_TITLE")?>",
-					syncEditorLegend: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_SYNC_LEGEND")?>",
-					syncEditorFieldListTitle: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_SYNC_FILED_LIST_TITLE")?>",
-					syncEditorEntityListTitle: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_SYNC_ENTITY_LIST_TITLE")?>",
-					continueButton: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_CONTINUE_BTN")?>",
-					cancelButton: "<?=GetMessageJS("CRM_DEAL_CONV_DIALOG_CANCEL_BTN")?>"
+					var schemeItem = converter.getConfig().getScheme().getItemForSingleEntityTypeId(dstEntityTypeId);
+					if (!schemeItem)
+					{
+						console.error('SchemeItem with single entityTypeId ' + dstEntityTypeId  + ' is not found');
+						return;
+					}
+
+					converter.getConfig().updateFromSchemeItem(schemeItem);
+
+					converter.convert(<?= (int)$arResult['ENTITY_ID'] ?>);
 				};
-				BX.CrmDealConverter.permissions =
-				{
-					invoice: <?=CUtil::PhpToJSObject($arResult['CAN_CONVERT_TO_INVOICE'])?>,
-					quote: <?=CUtil::PhpToJSObject($arResult['CAN_CONVERT_TO_QUOTE'])?>
-				};
-				BX.CrmDealConverter.settings =
-				{
-					serviceUrl: "<?='/bitrix/components/bitrix/crm.deal.details/ajax.php?action=convert&'.bitrix_sessid_get()?>",
-					config: <?=CUtil::PhpToJSObject($arResult['CONVERSION_CONFIG']->toJavaScript())?>
-				};
+
+				BX.addCustomEvent(window,
+					'CrmCreateQuoteFromDeal',
+					function()
+					{
+						convertByEvent(BX.CrmEntityType.enumeration.quote);
+					}
+				);
+				BX.addCustomEvent(window,
+					'CrmCreateInvoiceFromDeal',
+					function()
+					{
+						convertByEvent(BX.CrmEntityType.enumeration.invoice);
+					}
+				);
+				BX.addCustomEvent(window,
+					'BX.Crm.ItemListComponent:onAddNewItemButtonClick',
+					function(event)
+					{
+						var dstEntityTypeId = Number(event.getData().entityTypeId);
+						if (dstEntityTypeId > 0)
+						{
+							convertByEvent(dstEntityTypeId);
+						}
+					}
+				);
+
 				BX.CrmEntityType.setCaptions(<?=CUtil::PhpToJSObject(CCrmOwnerType::GetJavascriptDescriptions())?>);
 				BX.onCustomEvent(window, "BX.CrmEntityConverter:applyPermissions", [BX.CrmEntityType.names.deal]);
 				<?php

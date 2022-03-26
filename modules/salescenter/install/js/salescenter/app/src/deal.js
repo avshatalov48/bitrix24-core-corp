@@ -1,5 +1,6 @@
 import { Vuex } from 'ui.vue.vuex';
 import StageBlocksList from './components/deal-receiving-payment/stage-blocks-list';
+import EntityCreatePaymentStages from './components/crm-entity-create-payment/stage-blocks-list';
 import StageBlocksListShipment from './components/deal-creating-shipment/stage-blocks-list';
 import ComponentMixin from './component-mixin';
 import { Loc } from 'main.core';
@@ -19,6 +20,7 @@ export default {
 	},
 	components: {
 		'deal-receiving-payment': StageBlocksList,
+		'crm-entity-create-payment': EntityCreatePaymentStages,
 		'deal-creating-shipment': StageBlocksListShipment,
 		'start': Start,
 	},
@@ -85,6 +87,12 @@ export default {
 		},
 		howItWorks(event)
 		{
+			if (this.mode === 'payment')
+			{
+				BX.Salescenter.Manager.openHowPaySmartInvoiceWorks(event);
+				return;
+			}
+
 			BX.Salescenter.Manager.openHowPayDealWorks(event);
 		},
 		openIntegrationWindow(event)
@@ -102,7 +110,7 @@ export default {
 				let fixed = SenderConfig.openSliderFreeMessages(sender[0].connectUrl);
 				fixed().then()
 			}
-		}
+		},
 		// endregion
 	},
 	computed: {
@@ -201,6 +209,10 @@ export default {
 		{
 			return this.$root.$app.options.title;
 		},
+		getTitleForPaymentDeliveryMenuItem()
+		{
+			return Loc.getMessage('SALESCENTER_LEFT_TAKE_PAYMENT_AND_CREATE_SHIPMENT');
+		},
 		// classes region
 		paymentDeliveryFormSubmitButtonClass()
 		{
@@ -212,7 +224,12 @@ export default {
 		},
 		paymentDeliveryMenuItemClass()
 		{
-			return {'salescenter-app-sidebar-menu-active': this.activeMenuItem === 'payment_delivery'};
+			return {
+				'salescenter-app-sidebar-menu-active': (
+					this.activeMenuItem === 'payment_delivery'
+					|| this.activeMenuItem === 'payment'
+				)
+			};
 		},
 		deliveryMenuItemClass()
 		{
@@ -248,7 +265,7 @@ export default {
 						>
 							<a class="ui-sidepanel-menu-link">
 								<div class="ui-sidepanel-menu-link-text">
-									${Loc.getMessage('SALESCENTER_LEFT_TAKE_PAYMENT_AND_CREATE_SHIPMENT')}
+									{{getTitleForPaymentDeliveryMenuItem}}
 								</div>
 							</a>
 						</li>
@@ -265,7 +282,7 @@ export default {
 							</a>
 						</li>
 					</template>
-					
+
 					<li class="ui-sidepanel-menu-item ui-sidepanel-menu-item-sm ui-sidepanel-menu-item-separate">
 						<a
 							@click="specifyCompanyContacts"
@@ -288,7 +305,7 @@ export default {
 								${Loc.getMessage('SALESCENTER_LEFT_PAYMENT_OFFER_SCRIPT')}
 							</div>
 						</a>
-					</li>					
+					</li>
 					<li class="ui-sidepanel-menu-item ui-sidepanel-menu-item-sm">
 						<a
 							@click="howItWorks($event)"
@@ -343,11 +360,16 @@ export default {
 			        	@stage-block-send-on-send="sendDeliveryForm($event)"
 			        	:sendAllowed="isAllowedDeliverySubmitButton"
 			        />
+			        <crm-entity-create-payment
+			        	v-if="mode === 'payment'"
+			        	@stage-block-send-on-send="sendPaymentDeliveryForm($event)"
+			        	:sendAllowed="isAllowedPaymentDeliverySubmitButton"
+			        />
 		        </template>
 			</div>
 			<div class="ui-button-panel-wrapper salescenter-button-panel" ref="buttonsPanel">
 				<div class="ui-button-panel">
-					<template v-if="mode === 'payment_delivery'">
+					<template v-if="mode === 'payment_delivery' || mode === 'payment'">
 						<button
 							@click="sendPaymentDeliveryForm($event)"
 							:class="paymentDeliveryFormSubmitButtonClass"
@@ -376,7 +398,7 @@ export default {
 								class="ui-btn ui-btn-md ui-btn-link"
 							>
 								${Loc.getMessage('SALESCENTER_CANCEL')}
-							</button>							
+							</button>
 						</template>
 					</template>
 				</div>

@@ -6,12 +6,10 @@ use Bitrix\Crm\CallList\Internals\CallListCreatedTable;
 use Bitrix\Crm\CallList\Internals\CallListItemTable;
 use Bitrix\Crm\CallList\Internals\CallListTable;
 use Bitrix\Crm\CompanyAddress;
-use Bitrix\Main;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
-use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Localization\Loc;
 
@@ -51,27 +49,45 @@ final class CallList
 	 * @param $id
 	 * @return static
 	 * @throws ArgumentException
-	 * @throws SystemException
+	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function createWithId($id, $loadItems = false)
 	{
 		$id = (int)$id;
 
-		if($id == 0)
+		if ($id <= 0)
+		{
 			throw new ArgumentException('id should be positive', 'id');
+		}
 
 		$row = CallListTable::getById($id)->fetch();
-		if(!$row)
-			throw new SystemException('Call list is not found');
+		if (!$row)
+		{
+			throw new \Bitrix\Main\SystemException('Call list is not found', 404);
+		}
 
 		$callList = new static;
 		$callList->setFromArray($row);
 		$callList->new = false;
+		$userPermissions = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
+
+		if (!$userPermissions->isAdmin() && (int)$callList->getEntityTypeId() !== 0)
+		{
+			$canReadType = $userPermissions->canReadType((int)$callList->getEntityTypeId());
+			if (!$canReadType)
+			{
+				throw new \Bitrix\Main\SystemException('Access Denied', 403);
+			}
+		}
 
 		// todo: add caching
 		if($loadItems)
 		{
 			$callList->loadItems();
+			if (empty($callList->items))
+			{
+				return $callList;
+			}
 
 			$itemIds = array();
 			/** @var Item $item */
@@ -79,25 +95,40 @@ final class CallList
 			{
 				$itemIds[] = $item->getElementId();
 			}
-			$itemFields = $callList->resolveItemFields($callList->getEntityTypeId(), $itemIds);
 
-			foreach ($callList->items as $item)
+			$itemFields = self::resolveItemFields($callList->getEntityTypeId(), $itemIds);
+
+			foreach ($callList->items as $key => $item)
 			{
-				if(isset($itemFields[$item->getElementId()]))
+				if(!isset($itemFields[$item->getElementId()]))
 				{
-					$item->setName($itemFields[$item->getElementId()]['NAME']);
-					$item->setCompanyTitle($itemFields[$item->getElementId()]['COMPANY_TITLE']);
-					$item->setCompanyPost($itemFields[$item->getElementId()]['POST']);
-					$item->setEditUrl($itemFields[$item->getElementId()]['EDIT_URL']);
-					if(is_array($itemFields[$item->getElementId()]['PHONES']))
-					{
-						$item->setPhones($itemFields[$item->getElementId()]['PHONES']);
-					}
-					if(is_array($itemFields[$item->getElementId()]['ASSOCIATED_ENTITY']))
-					{
-						$item->setAssociatedEntity($itemFields[$item->getElementId()]['ASSOCIATED_ENTITY']);
-					}
+					unset($callList->items[$key]);
 				}
+
+				$canReadItem = $userPermissions->checkReadPermissions($callList->entityTypeId, $item->getElementId());
+				if (!$canReadItem)
+				{
+					unset($callList->items[$key]);
+					continue;
+				}
+				$item->setName($itemFields[$item->getElementId()]['NAME']);
+				$item->setCompanyTitle($itemFields[$item->getElementId()]['COMPANY_TITLE']);
+				$item->setCompanyPost($itemFields[$item->getElementId()]['POST']);
+				$item->setEditUrl($itemFields[$item->getElementId()]['EDIT_URL']);
+				if(is_array($itemFields[$item->getElementId()]['PHONES']))
+				{
+					$item->setPhones($itemFields[$item->getElementId()]['PHONES']);
+				}
+				if(is_array($itemFields[$item->getElementId()]['ASSOCIATED_ENTITY']))
+				{
+					$item->setAssociatedEntity($itemFields[$item->getElementId()]['ASSOCIATED_ENTITY']);
+				}
+
+			}
+
+			if (empty($callList->items))
+			{
+				throw new \Bitrix\Main\SystemException('Call list is empty or access denied', 403);
 			}
 
 		}
@@ -108,9 +139,7 @@ final class CallList
 	/**
 	 * @param string $entityType
 	 * @param string $gridId
-	 * @param string $filterParameters
 	 * @return CallList
-	 * @throws SystemException
 	 */
 	public static function createWithGridId($entityType, $gridId)
 	{
@@ -127,7 +156,6 @@ final class CallList
 	/**
 	 * @param string $entityType Type of the entities used to build the call list (LEAD|CONTACT|COMPANY).
 	 * @param int[] $entityIds Array of the entity's ids.
-	 * @param string $filterParameters Natural language description of filter parameters, used to produce entity list.
 	 * @return CallList
 	 */
 	public static function createWithEntities($entityType, $entityIds)
@@ -1005,7 +1033,7 @@ final class CallList
 		}
 
 		if(!$cursor)
-			throw new SystemException('Database error');
+			throw new \Bitrix\Main\SystemException('Database error');
 
 		$entityIds = array();
 
@@ -1015,7 +1043,7 @@ final class CallList
 			$count++;
 			if($count > self::ITEMS_LIMIT)
 			{
-				throw new SystemException(Loc::getMessage('CRM_CALL_LIST_LIMIT_ERROR', array("#LIMIT#" => self::ITEMS_LIMIT)));
+				throw new \Bitrix\Main\SystemException(Loc::getMessage('CRM_CALL_LIST_LIMIT_ERROR', array("#LIMIT#" => self::ITEMS_LIMIT)));
 			}
 
 			$entityIds[] = $row['ID'];

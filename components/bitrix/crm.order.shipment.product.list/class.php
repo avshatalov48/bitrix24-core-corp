@@ -5,6 +5,7 @@ use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Product\Url;
 use Bitrix\Iblock\Url\AdminPage\BuilderManager;
+use Bitrix\Catalog;
 
 Loc::loadMessages(__FILE__);
 
@@ -91,11 +92,11 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 			$this->arParams['BUILDER_CONTEXT'] = '';
 		}
 		if (
-			$this->arParams['BUILDER_CONTEXT'] != Url\ShopBuilder::TYPE_ID
-			&& $this->arParams['BUILDER_CONTEXT'] != Url\ProductBuilder::TYPE_ID
+			$this->arParams['BUILDER_CONTEXT'] !== Catalog\Url\ShopBuilder::TYPE_ID
+			&& $this->arParams['BUILDER_CONTEXT'] !== Url\ProductBuilder::TYPE_ID
 		)
 		{
-			$this->arParams['BUILDER_CONTEXT'] = Url\ShopBuilder::TYPE_ID;
+			$this->arParams['BUILDER_CONTEXT'] = Catalog\Url\ShopBuilder::TYPE_ID;
 		}
 
 		$manager = BuilderManager::getInstance();
@@ -642,8 +643,12 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 		$this->arResult['PATH_TO_ORDER_SHIPMENT_PRODUCT_LIST'] = $this->arParams['PATH_TO_ORDER_SHIPMENT_PRODUCT_LIST'] = CrmCheckPath('PATH_TO_ORDER_SHIPMENT_PRODUCT_LIST', $this->arParams['PATH_TO_ORDER_SHIPMENT_PRODUCT_LIST'], $APPLICATION->GetCurPage());
 		$this->arResult['ORDER_SITE_ID'] = $this->order->getSiteId();
 		$this->arResult['ORDER_ID'] =$this->order->getId();
-		$this->arResult['CAN_UPDATE_ORDER'] = \Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission(intval($this->arResult['ORDER_ID']), $this->userPermissions);
 		$this->arResult['LOADING_SET_ITEMS'] = ($_REQUEST['action'] === \Bitrix\Main\Grid\Actions::GRID_GET_CHILD_ROWS);
+		$this->arResult['CAN_UPDATE_ORDER'] = \Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission(intval($this->arResult['ORDER_ID']), $this->userPermissions);
+		if ($this->shipment->getField('DEDUCTED') === 'Y')
+		{
+			$this->arResult['CAN_UPDATE_ORDER'] = false;
+		}
 
 		$gridOptions = new \Bitrix\Main\Grid\Options($this->arResult['GRID_ID']);
 

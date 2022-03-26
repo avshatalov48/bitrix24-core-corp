@@ -1,6 +1,5 @@
 <?php
 $MESS["IMBOT_NETWORK_BOT_DIALOG_FORWARD"] = "Conversation forwarded to an agent";
-$MESS["IMBOT_NETWORK_BOT_MENU_RESULT"] = "Interactive Text Response menu result:";
 $MESS["IMBOT_NETWORK_BOT_WORK_POSITION"] = "Open Channel";
 $MESS["IMBOT_NETWORK_ERROR_ANSWER_MALFORMED"] = "Server didn't respond in JSON format.";
 $MESS["IMBOT_NETWORK_ERROR_BOT_NOT_FOUND"] = "Open Channel is currently not available.";
@@ -15,6 +14,7 @@ $MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_EMPTY"] = "Please provide the public site 
 $MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_FAIL"] = "The public site address you specified is not available (code: #ERROR#).";
 $MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_HANDLER_PATH"] = "Cannot find handler file in the public area. Required file: #PATH#";
 $MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_LOCALHOST"] = "Public site address resolves to a local host: #HOST#";
+$MESS["IMBOT_NETWORK_ERROR_CONVERTING_PUNYCODE"] = "Error converting hostname #HOST# to Punycode: #ERROR#";
 $MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_MALFORMED"] = "Incorrect public site address specified.";
 $MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_WRONG_ANSWER"] = "Error verifying public site address: invalid server response.";
 $MESS["IMBOT_NETWORK_ERROR_PUBLIC_URL_WRONG_ANSWER_CODE"] = "Error verifying public site address: server returned invalid HTTP response code.";

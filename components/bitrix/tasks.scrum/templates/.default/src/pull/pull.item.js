@@ -146,6 +146,10 @@ export class PullItem
 
 		itemsToSort.forEach((item: Item) => {
 			const itemInfoToSort = itemsInfoToSort.get(item.getId());
+			if (item.isParentTask() && item.isShownSubTasks())
+			{
+				item.hideSubTasks();
+			}
 			item.setSort(itemInfoToSort.sort);
 			const sourceEntity = this.entityStorage.findEntityByEntityId(item.getEntityId());
 			if (sourceEntity)

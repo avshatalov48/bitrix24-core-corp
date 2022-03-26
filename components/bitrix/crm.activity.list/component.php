@@ -304,6 +304,11 @@ if($displayReference)
 		]
 	];
 
+	if (\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isSmartInvoiceEnabled())
+	{
+		$referenceFilter['params']['addTabCrmSmartInvoices'] = 'Y';
+	}
+
 	$dynamicTypesMap = \Bitrix\Crm\Service\Container::getInstance()->getDynamicTypesMap()->load([
 		'isLoadCategories' => false,
 		'isLoadStages' => false,
@@ -1164,7 +1169,7 @@ while($arRes = $dbRes->GetNext())
 			$ownerTypeID === CCrmOwnerType::Deal
 			|| $ownerTypeID === CCrmOwnerType::Lead
 			|| $ownerTypeID === CCrmOwnerType::Quote
-			|| \CCrmOwnerType::isPossibleDynamicTypeId($ownerTypeID)
+			|| \CCrmOwnerType::isUseDynamicTypeBasedApproach($ownerTypeID)
 		)
 	)
 	{

@@ -1,6 +1,9 @@
 <?
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Crm\Agent\Duplicate\Background\Helper;
+use Bitrix\Crm\Agent\Duplicate\Background\IndexRebuild;
+use Bitrix\Crm\Agent\Duplicate\Background\Merge;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm;
@@ -227,6 +230,78 @@ class CCrmDedupeWizardComponentAjaxController extends Main\Engine\Controller
 			'TOTAL_ENTITIES' => $totalEntities
 		);
 	}
+
+	protected function getIndexAgentClassName(string $entityTypeName): string
+	{
+		return Helper::getInstance()->getAgentClassName($entityTypeName, 'IndexRebuild');
+	}
+
+	protected function getMergeAgentClassName(string $entityTypeName): string
+	{
+		return Helper::getInstance()->getAgentClassName($entityTypeName, 'Merge');
+	}
+
+	protected function getIndexAgentState(string $entityTypeName)
+	{
+		return Helper::getInstance()->getAgentState($this->currentUserID, $entityTypeName, 'IndexRebuild');
+	}
+
+	protected function getMergeAgentState(string $entityTypeName)
+	{
+		return Helper::getInstance()->getAgentState($this->currentUserID, $entityTypeName, 'Merge');
+	}
+
+	/**
+	 * @param string $entityTypeName
+	 * @param string $agentName
+	 * @return IndexRebuild|Merge|null
+	 */
+	protected function getAgent(string $entityTypeName, string $agentName)
+	{
+		/** @var IndexRebuild|Merge $agentClassName */
+		$agentClassName = Helper::getInstance()->getAgentClassName($entityTypeName, $agentName);
+
+		return $agentClassName::getInstance($this->currentUserID);
+	}
+
+	protected function getIndexAgent(string $entityTypeName): IndexRebuild
+	{
+		return $this->getAgent($entityTypeName, 'IndexRebuild');
+	}
+
+	protected function getMergeAgent(string $entityTypeName): Merge
+	{
+		return $this->getAgent($entityTypeName, 'Merge');
+	}
+
+	public function rebuildIndexBackgroundAction($entityTypeName, array $types, $scope, string $tryStart): array
+	{
+		/** @var IndexRebuild $agentClassName */
+		$agentClassName = $this->getIndexAgentClassName($entityTypeName);
+
+		if ($tryStart === 'Y')
+		{
+			$agent = $agentClassName::getInstance($this->currentUserID);
+			$agent->start($types, $scope);
+		}
+
+		return $this->getIndexAgentState($entityTypeName);
+	}
+
+	public function stopRebuildIndexBackgroundAction($entityTypeName): array
+	{
+		$this->getIndexAgent($entityTypeName)->stop();
+
+		return $this->getIndexAgentState($entityTypeName);
+	}
+
+	public function deleteRebuildIndexBackgroundAction($entityTypeName): bool
+	{
+		$this->getIndexAgent($entityTypeName)->delete();
+
+		return true;
+	}
+
 	public function mergeAction($entityTypeName, array $types, $scope, $mode = '')
 	{
 		$entityTypeID = \CCrmOwnerType::ResolveID($entityTypeName);
@@ -367,5 +442,33 @@ class CCrmDedupeWizardComponentAjaxController extends Main\Engine\Controller
 			return false;
 		}
 		return $result;
+	}
+
+	public function mergeBackgroundAction($entityTypeName, array $types, $scope, string $tryStart): array
+	{
+		/** @var Merge $agentClassName */
+		$agentClassName = $this->getMergeAgentClassName($entityTypeName);
+
+		if ($tryStart === 'Y')
+		{
+			$agent = $agentClassName::getInstance($this->currentUserID);
+			$agent->start($types, $scope);
+		}
+
+		return $this->getMergeAgentState($entityTypeName);
+	}
+
+	public function stopMergeBackgroundAction($entityTypeName): array
+	{
+		$this->getMergeAgent($entityTypeName)->stop();
+
+		return $this->getMergeAgentState($entityTypeName);
+	}
+
+	public function deleteMergeBackgroundAction($entityTypeName): bool
+	{
+		$this->getMergeAgent($entityTypeName)->delete();
+
+		return true;
 	}
 }

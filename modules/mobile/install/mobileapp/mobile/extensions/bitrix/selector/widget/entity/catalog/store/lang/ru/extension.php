@@ -1,0 +1,5 @@
+<?php
+$MESS["SELECTOR_COMPONENT_PICK_STORE_2"] = "Склад";
+$MESS["SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_STORE"] = "Начните печатать для выбора склада";
+$MESS["SELECTOR_COMPONENT_CREATE_STORE"] = "+ Cоздать склад";
+$MESS["SELECTOR_COMPONENT_CREATING_STORE"] = "Cоздание склада...";

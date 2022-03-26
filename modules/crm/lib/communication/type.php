@@ -27,6 +27,7 @@ class Type
 	const OPENLINE = 8;
 	const VIBER = 9;
 	const IMOL = 10;
+	const SLUSER = 10;
 
 	const PHONE_NAME = 'PHONE';
 	const EMAIL_NAME = 'EMAIL';
@@ -38,6 +39,7 @@ class Type
 	const OPENLINE_NAME = 'OPENLINE';
 	const VIBER_NAME = 'VIBER';
 	const IMOL_NAME = 'IMOL';
+	const SLUSER_NAME = 'SLUSER';
 
 	/**
 	 * Get all names.
@@ -55,7 +57,8 @@ class Type
 			self::BITRIX24_NAME,
 			self::OPENLINE_NAME,
 			self::VIBER_NAME,
-			self::IMOL_NAME
+			self::IMOL_NAME,
+			self::SLUSER_NAME,
 		);
 	}
 	/**
@@ -71,7 +74,7 @@ class Type
 		}
 
 		$ID = (int)$ID;
-		return $ID >= self::PHONE && $ID <= self::VIBER;
+		return $ID >= self::PHONE && $ID <= self::SLUSER;
 	}
 	/**
 	 * Try to resolve type ID by name.
@@ -121,6 +124,10 @@ class Type
 		elseif($name === self::VIBER_NAME)
 		{
 			return self::VIBER;
+		}
+		elseif($name === self::SLUSER_NAME)
+		{
+			return self::SLUSER;
 		}
 		return self::UNDEFINED;
 	}
@@ -178,6 +185,10 @@ class Type
 		{
 			return self::VIBER_NAME;
 		}
+		elseif($ID === self::SLUSER)
+		{
+			return self::SLUSER_NAME;
+		}
 		return '';
 	}
 	/**
@@ -186,7 +197,7 @@ class Type
 	 */
 	public static function getMultiFieldTypeIDs()
 	{
-		return array(\CCrmFieldMulti::PHONE, \CCrmFieldMulti::EMAIL, \CCrmFieldMulti::IM);
+		return array(\CCrmFieldMulti::PHONE, \CCrmFieldMulti::EMAIL, \CCrmFieldMulti::IM, \CCrmFieldMulti::LINK);
 	}
 	/**
 	 * Detect type by communication code.

@@ -73,6 +73,8 @@ class Application
 		}
 
 		options.provider.submit = this.getSubmitProvider24(b24options);
+		options.analyticsHandler = this.getAnalyticsSender(b24options);
+
 		if (b24options.lang)
 		{
 			options.language = b24options.lang;
@@ -337,6 +339,46 @@ class Application
 					break;
 			}
 		});
+	}
+
+	getAnalyticsSender(b24options)
+	{
+		return (counter: string, formId: string) =>
+		{
+			if (window.sessionStorage)
+			{
+				const key = `b24-analytics-counter-${formId}-${counter}`;
+				if (sessionStorage.getItem(key) === 'y')
+				{
+					return Promise.resolve([]);
+				}
+
+				sessionStorage.setItem(key, 'y');
+			}
+
+			const formData = new FormData();
+			formData.append('counter', counter);
+			formData.append('formId', formId);
+
+			return this.post(
+				b24options.address + '/bitrix/services/main/ajax.php?action=crm.site.form.handleAnalytics',
+				formData
+			).then((response) =>
+			{
+				return response.json();
+			}).then((data) =>
+			{
+				if (data.error)
+				{
+					throw new Error(data.error_description || data.error);
+				}
+				return new Promise(resolve =>
+				{
+					resolve(data);
+				});
+			});
+		};
+		;
 	}
 }
 

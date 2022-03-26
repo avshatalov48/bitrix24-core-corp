@@ -44,6 +44,7 @@
 	font: 17px/23px var(--b24-font-family);
 	padding-right: 8px;
 	min-width: 56px;
+	max-width: 47%;
 }
 
 .b24-form-control-product-price-old {
@@ -58,6 +59,9 @@
 .b24-form-control-product-price-current {
 	text-align: right;
 	font-weight: bold;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
 	color: #0F58D0;
 	color: var(--b24-primary-color);
 }

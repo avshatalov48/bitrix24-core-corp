@@ -2,6 +2,8 @@
 namespace Bitrix\Crm\Settings;
 use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Main\Loader;
+
 class LayoutSettings
 {
 	/** @var LayoutSettings */
@@ -10,6 +12,10 @@ class LayoutSettings
 	/** @var BooleanSetting */
 	private $enableSlider = null;
 	/** @var BooleanSetting */
+	private $enableCatalogPriceEdit = null;
+	/** @var BooleanSetting */
+	private $enableCatalogPriceSave = null;
+	/** @var BooleanSetting */
 	private $enableSimpleTimeFormat = null;
 	/** @var BooleanSetting */
 	private $enableUserNameSorting = null;
@@ -17,10 +23,15 @@ class LayoutSettings
 	private $clientLayoutType = null;
 	/** @var BooleanSetting */
 	private $enableDedupeWizard = null;
+	/** @var BooleanSetting */
+	private $enableFullCatalog;
 
 	function __construct()
 	{
 		$this->enableSlider = new BooleanSetting('enable_slider', true);
+		$this->enableFullCatalog = new BooleanSetting('enable_full_catalog', true);
+		$this->enableCatalogPriceEdit = new BooleanSetting('enable_product_price_edit', false);
+		$this->enableCatalogPriceSave = new BooleanSetting('enable_catalog_price_save', false);
 		$this->enableSimpleTimeFormat = new BooleanSetting('enable_simple_time_format', true);
 		$this->enableUserNameSorting = new BooleanSetting('enable_user_name_sorting', false);
 		$this->clientLayoutType = new IntegerSetting(
@@ -57,6 +68,56 @@ class LayoutSettings
 	public function enableSlider($enabled)
 	{
 		$this->enableSlider->set($enabled);
+	}
+
+	public function isFullCatalogEnabled(): bool
+	{
+		return $this->enableFullCatalog->get();
+	}
+
+	public function enableFullCatalog(bool $enabled): void
+	{
+		$this->enableFullCatalog->set($enabled);
+	}
+
+	public function isCommonProductProcessingEnabled(): bool
+	{
+		return Loader::includeModule('catalog') && \Bitrix\Catalog\Config\Feature::isCommonProductProcessingEnabled();
+	}
+
+	/**
+	 * Check if user is allowed to change product prices from entity card
+	 * @return bool
+	 */
+	public function isCatalogPriceEditEnabled(): bool
+	{
+		return !$this->isCommonProductProcessingEnabled() || $this->enableCatalogPriceEdit->get();
+	}
+	/**
+	 * Enabled changing product prices from entity card
+	 * @param bool $enabled Enabled Flag.
+	 * @return void
+	 */
+	public function enableCatalogPriceEdit($enabled): void
+	{
+		$this->enableCatalogPriceEdit->set($enabled);
+	}
+	/**
+	 * Check if user is allowed to change product prices from entity card
+	 * @return bool
+	 */
+	public function isCatalogPriceSaveEnabled(): bool
+	{
+		return $this->isCommonProductProcessingEnabled() && $this->enableCatalogPriceSave->get();
+	}
+	/**
+	 * Enabled saving product prices from entity card
+	 * @param bool $enabled Enabled Flag.
+	 * @return void
+	 */
+	public function enableCatalogPriceSave($enabled): void
+	{
+		$this->enableCatalogPriceSave->set($enabled);
 	}
 	/**
 	 * Check if dedupe wizard enabled for duplicate control

@@ -110,6 +110,7 @@
 	      this.isRestricted = Boolean(params.isRestricted);
 	    }
 
+	    this.buttonsPanel = document.getElementById('ui-button-panel');
 	    this.saveButton = document.getElementById('ui-button-panel-save');
 	    this.cancelButton = document.getElementById('ui-button-panel-cancel');
 	    this.deleteButton = document.getElementById('ui-button-panel-remove');
@@ -193,6 +194,8 @@
 	      }
 
 	      main_core.Dom.removeClass(document.getElementById('pagetitle'), 'crm-type-hidden');
+	      main_core.Dom.addClass(this.buttonsPanel, 'crm-type-hidden');
+	      this.hideErrors();
 	    }
 	  }, {
 	    key: "disablePresetsView",
@@ -211,6 +214,7 @@
 	      }
 
 	      main_core.Dom.addClass(document.getElementById('pagetitle'), 'crm-type-hidden');
+	      main_core.Dom.removeClass(this.buttonsPanel, 'crm-type-hidden');
 	    }
 	  }, {
 	    key: "disableLinkedUserFieldsIfNotAvailable",

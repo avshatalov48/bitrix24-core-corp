@@ -17,6 +17,7 @@
 	      if (!main_core.Type.isNil(form)) {
 	        this.entityTypeIdSelect = form.dynamic_type_id;
 	        this.currentEntityTypeId = this.entityTypeIdSelect.value;
+	        this.entityTypeDependentElements = document.querySelectorAll('[data-role="bca-cuda-entity-type-id-dependent"]');
 	      }
 
 	      if (this.isRobot) {
@@ -28,6 +29,18 @@
 	      this.entitiesFieldsContainers = document.querySelector('[data-role="bca-cuda-fields-container"]');
 	      this.conditinIdPrefix = 'id_bca_cuda_field_';
 	      this.fieldsMap = new Map(Object.entries(options.fieldsMap));
+	      this.filterFieldsContainer = document.querySelector('[data-role="bca-cuda-filter-fields-container"]');
+	      this.filteringFieldsPrefix = options.filteringFieldsPrefix;
+	      this.filterFieldsMap = new Map(Object.entries(options.filterFieldsMap));
+
+	      if (!main_core.Type.isNil(options.documentName)) {
+	        BX.Bizproc.Automation.API.documentName = options.documentName;
+	      }
+
+	      if (BX.Bizproc.Automation && BX.Bizproc.Automation.ConditionGroup) {
+	        this.conditionGroup = new BX.Bizproc.Automation.ConditionGroup(options.conditions);
+	      }
+
 	      this.currentValues = new Map();
 	      Array.from(this.fieldsMap.keys()).forEach(function (entityTypeId) {
 	        return _this.currentValues.set(entityTypeId, {});
@@ -35,8 +48,9 @@
 
 	      if (!main_core.Type.isNil(this.currentEntityTypeId) && main_core.Type.isObject(options.currentValues)) {
 	        this.currentValues.set(this.currentEntityTypeId, options.currentValues);
-	        this.renderEntityFields();
 	      }
+
+	      this.render();
 	    }
 	  }
 
@@ -57,21 +71,51 @@
 	    key: "onEntityTypeIdChange",
 	    value: function onEntityTypeIdChange() {
 	      this.currentEntityTypeId = this.entityTypeIdSelect.value;
+	      main_core.Dom.clean(this.filterFieldsContainer);
+
+	      if (BX.Bizproc.Automation && BX.Bizproc.Automation.ConditionGroup) {
+	        this.conditionGroup = new BX.Bizproc.Automation.ConditionGroup();
+	      }
+
 	      Array.from(this.entitiesFieldsContainers.children).forEach(function (elem) {
 	        return main_core.Dom.remove(elem);
 	      });
-	      this.renderEntityFields();
+	      this.render();
+	    }
+	  }, {
+	    key: "render",
+	    value: function render() {
+	      if (main_core.Type.isNil(this.currentEntityTypeId) || this.currentEntityTypeId === '') {
+	        this.entityTypeDependentElements.forEach(function (element) {
+	          return main_core.Dom.hide(element);
+	        });
+	      } else {
+	        this.entityTypeDependentElements.forEach(function (element) {
+	          return main_core.Dom.show(element);
+	        });
+	        this.renderFilterFields();
+	        this.renderEntityFields();
+	      }
+	    }
+	  }, {
+	    key: "renderFilterFields",
+	    value: function renderFilterFields() {
+	      if (!main_core.Type.isNil(this.conditionGroup) && !main_core.Type.isNil(this.currentEntityTypeId)) {
+	        var selector = new BX.Bizproc.Automation.ConditionGroupSelector(this.conditionGroup, {
+	          fields: Object.values(this.filterFieldsMap.get(this.currentEntityTypeId)),
+	          fieldPrefix: this.filteringFieldsPrefix
+	        });
+	        this.filterFieldsContainer.appendChild(selector.createNode());
+	      }
 	    }
 	  }, {
 	    key: "renderEntityFields",
 	    value: function renderEntityFields() {
 	      var _this2 = this;
 
-	      if (!main_core.Type.isNil(this.currentEntityTypeId) && this.currentEntityTypeId !== '') {
-	        Object.keys(this.currentValues.get(this.currentEntityTypeId)).forEach(function (fieldId) {
-	          return _this2.addCondition(fieldId);
-	        });
-	      }
+	      Object.keys(this.currentValues.get(this.currentEntityTypeId)).forEach(function (fieldId) {
+	        return _this2.addCondition(fieldId);
+	      });
 	    }
 	  }, {
 	    key: "onFieldsListSelectClick",
@@ -120,9 +164,10 @@
 	    }
 	  }, {
 	    key: "onAddConditionButtonClick",
-	    value: function onAddConditionButtonClick() {
+	    value: function onAddConditionButtonClick(event) {
 	      var defaultFieldId = Object.keys(this.fieldsMap.get(this.currentEntityTypeId))[0];
 	      this.addCondition(defaultFieldId);
+	      return event.preventDefault();
 	    }
 	  }, {
 	    key: "addCondition",
@@ -240,7 +285,7 @@
 	        value = '';
 	      }
 
-	      return BX.Bizproc.FieldType.renderControl(this.documentType, this.fieldsMap.get(this.currentEntityTypeId)[fieldId], fieldId, value);
+	      return BX.Bizproc.FieldType.renderControl(this.documentType, this.fieldsMap.get(this.currentEntityTypeId)[fieldId], fieldId, value, this.isRobot ? 'public' : 'designer');
 	    }
 	  }]);
 	  return CrmUpdateDynamicActivity;

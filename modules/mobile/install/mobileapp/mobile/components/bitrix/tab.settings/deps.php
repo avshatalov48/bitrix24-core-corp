@@ -1,5 +1,8 @@
 <?
 return [
-	"rest",
-	"notify"
+	'extensions' => [
+		'rest',
+		'notify',
+	],
+	'components' => ['tab.settings'],
 ];

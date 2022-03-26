@@ -3,6 +3,8 @@ namespace Bitrix\Crm\Settings;
 use Bitrix\Main;
 class DealSettings
 {
+	use Traits\EnableFactory;
+
 	const VIEW_LIST = EntityViewSettings::LIST_VIEW;
 	const VIEW_KANBAN = EntityViewSettings::KANBAN_VIEW;
 	const VIEW_CALENDAR = EntityViewSettings::CALENDAR_VIEW;
@@ -36,6 +38,7 @@ class DealSettings
 		$this->isOpened = new BooleanSetting('deal_opened_flag', true);
 		$this->enableDeferredCleaning = new BooleanSetting('enable_deal_deferred_cleaning', true);
 		$this->enableRecycleBin = new BooleanSetting('enable_deal_recycle_bin', true);
+		$this->initIsFactoryEnabledSetting(\CCrmOwnerType::Deal);
 	}
 	/**
 	 * Get current instance

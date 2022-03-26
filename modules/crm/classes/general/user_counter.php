@@ -139,7 +139,11 @@ class CCrmUserCounter
 		$currentDayEnd = ConvertTimeStamp(mktime(23, 59, 59, date('n', $currentDay), date('j', $currentDay), date('Y', $currentDay)), 'FULL', SITE_ID);
 
 		$count = 0;
-		if($this->typeID === self::CurrentActivies)
+		if (!\Bitrix\Crm\Settings\CounterSettings::getCurrent()->isEnabled())
+		{
+			$count = 0; // counters feature is completely disabled
+		}
+		elseif($this->typeID === self::CurrentActivies)
 		{
 			//Count of open user activities (start time: before tomorrow)
 			//Activities are filtered by RESPONSIBLE - we can switch off permission checking

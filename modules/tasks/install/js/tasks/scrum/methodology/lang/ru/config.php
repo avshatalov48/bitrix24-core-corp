@@ -11,3 +11,7 @@ $MESS["TSF_TUTORIAL_TITLE"] = "Как работать по Скраму";
 $MESS["TSF_TUTORIAL_TEXT"] = "Бесплатный учебный курс";
 $MESS["TSM_ERROR_POPUP_TITLE"] = "Произошла ошибка";
 $MESS["TSF_TEAM_SPEED_BUTTON"] = "Скорость команды";
+$MESS["TSF_TEAM_SPEED_LABEL"] = "Скоро";
+$MESS["TSF_TEAM_SPEED_DIAGRAM"] = "Диаграмма сгорания задач";
+$MESS["TSF_MIGRATION_TITLE"] = "Перенести данные из другой системы";
+$MESS["TSF_MIGRATION_LABEL"] = "Миграция";

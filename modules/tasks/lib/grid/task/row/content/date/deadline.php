@@ -202,13 +202,17 @@ class Deadline extends Date
 			return '';
 		}
 
-		$expiredTime = CTasksTools::getMessagePlural(1, $extensionPrefix.'MINUTE', ['#TIME#' => 1]);
+		$expiredTime = Loc::getMessagePlural($extensionPrefix . 'MINUTE', 1, [
+			'#TIME#' => 1,
+		]);
 		foreach ($extensions as $key => $extension)
 		{
 			$value = (int)floor($delta / $extension['value']);
 			if ($value >= 1)
 			{
-				$expiredTime = CTasksTools::getMessagePlural($value, $extensionPrefix.$key, ['#TIME#' => $value]);
+				$expiredTime = Loc::getMessagePlural($extensionPrefix . $key, $value, [
+					'#TIME#' => $value,
+				]);
 				break;
 			}
 			$delta -= $value * $extension['value'];

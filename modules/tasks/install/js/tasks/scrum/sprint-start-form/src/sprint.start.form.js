@@ -1,7 +1,11 @@
-import {ajax, Event, Loc, Tag, Text, Type} from 'main.core';
+import {Event, Loc, Tag, Text} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 
 import {Layout} from 'ui.sidepanel.layout';
+
+import {RequestSender} from './request.sender';
+
+import 'ui.hint';
 
 import '../css/base.css';
 
@@ -36,12 +40,6 @@ type Response = {
 	errors: Array
 }
 
-type ErrorResponse = {
-	data: string,
-	errors: Array,
-	status: string
-}
-
 export class SprintStartForm extends EventEmitter
 {
 	constructor(params: Params)
@@ -54,6 +52,8 @@ export class SprintStartForm extends EventEmitter
 		/* eslint-disable */
 		this.sidePanelManager = BX.SidePanel.Instance;
 		/* eslint-enable */
+
+		this.requestSender = new RequestSender();
 
 		this.node = null;
 	}
@@ -101,26 +101,24 @@ export class SprintStartForm extends EventEmitter
 		const dateStartValue = dateInputs.item(0).querySelector('input').value;
 		const dateEndValue = dateInputs.item(1).querySelector('input').value;
 
-		ajax.runAction(
-			'bitrix:tasks.scrum.sprint.startSprint',
-			{
-				data: {
-					groupId: this.groupId,
-					sprintId: this.sprintId,
-					name: baseContainer.querySelector('input').value,
-					sprintGoal: baseContainer.querySelector('textarea').value,
-					dateStart: Math.floor(BX.parseDate(dateStartValue).getTime() / 1000),
-					dateEnd: Math.floor(BX.parseDate(dateEndValue).getTime() / 1000)
-				}
-			}
-		)
+		this.requestSender.startSprint({
+			groupId: this.groupId,
+			sprintId: this.sprintId,
+			name: baseContainer.querySelector('input').value,
+			sprintGoal: baseContainer.querySelector('textarea').value,
+			dateStart: Math.floor(BX.parseDate(dateStartValue).getTime() / 1000),
+			dateEnd: Math.floor(BX.parseDate(dateEndValue).getTime() / 1000)
+		})
 			.then((response) => {
 				this.sidePanelManager.close(false, () => {
 					this.emit('afterStart');
 				});
 			})
 			.catch((response) => {
-				this.showErrorAlert(response, Loc.getMessage('TASKS_SCRUM_SPRINT_START_ERROR_TITLE_POPUP'));
+				this.requestSender.showErrorAlert(
+					response,
+					Loc.getMessage('TASKS_SCRUM_SPRINT_START_ERROR_TITLE_POPUP')
+				);
 			})
 		;
 	}
@@ -128,17 +126,18 @@ export class SprintStartForm extends EventEmitter
 	createContent()
 	{
 		return new Promise((resolve, reject) => {
-			ajax.runAction(
-				'bitrix:tasks.scrum.sprint.getDataForSprintStartForm',
-				{
-					data: {
-						groupId: this.groupId,
-						sprintId: this.sprintId
-					}
-				}
-			)
+			this.requestSender.getDataForSprintStartForm({
+				groupId: this.groupId,
+				sprintId: this.sprintId
+			})
 				.then((response: Response) => {
 					resolve(this.render(response.data));
+				})
+				.catch((response) => {
+					reject();
+					this.sidePanelManager.close(false, () => {
+						this.requestSender.showErrorAlert(response);
+					});
 				})
 			;
 		});
@@ -238,7 +237,13 @@ export class SprintStartForm extends EventEmitter
 										<div class="tasks-scrum__side-panel-start--plan-block-name-text">
 											${Loc.getMessage('TASKS_SCRUM_SPRINT_START_FORM_STORY_POINTS_LABEL')}
 										</div>
-										<div class="ui-hint"><span class="ui-hint-icon"></span></div>
+										<div class="ui-hint">
+											<span
+												class="ui-hint-icon"
+												data-hint="${Loc.getMessage('TSS_START_STORY_POINTS_HINT')}"
+												data-hint-no-icon
+											></span>
+										</div>
 									</div>
 								</div>
 
@@ -261,6 +266,8 @@ export class SprintStartForm extends EventEmitter
 				);
 			})
 		;
+
+		this.initHints(this.node);
 
 		return this.node;
 	}
@@ -383,27 +390,11 @@ export class SprintStartForm extends EventEmitter
 		return `rgba(${r},${g},${b},${opacity})`;
 	}
 
-	showErrorAlert(response: ErrorResponse, alertTitle?: string)
+	initHints(node: HTMLElement)
 	{
-		if (Type.isUndefined(response.errors))
-		{
-			console.log(response);
-
-			return;
-		}
-
-		if (response.errors.length)
-		{
-			const firstError = response.errors.shift();
-			if (firstError)
-			{
-				const errorCode = (firstError.code ? firstError.code : '');
-
-				const message = firstError.message + ' ' + errorCode;
-				const title = (alertTitle ? alertTitle : Loc.getMessage('TASKS_SCRUM_ERROR_TITLE_POPUP'));
-
-				top.BX.UI.Dialogs.MessageBox.alert(message, title);
-			}
-		}
+		// todo wtf hint
+		top.BX.UI.Hint.popup = null;
+		top.BX.UI.Hint.id = 'ui-hint-popup-' + (+new Date());
+		top.BX.UI.Hint.init(node);
 	}
 }

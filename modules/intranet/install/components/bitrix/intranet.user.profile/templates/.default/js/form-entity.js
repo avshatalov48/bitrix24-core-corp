@@ -119,6 +119,7 @@ namespace.EntityEditor.prototype =
 		)
 		{
 			this.changePageTitle(BX.prop.getString(fields, "FULL_NAME", ""));
+			(top || window).BX.onCustomEvent('BX.Intranet.UserProfile:Name:changed', [{fullName: BX.prop.getString(fields, "FULL_NAME", "")}]);
 		}
 
 		this.reloadGrid();

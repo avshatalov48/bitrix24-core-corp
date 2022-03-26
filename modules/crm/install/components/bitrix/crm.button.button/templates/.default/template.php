@@ -57,7 +57,7 @@ return;
 								</svg>
 							</div>
 						<?endif;?>
-						<?if(in_array(Manager::ENUM_TYPE_CALLBACK, $arResult['WIDGETS'])):?>
+						<?if(array_intersect([Manager::ENUM_TYPE_CALLBACK, Manager::ENUM_TYPE_WHATSAPP], $arResult['WIDGETS'])):?>
 							<div data-b24-crm-button-icon="<?=Manager::ENUM_TYPE_CALLBACK?>" class="b24-widget-button-inner-item">
 								<svg class="b24-crm-button-icon" xmlns="http://www.w3.org/2000/svg" width="28" height="28"
 									viewBox="0 0 28 30">

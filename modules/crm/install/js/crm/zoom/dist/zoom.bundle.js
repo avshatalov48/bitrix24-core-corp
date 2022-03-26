@@ -363,16 +363,19 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "refreshStartTimeView",
 	    value: function refreshStartTimeView() {
-	      var dt = new Date();
-	      var minutes = dt.getMinutes();
-	      var mod = minutes % 5;
+	      var currentDateTime = new Date();
+	      var minutes = currentDateTime.getMinutes();
+	      var divisionRemainder = minutes % 5;
+	      var gap = 5;
 
-	      if (mod > 0) {
-	        dt.setMinutes(minutes - mod + (mod > 2 ? 5 : 0));
+	      if (divisionRemainder > 0) {
+	        // We add 5 minutes gap to always show future time in the input.
+	        // Example: current time is 14:51. Then 51 - 1 + 5 => 14:55
+	        currentDateTime.setMinutes(minutes - divisionRemainder + gap);
 	      }
 
-	      this.getDateInputField().value = BX.formatDate(dt, BX.message('FORMAT_DATE'));
-	      this.getTimeInputField().innerHTML = this.formatTime(dt);
+	      this.getDateInputField().value = BX.formatDate(currentDateTime, BX.message('FORMAT_DATE'));
+	      this.getTimeInputField().innerHTML = this.formatTime(currentDateTime);
 	    }
 	  }, {
 	    key: "renderCancelButton",

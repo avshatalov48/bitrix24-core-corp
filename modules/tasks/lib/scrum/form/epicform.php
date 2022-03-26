@@ -225,10 +225,5 @@ class EpicForm
 		{
 			throw new ArgumentNullException('CREATED_BY');
 		}
-
-		if (empty($this->color))
-		{
-			throw new ArgumentNullException('COLOR');
-		}
 	}
 }

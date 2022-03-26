@@ -43,8 +43,8 @@ final class DeliveryRequest
 
 		$order = $shipment->getOrder();
 
-		$entityCommunication = $order->getEntityCommunication();
-		$phoneTo = $order->getEntityCommunicationPhone();
+		$entityCommunication = $order->getContactCompanyCollection()->getEntityCommunication();
+		$phoneTo = $order->getContactCompanyCollection()->getEntityCommunicationPhone();
 
 		if (!$entityCommunication || !$phoneTo)
 		{

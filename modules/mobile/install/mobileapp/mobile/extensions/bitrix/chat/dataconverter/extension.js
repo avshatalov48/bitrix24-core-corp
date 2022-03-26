@@ -101,6 +101,10 @@ ChatDataConverter.getElementFormat = function(element)
 			{
 				item.imageUrl = this.imagePath+'/avatar_24_x3.png';
 			}
+			else if (element.chat.type == 'support24Question')
+			{
+				item.imageUrl = this.imagePath+'/avatar_24_question_x3.png';
+			}
 		}
 
 		item.color = element.chat.color;
@@ -435,7 +439,7 @@ ChatDataConverter.getTitleFormat = function(type, entity)
 				image: {name: 'name_status_call'},
 			};
 		}
-		else if (entity.type == 'support24Notifier')
+		else if (entity.type == 'support24Notifier' || entity.type == 'support24Question')
 		{
 			result = {
 				color: '#0165af',
@@ -850,7 +854,7 @@ ChatDataConverter.getActionList = function(element)
 		else
 		{
 			result = [];
-			if (element.chat.type !== 'announcement')
+			if (element.chat.type !== 'announcement' && element.chat.type !== 'support24Question')
 			{
 				result.push({
 					title : element.chat.mute_list[this.userId]? BX.message("ELEMENT_MENU_UNMUTE"): BX.message("ELEMENT_MENU_MUTE"),
@@ -1403,7 +1407,7 @@ ChatDataConverter.preparePushFormat = function(element)
 		chat.extranet = result.chat.extranet || false;
 		chat.manager_list = [];
 		chat.mute_list = {};
-		chat.name = result.chat.name;
+		chat.name = ChatUtils.htmlspecialcharsback(result.chat.name);
 		chat.owner = result.chat.owner;
 		chat.type = result.chat.type;
 

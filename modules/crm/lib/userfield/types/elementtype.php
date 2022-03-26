@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\UserField\Types;
 
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UserField\Types\StringType;
@@ -22,13 +23,14 @@ class ElementType extends StringType
 		RENDER_COMPONENT = 'bitrix:crm.field.element';
 
 	protected const ENTITY_TYPE_NAMES = [
-		'D' => 'DEAL',
-		'C' => 'CONTACT',
-		'CO' => 'COMPANY',
-		'O' => 'ORDER',
-		'L' => 'LEAD',
-		'Q' => 'QUOTE',
-		\CCrmOwnerTypeAbbr::DynamicTypeAbbreviationPrefix => 'DYNAMIC'
+		\CCrmOwnerTypeAbbr::Deal => \CCrmOwnerType::DealName,
+		\CCrmOwnerTypeAbbr::Contact => \CCrmOwnerType::ContactName,
+		\CCrmOwnerTypeAbbr::Company => \CCrmOwnerType::CompanyName,
+		\CCrmOwnerTypeAbbr::Order => \CCrmOwnerType::OrderName,
+		\CCrmOwnerTypeAbbr::Lead => \CCrmOwnerType::LeadName,
+		\CCrmOwnerTypeAbbr::Quote => \CCrmOwnerType::QuoteName,
+		\CCrmOwnerTypeAbbr::SmartInvoice => \CCrmOwnerType::SmartInvoiceName,
+		\CCrmOwnerTypeAbbr::DynamicTypeAbbreviationPrefix => \CCrmOwnerType::CommonDynamicName,
 	];
 
 	protected const ENTITY_TYPE_NAME_DEFAULT = 'L';
@@ -132,7 +134,7 @@ class ElementType extends StringType
 	 */
 	public static function getLongEntityType(string $type): string
 	{
-		if(isset(self::ENTITY_TYPE_NAMES[$type]))
+		if (isset(self::ENTITY_TYPE_NAMES[$type]))
 		{
 			return self::ENTITY_TYPE_NAMES[$type];
 		}
@@ -180,6 +182,30 @@ class ElementType extends StringType
 		return $result;
 	}
 
+	public static function getPossibleEntityTypes(): array
+	{
+		$entityTypes = [
+			\CCrmOwnerType::LeadName => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Lead),
+			\CCrmOwnerType::ContactName => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Contact),
+			\CCrmOwnerType::CompanyName => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Company),
+			\CCrmOwnerType::DealName => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Deal),
+			\CCrmOwnerType::OrderName => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Order),
+			\CCrmOwnerType::QuoteName => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Quote),
+		];
+
+		if (InvoiceSettings::getCurrent()->isSmartInvoiceEnabled())
+		{
+			$entityTypes[\CCrmOwnerType::SmartInvoiceName] = \CCrmOwnerType::GetDescription(\CCrmOwnerType::SmartInvoice);
+		}
+
+		foreach (static::getUseInUserfieldTypes() as $entityTypeId => $title)
+		{
+			$entityTypes[\CCrmOwnerType::ResolveName($entityTypeId)] = $title;
+		}
+
+		return $entityTypes;
+	}
+
 	public static function getAvailableTypes(array $userField): array
 	{
 		$availableTypes = ($userField['SETTINGS'] ?? []);
@@ -205,22 +231,14 @@ class ElementType extends StringType
 	 */
 	public static function getDestSelectorParametersForFilter(array $settings, bool $isMultiple): array
 	{
-		$entityTypeNames = [];
-		$supportedEntityTypeNames = [
-			\CCrmOwnerType::LeadName,
-			\CCrmOwnerType::DealName,
-			\CCrmOwnerType::ContactName,
-			\CCrmOwnerType::CompanyName
-		];
+		$possibleTypes = static::getPossibleEntityTypes();
 
+		$entityTypeNames = [];
 		foreach($settings as $entityTypeName => $value)
 		{
 			if(
 				$value === 'Y'
-				&& (
-					in_array($entityTypeName, $supportedEntityTypeNames, true)
-					|| \CCrmOwnerType::isPossibleDynamicTypeId(\CCrmOwnerType::ResolveID($entityTypeName))
-				)
+				&& isset($possibleTypes[$entityTypeName])
 			)
 			{
 				$entityTypeNames[] = $entityTypeName;
@@ -328,6 +346,12 @@ class ElementType extends StringType
 			$selectorOptions['addTabCrmQuotes'] = 'Y';
 			$tabsCounter++;
 		}
+		if (in_array(\CCrmOwnerType::SmartInvoiceName, $availableTypes, true))
+		{
+			$selectorOptions['enableCrmSmartInvoices'] = 'Y';
+			$selectorOptions['addTabCrmSmartInvoices'] = 'Y';
+			$tabsCounter++;
+		}
 
 		foreach($availableTypes as $typeName)
 		{
@@ -348,6 +372,7 @@ class ElementType extends StringType
 			$selectorOptions['addTabCrmDeals'] = 'N';
 			$selectorOptions['addTabCrmOrders'] = 'N';
 			$selectorOptions['addTabCrmQuotes'] = 'N';
+			$selectorOptions['addTabCrmSmartInvoices'] = 'N';
 			if (!empty($selectorOptions['addTabCrmDynamics']))
 			{
 				foreach($selectorOptions['addTabCrmDynamics'] as $key => $item)

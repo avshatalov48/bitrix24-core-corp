@@ -11,6 +11,12 @@
 
 	var siteDir = ('/' + (BX.message.SITE_DIR || '/').replace(/[\\*+?.()|[\]{}]/g, '\\$&') + '/').replace(/\/+/g, '/');
 
+	this.mailLoader = BX.create("div", {
+		props: {
+			className: 'mail-loader-node'
+		},
+	})
+
 	BX.SidePanel.Instance.bindAnchors({
 		rules: [
 			{
@@ -132,10 +138,11 @@
 			},
 			{
 				condition: [
-					new RegExp("/marketplace\/configuration\/import_zip/"),
+					new RegExp("/marketplace/configuration/import_"),
+					new RegExp("/marketplace/configuration/export_"),
 				],
 				options: {
-					width: 940,
+					width: 491,
 					allowChangeHistory: false,
 					cacheable: false,
 					data: {
@@ -287,7 +294,7 @@
 				allowCrossDomain: true,
 				handler: function(event, link)
 				{
-					if (BX.desktop && BXIM.context === 'DESKTOP')
+					if (BX.desktop && !BX.desktop.enableInVersion(60))
 					{
 						return true;
 					}
@@ -313,6 +320,53 @@
 					label: {
 						text: BX.message("INTRANET_BINDINGS_ORDER"),
 					}
+				}
+			},
+			{
+				condition: [
+					new RegExp("/shop/documents/details/[0-9]+/", "i"),
+					new RegExp("/shop/documents/details/sales_order/[0-9]+/", "i")
+				],
+				options: {
+					loader: "crm-entity-details-loader",
+					cacheable: false,
+					customLeftBoundary: 0,
+				}
+			},
+			{
+				condition: [
+					new RegExp("/shop/settings/cat_store_document_edit.php", "i"),
+				],
+				options: {
+					cacheable: false,
+				}
+			},
+			{
+				condition: [
+					new RegExp("/shop/documents-catalog/(\\d+)/product/", "i")
+				],
+				options: {
+					loader: "crm-entity-details-loader",
+					cacheable: false,
+					customLeftBoundary: 0,
+				}
+			},
+			{
+				condition: [
+					new RegExp("/shop/documents-catalog/product/(\\d+)/", "i")
+				],
+				options: {
+					cacheable: false,
+					customLeftBoundary: 0,
+				}
+			},
+			{
+				condition: [
+					new RegExp("/shop/documents-catalog/section/(\\d+)/", "i")
+				],
+				options: {
+					cacheable: false,
+					customLeftBoundary: 0,
 				}
 			},
 			{
@@ -356,6 +410,13 @@
 						text: BX.message("INTRANET_BINDINGS_DEAL"),
 						bgColor: "#9985DD"
 					}
+				}
+			},
+			{
+				condition: [ new RegExp("/type/[0-9]+/details/[0-9]+/", "i") ],
+				loader: "crm-entity-details-loader",
+				options: {
+					cacheable: false,
 				}
 			},
 			{
@@ -497,7 +558,7 @@
 			},
 			{
 				condition: [
-					'^' + siteDir + 'mail/(blacklist|signature|config|message)'
+					'^' + siteDir + 'mail/(blacklist|signature|config|message|addressbook)'
 				],
 				options: {
 					width: 1080
@@ -505,9 +566,12 @@
 			},
 			{
 				condition: [
-					'^' + siteDir + 'mail/',
+					'^' + siteDir + 'mail(\/|$)',
 				],
+				// loader: "/bitrix/images/mail/mail-loader.svg",
 				options: {
+					contentClassName: "mail-loader-modifier",
+					loader: this.mailLoader,
 					cacheable: false,
 					customLeftBoundary: 0,
 				}
@@ -547,6 +611,18 @@
 					width: 900,
 					cacheable: false,
 					allowChangeHistory: false,
+				}
+			},
+			{
+				condition: [
+					"/shop/catalog/(\\d+)/product/(\\d+)/store_amount/",
+					"/crm/catalog/(\\d+)/product/(\\d+)/store_amount/"
+				],
+				options: {
+					cacheable: false,
+					label: {
+						text: BX.message('INTRANET_BINDINGS_PRODUCT_STORE_AMOUNT')
+					}
 				}
 			},
 			{

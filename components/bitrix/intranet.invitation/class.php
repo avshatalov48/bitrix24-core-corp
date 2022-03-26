@@ -21,56 +21,65 @@ class CIntranetInviteDialogComponent extends \CBitrixComponent
 		;
 	}
 
-	private function prepareMenuItems()
+	private function prepareMenuItems(): void
 	{
 		$this->arResult["MENU_ITEMS"] = [];
 
-		if ($this->arResult["IS_CLOUD"])
+		if ($this->arResult['canCurrentUserInvite'])
 		{
-			$this->arResult["MENU_ITEMS"]["self"] = [
-				"NAME" => Loc::getMessage("INTRANET_INVITE_DIALOG_MENU_SELF"),
+			if ($this->arResult["IS_CLOUD"])
+			{
+				$this->arResult["MENU_ITEMS"]["self"] = [
+					"NAME" => Loc::getMessage("INTRANET_INVITE_DIALOG_MENU_SELF"),
+					"ATTRIBUTES" => [
+						"data-role" => "menu-self",
+						"data-action" => "self"
+					],
+					"ACTIVE" => true
+				];
+			}
+
+			$this->arResult["MENU_ITEMS"]["invite"] = [
+				"NAME" => Loc::getMessage("INTRANET_INVITE_DIALOG_MENU_INVITE_".($this->arResult["IS_SMS_INVITATION_AVAILABLE"] ? "EMAIL_AND_PHONE" : "EMAIL")),
 				"ATTRIBUTES" => [
-					"data-role" => "menu-self",
-					"data-action" => "self"
+					"data-role" => "menu-invite",
+					"data-action" => "invite"
 				],
-				"ACTIVE" => true
+				"ACTIVE" => $this->arResult["IS_CLOUD"] ? false : true
+			];
+
+			$this->arResult["MENU_ITEMS"]["mass_invite"] = [
+				"NAME" => Loc::getMessage("INTRANET_INVITE_DIALOG_MENU_MASS_INVITE"),
+				"ATTRIBUTES" => [
+					"data-role" => "menu-mass-invite",
+					"data-action" => "mass-invite"
+				]
+			];
+
+			$this->arResult["MENU_ITEMS"]["invite_with_group_dp"] = [
+				"NAME" => Loc::getMessage("INTRANET_INVITE_DIALOG_MENU_INVITE_WITH_GROUP_DP"),
+				"ATTRIBUTES" => [
+					"data-role" => "menu-invite_with_group_dp",
+					"data-action" => "invite-with-group-dp"
+				]
+			];
+
+			$this->arResult["MENU_ITEMS"]["add"] = [
+				"NAME" => Loc::getMessage("INTRANET_INVITE_DIALOG_MENU_ADD"),
+				"ATTRIBUTES" => [
+					"data-role" => "menu-add",
+					"data-action" => "add"
+				]
 			];
 		}
 
-		$this->arResult["MENU_ITEMS"]["invite"] = [
-			"NAME" => Loc::getMessage("INTRANET_INVITE_DIALOG_MENU_INVITE_".($this->arResult["IS_SMS_INVITATION_AVAILABLE"] ? "EMAIL_AND_PHONE" : "EMAIL")),
-			"ATTRIBUTES" => [
-				"data-role" => "menu-invite",
-				"data-action" => "invite"
-			],
-			"ACTIVE" => $this->arResult["IS_CLOUD"] ? false : true
-		];
-
-		$this->arResult["MENU_ITEMS"]["mass_invite"] = [
-			"NAME" => Loc::getMessage("INTRANET_INVITE_DIALOG_MENU_MASS_INVITE"),
-			"ATTRIBUTES" => [
-				"data-role" => "menu-mass-invite",
-				"data-action" => "mass-invite"
-			]
-		];
-
-		$this->arResult["MENU_ITEMS"]["invite_with_group_dp"] = [
-			"NAME" => Loc::getMessage("INTRANET_INVITE_DIALOG_MENU_INVITE_WITH_GROUP_DP"),
-			"ATTRIBUTES" => [
-				"data-role" => "menu-invite_with_group_dp",
-				"data-action" => "invite-with-group-dp"
-			]
-		];
-
-		$this->arResult["MENU_ITEMS"]["add"] = [
-			"NAME" => Loc::getMessage("INTRANET_INVITE_DIALOG_MENU_ADD"),
-			"ATTRIBUTES" => [
-				"data-role" => "menu-add",
-				"data-action" => "add"
-			]
-		];
-
-		if ($this->arResult["IS_EXTRANET_INSTALLED"])
+		if (
+			$this->arResult["IS_EXTRANET_INSTALLED"]
+			&& (
+				!isset($this->arParams['USER_OPTIONS']['intranetUsersOnly'])
+				|| $this->arParams['USER_OPTIONS']['intranetUsersOnly'] !== true
+			)
+		)
 		{
 			$this->arResult["MENU_ITEMS"]["extranet"] = [
 				"NAME" => Loc::getMessage("INTRANET_INVITE_DIALOG_MENU_EXTRANET"),
@@ -81,30 +90,33 @@ class CIntranetInviteDialogComponent extends \CBitrixComponent
 			];
 		}
 
-		if ($this->arResult["IS_CLOUD"])
+		if ($this->arResult['canCurrentUserInvite'])
 		{
-			$this->arResult["MENU_ITEMS"]["integrator"] = [
-				"NAME" => Loc::getMessage("INTRANET_INVITE_DIALOG_MENU_INTEGRATOR"),
-				"ATTRIBUTES" => [
-					"data-role" => "menu-integrator",
-					"data-action" => "integrator"
-				]
-			];
-		}
+			if ($this->arResult["IS_CLOUD"])
+			{
+				$this->arResult["MENU_ITEMS"]["integrator"] = [
+					"NAME" => Loc::getMessage("INTRANET_INVITE_DIALOG_MENU_INTEGRATOR"),
+					"ATTRIBUTES" => [
+						"data-role" => "menu-integrator",
+						"data-action" => "integrator"
+					]
+				];
+			}
 
-		if ($this->arResult["IS_CLOUD"] && in_array($this->arResult["LICENSE_ZONE"], ['ru']))
-		{
-			$this->arResult["MENU_ITEMS"]["active_directory"] = [
-				"NAME_HTML" => Loc::getMessage("INTRANET_INVITE_DIALOG_MENU_ACTIVE_DIRECTORY"),
-				"ATTRIBUTES" => [
-					"data-role" => "menu-active-directory",
-					"data-action" => "active-directory"
-				]
-			];
+			if ($this->arResult["IS_CLOUD"] && in_array($this->arResult["LICENSE_ZONE"], ['ru']))
+			{
+				$this->arResult["MENU_ITEMS"]["active_directory"] = [
+					"NAME_HTML" => Loc::getMessage("INTRANET_INVITE_DIALOG_MENU_ACTIVE_DIRECTORY"),
+					"ATTRIBUTES" => [
+						"data-role" => "menu-active-directory",
+						"data-action" => "active-directory"
+					]
+				];
+			}
 		}
 	}
 
-	private function prepareLinkRegisterData()
+	private function prepareLinkRegisterData(): void
 	{
 		$registerSettings = array();
 		if(Loader::includeModule("socialservices"))
@@ -128,7 +140,7 @@ class CIntranetInviteDialogComponent extends \CBitrixComponent
 		}
 	}
 
-	private function prepareUserData()
+	private function prepareUserData(): void
 	{
 		if (!Loader::includeModule("bitrix24"))
 		{
@@ -149,8 +161,6 @@ class CIntranetInviteDialogComponent extends \CBitrixComponent
 
 	public function executeComponent()
 	{
-		global $USER;
-
 		$this->arResult["IS_CLOUD"] = Loader::includeModule("bitrix24");
 		if ($this->arResult["IS_CLOUD"])
 		{
@@ -166,12 +176,8 @@ class CIntranetInviteDialogComponent extends \CBitrixComponent
 
 		if (
 			(
-				$this->arResult["IS_CLOUD"]
-				&& !CBitrix24::isInvitingUsersAllowed()
-			)
-			|| (
-				!$this->arResult["IS_CLOUD"]
-				&& !$USER->CanDoOperation('edit_all_users')
+				!\Bitrix\Intranet\Invitation::canCurrentUserInvite()
+				&& !$this->arResult['IS_EXTRANET_INSTALLED']
 			)
 			|| !Loader::includeModule('iblock')
 			|| !Loader::includeModule('socialnetwork')
@@ -191,6 +197,8 @@ class CIntranetInviteDialogComponent extends \CBitrixComponent
 		$this->arResult["IS_SMS_INVITATION_AVAILABLE"] = $this->arResult["IS_CLOUD"]
 			&& Option::get('bitrix24', 'phone_invite_allowed', 'N') === 'Y';
 
+		$this->arResult['canCurrentUserInvite'] = \Bitrix\Intranet\Invitation::canCurrentUserInvite();
+
 		$this->prepareMenuItems();
 		$this->arResult["IS_CREATOR_EMAIL_CONFIRMED"] = true;
 		if ($this->arResult["IS_CLOUD"])
@@ -200,7 +208,14 @@ class CIntranetInviteDialogComponent extends \CBitrixComponent
 			$this->arResult["IS_CREATOR_EMAIL_CONFIRMED"] = \CBitrix24::isEmailConfirmed();
 		}
 
-		$this->arResult['FIRST_INVITATION_BLOCK'] = $this->arResult["IS_CLOUD"] ? 'self' : 'invite';
+		if ($this->arResult['canCurrentUserInvite'])
+		{
+			$this->arResult['FIRST_INVITATION_BLOCK'] = $this->arResult["IS_CLOUD"] ? 'self' : 'invite';
+		}
+		else
+		{
+			$this->arResult['FIRST_INVITATION_BLOCK'] = 'extranet';
+		}
 
 		if (
 			isset($_GET['firstInvitationBlock'])
@@ -223,4 +238,3 @@ class CIntranetInviteDialogComponent extends \CBitrixComponent
 		$this->includeComponentTemplate();
 	}
 }
-?>

@@ -1921,6 +1921,11 @@ a {
 .post-item-text table.data-table,
 .post-comment-text table.data-table { border-collapse: collapse; }
 
+.post-wrap .post-item-text table.data-table {
+	display: block;
+	overflow-x: auto;
+}
+
 .post-item-text table.data-table td,
 .post-comment-text table.data-table td,
 .post-item-text table.data-table th,
@@ -2329,10 +2334,86 @@ a.post-item-inline-attached-file,
 .bx-curtain-row-2 td {height: 12px;}
 .bx-curtain-row-last td {height: 33px;}
 
-.feed-nextpage-locked {
-	text-align: center;
-	margin-bottom: 10px;
-	color: #78838f;
+.feed-nextpage-locked--container {
+	font-weight: 400;
+	font-size: 12px;
+	line-height: 14px;
+	color: #333333;
+	box-sizing: border-box;
+	padding: 16px 17px 20px;
+	background: rgba(255,255,255,.5);
+}
+
+.feed-nextpage-locked--title {
+	font-size: 15px;
+	line-height: 18px;
+}
+
+.feed-nextpage-locked--content {
+	display: flex;
+	align-items: center;
+	margin-top: 14px;
+}
+
+.feed-nextpage-locked--btn {
+	text-decoration: none;
+	font-weight: 400;
+	background: rgba(255,255,255,.53);
+	border: 1px solid rgba(47,198,246,.53);
+	box-sizing: border-box;
+	box-shadow: 0 2px 2px rgba(0, 0, 0, 0.07);
+	border-radius: 24px;
+	font-size: 14px;
+	line-height: 16px;
+	padding: 6px 10px 6px 32px;
+	color: #333333;
+	position: relative;
+}
+
+.feed-nextpage-locked--btn::before {
+	content: '';
+	display: block;
+	width: 22px;
+	height: 22px;
+	position: absolute;
+	left: 5px;
+	top: 3px;
+	background-position: center;
+	background-repeat: no-repeat;
+	background-image: url("data:image/svg+xml,%3Csvg width='22' height='22' viewBox='0 0 22 22' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M18.1434 10.7731V5.39453L16.5977 6.9407C15.3392 5.39137 13.4235 4.39844 11.2711 4.39844C7.47539 4.39844 4.39844 7.47539 4.39844 11.2711C4.39844 15.0669 7.47539 18.1434 11.2711 18.1434C12.8901 18.1434 14.3752 17.5797 15.55 16.6434L13.8084 14.5064C13.1091 15.0556 12.2292 15.3862 11.2711 15.3862C8.99848 15.3862 7.15602 13.5438 7.15602 11.2711C7.15602 8.99848 8.99848 7.15557 11.2711 7.15557C12.6617 7.15557 13.8903 7.84677 14.6349 8.90303L12.7648 10.7731H18.1434Z' fill='%232FC6F6'/%3E%3C/svg%3E%0A");
+}
+
+.feed-nextpage-locked--btn.--loading::before {
+	-webkit-animation: rotating-animation 1s linear infinite;
+	animation: rotating-animation 1s linear infinite;
+}
+
+@keyframes rotating-animation {
+	from {
+		transform: rotate(0deg);
+		-webkit-transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+		-webkit-transform: rotate(360deg);
+	}
+}
+
+@-webkit-keyframes rotating-animation {
+	from {
+		transform: rotate(0deg);
+		-webkit-transform: rotate(0deg);
+	}
+	to {
+		transform: rotate(360deg);
+		-webkit-transform: rotate(360deg);
+		transform-origin: center;
+	}
+}
+
+.feed-nextpage-locked--prompt {
+	color: rgba(51,51,51,.3);
+	margin: 2px 0 0 10px;
 }
 
 td.transparent {background: none;}

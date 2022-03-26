@@ -8,6 +8,7 @@
 	height: 73px;
 	background-color: #fff;
 	box-sizing: border-box;
+	border-radius: var(--intranet-ustat-online-box, var(--ui-theme-radius-md, 0));
 }
 
 .intranet-ustat-online-badge {
@@ -32,12 +33,15 @@
 	justify-content: center;
 	margin-right: 10px;
 	width: 52px;
-	height: 52px;
+	height: 56px;
+	border-radius: 50%;
+	overflow: hidden;
 }
 
 .intranet-ustat-online-counter .ui-graph-circle-wrapper {
-	width: 56px;
-	height: 56px;
+	top: 1px;
+	width: 52px;
+	height: 52px;
 	background-image: url(images/intranet-ustat-online-circle.gif);
 	background-size: cover;
 }

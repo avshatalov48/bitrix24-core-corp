@@ -37,7 +37,7 @@ class InvoiceSpecTable extends Entity\DataManager
 
 	public static function getMap()
 	{
-		global $DB, $DBType;
+		global $DB;
 
 		if (function_exists('___dbCastIntToChar') !== true)
 		{
@@ -87,7 +87,7 @@ class InvoiceSpecTable extends Entity\DataManager
 			'NAME_WITH_IDENT' => array(
 				'data_type' => 'string',
 				'expression' => array(
-					$DB->concat('%s', '\' [\'', ___dbCastIntToChar($DBType, '%s'), '\']\''), 'NAME', 'PRODUCT_ID'
+					$DB->concat('%s', '\' [\'', ___dbCastIntToChar('mysql', '%s'), '\']\''), 'NAME', 'PRODUCT_ID'
 				)
 			),
 			'IBLOCK_ELEMENT' => array(

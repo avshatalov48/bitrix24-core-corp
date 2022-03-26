@@ -3,6 +3,7 @@
 use Bitrix\Disk;
 use Bitrix\Disk\Document\Online\UserInfoToken;
 use Bitrix\Disk\Document\OnlyOffice;
+use Bitrix\Disk\Document\OnlyOffice\Editor\ConfigBuilder;
 use Bitrix\Disk\Document\OnlyOffice\Filters\DocumentSessionCheck;
 use Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler;
 use Bitrix\Disk\User;
@@ -39,6 +40,11 @@ class DiskFileEditorOnlyOfficeController extends Engine\Controller
 	public function configureActions()
 	{
 		return [
+			'showNotFound' => [
+				'-prefilters' => [
+					ActionFilter\Csrf::class,
+				],
+			],
 			'getSliderContent' => [
 				'+prefilters' => [
 					(new DocumentSessionCheck())
@@ -135,7 +141,7 @@ class DiskFileEditorOnlyOfficeController extends Engine\Controller
 		];
 	}
 
-	public function getSliderContentAction(OnlyOffice\Models\DocumentSession $documentSession): HttpResponse
+	public function getSliderContentAction(OnlyOffice\Models\DocumentSession $documentSession, int $editorMode = ConfigBuilder::VISUAL_MODE_USUAL): HttpResponse
 	{
 		$content = $GLOBALS['APPLICATION']->includeComponent(
 			'bitrix:ui.sidepanel.wrapper',
@@ -146,6 +152,32 @@ class DiskFileEditorOnlyOfficeController extends Engine\Controller
 				'POPUP_COMPONENT_TEMPLATE_NAME' => '',
 				'POPUP_COMPONENT_PARAMS' => [
 					'DOCUMENT_SESSION' => $documentSession,
+					'EDITOR_MODE' => $editorMode,
+				],
+				'PLAIN_VIEW' => true,
+				'IFRAME_MODE' => true,
+				'PREVENT_LOADING_WITHOUT_IFRAME' => false,
+				'USE_PADDING' => false,
+			]
+		);
+
+		$response = new HttpResponse();
+		$response->setContent($content);
+
+		return $response;
+	}
+
+	public function showNotFoundAction(): HttpResponse
+	{
+		$content = $GLOBALS['APPLICATION']->includeComponent(
+			'bitrix:ui.sidepanel.wrapper',
+			'',
+			[
+				'RETURN_CONTENT' => true,
+				'POPUP_COMPONENT_NAME' => 'bitrix:disk.file.editor-onlyoffice',
+				'POPUP_COMPONENT_TEMPLATE_NAME' => '',
+				'POPUP_COMPONENT_PARAMS' => [
+					'TEMPLATE' => 'not-found',
 				],
 				'PLAIN_VIEW' => true,
 				'IFRAME_MODE' => true,

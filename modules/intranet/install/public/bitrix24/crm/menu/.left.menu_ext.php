@@ -1,15 +1,15 @@
 <?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
-$result = $GLOBALS["APPLICATION"]->IncludeComponent(
+$result = $GLOBALS['APPLICATION']->includeComponent(
 	'bitrix:crm.control_panel',
 	'',
-	array(
-		"MENU_MODE" => "Y"
-	)
+	[
+		'MENU_MODE' => 'Y'
+	]
 );
 
-$aMenuLinks = $result["ITEMS"];
+$aMenuLinks = is_array($result) && isset($result['ITEMS']) ? $result['ITEMS'] : [];

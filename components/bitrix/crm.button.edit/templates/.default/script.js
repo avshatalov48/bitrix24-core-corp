@@ -6,6 +6,7 @@ var CrmButtonEditor = function(params) {
 		this.isFrame = params.isFrame;
 		this.isSaved = params.isSaved;
 		this.reloadList = params.reloadList;
+		this.setupWhatsAppLink = params.setupWhatsAppLink;
 		this.pathToButtonList = params.pathToButtonList;
 		this.defaultWorkTime = params.defaultWorkTime;
 		this.dictionaryTypes = params.dictionaryTypes;
@@ -89,6 +90,7 @@ var CrmButtonEditor = function(params) {
 		this.loadedButtonCount = buttonCont.querySelectorAll('[data-b24-crm-button-widget]').length;
 		this.blockNode = buttonCont.querySelector('[data-b24-crm-button-block]');
 		this.blockInnerNode = buttonCont.querySelector('[data-b24-crm-button-block-inner]');
+		var WhatsAppSetupNodes = BX('WIDGET_CONTAINER').querySelector('[data-bx-crm-button-item-channel-setup-whatsapp]');
 		BX.bind(this.blockNode, 'mouseover', function (e) {
 			_this.showButtons();
 		});
@@ -101,7 +103,13 @@ var CrmButtonEditor = function(params) {
 		var apply = BX('CRM_BUTTON_APPLY');
 		BX.bind(save, 'click', this.onSubmitButtonClick.bind(this, save));
 		BX.bind(apply, 'click', this.onSubmitButtonClick.bind(this, apply));
+		BX.bind(WhatsAppSetupNodes, 'click',this.openWhatsAppSetup.bind(this))
 	};
+
+	this.openWhatsAppSetup = function()
+	{
+		BX.SidePanel.Instance.open(this.setupWhatsAppLink, {width: 996, allowChangeHistory: false});
+	}
 
 	this.onSubmitButtonClick = function(node)
 	{
@@ -366,6 +374,7 @@ function CrmButtonEditActivationManager(params)
 	this.attributeActive = 'data-bx-crm-button-item-active';
 	this.attributeActiveValue = 'data-bx-crm-button-item-active-val';
 	this.attributeChannelSetup = 'data-bx-crm-button-item-channel-setup';
+	// this.attributeChannelSetupWhatsApp = 'data-bx-crm-button-item-channel-setup-whatsapp';
 
 	this.context = params.context;
 
@@ -394,6 +403,13 @@ CrmButtonEditActivationManager.prototype =
 				});
 			}
 		}, this);
+
+		// var WhatsAppSetupNodes = this.context.querySelector('[' + this.attributeChannelSetupWhatsApp + ']');
+		//
+		// 	BX.bind(WhatsAppSetupNodes, 'click', function (e) {
+		// 		e.preventDefault();
+		// 		BX.SidePanel.Instance.open('/contact_center/connector/?ID=whatsappbytwilio', {width: 996, allowChangeHistory: false});
+		// 	});
 	},
 
 	toggleActive: function(node)

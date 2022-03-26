@@ -53,12 +53,6 @@ class EntityImplementation
 			$this->entityTypeId,
 			$entityInfoBatch,
 			false,
-			[
-				'PERMISSION_OPTIONS' => [
-					'DISPLAY_NOT_PERMITTED_ITEMS_AS_HIDDEN' => true,
-					'HIDE_ITEMS_FROM_UNAUTHORIZED_USERS' => false,
-				],
-			],
 		);
 
 		$entityInfo['ENTITY_TYPE_ID'] = $this->entityTypeId;

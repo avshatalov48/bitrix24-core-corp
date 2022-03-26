@@ -13,7 +13,20 @@ $action = isset($_REQUEST['ACTION']) ? $_REQUEST['ACTION'] : '';
  */
 define(
 	'NO_AGENT_CHECK',
-	!in_array($action, array('REBUILD_SEARCH_CONTENT', 'BUILD_TIMELINE', 'REFRESH_ACCOUNTING', 'REBUILD_SEMANTICS', 'REBUILD_CONVERSION_STATISTICS', 'REBUILD_SECURITY_ATTRS'), true)
+	!in_array(
+		$action,
+		[
+			'REBUILD_SEARCH_CONTENT',
+			'BUILD_TIMELINE',
+			'REFRESH_ACCOUNTING',
+			'REBUILD_SEMANTICS',
+			'REBUILD_CONVERSION_STATISTICS',
+			'REBUILD_SECURITY_ATTRS',
+			'BACKGROUND_INDEX_REBUILD',
+			'BACKGROUND_MERGE',
+		],
+		true
+	)
 );
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
@@ -38,6 +51,8 @@ if (!CModule::IncludeModule('crm'))
 	__CrmLeadListEndResponse(array('ERROR' => 'Could not include crm module.'));
 }
 
+use Bitrix\Crm\Agent\Duplicate\Background\LeadIndexRebuild;
+use Bitrix\Crm\Agent\Duplicate\Background\LeadMerge;
 use Bitrix\Crm\Conversion\LeadConversionType;
 use Bitrix\Crm\Conversion\LeadConversionConfig;
 use Bitrix\Crm\Conversion\LeadConversionWizard;
@@ -965,7 +980,14 @@ elseif ($action === 'PREPARE_BATCH_CONVERSION')
 	}
 	else
 	{
-		$filter = isset($params['FILTER']) && is_array($params['FILTER']) ? $params['FILTER'] : [];
+		if (isset($params['FILTER']) && is_array($params['FILTER']))
+		{
+			CCrmLead::PrepareFilter($params['FILTER']);
+		}
+		$filter = isset($params['FILTER']) && is_array($params['FILTER'])
+			? $params['FILTER']
+			: []
+		;
 
 		if(empty($filter))
 		{
@@ -1292,4 +1314,57 @@ elseif ($action === 'CHECK_ACTIVE_LEAD')
 
 	__CrmLeadListEndResponse(array('EXIST_LEADS' => $existActiveLeads));
 }
-?>
+elseif ($action === 'BACKGROUND_INDEX_REBUILD')
+{
+	$userId = CCrmSecurityHelper::GetCurrentUserID();
+	$isNeedToShowDupIndexProcess = false;
+	$agent = LeadIndexRebuild::getInstance($userId);
+	if ($agent->isActive())
+	{
+		$state = $agent->state()->getData();
+		if (isset($state['STATUS']) && $state['STATUS'] === LeadIndexRebuild::STATUS_RUNNING)
+		{
+			$isNeedToShowDupIndexProcess = true;
+		}
+	}
+
+	if(!$isNeedToShowDupIndexProcess)
+	{
+		__CrmLeadListEndResponse(array('STATUS' => 'COMPLETED'));
+	}
+
+	__CrmLeadListEndResponse(
+		[
+			'STATUS' => 'PROGRESS',
+			'PROCESSED_ITEMS' => (int)round(100 * $state['PROCESSED_ITEMS'] / $state['TOTAL_ITEMS']),
+			'TOTAL_ITEMS' => 100,
+		]
+	);
+}
+elseif ($action === 'BACKGROUND_MERGE')
+{
+	$userId = CCrmSecurityHelper::GetCurrentUserID();
+	$isNeedToShowDupMergeProcess = false;
+	$agent = LeadMerge::getInstance($userId);
+	if ($agent->isActive())
+	{
+		$state = $agent->state()->getData();
+		if (isset($state['STATUS']) && $state['STATUS'] === LeadMerge::STATUS_RUNNING)
+		{
+			$isNeedToShowDupMergeProcess = true;
+		}
+	}
+
+	if(!$isNeedToShowDupMergeProcess)
+	{
+		__CrmLeadListEndResponse(array('STATUS' => 'COMPLETED'));
+	}
+
+	__CrmLeadListEndResponse(
+		[
+			'STATUS' => 'PROGRESS',
+			'PROCESSED_ITEMS' => (int)round(100 * $state['PROCESSED_ITEMS'] / $state['FOUND_ITEMS']),
+			'TOTAL_ITEMS' => 100,
+		]
+	);
+}

@@ -70,6 +70,14 @@ elseif($companyID > 0)
 	$isPermitted = CCrmCompany::CheckReadPermission($companyID, $userPermissions);
 }
 
+if (!$isPermitted)
+{
+	$isPermitted = \Bitrix\Crm\Service\Container::getInstance()->getParentFieldManager()->tryPrepareListComponentParametersWithParentItem(
+		\CCrmOwnerType::Lead,
+		$componentParams
+	);
+}
+
 if(!$isPermitted)
 {
 	die();

@@ -4,13 +4,21 @@ namespace Bitrix\Crm\Integration;
 
 use Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 use Bitrix\Crm\Integration\DocumentGenerator\ProductLoader;
+use Bitrix\Crm\Integration\DocumentGenerator\Template;
 use Bitrix\Crm\Integration\Rest\EventManager;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Settings\InvoiceSettings;
+use Bitrix\DocumentGenerator\CreationMethod;
 use Bitrix\DocumentGenerator\Document;
 use Bitrix\DocumentGenerator\Driver;
+use Bitrix\DocumentGenerator\Model\DocumentBindingTable;
 use Bitrix\DocumentGenerator\Model\DocumentTable;
+use Bitrix\DocumentGenerator\Model\TemplateProviderTable;
 use Bitrix\DocumentGenerator\Nameable;
+use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Main\Error;
 use Bitrix\Main\Event;
 use Bitrix\Main\IO\Directory;
 use Bitrix\Main\Loader;
@@ -26,6 +34,8 @@ class DocumentGeneratorManager
 	public const DOCUMENT_UPDATE_EVENT_NAME = 'onUpdateDocument';
 	public const DOCUMENT_PUBLIC_VIEW_EVENT_NAME = 'onPublicView';
 	public const DOCUMENT_DELETE_EVENT_NAME = '\Bitrix\DocumentGenerator\Model\Document::OnBeforeDelete';
+
+	public const VALUE_PAYMENT_ID = '_paymentId';
 
 	protected $isEnabled;
 
@@ -111,6 +121,44 @@ class DocumentGeneratorManager
 		return $params;
 	}
 
+	public function getDocumentDetailUrl(
+		int $entityTypeId,
+		?int $entityId = null,
+		?int $documentId = null,
+		?int $templateId = null
+	): ?Uri
+	{
+		$provider = $this->getCrmOwnerTypeProvidersMap()[$entityTypeId] ?? null;
+		if (!$provider)
+		{
+			return null;
+		}
+		$componentPath = \CComponentEngine::makeComponentPath('bitrix:crm.document.view');
+		if (empty($componentPath))
+		{
+			return null;
+		}
+
+		$documentUrl = new Uri(getLocalPath('components'.$componentPath.'/slider.php'));
+		$params = [
+			'providerClassName' => $provider,
+		];
+		if ($entityId > 0)
+		{
+			$params['value'] = $entityId;
+		}
+		if ($documentId > 0)
+		{
+			$params['documentId'] = $documentId;
+		}
+		if ($templateId > 0)
+		{
+			$params['templateId'] = $templateId;
+		}
+
+		return $documentUrl->addParams($params);
+	}
+
 	/**
 	 * Returns url to add template.
 	 *
@@ -150,13 +198,20 @@ class DocumentGeneratorManager
 					DataProvider\Company::class,
 					DataProvider\Contact::class,
 					DataProvider\Deal::class,
-					DataProvider\Invoice::class,
 					DataProvider\Lead::class,
 					DataProvider\Quote::class,
 					DataProvider\Order::class,
 					DataProvider\Payment::class,
 					DataProvider\Shipment::class,
 				];
+				if (InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
+				{
+					$providers[] = DataProvider\Invoice::class;
+				}
+				if (InvoiceSettings::getCurrent()->isSmartInvoiceEnabled())
+				{
+					$providers[] = DataProvider\SmartInvoice::class;
+				}
 				$providers = array_merge($providers, array_values(static::getDynamicProviders(true)));
 				foreach($providers as $provider)
 				{
@@ -314,6 +369,12 @@ class DocumentGeneratorManager
 			$map[\CCrmOwnerType::getSuspendedDynamicTypeId($entityTypeId)] = DataProvider\Suspended::class;
 		}
 
+		if (InvoiceSettings::getCurrent()->isSmartInvoiceEnabled())
+		{
+			$map[\CCrmOwnerType::SmartInvoice] = DataProvider\SmartInvoice::class;
+			$map[\CCrmOwnerType::SuspendedSmartInvoice] = DataProvider\Suspended::class;
+		}
+
 		return $map;
 	}
 
@@ -378,7 +439,7 @@ class DocumentGeneratorManager
 		}
 
 		$entityId = (int) $entityId;
-		$provider = $this->getCrmOwnerTypeProvidersMap()[$entityTypeId];
+		$provider = $this->getCrmOwnerTypeProvidersMap()[$entityTypeId] ?? null;
 		if($provider && $entityId > 0)
 		{
 			return DocumentTable::deleteList([
@@ -402,5 +463,209 @@ class DocumentGeneratorManager
 		}
 
 		return $entityTypeId;
+	}
+
+	public function isEntitySupportsPaymentDocumentBinding(int $entityTypeId): bool
+	{
+		return $entityTypeId === \CCrmOwnerType::SmartInvoice;
+	}
+
+	public function getPaymentBoundDocumentId(int $paymentId): ?int
+	{
+		$binding = DocumentBindingTable::getList([
+			'select' => ['DOCUMENT_ID'],
+			'filter' => [
+				'=ENTITY_NAME' => \CCrmOwnerType::OrderPaymentName,
+				'=ENTITY_ID' => $paymentId,
+			],
+			'limit' => 1,
+		])->fetchObject();
+
+		return $binding ? $binding->get('DOCUMENT_ID') : null;
+	}
+
+	/**
+	 * @param ItemIdentifier $item
+	 * @return DocumentGenerator\Document[]
+	 */
+	public function getDocumentsByIdentifier(ItemIdentifier $item, int $paymentId = null): array
+	{
+		$result = [];
+
+		$provider = $this->getCrmOwnerTypeProvidersMap()[$item->getEntityTypeId()] ?? null;
+		if (!$provider)
+		{
+			return $result;
+		}
+
+		$documents = DocumentTable::getList([
+			'select' => ['ID', 'TITLE', 'VALUES'],
+			'order' => [
+				'UPDATE_TIME' => 'DESC',
+			],
+			'filter' => [
+				'=PROVIDER' => mb_strtolower($provider),
+				'VALUE' => $item->getEntityId(),
+			],
+		]);
+		while ($document = $documents->fetch())
+		{
+			$values = $document['VALUES'];
+			if ($paymentId > 0)
+			{
+				if (!isset($values[static::VALUE_PAYMENT_ID]) || (int)$values[static::VALUE_PAYMENT_ID] !== $paymentId)
+				{
+					continue;
+				}
+			}
+			$withStamps = $values[\Bitrix\DocumentGenerator\Document::STAMPS_ENABLED_PLACEHOLDER] ?? false;
+			$result[] =
+				(new DocumentGenerator\Document)
+					->setId($document['ID'])
+					->setTitle($document['TITLE'])
+					->setDetailUrl($this->getDocumentDetailUrl(
+						$item->getEntityTypeId(),
+						$item->getEntityId(),
+						$document['ID']
+					))
+					->setIsWithStamps($withStamps)
+			;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param ItemIdentifier $item
+	 * @return Template[]
+	 */
+	public function getTemplatesByIdentifier(ItemIdentifier $item, int $userId = null): array
+	{
+		$result = [];
+
+		$provider = $this->getCrmOwnerTypeProvidersMap()[$item->getEntityTypeId()] ?? null;
+		if (!$provider)
+		{
+			return $result;
+		}
+
+		$templates = TemplateTable::getListByClassName(
+			mb_strtolower($provider),
+			$userId,
+			$item->getEntityId(),
+		);
+		foreach ($templates as $template)
+		{
+			$result[] =
+				(new Template())
+					->setId($template['ID'])
+					->setTitle($template['NAME'])
+					->setDocumentCreationUrl($this->getDocumentDetailUrl(
+						$item->getEntityTypeId(),
+						$item->getEntityId(),
+						null,
+						$template['ID'],
+					))
+					->setIsWithStamps($template['WITH_STAMPS'] === 'Y')
+			;
+		}
+
+		return $result;
+	}
+
+	public function bindDocumentToPayment(int $documentId, int $paymentId): Result
+	{
+		if (!$this->isEnabled())
+		{
+			return (new Result())->addError(new Error('Document Generator is not available'));
+		}
+
+		DocumentBindingTable::deleteBindings(\CCrmOwnerType::OrderPaymentName, $paymentId);
+
+		return DocumentBindingTable::bindDocument(
+			$documentId,
+			\CCrmOwnerType::OrderPaymentName,
+			$paymentId
+		);
+	}
+
+	public function clearPaymentBindings(int $paymentId): void
+	{
+		if ($this->isEnabled())
+		{
+			DocumentBindingTable::deleteBindings(\CCrmOwnerType::OrderPaymentName, $paymentId);
+		}
+	}
+
+	public function getLastBoundPaymentDocumentTemplateId(): ?int
+	{
+		$lastBinding = DocumentBindingTable::getList([
+			'select' => ['DOCUMENT.TEMPLATE_ID'],
+			'order' => ['ID' => 'DESC'],
+			'filter' => [
+				'=ENTITY_NAME' => \CCrmOwnerType::OrderPaymentName,
+			],
+			'limit' => 1,
+		])->fetch();
+
+		return $lastBinding['DOCUMENT.TEMPLATE_ID'] ?? null;
+	}
+
+	public function createDocumentForItem(ItemIdentifier $identifier, int $templateId, int $paymentId = null): Result
+	{
+		$result = new Result();
+
+		$provider = $this->getCrmOwnerTypeProvidersMap()[$identifier->getEntityTypeId()] ?? null;
+		if (!$provider)
+		{
+			return $result->addError(new Error('Provider for entityTypeId ' . $identifier->getEntityTypeId() . ' is not found'));
+		}
+		$template = \Bitrix\DocumentGenerator\Template::loadById($templateId);
+		if (!$template)
+		{
+			return $result->addError(new Error('Template ' . $templateId . ' not found'));
+		}
+		$template->setSourceType($provider);
+		$document = \Bitrix\DocumentGenerator\Document::createByTemplate($template, $identifier->getEntityId());
+		if (!$document)
+		{
+			return $result->addError(new Error('Could not create document'));
+		}
+		CreationMethod::markDocumentAsCreatedByPublic($document);
+		if ($paymentId > 0)
+		{
+			$document->setValues([
+				static::VALUE_PAYMENT_ID => $paymentId,
+			]);
+		}
+
+		return $document->getFile(true, true);
+	}
+
+	public function copyTemplatesProviders(string $sourceProvider, string $destinationProvider): Result
+	{
+		$result = new Result();
+
+		$templates = TemplateTable::getListByClassName($sourceProvider);
+		foreach ($templates as $template)
+		{
+			try
+			{
+				$addResult = TemplateProviderTable::add([
+					'TEMPLATE_ID' => $template['ID'],
+					'PROVIDER' => $destinationProvider,
+				]);
+				if (!$addResult->isSuccess())
+				{
+					$result->addErrors($addResult->getErrors());
+				}
+			}
+			catch (SqlQueryException $exception)
+			{
+				$result->addError(new Error($exception->getMessage()));
+			}
+		}
+
+		return $result;
 	}
 }

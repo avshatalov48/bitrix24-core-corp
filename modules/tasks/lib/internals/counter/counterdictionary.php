@@ -16,6 +16,7 @@ class CounterDictionary
 	public const META_PROP_GROUP = 'group';
 	public const META_PROP_PROJECT = 'project';
 	public const META_PROP_SONET = 'sonet';
+	public const META_PROP_SCRUM = 'scrum';
 	public const META_PROP_NONE = 'none';
 
 	public const LEFT_MENU_TASKS = 'tasks_total';
@@ -75,6 +76,9 @@ class CounterDictionary
 		COUNTER_SONET_FOREIGN_COMMENTS			= 'sonet_foreign_comments',
 		COUNTER_SONET_MAJOR						= 'sonet_major',
 
+		COUNTER_SCRUM_TOTAL_COMMENTS			= 'scrum_total_comments',
+		COUNTER_SCRUM_FOREIGN_COMMENTS			= 'scrum_foreign_comments',
+
 		COUNTER_FLAG_COUNTED					= 'flag_computed_20210501';
 
 	public const MAP_EXPIRED = [
@@ -120,6 +124,11 @@ class CounterDictionary
 		self::COUNTER_SONET_TOTAL_COMMENTS => self::COUNTER_GROUPS_TOTAL_COMMENTS,
 		self::COUNTER_SONET_FOREIGN_EXPIRED => self::COUNTER_GROUPS_FOREIGN_EXPIRED,
 		self::COUNTER_SONET_FOREIGN_COMMENTS => self::COUNTER_GROUPS_FOREIGN_COMMENTS,
+	];
+
+	public const MAP_SCRUM_TOTAL = [
+		self::COUNTER_SCRUM_TOTAL_COMMENTS => self::COUNTER_GROUPS_TOTAL_COMMENTS,
+		self::COUNTER_SCRUM_FOREIGN_COMMENTS => self::COUNTER_GROUPS_FOREIGN_COMMENTS,
 	];
 
 	/**

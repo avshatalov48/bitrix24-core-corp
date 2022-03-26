@@ -83,6 +83,8 @@ class RestrictionManager
 	private static $webFormResultsRestriction;
 	/** @var Bitrix24AccessRestriction|null  */
 	private static $invoicesRestriction;
+	/** @var Bitrix24AccessRestriction|null  */
+	private static $inventoryControlIntegrationRestriction;
 
 	/**
 	 * @return SqlRestriction
@@ -449,7 +451,7 @@ class RestrictionManager
 				'CONTENT' => GetMessage('CRM_RESTR_MGR_HX_VIEW_MSG_CONTENT_2')
 			),
 			array(
-				'ID' => 'limit_crm_history',
+				'ID' => 'limit_crm_history_view',
 				'TITLE' => GetMessage('CRM_RESTR_MGR_POPUP_TITLE'),
 				'CONTENT' => GetMessage('CRM_RESTR_MGR_POPUP_CONTENT_2')
 			)
@@ -482,24 +484,7 @@ class RestrictionManager
 
 		//endregion
 		//region Deal Category Limit
-		self::$dealCategoryLimitRestriction = new Bitrix24QuantityRestriction(
-			'crm_clr_cfg_deal_category',
-			false,
-			null,
-			array(
-				'ID' => 'limit_crm_sales_funnels',
-				'TITLE' => GetMessage('CRM_RESTR_MGR_DEAL_CATEGORY_POPUP_TITLE'),
-				'CONTENT' => GetMessage(
-					'CRM_RESTR_MGR_DEAL_CATEGORY_POPUP_CONTENT_2',
-					array('#TEAM_CRM_FUNNEL#' => 10)
-				)
-			)
-		);
-
-		if(!self::$dealCategoryLimitRestriction->load())
-		{
-			self::$dealCategoryLimitRestriction->setQuantityLimit(Bitrix24Manager::getDealCategoryCount());
-		}
+		self::$dealCategoryLimitRestriction = new DealCategoryLimitRestriction();
 		//endregion
 
 		//region Attribute configurator
@@ -756,11 +741,6 @@ class RestrictionManager
 		}
 	}
 
-	public static function onDealCategoryLimitChange(Main\Event $event)
-	{
-		DealCategory::applyMaximumLimitRestrictions(Bitrix24Manager::getDealCategoryCount());
-	}
-
 	public static function onMigrateToBox()
 	{
 		Main\Config\Option::delete('crm', array('name' => 'crm_enable_permission_control'));
@@ -831,6 +811,28 @@ class RestrictionManager
 		}
 
 		return self::$orderRestriction;
+	}
+
+	public static function getInventoryControlIntegrationRestriction(): Bitrix24AccessRestriction
+	{
+		if (self::$inventoryControlIntegrationRestriction === null)
+		{
+			self::$inventoryControlIntegrationRestriction = new Bitrix24AccessRestriction(
+				'crm_inventory_management_integration',
+				false,
+				null,
+				['ID' => 'limit_store_crm_integration']
+			);
+			if(!self::$inventoryControlIntegrationRestriction->load())
+			{
+				self::$inventoryControlIntegrationRestriction->permit(
+					Bitrix24Manager::isFeatureEnabled('crm_inventory_management_integration')
+				);
+			}
+		}
+
+		return self::$inventoryControlIntegrationRestriction;
+
 	}
 
 	public static function getDealClientFieldsRestriction(): ClientFieldsRestriction
@@ -1004,8 +1006,20 @@ class RestrictionManager
 
 		return new Bitrix24AccessRestriction('', true);
 	}
+
+	/**
+	 * Return specific for type and item restriction, if detail page view is restricted.
+	 *
+	 * @param int $entityTypeId
+	 * @param int $entityId
+	 * @return Bitrix24AccessRestriction
+	 */
 	public static function getItemDetailPageRestriction(int $entityTypeId, int $entityId = 0): Bitrix24AccessRestriction
 	{
+		if ($entityTypeId === \CCrmOwnerType::Invoice || $entityTypeId === \CCrmOwnerType::SmartInvoice)
+		{
+			return static::getInvoicesRestriction();
+		}
 		if ($entityTypeId === \CCrmOwnerType::Lead)
 		{
 			return static::getLeadsRestriction();
@@ -1062,6 +1076,14 @@ class RestrictionManager
 	public static function getUpdateOperationRestriction(ItemIdentifier $identifier): Bitrix24AccessRestriction
 	{
 		$entityTypeId = $identifier->getEntityTypeId();
+		if ($entityTypeId === \CCrmOwnerType::Quote)
+		{
+			return static::getQuotesRestriction();
+		}
+		if ($entityTypeId === \CCrmOwnerType::SmartInvoice)
+		{
+			return static::getInvoicesRestriction();
+		}
 		if (!static::isWebFormResultsRestrictionCanBeAppliedTo($entityTypeId))
 		{
 			return new Bitrix24AccessRestriction('', true);
@@ -1078,7 +1100,7 @@ class RestrictionManager
 				]
 			);
 			Container::getInstance()->getLocalization()->loadMessages();
-			$restriction->setErrorMessage(Main\Localization\Loc::getMessage('CRM_FEATURE_RESTRICTION_ERROR'));
+			$restriction->setErrorMessage((string)Main\Localization\Loc::getMessage('CRM_FEATURE_RESTRICTION_ERROR'));
 
 			return $restriction;
 		}
@@ -1135,6 +1157,7 @@ class RestrictionManager
 
 		return static::$webFormResultsRestriction;
 	}
+
 	public static function getInvoicesRestriction(): Bitrix24AccessRestriction
 	{
 		if (self::$invoicesRestriction === null)
@@ -1147,6 +1170,8 @@ class RestrictionManager
 			);
 			if(!self::$invoicesRestriction->load())
 			{
+				Container::getInstance()->getLocalization()->loadMessages();
+				self::$invoicesRestriction->setErrorMessage((string)Main\Localization\Loc::getMessage('CRM_FEATURE_RESTRICTION_ERROR'));
 				self::$invoicesRestriction->permit(
 					Bitrix24Manager::isFeatureEnabled('crm_invoices')
 				);
@@ -1177,5 +1202,29 @@ class RestrictionManager
 		}
 
 		return $restriction;
+	}
+
+	/**
+	 * Return type specific items list restriction, if the page view is restricted.
+	 *
+	 * @param int $entityTypeId
+	 * @return Bitrix24AccessRestriction
+	 */
+	public static function getItemListRestriction(int $entityTypeId): Bitrix24AccessRestriction
+	{
+		if ($entityTypeId === \CCrmOwnerType::Lead)
+		{
+			return static::getLeadsRestriction();
+		}
+		if ($entityTypeId === \CCrmOwnerType::Quote)
+		{
+			return static::getQuotesRestriction();
+		}
+		if ($entityTypeId === \CCrmOwnerType::Invoice || $entityTypeId === \CCrmOwnerType::SmartInvoice)
+		{
+			return static::getInvoicesRestriction();
+		}
+
+		return new Bitrix24AccessRestriction('', true);
 	}
 }

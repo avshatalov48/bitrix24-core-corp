@@ -8,6 +8,7 @@ use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ScrumLimit;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\KpiLimit;
 
@@ -20,9 +21,11 @@ $arResult['HELPER'] = $helper = require(dirname(__FILE__).'/helper.php');
 
 $strIframe = '';
 $strIframe2 = '';
-if($_REQUEST['IFRAME'])
-    $strIframe = '?IFRAME='.($_REQUEST['IFRAME'] == 'Y' ? 'Y' : 'N');
-    $strIframe2 = '&IFRAME='.($_REQUEST['IFRAME'] == 'Y' ? 'Y' : 'N');
+if(isset($_REQUEST['IFRAME']) && !$arParams['MENU_MODE'])
+{
+	$strIframe = '?IFRAME='.($_REQUEST['IFRAME'] == 'Y' ? 'Y' : 'N');
+	$strIframe2 = '&IFRAME='.($_REQUEST['IFRAME'] == 'Y' ? 'Y' : 'N');
+}
 
 if ($helper->checkHasFatals())
 {
@@ -77,6 +80,7 @@ $arResult['ITEMS'][] = array(
 					$arParams["MARK_SECTION_EFFECTIVE"] != "Y" &&
 					$arParams["MARK_SECTION_PROJECTS"] != "Y" &&
 					$arParams["MARK_SECTION_PROJECTS_LIST"] != "Y" &&
+					$arParams["MARK_SECTION_SCRUM_LIST"] != "Y" &&
 					$arParams["MARK_SECTION_MANAGE"] != "Y" &&
 					$arParams["MARK_SECTION_EMPLOYEE_PLAN"] != "Y" &&
 					$arParams["MARK_RECYCLEBIN"] != "Y" &&
@@ -120,6 +124,41 @@ $arResult['ITEMS'][] = [
 	'SUB_LINK' => ['CLASS' => '', 'URL' => $createGroupLink],
 	'COUNTER' => $arResult['PROJECTS_COUNTER'],
 	'COUNTER_ID' => 'tasks_projects_counter',
+];
+
+$createScrumLink = CComponentEngine::makePathFromTemplate(
+	$arParams['TASKS_SCRUM_CREATE_URL_TEMPLATE'],
+	['user_id' => $arParams['LOGGED_USER_ID']]
+);
+
+$scrumUri = new \Bitrix\Main\Web\Uri($createScrumLink);
+$scrumUri->addParams([
+	'PROJECT_OPTIONS' => [
+		'scrum' => true,
+	]
+]);
+
+$isScrumLimited = ScrumLimit::isLimitExceeded();
+if ($isScrumLimited)
+{
+	$sidePanelId = ScrumLimit::getSidePanelId();
+
+	$scrumSubLink = 'javascript:BX.UI.InfoHelper.show("'. $sidePanelId .'", {isLimit: true, limitAnalyticsLabels: {module: "tasks", source: "topMenu"}});';
+}
+else
+{
+	$scrumSubLink = $scrumUri->getUri();
+}
+
+$arResult['ITEMS'][] = [
+	"TEXT" => GetMessage("TASKS_PANEL_TAB_SCRUM"),
+	"URL" => $tasksLink.'scrum/'.$strIframe,
+	"ID" => "view_scrum",
+	"IS_ACTIVE" => ($arParams["MARK_SECTION_SCRUM_LIST"] === "Y"),
+	'SUB_LINK' => ['CLASS' => '', 'URL' => $scrumSubLink],
+	'COUNTER' => $arResult['SCRUM_COUNTER'],
+	'COUNTER_ID' => 'tasks_scrum_counter',
+	'IS_NEW' => true,
 ];
 
 if ($arParams["SHOW_SECTION_MANAGE"] != "N")
@@ -219,9 +258,8 @@ if (TaskAccessController::can($arParams['LOGGED_USER_ID'], ActionDictionary::ACT
 	else
 	{
 		$sliderCode = 'limit_task_access_permissions';
-		$rightsButton['ON_CLICK'] = "top.BX.UI.InfoHelper.show('{$sliderCode}');";
-		$rightsButton['CLASS'] = 'tasks-tariff-lock';
-		$rightsButton['CLASS_SUBMENU_ITEM'] = 'tasks-tariff-lock';
+		$rightsButton['ON_CLICK'] = "top.BX.UI.InfoHelper.show('{$sliderCode}', {isLimit: true, limitAnalyticsLabels: {module: 'tasks', source: 'topMenu'}});";
+		$rightsButton['IS_LOCKED'] = true;
 	}
 	$arResult['ITEMS'][] = $rightsButton;
 }

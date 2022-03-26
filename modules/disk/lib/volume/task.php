@@ -5,6 +5,7 @@ namespace Bitrix\Disk\Volume;
 use Bitrix\Disk\Volume;
 use Bitrix\Main\Application;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Disk\Internals\VolumeTable;
 
 /**
  * Task cleanlier class.
@@ -99,11 +100,11 @@ class Task
 			$taskParams['FAIL_COUNT'] = $this->getFailCount();
 			$taskParams['LAST_ERROR'] = $this->getLastError();
 
-			$result = \Bitrix\Disk\Internals\VolumeTable::update($this->getId(), $taskParams);
+			$result = VolumeTable::update($this->getId(), $taskParams);
 		}
 		else
 		{
-			$result = \Bitrix\Disk\Internals\VolumeTable::add(array(
+			$result = VolumeTable::add(array(
 				'INDICATOR_TYPE' => $this->getIndicatorType(),
 				'OWNER_ID' => $this->getOwnerId(),
 				'STORAGE_ID' => $this->getParam('STORAGE_ID'),
@@ -142,7 +143,7 @@ class Task
 		{
 			$filter['=OWNER_ID'] = $ownerId;
 		}
-		$workerResult = \Bitrix\Disk\Internals\VolumeTable::getList(array(
+		$workerResult = VolumeTable::getList(array(
 			'filter' => $filter,
 			'limit' => 1,
 		));
@@ -233,25 +234,48 @@ class Task
 	}
 
 	/**
+	 * Checks if there are not any running task except current.
+	 * @param int $filterId Id of saved indicator result from b_disk_volume.
+	 * @return bool
+	 */
+	public static function isAllowRun($filterId): bool
+	{
+		$workerResult = VolumeTable::getList([
+			'select' => ['ID'],
+			'filter' => [
+				'!=ID' => $filterId,
+				'=AGENT_LOCK' => self::TASK_STATUS_RUNNING,
+			],
+			'limit' => 1,
+		]);
+		if ($workerResult->fetch())
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
 	 * Checks if status is in running mode.
 	 * @param int $status Status to check.
-	 * @param int[] $runningStatus This statuses are in running mode.
-	 * @return boolean
+	 * @param int[] $runningStatus These statuses are running modes.
+	 * @return bool
 	 */
-	public static function isRunningMode($status, $runningStatus = array(self::TASK_STATUS_WAIT, self::TASK_STATUS_RUNNING))
+	public static function isRunningMode($status, $runningStatus = array(self::TASK_STATUS_WAIT, self::TASK_STATUS_RUNNING)): bool
 	{
 		return in_array((int)$status, $runningStatus);
 	}
 
 	/**
 	 * Check user cancel task.
-	 * @return boolean
+	 * @return bool
 	 */
-	public function hasUserCanceled()
+	public function hasUserCanceled(): bool
 	{
 		if ($this->getId() > 0 && self::isRunningMode($this->getStatus()))
 		{
-			$param = \Bitrix\Disk\Internals\VolumeTable::getByPrimary($this->getId(), array('select' => array('AGENT_LOCK')))->fetch();
+			$param = VolumeTable::getByPrimary($this->getId(), array('select' => array('AGENT_LOCK')))->fetch();
 			if ($param)
 			{
 				if ((int)$param['AGENT_LOCK'] === self::TASK_STATUS_CANCEL)

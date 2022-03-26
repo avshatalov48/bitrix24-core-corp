@@ -16,6 +16,11 @@ class CallTrackerActivityCounter extends ActivityCounter
 	 */
 	public function calculateValue()
 	{
+		if (!\Bitrix\Crm\Settings\CounterSettings::getCurrent()->isEnabled())
+		{
+			return 0; // counters feature is completely disabled
+		}
+
 		$query = $this->prepareEntityQuery(\CCrmOwnerType::Deal);
 		$query->setSelect([
 			'QTY' => new ExpressionField('QTY', 'COUNT(*)')

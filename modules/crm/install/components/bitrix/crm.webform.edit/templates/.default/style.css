@@ -3043,3 +3043,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 	background: white;
 	border: 2px solid #eaeaea;
 }
+
+.ui-slider-no-access-inner {
+	max-width: 100%;
+}

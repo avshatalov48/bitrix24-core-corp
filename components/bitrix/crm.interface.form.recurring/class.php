@@ -1,5 +1,9 @@
-<?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Main\Localization\Loc,
 	Bitrix\Crm\Recurring\Calculator,
@@ -436,12 +440,7 @@ class CrmInterfaceFormRecurring extends CBitrixComponent
 		}
 		else
 		{
-			$typeElement = \Bitrix\Crm\MessageHelper::getNumberDeclension(
-				(int)$data['DEAL_COUNT_BEFORE'],
-				Loc::getMessage("CRM_RECURRING_HINT_".(int)$data['DEAL_TYPE_BEFORE']."_PLURAL_0"),
-				Loc::getMessage("CRM_RECURRING_HINT_".(int)$data['DEAL_TYPE_BEFORE']."_PLURAL_1"),
-				Loc::getMessage("CRM_RECURRING_HINT_".(int)$data['DEAL_TYPE_BEFORE']."_PLURAL_2")
-			);
+			$typeElement = Loc::getMessagePlural('CRM_RECURRING_HINT_' . (int)$data['DEAL_TYPE_BEFORE'], (int)$data['DEAL_COUNT_BEFORE']);
 
 			if ($data['DEAL_DATEPICKER_BEFORE'] <> '')
 			{
@@ -475,42 +474,23 @@ class CrmInterfaceFormRecurring extends CBitrixComponent
 		if ((int)$data['LIMIT_REPEAT'] > 0 && ($data['REPEAT_TILL'] === 'times' || $data['REPEAT_TILL'] === Base::LIMITED_BY_TIMES))
 		{
 			$times = abs((int)$data['LIMIT_REPEAT']);
-			if (LANGUAGE_ID == "en" || LANGUAGE_ID == "de")
-			{
-				$form = (($times !== 1) ? Loc::getMessage('CRM_RECURRING_HINT_END_CONSTRAINT_TIMES_PLURAL_1') : Loc::getMessage('CRM_RECURRING_HINT_END_CONSTRAINT_TIMES_PLURAL_0'));
-			}
-			elseif (LANGUAGE_ID == "ru" || LANGUAGE_ID == "ua")
-			{
-				$form = \Bitrix\Crm\MessageHelper::getNumberDeclension(
-					$times,
-					Loc::getMessage('CRM_RECURRING_HINT_END_CONSTRAINT_TIMES_PLURAL_0'),
-					Loc::getMessage('CRM_RECURRING_HINT_END_CONSTRAINT_TIMES_PLURAL_1'),
-					Loc::getMessage('CRM_RECURRING_HINT_END_CONSTRAINT_TIMES_PLURAL_2')
-				);
-			}
-			else
-			{
-				$form = Loc::getMessage('CRM_RECURRING_HINT_END_TIMES_PLURAL');
-			}
-			$constraint = Loc::getMessage(
+			$form = Loc::getMessagePlural('CRM_RECURRING_HINT_END_CONSTRAINT_TIMES', $times);
+
+			return Loc::getMessage(
 				'CRM_RECURRING_HINT_END_TIMES',
 				array(
 					"#TIMES#" => $times,
 					"#TIMES_PLURAL#" => $form
 				)
 			);
-			return $constraint;
 		}
-		elseif ($data['END_DATE'] <> '' && ($data['REPEAT_TILL'] === 'date' || $data['REPEAT_TILL'] === Base::LIMITED_BY_DATE))
+
+		if ($data['END_DATE'] <> '' && ($data['REPEAT_TILL'] === 'date' || $data['REPEAT_TILL'] === Base::LIMITED_BY_DATE))
 		{
-			$constraint = Loc::getMessage('CRM_RECURRING_HINT_END', array('#DATETIME#' => $data['END_DATE']));
-			return $constraint;
+			return Loc::getMessage('CRM_RECURRING_HINT_END', array('#DATETIME#' => $data['END_DATE']));
 		}
-		else
-		{
-			$constraint = Loc::getMessage('CRM_RECURRING_HINT_END_NONE');
-			return $constraint;
-		}
+
+		return Loc::getMessage('CRM_RECURRING_HINT_END_NONE');
 	}
 
 	/**

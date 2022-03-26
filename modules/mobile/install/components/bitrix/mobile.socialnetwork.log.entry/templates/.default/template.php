@@ -260,7 +260,10 @@ else
 
 		$pinned = (
 			!empty($arParams['PINNED_PANEL_DATA'])
-			|| (isset($arParams['PINNED']) && $arParams['PINNED'] === 'Y')
+			|| (
+				isset($arParams['EVENT']['PINNED'])
+				&& $arParams['EVENT']['PINNED'] === 'Y'
+			)
 		);
 
 		if ($pinned)
@@ -400,7 +403,7 @@ else
 								 data-pinned="<?=($pinnedValue ? "Y" : "N")?>"
 								 data-use-follow="<?=($useFollow ? "Y" : "N")?>"
 								 data-follow="<?=($followValue ? "Y" : "N")?>"
-								 data-content-type-id="<?=(!empty($arResult["POST_CONTENT_TYPE_ID"]) ? $arResult["POST_CONTENT_TYPE_ID"] : '')?>>"
+								 data-content-type-id="<?= (!empty($arResult["POST_CONTENT_TYPE_ID"]) ? $arResult["POST_CONTENT_TYPE_ID"] : '') ?>"
 								 data-content-id="<?=(!empty($arResult["POST_CONTENT_ID"]) ? $arResult["POST_CONTENT_ID"] : 0)?>"
 								 class="<?=implode(' ', $menuClasses)?>"
 								 onclick="oMSL.showPostMenu(event)"

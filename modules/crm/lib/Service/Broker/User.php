@@ -27,6 +27,11 @@ class User extends Broker
 		return $this->getById($id)['FORMATTED_NAME'] ?? null;
 	}
 
+	public function getWorkPosition(int $id): ?string
+	{
+		return $this->getById($id)['WORK_POSITION'] ?? null;
+	}
+
 	protected function loadEntry(int $id): ?array
 	{
 		$userRaw = UserTable::getList([

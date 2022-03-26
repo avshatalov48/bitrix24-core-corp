@@ -1,0 +1,9 @@
+<?php
+$MESS["TASKS_SCRUM_TEAM_SPEED_ACCESS_DENIED"] = "Ви не маєте прав на перегляд.";
+$MESS["TASKS_SCRUM_TEAM_SPEED_FILTER_LAST"] = "Останні";
+$MESS["TASKS_SCRUM_TEAM_SPEED_FILTER_PERIOD_LAST_3"] = "Останні 3 спринти";
+$MESS["TASKS_SCRUM_TEAM_SPEED_FILTER_PERIOD_LAST_10"] = "Останні 10 спринтів";
+$MESS["TASKS_SCRUM_TEAM_SPEED_FILTER_PERIOD_LAST_15"] = "Останні 15 спринтів";
+$MESS["TASKS_SCRUM_TEAM_SPEED_FILTER_PERIOD_LAST_30"] = "Останні 30 днів";
+$MESS["TASKS_SCRUM_TEAM_SPEED_FILTER_PRESET_LAST"] = "Останні спринти";
+$MESS["TASKS_SCRUM_TEAM_SPEED_TITLE"] = "Діаграма швидкості команди";

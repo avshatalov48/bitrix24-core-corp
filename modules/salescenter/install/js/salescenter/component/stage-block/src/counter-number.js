@@ -3,7 +3,7 @@ import {Counter} from "./counter";
 const CounterNumber = {
 	props: {
 		value: {
-			type: String,
+			type: Number,
 			required: true
 		},
 		checked: {

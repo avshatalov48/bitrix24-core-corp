@@ -99,4 +99,7 @@ $MESS["CRM_COMPANY_CONVERT_ADDRESSES_DLG_TITLE"] = "Перенос старых 
 $MESS["CRM_COMPANY_CONVERT_ADDRESSES_STATE"] = "#processed# из #total#";
 $MESS["CRM_COMPANY_CONVERT_UF_ADDRESSES_DLG_TITLE"] = "Перенос адресов из пользовательского поля в реквизиты компаний";
 $MESS["CRM_COMPANY_CONVERT_UF_ADDRESSES_STATE"] = "#processed# из #total#";
-?>
+$MESS["CRM_COMPANY_BACKGROUND_DUPLICATE_INDEX_REBUILD_TITLE"] = "Сканирование дубликатов компаний";
+$MESS["CRM_COMPANY_BACKGROUND_DUPLICATE_INDEX_REBUILD_STATE"] = "#processed#%";
+$MESS["CRM_COMPANY_BACKGROUND_DUPLICATE_MERGE_TITLE"] = "Объединение дубликатов компаний";
+$MESS["CRM_COMPANY_BACKGROUND_DUPLICATE_MERGE_STATE"] = "#processed#%";

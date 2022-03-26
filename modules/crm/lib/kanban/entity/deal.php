@@ -6,6 +6,7 @@ use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Category\DealCategoryChangeError;
 use Bitrix\Crm\Deal\PaymentsRepository;
 use Bitrix\Crm\Deal\ShipmentsRepository;
+use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Recurring;
 use Bitrix\Crm\Kanban\Entity;
 use Bitrix\Crm\Filter;
@@ -261,13 +262,11 @@ class Deal extends Entity
 	{
 		$result = parent::getExtraDisplayedFields();
 		$result['DELIVERY_STAGE'] =
-			(new Field('DELIVERY_STAGE'))
-				->setType('string')
+			(Field::createByType('string', 'DELIVERY_STAGE'))
 				->setDisplayParams(['VALUE_TYPE' => 'html']);
 
 		$result['PAYMENT_STAGE'] =
-			(new Field('PAYMENT_STAGE'))
-				->setType('string')
+			(Field::createByType('string', 'PAYMENT_STAGE'))
 				->setDisplayParams(['VALUE_TYPE' => 'html']);
 
 		return $result;
@@ -333,9 +332,10 @@ class Deal extends Entity
 		);
 		foreach (DealCategory::getAll(true) as $id => $category)
 		{
-			if (isset($categoryPermissions[$category['ID']]))
+			$categoryId = $category['ID'];
+			if (isset($categoryPermissions[$categoryId]))
 			{
-				$category['url'] = Container::getInstance()->getRouter()->getKanbanUrl($this->getTypeId(), $id);
+				$category['url'] = Container::getInstance()->getRouter()->getKanbanUrl($this->getTypeId(), $categoryId);
 				$result[$id] = $category;
 			}
 		}
@@ -429,6 +429,19 @@ class Deal extends Entity
 			{
 				unset($fields[$i]);
 			}
+
+			if (
+				$viewType === static::VIEW_TYPE_EDIT
+				&& in_array(
+					$field['NAME'],
+					[
+						'ORDER_STAGE', 'DELIVERY_STAGE', 'PAYMENT_STAGE', 'PAYMENT_PAID', 'ORDER_SOURCE'
+					]
+				)
+			)
+			{
+				unset($fields[$i]);
+			}
 		}
 
 		if ($viewType !== static::VIEW_TYPE_EDIT)
@@ -481,5 +494,17 @@ class Deal extends Entity
 		}
 
 		return $sections;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getSemanticIds(): array
+	{
+		return [
+			PhaseSemantics::PROCESS,
+			PhaseSemantics::SUCCESS,
+			PhaseSemantics::FAILURE,
+		];
 	}
 }

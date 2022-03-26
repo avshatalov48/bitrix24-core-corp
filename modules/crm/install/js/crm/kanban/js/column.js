@@ -187,6 +187,7 @@
 				BX.removeClass(item.layout.container, "main-kanban-item-disabled");
 			}
 
+			var oldColumnId = item.getColumnId();
 			item.setColumnId(this.getId());
 			//? setGrid
 
@@ -217,9 +218,10 @@
 					this.items.push(item);
 				}
 
-				if (item.isCountable())
+				if (item.isCountable() && !item.notChangeTotal)
 				{
 					this.incrementTotal();
+					item.notChangeTotal = false;
 				}
 			}
 
@@ -230,12 +232,15 @@
 				},
 				useAnimation: item.useAnimation
 			}).then(function(){
+				item.useAnimation = false;
+				item.layout.container.style.opacity = '100%';
 				BX.Event.EventEmitter.emit(
 					'Crm.Kanban.Column:onItemAdded',
 					{
 						item:item,
 						targetColumn: this,
-						beforeItem: beforeItem
+						beforeItem: beforeItem,
+						oldColumn: this.grid.getColumn(oldColumnId),
 					});
 			}.bind(this));
 
@@ -738,7 +743,8 @@
 
 				BX.addCustomEvent(window, "BX.CRM.Kanban.Item.select", this.hideQuickFormEditor.bind(this));
 				BX.addCustomEvent(window, "BX.CRM.Kanban.Item.select", this.enabledAddButton.bind(this));
-				BX.addCustomEvent(window, "Kanban.Column:render", this.hideQuickFormEditor.bind(this));
+				//BX.addCustomEvent(window, "Kanban.Column:render", this.hideQuickFormEditor.bind(this));
+				BX.addCustomEvent(window, "onCrmEntityCreate", this.hideQuickFormEditor.bind(this));
 				BX.addCustomEvent(window, "Kanban.Column:render", this.enabledAddButton.bind(this));
 				BX.addCustomEvent(window, "Kanban.Grid:onItemDragStart", this.enabledAddButton.bind(this));
 				BX.addCustomEvent(window, "Kanban.Grid:onItemDragStart", function()
@@ -782,7 +788,11 @@
 
 			while (!formDataEntry.done) {
 				pair = formDataEntry.value;
-				presetValues[pair[0]] = pair[1];
+				if (presetValues[pair[0]] === undefined)
+				{
+					presetValues[pair[0]] = [];
+				}
+				presetValues[pair[0]].push(pair[1]);
 				formDataEntry = formDataEntries.next();
 			}
 
@@ -944,10 +954,15 @@
 			if (this.layout.subTitlePriceText)
 			{
 				data.sum = parseFloat(data.sum);
-				data.sum_old = data.sum_old ? data.sum_old : data.sum_init;
 				data.sum_init = data.sum;
+				data.sum_old = data.sum_old ? data.sum_old : data.sum_init;
 
-				this.renderSubTitleAnimation(
+				if (this.subTitleAnimationInterval)
+				{
+					clearInterval(this.subTitleAnimationInterval);
+				}
+
+				this.subTitleAnimationInterval = this.renderSubTitleAnimation(
 					data.sum_old,
 					data.sum,
 					Math.abs(data.sum_old - data.sum) / 20,
@@ -974,13 +989,10 @@
 			// create sum and button if no exists
 
 			var plusTitle = '',
-				quickForm = true,
-				loadEditor = false;
+				quickForm = true;
 
 			if (data.sort === 100 && this.getGrid().getTypeInfoParam('hasPlusButtonTitle'))
 			{
-				loadEditor = true;
-
 				plusTitle = gridData.isDynamicEntity
 					? BX.message("CRM_KANBAN_PLUS_TITLE_DYNAMIC")
 					: BX.message("CRM_KANBAN_PLUS_TITLE_" + gridData.entityType);
@@ -1174,13 +1186,6 @@
 				]
 			});
 
-			if (loadEditor && this.canAddItem)
-			{
-				setTimeout(function() {
-					this.showQuickEditor(true);
-				}.bind(this));
-			}
-
 			return this.subtitleNode;
 		},
 
@@ -1219,57 +1224,47 @@
 		 * @param {Number} value
 		 * @param {Number} step
 		 * @param {DOM} element
-		 * @param {Function} finalCall Call finaly for element with val.
+		 * @param {Function} finalCall Call finally for element with val.
 		 * @returns {void}
 		 */
 		renderSubTitleAnimation: function(start, value, step, element, finalCall)
 		{
-			var i = +start;
+			var i = start;
 			var val = parseFloat(value);
 			var timeout = this.renderSubtitleTime;
 
-			if (i < val)
+			if (i === val)
 			{
-				(function ()
+				if (typeof finalCall === 'function')
 				{
-					if (i <= val)
-					{
-						setTimeout(arguments.callee, timeout);
-						element.textContent = BX.util.number_format(i, 0, ",", " ");
-						i = i + step;
-					}
-					else
-					{
-						if (typeof finalCall === "function")
-						{
-							finalCall(element, value);
-						}
-					}
-				})();
+					finalCall(element, value);
+				}
+				return;
 			}
-			else if (i > val)
+
+			var sign = (start > value ? 'minus' : 'plus');
+
+			var condition = function(currentValue){
+				return (sign === 'plus' ? (value < currentValue) : (value > currentValue));
+			};
+
+			if (start > val)
 			{
-				(function ()
+				step = -1 * step;
+			}
+
+			var timer = setInterval(function() {
+				element.textContent = BX.util.number_format(i, 0, ",", " ");
+				i += step;
+				if (condition(i))
 				{
-					if (i >= val)
-					{
-						setTimeout(arguments.callee, timeout);
-						element.textContent = BX.util.number_format(i, 0, ",", " ");
-						i = i - step;
-					}
-					else
-					{
-						if (typeof finalCall === "function")
-						{
-							finalCall(element, value);
-						}
-					}
-				})();
-			}
-			else if (typeof finalCall === "function")
-			{
-				finalCall(element, value);
-			}
+					clearInterval(timer);
+					this.subTitleAnimationInterval = null;
+					finalCall(element, value);
+				}
+			}, timeout);
+
+			return timer;
 		},
 
 		/**
@@ -1357,7 +1352,7 @@
 
 		/**
 		 *
-		 * @param {BX.Kanban.Item} itemToRemove
+		 * @param {BX.CRM.Kanban.Item} itemToRemove
 		 */
 		removeItem: function(itemToRemove)
 		{
@@ -1386,7 +1381,10 @@
 					}).then(function(value){
 						if (itemToRemove.isCountable() && itemToRemove.isVisible())
 						{
-							this.decrementTotal();
+							if (!itemToRemove.notChangeTotal)
+							{
+								this.decrementTotal();
+							}
 							this.getGrid().resetMultiSelectMode();
 						}
 						if (this.getGrid().isRendered())
@@ -1402,6 +1400,17 @@
 				}
 			}.bind(this));
 		},
+
+		cleanLayoutItems: function()
+		{
+			var childNodes = Array.from(this.layout.items.childNodes);
+			childNodes.map(function(item, index){
+				if (item.classList.contains('main-kanban-item'))
+				{
+					this.layout.items.removeChild(item);
+				}
+			}.bind(this));
+		}
 	};
 
 	BX.CRM.Kanban.DraftColumn = function(options)

@@ -162,6 +162,66 @@ this.BX = this.BX || {};
 	  return BalloonNotifier;
 	}();
 
+	var NextPageLoader = /*#__PURE__*/function () {
+	  function NextPageLoader() {
+	    var _this = this;
+
+	    babelHelpers.classCallCheck(this, NextPageLoader);
+	    this.initialized = false;
+	    this.init();
+	    main_core_events.EventEmitter.subscribe('onFrameDataProcessed', function () {
+	      _this.init();
+	    });
+	  }
+
+	  babelHelpers.createClass(NextPageLoader, [{
+	    key: "init",
+	    value: function init() {
+	      var buttonNode = this.getButtonNode();
+
+	      if (!buttonNode || this.initialized) {
+	        return;
+	      }
+
+	      this.initialized = true;
+	      this.initEvents();
+	    }
+	  }, {
+	    key: "initEvents",
+	    value: function initEvents() {
+	      var buttonNode = this.getButtonNode();
+	      buttonNode.addEventListener('click', function (e) {
+	        PageInstance.refresh(true);
+	        return false;
+	      });
+	    }
+	  }, {
+	    key: "getButtonNode",
+	    value: function getButtonNode() {
+	      return document.getElementById('next_page_refresh_needed_button');
+	    }
+	  }, {
+	    key: "startWaiter",
+	    value: function startWaiter() {
+	      var button = this.getButtonNode();
+
+	      if (button) {
+	        button.classList.add('--loading');
+	      }
+	    }
+	  }, {
+	    key: "stopWaiter",
+	    value: function stopWaiter() {
+	      var button = this.getButtonNode();
+
+	      if (button) {
+	        button.classList.remove('--loading');
+	      }
+	    }
+	  }]);
+	  return NextPageLoader;
+	}();
+
 	var NotificationBar = /*#__PURE__*/function () {
 	  function NotificationBar() {
 	    babelHelpers.classCallCheck(this, NotificationBar);
@@ -883,6 +943,7 @@ this.BX = this.BX || {};
 	  babelHelpers.createClass(BlogPost$$1, null, [{
 	    key: "delete",
 	    value: function _delete(params) {
+	      var context = main_core.Type.isStringFilled(params.context) ? params.context : 'list';
 	      var postId = !main_core.Type.isUndefined(params.postId) ? parseInt(params.postId) : 0;
 
 	      if (postId <= 0) {
@@ -926,9 +987,12 @@ this.BX = this.BX || {};
 	              }
 
 	              BXMobileApp.onCustomEvent('onBlogPostDelete', {}, true, true);
-	              app.closeController({
-	                drop: true
-	              });
+
+	              if (context === 'detail') {
+	                app.closeController({
+	                  drop: true
+	                });
+	              }
 	            },
 	            callback_failure: function callback_failure() {
 	              app.hidePopupLoader();
@@ -1225,7 +1289,8 @@ this.BX = this.BX || {};
 	          sectionCode: this.sectionCode,
 	          action: function action() {
 	            BlogPost$$1.delete({
-	              postId: _this.postId
+	              postId: _this.postId,
+	              context: _this.context
 	            });
 	          },
 	          arrowFlag: false
@@ -2807,6 +2872,7 @@ this.BX = this.BX || {};
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(SearchBar).call(this));
 	    _this.findTextMode = false;
 	    _this.ftMinTokenSize = 3;
+	    _this.hideByRefresh = false;
 	    return _this;
 	  }
 
@@ -2825,6 +2891,8 @@ this.BX = this.BX || {};
 
 	      this.subscribe('onSearchBarCancelButtonClicked', this.searchBarEventCallback.bind(this));
 	      this.subscribe('onSearchBarSearchButtonClicked', this.searchBarEventCallback.bind(this));
+	      main_core_events.EventEmitter.subscribe('BX.MobileLivefeed.SearchBar::setHideByRefresh', this.setHideByRefresh.bind(this));
+	      main_core_events.EventEmitter.subscribe('BX.MobileLivefeed.SearchBar::unsetHideByRefresh', this.unsetHideByRefresh.bind(this));
 	      BXMobileApp.UI.Page.params.set({
 	        useSearchBar: true
 	      });
@@ -2853,58 +2921,87 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "searchBarEventCallback",
 	    value: function searchBarEventCallback(event) {
+	      var _this3 = this;
+
 	      var eventData = event.getData();
 	      var text = main_core.Type.isPlainObject(eventData) && main_core.Type.isStringFilled(eventData.text) ? eventData.text : '';
 
 	      if (text.length >= this.ftMinTokenSize) {
 	        app.exec('showSearchBarProgress');
-
-	        var _event = new main_core_events.BaseEvent({
-	          compatData: [{
-	            text: text
-	          }]
-	        });
-
-	        main_core_events.EventEmitter.emit('BX.MobileLF:onSearchBarRefreshStart', _event);
+	        this.emitRefreshEvent(text);
 	      } else {
 	        if (this.findTextMode) {
-	          main_core_events.EventEmitter.emit('BX.MobileLF:onSearchBarRefreshAbort');
-	          app.exec('hideSearchBarProgress');
-	          BX.frameCache.readCacheWithID('framecache-block-feed', function (params) {
-	            var container = document.getElementById('bxdynamic_feed_refresh');
+	          if (!this.hideByRefresh) {
+	            main_core_events.EventEmitter.emit('BX.MobileLF:onSearchBarRefreshAbort');
+	          }
 
-	            if (!main_core.Type.isArray(params.items) || !container) {
-	              return;
-	            }
+	          if (BX.frameCache) {
+	            app.exec('hideSearchBarProgress');
+	            BX.frameCache.readCacheWithID('framecache-block-feed', function (params) {
+	              var container = document.getElementById('bxdynamic_feed_refresh');
 
-	            var block = params.items.find(function (item) {
-	              return main_core.Type.isStringFilled(item.ID) && item.ID === 'framecache-block-feed';
+	              if (!main_core.Type.isArray(params.items) || !container) {
+	                _this3.emitRefreshEvent();
+
+	                return;
+	              }
+
+	              var block = params.items.find(function (item) {
+	                return main_core.Type.isStringFilled(item.ID) && item.ID === 'framecache-block-feed';
+	              });
+
+	              if (main_core.Type.isUndefined(block)) {
+	                return;
+	              }
+
+	              main_core.Runtime.html(container, block.CONTENT).then(function () {
+	                BX.processHTML(block.CONTENT, true);
+	              });
+	              Post$$1.moveTop();
+	              setTimeout(function () {
+	                BitrixMobile.LazyLoad.showImages();
+	              }, 1000);
 	            });
-
-	            if (main_core.Type.isUndefined(block)) {
-	              return;
-	            }
-
-	            main_core.Runtime.html(container, block.CONTENT).then(function () {
-	              BX.processHTML(block.CONTENT, true);
-	            });
-	            Post$$1.moveTop();
-	            setTimeout(function () {
-	              BitrixMobile.LazyLoad.showImages();
-	            }, 1000);
-	          });
+	          } else {
+	            this.emitRefreshEvent();
+	          }
 	        }
 
 	        this.findTextMode = false;
 	      }
 	    }
+	  }, {
+	    key: "setHideByRefresh",
+	    value: function setHideByRefresh() {
+	      this.hideByRefresh = true;
+	    }
+	  }, {
+	    key: "unsetHideByRefresh",
+	    value: function unsetHideByRefresh() {
+	      this.hideByRefresh = false;
+	    }
+	  }, {
+	    key: "emitRefreshEvent",
+	    value: function emitRefreshEvent(text) {
+	      if (PageInstance.refreshXhr) {
+	        return;
+	      }
+
+	      text = text || '';
+	      var event = new main_core_events.BaseEvent({
+	        compatData: [{
+	          text: text
+	        }]
+	      });
+	      main_core_events.EventEmitter.emit('BX.MobileLF:onSearchBarRefreshStart', event);
+	    }
 	  }]);
 	  return SearchBar;
 	}(main_core_events.EventEmitter);
 
-	var DetailPageScroll = /*#__PURE__*/function () {
-	  function DetailPageScroll() {
-	    babelHelpers.classCallCheck(this, DetailPageScroll);
+	var PageScroll = /*#__PURE__*/function () {
+	  function PageScroll() {
+	    babelHelpers.classCallCheck(this, PageScroll);
 	    this.canCheckScrollButton = true;
 	    this.showScrollButtonTimeout = null;
 	    this.showScrollButtonBottom = false;
@@ -2919,7 +3016,7 @@ this.BX = this.BX || {};
 	    this.init();
 	  }
 
-	  babelHelpers.createClass(DetailPageScroll, [{
+	  babelHelpers.createClass(PageScroll, [{
 	    key: "init",
 	    value: function init() {
 	      if (window.platform === 'ios') {
@@ -3024,7 +3121,7 @@ this.BX = this.BX || {};
 	      });
 	    }
 	  }]);
-	  return DetailPageScroll;
+	  return PageScroll;
 	}();
 
 	var FollowManager = /*#__PURE__*/function () {
@@ -3528,7 +3625,7 @@ this.BX = this.BX || {};
 	              }
 
 	            Instance.setLastActivityDate();
-	            DetailPageScrollInstance.checkScrollButton();
+	            PageScrollInstance.checkScrollButton();
 	            var logIdContainer = document.getElementById('post_log_id');
 
 	            if (!main_core.Type.isUndefined(response.TS) && logIdContainer) {
@@ -3735,16 +3832,6 @@ this.BX = this.BX || {};
 	  return Comments;
 	}();
 
-	function _templateObject$3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"]);
-
-	  _templateObject$3 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
 	var Page = /*#__PURE__*/function () {
 	  function Page() {
 	    babelHelpers.classCallCheck(this, Page);
@@ -3880,6 +3967,7 @@ this.BX = this.BX || {};
 	      Instance.setRefreshNeeded(false);
 	      Instance.setRefreshStarted(true);
 	      BalloonNotifierInstance.hideRefreshNeededNotifier();
+	      NextPageLoaderInstance.startWaiter();
 	      NotificationBarInstance.hideAll();
 	      this.isBusyRefreshing = true;
 	      var reloadUrl = main_core.Uri.removeParam(document.location.href, ['RELOAD', 'RELOAD_JSON', 'FIND']);
@@ -3923,6 +4011,7 @@ this.BX = this.BX || {};
 
 	          Instance.setRefreshStarted(false);
 	          Instance.setRefreshNeeded(false);
+	          NextPageLoaderInstance.stopWaiter();
 
 	          if (document.getElementById('lenta_notifier')) {
 	            document.getElementById('lenta_notifier').classList.remove(_this2.class.notifier);
@@ -4009,6 +4098,7 @@ this.BX = this.BX || {};
 	          _this2.refreshXhr = null;
 	          Instance.setRefreshStarted(false);
 	          Instance.setRefreshNeeded(false);
+	          NextPageLoaderInstance.stopWaiter();
 
 	          if (document.getElementById('lenta_notifier')) {
 	            document.getElementById('lenta_notifier').classList.remove(_this2.class.notifier);
@@ -4048,7 +4138,9 @@ this.BX = this.BX || {};
 	          document.getElementById('lenta_wrapper_global').innerHTML = block.CONTENT;
 	        } else // next
 	          {
-	            document.getElementById('lenta_wrapper').insertBefore(main_core.Tag.render(_templateObject$3(), block.CONTENT), document.getElementById('next_post_more'));
+	            document.getElementById('lenta_wrapper').insertBefore(main_core.Dom.create('div', {
+	              html: block.CONTENT
+	            }), document.getElementById('next_post_more'));
 	          }
 
 	        htmlWasInserted = true;
@@ -4180,10 +4272,10 @@ this.BX = this.BX || {};
 	  return data;
 	}
 
-	function _templateObject$4() {
+	function _templateObject$3() {
 	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"", " ", "\" ontransitionend=\"", "\"></div>"]);
 
-	  _templateObject$4 = function _templateObject() {
+	  _templateObject$3 = function _templateObject() {
 	    return data;
 	  };
 
@@ -4776,7 +4868,7 @@ this.BX = this.BX || {};
 
 	        contentWrapper.remove();
 	      } else if (action === 'add') {
-	        this.setNewPostContainer(main_core.Tag.render(_templateObject$4(), this.class.postNewContainerTransformNew, this.class.postLazyLoadCheck, this.handleInsertPostTransitionEnd.bind(this)));
+	        this.setNewPostContainer(main_core.Tag.render(_templateObject$3(), this.class.postNewContainerTransformNew, this.class.postLazyLoadCheck, this.handleInsertPostTransitionEnd.bind(this)));
 	        main_core.Dom.prepend(this.getNewPostContainer(), containerNode);
 	        mobile_utils.Utils.htmlWithInlineJS(this.getNewPostContainer(), content).then(function () {
 	          var postNode = _this5.getNewPostContainer().querySelector("div.".concat(_this5.class.listPost));
@@ -5012,6 +5104,12 @@ this.BX = this.BX || {};
 	        } else {
 	          app.exec('showPostForm', PostFormOldManagerInstance.show());
 	        }
+	      } else if (e.target.classList.contains(".".concat(PageScrollInstance.class.scrollButton)) || e.target.closest(".".concat(PageScrollInstance.class.scrollButton))) {
+	        if (e.target.classList.contains(".".concat(PageScrollInstance.class.scrollButtonTop)) || e.target.closest(".".concat(PageScrollInstance.class.scrollButtonTop))) {
+	          PageScrollInstance.scrollTo('top');
+	        } else if (e.target.classList.contains(".".concat(PageScrollInstance.class.scrollButtonBottom)) || e.target.closest(".".concat(PageScrollInstance.class.scrollButtonBottom))) {
+	          PageScrollInstance.scrollTo('bottom');
+	        }
 	      } else if ((e.target.closest(".".concat(this.class.listWrapper)) || e.target.closest(".".concat(this.class.pinnedPanel))) && !(e.target.tagName.toLowerCase() === 'a' && main_core.Type.isStringFilled(e.target.getAttribute('target')) && e.target.getAttribute('target').toLowerCase() === '_blank')) {
 	        var detailFromPinned = !!(e.target.classList.contains(this.class.postItemPinnedBlock) || e.target.closest(".".concat(this.class.postItemPinnedBlock)));
 	        var detailFromNormal = !!(!detailFromPinned && (e.target.classList.contains(this.class.postItemPostContentView) || e.target.closest(".".concat(this.class.postItemPostContentView)) || e.target.classList.contains(this.class.postItemDescriptionBlock) // tasks
@@ -5039,12 +5137,6 @@ this.BX = this.BX || {};
 
 	          e.stopPropagation();
 	          return e.preventDefault();
-	        } else if (e.target.classList.contains(".".concat(DetailPageScrollInstance.class.scrollButton)) || e.target.closest(".".concat(DetailPageScrollInstance.class.scrollButton))) {
-	          if (e.target.classList.contains(".".concat(DetailPageScrollInstance.class.scrollButtonTop)) || e.target.closest(".".concat(DetailPageScrollInstance.class.scrollButtonTop))) {
-	            DetailPageScrollInstance.scrollTo('top');
-	          } else if (e.target.classList.contains(".".concat(DetailPageScrollInstance.class.scrollButtonBottom)) || e.target.closest(".".concat(DetailPageScrollInstance.class.scrollButtonBottom))) {
-	            DetailPageScrollInstance.scrollTo('bottom');
-	          }
 	        }
 	      } else if (e.target.closest(".".concat(this.class.postWrapper))) {
 	        var expand = !!(e.target.classList.contains(this.class.postItemInformMore) || e.target.closest(".".concat(this.class.postItemInformMore)) || e.target.classList.contains(this.class.postItemMore) || e.target.closest(".".concat(this.class.postItemMore)));
@@ -5286,6 +5378,10 @@ this.BX = this.BX || {};
 	          result = 34;
 	          break;
 
+	        case 'tabs':
+	          result = 41;
+	          break;
+
 	        default:
 	      }
 
@@ -5356,6 +5452,7 @@ this.BX = this.BX || {};
 
 	var Instance = new Feed();
 	var BalloonNotifierInstance = new BalloonNotifier();
+	var NextPageLoaderInstance = new NextPageLoader();
 	var NotificationBarInstance = new NotificationBar();
 	var DatabaseUnsentPostInstance = new Database();
 	var PublicationQueueInstance = new PublicationQueue();
@@ -5367,7 +5464,7 @@ this.BX = this.BX || {};
 	var RatingInstance = new Rating();
 	var ImportantManagerInstance = new ImportantManager();
 	var SearchBarInstance = new SearchBar();
-	var DetailPageScrollInstance = new DetailPageScroll();
+	var PageScrollInstance = new PageScroll();
 	var FollowManagerInstance = new FollowManager();
 	var CommentsInstance = new Comments();
 	var PageInstance = new Page();
@@ -5376,6 +5473,7 @@ this.BX = this.BX || {};
 	exports.BlogPost = BlogPost$$1;
 	exports.Instance = Instance;
 	exports.BalloonNotifierInstance = BalloonNotifierInstance;
+	exports.NextPageLoaderInstance = NextPageLoaderInstance;
 	exports.NotificationBarInstance = NotificationBarInstance;
 	exports.DatabaseUnsentPostInstance = DatabaseUnsentPostInstance;
 	exports.PublicationQueueInstance = PublicationQueueInstance;
@@ -5387,7 +5485,7 @@ this.BX = this.BX || {};
 	exports.RatingInstance = RatingInstance;
 	exports.ImportantManagerInstance = ImportantManagerInstance;
 	exports.SearchBarInstance = SearchBarInstance;
-	exports.DetailPageScrollInstance = DetailPageScrollInstance;
+	exports.PageScrollInstance = PageScrollInstance;
 	exports.FollowManagerInstance = FollowManagerInstance;
 	exports.CommentsInstance = CommentsInstance;
 	exports.PageInstance = PageInstance;

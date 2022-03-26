@@ -2,9 +2,11 @@
 
 namespace Bitrix\Crm\Relation\StorageStrategy;
 
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Order\Company;
 use Bitrix\Crm\Order\ContactCompanyEntity;
 use Bitrix\Crm\Order\Order;
+use Bitrix\Main\Result;
 
 class CompanyToOrder extends ContactCompanyToOrder
 {
@@ -25,5 +27,12 @@ class CompanyToOrder extends ContactCompanyToOrder
 		$company->setField('IS_PRIMARY', 'Y');
 
 		return $company;
+	}
+
+	protected function replaceBindings(ItemIdentifier $fromItem, ItemIdentifier $toItem): Result
+	{
+		\Bitrix\Crm\Order\Company::rebind($fromItem->getEntityId(), $toItem->getEntityId());
+
+		return new Result();
 	}
 }

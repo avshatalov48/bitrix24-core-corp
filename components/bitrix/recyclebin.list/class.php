@@ -67,6 +67,7 @@ class RecyclebinListComponent extends RecyclebinBaseComponent
 					$this->arResult['ENTITY_TYPES'][$typeId] = $typeData['NAME'];
 					$this->arResult['ENTITY_MESSAGES'][$typeId] = $typeData['HANDLER']::getNotifyMessages();
 					$this->arResult['ENTITY_ADDITIONAL_DATA'][$typeId] = $additionalData[$moduleId]['ADDITIONAL_DATA'][$typeId];
+					$this->arResult['ENTITY_ADDITIONAL_DATA'][$typeId]['MODULE_ID'] = $moduleId;
 				}
 			}
 		}
@@ -80,6 +81,7 @@ class RecyclebinListComponent extends RecyclebinBaseComponent
 					$this->arResult['ENTITY_TYPES'][$typeId] = $typeData['NAME'];
 					$this->arResult['ENTITY_MESSAGES'][$typeId] = $typeData['HANDLER']::getNotifyMessages();
 					$this->arResult['ENTITY_ADDITIONAL_DATA'][$typeId] = $additionalData[$moduleId]['ADDITIONAL_DATA'][$typeId];
+					$this->arResult['ENTITY_ADDITIONAL_DATA'][$typeId]['MODULE_ID'] = $moduleId;
 				}
 			}
 		}

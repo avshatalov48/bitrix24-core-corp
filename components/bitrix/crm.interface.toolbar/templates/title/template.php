@@ -132,7 +132,7 @@ for($i = 0; $i < $itemCount; $i++)
         </div>
 		<?
 	}
-	else
+	elseif(!isset($item['SEPARATOR']))
 	{
 		?>
 		<a href="<?=$link?>" class="ui-btn ui-btn-primary ui-btn-icon-add crm-btn-toolbar-add" title="<?=$title?>"<?=$onClick !== '' ? " onclick=\"{$onClick}; return false;\"" : ''?>><?=$text?></a>

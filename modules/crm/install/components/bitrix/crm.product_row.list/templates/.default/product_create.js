@@ -303,6 +303,8 @@ if (typeof BX.CrmProductCreateDialog === "undefined")
 			hidden = null;
 
 			form.appendChild(content);
+			popup.setTitleBar(this.messages["dialogTitle"]);
+			popup.setContent(form);
 			for (spIndex = 0; spIndex < scriptPack.length; spIndex++)
 			{
 				if (scriptPack[spIndex]["scripts"].length > 0)
@@ -310,8 +312,6 @@ if (typeof BX.CrmProductCreateDialog === "undefined")
 				if (scriptPack[spIndex]["styles"].length > 0)
 					BX.loadCSS(scriptPack[spIndex]["styles"]);
 			}
-			popup.setTitleBar(this.messages["dialogTitle"]);
-			popup.setContent(form);
 			popup.setButtons([
 				new BX.PopupWindowButton(
 					{

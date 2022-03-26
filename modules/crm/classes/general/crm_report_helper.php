@@ -137,11 +137,8 @@ abstract class CCrmReportHelperBase extends CReportHelper
 		if (!is_array(self::$arUFId) || count(self::$arUFId) <= 0 || is_array(self::$ufInfo))
 			return;
 
-		/** @global string $DBType */
 		/** @global CUserTypeManager $USER_FIELD_MANAGER */
-		global $DBType, $USER_FIELD_MANAGER;
-
-		$dbType = ToUpper(strval($DBType));
+		global $USER_FIELD_MANAGER;
 
 		$allowedUserTypes = array('string', 'date', 'datetime', 'enumeration', 'double', 'integer', 'boolean', 'file',
 			'employee', 'crm', 'crm_status', 'iblock_element', 'iblock_section', 'money');
@@ -176,9 +173,6 @@ abstract class CCrmReportHelperBase extends CReportHelper
 						$blPostfix = defined('self::UF_BOOLEAN_POSTFIX') ? self::UF_BOOLEAN_POSTFIX : '_BLINL';
 						if ($field['USER_TYPE_ID'] === 'boolean' && $field['MULTIPLE'] !== 'Y')
 							self::$ufInfo[$ufId][$field['FIELD_NAME'].$blPostfix] = $field;
-
-						if (($dbType === 'ORACLE' || $dbType === 'MSSQL') && $field['MULTIPLE'] === 'Y')
-							self::$ufInfo[$ufId][$field['FIELD_NAME'] . self::UF_TEXT_TRIM_POSTFIX] = $field;
 
 						if ($field['USER_TYPE_ID'] === 'money')
 						{
@@ -408,80 +402,11 @@ abstract class CCrmReportHelperBase extends CReportHelper
 
 	public static function appendTextUserFieldsAsTrimmed(\Bitrix\Main\Entity\Base $entity)
 	{
-		/** @global string $DBType */
-		global $DBType;
-
-		$dbType = ToUpper(strval($DBType));
-
-		// Advanced fields for text user fields
-		$textFields = array();
 		foreach($entity->getFields() as $field)
 		{
 			if (in_array($field->getName(), array('LEAD_BY', 'COMPANY_BY', 'CONTACT_BY'), true) && $field instanceof Bitrix\Main\Entity\ReferenceField)
 			{
 				self::appendTextUserFieldsAsTrimmed($field->getRefEntity());
-			}
-			else if ($field instanceof Bitrix\Main\Entity\ExpressionField)
-			{
-				$arUF = self::detectUserField($field);
-				if ($arUF['isUF'])
-				{
-					$ufDataType = self::getUserFieldDataType($arUF);
-					if ($arUF['ufInfo']['MULTIPLE'] === 'Y')
-					{
-						if ($dbType === 'ORACLE' || $dbType === 'MSSQL')
-						{
-							$exprVal = '';
-							switch ($dbType)
-							{
-								case 'ORACLE':
-									$maxStrLen = 4000;
-									$exprVal = 'TO_CHAR(SUBSTR(%s, 1, '.$maxStrLen.'))';
-									break;
-								case 'MSSQL':
-									$maxStrLen = 8000;
-									$exprVal = 'SUBSTRING(%s, 1, '.$maxStrLen.')';
-									break;
-							}
-							/*$textFields[] = array(
-								'def' => array(
-									'data_type' => 'string',
-									'expression' => array(
-										$exprVal, $arUF['ufInfo']['FIELD_NAME']
-									)
-								),
-								'name' => $arUF['ufInfo']['FIELD_NAME'].self::UF_TEXT_TRIM_POSTFIX
-							);*/
-							if ($arUF['ufInfo']['USER_TYPE_ID'] === 'datetime')
-								$fdmsGetterName = 'getFDMsMultipleTrimmedDateTime';
-							else
-								$fdmsGetterName = 'getFDMsMultipleTrimmed';
-							$textFields[] = new Main\Entity\ExpressionField(
-								$arUF['ufInfo']['FIELD_NAME'].self::UF_TEXT_TRIM_POSTFIX,
-								$exprVal,
-								array($arUF['ufInfo']['FIELD_NAME']),
-								array('fetch_data_modification' => array(__CLASS__, $fdmsGetterName))
-							);
-						}
-					}
-				}
-			}
-		}
-		foreach ($textFields as $fieldInfo)
-		{
-			if (is_object($fieldInfo))
-			{
-				if (!$entity->hasField($fieldInfo->getName()))
-				{
-					$entity->addField($fieldInfo);
-				}
-			}
-			else
-			{
-				if (!$entity->hasField($fieldInfo['name']))
-				{
-					$entity->addField($fieldInfo['def'], $fieldInfo['name']);
-				}
 			}
 		}
 	}
@@ -1483,45 +1408,7 @@ class CCrmReportHelper extends CCrmReportHelperBase
 
 	public static function getCustomSelectFields($select, $fList)
 	{
-		global $DBType;
-
-		$customFields = array();
-
-		$bAggr = false;
-		foreach ($select as $elem)
-		{
-			if (isset($elem['aggr']) && !empty($elem['aggr']))
-			{
-				$bAggr = true;
-				break;
-			}
-		}
-
-		if ($bAggr)
-		{
-			$dbType = ToUpper(strval($DBType));
-
-			if ($dbType === 'ORACLE' || $dbType === 'MSSQL')
-			{
-				foreach ($select as $k => $elem)
-				{
-					$fName = $elem['name'];
-					$field = $fList[$fName];
-					$arUF = self::detectUserField($field);
-					if ($arUF['isUF'])
-					{
-						if ($arUF['ufInfo']['MULTIPLE'] === 'Y')
-						{
-							$customField = $elem;
-							$customField['name'] .= self::UF_TEXT_TRIM_POSTFIX;
-							$customFields[$k] = $customField;
-						}
-					}
-				}
-			}
-		}
-
-		return $customFields;
+		return [];
 	}
 
 	public static function getCustomColumnTypes()
@@ -2321,7 +2208,7 @@ class CCrmInvoiceReportHelper extends CCrmReportHelperBase
 
 	public static function setRuntimeFields(\Bitrix\Main\Entity\Base $entity, $sqlTimeInterval)
 	{
-		global $DB, $DBType;
+		global $DB;
 
 		$options = array();
 
@@ -2363,7 +2250,7 @@ class CCrmInvoiceReportHelper extends CCrmReportHelperBase
 			'values' => array(0, 1)
 		), 'IS_CANCELED');
 
-		$datetimeNull = (ToUpper($DBType) === 'MYSQL') ? 'CAST(NULL AS DATETIME)' : 'NULL';
+		$datetimeNull = 'CAST(NULL AS DATETIME)';
 
 		$entity->addField(array(
 			'data_type' => 'datetime',
@@ -2385,45 +2272,7 @@ class CCrmInvoiceReportHelper extends CCrmReportHelperBase
 
 	public static function getCustomSelectFields($select, $fList)
 	{
-		global $DBType;
-
-		$customFields = array();
-
-		$bAggr = false;
-		foreach ($select as $elem)
-		{
-			if (isset($elem['aggr']) && !empty($elem['aggr']))
-			{
-				$bAggr = true;
-				break;
-			}
-		}
-
-		if ($bAggr)
-		{
-			$dbType = ToUpper(strval($DBType));
-
-			if ($dbType === 'ORACLE' || $dbType === 'MSSQL')
-			{
-				foreach ($select as $k => $elem)
-				{
-					$fName = $elem['name'];
-					$field = $fList[$fName];
-					$arUF = self::detectUserField($field);
-					if ($arUF['isUF'])
-					{
-						if ($arUF['ufInfo']['MULTIPLE'] === 'Y')
-						{
-							$customField = $elem;
-							$customField['name'] .= self::UF_TEXT_TRIM_POSTFIX;
-							$customFields[$k] = $customField;
-						}
-					}
-				}
-			}
-		}
-
-		return $customFields;
+		return [];
 	}
 
 	public static function getCustomColumnTypes()
@@ -3037,7 +2886,7 @@ class CCrmLeadReportHelper extends CCrmReportHelperBase
 
 	public static function setRuntimeFields(\Bitrix\Main\Entity\Base $entity, $sqlTimeInterval)
 	{
-		global $DB, $DBType;
+		global $DB;
 
 		$options = array();
 
@@ -3061,7 +2910,7 @@ class CCrmLeadReportHelper extends CCrmReportHelperBase
 			'values' => array(0, 1)
 		), 'IS_REJECT');
 
-		$datetimeNull = (ToUpper($DBType) === 'MYSQL') ? 'CAST(NULL AS DATETIME)' : 'NULL';
+		$datetimeNull = 'CAST(NULL AS DATETIME)';
 
 		$entity->addField(array(
 			'data_type' => 'datetime',
@@ -3080,45 +2929,7 @@ class CCrmLeadReportHelper extends CCrmReportHelperBase
 
 	public static function getCustomSelectFields($select, $fList)
 	{
-		global $DBType;
-
-		$customFields = array();
-
-		$bAggr = false;
-		foreach ($select as $elem)
-		{
-			if (isset($elem['aggr']) && !empty($elem['aggr']))
-			{
-				$bAggr = true;
-				break;
-			}
-		}
-
-		if ($bAggr)
-		{
-			$dbType = ToUpper(strval($DBType));
-
-			if ($dbType === 'ORACLE' || $dbType === 'MSSQL')
-			{
-				foreach ($select as $k => $elem)
-				{
-					$fName = $elem['name'];
-					$field = $fList[$fName];
-					$arUF = self::detectUserField($field);
-					if ($arUF['isUF'])
-					{
-						if ($arUF['ufInfo']['MULTIPLE'] === 'Y')
-						{
-							$customField = $elem;
-							$customField['name'] .= self::UF_TEXT_TRIM_POSTFIX;
-							$customFields[$k] = $customField;
-						}
-					}
-				}
-			}
-		}
-
-		return $customFields;
+		return [];
 	}
 
 	public static function getCustomColumnTypes()

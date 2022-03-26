@@ -103,3 +103,11 @@ DROP TABLE IF EXISTS b_tasks_project_last_activity;
 DROP TABLE IF EXISTS b_tasks_project_user_option;
 
 DROP TABLE IF EXISTS b_tasks_scrum_chat;
+
+DROP TABLE IF EXISTS b_tasks_result;
+
+DROP TABLE IF EXISTS b_tasks_scrum_epic;
+
+DROP TABLE IF EXISTS b_tasks_scrum_chat;
+
+DROP TABLE IF EXISTS b_tasks_marketing;

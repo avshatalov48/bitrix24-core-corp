@@ -11,11 +11,18 @@ use Bitrix\Main\PhoneNumber\Parser;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Voximplant\Model\CallerIdTable;
+use Bitrix\Voximplant\Security\Permissions;
 
 class Sip extends Engine\Controller
 {
 	public function deleteAction($id)
 	{
+		if (!Permissions::createWithCurrentUser()->canModifyLines())
+		{
+			$this->addError(new Error("Permission denied", "permission_denied"));
+			return null;
+		}
+
 		$viSip = new \CVoxImplantSip();
 		$result = $viSip->delete($id);
 

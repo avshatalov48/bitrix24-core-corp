@@ -1,5 +1,13 @@
 <?
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+
+/** @global CMain $APPLICATION */
+/** @global CUser $USER */
+/** @var array $arParams */
+/** @var array $arResult */
+/** @var CBitrixComponent $component */
+/** @var CBitrixComponentTemplate $this */
+
 global $APPLICATION;
 $APPLICATION->AddHeadScript('/bitrix/js/crm/interface_form.js');
 
@@ -54,24 +62,56 @@ endif;
 <div id="<?=$arParams["FORM_ID"]?>_tab_block" class="bx-crm-view-tab-block"><?
 	foreach($arResult["TABS"] as $tab):
 		$tabID = $tab['id'];
-
-		if(in_array($tabID, $hiddenTabs, true))
+		if (in_array($tabID, $hiddenTabs, true))
+		{
 			continue;
-
+		}
 		$tabName = isset($tab['name']) ? $tab['name'] : '';
-		if($tabName === '')
+		if ($tabName === '')
+		{
 			$tabName = $tabID;
-
+		}
 		$tabSuffix = isset($tabsExt[$tabID]) && $tabsExt[$tabID]['SUFFIX'] ? $tabsExt[$tabID]['SUFFIX'] : '';
-		if($tabSuffix !== '')
+		if ($tabSuffix !== '')
+		{
 			$tabName .= $tabSuffix;
-
-		$tabTitle = isset($tab['title']) ? $tab['title'] : '';
-		$onClick = isset($tab['onClick']) ? $tab['onClick'] : '';
-
-		$bSelected = ($tabID === $arResult["SELECTED_TAB"]);?>
-		<a id="<?=htmlspecialcharsbx($arParams["FORM_ID"]."_tab_". $tabID)?>" class="bx-crm-view-tab<?=$bSelected ? ' bx-crm-view-tab-active' : ''?>" href="#" onclick="bxForm_<?=$arParams["FORM_ID"]?>.SelectTab('<?=$tabID?>'); <?=$onClick !== '' ? htmlspecialcharsbx($onClick) : ''?> return false;" title="<?=htmlspecialcharsbx($tabTitle)?>">
-			<span class="bx-crm-view-tab-left"></span><span class="bx-crm-view-tab-text"><?=htmlspecialcharsbx($tabName)?></span><span class="bx-crm-view-tab-right"></span>
+		}
+		$tabTitle = $tab['title'] ?? '';
+		$onClick = $tab['onClick'] ?? '';
+		$isSelected = ($tabID === $arResult["SELECTED_TAB"]);
+		$id = htmlspecialcharsbx($arParams["FORM_ID"]."_tab_". $tabID);
+		$className = 'bx-crm-view-tab' . ($isSelected ? ' bx-crm-view-tab-active' : '');
+		static $isInfoHelperInitialized = false;
+		$isTariffLock =  (isset($tab['tariffLock']) && is_string($tab['tariffLock']) && $tab['tariffLock'] !== '');
+		if ($isTariffLock)
+		{
+			if (!$isInfoHelperInitialized)
+			{
+				/** @global CMain $APPLICATION */
+				global $APPLICATION;
+				$APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
+				$isInfoHelperInitialized = true;
+			}
+			$onClick = "BX.UI.InfoHelper.show('".htmlspecialcharsbx(CUtil::JSEscape($tab['tariffLock']))."')";
+		}
+		else
+		{
+			$onClick =
+				"bxForm_{$arParams['FORM_ID']}.SelectTab('$tabID'); "
+				. ($onClick !== '' ? htmlspecialcharsbx($onClick) : '') . ' return false;'
+			;
+		}
+		?>
+		<a id="<?= $id ?>"
+		   class="<?= $className ?>"
+		   href="#"
+		   onclick="<?= $onClick ?>"
+		   title="<?=htmlspecialcharsbx($tabTitle)?>">
+			<span class="bx-crm-view-tab-left"></span><?php
+			?><span class="bx-crm-view-tab-text"><?php
+			if ($isTariffLock): ?><span class="bx-crm-view-tab-lock"></span><?php endif;
+			?><?=htmlspecialcharsbx($tabName)?></span><?php
+			?><span class="bx-crm-view-tab-right"></span>
 		</a>
 		<?endforeach;?>
 	<a href="javascript:void(0)" onclick="bxForm_<?=$arParams["FORM_ID"]?>.menu.ShowMenu(this, bxForm_<?=$arParams["FORM_ID"]?>.settingsMenu);" title="<?=htmlspecialcharsbx(GetMessage("interface_form_settings"))?>" class="bx-context-button bx-form-menu"><span></span></a>

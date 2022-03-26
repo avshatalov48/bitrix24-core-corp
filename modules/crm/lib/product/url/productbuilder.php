@@ -3,10 +3,12 @@ namespace Bitrix\Crm\Product\Url;
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Catalog;
+use Bitrix\Crm;
 
 if (Loader::includeModule('catalog'))
 {
-	class ProductBuilder extends ShopBuilder
+	class ProductBuilder extends Catalog\Url\ShopBuilder
 	{
 		public const TYPE_ID = 'CRM';
 
@@ -65,12 +67,43 @@ if (Loader::includeModule('catalog'))
 				$result = array_merge($result, $items);
 			}
 
+			$sliderPath = \CComponentEngine::makeComponentPath('bitrix:catalog.warehouse.master.clear');
+			$sliderPath = getLocalPath('components' . $sliderPath . '/slider.php');
+
+			if(Catalog\Component\UseStore::isUsed())
+			{
+				$result[] = [
+					'TEXT' => Loc::getMessage('CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_WAREHOUSE_NAME_N'),
+					'TITLE' => Loc::getMessage('CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_WAREHOUSE_TITLE_N'),
+					'ONCLICK' => "openWarehousePanel('".$sliderPath."')"
+				];
+			}
+			else
+			{
+				$result[] = [
+					'TEXT' => Loc::getMessage('CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_WAREHOUSE_NAME_Y'),
+					'TITLE' => Loc::getMessage('CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_WAREHOUSE_TITLE_Y'),
+					'ONCLICK' => "openWarehousePanel('".$sliderPath."')"
+				];
+			}
+
 			return (!empty($result) ? $result: null);
+		}
+
+		protected function initConfig(): void
+		{
+			parent::initConfig();
+			$this->config['CRM_FULL_CATALOG'] = Crm\Settings\LayoutSettings::getCurrent()->isFullCatalogEnabled();
+		}
+
+		protected function isCrmFullCatalog(): bool
+		{
+			return (isset($this->config['CRM_FULL_CATALOG']) && $this->config['CRM_FULL_CATALOG']);
 		}
 
 		protected function initUrlTemplates(): void
 		{
-			if ($this->isUiCatalog())
+			if ($this->isCrmFullCatalog())
 			{
 				$this->urlTemplates[self::PAGE_SECTION_LIST] = '#PATH_PREFIX#'
 					.($this->iblockListMixed ? 'list/' : 'section_list/')
@@ -136,6 +169,14 @@ if (Loader::includeModule('catalog'))
 
 			$this->urlTemplates[self::PAGE_CSV_IMPORT] = '#PATH_PREFIX#'
 				.'import/';
+		}
+
+		protected function getSliderPathTemplates(): array
+		{
+			return [
+				'/^\/crm\/catalog\/[0-9]+\/product\/[0-9]+\/$/',
+				'/^\/crm\/catalog\/[0-9]+\/product\/[0-9]+\/variation\/[0-9]+\/$/',
+			];
 		}
 	}
 }

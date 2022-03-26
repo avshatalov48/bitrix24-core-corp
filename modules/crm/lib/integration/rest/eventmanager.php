@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Integration\Rest;
 
 use Bitrix\Crm\Model\Dynamic\TypeTable;
 use Bitrix\Crm\Service;
+use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
 use Bitrix\Rest\EventTable;
@@ -20,6 +21,10 @@ class EventManager
 	public const EVENT_DOCUMENTGENERATOR_DOCUMENT_ADD = 'onCrmDocumentGeneratorDocumentAdd';
 	public const EVENT_DOCUMENTGENERATOR_DOCUMENT_UPDATE = 'onCrmDocumentGeneratorDocumentUpdate';
 	public const EVENT_DOCUMENTGENERATOR_DOCUMENT_DELETE = 'onCrmDocumentGeneratorDocumentDelete';
+	public const EVENT_USER_FIELD_CONFIG_ADD = 'onCrmTypeUserFieldAdd';
+	public const EVENT_USER_FIELD_CONFIG_UPDATE = 'onCrmTypeUserFieldUpdate';
+	public const EVENT_USER_FIELD_CONFIG_DELETE = 'onCrmTypeUserFieldDelete';
+	public const EVENT_USER_FIELD_CONFIG_SET_ENUM_VALUES = 'onCrmTypeUserFieldSetEnumValues';
 
 	public function getDynamicItemCommonEventNames(): array
 	{
@@ -82,6 +87,7 @@ class EventManager
 		$this->registerDynamicItemsEvents($bindings);
 		$this->registerDynamicTypesEvents($bindings);
 		$this->registerDocumentGeneratorEvents($bindings);
+		$this->registerUserFieldConfigEvents($bindings);
 	}
 
 	protected function getItemEventInfo(string $eventName): array
@@ -130,6 +136,12 @@ class EventManager
 			throw new RestException('event object not found trying to process event');
 		}
 		$item = $event->getParameter('item');
+		$id = $event->getParameter('id');
+
+		if (!$id)
+		{
+			$id = $item->getId();
+		}
 
 		if (!$item || !($item instanceof \Bitrix\Crm\Item\Dynamic))
 		{
@@ -138,7 +150,7 @@ class EventManager
 
 		return [
 			'FIELDS' => [
-				'ID' => $item->getId(),
+				'ID' => $id,
 				'ENTITY_TYPE_ID' => $item->getEntityTypeId(),
 			],
 		];
@@ -252,6 +264,61 @@ class EventManager
 				'ID' => $document->ID,
 				'ENTITY_TYPE_ID' => $event->getParameter('entityTypeId'),
 				'ENTITY_ID' => $event->getParameter('entityId'),
+			],
+		];
+	}
+
+	protected function registerUserFieldConfigEvents(array &$bindings): void
+	{
+		$eventNames = [
+			static::EVENT_USER_FIELD_CONFIG_ADD,
+			static::EVENT_USER_FIELD_CONFIG_UPDATE,
+			static::EVENT_USER_FIELD_CONFIG_DELETE,
+			static::EVENT_USER_FIELD_CONFIG_SET_ENUM_VALUES,
+		];
+		foreach ($eventNames as $eventName)
+		{
+			$bindings[\CRestUtil::EVENTS][$eventName] = $this->getUserFieldConfigEventInfo($eventName);
+		}
+	}
+
+	protected function getUserFieldConfigEventInfo(string $eventName): array
+	{
+		$callback = [$this, 'processUserFieldConfigEvent'];
+
+		return [
+			'crm',
+			$eventName,
+			$callback,
+			[
+				'category' => \Bitrix\Rest\Sqs::CATEGORY_CRM,
+			],
+		];
+	}
+
+	public function processUserFieldConfigEvent(array $arParams, array $arHandler): array
+	{
+		$event = $arParams[0] ?? null;
+		if (!$event || !($event instanceof Event))
+		{
+			throw new RestException("Event object not found trying to process event");
+		}
+
+		$eventParameters = $event->getParameters();
+		$id = $eventParameters['id'] ?? 0;
+		$entityId = $eventParameters['entityId'] ?? '';
+		$fieldName = $eventParameters['fieldName'] ?? '';
+
+		if (empty($id) || empty($entityId) || empty($fieldName))
+		{
+			throw new RestException("Wrong event parameters trying to process event");
+		}
+
+		return [
+			'FIELDS' => [
+				'ID' => $id,
+				'ENTITY_ID' => $entityId,
+				'FIELD_NAME' => $fieldName,
 			],
 		];
 	}

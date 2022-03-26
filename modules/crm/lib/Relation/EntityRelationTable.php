@@ -44,7 +44,7 @@ class EntityRelationTable extends DataManager
 				->configurePrimary(),
 			(new EnumField('RELATION_TYPE'))
 				->configureRequired()
-				->configureValues([RelationType::CONVERSION, RelationType::BINDING])
+				->configureValues(RelationType::getAll())
 				->configureDefaultValue(RelationType::BINDING),
 		];
 	}
@@ -100,5 +100,20 @@ class EntityRelationTable extends DataManager
 				$helper->convertToDbInteger($oldItem->getEntityId())
 			));
 		}
+	}
+
+	public static function replaceBindings(ItemIdentifier $fromItem, ItemIdentifier $toItem): void
+	{
+		$entityTypeId = $toItem->getEntityTypeId();
+		$fromId = $fromItem->getEntityId();
+		$toId = $toItem->getEntityId();
+
+		$connection = Application::getConnection();
+		$tableName = $connection->getSqlHelper()->quote(static::getTableName());
+
+		$srcSql = "UPDATE IGNORE {$tableName} SET  SRC_ENTITY_ID = {$toId} WHERE SRC_ENTITY_ID = {$fromId} AND SRC_ENTITY_TYPE_ID = {$entityTypeId}";
+		$dstSql = "UPDATE IGNORE {$tableName} SET  DST_ENTITY_ID = {$toId} WHERE DST_ENTITY_ID = {$fromId} AND DST_ENTITY_TYPE_ID = {$entityTypeId}";
+		$connection->query($srcSql);
+		$connection->query($dstSql);
 	}
 }

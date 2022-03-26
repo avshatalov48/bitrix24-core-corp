@@ -12,6 +12,28 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+$userId = $GLOBALS["USER"]->getId();
+$cacheTtl = defined("BX_COMP_MANAGED_CACHE") ? 2592000 : 600;
+$cacheId = "bitrix24_group_list_".$userId."_".SITE_ID."_".isModuleInstalled("extranet");
+$cacheDir = "/bx/bitrix24_group_list/".$userId;
+$cache = new CPHPCache;
+
+if ($cache->initCache($cacheTtl, $cacheId, $cacheDir))
+{
+	return $cache->getVars();
+}
+
+$cache->startDataCache();
+
+if (defined("BX_COMP_MANAGED_CACHE"))
+{
+	$GLOBALS["CACHE_MANAGER"]->startTagCache($cacheDir);
+	$GLOBALS["CACHE_MANAGER"]->registerTag("sonet_user2group_U".$userId);
+	$GLOBALS["CACHE_MANAGER"]->registerTag("sonet_group");
+	$GLOBALS["CACHE_MANAGER"]->registerTag("sonet_group_favorites_U".$userId);
+	$GLOBALS["CACHE_MANAGER"]->endTagCache();
+}
+
 $groups = array();
 $userId = $GLOBALS["USER"]->getId();
 
@@ -141,5 +163,6 @@ $favoriteIntranetGroups = $getFavorites(SITE_ID, 100, array_keys($favoriteExtran
 
 $groups = array_replace($extranetGroups, $intranetGroups, $favoriteExtranetGroups, $favoriteIntranetGroups);
 Collection::sortByColumn($groups, "NAME");
+$cache->endDataCache($groups);
 
 return $groups;

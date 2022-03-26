@@ -287,6 +287,18 @@
 				},
 			];
 
+			if (Application.getApiVersion() >= 41)
+			{
+				resolveList.push({
+					resolveFunction: BX.MobileTools.projectIdFromUrl,
+					openFunction: function(data) {
+						data.siteId = BX.message('SITE_ID');
+						data.siteDir = BX.message('SITE_DIR');
+						BXMobileApp.Events.postToComponent('projectbackground::project::action', data, 'background');
+					},
+				})
+			}
+
 			var resolveData = null;
 			var inputData = null;
 			for (var i = 0; i < resolveList.length; i++)
@@ -433,6 +445,29 @@
 			if(result)
 			{
 				return result[1];
+			}
+
+			return null;
+		},
+		projectIdFromUrl: function(url)
+		{
+			//http://192.168.1.171:8080/mobile/log/?group_id=1
+			//http://192.168.1.171:8080/workgroups/group/1/
+
+			var regs = [
+				/\/mobile\/log\/\?group_id=(\d+)/i,
+				/\/workgroups\/group\/(\d+)\//i,
+			];
+			for (var i = 0; i < regs.length; i++)
+			{
+				var result = url.match(regs[i]);
+				if (result)
+				{
+					return {
+						projectId: parseInt(result[1]),
+						action: 'view',
+					};
+				}
 			}
 
 			return null;

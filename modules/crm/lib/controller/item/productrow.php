@@ -86,7 +86,7 @@ class ProductRow extends Base
 
 	protected function getFactoryAndItem(string $ownerType, int $ownerId): ?array
 	{
-		$entityTypeId = \CCrmOwnerType::ResolveID($ownerType);
+		$entityTypeId = \CCrmOwnerTypeAbbr::ResolveTypeID($ownerType);
 		$factory = Container::getInstance()->getFactory($entityTypeId);
 		if (!$factory || !$this->isEntityTypeSupported($entityTypeId))
 		{
@@ -125,10 +125,7 @@ class ProductRow extends Base
 	 */
 	protected function isEntityTypeSupported(int $entityTypeId): bool
 	{
-		return
-			($entityTypeId === \CCrmOwnerType::Quote)
-			|| \CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId)
-		;
+		return \CCrmOwnerType::isUseFactoryBasedApproach($entityTypeId);
 	}
 
 	public function getAction(int $id): ?array

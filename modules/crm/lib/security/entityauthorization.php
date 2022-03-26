@@ -1,11 +1,10 @@
 <?php
 namespace Bitrix\Crm\Security;
 
-use Bitrix\Crm\Item;
-use \Bitrix\Crm\Order;
+use Bitrix\Crm;
+use Bitrix\Crm\Order;
 use Bitrix\Crm\Service\Container;
-use \Bitrix\Main;
-use \Bitrix\Crm;
+use Bitrix\Main;
 
 class EntityAuthorization
 {
@@ -29,6 +28,13 @@ class EntityAuthorization
 		return \CCrmPerms::GetUserPermissions($userID);
 	}
 
+	/**
+	 * @param int $permissionTypeID
+	 * @param int $entityTypeID
+	 * @param int $entityID
+	 * @param \CCrmPerms|null $userPermissions
+	 * @return bool
+	 */
 	public static function checkPermission($permissionTypeID, $entityTypeID, $entityID = 0, $userPermissions = null)
 	{
 		if(!is_int($permissionTypeID))
@@ -56,6 +62,11 @@ class EntityAuthorization
 		return false;
 	}
 
+	/**
+	 * @param int $entityTypeID
+	 * @param \CCrmPerms|null $userPermissions
+	 * @return bool
+	 */
 	public static function checkCreatePermission($entityTypeID, $userPermissions = null)
 	{
 		if(!is_int($entityTypeID))
@@ -99,8 +110,13 @@ class EntityAuthorization
 		{
 			return Order\Permissions\Shipment::checkCreatePermission($userPermissions);
 		}
-		elseif(\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeID))
+		elseif($entityTypeID === \CCrmOwnerType::StoreDocument)
 		{
+			return Main\Loader::includeModule('catalog') && Main\Engine\CurrentUser::get()->canDoOperation('catalog_store');
+		}
+		elseif(\CCrmOwnerType::isUseFactoryBasedApproach($entityTypeID))
+		{
+			$permissionsService = static::getPermissionsService($userPermissions);
 			$factory = Container::getInstance()->getFactory($entityTypeID);
 			if ($factory && $factory->isCategoriesSupported())
 			{
@@ -108,7 +124,7 @@ class EntityAuthorization
 				$categories = $factory->getCategories();
 				foreach ($categories as $category)
 				{
-					$canAdd = Container::getInstance()->getUserPermissions()->checkAddPermissions(
+					$canAdd = $permissionsService->checkAddPermissions(
 						$entityTypeID,
 						$category->getId()
 					);
@@ -121,7 +137,7 @@ class EntityAuthorization
 				return false;
 			}
 
-			return Container::getInstance()->getUserPermissions()->checkAddPermissions($entityTypeID);
+			return $permissionsService->checkAddPermissions($entityTypeID);
 		}
 
 		$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
@@ -133,6 +149,17 @@ class EntityAuthorization
 		);
 	}
 
+	/**
+	 * @param int $entityTypeID
+	 * @param int $entityID
+	 * @param \CCrmPerms|null $userPermissions
+	 * @param array|null $params = [
+	 *     'DEAL_CATEGORY_ID' => -1, //deal category
+	 *     'CATEGORY_ID' => 0, //category for other types
+	 * ];
+	 *
+	 * @return bool
+	 */
 	public static function checkReadPermission($entityTypeID, $entityID, $userPermissions = null, array $params = null)
 	{
 		if(!is_int($entityTypeID))
@@ -181,17 +208,21 @@ class EntityAuthorization
 		{
 			return Order\Permissions\Payment::checkReadPermission($entityID, $userPermissions);
 		}
-		elseif($entityTypeID === \CCrmOwnerType::OrderShipment)
+		elseif($entityTypeID === \CCrmOwnerType::OrderShipment || $entityTypeID === \CCrmOwnerType::ShipmentDocument)
 		{
 			return Order\Permissions\Shipment::checkReadPermission($entityID, $userPermissions);
 		}
-		elseif(\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeID))
+		elseif($entityTypeID === \CCrmOwnerType::StoreDocument)
+		{
+			return Main\Loader::includeModule('catalog') && Main\Engine\CurrentUser::get()->canDoOperation('catalog_read');
+		}
+		elseif(\CCrmOwnerType::isUseFactoryBasedApproach($entityTypeID))
 		{
 			$factory = Container::getInstance()->getFactory($entityTypeID);
 			if ($factory)
 			{
 				$categoryId = $params['CATEGORY_ID'] ?? $factory->getItemCategoryId($entityID) ?? 0;
-				return Container::getInstance()->getUserPermissions()->checkReadPermissions(
+				return static::getPermissionsService($userPermissions)->checkReadPermissions(
 					$entityTypeID,
 					$entityID,
 					$categoryId
@@ -211,6 +242,12 @@ class EntityAuthorization
 		);
 	}
 
+	/**
+	 * @param int $entityTypeID
+	 * @param int $entityID
+	 * @param \CCrmPerms|null $userPermissions
+	 * @return bool
+	 */
 	public static function checkUpdatePermission($entityTypeID, $entityID, $userPermissions = null)
 	{
 		if(!is_int($entityTypeID))
@@ -259,9 +296,13 @@ class EntityAuthorization
 		{
 			return Order\Permissions\Shipment::checkUpdatePermission($entityID, $userPermissions);
 		}
-		elseif(\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeID))
+		elseif($entityTypeID === \CCrmOwnerType::StoreDocument)
 		{
-			return Container::getInstance()->getUserPermissions()->checkUpdatePermissions(
+			return Main\Loader::includeModule('catalog') && Main\Engine\CurrentUser::get()->canDoOperation('catalog_store');
+		}
+		elseif(\CCrmOwnerType::isUseFactoryBasedApproach($entityTypeID))
+		{
+			return static::getPermissionsService($userPermissions)->checkUpdatePermissions(
 				$entityTypeID,
 				$entityID,
 				Container::getInstance()->getFactory($entityTypeID)->getItemCategoryId($entityID) ?? 0
@@ -278,6 +319,12 @@ class EntityAuthorization
 		);
 	}
 
+	/**
+	 * @param int $entityTypeID
+	 * @param int $entityID
+	 * @param \CCrmPerms|null $userPermissions
+	 * @return bool
+	 */
 	public static function checkDeletePermission($entityTypeID, $entityID, $userPermissions = null)
 	{
 		if(!is_int($entityTypeID))
@@ -326,9 +373,13 @@ class EntityAuthorization
 		{
 			return Order\Permissions\Shipment::checkDeletePermission($entityID, $userPermissions);
 		}
-		elseif(\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeID))
+		elseif($entityTypeID === \CCrmOwnerType::StoreDocument)
 		{
-			return Container::getInstance()->getUserPermissions()->checkDeletePermissions(
+			return Main\Loader::includeModule('catalog') && Main\Engine\CurrentUser::get()->canDoOperation('catalog_store');
+		}
+		elseif(\CCrmOwnerType::isUseFactoryBasedApproach($entityTypeID))
+		{
+			return static::getPermissionsService($userPermissions)->checkDeletePermissions(
 				$entityTypeID,
 				$entityID,
 				Container::getInstance()->getFactory($entityTypeID)->getItemCategoryId($entityID) ?? 0
@@ -345,6 +396,11 @@ class EntityAuthorization
 		);
 	}
 
+	/**
+	 * @param int $entityTypeID
+	 * @param int[] $entityIDs
+	 * @return array
+	 */
 	public static function getPermissionAttributes($entityTypeID, array $entityIDs)
 	{
 		if(!is_int($entityTypeID))
@@ -370,7 +426,7 @@ class EntityAuthorization
 		{
 			return \CCrmCompany::GetPermissionAttributes($entityIDs);
 		}
-		elseif(\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeID))
+		elseif(\CCrmOwnerType::isUseFactoryBasedApproach($entityTypeID))
 		{
 			//@todo process dynamic types
 		}
@@ -393,5 +449,12 @@ class EntityAuthorization
 			$results += \CCrmPerms::GetEntityAttr($permissionEntityType, $permissionEntityIDs);
 		}
 		return $results;
+	}
+
+	private static function getPermissionsService(?\CCrmPerms $perms): Crm\Service\UserPermissions
+	{
+		$userId = $perms ? $perms->GetUserID() : null;
+
+		return Container::getInstance()->getUserPermissions($userId);
 	}
 }

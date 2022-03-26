@@ -11,6 +11,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Intranet\ContactCenter;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 
 Loc::loadMessages(__FILE__);
 
@@ -163,6 +164,84 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 		return $itemsList;
 	}
 
+	/**
+	 * Return formatted form item url with params
+	 *
+	 * @param string $code
+	 * @return array|string|string[]
+	 */
+	private function getFormsListLink(string $code, array $additionalOptions = [])
+	{
+		$uri = new Uri(\Bitrix\Crm\WebForm\Manager::getUrl());
+		$options = ['apply_filter' => 'Y',];
+		$options = array_merge($additionalOptions, $options);
+
+		switch ($code)
+		{
+			case 'call':
+				$options['IS_CALLBACK_FORM'] = 'Y';
+				$options['PRESET'] = 'callback';
+				break;
+			case 'vkontakteads':
+				$options['INTEGRATIONS'] = 'VKONTAKTE';
+				$options['PRESET'] = 'vk';
+				break;
+			case 'facebookads':
+				$options['INTEGRATIONS'] = 'FACEBOOK';
+				$options['PRESET'] = 'facebook';
+				break;
+			case 'form':
+			default:
+				$options['clear_filter'] = 'Y';
+				break;
+		}
+		$uri->addParams($options);
+
+		return \CUtil::JSEscape($uri->getUri());
+	}
+
+	/**
+	 * Return formatted form item url with params
+	 *
+	 * @param string $code
+	 * @return array|string|string[]
+	 */
+	private function getFormCreateUrl(string $code)
+	{
+		global $USER;
+		$CrmPerms = new CCrmPerms($USER->GetID());
+		if ($CrmPerms->HavePerm('WEBFORM', BX_CRM_PERM_NONE, 'WRITE'))
+		{
+			return $this->getFormsListLink($code, ['show_permission_error' => 'Y']);
+		}
+
+		$uri = new Uri(
+			\Bitrix\Crm\WebForm\Manager::getEditUrl(0)
+		);
+		$options = ['ACTIVE' => 'Y', 'ncc' => 1];
+
+		switch ($code)
+		{
+			case 'call':
+				$options['IS_CALLBACK_FORM'] = 'Y';
+				$options['PRESET'] = 'callback';
+				break;
+			case 'vkontakteads':
+				$options['PRESET'] = 'vk';
+				break;
+			case 'facebookads':
+				$options['PRESET'] = 'facebook';
+				break;
+			case 'form':
+			default:
+				break;
+		}
+		$uri->addParams($options);
+
+		return \CUtil::JSEscape($uri->getUri());
+	}
+
+
 	//CRM-blocks ----------------------------------------------------------------
 	/**
 	 * Return list of blocks for CRM module
@@ -192,36 +271,60 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 
 			foreach ($itemsList as $itemCode => &$crmItem)
 			{
-				if (!empty($crmItem["LIST"]))
+				$crmItem["ITEM_CODE"] = $itemCode;
+				$itemParams = [
+					'moduleId' => 'crm',
+					'itemCode' => $itemCode
+				];
+
+				$formKeys = [
+					'form',
+					'call',
+					'vkontakteads',
+					'facebookads',
+				];
+
+				if (in_array($itemCode, $formKeys, true))
 				{
-					$crmItem["ITEM_CODE"] = $itemCode;
-					$itemParams = array(
-						'moduleId' => 'crm',
-						'itemCode' => $itemCode
-					);
-					$newEditorEnabled = class_exists('Bitrix\Crm\Settings\WebFormSettings') && Bitrix\Crm\Settings\WebFormSettings::getCurrent()->isNewEditorEnabled();
-					if (in_array($itemCode, ['form', 'call']) && $newEditorEnabled)
-					{
-						$crmItem["LIST"] = array_map(
-							function ($item)
-							{
-								$link = CUtil::JSEscape($item['LINK']);
-								$item['ONCLICK'] = "window.location='{$link}'";
-								return $item;
-							},
-							$crmItem["LIST"]
-						);
-					}
-					elseif ($itemCode !== 'crm_shop')
+					$crmItem['LIST'] = [
+						[
+							'NAME' => Loc::getMessage("CONTACT_CENTER_CRM_FORMS_CREATE"),
+							'FIXED' => false,
+							'ONCLICK' => "top.window.location='{$this->getFormCreateUrl($itemCode)}'",
+						],
+						[
+							'NAME' => Loc::getMessage('CONTACT_CENTER_CRM_FORMS_VIEW_ALL'),
+							'FIXED' => true,
+							'ONCLICK' => $this->getOnclickScript(
+								$this->getFormsListLink($itemCode),
+								$itemParams
+							),
+						],
+						[
+							'NAME' => Loc::getMessage('CONTACT_CENTER_CRM_FORMS_HELP'),
+							'FIXED' => false,
+							'ONCLICK' => "top.BX.Helper.show('redirect=detail&code=6875449');",
+						]
+					];
+
+					$this->jsParams["menu"][] = [
+						'element' => "menu$itemCode",
+						'bindElement' => "feed-add-post-form-link-text-$itemCode",
+						'items' => $crmItem["LIST"]
+					];
+				}
+				elseif (!empty($crmItem["LIST"]))
+				{
+					if ($itemCode !== 'crm_shop')
 					{
 						$crmItem["LIST"] = $this->setMenuItemsClickAction($crmItem["LIST"], $itemParams);
 					}
-
 					$this->jsParams["menu"][] = array(
 						"element" => "menu" . $itemCode,
 						"bindElement" => "feed-add-post-form-link-text-" . $itemCode,
 						"items" => $crmItem["LIST"]
 					);
+
 				}
 				else
 				{
@@ -238,8 +341,12 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 					{
 						$itemParams = array_merge($itemParams, $crmItem['SIDEPANEL_PARAMS']);
 					}
-
 					$crmItem["ONCLICK"] = $this->getOnclickScript($crmItem["LINK"], $itemParams);
+
+					if ($crmItem['LINK_TYPE'] === 'newWindow')
+					{
+						$crmItem["ONCLICK"] = "top.window.location='{$crmItem["LINK"]}'";
+					}
 				}
 			}
 		}

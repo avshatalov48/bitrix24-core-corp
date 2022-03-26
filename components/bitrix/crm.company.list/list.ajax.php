@@ -21,7 +21,9 @@ define(
 			'BUILD_DUPLICATE_INDEX',
 			'CONVERT_ADDRESSES',
 			'CONVERT_UF_ADDRESSES',
-			'REBUILD_SECURITY_ATTRS'
+			'REBUILD_SECURITY_ATTRS',
+			'BACKGROUND_INDEX_REBUILD',
+			'BACKGROUND_MERGE',
 		],
 		true
 	)
@@ -50,6 +52,8 @@ if (!CModule::IncludeModule('crm'))
 }
 
 use Bitrix\Crm;
+use Bitrix\Crm\Agent\Duplicate\Background\CompanyIndexRebuild;
+use Bitrix\Crm\Agent\Duplicate\Background\CompanyMerge;
 use Bitrix\Crm\Agent\Requisite\CompanyAddressConvertAgent;
 use Bitrix\Crm\Agent\Requisite\CompanyUfAddressConvertAgent;
 
@@ -939,4 +943,57 @@ elseif ($action === 'CONVERT_UF_ADDRESSES')
 		]
 	);
 }
-?>
+elseif ($action === 'BACKGROUND_INDEX_REBUILD')
+{
+	$userId = CCrmSecurityHelper::GetCurrentUserID();
+	$isNeedToShowDupIndexProcess = false;
+	$agent = CompanyIndexRebuild::getInstance($userId);
+	if ($agent->isActive())
+	{
+		$state = $agent->state()->getData();
+		if (isset($state['STATUS']) && $state['STATUS'] === CompanyIndexRebuild::STATUS_RUNNING)
+		{
+			$isNeedToShowDupIndexProcess = true;
+		}
+	}
+
+	if(!$isNeedToShowDupIndexProcess)
+	{
+		__CrmCompanyListEndResponse(array('STATUS' => 'COMPLETED'));
+	}
+
+	__CrmCompanyListEndResponse(
+		[
+			'STATUS' => 'PROGRESS',
+			'PROCESSED_ITEMS' => (int)round(100 * $state['PROCESSED_ITEMS'] / $state['TOTAL_ITEMS']),
+			'TOTAL_ITEMS' => 100,
+		]
+	);
+}
+elseif ($action === 'BACKGROUND_MERGE')
+{
+	$userId = CCrmSecurityHelper::GetCurrentUserID();
+	$isNeedToShowDupMergeProcess = false;
+	$agent = CompanyMerge::getInstance($userId);
+	if ($agent->isActive())
+	{
+		$state = $agent->state()->getData();
+		if (isset($state['STATUS']) && $state['STATUS'] === CompanyMerge::STATUS_RUNNING)
+		{
+			$isNeedToShowDupMergeProcess = true;
+		}
+	}
+
+	if(!$isNeedToShowDupMergeProcess)
+	{
+		__CrmCompanyListEndResponse(array('STATUS' => 'COMPLETED'));
+	}
+
+	__CrmCompanyListEndResponse(
+		[
+			'STATUS' => 'PROGRESS',
+			'PROCESSED_ITEMS' => (int)round(100 * $state['PROCESSED_ITEMS'] / $state['FOUND_ITEMS']),
+			'TOTAL_ITEMS' => 100,
+		]
+	);
+}

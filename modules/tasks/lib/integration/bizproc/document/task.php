@@ -697,7 +697,7 @@ class Task implements \IBPWorkflowDocument
 		$res = \CTasks::GetList([], ['ID' => (int) $documentId, 'CHECK_PERMISSIONS' => 'N'], ['TITLE']);
 		if ($res && ($task = $res->Fetch()))
 		{
-			return $task['TITLE'];
+			return \Bitrix\Main\Text\Emoji::decode($task['TITLE']);
 		}
 		return null;
 	}

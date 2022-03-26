@@ -24,7 +24,7 @@ const SmsMessage = {
 			required: true
 		},
 		counter: {
-			type: String,
+			type: Number,
 			required: true
 		},
 		manager: {

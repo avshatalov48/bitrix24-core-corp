@@ -25,6 +25,7 @@ class EpicService implements Errorable
 	const ERROR_COULD_NOT_GET_EPICS = 'TASKS_EPS_06';
 	const ERROR_COULD_NOT_ADD_FILES = 'TASKS_EPS_07';
 	const ERROR_COULD_NOT_GET_UF_FIELD = 'TASKS_EPS_08';
+	const ERROR_COULD_NOT_REMOVE_FILES = 'TASKS_EPS_09';
 
 	private $userId;
 	private $errorCollection;
@@ -310,17 +311,12 @@ class EpicService implements Errorable
 	 * Attaches disk files to an epic.
 	 *
 	 * @param \CUserTypeManager $manager
-	 * @param int $itemId
+	 * @param int $epicId Epic id.
 	 * @param array $files
 	 * @return array
 	 */
 	public function attachFiles(\CUserTypeManager $manager, int $epicId, array $files): array
 	{
-		if (empty($files))
-		{
-			return [];
-		}
-
 		try
 		{
 			$ufValues = $manager->getUserFieldValue('TASKS_SCRUM_EPIC', 'UF_SCRUM_EPIC_FILES', $epicId);
@@ -332,6 +328,11 @@ class EpicService implements Errorable
 			else
 			{
 				$ufValues = $files;
+			}
+
+			if (empty($files))
+			{
+				$ufValues = [];
 			}
 
 			$userFields = ['UF_SCRUM_EPIC_FILES' => $ufValues];
@@ -353,6 +354,45 @@ class EpicService implements Errorable
 			);
 
 			return [];
+		}
+	}
+
+	/**
+	 * Removes disk files from epic.
+	 *
+	 * @param \CUserTypeManager $manager
+	 * @param int $epicId Epic id.
+	 * @return bool
+	 */
+	public function deleteFiles(\CUserTypeManager $manager, int $epicId): bool
+	{
+		try
+		{
+			$ufValues = $manager->getUserFieldValue('TASKS_SCRUM_EPIC', 'UF_SCRUM_EPIC_FILES', $epicId);
+
+			$userFields = ['UF_SCRUM_EPIC_FILES' => $ufValues];
+
+			if (!$manager->checkFields('TASKS_SCRUM_EPIC', $epicId, $userFields, $this->userId))
+			{
+				$this->errorCollection->setError(new Error('Access denied', self::ERROR_COULD_NOT_REMOVE_FILES));
+
+				return false;
+			}
+
+			$manager->delete('TASKS_SCRUM_EPIC', $epicId);
+
+			return true;
+		}
+		catch (\Exception $exception)
+		{
+			$this->errorCollection->setError(
+				new Error(
+					$exception->getMessage(),
+					self::ERROR_COULD_NOT_REMOVE_FILES
+				)
+			);
+
+			return false;
 		}
 	}
 

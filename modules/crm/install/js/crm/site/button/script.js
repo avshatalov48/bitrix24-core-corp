@@ -332,6 +332,10 @@
 			}, this);
 
 			var icon;
+			if (type === 'whatsapp')
+			{
+				type = 'callback';
+			}
 			if (type && !(icon = icons.filter(function (icon) { return icon.type === type; })[0]))
 			{
 				throw new Error('Animation.rotate: Unknown type `' + type + '`');
@@ -373,6 +377,11 @@
 			).map(function (node) {
 				var type = node.getAttribute(attributeName);
 				var hidden = !ButtonManager.getByType(type);
+				if (hidden && type === 'callback')
+				{
+					hidden = !ButtonManager.getByType('whatsapp');
+				}
+
 				node.style.display = hidden ? 'none' : '';
 				return {node: node, type: type, hidden: hidden};
 			}, this).filter(function (icon) {
@@ -424,10 +433,36 @@
 		{
 			this.storeTrace(widget);
 
-			if(!widget.show || !Type.isString(widget.show))
+			var show = widget.show;
+			if(show && typeof(show) === 'object' && show.js)
+			{
+				if (Browser.isMobile() && show.js.mobile)
+				{
+					show = show.js.mobile;
+				}
+				else if (!Browser.isMobile() && show.js.desktop)
+				{
+					show = show.js.desktop;
+				}
+				else if (Type.isString(show.js))
+				{
+					show = show.js;
+				}
+				else
+				{
+					show = null;
+				}
+			}
+			else if(!Type.isString(show))
+			{
+				show = null;
+			}
+
+			if(!show)
 			{
 				return;
 			}
+
 
 			this.showedWidget = widget;
 			if (!widget.freeze)
@@ -435,7 +470,7 @@
 				Shadow.show();
 			}
 
-			Utils.evalGlobal(widget.show);
+			Utils.evalGlobal(show);
 			if (widget.freeze)
 			{
 				Manager.freeze(widget.type);
@@ -624,7 +659,7 @@
 		},
 		getButtonUrl: function(widget)
 		{
-			if (widget.script || !widget.show)
+			if (!widget.show || (widget.script && !(widget.show.url && widget.show.url.force)))
 			{
 				return null;
 			}

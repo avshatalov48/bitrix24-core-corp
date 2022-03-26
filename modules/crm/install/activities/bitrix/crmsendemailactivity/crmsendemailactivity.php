@@ -814,7 +814,7 @@ class CBPCrmSendEmailActivity extends CBPActivity
 				'FieldName' => 'attachment_type',
 				'Type' => 'select',
 				'Options' => [
-					static::ATTACHMENT_TYPE_FILE => GetMessage('CRM_SEMA_ATTACHMENT_FILE'),
+					static::ATTACHMENT_TYPE_FILE => GetMessage('CRM_SEMA_ATTACHMENT_FILE_1'),
 					static::ATTACHMENT_TYPE_DISK => GetMessage('CRM_SEMA_ATTACHMENT_DISK')
 				]
 			],

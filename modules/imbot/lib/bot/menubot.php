@@ -2,6 +2,8 @@
 
 namespace Bitrix\Imbot\Bot;
 
+use Bitrix\ImBot\ItrMenu;
+
 /**
  * Common interface for chat menu.
  *
@@ -14,40 +16,42 @@ interface MenuBot
 	 *
 	 * @return bool
 	 */
-	public static function hasBotMenu();
+	public static function hasBotMenu(): bool;
 
 	/**
 	 * Returns stored data for ITR menu.
 	 *
-	 * @return array
+	 * @return ItrMenu|null
 	 */
-	public static function getBotMenu();
+	public static function getBotMenu(): ?ItrMenu;
 
 	/**
 	 * Returns user's menu track.
 	 *
-	 * @param int $dialogId User id.
+	 * @param string $dialogId User or chat id.
 	 *
 	 * @return array|null
 	 */
-	public static function getMenuState(int $dialogId);
+	public static function getMenuState(string $dialogId): ?array;
 
 	/**
 	 * Saves user's menu track.
 	 *
-	 * @param int $dialogId User id.
+	 * @param string $dialogId User or chat id.
 	 * @param array $menuState User menu track.
 	 *
 	 * @return void
 	 */
-	public static function saveMenuState(int $dialogId, array $menuState);
+	public static function saveMenuState(string $dialogId, array $menuState): void;
 
 	/**
 	 * Display ITR menu.
 	 *
-	 * @param array $params Command arguments. <pre>{
+	 * @param array $params Command arguments.
+	 * <pre>
+	 * [
 	 *   (int) BOT_ID Bot id.
-	 *   (int) DIALOG_ID Dialog id.
+	 *   (string) DIALOG_ID Dialog id.
 	 *   (int) MESSAGE_ID Previous message id.
 	 *   (string) COMMAND
 	 *   (string) COMMAND_PARAMS
@@ -55,21 +59,23 @@ interface MenuBot
 	 * ]
 	 * </pre>.
 	 *
-	 * @return array|null
+	 * @return bool
 	 */
-	public static function showMenu(array $params);
+	public static function showMenu(array $params): bool;
 
 	/**
 	 * Sends result of the user interaction with ITR menu to operator.
 	 *
-	 * @param array $params Command arguments. <pre>{
+	 * @param array $params Command arguments.
+	 * <pre>
+	 * [
 	 *   (int) BOT_ID Bot id.
-	 *   (int) DIALOG_ID Dialog id.
+	 *   (string) DIALOG_ID Dialog id.
 	 *   (int) MESSAGE_ID Message id.
 	 * ]
-	 * @param array|null $menuState Saved user track.
+	 * </pre>
 	 *
 	 * @return bool
 	 */
-	public static function sendMenuResult(array $params, ?array $menuState = null);
+	public static function sendMenuResult(array $params): bool;
 }

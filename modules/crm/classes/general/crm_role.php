@@ -1,10 +1,17 @@
 <?php
 IncludeModuleLangFile(__FILE__);
+
+use Bitrix\Crm\Security\Role\Model\RolePermissionTable;
+use Bitrix\Crm\Security\Role\Model\RoleRelationTable;
+use Bitrix\Crm\Security\Role\RolePermission;
 use Bitrix\Main;
+
 class CCrmRole
 {
 	protected $cdb = null;
-	private static $PERMISSIONS_BY_USER = array();
+
+	private const CACHE_TIME = 8640000; // 100 days
+	private const CACHE_PATH = '/crm/user_permission_roles/';
 
 	function __construct()
 	{
@@ -189,56 +196,68 @@ class CCrmRole
 		return $_arResult;
 	}
 
-	static public function GetUserPerms($userID)
+	static public function GetUserPerms($userId)
 	{
-		global $DB;
-
-		$userID = intval($userID);
-		if($userID <= 0)
+		$userId = intval($userId);
+		if($userId <= 0)
 		{
-			return array();
+			return [];
 		}
 
-		static $cache = [];
-		if (isset($cache[$userID]))
+		static $memoryCache = [];
+		if (isset($memoryCache[$userId]))
 		{
-			return $cache[$userID];
+			return $memoryCache[$userId];
 		}
 
-		// Prepare user codes if need
-		$CAccess = new CAccess();
-		$CAccess->UpdateCodes(array('USER_ID' => $userID));
+		$userAccessCodes = \Bitrix\Crm\Service\Container::getInstance()
+			->getUserPermissions($userId)
+			->getAttributesProvider()
+			->getUserAttributesCodes()
+		;
 
-		$obRes = $DB->Query(
-			"SELECT RP.* FROM b_crm_role_perms RP INNER JOIN b_crm_role_relation RR ON RR.ROLE_ID = RP.ROLE_ID INNER JOIN b_user_access UA ON UA.ACCESS_CODE = RR.RELATION AND UA.USER_ID = $userID",
-			false,
-			'FILE: '.__FILE__.'<br /> LINE: '.__LINE__
-		);
+		$cache = Main\Application::getInstance()->getCache();
+		$cacheId = 'crm_user_permission_roles_' . $userId . '_' . md5(serialize($userAccessCodes));
 
-		$arResult = array();
-		while ($arRow = $obRes->Fetch())
+		if ($cache->initCache(self::CACHE_TIME, $cacheId, self::CACHE_PATH))
 		{
-			$arRow['ATTR'] = trim($arRow['ATTR']);
-			if ($arRow['FIELD'] == '-')
+			$roles = $cache->getVars();
+		}
+		else
+		{
+			$cache->startDataCache();
+			$roles = [];
+
+			if (!empty($userAccessCodes))
 			{
-				if (!isset($arResult[$arRow['ENTITY']][$arRow['PERM_TYPE']][$arRow['FIELD']])
-					|| $arRow['ATTR'] > $arResult[$arRow['ENTITY']][$arRow['PERM_TYPE']][$arRow['FIELD']])
-					$arResult[$arRow['ENTITY']][$arRow['PERM_TYPE']][$arRow['FIELD']] = $arRow['ATTR'];
+				$rolesRelations = RoleRelationTable::getList([
+					'filter' => [
+						'@RELATION' => $userAccessCodes,
+					],
+					'select' => [
+						'ROLE_ID'
+					]
+				]);
+				while ($roleRelation = $rolesRelations->fetch())
+				{
+					$roles[] = $roleRelation['ROLE_ID'];
+				}
 			}
-			else
-				if (!isset($arResult[$arRow['ENTITY']][$arRow['PERM_TYPE']][$arRow['FIELD']][$arRow['FIELD_VALUE']])
-					|| $arRow['ATTR'] > $arResult[$arRow['ENTITY']][$arRow['PERM_TYPE']][$arRow['FIELD']][$arRow['FIELD_VALUE']])
-					$arResult[$arRow['ENTITY']][$arRow['PERM_TYPE']][$arRow['FIELD']][$arRow['FIELD_VALUE']] = $arRow['ATTR'];
+			$cache->endDataCache($roles);
 		}
-		$cache[$userID] = $arResult;
 
-		return $arResult;
+		$result = RolePermission::getPermissionsByRoles($roles);
+		$memoryCache[$userId] = $result;
+
+		return $result;
 	}
 
 	private static function ClearCache()
 	{
 		// Clean up cached permissions
-		self::$PERMISSIONS_BY_USER = array();
+		Main\Application::getInstance()->getCache()->cleanDir(self::CACHE_PATH);
+		RolePermissionTable::getEntity()->cleanCache();
+
 		CrmClearMenuCache();
 	}
 
@@ -377,6 +396,7 @@ class CCrmRole
 		$connection = Main\Application::getConnection();
 		$helper = $connection->getSqlHelper();
 		$entity = $helper->forSql($entity);
+		(new self())->log('EraseEntityPermissons', ['Entity' => $entity]);
 		$connection->queryExecute("DELETE FROM b_crm_role_perms WHERE ENTITY = '{$entity}'");
 		self::ClearCache();
 	}
@@ -458,6 +478,6 @@ class CCrmRole
 		{
 			$logData .= "\n" . print_r($extraData, true);
 		}
-		AddMessage2Log($logData, 'crm');
+		AddMessage2Log($logData, 'crm', 10);
 	}
 }

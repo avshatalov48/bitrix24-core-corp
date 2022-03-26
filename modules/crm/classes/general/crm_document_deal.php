@@ -536,7 +536,11 @@ class CCrmDocumentDeal extends CCrmDocument
 		$id = $CCrmEntity->Add(
 			$arFields,
 			true,
-			array('REGISTER_SONET_EVENT' => true, 'CURRENT_USER' => static::getSystemUserId())
+			[
+				'DISABLE_USER_FIELD_CHECK' => true,
+				'REGISTER_SONET_EVENT' => true,
+				'CURRENT_USER' => static::getSystemUserId(),
+			]
 		);
 
 		if (!$id || $id <= 0)
@@ -752,6 +756,11 @@ class CCrmDocumentDeal extends CCrmDocument
 		if ($modifiedById > 0)
 		{
 			$arFields['MODIFY_BY_ID'] = $modifiedById;
+		}
+
+		if (isset($arFields['OPPORTUNITY']))
+		{
+			$arFields['IS_MANUAL_OPPORTUNITY'] = $arFields['OPPORTUNITY'] > 0 ? 'Y' : 'N';
 		}
 
 		$CCrmEntity = new CCrmDeal(false);

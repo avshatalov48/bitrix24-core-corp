@@ -145,15 +145,17 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/crm/css/slider.css");
 											</label>
 										</div>
 									</div>
-									<div class="crm-entity-widget-content-block crm-entity-widget-content-block-field-checkbox">
-										<div class="crm-entity-widget-content-block-inner">
-											<label class="crm-entity-widget-content-block-checkbox-label">
-												<input class="crm-entity-widget-content-checkbox" id="add_base_for_count" name="add_base_for_count" type="checkbox"
-													<? if ($arResult['LAST_VALUES']['ADD']['GENERAL']['BASE_FOR_COUNT']) echo "checked";?>>
-												<span class="crm-entity-widget-content-block-checkbox-description"><?= Loc::getMessage('CRM_CURRENCY_CLASSIFIER_FIELD_BASE_FOR_COUNT')?></span>
-											</label>
+									<?php //if (\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled()): ?>
+										<div class="crm-entity-widget-content-block crm-entity-widget-content-block-field-checkbox">
+											<div class="crm-entity-widget-content-block-inner">
+												<label class="crm-entity-widget-content-block-checkbox-label">
+													<input class="crm-entity-widget-content-checkbox" id="add_base_for_count" name="add_base_for_count" type="checkbox"
+														<? if ($arResult['LAST_VALUES']['ADD']['GENERAL']['BASE_FOR_COUNT']) echo "checked";?>>
+													<span class="crm-entity-widget-content-block-checkbox-description"><?= Loc::getMessage('CRM_CURRENCY_CLASSIFIER_FIELD_BASE_FOR_COUNT')?></span>
+												</label>
+											</div>
 										</div>
-									</div>
+									<?php //endif;?>
 								</div>
 							</div>
 						</div>
@@ -270,15 +272,17 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/crm/css/slider.css");
 											</label>
 										</div>
 									</div>
-									<div class="crm-entity-widget-content-block crm-entity-widget-content-block-field-checkbox">
-										<div class="crm-entity-widget-content-block-inner">
-											<label class="crm-entity-widget-content-block-checkbox-label">
-												<input class="crm-entity-widget-content-checkbox" id="edit_base_for_count" name="edit_base_for_count" type="checkbox"
-													<? if ($arResult['LAST_VALUES']['EDIT']['GENERAL']['BASE_FOR_COUNT']) echo "checked";?>>
-												<span class="crm-entity-widget-content-block-checkbox-description"><?= Loc::getMessage('CRM_CURRENCY_CLASSIFIER_FIELD_BASE_FOR_COUNT')?></span>
-											</label>
+									<?php //if (\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled()): ?>
+										<div class="crm-entity-widget-content-block crm-entity-widget-content-block-field-checkbox">
+											<div class="crm-entity-widget-content-block-inner">
+												<label class="crm-entity-widget-content-block-checkbox-label">
+													<input class="crm-entity-widget-content-checkbox" id="edit_base_for_count" name="edit_base_for_count" type="checkbox"
+														<? if ($arResult['LAST_VALUES']['EDIT']['GENERAL']['BASE_FOR_COUNT']) echo "checked";?>>
+													<span class="crm-entity-widget-content-block-checkbox-description"><?= Loc::getMessage('CRM_CURRENCY_CLASSIFIER_FIELD_BASE_FOR_COUNT')?></span>
+												</label>
+											</div>
 										</div>
-									</div>
+									<?php //endif;?>
 								</div>
 							</div>
 						</div>

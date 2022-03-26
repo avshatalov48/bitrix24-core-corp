@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm;
 
+use Bitrix\Crm\Comparer\ProductRowComparer;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Error;
 use Bitrix\Main\ORM\Fields\FieldTypeMask;
@@ -11,6 +12,10 @@ use Bitrix\Main\Result;
 
 class ProductRow extends EO_ProductRow implements \JsonSerializable
 {
+	public const ERROR_CODE_NORMALIZATION_MEASURE_INVALID = 'CRM_PRODUCTROW_NORMALIZATION_MEASURE_INVALID';
+	public const ERROR_CODE_NORMALIZATION_DISCOUNT_RATE_REQUIRED = 'CRM_PRODUCTROW_NORMALIZATION_DISCOUNT_RATE_REQUIRED';
+	public const ERROR_CODE_NORMALIZATION_DISCOUNT_SUM_REQUIRED = 'CRM_PRODUCTROW_NORMALIZATION_DISCOUNT_SUM_REQUIRED';
+
 	protected const REFERENCE_FIELD_NAME = 'IBLOCK_ELEMENT';
 
 	/** @var IBlockElementProxyTable */
@@ -94,6 +99,23 @@ class ProductRow extends EO_ProductRow implements \JsonSerializable
 	}
 
 	/**
+	 * Returns true if this product row contains the same info as the $anotherProductRow.
+	 * ID and reference to owner is not taken into account
+	 *
+	 * @param ProductRow $anotherProductRow
+	 * @return bool
+	 */
+	public function isEqualTo(self $anotherProductRow): bool
+	{
+		$comparer = new ProductRowComparer();
+
+		return $comparer->areEquals(
+			$this->toArray(),
+			$anotherProductRow->toArray(),
+		);
+	}
+
+	/**
 	 * Reset all scalar fields of this object
 	 *
 	 * @return $this
@@ -131,58 +153,78 @@ class ProductRow extends EO_ProductRow implements \JsonSerializable
 
 	protected function normalizeMeasure(Result $result): void
 	{
-		if ($this->isCurrentMeasureValid())
+		if ($this->tryNormalizeCurrentMeasure())
 		{
 			return;
 		}
 
-		if (!$this->isNew())
+		if ($this->getProductId() > 0)
 		{
-			$existingMeasureInfo = Measure::getProductMeasures($this->getId())[$this->getId()] ?? null;
-			if (!empty($existingMeasureInfo))
+			if ($this->trySetMeasureFromReference())
 			{
-				$this->setMeasure($existingMeasureInfo);
-
 				return;
 			}
 		}
 
-		$defaultMeasureInfo = Measure::getDefaultMeasure();
-		if (!empty($defaultMeasureInfo))
+		if ($this->trySetDefaultMeasure())
 		{
-			$this->setMeasure($defaultMeasureInfo);
-
 			return;
 		}
 
 		$result->addError(new Error(
-			"Invalid measure. Default measure or existing measure in reference was not found. ID = {$this->getId()}"
+			"Invalid measure. Default measure and measure in reference were not found. ID = {$this->getId()}",
+			static::ERROR_CODE_NORMALIZATION_MEASURE_INVALID,
 		));
 	}
 
-	protected function isCurrentMeasureValid(): bool
+	protected function tryNormalizeCurrentMeasure(): bool
 	{
-		if (empty($this->getMeasureCode()) || empty($this->getMeasureName()))
+		if (empty($this->getMeasureCode()))
 		{
 			return false;
 		}
 
-		$measure = Measure::getMeasureByCode($this->getMeasureCode());
-		// Such measure doesn't exists. Code is invalid
-		if (empty($measure))
+		$currentMeasure = Measure::getMeasureByCode($this->getMeasureCode());
+		if (empty($currentMeasure))
 		{
+			//measure with such a code not found, value is invalid
 			return false;
 		}
 
-		return ($measure['SYMBOL'] === $this->getMeasureName());
+		//normalize measure name
+		$this->setMeasureName($currentMeasure['SYMBOL']);
+
+		return true;
 	}
 
-	protected function setMeasure(array $measureInfo): ProductRow
+	protected function trySetMeasureFromReference(): bool
 	{
-		$this->setMeasureCode($measureInfo['CODE']);
-		$this->setMeasureName($measureInfo['SYMBOL']);
+		$arrayOfReferenceMeasures = Measure::getProductMeasures($this->getProductId())[$this->getProductId()] ?? null;
+		$referenceMeasure = reset($arrayOfReferenceMeasures);
 
-		return $this;
+		if (empty($referenceMeasure))
+		{
+			return false;
+		}
+
+		$this->setMeasureCode($referenceMeasure['CODE']);
+		$this->setMeasureName($referenceMeasure['SYMBOL']);
+
+		return true;
+	}
+
+	protected function trySetDefaultMeasure(): bool
+	{
+		$defaultMeasure = Measure::getDefaultMeasure();
+		if (empty($defaultMeasure))
+		{
+			return false;
+		}
+
+		$this->setMeasureCode($defaultMeasure['CODE']);
+		$this->setMeasureName($defaultMeasure['SYMBOL']);
+
+		return true;
 	}
 
 	protected function normalizePriceExclusive(): void
@@ -219,12 +261,33 @@ class ProductRow extends EO_ProductRow implements \JsonSerializable
 		{
 			$result->addError(new Error(
 				'Discount Rate (DISCOUNT_RATE) is required if '
-				. "Percentage Discount Type (DISCOUNT_TYPE_ID) is used. ID = {$this->getId()}"
+				. "Percentage Discount Type (DISCOUNT_TYPE_ID) is used. ID = {$this->getId()}",
+				static::ERROR_CODE_NORMALIZATION_DISCOUNT_RATE_REQUIRED,
 			));
+
 			return;
 		}
 
-		$discountSum = Discount::calculateDiscountSum($this->getPriceExclusive(), $this->getDiscountRate());
+		if ($this->getDiscountRate() === 100.0)
+		{
+			$discountSum = $this->getDiscountSum();
+			if ($discountSum === 0.0 || is_null($discountSum))
+			{
+				// impossible to calculate discount sum, since price with 100% discount is exactly zero
+				$result->addError(new Error(
+					'Discount Sum (DISCOUNT_SUM) is required if '
+					. 'Percentage Discount Type (DISCOUNT_TYPE_ID) is used and Discount Rate (DISCOUNT_RATE) is 100%. '
+					. "ID = {$this->getId()}",
+					static::ERROR_CODE_NORMALIZATION_DISCOUNT_SUM_REQUIRED,
+				));
+
+				return;
+			}
+		}
+		else
+		{
+			$discountSum = Discount::calculateDiscountSum($this->getPriceExclusive(), $this->getDiscountRate());
+		}
 
 		$this->setDiscountSum($discountSum);
 	}
@@ -235,7 +298,8 @@ class ProductRow extends EO_ProductRow implements \JsonSerializable
 		{
 			$result->addError(new Error(
 				'Discount Sum (DISCOUNT_SUM) is required if '
-				. "Monetary Discount Type (DISCOUNT_TYPE_ID) is used. ID = {$this->getId()}"
+				. "Monetary Discount Type (DISCOUNT_TYPE_ID) is used. ID = {$this->getId()}",
+				static::ERROR_CODE_NORMALIZATION_DISCOUNT_SUM_REQUIRED,
 			));
 			return;
 		}

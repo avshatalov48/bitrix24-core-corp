@@ -22,7 +22,8 @@ type Params = {
 			url: string,
 			active: boolean
 		}
-	}
+	},
+	pathToBurnDown: string
 };
 
 export class SprintSidePanel extends EventEmitter
@@ -34,6 +35,7 @@ export class SprintSidePanel extends EventEmitter
 		this.sidePanel = params.sidePanel;
 		this.groupId = parseInt(params.groupId, 10);
 		this.views = params.views;
+		this.pathToBurnDown = params.pathToBurnDown ? params.pathToBurnDown : '';
 	}
 
 	showStartForm(sprint: Sprint)
@@ -78,12 +80,13 @@ export class SprintSidePanel extends EventEmitter
 
 	showBurnDownChart(sprint: Sprint)
 	{
-		this.sidePanel.showByExtension(
-			'Burn-Down-Chart',
-			{
-				groupId: this.groupId,
-				sprintId: sprint.getId()
-			}
-		);
+		if (this.pathToBurnDown)
+		{
+			this.sidePanel.openSidePanel(this.pathToBurnDown.replace('#sprint_id#', sprint.getId()));
+		}
+		else
+		{
+			throw new Error('Could not find a page to display the chart.');
+		}
 	}
 }

@@ -209,7 +209,10 @@ class UtmTable extends Entity\DataManager
 		foreach ($fieldCodes as $fieldCode)
 		{
 			$resultList[$fieldCode] = [
-				'TYPE' => 'string'
+				'TYPE' => Field::TYPE_STRING,
+				'ATTRIBUTES' => [
+					\CCrmFieldInfoAttr::NotDisplayed,
+				],
 			];
 		}
 

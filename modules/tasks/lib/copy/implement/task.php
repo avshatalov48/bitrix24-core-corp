@@ -455,7 +455,7 @@ class Task extends Base
 
 			$datePlanTime = TasksDateTime::createFrom($datePlan);
 			$startPointTime = TasksDateTime::createFrom($startPoint);
-			if ($datePlanTime < $startPointTime)
+			if ($datePlanTime->getTimestamp() < $startPointTime->getTimestamp())
 			{
 				$phpDateTimeFormat = DateTime::convertFormatToPhp(FORMAT_DATETIME);
 				$datePlan = $startPointTime->format($phpDateTimeFormat);
@@ -468,7 +468,7 @@ class Task extends Base
 				$datePlanTime = TasksDateTime::createFrom($datePlan);
 				$endPointTime = TasksDateTime::createFrom($endPoint);
 				$endPointTime->add("PT86399S");
-				if ($datePlanTime > $endPointTime)
+				if ($datePlanTime->getTimestamp() > $endPointTime->getTimestamp())
 				{
 					$phpDateFormat = DateTime::convertFormatToPhp(FORMAT_DATE);
 					$datePlan = $endPointTime->format($phpDateFormat);
@@ -522,7 +522,7 @@ class Task extends Base
 				$deadlineTime = TasksDateTime::createFrom($deadline);
 				$endPointTime = TasksDateTime::createFrom($endPoint);
 				$endPointTime->add("PT86399S");
-				if ($deadlineTime > $endPointTime)
+				if ($deadlineTime->getTimestamp() > $endPointTime->getTimestamp())
 				{
 					$phpDateFormat = DateTime::convertFormatToPhp(FORMAT_DATE);
 					$deadline = $endPointTime->format($phpDateFormat);

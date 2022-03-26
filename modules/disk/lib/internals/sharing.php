@@ -52,6 +52,7 @@ final class SharingTable extends DataManager
 	const TYPE_TO_USER       = 2;
 	const TYPE_TO_GROUP      = 3;
 	const TYPE_TO_DEPARTMENT = 4;
+	const TYPE_TO_CHAT       = 5;
 
 	public static function checkFields(Result $result, $primary, array $data)
 	{
@@ -227,7 +228,7 @@ final class SharingTable extends DataManager
 
 	public static function getListOfTypeValues()
 	{
-		return array(self::TYPE_TO_DEPARTMENT, self::TYPE_TO_GROUP, self::TYPE_TO_USER);
+		return array(self::TYPE_TO_DEPARTMENT, self::TYPE_TO_GROUP, self::TYPE_TO_USER, self::TYPE_TO_CHAT);
 	}
 
 	/**

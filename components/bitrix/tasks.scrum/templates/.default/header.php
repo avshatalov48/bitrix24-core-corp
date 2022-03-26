@@ -15,6 +15,7 @@ use Bitrix\Main\Page\Asset;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Internals\Counter\CounterDictionary;
+use Bitrix\Tasks\UI\ScopeDictionary;
 
 Extension::load([
 	'ui.forms',
@@ -43,9 +44,11 @@ if (Loader::includeModule('disk'))
 	Asset::getInstance()->addJs('/bitrix/components/bitrix/disk.uf.file/templates/.default/script.js');
 
 	Extension::load([
+		'file_dialog',
 		'mobile_uploader',
 		'disk.document',
 		'disk_external_loader',
+		'uploader',
 	]);
 }
 
@@ -78,6 +81,7 @@ $APPLICATION->SetPageProperty(
 );
 
 $popupMenuItems = [];
+$scope = ScopeDictionary::SCOPE_TASKS_PLANNING;
 switch ($viewName)
 {
 	case 'plan':
@@ -133,6 +137,7 @@ switch ($viewName)
 				'onclick' => '"BX.Tasks.Scrum.Kanban.onClickSort(this, \'asc\')"'
 			]
 		];
+		$scope = ScopeDictionary::SCOPE_TASKS_KANBAN_SPRINT;
 		break;
 }
 
@@ -156,6 +161,7 @@ $APPLICATION->includeComponent(
 		'USE_EXPORT' => 'N',
 		'SHOW_CREATE_TASK_BUTTON' => 'Y',
 		'POPUP_MENU_ITEMS' => $popupMenuItems,
+		'SCOPE' => $scope,
 	],
 	$component,
 	['HIDE_ICONS' => true]
@@ -181,11 +187,11 @@ if ($isBitrix24Template)
 					'ROLE' => 'view_all',
 					'COUNTERS' => [
 						CounterDictionary::COUNTER_NEW_COMMENTS,
-						CounterDictionary::COUNTER_MUTED_NEW_COMMENTS,
 						CounterDictionary::COUNTER_GROUP_COMMENTS,
 					],
 					'GRID_ID' => $filterId,
 					'FILTER_FIELD' => 'PROBLEM',
+					'SCOPE' => $scope,
 				],
 				$component
 			);

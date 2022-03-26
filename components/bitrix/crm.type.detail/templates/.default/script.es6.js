@@ -74,6 +74,7 @@ class TypeDetail
             this.isRestricted = Boolean(params.isRestricted);
         }
 
+        this.buttonsPanel = document.getElementById('ui-button-panel');
         this.saveButton = document.getElementById('ui-button-panel-save');
         this.cancelButton = document.getElementById('ui-button-panel-cancel');
         this.deleteButton = document.getElementById('ui-button-panel-remove');
@@ -160,6 +161,8 @@ class TypeDetail
 			Dom.addClass(presetSelectorContainer, 'crm-type-hidden');
 		}
 		Dom.removeClass(document.getElementById('pagetitle'), 'crm-type-hidden');
+		Dom.addClass(this.buttonsPanel, 'crm-type-hidden');
+		this.hideErrors();
 	}
 
 	disablePresetsView()
@@ -176,6 +179,7 @@ class TypeDetail
 			Dom.removeClass(presetSelectorContainer, 'crm-type-hidden');
 		}
 		Dom.addClass(document.getElementById('pagetitle'), 'crm-type-hidden');
+		Dom.removeClass(this.buttonsPanel, 'crm-type-hidden');
 	}
 
     disableLinkedUserFieldsIfNotAvailable()

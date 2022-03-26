@@ -58,9 +58,6 @@ BX.Tasks.QuickForm = function(formContainerId, parameters)
 		this.disable();
 	}
 
-	this.query = new BX.Tasks.Util.Query({url: "/bitrix/components/bitrix/tasks.task.list/ajax.php"});
-	this.query.bindEvent("executed", BX.proxy(this.onQueryExecuted, this));
-
 	this.operation = "taskQuickAdd";
 	this.errorPopup = null;
 
@@ -107,39 +104,42 @@ BX.Tasks.QuickForm.prototype.submit = function()
 	this.disable();
 	this.fadeGrid();
 
-	this.query.deleteAll();
-	this.query.add(
-		"ui.listcontrols.add",
-		{
-			data: data,
-			parameters: { }
-		},
-		{
-			code: this.operation
+	BX.ajax.runComponentAction('bitrix:tasks.interface.quick.form', 'addTask', {
+		mode: 'class',
+		data: {
+			data: data
 		}
+	}).then(
+		function(response)
+		{
+			this.onQueryExecuted(response);
+		}.bind(this),
+		function(response)
+		{
+			return this.showError("Could not process this operation.");
+		}.bind(this)
 	);
-
-
-	this.query.execute();
 };
 
-BX.Tasks.QuickForm.prototype.onQueryExecuted = function(result)
+BX.Tasks.QuickForm.prototype.onQueryExecuted = function(response)
 {
-	if (!result.success)
-	{
-		return this.showError(result.clientProcessErrors, result.serverProcessErrors);
-	}
-	else if (!result.data[this.operation])
+	if (
+		response.errors
+		&& response.errors.length
+	)
 	{
 		return this.showError("Could not process this operation.");
 	}
-	else if (!result.data[this.operation].SUCCESS)
-	{
-		return this.showError(result.data[this.operation].ERRORS);
-	}
 
-	var data = result.data[this.operation].RESULT;
-	var taskId = data["taskId"];
+	void BX.ajax.runAction('tasks.analytics.hit', {
+		analyticsLabel: {
+			action: 'taskAdding',
+			source: 'quickForm',
+			scope: this.parameters.scope
+		}
+	});
+
+	var data = response.data;
 	var found = data.position && data.position.found === true;
 	if (found)
 	{
@@ -151,13 +151,16 @@ BX.Tasks.QuickForm.prototype.onQueryExecuted = function(result)
 		}
 		else if (data.task)
 		{
+			var result = null;
 			var task = null;
 			try
 			{
 				eval("result = " + data.task);
 				task = result;
 			}
-			catch (e) {}
+			catch (e) {
+
+			}
 
 			this.insertIntoGantt(task, data.position);
 		}

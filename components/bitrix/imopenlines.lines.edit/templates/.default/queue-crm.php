@@ -186,12 +186,12 @@ if ($arResult['CAN_EDIT'])
 							   name="CONFIG[LIMITATION_MAX_CHAT]"
 							   value="Y"
 							   class="imopenlines-control-checkbox"
-							   <?if(!empty($arResult['CONFIG']['LIMITATION_MAX_CHAT'])) { ?>checked<? }?>>
+							   <? if ($arResult['VISIBLE']['MAX_CHAT'] !== false) { ?>checked<? }?>>
 						<?=Loc::getMessage('IMOL_CONFIG_EDIT_LIMITATION_MAX_CHAT_TITLE_NEW');?>
 						<span data-hint-html data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_EDIT_LIMITATION_MAX_CHAT_DESC'))?>"></span>
 					</label>
 				</div>
-				<div <?if($arResult['VISIBLE']['MAX_CHAT'] == false) {?>class="invisible"<?}?> id="imol_max_chat">
+				<div <? if ($arResult['VISIBLE']['MAX_CHAT'] === false) {?>class="invisible"<?}?> id="imol_max_chat">
 					<div class="imopenlines-control-container imopenlines-control-select">
 						<div class="imopenlines-control-subtitle">
 							<?= Loc::getMessage('IMOL_CONFIG_EDIT_TYPE_MAX_CHAT_TITLE_NEW') ?>

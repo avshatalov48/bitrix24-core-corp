@@ -26,6 +26,7 @@ class ThemePicker
 
 	public const ENTITY_TYPE_USER = 'USER';
 	public const ENTITY_TYPE_SONET_GROUP = 'SONET_GROUP';
+
 	public const VALID_ENTITY_TYPE_LIST = [
 		self::ENTITY_TYPE_USER,
 		self::ENTITY_TYPE_SONET_GROUP,
@@ -135,6 +136,11 @@ class ThemePicker
 		{
 			$this->currentTheme = $this->getDefaultTheme();
 		}
+	}
+
+	public function setThemeForCurrentPage($themeId)
+	{
+		$this->currentTheme = $this->getTheme($themeId);
 	}
 
 	/**

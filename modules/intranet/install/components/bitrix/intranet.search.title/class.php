@@ -876,7 +876,8 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 					);
 				}
 
-				if ($isAdmin || !$userPermissions->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'READ')) {
+				$crm = \Bitrix\Intranet\Integration\Crm::getInstance();
+				if ($crm->isOldInvoicesEnabled() && ($isAdmin || !$userPermissions->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'READ'))) {
 					$invoicePaths = array(
 						EntityViewSettings::LIST_VIEW => CrmCheckPath('PATH_TO_INVOICE_LIST', "", SITE_DIR . 'crm/invoice/list/'),
 						EntityViewSettings::KANBAN_VIEW => CrmCheckPath('PATH_TO_INVOICE_KANBAN', "", SITE_DIR . 'crm/invoice/kanban/')
@@ -887,8 +888,26 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 
 					$globalCrmSearchCategories["invoice"] = array(
 						"url" => $invoicePath . "?apply_filter=Y&with_preset=Y&FIND=",
-						"text" => GetMessage("CT_BST_GLOBAL_SEARCH_CRM_INVOICE")
+						"text" => \CCrmOwnerType::GetCategoryCaption(\CCrmOwnerType::Invoice),
 					);
+				}
+
+				if ($crm->isSmartInvoicesEnabled() && $crm->checkReadPermissions(\CCrmOwnerType::SmartInvoice))
+				{
+					$listUrl = $crm->getItemListUrlInCurrentView(\CCrmOwnerType::SmartInvoice);
+					if ($listUrl)
+					{
+						$listUrl->addParams([
+							'apply_filter' => 'Y',
+							'with_preset' => 'Y',
+							'FIND' => '',
+						]);
+					}
+
+					$globalCrmSearchCategories[mb_strtolower(\CCrmOwnerType::SmartInvoiceName)] = [
+						'url' => (string)$listUrl,
+						'text' => \CCrmOwnerType::GetCategoryCaption(\CCrmOwnerType::SmartInvoice),
+					];
 				}
 
 				if ($isAdmin || CCrmQuote::CheckReadPermission(0, $userPermissions)) {
@@ -966,19 +985,19 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 		{
 			$presetId = COption::GetOptionString("intranet", "left_menu_preset", "");
 		}
-		$sort = array("stream", "tasks", "calendar", "disk", "lead", "deal", "invoice", "contact", "company", "quote", "activity", "sites", "processes");
+		$sort = array("stream", "tasks", "calendar", "disk", "lead", "deal", "invoice", "smart_invoice", "contact", "company", "quote", "activity", "sites", "processes");
 		switch ($presetId)
 		{
 			case "tasks":
-				$sort = array("tasks", "stream", "calendar", "disk", "lead", "deal", "invoice", "contact", "company", "quote", "activity", "sites", "processes");
+				$sort = array("tasks", "stream", "calendar", "disk", "lead", "deal", "invoice", "smart_invoice", "contact", "company", "quote", "activity", "sites", "processes");
 
 				break;
 			case "crm":
-				$sort = array("lead", "deal", "invoice", "contact", "company", "quote", "activity", "tasks",  "calendar", "stream", "disk", "sites", "processes");
+				$sort = array("lead", "deal", "invoice", "smart_invoice", "contact", "company", "quote", "activity", "tasks",  "calendar", "stream", "disk", "sites", "processes");
 
 				break;
 			case "sites":
-				$sort = array("sites", "lead", "deal", "invoice", "contact", "company", "quote", "activity", "tasks", "stream",  "calendar",  "disk", "processes");
+				$sort = array("sites", "lead", "deal", "invoice", "smart_invoice", "contact", "company", "quote", "activity", "tasks", "stream",  "calendar",  "disk", "processes");
 
 				break;
 		}
@@ -990,6 +1009,9 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 
 			$this->arResult["GLOBAL_SEARCH_CATEGORIES"][$key] = $globalSearchCategories[$key];
 		}
+
+		//add unsorted categories at the end of the list
+		$this->arResult["GLOBAL_SEARCH_CATEGORIES"] += $globalSearchCategories;
 	}
 
 	public function executeComponent()

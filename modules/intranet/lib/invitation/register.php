@@ -543,9 +543,11 @@ class Register
 		$messageText = Loc::getMessage("INTRANET_INVITATION_INVITE_MESSAGE_TEXT");
 
 		//reinvite users by email
+		$reinvitedUserIds = [];
 		foreach($resEmail["EMAIL_TO_REINVITE"] as $userData)
 		{
 			\CIntranetInviteDialog::InviteUser($userData, $messageText, array('checkB24' => false));
+			$reinvitedUserIds[] = (int)$userData['ID'];
 		}
 		// TODO: reinvite: self::InviteUserByPhone($userData)
 
@@ -563,6 +565,6 @@ class Register
 			return false;
 		}
 
-		return array_merge($phoneUserIds, $emailUserIds, $transferedUserIds);
+		return array_merge($phoneUserIds, $emailUserIds, $reinvitedUserIds, $transferedUserIds);
 	}
 }

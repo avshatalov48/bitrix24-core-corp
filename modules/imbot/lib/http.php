@@ -3,10 +3,8 @@ namespace Bitrix\ImBot;
 
 use Bitrix\Main;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 
-Loc::loadMessages(__FILE__);
 
 class Http
 {
@@ -29,45 +27,17 @@ class Http
 
 	function __construct($botId)
 	{
+		$this->botId = $botId;
 		$this->error = new Error(null, '', '');
 		if (defined('BOT_CONTROLLER_URL'))
 		{
 			$this->controllerUrl = BOT_CONTROLLER_URL;
 		}
-		if (defined('BX24_HOST_NAME'))
-		{
-			$this->licenceCode = BX24_HOST_NAME;
-		}
-		else
-		{
-			require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/classes/general/update_client.php");
-			$this->licenceCode = md5("BITRIX".\CUpdateClient::GetLicenseKey()."LICENCE");
-		}
-		$this->type = $this->getPortalType();
+		$this->licenceCode = $this->detectLicenceCode();
+		$this->type = $this->detectPortalType();
 		$this->domain = self::getServerAddress();
-		$this->botId = $botId;
 
 		\Bitrix\Main\Loader::includeModule('im');
-
-		return true;
-	}
-
-	/**
-	 * Returns the kind of portal installation.
-	 * @return string
-	 */
-	private function getPortalType()
-	{
-		if (defined('BX24_HOST_NAME'))
-		{
-			$type = self::TYPE_BITRIX24;
-		}
-		else
-		{
-			$type = self::TYPE_CP;
-		}
-
-		return $type;
 	}
 
 	/**
@@ -119,7 +89,7 @@ class Http
 	{
 		if ($type == self::TYPE_BITRIX24 && function_exists('bx_sign'))
 		{
-			return bx_sign($str);
+			return \bx_sign($str);
 		}
 		else
 		{
@@ -172,28 +142,29 @@ class Http
 
 		$waitResponse = $waitResponse ? true : \Bitrix\Main\Config\Option::get('imbot', 'wait_response', false);
 
-		Log::write(Array($this->controllerUrl, $params), 'COMMAND: '.$command);
+		Log::write([$this->controllerUrl, $params], 'COMMAND: '.$command);
 
 		$controllerUrl = $this->controllerUrl.'?';
 		$controllerUrl .= 'BOT='.$this->botId.'&';
 		$controllerUrl .= 'COMMAND='.$command;
 
-		$httpClient = new \Bitrix\Main\Web\HttpClient(array(
+		$httpClient = new \Bitrix\Main\Web\HttpClient([
 			'socketTimeout' => 20,
 			'streamTimeout' => 60,
 			'waitResponse' => $waitResponse,
 			'disableSslVerification' => true,
-		));
-		$httpClient->setHeader('User-Agent', 'Bitrix Bot Client ('.$this->botId.')');
-		$httpClient->setHeader('x-bitrix-licence', $this->licenceCode);
-		$httpClient->setHeader('x-bitrix-imbot', $this->botId);
+			'headers' => [
+				'User-Agent' => 'Bitrix Bot Client ('.$this->botId.')',
+				'x-bitrix-licence' => $this->licenceCode,
+				'x-bitrix-imbot' => $this->botId,
+			]
+		]);
 
 		$result = $httpClient->post($controllerUrl, $params);
+		$errorCode = $httpClient->getHeaders()->get('x-bitrix-error');
 
-		Log::write(array($result), 'COMMAND RESULT: '.$command);
+		Log::write(['response' => $result, 'error' => $errorCode], 'COMMAND RESULT: '.$command);
 
-		if ($waitResponse)
-		{
 			if ($result === false)
 			{
 				// check for network errors
@@ -209,8 +180,10 @@ class Http
 					];
 				}
 			}
+		elseif ($waitResponse)
+		{
 			// try to parse result
-			elseif (is_string($result))
+			if (is_string($result))
 			{
 				try
 				{
@@ -235,6 +208,15 @@ class Http
 		else
 		{
 			$result = ($result !== false);
+
+			if ($errorCode)
+			{
+				$result = [
+					'error' => [
+						'code' => $errorCode,
+					]
+				];
+			}
 		}
 
 		return $result;
@@ -275,8 +257,95 @@ class Http
 	/**
 	 * @return Error
 	 */
-	public function getError()
+	public function getError(): Error
 	{
 		return $this->error;
+	}
+
+	/**
+	 * @param string $url
+	 * @return $this
+	 */
+	public function setControllerUrl(string $url): self
+	{
+		$this->controllerUrl = $url;
+		return $this;
+	}
+
+	/**
+	 * @param string $licence
+	 * @return $this
+	 */
+	public function setLicenceCode(string $licence): self
+	{
+		$this->licenceCode = $licence;
+		return $this;
+	}
+
+	/**
+	 * Returns the portal's licence code.
+	 * @return string
+	 */
+	private function detectLicenceCode(): string
+	{
+		if (defined('BX24_HOST_NAME'))
+		{
+			$licenceCode = BX24_HOST_NAME;
+		}
+		else
+		{
+			require_once($_SERVER['DOCUMENT_ROOT']. '/bitrix/modules/main/classes/general/update_client.php');
+			$licenceCode = md5('BITRIX'. \CUpdateClient::getLicenseKey(). 'LICENCE');
+		}
+
+		return $licenceCode;
+	}
+
+	/**
+	 * @param string $type
+	 * @return $this
+	 */
+	public function setPortalType(string $type): self
+	{
+		$this->type = $type;
+		return $this;
+	}
+
+	/**
+	 * Returns the kind of portal installation.
+	 * @return string
+	 */
+	private function detectPortalType(): string
+	{
+		if (defined('BX24_HOST_NAME'))
+		{
+			$type = self::TYPE_BITRIX24;
+		}
+		else
+		{
+			$type = self::TYPE_CP;
+		}
+
+		return $type;
+	}
+
+	/**
+	 * @param string $domain
+	 * @return $this
+	 */
+	public function setPortalDomain(string $domain): self
+	{
+		$this->domain = $domain;
+		return $this;
+	}
+
+	/**
+	 * @param string $botCode
+	 * @return $this
+	 */
+	public function setBotCode(string $botCode): self
+	{
+		$this->botId = $botCode;
+		return $this;
 	}
 }

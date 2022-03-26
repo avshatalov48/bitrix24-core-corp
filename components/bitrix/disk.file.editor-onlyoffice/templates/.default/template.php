@@ -16,7 +16,7 @@
 use Bitrix\Disk\Document\GoogleHandler;
 use Bitrix\Disk\Document\LocalDocumentController;
 use Bitrix\Disk\Document\Office365Handler;
-use Bitrix\Disk\Document\OnlyOffice\ConfigBuilder;
+use Bitrix\Disk\Document\OnlyOffice\Editor\ConfigBuilder;
 use Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler;
 use Bitrix\Disk\Internals\BaseComponent;
 use Bitrix\Main\Context;
@@ -181,6 +181,7 @@ if (Context::getCurrent()->getLanguage() !== 'ru')
 {
     $headerLogoClass = 'disk-fe-office-header-logo--eng';
 }
+$GLOBALS['APPLICATION']->SetTitle($arResult['OBJECT']['NAME']);
 ?>
 
 <div data-id="<?= $containerId ?>-wrapper">

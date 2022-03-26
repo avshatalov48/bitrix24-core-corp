@@ -532,11 +532,6 @@
 	height: calc(100% - 65px);
 }
 
-.rpa-automation-base .automation-base {
-	padding: 0 15px;
-	width: 100%;
-	box-sizing: border-box;
-}
 /*icons*/
 .rpa-tile-item-icon-plane {
 	background-image: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2277%22%20height%3D%2270%22%3E%3Cpath%20fill%3D%22%23B0BBCA%22%20fill-rule%3D%22evenodd%22%20d%3D%22M76.036%2034.769a5.864%205.864%200%2001-5.864%205.863H49.938l-18.15%2028.403-6.114-.412%206.715-27.991H15.592L7.14%2048.838l-6.9-.17L6.087%2035.76a5.902%205.902%200%2001.07-2.327L.24%2020.37l6.9-.17%208.967%208.705h16.221L25.674%201.172%2031.789.76l17.984%2028.145h20.4a5.864%205.864%200%20015.863%205.864z%22/%3E%3C/svg%3E);

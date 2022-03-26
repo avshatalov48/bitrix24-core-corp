@@ -30,6 +30,15 @@ class CBPCrmChangeDynamicCategoryActivity extends CBPCrmCopyDynamicActivity
 		{
 			return false;
 		}
+		if (!$factory->isCategoriesEnabled())
+		{
+			$this->WriteToTrackingService(
+				Loc::getMessage('CRM_CDCA_ENABLING_CATEGORIES_ERROR'),
+				0,
+				CBPTrackingType::Error
+			);
+			return false;
+		}
 
 		$itemId = mb_split('_(?=[^_]*$)', $this->GetDocumentId()[2])[1];
 		$item = $factory->getItem($itemId);
@@ -154,6 +163,14 @@ class CBPCrmChangeDynamicCategoryActivity extends CBPCrmCopyDynamicActivity
 		$dialog = parent::GetPropertiesDialog(...func_get_args());
 		$dialog->setActivityFile(__FILE__);
 
+		$factory = static::getFactoryByType($documentType[2]);
+		if (!$factory->isCategoriesEnabled())
+		{
+			$dialog->setRuntimeData([
+				'errors' => [new \Bitrix\Main\Error(Loc::getMessage('CRM_CDCA_ENABLING_CATEGORIES_ERROR'))],
+			]);
+		}
+
 		return $dialog;
 	}
 
@@ -161,8 +178,14 @@ class CBPCrmChangeDynamicCategoryActivity extends CBPCrmCopyDynamicActivity
 	{
 		$map = parent::getPropertiesDialogMap($dialog);
 
-		$map['CategoryId']['Required'] = true;
-		$map['StageId']['Required'] = true;
+		if (isset($map['CategoryId']))
+		{
+			$map['CategoryId']['Required'] = true;
+		}
+		if (isset($map['StageId']))
+		{
+			$map['StageId']['Required'] = true;
+		}
 
 		unset($map['ItemTitle']);
 		unset($map['Responsible']);

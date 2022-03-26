@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS['CRM_ACTION_DEFAULT_SUBJECT'] = 'Новое дело (#DATE#)';
 $MESS['CRM_CALL_ACTION_DEFAULT_SUBJECT'] = 'Новый звонок (#DATE#)';
 $MESS['CRM_MEETING_ACTION_DEFAULT_SUBJECT'] = 'Новая встреча (#DATE#)';
@@ -27,5 +27,6 @@ $MESS["CRM_DEAL_UPDATE_PERMISSION_DENIED"] = "Отсутствует разре�
 $MESS["CRM_ACTIVITY_COULD_NOT_CREATE_POSTING"] = "Не удалось зарегистрировать письмо для отправки.";
 $MESS["CRM_ACTIVITY_COULD_NOT_SAVE_POSTING_FILE"] = "Не удалось присоединить файл \"#FILE_NAME#\" к письму.";
 $MESS["CRM_ACTIVITY_EMAIL_CREATION_CANCELED"] = "Операция создания письма отменена.";
+$MESS["CRM_ACTIVITY_EMAIL_MESSAGE_TO_MANY_RECIPIENTS"] = "Получателей не может быть больше 10";
 $MESS["CRM_ACTIVITY_EMAIL_BLACKLISTED"] = "Мы не отправили ваше письмо, так как эти адреса находятся в %link_start% черном списке %link_end%: %emails%";
 ?>

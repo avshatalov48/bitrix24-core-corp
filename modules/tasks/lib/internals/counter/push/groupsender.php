@@ -100,7 +100,10 @@ class GroupSender
 				continue;
 			}
 
-			if ($push['EVENT'] === EventDictionary::EVENT_AFTER_PROJECT_READ_ALL)
+			if (
+				$push['EVENT'] === EventDictionary::EVENT_AFTER_PROJECT_READ_ALL
+				|| $push['EVENT'] === EventDictionary::EVENT_AFTER_SCRUM_READ_ALL
+			)
 			{
 				$owners[] = $push['USER_ID'];
 			}

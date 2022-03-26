@@ -122,4 +122,10 @@ class Conversion extends Operation
 			}
 		}
 	}
+
+	public function isFieldProcessionEnabled(): bool
+	{
+		//no need to process fields for source item since it doesn't change
+		return false;
+	}
 }

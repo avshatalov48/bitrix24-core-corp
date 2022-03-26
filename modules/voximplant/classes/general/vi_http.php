@@ -838,18 +838,6 @@ class CVoxImplantHttp
 		return $query;
 	}
 
-	public function setAutoPayAllowed($allowAutoPay)
-	{
-		if(!is_bool($allowAutoPay))
-		{
-			throw new \Bitrix\Main\ArgumentException('$autoPayAllowed should be bool', '$autoPayAllowed');
-		}
-	
-		return $this->Query('SetAutoPayAllowed', array(
-			'ALLOW_AUTO_PAY' => ($allowAutoPay ? 'Y' : 'N')
-		));
-	}
-
 	public function enqueueCallback(array $parameters, $executeAt)
 	{
 		return $this->Query('EnqueueCallback', array(
@@ -922,6 +910,11 @@ class CVoxImplantHttp
 		}
 
 		return $this->Query("getBillingUrl", ['USER_ID' => $userId], ['returnArray' => true]);
+	}
+
+	public function getDocumentUploadUrl(string $countryCode)
+	{
+		return $this->Query("getDocumentUploadUrl", ['COUNTRY_CODE' => $countryCode], ['returnArray' => true]);
 	}
 
 	public function saveTOSConsent($ipAddress, $userAgent, $userId = 0)

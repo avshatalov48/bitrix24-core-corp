@@ -1,7 +1,8 @@
-<?
+<?php
 
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\UI;use Bitrix\Tasks\Util;
+use Bitrix\Main\UI;
+use Bitrix\Tasks\Util;
 
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 /** @var array $arParams */
@@ -496,6 +497,19 @@ if (
 			$restPlacementHandlerList = \Bitrix\Rest\PlacementTable::getHandlersList(\CTaskRestService::PLACEMENT_TASK_VIEW_TAB);
 			$hasRestPlacement = !empty($restPlacementHandlerList);
 		}
+	?>
+
+	<?php
+	$APPLICATION->IncludeComponent(
+		'bitrix:tasks.widget.result',
+		'.default',
+		[
+			'TASK_ID' => $taskData['ID'],
+			'RESPONSIBLE' => (int) $taskData['RESPONSIBLE_ID'],
+			'ACCOMPLICES' => $taskData['ACCOMPLICES'],
+		],
+		$component,
+	);
 	?>
 
 	<div class="task-detail-comments">

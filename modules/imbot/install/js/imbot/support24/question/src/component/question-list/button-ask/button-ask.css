@@ -1,0 +1,55 @@
+.bx-imbot-support24-question-list-button-ask-secondary {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 29px;
+	width: 118px;
+	border: 1px solid #dedede;
+	font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-style: normal;
+	font-weight: 600;
+	font-size: 12px;
+	line-height: 16px;
+	cursor: pointer;
+	color: #525C69;
+	background-color: #ededed;
+	background-position: center;
+	background-repeat: no-repeat;
+	border-radius: 60px;
+	user-select: none;
+	transition: .2s linear;
+}
+
+.bx-imbot-support24-question-list-button-ask-secondary:hover {
+	background-color: #e5e5e5;
+	border: 1px solid #d7d7d7;
+}
+
+.bx-imbot-support24-question-list-button-ask-secondary:active {
+	background-color: #d9d9d9;
+	border: 1px solid #cccccc;
+}
+
+.bx-imbot-support24-question-list-button-ask-secondary-dark {
+	height: 31px;
+	width: 120px;
+	color: #fff;
+	background-color: rgba(255, 255, 255, 0.14);
+	border: none;
+}
+
+.bx-imbot-support24-question-list-button-ask-secondary-dark:hover {
+	background-color: rgba(255, 255, 255, 0.37);
+	border: none;
+}
+
+.bx-imbot-support24-question-list-button-ask-secondary-dark:active {
+	background-color: rgba(255, 255, 255, 0.29);
+	border: none;
+}
+
+.bx-imbot-support24-question-list-button-ask-primary {
+	height: 32px;
+	width: 142px;
+	font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+}

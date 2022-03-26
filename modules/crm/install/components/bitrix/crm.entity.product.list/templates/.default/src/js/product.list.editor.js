@@ -7,6 +7,7 @@ import SettingsPopup from './settings.button';
 import {CurrencyCore} from 'currency.currency-core';
 import {ProductSelector} from 'catalog.product-selector';
 import HintPopup from './hint.popup';
+import {ProductModel} from "catalog.product-model";
 
 const GRID_TEMPLATE_ROW = 'template_0';
 const DEFAULT_PRECISION: number = 2;
@@ -15,15 +16,18 @@ export class Editor
 {
 	id: ?string;
 	settings: Object;
+	ajaxPool: Map = new Map();
 	controller: ?BX.Crm.EntityProductListController;
 	container: ?HTMLElement;
 	form: ?HTMLElement
 	products: Row[] = [];
 	productsWasInitiated = false;
+	isChangedGrid = false;
 	pageEventsManager: PageEventsManager;
 	cache = new Cache.MemoryCache();
 
 	actions = {
+		disableSaveButton: 'disableSaveButton',
 		productChange: 'productChange',
 		productListChanged: 'productListChanged',
 		updateListField: 'listField',
@@ -48,6 +52,7 @@ export class Editor
 
 	onDialogSelectProductHandler = this.handleOnDialogSelectProduct.bind(this);
 	onSaveHandler = this.handleOnSave.bind(this);
+	onEntityUpdateHandler = this.handleOnEntityUpdate.bind(this);
 	onEditorSubmit = this.handleEditorSubmit.bind(this);
 	onInnerCancelHandler = this.handleOnInnerCancel.bind(this);
 	onBeforeGridRequestHandler = this.handleOnBeforeGridRequest.bind(this);
@@ -82,8 +87,22 @@ export class Editor
 
 		EventEmitter.emit(window, 'EntityProductListController', [this]);
 
+		this.#initSupportCustomRowActions();
+
 		this.subscribeDomEvents();
 		this.subscribeCustomEvents();
+
+		if (this.getSettingValue('isReserveBlocked', false))
+		{
+			const headersToLock = ['STORE_INFO', 'RESERVE_INFO'];
+			const container = this.getContainer();
+			headersToLock.forEach((headerId) => {
+				const header = container?.querySelector(`.main-grid-cell-head[data-name="${headerId}"] .main-grid-cell-head-container`);
+				let lock = Tag.render`<span class="crm-entity-product-list-locked-header"></span>`;
+				lock.onclick = () => top.BX.UI.InfoHelper.show('limit_store_crm_integration');
+				header?.insertBefore(lock, header.firstChild);
+			});
+		}
 	}
 
 	subscribeDomEvents()
@@ -154,6 +173,7 @@ export class Editor
 	{
 		EventEmitter.subscribe('CrmProductSearchDialog_SelectProduct', this.onDialogSelectProductHandler);
 		EventEmitter.subscribe('BX.Crm.EntityEditor:onSave', this.onSaveHandler);
+		EventEmitter.subscribe('onCrmEntityUpdate', this.onEntityUpdateHandler);
 		EventEmitter.subscribe('BX.Crm.EntityEditorAjax:onSubmit', this.onEditorSubmit);
 		EventEmitter.subscribe('EntityProductListController:onInnerCancel', this.onInnerCancelHandler);
 		EventEmitter.subscribe('Grid::beforeRequest', this.onBeforeGridRequestHandler);
@@ -169,6 +189,7 @@ export class Editor
 	{
 		EventEmitter.unsubscribe('CrmProductSearchDialog_SelectProduct', this.onDialogSelectProductHandler);
 		EventEmitter.unsubscribe('BX.Crm.EntityEditor:onSave', this.onSaveHandler);
+		EventEmitter.unsubscribe('onCrmEntityUpdate', this.onEntityUpdateHandler);
 		EventEmitter.unsubscribe('BX.Crm.EntityEditorAjax:onSubmit', this.onEditorSubmit);
 		EventEmitter.unsubscribe('EntityProductListController:onInnerCancel', this.onInnerCancelHandler);
 		EventEmitter.unsubscribe('Grid::beforeRequest', this.onBeforeGridRequestHandler);
@@ -180,10 +201,23 @@ export class Editor
 		EventEmitter.unsubscribe('Dropdown::change', this.dropdownChangeHandler);
 	}
 
+	#initSupportCustomRowActions()
+	{
+		this.getGrid()._clickOnRowActionsButton = () => {};
+	}
+
 	handleOnDialogSelectProduct(event: BaseEvent)
 	{
 		const [productId] = event.getCompatData();
-		const id = this.addProductRow();
+		let id;
+		if (this.getProductCount() > 0 || this.products[0]?.getField('ID') <= 0)
+		{
+			id = this.addProductRow();
+		}
+		else
+		{
+			id = this.products[0]?.getField('ID');
+		}
 		this.selectProductInRow(id, productId)
 	}
 
@@ -217,6 +251,20 @@ export class Editor
 		this.setSettingValue('items', items);
 	}
 
+	handleOnEntityUpdate(event: BaseEvent)
+	{
+		const [data] = event.getData();
+		if (
+			this.isChanged()
+			&& data.entityId === this.getSettingValue('entityId')
+			&& data.entityTypeId === this.getSettingValue('entityTypeId')
+		)
+		{
+			this.setGridChanged(false);
+			this.reloadGrid(false);
+		}
+	}
+
 	handleEditorSubmit(event: BaseEvent)
 	{
 		if (!this.isLocationDependantTaxesEnabled())
@@ -242,6 +290,7 @@ export class Editor
 			this.controller.rollback();
 		}
 
+		this.setGridChanged(false);
 		this.reloadGrid(false);
 	}
 
@@ -309,11 +358,12 @@ export class Editor
 			signedParameters: this.getSignedParameters(),
 			products: useProductsFromRequest ? this.getProductsFields() : null,
 			locationId: this.getLocationId(),
+			currencyId: this.getCurrencyId(),
 		};
 
 		this.clearEditor();
 
-		if (isNativeAction)
+		if (isNativeAction && this.isChanged())
 		{
 			EventEmitter.subscribeOnce('Grid::updated', () => this.actionUpdateTotalData({isInternalChanging: false}));
 		}
@@ -368,6 +418,16 @@ export class Editor
 	canEdit(): boolean
 	{
 		return this.getSettingValue('allowEdit', false) === true;
+	}
+
+	canEditCatalogPrice(): boolean
+	{
+		return this.getSettingValue('allowCatalogPriceEdit', false) === true;
+	}
+
+	canSaveCatalogPrice(): boolean
+	{
+		return this.getSettingValue('allowCatalogPriceSave', false) === true;
 	}
 
 	enableEdit()
@@ -535,6 +595,7 @@ export class Editor
 	setCurrencyId(currencyId): void
 	{
 		this.setSettingValue('currencyId', currencyId);
+		this.products.forEach(product => product.getModel()?.setOption('currency', currencyId));
 	}
 
 	isLocationDependantTaxesEnabled(): bool
@@ -557,8 +618,13 @@ export class Editor
 		this.setCurrencyId(currencyId);
 		const products = [];
 		this.products.forEach((product) => {
+			const priceFields = {};
+			this.#getCalculatePriceFieldNames().forEach((name) => {
+				priceFields[name] = product.getField(name);
+			});
+
 			products.push({
-				fields: product.getFields(),
+				fields: priceFields,
 				id: product.getId()
 			});
 		});
@@ -582,14 +648,29 @@ export class Editor
 		this.setGridEditData(editData);
 	}
 
+	#getCalculatePriceFieldNames(): []
+	{
+		return [
+			'BASE_PRICE',
+			'ENTERED_PRICE',
+			'TAX_INCLUDED',
+			'PRICE_NETTO',
+			'PRICE_BRUTTO',
+			'DISCOUNT_ROW',
+			'DISCOUNT_SUM',
+			'CURRENCY'
+		];
+	}
+
 	onCalculatePricesResponse(products: [])
 	{
 		this.products.forEach((product) => {
 			if (Type.isObject(products[product.getId()]))
 			{
-				const newPrice = Text.toNumber(products[product.getId()]['PRICE']);
 				product.updateUiCurrencyFields();
-				product.updateField('PRICE', newPrice);
+				['BASE_PRICE', 'ENTERED_PRICE', 'DISCOUNT_ROW', 'DISCOUNT_SUM', 'CURRENCY_ID'].forEach((name) => {
+					product.updateField(name, Text.toNumber(products[product.getId()][name]));
+				});
 				product.setField('CURRENCY', products[product.getId()]['CURRENCY_ID']);
 			}
 		});
@@ -983,18 +1064,20 @@ export class Editor
 	{
 		const list = this.getSettingValue('items', []);
 
+		const isReserveBlocked = this.getSettingValue('isReserveBlocked', false);
+
 		for (let item of list)
 		{
 			const fields = {...item.fields};
-			this.products.push(new Row(item.rowId, fields, {}, this));
-			const row = this.getGrid().getRows().getById(fields.ID);
-			if (row)
-			{
-				this.setDeleteButton(row.getNode(), fields.ID);
-			}
+			const settings = {
+				selectorId: item.selectorId,
+				isReserveBlocked,
+			};
+			this.products.push(new Row(item.rowId, fields, settings, this));
 		}
 
 		this.numerateRows();
+
 		this.productsWasInitiated = true;
 	}
 
@@ -1043,6 +1126,22 @@ export class Editor
 		this.getGrid().arParams.EDITABLE_DATA[GRID_TEMPLATE_ROW] = data;
 	}
 
+	handleProductErrorsChange()
+	{
+		if (this.#childrenHasErrors())
+		{
+			this.controller.disableSaveButton();
+		}
+	}
+
+	#childrenHasErrors()
+	{
+		return this.products
+			.filter((product) => product.getModel().getErrorCollection().hasErrors())
+			.length > 0
+		;
+	}
+
 	handleFieldChange(event)
 	{
 		const row = event.target.closest('tr');
@@ -1072,7 +1171,7 @@ export class Editor
 			const product = this.getProductById(rowId);
 			if (product)
 			{
-				product.updateField(fieldCode, value);
+				product.updateField(fieldCode, value, product.modeChanges.EDIT);
 			}
 		}
 	}
@@ -1151,12 +1250,22 @@ export class Editor
 		popup.Show();
 	}
 
-	addProductRow(): string
+	addProductRow(anchorProduct: Row = null): string
 	{
 		const row = this.createGridProductRow();
 		const newId = row.getId();
-		this.initializeNewProductRow(newId);
 
+		if (anchorProduct)
+		{
+			const anchorRowNode = this.getGrid().getRows().getById(anchorProduct.getField('ID'))?.getNode();
+			if (anchorRowNode)
+			{
+				anchorRowNode.parentNode.insertBefore(row.getNode(), anchorRowNode.nextSibling);
+			}
+		}
+
+		this.initializeNewProductRow(newId, anchorProduct);
+		this.getGrid().bindOnRowEvents();
 		return newId;
 	}
 
@@ -1216,8 +1325,6 @@ export class Editor
 
 		const newNode = newRow.getNode();
 
-		this.setDeleteButton(newNode, newId);
-
 		if (Type.isDomNode(newNode))
 		{
 			newNode.setAttribute('data-id', newId);
@@ -1236,29 +1343,6 @@ export class Editor
 		grid.updateCounterSelected();
 
 		return newRow;
-	}
-
-	setDeleteButton(row, rowId)
-	{
-		if (this.isReadOnly())
-		{
-			return;
-		}
-
-		const actionCellContentContainer = row.querySelector('.main-grid-cell-action .main-grid-cell-content');
-		if (rowId)
-		{
-			// BX.Main.grid._onClickOnRow needs to be a link or input here
-			const deleteButton = Tag.render`
-				<a 
-					href="#"
-					class="main-grid-delete-button" 
-					onclick="${this.handleDeleteRow.bind(this, rowId)}"
-					title="${Loc.getMessage('CRM_ENTITY_PL_DELETE')}"
-				></a>
-			`;
-			Dom.append(deleteButton, actionCellContentContainer);
-		}
 	}
 
 	handleDeleteRow(rowId, event: BaseEvent)
@@ -1308,23 +1392,48 @@ export class Editor
 		return customEditData;
 	}
 
-	initializeNewProductRow(newId): Row
+	initializeNewProductRow(newId, anchorProduct: Row = null): Row
 	{
-		const rowId = this.getRowIdPrefix() + newId;
-		const fields = {
-			...this.getSettingValue('templateItemFields', {}),
-			...{
-				ID: newId,
-				// hack: specially reversed field to change it after (isChangedValue need to be true)
-				TAX_INCLUDED: this.isTaxIncludedActive() ? 'N' : 'Y',
-				CURRENCY: this.getCurrencyId()
+		let fields = anchorProduct?.getFields();
+		if (Type.isNil(fields))
+		{
+			fields = {
+				...this.getSettingValue('templateItemFields', {}),
+				...{
+					CURRENCY: this.getCurrencyId()
+				}
+			};
+
+			const lastItem = this.products[this.products.length - 1];
+			if (lastItem)
+			{
+				fields.TAX_INCLUDED = lastItem.getField('TAX_INCLUDED');
 			}
-		};
+		}
 
-		const product = new Row(rowId, fields, {}, this);
-		product.updateFieldValue('TAX_INCLUDED', this.isTaxIncludedActive());
+		const rowId = this.getRowIdPrefix() + newId;
+		fields.ID = newId;
+		if (Type.isObject(fields.IMAGE_INFO))
+		{
+			delete(fields.IMAGE_INFO.input);
+		}
+		delete(fields.RESERVE_ID);
+		const isReserveBlocked = this.getSettingValue('isReserveBlocked', false);
+		const product = new Row(rowId, fields, {isReserveBlocked}, this);
+		product.refreshFieldsLayout();
 
-		if (this.getSettingValue('newRowPosition') === 'bottom')
+		if (anchorProduct instanceof Row)
+		{
+			this.products.splice(1 + this.products.indexOf(anchorProduct), 0, product);
+
+			product.getSelector()?.reloadFileInput();
+			product.getSelector()?.layout();
+			product.updateUiMeasure(
+				product.getField('MEASURE_CODE'),
+				Text.encode(product.getField('MEASURE_NAME'))
+			);
+		}
+		else if (this.getSettingValue('newRowPosition') === 'bottom')
 		{
 			this.products.push(product);
 		}
@@ -1347,7 +1456,7 @@ export class Editor
 		return this.products
 			.filter((product) => product.isTaxIncluded())
 			.length > 0
-			;
+		;
 	}
 
 	getProductSelector(newId: string): ?ProductSelector
@@ -1386,13 +1495,27 @@ export class Editor
 		{
 			const promise = new Promise((resolve, reject) => {
 				const fields = data.fields;
+				if (!Type.isNil(fields['SKU_TREE']))
+				{
+					fields['SKU_TREE'] = JSON.stringify(fields['SKU_TREE']);
+				}
+
+				if (!Type.isNil(fields['IMAGE_INFO']))
+				{
+					fields['IMAGE_INFO'] = JSON.stringify(fields['IMAGE_INFO']);
+				}
 
 				if (this.getCurrencyId() !== fields['CURRENCY_ID'])
 				{
 					fields['CURRENCY'] = fields['CURRENCY_ID'];
 
+					const priceFields = {};
+					this.#getCalculatePriceFieldNames().forEach((name) => {
+						priceFields[name] = data.fields[name]
+					});
+
 					const products = [{
-						fields: data.fields,
+						fields: priceFields,
 						id: productRow.getId()
 					}];
 
@@ -1432,6 +1555,25 @@ export class Editor
 			});
 
 			promise.then((fields) => {
+				if (this.products.length > 1)
+				{
+					const taxId = fields['VAT_ID'] || fields['TAX_ID'];
+					const taxIncluded = fields['VAT_INCLUDED'] || fields['TAX_INCLUDED'];
+
+					if (taxId > 0 && taxIncluded !== productRow.getTaxIncluded())
+					{
+						const taxRate = this.getTaxList()?.find((item) => parseInt(item.ID) === taxId);
+						if (taxRate?.VALUE > 0 && taxIncluded === 'Y')
+						{
+							fields['BASE_PRICE'] = fields['BASE_PRICE'] / (1 + taxRate.VALUE / 100);
+						}
+					}
+
+					['TAX_INCLUDED', 'VAT_INCLUDED'].forEach(name => delete(fields[name]));
+				}
+
+				fields['CATALOG_PRICE'] = fields['BASE_PRICE'];
+				fields['ENTERED_PRICE'] = fields['BASE_PRICE'];
 				Object.keys(fields).forEach((key) => {
 					productRow.updateFieldValue(key, fields[key]);
 				});
@@ -1443,7 +1585,8 @@ export class Editor
 
 				productRow.setField('IS_NEW', data.isNew ? 'Y' : 'N');
 
-				productRow.initHandlersForProductSelector();
+				productRow.initHandlersForSelectors();
+				productRow.modifyBasePriceInput();
 				productRow.executeExternalActions();
 				this.getGrid().tableUnfade();
 			});
@@ -1461,8 +1604,9 @@ export class Editor
 		const product = this.getProductByRowId(rowId);
 		if (product)
 		{
-			product.initHandlersForProductSelector();
-			product.changePrice(0);
+			product.initHandlersForSelectors();
+			product.changeEnteredPrice(0);
+			product.modifyBasePriceInput();
 			product.executeExternalActions();
 		}
 	}
@@ -1529,7 +1673,9 @@ export class Editor
 		}
 
 		const disableSaveButton = actions
-			.filter((action) => action.type === this.actions.updateTotal)
+			.filter(
+				(action) => action.type === this.actions.updateTotal || action.type === this.actions.disableSaveButton
+			)
 			.length > 0
 		;
 
@@ -1590,6 +1736,7 @@ export class Editor
 		if (this.controller)
 		{
 			this.controller.productChange(disableSaveButton);
+			this.setGridChanged(true);
 		}
 	}
 
@@ -1598,6 +1745,7 @@ export class Editor
 		if (this.controller)
 		{
 			this.controller.productChange(disableSaveButton);
+			this.setGridChanged(true);
 		}
 	}
 
@@ -1671,6 +1819,16 @@ export class Editor
 		}
 
 		return result;
+	}
+
+	setGridChanged(changed: boolean)
+	{
+		this.isChangedGrid = changed;
+	}
+
+	isChanged(): boolean
+	{
+		return this.isChangedGrid;
 	}
 
 	updateTotalDataDelayed(options = {})
@@ -1757,7 +1915,12 @@ export class Editor
 				needMarkAsChanged = false;
 			}
 
-			this.controller.changeSumTotal(data, needMarkAsChanged);
+			setTimeout(
+				() => {
+					this.controller.changeSumTotal(data, needMarkAsChanged, !this.#childrenHasErrors());
+				},
+				500
+			);
 		}
 	}
 
@@ -1766,11 +1929,16 @@ export class Editor
 	/* ajax tools */
 	ajaxRequest(action, data)
 	{
+		const requestKey = Text.getRandom();
+		this.ajaxPool.set(action, requestKey);
+
 		if (!Type.isPlainObject(data.options))
 		{
 			data.options = {};
 		}
 		data.options.ACTION = action;
+		data.options.REQUEST_KEY = requestKey;
+
 		ajax.runComponentAction(
 			this.getComponentName(),
 			action,
@@ -1787,10 +1955,14 @@ export class Editor
 
 	ajaxResultSuccess(response, requestOptions)
 	{
-		if (!this.ajaxResultCommonCheck(response))
+		if (!this.ajaxResultCommonCheck(response) || this.ajaxPool.get(response.data.action) !== requestOptions.REQUEST_KEY)
 		{
 			return;
 		}
+
+		this.ajaxPool.delete(response.data.action);
+
+		EventEmitter.emit(this, 'onAjaxSuccess', response.data.action);
 
 		switch (response.data.action)
 		{
@@ -1809,6 +1981,30 @@ export class Editor
 
 				break;
 		}
+	}
+
+	validateSubmit()
+	{
+		return new Promise((resolve, reject) => {
+			const currentBalloon = BX.UI.Notification.Center.getBalloonByCategory(ProductModel.SAVE_NOTIFICATION_CATEGORY);
+			if (currentBalloon)
+			{
+				EventEmitter.subscribeOnce(
+					currentBalloon,
+					BX.UI.Notification.Event.getFullName('onClose'),
+					() => {
+						EventEmitter.subscribeOnce(this, 'onAjaxSuccess', () => {
+							setTimeout(resolve, 100);
+						});
+					}
+				);
+				currentBalloon.close();
+			}
+			else
+			{
+				resolve()
+			}
+		});
 	}
 
 	ajaxResultFailure(response)
@@ -1888,6 +2084,20 @@ export class Editor
 				{type: this.actions.updateTotal}
 			]);
 		}
+	}
+
+	copyRow(row: Row): void
+	{
+		this.addProductRow(row)
+		this.refreshSortFields();
+		this.numerateRows();
+
+		EventEmitter.emit('Grid::thereEditedRows', []);
+
+		this.executeActions([
+			{type: this.actions.productListChanged},
+			{type: this.actions.updateTotal}
+		]);
 	}
 
 	cleanProductRows(): void

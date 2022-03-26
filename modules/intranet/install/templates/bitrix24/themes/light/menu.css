@@ -8,7 +8,7 @@ a.menu-item-link {
 	background: rgba(255,255,255,.1);
 }
 
-.menu-item-active .menu-item-link-text,
+.menu-items-view-mode .menu-item-active .menu-item-link-text,
 .menu-animation-opening-mode .menu-item-active .menu-item-link-text {
 	background-color: rgba(255, 255, 255, .35);
 	color: #fff;
@@ -33,11 +33,6 @@ a.menu-item-link {
 
 .menu-collapsed-mode.menu-sliding-mode .menu-item-plus:hover .menu-item-plus-icon:before {
 	opacity: 1;
-}
-
-.menu-item-index {
-	background-color: rgba(255,255,255,.2);
-	color: #fff;
 }
 
 .menu-favorites-more-btn,

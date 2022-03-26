@@ -1,7 +1,7 @@
 .b24-form {
 	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 	font-family: var(--b24-font-family);
-	line-height: 18px;
+	line-height: normal;
 }
 
 .b24-form * {
@@ -25,9 +25,10 @@
 	max-width: 700px;
 	margin: 0 auto;
 	transition: min-height 180ms ease;
+	word-break: break-word;
 }
 
-.b24-form-wrapper.b24-from-state-on {min-height: 320px;}
+.b24-form-wrapper.b24-from-state-on {min-height: 390px;}
 
 .b24-form-wrapper.b24-form-shadow { box-shadow: 0 4px 18px 0 rgba(0, 0, 0, .3); }
 
@@ -56,6 +57,7 @@
 	margin-bottom: 9px;
 	font: 700 24px/33px "Helvetica Neue", Helvetica, Arial, sans-serif;
 	font: 700 24px/33px var(--b24-font-family);
+	word-break: break-word;
 }
 
 .b24-form-header-description {
@@ -65,6 +67,7 @@
 	color: #000;
 	color: var(--b24-text-color);
 	opacity: 0.8;
+	word-break: break-word;
 }
 
 /* Content*/

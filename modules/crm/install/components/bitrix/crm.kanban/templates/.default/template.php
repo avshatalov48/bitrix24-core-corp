@@ -190,6 +190,8 @@ $gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
 								lead: "/bitrix/components/bitrix/crm.lead.details/ajax.php?<?= bitrix_sessid_get();?>",
 								deal: "/bitrix/components/bitrix/crm.deal.details/ajax.php?<?= bitrix_sessid_get();?>"
 							},
+							headersSections: <?= \CUtil::PhpToJSObject($arResult['HEADERS_SECTIONS'])?>,
+							defaultHeaderSectionId: "<?= \CUtil::JSEscape($arResult['DEFAULT_HEADER_SECTION_ID']) ?>",
 							params: <?= json_encode($arParams['EXTRA'])?>,
 							gridId: "<?=\CUtil::JSEscape($gridId)?>",
 							showActivity: <?= $arParams['SHOW_ACTIVITY'] == 'Y' ? 'true' : 'false'?>,

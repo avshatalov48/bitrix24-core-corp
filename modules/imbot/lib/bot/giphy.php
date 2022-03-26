@@ -30,7 +30,6 @@ class Giphy extends Base
 			'PROPERTIES' => Array(
 				'NAME' => Loc::getMessage('IMBOT_GIPHY_BOT_NAME'),
 				'COLOR' => Loc::getMessage('IMBOT_GIPHY_BOT_COLOR'),
-				//'EMAIL' => Loc::getMessage('IMBOT_GIPHY_BOT_EMAIL'),
 				'WORK_POSITION' => Loc::getMessage('IMBOT_GIPHY_BOT_WORK_POSITION'),
 				'PERSONAL_GENDER' => Loc::getMessage('IMBOT_GIPHY_BOT_GENDER'),
 				'PERSONAL_PHOTO' => self::uploadAvatar(),

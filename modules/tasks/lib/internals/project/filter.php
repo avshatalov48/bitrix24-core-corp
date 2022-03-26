@@ -21,10 +21,21 @@ class Filter
 	private $projectVisibilityCondition;
 
 	protected $userId;
+	protected $isScrum = false;
 
 	public function __construct(int $userId = 0)
 	{
 		$this->userId = ($userId ?: User::getId());
+	}
+
+	/**
+	 * @param bool $value
+	 * @return $this
+	 */
+	public function setIsScrum(bool $value)
+	{
+		$this->isScrum = true;
+		return $this;
 	}
 
 	public function processFilterSearch(Query $query, string $search): Query
@@ -140,7 +151,7 @@ class Filter
 		return $query;
 	}
 
-	public function processFilterTags(Query $query, array $tags): Query
+	public function processFilterTags(Query $query, string $tag): Query
 	{
 		$query
 			->registerRuntimeField(
@@ -152,7 +163,7 @@ class Filter
 					['join_type' => 'left']
 				)
 			)
-			->where('WT.NAME', $tags)
+			->where('WT.NAME', $tag)
 		;
 
 		return $query;

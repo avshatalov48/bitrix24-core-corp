@@ -159,7 +159,13 @@ final class DocumentSession extends Model
 
 	public function isOutdatedByFileContent(): bool
 	{
-		return $this->getObject()->getSyncUpdateTime() > $this->getCreateTime();
+		$syncUpdateTime = $this->getObject()->getSyncUpdateTime();
+		if (!$syncUpdateTime)
+		{
+			return false;
+		}
+
+		return ($syncUpdateTime->getTimestamp() - $this->getCreateTime()->getTimestamp()) > 0;
 	}
 
 	/**

@@ -3,7 +3,8 @@
 namespace Bitrix\Crm\Integration\UI\EntitySelector;
 
 use Bitrix\Crm\Controller\Entity;
-use Bitrix\Crm\Search\SearchEnvironment;
+use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Crm\Search;
 use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
@@ -37,7 +38,12 @@ abstract class EntityProvider extends BaseProvider
 
 	public function isAvailable(): bool
 	{
-		return \CCrmAuthorizationHelper::CheckReadPermission($this->getEntityTypeId(), 0);
+		$restriction = RestrictionManager::getSearchLimitRestriction();
+
+		return
+			EntityAuthorization::checkReadPermission($this->getEntityTypeId(), 0)
+			&& !$restriction->isExceeded($this->getEntityTypeId())
+		;
 	}
 
 	public function getItems(array $ids): array
@@ -58,9 +64,8 @@ abstract class EntityProvider extends BaseProvider
 		{
 			return $items;
 		}
-		$ids = $this->fetchEntryIds([
-			'@ID' => $ids,
-		]);
+
+		$ids = $this->filterOutNonExistentEntryIds($ids);
 
 		//todo remove queries in cycle!
 		foreach ($ids as $entryId)
@@ -70,6 +75,21 @@ abstract class EntityProvider extends BaseProvider
 
 		return $items;
 	}
+
+	protected function filterOutNonExistentEntryIds(array $ids): array
+	{
+		return $this->fetchEntryIds([
+			'@ID' => $ids,
+		]);
+	}
+
+	/**
+	 * Returns entry ids by the filter
+	 * @param array $filter - The same structure as in ORM
+	 *
+	 * @return int[]
+	 */
+	abstract protected function fetchEntryIds(array $filter): array;
 
 	protected function makeItem(int $entityId): ?Item
 	{
@@ -91,7 +111,7 @@ abstract class EntityProvider extends BaseProvider
 		return new Item([
 			'id' => $entityId,
 			'entityId' => $this->getItemEntityId(),
-			'title' => $entityInfo['title'],
+			'title' => (string)$entityInfo['title'],
 			'subtitle' => $entityInfo['desc'],
 			'link' => $entityInfo['url'],
 			'linkTitle' => Loc::getMessage('CRM_COMMON_DETAIL'),
@@ -136,28 +156,21 @@ abstract class EntityProvider extends BaseProvider
 
 	public function doSearch(SearchQuery $searchQuery, Dialog $dialog): void
 	{
-		$query = $searchQuery->getQuery();
-		if (empty($query))
-		{
-			return;
-		}
+		$searchProvider = Search\Result\Factory::createProvider($this->getEntityTypeId());
+		$searchProvider->setAdditionalFilter($this->getAdditionalFilter());
 
-		$filter = [
-			'SEARCH_CONTENT' => $query
-		];
-		SearchEnvironment::prepareSearchFilter($this->getEntityTypeId(), $filter);
+		$result = $searchProvider->getSearchResult($searchQuery->getQuery());
 
-		$ids = $this->fetchEntryIds($filter);
-		$dialog->addItems($this->makeItemsByIds($ids));
+		$wereAllResultsFoundForThisQuery = (count($result->getIds()) < $searchProvider->getLimit());
+		$searchQuery->setCacheable($wereAllResultsFoundForThisQuery);
+
+		$dialog->addItems($this->makeItemsByIds($result->getIds()));
 	}
 
-	/**
-	 * Returns entry ids by the filter
-	 * @param array $filter - The same structure as in ORM
-	 *
-	 * @return int[]
-	 */
-	abstract protected function fetchEntryIds(array $filter): array;
+	protected function getAdditionalFilter(): array
+	{
+		return [];
+	}
 
 	protected function getRecentItemIds(string $context): array
 	{

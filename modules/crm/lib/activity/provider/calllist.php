@@ -208,13 +208,22 @@ class CallList extends Base
 			return $result;
 		}
 
-		$callList = \Bitrix\Crm\CallList\CallList::createWithId($callListId);
+		try
+		{
+			$callList = \Bitrix\Crm\CallList\CallList::createWithId($callListId);
+		}
+		catch (\Bitrix\Main\SystemException $e)
+		{
+			$result->addError(new Main\Error(Loc::getMessage('CRM_CALL_LIST_NOT_CREATED_ERROR')));
+			return $result;
+		}
+
 		if($callList->getItemsCount() == 0)
 		{
 			$result->addError(new Main\Error(Loc::getMessage('CRM_CALL_LIST_NOT_CREATED_ERROR')));
 			return $result;
 		}
-		
+
 		$webformId = $formData['useWebform'] === 'Y' ? (int)$formData['webformId'] : null;
 		$callList->setWebformId($webformId);
 		$callList->persist();
@@ -269,7 +278,8 @@ class CallList extends Base
 			"FROM_USER_ID" => $activityFields['AUTHOR_ID'],
 			"NOTIFY_TYPE" => IM_NOTIFY_FROM,
 			"NOTIFY_MODULE" => "crm",
-			"NOTIFY_EVENT" => "callListCreated",
+			//"NOTIFY_EVENT" => "callListCreated",
+			"NOTIFY_EVENT" => "changeAssignedBy",
 			"NOTIFY_TAG" => "CRM|CALL_LIST|".$activityFields['ID'],
 			"NOTIFY_MESSAGE" => Loc::getMessage('CRM_CALL_LIST_RESPONSIBLE_IM_NOTIFY', array(
 				'#title#' =>  '<a href="'.\CCrmOwnerType::GetEntityShowPath(\CCrmOwnerType::Activity, $activityFields['ID']).'">'.$activityFields['SUBJECT'].'</a>'
@@ -304,6 +314,40 @@ class CallList extends Base
 		$permission = \CCrmPerms::GetUserPermissions($userId);
 		if(!is_array($callList->getItems()) || count($callList->getItems()) == 0)
 			return true;
+
+		foreach ($callList->getItems() as $callListItem)
+		{
+			if(\CCrmActivity::CheckReadPermission($callList->getEntityTypeId(), $callListItem->getElementId(), $permission))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	public static function checkReadPermission(array $activityFields, $userId = null)
+	{
+		if (!parent::checkReadPermission($activityFields, $userId))
+		{
+			return false;
+		}
+		$callListId = $activityFields['ASSOCIATED_ENTITY_ID'];
+
+		try
+		{
+			$callList = \Bitrix\Crm\CallList\CallList::createWithId($callListId, true);
+		}
+		catch (Main\SystemException $e)
+		{
+			return false;
+		}
+
+		$permission = \CCrmPerms::GetUserPermissions($userId);
+		if (!is_array($callList->getItems()) || count($callList->getItems()) === 0)
+		{
+			return false;
+		}
 
 		foreach ($callList->getItems() as $callListItem)
 		{

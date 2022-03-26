@@ -2,7 +2,6 @@
 $MESS['IMBOT_GIPHY_BOT_NAME'] = 'Giphy';
 $MESS['IMBOT_GIPHY_BOT_COLOR'] = 'AQUA';
 $MESS['IMBOT_GIPHY_BOT_GENDER'] = 'M';
-$MESS['IMBOT_GIPHY_BOT_EMAIL'] = 'support@bitrix24.ru';
 $MESS['IMBOT_GIPHY_BOT_WORK_POSITION'] = 'Этот бот поможет вам найти подходящее по смыслу изображение.';
 $MESS['IMBOT_GIPHY_NOT_FOUND_MESSAGE'] = 'По данной теме ничего не найдено :(';
 $MESS['IMBOT_GIPHY_FOUND_ALTER_MESSAGE'] = "По данной теме ничего не найдено :( [br] Но я подобрал похожую:";

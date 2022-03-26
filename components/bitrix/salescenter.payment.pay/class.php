@@ -10,7 +10,6 @@ use Bitrix\Sale\Cashbox;
 use Bitrix\Sale\Payment;
 use Bitrix\Sale\PaySystem;
 use Bitrix\Crm;
-use Bitrix\Crm\Order\DealBinding;
 use Bitrix\Crm\Workflow\PaymentWorkflow;
 use Bitrix\Crm\Workflow\PaymentStage;
 use Bitrix\ImOpenLines\Model\SessionTable;
@@ -216,12 +215,15 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 
 								if (!$this->payment->isPaid())
 								{
-									/** @var DealBinding $dealBinding */
-									$dealBinding = $order->getDealBinding();
-									if ($dealBinding)
+									/** @var Crm\Order\EntityBinding $binding */
+									$binding = $order->getEntityBinding();
+									if (
+										$binding
+										&& $binding->getOwnerTypeId() == CCrmOwnerType::Deal
+									)
 									{
 										$this->changeOrderStageDealOnViewedNoPaid(
-											$dealBinding->getDealId()
+											$binding->getOwnerId()
 										);
 									}
 								}
@@ -775,6 +777,7 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 	 */
 	protected function addTimelineEntityOnView(Sale\Payment $payment): void
 	{
+		/** @var Crm\Order\Order $order */
 		$order = $payment->getOrder();
 
 		$bindings = [
@@ -784,11 +787,11 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 			]
 		];
 
-		if ($order->getDealBinding())
+		if ($order->getEntityBinding())
 		{
 			$bindings[] = [
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
-				'ENTITY_ID' => $order->getDealBinding()->getDealId()
+				'ENTITY_TYPE_ID' => $order->getEntityBinding()->getOwnerTypeId(),
+				'ENTITY_ID' => $order->getEntityBinding()->getOwnerId()
 			];
 		}
 

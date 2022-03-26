@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Conversion;
-use Bitrix\Main;
+use Bitrix\Crm\Settings\InvoiceSettings;
+
 class DealConversionScheme
 {
 	const UNDEFINED = 0;
@@ -50,6 +51,24 @@ class DealConversionScheme
 				return '';
 		}
 	}
+
+	/**
+	 * Returns all schemes descriptions disregarding settings
+	 *
+	 * @return array
+	 */
+	private static function getAllDescriptionsInner(): array
+	{
+		if(!isset(self::$allDescriptions[LANGUAGE_ID]))
+		{
+			self::$allDescriptions[LANGUAGE_ID] = [
+				self::QUOTE => GetMessage('CRM_DEAL_CONV_QUOTE'),
+				self::INVOICE => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Invoice),
+			];
+		}
+		return self::$allDescriptions[LANGUAGE_ID];
+	}
+
 	public static function getDescription($schemeID)
 	{
 		if(!is_numeric($schemeID))
@@ -58,7 +77,7 @@ class DealConversionScheme
 		}
 
 		$schemeID = (int)$schemeID;
-		$descriptions = self::getAllDescriptions();
+		$descriptions = self::getAllDescriptionsInner();
 		return isset($descriptions[$schemeID]) ? $descriptions[$schemeID] : '';
 	}
 	/**
@@ -66,61 +85,55 @@ class DealConversionScheme
 	*/
 	public static function getAllDescriptions()
 	{
-		if(!self::$allDescriptions[LANGUAGE_ID])
+		$descriptions = static::getAllDescriptionsInner();
+		if (!InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
 		{
-			Main\Localization\Loc::loadMessages(__FILE__);
-			self::$allDescriptions[LANGUAGE_ID] = array(
-				self::INVOICE => GetMessage('CRM_DEAL_CONV_INVOICE'),
-				self::QUOTE => GetMessage('CRM_DEAL_CONV_QUOTE')
-			);
+			unset($descriptions[self::INVOICE]);
 		}
-		return self::$allDescriptions[LANGUAGE_ID];
+
+		return $descriptions;
 	}
 	/**
 	* @return array Array of strings
 	*/
 	public static function getJavaScriptDescriptions($checkPermissions = false)
 	{
-		$result = array();
-		$descriptions = self::getAllDescriptions();
-
-		if(!$checkPermissions)
+		$permissions = [
+			self::INVOICE => true,
+			self::QUOTE => true,
+		];
+		if ($checkPermissions)
 		{
-			$isInvoicePermitted = true;
-			$isQuotePermitted = true;
-		}
-		else
-		{
-			$flags = array();
+			$flags = [];
 			\CCrmDeal::PrepareConversionPermissionFlags(0, $flags);
-			$isInvoicePermitted = $flags['CAN_CONVERT_TO_INVOICE'];
-			$isQuotePermitted = $flags['CAN_CONVERT_TO_QUOTE'];
+			$permissions[self::INVOICE] = $flags['CAN_CONVERT_TO_INVOICE'];
+			$permissions[self::QUOTE] = $flags['CAN_CONVERT_TO_QUOTE'];
 		}
 
-		if($isInvoicePermitted && $isQuotePermitted)
+		$result = [];
+		foreach (static::getAllDescriptionsInner() as $schemeId => $description)
 		{
-			foreach($descriptions as $schemeID => $description)
+			$isPermitted = $permissions[$schemeId] ?? true;
+			if ($isPermitted)
 			{
-				$result[self::resolveName($schemeID)] = $description;
+				$result[self::resolveName($schemeId)] = $description;
 			}
 		}
-		else
-		{
-			$schemes = array();
-			if($isInvoicePermitted)
-			{
-				$schemes[] = self::INVOICE;
-			}
-			if($isQuotePermitted)
-			{
-				$schemes[] = self::QUOTE;
-			}
 
-			foreach($schemes as $schemeID)
-			{
-				$result[self::resolveName($schemeID)] = $descriptions[$schemeID];
-			}
-		}
 		return $result;
+	}
+
+	public static function getEntityTypeIds(int $schemeId): array
+	{
+		if ($schemeId === static::INVOICE)
+		{
+			return [\CCrmOwnerType::Invoice];
+		}
+		if ($schemeId === static::QUOTE)
+		{
+			return [\CCrmOwnerType::Quote];
+		}
+
+		return [];
 	}
 }

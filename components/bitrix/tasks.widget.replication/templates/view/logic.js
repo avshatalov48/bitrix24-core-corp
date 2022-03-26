@@ -37,19 +37,40 @@ BX.namespace('Tasks.Component');
 			{
 				if (!this.vars.enabled && this.vars.taskLimitExceeded)
 				{
-					BX.UI.InfoHelper.show('limit_tasks_recurring_tasks');
+					BX.UI.InfoHelper.show('limit_tasks_recurring_tasks', {
+						isLimit: true,
+						limitAnalyticsLabels: {
+							module: 'tasks',
+							source: 'templateSidebar'
+						}
+					});
 					return;
 				}
 
 				var action = (this.vars.enabled ? 'stopReplication' : 'startReplication');
-				var params = {id: this.option('entityId')};
 
-				this.callRemote('task.template.' + action, params).then(function(result) {
-					if (result.isSuccess())
-					{
-						this.setEnabled(!this.vars.enabled);
+				BX.ajax.runComponentAction('bitrix:tasks.widget.replication', action, {
+					mode: 'class',
+					data: {
+						templateId: this.option('entityId')
 					}
-				}.bind(this));
+				}).then(
+					function(response)
+					{
+						if (
+							!response.status
+							|| response.status !== 'success'
+						)
+						{
+							return;
+						}
+
+						this.setEnabled(!this.vars.enabled);
+					}.bind(this),
+					function(response)
+					{
+					}.bind(this)
+				);
 			},
 
 			setEnabled: function(flag)

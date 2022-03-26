@@ -45,7 +45,16 @@ BX.mergeEx(BX.Tasks, {
 		var popupContent = "";
 		for (var i = 0; i < errors.length; i++)
 		{
-			popupContent += BX.util.htmlspecialchars(typeof(errors[i].MESSAGE) !== "undefined" ? errors[i].MESSAGE : errors[i]) + "<br>";
+			var message = null;
+			if (typeof(errors[i].MESSAGE) !== "undefined")
+			{
+				message = errors[i].MESSAGE;
+			}
+			else if (typeof(errors[i].message) !== "undefined")
+			{
+				message = errors[i].message;
+			}
+			popupContent += BX.util.htmlspecialchars(message ? message : errors[i]) + "<br>";
 		}
 
 		var title = BX.message('TASKS_COMMON_ERROR_OCCURRED');
@@ -58,11 +67,28 @@ BX.mergeEx(BX.Tasks, {
 		errorPopup.setTitleBar({content: BX.type.isElementNode(title) ? title : BX.create('div', {
 			html: title
 		})});
-		errorPopup.setContent(
-			"<div style='width: 350px;padding: 10px; font-size: 12px; color: red;'>" +
-			popupContent +
-			"</div>"
-		);
+
+		var data = errors.length ? (errors[0].DATA || errors[0].data) : null;
+
+		if (
+			data
+			&& data.ui === 'notification'
+		)
+		{
+			popupContent = popupContent.replace('&lt;br&gt;', '<div class="task-popup-divider">&nbsp;</div>');
+			popupContent = popupContent.replace('#BR#', '<div class="task-popup-divider">&nbsp;</div>');
+			popupContent = "<div class='task-popup-notification'>" +
+				popupContent +
+				"</div>";
+		}
+		else
+		{
+			popupContent = "<div style='width: 350px;padding: 10px; font-size: 12px; color: red;'>" +
+				popupContent +
+				"</div>";
+		}
+
+		errorPopup.setContent(popupContent);
 
 		if (window.console && window.console.dir)
 		{
@@ -73,7 +99,7 @@ BX.mergeEx(BX.Tasks, {
 
 		return p;
 	},
-	
+
 	confirm: function(body, callback, params)
 	{
 		if(!BX.type.isFunction(callback))

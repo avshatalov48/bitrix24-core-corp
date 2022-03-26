@@ -63,18 +63,21 @@ $APPLICATION->IncludeComponent(
 	),
 	false
 );
-$APPLICATION->IncludeComponent(
-	'bitrix:report.list',
-	'',
-	array(
-		'REPORT_TITLE' => GetMessage('CRM_REPORT_LIST_INVOICE'),
-		'PATH_TO_REPORT_LIST' => $arParams['PATH_TO_REPORT_REPORT'],
-		'PATH_TO_REPORT_CONSTRUCT' => $arParams['PATH_TO_REPORT_CONSTRUCT'],
-		'PATH_TO_REPORT_VIEW' => $arParams['PATH_TO_REPORT_VIEW'],
-		'REPORT_HELPER_CLASS' => 'CCrmInvoiceReportHelper'
-	),
-	false
-);
+if (\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
+{
+	$APPLICATION->IncludeComponent(
+		'bitrix:report.list',
+		'',
+		array(
+			'REPORT_TITLE' => \Bitrix\Crm\Service\Container::getInstance()->getLocalization()->appendOldVersionSuffix(GetMessage('CRM_REPORT_LIST_INVOICE')),
+			'PATH_TO_REPORT_LIST' => $arParams['PATH_TO_REPORT_REPORT'],
+			'PATH_TO_REPORT_CONSTRUCT' => $arParams['PATH_TO_REPORT_CONSTRUCT'],
+			'PATH_TO_REPORT_VIEW' => $arParams['PATH_TO_REPORT_VIEW'],
+			'REPORT_HELPER_CLASS' => 'CCrmInvoiceReportHelper'
+		),
+		false
+	);
+}
 $APPLICATION->IncludeComponent(
 	'bitrix:report.list',
 	'',

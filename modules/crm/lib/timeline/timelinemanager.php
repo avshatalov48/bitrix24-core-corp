@@ -1,14 +1,10 @@
 <?php
 namespace Bitrix\Crm\Timeline;
 
-use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Loader;
 
 class TimelineManager
 {
-	/** @var int[]|null - null before initialization, after that - always array (even if empty) */
-	protected static $ignoredDynamicEntityTypeIds;
-
 	/**
 	 * @param array $item
 	 * @return EntityController|null
@@ -119,7 +115,15 @@ class TimelineManager
 		{
 			return ScoringController::getInstance();
 		}
-		elseif(\CCrmOwnerType::isPossibleDynamicTypeId($assocEntityTypeID))
+		elseif($assocEntityTypeID === \CCrmOwnerType::StoreDocument)
+		{
+			return StoreDocumentController::getInstance();
+		}
+		elseif($assocEntityTypeID === \CCrmOwnerType::ShipmentDocument)
+		{
+			return ShipmentDocumentController::getInstance();
+		}
+		elseif(\CCrmOwnerType::isUseDynamicTypeBasedApproach($assocEntityTypeID))
 		{
 			return DynamicController::getInstance($assocEntityTypeID);
 		}
@@ -327,12 +331,6 @@ class TimelineManager
 					$entityTypeID,
 					$entityInfos,
 					false,
-					[
-						'PERMISSION_OPTIONS' => [
-							'DISPLAY_NOT_PERMITTED_ITEMS_AS_HIDDEN' => true,
-							'HIDE_ITEMS_FROM_UNAUTHORIZED_USERS' => false,
-						],
-					],
 				);
 				foreach($entityInfos as $entityID => $entityInfo)
 				{
@@ -403,6 +401,51 @@ class TimelineManager
 					}
 				}
 			}
+			elseif ($entityTypeID === \CCrmOwnerType::StoreDocument)
+			{
+				if (Loader::includeModule('catalog'))
+				{
+					\CCrmOwnerType::PrepareEntityInfoBatch(
+						$entityTypeID,
+						$entityInfos,
+						false,
+					);
+
+					foreach($entityInfos as $entityID => $entityInfo)
+					{
+						if (empty($entityInfo['ITEM_IDS']) || !is_array($entityInfo['ITEM_IDS']))
+						{
+							continue;
+						}
+
+						foreach($entityInfo['ITEM_IDS'] as $itemID)
+						{
+							$items[$itemID]['ASSOCIATED_ENTITY'] = $entityInfo;
+						}
+					}
+				}
+			}
+			elseif ($entityTypeID === \CCrmOwnerType::ShipmentDocument)
+			{
+				\CCrmOwnerType::PrepareEntityInfoBatch(
+					\CCrmOwnerType::OrderShipment,
+					$entityInfos,
+					false,
+				);
+
+				foreach($entityInfos as $entityID => $entityInfo)
+				{
+					if (empty($entityInfo['ITEM_IDS']) || !is_array($entityInfo['ITEM_IDS']))
+					{
+						continue;
+					}
+
+					foreach($entityInfo['ITEM_IDS'] as $itemID)
+					{
+						$items[$itemID]['ASSOCIATED_ENTITY'] = $entityInfo;
+					}
+				}
+			}
 			else
 			{
 				if ($entityTypeID === \CCrmOwnerType::DealRecurring)
@@ -413,12 +456,6 @@ class TimelineManager
 					$entityTypeID,
 					$entityInfos,
 					false,
-					[
-						'PERMISSION_OPTIONS' => [
-							'DISPLAY_NOT_PERMITTED_ITEMS_AS_HIDDEN' => true,
-							'HIDE_ITEMS_FROM_UNAUTHORIZED_USERS' => false,
-						],
-					],
 				);
 				foreach($entityInfos as $entityID => $entityInfo)
 				{
@@ -483,39 +520,6 @@ class TimelineManager
 	 */
 	public static function getIgnoredEntityTypeIDs()
 	{
-		$allIgnoredTypes = array_merge(
-			[
-				\CCrmOwnerType::SuspendedLead,
-				\CCrmOwnerType::SuspendedDeal,
-				\CCrmOwnerType::SuspendedContact,
-				\CCrmOwnerType::SuspendedCompany,
-				\CCrmOwnerType::SuspendedActivity,
-			],
-			static::getIgnoredDynamicEntityTypeIDs(),
-		);
-
-		return array_unique($allIgnoredTypes);
-	}
-
-	/**
-	 * @return int[]
-	 */
-	protected static function getIgnoredDynamicEntityTypeIDs(): array
-	{
-		if (!is_array(static::$ignoredDynamicEntityTypeIds))
-		{
-			$typesMap = Container::getInstance()->getDynamicTypesMap()->load([
-				'isLoadStages' => false,
-				'isLoadCategories' => false,
-			]);
-
-			static::$ignoredDynamicEntityTypeIds = [];
-			foreach ($typesMap->getTypes() as $type)
-			{
-				static::$ignoredDynamicEntityTypeIds[] = \CCrmOwnerType::getSuspendedDynamicTypeId($type->getEntityTypeId());
-			}
-		}
-
-		return static::$ignoredDynamicEntityTypeIds;
+		return \CCrmOwnerType::getAllSuspended();
 	}
 }

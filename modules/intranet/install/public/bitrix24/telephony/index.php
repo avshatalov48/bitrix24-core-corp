@@ -10,7 +10,8 @@ $APPLICATION->SetTitle(GetMessage("VI_PAGE_STAT_TITLE"));
 	array(
 		"POPUP_COMPONENT_NAME" => "bitrix:voximplant.start",
 		"POPUP_COMPONENT_TEMPLATE_NAME" => "",
-		"USE_PADDING" => false
+		"USE_PADDING" => false,
+		"USE_TOP_MENU" => true,
 	)
 );?>
 

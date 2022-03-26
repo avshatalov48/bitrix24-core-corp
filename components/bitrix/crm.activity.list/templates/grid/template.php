@@ -274,7 +274,7 @@ foreach($arResult['ITEMS'] as &$item)
 			$ownerTypeID === CCrmOwnerType::Deal
 			|| $ownerTypeID === CCrmOwnerType::Lead
 			|| $ownerTypeID === CCrmOwnerType::Quote
-			|| \CCrmOwnerType::isPossibleDynamicTypeId($ownerTypeID)
+			|| \CCrmOwnerType::isUseDynamicTypeBasedApproach($ownerTypeID)
 		)
 		&& isset($arResult['OWNER_INFOS'][$ownerTypeID])
 		&& isset($arResult['OWNER_INFOS'][$ownerTypeID][$ownerID])
@@ -845,6 +845,7 @@ if(!$useQuickFilter):
 				var editor = BX.CrmActivityEditor.items['<?= CUtil::JSEscape($gridEditorID)?>'];
 				function reload()
 				{
+					BX.removeCustomEvent("tasksTaskEvent", reload);
 					if(editor)
 					{
 						editor.setLocked(true);
@@ -915,6 +916,7 @@ else:
 				var editor = BX.CrmActivityEditor.items['<?= CUtil::JSEscape($gridEditorID)?>'];
 				function reload()
 				{
+					BX.removeCustomEvent("tasksTaskEvent", reload);
 					if(editor)
 					{
 						editor.setLocked(true);

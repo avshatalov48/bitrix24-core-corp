@@ -60,10 +60,24 @@
 }
 
 .tasks-grid-avatar.ui-icon.ui-icon-common-user,
-.tasks-grid-avatar.ui-icon.ui-icon-common-user-group {
+.tasks-grid-avatar.ui-icon.ui-icon-common-user-group,
+.tasks-grid-avatar.sonet-common-workgroup-avatar {
 	width: 22px;
 	min-width: 22px;
 	height: 22px;
+}
+
+.tasks-grid-avatar.sonet-common-workgroup-avatar {
+	background-size: 14px;
+	margin: 0;
+}
+
+.tasks-grid-avatar.sonet-common-workgroup-avatar.--folder {
+	background-position: center 4px!important;
+}
+
+.tasks-grid-avatar.sonet-common-workgroup-avatar.--chart {
+	background-position: 5px 3px !important;
 }
 
 .tasks-grid-filter-remove {

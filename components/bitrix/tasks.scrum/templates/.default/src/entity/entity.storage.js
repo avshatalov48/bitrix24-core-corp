@@ -144,7 +144,7 @@ export class EntityStorage
 		return [...this.sprints.values()].find((sprint) => sprint.getId() === entityId);
 	}
 
-	findItemByItemId(itemId: number): Item
+	findItemByItemId(itemId: number): ?Item
 	{
 		itemId = parseInt(itemId, 10);
 

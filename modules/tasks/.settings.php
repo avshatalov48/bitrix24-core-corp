@@ -17,10 +17,24 @@ return array(
 		'value' => [
 			'entities' => [
 				[
+					'entityId' => 'task',
+					'provider' => [
+						'moduleId' => 'tasks',
+						'className' => '\\Bitrix\\Tasks\\Integration\\UI\\EntitySelector\\TaskProvider',
+					],
+				],
+				[
 					'entityId' => 'task-tag',
 					'provider' => [
 						'moduleId' => 'tasks',
 						'className' => '\\Bitrix\\Tasks\\Integration\\UI\\EntitySelector\\TaskTagProvider',
+					],
+				],
+				[
+					'entityId' => 'task-template',
+					'provider' => [
+						'moduleId' => 'tasks',
+						'className' => '\\Bitrix\\Tasks\\Integration\\UI\\EntitySelector\\TaskTemplateProvider',
 					],
 				],
 			],

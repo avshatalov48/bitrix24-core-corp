@@ -77,6 +77,7 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 		this._hasLayout = false;
 		this._hasMultifieldLayout = false;
 		this._isRequired = false;
+		this._enableRequisiteSelection = false;
 	};
 	BX.Crm.EntityEditorClientSearchBox.prototype =
 		{
@@ -122,6 +123,8 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 				this._clientEntityEditorEnabled = BX.prop.getBoolean(this._settings, "clientEditorEnabled", false);
 				this._clientEntityEditorFields = BX.prop.get(this._settings, "clientEditorFields", []);
 				this._clientEntityEditorFieldsParams = BX.prop.get(this._settings, "clientEditorFieldsParams", {});
+
+				this._enableRequisiteSelection = BX.prop.getBoolean(this._settings, "enableRequisiteSelection", false);
 			},
 			getMessage: function(name)
 			{
@@ -213,6 +216,32 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 				}
 
 				this._mode = mode;
+			},
+			setSelectRequisiteSelectionEnabled: function(enableRequisiteSelection)
+			{
+				if (this._enableRequisiteSelection !== enableRequisiteSelection)
+				{
+					this._enableRequisiteSelection = enableRequisiteSelection;
+					if (this._clientEntityEditor)
+					{
+						var requisitesController = null;
+						var controllers = this._clientEntityEditor._controllers;
+						if (controllers.length > 0)
+						{
+							for (var controllerIndex in controllers)
+							{
+								if (controllers[controllerIndex] instanceof BX.Crm.EntityEditorRequisiteController)
+								{
+									requisitesController = controllers[controllerIndex];
+								}
+							}
+						}
+						if (requisitesController)
+						{
+							requisitesController.setSelectModeEnabled(this._enableRequisiteSelection);
+						}
+					}
+				}
 			},
 			layout: function(options)
 			{
@@ -1045,7 +1074,9 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 								'config': {
 									'requisiteFieldId': 'REQUISITES',
 									'addressFieldId': 'ADDRESS',
-									'requisiteBinding': BX.prop.getObject(this._settings, "requisiteBinding", null)
+									'requisiteBinding': BX.prop.getObject(this._settings, "requisiteBinding", null),
+									'enableRequisiteSelection': this._enableRequisiteSelection,
+									'enableMyCompanyOnly': BX.prop.getBoolean(this._settings, "enableMyCompanyOnly", false)
 								}
 							}],
 							initialMode: BX.UI.EntityEditorMode.names.edit,
@@ -3619,11 +3650,13 @@ if(typeof BX.Crm.ClientEditorMenu === "undefined")
 	};
 
 	var DetailSearchPlacementLoader = function() {
+		var appLayout = BX.Reflection.getClass('BX.rest.AppLayout');
+
 		this.placementCode = 'CRM_DETAIL_SEARCH';
 		this.queue = [];
 		this.isActive = false;
 		this.isInited = false;
-		var placement = (BX['rest'] ? BX.rest.AppLayout.getPlacement(this.placementCode) : null);
+		var placement = (appLayout ? appLayout.getPlacement(this.placementCode) : null);
 		if (placement)
 		{
 			this.init();

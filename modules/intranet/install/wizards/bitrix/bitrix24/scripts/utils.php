@@ -349,9 +349,6 @@ class WizardServices
 
 	public static function SetIBlockFormSettings($iblockID, $settings)
 	{
-		global $DBType;
-		require_once($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/main/classes/".mb_strtolower($DBType)."/favorites.php");
-
 		CUserOptions::SetOption(
 			"form", 
 			"form_element_".$iblockID,
@@ -362,9 +359,6 @@ class WizardServices
 
 	public static function SetUserOption($category, $option, $settings, $common = false, $userID = false)
 	{
-		global $DBType;
-		require_once($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/main/classes/".mb_strtolower($DBType)."/favorites.php");
-
 		CUserOptions::SetOption(
 			$category, 
 			$option, 

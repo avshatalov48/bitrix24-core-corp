@@ -1,9 +1,11 @@
 <?php
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
-define('CRM_ORDER_DETAILS_AREA', true);
+const CRM_ORDER_DETAILS_AREA = true;
 
 use Bitrix\Crm;
+use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Salescenter;
 use Bitrix\Sale;
@@ -18,14 +20,17 @@ use Bitrix\Crm\Security\EntityPermissionType;
 use Bitrix\Crm\Component\EntityDetails\ComponentMode;
 use Bitrix\Sale\Helpers\Order\Builder;
 use Bitrix\Crm\Product\Url;
+use Bitrix\Catalog;
 
 if(!Main\Loader::includeModule('crm'))
 {
-	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
+	ShowError(Loc::getMessage('CRM_MODULE_NOT_INSTALLED'));
 	return;
 }
-
-Loc::loadMessages(__FILE__);
+if (!Main\Loader::includeModule('catalog'))
+{
+	ShowError(Loc::getMessage('CATALOG_MODULE_NOT_INSTALLED'));
+}
 
 class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponent
 {
@@ -116,13 +121,13 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			$this->arResult['ORIGIN_ID'] = '';
 		}
 
-		$this->arParams['BUILDER_CONTEXT'] = (isset($this->arParams['BUILDER_CONTEXT']) ? $this->arParams['BUILDER_CONTEXT'] : '');
+		$this->arParams['BUILDER_CONTEXT'] = $this->arParams['BUILDER_CONTEXT'] ?? '';
 		if (
-			$this->arParams['BUILDER_CONTEXT'] != Url\ShopBuilder::TYPE_ID
-			&& $this->arParams['BUILDER_CONTEXT'] != Url\ProductBuilder::TYPE_ID
+			$this->arParams['BUILDER_CONTEXT'] !== Catalog\Url\ShopBuilder::TYPE_ID
+			&& $this->arParams['BUILDER_CONTEXT'] !== Url\ProductBuilder::TYPE_ID
 		)
 		{
-			$this->arParams['BUILDER_CONTEXT'] = Url\ShopBuilder::TYPE_ID;
+			$this->arParams['BUILDER_CONTEXT'] = Catalog\Url\ShopBuilder::TYPE_ID;
 		}
 		$this->arResult['BUILDER_CONTEXT'] = $this->arParams['BUILDER_CONTEXT'];
 	}
@@ -311,6 +316,30 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			$formData['PERSON_TYPE_ID'] = Order\PersonType::getContactPersonTypeId();
 		}
 
+		if(isset($_REQUEST['product']) && is_array($_REQUEST['product']))
+		{
+			$basketCode = 1;
+			$productParams = Sale\Helpers\Admin\Blocks\OrderBasket::getProductsData(array_keys($_REQUEST['product']), $formData['SITE_ID'], [], (int)$_REQUEST['USER_ID']);
+
+			foreach($_REQUEST['product'] as $productId => $quantity)
+			{
+				if(
+					!is_array($productParams[$productId])
+					|| empty($productParams[$productId])
+					|| (int)$productParams[$productId]['PRODUCT_ID'] <= 0
+					|| $productParams[$productId]['MODULE'] == ''
+				)
+				{
+					continue;
+				}
+
+				$formData['PRODUCT'][$basketCode] = $productParams[$productId];
+				$formData['PRODUCT'][$basketCode]['BASKET_CODE'] = $basketCode;
+				$formData['PRODUCT'][$basketCode]['QUANTITY'] = $quantity;
+				$basketCode++;
+			}
+		}
+
 		$formData['CURRENCY'] = \CCrmCurrency::GetBaseCurrencyID();
 		$settings = [
 			'createUserIfNeed' => '',
@@ -334,16 +363,14 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 
 		if($order && isset($clientInfo['DEAL_ID']) && $clientInfo['DEAL_ID'] > 0)
 		{
-			$dealBinding = $order->getDealBinding();
-			if ($dealBinding === null)
+			$binding = $order->getEntityBinding();
+			if ($binding === null)
 			{
-				$dealBinding = $order->createDealBinding();
+				$binding = $order->createEntityBinding();
 			}
 
-			if ($dealBinding)
-			{
-				$dealBinding->setField('DEAL_ID', $clientInfo['DEAL_ID']);
-			}
+			$binding->setField('OWNER_ID', $clientInfo['DEAL_ID']);
+			$binding->setField('OWNER_TYPE_ID', CCrmOwnerType::Deal);
 		}
 
 		return $order;
@@ -612,21 +639,11 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 
 			if(\Bitrix\Crm\Automation\Factory::isAutomationAvailable(CCrmOwnerType::Order))
 			{
-				Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/crm.automation/templates/.default/style.css');
 				$this->arResult['TABS'][] = array(
 					'id' => 'tab_automation',
 					'name' => Loc::getMessage('CRM_ORDER_TAB_AUTOMATION'),
-					'loader' => array(
-						'serviceUrl' => '/bitrix/components/bitrix/crm.automation/lazyload.ajax.php?&site='.$this->arResult['SITE_ID'].'&'.bitrix_sessid_get(),
-						'componentData' => array(
-							'template' => '',
-							'params' => array(
-								'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
-								'ENTITY_ID' => $this->entityID,
-								'back_url' => \CCrmOwnerType::GetEntityShowPath(\CCrmOwnerType::Order, $this->entityID)
-							)
-						)
-					)
+					'url' => Container::getInstance()->getRouter()->getAutomationUrl(CCrmOwnerType::Order)
+						->addParams(['id' => $this->entityID]),
 				);
 			}
 
@@ -645,28 +662,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 				)
 			);
 
-			$this->arResult['TABS'][] = array(
-				'id' => 'tab_event',
-				'name' => Loc::getMessage('CRM_ORDER_TAB_EVENT'),
-				'loader' => array(
-					'serviceUrl' => '/bitrix/components/bitrix/crm.event.view/lazyload.ajax.php?&site='.$this->arResult['SITE_ID'].'&'.bitrix_sessid_get(),
-					'componentData' => array(
-						'template' => '',
-						'contextId' => "ORDER_{$this->entityID}_EVENT",
-						'params' => array(
-							'AJAX_OPTION_ADDITIONAL' => "ORDER_{$this->entityID}_EVENT",
-							'ENTITY_TYPE' => 'ORDER',
-							'ENTITY_ID' => $this->entityID,
-							'PATH_TO_USER_PROFILE' => $this->arResult['PATH_TO_USER_PROFILE'],
-							'TAB_ID' => 'tab_event',
-							'INTERNAL' => 'Y',
-							'SHOW_INTERNAL_FILTER' => 'Y',
-							'PRESERVE_HISTORY' => true,
-							'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE']
-						)
-					)
-				)
-			);
+			$this->arResult['TABS'][] = $this->getEventTabParams();
 		}
 		else
 		{
@@ -703,11 +699,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 				'enabled' => false
 			);
 
-			$this->arResult['TABS'][] = array(
-				'id' => 'tab_event',
-				'name' => Loc::getMessage('CRM_ORDER_TAB_EVENT'),
-				'enabled' => false
-			);
+			$this->arResult['TABS'][] = $this->getEventTabParams();
 		}
 		//endregion
 
@@ -1375,6 +1367,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 					'ENTITY_EDITOR_FORMAT' => true,
 					'IS_HIDDEN' => !$isEntityReadPermitted,
 					'REQUIRE_REQUISITE_DATA' => true,
+					'REQUIRE_EDIT_REQUISITE_DATA' => true,
 					'REQUIRE_MULTIFIELDS' => true,
 					'NAME_TEMPLATE' => \Bitrix\Crm\Format\PersonNameFormatter::getFormat()
 				)
@@ -1394,15 +1387,16 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 			$clientInfo['CONTACT_DATA'][] = CCrmEntitySelectorHelper::PrepareEntityInfo(
 				CCrmOwnerType::ContactName,
 				$contactID,
-				array(
+				[
 					'ENTITY_EDITOR_FORMAT' => true,
 					'IS_HIDDEN' => !$isEntityReadPermitted,
 					'REQUIRE_REQUISITE_DATA' => true,
 					'REQUIRE_EDIT_REQUISITE_DATA' => ($iteration === 0), // load full requisite data for first item only (due to performance optimisation)
 					'REQUIRE_MULTIFIELDS' => true,
 					'REQUIRE_BINDINGS' => true,
-					'NAME_TEMPLATE' => \Bitrix\Crm\Format\PersonNameFormatter::getFormat()
-				)
+					'NAME_TEMPLATE' => \Bitrix\Crm\Format\PersonNameFormatter::getFormat(),
+					'NORMALIZE_MULTIFIELDS' => true,
+				]
 			);
 			$iteration++;
 		}
@@ -1452,7 +1446,10 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 		$this->entityData += $this->getShipmentEntityData();
 		$this->arResult['PERSON_TYPES'] = array();
 		$personTypes = \Bitrix\Crm\Order\PersonType::load($this->arResult['SITE_ID']);
-		if(empty($this->entityData['PERSON_TYPE_ID']))
+		if (
+			empty($this->entityData['PERSON_TYPE_ID'])
+			|| !array_key_exists((int)$this->entityData['PERSON_TYPE_ID'], $personTypes)
+		)
 		{
 			$this->entityData['PERSON_TYPE_ID'] = key($personTypes);
 		}
@@ -1715,7 +1712,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 
 			$fields = array(
 				'NUMBER_AND_DATE' => Loc::getMessage('CRM_ORDER_SHIPMENT_SUBTITLE_MASK', array(
-					'#ID#' => $shipment->getField('ID'),
+					'#ID#' => $shipment->getField('ACCOUNT_NUMBER'),
 					'#DATE_BILL#' => CCrmComponentHelper::TrimDateTimeString(
 						ConvertTimeStamp(
 							MakeTimeStamp(
@@ -2126,7 +2123,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 					'PAY_SYSTEM_LOGO_PATH' => $paySystemLogoPath,
 					'DATE_PAID' => $payment->getField('DATE_PAID'),
 					'NUMBER_AND_DATE' => Loc::getMessage('CRM_ORDER_PAYMENT_SUBTITLE_MASK', array(
-						'#ID#' => $payment->getField('ID'),
+						'#ID#' => $payment->getField('ACCOUNT_NUMBER'),
 						'#DATE_BILL#' => CCrmComponentHelper::TrimDateTimeString(
 							ConvertTimeStamp(
 								MakeTimeStamp(
@@ -2418,5 +2415,15 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 		}
 
 		return $result;
+	}
+
+	protected function getEventTabParams(): array
+	{
+		return CCrmComponentHelper::getEventTabParams(
+			$this->entityID,
+			Loc::getMessage('CRM_ORDER_TAB_EVENT'),
+			CCrmOwnerType::OrderName,
+			$this->arResult
+		);
 	}
 }

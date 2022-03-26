@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Order;
 
 use Bitrix\Crm\Activity\Provider\Sms;
+use Bitrix\Crm\Relation\EntityRelationTable;
 use Bitrix\Main\EventResult;
 use Bitrix\Sale;
 use Bitrix\Crm;
@@ -13,7 +14,7 @@ use Bitrix\Sale\TradingPlatform\Landing\Landing;
 use Bitrix\Iblock;
 use Bitrix\Catalog\v2\Integration\UI\ViewedProducts;
 use Bitrix\Main\Engine\UrlManager;
-use \Bitrix\Crm\Order\BindingsMaker\TimelineBindingsMaker;
+use Bitrix\Crm\Order\BindingsMaker\TimelineBindingsMaker;
 
 if (!Main\Loader::includeModule('sale'))
 {
@@ -30,8 +31,8 @@ class Order extends Sale\Order
 {
 	protected $contactCompanyCollection = null;
 
-	/** @var DealBinding|null $dealBinding */
-	protected $dealBinding = null;
+	/** @var EntityBinding|null $entityBinding */
+	protected $entityBinding = null;
 
 	private $requisiteList = [];
 
@@ -64,8 +65,7 @@ class Order extends Sale\Order
 			return $result;
 		}
 
-		$contactCompanyCollection = $this->getContactCompanyCollection();
-		if ($contactCompanyCollection->isEmpty())
+		if ($this->needCreateContactCompany())
 		{
 			$r = $this->addContactCompany();
 			if (!$r->isSuccess())
@@ -78,16 +78,17 @@ class Order extends Sale\Order
 
 		if ($this->enableAutomaticDealCreation())
 		{
-			$dealBinding = $this->getDealBinding();
-			if (!$dealBinding)
+			$binding = $this->getEntityBinding();
+			if (!$binding)
 			{
 				$dealCreator = new DealCreator($this);
 				$dealId = $dealCreator->create();
 				if ($dealId)
 				{
-					$dealBinding = $this->createDealBinding();
-					$dealBinding->setField('DEAL_ID', $dealId);
-					$dealBinding->markCrmDealAsNew();
+					$binding = $this->createEntityBinding();
+					$binding->setField('OWNER_ID', $dealId);
+					$binding->setField('OWNER_TYPE_ID', \CCrmOwnerType::Deal);
+					$binding->markEntityAsNew();
 				}
 			}
 		}
@@ -111,6 +112,11 @@ class Order extends Sale\Order
 
 	protected function enableAutomaticDealCreation()
 	{
+		if ($this->isSetRealizationDocumentTradeBinding())
+		{
+			return false;
+		}
+
 		if (!\CCrmSaleHelper::isWithOrdersMode())
 		{
 			return true;
@@ -132,53 +138,37 @@ class Order extends Sale\Order
 		return false;
 	}
 
-	/**
-	 * @param $checkId
-	 * @param array $settings
-	 */
-	public function addTimelineCheckEntryOnCreate($checkId, array $settings = []) : void
+	private function isSetRealizationDocumentTradeBinding(): bool
 	{
-		if ((int)$checkId <= 0)
+		$collection = $this->getTradeBindingCollection();
+		/** @var TradeBindingEntity $binding */
+		foreach ($collection as $binding)
 		{
-			return;
+			$platform = $binding->getTradePlatform();
+			if (
+				$platform
+				&& $platform->getCode() === TradingPlatform\RealizationDocument::TRADING_PLATFORM_CODE
+			)
+			{
+				return true;
+			}
 		}
 
-		Crm\Timeline\OrderCheckController::getInstance()->onPrintCheck(
-			$checkId,
-			$this->getTimelineEntryParamsOnCheckPrint($settings)
-		);
+		return false;
 	}
 
-	public function addTimelineCheckEntryOnFailure(array $settings = []) : void
+	private function needCreateContactCompany(): bool
 	{
-		Crm\Timeline\OrderCheckController::getInstance()->onCheckFailure(
-			$this->getTimelineEntryParamsOnCheckFailure($settings)
-		);
-	}
+		$contactCompanyCollection = $this->getContactCompanyCollection();
+		if (
+			$contactCompanyCollection->isEmpty()
+			&& $contactCompanyCollection->isAutoCreationModeEnabled()
+		)
+		{
+			return true;
+		}
 
-	/**
-	 * @param array $settings
-	 * @return array
-	 */
-	private function getTimelineEntryParamsOnCheckPrint(array $settings)
-	{
-		return [
-			'ORDER_FIELDS' => $this->getFieldValues(),
-			'SETTINGS' => $settings,
-			'BINDINGS' => TimelineBindingsMaker::makeByOrder($this),
-		];
-	}
-
-	private function getTimelineEntryParamsOnCheckFailure(array $settings)
-	{
-		$resultSettings = $settings;
-		$resultSettings['FAILURE'] = 'Y';
-		$resultSettings['PRINTED'] = 'N';
-		return [
-			'ORDER_FIELDS' => $this->getFieldValues(),
-			'SETTINGS' => $resultSettings,
-			'BINDINGS' => TimelineBindingsMaker::makeByOrder($this),
-		];
+		return false;
 	}
 
 	/**
@@ -229,16 +219,39 @@ class Order extends Sale\Order
 			'MC_BANK_DETAIL_ID' => 0
 		];
 
-		$requisiteList = $entity->getRequisiteList();
-		if ($requisiteList)
+		$matcher = Matcher\EntityMatchManager::getInstance();
+		$entityId = $entity->getField('ENTITY_ID');
+		$entityTypeId = $entity->getField('ENTITY_TYPE_ID');
+		$requisiteMatch = $matcher->matchEntityRequisites($this, $entityTypeId, $entityId);
+		if (!empty($requisiteMatch))
 		{
-			$result['REQUISITE_ID'] = current($requisiteList)['ID'];
+			[$selectedRequisites, $selectedBankRequisites] = $requisiteMatch;
 		}
 
-		$bankRequisiteList = $entity->getBankRequisiteList();
-		if ($bankRequisiteList)
+		if (!empty($selectedRequisites))
 		{
-			$result['BANK_DETAIL_ID'] = current($bankRequisiteList)['ID'];
+			$result['REQUISITE_ID'] = current($selectedRequisites)['ID'];
+		}
+		else
+		{
+			$requisiteList = $entity->getRequisiteList();
+			if ($requisiteList)
+			{
+				$result['REQUISITE_ID'] = current($requisiteList)['ID'];
+			}
+		}
+
+		if (!empty($selectedBankRequisites))
+		{
+			$result['BANK_DETAIL_ID'] = current($selectedBankRequisites)['ID'];
+		}
+		else
+		{
+			$bankRequisiteList = $entity->getBankRequisiteList();
+			if ($bankRequisiteList)
+			{
+				$result['BANK_DETAIL_ID'] = current($bankRequisiteList)['ID'];
+			}
 		}
 
 		$this->setRequisiteLink($result);
@@ -259,8 +272,13 @@ class Order extends Sale\Order
 			);
 		}
 
-		$dealBinding = $this->getDealBinding();
-		if ($dealBinding && $dealBinding->isChanged() && !$this->enableAutomaticDealCreation())
+		$binding = $this->getEntityBinding();
+		if (
+			$binding
+			&& $binding->getOwnerTypeId() === \CCrmOwnerType::Deal
+			&& $binding->isChanged()
+			&& !$this->enableAutomaticDealCreation()
+		)
 		{
 			$this->addTimelineEntryOnBindingDealChanged();
 		}
@@ -283,7 +301,8 @@ class Order extends Sale\Order
 
 				if (
 					$this->getField('STATUS_ID') === OrderStatus::getFinalStatus()
-					&& $this->getDealBinding()
+					&& $binding
+					&& $binding->getOwnerTypeId() === \CCrmOwnerType::Deal
 				)
 				{
 					$params = $this->getTimelineEntryParamsOnSetFinalStatus();
@@ -323,15 +342,17 @@ class Order extends Sale\Order
 
 		if ($this->getFields()->isChanged('PAYED') && $this->isPaid())
 		{
-			if ($this->getDealBinding())
+			$binding = $this->getEntityBinding();
+			if (
+				$binding
+				&& Crm\Automation\Factory::canUseAutomation()
+				&& Crm\Automation\Trigger\OrderPaidTrigger::isSupported($binding->getOwnerTypeId())
+			)
 			{
-				if (Crm\Automation\Factory::canUseAutomation())
-				{
-					Crm\Automation\Trigger\OrderPaidTrigger::execute(
-						[['OWNER_TYPE_ID' => \CCrmOwnerType::Deal, 'OWNER_ID' => $this->getDealBinding()->getDealId()]],
-						['ORDER' => $this]
-					);
-				}
+				Crm\Automation\Trigger\OrderPaidTrigger::execute(
+					[['OWNER_TYPE_ID' => $binding->getOwnerTypeId(), 'OWNER_ID' => $binding->getOwnerId()]],
+					['ORDER' => $this]
+				);
 			}
 
 			Crm\Timeline\OrderController::getInstance()->onPay(
@@ -349,12 +370,16 @@ class Order extends Sale\Order
 				$this->getTimelineEntryParamsOnDeducted()
 			);
 
-			if ($this->getDealBinding())
+			$binding = $this->getEntityBinding();
+			if (
+				$binding
+				&& $binding->getOwnerTypeId() === \CCrmOwnerType::Deal
+			)
 			{
 				if (Crm\Automation\Factory::canUseAutomation())
 				{
 					Crm\Automation\Trigger\DeliveryFinishedTrigger::execute(
-						[['OWNER_TYPE_ID' => \CCrmOwnerType::Deal, 'OWNER_ID' => $this->getDealBinding()->getDealId()]],
+						[['OWNER_TYPE_ID' => \CCrmOwnerType::Deal, 'OWNER_ID' => $binding->getOwnerId()]],
 						['ORDER' => $this]
 					);
 				}
@@ -387,7 +412,10 @@ class Order extends Sale\Order
 	 */
 	private function updateDealOrderStage()
 	{
-		if (!$this->getDealBinding())
+		if (
+			!$this->getEntityBinding()
+			|| $this->getEntityBinding()->getOwnerTypeId() !== \CCrmOwnerType::Deal
+		)
 		{
 			return;
 		}
@@ -428,7 +456,7 @@ class Order extends Sale\Order
 		{
 			$fields = ['ORDER_STAGE' => $nextStage];
 			$deal = new \CCrmDeal(false);
-			$deal->Update($this->getDealBinding()->getDealId(), $fields);
+			$deal->Update($this->getEntityBinding()->getOwnerId(), $fields);
 		}
 	}
 
@@ -523,11 +551,11 @@ class Order extends Sale\Order
 	{
 		Crm\Timeline\OrderController::getInstance()->onBindingDealCreation(
 			$this->getId(),
-			$this->getDealBinding()->getDealId(),
+			$this->getEntityBinding()->getOwnerId(),
 			[
 				'ORDER_FIELDS' => $this->getFieldValues(),
 				'IS_NEW_ORDER' => $this->isNew() ? 'Y' : 'N',
-				'IS_NEW_DEAL' => $this->getDealBinding()->isNewCrmDeal() ? 'Y' : 'N'
+				'IS_NEW_DEAL' => $this->getEntityBinding()->isNewEntity() ? 'Y' : 'N'
 			]
 		);
 	}
@@ -539,7 +567,7 @@ class Order extends Sale\Order
 	{
 		Crm\Timeline\OrderController::getInstance()->notifyBindingDeal(
 			$this->getId(),
-			$this->getDealBinding()->getDealId(),
+			$this->getEntityBinding()->getOwnerId(),
 			$params
 		);
 	}
@@ -602,7 +630,7 @@ class Order extends Sale\Order
 
 		$skus = ViewedProducts\Repository::getInstance()->getList();
 
-		$newCard = Catalog\Config\State::isProductCardSliderEnabled();
+		$newCard = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isFullCatalogEnabled();
 
 		$result  = [];
 		foreach ($skus as $sku)
@@ -636,17 +664,18 @@ class Order extends Sale\Order
 
 		if (
 			$viewedProducts
-			&& $this->getDealBinding()
+			&& $this->getEntityBinding()
+			&& $this->getEntityBinding()->getOwnerTypeId() === \CCrmOwnerType::Deal
 			&& $this->getTradeBindingCollection()->hasTradingPlatform(Landing::TRADING_PLATFORM_CODE)
 		)
 		{
 			Crm\Timeline\OrderController::getInstance()->onLandingOrderCreate(
 				$this->getId(),
-				$this->getDealBinding()->getDealId(),
+				$this->getEntityBinding()->getOwnerId(),
 				[
 					'ORDER_FIELDS' => $this->getFieldValues(),
 					'SETTINGS' => [
-						'DEAL_ID' => $this->getDealBinding()->getDealId(),
+						'DEAL_ID' => $this->getEntityBinding()->getOwnerId(),
 						'VIEWED_PRODUCTS' => $viewedProducts,
 					],
 				]
@@ -660,8 +689,8 @@ class Order extends Sale\Order
 	private function sendSmsToClientOnStoreV3OrderCreate(Sale\TradingPlatform\Platform $platform): void
 	{
 		/** @var Contact|Company|null $entityCommunication */
-		$entityCommunication = $this->getEntityCommunication();
-		$phoneTo = $this->getEntityCommunicationPhone();
+		$entityCommunication = $this->getContactCompanyCollection()->getEntityCommunication();
+		$phoneTo = $this->getContactCompanyCollection()->getEntityCommunicationPhone();
 
 		if ($entityCommunication && $phoneTo)
 		{
@@ -824,18 +853,18 @@ class Order extends Sale\Order
 			$result->addErrors($r->getErrors());
 		}
 
-		$dealBinding = $this->dealBinding;
-		if ($dealBinding)
+		$binding = $this->entityBinding;
+		if ($binding)
 		{
-			$r = $dealBinding->save();
+			$r = $binding->save();
 			if (!$r->isSuccess())
 			{
 				$result->addErrors($r->getErrors());
 			}
 
-			if ($dealBinding->isDeleted())
+			if ($binding->isDeleted())
 			{
-				$this->dealBinding = null;
+				$this->entityBinding = null;
 			}
 		}
 
@@ -861,10 +890,10 @@ class Order extends Sale\Order
 			$result->addErrors($r->getErrors());
 		}
 
-		/** @var DealBinding $dealBinding */
-		$dealBinding = $registry->get(ENTITY_CRM_ORDER_DEAL_BINDING);
+		/** @var EntityBinding $binding */
+		$binding = $registry->get(ENTITY_CRM_ORDER_ENTITY_BINDING);
 
-		$r = $dealBinding::deleteNoDemand($orderId);
+		$r = $binding::deleteNoDemand($orderId);
 		if (!$r->isSuccess())
 		{
 			$result->addErrors($r->getErrors());
@@ -892,58 +921,12 @@ class Order extends Sale\Order
 				}
 			}
 
-			$dealBinding = $order->getDealBinding();
-			if ($dealBinding)
+			$binding = $order->getEntityBinding();
+			if ($binding)
 			{
-				$dealBinding->delete();
+				$binding->delete();
 			}
 		}
-	}
-
-	/**
-	 * @return Company|Contact|null
-	 */
-	public function getEntityCommunication()
-	{
-		$contact = $this->getContactCompanyCollection()->getPrimaryContact();
-		if ($contact)
-		{
-			return $contact;
-		}
-
-		$company = $this->getContactCompanyCollection()->getPrimaryCompany();
-		if ($company)
-		{
-			return $company;
-		}
-
-		return null;
-	}
-
-	/**
-	 * @return string|null
-	 */
-	public function getEntityCommunicationPhone(): ?string
-	{
-		$entityCommunication = $this->getEntityCommunication();
-		if (!$entityCommunication)
-		{
-			return null;
-		}
-
-		$phone = \CCrmFieldMulti::GetEntityFirstPhone(
-			$entityCommunication::getEntityTypeName(),
-			$entityCommunication->getField('ENTITY_ID'),
-			true,
-			false
-		);
-
-		if (!$phone)
-		{
-			return null;
-		}
-
-		return (string)$phone->format();
 	}
 
 	/**
@@ -1002,9 +985,9 @@ class Order extends Sale\Order
 			$contactCompanyCollection->clearChanged();
 		}
 
-		if ($dealBinding = $this->getDealBinding())
+		if ($binding = $this->getEntityBinding())
 		{
-			$dealBinding->clearChanged();
+			$binding->clearChanged();
 		}
 	}
 
@@ -1031,6 +1014,7 @@ class Order extends Sale\Order
 			}
 
 			Crm\Timeline\TimelineEntry::deleteByOwner(\CCrmOwnerType::Order, $id);
+			EntityRelationTable::deleteByItem(\CCrmOwnerType::Order, $id);
 		}
 
 		return $result;
@@ -1166,6 +1150,8 @@ class Order extends Sale\Order
 				Sale\Registry::ENTITY_BUNDLE_COLLECTION => '\Bitrix\Crm\Order\BundleCollection',
 				Sale\Registry::ENTITY_BASKET_PROPERTIES_COLLECTION => '\Bitrix\Crm\Order\BasketPropertiesCollection',
 				Sale\Registry::ENTITY_BASKET_PROPERTY_ITEM => '\Bitrix\Crm\Order\BasketPropertyItem',
+				Sale\Registry::ENTITY_BASKET_RESERVE_COLLECTION => '\Bitrix\Crm\Order\ReserveQuantityCollection',
+				Sale\Registry::ENTITY_BASKET_RESERVE_COLLECTION_ITEM => '\Bitrix\Crm\Order\ReserveQuantity',
 				Sale\Registry::ENTITY_PAYMENT => '\Bitrix\Crm\Order\Payment',
 				Sale\Registry::ENTITY_PAYMENT_COLLECTION => '\Bitrix\Crm\Order\PaymentCollection',
 				Sale\Registry::ENTITY_PAYABLE_BASKET_ITEM => '\Bitrix\Crm\Order\PayableBasketItem',
@@ -1187,7 +1173,7 @@ class Order extends Sale\Order
 				ENTITY_CRM_COMPANY => 'Bitrix\Crm\Order\Company',
 				ENTITY_CRM_CONTACT => 'Bitrix\Crm\Order\Contact',
 				ENTITY_CRM_CONTACT_COMPANY_COLLECTION => 'Bitrix\Crm\Order\ContactCompanyCollection',
-				ENTITY_CRM_ORDER_DEAL_BINDING => 'Bitrix\Crm\Order\DealBinding',
+				ENTITY_CRM_ORDER_ENTITY_BINDING => 'Bitrix\Crm\Order\EntityBinding',
 				Sale\Registry::ENTITY_TRADE_BINDING_COLLECTION => 'Bitrix\Crm\Order\TradeBindingCollection',
 				Sale\Registry::ENTITY_TRADE_BINDING_ENTITY => 'Bitrix\Crm\Order\TradeBindingEntity',
 			)
@@ -1197,47 +1183,47 @@ class Order extends Sale\Order
 	}
 
 	/**
-	 * @return DealBinding
+	 * @return EntityBinding
 	 */
-	public function getDealBinding()
+	public function getEntityBinding()
 	{
-		if (!$this->dealBinding)
+		if (!$this->entityBinding)
 		{
-			$this->dealBinding = $this->loadDealBinding();
+			$this->entityBinding = $this->loadEntityBinding();
 		}
 
-		if ($this->dealBinding && $this->dealBinding->isDeleted())
+		if ($this->entityBinding && $this->entityBinding->isDeleted())
 		{
 			return null;
 		}
 
-		return $this->dealBinding;
+		return $this->entityBinding;
 	}
 
 	/**
-	 * @return DealBinding|null
+	 * @return EntityBinding|null
 	 */
-	public function loadDealBinding()
+	public function loadEntityBinding()
 	{
 		$registry = Sale\Registry::getInstance(static::getRegistryType());
 
-		$dealBindingClassName = $registry->get(ENTITY_CRM_ORDER_DEAL_BINDING);
-		return $dealBindingClassName::load($this);
+		$bindingClassName = $registry->get(ENTITY_CRM_ORDER_ENTITY_BINDING);
+		return $bindingClassName::load($this);
 	}
 
 	/**
-	 * @return DealBinding
+	 * @return EntityBinding
 	 */
-	public function createDealBinding()
+	public function createEntityBinding()
 	{
 		$registry = Sale\Registry::getInstance(static::getRegistryType());
 
-		/** @var DealBinding $dealBindingClassName */
-		$dealBindingClassName = $registry->get(ENTITY_CRM_ORDER_DEAL_BINDING);
+		/** @var EntityBinding $bindingClassName */
+		$bindingClassName = $registry->get(ENTITY_CRM_ORDER_ENTITY_BINDING);
 
-		$this->dealBinding = $dealBindingClassName::create($this);
+		$this->entityBinding = $bindingClassName::create($this);
 
-		return $this->dealBinding;
+		return $this->entityBinding;
 	}
 
 	/**
@@ -1249,9 +1235,9 @@ class Order extends Sale\Order
 
 		$result['CONTACTS_COMPANIES'] = $this->getContactCompanyCollection()->toArray();
 
-		if ($this->getDealBinding())
+		if ($this->getEntityBinding())
 		{
-			$result['DEAL_BINDING'] = $this->getDealBinding()->toArray();
+			$result['ENTITY_BINDING'] = $this->getEntityBinding()->toArray();
 		}
 
 		return $result;

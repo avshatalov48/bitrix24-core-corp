@@ -1,6 +1,6 @@
 <?php
 
-/* ORMENTITYANNOTATION:Bitrix\Intranet\CustomSection\Entity\CustomSectionPageTable:intranet/lib/customsection/entity/customsectionpagetable.php:0ef8bb6d17557ef3363ce83a3561dec5 */
+/* ORMENTITYANNOTATION:Bitrix\Intranet\CustomSection\Entity\CustomSectionPageTable:intranet\lib\CustomSection\Entity\CustomSectionPageTable.php:420e1f543a39c886ce73b6a8e8a34b3c */
 namespace Bitrix\Intranet\CustomSection\Entity {
 	/**
 	 * EO_CustomSectionPage
@@ -201,7 +201,7 @@ namespace Bitrix\Intranet\CustomSection\Entity {
 	 */
 	class EO_CustomSectionPage_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Intranet\CustomSection\Entity\CustomSectionTable:intranet/lib/customsection/entity/customsectiontable.php:16a742cf9181fff1bdc82eabb8aaa7b3 */
+/* ORMENTITYANNOTATION:Bitrix\Intranet\CustomSection\Entity\CustomSectionTable:intranet\lib\CustomSection\Entity\CustomSectionTable.php:240c3323e9eaea3322eac848c3b18f9d */
 namespace Bitrix\Intranet\CustomSection\Entity {
 	/**
 	 * EO_CustomSection
@@ -367,7 +367,7 @@ namespace Bitrix\Intranet\CustomSection\Entity {
 	 */
 	class EO_CustomSection_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Intranet\Internals\InvitationTable:intranet/lib/internals/invitation.php:1ae0f9766b6f0aeed7127db3e2202737 */
+/* ORMENTITYANNOTATION:Bitrix\Intranet\Internals\InvitationTable:intranet\lib\internals\invitation.php:709e8968cf1d06a46897be1e8ee27f9f */
 namespace Bitrix\Intranet\Internals {
 	/**
 	 * EO_Invitation
@@ -569,7 +569,7 @@ namespace Bitrix\Intranet\Internals {
 	 */
 	class EO_Invitation_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Intranet\Internals\QueueTable:intranet/lib/internals/queue.php:256e2f9d3b792c5872db79f482c878de */
+/* ORMENTITYANNOTATION:Bitrix\Intranet\Internals\QueueTable:intranet\lib\internals\queue.php:69b9079f32e4e92b5b0a95f700ae1277 */
 namespace Bitrix\Intranet\Internals {
 	/**
 	 * EO_Queue
@@ -703,7 +703,7 @@ namespace Bitrix\Intranet\Internals {
 	 */
 	class EO_Queue_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Intranet\Internals\ThemeTable:intranet/lib/internals/theme.php:10eb02626e6eff9ae1589f6b108478fb */
+/* ORMENTITYANNOTATION:Bitrix\Intranet\Internals\ThemeTable:intranet\lib\internals\theme.php:747c3fadab900c8ab24cfd781e308039 */
 namespace Bitrix\Intranet\Internals {
 	/**
 	 * EO_Theme
@@ -879,7 +879,7 @@ namespace Bitrix\Intranet\Internals {
 	 */
 	class EO_Theme_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Intranet\RatingSubordinateTable:intranet/lib/ratingsubordinate.php:e5ff65deec0665d3b6fd1749e32041f1 */
+/* ORMENTITYANNOTATION:Bitrix\Intranet\RatingSubordinateTable:intranet\lib\ratingsubordinate.php:9618ca68cb323abbd24f0e569efd7caa */
 namespace Bitrix\Intranet {
 	/**
 	 * EO_RatingSubordinate
@@ -1031,7 +1031,7 @@ namespace Bitrix\Intranet {
 	 */
 	class EO_RatingSubordinate_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Intranet\UserTable:intranet/lib/user.php:a70e1d3600769f70d0569c77e88152ba */
+/* ORMENTITYANNOTATION:Bitrix\Intranet\UserTable:intranet\lib\user.php:b51fa0a2ffd881f45afc5f5bca5023e5 */
 namespace Bitrix\Intranet {
 	/**
 	 * EO_User
@@ -1640,16 +1640,6 @@ namespace Bitrix\Intranet {
 	 * @method bool isIndexFilled()
 	 * @method bool isIndexChanged()
 	 * @method \Bitrix\Main\EO_UserIndex fillIndex()
-	 * @method \Bitrix\Main\EO_UserIndexSelector getIndexSelector()
-	 * @method \Bitrix\Main\EO_UserIndexSelector remindActualIndexSelector()
-	 * @method \Bitrix\Main\EO_UserIndexSelector requireIndexSelector()
-	 * @method \Bitrix\Intranet\EO_User setIndexSelector(\Bitrix\Main\EO_UserIndexSelector $object)
-	 * @method \Bitrix\Intranet\EO_User resetIndexSelector()
-	 * @method \Bitrix\Intranet\EO_User unsetIndexSelector()
-	 * @method bool hasIndexSelector()
-	 * @method bool isIndexSelectorFilled()
-	 * @method bool isIndexSelectorChanged()
-	 * @method \Bitrix\Main\EO_UserIndexSelector fillIndexSelector()
 	 * @method \Bitrix\Main\EO_UserCounter getCounter()
 	 * @method \Bitrix\Main\EO_UserCounter remindActualCounter()
 	 * @method \Bitrix\Main\EO_UserCounter requireCounter()
@@ -1880,9 +1870,6 @@ namespace Bitrix\Intranet {
 	 * @method \Bitrix\Main\EO_UserIndex[] getIndexList()
 	 * @method \Bitrix\Intranet\EO_User_Collection getIndexCollection()
 	 * @method \Bitrix\Main\EO_UserIndex_Collection fillIndex()
-	 * @method \Bitrix\Main\EO_UserIndexSelector[] getIndexSelectorList()
-	 * @method \Bitrix\Intranet\EO_User_Collection getIndexSelectorCollection()
-	 * @method \Bitrix\Main\EO_UserIndexSelector_Collection fillIndexSelector()
 	 * @method \Bitrix\Main\EO_UserCounter[] getCounterList()
 	 * @method \Bitrix\Intranet\EO_User_Collection getCounterCollection()
 	 * @method \Bitrix\Main\EO_UserCounter_Collection fillCounter()
@@ -1959,7 +1946,7 @@ namespace Bitrix\Intranet {
 	 */
 	class EO_User_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Intranet\UStat\DepartmentDayTable:intranet/lib/ustat/departmentday.php:209793287c7b4fb0153a85cc6441d473 */
+/* ORMENTITYANNOTATION:Bitrix\Intranet\UStat\DepartmentDayTable:intranet\lib\ustat\departmentday.php:858e16cabd2beb2d998f7c11304c6dc3 */
 namespace Bitrix\Intranet\UStat {
 	/**
 	 * EO_DepartmentDay
@@ -2201,7 +2188,7 @@ namespace Bitrix\Intranet\UStat {
 	 */
 	class EO_DepartmentDay_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Intranet\UStat\DepartmentHourTable:intranet/lib/ustat/departmenthour.php:40d0af079d97664e35b4b5fe4f04da42 */
+/* ORMENTITYANNOTATION:Bitrix\Intranet\UStat\DepartmentHourTable:intranet\lib\ustat\departmenthour.php:dd6c639e2b23b87930c09f15b18ff69f */
 namespace Bitrix\Intranet\UStat {
 	/**
 	 * EO_DepartmentHour
@@ -2419,7 +2406,7 @@ namespace Bitrix\Intranet\UStat {
 	 */
 	class EO_DepartmentHour_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Intranet\UStat\UserDayTable:intranet/lib/ustat/userday.php:0559f92e149549b9281920b267e29654 */
+/* ORMENTITYANNOTATION:Bitrix\Intranet\UStat\UserDayTable:intranet\lib\ustat\userday.php:b68c7253a6faaab371c0fcb147198c29 */
 namespace Bitrix\Intranet\UStat {
 	/**
 	 * EO_UserDay
@@ -2637,7 +2624,7 @@ namespace Bitrix\Intranet\UStat {
 	 */
 	class EO_UserDay_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Intranet\UStat\UserHourTable:intranet/lib/ustat/userhour.php:7ab03fc279ab80cb0d4b91a7c6335b54 */
+/* ORMENTITYANNOTATION:Bitrix\Intranet\UStat\UserHourTable:intranet\lib\ustat\userhour.php:428fa6f1090143bb265196c36df2d34c */
 namespace Bitrix\Intranet\UStat {
 	/**
 	 * EO_UserHour

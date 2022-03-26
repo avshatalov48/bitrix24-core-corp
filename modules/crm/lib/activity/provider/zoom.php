@@ -133,7 +133,7 @@ class Zoom extends Base
 			$currentDateTime = new DateTime();
 			$activityStartDateTime = DateTime::createFromUserTime($activity['START_TIME']);
 
-			if ($activityStartDateTime < $currentDateTime)
+			if ($activityStartDateTime->getTimestamp() < $currentDateTime->getTimestamp())
 			{
 				$result->addError(new Error(Loc::getMessage("CRM_ACTIVITY_PROVIDER_ZOOM_ERROR_INCORRECT_DATETIME")));
 				return $result;

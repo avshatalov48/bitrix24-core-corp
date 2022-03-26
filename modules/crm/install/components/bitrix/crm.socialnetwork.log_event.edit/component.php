@@ -365,7 +365,7 @@ if (!empty($lastContactIds))
 {
 	$dbLastContacts = CCrmContact::GetListEx(
 		$arOrder = array(),
-		$arFilter = array('ID' => $lastContactIds),
+		$arFilter = array('ID' => $lastContactIds, '@CATEGORY_ID' => 0,),
 		$arGroupBy = false,
 		$arNavStartParams = array('nTopCount' => 20),
 		$arSelectFields = array('ID', 'HONORIFIC', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'COMPANY_TITLE', 'PHOTO', 'DATE_CREATE')
@@ -393,7 +393,7 @@ if (!empty($lastCompanyIds))
 {
 	$dbLastCompanies = CCrmCompany::GetListEx(
 		$arOrder = array(),
-		$arFilter = array('ID' => $lastCompanyIds),
+		$arFilter = array('ID' => $lastCompanyIds, '@CATEGORY_ID' => 0,),
 		$arGroupBy = false,
 		$arNavStartParams = array('nTopCount' => 20),
 		$arSelectFields = array('ID', 'TITLE', 'COMPANY_TYPE', 'INDUSTRY',  'LOGO', 'DATE_CREATE')

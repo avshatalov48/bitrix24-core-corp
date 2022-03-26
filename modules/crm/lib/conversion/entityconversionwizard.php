@@ -1,8 +1,17 @@
 <?php
+
 namespace Bitrix\Crm\Conversion;
+
+use Bitrix\Crm\Item;
+use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
-abstract class EntityConversionWizard
+
+class EntityConversionWizard
 {
+	public const QUERY_PARAM_SOURCE_TYPE_ID = 'conv_source_type_id';
+	public const QUERY_PARAM_SOURCE_ID = 'conv_source_id';
+
 	/** @var EntityConverter|null  */
 	protected $converter = null;
 	/** @var string  */
@@ -21,18 +30,254 @@ abstract class EntityConversionWizard
 	protected $isMobileContext = false;
 	/** @var array|null */
 	protected $eventParams = null;
+	/** @var bool $skipMultipleUserFields */
+	protected $skipMultipleUserFields = false;
+
+	/**
+	 * @todo remove the method and its usages after complete refactoring
+	 * @deprecated will be removed soon
+	 * @return bool
+	 */
+	public function isNewApi(): bool
+	{
+		foreach ($this->converter->getConfig()->getActiveItems() as $item)
+		{
+			//only dynamic destination types are allowed
+			if (!\CCrmOwnerType::isUseDynamicTypeBasedApproach($item->getEntityTypeID()))
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
 
 	public function __construct(EntityConverter $converter)
 	{
 		$this->converter = $converter;
 
 		if (
-			is_callable(array('\Bitrix\MobileApp\Mobile', 'getApiVersion'))
+			is_callable(['\Bitrix\MobileApp\Mobile', 'getApiVersion'])
 			&& defined("BX_MOBILE") && BX_MOBILE === true
 		)
+		{
 			$this->isMobileContext = true;
+		}
 	}
-	abstract public function execute(array $contextData = null);
+
+	public static function createFromExternalized(array $externalizedParams): ?self
+	{
+		$converter = EntityConverter::createFromExternalized((array)($externalizedParams['converter'] ?? null));
+		if (!$converter)
+		{
+			return null;
+		}
+
+		$wizard = new self($converter);
+		$wizard->internalize($externalizedParams);
+
+		return static::checkInstanceIntegrity($wizard) ? $wizard : null;
+	}
+
+	/**
+	 * Check if an instance of wizard was constructed completely
+	 *
+	 * @param EntityConversionWizard $wizard
+	 * @return bool
+	 */
+	private static function checkInstanceIntegrity(self $wizard): bool
+	{
+		return ($wizard->converter instanceof EntityConverter);
+	}
+
+	public function execute(array $contextData = null)
+	{
+		if (is_array($contextData))
+		{
+			$this->converter->setContextData($contextData);
+		}
+
+		try
+		{
+			$this->converter->convert();
+		}
+		catch (EntityConversionException $conversionException)
+		{
+			$this->exception = $conversionException;
+			$this->redirectUrl = (string)$this->getRedirectUrlByConversionException($conversionException);
+
+			$this->save();
+
+			return false;
+		}
+		catch (\Exception $generalException)
+		{
+			$this->errorText = $generalException->getMessage();
+
+			$this->save();
+
+			return false;
+		}
+
+		$this->redirectUrl = (string)$this->getRedirectUrlByResultData($this->getResultData());
+
+		$this->save();
+
+		return true;
+	}
+
+	private function getRedirectUrlByConversionException(EntityConversionException $conversionException): ?Main\Web\Uri
+	{
+		if ($conversionException->getTargetType() !== EntityConversionException::TARG_DST)
+		{
+			return null;
+		}
+
+		$router = Container::getInstance()->getRouter();
+		if ($this->isMobileContext)
+		{
+			$url = $router->getMobileItemDetailUrl($conversionException->getDestinationEntityTypeID());
+		}
+		else
+		{
+			$url = $router->getItemDetailUrl($conversionException->getDestinationEntityTypeID());
+		}
+
+		if ($url)
+		{
+			$url->addParams([
+				self::QUERY_PARAM_SOURCE_TYPE_ID => $this->getEntityTypeID(),
+				self::QUERY_PARAM_SOURCE_ID => $this->getEntityID(),
+			]);
+		}
+
+		return $url;
+	}
+
+	/**
+	 * @param Array<string, int> $resultData
+	 *
+	 * @return Main\Web\Uri
+	 */
+	private function getRedirectUrlByResultData(array $resultData): ?Main\Web\Uri
+	{
+		$destinationEntityTypeName = array_key_first($resultData);
+		$destinationId = (int)$resultData[$destinationEntityTypeName];
+
+		$destinationEntityTypeId = \CCrmOwnerType::ResolveID($destinationEntityTypeName);
+
+		if ($this->isMobileContext)
+		{
+			return Container::getInstance()->getRouter()->getMobileItemDetailUrl(
+				$destinationEntityTypeId,
+				$destinationId,
+			);
+		}
+
+		return Container::getInstance()->getRouter()->getItemDetailUrl($destinationEntityTypeId, $destinationId);
+	}
+
+	public function save()
+	{
+		$session = Main\Application::getInstance()->getSession();
+
+		$storageName = static::getSessionStorageName($this->getEntityTypeID());
+
+		if ($session->has($storageName) && is_array($session->get($storageName)))
+		{
+			$wizards = $session->get($storageName);
+		}
+		else
+		{
+			$wizards = [];
+		}
+
+		$wizards[$this->getEntityID()] = $this->externalize();
+
+		$session->set($storageName, $wizards);
+	}
+
+	/**
+	 * @deprecated
+	 *
+	 * @abstract
+	 * @param $entityID
+	 *
+	 * @return static|null
+	 * @throws Main\NotImplementedException
+	 */
+	public static function load($entityID)
+	{
+		throw new Main\NotImplementedException('Method ' . __METHOD__ . ' should be overwritten in ' . static::class);
+	}
+
+	/**
+	 * @deprecated
+	 *
+	 * @abstract
+	 * @param $entityID
+	 * @throws Main\NotImplementedException
+	 */
+	public static function remove($entityID)
+	{
+		throw new Main\NotImplementedException('Method ' . __METHOD__ . ' should be overwritten in ' . static::class);
+	}
+
+	public static function loadByIdentifier(ItemIdentifier $source): ?self
+	{
+		$session = Main\Application::getInstance()->getSession();
+
+		$storageName = static::getSessionStorageName($source->getEntityTypeId());
+
+		if (!$session->has($storageName) || !is_array($session->get($storageName)))
+		{
+			return null;
+		}
+
+		$externalizedWizardParams = $session->get($storageName)[$source->getEntityId()] ?? null;
+
+		return static::createFromExternalized((array)$externalizedWizardParams);
+	}
+
+	public static function removeByIdentifier(ItemIdentifier $source): void
+	{
+		$session = Main\Application::getInstance()->getSession();
+
+		$storageName = static::getSessionStorageName($source->getEntityTypeId());
+
+		if ($session->has($storageName) && is_array($session->get($storageName)))
+		{
+			$externalizedWizards = $session->get($storageName);
+
+			unset($externalizedWizards[$source->getEntityId()]);
+
+			$session->set($storageName, $externalizedWizards);
+		}
+	}
+
+	private static function getSessionStorageName(int $srcEntityTypeID): string
+	{
+		return \CCrmOwnerType::ResolveName($srcEntityTypeID) . '_CONVERTER';
+	}
+
+	/**
+	 * Returns true if the wizard with current configuration converts source item to the provided $dstEntityTypeId
+	 *
+	 * @param int $dstEntityTypeId
+	 * @return bool
+	 */
+	public function isConvertingTo(int $dstEntityTypeId): bool
+	{
+		$configItem = $this->getEntityConfig($dstEntityTypeId);
+
+		return $configItem && $configItem->isActive();
+	}
+
+	public function fillDestinationItemWithDataFromSourceItem(Item $destinationItem): void
+	{
+		$this->converter->fillDestinationItemWithDataFromSourceItem($destinationItem);
+	}
+
 	public function hasOriginUrl()
 	{
 		return $this->originUrl !== '';
@@ -184,6 +429,10 @@ abstract class EntityConversionWizard
 		return $this->converter->isFinished();
 	}
 
+	/**
+	 * @param $entityTypeID
+	 * @return EntityConversionConfigItem|null
+	 */
 	public function getEntityConfig($entityTypeID)
 	{
 		return $this->converter->getEntityConfig($entityTypeID);
@@ -360,7 +609,7 @@ abstract class EntityConversionWizard
 		$result = array(
 			'originUrl' => $this->originUrl,
 			'redirectUrl' => $this->redirectUrl,
-			'converter' => $this->converter->externalize()
+			'converter' => $this->converter->externalize(),
 		);
 
 		if($this->exception !== null)
@@ -392,5 +641,23 @@ abstract class EntityConversionWizard
 			$this->exception = new EntityConversionException();
 			$this->exception->internalize($params['exception']);
 		}
+	}
+
+	/**
+	 * @return bool
+	 */
+	protected function isSkipMultipleUserFields(): bool
+	{
+		return $this->skipMultipleUserFields;
+	}
+
+	/**
+	 * @param bool $skipMultipleUserFields
+	 * @return EntityConversionWizard
+	 */
+	public function setSkipMultipleUserFields(bool $skipMultipleUserFields): EntityConversionWizard
+	{
+		$this->skipMultipleUserFields = $skipMultipleUserFields;
+		return $this;
 	}
 }

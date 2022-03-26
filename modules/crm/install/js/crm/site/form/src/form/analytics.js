@@ -25,6 +25,7 @@ class Analytics
 				{
 					this.#isStartSent = true;
 					this.send('start');
+					this.#form.analyticsHandler('start', this.#form.identification.id);
 				}
 				break;
 			case Type.EventTypes.fieldBlur:

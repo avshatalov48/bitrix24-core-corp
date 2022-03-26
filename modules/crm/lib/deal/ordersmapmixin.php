@@ -2,7 +2,7 @@
 
 namespace Bitrix\Crm\Deal;
 
-use Bitrix\Crm\Order\DealBinding;
+use Bitrix\Crm\Order\EntityBinding;
 
 trait OrdersMapMixin
 {
@@ -18,10 +18,11 @@ trait OrdersMapMixin
 			return [];
 		}
 
-		$dealOrders = DealBinding::getList([
-			'select' => ['ORDER_ID', 'DEAL_ID'],
+		$dealOrders = EntityBinding::getList([
+			'select' => ['ORDER_ID', 'OWNER_ID'],
 			'filter' => [
-				'=DEAL_ID' => $dealIds
+				'=OWNER_ID' => $dealIds,
+				'=OWNER_TYPE_ID' => \CCrmOwnerType::Deal
 			],
 		]);
 
@@ -29,7 +30,7 @@ trait OrdersMapMixin
 
 		while ($binding = $dealOrders->fetch())
 		{
-			$orderToDealMap[(int)$binding['ORDER_ID']] = (int)$binding['DEAL_ID'];
+			$orderToDealMap[(int)$binding['ORDER_ID']] = (int)$binding['OWNER_ID'];
 		}
 
 		return $orderToDealMap;

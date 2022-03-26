@@ -157,12 +157,25 @@ if($this->StartResultCache(true))
 			$arParams['~FIELD_EDIT_URL']
 		);
 
+		$data['~TITLE'] = $data["~LIST_COLUMN_LABEL"] ?? '';
+		if (empty($data['~TITLE']))
+		{
+			$data['~TITLE'] = $data["~EDIT_FORM_LABEL"] ?? '';
+		}
+		if (empty($data['~TITLE']))
+		{
+			$data['~TITLE'] = $data["~LIST_FILTER_LABEL"] ?? '';
+		}
+		$data['TITLE'] = htmlspecialcharsbx($data['~TITLE']);
+
 		$data['FIELD_EDIT_URL'] = htmlspecialcharsbx($data['~FIELD_EDIT_URL']);
-		$aCols = array(
+		$aCols = [
 			'TYPE' => $data['USER_TYPE']['DESCRIPTION'],
 			'MANDATORY' => $data['USER_TYPE']['DESCRIPTION'],
-			'LIST_COLUMN_LABEL' => '<a target="_self" href="'.$data["FIELD_EDIT_URL"].'">'.$data["LIST_COLUMN_LABEL"].'</a>'
-		);
+			'TITLE' => '<a target="_self" href="'.$data["FIELD_EDIT_URL"].'">'
+				. ($data["TITLE"])
+				. '</a>'
+		];
 
 		$aActions = array(
 			array(
@@ -182,7 +195,13 @@ if($this->StartResultCache(true))
 
 		$aEditable = array();
 
-		$arResult['ROWS'][] = array('id' => $arField['ID'], 'data'=>$data, 'actions'=>$aActions, 'columns'=>$aCols, 'editable'=>$aEditable);
+		$arResult['ROWS'][] = [
+			'id' => $arField['ID'],
+			'data'=> $data,
+			'actions'=> $aActions,
+			'columns'=> $aCols,
+			'editable'=> $aEditable,
+		];
 	}
 
 	$CACHE_MANAGER->EndTagCache();

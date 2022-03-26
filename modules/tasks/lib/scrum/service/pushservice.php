@@ -2,13 +2,13 @@
 
 namespace Bitrix\Tasks\Scrum\Service;
 
+use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Scrum\Form\EpicForm;
-use Bitrix\Tasks\Scrum\Internal\EntityTable;
-use Bitrix\Tasks\Scrum\Internal\ItemTable;
+use Bitrix\Tasks\Scrum\Form\ItemForm;
 
 class PushService
 {
-	public function sendAddItemEvent(ItemTable $item): void
+	public function sendAddItemEvent(ItemForm $item): void
 	{
 		$entityService = new EntityService();
 		$entity = $entityService->getEntityById($item->getEntityId());
@@ -38,7 +38,7 @@ class PushService
 		);
 	}
 
-	public function sendUpdateItemEvent(ItemTable $updatedItem): void
+	public function sendUpdateItemEvent(ItemForm $updatedItem): void
 	{
 		$entityService = new EntityService();
 		$entity = $entityService->getEntityById($updatedItem->getEntityId());
@@ -71,7 +71,7 @@ class PushService
 		);
 	}
 
-	public function sendRemoveItemEvent(ItemTable $removedItem): void
+	public function sendRemoveItemEvent(ItemForm $removedItem): void
 	{
 		$entityService = new EntityService();
 
@@ -169,7 +169,7 @@ class PushService
 		);
 	}
 
-	public function sendAddSprintEvent(EntityTable $inputSprint)
+	public function sendAddSprintEvent(EntityForm $inputSprint)
 	{
 		$sprintService = new SprintService();
 		$sprint = $sprintService->getSprintById($inputSprint->getId());
@@ -195,7 +195,7 @@ class PushService
 		);
 	}
 
-	public function sendUpdateSprintEvent(EntityTable $inputSprint)
+	public function sendUpdateSprintEvent(EntityForm $inputSprint)
 	{
 		$sprintService = new SprintService();
 		$sprint = $sprintService->getSprintById($inputSprint->getId());
@@ -244,7 +244,7 @@ class PushService
 		);
 	}
 
-	public function sendRemoveSprintEvent(EntityTable $inputSprint)
+	public function sendRemoveSprintEvent(EntityForm $inputSprint)
 	{
 		$tag = 'entityActions_' . $inputSprint->getGroupId();
 
@@ -261,7 +261,7 @@ class PushService
 	}
 
 	private function getItemData(
-		ItemTable $item,
+		ItemForm $item,
 		ItemService $itemService,
 		TaskService $taskService = null,
 		UserService $userService = null

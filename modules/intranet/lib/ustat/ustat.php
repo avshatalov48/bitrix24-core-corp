@@ -1113,7 +1113,12 @@ class UStat
 			$topUsers[$position] = array('USER_ID' => $userId, 'ACTIVITY' => $posTotal);
 		}
 
-		return array('data' => $data, 'rating' => array('top' => $topUsers, 'position' => $position));
+		$allQuery = new Entity\Query($query->getEntity());
+		$allQuery->setFilter(array_diff_key($query->getFilter(), ['=USER_ID' => null]));
+		$allQuery->addSelect(new Entity\ExpressionField('ALL_ACTIVE_USERS', 'COUNT(DISTINCT %s)', 'USER_ID'));
+		$res = $allQuery->exec()->fetch();
+
+		return array('data' => $data, 'rating' => array('top' => $topUsers, 'position' => $position, 'range' => intval($res['ALL_ACTIVE_USERS'])));
 	}
 
 	public static function getDepartmentAverageGraphData($deptId, Type\DateTime $dateFrom, Type\DateTime $dateTo, $interval, $section = null)

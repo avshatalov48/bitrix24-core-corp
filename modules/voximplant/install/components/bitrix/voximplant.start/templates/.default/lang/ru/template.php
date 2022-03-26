@@ -14,6 +14,7 @@ $MESS["VOX_START_AUTO_PROLONG"] = "Автопродление включено";
 $MESS["VOX_START_RENT_OR_LINK_NUMBER"] = "Арендуйте или добавьте свой номер телефона";
 $MESS["VOX_START_TELEPHONY"] = "Телефония";
 $MESS["VOX_START_TELEPHONY_SETTINGS"] = "Настройка телефонии";
+$MESS["VOX_START_TELEPHONY_CRM_INTEGRATION"] = "CRM-форма на сайт";
 $MESS["VOX_START_PARTNERS"] = "Телефония от партнеров";
 $MESS["VOX_START_MY_NUMBERS"] = "Мои номера";
 $MESS["VOX_START_SET_UP"] = "Настроить";

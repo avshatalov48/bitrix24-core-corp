@@ -247,6 +247,17 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 							]);
 						}
 					}
+					else
+					{
+						\Bitrix\Crm\Component\EntityDetails\BaseComponent::updateEntity(
+							CCrmOwnerType::Company,
+							$companyID,
+							$companyData,
+							[
+								'startWorkFlows' => true
+							],
+						);
+					}
 				}
 			}
 
@@ -296,6 +307,17 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 								'IS_PRIMARY' => $clientCollection->isPrimaryItemExists(\CCrmOwnerType::Contact) ? 'N' : 'Y'
 							]);
 						}
+					}
+					else
+					{
+						\Bitrix\Crm\Component\EntityDetails\BaseComponent::updateEntity(
+							CCrmOwnerType::Contact,
+							$contactID,
+							$contactItem,
+							[
+								'startWorkFlows' => true
+							],
+						);
 					}
 				}
 			}
@@ -1219,6 +1241,10 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		$oldTradingPlatformId = isset($changedFields['OLD_TRADING_PLATFORM']) ? (int)$changedFields['OLD_TRADING_PLATFORM'] : null;
 		$newTradingPlatformId = isset($freshData['TRADING_PLATFORM']) ? (int)$freshData['TRADING_PLATFORM'] : null;
 		$isTradingPlatformChanged = ($oldTradingPlatformId !== $newTradingPlatformId);
+		if (is_null($newTradingPlatformId))
+		{
+			$freshData['TRADING_PLATFORM'] = 0;
+		}
 
 		$oldPaymentSystemId = isset($changedFields['PAY_SYSTEM_ID']) ? (int)$changedFields['PAY_SYSTEM_ID'] : null;
 		$newPaymentSystemId = isset($freshData['PAY_SYSTEM_ID']) ? (int)$freshData['PAY_SYSTEM_ID'] : null;
@@ -1243,7 +1269,11 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 				if (!empty($freshData['USER_PROFILE_LIST']))
 				{
-					$freshData['USER_PROFILE'] = $freshData['USER_PROFILE_LIST'][0]['VALUE'];
+					if (empty($freshData['USER_PROFILE']))
+					{
+						$freshData['USER_PROFILE'] = $freshData['USER_PROFILE_LIST'][0]['VALUE'];
+					}
+
 					$this->fillPropsFromProfile($order, (int)$freshData['USER_PROFILE']);
 
 					// It seems not optimal to call this method second time.

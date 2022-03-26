@@ -143,9 +143,7 @@ class CrmTypeListComponent extends Bitrix\Crm\Component\Base
 		$grid['AJAX_OPTION_STYLE'] = "N";
 		$grid['AJAX_OPTION_HISTORY'] = "N";
 		$grid['SHOW_PAGESIZE'] = true;
-		$grid['PAGE_SIZES'] = [['NAME' => 10, 'VALUE' => 10], ['NAME' => 20, 'VALUE' => 20], ['NAME' => 50, 'VALUE' => 50]];
-		$grid['SHOW_ROW_CHECKBOXES'] = false;
-		$grid['SHOW_CHECK_ALL_CHECKBOXES'] = false;
+		$grid['PAGE_SIZES'] = [['NAME' => '10', 'VALUE' => '10'], ['NAME' => '20', 'VALUE' => '20'], ['NAME' => '50', 'VALUE' => '50']];
 		$grid['SHOW_ACTION_PANEL'] = false;
 		$grid['SHOW_PAGINATION'] = true;
 		$grid['ALLOW_CONTEXT_MENU'] = false;
@@ -171,6 +169,7 @@ class CrmTypeListComponent extends Bitrix\Crm\Component\Base
 
 		$filter = [];
 		$this->provider->prepareListFilter($filter, $requestFilter);
+		$filter['!@ENTITY_TYPE_ID'] = \CCrmOwnerType::getDynamicTypeBasedStaticEntityTypeIds();
 
 		return $filter;
 	}
@@ -222,6 +221,12 @@ class CrmTypeListComponent extends Bitrix\Crm\Component\Base
 		return array_merge(parent::getToolbarParameters(), [
 			'buttons' => $buttons,
 			'isWithFavoriteStar' => true,
+			'hideBorder' => true,
 		]);
+	}
+
+	protected function getTopPanelId(int $entityTypeId): string
+	{
+		return 'DYNAMIC_LIST';
 	}
 }

@@ -124,7 +124,27 @@ class CounterController
 			return;
 		}
 
-		$groupIds = [];
+		$groupIds = array_keys(UserRegistry::getInstance($this->userId)->getUserGroups(UserRegistry::MODE_EXCLUDE_SCRAM));
+		if ($groupId > 0)
+		{
+			$groupIds = [$groupId];
+		}
+
+		ProjectProcessor::getInstance()->readAll($this->userId, $groupIds);
+	}
+
+	/**
+	 * @param int $groupId
+	 * @throws Main\DB\SqlQueryException
+	 */
+	public function readScrum(int $groupId = 0): void
+	{
+		if (!$this->userId)
+		{
+			return;
+		}
+
+		$groupIds = array_keys(UserRegistry::getInstance($this->userId)->getUserGroups(UserRegistry::MODE_SCRUM));
 		if ($groupId > 0)
 		{
 			$groupIds = [$groupId];

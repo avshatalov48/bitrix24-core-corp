@@ -322,6 +322,13 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 				);
 			}
 
+			if($_POST['INVOICE_OLD_ENABLED'])
+			{
+				\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->setOldInvoicesEnabled(
+					mb_strtoupper($_POST['INVOICE_OLD_ENABLED']) === 'Y'
+				);
+			}
+
 			if($_POST['COMPANY_DEFAULT_LIST_VIEW'])
 			{
 				\Bitrix\Crm\Settings\CompanySettings::getCurrent()->setDefaultListViewID($_POST['COMPANY_DEFAULT_LIST_VIEW']);
@@ -447,6 +454,27 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 				);
 			}
 
+			if (isset($_POST['ENABLE_FULL_CATALOG']))
+			{
+				\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->enableFullCatalog(
+					mb_strtoupper($_POST['ENABLE_FULL_CATALOG']) === 'Y'
+				);
+			}
+
+			if(isset($_POST['ENABLE_ENTITY_CATALOG_PRICE_EDIT']))
+			{
+				\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->enableCatalogPriceEdit(
+					mb_strtoupper($_POST['ENABLE_ENTITY_CATALOG_PRICE_EDIT']) === 'Y'
+				);
+			}
+
+			if(isset($_POST['ENABLE_ENTITY_CATALOG_PRICE_SAVE']))
+			{
+				\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->enableCatalogPriceSave(
+					mb_strtoupper($_POST['ENABLE_ENTITY_CATALOG_PRICE_SAVE']) === 'Y'
+				);
+			}
+
 			if(isset($_POST['ENABLE_USER_NAME_SORTING']))
 			{
 				\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->enableUserNameSorting(
@@ -496,30 +524,63 @@ $arResult['FIELDS']['tab_main'][] = array(
 
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'ENABLE_SLIDER',
-	'name' => GetMessage('CRM_FIELD_ENABLE_SLIDER'),
+	'name' => GetMessage('CRM_FIELD_ENABLE_SLIDER2'),
 	'type' => 'checkbox',
 	'value' => \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled(),
 	'required' => false
 );
 
 $arResult['FIELDS']['tab_main'][] = array(
+	'id' => 'ENABLE_FULL_CATALOG',
+	'name' => GetMessage('CRM_FIELD_ENABLE_FULL_CATALOG'),
+	'type' => 'checkbox',
+	'value' => \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isFullCatalogEnabled(),
+	'required' => false,
+);
+
+$arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'ENABLE_USER_NAME_SORTING',
-	'name' => GetMessage('CRM_FIELD_ENABLE_USER_NAME_SORTING'),
+	'name' => GetMessage('CRM_FIELD_ENABLE_USER_NAME_SORTING2'),
 	'type' => 'checkbox',
 	'value' => \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isUserNameSortingEnabled(),
 	'required' => false
 );
 
+if (\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isCommonProductProcessingEnabled())
+{
+	$arResult['FIELDS']['tab_main'][] = array(
+		'id' => 'PRODUCT_CONFIG',
+		'name' => GetMessage('CRM_SECTION_PRODUCT_CONFIG'),
+		'type' => 'section'
+	);
+
+	$arResult['FIELDS']['tab_main'][] = array(
+		'id' => 'ENABLE_ENTITY_CATALOG_PRICE_EDIT',
+		'name' => GetMessage('CRM_FIELD_ENABLE_ENTITY_CATALOG_PRICE_EDIT_2'),
+		'type' => 'checkbox',
+		'value' => \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isCatalogPriceEditEnabled(),
+		'required' => false
+	);
+
+	$arResult['FIELDS']['tab_main'][] = array(
+		'id' => 'ENABLE_ENTITY_CATALOG_PRICE_SAVE',
+		'name' => GetMessage('CRM_FIELD_ENABLE_ENTITY_CATALOG_PRICE_SAVE'),
+		'type' => 'checkbox',
+		'show' => \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isCatalogPriceEditEnabled() ? 'Y' : 'N',
+		'value' => \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isCatalogPriceSaveEnabled(),
+		'required' => false
+	);
+}
 
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'LEAD_CONFIG',
-	'name' => GetMessage('CRM_SECTION_LEAD_CONFIG'),
+	'name' => GetMessage('CRM_SECTION_LEAD_CONFIG2'),
 	'type' => 'section'
 );
 
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'LEAD_OPENED',
-	'name' => GetMessage('CRM_FIELD_LEAD_OPENED'),
+	'name' => GetMessage('CRM_FIELD_LEAD_OPENED2'),
 	'type' => 'checkbox',
 	'value' => \Bitrix\Crm\Settings\LeadSettings::getCurrent()->getOpenedFlag(),
 	'required' => false
@@ -566,13 +627,13 @@ $arResult['FIELDS']['tab_main'][] = array(
 
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'CONTACT_CONFIG',
-	'name' => GetMessage('CRM_SECTION_CONTACT_CONFIG'),
+	'name' => GetMessage('CRM_SECTION_CONTACT_CONFIG2'),
 	'type' => 'section'
 );
 
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'CONTACT_OPENED',
-	'name' => GetMessage('CRM_FIELD_CONTACT_OPENED'),
+	'name' => GetMessage('CRM_FIELD_CONTACT_OPENED2'),
 	'type' => 'checkbox',
 	'value' => \Bitrix\Crm\Settings\ContactSettings::getCurrent()->getOpenedFlag(),
 	'required' => false
@@ -589,13 +650,13 @@ $arResult['FIELDS']['tab_main'][] = array(
 
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'COMPANY_CONFIG',
-	'name' => GetMessage('CRM_SECTION_COMPANY_CONFIG'),
+	'name' => GetMessage('CRM_SECTION_COMPANY_CONFIG2'),
 	'type' => 'section'
 );
 
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'COMPANY_OPENED',
-	'name' => GetMessage('CRM_FIELD_COMPANY_OPENED'),
+	'name' => GetMessage('CRM_FIELD_COMPANY_OPENED2'),
 	'type' => 'checkbox',
 	'value' => \Bitrix\Crm\Settings\CompanySettings::getCurrent()->getOpenedFlag(),
 	'required' => false
@@ -612,13 +673,13 @@ $arResult['FIELDS']['tab_main'][] = array(
 
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'DEAL_CONFIG',
-	'name' => GetMessage('CRM_SECTION_DEAL_CONFIG'),
+	'name' => GetMessage('CRM_SECTION_DEAL_CONFIG2'),
 	'type' => 'section'
 );
 
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'DEAL_OPENED',
-	'name' => GetMessage('CRM_FIELD_DEAL_OPENED'),
+	'name' => GetMessage('CRM_FIELD_DEAL_OPENED2'),
 	'type' => 'checkbox',
 	'value' => \Bitrix\Crm\Settings\DealSettings::getCurrent()->getOpenedFlag(),
 	'required' => false
@@ -635,7 +696,7 @@ $arResult['FIELDS']['tab_main'][] = array(
 
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'REFRESH_DEAL_CLOSEDATE',
-	'name' => GetMessage('CRM_FIELD_REFRESH_DEAL_CLOSEDATE'),
+	'name' => GetMessage('CRM_FIELD_REFRESH_DEAL_CLOSEDATE2'),
 	'type' => 'checkbox',
 	'value' => \Bitrix\Crm\Settings\DealSettings::getCurrent()->isCloseDateSyncEnabled(),
 	'required' => false
@@ -651,7 +712,7 @@ $arResult['FIELDS']['tab_main'][] = array(
 
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'INVOICE_CONFIG',
-	'name' => GetMessage('CRM_SECTION_INVOICE_CONFIG'),
+	'name' => GetMessage('CRM_SECTION_INVOICE_CONFIG2'),
 	'type' => 'section'
 );
 
@@ -685,15 +746,26 @@ else
 	);
 }
 
+if (Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnablingPossible())
+{
+	$arResult['FIELDS']['tab_main'][] = array(
+		'id' => 'INVOICE_OLD_ENABLED',
+		'name' => GetMessage('CRM_FIELD_INVOICE_OLD_ENABLED'),
+		'type' => 'checkbox',
+		'value' => \Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled(),
+		'required' => false,
+	);
+}
+
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'QUOTE_CONFIG',
-	'name' => GetMessage('CRM_SECTION_QUOTE_CONFIG'),
+	'name' => GetMessage('CRM_SECTION_QUOTE_CONFIG2'),
 	'type' => 'section'
 );
 
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'QUOTE_OPENED',
-	'name' => GetMessage('CRM_FIELD_QUOTE_OPENED'),
+	'name' => GetMessage('CRM_FIELD_QUOTE_OPENED2'),
 	'type' => 'checkbox',
 	'value' => \Bitrix\Crm\Settings\QuoteSettings::getCurrent()->getOpenedFlag(),
 	'required' => false
@@ -701,7 +773,7 @@ $arResult['FIELDS']['tab_main'][] = array(
 
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'CONVERSION_CONFIG',
-	'name' => GetMessage('CRM_SECTION_CONVERSION_CONFIG'),
+	'name' => GetMessage('CRM_SECTION_CONVERSION_CONFIG2'),
 	'type' => 'section'
 );
 
@@ -723,21 +795,6 @@ $arResult['FIELDS']['tab_main'][] = array(
 );
 
 $arResult['FIELDS']['tab_main'][] = array(
-	'id' => 'WEBFORM_CONFIG',
-	'name' => GetMessage('CRM_SECTION_WEBFORM_CONFIG'),
-	'type' => 'section'
-);
-
-$arResult['FIELDS']['tab_main'][] = array(
-	'id' => 'WEBFORM_EDITOR',
-	'name' => GetMessage('CRM_FIELD_WEBFORM_EDITOR'),
-	'type' => 'list',
-	'items' => Settings\WebFormSettings::getEditorItems(),
-	'value' => Settings\WebFormSettings::getCurrent()->getEditorId(),
-	'required' => false
-);
-
-$arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'NOTIFICATIONS_CONFIG',
 	'name' => GetMessage('CRM_SECTION_NOTIFICATIONS_CONFIG'),
 	'type' => 'section'
@@ -745,7 +802,7 @@ $arResult['FIELDS']['tab_main'][] = array(
 
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'NOTIFICATIONS_SENDER',
-	'name' => GetMessage('CRM_SECTION_NOTIFICATIONS_SENDER'),
+	'name' => GetMessage('CRM_SECTION_NOTIFICATIONS_SENDER2'),
 	'type' => 'list',
 	'items' => \Bitrix\Crm\MessageSender\SettingsManager::getSettingsList(),
 	'value' =>  \Bitrix\Crm\MessageSender\SettingsManager::getValue(),
@@ -762,7 +819,7 @@ $arResult['FIELDS']['tab_rest'][] = array(
 
 $arResult['FIELDS']['tab_activity_config'][] = array(
 	'id' => 'ACTIVITY_GENERAL_CONFIG',
-	'name' => GetMessage('CRM_SECTION_ACTIVITY_GENERAL_CONFIG'),
+	'name' => GetMessage('CRM_SECTION_ACTIVITY_GENERAL_CONFIG2'),
 	'type' => 'section'
 );
 
@@ -808,7 +865,7 @@ $arResult['FIELDS']['tab_activity_config'][] = array(
 
 $arResult['FIELDS']['tab_activity_config'][] = array(
 	'id' => 'RECKON_ACTIVITYLESS_ITEMS_IN_COUNTERS',
-	'name' => GetMessage('CRM_FIELD_RECKON_ACTIVITYLESS_ITEMS_IN_COUNTERS'),
+	'name' => GetMessage('CRM_FIELD_RECKON_ACTIVITYLESS_ITEMS_IN_COUNTERS2'),
 	'type' => 'checkbox',
 	'value' => CCrmUserCounterSettings::GetValue(CCrmUserCounterSettings::ReckonActivitylessItems, true),
 	'required' => false
@@ -856,13 +913,13 @@ $arResult['FIELDS']['tab_activity_config'][] = array(
 
 $arResult['FIELDS']['tab_activity_config'][] = array(
 	'id' => 'ACTIVITY_INCOMING_EMAIL_CONFIG',
-	'name' => GetMessage('CRM_SECTION_ACTIVITY_INCOMING_EMAIL_CONFIG'),
+	'name' => GetMessage('CRM_SECTION_ACTIVITY_INCOMING_EMAIL_CONFIG2'),
 	'type' => 'section'
 );
 
 $arResult['FIELDS']['tab_activity_config'][] = array(
 	'id' => 'MARK_FORWARDED_EMAIL_AS_OUTGOING',
-	'name' => GetMessage('CRM_FIELD_MARK_FORWARDED_EMAIL_AS_OUTGOING'),
+	'name' => GetMessage('CRM_FIELD_MARK_FORWARDED_EMAIL_AS_OUTGOING2'),
 	'type' => 'checkbox',
 	'value' => Settings\ActivitySettings::getValue(Settings\ActivitySettings::MARK_FORWARDED_EMAIL_AS_OUTGOING),
 	'required' => false
@@ -870,7 +927,7 @@ $arResult['FIELDS']['tab_activity_config'][] = array(
 
 $arResult['FIELDS']['tab_activity_config'][] = array(
 	'id' => 'ACTIVITY_OUTGOING_EMAIL_CONFIG',
-	'name' => GetMessage('CRM_SECTION_ACTIVITY_OUTGOING_EMAIL_CONFIG'),
+	'name' => GetMessage('CRM_SECTION_ACTIVITY_OUTGOING_EMAIL_CONFIG2'),
 	'type' => 'section'
 );
 
@@ -885,7 +942,7 @@ $arResult['FIELDS']['tab_activity_config'][] = array(
 
 $arResult['FIELDS']['tab_activity_config'][] = array(
 	'id' => 'OUTGOING_EMAIL_OWNER_TYPE',
-	'name' => GetMessage('CRM_FIELD_OUTGOING_EMAIL_OWNER_TYPE'),
+	'name' => GetMessage('CRM_FIELD_OUTGOING_EMAIL_OWNER_TYPE2'),
 	'items' => array(
 		\CCrmOwnerType::Lead => \CCrmOwnerType::getDescription(\CCrmOwnerType::Lead),
 		\CCrmOwnerType::Contact => \CCrmOwnerType::getDescription(\CCrmOwnerType::Contact),
@@ -945,7 +1002,7 @@ $arResult['FIELDS']['tab_history'][] = array(
 
 $arResult['FIELDS']['tab_history'][] = array(
 	'id' => 'ENABLE_LEAD_DELETION_EVENT',
-	'name' => GetMessage('CRM_FIELD_ENABLE_LEAD_DELETION_EVENT'),
+	'name' => GetMessage('CRM_FIELD_ENABLE_LEAD_DELETION_EVENT2'),
 	'type' => 'checkbox',
 	'value' => \Bitrix\Crm\Settings\HistorySettings::getCurrent()->isLeadDeletionEventEnabled(),
 	'required' => false
@@ -953,7 +1010,7 @@ $arResult['FIELDS']['tab_history'][] = array(
 
 $arResult['FIELDS']['tab_history'][] = array(
 	'id' => 'ENABLE_CONTACT_DELETION_EVENT',
-	'name' => GetMessage('CRM_FIELD_ENABLE_CONTACT_DELETION_EVENT'),
+	'name' => GetMessage('CRM_FIELD_ENABLE_CONTACT_DELETION_EVENT2'),
 	'type' => 'checkbox',
 	'value' => \Bitrix\Crm\Settings\HistorySettings::getCurrent()->isContactDeletionEventEnabled(),
 	'required' => false
@@ -961,7 +1018,7 @@ $arResult['FIELDS']['tab_history'][] = array(
 
 $arResult['FIELDS']['tab_history'][] = array(
 	'id' => 'ENABLE_COMPANY_DELETION_EVENT',
-	'name' => GetMessage('CRM_FIELD_ENABLE_COMPANY_DELETION_EVENT'),
+	'name' => GetMessage('CRM_FIELD_ENABLE_COMPANY_DELETION_EVENT2'),
 	'type' => 'checkbox',
 	'value' => \Bitrix\Crm\Settings\HistorySettings::getCurrent()->isCompanyDeletionEventEnabled(),
 	'required' => false
@@ -969,7 +1026,7 @@ $arResult['FIELDS']['tab_history'][] = array(
 
 $arResult['FIELDS']['tab_history'][] = array(
 	'id' => 'ENABLE_DEAL_DELETION_EVENT',
-	'name' => GetMessage('CRM_FIELD_ENABLE_DEAL_DELETION_EVENT'),
+	'name' => GetMessage('CRM_FIELD_ENABLE_DEAL_DELETION_EVENT2'),
 	'type' => 'checkbox',
 	'value' => \Bitrix\Crm\Settings\HistorySettings::getCurrent()->isDealDeletionEventEnabled(),
 	'required' => false
@@ -977,7 +1034,7 @@ $arResult['FIELDS']['tab_history'][] = array(
 
 $arResult['FIELDS']['tab_history'][] = array(
 	'id' => 'ENABLE_QUOTE_DELETION_EVENT',
-	'name' => GetMessage('CRM_FIELD_ENABLE_QUOTE_DELETION_EVENT'),
+	'name' => GetMessage('CRM_FIELD_ENABLE_QUOTE_DELETION_EVENT2'),
 	'type' => 'checkbox',
 	'value' => \Bitrix\Crm\Settings\HistorySettings::getCurrent()->isQuoteDeletionEventEnabled(),
 	'required' => false
@@ -985,7 +1042,7 @@ $arResult['FIELDS']['tab_history'][] = array(
 
 $arResult['FIELDS']['tab_livefeed'][] = array(
 	'id' => 'ENABLE_LIVEFEED_MERGE',
-	'name' => GetMessage('CRM_FIELD_ENABLE_LIVEFEED_MERGE'),
+	'name' => GetMessage('CRM_FIELD_ENABLE_LIVEFEED_MERGE2'),
 	'type' => 'checkbox',
 	'value' => \Bitrix\Crm\Settings\LiveFeedSettings::getCurrent()->isLiveFeedMergeEnabled(),
 	'required' => false
@@ -993,7 +1050,7 @@ $arResult['FIELDS']['tab_livefeed'][] = array(
 
 $arResult['FIELDS']['tab_format'][] = array(
 	'id' => 'PERSON_NAME_FORMAT_ID',
-	'name' => GetMessage('CRM_FIELD_PERSON_NAME_FORMAT'),
+	'name' => GetMessage('CRM_FIELD_PERSON_NAME_FORMAT2'),
 	'type' => 'list',
 	'items' => \Bitrix\Crm\Format\PersonNameFormatter::getAllDescriptions(),
 	'value' => \Bitrix\Crm\Format\PersonNameFormatter::getFormatID(),
@@ -1058,7 +1115,7 @@ if(\Bitrix\Main\Loader::includeModule('location'))
 {
 	$arResult['FIELDS']['tab_format'][] = array(
 		'id' => 'ENTITY_ADDRESS_FORMAT',
-		'name' => GetMessage('CRM_FIELD_ENTITY_ADDRESS_FORMAT'),
+		'name' => GetMessage('CRM_FIELD_ENTITY_ADDRESS_FORMAT2'),
 		'type' => 'custom',
 		'value' =>
 			'<div class="crm-dup-control-type-radio-wrap">'.htmlspecialcharsbx($addrFormatDescrs[$curAddrFormatID]).'</div>'.
@@ -1080,7 +1137,7 @@ else
 		'id' => 'ENTITY_ADDRESS_FORMAT',
 		'type' => 'custom',
 		'value' =>
-			'<div class="crm-dup-control-type-radio-title">' . GetMessage('CRM_FIELD_ENTITY_ADDRESS_FORMAT') . ':</div>' .
+			'<div class="crm-dup-control-type-radio-title">' . GetMessage('CRM_FIELD_ENTITY_ADDRESS_FORMAT2') . ':</div>' .
 			'<div class="crm-dup-control-type-radio-wrap">' .
 			implode('', $addrFormatControls) .
 			'</div>',

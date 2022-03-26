@@ -7,7 +7,7 @@
 	display: block;
 	position: relative;
 	width: 100%;
-	margin-bottom: 15px;
+	margin-bottom: 5px;
 	transition: 200ms ease all;
 }
 
@@ -22,6 +22,17 @@
 	color: #000;
 	outline: none;
 	transition: 200ms ease all;
+}
+
+.b24-form-control-comment {
+	display: flex;
+	align-self: flex-end;
+	flex: 0 0 100%;
+	word-break: break-word;
+	color: #82888f;
+	color: var(--b24-text-color);
+	font: 13px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--b24-font-family);
 }
 
 /*region Placeholders */
@@ -224,6 +235,7 @@
 	display: -ms-flexbox;
 	display: flex;
 	width: 100%;
+	flex-wrap: wrap;
 }
 
 .b24-form-control-product .b24-form-control-container {
@@ -601,6 +613,16 @@
 	width: 14px;
 	height: 10px;
 	/*background: url(icon-check.svg) no-repeat center;*/
+}
+
+.b24-form-control-input-text[type="number"] {
+	-moz-appearance: textfield;
+}
+
+.b24-form-control-input-text[type="number"]::-webkit-outer-spin-button,
+.b24-form-control-input-text[type="number"]::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
 }
 
 /*endregion*/

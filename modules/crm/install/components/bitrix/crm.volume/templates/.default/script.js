@@ -871,8 +871,8 @@ BX.Crm.MeasureClass = (function ()
 
 		if(!!startMeasureButton)
 		{
-			BX.addClass(startMeasureButton, 'webform-button-wait');
-			measureLink.disabled = true;
+			startMeasureButton.disabled = true;
+			BX.addClass(startMeasureButton, 'ui-btn-disabled ui-btn-wait');
 
 			this.progressBarShow(0);
 			this.runQueue(1);
@@ -888,14 +888,14 @@ BX.Crm.MeasureClass = (function ()
 					messageConfirm: BX.message('CRM_VOLUME_MEASURE_CONFIRM') + "\n\n" + BX.message('CRM_VOLUME_MEASURE_CONFIRM_QUESTION'),
 					acceptButton: BX.message('CRM_VOLUME_MEASURE_ACCEPT'),
 					payload: function () {
-						BX.addClass(measureLink, 'webform-button-wait');
+						BX.addClass(measureLink, 'ui-btn-wait ui-btn-disabled');
 						window.location.href = url;
 					}
 				});
 			}
 			else
 			{
-				BX.addClass(measureLink, 'webform-button-wait');
+				BX.addClass(measureLink, 'ui-btn-wait ui-btn-disabled');
 				window.location.href = url;
 			}
 		}

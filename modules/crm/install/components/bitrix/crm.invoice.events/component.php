@@ -1,4 +1,8 @@
-<?if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+use Bitrix\Crm\Restriction\RestrictionManager;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -6,6 +10,12 @@ if (!CModule::IncludeModule('crm'))
 	return;
 }
 if (!CCrmPerms::IsAccessEnabled())
+{
+	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+	return;
+}
+
+if(!RestrictionManager::isHistoryViewPermitted())
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
@@ -359,7 +369,6 @@ while ($arEvent = $obRes->Fetch())
 	$arEvent['~FILES'] = $arEvent['FILES'];
 	//$arEvent['~EVENT_NAME'] = $arEvent['EVENT_NAME'];
 	$arUserDistinct[intval($arEvent['USER_ID'])] = true;
-	$arEvent['DATE_CREATE'] = $arEvent['DATE_CREATE'];
 	//$arEvent['EVENT_NAME'] = htmlspecialcharsbx($arEvent['~EVENT_NAME']);
 
 	if (!empty($arEvent['FILES']))

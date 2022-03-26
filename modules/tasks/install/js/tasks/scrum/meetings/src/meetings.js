@@ -24,8 +24,17 @@ type MeetingsResponse = {
 		listEvents: Array<CreatedEventType>,
 		mapCreatedEvents: ?MapCreatedEvents,
 		todayEvent: ?CreatedEventType,
-		isTemplatesClosed: boolean
+		isTemplatesClosed: boolean,
+		defaultSprintDuration: number,
+		calendarSettings: CalendarSettings
 	}
+}
+
+type CalendarSettings = {
+	workTimeStart: number,
+	weekDays: Object,
+	weekStart: Object,
+	interval: number
 }
 
 type ChatsResponse = {
@@ -68,7 +77,8 @@ type EventTemplate = {
 	rrule: Rrule,
 	roles: Array<EntityList>,
 	uiClass: string,
-	color: string
+	color: string,
+	hint: string
 }
 
 type EntityList = {
@@ -146,13 +156,16 @@ export class Meetings
 			.then((response: MeetingsResponse) => {
 				this.meetingsNode = Tag.render`
 					<div class="tasks-scrum__widget-meetings tasks-scrum__widget-meetings--scope">
-						${this.renderMeetingsHeader()}
+						${this.renderMeetingsHeader(response)}
 						${this.renderEventTemplates(response)}
 						${this.renderScheduledMeetings(response)}
 					</div>`
 				;
 
 				return this.meetingsNode;
+			})
+			.catch((response) => {
+				this.requestSender.showErrorAlert(response);
 			})
 		;
 	}
@@ -179,6 +192,9 @@ export class Meetings
 				`;
 
 				return node;
+			})
+			.catch((response) => {
+				this.requestSender.showErrorAlert(response);
 			})
 		;
 	}
@@ -244,6 +260,9 @@ export class Meetings
 					this.menu.close();
 				}
 			})
+			.catch((response) => {
+				this.requestSender.showErrorAlert(response);
+			})
 		;
 	}
 
@@ -284,8 +303,10 @@ export class Meetings
 		`;
 	}
 
-	renderMeetingsHeader(): HTMLElement
+	renderMeetingsHeader(response: MeetingsResponse): HTMLElement
 	{
+		const calendarSettings = response.data.calendarSettings;
+
 		const node = Tag.render`
 			<div class="tasks-scrum__widget-meetings--header">
 
@@ -309,7 +330,7 @@ export class Meetings
 		const menu = node.querySelector('.ui-btn-menu');
 
 		Event.bind(button, 'click', this.showEventSidePanel.bind(this));
-		Event.bind(menu, 'click', this.showMenuWithEventTemplates.bind(this, button));
+		Event.bind(menu, 'click', this.showMenuWithEventTemplates.bind(this, button, calendarSettings));
 
 		return node;
 	}
@@ -319,6 +340,7 @@ export class Meetings
 		const mapCreatedEvents = response.data.mapCreatedEvents;
 		const listEvents = response.data.listEvents;
 		const isTemplatesClosed = response.data.isTemplatesClosed;
+		const calendarSettings = response.data.calendarSettings;
 
 		const templateVisibility = (
 			isTemplatesClosed
@@ -339,7 +361,7 @@ export class Meetings
 						${Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATES_INFO')}
 					</div>
 					${
-						[...this.getEventTemplates().values()]
+						[...this.getEventTemplates(calendarSettings).values()]
 							.map((eventTemplate: EventTemplate) => {
 								if (
 									Type.isArray(mapCreatedEvents)
@@ -385,7 +407,11 @@ export class Meetings
 			}
 			this.requestSender.closeTemplates({
 				groupId: this.groupId
-			});
+			})
+				.catch((response) => {
+					this.requestSender.showErrorAlert(response);
+				})
+			;
 		});
 		Event.bind(oneClickButton, 'click', () => {
 			Dom.addClass(templatesNode, '--visible');
@@ -427,7 +453,14 @@ export class Meetings
 					<span class="tasks-scrum__widget-meetings--create-element-name">
 						${Text.encode(eventTemplate.name)}
 					</span>
-					<span class="ui-hint"><i class="ui-hint-icon"></i></span>
+					<span class="ui-hint">
+						<i
+							class="ui-hint-icon"
+							data-hint="${eventTemplate.hint}"
+							data-hint-no-icon
+							data-hint-html
+						></i>
+					</span>
 				</div>
 				<div class="tasks-scrum__widget-meetings--create-btn">
 					<button class="ui-qr-popupcomponentmaker__btn">
@@ -440,6 +473,8 @@ export class Meetings
 		const createButton = node.querySelector('.tasks-scrum__widget-meetings--create-btn');
 
 		Event.bind(createButton, 'click', this.openCalendarSidePanel.bind(this, eventTemplate));
+
+		this.initHints(node);
 
 		return node;
 	}
@@ -454,7 +489,7 @@ export class Meetings
 		this.openCalendarSidePanel();
 	}
 
-	showMenuWithEventTemplates(targetNode: HTMLElement)
+	showMenuWithEventTemplates(targetNode: HTMLElement, calendarSettings: CalendarSettings)
 	{
 		if (this.eventTemplatesMenu)
 		{
@@ -477,7 +512,7 @@ export class Meetings
 			delimiter: true
 		});
 
-		this.getEventTemplates()
+		this.getEventTemplates(calendarSettings)
 			.forEach((eventTemplate: EventTemplate) => {
 				this.eventTemplatesMenu.addMenuItem({
 					text: eventTemplate.name,
@@ -559,6 +594,9 @@ export class Meetings
 							.then(() => {
 								// todo maybe update widget or repeat request if error
 							})
+							.catch((response) => {
+								this.requestSender.showErrorAlert(response);
+							})
 						;
 					}
 				}
@@ -568,27 +606,34 @@ export class Meetings
 		this.menu.close();
 	}
 
-	getEventTemplates(): Set<EventTemplate>
+	getEventTemplates(calendarSettings: CalendarSettings): Set<EventTemplate>
 	{
 		const eventTemplates = new Set();
+
+		const daysNumberMap = {
+			MO: 1,
+			TU: 2,
+			WE: 3,
+			TH: 4,
+			FR: 5,
+			SA: 6,
+			SU: 7
+		}
+
+		const weekStartDay = calendarSettings.weekStart[Object.keys(calendarSettings.weekStart)[0]];
+		const weekStartDayNumber = daysNumberMap[weekStartDay];
 
 		eventTemplates.add({
 			id: 'daily',
 			entityId: 'project-roles',
 			name: Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_NAME_DAILY'),
 			desc: '',
-			from: new Date((new Date()).setHours(9, 0, 0)),
-			to: new Date((new Date()).setHours(9, 15, 0)),
+			from: new Date((new Date()).setHours(calendarSettings.workTimeStart, 0, 0)),
+			to: new Date((new Date()).setHours(calendarSettings.workTimeStart, 15, 0)),
 			rrule: {
 				FREQ: 'WEEKLY',
 				INTERVAL: 1,
-				BYDAY: {
-					MO: 'MO',
-					TU: 'TU',
-					WE: 'WE',
-					TH: 'TH',
-					FR: 'FR'
-				}
+				BYDAY: calendarSettings.weekDays
 			},
 			roles: [
 				{
@@ -601,7 +646,8 @@ export class Meetings
 				}
 			],
 			uiClass: 'widget-meetings__sprint-daily',
-			color: '#2FC6F6'
+			color: '#2FC6F6',
+			hint: Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_HINT_DAILY')
 		});
 
 		eventTemplates.add({
@@ -609,14 +655,18 @@ export class Meetings
 			entityId: 'project-roles',
 			name: Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_NAME_PLANNING'),
 			desc: '',
-			from: new Date(this.getTargetDate(1).setHours(9, 0, 0)),
-			to: new Date(this.getTargetDate(1).setHours(10, 0, 0)),
+			from: new Date(
+				this.getNextWeekStartDate(weekStartDayNumber)
+					.setHours(calendarSettings.workTimeStart, 0, 0)
+			),
+			to: new Date(
+				this.getNextWeekStartDate(weekStartDayNumber)
+					.setHours(calendarSettings.workTimeStart + 1, 0, 0)
+			),
 			rrule: {
 				FREQ: 'WEEKLY',
-				INTERVAL: 1,
-				BYDAY: {
-					MO: 'MO'
-				}
+				INTERVAL: calendarSettings.interval,
+				BYDAY: calendarSettings.weekStart
 			},
 			roles: [
 				{
@@ -633,7 +683,8 @@ export class Meetings
 				}
 			],
 			uiClass: 'widget-meetings__sprint-planning',
-			color: '#DA51D4'
+			color: '#DA51D4',
+			hint: Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_HINT_PLANNING')
 		});
 
 		eventTemplates.add({
@@ -641,14 +692,18 @@ export class Meetings
 			entityId: 'project-roles',
 			name: Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_NAME_REVIEW'),
 			desc: '',
-			from: new Date(this.getTargetDate(1).setHours(9, 0, 0)),
-			to: new Date(this.getTargetDate(1).setHours(10, 0, 0)),
+			from: new Date(
+				this.getNextWeekStartDate(weekStartDayNumber)
+					.setHours(calendarSettings.workTimeStart, 0, 0)
+			),
+			to: new Date(
+				this.getNextWeekStartDate(weekStartDayNumber)
+					.setHours(calendarSettings.workTimeStart + 1, 0, 0)
+			),
 			rrule: {
 				FREQ: 'WEEKLY',
-				INTERVAL: 1,
-				BYDAY: {
-					MO: 'MO'
-				}
+				INTERVAL: calendarSettings.interval,
+				BYDAY: calendarSettings.weekStart
 			},
 			roles: [
 				{
@@ -665,7 +720,8 @@ export class Meetings
 				}
 			],
 			uiClass: 'widget-meetings__sprint-review',
-			color: '#FF5752'
+			color: '#FF5752',
+			hint: Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_HINT_REVIEW')
 		});
 
 		eventTemplates.add({
@@ -673,14 +729,18 @@ export class Meetings
 			entityId: 'project-roles',
 			name: Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_NAME_RETROSPECTIVE'),
 			desc: '',
-			from: new Date(this.getTargetDate(1).setHours(9, 0, 0)),
-			to: new Date(this.getTargetDate(1).setHours(10, 0, 0)),
+			from: new Date(
+				this.getNextWeekStartDate(weekStartDayNumber)
+					.setHours(calendarSettings.workTimeStart, 0, 0)
+			),
+			to: new Date(
+				this.getNextWeekStartDate(weekStartDayNumber)
+					.setHours(calendarSettings.workTimeStart + 1, 0, 0)
+			),
 			rrule: {
 				FREQ: 'WEEKLY',
-				INTERVAL: 1,
-				BYDAY: {
-					MO: 'MO'
-				}
+				INTERVAL: calendarSettings.interval,
+				BYDAY: calendarSettings.weekStart
 			},
 			roles: [
 				{
@@ -693,7 +753,8 @@ export class Meetings
 				}
 			],
 			uiClass: 'widget-meetings__sprint-retrospective',
-			color: '#FF5752'
+			color: '#FF5752',
+			hint: Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_HINT_RETROSPECTIVE')
 		});
 
 		return eventTemplates;
@@ -714,12 +775,12 @@ export class Meetings
 		);
 	}
 
-	getTargetDate(targetDay: number): Date
+	getNextWeekStartDate(weekStartDayNumber: number): Date
 	{
 		const date = new Date();
 		const targetDate = new Date();
 
-		const delta = targetDay - date.getDay();
+		const delta = weekStartDayNumber - date.getDay();
 
 		if (delta >= 0)
 		{
@@ -731,5 +792,10 @@ export class Meetings
 		}
 
 		return targetDate;
+	}
+
+	initHints(node: HTMLElement)
+	{
+		BX.UI.Hint.init(node);
 	}
 }

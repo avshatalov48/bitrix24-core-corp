@@ -78,23 +78,39 @@ class CrmRouterComponent extends Bitrix\Crm\Component\Base
 		$this->arResult['isIframe'] = $this->isIframe();
 		$this->arResult['isUsePadding'] = $this->isUsePadding($componentName);
 		$this->arResult['isPlainView'] = $this->isPlainView($componentName);
+		$this->arResult['isUseBitrix24Theme'] = $this->isUseBitrix24Theme($componentName);
+		$this->arResult['defaultBitrix24Theme'] = $this->getDefaultBitrix24Theme($componentName);
 		$this->arResult['roots'] = $this->getAllRoots();
-		$this->arResult['isUseToolbar'] = 'Y';
+		$this->arResult['isUseToolbar'] = $this->isUseToolbar($componentName);
 
 		$this->includeComponentTemplate();
 	}
 
 	protected function isUsePadding(string $componentName): bool
 	{
-		return $componentName === 'bitrix:crm.item.automation';
+		return false;
+	}
+
+	protected function isUseToolbar(string $componentName): bool
+	{
+		return $componentName !== 'bitrix:crm.item.automation';
 	}
 
 	protected function isPlainView(string $componentName): bool
 	{
-		return (
-			$componentName === 'bitrix:crm.item.details'
-			|| $componentName === 'bitrix:crm.quote.details'
-		);
+		$detailComponentNames = array_values($this->router->getItemDetailComponentNamesMap());
+
+		return in_array($componentName, $detailComponentNames, true);
+	}
+
+	protected function isUseBitrix24Theme(string $componentName): bool
+	{
+		return $componentName === 'bitrix:crm.item.automation';
+	}
+
+	protected function getDefaultBitrix24Theme(string $componentName): ?string
+	{
+		return $componentName === 'bitrix:crm.item.automation' ? 'light:robots' : null;
 	}
 
 	protected function getAllRoots(): array

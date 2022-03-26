@@ -1,18 +1,27 @@
 <?php
+
 namespace Bitrix\Crm\Conversion;
-use Bitrix\Main;
+
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Merger\EntityMerger;
 
 class LeadConversionWizard extends EntityConversionWizard
 {
+	public function isNewApi(): bool
+	{
+		//lead doesn't support factories yet
+		return false;
+	}
+
 	/**
 	 * @param int $entityID Entity ID.
 	 * @param LeadConversionConfig|null $config Configuration parameters.
 	 */
-	public function __construct($entityID = 0, LeadConversionConfig $config = null)
+	public function __construct($entityID = 0, EntityConversionConfig $config = null)
 	{
 		$converter = new LeadConverter($config);
 		$converter->setEntityID($entityID);
+
 		parent::__construct($converter);
 	}
 	/**
@@ -44,6 +53,11 @@ class LeadConversionWizard extends EntityConversionWizard
 	 */
 	public function execute(array $contextData = null)
 	{
+		if ($this->isNewApi())
+		{
+			return parent::execute($contextData);
+		}
+
 		/** @var LeadConverter $converter */
 		$converter = $this->converter;
 
@@ -259,22 +273,18 @@ class LeadConversionWizard extends EntityConversionWizard
 		if(!empty($mappedFields))
 		{
 			$merger = EntityMerger::create($entityTypeID, $converter->getUserID(), true);
-			//Skip empty fields if user has left theirs empty.
-			$merger->mergeFields($mappedFields, $fields, true, array('ENABLE_UPLOAD' => true));
-		}
-	}
-	/**
-	 * Save wizard settings in session.
-	 * @return void
-	 */
-	public function save()
-	{
-		if(!isset($_SESSION['LEAD_CONVERTER']))
-		{
-			$_SESSION['LEAD_CONVERTER'] = array();
-		}
 
-		$_SESSION['LEAD_CONVERTER'][$this->getEntityID()] = $this->externalize();
+			//Skip empty fields if user has left theirs empty.
+			$merger->mergeFields(
+				$mappedFields,
+				$fields,
+				true,
+				[
+					'ENABLE_UPLOAD' => true,
+					'SKIP_MULTIPLE_USER_FIELDS' => $this->isSkipMultipleUserFields(),
+				]
+			);
+		}
 	}
 	/**
 	 * Load wizard related to entity from session.
@@ -292,16 +302,15 @@ class LeadConversionWizard extends EntityConversionWizard
 		$item->internalize($_SESSION['LEAD_CONVERTER'][$entityID]);
 		return $item;
 	}
+
 	/**
-	 * Remove wizard related to entity from session.
-	 * @param int $entityID Entity ID.
-	 * @return void
+	 * @inheritDoc
 	 */
 	public static function remove($entityID)
 	{
-		if(isset($_SESSION['LEAD_CONVERTER']) && $_SESSION['LEAD_CONVERTER'][$entityID])
+		if ($entityID > 0)
 		{
-			unset($_SESSION['LEAD_CONVERTER'][$entityID]);
+			static::removeByIdentifier(new ItemIdentifier(\CCrmOwnerType::Lead, (int)$entityID));
 		}
 	}
 }

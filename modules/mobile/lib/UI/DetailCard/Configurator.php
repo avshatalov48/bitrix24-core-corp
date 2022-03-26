@@ -1,0 +1,127 @@
+<?php
+
+declare(strict_types = 1);
+
+namespace Bitrix\Mobile\UI\DetailCard;
+
+use Bitrix\Main\Engine\Resolver;
+use Bitrix\Main\Web\Json;
+
+final class Configurator
+{
+	private $controller;
+	private $tabs = [];
+	private $editMode = true;
+	private $activeTabId;
+
+	public function __construct(Controller $controller)
+	{
+		$this->controller = $controller;
+	}
+
+	private function getActionsList(): array
+	{
+		static $actions = null;
+
+		if ($actions === null)
+		{
+			$actions = array_fill_keys($this->controller->listNameActions(), true);
+		}
+
+		return $actions;
+	}
+
+	private function getEndpoint(): string
+	{
+		$fullName = mb_strtolower(Resolver::getNameByController($this->controller));
+
+		return explode(':', $fullName)[1];
+	}
+
+	public function setEditMode(bool $mode): self
+	{
+		$this->editMode = $mode;
+
+		return $this;
+	}
+
+	public function isEditMode(): bool
+	{
+		return $this->editMode && $this->isSaveable();
+	}
+
+	private function isSaveable(): bool
+	{
+		return $this->hasControllerAction('save');
+	}
+
+	private function checkTabAction(Tabs\Base $tab): bool
+	{
+		return $this->hasControllerAction($this->getTabActionName($tab));
+	}
+
+	private function getTabActionName(Tabs\Base $tab): string
+	{
+		return $this->controller::getTabActionName($tab->getId());
+	}
+
+	private function hasControllerAction(string $actionName): bool
+	{
+		return isset($this->getActionsList()[$actionName]);
+	}
+
+	public function addTab(Tabs\Base $tab): self
+	{
+		if (!$this->checkTabAction($tab))
+		{
+			$controllerClass = get_class($this->controller);
+			throw new \DomainException(
+				"Tab action {{$controllerClass}::{$this->getTabActionName($tab)}} not found."
+			);
+		}
+
+		$this->tabs[] = $tab;
+
+		return $this;
+	}
+
+	public function setActiveTabId(?string $id): self
+	{
+		$this->activeTabId = $id;
+
+		return $this;
+	}
+
+	public function getActiveTabId(): ?string
+	{
+		if ($this->activeTabId)
+		{
+			return $this->activeTabId;
+		}
+
+		$firstTab = $this->tabs[0] ?? null;
+		if ($firstTab)
+		{
+			return $firstTab->getId();
+		}
+
+		return null;
+	}
+
+	public function toArray(): array
+	{
+		return [
+			'endpoint' => $this->getEndpoint(),
+			'isEditMode' => $this->isEditMode(),
+			'tabs' => array_map(static function (Tabs\Base $tab) {
+				return $tab->jsonSerialize();
+			}, $this->tabs),
+			'activeTab' => $this->getActiveTabId(),
+		];
+	}
+
+	public function toJson(): string
+	{
+		return Json::encode($this->toArray());
+	}
+}

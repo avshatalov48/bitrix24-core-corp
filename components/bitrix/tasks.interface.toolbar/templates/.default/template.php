@@ -4,11 +4,12 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Main\Config\Option;
+use Bitrix\Main\Loader;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Update\Stepper;
 use Bitrix\Tasks\Access;
 use Bitrix\Tasks\Integration\Bizproc\Automation\Factory;
+use Bitrix\Tasks\UI\ScopeDictionary;
 
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass? $bodyClass.' ' : '').'pagetitle-toolbar-field-view tasks-pagetitle-view');
@@ -20,10 +21,8 @@ Extension::load([
 	'ui.hint',
 ]);
 
-$isMyTasks = $arResult['USER_ID'] === $arResult['OWNER_ID'];
-$showViewMode = $arParams['SHOW_VIEW_MODE'] == 'Y';
-$isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
-$taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
+$showViewMode = ($arParams['SHOW_VIEW_MODE'] === 'Y');
+$isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24');
 
 if ($isBitrix24Template)
 {
@@ -91,47 +90,50 @@ if ($isBitrix24Template)
 
 	<div class="task-interface-toolbar--item --without-bg --align-right">
 		<div class="task-interface-toolbar--item--scope">
-	<?php
-	if (
-		$isMyTasks
-		&& $arResult['SHOW_COUNTERS']
-		&& Access\TaskAccessController::can($arParams['USER_ID'], Access\ActionDictionary::ACTION_TASK_ROBOT_EDIT)
-	)
-	{
-		$groupId = (int)$arParams['GROUP_ID'];
-		$projectId = ($showViewMode ? $groupId : 'this.getAttribute(\'data-project-id\')');
-
-		$showLimitSlider = $taskLimitExceeded || !Factory::canUseAutomation();
-		$openLimitSliderAction = "top.BX.UI.InfoHelper.show('limit_tasks_robots')";
-		$openRobotSliderAction = "BX.SidePanel.Instance.open('/bitrix/components/bitrix/tasks.automation/slider.php?site_id='+BX.message('SITE_ID')+'&amp;project_id='+{$projectId});";
-
-		$lockClass = ($showLimitSlider ? 'ui-btn-icon-lock' : '');
-		$onClick = ($showLimitSlider ? $openLimitSliderAction : $openRobotSliderAction);
-		?>
-		<button class="ui-btn ui-btn-xs ui-btn-light-border ui-btn-no-caps ui-btn-themes ui-btn-round <?=$lockClass?> task-interface-btn-toolbar --robots --small"
-			<?=($showViewMode ? '' : "data-project-id='{$groupId}'")?> onclick="<?=$onClick?>">
-			<?=GetMessage('TASKS_SWITCHER_ITEM_ROBOTS')?>
-		</button>
-		<?php
-	}
-
-	if (\Bitrix\Main\Loader::includeModule('intranet'))
-	{
-		$context = $arParams['GROUP_ID']
-			? ['GROUP_ID' => $arParams['GROUP_ID']]
-			: ['USER_ID' => $arParams['OWNER_ID']];
-		$menuCode = $arParams['GROUP_ID'] ? 'group' : 'user';
-		$APPLICATION->includeComponent(
-			'bitrix:intranet.binding.menu',
-			'',
-			array(
-				'SECTION_CODE' => 'tasks_switcher',
-				'MENU_CODE' => $menuCode,
-				'CONTEXT' => $context
+			<?php
+			$robotBtnIgnoreList = [
+				ScopeDictionary::SCOPE_SCRUM_PROJECTS_GRID,
+			];
+			if (
+				($arResult['USER_ID'] === $arResult['OWNER_ID'])
+				&& $arResult['SHOW_COUNTERS']
+				&& !in_array($arParams['SCOPE'], $robotBtnIgnoreList, true)
+				&& Loader::includeModule('bizproc')
+				&& Access\TaskAccessController::can($arResult['USER_ID'], Access\ActionDictionary::ACTION_TASK_ROBOT_EDIT)
 			)
-		);
-	}
-	?>
+			{
+				$groupId = (int)$arParams['GROUP_ID'];
+				$projectId = ($showViewMode ? $groupId : 'this.getAttribute(\'data-project-id\')');
+
+				$showLimitSlider = ($arResult['TASK_LIMIT_EXCEEDED'] || !Factory::canUseAutomation());
+				$openLimitSliderAction = "top.BX.UI.InfoHelper.show('limit_tasks_robots', {isLimit: true, limitAnalyticsLabels: {module: 'tasks'}})";
+				$openRobotSliderAction = "BX.SidePanel.Instance.open('/bitrix/components/bitrix/tasks.automation/slider.php?site_id='+BX.message('SITE_ID')+'&amp;project_id='+{$projectId}, {customLeftBoundary: 0});";
+
+				$lockClass = ($showLimitSlider ? 'ui-btn-icon-lock' : '');
+				$onClick = ($showLimitSlider ? $openLimitSliderAction : $openRobotSliderAction);
+
+				?><button class="ui-btn ui-btn-xs ui-btn-light-border ui-btn-no-caps ui-btn-themes ui-btn-round <?=$lockClass?> task-interface-btn-toolbar --robots --small"
+					<?=($showViewMode ? '' : "data-project-id='{$groupId}'")?> onclick="<?=$onClick?>">
+					<?=GetMessage('TASKS_SWITCHER_ITEM_ROBOTS')?>
+				</button><?php
+			}
+			if (Loader::includeModule('intranet'))
+			{
+				$APPLICATION->includeComponent(
+					'bitrix:intranet.binding.menu',
+					'',
+					[
+						'SECTION_CODE' => 'tasks_switcher',
+						'MENU_CODE' => ($arParams['GROUP_ID'] ? 'group' : 'user'),
+						'CONTEXT' => (
+							$arParams['GROUP_ID']
+								? ['GROUP_ID' => $arParams['GROUP_ID']]
+								: ['USER_ID' => $arParams['OWNER_ID']]
+						),
+					]
+				);
+			}
+			?>
 		</div>
 	</div>
 
@@ -154,14 +156,6 @@ if ($isBitrix24Template)
 		echo Stepper::getHtml(
 			['tasks' => 'Bitrix\Tasks\Update\FullTasksIndexer'],
 			GetMessage('TASKS_FULL_TASK_INDEXING_TITLE')
-		);
-		echo Stepper::getHtml(
-			['tasks' => 'Bitrix\Tasks\Update\TemplateCheckListConverter'],
-			GetMessage('TASKS_TEMPLATE_CHECKLIST_CONVERTING_TITLE')
-		);
-		echo Stepper::getHtml(
-			['tasks' => 'Bitrix\Tasks\Update\TaskCheckListConverter'],
-			GetMessage('TASKS_TASK_CHECKLIST_CONVERTING_TITLE')
 		);
 		echo Stepper::getHtml([
 			'tasks' => [

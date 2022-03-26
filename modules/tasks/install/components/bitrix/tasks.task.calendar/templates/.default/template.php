@@ -5,6 +5,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
+use Bitrix\Tasks\UI\ScopeDictionary;
 
 $isIFrame = $_REQUEST['IFRAME'] == 'Y';
 
@@ -24,16 +25,6 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/tasks/css/tasks.css");
 
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass . " " : "") . "page-one-column");
-
-if (\Bitrix\Tasks\Util\DisposableAction::needConvertTemplateFiles())
-{
-	$APPLICATION->IncludeComponent("bitrix:tasks.util.process",
-		'',
-		array(),
-		false,
-		array("HIDE_ICONS" => "Y")
-	);
-}
 
 $APPLICATION->IncludeComponent(
 	'bitrix:main.calendar',
@@ -406,7 +397,6 @@ if ($isBitrix24Template)
 		'GET_LIST_PARAMS' => $arResult['GET_LIST_PARAMS'],
 		'COMPANY_WORKTIME' => $arResult['COMPANY_WORKTIME'],
 		'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
-		'GANTT_MODE' => true,
 		'USER_ID' => $arParams['USER_ID'],
 		'GROUP_ID' => $arParams['GROUP_ID'],
 		'MARK_ACTIVE_ROLE' => $arParams['MARK_ACTIVE_ROLE'],
@@ -438,7 +428,8 @@ if ($isBitrix24Template)
 		'USE_LIVE_SEARCH' => 'Y',
 		'SHOW_SECTION_TEMPLATES'=>$arParams['GROUP_ID'] > 0 ? 'N' : 'Y',
 		'DEFAULT_ROLEID'=>$arParams['DEFAULT_ROLEID'],
-		'USE_AJAX_ROLE_FILTER'=>'Y'
+		'USE_AJAX_ROLE_FILTER'=>'Y',
+		'SCOPE' => ScopeDictionary::SCOPE_TASKS_CALENDAR,
 	),
 	$component,
 	array('HIDE_ICONS' => true)

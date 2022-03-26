@@ -133,7 +133,7 @@ class StatisticTable extends Base
 				'title' => Loc::getMessage('STATISTIC_ENTITY_CALL_STATUS_FIELD'),
 			)),
 			new Entity\IntegerField('CALL_RECORD_ID', array(
-				'title' => Loc::getMessage('STATISTIC_ENTITY_CALL_RECORD_ID_FIELD'),
+				'title' => Loc::getMessage('STATISTIC_ENTITY_CALL_RECORD_ID_FIELD_2'),
 			)),
 			new Entity\StringField('CALL_RECORD_URL', array(
 				'validation' => function(){return array(new Entity\Validator\Length(null, 2000));},

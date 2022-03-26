@@ -18,13 +18,13 @@ use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Internals\Counter\Template\CounterStyle;
 use Bitrix\Tasks\Internals\Counter\Template\TaskCounter;
-use Bitrix\Tasks\Scrum\Internal\EntityTable;
-use Bitrix\Tasks\Scrum\Internal\ItemTable;
+use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Helper\Common;
 use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Internals\Task\CheckListTable;
-use Bitrix\Tasks\Internals\Task\CheckListTreeTable as CheckListTreeTable;
-use Bitrix\Tasks\Util\Type\DateTime as TasksDateTime;
+use Bitrix\Tasks\Internals\Task\CheckListTreeTable;
+use Bitrix\Tasks\Scrum\Form\ItemForm;
+use Bitrix\Tasks\Util\Type;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util;
 
@@ -86,6 +86,11 @@ class TaskService implements Errorable
 		return ($this->ownerId === 0 ? $this->executiveUserId : $this->ownerId);
 	}
 
+	public function getUserId(): int
+	{
+		return $this->executiveUserId;
+	}
+
 	public function getFilterInstance(int $groupId, bool $isCompletedSprint = false): Common
 	{
 		if ($isCompletedSprint)
@@ -127,11 +132,7 @@ class TaskService implements Errorable
 		{
 			$tags = $this->cleanTagsInTaskFields($taskFields['TAGS']);
 
-			$taskItemObject = \CTaskItem::add(
-				$taskFields,
-				$this->executiveUserId,
-				['DISABLE_BIZPROC_RUN' => true]
-			);
+			$taskItemObject = \CTaskItem::add($taskFields, $this->executiveUserId);
 
 			$taskId = $taskItemObject->getId();
 
@@ -387,7 +388,11 @@ class TaskService implements Errorable
 		catch (\Exception $exception)
 		{
 			$message = $exception->getMessage().$exception->getTraceAsString();
-			$this->errorCollection->setError(new Error($message, self::ERROR_COULD_NOT_READ_TAGS));
+
+			$this->errorCollection->setError(
+				new Error($message, self::ERROR_COULD_NOT_READ_TAGS)
+			);
+
 			return [];
 		}
 	}
@@ -434,12 +439,17 @@ class TaskService implements Errorable
 		{
 			$task = $this->getTaskItemObject($taskId);
 			$task->update($taskFields);
+
 			return true;
 		}
 		catch (\Exception $exception)
 		{
 			$message = $exception->getMessage().$exception->getTraceAsString();
-			$this->errorCollection->setError(new Error($message, self::ERROR_COULD_NOT_UPDATE_TASK));
+
+			$this->errorCollection->setError(
+				new Error($message, self::ERROR_COULD_NOT_UPDATE_TASK)
+			);
+
 			return false;
 		}
 	}
@@ -508,13 +518,16 @@ class TaskService implements Errorable
 
 			if ($taskData['CLOSED_DATE'])
 			{
-				return TasksDateTime::createFrom($taskData['CLOSED_DATE']);
+				return Type\DateTime::createFrom($taskData['CLOSED_DATE']);
 			}
 		}
 		catch (\Exception $exception)
 		{
 			$message = $exception->getMessage().$exception->getTraceAsString();
-			$this->errorCollection->setError(new Error($message, self::ERROR_COULD_NOT_READ_TASK));
+
+			$this->errorCollection->setError(
+				new Error($message, self::ERROR_COULD_NOT_READ_TASK)
+			);
 		}
 
 		return null;
@@ -527,8 +540,6 @@ class TaskService implements Errorable
 			$task = \CTaskItem::getInstance($taskId, $this->executiveUserId);
 
 			$task->delete();
-
-			ItemTable::deactivateBySourceId($taskId);
 
 			return true;
 		}
@@ -554,12 +565,17 @@ class TaskService implements Errorable
 				$task = \CTaskItem::getInstance($taskId, $this->executiveUserId);
 				$task->complete();
 			}
+
 			return true;
 		}
 		catch (\Exception $exception)
 		{
 			$message = $exception->getMessage().$exception->getTraceAsString();
-			$this->errorCollection->setError(new Error($message, self::ERROR_COULD_NOT_COMPLETE_TASK));
+
+			$this->errorCollection->setError(
+				new Error($message, self::ERROR_COULD_NOT_COMPLETE_TASK)
+			);
+
 			return false;
 		}
 	}
@@ -915,6 +931,19 @@ class TaskService implements Errorable
 		return $itemsData;
 	}
 
+	public function mandatoryExists(): bool
+	{
+		$queryObject = \CUserTypeEntity::getList(
+			[],
+			[
+				'ENTITY_ID' => 'TASKS_TASK',
+				'MANDATORY' => 'Y'
+			]
+		);
+
+		return (bool) $queryObject->fetch();
+	}
+
 	public function getErrors()
 	{
 		return $this->errorCollection->toArray();
@@ -1110,7 +1139,10 @@ class TaskService implements Errorable
 				$parentId = (int) $previousFields['PARENT_ID'];
 				if ($parentId && self::isTaskInActiveSprint($parentId, $currentGroupId))
 				{
-					self::moveTaskToActiveSprint($taskId, $currentGroupId);
+					if (!self::isTaskInActiveSprint($taskId, $currentGroupId))
+					{
+						self::moveTaskToActiveSprint($taskId, $currentGroupId);
+					}
 				}
 				else
 				{
@@ -1123,15 +1155,6 @@ class TaskService implements Errorable
 			}
 		}
 		catch (\Exception $exception) {}
-	}
-
-	private function getTaskItemObject($taskId)
-	{
-		if (empty(self::$taskItemObject[$taskId]))
-		{
-			self::$taskItemObject[$taskId] = \CTaskItem::getInstance($taskId, $this->executiveUserId);
-		}
-		return self::$taskItemObject[$taskId];
 	}
 
 	public function getTasksInfo(array $taskIds): array
@@ -1158,6 +1181,7 @@ class TaskService implements Errorable
 			);
 			while ($data = $queryObject->fetch())
 			{
+				$data['TITLE'] = \Bitrix\Main\Text\Emoji::decode($data['TITLE']);
 				$tasksInfo[$data['ID']] = $data;
 			}
 
@@ -1199,6 +1223,15 @@ class TaskService implements Errorable
 		}
 
 		return $parentIds;
+	}
+
+	private function getTaskItemObject($taskId)
+	{
+		if (empty(self::$taskItemObject[$taskId]))
+		{
+			self::$taskItemObject[$taskId] = \CTaskItem::getInstance($taskId, $this->executiveUserId);
+		}
+		return self::$taskItemObject[$taskId];
 	}
 
 	private function getChecklistCounts(array $taskIds): array
@@ -1392,32 +1425,35 @@ class TaskService implements Errorable
 
 	private static function createScrumItem(int $taskId, array $fields, $previousFields = []): void
 	{
-		$isActiveSprintItem = false;
+		$isBacklogTarget = true;
 
 		$parentTaskId = $fields['PARENT_ID'] ? $fields['PARENT_ID'] : $previousFields['PARENT_ID'];
 
 		if ($parentTaskId)
 		{
-			$sprintService = new SprintService();
 			$itemService = new ItemService();
-			$scrumItem = $itemService->getItemBySourceId($parentTaskId);
-			$sprint = $sprintService->getActiveSprintByGroupId($fields['GROUP_ID']);
-			$isActiveSprintItem = ($sprint->getId() === $scrumItem->getEntityId());
-			if ($sprint->isEmpty() || $scrumItem->isEmpty())
+
+			$parentScrumItem = $itemService->getItemBySourceId($parentTaskId);
+			if (!$parentScrumItem->isEmpty())
 			{
-				$isActiveSprintItem = false;
-			}
-			if ($isActiveSprintItem)
-			{
-				self::createItem($sprint, $taskId, $fields, $previousFields, $scrumItem->getEpicId());
+				$entityService = new EntityService();
+
+				$entity = $entityService->getEntityById($parentScrumItem->getEntityId());
+				if (!$entity->isEmpty())
+				{
+					self::createItem($entity, $taskId, $fields, $previousFields, $parentScrumItem->getEpicId());
+
+					$isBacklogTarget = false;
+				}
 			}
 		}
 
-		if (!$isActiveSprintItem)
+		if ($isBacklogTarget)
 		{
 			$backlogService = new BacklogService();
+
 			$backlog = $backlogService->getBacklogByGroupId($fields['GROUP_ID']);
-			if (!$backlogService->getErrors() && !$backlog->isEmpty())
+			if (!$backlog->isEmpty())
 			{
 				self::createItem($backlog, $taskId, $fields, $previousFields);
 			}
@@ -1425,7 +1461,7 @@ class TaskService implements Errorable
 	}
 
 	private static function createItem(
-		EntityTable $entity,
+		EntityForm $entity,
 		int $taskId,
 		array $fields,
 		array $previousFields = [],
@@ -1439,7 +1475,8 @@ class TaskService implements Errorable
 		{
 			$pushService = (Loader::includeModule('pull') ? new PushService() : null);
 
-			$scrumItem = ItemTable::createItemObject();
+			$scrumItem = new ItemForm();
+
 			$createdBy = ($fields['CREATED_BY'] ? $fields['CREATED_BY'] : $previousFields['CREATED_BY']);
 			$scrumItem->setCreatedBy($createdBy);
 			$scrumItem->setEntityId($entity->getId());
@@ -1493,7 +1530,7 @@ class TaskService implements Errorable
 		}
 	}
 
-	private static function updateItem(EntityTable $entity, int $taskId, $fields): void
+	private static function updateItem(EntityForm $entity, int $taskId, $fields): void
 	{
 		$itemService = new ItemService();
 		$scrumItem = $itemService->getItemBySourceId($taskId);

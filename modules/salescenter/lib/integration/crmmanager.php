@@ -320,7 +320,7 @@ class CrmManager extends Base
 				if($lead)
 				{
 					$clientInfo['COMPANY_ID'] = (int)$lead['COMPANY_ID'];
-					$clientInfo['CONTACT_IDS'] = LeadContactTable::getContactLeadIDs($ownerId);
+					$clientInfo['CONTACT_IDS'] = LeadContactTable::getLeadContactIDs($ownerId);
 				}
 			}
 			elseif($ownerTypeId == \CCrmOwnerType::Deal)
@@ -330,7 +330,9 @@ class CrmManager extends Base
 				{
 					$clientInfo['CONTACT_IDS'] = DealContactTable::getDealContactIDs($ownerId);
 					$clientInfo['COMPANY_ID'] = (int)$deal['COMPANY_ID'];
-					$clientInfo['DEAL_ID'] = $ownerId;
+
+					$clientInfo['OWNER_ID'] = $ownerId;
+					$clientInfo['OWNER_TYPE_ID'] = $ownerTypeId;
 				}
 			}
 			elseif($ownerTypeId == \CCrmOwnerType::Contact)
@@ -359,9 +361,70 @@ class CrmManager extends Base
 					}
 				}
 			}
+			elseif($ownerTypeId == \CCrmOwnerType::Invoice)
+			{
+				$invoice = \CCrmInvoice::GetByID($ownerId);
+				if ($invoice)
+				{
+					$companyID = $invoice['UF_COMPANY_ID'] ?? 0;
+					if ($companyID)
+					{
+						$clientInfo['COMPANY_ID'] = $companyID;
+					}
+
+					$contactID = $invoice['UF_CONTACT_ID'] ?? 0;
+					if ($contactID)
+					{
+						$clientInfo['CONTACT_IDS'][] = $contactID;
+					}
+				}
+			}
+			else
+			{
+				$factory = Crm\Service\Container::getInstance()->getFactory($ownerTypeId);
+				if ($factory)
+				{
+					$item = $factory->getItem($ownerId);
+
+					if ($item && $item->getCompanyId())
+					{
+						$clientInfo['COMPANY_ID'] = (int)$item->getCompanyId();
+					}
+
+					if ($item && $item->getContactId())
+					{
+						$clientInfo['CONTACT_IDS'] = [(int)$item->getContactId()];
+					}
+				}
+
+				$clientInfo['OWNER_ID'] = $ownerId;
+				$clientInfo['OWNER_TYPE_ID'] = $ownerTypeId;
+			}
+
 		}
 
 		return $clientInfo;
+	}
+
+	/**
+	 * @param int $ownerId
+	 * @param int $ownerTypeId
+	 * @return bool
+	 */
+	public function isOwnerEntityInFinalStage(int $ownerId, int $ownerTypeId): bool
+	{
+		$factory = Crm\Service\Container::getInstance()->getFactory($ownerTypeId);
+		if ($factory)
+		{
+			$item = $factory->getItem($ownerId);
+			if ($item)
+			{
+				$stage = $factory->getStage($item->getStageId());
+				return $stage && Crm\PhaseSemantics::isFinal($stage->getSemantics());
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -376,21 +439,21 @@ class CrmManager extends Base
 
 	/**
 	 * @param $triggerCode
-	 * @param $dealId
+	 * @param $entityId
+	 * @param $entityTypeId
 	 * @param $stageId
 	 * @return int|mixed
 	 */
-	private function saveTriggerByCode($triggerCode, $dealId, $stageId)
+	private function saveTriggerByCode($triggerCode, $entityId, $entityTypeId, $stageId)
 	{
-		$target = $this->getDealAutomationTarget();
+		$target = $this->getAutomationTarget($entityTypeId);
 
 		if ($target === null)
 		{
 			return 0;
 		}
 
-		$dealCategoryId = \CCrmDeal::GetCategoryID($dealId);
-		$stages = \CCrmDeal::GetStages($dealCategoryId);
+		$stages = $this->getStageList($entityId, $entityTypeId);
 
 		$triggers = $target->getTriggers(array_keys($stages));
 		$trigger = $this->findTriggerByCode($triggerCode, $triggers);
@@ -428,26 +491,48 @@ class CrmManager extends Base
 	}
 
 	/**
-	 * @param $dealId
+	 * @param $entityId
+	 * @param $entityTypeId
 	 * @param $stageId
 	 * @return int|mixed
 	 */
-	public function saveTriggerOnOrderPaid($dealId, $stageId)
+	public function saveTriggerOnOrderPaid($entityId, $entityTypeId, $stageId)
 	{
-		return $this->saveTriggerByCode(Automation\Trigger\OrderPaidTrigger::getCode(), $dealId, $stageId);
+		if (!Automation\Trigger\OrderPaidTrigger::isSupported($entityTypeId))
+		{
+			return 0;
+		}
+
+		return $this->saveTriggerByCode(
+			Automation\Trigger\OrderPaidTrigger::getCode(),
+			$entityId,
+			$entityTypeId,
+			$stageId
+		);
 	}
 
 	/**
-	 * @param $dealId
+	 * @param $entityId
+	 * @param $entityTypeId
 	 * @param $stageId
 	 * @return int|mixed
 	 */
-	public function saveTriggerOnDeliveryFinished($dealId, $stageId)
+	public function saveTriggerOnDeliveryFinished($entityId, $entityTypeId, $stageId)
 	{
-		return $this->saveTriggerByCode(Automation\Trigger\DeliveryFinishedTrigger::getCode(), $dealId, $stageId);
+		if (!Automation\Trigger\DeliveryFinishedTrigger::isSupported($entityTypeId))
+		{
+			return 0;
+		}
+
+		return $this->saveTriggerByCode(
+			Automation\Trigger\DeliveryFinishedTrigger::getCode(),
+			$entityId,
+			$entityTypeId,
+			$stageId
+		);
 	}
 
-	protected function getDealAutomationTarget()
+	protected function getAutomationTarget($entityTypeId)
 	{
 		if (!Loader::includeModule('bizproc'))
 		{
@@ -459,11 +544,9 @@ class CrmManager extends Base
 
 		$documentService = $runtime->GetService('DocumentService');
 
-		return $documentService->createAutomationTarget([
-			'crm',
-			\CCrmDocumentDeal::class,
-			'DEAL',
-		]);
+		return $documentService->createAutomationTarget(
+			\CCrmBizProcHelper::ResolveDocumentType($entityTypeId)
+		);
 	}
 
 	/**
@@ -485,40 +568,58 @@ class CrmManager extends Base
 	}
 
 	/**
-	 * @param $dealId
+	 * @param $entityId
+	 * @param $entityTypeId
 	 * @return mixed|string
 	 */
-	public function getStageWithOrderPaidTrigger($dealId)
+	public function getStageWithOrderPaidTrigger($entityId, $entityTypeId)
 	{
+		if (!Automation\Trigger\OrderPaidTrigger::isSupported($entityTypeId))
+		{
+			return '';
+		}
+
 		return $this->getStageWithTrigger(
 			Automation\Trigger\OrderPaidTrigger::getCode(),
-			$dealId
+			$entityId,
+			$entityTypeId
 		);
 	}
 
 	/**
-	 * @param $dealId
+	 * @param $entityId
+	 * @param $entityTypeId
 	 * @return mixed|string
 	 */
-	public function getStageWithDeliveryFinishedTrigger($dealId)
+	public function getStageWithDeliveryFinishedTrigger($entityId, $entityTypeId)
 	{
+		if (!Automation\Trigger\DeliveryFinishedTrigger::isSupported($entityTypeId))
+		{
+			return '';
+		}
+
 		return $this->getStageWithTrigger(
 			Automation\Trigger\DeliveryFinishedTrigger::getCode(),
-			$dealId
+			$entityId,
+			$entityTypeId
 		);
 	}
 
 	/**
 	 * @param $triggerCode
-	 * @param $dealId
+	 * @param $entityId
+	 * @param $entityTypeId
 	 * @return mixed|string
 	 */
-	private function getStageWithTrigger($triggerCode, $dealId)
+	private function getStageWithTrigger($triggerCode, $entityId, $entityTypeId)
 	{
-		$target = $this->getDealAutomationTarget();
+		$target = $this->getAutomationTarget($entityTypeId);
+		if ($target === null)
+		{
+			return '';
+		}
 
-		$dealCategoryId = \CCrmDeal::GetCategoryID($dealId);
-		$stages = \CCrmDeal::GetStages($dealCategoryId);
+		$stages = $this->getStageList($entityId, $entityTypeId);
 
 		$triggers = $target->getTriggers(array_keys($stages));
 		$trigger = $this->findTriggerByCode($triggerCode, $triggers);
@@ -535,13 +636,13 @@ class CrmManager extends Base
 		/** @var Order\Order $order */
 		$order = $payment->getOrder();
 
-		$entityCommunication = $order->getEntityCommunication();
+		$entityCommunication = $order->getContactCompanyCollection()->getEntityCommunication();
 		if (!$entityCommunication)
 		{
 			return false;
 		}
 
-		$messageTo = $order->getEntityCommunicationPhone();
+		$messageTo = $order->getContactCompanyCollection()->getEntityCommunicationPhone();
 		if (!$messageTo)
 		{
 			return false;
@@ -706,22 +807,13 @@ class CrmManager extends Base
 	 */
 	public function addTimelineEntryOnOrderSend(Order\Order $order, array $options): void
 	{
-		$orderId = $order->getId();
-		$dealId = $order->getDealBinding()->getDealId();
-		$bindings = [
-			[
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
-				'ENTITY_ID' => $orderId,
-			]
-		];
-
-		if ($order->getDealBinding())
+		$binding = $order->getEntityBinding();
+		if (!$binding)
 		{
-			$bindings[] = [
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
-				'ENTITY_ID' => $dealId,
-			];
+			return;
 		}
+
+		$orderId = $order->getId();
 
 		$params = [
 			'ORDER_FIELDS' => $order->getFieldValues(),
@@ -729,14 +821,15 @@ class CrmManager extends Base
 				'CHANGED_ENTITY' => \CCrmOwnerType::OrderName,
 				'FIELDS' => [
 					'ORDER_ID' => $orderId,
-					'DEAL_ID' => $dealId,
+					'OWNER_ID' => $binding->getOwnerId(),
+					'OWNER_TYPE_ID' => $binding->getOwnerTypeId(),
 					'SENT' => 'Y',
 					'DESTINATION' => $options['DESTINATION'] ?? '',
 					'PAYMENT_ID' => $options['PAYMENT_ID'] ?? '',
 					'SHIPMENT_ID' => $options['SHIPMENT_ID'] ?? '',
 				]
 			],
-			'BINDINGS' => $bindings
+			'BINDINGS' => Order\BindingsMaker\TimelineBindingsMaker::makeByOrder($order)
 		];
 
 		Timeline\OrderController::getInstance()->onSend($orderId, $params);
@@ -752,35 +845,26 @@ class CrmManager extends Base
 	public static function addTimelineEntryOnPaymentSend(Order\Payment $payment, array $options): void
 	{
 		$order = $payment->getOrder();
-		$orderId = $order->getId();
-		$dealId = $order->getDealBinding()->getDealId();
-		$bindings = [
-			[
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
-				'ENTITY_ID' => $orderId,
-			]
-		];
 
-		if ($order->getDealBinding())
+		$binding = $order->getEntityBinding();
+		if (!$binding)
 		{
-			$bindings[] = [
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
-				'ENTITY_ID' => $dealId,
-			];
+			return;
 		}
 
 		$params = [
 			'SETTINGS' => [
 				'FIELDS' => [
-					'ORDER_ID' => $orderId,
-					'DEAL_ID' => $dealId,
+					'ORDER_ID' => $payment->getOrderId(),
+					'OWNER_ID' => $binding->getOwnerId(),
+					'OWNER_TYPE_ID' => $binding->getOwnerTypeId(),
 					'SENT' => 'Y',
 					'DESTINATION' => $options['DESTINATION'] ?? '',
 					'PAYMENT_ID' => $options['PAYMENT_ID'] ?? '',
 					'SHIPMENT_ID' => $options['SHIPMENT_ID'] ?? '',
 				]
 			],
-			'BINDINGS' => $bindings
+			'BINDINGS' => Order\BindingsMaker\TimelineBindingsMaker::makeByPayment($payment)
 		];
 
 		Timeline\OrderPaymentController::getInstance()->onSend($payment->getId(), $params);
@@ -972,26 +1056,18 @@ class CrmManager extends Base
 	}
 
 	/**
-	 * @param int $dealId
+	 * @param int $contactId
 	 * @return int[]
 	 */
-	public function getDealClientAddressList(int $dealId)
+	public function getClientAddressList(int $contactId)
 	{
-		$contact = $this->getPrimaryContact($dealId);
-		if (!$contact)
-		{
-			return [];
-		}
-
-		$requisite = EntityRequisite::getSingleInstance()->getList(
-			[
-				'select' => ['ID'],
-				'filter' => [
-					'=ENTITY_TYPE_ID' => \CCrmOwnerType::Contact,
-					'=ENTITY_ID' => (int)$contact['CONTACT_ID']
-				],
-			]
-		)->fetch();
+		$requisite = EntityRequisite::getSingleInstance()->getList([
+			'select' => ['ID'],
+			'filter' => [
+				'=ENTITY_TYPE_ID' => \CCrmOwnerType::Contact,
+				'=ENTITY_ID' => $contactId,
+			],
+		])->fetch();
 
 		if (!$requisite)
 		{
@@ -1000,15 +1076,13 @@ class CrmManager extends Base
 
 		$result = [];
 
-		$addresses = AddressTable::getList(
-			[
-				'filter' => [
-					'ENTITY_ID' => (int)$requisite['ID'],
-					'ENTITY_TYPE_ID' => \CCrmOwnerType::Requisite,
-					'>LOC_ADDR_ID' => 0,
-				],
-			]
-		)->fetchAll();
+		$addresses = AddressTable::getList([
+			'filter' => [
+				'ENTITY_ID' => (int)$requisite['ID'],
+				'ENTITY_TYPE_ID' => \CCrmOwnerType::Requisite,
+				'>LOC_ADDR_ID' => 0,
+			],
+		])->fetchAll();
 
 		$defaultAddressTypeId = EntityAddressType::getDefaultIdByZone(EntityAddress::getZoneId());
 
@@ -1044,9 +1118,29 @@ class CrmManager extends Base
 			return '';
 		}
 
+		return $this->getContactPhoneFormat($contact['CONTACT_ID']);
+	}
+
+	/**
+	 * @param Crm\Item $item
+	 * @return mixed|string
+	 */
+	public function getItemContactPhoneFormatted(Crm\Item $item)
+	{
+		$contactId = $item->getContactId();
+		if (!$contactId)
+		{
+			return '';
+		}
+
+		return $this->getContactPhoneFormat($contactId);
+	}
+
+	private function getContactPhoneFormat(int $contactId)
+	{
 		$phones = \CCrmFieldMulti::GetEntityFields(
 			'CONTACT',
-			$contact['CONTACT_ID'],
+			$contactId,
 			'PHONE',
 			true,
 			false
@@ -1091,5 +1185,24 @@ class CrmManager extends Base
 		}
 
 		return null;
+	}
+
+	public function getStageList(int $entityId, int $entityTypeId) : array
+	{
+		$factory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+		if (!$factory || !$factory->isStagesSupported())
+		{
+			return [];
+		}
+
+		$result = [];
+
+		$collection = $factory->getStages($factory->getItemCategoryId($entityId));
+		foreach ($collection as $item)
+		{
+			$result[$item->getStatusId()] = $item->collectValues();
+		}
+
+		return Crm\Color\PhaseColorScheme::fillDefaultColors($result);
 	}
 }

@@ -37,25 +37,28 @@ if (Loader::includeModule('catalog'))
 		 */
 		public static function getDefaultId(): ?int
 		{
+			static $iblockList = [];
+
 			$id = (int)Main\Config\Option::get('crm', 'default_product_catalog_id');
 
 			if ($id > 0)
 			{
-				$filter = ['=ID' => $id];
-				if (ModuleManager::isModuleInstalled('bitrix24'))
+				if (!isset($iblockList[$id]))
 				{
-					$filter['=IBLOCK_TYPE_ID'] = static::getTypeId();
+					$filter = ['=ID' => $id];
+					if (ModuleManager::isModuleInstalled('bitrix24'))
+					{
+						$filter['=IBLOCK_TYPE_ID'] = static::getTypeId();
+					}
+					$iterator = Iblock\IblockTable::getList([
+						'select' => ['ID'],
+						'filter' => $filter,
+					]);
+					$row = $iterator->fetch();
+					$iblockList[$id] = !empty($row) ? $id : 0;
+					unset($row, $iterator);
 				}
-				$iterator = Iblock\IblockTable::getList([
-					'select' => ['ID'],
-					'filter' => $filter,
-				]);
-				$row = $iterator->fetch();
-				if (empty($row))
-				{
-					$id = 0;
-				}
-				unset($row, $iterator);
+				$id = $iblockList[$id];
 			}
 
 			return ($id > 0 ? $id : null);

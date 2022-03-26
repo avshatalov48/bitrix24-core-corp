@@ -8,10 +8,13 @@ use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\Internals\Error\IErrorable;
 use Bitrix\Disk\Version;
+use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 
 final class DocumentSessionManager implements IErrorable
 {
+	protected const LOCK_LIMIT = 15;
+
 	/** @var Version */
 	protected $version;
 	/** @var File */
@@ -30,6 +33,32 @@ final class DocumentSessionManager implements IErrorable
 	public function __construct()
 	{
 		$this->errorCollection = new ErrorCollection();
+	}
+
+	public function lock(): bool
+	{
+		$connection = Application::getConnection();
+
+		return $connection->lock($this->getLockKey(), self::LOCK_LIMIT);
+	}
+
+	public function unlock(): void
+	{
+		$connection = Application::getConnection();
+
+		$connection->unlock($this->getLockKey());
+	}
+
+	protected function getLockKey(): string
+	{
+		$filter = $this->buildFilter();
+		$keyData = [
+			'TYPE' => $filter['TYPE'],
+			'VERSION_ID' => $filter['VERSION_ID'] ?? 0,
+			'OBJECT_ID' => $filter['OBJECT_ID'] ?? 0,
+		];
+
+		return implode('|', array_values($keyData));
 	}
 
 	public function setSessionType(int $sessionType): self

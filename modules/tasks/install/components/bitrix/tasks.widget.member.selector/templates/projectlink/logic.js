@@ -77,20 +77,33 @@ BX.namespace('Tasks.Component');
 				var entityId = this.option('entityId');
 				groupId = parseInt(groupId);
 
-				this.callRemote(prefix+'.update', {
-					id: entityId,
+				BX.ajax.runComponentAction('bitrix:tasks.widget.member.selector', 'setProject', {
+					mode: 'class',
 					data: {
-						GROUP_ID: groupId
+						taskId: entityId,
+						context: this.option('context') ?? '',
+						groupId: groupId
 					}
-				}, {}, function(){
-					BX.Tasks.Util.fireGlobalTaskEvent(
-						'UPDATE',
-						{ID: entityId},
-						{STAY_AT_PAGE: true},
-						{id: entityId}
-					);
-					BX.onCustomEvent(this, 'onChangeProjectLink', [groupId, entityId]);
-				});
+				}).then(
+					function(response)
+					{
+						BX.Tasks.Util.fireGlobalTaskEvent(
+							'UPDATE',
+							{ID: entityId},
+							{STAY_AT_PAGE: true},
+							{id: entityId}
+						);
+						BX.onCustomEvent(this, 'onChangeProjectLink', [groupId, entityId]);
+					}.bind(this)
+				).catch(
+					function(response)
+					{
+						if (response.errors)
+						{
+							BX.Tasks.alert(response.errors);
+						}
+					}.bind(this)
+				);
 			},
 
 			onSelectorItemSelected: function(data)

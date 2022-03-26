@@ -86,9 +86,13 @@ $MESS["TASKS_TASK_COMPONENT_TEMPLATE_SAVED"] = "Задача сохранена"
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_VIEW_TASK"] = "Посмотреть";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_PARAMETER_1"] = "Сроки определяются сроками подзадач";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_PARAMETER_2"] = "Автоматически завершать задачу при завершении подзадач (и наоборот)";
+$MESS["TASKS_TASK_COMPONENT_TEMPLATE_PARAMETER_3"] = "Результат задачи";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_PARAMETER_HINT_1"] = "Даты планируемого начала и завершения этой задачи будут расчитаны автоматически на основании дат её подзадач. Датой её начала будет наименьшая из дат начала подзадачи, а датой завершения - наибольшая из дат завершения подзадачи.";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_PARAMETER_HINT_2"] = "Главная задача будет автоматически завершена, как только будут завершены все ее подзадачи. Также, при завершении главной задачи, будут автоматически завершены все ее подзадачи.";
+$MESS["TASKS_TASK_COMPONENT_TEMPLATE_PARAMETER_HINT_3"] = "Обязательный отчет при завершении задачи";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_PLAN_DATES_DISABLED"] = "Сроки вычисляются автоматически";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_SAVE_AS_TEMPLATE"] = "Сохранить как шаблон";
 $MESS["TASKS_TASK_COMPONENT_TEMPLATE_NO_WORK_DAYS_ERROR"] = "Все дни на Вашем портале отмечены как выходные";
+$MESS["TASKS_TASK_COMPONENT_TEMPLATE_BLOCK_TITLE_SE_REQUIRE_RESULT"] = "Результат задачи";
+$MESS["TASKS_TASK_COMPONENT_TEMPLATE_BLOCK_LABEL_SE_REQUIRE_RESULT"] = "Обязательный отчет при завершении задачи";
 ?>

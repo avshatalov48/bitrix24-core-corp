@@ -28,8 +28,3 @@ $MESS["VI_COMBINATIONS_TITLE"] = "Комбинации клавиш";
 $MESS["VI_COMBINATIONS_SAVE"] = "Сохранить";
 $MESS["VI_COMBINATION_INTERCEPT_GROUP"] = "Перехват звонка, направленного на группу, в которой состоит сотрудник:";
 $MESS["VI_BACKUP_NUMBER"] = "Номер для перенаправления звонка";
-
-$MESS["VI_AUTOPAY_TITLE"] = "Автопополнение баланса";
-$MESS["VI_AUTOPAY_LABEL_2"] = "Когда баланс телефонии будет заканчиваться, система автоматически спишет средства с карты, которой вы оплатили первый раз.";
-$MESS["VI_AUTOPAY_ON"] = "Включено";
-$MESS["VI_AUTOPAY_OFF"] = "Отключено";

@@ -1,4 +1,5 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -9,7 +10,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\UI\Extension;
 
-Extension::load("ui.alerts");
+Extension::load('ui.alerts');
 
 ?>
 

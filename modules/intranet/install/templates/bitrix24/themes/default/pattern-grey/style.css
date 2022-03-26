@@ -73,7 +73,9 @@ body {
 	border-color: rgba(196, 114, 118, .6);
 }
 
-.user-block:hover {
+.user-block:hover,
+.user-block.--hover,
+.user-block.--wait {
 	background-color: rgba(120, 128, 139, .5);
 }
 

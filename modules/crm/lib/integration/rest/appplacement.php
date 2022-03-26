@@ -193,6 +193,7 @@ class AppPlacement
 			\CCrmOwnerType::Contact,
 			\CCrmOwnerType::Company,
 			\CCrmOwnerType::Activity,
+			\CCrmOwnerType::SmartInvoice,
 		];
 
 		static::mixinDynamicEntityTypes($supportedEntityTypesList);
@@ -218,6 +219,7 @@ class AppPlacement
 			\CCrmOwnerType::Contact,
 			\CCrmOwnerType::Company,
 			\CCrmOwnerType::Order,
+			\CCrmOwnerType::SmartInvoice,
 		];
 
 		static::mixinDynamicEntityTypes($supportedEntityTypesList);
@@ -243,6 +245,7 @@ class AppPlacement
 			\CCrmOwnerType::Contact,
 			\CCrmOwnerType::Company,
 			\CCrmOwnerType::Order,
+			\CCrmOwnerType::SmartInvoice,
 		];
 
 		static::mixinDynamicEntityTypes($supportedEntityTypesList);

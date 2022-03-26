@@ -5,6 +5,8 @@ namespace Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ObjectPropertyException;
+use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Integration\IM;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit;
@@ -21,6 +23,21 @@ Loc::loadMessages(__FILE__);
 class FilterLimit extends Limit
 {
 	protected static $variableName = 'tasks_entity_search_limit';
+
+	/**
+	 * Checks if limit exceeded
+	 *
+	 * @param int $limit
+	 * @return bool
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 */
+	public static function isLimitExceeded(int $limit = 0): bool
+	{
+		$limit = ($limit > 0 ? $limit : static::getLimit());
+
+		return (static::isLimitExist($limit) && static::getCurrentValue() > $limit);
+	}
 
 	/**
 	 * @param array|null $params

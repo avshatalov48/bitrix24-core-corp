@@ -46,9 +46,14 @@ $MESS["CRM_LF_DEAL_ADD_COMMENT_MENTION_TITLE"] = "to the post on a new deal #tit
 $MESS["CRM_LF_DEAL_MESSAGE_COMMENT_MENTION_TITLE"] = "to the post added to deal #title#";
 $MESS["CRM_LF_DEAL_PROGRESS_COMMENT_MENTION_TITLE"] = "to deal \"#title#\" status change notification";
 $MESS["CRM_LF_DEAL_RESPONSIBLE_COMMENT_MENTION_TITLE"] = "to the post on the deal responsible person change: #title#";
+$MESS["CRM_LF_EVENT_ADD"] = "A \"#ENTITY_TYPE_CAPTION#\" item created";
+$MESS["CRM_LF_EVENT_BECOME_RESPONSIBLE"] = "You are now responsible for #ENTITY_TYPE_CAPTION# item \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\"";
+$MESS["CRM_LF_EVENT_FIELD_CHANGED"] = "Field \"#FIELD_CAPTION#\" changed";
 $MESS["CRM_LF_EVENT_IM_POST"] = "has addressed a post to you \"#title#\"";
 $MESS["CRM_LF_EVENT_IM_POST_F"] = "has addressed a post to you \"#title#\"";
 $MESS["CRM_LF_EVENT_IM_POST_M"] = "has addressed a post to you \"#title#\"";
+$MESS["CRM_LF_EVENT_NO_LONGER_RESPONSIBLE"] = "You are no longer responsible for #ENTITY_TYPE_CAPTION# item \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\"";
+$MESS["CRM_LF_EVENT_STAGE_CHANGED"] = "#ENTITY_TYPE_CAPTION# item stage \"<a href=\"#URL#\" class=\"bx-notifier-item-action\">#TITLE#</a>\" changed from \"#START_STAGE_CAPTION#\" to \"#FINAL_STAGE_CAPTION#\"";
 $MESS["CRM_LF_IM_COMMENT_TITLE_ACTIVITY_CALL_ADD"] = "your post on the new call #title#";
 $MESS["CRM_LF_IM_COMMENT_TITLE_ACTIVITY_EMAIL_ADD"] = "your post on the new e-mail #title#";
 $MESS["CRM_LF_IM_COMMENT_TITLE_ACTIVITY_MEETING_ADD"] = "your post on the new meeting #title#";

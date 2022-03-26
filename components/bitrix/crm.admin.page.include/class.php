@@ -40,11 +40,18 @@ class CCrmAdminPageInclude extends \CBitrixComponent
 		);
 		$params["INTERNAL_PAGE"] = (!empty($params["INTERNAL_PAGE"]) ? $params["INTERNAL_PAGE"] : "N");
 
-		$params['IS_SIDE_PANEL'] = (
-			$this->request->get('IFRAME') === 'Y'
-			&& $this->request->get('IFRAME_TYPE') === 'SIDE_SLIDER'
-			&& $this->request->get('disableRedirect') !== 'Y'
-		);
+		if (isset($params['IS_SIDE_PANEL']))
+		{
+			$params['IS_SIDE_PANEL'] = !($params['IS_SIDE_PANEL'] === 'N');
+		}
+		else
+		{
+			$params['IS_SIDE_PANEL'] = (
+				$this->request->get('IFRAME') === 'Y'
+				&& $this->request->get('IFRAME_TYPE') === 'SIDE_SLIDER'
+				&& $this->request->get('disableRedirect') !== 'Y'
+			);
+		}
 
 		return $params;
 	}

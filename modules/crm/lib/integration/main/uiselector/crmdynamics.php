@@ -12,7 +12,7 @@ class CrmDynamics extends CrmEntity
 {
 	public const PREFIX_FULL = 'CRMDYNAMIC-';
 
-	private static function getPrefix($options = [])
+	protected static function getPrefix($options = [])
 	{
 		$prefix = (
 			is_array($options)
@@ -25,7 +25,7 @@ class CrmDynamics extends CrmEntity
 		return $prefix . '_';
 	}
 
-	private static function prepareEntity(Dynamic $item, ?array $options = [])
+	protected static function prepareEntity(Dynamic $item, ?array $options = [])
 	{
 		$prefix = self::getPrefix($options);
 		$result = [
@@ -79,9 +79,12 @@ class CrmDynamics extends CrmEntity
 		$entityOptions = (!empty($params['options']) ? $params['options'] : []);
 		$prefix = self::getPrefix($entityOptions);
 
-		$lastItems = (!empty($params['lastItems']) ? $params['lastItems'] : []);
+		$lastItemIds = [];
+		$selectedItemIds = [];
 
-		$lastEntitiesIdList = [];
+		$lastItems = (!empty($params['lastItems']) ? $params['lastItems'] : []);
+		$selectedItems = (!empty($params['selectedItems']) ? $params['selectedItems'] : []);
+
 		if(!empty($lastItems[$entityType]))
 		{
 			$result['ITEMS_LAST'] = array_map(
@@ -92,23 +95,51 @@ class CrmDynamics extends CrmEntity
 			);
 			foreach ($lastItems[$entityType] as $value)
 			{
-				$lastEntitiesIdList[] = str_replace(self::PREFIX_FULL, '', $value);
+				$lastItemIds[] = str_replace(self::PREFIX_FULL, '', $value);
+			}
+		}
+		if (!empty($selectedItems[$entityType]))
+		{
+			foreach ($selectedItems[$entityType] as $value)
+			{
+				$selectedItemIds[] = str_replace($prefix, '', $value);
 			}
 		}
 
+		$itemIds = array_merge($lastItemIds, $selectedItemIds);
+		if (count($itemIds) > 20)
+		{
+			$itemIds = array_slice($itemIds, 0, 20);
+		}
+		$itemIds = array_unique($itemIds);
+
 		$entitiesList = [];
 
-		$list = Container::getInstance()->getFactory($params['options']['typeId'])->getItemsFilteredByPermissions([
-			'order' => ['ID' => 'DESC'],
-			'limit' => 10,
-		]);
+		$list = [];
+		$factory = Container::getInstance()->getFactory($params['options']['typeId']);
+		if ($factory)
+		{
+			$parameters = [
+				'order' => ['ID' => 'DESC'],
+				'limit' => 10,
+			];
+			if (!empty($itemIds))
+			{
+				$parameters = [
+					'filter' => [
+						'@ID' => $itemIds,
+					],
+				];
+			}
+			$list = $factory->getItemsFilteredByPermissions($parameters);
+		}
 
 		foreach ($list as $item)
 		{
 			$entitiesList[$prefix.$item['ID']] = self::prepareEntity($item, $entityOptions);
 		}
 
-		if (empty($lastEntitiesIdList))
+		if (empty($lastItemIds))
 		{
 			$result['ITEMS_LAST'] = array_keys($entitiesList);
 		}
@@ -173,7 +204,7 @@ class CrmDynamics extends CrmEntity
 
 			$list = Container::getInstance()->getFactory($entityTypeId)->getItemsFilteredByPermissions([
 				'select' => ['*'],
-				'limit' => 10,
+				'limit' => 20,
 				'filter' => $filter,
 			]);
 

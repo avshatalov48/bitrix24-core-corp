@@ -362,8 +362,6 @@ BX.Mobile.Tasks.CheckList.OptionManager = (function()
 
 		this.stableTreeStructure = null;
 		this.slider = BX.SidePanel.Instance.getTopSlider();
-
-		this.query = new BX.Tasks.Util.Query({url: '/bitrix/components/bitrix/tasks.widget.checklist.new/ajax.php'});
 	};
 
 	OptionManager.prototype.getUserPath = function()
@@ -437,12 +435,6 @@ BX.Mobile.Tasks.CheckList.OptionManager = (function()
 		return this.defaultMemberSelectorType;
 	};
 
-	OptionManager.prototype.setDefaultMemberSelectorType = function(defaultMemberSelectorType)
-	{
-		this.defaultMemberSelectorType = defaultMemberSelectorType;
-		this.updateTaskOption('default_member_selector_type', defaultMemberSelectorType);
-	};
-
 	OptionManager.prototype.getStableTreeStructure = function()
 	{
 		return this.stableTreeStructure;
@@ -455,15 +447,24 @@ BX.Mobile.Tasks.CheckList.OptionManager = (function()
 
 	OptionManager.prototype.updateTaskOption = function(option, value)
 	{
-		var args = {
-			option: option,
-			value: value,
-			userId: this.userId,
-			entityType: this.entityType
-		};
+		BX.ajax.runComponentAction('bitrix:tasks.widget.checklist.new', 'updateTaskOption', {
+			mode: 'class',
+			data: {
+				option: option,
+				value: value,
+				userId: this.userId,
+				entityType: this.entityType
+			}
+		}).then(
+			function(response)
+			{
 
-		this.query.run('TasksWidgetCheckListNewComponent.updateTaskOption', args);
-		this.query.execute();
+			}.bind(this),
+			function(response)
+			{
+
+			}.bind(this)
+		);
 	};
 
 	return OptionManager;

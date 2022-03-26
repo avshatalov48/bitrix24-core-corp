@@ -162,8 +162,10 @@ export class ActionPanel extends EventEmitter
 		{
 			const disableClass = this.itemList.sprint.disable === true ? '--disabled' : '';
 
+			const sprintArrowClass = this.itemList.sprint.multiple === true ? arrowClass : '';
+
 			sprint = Tag.render`
-				<div class="${baseBtnClass} tasks-scrum__action-panel--btn-sprint ${arrowClass} ${disableClass}">
+				<div class="${baseBtnClass} tasks-scrum__action-panel--btn-sprint ${sprintArrowClass} ${disableClass}">
 					<span class="tasks-scrum__action-panel--text">
 						${Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_SPRINT')}
 					</span>

@@ -19,6 +19,8 @@ class Fill
 	protected $form;
 	/** @var array $values Values. */
 	protected $values;
+	/** @var array $consents Consents. */
+	protected $consents = [];
 	/** @var int|string $trace Trace. */
 	protected $trace;
 	/** @var array $properties Properties. */
@@ -45,6 +47,18 @@ class Fill
 	public function setValues(array $values)
 	{
 		$this->values = $values;
+		return $this;
+	}
+
+	/*
+	 * Set consents.
+	 *
+	 * @param array $values Values.
+	 * @return $this
+	 */
+	public function setConsents(array $consents)
+	{
+		$this->consents = $consents;
 		return $this;
 	}
 
@@ -110,6 +124,7 @@ class Fill
 				'DISABLE_FIELD_CHECKING' => !$this->isFieldCheckingEnabled,
 				'COMMON_FIELDS' => [],
 				'PLACEHOLDERS' => $this->properties,
+				'AGREEMENTS' => $this->getAppliedAgreements(),
 				'STOP_CALLBACK' => false,
 				'COMMON_DATA' => [
 					'VISITED_PAGES' => [],
@@ -117,6 +132,34 @@ class Fill
 				],
 			]
 		);
+	}
+
+	private function getAppliedAgreements(): array
+	{
+		$formData = $this->form->get();
+		if ($formData['USE_LICENCE'] != 'Y')
+		{
+			return [];
+		}
+
+		$list = array_column($formData['AGREEMENTS'], 'AGREEMENT_ID');
+		$agreements = [];
+		foreach ($this->consents as $name => $value)
+		{
+			if ($value <> 'Y')
+			{
+				continue;
+			}
+
+			$id = (int)preg_replace('/[^\d]/', '', $name);
+			if (!$id || !in_array($id, $list))
+			{
+				continue;
+			}
+			$agreements[] = $id;
+		}
+
+		return $agreements;
 	}
 
 	private function getFilledFields()

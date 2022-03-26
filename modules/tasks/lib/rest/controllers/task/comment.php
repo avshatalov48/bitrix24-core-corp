@@ -11,6 +11,7 @@ use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Integration\Forum\Task\UserTopic;
 use Bitrix\Tasks\Integration\Pull\PushService;
 use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Internals\Registry\UserRegistry;
 use Bitrix\Tasks\Internals\Task\ViewedTable;
 use Bitrix\Tasks\Rest\Controllers\Base;
 
@@ -146,6 +147,7 @@ class Comment extends Base
 			'params' => [
 				'USER_ID' => $currentUserId,
 				'GROUP_ID' => $groupId,
+				'ROLE' => $role,
 			]
 		]);
 
@@ -168,10 +170,16 @@ class Comment extends Base
 
 		$groupId = (int)$groupId;
 
-		$groupCondition = "AND TS.GROUP_ID > 0";
 		if ($groupId)
 		{
 			$groupCondition = "AND TS.GROUP_ID = {$groupId}";
+		}
+		else
+		{
+			$scrum = UserRegistry::getInstance($currentUserId)->getUserGroups(UserRegistry::MODE_SCRUM);
+			$scrumIds = array_keys($scrum);
+			$scrumIds[] = 0;
+			$groupCondition = "AND TS.GROUP_ID NOT IN (". implode(',', $scrumIds) .")";
 		}
 
 		$userJoin = '';
@@ -189,6 +197,54 @@ class Comment extends Base
 		PushService::addEvent($currentUserId, [
 			'module_id' => 'tasks',
 			'command' => 'project_read_all',
+			'params' => [
+				'USER_ID' => $currentUserId,
+				'GROUP_ID' => $groupId,
+			]
+		]);
+
+		return true;
+	}
+
+	/**
+	 * @param null $groupId
+	 * @return bool
+	 * @throws ArgumentTypeException
+	 * @throws SqlQueryException
+	 */
+	public function readScrumAction($groupId = null)
+	{
+		$currentUserId = (int)CurrentUser::get()->getId();
+
+		$groupId = (int)$groupId;
+
+		if ($groupId)
+		{
+			$groupCondition = "AND TS.GROUP_ID = {$groupId}";
+		}
+		else
+		{
+			$scrum = UserRegistry::getInstance($currentUserId)->getUserGroups(UserRegistry::MODE_SCRUM);
+			$scrumIds = array_keys($scrum);
+			$scrumIds[] = 0;
+			$groupCondition = "AND TS.GROUP_ID IN (". implode(',', $scrumIds) .")";
+		}
+
+		$userJoin = '';
+
+		$this->readAll($currentUserId, $userJoin, $groupCondition);
+
+		Counter\CounterService::addEvent(
+			Counter\Event\EventDictionary::EVENT_AFTER_SCRUM_READ_ALL,
+			[
+				'USER_ID' => $currentUserId,
+				'GROUP_ID' => $groupId
+			]
+		);
+
+		PushService::addEvent($currentUserId, [
+			'module_id' => 'tasks',
+			'command' => 'scrum_read_all',
 			'params' => [
 				'USER_ID' => $currentUserId,
 				'GROUP_ID' => $groupId,

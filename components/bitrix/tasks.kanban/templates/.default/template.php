@@ -1,7 +1,5 @@
 <?php
 
-use \Bitrix\Tasks\Kanban;
-
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
     die();
 }
@@ -16,9 +14,9 @@ use Bitrix\Main\Type\Date;
 use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\UI\Filter;
 use Bitrix\Tasks\Kanban\StagesTable;
+use Bitrix\Tasks\UI\ScopeDictionary;
 
 Loc::loadMessages(__FILE__);
-
 
 $isIFrame = $_REQUEST['IFRAME'] == 'Y';
 
@@ -27,14 +25,17 @@ $data = $arResult['DATA'];
 if ($arParams['TIMELINE_MODE'] == 'Y')
 {
 	$type = 'TL';
+	$scope = ScopeDictionary::SCOPE_TASKS_KANBAN_TIMELINE;
 }
 else if ($arParams['PERSONAL'] == 'Y')
 {
 	$type = 'P';
+	$scope = ScopeDictionary::SCOPE_TASKS_KANBAN_PERSONAL;
 }
 else
 {
 	$type = 'K';
+	$scope = ScopeDictionary::SCOPE_TASKS_KANBAN;
 }
 
 $demoAccess = $arParams['PERSONAL'] != 'Y' &&
@@ -214,7 +215,9 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
 							)
 						)
 					: array(),
-            'DEFAULT_ROLEID' => $arParams['DEFAULT_ROLEID']
+            'DEFAULT_ROLEID' => $arParams['DEFAULT_ROLEID'],
+
+			'SCOPE' => $scope,
         ),
         $component,
         array('HIDE_ICONS' => true)
@@ -237,7 +240,9 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
 				</div>
 				<div class="tasks-kanban-start-icon"></div>
 
-				<? if (CSocNetUser::IsCurrentUserModuleAdmin() || $GLOBALS["APPLICATION"]->GetGroupRight("socialnetwork", false, "Y", "Y", array(SITE_ID, false)) >= "K"): ?>
+				<?
+				if (\Bitrix\Socialnetwork\Helper\Workgroup::canCreate()):
+					?>
 					<div class="tasks-kanban-start-title-sm">
 						<?= Loc::getMessage('KANBAN_WO_GROUP_2');?>
 					</div>
@@ -245,7 +250,9 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
 						?>class="webform-button webform-button-blue tasks-kanban-start-button js-id-add-project"><?
 							?><?= Loc::getMessage('KANBAN_WO_GROUP_BUTTON'); ?><?
 					?></a>
-				<? endif; ?>
+					<?
+				endif;
+				?>
 
 			</div>
 		</div>

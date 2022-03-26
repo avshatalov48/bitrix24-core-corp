@@ -636,16 +636,18 @@ class Contact
 	/**
 	 * Performs dropping entity.
 	 *
-	 * @return boolean
+	 * @return int
 	 */
 	public function clearEntity()
 	{
 		if (!$this->canClearEntity())
 		{
-			return false;
+			return -1;
 		}
 
 		$query = $this->prepareQuery();
+
+		$dropped = -1;
 
 		if ($this->prepareFilter($query))
 		{
@@ -662,14 +664,13 @@ class Contact
 
 			$res = $query->exec();
 
-			$success = true;
-
 			$connection = \Bitrix\Main\Application::getConnection();
 
 			$userPermissions = \CCrmPerms::GetUserPermissions($this->getOwner());
 
 			$crmContact = new \CCrmContact(false);
 
+			$dropped = 0;
 			while ($contact = $res->fetch())
 			{
 				$this->setProcessOffset($contact['CONTACT_ID']);
@@ -679,10 +680,11 @@ class Contact
 				{
 					$connection->startTransaction();
 
-					if ($crmContact->Delete($contact['CONTACT_ID'], array('CURRENT_USER' => $this->getOwner())))
+					if ($crmContact->delete($contact['CONTACT_ID'], array('CURRENT_USER' => $this->getOwner())))
 					{
 						$connection->commitTransaction();
 						$this->incrementDroppedEntityCount();
+						$dropped ++;
 					}
 					else
 					{
@@ -699,7 +701,6 @@ class Contact
 							$err = 'Deletion failed with contact #'.$contact['CONTACT_ID'];
 						}
 						$this->collectError(new Main\Error($err, self::ERROR_DELETION_FAILED));
-
 						$this->incrementFailCount();
 					}
 				}
@@ -711,13 +712,16 @@ class Contact
 
 				if ($this->hasTimeLimitReached())
 				{
-					$success = false;
 					break;
 				}
 			}
 		}
+		else
+		{
+			$this->collectError(new Main\Error('Filter error', self::ERROR_DELETION_FAILED));
+		}
 
-		return $success;
+		return $dropped;
 	}
 
 	/**
@@ -734,13 +738,13 @@ class Contact
 	/**
 	 * Performs dropping associated entity activities.
 	 *
-	 * @return boolean
+	 * @return int
 	 */
 	public function clearActivity()
 	{
 		if (!$this->canClearActivity())
 		{
-			return false;
+			return -1;
 		}
 
 		$userPermissions = \CCrmPerms::GetUserPermissions($this->getOwner());
@@ -750,7 +754,7 @@ class Contact
 
 		$query = $activityVolume->prepareQuery();
 
-		$success = true;
+		$dropped = -1;
 
 		if ($activityVolume->prepareFilter($query))
 		{
@@ -770,6 +774,7 @@ class Contact
 
 			$res = $query->exec();
 
+			$dropped = 0;
 			while ($activity = $res->fetch())
 			{
 				$this->setProcessOffset($activity['ID']);
@@ -784,6 +789,7 @@ class Contact
 					//todo: fail count here
 
 					$this->incrementDroppedActivityCount();
+					$dropped ++;
 				}
 				else
 				{
@@ -793,13 +799,16 @@ class Contact
 
 				if ($this->hasTimeLimitReached())
 				{
-					$success = false;
 					break;
 				}
 			}
 		}
+		else
+		{
+			$this->collectError(new Main\Error('Filter error', self::ERROR_DELETION_FAILED));
+		}
 
-		return $success;
+		return $dropped;
 	}
 
 
@@ -817,13 +826,13 @@ class Contact
 	/**
 	 * Performs dropping associated entity events.
 	 *
-	 * @return boolean
+	 * @return int
 	 */
 	public function clearEvent()
 	{
 		if (!$this->canClearEvent())
 		{
-			return false;
+			return -1;
 		}
 
 		$eventVolume = new Volume\Event();
@@ -831,7 +840,7 @@ class Contact
 
 		$query = $eventVolume->prepareRelationQuery(static::className());
 
-		$success = true;
+		$dropped = -1;
 
 		if ($eventVolume->prepareFilter($query))
 		{
@@ -848,6 +857,7 @@ class Contact
 
 			$res = $query->exec();
 
+			$dropped = 0;
 			while ($event = $res->fetch())
 			{
 				$this->setProcessOffset($event['EVENT_ID']);
@@ -855,6 +865,7 @@ class Contact
 				if (Volume\Event::dropEvent($event['EVENT_ID'], $this->getOwner()))
 				{
 					$this->incrementDroppedEventCount();
+					$dropped ++;
 				}
 				else
 				{
@@ -864,12 +875,15 @@ class Contact
 
 				if ($this->hasTimeLimitReached())
 				{
-					$success = false;
 					break;
 				}
 			}
 		}
+		else
+		{
+			$this->collectError(new Main\Error('Filter error', self::ERROR_DELETION_FAILED));
+		}
 
-		return $success;
+		return $dropped;
 	}
 }

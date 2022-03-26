@@ -22,6 +22,7 @@ class Handler
 	const ENTITY_TYPE_CRMORDERS = 'ORDERS';
 	const ENTITY_TYPE_CRMPRODUCTS = 'PRODUCTS';
 	const ENTITY_TYPE_CRMQUOTES = 'QUOTES';
+	const ENTITY_TYPE_CRMSMART_INVOICES = 'SMART_INVOICES';
 	const ENTITY_TYPE_CRMDYNAMICS = 'DYNAMICS';
 
 	public static function OnUISelectorGetProviderByEntityType(Event $event)
@@ -33,28 +34,31 @@ class Handler
 		switch($entityType)
 		{
 			case self::ENTITY_TYPE_CRMCONTACTS:
-				$provider = new \Bitrix\Crm\Integration\Main\UISelector\CrmContacts;
+				$provider = new CrmContacts;
 				break;
 			case self::ENTITY_TYPE_CRMCOMPANIES:
-				$provider = new \Bitrix\Crm\Integration\Main\UISelector\CrmCompanies;
+				$provider = new CrmCompanies;
 				break;
 			case self::ENTITY_TYPE_CRMLEADS:
-				$provider = new \Bitrix\Crm\Integration\Main\UISelector\CrmLeads;
+				$provider = new CrmLeads;
 				break;
 			case self::ENTITY_TYPE_CRMDEALS:
-				$provider = new \Bitrix\Crm\Integration\Main\UISelector\CrmDeals;
+				$provider = new CrmDeals;
 				break;
 			case self::ENTITY_TYPE_CRMORDERS:
-				$provider = new \Bitrix\Crm\Integration\Main\UISelector\CrmOrders;
+				$provider = new CrmOrders;
 				break;
 			case self::ENTITY_TYPE_CRMPRODUCTS:
-				$provider = new \Bitrix\Crm\Integration\Main\UISelector\CrmProducts;
+				$provider = new CrmProducts;
 				break;
 			case self::ENTITY_TYPE_CRMQUOTES:
-				$provider = new \Bitrix\Crm\Integration\Main\UISelector\CrmQuotes;
+				$provider = new CrmQuotes;
+				break;
+			case self::ENTITY_TYPE_CRMSMART_INVOICES:
+				$provider = new CrmSmartInvoices();
 				break;
 			case (strpos($entityType, self::ENTITY_TYPE_CRMDYNAMICS)===0):
-				$provider = new \Bitrix\Crm\Integration\Main\UISelector\CrmDynamics;
+				$provider = new CrmDynamics;
 				break;
 			default:
 				$provider = false;
@@ -106,6 +110,10 @@ class Handler
 		elseif (preg_match('/^'.CrmQuotes::PREFIX_SHORT.'(\d+)$/i', $code, $matches))
 		{
 			$newCode = preg_replace('/^'.CrmQuotes::PREFIX_SHORT.'(\d+)$/', CrmQuotes::PREFIX_FULL.'$1', $code);
+		}
+		elseif (preg_match('/^'.CrmSmartInvoices::PREFIX_SHORT.'(\d+)$/i', $code, $matches))
+		{
+			$newCode = preg_replace('/^'.CrmSmartInvoices::PREFIX_SHORT.'(\d+)$/', CrmSmartInvoices::PREFIX_FULL.'$1', $code);
 		}
 		elseif (preg_match(
 			'/^'.\CCrmOwnerTypeAbbr::DynamicTypeAbbreviationPrefix.'(\w+)_(\d+)$/i',
@@ -160,7 +168,7 @@ class Handler
 
 		if (is_array($destSortData))
 		{
-		$crmContactLimit = $crmCompanyLimit = $crmDealLimit = $crmLeadLimit = $crmOrderLimit = $crmProductLimit = $crmQuoteLimit = 10;
+			$crmContactLimit = $crmCompanyLimit = $crmDealLimit = $crmLeadLimit = $crmOrderLimit = $crmProductLimit = $crmQuoteLimit = 10;
 
 			foreach($destSortData as $code => $sortInfo)
 			{

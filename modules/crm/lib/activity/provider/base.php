@@ -551,4 +551,20 @@ class Base
 	{
 		return null;
 	}
+
+	public static function checkReadPermission(array $activityFields, $userId = null)
+	{
+		if($userId <= 0)
+		{
+			$userId = \CCrmSecurityHelper::getCurrentUserId();
+		}
+
+		if($userId > 0 && isset($activityFields['RESPONSIBLE_ID']) && $userId === (int)$activityFields['RESPONSIBLE_ID'])
+		{
+			return true;
+		}
+
+		$permission = \CCrmPerms::GetUserPermissions($userId);
+		return \CCrmActivity::CheckReadPermission($activityFields['OWNER_TYPE_ID'], $activityFields['OWNER_ID'], $permission);
+	}
 }

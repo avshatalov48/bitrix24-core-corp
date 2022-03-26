@@ -14,7 +14,8 @@ type Params = {
 	defaultSprintDuration: number,
 	pageNumberToCompletedSprints: number,
 	displayPriority: string,
-	isShortView: 'Y' | 'N'
+	isShortView: 'Y' | 'N',
+	mandatoryExists: 'Y' | 'N'
 }
 
 export class PlanBuilder extends EventEmitter
@@ -31,6 +32,7 @@ export class PlanBuilder extends EventEmitter
 		this.pageNumberToCompletedSprints = params.pageNumberToCompletedSprints;
 		this.displayPriority = params.displayPriority;
 		this.isShortView = params.isShortView;
+		this.mandatoryExists = params.mandatoryExists;
 	}
 
 	renderTo(container: HTMLElement)
@@ -147,16 +149,12 @@ export class PlanBuilder extends EventEmitter
 
 	createSprint(): Promise
 	{
-		const countSprints = this.entityStorage.getSprints().size;
-		const title = Loc.getMessage('TASKS_SCRUM_SPRINT_NAME').replace('%s', countSprints + 1);
-		const storyPoints = '';
 		const dateStart = Math.floor(Date.now() / 1000);
 		const dateEnd = (Math.floor(Date.now() / 1000) + parseInt(this.defaultSprintDuration, 10));
 		const sort = this.entityStorage.getPlannedSprints().size + 1;
 
 		const requestData = {
 			tmpId: Text.getRandom(),
-			name: title,
 			sort: sort + 1,
 			dateStart: dateStart,
 			dateEnd: dateEnd
@@ -168,6 +166,7 @@ export class PlanBuilder extends EventEmitter
 			.then((response) => {
 				const sprintParams: SprintParams = response.data;
 				sprintParams.isShortView = this.isShortView;
+				sprintParams.mandatoryExists = this.mandatoryExists;
 				const sprint = Sprint.buildSprint(sprintParams);
 
 				this.entityStorage.addSprint(sprint);
@@ -189,6 +188,7 @@ export class PlanBuilder extends EventEmitter
 	createSprintNode(sprint: Sprint)
 	{
 		sprint.setShortView(this.isShortView);
+		sprint.setMandatory(this.mandatoryExists);
 
 		this.entityStorage.addSprint(sprint);
 
@@ -222,8 +222,20 @@ export class PlanBuilder extends EventEmitter
 		Dom.append(sprint.getNode(), container);
 
 		Dom.removeClass(container, '--empty');
+	}
 
-		this.updatePlannedSprints(this.entityStorage.getPlannedSprints(), true);
+	moveSprintToCompletedListNode(sprint: Sprint)
+	{
+		sprint.removeNode();
+
+		this.entityStorage.removeSprint(sprint.getId());
+
+		if (this.completedSprints.isSprintsUploaded())
+		{
+			this.completedSprints.addSprint(sprint);
+		}
+
+		this.adjustSprintListWidth();
 	}
 
 	appendItemAfterItem(newItemNode: HTMLElement, bindItemNode: HTMLElement)
@@ -245,6 +257,8 @@ export class PlanBuilder extends EventEmitter
 
 	adjustSprintListWidth()
 	{
+		this.updateSprintContainers();
+
 		const hasScroll = this.getSprintsContainer().scrollHeight > this.getSprintsContainer().clientHeight;
 
 		if (hasScroll)
@@ -254,6 +268,31 @@ export class PlanBuilder extends EventEmitter
 		else
 		{
 			Dom.removeClass(this.getSprintsContainer(), '--scrollbar');
+		}
+	}
+
+	updateSprintContainers()
+	{
+		const activeSprint = this.entityStorage.getActiveSprint();
+		const activeContainer = this.getSprintsContainer().querySelector('.tasks-scrum__sprints--active');
+		if (activeSprint)
+		{
+			Dom.removeClass(activeContainer, '--empty');
+		}
+		else
+		{
+			Dom.addClass(activeContainer, '--empty');
+		}
+
+		const plannedSprints = this.entityStorage.getPlannedSprints();
+		const plannedContainer = this.getSprintsContainer().querySelector('.tasks-scrum__sprints--planned');
+		if (plannedSprints.size)
+		{
+			Dom.removeClass(plannedContainer, '--empty');
+		}
+		else
+		{
+			Dom.addClass(plannedContainer, '--empty');
 		}
 	}
 
@@ -300,6 +339,8 @@ export class PlanBuilder extends EventEmitter
 
 	unblockScrumContainerSelect()
 	{
-		Dom.removeClass(this.scrumContainer, '--select-none');
+		setTimeout(() => {
+			Dom.removeClass(this.scrumContainer, '--select-none');
+		}, 500);
 	}
 }

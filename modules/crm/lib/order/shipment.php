@@ -15,9 +15,121 @@ if (!Main\Loader::includeModule('sale'))
 /**
  * Class Shipment
  * @package Bitrix\Crm\Order
+ * @method Order getOrder()
  */
 class Shipment extends Sale\Shipment
 {
+	public static function create(Sale\ShipmentCollection $collection, Sale\Delivery\Services\Base $service = null)
+	{
+		/** \Bitrix\Crm\Order\Shipment $shipment */
+		$shipment = parent::create($collection, $service);
+		$shipment->initField('IS_REALIZATION', 'Y');
+
+		return $shipment;
+	}
+
+	public static function getAvailableFields()
+	{
+		$fields = parent::getAvailableFields();
+		$fields[] = 'IS_REALIZATION';
+
+		return $fields;
+	}
+
+	/**
+	 * @return array
+	 */
+	protected static function getFieldsMap()
+	{
+		$fieldsMap = Sale\Internals\ShipmentTable::getMap();
+		$fieldsMap['IS_REALIZATION'] = [
+			'data_type' => Crm\Order\Internals\ShipmentRealizationTable::class,
+			'reference' => [
+				'=this.ID' => 'ref.SHIPMENT_ID',
+			]
+		];
+
+		return $fieldsMap;
+	}
+
+	protected function onFieldModify($name, $oldValue, $value)
+	{
+		if (
+			$name === 'DEDUCTED'
+			&& $value === 'Y'
+			&& $this->getField('IS_REALIZATION') === 'N'
+		)
+		{
+			$this->setField('IS_REALIZATION', 'Y');
+		}
+
+		return parent::onFieldModify($name, $oldValue, $value);
+	}
+
+	protected function updateInternal($id, array $data)
+	{
+		$isRealization = null;
+		if (isset($data['IS_REALIZATION']))
+		{
+			$isRealization = $data['IS_REALIZATION'];
+			unset($data['IS_REALIZATION']);
+		}
+
+		$result = parent::updateInternal($id, $data);
+		if ($isRealization && $result->isSuccess())
+		{
+			$this->updateRealization($result->getId(), $isRealization);
+		}
+
+		return $result;
+	}
+
+	protected function addInternal(array $data)
+	{
+		$isRealization = null;
+		if (isset($data['IS_REALIZATION']))
+		{
+			$isRealization = $data['IS_REALIZATION'];
+			unset($data['IS_REALIZATION']);
+		}
+
+		$result = parent::addInternal($data);
+		if ($isRealization && $result->isSuccess())
+		{
+			$this->addRealization($result->getId(), $isRealization);
+		}
+
+		return $result;
+	}
+
+	protected static function getParametersForLoad($id): array
+	{
+		$parameters = parent::getParametersForLoad($id);
+
+		if (!isset($parameters['select']))
+		{
+			$parameters['select'] = ['*'];
+		}
+
+		$parameters['select']['IS_REALIZATION'] = 'SHIPMENT_REALIZATION.IS_REALIZATION';
+
+		if (!isset($parameters['runtime']))
+		{
+			$parameters['runtime'] = [];
+		}
+
+		$parameters['runtime'][] = new Main\Entity\ReferenceField(
+			'SHIPMENT_REALIZATION',
+			Crm\Order\Internals\ShipmentRealizationTable::class,
+			[
+				'=this.ID' => 'ref.SHIPMENT_ID',
+			],
+			'left_join'
+		);
+
+		return $parameters;
+	}
+
 	/**
 	 * @param $isNew
 	 */
@@ -50,44 +162,49 @@ class Shipment extends Sale\Shipment
 			}
 		}
 
-		if (!$this->isSystem() && !$isNew && $this->isChanged())
-		{
-			Crm\Automation\Trigger\ShipmentChangedTrigger::execute(
-				[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getField('ORDER_ID')]],
-				['SHIPMENT' => $this]
-			);
-		}
+		$automationAvailable = Crm\Automation\Factory::isAutomationAvailable(\CCrmOwnerType::Order);
 
-		if ($this->fields->isChanged('ALLOW_DELIVERY') && $this->isAllowDelivery())
+		if ($automationAvailable)
 		{
-			Crm\Automation\Trigger\AllowDeliveryTrigger::execute(
-				[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getField('ORDER_ID')]],
-				['SHIPMENT' => $this]
-			);
-		}
+			if (!$this->isSystem() && !$isNew && $this->isChanged())
+			{
+				Crm\Automation\Trigger\ShipmentChangedTrigger::execute(
+					[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getField('ORDER_ID')]],
+					['SHIPMENT' => $this]
+				);
+			}
 
-		if (
-			$this->fields->isChanged('STATUS_ID')
-			&& $this->getField('STATUS_ID') === DeliveryStatus::getFinalStatus()
-		)
-		{
-			Crm\Automation\Trigger\ShipmentChangedTrigger::execute(
-				[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getField('ORDER_ID')]],
-				['SHIPMENT' => $this]
-			);
-		}
+			if ($this->fields->isChanged('ALLOW_DELIVERY') && $this->isAllowDelivery())
+			{
+				Crm\Automation\Trigger\AllowDeliveryTrigger::execute(
+					[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getField('ORDER_ID')]],
+					['SHIPMENT' => $this]
+				);
+			}
 
-		if ($this->fields->isChanged('TRACKING_NUMBER') && !empty($this->getField('TRACKING_NUMBER')))
-		{
-			Crm\Automation\Trigger\FillTrackingNumberTrigger::execute(
-				[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getField('ORDER_ID')]],
-				['SHIPMENT' => $this]
-			);
+			if (
+				$this->fields->isChanged('STATUS_ID')
+				&& $this->getField('STATUS_ID') === DeliveryStatus::getFinalStatus()
+			)
+			{
+				Crm\Automation\Trigger\ShipmentChangedTrigger::execute(
+					[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getField('ORDER_ID')]],
+					['SHIPMENT' => $this]
+				);
+			}
+
+			if ($this->fields->isChanged('TRACKING_NUMBER') && !empty($this->getField('TRACKING_NUMBER')))
+			{
+				Crm\Automation\Trigger\FillTrackingNumberTrigger::execute(
+					[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getField('ORDER_ID')]],
+					['SHIPMENT' => $this]
+				);
+			}
 		}
 
 		if ($this->fields->isChanged('DEDUCTED'))
 		{
-			if ($this->getField('DEDUCTED') == "Y")
+			if ($automationAvailable && $this->getField('DEDUCTED') == "Y")
 			{
 				Crm\Automation\Trigger\DeductedTrigger::execute(
 					[['OWNER_TYPE_ID' => \CCrmOwnerType::Order, 'OWNER_ID' => $this->getField('ORDER_ID')]],
@@ -97,6 +214,12 @@ class Shipment extends Sale\Shipment
 
 			if (!$isNew && !$this->isSystem() && !$this->getOrder()->isNew())
 			{
+				$timelineBindingsOptions = [];
+				if (\Bitrix\Main\Config\Option::get('catalog', 'default_use_store_control', 'N') === 'Y')
+				{
+					$timelineBindingsOptions['withDeal'] = false;
+				}
+
 				$timelineParams = [
 					'FIELDS' => $this->getFieldValues(),
 					'SETTINGS' => [
@@ -106,7 +229,7 @@ class Shipment extends Sale\Shipment
 							'ORDER_DONE' => 'N'
 						],
 					],
-					'BINDINGS' => BindingsMaker\TimelineBindingsMaker::makeByShipment($this)
+					'BINDINGS' => BindingsMaker\TimelineBindingsMaker::makeByShipment($this, $timelineBindingsOptions)
 				];
 
 				Crm\Timeline\OrderShipmentController::getInstance()->onDeducted($this->getId(), $timelineParams);
@@ -190,11 +313,53 @@ class Shipment extends Sale\Shipment
 	public function delete()
 	{
 		$deleteResult = parent::delete();
-		if ($deleteResult->isSuccess() && (int)$this->getId() > 0)
+		if ($deleteResult->isSuccess() && $this->getId() > 0)
 		{
+			$this->deleteRealization($this->getId());
 			Crm\Timeline\TimelineEntry::deleteByOwner(\CCrmOwnerType::OrderShipment, $this->getId());
+			Delivery::onShipmentDeleted($this->getId());
 		}
 
 		return $deleteResult;
+	}
+
+	private function addRealization(int $id, $isRealization): void
+	{
+		Crm\Order\Internals\ShipmentRealizationTable::add([
+			'SHIPMENT_ID' => $id,
+			'IS_REALIZATION' => $isRealization,
+		]);
+	}
+
+	private function updateRealization(int $id, $isRealization): void
+	{
+		$shipmentRealization = Crm\Order\Internals\ShipmentRealizationTable::getList([
+			'select' => ['ID'],
+			'filter' => [
+				'=SHIPMENT_ID' => $id,
+			],
+			'limit' => 1,
+		])->fetch();
+		if ($shipmentRealization)
+		{
+			Crm\Order\Internals\ShipmentRealizationTable::update($shipmentRealization['ID'], [
+				'IS_REALIZATION' => $isRealization,
+			]);
+		}
+	}
+
+	private function deleteRealization(int $id): void
+	{
+		$shipmentRealization = Crm\Order\Internals\ShipmentRealizationTable::getList([
+			'select' => ['ID'],
+			'filter' => [
+				'=SHIPMENT_ID' => $id,
+			],
+			'limit' => 1,
+		])->fetch();
+		if ($shipmentRealization)
+		{
+			Crm\Order\Internals\ShipmentRealizationTable::delete($shipmentRealization['ID']);
+		}
 	}
 }

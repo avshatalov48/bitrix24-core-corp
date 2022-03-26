@@ -11,6 +11,17 @@ CJSCore::Init("fx");
 	padding-left: 15px;
 }
 </style>
+<script type="text/javascript">
+	console.warn('Notify page loaded');
+	BXMobileApp.UI.Page.isVisible({callback: (data) => {
+		var result = data.status !== 'visible';
+
+		console.warn('isVisible check - '+data.status);
+		console.warn('isVisible check - skip reload '+result);
+
+		window.skipReload = result;
+	}});
+</script>
 <?
 if(empty($arResult['NOTIFY'])):?>
 	<div class="notif-block-empty"><?=GetMessage('NM_EMPTY');?></div>
@@ -182,6 +193,23 @@ if(empty($arResult['NOTIFY'])):?>
 	</script>
 <?endif;?>
 	<script type="text/javascript">
+		function setTitleProgress(progress)
+		{
+			progress = progress === true;
+			if (<?=isset($_GET['navigation'])? 'true': 'false'?>)
+			{
+				BXMobileApp.Events.postToComponent("onChangeTitleProgress", [progress], 'im.notify.legacy');
+			}
+			else
+			{
+				app.titleAction("setParams", {
+					text: "<?=GetMessage("NM_TITLE")?>",
+					useProgress: progress,
+					largeMode: true
+				});
+			}
+		}
+
 		document.body.style.overflow = "hidden";
 		document.body.style.overflowY = "scroll";
 		var maxHeightFromCssStyle = null;
@@ -367,10 +395,7 @@ if(empty($arResult['NOTIFY'])):?>
 
 		if (app.enableInVersion(10))
 		{
-			BXMobileApp.UI.Page.TopBar.title.setText("<?=GetMessage("NM_TITLE")?>");
-			BXMobileApp.UI.Page.TopBar.title.show();
-
-			app.titleAction("setParams", {text: "<?=GetMessage("NM_TITLE")?>", useProgress: false});
+			setTitleProgress(false);
 		}
 		app.pullDown({
 			'enable': true,
@@ -378,7 +403,7 @@ if(empty($arResult['NOTIFY'])):?>
 			'downtext': '<?=GetMessage('NM_DOWNTEXT')?>',
 			'loadtext': '<?=GetMessage('NM_LOADTEXT')?>',
 			'callback': function(){
-				app.titleAction("setParams", {text: "<?=GetMessage("NM_TITLE")?>", useProgress: true});
+				setTitleProgress(true);
 				location.reload();
 			}
 		});
@@ -406,6 +431,7 @@ if(empty($arResult['NOTIFY'])):?>
 		});
 
 		BX.addCustomEvent("onOpenPageAfter", () => {
+			console.warn('onOpenPageAfter - skip reload false')
 			window.skipReload = false;
 			if (window.needReload)
 			{
@@ -413,12 +439,14 @@ if(empty($arResult['NOTIFY'])):?>
 			}
 		});
 		BX.addCustomEvent("onHidePageBefore", () => {
+			console.warn('onOpenPageAfter - skip reload true');
 			window.skipReload = true;
 		});
 
 		window.refreshEasingStart = false;
 
 		BXMobileApp.addCustomEvent("onBeforeNotificationsReload", reloadAfterNewNotify);
+		setTitleProgress(false);
 
 		function reloadAfterNewNotify()
 		{
@@ -432,14 +460,7 @@ if(empty($arResult['NOTIFY'])):?>
 					element.remove();
 				});
 
-				var loadingNode = document.createElement('div');
-				loadingNode.className = 'notif-new';
-				document.body.insertBefore(loadingNode, document.body.firstChild);
-				var loadingNode = document.createElement('div');
-				loadingNode.innerText = '<?=GetMessage('NM_TITLE_2');?>';
-				loadingNode.className = 'bx-notify-loading';
-				document.body.insertBefore(loadingNode, document.body.firstChild);
-
+				setTitleProgress(true);
 				location.reload();
 			}
 		}
@@ -454,7 +475,7 @@ if(empty($arResult['NOTIFY'])):?>
 			if(document.firstElementChild.scrollTop < 100)
 			{
 				window.needReload = false;
-				app.titleAction("setParams", {text: "<?=GetMessage("NM_TITLE")?>", useProgress: true});
+				setTitleProgress(true);
 				location.reload();
 			}
 		}, 300));

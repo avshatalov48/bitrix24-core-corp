@@ -24,7 +24,7 @@ if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvai
 {
 	CBitrix24::initLicenseInfoPopupJS();
 }
-CJSCore::Init(array('crm_activity_planner'));
+CJSCore::Init(['crm_activity_planner', 'crm_common']);
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/autorun_proc.js');
@@ -128,6 +128,10 @@ $prefixLC = mb_strtolower($arResult['GRID_ID']);
 			if($arResult['CONVERSION_PERMITTED'])
 			{
 				$arSchemeDescriptions = \Bitrix\Crm\Conversion\QuoteConversionScheme::getJavaScriptDescriptions(true);
+				if (!\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
+				{
+					unset($arSchemeDescriptions[\Bitrix\Crm\Conversion\QuoteConversionScheme::INVOICE_NAME]);
+				}
 				$arSchemeList = array();
 				foreach($arSchemeDescriptions as $name => $description)
 				{
@@ -566,6 +570,7 @@ $APPLICATION->IncludeComponent(
 	array(
 		'GRID_ID' => $arResult['GRID_ID'],
 		'HEADERS' => $arResult['HEADERS'],
+		'HEADERS_SECTIONS' => $arResult['HEADERS_SECTIONS'],
 		'ENABLE_FIELDS_SEARCH' => 'Y',
 		'SORT' => $arResult['SORT'],
 		'SORT_VARS' => $arResult['SORT_VARS'],
@@ -583,6 +588,7 @@ $APPLICATION->IncludeComponent(
 				'GET_FIELD' => '/bitrix/components/bitrix/crm.quote.list/filter.ajax.php?action=field&filter_id='.urlencode($arResult['GRID_ID']).'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
 			),
 			'ENABLE_FIELDS_SEARCH' => 'Y',
+			'HEADERS_SECTIONS' => $arResult['HEADERS_SECTIONS'],
 			'CONFIG' => [
 				'popupColumnsCount' => 4,
 				'popupWidth' => 800,

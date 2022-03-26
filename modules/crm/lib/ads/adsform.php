@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Ads;
 
 use Bitrix\Crm\WebForm\Form;
 use Bitrix\Crm\Ads\Form\FieldMapper;
+use Bitrix\Crm\WebForm\Internals\FormFieldMappingTable;
 use Bitrix\Main\EventManager;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\Type\DateTime;
@@ -11,6 +12,8 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main;
 
 use Bitrix\Seo\LeadAds;
+use Bitrix\Crm\Ads\Form\WebHookFormFillHandler;
+use Bitrix\Seo\Retargeting\AuthAdapter;
 
 Loc::loadMessages(__FILE__);
 
@@ -65,11 +68,15 @@ class AdsForm extends AdsService
 	 * Remove group auth.
 	 *
 	 * @param string $type Type.
+	 *
 	 * @return void
 	 */
 	public static function removeGroupAuth($type)
 	{
-		static::getService()->getGroupAuth($type)->removeAuth();
+		static::getService()
+			->getGroupAuth($type)
+			->removeAuth()
+		;
 	}
 
 	/**
@@ -77,6 +84,7 @@ class AdsForm extends AdsService
 	 *
 	 * @param string $type Type.
 	 * @param string $groupId Group ID.
+	 *
 	 * @return bool
 	 */
 	public static function registerGroup($type, $groupId)
@@ -89,6 +97,7 @@ class AdsForm extends AdsService
 	 *
 	 * @param string $type Type.
 	 * @param string $groupId Group ID.
+	 *
 	 * @return bool
 	 */
 	public static function unRegisterGroup($type, $groupId)
@@ -103,6 +112,7 @@ class AdsForm extends AdsService
 	 * Get service type name.
 	 *
 	 * @param string $type Type.
+	 *
 	 * @return string
 	 */
 	public static function getServiceTypeName($type)
@@ -127,26 +137,27 @@ class AdsForm extends AdsService
 	 *
 	 * @param string $type Type.
 	 * @param string|null $accountId Account ID.
+	 *
 	 * @return array
 	 */
 	public static function getForms($type, $accountId = null)
 	{
 		$result = array();
-
 		$form = static::getService()->getForm($type);
-
 		$form->setAccountId($accountId);
 		$formResult = $form->getList();
+
 		if ($formResult->isSuccess())
 		{
+			/**@var array $formData */
 			while ($formData = $formResult->fetch())
 			{
-				$formData = $form->normalizeListRow($formData);
+				$formData = $form::normalizeListRow($formData);
 				if ($formData['ID'])
 				{
 					$result[] = array(
 						'id' => $formData['ID'],
-						'name' => $formData['NAME'] ? $formData['NAME'] : $formData['ID']
+						'name' => $formData['NAME'] ? : $formData['ID']
 					);
 				}
 			}
@@ -167,29 +178,47 @@ class AdsForm extends AdsService
 	 */
 	public static function getProviders(array $types = null)
 	{
+		$providerIcons = static::getAdsIconMap();
 		$providers = static::getServiceProviders($types);
-		foreach ($providers as $type => $provider)
-		{
-			$form = static::getService()->getForm($type);
-			$account = static::getService()->getAccount($type);
-			$provider['URL_INFO'] =  $account->getUrlInfo();
-			$provider['URL_ACCOUNT_LIST'] =  $account->getUrlAccountList();
-			$provider['URL_FORM_LIST'] =  $form->getUrlFormList();
-			$provider['IS_SUPPORT_ACCOUNT'] =  $form->isSupportAccount();
 
+		foreach ($providers as $type => &$provider)
+		{
+			if ($icon = $providerIcons[$type])
+			{
+				$provider['ICON'] = $icon;
+			}
+
+			if ($defaultMap = FieldMapper::getDefaultMap($type))
+			{
+				$provider['DEFAULT_MAPPING'] = $defaultMap;
+			}
+
+			$service = static::getService();
+			/**@var LeadAds\Account */
+			$account = $service->getAccount($type);
+
+			$provider['URL_INFO'] = $account::getUrlInfo();
+			$provider['URL_ACCOUNT_LIST'] = $account::getUrlAccountList();
+
+			/**@var LeadAds\Form */
+			$form = $service->getForm($type);
+			/**@var AuthAdapter|null*/
 			$groupAuthAdapter = $form->getGroupAuthAdapter();
+
+			$provider['URL_FORM_LIST'] = $form::getUrlFormList();
+			$provider['IS_SUPPORT_ACCOUNT'] = $form::isSupportAccount();
 			$provider['GROUP'] = [
-				'IS_AUTH_USED' => $form->isGroupAuthUsed(),
-				'HAS_AUTH' => $groupAuthAdapter ? $groupAuthAdapter->hasAuth() : false,
+				'IS_AUTH_USED' => $form::isGroupAuthUsed(),
+				'HAS_AUTH' => $groupAuthAdapter && $groupAuthAdapter->hasAuth(),
 				'AUTH_URL' => $groupAuthAdapter ? $groupAuthAdapter->getAuthUrl() : null,
 				'GROUP_ID' => []
 			];
+
 			if ($provider['GROUP']['HAS_AUTH'])
 			{
 				$provider['GROUP']['GROUP_ID'] = current($form->getRegisteredGroups());
 			}
 
-			$providers[$type] = $provider;
 		}
 
 		return $providers;
@@ -199,24 +228,17 @@ class AdsForm extends AdsService
 	 * Return true if it has form links.
 	 *
 	 * @param integer $crmFormId Crm form ID.
-	 * @param string $type Type.
+	 * @param string|null $type Type.
+	 *
 	 * @return bool
 	 */
 	public static function hasFormLinks($crmFormId, $type = null)
 	{
-		if ($type)
-		{
-			$types = array($type);
-		}
-		else
-		{
-			$types = static::getServiceTypes();
-		}
+		$types = isset($type)? [$type] : static::getServiceTypes();
 
-		foreach ($types as $type)
+		foreach ($types as $serviceType)
 		{
-			$links = static::getFormLinks($crmFormId, $type);
-			if (count($links) > 0)
+			if (count(static::getFormLinks($crmFormId, $serviceType)) > 0)
 			{
 				return true;
 			}
@@ -229,6 +251,7 @@ class AdsForm extends AdsService
 	 * Get linked forms.
 	 *
 	 * @param string $type Type.
+	 *
 	 * @return array
 	 */
 	public static function getLinkedForms($type)
@@ -253,15 +276,18 @@ class AdsForm extends AdsService
 	 *
 	 * @param integer $crmFormId Crm form ID.
 	 * @param string $type Type.
+	 *
 	 * @return array
+	 * @throws Main\ArgumentException|Main\SystemException
 	 */
 	public static function getFormLinks($crmFormId, $type)
 	{
 		$linkDb = Internals\AdsFormLinkTable::getList(array(
 			'select' => array(
+				'ID','LINK_DIRECTION',
 				'ADS_FORM_NAME', 'ADS_FORM_ID',
 				'ADS_ACCOUNT_NAME', 'ADS_ACCOUNT_ID',
-				'DATE_INSERT'
+				'DATE_INSERT','ADS_TYPE'
 			),
 			'filter' => array(
 				'=WEBFORM_ID' => $crmFormId,
@@ -271,23 +297,37 @@ class AdsForm extends AdsService
 			'cache' => array('ttl' => 300),
 			'order' => array('DATE_INSERT' => 'DESC'),
 		));
-		$linkDb->addFetchDataModifier(function ($raw) {
-			$raw['ADS_FORM_NAME'] = $raw['ADS_FORM_NAME'] ? $raw['ADS_FORM_NAME'] : $raw['ADS_FORM_ID'];
-			$raw['ADS_ACCOUNT_NAME'] = $raw['ADS_ACCOUNT_NAME'] ? $raw['ADS_ACCOUNT_NAME'] : $raw['ADS_ACCOUNT_ID'];
+		$linkDb->addFetchDataModifier(
+			static function ($raw) {
 
-			/** @var DateTime $dateInsert */
-			$dateInsert = $raw['DATE_INSERT'];
-			$timestamp = $dateInsert ? $dateInsert->getTimestamp() : time() + \CTimeZone::getOffset();
-			$raw['DATE_INSERT_DISPLAY'] = \FormatDate('x', $timestamp);
-			return $raw;
-		});
+				$raw['ADS_FORM_NAME'] = $raw['ADS_FORM_NAME'] ?? $raw['ADS_FORM_ID'];
+				$raw['ADS_ACCOUNT_NAME'] = $raw['ADS_ACCOUNT_NAME'] ?? $raw['ADS_ACCOUNT_ID'];
+
+				/** @var DateTime $dateInsert */
+				$dateInsert = $raw['DATE_INSERT'];
+				$timestamp = $dateInsert ? $dateInsert->getTimestamp() : time() + \CTimeZone::getOffset();
+				$raw['DATE_INSERT_DISPLAY'] = \FormatDate('x', $timestamp);
+
+				/*INTEGRATION MAPPING*/
+				if (Internals\AdsFormLinkTable::LINK_DIRECTION_IMPORT === (int)$raw["LINK_DIRECTION"])
+				{
+					$raw['FIELDS_MAPPING'] = FormFieldMappingTable::query()
+						->setSelect(['CRM_FIELD_KEY','ADS_FIELD_KEY','ITEMS','MULTIPLE'])
+						->where("FORM_LINK_ID", $raw["ID"])
+						->exec()
+						->fetchAll();
+				}
+
+				return $raw;
+			}
+		);
 
 		return $linkDb->fetchAll();
 	}
 
 	/**
 	 * Export form.
-	 *
+	 * @deprecated
 	 * @param string $type Type.
 	 * @param string $accountId Account ID.
 	 * @param integer $crmFormId Crm form ID.
@@ -334,7 +374,8 @@ class AdsForm extends AdsService
 		}
 
 		// 1. Send add query to Facebook.
-		$form = static::getService()->getForm($type);
+		/**@var LeadAds\Form $form*/
+		$form =  static::getService()->getForm($type);
 		$form->setAccountId($accountId);
 		$addResult = $form->add(array(
 			'NAME' => $formName,
@@ -360,7 +401,7 @@ class AdsForm extends AdsService
 			'ADS_TYPE' => $type,
 			'ADS_ACCOUNT_ID' => $accountId,
 			'ADS_FORM_ID' => $adsFormId,
-			'ADS_ACCOUNT_NAME' => isset($parameters['ADS_ACCOUNT_NAME']) ? $parameters['ADS_ACCOUNT_NAME'] : '',
+			'ADS_ACCOUNT_NAME' => $parameters['ADS_ACCOUNT_NAME'] ?? '',
 			'ADS_FORM_NAME' => $formName,
 		));
 		if (!$addLinkResult->isSuccess())
@@ -374,7 +415,7 @@ class AdsForm extends AdsService
 			'seo',
 			'OnWebHook',
 			'crm',
-			'\Bitrix\Crm\Ads\Form\WebHookFormFillHandler',
+			WebHookFormFillHandler::class,
 			'handleEvent'
 		);
 
@@ -386,6 +427,7 @@ class AdsForm extends AdsService
 	 *
 	 * @param integer $crmFormId Crm form ID.
 	 * @param string|null $type Type.
+	 *
 	 * @return bool
 	 */
 	public static function unlinkForm($crmFormId, $type = null)
@@ -450,6 +492,7 @@ class AdsForm extends AdsService
 	 * Get temporary disabled message.
 	 *
 	 * @param string $type Type.
+	 *
 	 * @return string
 	 */
 	public static function getTemporaryDisabledMessage($type)
@@ -462,6 +505,9 @@ class AdsForm extends AdsService
 		return Loc::getMessage('CRM_ADS_FORM_TYPE_ERR_DISABLED_'.mb_strtoupper($type));
 	}
 
+	/**
+	 * @return bool
+	 */
 	protected static function isDisabled()
 	{
 		return false;
@@ -480,41 +526,4 @@ class AdsForm extends AdsService
 		);
 	}
 
-	/**
-	 * @deprecated
-	 *
-	 * @return string
-	 */
-	public static function getServicesBackgroundColorCss()
-	{
-		$style = '';
-		$cssFile = (file_exists($_SERVER['DOCUMENT_ROOT'].'/bitrix/js/ui/icons/service/ui.icons.service.css') ?
-			'/bitrix/js/ui/icons/service/ui.icons.service.css' : '/bitrix/js/ui/icons/ui.icons.css');
-		$cssFilePath = $_SERVER["DOCUMENT_ROOT"] . $cssFile;
-		$cssFile = file_get_contents($cssFilePath);
-
-		if (!empty($cssFile))
-		{
-			$cssList = Main\Web\DOM\CssParser::parse($cssFile);
-
-			if (!empty($cssList))
-			{
-				$column = array_column($cssList, 'SELECTOR');
-				$adsList = self::getAdsIconMap();
-
-				foreach ($adsList as $key => $ad)
-				{
-					$position = array_search('.ui-icon-service-' . $ad . ' > i', $column);
-
-					if ($position !== false)
-					{
-						$style .= '.crm-' . $key . '-background-color { background-color: ' . $cssList[$position]['STYLE']['background-color'] . '; }' . PHP_EOL;
-						$style .= '.intranet-' . $key . '-background-color { background-color: ' . $cssList[$position]['STYLE']['background-color'] . '; }' . PHP_EOL;
-					}
-				}
-			}
-		}
-
-		return $style;
-	}
 }

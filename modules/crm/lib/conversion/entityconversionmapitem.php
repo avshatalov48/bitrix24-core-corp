@@ -1,6 +1,5 @@
 <?php
 namespace Bitrix\Crm\Conversion;
-use Bitrix\Main;
 class EntityConversionMapItem
 {
 	protected $srcField = '';
@@ -55,6 +54,11 @@ class EntityConversionMapItem
 
 	public function getDestinationField()
 	{
+		if (empty($this->dstField))
+		{
+			return $this->srcField;
+		}
+
 		return $this->dstField;
 	}
 

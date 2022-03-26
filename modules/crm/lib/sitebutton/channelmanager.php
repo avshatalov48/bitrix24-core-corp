@@ -31,6 +31,7 @@ class ChannelManager
 			'\Bitrix\Crm\SiteButton\Channel\ChannelOpenLine',
 			'\Bitrix\Crm\SiteButton\Channel\ChannelWebForm',
 			'\Bitrix\Crm\SiteButton\Channel\ChannelCallback',
+			'\Bitrix\Crm\SiteButton\Channel\ChannelWhatsApp',
 		);
 
 		$list = array();

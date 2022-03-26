@@ -18,7 +18,8 @@ type EntityParams = {
 	storyPoints?: string,
 	pageSize: number,
 	pageNumberItems: number,
-	isShortView: 'Y' | 'N'
+	isShortView: 'Y' | 'N',
+	mandatoryExists: 'Y' | 'N'
 };
 
 export class Entity extends EventEmitter
@@ -54,6 +55,7 @@ export class Entity extends EventEmitter
 		this.setNumberTasks(params.numberTasks);
 		this.setStoryPoints(params.storyPoints);
 		this.setShortView(params.isShortView);
+		this.setMandatory(params.mandatoryExists);
 
 		this.exactSearchApplied = (params.isExactSearchApplied === 'Y');
 
@@ -94,6 +96,11 @@ export class Entity extends EventEmitter
 	isShortView(): boolean
 	{
 		return this.shortView === 'Y';
+	}
+
+	setMandatory(value: 'Y' | 'N')
+	{
+		this.mandatoryExists = value === 'Y';
 	}
 
 	getNode(): ?HTMLElement

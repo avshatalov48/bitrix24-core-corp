@@ -153,8 +153,9 @@ class CrmActivityEmailComponent extends CBitrixComponent
 						$activity['OWNER_ID'] = $invoice['UF_DEAL_ID'];
 					}
 
+					// remove (old version) suffix from message to a client
 					$activity['SUBJECT'] = sprintf(
-						'%s %s', \CCrmOwnerType::getDescription(\CCrmOwnerType::Invoice), $invoice['ACCOUNT_NUMBER']
+						'%s %s', \CCrmOwnerType::getDescription(\CCrmOwnerType::SmartInvoice), $invoice['ACCOUNT_NUMBER']
 					);
 
 					// encapsulate to StorageManager

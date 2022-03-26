@@ -26,7 +26,6 @@ BX.Tasks.UserItemSet = BX.Tasks.Util.ItemSet.extend({
 				scope: this.scope(),
 				id: 'selector-'+this.getRandomHash(),
 				mode: this.getNSMode(),
-				query: this.getQuery(),
 				useSearch: this.option('useSearch'),
 				useAdd: this.option('useAdd'),
 				forceTop: this.option('forceTop'),

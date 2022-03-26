@@ -2,6 +2,9 @@
 {
 	include("InAppNotifier");
 
+	/**
+	 * @class Notify
+	 */
 	class Notify
 	{
 		static showMessage(message = "", title = "")

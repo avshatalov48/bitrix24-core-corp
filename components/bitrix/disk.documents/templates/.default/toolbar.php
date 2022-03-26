@@ -45,7 +45,6 @@ $items = array_map(function ($item) use ($defaultHandler) {
 	}
 	return [
 		'text' => $item['name'],
-		'className' => 'disk-fe-office-edit-popup-item disk-fe-office-icon-'.$item['code'],
 		'code' => $item['code'],
 		'items' => [
 			[

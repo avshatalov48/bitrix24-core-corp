@@ -59,7 +59,7 @@ if ($_REQUEST['MODE'] === 'SEARCH')
 	{
 		$tasks[] = [
 			'ID' => $task['ID'],
-			'TITLE' => $task['TITLE'],
+			'TITLE' => \Bitrix\Main\Text\Emoji::decode($task['TITLE']),
 			'STATUS' => $task['STATUS'],
 		];
 	}
@@ -77,7 +77,7 @@ if ($_REQUEST['MODE'] === 'SEARCH')
 		{
 			$tasks[] = [
 				'ID' => $task['ID'],
-				'TITLE' => $task['TITLE'],
+				'TITLE' => \Bitrix\Main\Text\Emoji::decode($task['TITLE']),
 				'STATUS' => $task['STATUS'],
 			];
 		}

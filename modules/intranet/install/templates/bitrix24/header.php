@@ -1,35 +1,42 @@
 <?
+/** @global CMain $APPLICATION */
+/** @global CUser $USER */
+
 //phpinfo();
 use Bitrix\Intranet\Integration\Templates\Bitrix24\ThemePicker;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
+use \Bitrix\Main\Page\AssetLocation;
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
+$asset = \Bitrix\Main\Page\Asset::getInstance();
+
 //Ajax Performance Optimization
-if (isset($_GET["RELOAD"]) && $_GET["RELOAD"] == "Y")
+if (isset($_GET['RELOAD']) && $_GET['RELOAD'] == 'Y')
 {
 	return; //Live Feed Ajax
 }
-else if (mb_strpos($_SERVER["REQUEST_URI"], "/historyget/") > 0)
+else if (mb_strpos($_SERVER['REQUEST_URI'], '/historyget/') > 0)
 {
 	return;
 }
-else if (isset($_GET["IFRAME"]) && $_GET["IFRAME"] === "Y" && !isset($_GET["SONET"]))
+else if (isset($_GET['IFRAME']) && $_GET['IFRAME'] === 'Y' && !isset($_GET['SONET']))
 {
 	//For the task iframe popup
-	$APPLICATION->SetPageProperty("BodyClass", "task-iframe-popup");
-	$APPLICATION->SetAdditionalCSS(SITE_TEMPLATE_PATH."/interface.css", true);
-	$APPLICATION->AddHeadScript(SITE_TEMPLATE_PATH."/bitrix24.js", true);
+	$APPLICATION->SetPageProperty('BodyClass', 'task-iframe-popup');
+
+	$asset->addCss(SITE_TEMPLATE_PATH . '/interface.css', true);
+	$asset->addJs(SITE_TEMPLATE_PATH . '/bitrix24.js', true);
 	return;
 }
 
-CModule::IncludeModule("intranet");
+CModule::IncludeModule('intranet');
 
 \Bitrix\Main\UI\Extension::load([
 	"ui.fonts.opensans",
@@ -40,65 +47,97 @@ CModule::IncludeModule("intranet");
 	"ui.info-helper"
 ]);
 
-Loc::loadMessages($_SERVER["DOCUMENT_ROOT"]."/bitrix/templates/".SITE_TEMPLATE_ID."/header.php");
+Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . '/bitrix/templates/' . SITE_TEMPLATE_ID . '/header.php');
 
-$APPLICATION->MoveJSToBody("im");
-$APPLICATION->MoveJSToBody("timeman");
-$APPLICATION->SetUniqueJS('bx24', 'template');
-$APPLICATION->SetUniqueCSS('bx24', 'template');
+$asset->moveJs('im');
+$asset->moveJs('timeman');
+$asset->setUnique('bx24', 'TEMPLATE');
 
-$isCompositeMode = defined("USE_HTML_STATIC_CACHE");
+$isCompositeMode = defined('USE_HTML_STATIC_CACHE');
 
 $isIndexPage =
-	$APPLICATION->GetCurPage(true) === SITE_DIR."stream/index.php" ||
-	$APPLICATION->GetCurPage(true) === SITE_DIR."index.php" ||
-	(defined("BITRIX24_INDEX_PAGE") && constant("BITRIX_INDEX_PAGE") === true)
+	$APPLICATION->GetCurPage(true) === SITE_DIR . 'stream/index.php' ||
+	$APPLICATION->GetCurPage(true) === SITE_DIR . 'index.php' ||
+	(defined('BITRIX24_INDEX_PAGE') && constant('BITRIX_INDEX_PAGE') === true)
 ;
 
-$isBitrix24Cloud = ModuleManager::isModuleInstalled("bitrix24");
+$isBitrix24Cloud = ModuleManager::isModuleInstalled('bitrix24');
 
 if ($isIndexPage)
 {
-	if (!defined("BITRIX24_INDEX_PAGE"))
+	if (!defined('BITRIX24_INDEX_PAGE'))
 	{
-		define("BITRIX24_INDEX_PAGE", true);
+		define('BITRIX24_INDEX_PAGE', true);
 	}
 
 	if ($isCompositeMode)
 	{
-		define("BITRIX24_INDEX_COMPOSITE", true);
+		define('BITRIX24_INDEX_COMPOSITE', true);
 	}
 }
 
 function showJsTitle()
 {
-	$GLOBALS["APPLICATION"]->AddBufferContent("getJsTitle");
+	/** @global CMain $APPLICATION */
+	global $APPLICATION;
+	$APPLICATION->AddBufferContent("getJsTitle");
 }
 
 function getJsTitle()
 {
-	$title = $GLOBALS["APPLICATION"]->GetTitle("title", true);
+	/** @global CMain $APPLICATION */
+	global $APPLICATION;
+	$title = $APPLICATION->GetTitle("title", true);
 	$title = html_entity_decode($title, ENT_QUOTES, SITE_CHARSET);
-	$title = CUtil::JSEscape($title);
-	return $title;
+	return CUtil::JSEscape($title);
 }
 ?>
 <!DOCTYPE html>
 <html <?if (LANGUAGE_ID == "tr"):?>lang="<?=LANGUAGE_ID?>"<?endif?>>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
-<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-<?if ($isBitrix24Cloud):?>
-<meta name="apple-itunes-app" content="app-id=561683423" />
-<link rel="apple-touch-icon-precomposed" href="/images/iphone/57x57.png" />
-<link rel="apple-touch-icon-precomposed" sizes="72x72" href="/images/iphone/72x72.png" />
-<link rel="apple-touch-icon-precomposed" sizes="114x114" href="/images/iphone/114x114.png" />
-<link rel="apple-touch-icon-precomposed" sizes="144x144" href="/images/iphone/144x144.png" />
-<?endif;
+<head><?
+$asset->addString(
+	'<meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no" />',
+	false,
+	AssetLocation::BEFORE_CSS
+);
+$asset->addString(
+	'<meta http-equiv="X-UA-Compatible" content="IE=edge" />',
+	false,
+	AssetLocation::BEFORE_CSS
+);
+
+if ($isBitrix24Cloud)
+{
+	$asset->addString(
+		'<meta name="apple-itunes-app" content="app-id=561683423" />',
+		false,
+		AssetLocation::BEFORE_CSS
+	);
+	$asset->addString(
+		'<link rel="apple-touch-icon-precomposed" href="/images/iphone/57x57.png" />',
+		false,
+		AssetLocation::BEFORE_CSS
+	);
+	$asset->addString(
+		'<link rel="apple-touch-icon-precomposed" sizes="72x72" href="/images/iphone/72x72.png" />',
+		false,
+		AssetLocation::BEFORE_CSS
+	);
+	$asset->addString(
+		'<link rel="apple-touch-icon-precomposed" sizes="114x114" href="/images/iphone/114x114.png" />',
+		false,
+		AssetLocation::BEFORE_CSS
+	);
+	$asset->addString(
+		'<link rel="apple-touch-icon-precomposed" sizes="144x144" href="/images/iphone/144x144.png" />',
+		false,
+		AssetLocation::BEFORE_CSS
+	);
+}
 
 $APPLICATION->ShowHead(false);
-$APPLICATION->SetAdditionalCSS(SITE_TEMPLATE_PATH."/interface.css", true);
-$APPLICATION->AddHeadScript(SITE_TEMPLATE_PATH."/bitrix24.js", true);
+$asset->addCss(SITE_TEMPLATE_PATH . '/interface.css', true);
+$asset->addJs(SITE_TEMPLATE_PATH . '/bitrix24.js', true);
 
 ThemePicker::getInstance()->showHeadAssets();
 
@@ -121,17 +160,14 @@ if ($imBarExists)
 	$bodyClass .= " im-bar-mode";
 }
 
-$APPLICATION->AddHeadString(
-	'<link rel="stylesheet" type="text/css" media="print" href="'.
-	\CUtil::GetAdditionalFileURL(SITE_TEMPLATE_PATH."/print.css").'">',
+$asset->addString(
+	'<link rel="stylesheet" type="text/css" media="print" href="' . \CUtil::GetAdditionalFileURL(SITE_TEMPLATE_PATH."/print.css") . '">',
 	false,
-	\Bitrix\Main\Page\AssetLocation::AFTER_CSS
+	AssetLocation::AFTER_CSS
 );
-?>
-<title><? if (!$isCompositeMode || $isIndexPage) $APPLICATION->ShowTitle()?></title>
+?><title><? if (!$isCompositeMode || $isIndexPage) $APPLICATION->ShowTitle()?></title>
 </head>
-<body class="<?=$bodyClass?>">
-<?
+<body class="<?=$bodyClass?>"><?
 ThemePicker::getInstance()->showBodyAssets();
 
 if ($isCompositeMode && !$isIndexPage)
@@ -160,9 +196,7 @@ if (CUserOptions::GetOption("intranet", "left_menu_collapsed") === "Y")
 	<tr>
 		<td class="bx-layout-header">
 			<? if ((!$isBitrix24Cloud || $USER->IsAdmin()) && !defined("SKIP_SHOW_PANEL")):?>
-				<div id="panel">
-				<?$APPLICATION->ShowPanel();?>
-				</div>
+				<div id="panel"><?$APPLICATION->ShowPanel();?></div>
 			<? endif ?>
 <?
 if ($isBitrix24Cloud)
@@ -377,11 +411,13 @@ if ($isBitrix24Cloud)
 						<?
 						$profileLink = $isExtranet ? SITE_DIR."contacts/personal" : SITE_DIR."company/personal";
 						$APPLICATION->IncludeComponent(
-							"bitrix:system.auth.form",
+							"bitrix:intranet.user.profile.button",
 							"",
 							array(
-								"PATH_TO_SONET_PROFILE" => $profileLink."/user/#user_id#/",
-								"PATH_TO_SONET_PROFILE_EDIT" => $profileLink."/user/#user_id#/edit/",
+								"PATH_TO_USER_PROFILE" => $profileLink."/user/#user_id#/",
+								"PATH_TO_USER_PROFILE_EDIT" => $profileLink."/user/#user_id#/edit/",
+								"PATH_TO_USER_STRESSLEVEL" => $profileLink."/user/#user_id#/stresslevel/",
+								"PATH_TO_USER_COMMON_SECURITY" => $profileLink."/user/#user_id#/common_security/",
 							),
 							false
 						);
@@ -414,14 +450,13 @@ if ($isBitrix24Cloud)
 							"left_vertical",
 							array(
 								"ROOT_MENU_TYPE" => file_exists($_SERVER["DOCUMENT_ROOT"].SITE_DIR.".superleft.menu_ext.php") ? "superleft" : "top",
-								"CHILD_MENU_TYPE" => "left",
 								"MENU_CACHE_TYPE" => "Y",
 								"MENU_CACHE_TIME" => "604800",
 								"MENU_CACHE_USE_GROUPS" => "N",
 								"MENU_CACHE_USE_USERS" => "Y",
 								"CACHE_SELECTED_ITEMS" => "N",
 								"MENU_CACHE_GET_VARS" => array(),
-								"MAX_LEVEL" => $isExtranet ? "1" : "2",
+								"MAX_LEVEL" => "1",
 								"USE_EXT" => "Y",
 								"DELAY" => "N",
 								"ALLOW_MULTI_SELECT" => "N"
@@ -468,8 +503,8 @@ if ($isBitrix24Cloud)
 								</tr>
 								<tr>
 									<td class="bx-layout-inner-inner-cont">
-										<div id="workarea">
-											<div id="workarea-content">
+										<div id="workarea" class="workarea">
+											<div id="workarea-content" class="workarea-content">
 												<div class="workarea-content-paddings">
 													<div style="position: relative; height: 50vh;">
 														<div class="intranet-loader-container" id="b24-loader">
@@ -500,30 +535,30 @@ if ($isBitrix24Cloud)
 							<tr class="bx-layout-inner-inner-top-row">
 								<td class="bx-layout-inner-inner-cont">
 									<div class="page-header">
-										<?
-										$APPLICATION->ShowViewContent("above_pagetitle");
-										$APPLICATION->IncludeComponent(
-											"bitrix:menu",
-											"top_horizontal",
-											array(
-												"ROOT_MENU_TYPE" => "left",
-												"MENU_CACHE_TYPE" => "N",
-												"MENU_CACHE_TIME" => "604800",
-												"MENU_CACHE_USE_GROUPS" => "N",
-												"MENU_CACHE_USE_USERS" => "Y",
-												"CACHE_SELECTED_ITEMS" => "N",
-												"MENU_CACHE_GET_VARS" => array(),
-												"MAX_LEVEL" => "1",
-												"USE_EXT" => "Y",
-												"DELAY" => "N",
-												"ALLOW_MULTI_SELECT" => "N"
-											),
-											false
-										);
-										?>
+										<div class="page-navigation"><?
+											$APPLICATION->ShowViewContent("above_pagetitle");
+											$APPLICATION->IncludeComponent(
+												"bitrix:menu",
+												"top_horizontal",
+												array(
+													"ROOT_MENU_TYPE" => "left",
+													"CHILD_MENU_TYPE" => "sub",
+													"MENU_CACHE_TYPE" => "N",
+													"MENU_CACHE_TIME" => "604800",
+													"MENU_CACHE_USE_GROUPS" => "N",
+													"MENU_CACHE_USE_USERS" => "Y",
+													"CACHE_SELECTED_ITEMS" => "Y",
+													"MENU_CACHE_GET_VARS" => array(),
+													"MAX_LEVEL" => "3",
+													"USE_EXT" => "Y",
+													"DELAY" => "N",
+													"ALLOW_MULTI_SELECT" => "N"
+												),
+												false
+											);
 
-										<?$APPLICATION->IncludeComponent("bitrix:ui.toolbar", '', []);?>
-
+											$APPLICATION->IncludeComponent("bitrix:ui.toolbar", '', []); ?>
+										</div>
 										<div class="pagetitle-below"><?$APPLICATION->ShowViewContent("below_pagetitle")?></div>
 									</div>
 								</td>
@@ -532,7 +567,7 @@ if ($isBitrix24Cloud)
 							<tr>
 								<td class="bx-layout-inner-inner-cont">
 
-									<div id="workarea">
+									<div id="workarea" class="workarea">
 										<?if($APPLICATION->GetProperty("HIDE_SIDEBAR", "N") != "Y"):
 											?><div id="sidebar"><?
 											$APPLICATION->ShowViewContent("sidebar");
@@ -540,7 +575,7 @@ if ($isBitrix24Cloud)
 											$APPLICATION->ShowViewContent("sidebar_tools_2");
 											?></div>
 										<?endif?>
-										<div id="workarea-content">
+										<div id="workarea-content" class="workarea-content">
 											<div class="workarea-content-paddings">
 											<?$APPLICATION->ShowViewContent("topblock")?>
 											<?if ($isIndexPage):?>

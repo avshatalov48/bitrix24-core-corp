@@ -2,7 +2,6 @@
 namespace Bitrix\Crm\Agent\Routine;
 
 use Bitrix\Crm;
-use Bitrix\Crm\Cleaning\Entity\CleaningTable;
 
 class CleaningAgent extends Crm\Agent\AgentBase
 {
@@ -19,17 +18,35 @@ class CleaningAgent extends Crm\Agent\AgentBase
 			$entityTypeID = (int)$item['ENTITY_TYPE_ID'];
 			$entityID = (int)$item['ENTITY_ID'];
 
-			$entity = Crm\Entity\EntityManager::resolveByTypeID($entityTypeID);
-			if($entity !== null)
+			if (\CCrmOwnerType::isUseFactoryBasedApproach($entityTypeID))
 			{
+				$cleaner = Crm\Cleaning\CleaningManager::getCleaner($entityTypeID, $entityID);
+				$cleaner->getOptions()->setEnvironment(Crm\Cleaning\Cleaner\Options::ENVIRONMENT_AGENT);
+
 				try
 				{
-					$entity->cleanup($entityID);
+					$cleaner->cleanup();
 				}
-				catch(\Exception $ex)
+				catch (\Throwable $throwable)
 				{
 				}
 			}
+			else
+			{
+				//todo remove this branch after implementing factories for all entity types
+				$entity = Crm\Entity\EntityManager::resolveByTypeID($entityTypeID);
+				if($entity !== null)
+				{
+					try
+					{
+						$entity->cleanup($entityID);
+					}
+					catch(\Throwable $throwable)
+					{
+					}
+				}
+			}
+
 			Crm\Cleaning\CleaningManager::unregister($entityTypeID, $entityID);
 			$end = microtime(true);
 			if(($end - $start) >= 1.0)

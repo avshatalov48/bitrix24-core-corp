@@ -2,6 +2,7 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Crm\Integration\StorageType;
+use Bitrix\Crm\Restriction\RestrictionManager;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -1078,6 +1079,8 @@ $arResult['FIELDS']['tab_tree'] = array(array(
 	'type' => 'custom',
 	'value' => '<div id="'.htmlspecialcharsbx($arResult['TREE_CONTAINER_ID']).'"></div>'
 ));
+
+$arResult['TAB_EVENT_TARIFF_LOCK'] = (!RestrictionManager::isHistoryViewPermitted()) ? 'Y' : 'N';
 
 $arResult['FIELDS']['tab_event'][] = array(
 	'id' => 'section_event_grid',

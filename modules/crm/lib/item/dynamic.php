@@ -30,7 +30,7 @@ class Dynamic extends Item
 
 	protected function getItemReferenceFieldNameInProduct(): string
 	{
-		return $this->getEntityName();
+		return \CCrmOwnerType::ResolveName($this->getEntityTypeId());
 	}
 
 	protected function disableCheckUserFields(): void
@@ -48,7 +48,7 @@ class Dynamic extends Item
 		return array_merge(
 			parent::getExternalizableFieldNames(),
 			[
-				Item::FIELD_NAME_OBSERVERS,
+				$this->getEntityFieldNameByMap(Item::FIELD_NAME_OBSERVERS),
 			],
 		);
 	}

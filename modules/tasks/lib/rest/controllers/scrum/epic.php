@@ -13,6 +13,7 @@ use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Tasks\Rest\Controllers\Base;
 use Bitrix\Tasks\Scrum\Form\EpicForm;
 use Bitrix\Tasks\Scrum\Service\EpicService;
+use Bitrix\Tasks\Scrum\Service\TaskService;
 use Bitrix\Tasks\Util\User;
 
 class Epic extends Base
@@ -20,7 +21,9 @@ class Epic extends Base
 	use UserTrait;
 
 	/**
-	 * @return string[][][]
+	 * Returns available fields.
+	 *
+	 * @return array
 	 */
 	public function getFieldsAction(): array
 	{
@@ -52,11 +55,15 @@ class Epic extends Base
 	}
 
 	/**
-	 * @param $id
+	 * Returns epic.
+	 *
+	 * @param int $id Epic id.
 	 * @return array|null
 	 */
-	public function getAction($id)
+	public function getAction(int $id)
 	{
+		global $USER_FIELD_MANAGER;
+
 		$id = (int) $id;
 		if (!$id)
 		{
@@ -71,38 +78,76 @@ class Epic extends Base
 		if (!$epic->getId())
 		{
 			$this->errorCollection->add([new Error('Epic not found')]);
-
 			return null;
 		}
 		if (!$this->checkAccess($epic->getGroupId()))
 		{
 			$this->errorCollection->add([new Error('Access denied')]);
+			return null;
+		}
+
+		$userFields = $epicService->getFilesUserField($USER_FIELD_MANAGER, $epic->getId());
+		if ($epicService->getErrors())
+		{
+			$this->errorCollection->add($epicService->getErrors());
 
 			return null;
 		}
 
-		return $epic->toArray();
+		$result = $epic->toArray();
+		$result['files'] = $userFields['UF_SCRUM_EPIC_FILES'];
+
+		return $result;
 	}
 
 	/**
-	 * @param $fields
+	 * Adds epic.
+	 *
+	 * @param array $fields Epic fields.
 	 * @return array|null
 	 */
-	public function addAction($fields)
+	public function addAction(array $fields)
 	{
 		$epic = new EpicForm();
 
+		$epicService = new EpicService($this->getUserId());
+
 		$epic->setGroupId($fields['groupId']);
 		$epic->setName($fields['name']);
-		$epic->setDescription($fields['description']);
-		$epic->setCreatedBy($fields['createdBy'] ?? User::getId());
+
+		if (array_key_exists('description', $fields) && is_string($fields['description']))
+		{
+			$userFields = $epicService->getFilesUserField($this->getUserFieldManager(), $epic->getId());
+			$epic->setDescription($this->sanitizeText($fields['description'], $userFields));
+		}
+
+		$createdBy = 0;
+		if (array_key_exists('createdBy', $fields) && is_numeric($fields['createdBy']))
+		{
+			$createdBy = (int) $fields['createdBy'];
+			if (!$this->existsUser($createdBy))
+			{
+				$this->errorCollection->add([new Error('createdBy user not found')]);
+
+				return null;
+			}
+		}
+		$epic->setCreatedBy($createdBy ?? $this->getUserId());
+
 		$epic->setColor($fields['color']);
 
 		$files = (is_array($fields['files']) ? $fields['files'] : []);
 
 		if (!$epic->getGroupId())
 		{
-			$this->errorCollection->add([new Error('Bad request')]);
+			$this->errorCollection->add([new Error('Group id not found')]);
+
+			return null;
+		}
+
+		if (!$epic->getName())
+		{
+			$this->errorCollection->add([new Error('Name not found')]);
 
 			return null;
 		}
@@ -114,33 +159,34 @@ class Epic extends Base
 			return null;
 		}
 
-		$epicService = new EpicService(User::getId());
-
 		$epic = $epicService->createEpic($epic);
-		if ($epicService->getErrors())
+		if (!empty($epicService->getErrors()))
 		{
 			$this->errorCollection->add([new Error('Epic not created')]);
-
 			return null;
 		}
 
-		$epicService->attachFiles($this->getUserFieldManager(), $epic->getId(), $files);
-		if ($epicService->getErrors())
+		if (!empty($files))
 		{
-			$this->errorCollection->add([new Error('Epic files not attached')]);
-
-			return null;
+			$epicService->attachFiles($this->getUserFieldManager(), $epic->getId(), $files);
+			if (!empty($epicService->getErrors()))
+			{
+				$this->errorCollection->add([new Error('Epic files not attached')]);
+				return null;
+			}
 		}
 
 		return $epic->toArray();
 	}
 
 	/**
-	 * @param $id
-	 * @param $fields
+	 * Updates epic.
+	 *
+	 * @param int $id Epic id.
+	 * @param array $fields Epic fields.
 	 * @return array|null
 	 */
-	public function updateAction($id, $fields)
+	public function updateAction(int $id, array $fields)
 	{
 		$id = (int) $id;
 		if (!$id)
@@ -150,7 +196,7 @@ class Epic extends Base
 			return null;
 		}
 
-		$epicService = new EpicService(User::getId());
+		$epicService = new EpicService($this->getUserId());
 
 		$epic = $epicService->getEpic($id);
 		if (!$epic->getId())
@@ -168,39 +214,92 @@ class Epic extends Base
 
 		$inputEpic = new EpicForm();
 
-		$inputEpic->setGroupId($fields['groupId']);
-		$inputEpic->setName($fields['name']);
-		$inputEpic->setDescription($fields['description']);
-		$inputEpic->setCreatedBy($fields['createdBy'] ?? User::getId());
-		$inputEpic->setModifiedBy($fields['modifiedBy'] ?? User::getId());
-		$inputEpic->setColor($fields['color']);
+		if (array_key_exists('groupId', $fields) && is_numeric($fields['groupId']))
+		{
+			if (!$this->checkAccess($fields['groupId']))
+			{
+				$this->errorCollection->add([new Error('Access denied')]);
 
-		$files = (is_array($fields['files']) ? $fields['files'] : []);
+				return null;
+			}
+
+			$inputEpic->setGroupId($fields['groupId']);
+		}
+
+		if (array_key_exists('name', $fields) && is_string($fields['name']))
+		{
+			$inputEpic->setName($fields['name']);
+		}
+
+		if (array_key_exists('description', $fields) && is_string($fields['description']))
+		{
+			$userFields = $epicService->getFilesUserField($this->getUserFieldManager(), $epic->getId());
+
+			$inputEpic->setDescription($this->sanitizeText($fields['description'], $userFields));
+		}
+
+		if (array_key_exists('createdBy', $fields) && is_numeric($fields['createdBy']))
+		{
+			$createdBy = (int) $fields['createdBy'];
+			if (!$this->existsUser($createdBy))
+			{
+				$this->errorCollection->add([new Error('createdBy user not found')]);
+
+				return null;
+			}
+
+			$inputEpic->setCreatedBy($createdBy);
+		}
+
+		$modifiedBy = 0;
+		if (array_key_exists('modifiedBy', $fields) && is_numeric($fields['modifiedBy']))
+		{
+			$modifiedBy = (int) $fields['modifiedBy'];
+			if (!$this->existsUser($modifiedBy))
+			{
+				$this->errorCollection->add([new Error('modifiedBy user not found')]);
+
+				return null;
+			}
+		}
+		$inputEpic->setModifiedBy($modifiedBy ?? $this->getUserId());
+
+		if (array_key_exists('color', $fields) && is_string($fields['color']))
+		{
+			$inputEpic->setColor($fields['color']);
+		}
 
 		$epicService->updateEpic($epic->getId(), $inputEpic);
-		if ($epicService->getErrors())
+		if (!empty($epicService->getErrors()))
 		{
 			$this->errorCollection->add([new Error('Epic not updated')]);
 
 			return null;
 		}
 
-		$epicService->attachFiles($this->getUserFieldManager(), $epic->getId(), $files);
-		if ($epicService->getErrors())
+		if (array_key_exists('files', $fields))
 		{
-			$this->errorCollection->add([new Error('Epic files not attached')]);
+			$files = (is_array($fields['files']) ? $fields['files'] : []);
 
-			return null;
+			$epicService->attachFiles($this->getUserFieldManager(), $epic->getId(), $files);
+			if (!empty($epicService->getErrors()))
+			{
+				$this->errorCollection->add([new Error('Epic files not attached')]);
+
+				return null;
+			}
 		}
 
 		return $epic->toArray();
 	}
 
 	/**
-	 * @param $id
+	 * Removes epic.
+	 *
+	 * @param int $id Epic id.
 	 * @return array|null
 	 */
-	public function deleteAction($id)
+	public function deleteAction(int $id)
 	{
 		$id = (int) $id;
 		if (!$id)
@@ -231,10 +330,14 @@ class Epic extends Base
 			$this->errorCollection->add([new Error('Epic not deleted')]);
 		}
 
+		$epicService->deleteFiles($this->getUserFieldManager(), $epic->getId());
+
 		return [];
 	}
 
 	/**
+	 * Returns list epics.
+	 *
 	 * @param PageNavigation $nav
 	 * @param array $filter
 	 * @param array $select
@@ -289,5 +392,14 @@ class Epic extends Base
 		global $USER_FIELD_MANAGER;
 
 		return $USER_FIELD_MANAGER;
+	}
+
+	private function sanitizeText(string $text, array $userFields = []): string
+	{
+		$text = (new \CBXSanitizer)->sanitizeHtml($text);
+
+		$taskService = new TaskService($this->getUserId());
+
+		return $taskService->convertDescription($text, $userFields);
 	}
 }

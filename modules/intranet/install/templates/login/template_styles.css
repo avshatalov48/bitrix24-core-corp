@@ -117,7 +117,8 @@ body {
 }
 
 .log-popup-wrap .log-popup {
-	white-space: nowrap;
+	display: flex;
+	flex-direction: row;
 }
 
 .log-popup-text {
@@ -1062,6 +1063,7 @@ a.login-btn {
 }
 
 .login-text {
+	white-space: normal;
 	color: #727a87;
 	font-size: 14px;
 	line-height: 22px;
@@ -1254,6 +1256,7 @@ a.login-btn {
 }
 
 .login-wrapper-qr-text {
+	padding: 0 15px;
 	font-size: 11px;
 	font-family: 'Montserrat-medium', "Helvetica Neue", Helvetica, Arial, sans-serif;
 	color: #545c68;
@@ -1271,7 +1274,7 @@ a.login-btn {
 
 .log-popup-form-input {
 	display: inline-flex;
-	width: 100%;
+	min-width: 100%;
 	flex-direction: column;
 	text-align: left;
 	white-space: normal;
@@ -1290,7 +1293,7 @@ a.login-btn {
 
 .log-popup-form-qr {
 	display: inline-flex;
-	width: 100%;
+	min-width: 100%;
 	flex-direction: column;
 	align-items: center;
 	white-space: normal;

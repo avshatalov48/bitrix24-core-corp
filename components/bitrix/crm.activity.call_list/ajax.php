@@ -120,8 +120,14 @@ switch ($action)
 		$rank = (int)$_REQUEST['parameters']['rank'];
 		if($callListId == 0 || $elementId == 0 || $rank == 0)
 			return false;
-		
-		$callList = \Bitrix\Crm\CallList\CallList::createWithId($callListId, true);
+		try
+		{
+			$callList = \Bitrix\Crm\CallList\CallList::createWithId($callListId, true);
+		}
+		catch (\Bitrix\Main\SystemException $e)
+		{
+			return false;
+		}
 		$result = $callList->setElementRank($elementId, $rank);
 		if(!$result)
 			return false;
@@ -137,7 +143,14 @@ switch ($action)
 		if($callListId == 0 || $elementId == 0 || $statusId == '')
 			return false;
 
-		$callList = \Bitrix\Crm\CallList\CallList::createWithId($callListId, true);
+		try
+		{
+			$callList = \Bitrix\Crm\CallList\CallList::createWithId($callListId, true);
+		}
+		catch (\Bitrix\Main\SystemException $e)
+		{
+			return false;
+		}
 		$result = $callList->setElementStatus($elementId, $statusId);
 		if(!$result)
 			return false;
@@ -157,7 +170,14 @@ switch ($action)
 		if($callListId == 0 || $elementId == 0 || $webformResultId == 0)
 			return false;
 
-		$callList = \Bitrix\Crm\CallList\CallList::createWithId($callListId);
+		try
+		{
+			$callList = \Bitrix\Crm\CallList\CallList::createWithId($callListId, true);
+		}
+		catch (\Bitrix\Main\SystemException $e)
+		{
+			return false;
+		}
 
 		\Bitrix\Crm\CallList\Internals\CallListItemTable::update(
 			array(
@@ -173,7 +193,14 @@ switch ($action)
 		break;
 	case 'APPLY_ORIGINAL_FILTER':
 		$callListId = (int)$_REQUEST['callListId'];
-		$callList = \Bitrix\Crm\CallList\CallList::createWithId($callListId);
+		try
+		{
+			$callList = \Bitrix\Crm\CallList\CallList::createWithId($callListId, true);
+		}
+		catch (\Bitrix\Main\SystemException $e)
+		{
+			return false;
+		}
 		$callList->applyOriginalFilter();
 		$response = array(
 			'SUCCESS' => true,
@@ -186,7 +213,14 @@ switch ($action)
 		break;
 	case 'DELETE_ITEMS':
 		$callListId = (int)$_REQUEST['callListId'];
-		$callList = \Bitrix\Crm\CallList\CallList::createWithId($callListId);
+		try
+		{
+			$callList = \Bitrix\Crm\CallList\CallList::createWithId($callListId, true);
+		}
+		catch (\Bitrix\Main\SystemException $e)
+		{
+			return false;
+		}
 		$items = $_REQUEST['items'];
 		if(is_array($items))
 		{

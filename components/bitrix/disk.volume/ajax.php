@@ -1,10 +1,4 @@
 <?php
-use Bitrix\Main;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Disk\ProxyType;
-use Bitrix\Disk\Internals\Error\Error;
-use Bitrix\Disk\Volume;
-
 
 define('STOP_STATISTICS', true);
 define('BX_SECURITY_SHOW_MESSAGE', true);
@@ -18,7 +12,13 @@ if(!empty($siteId) && is_string($siteId))
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
-if (!CModule::IncludeModule('disk'))
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Disk\ProxyType;
+use Bitrix\Disk\Internals\Error\Error;
+use Bitrix\Disk\Volume;
+
+if (!Main\Loader::includeModule('disk'))
 {
 	return;
 }
@@ -1196,7 +1196,7 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 		}
 		else
 		{
-			$folderIndicatorId = Volume\Folder::getIndicatorId();
+			$folderIndicatorId = Volume\FolderTree::getIndicatorId();
 			$fileIndicatorId = Volume\File::getIndicatorId();
 		}
 
@@ -1226,6 +1226,7 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 
 				if ($storageSubTask == 'purify')
 				{
+					/*
 					$this->purify(
 						$storageIndicatorId,
 						array(
@@ -1233,6 +1234,7 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 						),
 						$this->filterId
 					);
+					*/
 
 					$storageSubTask = null;
 				}
@@ -1243,7 +1245,8 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 					$storageIndicatorId,
 					array(
 						'=STORAGE_ID' => $this->storageId,
-					)
+					),
+					$this->filterId
 				);
 
 				if ($this->component->getQueueStepParam('subTask') !== null)
@@ -1269,7 +1272,34 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 					$folderIndicatorId,
 					array(
 						'=STORAGE_ID' => $this->storageId,
-						'=PARENT_ID' => $this->folderId,
+						//'=PARENT_ID' => $this->folderId,
+						'=FOLDER_ID' => $this->folderId,
+					)
+				);
+
+				$this->subTask = 'folderRoot';
+				$this->subStep ++;
+				if (!$timer->checkTimeEnd())
+				{
+					$subTaskDone = false;
+					break;
+				}
+			}
+
+			if ($this->subTask === 'folderRoot')
+			{
+				$this->purify(
+					Bitrix\Disk\Volume\Folder::getIndicatorId(),
+					array(
+						'=STORAGE_ID' => $this->storageId,
+						'=PARENT_ID' => null,
+						'=FOLDER_ID' => $this->folderId,
+					)
+				);
+				$this->measure(
+					Bitrix\Disk\Volume\Folder::getIndicatorId(),
+					array(
+						'=STORAGE_ID' => $this->storageId,
 						'=FOLDER_ID' => $this->folderId,
 					)
 				);

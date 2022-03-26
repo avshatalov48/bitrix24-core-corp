@@ -107,6 +107,7 @@ class ProcessDeletionAction extends Main\Engine\Action
 		}
 
 		$errors = [];
+		$connection = Main\Application::getConnection();
 		for($i = 0; $i < 10; $i++)
 		{
 			if($currentEntityIndex >= $totalCount)
@@ -117,9 +118,11 @@ class ProcessDeletionAction extends Main\Engine\Action
 			$currentEntityID = $entityIDs[$currentEntityIndex];
 			if($currentEntityID > 0 && $entity->checkDeletePermission($currentEntityID, $userPermissions))
 			{
+				$connection->startTransaction();
 				$error = $entity->delete($currentEntityID);
 				if(is_array($error))
 				{
+					$connection->rollbackTransaction();
 					\CCrmOwnerType::TryGetEntityInfo(
 						$entityTypeID,
 						$currentEntityID,
@@ -132,6 +135,10 @@ class ProcessDeletionAction extends Main\Engine\Action
 						0,
 						[ 'info' => [ 'title' => $entityInfo['TITLE'], 'showUrl' => $entityInfo['SHOW_URL'] ] ]
 					);
+				}
+				else
+				{
+					$connection->commitTransaction();
 				}
 			}
 

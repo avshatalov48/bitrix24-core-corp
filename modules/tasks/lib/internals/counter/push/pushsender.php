@@ -16,8 +16,6 @@ class PushSender
 	public const COMMAND_USER = 'user_counter';
 	public const COMMAND_PROJECT = 'project_counter';
 
-	private const MODULE_NAME = 'tasks';
-
 	/**
 	 * @param array $users
 	 * @throws \Bitrix\Main\ArgumentException
@@ -42,8 +40,13 @@ class PushSender
 			$counters = $counter->getRawCounters();
 
 			$pushData[CounterDictionary::COUNTER_TOTAL] = $counter->get(CounterDictionary::COUNTER_TOTAL);
-			$pushData[CounterDictionary::COUNTER_PROJECTS_MAJOR] = $counter->get(CounterDictionary::COUNTER_SONET_TOTAL_EXPIRED)
-				+ $counter->get(CounterDictionary::COUNTER_SONET_TOTAL_COMMENTS);
+			$pushData[CounterDictionary::COUNTER_PROJECTS_MAJOR] =
+				$counter->get(CounterDictionary::COUNTER_GROUPS_TOTAL_COMMENTS)
+				+ $counter->get(CounterDictionary::COUNTER_PROJECTS_TOTAL_COMMENTS)
+				+ $counter->get(CounterDictionary::COUNTER_GROUPS_TOTAL_EXPIRED)
+				+ $counter->get(CounterDictionary::COUNTER_PROJECTS_TOTAL_EXPIRED);
+
+			$pushData[CounterDictionary::COUNTER_SCRUM_TOTAL_COMMENTS] = $counter->get(CounterDictionary::COUNTER_SCRUM_TOTAL_COMMENTS);
 
 			/**
 			 * for menu's counters group 0 is a total counters (tasks with any groups or without groups)
@@ -100,7 +103,7 @@ class PushSender
 		}
 
 		PushService::addEvent($userIds, [
-			'module_id' => self::MODULE_NAME,
+			'module_id' => PushService::MODULE_NAME,
 			'command' => $command,
 			'params' => $params
 		]);

@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Kanban\Entity;
 
+use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
@@ -175,10 +176,10 @@ class Lead extends Entity
 		$result['CAN_CONVERT_TO_CONTACT'] = \CCrmContact::CheckCreatePermission($permissions);
 		$result['CAN_CONVERT_TO_COMPANY'] = \CCrmCompany::CheckCreatePermission($permissions);
 		$result['CAN_CONVERT_TO_DEAL'] = \CCrmDeal::CheckCreatePermission($permissions);
-		$result['CONVERSION_CONFIG'] = \Bitrix\Crm\Conversion\DealConversionConfig::load();
+		$result['CONVERSION_CONFIG'] = \Bitrix\Crm\Conversion\LeadConversionConfig::load();
 		if ($result['CONVERSION_CONFIG'] === null)
 		{
-			$result['CONVERSION_CONFIG'] = \Bitrix\Crm\Conversion\DealConversionConfig::getDefault();
+			$result['CONVERSION_CONFIG'] = \Bitrix\Crm\Conversion\LeadConversionConfig::getDefault();
 		}
 
 		return $result;
@@ -240,5 +241,17 @@ class Lead extends Entity
 	protected function getColumnId(array $data): string
 	{
 		return ($data['STATUS_ID'] ?? '');
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getSemanticIds(): array
+	{
+		return [
+			PhaseSemantics::PROCESS,
+			PhaseSemantics::SUCCESS,
+			PhaseSemantics::FAILURE,
+		];
 	}
 }

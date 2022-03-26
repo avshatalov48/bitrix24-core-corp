@@ -501,8 +501,8 @@ class QueueManager
 			(
 				!Loader::includeModule('im') ||
 				(
-					!User::getInstance($userId)->isExtranet() &&
-					User::getInstance($userId)->isActive()
+					!User::getInstance($userId)->isExtranet()
+					&& User::getInstance($userId)->isActive()
 				)
 			)
 		)

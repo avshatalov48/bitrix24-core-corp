@@ -1,8 +1,10 @@
-<?
+<?php
+
 namespace Bitrix\Intranet\Controller;
 
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Intranet\ActionFilter;
 
 require_once __DIR__."/../../install/templates/bitrix24/components/bitrix/search.title/.default/class.php";
 
@@ -11,7 +13,18 @@ class SearchEntity extends \Bitrix\Main\Engine\Controller
 	const ENTITY_SONETGROUPS = 'sonetgroups';
 	const ENTITY_MENUITEMS = 'menuitems';
 
-	private static function getAllEntities()
+	protected function getDefaultPreFilters()
+	{
+		$preFilters = parent::getDefaultPreFilters();
+		$preFilters[] = new ActionFilter\UserType([
+			'employee',
+			'extranet',
+		]);
+
+		return $preFilters;
+	}
+
+	private static function getAllEntities(): array
 	{
 		return array(
 			self::ENTITY_SONETGROUPS,
@@ -59,4 +72,3 @@ class SearchEntity extends \Bitrix\Main\Engine\Controller
 		);
 	}
 }
-

@@ -79,7 +79,7 @@ class OnecStartComponent extends CBitrixComponent
 			$arUrlTemplates = CComponentEngine::MakeComponentUrlTemplates($arDefaultUrlTemplates404, $this->arParams['SEF_URL_TEMPLATES']);
 			$arVariableAliases = CComponentEngine::MakeComponentVariableAliases($arDefaultVariableAliases404, $this->arParams['VARIABLE_ALIASES']);
 			$componentPage = CComponentEngine::ParseComponentPath($this->arParams['SEF_FOLDER'], $arUrlTemplates, $arVariables);
-			
+
 			if (!(is_string($componentPage) && isset($componentPage[0]) && isset($arDefaultUrlTemplates404[$componentPage])))
 			{
 				$componentPage = 'index';
@@ -254,8 +254,12 @@ class OnecStartComponent extends CBitrixComponent
 						];
 					}
 
-					$placement = \Bitrix\Crm\Integration\Rest\AppPlacement::ONEC_PAGE;
-					$placementHandlerList = \Bitrix\Rest\PlacementTable::getHandlersList($placement);
+					$placementHandlerList = [];
+					if (Loader::includeModule('crm'))
+					{
+						$placement = \Bitrix\Crm\Integration\Rest\AppPlacement::ONEC_PAGE;
+						$placementHandlerList = \Bitrix\Rest\PlacementTable::getHandlersList($placement);
+					}
 
 					if(count($placementHandlerList) > 0)
 					{
@@ -391,7 +395,7 @@ class OnecStartComponent extends CBitrixComponent
 	protected function checkModuleByPage($page='', &$error, &$redirectUrl = '')
 	{
 		$error = [];
-		
+
 		switch ($page)
 		{
 			case 'index':
@@ -417,8 +421,8 @@ class OnecStartComponent extends CBitrixComponent
 					$redirectUrl = 'exchange/';
 				}
 
-				$r = count($error)<=0;				
-				
+				$r = count($error)<=0;
+
 				break;
 			case 'tracker':
 			case 'report':
@@ -430,7 +434,7 @@ class OnecStartComponent extends CBitrixComponent
 					$error[] = 'rest';
 					$redirectUrl = 'exchange/';
 				}
-					
+
 				$r = count($error)<=0;
 				break;
 			case 'realtime':

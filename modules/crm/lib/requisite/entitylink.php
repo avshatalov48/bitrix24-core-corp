@@ -1,9 +1,12 @@
 <?php
 namespace Bitrix\Crm\Requisite;
 
-use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Crm\EntityBankDetail;
+use Bitrix\Crm\EntityRequisite;
+use Bitrix\Crm\Item;
 use Bitrix\Crm\Service;
+use Bitrix\Main;
 
 /**
  * Class EntityLink
@@ -118,6 +121,10 @@ class EntityLink
 				\CCrmOwnerType::Invoice => [
 					\CCrmOwnerType::Quote => 'UF_QUOTE_ID',
 					\CCrmOwnerType::Deal => 'UF_DEAL_ID'
+				],
+				\CCrmOwnerType::SmartInvoice => [
+					\CCrmOwnerType::Quote => Service\ParentFieldManager::getParentFieldName(\CCrmOwnerType::Quote),
+					\CCrmOwnerType::Deal => Service\ParentFieldManager::getParentFieldName(\CCrmOwnerType::Deal),
 				],
 			];
 		}
@@ -315,8 +322,8 @@ class EntityLink
 			$clientSellerInfo = self::getEntityClientSellerInfo($entityTypeId, $entityId);
 		}
 
-		$requisite = new Crm\EntityRequisite();
-		$bankDetail = new Crm\EntityBankDetail();
+		$requisite = new EntityRequisite();
+		$bankDetail = new EntityBankDetail();
 		$entityTypeName = null;
 
 		if ($requisiteId > 0)
@@ -621,6 +628,50 @@ class EntityLink
 		}
 	}
 
+	public static function getSelectedRequisiteLink($entityTypeId, $entityId): array
+	{
+		$result = [
+			'REQUISITE_ID' => 0,
+			'BANK_DETAIL_ID' => 0
+		];
+
+		$requisite = EntityRequisite::getSingleInstance();
+		$bankDetail = EntityBankDetail::getSingleInstance();
+
+		$settings = $requisite->loadSettings($entityTypeId, $entityId);
+		if (is_array($settings))
+		{
+			$requisiteId = 0;
+
+			if (isset($settings['REQUISITE_ID_SELECTED']) && $settings['REQUISITE_ID_SELECTED'] > 0)
+			{
+				$defRequisiteId = (int)$settings['REQUISITE_ID_SELECTED'];
+				if ($defRequisiteId > 0)
+				{
+					if ($requisite->exists($defRequisiteId))
+					{
+						$requisiteId = $defRequisiteId;
+						$result['REQUISITE_ID'] = $requisiteId;
+					}
+				}
+			}
+
+			if ($requisiteId > 0 && isset($settings['BANK_DETAIL_ID_SELECTED']))
+			{
+				$defBankDetailId = (int)$settings['BANK_DETAIL_ID_SELECTED'];
+				if ($defBankDetailId > 0)
+				{
+					if ($bankDetail->exists($defBankDetailId, \CCrmOwnerType::Requisite, $requisiteId))
+					{
+						$result['BANK_DETAIL_ID'] = $defBankDetailId;
+					}
+				}
+			}
+		}
+
+		return $result;
+	}
+
 	/**
 	 * @return array Array of identifiers by default for seller, requisites and bank details
 	 */
@@ -633,30 +684,20 @@ class EntityLink
 
 		if ($myCompanyId > 0)
 		{
-			$requisite = new Crm\EntityRequisite();
-			$res = $requisite->getList(
-				array(
-					'order' => array('SORT' => 'ASC', 'ID' => 'ASC'),
-					'filter' => array(
-						'=ENTITY_TYPE_ID' => \CCrmOwnerType::Company,
-						'=ENTITY_ID' => $myCompanyId
-					),
-					'select' => array('ID'),
-					'limit' => 1
-				)
+			[$mcRequisiteId, $mcBankDetailId] = array_values(
+				static::getSelectedRequisiteLink(\CCrmOwnerType::Company, $myCompanyId)
 			);
-			if ($row = $res->fetch())
-				$mcRequisiteId = (int)$row['ID'];
 
-			if ($mcRequisiteId > 0)
+			if ($mcRequisiteId <= 0)
 			{
-				$bankDetail = new Crm\EntityBankDetail();
-				$res = $bankDetail->getList(
+				$mcBankDetailId = 0;
+				$requisite = EntityRequisite::getSingleInstance();
+				$res = $requisite->getList(
 					array(
 						'order' => array('SORT' => 'ASC', 'ID' => 'ASC'),
 						'filter' => array(
-							'=ENTITY_TYPE_ID' => \CCrmOwnerType::Requisite,
-							'=ENTITY_ID' => $mcRequisiteId
+							'=ENTITY_TYPE_ID' => \CCrmOwnerType::Company,
+							'=ENTITY_ID' => $myCompanyId
 						),
 						'select' => array('ID'),
 						'limit' => 1
@@ -664,7 +705,30 @@ class EntityLink
 				);
 				if ($row = $res->fetch())
 				{
-					$mcBankDetailId = (int)$row['ID'];
+					$mcRequisiteId = (int)$row['ID'];
+				}
+			}
+
+			if ($mcRequisiteId > 0)
+			{
+				if ($mcBankDetailId <= 0)
+				{
+					$bankDetail = EntityBankDetail::getSingleInstance();
+					$res = $bankDetail->getList(
+						array(
+							'order' => array('SORT' => 'ASC', 'ID' => 'ASC'),
+							'filter' => array(
+								'=ENTITY_TYPE_ID' => \CCrmOwnerType::Requisite,
+								'=ENTITY_ID' => $mcRequisiteId
+							),
+							'select' => array('ID'),
+							'limit' => 1
+						)
+					);
+					if ($row = $res->fetch())
+					{
+						$mcBankDetailId = (int)$row['ID'];
+					}
 				}
 			}
 		}
@@ -736,7 +800,7 @@ class EntityLink
 			if ($parentEntityId < 0)
 				$parentEntityId = 0;
 
-			if ($parentEntityTypeId > 0 && $parentEntityId > 0)
+			if (\CCrmOwnerType::IsDefined($parentEntityTypeId) && $parentEntityId > 0)
 			{
 				if ($parentEntityTypeId === \CCrmOwnerType::Deal
 					|| $parentEntityTypeId === \CCrmOwnerType::Quote
@@ -839,7 +903,7 @@ class EntityLink
 							{
 								$result['BANK_DETAIL_ID'] = 0;
 								if ($bankDetail === null)
-									$bankDetail = Crm\EntityBankDetail::getSingleInstance();
+									$bankDetail = EntityBankDetail::getSingleInstance();
 								$res = $bankDetail->getList(
 									array(
 										'order' => array('SORT' => 'ASC', 'ID' => 'ASC'),
@@ -880,7 +944,7 @@ class EntityLink
 				{
 					if ($requisite === null)
 					{
-						$requisite = Crm\EntityRequisite::getSingleInstance();
+						$requisite = EntityRequisite::getSingleInstance();
 					}
 
 					if ($result['REQUISITE_ID'] <= 0 || $result['BANK_DETAIL_ID'] <= 0)
@@ -965,7 +1029,7 @@ class EntityLink
 						{
 							$result['BANK_DETAIL_ID'] = 0;
 							if ($bankDetail === null)
-								$bankDetail = Crm\EntityBankDetail::getSingleInstance();
+								$bankDetail = EntityBankDetail::getSingleInstance();
 							$res = $bankDetail->getList(
 								array(
 									'order' => array('SORT' => 'ASC', 'ID' => 'ASC'),
@@ -992,7 +1056,7 @@ class EntityLink
 					{
 						if ($requisite === null)
 						{
-							$requisite = Crm\EntityRequisite::getSingleInstance();
+							$requisite = EntityRequisite::getSingleInstance();
 						}
 						$res = $requisite->getList(
 							array(
@@ -1015,7 +1079,7 @@ class EntityLink
 						if ($result['BANK_DETAIL_ID'] === 0)
 						{
 							if ($bankDetail === null)
-								$bankDetail = Crm\EntityBankDetail::getSingleInstance();
+								$bankDetail = EntityBankDetail::getSingleInstance();
 							$res = $bankDetail->getList(
 								array(
 									'order' => array('SORT' => 'ASC', 'ID' => 'ASC'),
@@ -1268,7 +1332,7 @@ class EntityLink
 		{
 			$resultLink['CLIENT_ENTITY_TYPE_ID'] = $clientEntityTypeId;
 			$resultLink['CLIENT_ENTITY_ID'] = $clientEntityId;
-			
+
 			if ($clientEntityTypeId !== $currentLink['CLIENT_ENTITY_TYPE_ID']
 				|| $clientEntityId !== $currentLink['CLIENT_ENTITY_ID'])
 			{
@@ -1667,6 +1731,11 @@ class EntityLink
 			$types[$type->getEntityTypeId()] = $type->getEntityTypeId();
 		}
 
+		if (Crm\Settings\InvoiceSettings::getCurrent()->isSmartInvoiceEnabled())
+		{
+			$types[\CCrmOwnerType::SmartInvoice] = \CCrmOwnerType::SmartInvoice;
+		}
+
 		return $types;
 	}
 
@@ -1790,5 +1859,79 @@ class EntityLink
 		$event->send();
 
 		return true;
+	}
+
+	public static function copyRequisiteLink(Item $source, Item $destination): void
+	{
+		$companyId = null;
+		if ($source->hasField(Item::FIELD_NAME_COMPANY_ID))
+		{
+			$companyId = $source->getCompanyId();
+		}
+
+		$contactId = null;
+		if ($source->hasField(Item::FIELD_NAME_CONTACTS))
+		{
+			$contactId = $source->getPrimaryContact() ? $source->getPrimaryContact()->getId() : null;
+		}
+
+		$requisiteBindings = EntityRequisite::getSingleInstance()->getEntityRequisiteBindings(
+			$source->getEntityTypeId(),
+			$source->getId(),
+			$companyId,
+			$contactId,
+		);
+		$requisiteId = isset($requisiteBindings['REQUISITE_ID']) ? (int)$requisiteBindings['REQUISITE_ID'] : 0;
+		$bankDetailId = isset($requisiteBindings['BANK_DETAIL_ID']) ? (int)$requisiteBindings['BANK_DETAIL_ID'] : 0;
+
+		[$mcRequisiteId, $mcBankDetailId] = self::getMcRequisiteLink($source);
+
+		if ($requisiteId > 0 || $mcRequisiteId > 0)
+		{
+			self::register(
+				$destination->getEntityTypeId(),
+				$destination->getId(),
+				$requisiteId,
+				$bankDetailId,
+				$mcRequisiteId,
+				$mcBankDetailId,
+			);
+		}
+	}
+
+	/**
+	 * @param Item $item
+	 * @return int[] [MC_REQUISITE_ID, MC_BANK_DETAIL_ID]
+	 */
+	private static function getMcRequisiteLink(Item $item): array
+	{
+		if (!$item->hasField(Item::FIELD_NAME_MYCOMPANY_ID))
+		{
+			return [
+				0,
+				0,
+			];
+		}
+
+		if ($item->getMycompanyId() > 0)
+		{
+			$mcRequisiteBindings = EntityRequisite::getSingleInstance()->getDefaultMyCompanyEntityRequisiteBindings(
+				$item->getEntityTypeId(),
+				$item->getId(),
+				$item->getMycompanyId(),
+			);
+		}
+		else
+		{
+			$mcRequisiteBindings = self::getDefaultMyCompanyRequisiteLink();
+		}
+
+		$mcRequisiteId = isset($mcRequisiteBindings['MC_REQUISITE_ID']) ? (int)$mcRequisiteBindings['MC_REQUISITE_ID'] : 0;
+		$mcBankDetailId = isset($mcRequisiteBindings['MC_BANK_DETAIL_ID']) ? (int)$mcRequisiteBindings['MC_BANK_DETAIL_ID'] : 0;
+
+		return [
+			$mcRequisiteId,
+			$mcBankDetailId,
+		];
 	}
 }

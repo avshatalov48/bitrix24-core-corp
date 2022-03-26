@@ -21,6 +21,7 @@ use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\Query\Join;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Text\Emoji;
 use Bitrix\Main\UserTable;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Comments\Internals\Comment;
@@ -40,6 +41,7 @@ use Bitrix\Tasks\Internals\Task\UserOptionTable;
 use Bitrix\Tasks\Internals\Task\ViewedTable;
 use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Kanban\TaskStageTable;
+use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Scrum\Internal\EntityTable;
 use Bitrix\Tasks\Scrum\Internal\ItemTable;
 use Bitrix\Tasks\Util\Calendar;
@@ -82,9 +84,6 @@ class CTasks
 	const TIME_UNIT_TYPE_MONTH = 'monts'; // 5 chars max :)
 	const TIME_UNIT_TYPE_YEAR = 'years';
 
-	const PARAMETER_PROJECT_PLAN_FROM_SUBTASKS = 0x01;
-	const PARAMETER_COMPLETE_TASK_FROM_SUBTASKS = 0x02;
-
 	const MAX_INT = 2147483647;
 
 	const CACHE_TASKS_COUNT = 'CACHE_TASKS_COUNT_KEY';
@@ -123,6 +122,7 @@ class CTasks
 		$effectiveUserId = $this->checkEffectiveUser($effectiveUserId);
 
 		$fields = $this->checkTitle($fields, $taskId);
+		$fields = $this->checkDescription($fields);
 		$fields = $this->checkStatus($fields);
 		$fields = $this->checkPriority($fields);
 		$fields = $this->checkMark($fields);
@@ -183,7 +183,17 @@ class CTasks
 			{
 				$title = mb_substr($title, 0, 250);
 			}
-			$fields['TITLE'] = $title;
+			$fields['TITLE'] = Emoji::encode($title);
+		}
+
+		return $fields;
+	}
+
+	private function checkDescription(array $fields): array
+	{
+		if (array_key_exists('DESCRIPTION', $fields) && $fields['DESCRIPTION'] !== '')
+		{
+			$fields['DESCRIPTION'] = Emoji::encode($fields['DESCRIPTION']);
 		}
 
 		return $fields;
@@ -471,6 +481,14 @@ class CTasks
 
 		if ($isAdding)
 		{
+			if (!array_key_exists('CREATED_BY', $fields) || $fields['CREATED_BY'] < 1)
+			{
+				$this->_errors[] = [
+					'id' => 'ERROR_TASKS_BAD_CREATED_BY',
+					'text' => Loc::getMessage('TASKS_BAD_CREATED_BY'),
+				];
+			}
+
 			if (!array_key_exists('RESPONSIBLE_ID', $fields))
 			{
 				$this->_errors[] = [
@@ -478,7 +496,10 @@ class CTasks
 					'text' => Loc::getMessage('TASKS_BAD_RESPONSIBLE_ID'),
 				];
 			}
-			if (!array_key_exists('CREATED_BY', $fields) || $fields['CREATED_BY'] < 1)
+		}
+		else
+		{
+			if (array_key_exists('CREATED_BY', $fields) && $fields['CREATED_BY'] < 1)
 			{
 				$this->_errors[] = [
 					'id' => 'ERROR_TASKS_BAD_CREATED_BY',
@@ -621,33 +642,6 @@ class CTasks
 		if (!isset($arParams['CORRECT_DATE_PLAN']))
 		{
 			$arParams['CORRECT_DATE_PLAN'] = true;
-		}
-
-		if (isset($arFields['ALLOW_CHANGE_DEADLINE_COUNT']))
-		{
-			$availableValues = array_column(\Bitrix\Tasks\UI\Controls\Fields\Deadline::getCountTimesItems(), 'VALUE');
-			if(!in_array($arFields['ALLOW_CHANGE_DEADLINE_COUNT'], $availableValues))
-			{
-				$arFields['ALLOW_CHANGE_DEADLINE_COUNT'] = '*;';
-			}
-			$arFields['ALLOW_CHANGE_DEADLINE_COUNT'] = $arFields['ALLOW_CHANGE_DEADLINE_COUNT']=='*' ? null: (int)$arFields['ALLOW_CHANGE_DEADLINE_COUNT'];
-		}
-
-		if (isset($arFields['ALLOW_CHANGE_DEADLINE_MAXTIME']))
-		{
-			$availableValues = array_column(\Bitrix\Tasks\UI\Controls\Fields\Deadline::getTimesItems(), 'VALUE');
-			if(!in_array($arFields['ALLOW_CHANGE_DEADLINE_MAXTIME'], $availableValues))
-			{
-				$arFields['ALLOW_CHANGE_DEADLINE_MAXTIME'] = '*;';
-			}
-
-			if($arFields['ALLOW_CHANGE_DEADLINE_MAXTIME'] != '*')
-			{
-				$maxDate = Datetime::createFromTimestamp(strtotime('+'.$arFields['ALLOW_CHANGE_DEADLINE_MAXTIME']));
-			}
-
-			$arFields['ALLOW_CHANGE_DEADLINE_MAXTIME_VALUE'] = $arFields['ALLOW_CHANGE_DEADLINE_MAXTIME']=='*' ? null: $arFields['ALLOW_CHANGE_DEADLINE_MAXTIME'];
-			$arFields['ALLOW_CHANGE_DEADLINE_MAXTIME'] = $arFields['ALLOW_CHANGE_DEADLINE_MAXTIME']=='*' ? null: $maxDate;
 		}
 
 		// force GROUP_ID to 0 if not set (prevent occur as NULL in database)
@@ -1107,6 +1101,8 @@ class CTasks
 			'params' => [
 				'addCommentExists' => $params['ADD_COMMENT_EXISTS'],
 			],
+			'taskRequireResult' => \Bitrix\Tasks\Internals\Task\Result\ResultManager::requireResult((int)$params['TASK_ID']) ? "Y" : "N",
+			'taskHasResult' => \Bitrix\Tasks\Internals\Task\Result\ResultManager::hasResult((int)$params['TASK_ID']) ? "Y" : "N",
 		];
 	}
 
@@ -1160,7 +1156,6 @@ class CTasks
 
 	/**
 	 * This method is deprecated. Use CTaskItem::update() instead.
-	 * @deprecated
 	 */
 	public function Update($ID, $arFields, $arParams = array(
 		'CORRECT_DATE_PLAN_DEPENDENT_TASKS' => true,
@@ -1727,6 +1722,11 @@ class CTasks
 							);
 						}
 
+						if (in_array((int)$arFields['STATUS'], [CTasks::STATE_COMPLETED, CTasks::STATE_SUPPOSEDLY_COMPLETED]))
+						{
+							(new \Bitrix\Tasks\Internals\Task\Result\ResultManager($occurAsUserId))->close($ID);
+						}
+
 						foreach ($participants as $userId)
 						{
 							static::addCacheIdToClear("tasks_user_".$userId);
@@ -1848,6 +1848,23 @@ class CTasks
 			unset($newFields['DURATION_PLAN']);
 		}
 
+		if (array_key_exists('TITLE', $currentFields))
+		{
+			$currentFields['TITLE'] = Emoji::encode($currentFields['TITLE']);
+		}
+		if (array_key_exists('DESCRIPTION', $currentFields))
+		{
+			$currentFields['DESCRIPTION'] = Emoji::encode($currentFields['DESCRIPTION']);
+		}
+		if (array_key_exists('TITLE', $newFields))
+		{
+			$newFields['TITLE'] = Emoji::encode($newFields['TITLE']);
+		}
+		if (array_key_exists('DESCRIPTION', $newFields))
+		{
+			$newFields['DESCRIPTION'] = Emoji::encode($newFields['DESCRIPTION']);
+		}
+
 		return CTaskLog::GetChanges($currentFields, $newFields);
 	}
 
@@ -1934,6 +1951,8 @@ class CTasks
 				'updateCommentExists' => $params['UPDATE_COMMENT_EXISTS'],
 				'removedParticipants' => $params['REMOVED_PARTICIPANTS'],
 			],
+			'taskRequireResult' => \Bitrix\Tasks\Internals\Task\Result\ResultManager::requireResult((int)$params['TASK_ID']) ? "Y" : "N",
+			'taskHasResult' => \Bitrix\Tasks\Internals\Task\Result\ResultManager::hasResult((int)$params['TASK_ID']) ? "Y" : "N",
 		];
 	}
 
@@ -2035,7 +2054,7 @@ class CTasks
 		{
 			foreach ($fields['SE_PARAMETER'] as $parameter)
 			{
-				if ($parameter['CODE'] == 1 && $parameter['VALUE'] == 'Y')
+				if ($parameter['CODE'] == ParameterTable::PARAM_SUBTASKS_TIME && $parameter['VALUE'] == 'Y')
 				{
 					return true;
 				}
@@ -2205,6 +2224,7 @@ class CTasks
 				UserOption::deleteByTaskId($taskId);
 				TaskStageTable::clearTask($taskId);
 				TaskCheckListFacade::deleteByEntityIdOnLowLevel($taskId);
+				(new \Bitrix\Tasks\Internals\Task\Result\ResultManager(0))->deleteByTaskId($taskId);
 
 				$tablesToClear = [
 					ViewedTable::class => ['TASK_ID', 'USER_ID'],
@@ -2404,6 +2424,19 @@ class CTasks
 				'GetSqlByFilter: expected array, but something other given: '.var_export($arFilter, true)
 			);
 
+		if (
+			array_key_exists('ONLY_ROOT_TASKS', $arFilter)
+			&& $arFilter['ONLY_ROOT_TASKS'] === 'Y'
+			&&
+			(
+				array_key_exists('FULL_SEARCH_INDEX', $arFilter)
+				|| array_key_exists('COMMENT_SEARCH_INDEX', $arFilter)
+			)
+		)
+		{
+			unset($arFilter['ONLY_ROOT_TASKS']);
+		}
+
 		$logicStr = ' AND ';
 
 		if (isset($arFilter['::LOGIC']))
@@ -2420,7 +2453,6 @@ class CTasks
 
 				default:
 					throw new TasksException('Unknown logic in filter');
-					break;
 			}
 		}
 
@@ -2651,10 +2683,12 @@ class CTasks
 						$bFullJoin,
 						$cOperationType
 					);
-					if ($realStatusFilter && self::containCompletedInActiveSprintStatus($arFilter))
+					if (self::containCompletedInActiveSprintStatus($arFilter))
 					{
-						$realStatusFilter = $realStatusFilter .
-							" OR ({$sAliasPrefix}TSI.ID IS NOT NULL AND (T.STATUS = '5'))";
+						$realStatusFilter = $realStatusFilter
+							? $realStatusFilter . " OR ({$sAliasPrefix}TSI.ID IS NOT NULL AND (T.STATUS = '5'))"
+							: "({$sAliasPrefix}TSI.ID IS NOT NULL AND (T.STATUS = '5'))"
+						;
 					}
 					$arSqlSearch[] = $realStatusFilter;
 					break;
@@ -3366,7 +3400,7 @@ class CTasks
 		{
 			foreach ($values as $key => $value)
 			{
-				if ($value == EntityTable::STATE_COMPLETED_IN_ACTIVE_SPRINT)
+				if ($value == EntityForm::STATE_COMPLETED_IN_ACTIVE_SPRINT)
 				{
 					unset($values[$key]);
 				}
@@ -3389,7 +3423,7 @@ class CTasks
 				}
 				foreach ($filterValue['REAL_STATUS'] as $realStatus)
 				{
-					if ($realStatus == EntityTable::STATE_COMPLETED_IN_ACTIVE_SPRINT)
+					if ($realStatus == EntityForm::STATE_COMPLETED_IN_ACTIVE_SPRINT)
 					{
 						return true;
 					}
@@ -3774,7 +3808,7 @@ class CTasks
 		$enableLegacyAccess = !is_array($arParams) || $arParams['ENABLE_LEGACY_ACCESS'] !== false;
 		if ($enableLegacyAccess && static::needAccessRestriction($arFilter, $arParams))
 		{
-			list($arSubSqlSearch, $fields) = static::getPermissionFilterConditions(
+			[$arSubSqlSearch, $fields] = static::getPermissionFilterConditions(
 				$arParams,
 				array('ALIAS' => $sAliasPrefix)
 			);
@@ -4399,6 +4433,16 @@ class CTasks
 		$res = CTasks::GetList(array(), $arFilter, $select, $arGetListParams);
 		if ($res && ($task = $res->Fetch()))
 		{
+			if (array_key_exists('TITLE', $task))
+			{
+				$task['TITLE'] = \Bitrix\Main\Text\Emoji::decode($task['TITLE']);
+			}
+
+			if (array_key_exists('DESCRIPTION', $task) && $task['DESCRIPTION'] !== '')
+			{
+				$task['DESCRIPTION'] = \Bitrix\Main\Text\Emoji::decode($task['DESCRIPTION']);
+			}
+
 			if (in_array('AUDITORS', $select) || in_array('ACCOMPLICES', $select) || in_array('*', $select))
 			{
 				$task["ACCOMPLICES"] = $task["AUDITORS"] = [];
@@ -5318,7 +5362,7 @@ class CTasks
 					)
 					{
 						$scrumEntityTableName = EntityTable::getTableName();
-						$activeSprintStatus = EntityTable::SPRINT_ACTIVE;
+						$activeSprintStatus = EntityForm::SPRINT_ACTIVE;
 						$relatedJoins[$join] = "LEFT JOIN {$scrumEntityTableName} {$joinAlias}TSE
 							ON {$joinAlias}TSE.GROUP_ID = {$sourceAlias}.GROUP_ID
 							AND {$joinAlias}TSE.STATUS = '{$activeSprintStatus}'
@@ -7921,10 +7965,6 @@ class CTasks
 			'AUDITORS' => 					array(1, 1, 0, 0, 0),
 			'TAGS' => 						array(1, 1, 0, 0, 0),
 			'ALLOW_CHANGE_DEADLINE' => 		array(1, 1, 1, 0, 0),
-			'ALLOW_CHANGE_DEADLINE_COUNT' => 		array(1, 1, 1, 1, 0),
-			'ALLOW_CHANGE_DEADLINE_COUNT_VALUE' => 		array(1, 1, 1, 1, 0),
-			'ALLOW_CHANGE_DEADLINE_MAXTIME' => 		array(1, 1, 1, 1, 1),
-			'ALLOW_CHANGE_DEADLINE_MAXTIME_VALUE' => 		array(1, 1, 1, 1, 1),
 			'TASK_CONTROL' => 				array(1, 1, 0, 0, 0),
 			'PARENT_ID' => 					array(1, 1, 0, 1, 0),
 			'DEPENDS_ON' => 				array(1, 1, 0, 1, 0),

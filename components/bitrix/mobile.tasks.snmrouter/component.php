@@ -52,7 +52,6 @@ if (CModule::IncludeModule('tasks') && CModule::IncludeModule('mobileapp'))
 		'bitrix24restricted',
 		'edit',
 		'filter',
-		'list',
 		'listfields',
 		'listsorter',
 		'projects',

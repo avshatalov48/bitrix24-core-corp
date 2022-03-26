@@ -99,7 +99,18 @@
 					});
 					this.scrumDod.subscribe('resolve', function() { taskCompletePromise.fulfill() });
 					this.scrumDod.subscribe('reject', function() { taskCompletePromise.reject() });
-					this.scrumDod.showList();
+					this.scrumDod.isNecessary()
+						.then(function(isNecessary) {
+							if (isNecessary)
+							{
+								this.scrumDod.showList();
+							}
+							else
+							{
+								taskCompletePromise.fulfill();
+							}
+						}.bind(this))
+					;
 				}.bind(this));
 			}
 			else
@@ -247,15 +258,9 @@
 		{
 			var gridData = this.getGridData();
 
-			if (
-				gridData.addItemInSlider === true &&
-				typeof BX.Bitrix24 !== "undefined" &&
-				typeof BX.Bitrix24.PageSlider !== "undefined"
-			)
+			if (gridData.addItemInSlider === true && BX.SidePanel.Instance)
 			{
-				BX.Bitrix24.PageSlider.open(
-					gridData.pathToTaskCreate.replace("#task_id#", 0)
-				);
+				BX.SidePanel.Instance.open(gridData.pathToTaskCreate.replace('#task_id#', 0));
 			}
 			else
 			{
@@ -438,6 +443,57 @@
 		isScrumGridHeader: function()
 		{
 			return this.getGrid().isScrumGridHeader();
+		},
+
+		addItem: function(item, beforeItem)
+		{
+			BX.Kanban.Column.prototype.addItem.call(this, item, beforeItem);
+
+			if (item.isCountable())
+			{
+				this.updateHeaderColumn();
+			}
+		},
+
+		removeItem: function(itemToRemove)
+		{
+			BX.Kanban.Column.prototype.removeItem.call(this, itemToRemove);
+
+			if (itemToRemove.isCountable())
+			{
+				this.updateHeaderColumn();
+			}
+		},
+
+		updateHeaderColumn: function()
+		{
+			if (this.isScrumGrid())
+			{
+				var headerColumn = null;
+				var total = this.getTotal();
+
+				this.getGrid().getNeighborGrids()
+					.forEach(function(neighborGrid) {
+						if (neighborGrid.isScrumGridHeader())
+						{
+							headerColumn = neighborGrid.getColumn(this.getId());
+						}
+						else
+						{
+							if (neighborGrid.getColumn(this.getId()))
+							{
+								total += neighborGrid.getColumn(this.getId()).getTotal();
+							}
+						}
+					}.bind(this))
+				;
+
+				if (headerColumn)
+				{
+					headerColumn.setTotal(total);
+					headerColumn.render();
+				}
+			}
 		}
 	};
 

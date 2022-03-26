@@ -212,21 +212,14 @@ class Invitation
 	{
 		global $USER;
 
-		if (
-			(
-				Loader::includeModule('bitrix24')
-				&& \CBitrix24::isInvitingUsersAllowed()
-			)
-			|| (
-				!ModuleManager::isModuleInstalled('bitrix24')
-				&& $USER->CanDoOperation('edit_all_users')
-			)
+		return (
+			Loader::includeModule('bitrix24')
+			&& \CBitrix24::isInvitingUsersAllowed()
 		)
-		{
-			return true;
-		}
-
-		return false;
+		|| (
+			!ModuleManager::isModuleInstalled('bitrix24')
+			&& $USER->CanDoOperation('edit_all_users')
+		);
 	}
 
 	public static function getRootStructureSectionId(): int

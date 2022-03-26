@@ -132,6 +132,11 @@ $MESS["CRM_SL_EVENT_EDIT_EMPTY_MESSAGE"] = "Пожалуйста, введите
 $MESS["CRM_LF_EVENT_IM_POST"] = "Написал(а) вам сообщение \"#title#\"";
 $MESS["CRM_LF_EVENT_IM_POST_M"] = "Написал вам сообщение \"#title#\"";
 $MESS["CRM_LF_EVENT_IM_POST_F"] = "Написала вам сообщение \"#title#\"";
+$MESS["CRM_LF_EVENT_FIELD_CHANGED"] = 'Изменено значение поля "#FIELD_CAPTION#"';
+$MESS["CRM_LF_EVENT_ADD"] = 'Создан элемент типа "#ENTITY_TYPE_CAPTION#"';
+$MESS["CRM_LF_EVENT_BECOME_RESPONSIBLE"] = 'Вы назначены ответственным за элемент типа "#ENTITY_TYPE_CAPTION#" "<a href="#URL#" class="bx-notifier-item-action">#TITLE#</a>"';
+$MESS["CRM_LF_EVENT_NO_LONGER_RESPONSIBLE"] = 'Вы перестали быть ответственным за элемент типа "#ENTITY_TYPE_CAPTION#" "<a href="#URL#" class="bx-notifier-item-action">#TITLE#</a>"';
+$MESS["CRM_LF_EVENT_STAGE_CHANGED"] = 'Стадия элемента типа "#ENTITY_TYPE_CAPTION#" "<a href="#URL#" class="bx-notifier-item-action">#TITLE#</a>" изменена с "#START_STAGE_CAPTION#" на "#FINAL_STAGE_CAPTION#"';
 $MESS["CRM_SL_EVENT_IM_MENTION_POST"] = "Упомянул(а) вас в сообщении \"#title#\"";
 $MESS["CRM_SL_EVENT_IM_MENTION_POST_M"] = "Упомянул вас в сообщении \"#title#\"";
 $MESS["CRM_SL_EVENT_IM_MENTION_POST_F"] = "Упомянула вас в сообщении \"#title#\"";

@@ -6,10 +6,13 @@ const Filter = {
 		return (value || '').replace(/[^\-,.\d]/g, '');
 	},
 	Integer: (value) => {
-		return (value || '').replace(/[^-\d]/g, '');
+		return (value || '').replace(/[^\-\d]/g, '');
 	},
 	Phone: value => {
 		return (value || '').replace(/[^+\d]/g, '');
+	},
+	Money: (value) => {
+		return (value || '').replace(/[^,.\d]/g, '');
 	},
 };
 
@@ -23,6 +26,9 @@ const Normalizer = {
 	},
 	Phone: value => {
 		return value;
+	},
+	Money: value => {
+		return Filter.Money(value).replace(/,/g, '.');
 	},
 };
 
@@ -49,6 +55,9 @@ const Validator = {
 	},
 	Phone: value => {
 		return Filter.Phone(value).length > 5;
+	},
+	Money: value => {
+		return Validator.Double(value);
 	},
 };
 

@@ -1,14 +1,18 @@
 <?php
 namespace Bitrix\ImOpenLines\Crm;
 
-use \Bitrix\ImOpenLines\Result;
+use Bitrix\ImOpenLines\Result;
+
 use Bitrix\Main\Error;
-use \Bitrix\Main\Loader,
-	\Bitrix\Main\Type\DateTime;
-use \Bitrix\Crm\WebForm,
-	\Bitrix\Crm\Tracking;
-use \Bitrix\Calendar\UserField\ResourceBooking;
-use \Bitrix\ImConnector\InteractiveMessage\Connectors\IMessage;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Type\DateTime;
+
+use Bitrix\Crm\WebForm;
+use Bitrix\Crm\Tracking;
+
+use Bitrix\Calendar\UserField\ResourceBooking;
+
+use Bitrix\ImConnector\InteractiveMessage\Connectors\IMessage;
 
 /**
  * Class Form
@@ -20,11 +24,9 @@ class Form
 	 * Preparing a value for saving the selected time in the resource reservation field.
 	 *
 	 * @param $name
-	 * @param $value
+	 * @param DateTime $value
 	 * @param $idForm
 	 * @return array
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function prepareFormDateValues($name, DateTime $value, $idForm): array
 	{
@@ -73,7 +75,6 @@ class Form
 	 * Form constructor.
 	 * @param $connectorId
 	 * @param $formId
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public function __construct($connectorId, $formId)
 	{
@@ -110,7 +111,6 @@ class Form
 	 *
 	 * @param $values
 	 * @return Result
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public function save($values): Result
 	{

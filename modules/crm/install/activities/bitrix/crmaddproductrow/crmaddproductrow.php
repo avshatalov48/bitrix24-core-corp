@@ -32,9 +32,9 @@ class CBPCrmAddProductRow extends CBPActivity
 
 		[$entityTypeId, $entityId] = \CCrmBizProcHelper::resolveEntityId($this->GetDocumentId());
 
-		if ($entityTypeId !== \CCrmOwnerType::Deal)
+		if ($entityTypeId !== \CCrmOwnerType::Deal && $entityTypeId !== CCrmOwnerType::SmartInvoice)
 		{
-			$this->WriteToTrackingService(GetMessage('CRM_APR_DOCUMENT_ERROR'), 0, CBPTrackingType::Error);
+			$this->WriteToTrackingService(GetMessage('CRM_APR_DOCUMENT_ERROR_1'), 0, CBPTrackingType::Error);
 
 			return CBPActivityExecutionStatus::Closed;
 		}
@@ -75,7 +75,17 @@ class CBPCrmAddProductRow extends CBPActivity
 
 		$this->calculatePrices($row, $price);
 
-		$addResult = \CCrmDeal::addProductRows($entityId, [$row], [], false);
+		$entity = $this->getDocumentId()[1];
+		$addResult = false;
+		if ($entityTypeId === CCrmOwnerType::Deal)
+		{
+			$addResult = \CCrmDeal::addProductRows($entityId, [$row], [], false);
+		}
+		elseif (class_exists($entity) && method_exists($entity, 'addProductRows'))
+		{
+			$productRow = Crm\ProductRow::createFromArray($row);
+			$addResult = $entity::addProductRows($this->getDocumentId()[2], [$productRow])->isSuccess();
+		}
 
 		if (!$addResult)
 		{

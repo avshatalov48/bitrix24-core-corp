@@ -1,4 +1,4 @@
-import {Dom, Text, Type} from 'main.core';
+import {Dom, Type} from 'main.core';
 import {BaseEvent, EventEmitter} from 'main.core.events';
 
 import {SidePanel} from '../service/side.panel';
@@ -15,7 +15,8 @@ import type {SprintParams} from '../entity/sprint/sprint';
 type Params = {
 	views: Views,
 	completedSprint: SprintParams,
-	sprints: Array<SprintParams>
+	sprints: Array<SprintParams>,
+	pathToBurnDown: string
 }
 
 export class CompletedSprint extends View
@@ -67,6 +68,8 @@ export class CompletedSprint extends View
 			this.sprints.set(sprint.getId(), sprint);
 		});
 		this.views = params.views;
+
+		this.pathToBurnDown = params.pathToBurnDown;
 	}
 
 	bindHandlers()
@@ -79,8 +82,6 @@ export class CompletedSprint extends View
 		const [currentSprint] = event.getCompatData()
 
 		this.completedSprint = this.findSprintBySprintId(currentSprint.sprintId);
-
-		this.titleContainer.textContent = Text.encode(currentSprint.name);
 	}
 
 	onShowSprintBurnDownChart(baseEvent: BaseEvent)
@@ -88,7 +89,8 @@ export class CompletedSprint extends View
 		const sprintSidePanel = new SprintSidePanel({
 			groupId: this.groupId,
 			sidePanel: this.sidePanel,
-			views: this.views
+			views: this.views,
+			pathToBurnDown: this.pathToBurnDown
 		});
 		sprintSidePanel.showBurnDownChart(this.completedSprint);
 	}

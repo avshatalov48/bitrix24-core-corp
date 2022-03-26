@@ -11,12 +11,10 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Crm\StatusTable;
-use Bitrix\Crm\UserField\Types\ElementType;
 use Bitrix\Crm\UtmTable;
 use Bitrix\Crm\WebForm;
 use Bitrix\Main\Filter\EntityDataProvider;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Text\HtmlFilter;
 use Bitrix\Main\Text\StringHelper;
 use Bitrix\Main\Loader;
 
@@ -51,7 +49,6 @@ class ItemDataProvider extends EntityDataProvider
 	/** @var Factory */
 	protected $factory;
 	protected $stages;
-	protected $typeNames = [];
 
 	public function __construct(ItemSettings $settings, Factory $factory)
 	{
@@ -70,6 +67,9 @@ class ItemDataProvider extends EntityDataProvider
 			return $fields;
 		}
 
+		// todo temporary crutch for smart invoices
+		$isSmartInvoice = $this->factory instanceof Factory\SmartInvoice;
+
 		$fields = [
 			Item::FIELD_NAME_ID => [
 				'type' => static::TYPE_NUMBER,
@@ -85,62 +85,73 @@ class ItemDataProvider extends EntityDataProvider
 				'defaultGrid' => true,
 				'defaultFilter' => false,
 			],
-			Item::FIELD_NAME_CREATED_BY => [
-				'type' => static::TYPE_USER,
-				'displayGrid' => true,
-				'displayFilter' => true,
-				'defaultGrid' => true,
-				'defaultFilter' => false,
-				'filterOptionPreset' => static::PRESET_ENTITY_SELECTOR,
-			],
-			Item::FIELD_NAME_CREATED_TIME => [
-				'type' => static::TYPE_DATE,
-				'displayGrid' => true,
-				'displayFilter' => true,
-				'defaultGrid' => true,
-				'defaultFilter' => false,
-				'filterOptionPreset' => static::PRESET_DATETIME,
-			],
-			Item::FIELD_NAME_UPDATED_BY => [
-				'type' => static::TYPE_USER,
-				'displayGrid' => true,
-				'displayFilter' => true,
-				'defaultGrid' => false,
-				'defaultFilter' => false,
-				'filterOptionPreset' => static::PRESET_ENTITY_SELECTOR,
-			],
-			Item::FIELD_NAME_UPDATED_TIME => [
-				'type' => static::TYPE_DATE,
-				'displayGrid' => true,
-				'displayFilter' => true,
-				'defaultGrid' => false,
-				'defaultFilter' => false,
-				'filterOptionPreset' => static::PRESET_DATETIME,
-			],
-			Item::FIELD_NAME_ASSIGNED => [
-				'type' => static::TYPE_USER,
+		];
+		if ($isSmartInvoice)
+		{
+			$fields[Item\SmartInvoice::FIELD_NAME_ACCOUNT_NUMBER] = [
+				'type' => static::TYPE_STRING,
 				'displayGrid' => true,
 				'displayFilter' => true,
 				'defaultGrid' => true,
 				'defaultFilter' => true,
-				'filterOptionPreset' => static::PRESET_ENTITY_SELECTOR,
-			],
-			Item::FIELD_NAME_OPENED => [
-				'type' => static::TYPE_BOOLEAN,
-				'displayGrid' => true,
-				'displayFilter' => true,
-				'defaultGrid' => false,
-				'defaultFilter' => false,
-				'filterOptionPreset' => static::PRESET_BOOLEAN,
-			],
-			Item::FIELD_NAME_WEBFORM_ID => [
-				'type' => static::TYPE_LIST,
-				'displayGrid' => true,
-				'displayFilter' => true,
-				'defaultGrid' => false,
-				'defaultFilter' => false,
-				'filterOptionPreset' => static::PRESET_LIST,
-			],
+			];
+		}
+
+		$fields[Item::FIELD_NAME_CREATED_BY] = [
+			'type' => static::TYPE_USER,
+			'displayGrid' => true,
+			'displayFilter' => true,
+			'defaultGrid' => true,
+			'defaultFilter' => false,
+			'filterOptionPreset' => static::PRESET_ENTITY_SELECTOR,
+		];
+		$fields[Item::FIELD_NAME_CREATED_TIME] = [
+			'type' => static::TYPE_DATE,
+			'displayGrid' => true,
+			'displayFilter' => true,
+			'defaultGrid' => !$isSmartInvoice,
+			'defaultFilter' => !$isSmartInvoice,
+			'filterOptionPreset' => static::PRESET_DATETIME,
+		];
+		$fields[Item::FIELD_NAME_UPDATED_BY] = [
+			'type' => static::TYPE_USER,
+			'displayGrid' => true,
+			'displayFilter' => true,
+			'defaultGrid' => false,
+			'defaultFilter' => false,
+			'filterOptionPreset' => static::PRESET_ENTITY_SELECTOR,
+		];
+		$fields[Item::FIELD_NAME_UPDATED_TIME] = [
+			'type' => static::TYPE_DATE,
+			'displayGrid' => true,
+			'displayFilter' => true,
+			'defaultGrid' => false,
+			'defaultFilter' => false,
+			'filterOptionPreset' => static::PRESET_DATETIME,
+		];
+		$fields[Item::FIELD_NAME_ASSIGNED] = [
+			'type' => static::TYPE_USER,
+			'displayGrid' => true,
+			'displayFilter' => true,
+			'defaultGrid' => true,
+			'defaultFilter' => true,
+			'filterOptionPreset' => static::PRESET_ENTITY_SELECTOR,
+		];
+		$fields[Item::FIELD_NAME_OPENED] = [
+			'type' => static::TYPE_BOOLEAN,
+			'displayGrid' => true,
+			'displayFilter' => true,
+			'defaultGrid' => false,
+			'defaultFilter' => false,
+			'filterOptionPreset' => static::PRESET_BOOLEAN,
+		];
+		$fields[Item::FIELD_NAME_WEBFORM_ID] = [
+			'type' => static::TYPE_LIST,
+			'displayGrid' => true,
+			'displayFilter' => true,
+			'defaultGrid' => false,
+			'defaultFilter' => false,
+			'filterOptionPreset' => static::PRESET_LIST,
 		];
 
 		if($this->factory->isStagesEnabled())
@@ -206,16 +217,16 @@ class ItemDataProvider extends EntityDataProvider
 				'type' => static::TYPE_DATE,
 				'displayGrid' => true,
 				'displayFilter' => true,
-				'defaultGrid' => false,
-				'defaultFilter' => false,
+				'defaultGrid' => $isSmartInvoice,
+				'defaultFilter' => $isSmartInvoice,
 				'filterOptionPreset' => static::PRESET_DATE,
 			];
 			$fields[Item::FIELD_NAME_CLOSE_DATE] = [
 				'type' => static::TYPE_DATE,
 				'displayGrid' => true,
 				'displayFilter' => true,
-				'defaultGrid' => false,
-				'defaultFilter' => false,
+				'defaultGrid' => $isSmartInvoice,
+				'defaultFilter' => $isSmartInvoice,
 				'filterOptionPreset' => static::PRESET_DATE,
 			];
 		}
@@ -318,14 +329,14 @@ class ItemDataProvider extends EntityDataProvider
 				'type' => self::TYPE_CRM_ENTITY,
 				'displayGrid' => true,
 				'displayFilter' => true,
-				'defaultGrid' => false,
-				'defaultFilter' => false,
-				'filterOptionPreset' => static::PRESET_DEST_SELECTOR
+				'defaultGrid' => $isSmartInvoice,
+				'defaultFilter' => $isSmartInvoice,
+				'filterOptionPreset' => static::PRESET_DEST_SELECTOR,
 			];
 			$fields[Item::FIELD_NAME_MYCOMPANY.'.TITLE'] = [
 				'type' => static::TYPE_STRING,
 				'displayGrid' => false,
-				'displayFilter' => true,
+				'displayFilter' => false,
 				'customCaption' => Loc::getMessage('CRM_FILTER_ITEMDATAPROVIDER_MYCOMPANY_TITLE'),
 			];
 		}
@@ -544,23 +555,15 @@ class ItemDataProvider extends EntityDataProvider
 
 	protected function prepareParentFields(array &$fields): void
 	{
-		$relationManager = Container::getInstance()->getRelationManager();
-		$parentRelations = $relationManager->getParentRelations($this->getFactory()->getEntityTypeId());
-		foreach ($parentRelations as $relation)
-		{
-			if (!$relation->isPredefined())
-			{
-				$parentEntityTypeId = $relation->getParentEntityTypeId();
+		$parentFields = Container::getInstance()->getParentFieldManager()->getParentFieldsOptionsForFilterProvider(
+			$this->getFactory()->getEntityTypeId()
+		);
 
-				$fields[ParentFieldManager::getParentFieldName($parentEntityTypeId)] = [
-					'options' => [
-						'type' => 'dest_selector',
-						'default' => '',
-						'partial' => 1,
-						'name' => $this->getEntityDescription($parentEntityTypeId),
-					],
-				];
-			}
+		foreach ($parentFields as $code => $parentField)
+		{
+			$fields[$code] = [
+				'options' => $parentField,
+			];
 		}
 	}
 
@@ -662,9 +665,13 @@ class ItemDataProvider extends EntityDataProvider
 	{
 		$result = null;
 
-		if (in_array($fieldID, $this->getFieldNamesByType(static::TYPE_USER, static::DISPLAY_IN_FILTER)))
+		if (
+			in_array($fieldID, $this->getFieldNamesByType(static::TYPE_USER, static::DISPLAY_IN_FILTER))
+			&& $fieldID !== Item::FIELD_NAME_PRODUCTS.'.PRODUCT_ID'
+		)
 		{
 			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($this->getEntityTypeId());
+
 			return $this->getUserEntitySelectorParams(
 				strtolower('crm_type_' . $this->getEntityTypeId() . '_item_filter_' . $fieldID),
 				[
@@ -675,7 +682,7 @@ class ItemDataProvider extends EntityDataProvider
 				]
 			);
 		}
-		elseif (in_array($fieldID, $this->getFieldNamesByType(static::TYPE_CRM_ENTITY, static::DISPLAY_IN_FILTER)))
+		if (in_array($fieldID, $this->getFieldNamesByType(static::TYPE_CRM_ENTITY, static::DISPLAY_IN_FILTER)))
 		{
 			$result = [
 				'params' => [
@@ -705,6 +712,11 @@ class ItemDataProvider extends EntityDataProvider
 			{
 				$result['params']['enableCrmCompanies'] = 'Y';
 				$result['params']['prefix'] = UISelector\CrmCompanies::PREFIX_FULL;
+
+				if ($fieldID === Item::FIELD_NAME_MYCOMPANY_ID)
+				{
+					$result['params']['onlyMyCompanies'] = 'Y';
+				}
 			}
 			elseif ($fieldID === Item::FIELD_NAME_PRODUCTS.'.PRODUCT_ID')
 			{
@@ -791,78 +803,13 @@ class ItemDataProvider extends EntityDataProvider
 		}
 		elseif (ParentFieldManager::isParentFieldName($fieldID))
 		{
-			$result = [
-				'params' => [
-					'apiVersion' => 3,
-					'context' => 'CRM_TYPE_' . $this->getEntityTypeId() . '_ITEM_FILTER_' . $fieldID,
-					'multiple' => 'N',
-					'contextCode' => 'CRM',
-					'useClientDatabase' => 'N',
-					'enableAll' => 'N',
-					'enableUsers' => 'N',
-					'enableSonetgroups' => 'N',
-					'enableDepartments' => 'N',
-					'allowEmailInvitation' => 'N',
-					'allowSearchEmailUsers' => 'N',
-					'departmentSelectDisable' => 'Y',
-					'isNumeric' => 'Y',
-					'enableCrm' => 'Y',
-				]
-			];
-
-			$parentId = ParentFieldManager::getEntityTypeIdFromFieldName($fieldID);
-
-			if (\CCrmOwnerType::isPossibleDynamicTypeId($parentId))
-			{
-				$key = UISelector\Handler::ENTITY_TYPE_CRMDYNAMICS . '_'. $parentId;
-				$crmDynamicTitles = [
-					$key => HtmlFilter::encode($this->getEntityDescription($parentId)),
-				];
-			}
-
-			$result['params'] = array_merge_recursive(
-				$result['params'],
-				ElementType::getEnableEntityTypesForSelectorOptions(
-					[\CCrmOwnerType::ResolveName($parentId)],
-					$crmDynamicTitles ?? []
-				)
+			$result = Container::getInstance()->getParentFieldManager()->prepareParentFieldDataForFilterProvider(
+				$this->factory->getEntityTypeId(),
+				$fieldID
 			);
 		}
 
 		return $result;
-	}
-
-	/**
-	 * @param int|null $entityTypeId
-	 * @return string|null
-	 */
-	protected function getEntityDescription(?int $entityTypeId = null): ?string
-	{
-		if (isset($this->typeNames[$entityTypeId]))
-		{
-			return $this->typeNames[$entityTypeId];
-		}
-
-		$entityDescription = null;
-		if ($entityTypeId === null)
-		{
-			$entityDescription = $this->getFactory()->getEntityDescription();
-		}
-		elseif(\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
-		{
-			$factory = Container::getInstance()->getFactory($entityTypeId);
-			if($factory)
-			{
-				$entityDescription = $factory->getEntityDescription();
-			}
-		}
-		else
-		{
-			$entityDescription = \CCrmOwnerType::GetDescription($entityTypeId);
-		}
-
-		$this->typeNames[$entityTypeId] = $entityDescription;
-		return $this->typeNames[$entityTypeId];
 	}
 
 	/**
@@ -1004,7 +951,7 @@ class ItemDataProvider extends EntityDataProvider
 		{
 			if (!empty($requestFilter[$fieldName]))
 			{
-				$filter[$fieldName] = $requestFilter[$fieldName];
+				$filter[$fieldName] = ParentFieldManager::transformEncodedFilterValueIntoInteger($fieldName, $requestFilter[$fieldName]);
 			}
 		}
 	}

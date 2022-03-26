@@ -4,7 +4,11 @@ namespace Bitrix\Crm\Order;
 
 use Bitrix\Crm;
 use Bitrix\Main;
+use Bitrix\Main\Context;
 use Bitrix\Main\Error;
+use Bitrix\Sale;
+use Bitrix\Main\IO\Path;
+use Bitrix\Sale\Cashbox\CheckManager;
 use Bitrix\Sale\Result;
 use Bitrix\Sale\Delivery;
 use Bitrix\Main\Localization\Loc;
@@ -544,5 +548,125 @@ final class Manager
 	public static function installDeliveryServices()
 	{
 		return '';
+	}
+
+	/**
+	 * @param int $dealId
+	 * @return Order|null
+	 */
+	public static function createOrderWithoutProductByDeal(int $dealId): ?Order
+	{
+		$deal = \CCrmDeal::GetByID($dealId, false);
+
+		$currency = $deal['CURRENCY_ID'];
+
+		$personTypeId = PersonType::getContactPersonTypeId();
+		if ($deal['COMPANY_ID'])
+		{
+			$personTypeId = PersonType::getCompanyPersonTypeId();
+		}
+
+		$fields = [
+			'SITE_ID' => SITE_ID,
+			'USER_ID' => $deal['ASSIGNED_BY_ID'],
+			'RESPONSIBLE_ID' => $deal['ASSIGNED_BY_ID'],
+			'PERSON_TYPE_ID' => $personTypeId,
+			'CURRENCY' => $currency,
+			'OWNER_ID' => $deal['ID'],
+			'OWNER_TYPE_ID' => \CCrmOwnerType::Deal,
+			'COMPANY_ID' => $deal['COMPANY_ID'],
+			'CONTACT_IDS' => [$deal['CONTACT_ID']],
+		];
+
+		$orderBuilder = new Crm\Order\Builder\OrderBuilderCrm(
+			new Sale\Helpers\Order\Builder\SettingsContainer([
+				'createDefaultPaymentIfNeed' => false,
+				'createDefaultShipmentIfNeed' => false,
+			])
+		);
+
+		$director = new Sale\Helpers\Order\Builder\Director();
+		return $director->createOrder($orderBuilder, $fields);
+	}
+
+	public static function createOrderWithoutProductByDynamicEntity(int $ownerTypeId, int $ownerId): ?Order
+	{
+		$item = null;
+
+		$factory = Crm\Service\Container::getInstance()->getFactory($ownerTypeId);
+		if ($factory)
+		{
+			$item = $factory->getItem($ownerId);
+		}
+
+		if (!$item)
+		{
+			return null;
+		}
+
+		$personTypeId = PersonType::getContactPersonTypeId();
+		if ($item->getCompanyId())
+		{
+			$personTypeId = PersonType::getCompanyPersonTypeId();
+		}
+
+		$fields = [
+			'SITE_ID' => SITE_ID,
+			'USER_ID' => $item->getAssignedById(),
+			'RESPONSIBLE_ID' => $item->getAssignedById(),
+			'PERSON_TYPE_ID' => $personTypeId,
+			'CURRENCY' => $item->getCurrencyId(),
+			'OWNER_ID' => $ownerId,
+			'OWNER_TYPE_ID' => $ownerTypeId,
+			'COMPANY_ID' => $item->getCompanyId(),
+			'CONTACT_IDS' => [$item->getContactId()],
+		];
+
+		$orderBuilder = new Crm\Order\Builder\OrderBuilderCrm(
+			new Sale\Helpers\Order\Builder\SettingsContainer([
+				'createDefaultPaymentIfNeed' => false,
+				'createDefaultShipmentIfNeed' => false,
+			])
+		);
+
+		$director = new Sale\Helpers\Order\Builder\Director();
+		return $director->createOrder($orderBuilder, $fields);
+	}
+
+	public static function getCheckData($orderId): array
+	{
+		$culture = Context::getCurrent()->getCulture();
+		$result = [];
+
+		if (!Main\Loader::includeModule('sale'))
+		{
+			return $result;
+		}
+
+		$dbRes = CheckManager::getList([
+			'select' => ['ID'],
+			'filter' => [
+				'=ORDER_ID' => $orderId,
+				'=STATUS' => 'Y'
+			]
+		]);
+
+		while ($data = $dbRes->fetch())
+		{
+			$check = CheckManager::getObjectById($data['ID']);
+
+			if ($check)
+			{
+				$result[] = [
+					'TITLE' => Loc::getMessage('CRM_ORDER_CHECK_TITLE', [
+						'#NAME#' => $check::getName(),
+						'#DATE_PRINT#' => FormatDate($culture->getLongDateFormat(), $check->getField('DATE_CREATE')->getTimestamp())
+					]),
+					'URL' => $check->getUrl()
+				];
+			}
+		}
+
+		return $result;
 	}
 }

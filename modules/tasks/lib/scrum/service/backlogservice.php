@@ -6,6 +6,7 @@ use Bitrix\Main\Errorable;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Result;
 use Bitrix\Main\UI\PageNavigation;
+use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Scrum\Internal\EntityTable;
 
 class BacklogService implements Errorable
@@ -21,7 +22,7 @@ class BacklogService implements Errorable
 		$this->errorCollection = new ErrorCollection;
 	}
 
-	public function createBacklog(EntityTable $backlog): EntityTable
+	public function createBacklog(EntityForm $backlog): EntityForm
 	{
 		try
 		{
@@ -33,21 +34,25 @@ class BacklogService implements Errorable
 			}
 			else
 			{
-				$this->errorCollection->setError(new Error(
-					implode('; ', $result->getErrorMessages()),
-					self::ERROR_COULD_NOT_ADD_BACKLOG
-				));
+				$this->errorCollection->setError(
+					new Error(
+						implode('; ', $result->getErrorMessages()),
+						self::ERROR_COULD_NOT_ADD_BACKLOG
+					)
+				);
 			}
 		}
 		catch (\Exception $exception)
 		{
-			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_ADD_BACKLOG));
+			$this->errorCollection->setError(
+				new Error($exception->getMessage(), self::ERROR_COULD_NOT_ADD_BACKLOG)
+			);
 		}
 
 		return $backlog;
 	}
 
-	public function changeBacklog(EntityTable $backlog): bool
+	public function changeBacklog(EntityForm $backlog): bool
 	{
 		try
 		{
@@ -84,23 +89,23 @@ class BacklogService implements Errorable
 	 * @param ItemService|null $itemService Item service object.
 	 * @param PageNavigation|null $nav For item navigation.
 	 * @param array $filteredSourceIds If you need to get filtered items.
-	 * @return EntityTable
+	 * @return EntityForm
 	 */
 	public function getBacklogByGroupId(
 		int $groupId,
 		ItemService $itemService = null,
 		PageNavigation $nav = null,
 		array $filteredSourceIds = []
-	): EntityTable
+	): EntityForm
 	{
-		$backlog = EntityTable::createEntityObject();
+		$backlog = new EntityForm();
 
 		try
 		{
 			$queryObject = EntityTable::getList([
 				'filter' => [
 					'GROUP_ID' => $groupId,
-					'ENTITY_TYPE' => EntityTable::BACKLOG_TYPE
+					'=ENTITY_TYPE' => EntityForm::BACKLOG_TYPE
 				]
 			]);
 			if ($backlogData = $queryObject->fetch())
@@ -120,7 +125,9 @@ class BacklogService implements Errorable
 		}
 		catch (\Exception $exception)
 		{
-			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_BACKLOG));
+			$this->errorCollection->setError(
+				new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_BACKLOG)
+			);
 		}
 
 		return $backlog;
@@ -139,10 +146,7 @@ class BacklogService implements Errorable
 	private function setErrors(Result $result, string $code): void
 	{
 		$this->errorCollection->setError(
-			new Error(
-				implode('; ', $result->getErrorMessages()),
-				$code
-			)
+			new Error(implode('; ', $result->getErrorMessages()), $code)
 		);
 	}
 }

@@ -4,3 +4,4 @@ $MESS["SDP_SALESCENTER_DELIVERY_ADD"] = "Добавить службу дост�
 $MESS["SDP_SALESCENTER_DELIVERY_EDIT"] = "Редактировать ";
 $MESS["SDP_SALESCENTER_DELIVERY_LIST"] = "Список доставок";
 $MESS["SDP_SALESCENTER_DELIVERY_RECOMMEND"] = "Рекомендовать";
+$MESS["SDP_ACCESS_DENIED"] = "Доступ запрещен.";

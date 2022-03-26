@@ -1,12 +1,12 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
-use Bitrix\Crm\Attribute\FieldAttributeType;
-use Bitrix\Crm\Attribute\FieldAttributePhaseGroupType;
 use Bitrix\Crm\CompanyAddress;
 use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Format\AddressFormatter;
@@ -82,6 +82,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 	private $defaultEntityData = [];
 	/** @var bool */
 	private $isLocationModuleIncluded = false;
+	private $editorAdapter;
 
 	public function __construct($component = null)
 	{
@@ -98,6 +99,11 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 
 		$this->multiFieldInfos = CCrmFieldMulti::GetEntityTypeInfos();
 		$this->multiFieldValueTypeInfos = CCrmFieldMulti::GetEntityTypes();
+		$factory = Container::getInstance()->getFactory(\CCrmOwnerType::Company);
+		if ($factory)
+		{
+			$this->editorAdapter = $factory->getEditorAdapter();
+		}
 	}
 	public function initializeParams(array $params)
 	{
@@ -162,10 +168,13 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 		$this->arResult['ACTION_URI'] = $this->arResult['POST_FORM_URI'] = POST_FORM_ACTION_URI;
 
 		$this->arResult['CONTEXT_ID'] = \CCrmOwnerType::CompanyName.'_'.$this->arResult['ENTITY_ID'];
-		$this->arResult['CONTEXT_PARAMS'] = array(
-			'PATH_TO_USER_PROFILE' => $this->arResult['PATH_TO_USER_PROFILE'],
-			'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE']
-		);
+		$this->arResult['CONTEXT'] = [
+			'PARAMS' => [
+				'PATH_TO_USER_PROFILE' => $this->arResult['PATH_TO_USER_PROFILE'],
+				'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'],
+			],
+		];
+		Crm\Service\EditorAdapter::addParentItemToContextIfFound($this->arResult['CONTEXT']);
 
 		$this->enableSearchHistory = !isset($this->arParams['~ENABLE_SEARCH_HISTORY'])
 			|| mb_strtoupper($this->arParams['~ENABLE_SEARCH_HISTORY']) === 'Y';
@@ -174,7 +183,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 
 		if($this->isMyCompany())
 		{
-			$this->arResult['CONTEXT_PARAMS']['IS_MY_COMPANY'] = 'Y';
+			$this->arResult['CONTEXT']['PARAMS']['IS_MY_COMPANY'] = 'Y';
 		}
 
 		$this->arResult['EXTERNAL_CONTEXT_ID'] = $this->request->get('external_context_id');
@@ -209,7 +218,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 			if($this->request->get('copy') !== null)
 			{
 				$this->isCopyMode = true;
-				$this->arResult['CONTEXT_PARAMS']['COMPANY_ID'] = $this->entityID;
+				$this->arResult['CONTEXT']['PARAMS']['COMPANY_ID'] = $this->entityID;
 			}
 			else
 			{
@@ -268,8 +277,8 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 			$this->conversionWizard = \Bitrix\Crm\Conversion\LeadConversionWizard::load($this->leadID);
 			if($this->conversionWizard !== null)
 			{
-				$this->arResult['CONTEXT_PARAMS'] = array_merge(
-					$this->arResult['CONTEXT_PARAMS'],
+				$this->arResult['CONTEXT']['PARAMS'] = array_merge(
+					$this->arResult['CONTEXT']['PARAMS'],
 					$this->conversionWizard->prepareEditorContextParams(\CCrmOwnerType::Company)
 				);
 			}
@@ -458,33 +467,36 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 						)
 					)
 				);
-				$this->arResult['TABS'][] = array(
-					'id' => 'tab_invoice',
-					'name' => Loc::getMessage('CRM_COMPANY_TAB_INVOICES'),
-					'loader' => array(
-						'serviceUrl' => '/bitrix/components/bitrix/crm.invoice.list/lazyload.ajax.php?&site'.SITE_ID.'&'.bitrix_sessid_get(),
-						'componentData' => array(
-							'template' => '',
-							'params' => array(
-								'INVOICE_COUNT' => '20',
-								'PATH_TO_COMPANY_SHOW' => $this->arResult['PATH_TO_COMPANY_SHOW'],
-								'PATH_TO_COMPANY_EDIT' => $this->arResult['PATH_TO_COMPANY_EDIT'],
-								'PATH_TO_CONTACT_EDIT' => $this->arResult['PATH_TO_CONTACT_EDIT'],
-								'PATH_TO_DEAL_EDIT' => $this->arResult['PATH_TO_DEAL_EDIT'],
-								'PATH_TO_INVOICE_EDIT' => $this->arResult['PATH_TO_INVOICE_EDIT'],
-								'PATH_TO_INVOICE_PAYMENT' => $this->arResult['PATH_TO_INVOICE_PAYMENT'],
-								'INTERNAL_FILTER' => array('UF_COMPANY_ID' => $this->entityID),
-								'SUM_PAID_CURRENCY' => \CCrmCurrency::GetBaseCurrencyID(),
-								'GRID_ID_SUFFIX' => 'COMPANY_DETAILS',
-								'TAB_ID' => 'tab_invoice',
-								'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'],
-								'ENABLE_TOOLBAR' => 'Y',
-								'PRESERVE_HISTORY' => true,
-								'ADD_EVENT_NAME' => 'CrmCreateInvoiceFromCompany'
-							)
-						)
-					)
-				);
+				if (Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
+				{
+					$this->arResult['TABS'][] = [
+						'id' => 'tab_invoice',
+						'name' => \CCrmOwnerType::GetCategoryCaption(\CCrmOwnerType::Invoice),
+						'loader' => [
+							'serviceUrl' => '/bitrix/components/bitrix/crm.invoice.list/lazyload.ajax.php?&site'.SITE_ID.'&'.bitrix_sessid_get(),
+							'componentData' => [
+								'template' => '',
+								'params' => [
+									'INVOICE_COUNT' => '20',
+									'PATH_TO_COMPANY_SHOW' => $this->arResult['PATH_TO_COMPANY_SHOW'],
+									'PATH_TO_COMPANY_EDIT' => $this->arResult['PATH_TO_COMPANY_EDIT'],
+									'PATH_TO_CONTACT_EDIT' => $this->arResult['PATH_TO_CONTACT_EDIT'],
+									'PATH_TO_DEAL_EDIT' => $this->arResult['PATH_TO_DEAL_EDIT'],
+									'PATH_TO_INVOICE_EDIT' => $this->arResult['PATH_TO_INVOICE_EDIT'],
+									'PATH_TO_INVOICE_PAYMENT' => $this->arResult['PATH_TO_INVOICE_PAYMENT'],
+									'INTERNAL_FILTER' => ['UF_COMPANY_ID' => $this->entityID],
+									'SUM_PAID_CURRENCY' => \CCrmCurrency::GetBaseCurrencyID(),
+									'GRID_ID_SUFFIX' => 'COMPANY_DETAILS',
+									'TAB_ID' => 'tab_invoice',
+									'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE'],
+									'ENABLE_TOOLBAR' => 'Y',
+									'PRESERVE_HISTORY' => true,
+									'ADD_EVENT_NAME' => 'CrmCreateInvoiceFromCompany'
+								]
+							]
+						]
+					];
+				}
 				if (
 					CModule::IncludeModule('sale')
 					&& Main\Config\Option::get("crm", "crm_shop_enabled") === "Y"
@@ -556,7 +568,10 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 					'id' => 'tab_tree',
 					'name' => Loc::getMessage('CRM_COMPANY_TAB_TREE'),
 					'loader' => array(
-						'serviceUrl' => '/bitrix/components/bitrix/crm.entity.tree/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
+						'serviceUrl' =>
+							'/bitrix/components/bitrix/crm.entity.tree/lazyload.ajax.php?&site='
+							. SITE_ID . '&' . bitrix_sessid_get()
+						,
 						'componentData' => array(
 							'template' => '.default',
 							'params' => array(
@@ -566,34 +581,16 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 						)
 					)
 				);
-				$this->arResult['TABS'][] = array(
-				'id' => 'tab_event',
-				'name' => Loc::getMessage('CRM_COMPANY_TAB_EVENT'),
-				'loader' => array(
-					'serviceUrl' => '/bitrix/components/bitrix/crm.event.view/lazyload.ajax.php?&site'.SITE_ID.'&'.bitrix_sessid_get(),
-					'componentData' => array(
-						'template' => '',
-						'contextId' => "COMPANY_{$this->entityID}_EVENT",
-						'params' => array(
-							'AJAX_OPTION_ADDITIONAL' => "COMPANY_{$this->entityID}_EVENT",
-							'ENTITY_TYPE' => CCrmOwnerType::CompanyName,
-							'ENTITY_ID' => $this->entityID,
-							'PATH_TO_USER_PROFILE' => $this->arResult['PATH_TO_USER_PROFILE'],
-							'TAB_ID' => 'tab_event',
-							'INTERNAL' => 'Y',
-							'SHOW_INTERNAL_FILTER' => 'Y',
-							'PRESERVE_HISTORY' => true,
-							'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE']
-						)
-					)
-				)
-			);
+				$this->arResult['TABS'][] = $this->getEventTabParams();
 
 				$this->arResult['TABS'][] = array(
 					'id' => 'tab_portrait',
 					'name' => Loc::getMessage('CRM_COMPANY_TAB_PORTRAIT'),
 					'loader' => array(
-						'serviceUrl' => '/bitrix/components/bitrix/crm.client.portrait/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
+						'serviceUrl' =>
+							'/bitrix/components/bitrix/crm.client.portrait/lazyload.ajax.php?&site='
+							. SITE_ID.'&'.bitrix_sessid_get()
+						,
 						'componentData' => array(
 							'template' => '.default',
 							'params' => array(
@@ -614,7 +611,10 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 							'id' => 'tab_lists_'.$iblockId,
 							'name' => $iblockName,
 							'loader' => array(
-								'serviceUrl' => '/bitrix/components/bitrix/lists.element.attached.crm/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get().'',
+								'serviceUrl' =>
+									'/bitrix/components/bitrix/lists.element.attached.crm/lazyload.ajax.php?&site='
+									. SITE_ID . '&'.bitrix_sessid_get().''
+								,
 								'componentData' => array(
 									'template' => '',
 									'params' => array(
@@ -631,30 +631,8 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 			}
 			else
 			{
-				$this->arResult['TABS'][] = array(
-				'id' => 'tab_event',
-				'name' => Loc::getMessage('CRM_COMPANY_TAB_EVENT'),
-				'loader' => array(
-					'serviceUrl' => '/bitrix/components/bitrix/crm.event.view/lazyload.ajax.php?&site'.SITE_ID.'&'.bitrix_sessid_get(),
-					'componentData' => array(
-						'template' => '',
-						'contextId' => "COMPANY_{$this->entityID}_EVENT",
-						'params' => array(
-							'AJAX_OPTION_ADDITIONAL' => "COMPANY_{$this->entityID}_EVENT",
-							'ENTITY_TYPE' => CCrmOwnerType::CompanyName,
-							'ENTITY_ID' => $this->entityID,
-							'PATH_TO_USER_PROFILE' => $this->arResult['PATH_TO_USER_PROFILE'],
-							'TAB_ID' => 'tab_event',
-							'INTERNAL' => 'Y',
-							'SHOW_INTERNAL_FILTER' => 'Y',
-							'PRESERVE_HISTORY' => true,
-							'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE']
-						)
-					)
-				)
-			);
+				$this->arResult['TABS'][] = $this->getEventTabParams();
 			}
-
 		}
 		else
 		{
@@ -681,11 +659,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 					'enabled' => false
 				);
 			}
-			$this->arResult['TABS'][] = array(
-				'id' => 'tab_event',
-				'name' => Loc::getMessage('CRM_COMPANY_TAB_EVENT'),
-				'enabled' => false
-			);
+			$this->arResult['TABS'][] = $this->getEventTabParams();
 			$this->arResult['TABS'][] = array(
 				'id' => 'tab_portrait',
 				'name' => Loc::getMessage('CRM_COMPANY_TAB_PORTRAIT'),
@@ -1026,7 +1000,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 				'type' => 'requisite',
 				'editable' => true,
 				'data' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company,'requisite'),
-                'enableAttributes' => false
+				'enableAttributes' => false
 			)
 		);
 
@@ -1047,7 +1021,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 				'title' => Loc::getMessage('CRM_COMPANY_FIELD_ADDRESS'),
 				'type' => 'address_form',
 				'editable' => true,
-                'enableAttributes' => false,
+				'enableAttributes' => false,
 				'data' => array(
 					'fields' => array(
 						'ADDRESS' => array('NAME' => 'ADDRESS', 'IS_MULTILINE' => true),
@@ -1068,7 +1042,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 				'title' => Loc::getMessage('CRM_COMPANY_FIELD_ADDRESS_LEGAL'),
 				'type' => 'address_form',
 				'editable' => true,
-                'enableAttributes' => false,
+				'enableAttributes' => false,
 				'data' => array(
 					'fields' => array(
 						'ADDRESS' => array('NAME' => 'REG_ADDRESS', 'IS_MULTILINE' => true),
@@ -1091,7 +1065,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 				'title' => Loc::getMessage('CRM_COMPANY_FIELD_REQUISITE_ADDRESS'),
 				'type' => 'requisite_address',
 				'editable' => true,
-                'enableAttributes' => false,
+				'enableAttributes' => false,
 				'virtual' => true,
 				'data' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company,'requisite_address')
 			);
@@ -1134,8 +1108,21 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 			array_values($this->userFieldInfos)
 		);
 
+		if ($this->editorAdapter)
+		{
+			$parentFieldsInfo = $this->editorAdapter->getParentFieldsInfo(
+				\CCrmOwnerType::Company,
+				'crm_company_details'
+			);
+			$this->entityFieldInfos = array_merge(
+				$this->entityFieldInfos,
+				array_values($parentFieldsInfo)
+			);
+		}
+
 		return $this->entityFieldInfos;
 	}
+
 	public function prepareEntityUserFields()
 	{
 		if($this->userFields === null)
@@ -1148,6 +1135,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 		}
 		return $this->userFields;
 	}
+
 	public function prepareEntityFieldAttributeConfigs()
 	{
 		if(!$this->entityFieldAttributeConfig)
@@ -1162,6 +1150,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 		}
 		return $this->entityFieldAttributeConfig;
 	}
+
 	public function prepareEntityUserFieldInfos()
 	{
 		if($this->userFieldInfos !== null)
@@ -1262,6 +1251,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 
 		return $this->userFieldInfos;
 	}
+
 	protected function isFieldHasDefaultValueAttribute(array $fieldsInfo, string $fieldName): bool
 	{
 		return (
@@ -1273,6 +1263,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 			)
 		);
 	}
+
 	protected function isSetDefaultValueForField(array $fieldsInfo, array $requiredFields, string $fieldName): bool
 	{
 		// if field is not required and has an attribute
@@ -1281,6 +1272,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 			&& $this->isFieldHasDefaultValueAttribute($fieldsInfo, $fieldName)
 		);
 	}
+
 	public function prepareEntityFieldAttributes()
 	{
 		if($this->entityFieldInfos === null)
@@ -1319,6 +1311,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 			}
 		}
 	}
+
 	protected function isEntityFieldHasEmpyValue($fieldInfo)
 	{
 		$result = false;
@@ -1442,6 +1435,7 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 
 		return $result;
 	}
+
 	public function prepareEntityData()
 	{
 		/** @global \CMain $APPLICATION */
@@ -1918,6 +1912,35 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 			$isTrackingFieldRequired
 		);
 
+		if ($this->editorAdapter)
+		{
+			$parentElements = [];
+			if ($this->entityID > 0)
+			{
+				$relationManager = Container::getInstance()->getRelationManager();
+				$parentElements = $relationManager->getParentElements(
+					new Crm\ItemIdentifier(\CCrmOwnerType::Company, $this->entityID)
+				);
+			}
+			else
+			{
+				$parentItem = ParentFieldManager::tryParseParentItemFromRequest($this->request);
+				if ($parentItem)
+				{
+					$parentElements = [$parentItem];
+				}
+			}
+
+			if (!empty($parentElements))
+			{
+				$this->editorAdapter->addParentFieldsEntityData(
+					$parentElements,
+					$this->entityFieldInfos,
+					$this->entityData
+				);
+			}
+		}
+
 		return ($this->arResult['ENTITY_DATA'] = $this->entityData);
 	}
 	protected function prepareTypeList()
@@ -2029,10 +2052,20 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 		return $result;
 	}
 
+	protected function getEventTabParams(): array
+	{
+		return CCrmComponentHelper::getEventTabParams(
+			$this->entityID,
+			Loc::getMessage('CRM_COMPANY_TAB_EVENT'),
+			CCrmOwnerType::CompanyName,
+			$this->arResult
+		);
+	}
+
 	public function initializeData()
 	{
-		$this->prepareEntityData();
 		$this->prepareFieldInfos();
+		$this->prepareEntityData();
 		$this->prepareEntityFieldAttributes();
 	}
 

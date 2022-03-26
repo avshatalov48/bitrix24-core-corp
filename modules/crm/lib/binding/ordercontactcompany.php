@@ -7,6 +7,7 @@
  */
 namespace Bitrix\Crm\Binding;
 
+use Bitrix\Main\Application;
 use Bitrix\Main\Entity;
 
 /**
@@ -76,5 +77,17 @@ class OrderContactCompanyTable extends Entity\DataManager
 				'default_value' => 'N'
 			]
 		];
+	}
+
+	public static function rebind(int $entityTypeId, int $oldEntityId, int $newEntityId): void
+	{
+		$sql = "UPDATE IGNORE b_crm_order_contact_company SET ENTITY_ID = {$newEntityId} WHERE ENTITY_TYPE_ID = {$entityTypeId} AND ENTITY_ID = {$oldEntityId}";
+		Application::getConnection()->query($sql);
+	}
+
+	public static function unbind(int $entityTypeId, int $entityId): void
+	{
+		$sql = "DELETE FROM b_crm_order_contact_company WHERE ENTITY_TYPE_ID = {$entityTypeId} AND ENTITY_ID = {$entityId}";
+		Application::getConnection()->query($sql);
 	}
 }

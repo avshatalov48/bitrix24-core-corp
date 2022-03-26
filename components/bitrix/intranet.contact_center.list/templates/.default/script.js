@@ -444,6 +444,7 @@
 		{
 			if (params.data.SELECTED)
 			{
+
 				item.classList.add('intranet-contact-item-selected');
 				this.setBlockColor(item, '');
 				if (params.data.COLOR_CLASS)
@@ -459,6 +460,10 @@
 				{
 					item.setAttribute('onclick', null);
 					item.setAttribute('id', 'feed-add-post-form-link-text-' + params.data.ITEM_CODE);
+				}
+				if (params.data.LINK_TYPE === 'newWindow')
+				{
+					item.setAttribute('onclick', 'top.window.location="' + BX.Text.encode(params.data.LINK) + '"');
 				}
 			}
 			else

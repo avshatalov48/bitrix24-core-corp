@@ -492,6 +492,7 @@
 			}).then(function (response) {
 				if (response.data)
 				{
+					(top || window).BX.onCustomEvent('BX.Intranet.UserProfile:Avatar:changed', [{url: response.data}]);
 					BX("intranet-user-profile-photo").style = "background-image: url('" + response.data + "'); background-size: cover;";
 				}
 

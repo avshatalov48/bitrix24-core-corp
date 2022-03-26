@@ -40,7 +40,7 @@ $APPLICATION->IncludeComponent(
 		'GRID_ID'=>$arResult['GRID_ID'],
 		'HEADERS'=>array(
 			array('id'=>'SORT', 'name'=>GetMessage('CRM_FIELDS_LIST_SORT'), 'default'=>true, 'editable'=>array('size'=>3, 'maxlength'=>11), 'align'=>'right'),
-			array('id'=>'LIST_COLUMN_LABEL', 'name'=>GetMessage('CRM_FIELDS_LIST_NAME'), 'default'=>true, 'editable'=>false),
+			array('id'=>'TITLE', 'name'=>GetMessage('CRM_FIELDS_LIST_NAME'), 'default'=>true, 'editable'=>false),
 			array('id'=>'TYPE', 'name'=>GetMessage('CRM_FIELDS_LIST_TYPE'), 'default'=>true),
 			array('id'=>'MANDATORY', 'name'=>GetMessage('CRM_FIELDS_LIST_IS_REQUIRED'), 'default'=>true, 'type'=>'checkbox', 'editable'=>true),
 			array('id'=>'MULTIPLE', 'name'=>GetMessage('CRM_FIELDS_LIST_MULTIPLE'), 'default'=>true, 'type'=>'checkbox', 'editable'=>false),

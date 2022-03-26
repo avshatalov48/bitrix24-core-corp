@@ -165,10 +165,21 @@ class CrmTrackingChannelSiteComponent extends \CBitrixComponent
 		);
 
 		$this->arResult['SOURCES'] = Webpack\CallTracker::getSources(true)
-			?: Webpack\CallTracker::getDemoSources();
+			?: Webpack\CallTracker::getDemoSources()
+		;
 
-		$this->arResult['SCRIPT_LOADER'] = Webpack\CallTracker::instance()->getEmbeddedScript();
+		$callTrackerWebpack = Webpack\CallTracker::instance();
+		if (!$callTrackerWebpack->isBuilt())
+		{
+			$callTrackerWebpack->build();
+		}
 
+		$callTrackerEditorWebpack = Webpack\CallTrackerEditor::instance();
+		if (!$callTrackerEditorWebpack->isBuilt())
+		{
+			$callTrackerEditorWebpack->build();
+		}
+		$this->arResult['SCRIPT_LOADER'] = $callTrackerWebpack->getEmbeddedScript();
 
 		return true;
 	}

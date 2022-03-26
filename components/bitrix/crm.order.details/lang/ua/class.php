@@ -53,3 +53,4 @@ $MESS["CRM_ORDER_TAB_SHIPMENT"] = "Відвантаження";
 $MESS["CRM_ORDER_TAB_TREE"] = "Аналіз замовлення";
 $MESS["CRM_ORDER_TITLE"] = "Замовлення ID (#ID#), № #ACCOUNT_NUMBER#";
 $MESS["CRM_ORDER_TITLE2"] = "Замовлення № #ACCOUNT_NUMBER#";
+$MESS["CATALOG_MODULE_NOT_INSTALLED"] = "Модуль catalog не встановлений";

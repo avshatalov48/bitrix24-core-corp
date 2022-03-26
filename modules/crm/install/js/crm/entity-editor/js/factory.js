@@ -271,6 +271,10 @@ if(typeof BX.Crm.EntityEditorControlFactory === "undefined")
 				{
 					return BX.Crm.EntityEditorPaySystemSelector.create(controlId, settings);
 				}
+				else if(type === "document_number")
+				{
+					return BX.Crm.EntityEditorDocumentNumber.create(controlId, settings);
+				}
 
 				for(var name in this.methods)
 				{
@@ -317,6 +321,10 @@ if(typeof BX.Crm.EntityEditorControllerFactory === "undefined")
 				{
 					return BX.Crm.EntityEditorOrderShipmentController.create(controllerId, settings);
 				}
+				else if(type === "document_order_shipment_controller")
+				{
+					return BX.Crm.EntityEditorDocumentOrderShipmentController.create(controllerId, settings);
+				}
 				else if(type === "order_payment_controller")
 				{
 					return BX.Crm.EntityEditorOrderPaymentController.create(controllerId, settings);
@@ -324,6 +332,10 @@ if(typeof BX.Crm.EntityEditorControllerFactory === "undefined")
 				else if(type === "order_product_controller")
 				{
 					return BX.Crm.EntityEditorOrderProductController.create(controllerId, settings);
+				}
+				else if(type === "store_document_product_list")
+				{
+					return BX.Crm.EntityStoreDocumentProductListController.create(controllerId, settings);
 				}
 
 				return null;
@@ -372,6 +384,10 @@ if(typeof BX.Crm.EntityEditorModelFactory === "undefined")
 				else if(entityTypeId === BX.CrmEntityType.enumeration.ordershipment)
 				{
 					return BX.Crm.OrderShipmentModel.create(id, settings);
+				}
+				else if(entityTypeId === BX.CrmEntityType.enumeration.smartinvoice)
+				{
+					return BX.Crm.SmartInvoiceModel.create(id, settings);
 				}
 				else if (BX.CrmEntityType.isDynamicTypeByTypeId(entityTypeId))
 				{

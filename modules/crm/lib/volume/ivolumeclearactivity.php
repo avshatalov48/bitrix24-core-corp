@@ -26,7 +26,7 @@ interface IVolumeClearActivity extends \Bitrix\Crm\Volume\IVolumeClear
 
 	/**
 	 * Performs dropping associated entity activities.
-	 * @return boolean
+	 * @return int
 	 */
 	public function clearActivity();
 

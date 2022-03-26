@@ -330,23 +330,32 @@ export default {
 				});
 				this.hideActionsPopup();
 			},
+			getPaymentItemTitle(): ?string
+			{
+				if(!this.isOrderPublicUrlAvailable)
+				{
+					return null;
+				}
+				if (this.$root.$app.options.mode === 'payment')
+				{
+					return this.localize.SALESCENTER_LEFT_PAYMENT_ADD_2;
+				}
+
+				return this.localize.SALESCENTER_LEFT_PAYMENT_AND_DELIVERY;
+			},
 			showPaymentForm()
 			{
 				this.isShowPayment = true;
 				this.isShowPreview = false;
-				if(this.isOrderPublicUrlAvailable)
-				{
-					this.setPageTitle(this.localize.SALESCENTER_LEFT_PAYMENT_AND_DELIVERY);
-				}
-				else
-				{
-					this.setPageTitle(this.localize.SALESCENTER_DEFAULT_TITLE);
-				}
+				let title = this.getPaymentItemTitle() || this.localize.SALESCENTER_DEFAULT_TITLE;
+
+				this.setPageTitle(title);
 			},
 			showOrdersList()
 			{
 				this.hideActionsPopup();
 				Manager.showOrdersList({
+					context: this.$root.$app.context,
 					ownerId: this.$root.$app.ownerId,
 					ownerTypeId: this.$root.$app.ownerTypeId,
 				}).then(() =>
@@ -358,6 +367,7 @@ export default {
 			{
 				this.hideActionsPopup();
 				Manager.showPaymentsList({
+					context: this.$root.$app.context,
 					ownerId: this.$root.$app.ownerId,
 					ownerTypeId: this.$root.$app.ownerTypeId,
 				}).then(() =>
@@ -752,7 +762,7 @@ export default {
 				<ul class="ui-sidepanel-menu" ref="sidepanelMenu">
 					<li v-if="this.$root.$app.isPaymentCreationAvailable" :class="{ 'salescenter-app-sidebar-menu-active': this.isShowPayment}" class="ui-sidepanel-menu-item" @click="showPaymentForm">
 						<a class="ui-sidepanel-menu-link">
-							<div class="ui-sidepanel-menu-link-text">{{localize.SALESCENTER_LEFT_PAYMENT_AND_DELIVERY}}</div>
+							<div class="ui-sidepanel-menu-link-text">{{getPaymentItemTitle()}}</div>
 						</a>
 					</li>
 					<li :class="{'salescenter-app-sidebar-menu-active': isPagesOpen}" class="ui-sidepanel-menu-item">
@@ -803,7 +813,7 @@ export default {
 					<li :class="{'salescenter-app-sidebar-menu-active': isFormsOpen}" class="ui-sidepanel-menu-item">
 						<a class="ui-sidepanel-menu-link" @click.stop.prevent="onFormsClick();">
 							<div class="ui-sidepanel-menu-link-text">{{localize.SALESCENTER_LEFT_FORMS_ALL}}</div>
-							<div class="ui-sidepanel-toggle-btn">{{this.isPagesOpen ? this.localize.SALESCENTER_SUBMENU_CLOSE : this.localize.SALESCENTER_SUBMENU_OPEN}}</div>
+							<div class="ui-sidepanel-toggle-btn">{{this.isFormsOpen ? this.localize.SALESCENTER_SUBMENU_CLOSE : this.localize.SALESCENTER_SUBMENU_OPEN}}</div>
 						</a>
 						<ul class="ui-sidepanel-submenu" :style="{height: formsSubmenuHeight}">
 							<li v-for="page in pages" v-if="page.isWebform" :key="page.id"

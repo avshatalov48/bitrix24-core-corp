@@ -1,12 +1,11 @@
-<?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+<?php
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
-$arResult['ROWS'] = [];
-
 use Bitrix\Bitrix24\Feature;
+use Bitrix\Main\Context;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Recyclebin\Internals\User;
@@ -89,7 +88,7 @@ function getColumnRestoreAction($entityId, $entityType, $restoreDisablingOptions
 		{
 			if ($restoreDisablingOptions['IS_ON'])
 			{
-				return "BX.UI.InfoHelper.show('{$restoreDisablingOptions['SLIDER_CODE']}');";
+				return "BX.UI.InfoHelper.show('{$restoreDisablingOptions['SLIDER_CODE']}', {isLimit: true, limitAnalyticsLabels: {module: 'recyclebin', source: '{$restoreDisablingOptions['MODULE']}'}});";
 			}
 			return "BX.Recyclebin.List.restore({$entityId}, '{$entityType}')";
 		}
@@ -151,6 +150,7 @@ function getRestoreDisablingOptions($entityTypes, $entityAdditionalData)
 	$isRestoreDisablingOn = false;
 	$restoreDisablingType = '';
 	$sliderCode = '';
+	$module = 'recyclebin';
 
 	foreach ($entityTypes as $typeId => $type)
 	{
@@ -163,6 +163,7 @@ function getRestoreDisablingOptions($entityTypes, $entityAdditionalData)
 				$isRestoreDisablingOn = true;
 				$restoreDisablingType = $typeId;
 				$sliderCode = $entityLimitData['RESTORE']['SLIDER_CODE'];
+				$module = $entityAdditionalData[$typeId]['MODULE_ID'];
 				break;
 			}
 		}
@@ -173,6 +174,7 @@ function getRestoreDisablingOptions($entityTypes, $entityAdditionalData)
 		'IS_ON' => $isRestoreDisablingOn,
 		'TYPE' => $restoreDisablingType,
 		'SLIDER_CODE' => $sliderCode,
+		'MODULE' => $module,
 	];
 }
 
@@ -194,7 +196,7 @@ function getGroupRestoreAction($restoreDisablingOptions)
 		{
 			if ($restoreDisablingOptions['IS_ON'])
 			{
-				return "BX.UI.InfoHelper.show('{$restoreDisablingOptions['SLIDER_CODE']}');";
+				return "BX.UI.InfoHelper.show('{$restoreDisablingOptions['SLIDER_CODE']}', {isLimit: true, limitAnalyticsLabels: {module: 'recyclebin', source: '{$restoreDisablingOptions['MODULE']}'}});";
 			}
 			return "BX.Recyclebin.List.restoreBatch();";
 		}
@@ -260,123 +262,38 @@ function prepareGroupActions($restoreDisablingOptions)
 	];
 }
 
-function getDateTimeFormat()
+function formatDateRecycle($date): string
 {
-	if (defined('FORMAT_DATETIME'))
-	{
-		$format = FORMAT_DATETIME;
-	}
-	else
-	{
-		$format = \CSite::GetDateFormat("FULL");
-	}
+	$culture = Context::getCurrent()->getCulture();
+	$dateFormat = (
+		date('Y') !== date('Y', strtotime($date))
+			? $culture->getLongDateFormat()
+			: $culture->getDayMonthFormat()
+	);
+	$format = "{$dateFormat}, {$culture->getShortTimeFormat()}";
 
-	return $GLOBALS['DB']->DateFormatToPHP($format); // have to make php format from site format
-}
-
-function formatDateTime($stamp, $format = false)
-{
-	$simple = false;
-
-	// accept also FORMAT_DATE and FORMAT_DATETIME as ones of the legal formats
-	if ((defined('FORMAT_DATE') && $format == FORMAT_DATE) ||
-		(defined('FORMAT_DATETIME') && $format == FORMAT_DATETIME))
-	{
-		$format = $GLOBALS['DB']->dateFormatToPHP($format);
-		$simple = true;
-	}
-
-	$default = getDateTimeFormat();
-	if ($format === false)
-	{
-		$format = $default;
-		$simple = true;
-	}
-
-	if ($simple)
-	{
-		// its a simple format, we can use a simpler function
-		return date($format, $stamp);
-	}
-	else
-	{
-		return \FormatDate($format, $stamp);
-	}
-}
-
-function formatDateRecycle($date)
-{
-	$curTimeFormat = "HH:MI:SS";
-	$format = 'j F';
-	if (LANGUAGE_ID == "en")
-	{
-		$format = "F j";
-	}
-	if (LANGUAGE_ID == "de")
-	{
-		$format = "j. F";
-	}
-
-	if (date('Y') != date('Y', strtotime($date)))
-	{
-		if (LANGUAGE_ID == "en")
-		{
-			$format .= ",";
-		}
-
-		$format .= ' Y';
-	}
-
-	$rsSite = CSite::GetByID(SITE_ID);
-	if ($arSite = $rsSite->Fetch())
-	{
-		$curDateFormat = $arSite["FORMAT_DATE"];
-		$curTimeFormat = str_replace($curDateFormat." ", "", $arSite["FORMAT_DATETIME"]);
-	}
-
-	if ($curTimeFormat == "HH:MI:SS")
-	{
-		$currentDateTimeFormat = " G:i";
-	}
-	else //($curTimeFormat == "H:MI:SS TT")
-	{
-		$currentDateTimeFormat = " g:i a";
-	}
-
-	if (date('Hi', strtotime($date)) > 0)
-	{
-		$format .= ', '.$currentDateTimeFormat;
-	}
-
-	$str = formatDateTime(MakeTimeStamp($date), $format);
-
-	return $str;
+	return FormatDate($format, MakeTimeStamp($date));
 }
 
 $restoreDisablingOptions = getRestoreDisablingOptions($arResult['ENTITY_TYPES'], $arResult['ENTITY_ADDITIONAL_DATA']);
 
+$arResult['ROWS'] = [];
 if (!empty($arResult['GRID']['DATA']))
 {
-	$users = [];
-	foreach ($arResult['GRID']['DATA'] as $row)
-	{
-		$users[] = $row['USER_ID'];
-	}
-
 	foreach ($arResult['GRID']['DATA'] as $row)
 	{
 		$arResult['ROWS'][] = [
-			"id"      => $row["ID"],
+			'id' => $row['ID'],
 			'actions' => prepareActionsColumn($row, $restoreDisablingOptions),
 			'columns' => [
-				'ID'          => $row['ID'],
-				'ENTITY_ID'   => $row['ENTITY_ID'],
+				'ID' => $row['ID'],
+				'ENTITY_ID' => $row['ENTITY_ID'],
 				'ENTITY_TYPE' => $arResult['ENTITY_TYPES'][$row['ENTITY_TYPE']],
-				'NAME'        => htmlspecialcharsbx($row['NAME']),
-				'MODULE_ID'   => $arResult['MODULES_LIST'][$row['MODULE_ID']],
-				'TIMESTAMP'   => formatDateRecycle($row['TIMESTAMP']),
-				'USER_ID'     => getUserName($row)
-			]
+				'NAME' => htmlspecialcharsbx($row['NAME']),
+				'MODULE_ID' => $arResult['MODULES_LIST'][$row['MODULE_ID']],
+				'TIMESTAMP' => formatDateRecycle($row['TIMESTAMP']),
+				'USER_ID' => getUserName($row),
+			],
 		];
 	}
 }

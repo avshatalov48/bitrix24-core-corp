@@ -41,6 +41,7 @@ return array(
 		"/bitrix/js/crm/entity-editor/js/product-list.js",
 		"/bitrix/js/crm/entity-editor/js/field-configurator.js",
 		"/bitrix/js/crm/entity-editor/js/product-list.js",
+		"/bitrix/js/crm/entity-editor/js/store-document-product-list.js",
 		'/bitrix/js/crm/entity-editor/js/entity-selector.js',
 	],
 	'rel' => [

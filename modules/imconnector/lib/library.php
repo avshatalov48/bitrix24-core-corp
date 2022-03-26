@@ -27,6 +27,7 @@ class Library
 	const ID_VIBER_CONNECTOR = 'viber';
 	const ID_WECHAT_CONNECTOR = 'wechat';
 	const ID_NETWORK_CONNECTOR = 'network';
+	const ID_FB_MESSAGES_CONNECTOR = 'facebook';
 	const ID_FB_COMMENTS_CONNECTOR = 'facebookcomments';
 	public const ID_FBINSTAGRAMDIRECT_CONNECTOR = 'fbinstagramdirect';
 	const ID_IMESSAGE_CONNECTOR = 'imessage';
@@ -159,6 +160,13 @@ class Library
 			'BLOCK_DATE' => 86400,
 			'BLOCK_REASON' => self::BLOCK_REASON_DEFAULT
 		],
+	];
+
+	public const RU_RESTRICTED_META_CONNECTORS = [
+		Library::ID_FB_MESSAGES_CONNECTOR,
+		Library::ID_FB_COMMENTS_CONNECTOR,
+		Library::ID_FBINSTAGRAM_CONNECTOR,
+		Library::ID_FBINSTAGRAMDIRECT_CONNECTOR,
 	];
 
 	public const AUTO_DELETE_BLOCK = [

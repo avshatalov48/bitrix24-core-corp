@@ -42,7 +42,8 @@ class LeadController extends BaseController
 			'SOURCE_ID', 'SOURCE_DESCRIPTION', 'CURRENCY_ID', 'OPPORTUNITY',
 			'HONORIFIC', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'BIRTHDATE', 'POST', 'COMMENTS',
 			'COMPANY_TITLE', 'COMPANY_ID', 'CONTACT_ID', 'OPENED', 'DATE_CLOSED',
-			'WEBFORM_ID', 'FACE_ID', 'IS_RETURN_CUSTOMER', 'ORIGINATOR_ID', 'ORIGIN_ID'
+			'WEBFORM_ID', 'FACE_ID', 'IS_RETURN_CUSTOMER', 'ORIGINATOR_ID', 'ORIGIN_ID',
+			'MOVED_BY_ID', 'MOVED_TIME',
 		);
 	}
 
@@ -81,7 +82,7 @@ class LeadController extends BaseController
 	 */
 	public function getProductRowOwnerType()
 	{
-		return 'L';
+		return \CCrmOwnerTypeAbbr::Lead;
 	}
 
 	/**
@@ -90,7 +91,7 @@ class LeadController extends BaseController
 	 */
 	public function getProductRowSuspendedOwnerType()
 	{
-		return 'SL';
+		return \CCrmOwnerTypeAbbr::SuspendedLead;
 	}
 	//endregion
 
@@ -168,6 +169,12 @@ class LeadController extends BaseController
 		if(!empty($childDealIDs))
 		{
 			$slots['CHILD_DEAL_IDS'] = $childDealIDs;
+		}
+
+		$childQuoteIds = Crm\Entity\Lead::getChildEntityIDs($entityID, \CCrmOwnerType::Quote);
+		if(!empty($childQuoteIds))
+		{
+			$slots['CHILD_QUOTE_IDS'] = $childQuoteIds;
 		}
 
 		$slots = array_merge($slots, $this->prepareActivityData($entityID, $params));

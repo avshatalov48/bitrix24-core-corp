@@ -16,6 +16,8 @@ class EntityBinding extends StorageStrategy
 	protected $bindParentIds;
 	/** @var callable */
 	protected $unbindParentIds;
+	/** @var callable */
+	protected $replaceBindings;
 
 	/**
 	 * EntityBinding constructor.
@@ -29,13 +31,15 @@ class EntityBinding extends StorageStrategy
 		callable $getParentIds,
 		callable $getChildIds,
 		callable $bindParentIds,
-		callable $unbindParentIds
+		callable $unbindParentIds,
+		callable $replaceBindings
 	)
 	{
 		$this->getParentIds = $getParentIds;
 		$this->getChildIds = $getChildIds;
 		$this->bindParentIds = $bindParentIds;
 		$this->unbindParentIds = $unbindParentIds;
+		$this->replaceBindings = $replaceBindings;
 	}
 
 	/**
@@ -118,6 +122,13 @@ class EntityBinding extends StorageStrategy
 	protected function deleteBinding(ItemIdentifier $parent, ItemIdentifier $child): Result
 	{
 		call_user_func($this->unbindParentIds, $child->getEntityId(), [$parent->getEntityId()]);
+
+		return new Result();
+	}
+
+	protected function replaceBindings(ItemIdentifier $fromItem, ItemIdentifier $toItem): Result
+	{
+		call_user_func($this->replaceBindings, $fromItem->getEntityId(), $toItem->getEntityId());
 
 		return new Result();
 	}

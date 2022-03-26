@@ -27,6 +27,16 @@ if (!$arResult['isIframe'])
 				condition: [
 					"type/(\\d+)/automation/(\\d+)/",
 				],
+				stopParameters: ['id'],
+				options: {
+					cacheable: false,
+					customLeftBoundary: 0
+				}
+			},
+			{
+				condition: [
+					"type/(\\d+)/automation/(\\d+)/",
+				],
 				options: {
 					cacheable: false
 				}
@@ -81,7 +91,9 @@ $APPLICATION->IncludeComponent(
 		'POPUP_COMPONENT_PARAMS' => $arResult['componentParameters'],
 		'USE_PADDING' => $arResult['isUsePadding'],
 		'PLAIN_VIEW' => $arResult['isPlainView'],
-		'USE_UI_TOOLBAR' => $arResult['isUseToolbar'],
+		'USE_UI_TOOLBAR' => $arResult['isUseToolbar'] ? 'Y' : 'N',
+		'POPUP_COMPONENT_USE_BITRIX24_THEME' => $arResult['isUseBitrix24Theme'] ? 'Y' : 'N',
+		'DEFAULT_THEME_ID' => $arResult['defaultBitrix24Theme'],
 	],
 	$this->getComponent()
 );?>

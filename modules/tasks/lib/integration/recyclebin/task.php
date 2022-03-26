@@ -14,7 +14,6 @@ use Bitrix\Recyclebin\Internals\Models\RecyclebinTable;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Integration;
 use Bitrix\Tasks\Internals\Counter;
-use Bitrix\Tasks\Internals\TaskObject;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
 use Bitrix\Tasks\Internals\Task\FavoriteTable;
@@ -25,7 +24,7 @@ use Bitrix\Tasks\Internals\Helper\Task\Dependence;
 use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Kanban\StagesTable;
 use Bitrix\Tasks\Kanban\TaskStageTable;
-use Bitrix\Tasks\Scrum\Internal\ItemTable as ScrumItem;
+use Bitrix\Tasks\Scrum\Internal\ItemTable;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
@@ -191,16 +190,6 @@ if (Loader::includeModule('recyclebin'))
 
 			try
 			{
-				$logFields = [
-					"TASK_ID" => $taskId,
-					"USER_ID" => User::getId(),
-					"CREATED_DATE" => new DateTime(),
-					"FIELD" => 'RENEW'
-				];
-
-				$log = new \CTaskLog();
-				$log->Add($logFields);
-
 				$cache = Cache::createInstance();
 				$cache->clean(CTasks::CACHE_TASKS_COUNT, CTasks::CACHE_TASKS_COUNT_DIR_NAME);
 			}
@@ -211,22 +200,44 @@ if (Loader::includeModule('recyclebin'))
 
 			try
 			{
-				if ($taskData)
+				if (!$taskData)
 				{
-					// we should to restore task first
-					foreach ($taskData as $key => $value)
+					AddMessage2Log('Tasks RecycleBin: unable to load task data. TaskId: '.$taskId, 'tasks');
+					return false;
+				}
+
+				// we should to restore task first
+				$taskRestored = false;
+				foreach ($taskData as $key => $value)
+				{
+					if ($value['ACTION'] !== 'TASK')
 					{
-						if ($value['ACTION'] !== 'TASK')
-						{
-							continue;
-						}
-						self::restoreAdditionalData($taskId, $value);
-						unset($taskData[$key]);
+						continue;
 					}
 
-					foreach ($taskData as $value)
+					$restore = self::restoreAdditionalData($taskId, $value);
+
+					if (!$restore->isSuccess())
 					{
-						self::restoreAdditionalData($taskId, $value);
+						AddMessage2Log('Tasks RecycleBin: unable to restore task data. TaskId: '.$taskId.'. Data: '.var_export($taskData, true), 'tasks');
+						return false;
+					}
+					unset($taskData[$key]);
+					$taskRestored = true;
+				}
+
+				if (!$taskRestored)
+				{
+					AddMessage2Log('Tasks RecycleBin: task data not found. TaskId: '.$taskId.'. Data: '.var_export($taskData, true), 'tasks');
+					return false;
+				}
+
+				foreach ($taskData as $value)
+				{
+					$restore = self::restoreAdditionalData($taskId, $value);
+					if (!$restore->isSuccess())
+					{
+						$result->addErrors($restore->getErrors());
 					}
 				}
 
@@ -236,17 +247,28 @@ if (Loader::includeModule('recyclebin'))
 					'PIN_IN_STAGE' => false,
 				]);
 
+				$logFields = [
+					"TASK_ID" => $taskId,
+					"USER_ID" => User::getId(),
+					"CREATED_DATE" => new DateTime(),
+					"FIELD" => 'RENEW'
+				];
+
+				$log = new \CTaskLog();
+				$log->Add($logFields);
+
 				Counter\CounterService::addEvent(
 					Counter\Event\EventDictionary::EVENT_AFTER_TASK_RESTORE,
 					$task->getData(false)
 				);
 
 				Integration\SocialNetwork\Log::showLogByTaskId($taskId);
-				ScrumItem::activateBySourceId($taskId);
+				ItemTable::activateBySourceId($taskId);
 			}
 			catch (\Exception $e)
 			{
-				$result->addError(new Error($e->getMessage(), $e->getCode()));
+				AddMessage2Log('Tasks RecycleBin: '.$e->getMessage().'. TaskId: '.$taskId.'. Data: '.var_export($taskData, true), 'tasks');
+				return false;
 			}
 
 			return $result;
@@ -262,7 +284,7 @@ if (Loader::includeModule('recyclebin'))
 		 */
 		private static function restoreAdditionalData($taskId, $value)
 		{
-			$data = unserialize($value['DATA'], ['allowed_classes' => false]);
+			$data = unserialize($value['DATA'], ['allowed_classes' => ['Bitrix\Tasks\Util\Type\DateTime', 'Bitrix\Main\Type\DateTime', 'DateTime']]);
 			$action = $value['ACTION'];
 
 			$result = new Result();
@@ -433,7 +455,7 @@ if (Loader::includeModule('recyclebin'))
 
 				$USER_FIELD_MANAGER->Delete('TASKS_TASK', $taskId);
 
-				ScrumItem::deleteBySourceId($taskId);
+				ItemTable::deleteBySourceId($taskId);
 
 				TaskTable::delete($taskId);
 			}

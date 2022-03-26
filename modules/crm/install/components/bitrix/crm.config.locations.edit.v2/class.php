@@ -287,6 +287,8 @@ class CBitrixCrmConfigLocationEdit2Component extends CBitrixComponent
 	{
 		$cachedData['TYPES'] = Helper::getTypeList();
 		$cachedData['EXTERNAL_SERVICES'] = Helper::getExternalServicesList();
+		$cachedData['YANDEX_MARKET_ES_ID'] = Helper::getYandexMarketExternalServiceId();
+		$cachedData['PORTAL_ZONE'] = Bitrix\Sale\Delivery\Helper::getPortalZone();
 	}
 
 	/**

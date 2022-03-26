@@ -79,3 +79,9 @@
 
 .crm-entity-widget-content-input.barcode-error { border-color: #ff0000; }
 .crm-entity-widget-content-input.barcode-ok { border-color: #00ff00; }
+
+.pagetitle-inner-container .pagetitle {
+	font: 26px "OpenSans-Light", Helvetica, Arial, sans-serif;
+	flex-grow: 1;
+	order: 1;
+}

@@ -1,5 +1,5 @@
 import {ajax as Ajax, Runtime, Type} from "main.core";
-import { EventEmitter } from "main.core.events";
+import {BaseEvent, EventEmitter} from "main.core.events";
 import { MenuItem } from "main.popup";
 import {PULL, PullClient} from "pull.client";
 import type {EditorOptions, DocumentSession, Context} from "./types";
@@ -70,8 +70,9 @@ export default class OnlyOffice
 		if (currentSlider)
 		{
 			currentSlider.getData().set('documentSession', this.documentSession);
-			this.loadDiskExtensionInTopWindow();
 		}
+
+		this.loadDiskExtensionInTopWindow();
 
 		this.initPull();
 		this.bindEvents();
@@ -135,8 +136,18 @@ export default class OnlyOffice
 
 	bindEvents(): void
 	{
-		EventEmitter.subscribe("SidePanel.Slider:onClose", this.handleClose.bind(this));
+		EventEmitter.subscribe("SidePanel.Slider:onClose", this.handleSliderClose.bind(this));
 		window.addEventListener("beforeunload", this.handleClose.bind(this));
+
+		if (window.top !== window)
+		{
+			window.addEventListener("message", (event: MessageEvent) => {
+				if (event.data === 'closeIframe')
+				{
+					this.handleClose();
+				}
+			});
+		}
 
 		if (this.editorJson.document.permissions.edit === true && this.editButton)
 		{
@@ -197,8 +208,9 @@ export default class OnlyOffice
 			onDocumentReady: this.handleDocumentReady.bind(this),
 			onMetaChange: this.handleMetaChange.bind(this),
 			onInfo: this.handleInfo.bind(this),
+			onWarning: this.handleWarning.bind(this),
 			onError: this.handleError.bind(this),
-			// onRequestClose: this.handleClose.bind(this),
+			onRequestClose: this.handleRequestClose.bind(this),
 		}
 
 		if (options.document.permissions.rename)
@@ -337,8 +349,67 @@ export default class OnlyOffice
 		});
 	}
 
+	handleRequestClose(): void
+	{
+		console.log('handleRequestClose');
+		const currentSlider = BX.SidePanel.Instance.getSliderByWindow(window);
+		if (!currentSlider)
+		{
+			return;
+		}
+
+		currentSlider.getData().set('dontInvokeRequestClose', true);
+		this.handleClose();
+		currentSlider.close();
+	}
+
+	handleSliderClose(event: BaseEvent): void
+	{
+		console.log('handleSliderClose');
+
+		const currentSlider = BX.SidePanel.Instance.getSliderByWindow(window);
+		if (!currentSlider)
+		{
+			return;
+		}
+
+		const currentSliderData = currentSlider.getData();
+		const uid = currentSliderData.get('uid');
+
+		/** @type {BX.SidePanel.Event} */
+		const [sliderEvent] = event.getData();
+		if (sliderEvent.getSlider().getData().get('uid') !== uid)
+		{
+			return;
+		}
+
+		if (this.isViewMode())
+		{
+			this.handleClose();
+
+			return;
+		}
+
+		if (this.editor.hasOwnProperty('requestClose'))
+		{
+			if (currentSliderData.get('dontInvokeRequestClose'))
+			{
+				return;
+			}
+
+			this.editor.requestClose();
+			sliderEvent.denyAction();
+		}
+		else
+		{
+			this.handleClose();
+		}
+	}
+
 	handleClose(): void
 	{
+		console.log('handleClose');
+
 		PULL.sendMessageToChannels([this.context.object.publicChannel], 'disk', 'exitDocument', {
 			fromUserId: this.context.currentUser.id,
 		});
@@ -400,6 +471,11 @@ export default class OnlyOffice
 	handleInfo(): void
 	{
 		this.caughtInfoEvent = Date.now();
+	}
+
+	handleWarning(d): void
+	{
+		console.log('onlyoffice warning:', d.data);
 	}
 
 	handleError(d): void

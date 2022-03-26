@@ -1,0 +1,14 @@
+.tasks-scrum-sprint-team-speed-filter {
+	padding: 0 39px 0 19px;
+	margin-bottom: 20px;
+	background: #fff;
+}
+
+.tasks-scrum-sprint-team-speed-filter .main-ui-filter-search {
+	border: 1px solid #c6cdd3;
+	width: 100%;
+}
+
+.tasks-scrum-sprint-team-speed-chart {
+	min-height: 60vh;
+}

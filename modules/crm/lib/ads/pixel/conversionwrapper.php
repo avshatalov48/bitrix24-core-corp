@@ -14,17 +14,17 @@ use Bitrix\Crm\Ads\Pixel\EventBuilders\CrmConversionEventBuilderInterface;
  */
 class ConversionWrapper
 {
-	/**@var ConversionObjectInterface $conversion*/
+	/**@var ConversionObjectInterface|null $conversion*/
 	protected $conversion;
 
 	/**
 	 * ConversionWrapper constructor.
 	 *
-	 * @param ConversionObjectInterface $conversion
+	 * @param ConversionObjectInterface|null $conversion
 	 *
 	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public function __construct(ConversionObjectInterface $conversion)
+	public function __construct(?ConversionObjectInterface $conversion)
 	{
 		$this->conversion = $conversion;
 		if ($this->isAvailable())

@@ -121,26 +121,7 @@ BX.namespace('Tasks.Component');
 
 			rerender: function(roleId)
 			{
-				return;
-				this.getToolbarData(roleId, this.render.bind(this));
-			},
 
-			getToolbarData: function(roleId, cb)
-			{
-				roleId = roleId || '';
-				cb = cb || {};
-
-				var ownerId = this.option('ownerId');
-				var groupId = this.option('groupId') || 0;
-
-				this.callRemote('ui.counters.get', {
-					userId: ownerId,
-					type: roleId,
-					groupId: groupId
-				}).then(function(result) {
-					this.option('counters', result.getData());
-					cb.call(this);
-				}.bind(this));
 			},
 
 			render: function()
@@ -178,7 +159,7 @@ BX.namespace('Tasks.Component');
 									.replace('#COUNTER#', counter.counter)
 									.replace('#COUNTER_ID#', key)
 									.replace('#COUNTER_CODE#', counter.code)
-									.replace('#TEXT#', messages[key + '_' + this.getPluralForm(counter.counter)])
+									.replace('#TEXT#', messages[key + '_' + BX.Loc.getPluralForm(counter.counter)])
 									.replace('#CLASS#', classes[key])
 									.replace('#BUTTON#', (buttons[key] || ''))
 							);
@@ -215,7 +196,7 @@ BX.namespace('Tasks.Component');
 									.replace('#COUNTER#', counter.counter)
 									.replace('#COUNTER_ID#', key)
 									.replace('#COUNTER_CODE#', counter.code)
-									.replace('#TEXT#', messages[key + '_' + this.getPluralForm(counter.counter)])
+									.replace('#TEXT#', messages[key + '_' + BX.Loc.getPluralForm(counter.counter)])
 									.replace('#CLASS#', classes[key])
 									.replace('#BUTTON#', (buttons[key] || ''))
 							);
@@ -276,45 +257,6 @@ BX.namespace('Tasks.Component');
 					}
 				}.bind(this));
 			},
-
-			getPluralForm: function(n)
-			{
-				var pluralForm, langId;
-
-				langId = BX.message('LANGUAGE_ID');
-				n = parseInt(n);
-
-				if (n < 0)
-				{
-					n = (-1) * n;
-				}
-
-				if (langId)
-				{
-					switch (langId)
-					{
-						case 'de':
-						case 'en':
-							pluralForm = ((n !== 1) ? 1 : 0);
-							break;
-
-						case 'ru':
-						case 'ua':
-							pluralForm = ( ((n%10 === 1) && (n%100 !== 11)) ? 0 : (((n%10 >= 2) && (n%10 <= 4) && ((n%100 < 10) || (n%100 >= 20))) ? 1 : 2) );
-							break;
-
-						default:
-							pluralForm = 1;
-							break;
-					}
-				}
-				else
-				{
-					pluralForm = 1;
-				}
-
-				return pluralForm;
-			}
 		}
 	});
 }).call(this);

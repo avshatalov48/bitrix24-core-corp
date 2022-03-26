@@ -90,19 +90,22 @@ else
 		$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'crm-toolbar-modifier');
 	}
 
-	$APPLICATION->IncludeComponent(
-		'bitrix:crm.deal_category.panel',
-		$isBitrix24Template ? 'tiny' : '',
-		array(
-			'PATH_TO_DEAL_LIST' => $arResult['PATH_TO_DEAL_LIST'],
-			'PATH_TO_DEAL_EDIT' => $arResult['PATH_TO_DEAL_EDIT'],
-			'PATH_TO_DEAL_CATEGORY' => $catalogPath,
-			'PATH_TO_DEAL_CATEGORY_LIST' => $arResult['PATH_TO_DEAL_CATEGORY_LIST'],
-			'PATH_TO_DEAL_CATEGORY_EDIT' => $arResult['PATH_TO_DEAL_CATEGORY_EDIT'],
-			'CATEGORY_ID' => $categoryID
-		),
-		$component
-	);
+	if (!$isSlider)
+	{
+		$APPLICATION->IncludeComponent(
+			'bitrix:crm.deal_category.panel',
+			$isBitrix24Template ? 'tiny' : '',
+			[
+				'PATH_TO_DEAL_LIST' => $arResult['PATH_TO_DEAL_LIST'],
+				'PATH_TO_DEAL_EDIT' => $arResult['PATH_TO_DEAL_EDIT'],
+				'PATH_TO_DEAL_CATEGORY' => $catalogPath,
+				'PATH_TO_DEAL_CATEGORY_LIST' => $arResult['PATH_TO_DEAL_CATEGORY_LIST'],
+				'PATH_TO_DEAL_CATEGORY_EDIT' => $arResult['PATH_TO_DEAL_CATEGORY_EDIT'],
+				'CATEGORY_ID' => $categoryID
+			],
+			$component
+		);
+	}
 
 	if($isBitrix24Template)
 	{
@@ -110,29 +113,32 @@ else
 	}
 	$APPLICATION->ShowViewContent('crm-grid-filter');
 
-	$APPLICATION->IncludeComponent(
-		'bitrix:crm.dedupe.autosearch',
-		'',
-		array(
-			'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
-			'PATH_TO_MERGE' => $arResult['PATH_TO_COMPANY_MERGE'],
-			'PATH_TO_DEDUPELIST' => $arResult['PATH_TO_COMPANY_DEDUPELIST']
-		),
-		$component,
-		array('HIDE_ICONS' => 'Y')
-	);
+	if (!$isSlider)
+	{
+		$APPLICATION->IncludeComponent(
+			'bitrix:crm.dedupe.autosearch',
+			'',
+			[
+				'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
+				'PATH_TO_MERGE' => $arResult['PATH_TO_COMPANY_MERGE'],
+				'PATH_TO_DEDUPELIST' => $arResult['PATH_TO_COMPANY_DEDUPELIST']
+			],
+			$component,
+			['HIDE_ICONS' => 'Y']
+		);
 
-	$APPLICATION->IncludeComponent(
-		'bitrix:crm.dedupe.autosearch',
-		'',
-		array(
-			'ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
-			'PATH_TO_MERGE' => $arResult['PATH_TO_CONTACT_MERGE'],
-			'PATH_TO_DEDUPELIST' => $arResult['PATH_TO_CONTACT_DEDUPELIST']
-		),
-		$component,
-		array('HIDE_ICONS' => 'Y')
-	);
+		$APPLICATION->IncludeComponent(
+			'bitrix:crm.dedupe.autosearch',
+			'',
+			[
+				'ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
+				'PATH_TO_MERGE' => $arResult['PATH_TO_CONTACT_MERGE'],
+				'PATH_TO_DEDUPELIST' => $arResult['PATH_TO_CONTACT_DEDUPELIST']
+			],
+			$component,
+			['HIDE_ICONS' => 'Y']
+		);
+	}
 
 	$this->SetViewTarget('pagetitle');
 		$APPLICATION->IncludeComponent(
@@ -149,7 +155,8 @@ else
 				'IS_RECURRING' => $arResult['IS_RECURRING'],
 				'ELEMENT_ID' => 0,
 				'CATEGORY_ID' => $categoryID,
-				'TYPE' => 'list'
+				'TYPE' => 'list',
+				'IN_SLIDER' => $isSlider ? 'Y' : 'N',
 			),
 			$component
 		);

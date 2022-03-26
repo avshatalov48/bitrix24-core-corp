@@ -87,4 +87,9 @@ export class FormClient
 				});
 		}
 	}
+
+	check(options): Promise<any>
+	{
+		return request({action: 'check', data: {options}});
+	}
 }

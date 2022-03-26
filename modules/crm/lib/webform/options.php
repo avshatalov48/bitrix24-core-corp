@@ -8,7 +8,6 @@
 namespace Bitrix\Crm\WebForm;
 
 use Bitrix\Main;
-use Bitrix\Crm;
 
 /**
  * Class Options
@@ -66,6 +65,7 @@ class Options
 	public function merge(array $options = [])
 	{
 		$this->form->merge($this->convertToFormOptions($options));
+		$this->form->getIntegration()->setData($options['integration'] ?? null);
 		$this->config->setDataFromArray($options['data'] ?? []);
 		return $this;
 	}
@@ -99,6 +99,8 @@ class Options
 		$config = $this->config->toArray();
 		$dynamicCategory = $formData['FORM_SETTINGS']['DYNAMIC_CATEGORY'] ?? null;
 		$dynamicDcEnabled = ($formData['FORM_SETTINGS']['DYNAMIC_DC_ENABLED'] ?? 'N') === 'Y';
+		$refill = ($formData['FORM_SETTINGS']['REFILL']['ACTIVE'] ?? 'N') === 'Y';
+
 		return [
 			'data' => $config['data'],
 
@@ -132,7 +134,7 @@ class Options
 
 			'responsible' => [
 				'users' => $formData['ASSIGNED_BY_ID'],
-				'checkWorkTime' => $formData['ASSIGNED_WORK_TIME'],
+				'checkWorkTime' => $formData['ASSIGNED_WORK_TIME'] === 'Y',
 				'supportWorkTime' => ResponsibleQueue::isSupportedWorkTime(),
 			],
 			'agreements' => [
@@ -147,15 +149,22 @@ class Options
 					'url' => $formData['RESULT_FAILURE_URL'],
 					'text' => $formData['RESULT_FAILURE_TEXT'],
 				],
-				'redirectDelay' => $formData['FORM_SETTINGS']['REDIRECT_DELAY']
+				'redirectDelay' => $formData['FORM_SETTINGS']['REDIRECT_DELAY'],
+				'refill' => [
+					'caption' => $refill ? $formData['FORM_SETTINGS']['REFILL']['CAPTION'] : '',
+					'active' => $refill
+				]
 			],
 			'callback' => [
 				'use' => $formData['IS_CALLBACK_FORM'] === 'Y',
 				'from' => $formData['CALL_FROM'],
 				'text' => $formData['CALL_TEXT'],
 			],
+			'whatsapp' => [
+				'use' => $formData['IS_WHATSAPP_FORM'] === 'Y',
+			],
 			'analytics' => $this->getAnalytics(),
-			'integration' => $this->getIntegration(),
+			'integration' => $this->form->getIntegration()->toArray(),
 			'embedding' => $this->getEmbedding(),
 		];
 	}
@@ -193,59 +202,6 @@ class Options
 		return array_change_key_case($result);
 	}
 
-	private function getIntegration()
-	{
-		$list = [];
-		$providers = [];
-
-		if (Crm\Ads\AdsForm::canUse())
-		{
-			$adTypes = Crm\Ads\AdsForm::getServiceTypes();
-			$providerList = Crm\Ads\AdsForm::getProviders();
-			$providerIcons = Crm\Ads\AdsForm::getAdsIconMap();
-			foreach ($adTypes as $adType)
-			{
-				if (empty($providerList[$adType]))
-				{
-					continue;
-				}
-
-				$provider = [
-					'code' => $adType,
-					'title' => Crm\Ads\AdsForm::getServiceTypeName($adType),
-					'icon' => $providerIcons[$adType] ?? null,
-					'hasAuth' => $providerList[$adType]['HAS_AUTH'] ?? false,
-				];
-
-				$providers[] = $provider;
-
-				$links = Crm\Ads\AdsForm::getFormLinks($this->form->getId(), $adType);
-				foreach ($links as $link)
-				{
-					$list[] = [
-						'active' => $provider['hasAuth'],
-						'providerCode' => $adType,
-						'date' => $link['DATE_INSERT'],
-						'form' => [
-							'id' => $link['ADS_FORM_ID'],
-							'title' => $link['ADS_FORM_NAME'],
-						],
-						'account' => [
-							'id' => $link['ADS_ACCOUNT_ID'],
-							'name' => $link['ADS_ACCOUNT_NAME'],
-						],
-					];
-				}
-			}
-		}
-		
-		return [
-			'canUse' => Crm\Ads\AdsForm::canUse(),
-			'cases' => $list,
-			'providers' => $providers,
-		];
-	}
-
 	private function getEmbedding()
 	{
 		if (!$this->form->getId())
@@ -262,6 +218,7 @@ class Options
 			];
 		}
 		return [
+			'link' => Script::getUrlContext($this->form->get()),
 			'scripts' => $scripts,
 			'views' => $this->config->toArray()['views'] ?? [],
 		];
@@ -322,12 +279,7 @@ class Options
 				},
 				$options['presetFields'] ?? []
 			),
-
 			'IS_PAY' => $options['payment']['use'] ? 'Y' : 'N',
-
-			'CAPTCHA_KEY' => $options['captcha']['key'],
-			'CAPTCHA_SECRET' => $options['captcha']['secret'],
-			'CAPTCHA_VERSION' => 2,
 
 			'AGREEMENT_ID' => null,
 
@@ -340,6 +292,10 @@ class Options
 				'DEAL_CATEGORY' => $options['document']['deal']['category'],
 				'DEAL_DC_ENABLED' => $options['document']['deal']['duplicatesEnabled'] ? 'Y' : 'N',
 				'REDIRECT_DELAY' => $options['result']['redirectDelay'],
+				'REFILL' => [
+						'ACTIVE' => ($options['result']['refill']['active'] ?? false) ? 'Y' : 'N',
+						'CAPTION' => $options['result']['refill']['caption'] ?? '',
+					],
 				'VIEWS' => $views,
 			],
 

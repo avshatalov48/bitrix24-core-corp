@@ -45,7 +45,7 @@
 }
 
 .tasks-scrum__backlog .tasks-scrum__content-items {
-	overflow: auto;
+	overflow: hidden auto;
 	box-sizing: border-box;
 }
 

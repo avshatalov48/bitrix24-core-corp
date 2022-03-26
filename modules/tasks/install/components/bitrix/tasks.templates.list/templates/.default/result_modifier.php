@@ -79,25 +79,32 @@ function prepareTaskRowActions($row, $arParams, $arResult)
 
     if ($_REQUEST['IFRAME'])
     {
-        $strIframe = '?IFRAME='.($_REQUEST['IFRAME'] == 'Y' ? 'Y' : 'N');
-        $strIframe2 = '?IFRAME='.($_REQUEST['IFRAME'] == 'Y' ? 'Y' : 'N');
+		$iframe = ($_REQUEST['IFRAME'] === 'Y' ? 'Y' : 'N');
+
+        $strIframe = "?IFRAME={$iframe}";
+        $strIframe2 = "&IFRAME={$iframe}";
     }
 
 	$userId = Util\User::getId();
 	$urlPathAction = $arParams['PATH_TO_USER_TEMPLATES_TEMPLATE'];
 	$urlTaskPath = $arParams['PATH_TO_USER_TASKS_TASK'];
 
-	$newTemplateLink = CComponentEngine::MakePathFromTemplate($urlPathAction, [
-		'user_id' => $userId,
-		'action' => 'edit',
-		'template_id' => 0,
-	]);
+	$newTemplateLink = CComponentEngine::MakePathFromTemplate(
+		$urlPathAction,
+		[
+			'user_id' => $userId,
+			'action' => 'edit',
+			'template_id' => 0,
+		]
+	);
 
 	$allowedActions = $row['ALLOWED_ACTIONS'];
 	$actions = [];
 
-
-	if (array_key_exists(ActionDictionary::ACTION_TEMPLATE_READ, $allowedActions) && $allowedActions[ActionDictionary::ACTION_TEMPLATE_READ])
+	if (
+		array_key_exists(ActionDictionary::ACTION_TEMPLATE_READ, $allowedActions)
+		&& $allowedActions[ActionDictionary::ACTION_TEMPLATE_READ]
+	)
 	{
 		$actions[] = [
 			'text' => GetMessageJS('TASKS_TEMPLATES_ROW_ACTION_VIEW'),
@@ -108,19 +115,22 @@ function prepareTaskRowActions($row, $arParams, $arResult)
 					'action' => 'view',
 					'template_id' => $row['ID'],
 				]
-			).$strIframe,
+			) . $strIframe,
 		];
-		if (array_key_exists(ActionDictionary::ACTION_TEMPLATE_CREATE, $allowedActions) && $allowedActions[ActionDictionary::ACTION_TEMPLATE_CREATE])
+
+		$canCreate =
+			array_key_exists(ActionDictionary::ACTION_TEMPLATE_CREATE, $allowedActions)
+			&& $allowedActions[ActionDictionary::ACTION_TEMPLATE_CREATE]
+		;
+
+		if ($canCreate)
 		{
 			$actions[] = [
 				'text' => GetMessageJS('TASKS_TEMPLATES_ROW_ACTION_COPY'),
-				'href' => $newTemplateLink.'?COPY='.$row['ID'].$strIframe2,
+				'href' => "{$newTemplateLink}?COPY={$row['ID']}{$strIframe2}",
 			];
 		}
-	}
 
-	if (array_key_exists(ActionDictionary::ACTION_TEMPLATE_EDIT, $allowedActions) && $allowedActions[ActionDictionary::ACTION_TEMPLATE_EDIT])
-	{
 		$actions[] = [
 			'text' => GetMessageJS('TASKS_TEMPLATES_ROW_ACTION_CREATE_TASK'),
 			'href' => CComponentEngine::MakePathFromTemplate(
@@ -130,25 +140,39 @@ function prepareTaskRowActions($row, $arParams, $arResult)
 					'action' => 'edit',
 					'task_id' => 0,
 				]
-			).'?TEMPLATE='.$row['ID'].$strIframe2,
+			) . "?TEMPLATE={$row['ID']}{$strIframe2}",
 		];
-		if (\Bitrix\Tasks\Access\TemplateAccessController::can($userId, ActionDictionary::ACTION_TEMPLATE_CREATE))
+
+		if ($canCreate)
 		{
 			$addSubTemplateAction = [
 				'text' => GetMessageJS('TASKS_TEMPLATES_ROW_ACTION_CREATE_SUB_TEMPLATE'),
 			];
 			if ($arResult['AUX_DATA']['TEMPLATE_SUBTASK_LIMIT_EXCEEDED'])
 			{
-				$addSubTemplateAction['onclick'] = "BX.UI.InfoHelper.show('limit_tasks_templates_subtasks');";
+				$addSubTemplateAction['onclick'] = "BX.UI.InfoHelper.show('limit_tasks_templates_subtasks', {
+					isLimit: true,
+					limitAnalyticsLabels: {
+						module: 'tasks',
+						source: 'templateList'
+					}
+				});";
 				$addSubTemplateAction['className'] = 'tasks-list-menu-popup-item-lock';
 			}
 			else
 			{
-				$addSubTemplateAction['href'] = $newTemplateLink.'?BASE_TEMPLATE='.$row['ID'].$strIframe2;
+				$addSubTemplateAction['href'] = "{$newTemplateLink}?BASE_TEMPLATE={$row['ID']}{$strIframe2}";
 			}
 
 			$actions[] = $addSubTemplateAction;
 		}
+	}
+
+	if (
+		array_key_exists(ActionDictionary::ACTION_TEMPLATE_EDIT, $allowedActions)
+		&& $allowedActions[ActionDictionary::ACTION_TEMPLATE_EDIT]
+	)
+	{
 		$actions[] = [
 			'text' => GetMessageJS('TASKS_TEMPLATES_ROW_ACTION_EDIT'),
 			'href' => CComponentEngine::MakePathFromTemplate(
@@ -158,15 +182,18 @@ function prepareTaskRowActions($row, $arParams, $arResult)
 					'action' => 'edit',
 					'template_id' => $row['ID'],
 				]
-			).$strIframe,
+			) . $strIframe,
 		];
 	}
 
-	if (array_key_exists(ActionDictionary::ACTION_TEMPLATE_REMOVE, $allowedActions) && $allowedActions[ActionDictionary::ACTION_TEMPLATE_REMOVE])
+	if (
+		array_key_exists(ActionDictionary::ACTION_TEMPLATE_REMOVE, $allowedActions)
+		&& $allowedActions[ActionDictionary::ACTION_TEMPLATE_REMOVE]
+	)
 	{
 		$actions[] = [
 			'text' => GetMessageJS('TASKS_TEMPLATES_ROW_ACTION_DELETE'),
-			'onclick' => 'DeleteTemplate('.$row['ID'].');',
+			'onclick' => "DeleteTemplate({$row['ID']});",
 		];
 	}
 

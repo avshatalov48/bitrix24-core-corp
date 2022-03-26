@@ -52,7 +52,7 @@ final class ElapsedTime extends \Bitrix\Tasks\Manager
 		);
 	}
 
-	public static function add($userId, array $data, array $parameters = array('PUBLIC_MODE' => false))
+	public static function add($userId, array $data, array $parameters = ['PUBLIC_MODE' => false])
 	{
 		$errors = static::ensureHaveErrorCollection($parameters);
 

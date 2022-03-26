@@ -1,4 +1,6 @@
 <?php
 return [
-	'task/taskcard',
+	'extensions' => [
+		'task/taskcard',
+	]
 ];

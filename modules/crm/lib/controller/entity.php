@@ -22,7 +22,11 @@ class Entity extends Main\Engine\Controller
 			'processMergeByMap' => array('class' => Crm\Controller\Action\Entity\ProcessMergeByMapAction::class),
 			'prepareDeletion' => array('class' => Crm\Controller\Action\Entity\PrepareDeletionAction::class),
 			'cancelDeletion' => array('class' => Crm\Controller\Action\Entity\CancelDeletionAction::class),
-			'processDeletion' => array('class' => Crm\Controller\Action\Entity\ProcessDeletionAction::class)
+			'processDeletion' => array('class' => Crm\Controller\Action\Entity\ProcessDeletionAction::class),
+			'fetchPaymentDocuments' => array(
+				'class' => Crm\Controller\Action\Entity\FetchPaymentDocumentsAction::class,
+				'+prefilters' => [new Main\Engine\ActionFilter\Authentication()]
+			),
 		);
 	}
 
@@ -141,11 +145,11 @@ class Entity extends Main\Engine\Controller
 		}
 		elseif($entityTypeID === \CCrmOwnerType::Contact)
 		{
-			$entityIDs = \CCrmContact::GetTopIDs($limit, 'DESC', $userPermissions);
+			$entityIDs = \CCrmContact::GetTopIDsInCategory(0, $limit, 'DESC', $userPermissions);
 		}
 		elseif($entityTypeID === \CCrmOwnerType::Company)
 		{
-			$entityIDs = \CCrmCompany::GetTopIDs($limit, 'DESC', $userPermissions);
+			$entityIDs = \CCrmCompany::GetTopIDsInCategory(0, $limit, 'DESC', $userPermissions);
 		}
 		elseif($entityTypeID === \CCrmOwnerType::Deal)
 		{
@@ -160,10 +164,7 @@ class Entity extends Main\Engine\Controller
 
 			$entityIDs = $orders->getIdList();
 		}
-		elseif(
-			$entityTypeID === \CCrmOwnerType::Quote
-			|| \CCrmOwnerType::isPossibleDynamicTypeId($entityTypeID)
-		)
+		elseif(\CCrmOwnerType::isUseFactoryBasedApproach($entityTypeID))
 		{
 			$factory = Container::getInstance()->getFactory($entityTypeID);
 			if ($factory)

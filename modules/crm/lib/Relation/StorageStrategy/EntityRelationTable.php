@@ -6,7 +6,6 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Relation;
 use Bitrix\Crm\Relation\RelationType;
 use Bitrix\Crm\Relation\StorageStrategy;
-use Bitrix\Crm\Timeline\RelationController;
 use Bitrix\Main\Result;
 
 class EntityRelationTable extends StorageStrategy
@@ -93,14 +92,7 @@ class EntityRelationTable extends StorageStrategy
 			->setRelationType(static::RELATION_TYPE)
 		;
 
-		$result = $entityObject->save();
-
-		if ($result->isSuccess())
-		{
-			RelationController::getInstance()->onItemsBind($parent, $child);
-		}
-
-		return $result;
+		return $entityObject->save();
 	}
 
 	/**
@@ -108,18 +100,19 @@ class EntityRelationTable extends StorageStrategy
 	 */
 	protected function deleteBinding(ItemIdentifier $parent, ItemIdentifier $child): Result
 	{
-		$result = static::$tableClass::delete([
+		return static::$tableClass::delete([
 			'SRC_ENTITY_TYPE_ID' => $parent->getEntityTypeId(),
 			'SRC_ENTITY_ID' => $parent->getEntityId(),
 			'DST_ENTITY_TYPE_ID' => $child->getEntityTypeId(),
 			'DST_ENTITY_ID' => $child->getEntityId(),
 		]);
-
-		if ($result->isSuccess())
-		{
-			RelationController::getInstance()->onItemsUnbind($parent, $child);
-		}
-
-		return $result;
 	}
+
+	protected function replaceBindings(ItemIdentifier $fromItem, ItemIdentifier $toItem): Result
+	{
+		static::$tableClass::replaceBindings($fromItem, $toItem);
+
+		return new Result();
+	}
+
 }

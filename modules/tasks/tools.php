@@ -1007,11 +1007,11 @@ function tasksRenderJSON(
 			<?if($v['VALUE'] == 'Y' || $v['VALUE'] == 'N'):?>
 				<?
 				$code = $v['CODE'];
-				if($code == \CTasks::PARAMETER_COMPLETE_TASK_FROM_SUBTASKS)
+				if($code == \Bitrix\Tasks\Internals\Task\ParameterTable::PARAM_SUBTASKS_AUTOCOMPLETE)
 				{
 					$code = 'completeTasksFromSubTasks';
 				}
-				elseif($code == \CTasks::PARAMETER_PROJECT_PLAN_FROM_SUBTASKS)
+				elseif($code == \Bitrix\Tasks\Internals\Task\ParameterTable::PARAM_SUBTASKS_TIME)
 				{
 					$code = 'projectPlanFromSubTasks';
 				}

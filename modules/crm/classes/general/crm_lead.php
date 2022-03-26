@@ -63,6 +63,12 @@ class CAllCrmLead
 			$result = Crm\Tracking\UI\Details::getFieldCaption($fieldName);
 		}
 
+		if (Crm\Service\ParentFieldManager::isParentFieldName($fieldName))
+		{
+			$entityTypeId = Crm\Service\ParentFieldManager::getEntityTypeIdFromFieldName($fieldName);
+			$result = \CCrmOwnerType::GetDescription($entityTypeId);
+		}
+
 		return is_string($result) ? $result : '';
 	}
 	// Get Fields Metadata
@@ -191,6 +197,10 @@ class CAllCrmLead
 					'TYPE' => 'user',
 					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
 				),
+				'MOVED_BY_ID' => [
+					'TYPE' => 'user',
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly],
+				],
 				'DATE_CREATE' => array(
 					'TYPE' => 'datetime',
 					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
@@ -199,6 +209,10 @@ class CAllCrmLead
 					'TYPE' => 'datetime',
 					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
 				),
+				'MOVED_TIME' => [
+					'TYPE' => 'datetime',
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly],
+				],
 				'COMPANY_ID' => array(
 					'TYPE' => 'crm_company',
 					'SETTINGS' => [
@@ -226,7 +240,7 @@ class CAllCrmLead
 				),
 				'ORIGIN_ID' => array(
 					'TYPE' => 'string'
-				)
+				),
 				/*'DISCOUNT_TYPE_ID' => array(
 					'TYPE' => 'integer'
 				),
@@ -239,7 +253,9 @@ class CAllCrmLead
 			);
 
 			// add utm fields
-			self::$FIELD_INFOS = self::$FIELD_INFOS + UtmTable::getUtmFieldsInfo();
+			self::$FIELD_INFOS += UtmTable::getUtmFieldsInfo();
+
+			self::$FIELD_INFOS += Crm\Service\Container::getInstance()->getParentFieldManager()->getParentFieldsInfo(\CCrmOwnerType::Lead);
 		}
 
 		return self::$FIELD_INFOS;
@@ -327,6 +343,9 @@ class CAllCrmLead
 			'ORIGIN_ID' => array('FIELD' => 'L.ORIGIN_ID', 'TYPE' => 'string'), //ITEM ID IN EXTERNAL SYSTEM
 			'FACE_ID' => array('FIELD' => 'L.FACE_ID', 'TYPE' => 'int'),
 
+			'MOVED_BY_ID' => ['FIELD' => 'L.MOVED_BY_ID', 'TYPE' => 'int'],
+			'MOVED_TIME' => ['FIELD' => 'L.MOVED_TIME', 'TYPE' => 'datetime'],
+
 			// For compatibility only
 			'PRODUCT_ID' => array('FIELD' => 'L.PRODUCT_ID', 'TYPE' => 'string')
 		);
@@ -390,6 +409,14 @@ class CAllCrmLead
 
 		// add utm fields
 		$result = array_merge($result, UtmTable::getFieldsDescriptionByEntityTypeId(CCrmOwnerType::Lead));
+
+		$result = array_merge(
+			$result,
+			Crm\Service\Container::getInstance()->getParentFieldManager()->getParentFieldsSqlInfo(
+				CCrmOwnerType::Lead,
+				'L'
+			)
+		);
 
 		return $result;
 	}
@@ -557,7 +584,7 @@ class CAllCrmLead
 		Tracking\UI\Filter::buildFilterAfterPrepareSql(
 			$sqlData,
 			$arFilter,
-			\CCrmOwnerType::ResolveID(self::$TYPE_NAME),
+			\CCrmOwnerType::Lead,
 			$sender->GetTableAlias()
 		);
 
@@ -1247,6 +1274,15 @@ class CAllCrmLead
 			$arFields['~DATE_MODIFY'] = $DB->CurrentTimeFunction();
 		}
 
+		if(!($isRestoration && isset($arFields['MOVED_TIME'])))
+		{
+			unset($arFields['MOVED_TIME']);
+		}
+		if(!($isRestoration && isset($arFields['MOVED_BY_ID'])))
+		{
+			unset($arFields['MOVED_BY_ID']);
+		}
+
 		if($userID > 0)
 		{
 			if(!(isset($arFields['CREATED_BY_ID']) && $arFields['CREATED_BY_ID'] > 0))
@@ -1301,6 +1337,15 @@ class CAllCrmLead
 		else
 		{
 			$arFields['BIRTHDAY_SORT'] = \Bitrix\Crm\BirthdayReminder::prepareSorting('');
+		}
+
+		if (!isset($arFields['MOVED_BY_ID']))
+		{
+			$arFields['MOVED_BY_ID'] = (int)$userID;
+		}
+		if (!isset($arFields['MOVED_TIME']))
+		{
+			$arFields['MOVED_TIME'] = (new \Bitrix\Main\Type\DateTime())->toString();
 		}
 
 		if(!isset($arFields['STATUS_ID']) || (string)$arFields['STATUS_ID'] === '')
@@ -1395,6 +1440,7 @@ class CAllCrmLead
 		}
 
 		//region Setup HAS_EMAIL & HAS_PHONE & HAS_IMOL fields
+		//todo fill HAS_EMAIL and similar fields based on multifields
 		$arFields['HAS_EMAIL'] = $arFields['HAS_PHONE'] = $arFields['HAS_IMOL'] = 'N';
 		if(isset($arFields['FM']) && is_array($arFields['FM']))
 		{
@@ -1481,6 +1527,7 @@ class CAllCrmLead
 		//endregion
 
 		//region Rise BeforeAdd event
+		//todo rise events
 		$beforeEvents = GetModuleEvents('crm', 'OnBeforeCrmLeadAdd');
 		while ($arEvent = $beforeEvents->Fetch())
 		{
@@ -1535,6 +1582,7 @@ class CAllCrmLead
 		}
 		//endregion
 
+		//todo register duplication criterions
 		$companyTitle = isset($arFields['COMPANY_TITLE']) ? $arFields['COMPANY_TITLE'] : '';
 		if($companyTitle !== '')
 		{
@@ -1567,6 +1615,7 @@ class CAllCrmLead
 			'LOC_ADDR' => isset($arFields['ADDRESS_LOC_ADDR']) ? $arFields['ADDRESS_LOC_ADDR'] : null
 		);
 
+		//todo register address
 		if(!\Bitrix\Crm\EntityAddress::isEmpty($addressFields) || $addressFields['LOC_ADDR'])
 		{
 			\Bitrix\Crm\EntityAddress::register(
@@ -1581,6 +1630,7 @@ class CAllCrmLead
 		$GLOBALS['USER_FIELD_MANAGER']->Update(self::$sUFEntityID, $ID, $arFields);
 
 		//Statistics & History -->
+		//todo implement lead statistics facade
 		Bitrix\Crm\Statistics\LeadSumStatisticEntry::register($ID, $arFields);
 		Bitrix\Crm\History\LeadStatusHistoryEntry::register($ID, $arFields, array('IS_NEW' => !$isRestoration));
 		if($arFields['STATUS_ID'] === 'CONVERTED')
@@ -1666,6 +1716,13 @@ class CAllCrmLead
 		}
 		//endregion
 
+		//region save parent relations
+		Crm\Service\Container::getInstance()->getParentFieldManager()->saveParentRelationsForIdentifier(
+			new Crm\ItemIdentifier(\CCrmOwnerType::Lead, $ID),
+			$arFields
+		);
+		//endregion
+
 		if($bUpdateSearch)
 		{
 			CCrmSearch::UpdateSearch(array('ID' => $ID, 'CHECK_PERMISSIONS' => 'N'), 'LEAD', true);
@@ -1677,6 +1734,7 @@ class CAllCrmLead
 		)->build($ID, ['checkExist' => true]);
 		//endregion
 
+		//todo register social network events for lead
 		if(isset($options['REGISTER_SONET_EVENT']) && $options['REGISTER_SONET_EVENT'] === true)
 		{
 			$opportunity = round((isset($arFields['OPPORTUNITY']) ? doubleval($arFields['OPPORTUNITY']) : 0.0), 2);
@@ -1735,7 +1793,8 @@ class CAllCrmLead
 					"NOTIFY_TYPE" => IM_NOTIFY_FROM,
 					"NOTIFY_MODULE" => "crm",
 					"LOG_ID" => $logEventID,
-					"NOTIFY_EVENT" => "lead_add",
+					//"NOTIFY_EVENT" => "lead_add",
+					"NOTIFY_EVENT" => "changeAssignedBy",
 					"NOTIFY_TAG" => "CRM|LEAD|".$ID,
 					"NOTIFY_MESSAGE" => GetMessage("CRM_LEAD_RESPONSIBLE_IM_NOTIFY", Array("#title#" => "<a href=\"".$url."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx($arFields['TITLE'])."</a>")),
 					"NOTIFY_MESSAGE_OUT" => GetMessage("CRM_LEAD_RESPONSIBLE_IM_NOTIFY", Array("#title#" => htmlspecialcharsbx($arFields['TITLE'])))." (".$serverName.$url.")"
@@ -1905,15 +1964,14 @@ class CAllCrmLead
 			return false;
 		}
 
-		if (isset($arFields['DATE_CREATE']))
-		{
-			unset($arFields['DATE_CREATE']);
-		}
-
-		if (isset($arFields['DATE_MODIFY']))
-		{
-			unset($arFields['DATE_MODIFY']);
-		}
+		unset(
+			$arFields['DATE_CREATE'],
+			$arFields['DATE_MODIFY'],
+			$arFields['DATE_CLOSED'],
+			$arFields['IS_RETURN_CUSTOMER'],
+			$arFields['MOVED_BY_ID'],
+			$arFields['MOVED_TIME']
+		);
 
 		if(!$isSystemAction)
 		{
@@ -1922,11 +1980,6 @@ class CAllCrmLead
 			{
 				$arFields['MODIFY_BY_ID'] = $iUserId;
 			}
-		}
-
-		if (isset($arFields['DATE_CLOSED']))
-		{
-			unset($arFields['DATE_CLOSED']);
 		}
 
 		if (!empty($arFields['STATUS_ID']) && $arFields['STATUS_ID'] !== $arRow['STATUS_ID'])
@@ -1939,11 +1992,6 @@ class CAllCrmLead
 		if(isset($arFields['ASSIGNED_BY_ID']) && $arFields['ASSIGNED_BY_ID'] <= 0)
 		{
 			unset($arFields['ASSIGNED_BY_ID']);
-		}
-
-		if(isset($arFields['IS_RETURN_CUSTOMER']))
-		{
-			unset($arFields['IS_RETURN_CUSTOMER']);
 		}
 
 		$companyID = isset($arFields['COMPANY_ID'])
@@ -2020,6 +2068,12 @@ class CAllCrmLead
 				$arFields['STATUS_SEMANTIC_ID'] = self::IsStatusExists($arFields['STATUS_ID'])
 					? self::GetSemanticID($arFields['STATUS_ID'])
 					: Bitrix\Crm\PhaseSemantics::UNDEFINED;
+
+				if ($arFields['STATUS_ID'] !== $arRow['STATUS_ID'])
+				{
+					$arFields['MOVED_BY_ID'] = $iUserId;
+					$arFields['MOVED_TIME'] = (new \Bitrix\Main\Type\DateTime())->toString();
+				}
 			}
 			else
 			{
@@ -2296,6 +2350,7 @@ class CAllCrmLead
 				$arFields['FULL_NAME'] = trim((isset($arFields['NAME'])? $arFields['NAME']: $arRes['NAME']).' '.(isset($arFields['LAST_NAME'])? $arFields['LAST_NAME']: $arRes['LAST_NAME']));
 			}
 
+			//todo make HAS_EMAIL and similar fields immutable
 			if(isset($arFields['HAS_EMAIL']))
 			{
 				unset($arFields['HAS_EMAIL']);
@@ -2479,6 +2534,7 @@ class CAllCrmLead
 			//endregion
 
 			//region Enrich associated company and primary contact of returning customer
+			//todo update company and contact on lead update
 			if(isset($arFields['IS_RETURN_CUSTOMER']) && $arFields['IS_RETURN_CUSTOMER'] === 'Y')
 			{
 				if($companyID > 0)
@@ -2523,6 +2579,7 @@ class CAllCrmLead
 			{
 				$providerIDs = array();
 				$completionConfig = \Bitrix\Crm\Settings\LeadSettings::getCurrent()->getActivityCompletionConfig();
+				//todo complete activities based on settings
 				foreach(\Bitrix\Crm\Activity\Provider\ProviderManager::getCompletableProviderList() as $providerInfo)
 				{
 					$providerID = $providerInfo['ID'];
@@ -2566,6 +2623,7 @@ class CAllCrmLead
 						new Bitrix\Crm\Conversion\LeadConversionConfig()
 					);
 					$converter->setEntityID($ID);
+					//todo unbind lead child entities after move to a success stage
 					$converter->unbindChildEntities();
 				}
 
@@ -2579,6 +2637,7 @@ class CAllCrmLead
 			}
 			//endregion
 
+			//todo add multifields support
 			if (isset($arFields['FM']) && is_array($arFields['FM']))
 			{
 				$CCrmFieldMulti = new CCrmFieldMulti();
@@ -2671,6 +2730,13 @@ class CAllCrmLead
 				->build($ID, ['checkExist' => true]);
 			//endregion
 
+			//region save parent relations
+			Crm\Service\Container::getInstance()->getParentFieldManager()->saveParentRelationsForIdentifier(
+				new Crm\ItemIdentifier(\CCrmOwnerType::Lead, $ID),
+				$arFields
+			);
+			//endregion
+
 			Bitrix\Crm\Timeline\LeadController::getInstance()->onModify(
 				$ID,
 				array('CURRENT_FIELDS' => $arFields, 'PREVIOUS_FIELDS' => $arRow)
@@ -2754,7 +2820,8 @@ class CAllCrmLead
 								"NOTIFY_TYPE" => IM_NOTIFY_FROM,
 								"NOTIFY_MODULE" => "crm",
 								"LOG_ID" => $logEventID,
-								"NOTIFY_EVENT" => "lead_update",
+								//"NOTIFY_EVENT" => "lead_update",
+								"NOTIFY_EVENT" => "changeAssignedBy",
 								"NOTIFY_TAG" => "CRM|LEAD_RESPONSIBLE|".$ID,
 								"NOTIFY_MESSAGE" => GetMessage("CRM_LEAD_RESPONSIBLE_IM_NOTIFY", Array("#title#" => "<a href=\"".$url."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx($title)."</a>")),
 								"NOTIFY_MESSAGE_OUT" => GetMessage("CRM_LEAD_RESPONSIBLE_IM_NOTIFY", Array("#title#" => htmlspecialcharsbx($title)))." (".$serverName.$url.")"
@@ -2775,7 +2842,8 @@ class CAllCrmLead
 								"NOTIFY_TYPE" => IM_NOTIFY_FROM,
 								"NOTIFY_MODULE" => "crm",
 								"LOG_ID" => $logEventID,
-								"NOTIFY_EVENT" => "lead_update",
+								//"NOTIFY_EVENT" => "lead_update",
+								"NOTIFY_EVENT" => "changeAssignedBy",
 								"NOTIFY_TAG" => "CRM|LEAD_RESPONSIBLE|".$ID,
 								"NOTIFY_MESSAGE" => GetMessage("CRM_LEAD_NOT_RESPONSIBLE_IM_NOTIFY", Array("#title#" => "<a href=\"".$url."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx($title)."</a>")),
 								"NOTIFY_MESSAGE_OUT" => GetMessage("CRM_LEAD_NOT_RESPONSIBLE_IM_NOTIFY", Array("#title#" => htmlspecialcharsbx($title)))." (".$serverName.$url.")"
@@ -2807,7 +2875,8 @@ class CAllCrmLead
 									"NOTIFY_TYPE" => IM_NOTIFY_FROM,
 									"NOTIFY_MODULE" => "crm",
 									"LOG_ID" => $logEventID,
-									"NOTIFY_EVENT" => "lead_update",
+									//"NOTIFY_EVENT" => "lead_update",
+									"NOTIFY_EVENT" => "changeStage",
 									"NOTIFY_TAG" => "CRM|LEAD_PROGRESS|".$ID,
 									"NOTIFY_MESSAGE" => GetMessage("CRM_LEAD_PROGRESS_IM_NOTIFY", Array(
 										"#title#" => "<a href=\"".$url."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx($title)."</a>",
@@ -3071,6 +3140,7 @@ class CAllCrmLead
 				);
 			}
 
+			//todo rebind activities to a client if lead is converted
 			if($isConverted)
 			{
 				if($contactID > 0)
@@ -4859,5 +4929,22 @@ class CAllCrmLead
 		}
 		return false;
 	}
+
+	public static function Rebind(int $ownerTypeId, int $oldId, int $newId)
+	{
+		$ownerTypeId = intval($ownerTypeId);
+		$oldId = intval($oldId);
+		$newId = intval($newId);
+		$tableName = CCrmLead::TABLE_NAME;
+
+		$connection = \Bitrix\Main\Application::getConnection();
+		if($ownerTypeId === CCrmOwnerType::Contact)
+		{
+			$connection->query("UPDATE {$tableName} SET CONTACT_ID = {$newId} WHERE CONTACT_ID = {$oldId}");
+		}
+		elseif($ownerTypeId === CCrmOwnerType::Company)
+		{
+			$connection->query("UPDATE {$tableName} SET COMPANY_ID = {$newId} WHERE COMPANY_ID = {$oldId}");
+		}
+	}
 }
-?>

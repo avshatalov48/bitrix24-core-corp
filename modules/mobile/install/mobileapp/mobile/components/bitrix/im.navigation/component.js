@@ -40,17 +40,24 @@
 				return;
 			}
 
-			console.log('onTabChange', 'change tab', id);
-
-			const previousTab = this.currentTab;
-
-			tabs.setActiveItem(id);
-			this.currentTab = tabs.getCurrentItem();
-
-			if (this.currentTab !== previousTab)
+			if (!PageManager.getNavigator().isActiveTab())
 			{
-				this.previousTab = previousTab;
+				PageManager.getNavigator().makeTabActive();
 			}
+
+			BX.onViewLoaded(() =>
+			{
+				console.log('onTabChange', 'change tab', id);
+
+				const previousTab = this.currentTab;
+				tabs.setActiveItem(id);
+				this.currentTab = tabs.getCurrentItem();
+
+				if (this.currentTab !== previousTab)
+				{
+					this.previousTab = previousTab;
+				}
+			});
 		}
 
 		onTabSelected(item, changed)

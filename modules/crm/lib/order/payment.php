@@ -19,6 +19,7 @@ if (!Main\Loader::includeModule('sale'))
 /**
  * Class Payment
  * @package Bitrix\Crm\Order
+ * @method Order getOrder()
  */
 class Payment extends Sale\Payment
 {
@@ -101,14 +102,13 @@ class Payment extends Sale\Payment
 			]
 		];
 
-		if ($this->getOrder()->getDealbinding())
+		/** @var EntityBinding $binding */
+		$binding = $this->getOrder()->getEntityBinding();
+		if ($binding)
 		{
-			/** @var DealBinding $dealBindings */
-			$dealBindings = $this->getOrder()->getDealBinding();
-
 			$bindings[] = [
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
-				'ENTITY_ID' => $dealBindings->getDealId()
+				'ENTITY_TYPE_ID' => $binding->getOwnerTypeId(),
+				'ENTITY_ID' => $binding->getOwnerId()
 			];
 		}
 
@@ -166,6 +166,7 @@ class Payment extends Sale\Payment
 		if ($deleteResult->isSuccess() && (int)$this->getId() > 0)
 		{
 			Crm\Timeline\TimelineEntry::deleteByOwner(\CCrmOwnerType::OrderPayment, $this->getId());
+			Crm\Integration\DocumentGeneratorManager::getInstance()->clearPaymentBindings($this->getId());
 			PaymentWorkflow::createFrom($this)->resetStage();
 		}
 
@@ -182,8 +183,8 @@ class Payment extends Sale\Payment
 		$order = $this->getOrder();
 
 		/** @var Contact|Company|null $entityCommunication */
-		$entityCommunication = $order->getEntityCommunication();
-		$phoneTo = $order->getEntityCommunicationPhone();
+		$entityCommunication = $order->getContactCompanyCollection()->getEntityCommunication();
+		$phoneTo = $order->getContactCompanyCollection()->getEntityCommunicationPhone();
 
 		if (
 			$order->getTradeBindingCollection()->hasTradingPlatform(

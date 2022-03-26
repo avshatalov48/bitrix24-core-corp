@@ -1,6 +1,10 @@
+import {Dom} from 'main.core';
+import {Loader} from 'main.loader';
 import {BaseEvent} from 'main.core.events';
 
 import {Filter} from '../service/filter';
+
+import {PlanBuilder} from '../view/plan/plan.builder';
 
 import {EntityStorage} from '../entity/entity.storage';
 import {Sprint} from '../entity/sprint/sprint';
@@ -12,7 +16,8 @@ import {Item, ItemParams} from '../item/item';
 type Params = {
 	filter: Filter,
 	requestSender: RequestSender,
-	entityStorage: EntityStorage
+	entityStorage: EntityStorage,
+	planBuilder: PlanBuilder
 }
 
 export class FilterHandler
@@ -22,6 +27,7 @@ export class FilterHandler
 		this.filter = params.filter;
 		this.requestSender = params.requestSender;
 		this.entityStorage = params.entityStorage;
+		this.planBuilder = params.planBuilder;
 
 		this.filter.subscribe('applyFilter', this.onApplyFilter.bind(this));
 	}
@@ -29,6 +35,17 @@ export class FilterHandler
 	onApplyFilter(baseEvent: BaseEvent)
 	{
 		this.fadeOutAll();
+
+		const containerPosition = Dom.getPosition(this.planBuilder.getScrumContainer());
+
+		const loader = new Loader({
+			target: this.planBuilder.getScrumContainer(),
+			offset: {
+				top: `${containerPosition.top / 2}px`
+			}
+		});
+
+		loader.show();
 
 		this.requestSender.applyFilter().then((response) => {
 
@@ -55,9 +72,13 @@ export class FilterHandler
 			});
 
 			this.fadeInAll();
+
+			loader.hide();
 		}).catch((response) => {
 
 			this.fadeInAll();
+
+			loader.hide();
 
 			this.requestSender.showErrorAlert(response);
 		});

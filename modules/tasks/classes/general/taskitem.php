@@ -2010,17 +2010,25 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 
 			while ($arData = $rsData->fetch())
 			{
-				$taskId       = (int) $arData['ID'];
+				$taskId = (int)$arData['ID'];
 				$arTasksIDs[] = $taskId;
 
-				if(in_array('AUDITORS', $arSelect) || in_array('*', $arSelect))
+				if (in_array('AUDITORS', $arSelect) || in_array('*', $arSelect))
 				{
-					$arData['AUDITORS']    = array();
+					$arData['AUDITORS'] = [];
+				}
+				if (in_array('ACCOMPLICES', $arSelect) || in_array('*', $arSelect))
+				{
+					$arData['ACCOMPLICES'] = [];
 				}
 
-				if(in_array('ACCOMPLICES', $arSelect) || in_array('*', $arSelect))
+				if (array_key_exists('TITLE', $arData))
 				{
-					$arData['ACCOMPLICES']    = array();
+					$arData['TITLE'] = \Bitrix\Main\Text\Emoji::decode($arData['TITLE']);
+				}
+				if (array_key_exists('DESCRIPTION', $arData) && $arData['DESCRIPTION'] !== '')
+				{
+					$arData['DESCRIPTION'] = \Bitrix\Main\Text\Emoji::decode($arData['DESCRIPTION']);
 				}
 
 				$arItemsData[$taskId]  = $arData;

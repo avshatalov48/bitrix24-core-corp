@@ -22,8 +22,6 @@ BX.namespace('Tasks.Component');
 				this.callConstruct(BX.Tasks.Component);
 				this.initFileView();
 
-				this.query = new BX.Tasks.Util.Query({url: "/bitrix/components/bitrix/tasks.task.template/ajax.php"});
-
 				this.checkListChanged = false;
 				this.showCloseConfirmation = false;
 				this.analyticsData = {};
@@ -131,15 +129,31 @@ BX.namespace('Tasks.Component');
 				var priority = this.option('data').PRIORITY;
 				var newPriority = priority == 2 ? 1 : 2;
 
-				this.callRemote('task.template.update', {id: this.option('data').ID, data: {
-					PRIORITY: newPriority
-				}}).then(function(result){
-					if(result.isSuccess())
+				BX.ajax.runComponentAction('bitrix:tasks.task.template', 'setPriority', {
+					mode: 'class',
+					data: {
+						templateId: this.option('data').ID,
+						priority: newPriority
+					}
+				}).then(
+					function(response)
 					{
+						if (
+							!response.status
+							|| response.status !== 'success'
+						)
+						{
+							this.isSaving = false;
+							return;
+						}
 						this.option('can').PRIORITY = newPriority;
 						BX.toggleClass(node, 'no');
-					}
-				}.bind(this));
+					}.bind(this),
+					function(response)
+					{
+
+					}.bind(this)
+				);
 			},
 
 			syncTags: function(tags)
@@ -154,24 +168,54 @@ BX.namespace('Tasks.Component');
 					tags = tmpTags;
 				}
 
-				this.callRemote('task.template.update', {id: this.option('data').ID, data: {
-					SE_TAG: tags
-				}});
+				BX.ajax.runComponentAction('bitrix:tasks.task.template', 'setTags', {
+					mode: 'class',
+					data: {
+						templateId: this.option('data').ID,
+						tags: tags
+					}
+				}).then(
+					function(response)
+					{
+
+					}.bind(this),
+					function(response)
+					{
+
+					}.bind(this)
+				);
 			},
 
 			onButtonClick: function(code)
 			{
-				if (code == 'DELETE')
+				if (code === 'DELETE')
 				{
-					this.callRemote('task.template.delete', {id: this.option('data').ID}, {},
-						function()
+					BX.ajax.runComponentAction('bitrix:tasks.task.template', 'delete', {
+						mode: 'class',
+						data: {
+							templateId: this.option('data').ID
+						}
+					}).then(
+						function(response)
 						{
+							if (
+								!response.status
+								|| response.status !== 'success'
+							)
+							{
+								return;
+							}
+
 							BX.UI.Notification.Center.notify({
 								content: BX.message('TASKS_NOTIFY_TASK_DELETED')
 							});
 
 							window.location = this.option('backUrl');
-						}
+						}.bind(this),
+						function(response)
+						{
+
+						}.bind(this)
 					);
 				}
 			},
@@ -217,7 +261,13 @@ BX.namespace('Tasks.Component');
 				)
 				{
 					e.preventDefault();
-					BX.UI.InfoHelper.show('limit_tasks_templates_subtasks');
+					BX.UI.InfoHelper.show('limit_tasks_templates_subtasks', {
+						isLimit: true,
+						limitAnalyticsLabels: {
+							module: 'tasks',
+							source: 'templateView'
+						}
+					});
 				}
 			},
 
@@ -225,22 +275,32 @@ BX.namespace('Tasks.Component');
 			{
 				var self = this;
 				var treeStructure = BX.Tasks.CheckListInstance.getTreeStructure();
-				var args = {
-					items: treeStructure.getRequestData(),
-					templateId: this.option('data').ID,
-					userId: this.option('data').USER_ID,
-					params: {
-						analyticsData: Object.assign(this.analyticsData, {
-							checklistCount: treeStructure.getDescendantsCount()
-						})
-					}
-				};
 
-				this.query.run('TasksTaskTemplateComponent.saveCheckList', args).then(function(result) {
-					if (result.isSuccess())
+				BX.ajax.runComponentAction('bitrix:tasks.task.template', 'saveChecklist', {
+					mode: 'class',
+					data: {
+						templateId: this.option('data').ID,
+						items: treeStructure.getRequestData(),
+						params: {
+							analyticsData: Object.assign(this.analyticsData, {
+								checklistCount: treeStructure.getDescendantsCount()
+							})
+						}
+					}
+				}).then(
+					function(response)
 					{
+						if (
+							!response.status
+							|| response.status !== 'success'
+						)
+						{
+							this.isSaving = false;
+							return;
+						}
+
 						var treeStructure = BX.Tasks.CheckListInstance.getTreeStructure();
-						var traversedItems = result.getData().TRAVERSED_ITEMS;
+						var traversedItems = response.data.TRAVERSED_ITEMS;
 
 						if (traversedItems)
 						{
@@ -259,12 +319,14 @@ BX.namespace('Tasks.Component');
 						this.analyticsData = {};
 
 						self.toggleFooterWrap(false);
-					}
 
-					this.isSaving = false;
-				}.bind(this));
-
-				this.query.execute();
+						this.isSaving = false;
+					}.bind(this),
+					function(response)
+					{
+						this.isSaving = false;
+					}.bind(this)
+				);
 			},
 
 			onCancelButtonClick: function()

@@ -1,8 +1,13 @@
 <?php
 namespace Bitrix\Crm\Settings;
-use Bitrix\Main;
+
+use Bitrix\Crm\Conversion\ConversionManager;
+use Bitrix\Crm\Conversion\EntityConversionConfig;
 use Bitrix\Crm\Integration\Bitrix24Manager;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Main;
 use Bitrix\Main\ModuleManager;
+
 class InvoiceSettings
 {
 	const VIEW_LIST = EntityViewSettings::LIST_VIEW;
@@ -16,6 +21,8 @@ class InvoiceSettings
 	private static $descriptions = null;
 	/** @var BooleanSetting  */
 	private $isOpened = null;
+	private $isOldInvoicesEnabled;
+	private $isShowInvoiceTransitionNotice;
 	/** @var BooleanSetting  */
 	private $isEnableSign = null;
 	/** @var IntegerSetting */
@@ -28,17 +35,20 @@ class InvoiceSettings
 		$this->defaultListView = new IntegerSetting('invoice_default_list_view', self::VIEW_KANBAN);
 		$this->isOpened = new BooleanSetting('invoice_opened_flag', true);
 		$this->isEnableSign = new BooleanSetting('invoice_enable_public_b24_sign', true);
+		$this->isShowInvoiceTransitionNotice = new BooleanSetting('invoice_show_transition_notice', true);
+		$this->isOldInvoicesEnabled = new BooleanSetting('old_invoice_enable', true);
 	}
 	/**
 	 * Get current instance
 	 * @return InvoiceSettings
 	 */
-	public static function getCurrent()
+	public static function getCurrent(): InvoiceSettings
 	{
 		if(self::$current === null)
 		{
 			self::$current = new InvoiceSettings();
 		}
+
 		return self::$current;
 	}
 	/**
@@ -128,10 +138,10 @@ class InvoiceSettings
 		{
 			self::includeModuleFile();
 
-			self::$descriptions= array(
+			self::$descriptions= [
 				self::VIEW_LIST => GetMessage('CRM_INVOICE_SETTINGS_VIEW_LIST'),
 				self::VIEW_KANBAN => GetMessage('CRM_INVOICE_SETTINGS_VIEW_KANBAN')
-			);
+			];
 		}
 		return self::$descriptions;
 	}
@@ -141,7 +151,9 @@ class InvoiceSettings
 	 */
 	public static function prepareViewListItems()
 	{
-		return \CCrmEnumeration::PrepareListItems(self::getViewDescriptions());
+		$viewDescriptions = self::getViewDescriptions();
+
+		return \CCrmEnumeration::PrepareListItems($viewDescriptions);
 	}
 	/**
 	 * Include language file
@@ -156,5 +168,49 @@ class InvoiceSettings
 
 		Main\Localization\Loc::loadMessages(__FILE__);
 		self::$messagesLoaded = true;
+	}
+
+	public function isSmartInvoiceEnabled(): bool
+	{
+		return Container::getInstance()->getTypeByEntityTypeId(\CCrmOwnerType::SmartInvoice) !== null;
+	}
+
+	public function isOldInvoicesEnabled(): bool
+	{
+		return $this->isOldInvoicesEnabled->get();
+	}
+
+	public function setOldInvoicesEnabled(bool $isEnabled): void
+	{
+		$isEnabledPrevious = $this->isOldInvoicesEnabled();
+		$this->isOldInvoicesEnabled->set($isEnabled);
+
+		if ($isEnabledPrevious !== $isEnabled)
+		{
+			$this->onAfterChangeIsOldInvoicesEnabled();
+		}
+	}
+
+	private function onAfterChangeIsOldInvoicesEnabled(): void
+	{
+		foreach (ConversionManager::getSourceEntityTypeIDs(\CCrmOwnerType::Invoice) as $sourceEntityTypeID)
+		{
+			EntityConversionConfig::removeByEntityTypeId($sourceEntityTypeID);
+		}
+	}
+
+	public function isOldInvoicesEnablingPossible(): bool
+	{
+		return $this->isSmartInvoiceEnabled();
+	}
+
+	public function isShowInvoiceTransitionNotice(): bool
+	{
+		return $this->isShowInvoiceTransitionNotice->get();
+	}
+
+	public function setShowInvoiceTransitionNotice(bool $isShowInvoiceTransitionNotice): void
+	{
+		$this->isShowInvoiceTransitionNotice->set($isShowInvoiceTransitionNotice);
 	}
 }

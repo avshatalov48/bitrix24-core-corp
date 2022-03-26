@@ -34,7 +34,7 @@ export class PullCounters
 	{
 		return {
 			task_view: this.onTaskView.bind(this),
-			project_read_all: this.onCommentsReadAll.bind(this)
+			scrum_read_all: this.onCommentsReadAll.bind(this)
 		};
 	}
 

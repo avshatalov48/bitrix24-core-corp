@@ -92,6 +92,7 @@
 	margin-bottom: 24px;
 	padding: 16px 12px;
 	position: relative;
+	transition: .2s;
 }
 
 .tasks-scrum__content::before {
@@ -366,4 +367,64 @@
 
 .tasks-scrum-entity-items-loader {
 	overflow: hidden;
+}
+
+.tasks-scrum__item--dragstrate {
+	display: none;
+	pointer-events: none;
+}
+
+.tasks-scrum__item.--multiple-drag-shadow {
+	opacity: 0.5;
+}
+
+.ui-draggable--draggable .tasks-scrum__item.--multiple-drag::before,
+.ui-draggable--draggable .tasks-scrum__item.--multiple-drag-many::before {
+	box-shadow: 0 -1px 1px var(--tasks_scrum-black_alpha_08), 0px 1px 1px var(--tasks_scrum-black_alpha_08);
+}
+
+.ui-draggable--draggable .tasks-scrum__item.--multiple-drag .tasks-scrum__item--dragstrate,
+.ui-draggable--draggable .tasks-scrum__item.--multiple-drag-many .tasks-scrum__item--dragstrate {
+	display: block;
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	z-index: -2;
+}
+
+.ui-draggable--draggable .tasks-scrum__item.--multiple-drag .tasks-scrum__item--dragstrate::before,
+.ui-draggable--draggable .tasks-scrum__item.--multiple-drag-many .tasks-scrum__item--dragstrate::before,
+.ui-draggable--draggable .tasks-scrum__item.--multiple-drag-many .tasks-scrum__item--dragstrate::after {
+	content: '';
+	display: block;
+	position: absolute;
+	bottom: 0;
+	left: 2px;
+	width: 100%;
+	height: 100%;
+	background: var(--tasks_scrum-white);
+	transform: rotate(1deg);
+	border-radius: 3px;
+	box-shadow: 0 -1px 1px var(--tasks_scrum-black_alpha_08), 0 1px 1px var(--tasks_scrum-black_alpha_08);
+}
+
+.ui-draggable--draggable .tasks-scrum__item.--multiple-drag-many .tasks-scrum__item--dragstrate::after {
+	left: 5px;
+	transform: rotate(2deg);
+	z-index: -1;
+	box-shadow: 0 1px 1px 0 var(--tasks_scrum-black_alpha_08);
+}
+
+
+.ui-draggable--draggable .tasks-scrum__item.--item-backlog.--multiple-drag .tasks-scrum__item--dragstrate::before,
+.ui-draggable--draggable .tasks-scrum__item.--item-backlog.--multiple-drag-many .tasks-scrum__item--dragstrate::before,
+.ui-draggable--draggable .tasks-scrum__item.--item-backlog.--multiple-drag-many .tasks-scrum__item--dragstrate::after {
+	border-left: 3px solid var(--tasks_scrum-grey-3);
+}
+
+.ui-draggable--draggable .tasks-scrum__item.--parent-tasks.--multiple-drag .tasks-scrum__item--substrate,
+.ui-draggable--draggable .tasks-scrum__item.--parent-tasks.--multiple-drag-many .tasks-scrum__item--substrate {
+	display: none;
 }

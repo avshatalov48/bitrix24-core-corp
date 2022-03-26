@@ -11,6 +11,7 @@ namespace Bitrix\Tasks\Processor\Task\Scheduler\RelationManager;
 use Bitrix\Tasks\Internals\DataBase\Structure\ClosureTree\Fragment;
 use Bitrix\Tasks\Internals\Helper\Task\Dependence;
 use Bitrix\Tasks\Internals\RunTime;
+use Bitrix\Tasks\Internals\Task\ParameterTable;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Processor\Task\Scheduler\Result\Impact;
 use Bitrix\Tasks\Processor\Task\Result;
@@ -291,7 +292,7 @@ final class SubTask extends \Bitrix\Tasks\Processor\Task\Scheduler\RelationManag
 		{
 			foreach($data['SE_PARAMETER'] as $param)
 			{
-				if($param['CODE'] == 1) // todo: use constant here, not just 1
+				if($param['CODE'] == ParameterTable::PARAM_SUBTASKS_TIME)
 				{
 					return $param['VALUE'] == 'Y';
 				}

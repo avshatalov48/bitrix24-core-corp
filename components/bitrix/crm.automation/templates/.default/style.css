@@ -390,16 +390,6 @@
 	transition: .1s;
 }
 
-.automation-base-node-top {
-	clear: both;
-	display: block;
-	width: 100%;
-	overflow: hidden;
-	line-height: 70px;
-	border-bottom: 1px solid #d8d8d8;
-	margin: 0 0 17px 0;
-}
-
 .automation-base-node-edit {
 	float: right;
 	font-family: "OpenSans-SemiBold", "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -414,10 +404,6 @@
 	overflow: hidden;
 	color: #000;
 	font: 16px/22px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
-}
-
-.bitrix24-light-theme :not(.side-panel) .automation-base-node-title {
-	color: #fff;
 }
 
 .crm-automation-trigger-item-drag .crm-automation-trigger-item-wrapper {

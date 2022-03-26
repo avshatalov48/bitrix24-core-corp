@@ -60,6 +60,25 @@ if($action === '')
 {
 	__CrmCheckCorrectionDetailsEndJsonResponse(['ERROR' => 'Action is not defined!']);
 }
+elseif ($action === 'GET_FORMATTED_SUM')
+{
+	if (!\Bitrix\Main\Loader::includeModule('currency'))
+	{
+		return;
+	}
+
+	$sum = $_POST['SUM'] ?? 0;
+	$currencyId = $_POST['CURRENCY_ID'] ?? '';
+	if($currencyId === '')
+	{
+		$currencyId = \Bitrix\Currency\CurrencyManager::getBaseCurrency();
+	}
+
+	__CrmCheckCorrectionDetailsEndJsonResponse([
+		'FORMATTED_SUM' => CCurrencyLang::CurrencyFormat($sum, $currencyId, false),
+		'FORMATTED_SUM_WITH_CURRENCY' => CCurrencyLang::CurrencyFormat($sum, $currencyId),
+	]);
+}
 elseif ($action === 'SAVE')
 {
 	$fields = [

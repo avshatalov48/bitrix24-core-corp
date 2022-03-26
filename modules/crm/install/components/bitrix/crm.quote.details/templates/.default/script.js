@@ -1,4 +1,4 @@
-(function (exports,main_core,main_popup,ui_buttons,main_core_events,crm_itemDetailsComponent) {
+(function (exports,main_core,main_popup,ui_buttons,main_core_events,crm_itemDetailsComponent,crm_conversion) {
 	'use strict';
 
 	function _templateObject2() {
@@ -67,35 +67,43 @@
 	    value: function initConversionApi() {
 	      var _this2 = this;
 
+	      var converter = crm_conversion.Conversion.Manager.Instance.initializeConverter(this.entityTypeId, this.conversionSettings.converter);
+	      var schemeSelector = new crm_conversion.Conversion.SchemeSelector(converter, this.conversionSettings.schemeSelector);
+
 	      if (this.conversionSettings.lockScript) {
-	        var button = document.getElementById(this.conversionSettings.buttonId);
-
-	        if (button) {
-	          main_core.Event.bind(button, 'click', this.conversionSettings.lockScript);
-	        }
-
-	        var menuButton = document.getElementById(this.conversionSettings.menuButtonId);
-
-	        if (menuButton) {
-	          main_core.Event.bind(menuButton, 'click', this.conversionSettings.lockScript);
-	        }
-
+	        schemeSelector.subscribe('SchemeSelector:onSchemeSelected', this.conversionSettings.lockScript);
+	        schemeSelector.subscribe('SchemeSelector:onContainerClick', this.conversionSettings.lockScript);
 	        main_core_events.EventEmitter.subscribe('CrmCreateDealFromQuote', this.conversionSettings.lockScript);
 	        main_core_events.EventEmitter.subscribe('CrmCreateInvoiceFromQuote', this.conversionSettings.lockScript);
-	        return;
-	      }
+	      } else {
+	        schemeSelector.enableAutoConversion();
 
-	      BX.CrmQuoteConversionScheme.messages = this.conversionSettings.scheme.messages;
-	      BX.CrmQuoteConversionSchemeSelector.create("quote_converter", this.conversionSettings.schemeSelector);
-	      BX.CrmQuoteConverter.messages = this.conversionSettings.converter.messages;
-	      BX.CrmQuoteConverter.permissions = this.conversionSettings.converter.permissions;
-	      BX.CrmQuoteConverter.settings = this.conversionSettings.converter.settings;
-	      main_core_events.EventEmitter.subscribe('CrmCreateDealFromQuote', function () {
-	        BX.CrmQuoteConverter.getCurrent().convert(_this2.id, BX.CrmQuoteConversionScheme.createConfig(BX.CrmQuoteConversionScheme.deal), window.location.href);
-	      });
-	      main_core_events.EventEmitter.subscribe('CrmCreateInvoiceFromQuote', function () {
-	        BX.CrmQuoteConverter.getCurrent().convert(_this2.id, BX.CrmQuoteConversionScheme.createConfig(BX.CrmQuoteConversionScheme.invoice), window.location.href);
-	      });
+	        var convertByEvent = function convertByEvent(dstEntityTypeId) {
+	          var schemeItem = converter.getConfig().getScheme().getItemForSingleEntityTypeId(dstEntityTypeId);
+
+	          if (!schemeItem) {
+	            console.error('SchemeItem with single entityTypeId ' + dstEntityTypeId + ' is not found');
+	            return;
+	          }
+
+	          converter.getConfig().updateFromSchemeItem(schemeItem);
+	          converter.convert(_this2.id);
+	        };
+
+	        main_core_events.EventEmitter.subscribe('CrmCreateDealFromQuote', function () {
+	          convertByEvent(BX.CrmEntityType.enumeration.deal);
+	        });
+	        main_core_events.EventEmitter.subscribe('CrmCreateInvoiceFromQuote', function () {
+	          convertByEvent(BX.CrmEntityType.enumeration.invoice);
+	        });
+	        main_core_events.EventEmitter.subscribe('BX.Crm.ItemListComponent:onAddNewItemButtonClick', function (event) {
+	          var dstEntityTypeId = Number(event.getData().entityTypeId);
+
+	          if (dstEntityTypeId > 0) {
+	            convertByEvent(dstEntityTypeId);
+	          }
+	        });
+	      }
 	    }
 	  }, {
 	    key: "bindEvents",
@@ -266,5 +274,5 @@
 
 	namespace.QuoteDetailsComponent = QuoteDetailsComponent;
 
-}((this.window = this.window || {}),BX,BX.Main,BX.UI,BX.Event,BX.Crm));
+}((this.window = this.window || {}),BX,BX.Main,BX.UI,BX.Event,BX.Crm,BX.Crm));
 //# sourceMappingURL=script.js.map

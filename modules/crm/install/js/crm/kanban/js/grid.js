@@ -79,6 +79,7 @@ BX.CRM.Kanban.Grid.prototype = {
 	schemeInline: null,
 	isBindEvents: false,
 	fieldsSelectors: {},
+	headersSections: {},
 
 	/**
 	 * Get current checkeds items.
@@ -152,7 +153,6 @@ BX.CRM.Kanban.Grid.prototype = {
 	unCheckItem: function(item)
 	{
 		var itemInArray = this.getItem(item);
-
 		if(BX.util.in_array(itemInArray, this.checkedItems))
 		{
 			this.checkedItems.splice(this.checkedItems.indexOf(itemInArray), 1);
@@ -290,6 +290,8 @@ BX.CRM.Kanban.Grid.prototype = {
 						&& this.itemMoving.item.columnId === this.items[this.itemMoving.item.id].columnId
 					)
 					{
+						// @todo check this for ticket 0143009
+						//this.itemMoving.oldColumn = event.data.oldColumn;
 						this.onItemMoved(
 							event.data.item,
 							event.data.targetColumn,
@@ -695,10 +697,13 @@ BX.CRM.Kanban.Grid.prototype = {
 		}
 
 		column.loadingInProgress = true;
+
+		var page = pagination.getPage() + 1
 		this.ajax({
 				action: "page",
-				page: pagination.getPage() + 1,
-				column: column.getId()
+				page: page,
+				column: column.getId(),
+				onlyItems: (page > 1 ? 'Y' : 'N')
 			},
 			function(data)
 			{
@@ -733,12 +738,14 @@ BX.CRM.Kanban.Grid.prototype = {
 	/**
 	 * Add item to the column in top.
 	 * @param {Object} data
+	 * @param {bool} incColumnPrice
 	 * @returns {void}
 	 */
-	addItemTop: function(data)
+	addItemTop: function(data, incColumnPrice)
 	{
 		var column = this.getColumn(data.columnId);
 		var columnItems = column ? column.getItems() : [];
+		incColumnPrice = (typeof incColumnPrice !== 'undefined' ? incColumnPrice : true);
 
 		// get first item in column
 		if (columnItems.length > 0)
@@ -747,24 +754,66 @@ BX.CRM.Kanban.Grid.prototype = {
 		}
 
 		// inc column price and add item
-		column ? column.incPrice(data.data.price) : null;
+		(column && incColumnPrice) ? column.incPrice(data.data.price) : null;
 		this.addItem(data);
 	},
 
-	moveItem: function(item, targetColumn, beforeItem)
+	/**
+	 *
+	 * @param {BX.CRM.Kanban.Item} item
+	 * @param {BX.CRM.Kanban.Column} targetColumn
+	 * @param {BX.CRM.Kanban.Item} beforeItem
+	 * @param {bool} usePromise
+	 * @returns {Promise<{status: boolean}>|boolean|Promise<void>|Promise<unknown>}
+	 */
+	moveItem: function(
+		item,
+		targetColumn,
+		beforeItem,
+		usePromise
+	)
 	{
+		usePromise = (usePromise || false);
+		return this.movePromisedItem(item, targetColumn, beforeItem, usePromise);
+	},
+
+	/**
+	 *
+	 * @param {BX.CRM.Kanban.Item} item
+	 * @param {BX.CRM.Kanban.Column} targetColumn
+	 * @param {BX.CRM.Kanban.Item} beforeItem
+	 * @param {bool} usePromise
+	 * @returns {Promise<unknown[]>|boolean|Promise<void>|Promise<{status: boolean}>}
+	 */
+	movePromisedItem: function(
+		item,
+		targetColumn,
+		beforeItem,
+		usePromise
+	)
+	{
+		var notChangeTotal = (item.notChangeTotal || false);
 		item = this.getItem(item);
+		item.notChangeTotal = notChangeTotal;
+
 		targetColumn = this.getColumn(targetColumn);
-		beforeItem = this.getItem(beforeItem);
+
+		if (!item || !targetColumn || item === beforeItem)
+		{
+			if (usePromise)
+			{
+				return Promise.resolve({
+					status: false,
+				});
+			}
+			return false;
+		}
+
+		beforeItem = (beforeItem ? this.getItem(beforeItem) : (targetColumn.items[0] || null));
 		var currentColumn = item.getColumn();
 		var targetColumnId = targetColumn.getId();
 		var gridData = this.getData();
 		var targetColumnData = targetColumn.getData();
-
-		if (!item || !targetColumn || item === beforeItem)
-		{
-			return false;
-		}
 
 		if (this.getChecked().length > 1)
 		{
@@ -834,6 +883,11 @@ BX.CRM.Kanban.Grid.prototype = {
 						console.log('update action restricted');
 					}
 					this.resetMultiSelectMode();
+
+					if (usePromise)
+					{
+						return Promise.resolve();
+					}
 					return;
 				}
 			}
@@ -845,6 +899,7 @@ BX.CRM.Kanban.Grid.prototype = {
 
 			var itemsChecked = this.getChecked();
 
+			var removePromises = [];
 			for (var i = 0; i < itemsChecked.length; i++)
 			{
 				if(itemsChecked[i] !== item && itemsChecked[i].getColumn() !== targetColumn)
@@ -852,24 +907,48 @@ BX.CRM.Kanban.Grid.prototype = {
 					itemsChecked[i].getColumn().layout.total.textContent = +itemsChecked[i].getColumn().layout.total.innerHTML - 1;
 				}
 
-				currentColumn.removeItem(itemsChecked[i]);
+				removePromises.push(currentColumn.removeItem(itemsChecked[i]));
 			}
 
-			targetColumn.addItems(this.getChecked(), beforeItem);
+			var checked = this.getChecked();
 
+			if (usePromise)
+			{
+				return Promise.all(removePromises).then(function ()
+				{
+					checked.forEach(function(item){
+						item.useAnimation = false;
+						item.layout.container.style.opacity = 1;
+					});
+					targetColumn.addItems(checked, beforeItem);
+
+					this.resetMultiSelectMode();
+					this.stopActionPanel();
+				}.bind(this));
+			}
+
+			targetColumn.addItems(checked, beforeItem);
 			this.resetMultiSelectMode();
-
 			this.stopActionPanel();
 			return;
 		}
+		else
+		{
+			item.beforeItem = beforeItem;
+			currentColumn.removeItem(item).then(function (){
+				targetColumn.addItem(item, item.beforeItem);
+			});
 
-		item.beforeItem = beforeItem;
-		currentColumn.removeItem(item).then(function(){
-			targetColumn.addItem(item, item.beforeItem);
-		});
+			this.stopActionPanel();
 
-		this.stopActionPanel();
-		return true;
+			if (usePromise)
+			{
+				return Promise.resolve({
+					status: true,
+				});
+			}
+			return true;
+		}
 	},
 
 	/**
@@ -878,12 +957,24 @@ BX.CRM.Kanban.Grid.prototype = {
 	 * @param {boolean} force Force load without filter.
 	 * @param {boolean} forceUpdate Force update entity.
 	 * @param {boolean} onlyItems
+	 * @param {boolean} incColumnPrice
 	 * @returns {void}
 	 */
-	loadNew: function(id, force, forceUpdate, onlyItems)
+	loadNew: function(id, force, forceUpdate, onlyItems, incColumnPrice)
 	{
 		var gridData = this.getData();
 		var entityId = typeof id !== "undefined" ? id : 0;
+
+		// we need to check the status (created last time or already exist element), if a new element, then always inc the column price (ticket #136848)
+		if (entityId > gridData.lastId)
+		{
+			incColumnPrice = true;
+		}
+		else
+		{
+			incColumnPrice = (typeof incColumnPrice !== 'undefined' ? incColumnPrice : true);
+		}
+
 
 		if (document.hidden)
 		{
@@ -896,8 +987,7 @@ BX.CRM.Kanban.Grid.prototype = {
 			return;
 		}
 
-		return new Promise(function(resolve, reject)
-		{
+		return new Promise(function(resolve, reject){
 			this.ajax(
 				entityId
 					? {
@@ -943,15 +1033,17 @@ BX.CRM.Kanban.Grid.prototype = {
 									{
 										newColumn.incPrice(parseFloat(item.data.price));
 										existItem.data.price = item.data.price;
-									}
 
-									if (
-										(newColumn && newColumn !== existColumn)
-										|| forceUpdate === true
-									)
+										if (newColumn !== existColumn || forceUpdate === true)
+										{
+											item.notChangeTotal = true;
+											this.updateItem(item.id, item);
+											titlesForRender[newColumn.getId()] = newColumn;
+										}
+									}
+									else
 									{
-										this.updateItem(item.id, item);
-										titlesForRender[newColumn.getId()] = newColumn;
+										this.removeItem(existItem);
 									}
 								}
 								else if (item.id && this.getColumn(item.columnId) === null)
@@ -996,6 +1088,39 @@ BX.CRM.Kanban.Grid.prototype = {
 				}.bind(this)
 			);
 		}.bind(this));
+	},
+
+	/**
+	 *
+	 * @param {Number} item
+	 * @param {BX.CRM.Kanban.Item} options
+	 * @returns {boolean}
+	 */
+	updateItem: function(item, options)
+	{
+		item = this.getItem(item);
+		if (!item)
+		{
+			return false;
+		}
+
+		if (BX.Kanban.Utils.isValidId(options.columnId) && options.columnId !== item.getColumn().getId())
+		{
+			if (options.notChangeTotal)
+			{
+				item.notChangeTotal = options.notChangeTotal;
+			}
+			this.moveItem(item, this.getColumn(options.columnId), this.getItem(options.targetId));
+		}
+
+		var eventArgs = ['UPDATE', { task: item, options: options }];
+
+		BX.onCustomEvent(window, 'tasksTaskEvent', eventArgs);
+
+		item.setOptions(options);
+		item.render();
+
+		return true;
 	},
 
 	/**
@@ -1300,15 +1425,18 @@ BX.CRM.Kanban.Grid.prototype = {
 			}
 
 			// change price in old/new columns
-			if (this.itemMoving.item.getData().runtimePrice !== true)
+			if (!item.notChangeTotal)
 			{
-				this.itemMoving.oldColumn.decPrice(this.itemMoving.price);
-			}
-			if (!isDropZone)
-			{
-				targetColumn.incPrice(this.itemMoving.price);
-				targetColumn.renderSubTitle();
-				this.itemMoving.oldColumn.renderSubTitle();
+				if (this.itemMoving.item.getData().runtimePrice !== true)
+				{
+					this.itemMoving.oldColumn.decPrice(this.itemMoving.price);
+				}
+				if (!isDropZone)
+				{
+					targetColumn.incPrice(this.itemMoving.price);
+					targetColumn.renderSubTitle();
+					this.itemMoving.oldColumn.renderSubTitle();
+				}
 			}
 		}
 
@@ -1585,6 +1713,8 @@ BX.CRM.Kanban.Grid.prototype = {
 				}
 				this.fadeIn();
 
+				this.resetMultiSelectMode();
+
 				if (typeof promise !== "undefined")
 				{
 					promise.fulfill();
@@ -1745,7 +1875,13 @@ BX.CRM.Kanban.Grid.prototype = {
 					text: BX.message("CRM_KANBAN_SETTINGS_FIELDS_EDIT"),
 					onclick: function(e, /*BX.PopupMenuItem*/item)
 					{
-						this.showFieldsSelectPopup("edit");
+						// @todo as needed, will need to add a promise to the showQuickEditor method
+						var firstColumnId = (this.columnsOrder[0] ? this.columnsOrder[0].id : null);
+						if (firstColumnId && this.columns[firstColumnId].canAddItem)
+						{
+							this.columns[firstColumnId].showQuickEditor(true)
+							this.showFieldsSelectPopup("edit");
+						}
 					}.bind(this)
 				});
 			}
@@ -1829,6 +1965,8 @@ BX.CRM.Kanban.Grid.prototype = {
 				entityTypeName: gridData.entityType,
 				type: viewType,
 				sections: gridData.customSectionsFields,
+				headersSections: gridData.headersSections || {},
+				defaultHeaderSectionId: gridData.defaultHeaderSectionId || null,
 				selectedFields: (viewType === 'view')
 					? gridData.customFields
 					: gridData.customEditFields,
@@ -2284,7 +2422,7 @@ BX.CRM.Kanban.Grid.prototype = {
 		var match = sliderUrl.match(new RegExp(maskUrl));
 		if (match && match[1])
 		{
-			this.loadNew(match[1], false, true);
+			this.loadNew(match[1], false, true, true, false);
 		}
 	},
 

@@ -19,5 +19,6 @@ $MESS["TASKS_GRID_TASK_ROW_ACTION_START"] = "Начать выполнение";
 $MESS["TASKS_GRID_TASK_ROW_ACTION_PAUSE"] = "Приостановить";
 $MESS["TASKS_GRID_TASK_ROW_ACTION_DEFER"] = "Отложить";
 $MESS["TASKS_GRID_TASK_ROW_ACTION_COPY"] = "Копировать";
+$MESS["TASKS_GRID_TASK_ROW_ACTION_COPY_LINK"] = "Скопировать ссылку на задачу";
 $MESS["TASKS_GRID_TASK_ROW_ACTION_ADD_TO_TIMEMAN"] = "Добавить в план рабочего дня";
 $MESS["TASKS_GRID_TASK_ROW_ACTION_REMOVE"] = "Удалить";

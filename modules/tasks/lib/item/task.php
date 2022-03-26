@@ -705,7 +705,9 @@ final class Task extends \Bitrix\Tasks\Item
 					'GROUP_ID' => $groupId
 				),
 				'TS' => time(),
-				'event_GUID' => isset($data['META::EVENT_GUID']) ? $data['META::EVENT_GUID'] : sha1(uniqid('AUTOGUID', true))
+				'event_GUID' => isset($data['META::EVENT_GUID']) ? $data['META::EVENT_GUID'] : sha1(uniqid('AUTOGUID', true)),
+				'taskRequireResult' => \Bitrix\Tasks\Internals\Task\Result\ResultManager::requireResult((int)$id) ? "Y" : "N",
+				'taskHasResult' => \Bitrix\Tasks\Internals\Task\Result\ResultManager::hasResult((int)$id) ? "Y" : "N",
 			);
 
 			Pull\PushService::addEvent($recipients, [

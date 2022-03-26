@@ -89,7 +89,7 @@ class Group extends \Bitrix\Tasks\Integration\SocialNetwork
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 */
-	public static function getData(array $groupIds, array $select = []): array
+	public static function getData(array $groupIds, array $select = [], array $params = []): array
 	{
 		$groupIds = array_unique(array_filter($groupIds, 'intval'));
 
@@ -115,6 +115,29 @@ class Group extends \Bitrix\Tasks\Integration\SocialNetwork
 			$groups[$groupId] = $group;
 		}
 
+		if (
+			!empty($groups)
+			&& isset($params['MODE'])
+			&& mb_strtolower($params['MODE']) === 'mobile'
+		)
+		{
+			$additionalData = Workgroup::getAdditionalData([
+				'ids' => array_keys($groups),
+				'features' => \Bitrix\Mobile\Project\Helper::getMobileFeatures(),
+				'mandatoryFeatures' => \Bitrix\Mobile\Project\Helper::getMobileMandatoryFeatures(),
+				'currentUserId' => (int)($params['CURRENT_USER_ID'] ?? User::getId()),
+			]);
+
+			foreach (array_keys($groups) as $id)
+			{
+				if (!isset($additionalData[$id]))
+				{
+					continue;
+				}
+
+				$groups[$id]['ADDITIONAL_DATA'] = ($additionalData[$id] ?? []) ;
+			}
+		}
 		return $groups;
 	}
 

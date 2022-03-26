@@ -5,6 +5,8 @@ namespace Bitrix\Crm\Controller\Action\Entity;
 use Bitrix\Crm\Controller\EntitySearchScope;
 use Bitrix\Crm\Restriction\RestrictionManager;
 
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Main;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Search;
@@ -63,6 +65,13 @@ class SearchAction extends Search\SearchAction
 				&& $this->limit > 0
 			)
 			{
+				if (
+					\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId)
+					&& !Container::getInstance()->getTypeByEntityTypeId($entityTypeId)
+				)
+				{
+					continue;
+				}
 				$searchResultProvider = Factory::createProvider($entityTypeId);
 				$searchResultProvider->setUserId($this->userId);
 				$searchResultProvider->setLimit($this->limit);
@@ -120,9 +129,19 @@ class SearchAction extends Search\SearchAction
 				isset($options['isMyCompany'])
 				&& mb_strtoupper($options['isMyCompany']) === 'Y'
 			);
+			$categoryId = $options['categoryId'] ?? 0;
 
 			return [
 				'=IS_MY_COMPANY' => $isMyCompany ? 'Y' : 'N',
+				'=CATEGORY_ID' =>  $categoryId
+			];
+		}
+		if ($entityTypeId === \CCrmOwnerType::Contact)
+		{
+			$categoryId = $options['categoryId'] ?? 0;
+
+			return [
+				'=CATEGORY_ID' =>  $categoryId
 			];
 		}
 

@@ -492,7 +492,8 @@ HTML;
 								array(
 									'this.OWNER_TYPE_ID' => new SqlExpression('?i', \CCrmOwnerType::Company),
 									'=ref.ID' => 'this.OWNER_ID',
-									'=ref.IS_MY_COMPANY' => new SqlExpression('?s', 'N')
+									'=ref.IS_MY_COMPANY' => new SqlExpression('?s', 'N'),
+									'=ref.CATEGORY_ID' => new SqlExpression('?i', 0)
 								),
 								array(
 									'join_type' => 'LEFT')
@@ -578,7 +579,8 @@ HTML;
 									array(
 										'this.OWNER_TYPE_ID' => new SqlExpression('?i', \CCrmOwnerType::Company),
 										'=ref.ID' => 'this.OWNER_ID',
-										'=ref.IS_MY_COMPANY' => new SqlExpression('?s', 'N')
+										'=ref.IS_MY_COMPANY' => new SqlExpression('?s', 'N'),
+										'=ref.CATEGORY_ID' => new SqlExpression('?i', 0)
 									),
 									array(
 										'join_type' => 'LEFT')

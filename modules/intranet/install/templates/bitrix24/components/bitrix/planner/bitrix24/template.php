@@ -221,7 +221,6 @@ if (is_array($arResult['DATA']) && count($arResult['DATA']) > 0)
 					autoHide: true,
 					offsetTop : 10,
 					offsetLeft : -60,
-					zIndex : -1,
 					bindOptions: {
 						forceBindPosition: true,
 						forceTop: true
@@ -233,6 +232,12 @@ if (is_array($arResult['DATA']) && count($arResult['DATA']) > 0)
 					events: {
 						onPopupClose: function() {
 							BX.removeClass(BX('timeman-block', true), "timeman-block-active");
+						},
+						onFirstShow: function(event) {
+							const popup = event.getTarget();
+							BX.Event.EventEmitter.subscribe('BX.Main.InterfaceButtons:onMenuShow', function() {
+								popup.close();
+							});
 						}
 					}
 				});

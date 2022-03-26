@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Class MemberTable
  *
@@ -7,9 +7,7 @@
 
 namespace Bitrix\Tasks\Internals\Task;
 
-use Bitrix\Main,
-	Bitrix\Main\Localization\Loc;
-//Loc::loadMessages(__FILE__);
+use Bitrix\Main;
 
 /**
  * Class MemberTable

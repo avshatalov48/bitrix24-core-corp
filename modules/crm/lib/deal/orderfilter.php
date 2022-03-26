@@ -9,6 +9,7 @@ use Bitrix\Crm\Workflow\PaymentWorkflow;
 use Bitrix\Main;
 use Bitrix\Sale\Internals;
 use Bitrix\Sale\TradingPlatform;
+use Bitrix\Sale\Delivery;
 
 Main\Loader::includeModule('sale');
 
@@ -56,9 +57,9 @@ final class OrderFilter
 			"SQL" => "EXISTS (
 				SELECT stage.ENTITY_ID FROM ".EntityStageTable::getTableName()." stage
 				INNER JOIN ".Internals\PaymentTable::getTableName()." payment ON payment.ID = stage.ENTITY_ID
-				INNER JOIN ".Binding\OrderDealTable::getTableName()." orderdeal ON orderdeal.ORDER_ID = payment.ORDER_ID
+				INNER JOIN ".Binding\OrderEntityTable::getTableName()." orderentity ON orderentity.ORDER_ID = payment.ORDER_ID
 				WHERE stage.WORKFLOW_CODE = '" . PaymentWorkflow::getWorkflowCode() . "' 
-				AND stage.STAGE IN ({$sql}) AND orderdeal.DEAL_ID = ".\CCrmDeal::TABLE_ALIAS.".ID 
+				AND stage.STAGE IN ({$sql}) AND orderentity.OWNER_ID = ".\CCrmDeal::TABLE_ALIAS.".ID AND orderentity.OWNER_TYPE_ID=".\CCrmOwnerType::Deal."
 			)"
 		];
 	}
@@ -74,8 +75,8 @@ final class OrderFilter
 			"TYPE" => "WHERE",
 			"SQL" => "EXISTS (
 				SELECT ID FROM ".Internals\PaymentTable::getTableName()." bsop
-				INNER JOIN ".Binding\OrderDealTable::getTableName()." bcod ON bcod.ORDER_ID = bsop.ORDER_ID
-				WHERE bcod.DEAL_ID = ".\CCrmDeal::TABLE_ALIAS.".ID AND bsop.DATE_PAID >= {$from} AND bsop.DATE_PAID <= {$to}
+				INNER JOIN ".Binding\OrderEntityTable::getTableName()." bcod ON bcod.ORDER_ID = bsop.ORDER_ID
+				WHERE bcod.OWNER_ID = ".\CCrmDeal::TABLE_ALIAS.".ID AND bcod.OWNER_TYPE_ID=".\CCrmOwnerType::Deal." AND bsop.DATE_PAID >= {$from} AND bsop.DATE_PAID <= {$to}
 			)"
 		];
 	}
@@ -88,8 +89,8 @@ final class OrderFilter
 			"TYPE" => "WHERE",
 			"SQL" => "EXISTS (
 				SELECT bstpo.ID FROM " . TradingPlatform\OrderTable::getTableName() . " bstpo
-				INNER JOIN " . Binding\OrderDealTable::getTableName() . " bcod ON bcod.ORDER_ID = bstpo.ORDER_ID
-				WHERE bstpo.TRADING_PLATFORM_ID IN ({$sql}) AND bcod.DEAL_ID = " . \CCrmDeal::TABLE_ALIAS . ".ID 
+				INNER JOIN " . Binding\OrderEntityTable::getTableName() . " bcod ON bcod.ORDER_ID = bstpo.ORDER_ID
+				WHERE bstpo.TRADING_PLATFORM_ID IN ({$sql}) AND bcod.OWNER_ID = " . \CCrmDeal::TABLE_ALIAS . ".ID AND bcod.OWNER_TYPE_ID=".\CCrmOwnerType::Deal."
 			)"
 		];
 	}
@@ -107,18 +108,25 @@ final class OrderFilter
 		}
 
 		$sql = self::convertEnumToSql($enum);
-		$deliveryTable = Internals\ShipmentTable::getTableName();
-		$orderDealTable = Binding\OrderDealTable::getTableName();
+		$shipmentTable = Internals\ShipmentTable::getTableName();
+		$deliveryTable = Delivery\Services\Table::getTableName();
+		$orderEntityTable = Binding\OrderEntityTable::getTableName();
 		$dealTableAlias = \CCrmDeal::TABLE_ALIAS;
+
+		$helper = Main\Application::getConnection()->getSqlHelper();
+
 
 		return [
 			"TYPE" => "WHERE",
 			"SQL" => "EXISTS (
-				SELECT 1 FROM {$deliveryTable} delivery
-				INNER JOIN {$orderDealTable} orderdeal ON orderdeal.ORDER_ID = delivery.ORDER_ID
-				WHERE delivery.SYSTEM = 'N'
-					AND orderdeal.DEAL_ID = {$dealTableAlias}.ID
-					AND delivery.DEDUCTED IN ({$sql})
+				SELECT 1 FROM {$shipmentTable} shipment
+				INNER JOIN {$orderEntityTable} orderentity ON orderentity.ORDER_ID = shipment.ORDER_ID
+				INNER JOIN {$deliveryTable} delivery ON delivery.ID = shipment.DELIVERY_ID
+				WHERE shipment.SYSTEM = 'N'
+					AND orderentity.OWNER_ID = {$dealTableAlias}.ID
+					AND orderentity.OWNER_TYPE_ID = " . \CCrmOwnerType::Deal . "
+					AND shipment.DEDUCTED IN ({$sql})
+					AND delivery.CLASS_NAME != '" . $helper->forSql('\\' . Delivery\Services\EmptyDeliveryService::class) . "'
 			)",
 		];
 	}

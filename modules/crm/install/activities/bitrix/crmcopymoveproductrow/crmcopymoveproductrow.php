@@ -61,9 +61,19 @@ class CBPCrmCopyMoveProductRow extends CBPActivity
 
 	private function deleteRows($entityTypeId, $entityId): bool
 	{
-		$entityType = \CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId);
+		$complexDocumentId = CCrmBizProcHelper::ResolveDocumentId((int)$entityTypeId, (int)$entityId);
+		$entityDocument = $complexDocumentId[1];
 
-		return \CCrmProductRow::SaveRows($entityType, $entityId, [], null, false);
+		if (class_exists($entityDocument) && method_exists($entityDocument, 'setProductRows'))
+		{
+			return $entityDocument::setProductRows($complexDocumentId[2], [])->isSuccess();
+		}
+		else
+		{
+			$entityType = \CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId);
+
+			return \CCrmProductRow::SaveRows($entityType, $entityId, [], null, false);
+		}
 	}
 
 	private function copyRows($entityTypeId, $entityId, $dstEntityTypeId, $dstEntityId): bool
@@ -88,9 +98,17 @@ class CBPCrmCopyMoveProductRow extends CBPActivity
 
 		$saveResult = false;
 
+		$entityDocument = CCrmBizProcHelper::ResolveDocumentName($dstEntityTypeId);
 		if ($dstEntityTypeId === \CCrmOwnerType::Deal)
 		{
 			$saveResult = \CCrmDeal::addProductRows($dstEntityId, $sourceRows, [], false);
+		}
+		elseif (class_exists($entityDocument) && method_exists($entityDocument, 'addProductRows'))
+		{
+			$dstDocumentId = CCrmBizProcHelper::ResolveDocumentId($dstEntityTypeId, $dstEntityId);
+			$productRows = array_map([Crm\ProductRow::class, 'createFromArray'], $sourceRows);
+
+			$saveResult = $entityDocument::addProductRows($dstDocumentId[2], $productRows)->isSuccess();
 		}
 
 		if (!$saveResult)
@@ -117,6 +135,13 @@ class CBPCrmCopyMoveProductRow extends CBPActivity
 			{
 				return [\CCrmOwnerType::Deal, (int)$entityId];
 			}
+		}
+		elseif ($entityType === CCrmOwnerTypeAbbr::SmartInvoice)
+		{
+			$factory = Crm\Service\Container::getInstance()->getFactory(CCrmOwnerType::SmartInvoice);
+			$item = isset($factory) ? $factory->getItem((int)$entityId) : null;
+
+			return isset($item) ? [CCrmOwnerType::SmartInvoice, (int)$entityId] : null;
 		}
 		/*elseif ($entityType === \CCrmOwnerTypeAbbr::Order)
 		{
@@ -162,6 +187,7 @@ class CBPCrmCopyMoveProductRow extends CBPActivity
 				'Default' => \CCrmOwnerTypeAbbr::Deal,
 				'Options' => [
 					\CCrmOwnerTypeAbbr::Deal => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Deal),
+					\CCrmOwnerTypeAbbr::SmartInvoice => \CCrmOwnerType::GetDescription(\CCrmOwnerType::SmartInvoice),
 					//\CCrmOwnerTypeAbbr::Order => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Order),
 					//\CCrmOwnerTypeAbbr::Invoice => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Invoice),
 				],

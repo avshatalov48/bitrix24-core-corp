@@ -1199,7 +1199,7 @@ class CDiskFolderListComponent extends DiskComponent implements \Bitrix\Main\Eng
 		if ($this->isTrashMode())
 		{
 			$buttons = array(
-				trim($this->arParams['RELATIVE_PATH'], '/')? $restoreLink : null,
+				$restoreLink,
 				$destroyLink,
 			);
 		}

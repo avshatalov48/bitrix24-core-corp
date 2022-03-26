@@ -39,7 +39,10 @@ if(typeof BX.Crm.EntityEditorUserFieldConfigurator === "undefined")
 	BX.Crm.EntityEditorUserFieldConfigurator.prototype.doInitialize = function()
 	{
 		BX.Crm.EntityEditorUserFieldConfigurator.superclass.doInitialize.apply(this);
-		this._visibilityConfigurator = BX.prop.get(this._settings, "visibilityConfigurator", null);
+		if (this.getEditor().canChangeCommonConfiguration())
+		{
+			this._visibilityConfigurator = BX.prop.get(this._settings, "visibilityConfigurator", null);
+		}
 	};
 	BX.Crm.EntityEditorUserFieldConfigurator.prototype.getOptionContainer = function()
 	{
@@ -216,7 +219,7 @@ if(typeof BX.Crm.EntityEditorUserField === "undefined")
 												messages.push(BX.prop.getString(errors[i], "message"));
 											}
 										}
-										
+
 										if (messages.length > 0)
 										{
 											BX.UI.Notification.Center.notify(

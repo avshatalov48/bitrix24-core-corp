@@ -49,7 +49,7 @@ this.BX.Salescenter = this.BX.Salescenter || {};
 	var CounterNumber = {
 	  props: {
 	    value: {
-	      type: String,
+	      type: Number,
 	      required: true
 	    },
 	    checked: {

@@ -12,10 +12,10 @@ global $APPLICATION, $USER, $DB;
 $arParams['PATH_TO_PRODUCT_EDIT'] = isset($arParams['PATH_TO_PRODUCT_EDIT']) ? $arParams['PATH_TO_PRODUCT_EDIT'] : '';
 $arParams['PATH_TO_PRODUCT_EDIT'] = CrmCheckPath('PATH_TO_PRODUCT_EDIT', $arParams['PATH_TO_PRODUCT_EDIT'], $APPLICATION->GetCurPage().'?product_id=#product_id#&edit');
 
-if (\Bitrix\Main\Loader::includeModule('catalog') && \Bitrix\Catalog\Config\State::isProductCardSliderEnabled())
+if (\Bitrix\Main\Loader::includeModule('catalog') && \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isFullCatalogEnabled())
 {
 	$catalogId = CCrmCatalog::EnsureDefaultExists();
-	$arParams['PATH_TO_PRODUCT_SHOW'] = "/shop/catalog/{$catalogId}/product/#product_id#/";
+	$arParams['PATH_TO_PRODUCT_SHOW'] = "/crm/catalog/{$catalogId}/product/#product_id#/";
 }
 else
 {

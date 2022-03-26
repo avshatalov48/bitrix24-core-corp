@@ -36,6 +36,8 @@ class EntityCounter extends CounterBase
 	/** @var bool */
 	protected $sendPullEvent = false;
 
+	private static $userTimes = [];
+
 	/**
 	 * @param int $entityTypeID Entity Type ID (see \CCrmOwnerType).
 	 * @param int $typeID Type ID (see EntityCounterType).
@@ -239,16 +241,44 @@ class EntityCounter extends CounterBase
 			\CUserOptions::SetOption('crm', $this->lastCalculateOptionName, $this->lastCalculatedTime, false, $this->userID);
 		}
 	}
-	protected static function getUserTime($userID)
+
+	/**
+	 * @param $userID
+	 * @return DateTime
+	 */
+	protected static function getUserTime($userID): DateTime
 	{
-		$time = new DateTime();
-		$offset = $userID > 0 ? \CTimeZone::GetOffset($userID) : 0;
-		if($offset != 0)
+		$currentUser = (int)\CCrmSecurityHelper::GetCurrentUserID();
+		if (is_array($userID))
 		{
-			$time->add(($offset < 0 ? '-' : '').'PT'.abs($offset).'S');
+			if (empty($userID))
+			{
+				$userID = $currentUser;
+			}
+			else
+			{
+				$userID = (int)array_shift($userID);
+			}
 		}
-		return $time;
+		else
+		{
+			$userID = (int)$userID;
+		}
+
+		if (empty(self::$userTimes[$userID]))
+		{
+			$time = new DateTime();
+			$offset = (int) ($userID > 0 ? \CTimeZone::GetOffset($currentUser === $userID ? null : $userID) : 0);
+			if ($offset)
+			{
+				$time->add(($offset < 0 ? '-' : '') . 'PT' . abs($offset) . 'S');
+			}
+			self::$userTimes[$userID] = $time;
+		}
+
+		return clone self::$userTimes[$userID];
 	}
+
 	public function getValue($recalculate = false)
 	{
 		if($this->currentValue !== null)
@@ -419,10 +449,15 @@ class EntityCounter extends CounterBase
 						$query = new Query(DealTable::getEntity());
 						$query->addFilter('=STAGE_SEMANTIC_ID', PhaseSemantics::PROCESS);
 					}
+					else if($entityTypeID === \CCrmOwnerType::Contact)
+					{
+						$query->where('CATEGORY_ID', 0);
+					}
 					else if($entityTypeID === \CCrmOwnerType::Company)
 					{
 						$query = new Query(CompanyTable::getEntity());
 						$query->addFilter('=IS_MY_COMPANY', 'N');
+						$query->where('CATEGORY_ID', 0);
 					}
 					elseif($entityTypeID === \CCrmOwnerType::Order)
 					{
@@ -708,6 +743,11 @@ class EntityCounter extends CounterBase
 	 */
 	public function calculateValue()
 	{
+		if (!\Bitrix\Crm\Settings\CounterSettings::getCurrent()->isEnabled())
+		{
+			return 0; // counters feature is completely disabled
+		}
+
 		$result = 0;
 		$queries = $this->prepareQueries(array('SELECT' => 'QTY'));
 

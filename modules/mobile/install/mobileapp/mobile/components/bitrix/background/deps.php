@@ -1,15 +1,21 @@
-<?
+<?php
+
 return [
-	"reload/listeners", // reload vars after reload script
-	"chat/uploader", // chat uploader
-	"chat/background", // chat background processes (message, reaction, read, .etc)
-	"task/checklist/uploader", // task checklist uploader
-	"task/uploader", // task uploader
-	"task/background", // task background processes (view, .etc)
-	"task", // task background processes (view, .etc)
-	"disk/background", // task background processes (view, .etc)
-	"rest",
-	'livefeed',
-	'livefeed/publicationqueue',
-	'comments/uploadqueue',
+	'extensions' => [
+		"reload/listeners", // reload vars after reload script
+		"chat/uploader", // chat uploader
+		"chat/background", // chat background processes (message, reaction, read, .etc)
+		"task/checklist/uploader", // task checklist uploader
+		"task/uploader", // task uploader
+		"task/background", // task background processes (view, .etc)
+		'project/background', // project background processes (view, .etc)
+		"task", // task background processes (view, .etc)
+		"disk/background", // task background processes (view, .etc)
+		"rest",
+		'livefeed',
+		'livefeed/publicationqueue',
+		'comments/uploadqueue',
+		'catalog/background/barcodescanner',
+		'push/listener',
+	]
 ];

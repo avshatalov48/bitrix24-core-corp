@@ -3,29 +3,25 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 $APPLICATION->SetTitle($arResult['PAGE_TITLE']);
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'no-background');
+
 $this->getComponent()->addToolbar($this);
 $this->getComponent()->addTopPanel($this);
-
-if ($arResult['CATEGORIES'] && count($arResult['CATEGORIES']) > 1)
-{
-	?><div class="crm-config-automation-button-container">
-		<div class="ui-btn ui-btn-dropdown ui-btn-light-border" data-role="category-selector">
-			<?=htmlspecialcharsbx($arResult['CATEGORY_NAME'])?>
-		</div>
-	</div><?php
-}
 
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.automation',
 	'',
 	[
-		'DOCUMENT_TYPE' => ['crm', $arResult['DOCUMENT_NAME'], $arResult["DOCUMENT_TYPE"]],
-		'DOCUMENT_ID' => $arResult['DOCUMENT_ID'],
 		'TITLE_VIEW' => $arResult['TITLE_VIEW'],
 		'TITLE_EDIT' => $arResult['TITLE_EDIT'],
 		'ENTITY_TYPE_ID' => $arResult['ENTITY_TYPE_ID'],
+		'ENTITY_ID' => (int)$arParams['id'],
 		'ENTITY_CATEGORY_ID' => $arResult['ENTITY_CATEGORY_ID'],
 		'back_url' => $arResult['BACK_URL'],
+		'CATEGORY_SELECTOR' => (
+			$arResult['CATEGORY_NAME']
+				? ['TEXT' => $arResult['CATEGORY_NAME']]
+				: null
+		),
 	],
 	$this
 );

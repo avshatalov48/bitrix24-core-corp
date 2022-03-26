@@ -6,6 +6,7 @@ $MESS["CRM_TRACKING_SOURCE_EDIT_AUTH_DESC"] = "Use %name% account to log on";
 $MESS["CRM_TRACKING_SOURCE_EDIT_AUTO_CONFIGURED"] = "This channel is automatic. It does not require any specific configuration.";
 $MESS["CRM_TRACKING_SOURCE_EDIT_BTN_COPY"] = "copy";
 $MESS["CRM_TRACKING_SOURCE_EDIT_CONNECT"] = "Connect";
+$MESS["CRM_TRACKING_SOURCE_EDIT_CONNECT_GOOGLE"] = "Sign in with Google";
 $MESS["CRM_TRACKING_SOURCE_EDIT_CONNECTED"] = "Source %name% connected";
 $MESS["CRM_TRACKING_SOURCE_EDIT_DESC_ORGANIC1"] = "Other traffic includes all customers that don't belong to any of the connected sources. Other traffic is fully automated and doesn't require any specific configuration. Statistics are available in the report.";
 $MESS["CRM_TRACKING_SOURCE_EDIT_DESC_SENDER-MAIL"] = "Email Marketing includes all customers who clicked links in the emails sent by the CRM Marketing. This feature is fully automated and does not require configuration. You can see statistics in the report.";

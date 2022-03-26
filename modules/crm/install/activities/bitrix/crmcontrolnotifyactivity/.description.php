@@ -16,6 +16,7 @@ $arActivityDescription = array(
 			['crm', 'CCrmDocumentLead'],
 			['crm', 'Bitrix\Crm\Integration\BizProc\Document\Order'],
 			['crm', 'Bitrix\Crm\Integration\BizProc\Document\Invoice'],
+			['crm', \Bitrix\Crm\Integration\BizProc\Document\Dynamic::class],
 		),
 	),
 	'ROBOT_SETTINGS' => array(

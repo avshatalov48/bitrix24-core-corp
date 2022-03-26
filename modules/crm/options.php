@@ -68,7 +68,7 @@ if($MOD_RIGHT>='R'):
 		array('path_to_deal_calendar', Loc::getMessage('CRM_OPTIONS_PATH_TO_DEAL_CALENDAR'), '/crm/deal/calendar/', Array('text', '40')),
 		array('path_to_quote_list', Loc::getMessage('CRM_OPTIONS_PATH_TO_QUOTE_LIST'), '/crm/quote/list/', Array('text', '40')),
 		array('path_to_quote_show', Loc::getMessage('CRM_OPTIONS_PATH_TO_QUOTE_SHOW'), '/crm/quote/show/#quote_id#/', Array('text', '40')),
-		array('path_to_quote_details', Loc::getMessage('CRM_OPTIONS_PATH_TO_QUOTE_DETAILS'), '/crm/quote/details/#quote_id#/', Array('text', '40')),
+		array('path_to_quote_details', Loc::getMessage('CRM_OPTIONS_PATH_TO_QUOTE_DETAILS'), '/crm/type/7/details/#quote_id#/', Array('text', '40')),
 		array('path_to_quote_edit', Loc::getMessage('CRM_OPTIONS_PATH_TO_QUOTE_EDIT'), '/crm/quote/edit/#quote_id#/', Array('text', '40')),
 		array('path_to_quote_import', Loc::getMessage('CRM_OPTIONS_PATH_TO_QUOTE_IMPORT'), '/crm/quote/import/', Array('text', '40')),
 		array('path_to_quote_kanban', Loc::getMessage('CRM_OPTIONS_PATH_TO_QUOTE_KANBAN'), '/crm/quote/kanban/', Array('text', '40')),

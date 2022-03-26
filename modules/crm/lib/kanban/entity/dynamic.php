@@ -37,7 +37,7 @@ class Dynamic extends Kanban\Entity
 
 	public function getTitle(): string
 	{
-		return $this->factory->getType()->getTitle();
+		return \CCrmOwnerType::GetCategoryCaption($this->getTypeId());
 	}
 
 	public function getStatusEntityId(): string
@@ -47,7 +47,17 @@ class Dynamic extends Kanban\Entity
 
 	public function getItemsSelectPreset(): array
 	{
-		return array_keys($this->factory->getFieldsInfo());
+		$select = array_keys($this->factory->getFieldsInfo());
+
+		$select = array_filter($select, static function ($fieldName) {
+			return (
+				$fieldName !== Item::FIELD_NAME_CONTACTS
+				&& $fieldName !== Item::FIELD_NAME_CONTACT_IDS
+				&& $fieldName !== Item::FIELD_NAME_CONTACT_BINDINGS
+			);
+		});
+
+		return $select;
 	}
 
 	public function isTotalPriceSupported(): bool
@@ -191,7 +201,7 @@ class Dynamic extends Kanban\Entity
 				$this->getStageFieldName(),
 				new ExpressionField($fieldSum, 'SUM(%s)', Item::FIELD_NAME_OPPORTUNITY_ACCOUNT),
 				new ExpressionField('CNT', 'COUNT(1)'),
-			]
+			],
 		];
 		if (!empty($runtime))
 		{
@@ -206,6 +216,19 @@ class Dynamic extends Kanban\Entity
 		}
 
 		return $data;
+	}
+
+	public function fillStageTotalSums(array $filter, array $runtime, array &$stages): void
+	{
+		if (isset($filter['SEARCH_CONTENT']))
+		{
+			SearchEnvironment::prepareSearchFilter($this->getTypeId(), $filter, [
+				'ENABLE_PHONE_DETECTION' => false,
+			]);
+			unset($filter['SEARCH_CONTENT']);
+		}
+
+		parent::fillStageTotalSums($filter, $runtime, $stages);
 	}
 
 	public function getItems(array $parameters): \CDBResult
@@ -239,18 +262,11 @@ class Dynamic extends Kanban\Entity
 				$this->factory->getEntityTypeId(),
 				$item->getId()
 			);
+			$itemData[Item::FIELD_NAME_TITLE] = $item->getHeading();
 			if(isset($itemData[Item::FIELD_NAME_PREVIOUS_STAGE_ID]))
 			{
 				$stage = $this->factory->getStage($itemData[Item::FIELD_NAME_PREVIOUS_STAGE_ID]);
 				$itemData[Item::FIELD_NAME_PREVIOUS_STAGE_ID] = $stage ? $stage->getName() : $itemData[Item::FIELD_NAME_PREVIOUS_STAGE_ID];
-			}
-
-			if (!empty($itemData[Item::FIELD_NAME_MYCOMPANY_ID]))
-			{
-				$itemData[Item::FIELD_NAME_MYCOMPANY_ID] = $this->factory->getFieldValueCaption(
-					Item::FIELD_NAME_MYCOMPANY_ID,
-					$itemData[Item::FIELD_NAME_MYCOMPANY_ID]
-				);
 			}
 
 			$data[] = $itemData;

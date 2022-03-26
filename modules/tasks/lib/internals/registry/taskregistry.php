@@ -153,6 +153,7 @@ class TaskRegistry
 			->addSelect('ALLOW_CHANGE_DEADLINE')
 			->addSelect('ALLOW_TIME_TRACKING')
 			->addSelect('DEADLINE')
+			->addSelect('FORUM_TOPIC_ID')
 			->whereIn('ID', $taskIds)
 			->exec();
 

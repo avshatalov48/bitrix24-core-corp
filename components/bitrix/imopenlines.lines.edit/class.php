@@ -180,8 +180,9 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 			$post['CONFIG']['WORKTIME_DAYOFF'] = $post['CONFIG']['WORKTIME_DAYOFF'] ?? [];
 
 			if(
-				empty($post['CONFIG']['LIMITATION_MAX_CHAT']) ||
-				!is_numeric($post['CONFIG']['MAX_CHAT']) || $post['CONFIG']['MAX_CHAT'] < 1
+				empty($post['CONFIG']['LIMITATION_MAX_CHAT'])
+				|| !is_numeric($post['CONFIG']['MAX_CHAT'])
+				|| $post['CONFIG']['MAX_CHAT'] < 1
 			)
 			{
 				$post['CONFIG']['MAX_CHAT'] = 0;
@@ -209,8 +210,8 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 			}
 
 			if(
-				!empty($post['CONFIG']['QUEUE']) &&
-				is_array($post['CONFIG']['QUEUE'])
+				!empty($post['CONFIG']['QUEUE'])
+				&& is_array($post['CONFIG']['QUEUE'])
 			)
 			{
 				$userList = QueueManager::getUserListFromQueue($post['CONFIG']['QUEUE']);
@@ -229,7 +230,7 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 								'ENTITY_TYPE' => $entity['type'],
 							];
 						}
-						elseif((string)$entity['type'] === 'department')
+						elseif ((string)$entity['type'] === 'department')
 						{
 							$queueList[] = [
 								'ENTITY_ID' => $entity['id'],
@@ -244,8 +245,8 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 					foreach ($userList as $userId)
 					{
 						if (
-							!empty($post['CONFIG']['QUEUE_USERS_FIELDS'][$userId]) &&
-							is_array($post['CONFIG']['QUEUE_USERS_FIELDS'][$userId])
+							!empty($post['CONFIG']['QUEUE_USERS_FIELDS'][$userId])
+							&& is_array($post['CONFIG']['QUEUE_USERS_FIELDS'][$userId])
 						)
 						{
 							$queueUsersFields[$userId] = $post['CONFIG']['QUEUE_USERS_FIELDS'][$userId];
@@ -269,8 +270,8 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 			}
 
 			if(
-				!isset($post['CONFIG']['VOTE_ENABLE_TIME_LIMIT']) ||
-				$post['CONFIG']['VOTE_ENABLE_TIME_LIMIT'] !== 'Y'
+				!isset($post['CONFIG']['VOTE_ENABLE_TIME_LIMIT'])
+				|| $post['CONFIG']['VOTE_ENABLE_TIME_LIMIT'] !== 'Y'
 			)
 			{
 				$post['CONFIG']['VOTE_TIME_LIMIT'] = 0;
@@ -1099,7 +1100,7 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 		{
 			if(isset($post['CONFIG']['MAX_CHAT']))
 			{
-				$this->arResult['CONFIG']['MAX_CHAT'] = $post['CONFIG']['MAX_CHAT'];
+				$this->arResult['CONFIG']['MAX_CHAT'] = (int)$post['CONFIG']['MAX_CHAT'];
 			}
 			else
 			{

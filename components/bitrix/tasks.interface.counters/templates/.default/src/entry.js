@@ -28,6 +28,7 @@ export class Counters
 				'sonet_total_comments',
 				'groups_total_expired',
 				'groups_total_comments',
+				'scrum_total_comments'
 			],
 			other: [
 				'project_expired',
@@ -38,6 +39,7 @@ export class Counters
 				'groups_foreign_comments',
 				'sonet_foreign_expired',
 				'sonet_foreign_comments',
+				'scrum_foreign_comments'
 			],
 			additional: [
 				'muted_new_comments',
@@ -70,9 +72,16 @@ export class Counters
 				'groups_foreign_comments',
 				'sonet_total_comments',
 				'sonet_foreign_comments',
+				'scrum_total_comments',
+				'scrum_foreign_comments'
 			],
 		};
 	}
+
+	static updateTimeout = false;
+	static needUpdate = false;
+
+	static timeoutTTL = 5000;
 
 	constructor(options)
 	{
@@ -202,6 +211,15 @@ export class Counters
 
 	updateCountersData()
 	{
+		if (Counters.updateTimeout)
+		{
+			Counters.needUpdate = true;
+			return;
+		}
+
+		Counters.updateTimeout = true;
+		Counters.needUpdate = false;
+
 		Ajax.runComponentAction('bitrix:tasks.interface.counters', 'getCounters', {
 			mode: 'class',
 			data: {
@@ -214,6 +232,14 @@ export class Counters
 			response => this.rerender(response.data),
 			response => console.log(response)
 		);
+
+		setTimeout(function() {
+			Counters.updateTimeout = false;
+			if (Counters.needUpdate)
+			{
+				this.updateCountersData();
+			}
+		}.bind(this), Counters.timeoutTTL);
 	}
 
 	isRoleChanged()
@@ -370,11 +396,22 @@ export class Counters
 			</div>
 		`;
 
-		const readAllClick =
-			this.isUserTaskList() || (this.isProjectsTaskList() && this.role !== 'view_all')
-				? this.readAllByRole.bind(this)
-				: this.readAllForProjects.bind(this)
-		;
+		let readAllClick = this.readAllForProjects.bind(this);
+		if (
+			this.isUserTaskList()
+			|| (this.isProjectsTaskList() && this.role !== 'view_all')
+		)
+		{
+			readAllClick = this.readAllByRole.bind(this);
+		}
+		else if (
+			this.myCounters['scrum_total_comments']
+			|| this.otherCounters['scrum_foreign_comments']
+		)
+		{
+			readAllClick = this.readAllForScrum.bind(this);
+		}
+
 		Event.bind(this.$readAllInner, 'click', readAllClick);
 		Event.bind(this.$readAllInner, 'click', () => this.$readAllInner.classList.add('--fade'));
 
@@ -407,6 +444,23 @@ export class Counters
 		});
 
 		Ajax.runAction('tasks.task.comment.readProject', {
+			data: {
+				groupId: this.groupId,
+			},
+		});
+	}
+
+	readAllForScrum()
+	{
+		const allCounters = {...this.myCounters, ...this.otherCounters};
+		Object.entries(allCounters).forEach(([type, counter]) => {
+			if (Counters.counterTypes.comment.includes(type))
+			{
+				counter.updateCount(0);
+			}
+		});
+
+		Ajax.runAction('tasks.task.comment.readScrum', {
 			data: {
 				groupId: this.groupId,
 			},

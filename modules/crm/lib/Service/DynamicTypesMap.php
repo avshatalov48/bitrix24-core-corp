@@ -2,18 +2,23 @@
 
 namespace Bitrix\Crm\Service;
 
-use Bitrix\Crm\Category\Entity\Category;
-use Bitrix\Crm\Category\Entity\ItemCategory;
 use Bitrix\Crm\EO_Status;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Model\Dynamic\Type;
 use Bitrix\Crm\Model\Dynamic\TypeTable;
 use Bitrix\Crm\Model\ItemCategoryTable;
 use Bitrix\Crm\StatusTable;
+use Bitrix\Main\Application;
+use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\InvalidOperationException;
+use Bitrix\Main\ORM\Objectify\Collection;
 
 class DynamicTypesMap
 {
+	protected const DYNAMIC_COLLECTION_CACHE_TTL = 86400;
+	protected const DYNAMIC_COLLECTION_CACHE_ID = 'crm_dynamic_types_collection';
+	protected const DYNAMIC_COLLECTION_CACHE_PATH = 'crm';
+
 	/**
 	 * @var string|TypeTable
 	 */
@@ -82,10 +87,13 @@ class DynamicTypesMap
 		if(!$this->isTypesLoaded)
 		{
 			$this->isTypesLoaded = true;
-			foreach ($this->typeDataClass::getList()->fetchCollection() as $type)
+			foreach ($this->getTypesCollection() as $type)
 			{
-				$factory = Container::getInstance()
-					->getDynamicFactoryByType($type);
+				if (!\CCrmOwnerType::isPossibleDynamicTypeId($type->getEntityTypeId()))
+				{
+					continue;
+				}
+				$factory = Container::getInstance()->getDynamicFactoryByType($type);
 				$stagesFieldName = null;
 				if ($factory->isStagesSupported())
 				{
@@ -261,5 +269,70 @@ class DynamicTypesMap
 	public function isAutomationEnabled(int $entityTypeId): bool
 	{
 		return $this->isAutomationEnabled[$entityTypeId] ?? false;
+	}
+
+	/**
+	 * Load types collection from cache of possible.
+	 * If cache is not valid - loads it from database and stores new value.
+	 *
+	 * @return Collection
+	 */
+	public function getTypesCollection(): Collection
+	{
+		$typesData = null;
+
+		$cache = Application::getInstance()->getCache();
+		if ($cache->initCache(
+			static::DYNAMIC_COLLECTION_CACHE_TTL,
+			static::DYNAMIC_COLLECTION_CACHE_ID,
+			static::DYNAMIC_COLLECTION_CACHE_PATH
+		))
+		{
+			$cacheVars = $cache->getVars();
+			if (isset($cacheVars['typesData']) && is_array($cacheVars['typesData']))
+			{
+				$typesData = $cacheVars['typesData'];
+			}
+		}
+
+		if ($typesData === null)
+		{
+			if (Application::getConnection()->isTableExists($this->typeDataClass::getTableName()))
+			{
+				try
+				{
+					$typesData = $this->typeDataClass::getList()->fetchAll();
+				}
+				catch (SqlQueryException $e)
+				{
+					$typesData = null;
+				}
+			}
+			else
+			{
+				$typesData = [];
+			}
+
+			if ($typesData !== null)
+			{
+				$cache->startDataCache();
+				$cache->endDataCache([
+					'typesData' => $typesData,
+				]);
+			}
+			else
+			{
+				$typesData = [];
+			}
+		}
+
+		return $this->typeDataClass::wakeUpCollection($typesData);
+	}
+
+	public function invalidateTypesCollectionCache(): void
+	{
+		$cache = Application::getInstance()->getCache();
+		$cache->clean(static::DYNAMIC_COLLECTION_CACHE_ID, static::DYNAMIC_COLLECTION_CACHE_PATH);
+		$this->isTypesLoaded = false;
 	}
 }

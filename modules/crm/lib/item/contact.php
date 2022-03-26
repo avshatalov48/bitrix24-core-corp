@@ -39,7 +39,9 @@ class Contact extends Item
 
 	public function getTitlePlaceholder(): ?string
 	{
-		return Loc::getMessage('CRM_CONTACT_DEFAULT_TITLE_TEMPLATE', array('%NUMBER%' => $this->getId()));
+		$number = ($this->getId() > 0) ? $this->getId() : '';
+
+		return Loc::getMessage('CRM_CONTACT_DEFAULT_TITLE_TEMPLATE', ['%NUMBER%' => $number]);
 	}
 
 	protected function getExternalizableFieldNames(): array
@@ -47,6 +49,7 @@ class Contact extends Item
 		return array_diff(parent::getExternalizableFieldNames(), [
 			static::FIELD_NAME_PRODUCTS,
 			static::FIELD_NAME_CONTACT_BINDINGS,
+			static::FIELD_NAME_CONTACT_IDS,
 		]);
 	}
 }

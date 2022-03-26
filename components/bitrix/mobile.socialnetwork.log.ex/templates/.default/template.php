@@ -225,6 +225,7 @@ else
 					: "false"
 			)?>,
 			groupID: <?=$arParams["GROUP_ID"]?>,
+			canAddPost: <?= ((int)$arResult["MICROBLOG_USER_ID"] > 0 ? 'true' : 'false') ?>,
 			groupImage: '<?=$arResult["GROUP_IMAGE"]?>',
 			curUrl: '<?=$APPLICATION->GetCurPageParam("", array("LAST_LOG_TS", "AJAX_CALL", "RELOAD", "RELOAD_JSON"))?>',
 			appCacheDebug: <?= Composite\AppCache::getInstance()->getDebug() ? "true" : "false" ?>,
@@ -442,7 +443,7 @@ else
 			BX.ready(function() {
 				BX.bind(window, 'scroll', oMSL.onScrollDetail);
 				BX.MobileLivefeed.Instance.setLogId(<?= (int)$arParams['LOG_ID'] ?>);
-				BX.MobileLivefeed.DetailPageScrollInstance.checkScrollButton();
+				BX.MobileLivefeed.PageScrollInstance.checkScrollButton();
 
 				BX.onCustomEvent(window, 'BX.UserContentView.onInitCall', [{
 					mobile: true,
@@ -456,7 +457,11 @@ else
 
 	if ($arParams['NEW_LOG_ID'] <= 0)
 	{
-		?><div class="feed-add-post-button" id="feed-add-post-button"></div><?php
+		if ((int)$arResult["MICROBLOG_USER_ID"] > 0)
+		{
+			?><div class="feed-add-post-button" id="feed-add-post-button"></div><?php
+		}
+
 		?><div class="lenta-wrapper" id="lenta_wrapper"><?php
 			?><div class="post-comment-block-scroll post-comment-block-scroll-top"><div class="post-comment-block-scroll-arrow post-comment-block-scroll-arrow-top"></div></div><?php
 			?><div class="post-comment-block-scroll post-comment-block-scroll-bottom"><div class="post-comment-block-scroll-arrow post-comment-block-scroll-arrow-bottom"></div></div><?php
@@ -532,9 +537,9 @@ else
 				?><div class="post-item-attached-file-wrap post-item-attached-disk-file-wrap" id="post_block_files"></div><?php
 
 				$bRatingExtended = (
-				CModule::IncludeModule("mobileapp")
-					? CMobile::getApiVersion() >= 2
-					: (int)$APPLICATION->GetPageProperty("api_version") >= 2
+					CModule::IncludeModule("mobileapp")
+						? CMobile::getApiVersion() >= 2
+						: (int)$APPLICATION->GetPageProperty("api_version") >= 2
 				);
 
 				if ($bRatingExtended)
@@ -547,14 +552,14 @@ else
 					?><div class="post-item-inform-wrap-left"><?php
 
 						// rating
-					$like = COption::GetOptionString("main", "rating_text_like_y", Loc::getMessage("MOBILE_LOG_LIKE"));
+						$like = COption::GetOptionString("main", "rating_text_like_y", Loc::getMessage("MOBILE_LOG_LIKE"));
 
 						?><div id="rating_text" class="post-item-informers bx-ilike-block" data-counter="0" style="display: none;"></div><?php
 
-						?><div id="comments_control" style="display: none;" class="post-item-informers post-item-inform-comments" onclick="oMSL.setFocusOnCommentForm();"><?php
+						?><div id="comments_control" style="display: none;" class="post-item-informers post-item-inform-comments"><?php
 							?><div class="post-item-inform-comments-box"><?php
 								?><span class="post-item-inform-icon"></span><?php
-							?><div class="post-item-inform-left"><?=Loc::getMessage('MOBILE_LOG_COMMENT')?></div><?php
+								?><div class="post-item-inform-left"><?=Loc::getMessage('MOBILE_LOG_COMMENT')?></div><?php
 							?></div><?php
 						?></div><?php
 

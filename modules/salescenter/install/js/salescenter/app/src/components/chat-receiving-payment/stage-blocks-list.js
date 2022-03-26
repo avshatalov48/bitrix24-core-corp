@@ -13,6 +13,7 @@ import {Automation} from '../stage-blocks/automation';
 import {StageMixin} from '../stage-blocks/stage-mixin';
 import Send from '../deal-receiving-payment/stage-blocks/send';
 import {TimeLine} from '../stage-blocks/timeline';
+import {DocumentSelector} from '../stage-blocks/document-selector';
 
 export default {
 	components: {
@@ -23,14 +24,15 @@ export default {
 		'delivery-block': DeliveryVuex,
 		'automation-block': Automation,
 		'send-block': Send,
-		'timeline-block': TimeLine
+		'timeline-block': TimeLine,
+		'document-selector-block': DocumentSelector,
 	},
 	data()
 	{
 		let stages = {
 			message: {
 				status: Status.complete,
-				manager: this.$root.$app.options.dealResponsible,
+				manager: this.$root.$app.options.entityResponsible,
 				titleTemplate: Loc.getMessage('SALESCENTER_APP_CHAT_MESSAGE_TITLE'),
 				showHint: this.$root.$app.options.templateMode !== 'view',
 				editorTemplate: this.$root.$app.sendingMethodDesc.text,
@@ -59,7 +61,15 @@ export default {
 					: this.$root.$app.options.paySystemList.isSet,
 			},
 			cashbox: {},
-			delivery: {
+			automation: {},
+			documentSelector: {
+				status: Status.complete,
+			},
+		};
+
+		if (this.$root.$app.options.hasOwnProperty('deliveryList'))
+		{
+			stages.delivery = {
 				isHidden: (
 					this.$root.$app.options.templateMode === 'view'
 					&& parseInt(this.$root.$app.options.shipmentId) <= 0
@@ -72,8 +82,8 @@ export default {
 				initialCollapseState: this.$root.$app.options.isDeliveryCollapsed
 					? this.$root.$app.options.isDeliveryCollapsed === 'Y'
 					: this.$root.$app.options.deliveryList.isInstalled,
-			}
-		};
+			};
+		}
 
 		if (this.$root.$app.options.cashboxList.hasOwnProperty('items'))
 		{
@@ -96,7 +106,7 @@ export default {
 				status: Status.complete,
 				stageOnOrderPaid: this.$root.$app.options.stageOnOrderPaid,
 				stageOnDeliveryFinished: this.$root.$app.options.stageOnDeliveryFinished,
-				items: this.$root.$app.options.dealStageList,
+				items: this.$root.$app.options.entityStageList,
 				initialCollapseState: this.$root.$app.options.isAutomationCollapsed
 					? this.$root.$app.options.isAutomationCollapsed === 'Y'
 					: false,
@@ -107,6 +117,14 @@ export default {
 		{
 			stages.timeline = {
 				items: this.getTimelineCollection(this.$root.$app.options.timeline)
+			}
+		}
+
+		if (this.$root.$app.hasOwnProperty('documentSelector'))
+		{
+			if (this.$root.$app.documentSelector.templateAddUrl)
+			{
+				stages.documentSelector.templateAddUrl = this.$root.$app.documentSelector.templateAddUrl;
 			}
 		}
 
@@ -138,6 +156,10 @@ export default {
 		submitButtonLabel()
 		{
 			return Loc.getMessage('SALESCENTER_SEND');
+		},
+		isShowDocumentSelector()
+		{
+			return this.$root.$app.hasOwnProperty('documentSelector');
 		},
 	},
 	methods: {
@@ -291,7 +313,7 @@ export default {
 				@on-save-collapsed-option="saveCollapsedOption"
 			/>
 			<delivery-block
-				v-if="!stages.delivery.isHidden"
+				v-if="stages.delivery && !stages.delivery.isHidden"
 				@on-stage-tile-collection-slider-close="stageRefresh($event, 'DELIVERY')"
 				:counter="counter++"
 				:status="stages.delivery.status"
@@ -300,6 +322,11 @@ export default {
 				:isCollapsible="true"
 				:initialCollapseState="stages.delivery.initialCollapseState"
 				@on-save-collapsed-option="saveCollapsedOption"
+			/>
+			<document-selector-block
+				v-if="isShowDocumentSelector"
+				:counter="counter++"
+				:templateAddUrl="stages.documentSelector.templateAddUrl"
 			/>
 			<automation-block
 				v-if="hasStageAutomation"

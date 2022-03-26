@@ -273,7 +273,11 @@ class SaleManager extends Base
 		}
 
 		$payment = $event->getParameter('PAYMENT');
-		ImOpenLinesManager::getInstance()->sendPaymentCheckNotify($checkId, $payment);
+
+		if ($payment instanceof Crm\Order\Payment)
+		{
+			ImOpenLinesManager::getInstance()->sendPaymentCheckNotify($checkId, $payment);
+		}
 
 		return $result;
 	}
@@ -555,17 +559,42 @@ class SaleManager extends Base
 	/**
 	 * @return bool
 	 */
-	public function isManagerAccess()
+	public function isManagerAccess(bool $checkSalePermissions = false)
 	{
-		return $this->isEnabled() && Loader::includeModule("crm") && \CCrmSaleHelper::isShopAccess();
+		$saleModulePermissions = \CMain::GetGroupRight('sale');
+
+		$access =
+			$this->isEnabled()
+			&& Loader::includeModule('crm')
+			&& \CCrmSaleHelper::isShopAccess()
+		;
+
+		if ($checkSalePermissions)
+		{
+			$access = $access && $saleModulePermissions >= 'U';
+		}
+
+		return $access;
 	}
 
 	/**
 	 * @return bool
 	 */
-	public function isFullAccess()
+	public function isFullAccess(bool $checkSalePermissions = false)
 	{
-		return $this->isManagerAccess() && \CCrmSaleHelper::isShopAccess('admin');
+		$saleModulePermissions = \CMain::GetGroupRight('sale');
+
+		$access =
+			$this->isManagerAccess()
+			&& \CCrmSaleHelper::isShopAccess('admin')
+		;
+
+		if ($checkSalePermissions)
+		{
+			$access = $access && $saleModulePermissions >= 'W';
+		}
+
+		return $access;
 	}
 
 	/**

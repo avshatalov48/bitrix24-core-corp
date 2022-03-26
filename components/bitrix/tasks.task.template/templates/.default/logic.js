@@ -349,7 +349,13 @@ BX.namespace('Tasks.Component');
 					{
 						flagNode.value = 'N';
 						node.checked = false;
-						BX.UI.InfoHelper.show('limit_tasks_recurring_tasks');
+						BX.UI.InfoHelper.show('limit_tasks_recurring_tasks', {
+							isLimit: true,
+							limitAnalyticsLabels: {
+								module: 'tasks',
+								source: 'templateEdit'
+							}
+						});
 						return;
 					}
 

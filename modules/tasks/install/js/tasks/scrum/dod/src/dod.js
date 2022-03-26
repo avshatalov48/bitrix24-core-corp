@@ -58,6 +58,21 @@ export class Dod extends EventEmitter
 		});
 	}
 
+	isNecessary(): Promise
+	{
+		return this.requestSender.isNecessary({
+			groupId: this.groupId,
+			taskId: this.taskId
+		})
+			.then((response) => {
+				return response.data;
+			})
+			.catch((response) => {
+				this.requestSender.showErrorAlert(response);
+			})
+		;
+	}
+
 	show()
 	{
 		switch(this.view)
@@ -77,7 +92,7 @@ export class Dod extends EventEmitter
 			'tasks-scrum-dod-settings-side-panel',
 			{
 				cacheable: false,
-				width: 800,
+				width: 1000,
 				contentCallback: () => {
 					return Layout.createContent({
 						extensions: ['tasks.scrum.dod'],

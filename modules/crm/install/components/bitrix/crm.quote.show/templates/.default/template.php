@@ -9,6 +9,7 @@ global $APPLICATION;
 
 use \Bitrix\Crm\Category\DealCategory;
 use \Bitrix\Crm\Conversion\EntityConverter;
+use Bitrix\Crm\Restriction\RestrictionManager;
 
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
@@ -112,14 +113,20 @@ $arTabs[] = array(
 if(!empty($arResult['FIELDS']['tab_event']))
 {
 	//$eventCount = intval($arResult[EVENT_COUNT]);
-	$arTabs[] = array(
+	$tabEventParams = [
 		'id' => 'tab_event',
 		//'name' => GetMessage('CRM_TAB_HISTORY')." ($eventCount)",
 		'name' => GetMessage('CRM_TAB_HISTORY'),
 		'title' => GetMessage('CRM_TAB_HISTORY_TITLE'),
 		'icon' => '',
 		'fields' => $arResult['FIELDS']['tab_event']
-	);
+	];
+	if (isset($arResult['TAB_EVENT_TARIFF_LOCK']) && $arResult['TAB_EVENT_TARIFF_LOCK'] === 'Y')
+	{
+		$tabEventParams['tariffLock']  = RestrictionManager::getHistoryViewRestriction()->prepareInfoHelperScript();
+	}
+	$arTabs[] = $tabEventParams;
+	unset($tabEventParams);
 }
 
 $element = isset($arResult['ELEMENT']) ? $arResult['ELEMENT'] : null;

@@ -60,7 +60,7 @@ if (!empty($arResult['COUNTERS_RUNNING']['lists']['BizprocDocument']) || !empty(
 		</span>
 			<? if (!empty($arResult['COUNTERS_RUNNING']['lists']['BizprocDocument'])): ?>
 				<a class="task-item" href="<?= htmlspecialcharsbx($arParams["PATH_TO_MY_PROCESSES"]) ?>">
-					<span class="task-item-text"><?= GetMessage('BPTLWGT_MY_PROCESSES') ?></span>
+					<span class="task-item-text"><?= GetMessage('BPTLWGT_MY_PROCESSES_1') ?></span>
 			<span class="task-item-index-wrap">
 				<span class="task-item-index"><?= $arResult['COUNTERS_RUNNING']['lists']['BizprocDocument'] < 100 ? $arResult['COUNTERS_RUNNING']['lists']['BizprocDocument'] : '99+' ?></span>
 			</span>

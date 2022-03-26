@@ -5,7 +5,7 @@ namespace Bitrix\Crm\Service;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\DI\ServiceLocator;
 
-class EventHandler
+final class EventHandler
 {
 	public static function onGetUserFieldTypeFactory(): array
 	{

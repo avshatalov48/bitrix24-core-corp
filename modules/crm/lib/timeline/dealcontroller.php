@@ -2,9 +2,9 @@
 namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Crm\Binding\DealContactTable;
-use Bitrix\Crm\Deal\PaymentDocumentsRepository;
+use Bitrix\Crm\Entity\PaymentDocumentsRepository;
 use Bitrix\Crm\History\DealStageHistoryEntry;
-use Bitrix\Crm\Order\DealBinding;
+use Bitrix\Crm;
 use Bitrix\Crm\Order\Order;
 use Bitrix\Crm\Order\Payment;
 use Bitrix\Crm\PhaseSemantics;
@@ -116,7 +116,12 @@ class DealController extends EntityController
 			);
 		}
 
-		$isManualOpportunity = isset($fields['IS_MANUAL_OPPORTUNITY']) ? $fields['IS_MANUAL_OPPORTUNITY'] : 'N';
+		$isManualOpportunity = $fields['IS_MANUAL_OPPORTUNITY'] ?? 'N';
+		if (is_bool($isManualOpportunity))
+		{
+			$isManualOpportunity = $isManualOpportunity ? 'Y' : 'N';
+		}
+
 		if ($isManualOpportunity === 'Y')
 		{
 			$this->createManualOpportunityModificationEntry($ownerID, $authorID, 'N', $isManualOpportunity);
@@ -210,57 +215,32 @@ class DealController extends EntityController
 			$prevSemanticID = \CCrmDeal::GetSemanticID($prevStageID, $categoryID);
 			if($curSemanticID !== PhaseSemantics::PROCESS && $curSemanticID !== $prevSemanticID)
 			{
-				$orderIdList = [];
-
-				$dbRes = DealBinding::getList([
-					'select' => ['ORDER_ID'],
-					'filter' => [
-						'=DEAL_ID' => $ownerID,
-					]
-				]);
-
-				while ($data = $dbRes->fetch())
-				{
-					$orderIdList[] = $data['ORDER_ID'];
-				}
-
+				$orderIdList = Crm\Binding\OrderEntityTable::getOrderIdsByOwner($ownerID, \CCrmOwnerType::Deal);
 				if ($orderIdList)
 				{
+					$summaryFields = [
+						'ENTITY_ID' => $ownerID,
+						'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
+						'TYPE_CATEGORY_ID' => TimelineType::CREATION,
+						'AUTHOR_ID' => $authorID,
+						'SETTINGS' => [
+							'ORDER_IDS' => $orderIdList
+						],
+						'BINDINGS' => [
+							[
+								'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
+								'ENTITY_ID' => $ownerID
+							]
+						]
+					];
+
 					if (\CCrmSaleHelper::isWithOrdersMode())
 					{
-						$entryId = FinalSummaryEntry::create([
-							'ENTITY_ID' => $ownerID,
-							'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
-							'TYPE_CATEGORY_ID' => TimelineType::CREATION,
-							'AUTHOR_ID' => $authorID,
-							'SETTINGS' => [
-								'ORDER_IDS' => $orderIdList
-							],
-							'BINDINGS' => [
-								[
-									'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
-									'ENTITY_ID' => $ownerID
-								]
-							]
-						]);
+						$entryId = FinalSummaryEntry::create($summaryFields);
 					}
 					else
 					{
-						$entryId = FinalSummaryDocumentsEntry::create([
-							'ENTITY_ID' => $ownerID,
-							'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
-							'TYPE_CATEGORY_ID' => TimelineType::CREATION,
-							'AUTHOR_ID' => $authorID,
-							'SETTINGS' => [
-								'ORDER_IDS' => $orderIdList
-							],
-							'BINDINGS' => [
-								[
-									'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
-									'ENTITY_ID' => $ownerID
-								]
-							]
-						]);
+						$entryId = FinalSummaryDocumentsEntry::create($summaryFields);
 					}
 
 					self::pushHistoryEntry(
@@ -272,8 +252,17 @@ class DealController extends EntityController
 			}
 		}
 
-		$prevIsManualOpportunity = isset($previousFields['IS_MANUAL_OPPORTUNITY']) ? $previousFields['IS_MANUAL_OPPORTUNITY'] : 'N';
-		$curIsManualOpportunity = isset($currentFields['IS_MANUAL_OPPORTUNITY']) ? $currentFields['IS_MANUAL_OPPORTUNITY'] : $prevIsManualOpportunity;
+		$prevIsManualOpportunity = $previousFields['IS_MANUAL_OPPORTUNITY'] ?? 'N';
+		if (is_bool($prevIsManualOpportunity))
+		{
+			$prevIsManualOpportunity = $prevIsManualOpportunity ? 'Y' : 'N';
+		}
+
+		$curIsManualOpportunity = $currentFields['IS_MANUAL_OPPORTUNITY'] ?? $prevIsManualOpportunity;
+		if (is_bool($curIsManualOpportunity))
+		{
+			$curIsManualOpportunity = $curIsManualOpportunity ? 'Y' : 'N';
+		}
 
 		if ($prevIsManualOpportunity !== $curIsManualOpportunity)
 		{
@@ -534,13 +523,15 @@ class DealController extends EntityController
 		$typeID = isset($data['TYPE_ID']) ? (int)$data['TYPE_ID'] : TimelineType::UNDEFINED;
 		$settings = isset($data['SETTINGS']) ? $data['SETTINGS'] : array();
 		$culture = Main\Context::getCurrent()->getCulture();
+		$associatedEntityTypeID = isset($data['ASSOCIATED_ENTITY_TYPE_ID'])
+			? (int)$data['ASSOCIATED_ENTITY_TYPE_ID']
+			: \CCrmOwnerType::Deal
+		;
 
 		if($typeID === TimelineType::CREATION)
 		{
 			$data['TITLE'] =  Loc::getMessage('CRM_DEAL_CREATION');
 
-			$associatedEntityTypeID = isset($data['ASSOCIATED_ENTITY_TYPE_ID'])
-				? (int)$data['ASSOCIATED_ENTITY_TYPE_ID'] : \CCrmOwnerType::Deal;
 			if($associatedEntityTypeID === \CCrmOwnerType::SuspendedDeal)
 			{
 				$data['LEGEND'] = Loc::getMessage('CRM_DEAL_MOVING_TO_RECYCLEBIN');
@@ -704,7 +695,7 @@ class DealController extends EntityController
 					),
 				];
 
-				$row['CHECK'] = $this->getCheckData($orderId);
+				$row['CHECK'] = Crm\Order\Manager::getCheckData($orderId);
 
 				$data['RESULT'][] = $row;
 			}
@@ -713,13 +704,13 @@ class DealController extends EntityController
 		{
 			$data['RESULT'] = [];
 
-			if ((int)$data['ASSOCIATED_ENTITY_TYPE_ID'] === \CCrmOwnerType::Deal)
+			if ($associatedEntityTypeID === \CCrmOwnerType::Deal)
 			{
-				$dealId = (int)$data['ASSOCIATED_ENTITY_ID'];
+				$entityId = (int)$data['ASSOCIATED_ENTITY_ID'];
 
 				/** @var PaymentDocumentsRepository */
-				$repository = ServiceLocator::getInstance()->get('crm.deal.paymentDocumentsRepository');
-				$result = $repository->getDocumentsForDeal($dealId);
+				$repository = ServiceLocator::getInstance()->get('crm.entity.paymentDocumentsRepository');
+				$result = $repository->getDocumentsForEntity($associatedEntityTypeID, $entityId);
 				if ($result->isSuccess())
 				{
 					$data['RESULT']['TIMELINE_SUMMARY_OPTIONS'] = $result->getData();
@@ -728,7 +719,7 @@ class DealController extends EntityController
 				$data['RESULT']['CHECKS'] = [];
 				foreach ($settings['ORDER_IDS'] as $orderId)
 				{
-					$data['RESULT']['CHECKS'][] = $this->getCheckData($orderId);
+					$data['RESULT']['CHECKS'][] = Crm\Order\Manager::getCheckData($orderId);
 				}
 
 				$data['RESULT']['CHECKS'] = array_merge(...$data['RESULT']['CHECKS']);
@@ -736,43 +727,6 @@ class DealController extends EntityController
 		}
 
 		return parent::prepareHistoryDataModel($data, $options);
-	}
-
-	/**
-	 * @param $orderId
-	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\NotImplementedException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
-	 */
-	protected function getCheckData($orderId)
-	{
-		$culture = Main\Context::getCurrent()->getCulture();
-		$result = [];
-
-		$dbRes = CheckManager::getList([
-			'select' => ['ID'],
-			'filter' => [
-				'=ORDER_ID' => $orderId,
-				'=STATUS' => 'Y'
-			]
-		]);
-
-		while ($data = $dbRes->fetch())
-		{
-			$check = CheckManager::getObjectById($data['ID']);
-
-			$result[] = [
-				'TITLE' => Loc::getMessage('CRM_DEAL_CHECK_TITLE', [
-					'#NAME#' => $check::getName(),
-					'#DATE_PRINT#' => FormatDate($culture->getLongDateFormat(), $check->getField('DATE_CREATE')->getTimestamp())
-				]),
-				'URL' => $check->getUrl()
-			];
-		}
-
-		return $result;
 	}
 	//endregion
 

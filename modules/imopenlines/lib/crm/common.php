@@ -1,19 +1,19 @@
 <?php
 namespace Bitrix\ImOpenLines\Crm;
 
-use \Bitrix\Main\Loader,
-	\Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 
-use \Bitrix\ImOpenLines\Crm,
-	\Bitrix\ImOpenLines\Error,
-	\Bitrix\ImOpenLines\Result,
-	\Bitrix\ImOpenLines\Session;
+use Bitrix\ImOpenLines\Crm;
+use Bitrix\ImOpenLines\Error;
+use Bitrix\ImOpenLines\Result;
+use Bitrix\ImOpenLines\Session;
 
-use \Bitrix\ImConnector\Connector;
+use Bitrix\ImConnector\Connector;
 
-use \Bitrix\Crm\Category\DealCategory;
+use Bitrix\Crm\Category\DealCategory;
 
-use \Bitrix\Im\User as ImUser;
+use Bitrix\Im;
 
 Crm::loadMessages();
 
@@ -78,9 +78,8 @@ class Common
 	/**
 	 * @param $id
 	 * @return Result
-	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public static function getActivityBindings($id)
+	public static function getActivityBindings($id): Result
 	{
 		$result = new Result();
 
@@ -140,9 +139,8 @@ class Common
 	 * @param $id
 	 * @param $newBindings
 	 * @return Result
-	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public static function addActivityBindings($id, $newBindings)
+	public static function addActivityBindings($id, $newBindings): Result
 	{
 		$result = new Result();
 
@@ -192,9 +190,8 @@ class Common
 	 * @param $id
 	 * @param $updateFields
 	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public static function update($type, $id, $updateFields)
+	public static function update($type, $id, $updateFields): bool
 	{
 		$result = false;
 		$entity = null;
@@ -202,41 +199,44 @@ class Common
 
 		if(Loader::includeModule('crm'))
 		{
-			if ($type == Crm::ENTITY_LEAD)
+			if ($type === Crm::ENTITY_LEAD)
 			{
 				$entity = new \CCrmLead(false);
 			}
-			elseif ($type == Crm::ENTITY_COMPANY)
+			elseif ($type === Crm::ENTITY_COMPANY)
 			{
 				$entity = new \CCrmCompany(false);
 
-				unset($updateFields['COMPANY_ID']);
-				unset($updateFields['CONTACT_ID']);
-
-				unset($updateFields['NAME']);
-				unset($updateFields['LAST_NAME']);
-				unset($updateFields['SECOND_NAME']);
-				unset($updateFields['SOURCE_DESCRIPTION']);
+				unset(
+					$updateFields['COMPANY_ID'],
+					$updateFields['CONTACT_ID'],
+					$updateFields['NAME'],
+					$updateFields['LAST_NAME'],
+					$updateFields['SECOND_NAME'],
+					$updateFields['SOURCE_DESCRIPTION']
+				);
 			}
-			elseif ($type == Crm::ENTITY_CONTACT)
+			elseif ($type === Crm::ENTITY_CONTACT)
 			{
 				$entity = new \CCrmContact(false);
 
-				unset($updateFields['COMPANY_ID']);
-				unset($updateFields['CONTACT_ID']);
+				unset(
+					$updateFields['COMPANY_ID'],
+					$updateFields['CONTACT_ID']
+				);
 			}
-			elseif ($type == Crm::ENTITY_DEAL)
+			elseif ($type === Crm::ENTITY_DEAL)
 			{
 				$entity = new \CCrmDeal(false);
 
-				unset($updateFields['COMPANY_ID']);
-				unset($updateFields['CONTACT_ID']);
-
-				unset($updateFields['FM']);
-
-				unset($updateFields['NAME']);
-				unset($updateFields['LAST_NAME']);
-				unset($updateFields['SECOND_NAME']);
+				unset(
+					$updateFields['COMPANY_ID'],
+					$updateFields['CONTACT_ID'],
+					$updateFields['FM'],
+					$updateFields['NAME'],
+					$updateFields['LAST_NAME'],
+					$updateFields['SECOND_NAME']
+				);
 			}
 
 			if(!empty($updateFields['EDITOR_ID']))
@@ -247,11 +247,11 @@ class Common
 			}
 
 			if(
-				!empty($entity) &&
-				!empty($updateFields) &&
-				(
-					!isset($updateFields['FM']) ||
-					!empty($updateFields['FM'])
+				$entity !== null
+				&& !empty($updateFields)
+				&& (
+					!isset($updateFields['FM'])
+					|| !empty($updateFields['FM'])
 				)
 			)
 			{
@@ -269,56 +269,57 @@ class Common
 	 * @param $id
 	 * @param bool $withMultiFields
 	 * @return array|bool|false|mixed|null
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function get($type, $id, $withMultiFields = false)
 	{
 		$data = false;
 		$entity = null;
 
-		if(Loader::includeModule('crm'))
+		if (Loader::includeModule('crm'))
 		{
-			if ($type == Crm::ENTITY_LEAD)
+			if ($type === Crm::ENTITY_LEAD)
 			{
 				$entity = new \CCrmLead(false);
 			}
-			elseif ($type == Crm::ENTITY_COMPANY)
+			elseif ($type === Crm::ENTITY_COMPANY)
 			{
 				$entity = new \CCrmCompany(false);
 			}
-			elseif ($type == Crm::ENTITY_CONTACT)
+			elseif ($type === Crm::ENTITY_CONTACT)
 			{
 				$entity = new \CCrmContact(false);
 			}
-			elseif ($type == Crm::ENTITY_DEAL)
+			elseif ($type === Crm::ENTITY_DEAL)
 			{
 				$entity = new \CCrmDeal(false);
 			}
 
-			if(!empty($entity))
+			if (!empty($entity))
 			{
 				$data = $entity->GetByID($id, false);
 
 				if ($withMultiFields && $type != Crm::ENTITY_DEAL)
 				{
 					$multiFields = new \CCrmFieldMulti();
-					$res = $multiFields->GetList(Array(), Array(
+					$res = $multiFields->GetList([], [
 						'ENTITY_ID' => $type,
 						'ELEMENT_ID' => $id
-					));
+					]);
 					while ($row = $res->Fetch())
 					{
 						$data['FM'][$row['TYPE_ID']][$row['VALUE_TYPE']][] = $row['VALUE'];
 					}
+
+
 				}
 
-				$assignedId = intval($data['ASSIGNED_BY_ID']);
+				$assignedId = (int)$data['ASSIGNED_BY_ID'];
 
 				if (
 					Loader::includeModule('im')
 					&& (
-						!ImUser::getInstance($assignedId)->isActive()
-						|| ImUser::getInstance($assignedId)->isAbsent()
+						!Im\User::getInstance($assignedId)->isActive()
+						|| Im\User::getInstance($assignedId)->isAbsent()
 					)
 				)
 				{
@@ -334,7 +335,6 @@ class Common
 	 * @param $type
 	 * @param $id
 	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function delete($type, $id)
 	{
@@ -342,19 +342,19 @@ class Common
 
 		if (Loader::includeModule('crm'))
 		{
-			if ($type == Crm::ENTITY_LEAD)
+			if ($type === Crm::ENTITY_LEAD)
 			{
 				$entity = new \CCrmLead(false);
 			}
-			else if ($type == Crm::ENTITY_COMPANY)
+			elseif ($type === Crm::ENTITY_COMPANY)
 			{
 				$entity = new \CCrmCompany(false);
 			}
-			else if ($type == Crm::ENTITY_CONTACT)
+			elseif ($type === Crm::ENTITY_CONTACT)
 			{
 				$entity = new \CCrmContact(false);
 			}
-			elseif ($type == Crm::ENTITY_DEAL)
+			elseif ($type === Crm::ENTITY_DEAL)
 			{
 				$entity = new \CCrmDeal(false);
 			}
@@ -376,7 +376,6 @@ class Common
 	 * @param $fieldType
 	 * @param $fieldValue
 	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function deleteMultiField($type, $id, $fieldType, $fieldValue)
 	{
@@ -385,12 +384,12 @@ class Common
 		if (Loader::includeModule('crm'))
 		{
 			$crmFieldMulti = new \CCrmFieldMulti();
-			$ar = \CCrmFieldMulti::GetList(Array(), Array(
+			$ar = \CCrmFieldMulti::GetList([], [
 				'TYPE_ID' => $fieldType,
 				'RAW_VALUE' => $fieldValue,
 				'ENTITY_ID' => $type,
 				'ELEMENT_ID' => $id,
-			));
+			]);
 			if ($row = $ar->Fetch())
 			{
 				$crmFieldMulti->Delete($row['ID']);
@@ -408,18 +407,18 @@ class Common
 	 */
 	public static function formatMultifieldFields($fields)
 	{
-		$destinationData = array();
-		if(is_array($fields))
+		$destinationData = [];
+		if (is_array($fields))
 		{
-			foreach($fields as $typeID => $typeData)
+			foreach ($fields as $typeID => $typeData)
 			{
 				$counter = 0;
-				$results = array();
-				foreach($typeData as $valueType => $values)
+				$results = [];
+				foreach ($typeData as $valueType => $values)
 				{
-					for($i = 0, $length = count($values); $i < $length; $i++)
+					for ($i = 0, $length = count($values); $i < $length; $i++)
 					{
-						$results["n{$counter}"] = array('VALUE_TYPE' => $valueType, 'VALUE' => $values[$i]);
+						$results["n{$counter}"] = ['VALUE_TYPE' => $valueType, 'VALUE' => $values[$i]];
 						$counter++;
 					}
 				}
@@ -435,7 +434,6 @@ class Common
 	 * @param $userCode
 	 * @param string $lineTitle
 	 * @return string
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function getSourceName($userCode, $lineTitle = '')
 	{
@@ -456,7 +454,6 @@ class Common
 	 * @param $entityType
 	 * @param $entityId
 	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function hasAccessToEntity($entityType, $entityId)
 	{
@@ -475,7 +472,6 @@ class Common
 	/**
 	 * @param $activityId
 	 * @return Result
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function hasAccessToEntitiesBindingActivity($activityId)
 	{
@@ -510,7 +506,6 @@ class Common
 	 * @param $type
 	 * @param null $id
 	 * @return bool|mixed|string
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function getLink($type, $id = null)
 	{
@@ -541,7 +536,6 @@ class Common
 	 * @param $type
 	 * @param $id
 	 * @return mixed|string
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function getEntityCaption($type, $id)
 	{
@@ -558,7 +552,6 @@ class Common
 	/**
 	 * @param $activityId
 	 * @return array
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function generateSearchContent($activityId)
 	{
@@ -583,7 +576,6 @@ class Common
 	 * @param $crmEntityType
 	 *
 	 * @return bool|mixed
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function getCrmEntityIdByTypeCode($crmEntityType)
 	{
@@ -609,7 +601,6 @@ class Common
 	 * @param $id
 	 *
 	 * @return array
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function getActivityBindingsFormatted($id)
 	{
@@ -639,10 +630,6 @@ class Common
 	 * @param $crmEntityType
 	 * @param $crmEntityId
 	 * @return int
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getLastChatIdByCrmEntity($crmEntityType, $crmEntityId): int
 	{
@@ -671,17 +658,17 @@ class Common
 			if (isset($filter))
 			{
 				$activity = \CCrmActivity::GetList(
-					array('LAST_UPDATED' => 'DESC'),
+					['LAST_UPDATED' => 'DESC'],
 					$filter,
 					false,
 					false,
-					array(
+					[
 						'ID', 'OWNER_ID', 'OWNER_TYPE_ID',
 						'TYPE_ID', 'PROVIDER_ID', 'PROVIDER_TYPE_ID', 'ASSOCIATED_ENTITY_ID', 'DIRECTION',
 						'SUBJECT', 'STATUS', 'DESCRIPTION', 'DESCRIPTION_TYPE',
 						'DEADLINE', 'RESPONSIBLE_ID'
-					),
-					array('QUERY_OPTIONS' => array('LIMIT' => 1, 'OFFSET' => 0))
+					],
+					['QUERY_OPTIONS' => ['LIMIT' => 1, 'OFFSET' => 0]]
 				)->Fetch();
 			}
 
@@ -689,7 +676,10 @@ class Common
 			{
 				$activity = \Bitrix\Crm\Timeline\ActivityController::prepareScheduleDataModel($activity);
 
-				if (!empty($activity['ASSOCIATED_ENTITY']['COMMUNICATION']['VALUE']) && mb_strpos($activity['ASSOCIATED_ENTITY']['COMMUNICATION']['VALUE'], 'imol|') === 0)
+				if (
+					!empty($activity['ASSOCIATED_ENTITY']['COMMUNICATION']['VALUE'])
+					&& mb_strpos($activity['ASSOCIATED_ENTITY']['COMMUNICATION']['VALUE'], 'imol|') === 0
+				)
 				{
 					$entityId = str_replace('imol|', '',  $activity['ASSOCIATED_ENTITY']['COMMUNICATION']['VALUE']);
 					$filter = [
@@ -698,7 +688,7 @@ class Common
 					];
 
 					$chatData = \Bitrix\Im\Model\ChatTable::getList(['select' => ['ID'], 'filter' => $filter])->fetch();
-					$chatData['ID'] = intval($chatData['ID']);
+					$chatData['ID'] = (int)$chatData['ID'];
 
 					$result = $chatData['ID'] > 0 ? $chatData['ID'] : 0;
 				}
@@ -712,8 +702,6 @@ class Common
 	 * Return a list of funnels for sales transactions.
 	 *
 	 * @return Result
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function getDealCategories(): Result
 	{

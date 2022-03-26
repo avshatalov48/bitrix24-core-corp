@@ -13,6 +13,7 @@ CModule::IncludeModule('fileman');
 use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\Conversion\LeadConversionDispatcher;
 use Bitrix\Crm\LeadAddress;
+use Bitrix\Crm\Restriction\RestrictionManager;
 
 CUtil::InitJSCore(array('ajax', 'tooltip'));
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
@@ -1191,6 +1192,8 @@ $arResult['FIELDS']['tab_tree'] = array(array(
 	'type' => 'custom',
 	'value' => '<div id="'.htmlspecialcharsbx($arResult['TREE_CONTAINER_ID']).'"></div>'
 ));
+
+$arResult['TAB_EVENT_TARIFF_LOCK'] = (!RestrictionManager::isHistoryViewPermitted()) ? 'Y' : 'N';
 
 $arResult['FIELDS']['tab_event'][] = array(
 	'id' => 'section_event_grid',

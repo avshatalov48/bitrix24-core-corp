@@ -555,7 +555,7 @@ if(!empty($htmlEditorConfigs))
 
 			BX.Crm.EntityEditorMoney.messages =
 			{
-				manualOpportunitySetAutomatic: "<?=GetMessageJS('CRM_EDITOR_MANUAL_OPPORTUNITY_SET_AUTOMATIC')?>"
+				manualOpportunitySetAutomatic: "<?=GetMessageJS('CRM_EDITOR_MANUAL_OPPORTUNITY_SET_TO_AUTOMATIC')?>"
 			}
 
 			BX.Crm.EntityEditorProductRowProxy.messages =
@@ -732,6 +732,11 @@ if(!empty($htmlEditorConfigs))
 				refresh: "<?=GetMessageJS('CRM_ENTITY_ED_SHIPMENT_REFRESH')?>",
 			};
 
+			BX.Crm.EntityEditorDocumentNumber.messages =
+			{
+				numeratorSettingsContextItem: "<?=GetMessageJS('CRM_ENTITY_ED_DOCUMENT_NUMBER_NUMERATOR_SETTINGS_CONTEXT_ITEM')?>",
+			};
+
 			BX.message(
 				{
 					"CRM_EDITOR_SAVE": "<?=GetMessageJS('CRM_ENTITY_ED_SAVE')?>",
@@ -739,6 +744,8 @@ if(!empty($htmlEditorConfigs))
 					"CRM_EDITOR_CANCEL": "<?=GetMessageJS('CRM_ENTITY_ED_CANCEL')?>",
 					"CRM_EDITOR_DELETE": "<?=GetMessageJS('CRM_ENTITY_ED_DELETE')?>",
 					"CRM_EDITOR_ADD": "<?=GetMessageJS('CRM_ENTITY_ED_ADD')?>",
+					"CRM_EDITOR_ADD_REQUISITE": "<?=GetMessageJS('CRM_EDITOR_ADD_REQUISITE')?>",
+					"CRM_EDITOR_ADD_BANK_DETAILS": "<?=GetMessageJS('CRM_EDITOR_ADD_BANK_DETAILS')?>",
 					"CRM_EDITOR_CONFIRMATION": "<?=GetMessageJS('CRM_EDITOR_CONFIRMATION')?>",
 					"CRM_EDITOR_CLOSE_CONFIRMATION": "<?=GetMessageJS('CRM_EDITOR_CLOSE_CONFIRMATION')?>",
 					"CRM_EDITOR_SAVE_ERROR_TITLE": "<?=GetMessageJS('CRM_EDITOR_SAVE_ERROR_TITLE')?>",
@@ -753,7 +760,6 @@ if(!empty($htmlEditorConfigs))
 					"CRM_EDITOR_ADDRESS": "<?=GetMessageJS('CRM_EDITOR_ADDRESS')?>",
 					"CRM_EDITOR_REQUISITES": "<?=GetMessageJS('CRM_EDITOR_REQUISITES')?>",
 					"CRM_EDITOR_PLACEMENT_CAUTION": "<?=GetMessageJS('CRM_EDITOR_PLACEMENT_CAUTION')?>",
-
 				}
 			);
 
@@ -785,6 +791,8 @@ if(!empty($htmlEditorConfigs))
 					{
 						entityTypeName: "<?=CUtil::JSEscape($arResult['ENTITY_TYPE_NAME'])?>",
 						entityTypeId: <?=$arResult['ENTITY_TYPE_ID']?>,
+						entityTypeTitle: "<?= CUtil::JSEscape($arResult['ENTITY_TYPE_TITLE']) ?>",
+						useFieldsSearch: true,
 						entityId: <?=$arResult['ENTITY_ID']?>,
 						model: model,
 						config: config,
@@ -802,6 +810,7 @@ if(!empty($htmlEditorConfigs))
 						initialMode: "<?=CUtil::JSEscape($arResult['INITIAL_MODE'])?>",
 						enableModeToggle: <?=$arResult['ENABLE_MODE_TOGGLE'] ? 'true' : 'false'?>,
 						enableVisibilityPolicy: <?=$arResult['ENABLE_VISIBILITY_POLICY'] ? 'true' : 'false'?>,
+						isToolPanelAlwaysVisible: <?=$arResult['IS_TOOL_PANEL_ALWAYS_VISIBLE'] ? 'true' : 'false'?>,
 						enableToolPanel: <?=$arResult['ENABLE_TOOL_PANEL'] ? 'true' : 'false'?>,
 						enableBottomPanel: <?=$arResult['ENABLE_BOTTOM_PANEL'] ? 'true' : 'false'?>,
 						enableFieldsContextMenu: <?=$arResult['ENABLE_FIELDS_CONTEXT_MENU'] ? 'true' : 'false'?>,

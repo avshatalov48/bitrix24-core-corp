@@ -24,4 +24,5 @@ class FeatureDictionary
 	public const VARIABLE_TASKS_LIMIT = 'tasks_functional_disabling_limit';
 	public const VARIABLE_KPI_LIMIT = 'tasks_kpi_disabling_limit';
 	public const VARIABLE_TEMPLATE_SUBTASKS = 'tasks_template_subtasks';
+	public const VARIABLE_SCRUM_LIMIT = 'tasks_scrum_functional_disabling_limit';
 }

@@ -35,9 +35,6 @@ class Event
 	 * @param $configLine
 	 * @return bool|\Bitrix\ImOpenLines\Queue\Event\Evenly|\Bitrix\ImOpenLines\Queue\Event\All|\Bitrix\ImOpenLines\Queue\Event\Strictly
 	 * @return Event\All|Event\Evenly|Event\Strictly|bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function initialization($configLine)
 	{
@@ -113,12 +110,6 @@ class Event
 	 * Added operator to the queue.
 	 *
 	 * @param \Bitrix\Main\Event $event
-	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function onQueueOperatorsAdd(\Bitrix\Main\Event $event)
 	{
@@ -141,12 +132,6 @@ class Event
 	 * Start of working time.
 	 *
 	 * @param $data
-	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function onAfterTMDayStart($data)
 	{
@@ -165,12 +150,6 @@ class Event
 	 * The working day continued after a pause.
 	 *
 	 * @param $data
-	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function onAfterTMDayContinue($data)
 	{
@@ -181,11 +160,6 @@ class Event
 	 * The event of end of holiday.
 	 *
 	 * @param \Bitrix\Main\Event $event
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function OnEndAbsence(\Bitrix\Main\Event $event)
 	{
@@ -223,12 +197,6 @@ class Event
 	 *
 	 * @param $userId
 	 * @param bool $checkTimeman
-	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	protected static function returnUserToAllQueues($userId, $checkTimeman = false)
 	{
@@ -264,12 +232,6 @@ class Event
 	 *
 	 * @param $userIds
 	 * @param $lineId
-	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	protected static function returnUserToQueue(array $userIds, $lineId): void
 	{
@@ -286,12 +248,6 @@ class Event
 	 * The working day is put on pause.
 	 *
 	 * @param $data
-	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function onAfterTMDayPause($data)
 	{
@@ -302,12 +258,6 @@ class Event
 	 * The working day was over.
 	 *
 	 * @param $data
-	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function onAfterTMDayEnd($data): void
 	{
@@ -347,11 +297,6 @@ class Event
 	 * @param \Bitrix\Main\Event $event
 	 *
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function onQueueOperatorsDelete(\Bitrix\Main\Event $event)
 	{
@@ -380,10 +325,6 @@ class Event
 	 *
 	 * @param \Bitrix\Main\Event $event
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function OnQueueOperatorsChange(\Bitrix\Main\Event $event): bool
 	{
@@ -424,11 +365,6 @@ class Event
 	 * @param $userId
 	 *
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function onUserDelete($userId)
 	{
@@ -471,12 +407,6 @@ class Event
 
 	/**
 	 * @param $sectionId
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function OnBeforeDepartmentsDelete($sectionId)
 	{
@@ -513,10 +443,6 @@ class Event
 
 	/**
 	 * @param $fields
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function OnAfterDepartmentsDelete($fields)
 	{
@@ -535,12 +461,6 @@ class Event
 
 	/**
 	 * @param $fields
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function OnBeforeDepartmentsUpdate(&$fields)
 	{
@@ -590,10 +510,6 @@ class Event
 
 	/**
 	 * @param $fields
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function OnAfterDepartmentsUpdate(&$fields)
 	{
@@ -614,10 +530,6 @@ class Event
 
 	/**
 	 * @param $userId
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function OnAfterUserDelete($userId)
 	{
@@ -639,12 +551,6 @@ class Event
 
 	/**
 	 * @param $userFields
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function onUserAdd(&$userFields)
 	{
@@ -674,9 +580,6 @@ class Event
 
 	/**
 	 * @param $userFields
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function onUserUpdateBefore(&$userFields)
 	{
@@ -706,12 +609,6 @@ class Event
 	 * User update.
 	 *
 	 * @param $userFields
-	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function onUserUpdate(&$userFields)
 	{
@@ -789,12 +686,6 @@ class Event
 	//Absence
 	/**
 	 * Start of vacation.
-	 *
-	 * @param \Bitrix\Main\Event $event
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function OnStartAbsence(\Bitrix\Main\Event $event)
 	{
@@ -862,10 +753,6 @@ class Event
 	 * @param $userId
 	 * @param false $checkTimeman
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getLineIsOperator($userId, $checkTimeman = false)
 	{
@@ -911,10 +798,6 @@ class Event
 	 * @param false $checkTimeman
 	 * @param array $excludeLine
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getLineIsSessionOperatorNotLine($userId, $checkTimeman = false, $excludeLine = [])
 	{
@@ -967,10 +850,6 @@ class Event
 	 * @param $userId
 	 * @param bool $checkTimeman
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getLineIsSessionOperator($userId, $checkTimeman = false)
 	{
@@ -985,9 +864,6 @@ class Event
 	 * @param bool $recursion
 	 * @param bool $includeCurrentDepartment
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function getParentDepartments($departments, $recursion = true, $includeCurrentDepartment = true): array
 	{
@@ -1013,12 +889,6 @@ class Event
 	 * @param $departments
 	 * @param bool $recursion
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getLineIsDepartmentQueue($departments, $recursion = true)
 	{
@@ -1055,11 +925,6 @@ class Event
 	 * OnChatAnswer event handler for filling free slots.
 	 *
 	 * @param \Bitrix\Main\Event $event
-	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function checkFreeSlotOnChatAnswer(\Bitrix\Main\Event $event)
 	{
@@ -1078,12 +943,6 @@ class Event
 	 * OnChatSkip/OnChatMarkSpam/OnChatFinish event handler for filling free slots.
 	 *
 	 * @param \Bitrix\Main\Event $event
-	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function checkFreeSlotOnFinish(\Bitrix\Main\Event $event)
 	{
@@ -1099,12 +958,6 @@ class Event
 	 * OnOperatorTransfer event handler for filling free slots.
 	 *
 	 * @param \Bitrix\Main\Event $event
-	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function checkFreeSlotOnOperatorTransfer(\Bitrix\Main\Event $event)
 	{
@@ -1120,12 +973,6 @@ class Event
 	 * OnChatSkip/OnChatMarkSpam/OnChatFinish/OnOperatorTransfer event handler for filling free slots.
 	 *
 	 * @param Session $session
-	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function checkSessionFreeSlotOnFinish(Session $session)
 	{
@@ -1143,12 +990,6 @@ class Event
 	 * Method for checking free slots by sending message data.
 	 *
 	 * @param array $messageData
-	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function checkFreeSlotBySendMessage($messageData): void
 	{

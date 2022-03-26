@@ -7,6 +7,7 @@
  */
 
 use Bitrix\Disk;
+use Bitrix\Forum\MessageTable;
 use Bitrix\Main;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\Type\DateTime;
@@ -213,13 +214,10 @@ final class CTaskCommentItem extends CTaskSubItemAbstract
 			$filter = (is_array($filter) ? $filter : []);
 			$filter['TOPIC_ID'] = $topicId;
 
-			$commentsResult = CForumMessage::GetList($order, $filter);
-
-			if (!is_object($commentsResult))
-			{
-				throw new Exception();
-			}
-
+			$commentsResult = MessageTable::getList([
+				'filter' => $filter,
+				'order' => $order,
+			]);
 			while ($comment = $commentsResult->fetch())
 			{
 				// typically the first one is a non-interesting system message, so skip it

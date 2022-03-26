@@ -1,6 +1,11 @@
 <?php
 global $MESS;
 
+use Bitrix\Disk\Configuration;
+use Bitrix\Disk\Document\BitrixHandler;
+use Bitrix\Disk\Document\OnlyOffice\Models\DocumentSessionTable;
+use Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler;
+use Bitrix\Disk\UserConfiguration;
 use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
@@ -85,16 +90,30 @@ Class disk extends CModule
 			{
 				$commonStorage->changeBaseUrl('/docs/shared/');
 			}
+
+			$defaultViewerServiceCode = Configuration::getDefaultViewerServiceCode();
+			if ($defaultViewerServiceCode === OnlyOfficeHandler::getCode())
+			{
+				UserConfiguration::resetDocumentServiceForAllUsers();
+
+				Configuration::setDefaultViewerService(BitrixHandler::getCode());
+				DocumentSessionTable::clearTable();
+
+				Option::set('disk', 'documents_enabled', 'N');
+				Option::delete('disk', [
+					'name' => 'disk_onlyoffice_server',
+				]);
+			}
 		}
 	}
 
 	function InstallDB($install_wizard = true)
 	{
-		global $DB, $DBType, $APPLICATION;
+		global $DB, $APPLICATION;
 
 		$errors = null;
 		if (!$DB->Query("SELECT 'x' FROM b_disk_storage", true))
-			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/disk/install/db/".$DBType."/install.sql");
+			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/disk/install/db/mysql/install.sql");
 		$this->InstallTasks();
 
 		if (!empty($errors))
@@ -140,7 +159,7 @@ Class disk extends CModule
 			\Bitrix\Main\Config\Option::set(
 				'disk',
 				'disk_revision_api',
-				\Bitrix\Disk\Configuration::REVISION_API
+				Configuration::REVISION_API
 			);
 			/** @see \Bitrix\Disk\Search\Reindex\BaseObjectIndex::STATUS_STOP */
 			/** @see \Bitrix\Disk\Search\Reindex\BaseObjectIndex::stopExecution(); */
@@ -238,7 +257,7 @@ Class disk extends CModule
 
 	function UnInstallDB($arParams = Array())
 	{
-		global $DB, $DBType, $APPLICATION;
+		global $DB, $APPLICATION;
 
 		if(CModule::IncludeModule("search"))
 		{
@@ -251,7 +270,7 @@ Class disk extends CModule
 		if(array_key_exists("savedata", $arParams) && $arParams["savedata"] != "Y")
 		{
 			static::UnInstallUserFields();
-			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/disk/install/db/".$DBType."/uninstall.sql");
+			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/disk/install/db/mysql/uninstall.sql");
 
 			if (!empty($errors))
 			{
@@ -602,7 +621,7 @@ Class disk extends CModule
 		{
 			return;
 		}
-		if(\Bitrix\Disk\Configuration::isSuccessfullyConverted())
+		if(Configuration::isSuccessfullyConverted())
 		{
 			return false;
 		}

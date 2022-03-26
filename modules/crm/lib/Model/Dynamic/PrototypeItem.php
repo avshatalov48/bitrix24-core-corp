@@ -2,18 +2,13 @@
 
 namespace Bitrix\Crm\Model\Dynamic;
 
-use Bitrix\Crm\Binding\EntityContactTable;
 use Bitrix\Crm\CompanyTable;
 use Bitrix\Crm\ContactTable;
 use Bitrix\Crm\Currency;
 use Bitrix\Crm\Model\AssignedTable;
 use Bitrix\Crm\ProductRowTable;
-use Bitrix\Crm\Relation\EntityRelationTable;
 use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Service\ParentFieldManager;
-use Bitrix\Crm\StatusTable;
-use Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM;
@@ -158,7 +153,6 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 			(new Reference('MYCOMPANY', CompanyTable::class, Join::on('this.MYCOMPANY_ID', 'ref.ID'))),
 			(new StringField('SOURCE_ID'))
 				->configureSize(50)
-				->addValidator([static::class, 'validateSourceId'])
 				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_SOURCE_ID')),
 			(new TextField('SOURCE_DESCRIPTION'))
 				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_SOURCE_DESCRIPTION')),
@@ -207,7 +201,6 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 			$parameters['runtime'][] = static::getFullTextReferenceField();
 		}
 
-		$parameters = static::prepareParentFieldsInParameters($parameters);
 		$parameters['filter'] = static::replaceAssignedInFilter($parameters['filter']);
 
 		return $parameters;
@@ -276,81 +269,6 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 		return false;
 	}
 
-	/**
-	 * @param array $parameters
-	 * @return array
-	 */
-	protected static function prepareParentFieldsInParameters(array $parameters): array
-	{
-		if (isset($parameters['filter']))
-		{
-			$filterItem = [
-				'LOGIC' => 'AND',
-			];
-
-			foreach($parameters['filter'] as $name => $value)
-			{
-				if(ParentFieldManager::isParentFieldName($name))
-				{
-					$parentEntityTypeId = ParentFieldManager::getEntityTypeIdFromFieldName($name);
-					$parentEntityId = self::getParentEntityIdFromFilterValue($value);
-
-					if (
-						$parentEntityId < 1
-						|| !\CCrmOwnerType::ResolveName($parentEntityTypeId)
-					)
-					{
-						continue;
-					}
-
-					$referenceName = 'REFERENCE_RELATION_' . $parentEntityTypeId;
-					$parameters['runtime'][] = new Reference(
-						$referenceName,
-						EntityRelationTable::getEntity(),
-						[
-							'=this.ID' => 'ref.DST_ENTITY_ID',
-						]
-					);
-
-					unset($parameters['filter'][$name]);
-
-					$filterItem[] = [
-						$referenceName . '.SRC_ENTITY_ID' => $parentEntityId,
-						$referenceName . '.SRC_ENTITY_TYPE_ID' => $parentEntityTypeId
-					];
-				}
-			}
-
-			if (count($filterItem) > 1)
-			{
-				$parameters['filter'][] = $filterItem;
-			}
-		}
-
-		return $parameters;
-	}
-
-	/**
-	 * @param string $value
-	 * @return int
-	 */
-	protected static function getParentEntityIdFromFilterValue(string $value): int
-	{
-		// if not dynamic entity, e.g. CRMDEAL8
-		if (preg_match('/^CRM[A-Z]+(\d+)$/', $value, $matches))
-		{
-			$parentEntityId = $matches[1];
-		}
-		// dynamic entity, e.g. CRMDYNAMIC-128_41
-		else
-		{
-			$arr = explode('_', $value);
-			$parentEntityId = (int)($arr[1] ?? 0);
-		}
-
-		return $parentEntityId;
-	}
-
 	protected static function replaceAssignedInFilter(array $filter): array
 	{
 		foreach ($filter as $index => $value)
@@ -393,9 +311,16 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 
 	public static function getFullTextReferenceField(): Reference
 	{
-		return new Reference('FULL_TEXT', static::getFullTextDataClass()::getEntity(), [
-			'=this.ID' => 'ref.ITEM_ID',
-		]);
+		return new Reference(
+			'FULL_TEXT',
+			static::getFullTextDataClass()::getEntity(),
+			[
+				'=this.ID' => 'ref.ITEM_ID',
+			],
+			[
+				'join_type' => \Bitrix\Main\ORM\Query\Join::TYPE_INNER,
+			]
+		);
 	}
 
 	public static function onAfterUpdate(Event $event): ORM\EventResult
@@ -424,15 +349,7 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 
 		if (!$result->getErrors())
 		{
-			$typeData = static::getType();
-			$entityTypeId = (int)$typeData['ENTITY_TYPE_ID'];
 			$id = static::getTemporaryStorage()->getIdByPrimary($event->getParameter('primary'));
-
-			EntityContactTable::deleteByItem($entityTypeId, $id);
-			ProductRowTable::deleteByItem($entityTypeId, $id);
-			AssignedTable::deleteByItem($entityTypeId, $id);
-			EntityRelationTable::deleteByItem($entityTypeId, $id);
-			TimelineEntry::deleteByOwner($entityTypeId, $id);
 
 			static::getFullTextDataClass()::delete($id);
 		}
@@ -553,39 +470,12 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 	public static function getOwnFieldNames(): array
 	{
 		$names = parent::getOwnFieldNames();
-		$names['ASSIGNED_BY_ID'] = 'ASSIGNED_BY_ID';
+		$names[\Bitrix\Crm\Item::FIELD_NAME_ASSIGNED] = \Bitrix\Crm\Item::FIELD_NAME_ASSIGNED;
+		$names[\Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_COMMENTS] = \Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_COMMENTS;
+		$names[\Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_ACCOUNT_NUMBER] = \Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_ACCOUNT_NUMBER;
+		$names[\Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_LOCATION_ID] = \Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_LOCATION_ID;
 
 		return $names;
-	}
-
-	/**
-	 * We can't use \Bitrix\Main\ORM\Fields\EnumField explicitly.
-	 * Reason - we can't configure the size of a created VARCHAR column in
-	 * the table that is created by \Bitrix\Main\ORM\Entity::createDbTable
-	 * For details @see \Bitrix\Main\DB\MysqlCommonSqlHelper::getColumnTypeByField
-	 *
-	 * Therefore, we simply imitate its validation on a basic string field
-	 *
-	 * @param $value
-	 *
-	 * @return true|string
-	 */
-	public static function validateSourceId($value)
-	{
-		if (empty($value))
-		{
-			return true;
-		}
-
-		$possibleValues = StatusTable::getStatusesIds(StatusTable::ENTITY_ID_SOURCE);
-
-		/** @noinspection TypeUnsafeArraySearchInspection */
-		if (in_array($value, $possibleValues))
-		{
-			return true;
-		}
-
-		return 'SOURCE_ID is invalid';
 	}
 
 	public static function onBeforeAdd(Event $event): ORM\EventResult

@@ -2,18 +2,18 @@
 {
 	class ApplicationStorage
 	{
-		static set(key, value)
+		static set(key, value, storageId = 'default')
 		{
 			return new Promise((resolve, reject) =>
 			{
-				app.exec("setStorageValue", {key: key, value: {value: String(value)}, callback: result =>
+				app.exec("setStorageValue", {storageId: storageId, key: key, value: {value: String(value)}, callback: result =>
 				{
 					resolve(String(value));
 				}});
 			});
 		}
 
-		static get(key, fallback = null)
+		static get(key, fallback = null, storageId = 'default')
 		{
 			return new Promise((resolve, reject) =>
 			{
@@ -22,7 +22,7 @@
 					return resolve(undefined);
 				}
 
-				app.exec("getStorageValue", {key: key, callback: value =>
+				app.exec("getStorageValue", {storageId: storageId, key: key, callback: value =>
 				{
 					if (!value || typeof value === 'undefined')
 					{
@@ -137,11 +137,11 @@
 			});
 		}
 
-		static getObject(key, fallback = {})
+		static getObject(key, fallback = {}, storageId = 'default')
 		{
 			return new Promise((resolve, reject) =>
 			{
-				ApplicationStorage.get(key, NaN).then(value =>
+				ApplicationStorage.get(key, NaN, storageId).then(value =>
 				{
 					if (Number.isNaN(value))
 					{

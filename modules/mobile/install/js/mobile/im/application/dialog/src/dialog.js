@@ -47,6 +47,12 @@ import "./dialog.css";
 // widget components
 import "./component/dialog";
 
+const STORAGE_PREFIX = 'chatBackgroundQueue';
+const FILES_STORAGE_NAME = 'uploadTasks';
+const MESSAGES_STORAGE_NAME = 'tasks';
+const NO_INTERNET_CONNECTION_ERROR_CODE = -2;
+const HTTP_OK_STATUS_CODE = 200;
+
 export class MobileDialogApplication
 {
 	/* region 01. Initialize and store data */
@@ -67,15 +73,22 @@ export class MobileDialogApplication
 		this.messagesQueue = [];
 		this.windowFocused = true;
 
+		window.imDialogUploadTasks = [];
+		window.imDialogMessagesTasks = [];
+
+		this.messagesSet = false;
+
 		//alert('Pause: open console for debug');
 
 		this.initCore()
+			.then(() => this.subscribeToEvents())
 			.then(() => this.initComponentParams())
 			.then(result => this.initMobileEntity(result))
 			.then(result => this.initMobileSettings(result))
 			.then(() => this.initComponent())
 			.then(() => this.initEnvironment())
 			.then(() => this.initMobileEnvironment())
+			.then(() => this.initUnsentStorage())
 			.then(() => this.initPullClient())
 			.then(() => this.initComplete())
 		;
@@ -89,6 +102,11 @@ export class MobileDialogApplication
 				resolve();
 			})
 		});
+	}
+
+	subscribeToEvents()
+	{
+		EventEmitter.subscribe(EventType.dialog.messagesSet, this.onMessagesSet.bind(this));
 	}
 
 	initComponentParams()
@@ -164,7 +182,6 @@ export class MobileDialogApplication
 	{
 		console.log('3. initComponent');
 
-
 		this.controller.application.setPrepareFilesBeforeSaveFunction(this.prepareFileData.bind(this));
 
 		this.controller.addRestAnswerHandler(
@@ -199,14 +216,6 @@ export class MobileDialogApplication
 		console.log('4. initEnvironment');
 
 		this.setTextareaMessage = Utils.debounce(this.controller.application.setTextareaMessage, 300, this.controller.application);
-
-		if (
-			Utils.platform.isIos()
-			&& Application.getApiVersion() >= 39
-		)
-		{
-			//document.body.classList.add('bx-mobile-ios-safe-area');
-		}
 
 		return new Promise((resolve, reject) => resolve());
 	}
@@ -312,7 +321,12 @@ export class MobileDialogApplication
 			});
 		});
 
-		BXMobileApp.UI.Page.TextPanel.setParams(this.getKeyboardParams());
+		BXMobileApp.UI.Page.TextPanel.getText((initialText) => {
+			BXMobileApp.UI.Page.TextPanel.setParams(this.getKeyboardParams({
+				text: initialText
+			}));
+		})
+
 		this.changeChatKeyboardStatus();
 
 		BX.MobileUploadProvider.setListener(this.executeUploaderEvent.bind(this));
@@ -322,6 +336,7 @@ export class MobileDialogApplication
 				chatId: chatId,
 				id: fileId,
 				fields: {
+					status: FileStatus.upload,
 					size: size,
 					progress: progress
 				}
@@ -358,7 +373,7 @@ export class MobileDialogApplication
 
 	initPullClient()
 	{
-		console.log('6. initPullClient');
+		console.log('7. initPullClient');
 
 		if (this.storedEvents && this.storedEvents.length > 0 && this.controller.application.isUnreadMessagesLoaded())
 		{
@@ -372,6 +387,12 @@ export class MobileDialogApplication
 					BX.onCustomEvent('chatrecent::push::get', [event]);
 					return false;
 				});
+				// scroll to first push message in dialog before load all messages from server
+				EventEmitter.emit(EventType.dialog.scrollToBottom, {
+					chatId: this.controller.application.getChatId(),
+					duration: 300,
+					cancelIfScrollChange: true
+				});
 			}, 50);
 		}
 
@@ -382,21 +403,6 @@ export class MobileDialogApplication
 				dialog: this,
 			})
 		);
-		Pull.subscribe({
-			type: BX.PullClient.SubscriptionType.Server,
-			moduleId: 'im',
-			command: 'chatUserLeave',
-			callback: (params) =>
-			{
-				if (
-					params.userId === this.controller.application.getUserId()
-					&& params.dialogId === this.controller.application.getDialogId()
-				)
-				{
-					app.closeController();
-				}
-			}
-		});
 
 		Pull.subscribe({
 			type: PullClient.SubscriptionType.Status,
@@ -416,7 +422,7 @@ export class MobileDialogApplication
 
 	initComplete()
 	{
-		console.log('7. init complete')
+		console.log('8. initComplete')
 		this.controller.getStore().subscribe(mutation => this.eventStoreInteraction(mutation));
 
 		this.inited = true;
@@ -427,6 +433,79 @@ export class MobileDialogApplication
 		}, true], 'im.recent');
 
 		return this.requestData();
+	}
+
+	cancelUnsentFile(fileId)
+	{
+		const taskId = `imDialogFileUpload|${fileId}`;
+
+		BX.MobileUploadProvider.cancelTasks([taskId]);
+
+		window.imDialogUploadTasks = window.imDialogUploadTasks.filter(entry => {
+			return taskId !== entry.taskId;
+		});
+	}
+
+	initUnsentStorage()
+	{
+		console.log('6. initUnsentStorage');
+
+		return new Promise(resolve => {
+			const filesPromise = this.loadUnsentFiles();
+			const messagesPromise = this.loadUnsentMessages();
+
+			Promise.all([filesPromise, messagesPromise]).then(resolve);
+		});
+
+	}
+
+	loadUnsentMessages()
+	{
+		const userId = this.controller.application.getUserId();
+		const dialogId = this.controller.application.getDialogId();
+		const storageId = `${STORAGE_PREFIX}_${userId}`;
+
+		return ApplicationStorage.getObject(MESSAGES_STORAGE_NAME, {}, storageId)
+			.then(tasks => {
+				for (const queueType in tasks)
+				{
+					if (queueType === dialogId)
+					{
+						tasks[queueType].forEach(task => {
+							if (dialogId === task.extra.dialogId)
+							{
+								window.imDialogMessagesTasks.push(task);
+							}
+						});
+					}
+				}
+			});
+	}
+
+	loadUnsentFiles()
+	{
+		const userId = this.controller.application.getUserId();
+		const dialogId = this.controller.application.getDialogId();
+		const storageId = `${STORAGE_PREFIX}_${userId}`;
+
+		return ApplicationStorage.getObject(FILES_STORAGE_NAME, {}, storageId)
+			.then(result => {
+				Object.values(result).forEach(task => {
+					if (
+						typeof task.eventData.file !== 'undefined'
+						&& dialogId === task.eventData.file.params.dialogId
+					)
+					{
+						window.imDialogUploadTasks.push(task);
+					}
+				});
+
+				// we need it to show a progress bar for the uploading
+				if (window.imDialogUploadTasks.length > 0)
+				{
+					BX.MobileUploadProvider.registerTaskLoaders(window.imDialogUploadTasks);
+				}
+			});
 	}
 
 	ready()
@@ -444,7 +523,7 @@ export class MobileDialogApplication
 
 	requestData()
 	{
-		console.log('4. requestData');
+		console.log('-> requestData');
 		if (this.requestDataSend)
 		{
 			return this.requestDataSend;
@@ -487,6 +566,7 @@ export class MobileDialogApplication
 					resolve();
 					return false;
 				}
+				console.log('<-- requestData', response);
 
 				let constGet = response[RestMethodHandler.mobileBrowserConstGet];
 				if (constGet.error())
@@ -634,7 +714,11 @@ export class MobileDialogApplication
 		)
 		{
 			console.error('ChatDialog.disk.eventRouter: ', eventName, eventData, taskId);
-			this.fileError(eventData.file.params.chatId, eventData.file.params.file.id, eventData.file.params.id);
+			// show file error only if it is not internet connection error
+			if (eventData?.error?.error?.code !== NO_INTERNET_CONNECTION_ERROR_CODE)
+			{
+				this.fileError(eventData.file.params.chatId, eventData.file.params.file.id, eventData.file.params.id);
+			}
 		}
 
 		return true;
@@ -747,6 +831,76 @@ export class MobileDialogApplication
 		return true;
 	}
 
+	setIosInset()
+	{
+		if (
+			!Utils.platform.isIos()
+			|| Application.getApiVersion() <= 39
+		)
+		{
+			return false;
+		}
+
+		const getScrollElement = () =>
+		{
+			return document.getElementsByClassName("bx-im-dialog-list")[0];
+		}
+
+		const setTopInset = (scrollElement) =>
+		{
+			scrollElement.style.paddingTop = window.safeAreaInsets.top + "px"
+		}
+
+		const onScrollChange = () =>
+		{
+			const scrollElement = getScrollElement();
+			if (!scrollElement)
+			{
+				return false;
+			}
+
+			if (scrollElement.scrollTop <= window.safeAreaInsets.top)
+			{
+				setTopInset(scrollElement);
+				scrollElement.removeEventListener("scroll", onScrollChange);
+			}
+		}
+
+		if (this.iosInsetEventSetted)
+		{
+			return true;
+		}
+
+		this.iosInsetEventSetted = true;
+
+		const onInsetsChanged = Utils.debounce(() =>
+		{
+			const scrollElement = getScrollElement();
+			if (!scrollElement)
+			{
+				return false;
+			}
+
+			if (
+				window.safeAreaInsets
+				&& scrollElement.scrollTop <= window.safeAreaInsets.top
+			)
+			{
+				setTopInset(scrollElement);
+			}
+			else
+			{
+				scrollElement.removeEventListener("scroll", onScrollChange);
+				scrollElement.addEventListener("scroll", onScrollChange);
+			}
+		}, 100);
+
+		BXMobileApp.addCustomEvent("onInsetsChanged", onInsetsChanged);
+		setTimeout(onInsetsChanged, 1000);
+
+		return true;
+	}
+
 	getUserHeaderParams()
 	{
 		let user = this.controller.getStore().getters['users/get'](this.controller.application.getDialogId());
@@ -786,7 +940,11 @@ export class MobileDialogApplication
 		}
 		else
 		{
-			if (user.workPosition)
+			if (user.extranet)
+			{
+				result.desc = this.getLocalize('IM_LIST_EXTRANET');
+			}
+			else if (user.workPosition)
 			{
 				result.desc = user.workPosition;
 			}
@@ -843,6 +1001,14 @@ export class MobileDialogApplication
 		}
 		result.desc = chatTypeTitle;
 
+		if (dialog.entityType === 'SUPPORT24_QUESTION')
+		{
+			result.avatar = encodeURI(
+				this.controller.getHost() + "/bitrix/mobileapp/mobile/components/bitrix/im.recent/images/avatar_24_question_x3.png"
+			);
+			result.desc = '';
+		}
+
 		return result;
 	}
 
@@ -858,6 +1024,10 @@ export class MobileDialogApplication
 		let keyboardShow = true;
 
 		if (dialog.type === 'announcement' && !dialog.managerList.includes(this.controller.application.getUserId()))
+		{
+			keyboardShow = false;
+		}
+		else if (dialog.restrictions.send === false)
 		{
 			keyboardShow = false;
 		}
@@ -926,6 +1096,14 @@ export class MobileDialogApplication
 				{
 					app.exec("setRightButtons", {items: []});
 				}
+
+				this.callMenuSetted = true;
+				return true;
+			}
+
+			if (!dialogData.restrictions.call)
+			{
+				app.exec("setRightButtons", {items: []});
 
 				this.callMenuSetted = true;
 				return true;
@@ -1362,6 +1540,13 @@ export class MobileDialogApplication
 	{
 		if (data.status === PullClient.PullStatus.Online)
 		{
+			// restart background tasks (messages and files) to resend files after we got connection again
+			if (this.messagesSet)
+			{
+				BXMobileApp.Events.postToComponent('chatbackground::task::restart', [], 'background');
+				BXMobileApp.Events.postToComponent('chatuploader::task::restart', [], 'background');
+			}
+
 			if (this.pullRequestMessage)
 			{
 				this.controller.pullBaseHandler.option.skip = true;
@@ -1416,14 +1601,17 @@ export class MobileDialogApplication
 
 /* endregion 02. Push & Pull */
 
-	getKeyboardParams()
+	getKeyboardParams(params = {})
 	{
 		let dialogData = this.controller.application.getDialogData();
+
+		let initialText = dialogData? dialogData.textareaMessage: '';
+		initialText = initialText || params.text;
 
 		let siteDir = this.getLocalize('SITE_DIR');
 
 		return {
-			text: dialogData? dialogData.textareaMessage: '',
+			text: initialText,
 			placeholder: this.getLocalize('MOBILE_CHAT_PANEL_PLACEHOLDER'),
 			smileButton: {},
 			useImageButton:true,
@@ -1621,7 +1809,10 @@ export class MobileDialogApplication
 					{
 						if (Utils.platform.isIos() && Utils.platform.getIosVersion() > 12)
 						{
-							EventEmitter.emit(EventType.dialog.scrollToBottom, {chatId: this.controller.application.getChatId(), duration: 300, cancelIfScrollChange: true})
+							EventEmitter.emit(EventType.dialog.scrollToBottom, {
+								chatId: this.controller.application.getChatId(),
+								duration: 300, cancelIfScrollChange: true
+							});
 						}
 					}
 					else if (data.event === "removeFocus")
@@ -1635,17 +1826,19 @@ export class MobileDialogApplication
 
 /* region 04. Rest methods */
 
-	addMessage(text, file = null)
+	addMessage(text, file = null, messageUuid = null)
 	{
 		if (!text && !file)
 		{
 			return false;
 		}
 
-		let quoteId = this.controller.getStore().getters['dialogues/getQuoteId'](this.controller.application.getDialogId());
+		const uuid = messageUuid || ChatUtils.getUuidv4();
+
+		const quoteId = this.controller.getStore().getters['dialogues/getQuoteId'](this.controller.application.getDialogId());
 		if (quoteId)
 		{
-			let quoteMessage = this.controller.getStore().getters['messages/getMessage'](this.controller.application.getChatId(), quoteId);
+			const quoteMessage = this.controller.getStore().getters['messages/getMessage'](this.controller.application.getChatId(), quoteId);
 			if (quoteMessage)
 			{
 				let user = null;
@@ -1654,9 +1847,9 @@ export class MobileDialogApplication
 					user = this.controller.getStore().getters['users/get'](quoteMessage.authorId);
 				}
 
-				let files = this.controller.getStore().getters['files/getList'](this.controller.application.getChatId());
+				const files = this.controller.getStore().getters['files/getList'](this.controller.application.getChatId());
 
-				let message = [];
+				const message = [];
 				message.push('-'.repeat(54));
 				message.push((user && user.name? user.name: this.getLocalize('MOBILE_CHAT_SYSTEM_MESSAGE'))+' ['+Utils.date.format(quoteMessage.date, null, this.getLocalize())+']');
 				message.push(Utils.text.quote(quoteMessage.text, quoteMessage.params, files, this.getLocalize()));
@@ -1668,11 +1861,17 @@ export class MobileDialogApplication
 			}
 		}
 
-		console.warn('addMessage', text, file);
+		console.warn('addMessage', text, file, uuid);
 
 		if (!this.controller.application.isUnreadMessagesLoaded())
 		{
-			this.sendMessage({id: 0, chatId: this.controller.application.getChatId(), dialogId: this.controller.application.getDialogId(), text, file});
+			this.sendMessage({
+				id: uuid,
+				chatId: this.controller.application.getChatId(),
+				dialogId: this.controller.application.getDialogId(),
+				text,
+				file
+			});
 			this.processSendMessages();
 
 			return true;
@@ -1680,13 +1879,14 @@ export class MobileDialogApplication
 
 		this.controller.getStore().commit('application/increaseDialogExtraCount');
 
-		let params = {};
+		const params = {};
 		if (file)
 		{
 			params.FILE_ID = [file.id];
 		}
 
 		this.controller.getStore().dispatch('messages/add', {
+			id: uuid,
 			chatId: this.controller.application.getChatId(),
 			authorId: this.controller.application.getUserId(),
 			text: text,
@@ -1694,6 +1894,7 @@ export class MobileDialogApplication
 			sending: !file,
 		}).then(messageId => {
 			EventEmitter.emit(EventType.dialog.scrollToBottom, {chatId: this.controller.application.getChatId(), cancelIfScrollChange: true});
+
 			this.messagesQueue.push({
 				id: messageId,
 				chatId: this.controller.application.getChatId(),
@@ -1711,7 +1912,6 @@ export class MobileDialogApplication
 			{
 				this.requestData();
 			}
-
 		});
 
 		return true;
@@ -1724,11 +1924,13 @@ export class MobileDialogApplication
 			return false;
 		}
 
-		console.warn('addFile', file, text);
+		const fileMessageUuid = ChatUtils.getUuidv4();
+
+		console.warn('addFile', file, text, fileMessageUuid);
 
 		if (!this.controller.application.isUnreadMessagesLoaded())
 		{
-			this.addMessage(text, {id: 0, source: file});
+			this.addMessage(text, {id: 0, source: file}, fileMessageUuid);
 			return true;
 		}
 
@@ -1747,17 +1949,32 @@ export class MobileDialogApplication
 			progress: 0,
 			authorName: this.controller.application.getCurrentUser().name,
 			urlPreview: !file.preview? '': file.preview.url,
-		})).then(fileId => this.addMessage(text, {id: fileId, ...file}));
+		})).then(fileId => this.addMessage(text, {id: fileId, ...file}, fileMessageUuid));
 
 		return true;
 	}
 
 	cancelUploadFile(fileId)
 	{
+		this.cancelUnsentFile(fileId);
 		let element = this.messagesQueue.find(element => element.file && element.file.id === fileId);
+		if (!element)
+		{
+			const messages = this.controller.getStore().getters['messages/get'](this.controller.application.getChatId());
+			const messageToDelete = messages.find(element => element.params.FILE_ID && element.params.FILE_ID.includes(fileId));
+			if (messageToDelete)
+			{
+				element = {
+					id: messageToDelete.id,
+					chatId: messageToDelete.chatId,
+					file: { id: messageToDelete.params.FILE_ID[0] }
+				};
+			}
+		}
+
 		if (element)
 		{
-			BX.MobileUploadProvider.cancelTasks(['imDialog'+fileId]);
+			BX.MobileUploadProvider.cancelTasks(['imDialogFileUpload|'+fileId]);
 
 			this.controller.getStore().dispatch('messages/delete', {
 				chatId: element.chatId,
@@ -1855,6 +2072,8 @@ export class MobileDialogApplication
 
 		this.controller.application.stopWriting(message.dialogId);
 
+		window.imDialogMessagesTasks.push({taskId: 'sendMessage|'+message.id });
+
 		BXMobileApp.Events.postToComponent('chatbackground::task::add', [
 			'sendMessage|'+message.id,
 			[RestMethod.imMessageAdd, {
@@ -1873,6 +2092,8 @@ export class MobileDialogApplication
 		let attachPreviewFile = fileType !== FileType.image && message.file.preview;
 		let needConvert = fileType === FileType.image && message.file.type !== 'image/gif' || fileType === FileType.video;
 
+		window.imDialogUploadTasks.push({taskId: 'imDialogFileUpload|'+message.file.id,});
+
 		BX.MobileUploadProvider.addTasks([{
 			url: message.file.uploadLink,
 			params: message,
@@ -1886,7 +2107,7 @@ export class MobileDialogApplication
 			},
 			previewUrl: attachPreviewFile? message.file.preview.url: '',
 			folderId: this.controller.application.getDiskFolderId(),
-			taskId: 'imDialog'+message.file.id,
+			taskId: 'imDialogFileUpload|'+message.file.id,
 			onDestroyEventName: 'onimdiskmessageaddsuccess'
 		}]);
 	}
@@ -1913,7 +2134,7 @@ export class MobileDialogApplication
 
 	fileCommit(params, message)
 	{
-		let queryParams = {
+		const queryParams = {
 			chat_id: params.chatId,
 			message: params.messageText,
 			template_id: params.messageId? params.messageId: 0,
@@ -1928,17 +2149,11 @@ export class MobileDialogApplication
 			queryParams.disk_id = params.diskId;
 		}
 
-		this.controller.restClient.callMethod(RestMethod.imDiskFileCommit, queryParams, null, null, Utils.getLogTrackingParams({
-			name: RestMethod.imDiskFileCommit,
-			data: {timMessageType: params.fileType},
-			dialog: this.controller.application.getDialogData(params.dialogId)
-		})).then(response => {
-			this.controller.executeRestAnswer(RestMethodHandler.imDiskFileCommit, response, message);
-		}).catch(error => {
-			this.controller.executeRestAnswer(RestMethodHandler.imDiskFileCommit, error, message);
-		});
-
-		return true;
+		BXMobileApp.Events.postToComponent('chatbackground::task::add', [
+			'uploadFileFromDisk|'+message.id,
+			[RestMethod.imDiskFileCommit, queryParams],
+			message
+		], 'background');
 	}
 
 	requestDiskFolderId()
@@ -2460,10 +2675,12 @@ export class MobileDialogApplication
 					HeaderMenuItem.create('notify')
 						.setTitle(notifyToggleText)
 						.setIcon(notifyToggleIcon)
+						.skip(!dialogData.restrictions.mute)
 					,
 					HeaderMenuItem.create('user_list')
 						.setTitle(this.getLocalize('MOBILE_HEADER_MENU_USER_LIST'))
 						.setIcon(HeaderMenuIcon.user)
+						.skip(!dialogData.restrictions.userList)
 					,
 					HeaderMenuItem.create('user_add')
 						.setTitle(this.getLocalize('MOBILE_HEADER_MENU_USER_ADD'))
@@ -2501,6 +2718,14 @@ export class MobileDialogApplication
 		}
 		else
 		{
+			let shouldSkipUserAdd = false;
+
+			const userData = this.controller.getStore().getters['users/get'](this.controller.application.getDialogId(), true);
+			if (userData.bot && userData.externalAuthId === 'support24')
+			{
+				shouldSkipUserAdd = true;
+			}
+
 			this.headerMenu.setItems([
 				HeaderMenuItem.create('profile')
 					.setTitle(this.getLocalize('MOBILE_HEADER_MENU_PROFILE'))
@@ -2510,6 +2735,7 @@ export class MobileDialogApplication
 				HeaderMenuItem.create('user_add')
 					.setTitle(this.getLocalize('MOBILE_HEADER_MENU_USER_ADD'))
 					.setIcon(HeaderMenuIcon.user_plus)
+					.skip(shouldSkipUserAdd)
 				,
 				HeaderMenuItem.create('reload')
 					.setTitle(this.getLocalize('MOBILE_HEADER_MENU_RELOAD'))
@@ -2867,6 +3093,16 @@ export class MobileDialogApplication
 		// this.controller.hideSmiles();
 	}
 
+	changeDialogState(state)
+	{
+		console.log(`changeDialogState -> ${state}`);
+
+		if (state === 'show')
+		{
+			this.setIosInset();
+		}
+	}
+
 /* endregion 05. Templates and template interaction */
 
 /* region 05. Interaction and utils */
@@ -2889,6 +3125,10 @@ export class MobileDialogApplication
 		{
 			this.processMarkReadMessages();
 		}
+		else if (action === 'uploadFileFromDisk')
+		{
+			this.controller.executeRestAnswer(RestMethodHandler.imMessageAdd, successObject, data.extra);
+		}
 	}
 
 	executeBackgroundTaskFailure(action, data)
@@ -2909,9 +3149,14 @@ export class MobileDialogApplication
 
 		console.log('Dialog.executeBackgroundTaskFailure', action, data);
 
-		if (action === 'sendMessage')
+		// Handle an error only for API error when server status is 200.
+		// Otherwise we don't want to draw errors, because background queue will resend messages.
+		if (data.status === HTTP_OK_STATUS_CODE)
 		{
-			this.controller.executeRestAnswer(RestMethodHandler.imMessageAdd, errorObject, data.extra);
+			if (action === 'sendMessage' || action === 'uploadFileFromDisk')
+			{
+				this.controller.executeRestAnswer(RestMethodHandler.imMessageAdd, errorObject, data.extra);
+			}
 		}
 	}
 
@@ -2956,4 +3201,13 @@ export class MobileDialogApplication
 	}
 
 /* endregion 06. Interaction and utils */
+/* region 07. Event handlers */
+	onMessagesSet()
+	{
+		this.messagesSet = true;
+
+		BXMobileApp.Events.postToComponent('chatbackground::task::restart', [], 'background');
+		BXMobileApp.Events.postToComponent('chatuploader::task::restart', [], 'background');
+	}
+/* endregion 07. Event handlers */
 }

@@ -8,9 +8,10 @@ return [
 	'css' => 'dist/sprint.completion.form.bundle.css',
 	'js' => 'dist/sprint.completion.form.bundle.js',
 	'rel' => [
-		'main.core',
 		'main.core.events',
 		'ui.sidepanel.layout',
+		'main.core',
+		'ui.hint',
 	],
 	'skip_core' => false,
 ];

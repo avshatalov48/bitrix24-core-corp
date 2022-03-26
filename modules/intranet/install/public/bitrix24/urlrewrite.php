@@ -624,6 +624,18 @@ $arUrlRewrite = array(
 		"PATH" => "/shop/orders/index.php",
 	),
 	array(
+		"CONDITION" => "#^/shop/documents/#",
+		"RULE" => "",
+		"ID" => "bitrix:catalog.store.document",
+		"PATH" => "/shop/documents/index.php",
+	),
+	array(
+		"CONDITION" => "#^/shop/documents-catalog/#",
+		"RULE" => "",
+		"ID" => "bitrix:catalog.catalog.controller",
+		"PATH" => "/shop/documents-catalog/index.php",
+	),
+	array(
 		"CONDITION" => "#^/marketing/rc/#",
 		"RULE" => "",
 		"ID" => "",

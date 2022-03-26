@@ -145,6 +145,17 @@ class CCrmTemplateMapper extends CCrmTemplateMapperBase
 			$entityInfo['FIELDS'] = $entityClass::getById($ID, false);
 			$entityInfo['USER_FIELDS'] = $USER_FIELD_MANAGER->getUserFields($entityClass::$sUFEntityID, $ID, LANGUAGE_ID);
 		}
+		elseif (\CCrmOwnerType::isUseFactoryBasedApproach($typeID))
+		{
+			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($typeID);
+			$item = $factory->getItem($ID);
+			if ($item)
+			{
+				$entityInfo['FIELDS'] = $item->getCompatibleData();
+				$entityInfo['FIELDS']['HEADING'] = $item->getHeading();
+				$entityInfo['USER_FIELDS'] = $USER_FIELD_MANAGER->getUserFields($factory->getUserFieldEntityId(), $ID, LANGUAGE_ID);
+			}
+		}
 
 		$entityNames = array(
 			\CCrmOwnerType::Lead    => \CCrmOwnerType::LeadName,
@@ -196,9 +207,16 @@ class CCrmTemplateMapper extends CCrmTemplateMapperBase
 			\CCrmOwnerType::System,
 		);
 
+		$factory = null;
 		$result = '';
 		if (!in_array($typeID, $entityTypes))
-			return $result;
+		{
+			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFilterFactory($typeID);
+			if (!$factory)
+			{
+				return $result;
+			}
+		}
 
 		if($typeID === CCrmOwnerType::Lead)
 		{
@@ -644,6 +662,9 @@ class CCrmTemplateMapper extends CCrmTemplateMapperBase
 				case 'ASSIGNED_BY_WORK_POSITION':
 					$result = self::mapFieldValue($fields, $fieldName, $isHtml);
 					break;
+				case 'BEGINDATE':
+					$result = isset($fields['BEGINDATE']) ? FormatDate('SHORT', MakeTimeStamp($fields['BEGINDATE'])) : '';
+					break;
 				case 'STATUS':
 					$result = self::mapReferenceValue(self::prepareQuoteStatuses(), $fields, 'STATUS_ID', $isHtml);
 					break;
@@ -732,6 +753,88 @@ class CCrmTemplateMapper extends CCrmTemplateMapperBase
 					break;
 			}
 		}
+		elseif ($factory)
+		{
+			if (\Bitrix\Crm\Service\ParentFieldManager::isParentFieldName($fieldName))
+			{
+				$parentEntityTypeId = \Bitrix\Crm\Service\ParentFieldManager::getEntityTypeIdFromFieldName($fieldName);
+				$result = self::ResolveEntityInfo($parentEntityTypeId, $fields[$fieldName]);
+			}
+			elseif ($fieldName === 'CONTACT')
+			{
+				$result = self::ResolveEntityInfo(\CCrmOwnerType::Contact, $fields[\Bitrix\Crm\Item::FIELD_NAME_CONTACT_ID]);
+			}
+			elseif ($fieldName === 'COMPANY')
+			{
+				$result = self::ResolveEntityInfo(\CCrmOwnerType::Company, $fields[\Bitrix\Crm\Item::FIELD_NAME_COMPANY_ID]);
+			}
+			elseif ($fieldName === 'MY_COMPANY')
+			{
+				$result = self::ResolveEntityInfo(\CCrmOwnerType::Company, $fields[\Bitrix\Crm\Item::FIELD_NAME_MYCOMPANY_ID]);
+			}
+			elseif ($fieldName === 'ASSIGNED_BY_FULL_NAME')
+			{
+				$result = \Bitrix\Crm\Service\Container::getInstance()->getUserBroker()->getName((int)$fields['ASSIGNED_BY_ID']);
+				if ($result && $isHtml)
+				{
+					$result = htmlspecialcharsEx($result);
+				}
+			}
+			elseif ($fieldName === 'ASSIGNED_BY_WORK_POSITION')
+			{
+				$result = \Bitrix\Crm\Service\Container::getInstance()->getUserBroker()->getWorkPosition((int)$fields['ASSIGNED_BY_ID']);
+				if ($result && $isHtml)
+				{
+					$result = htmlspecialcharsEx($result);
+				}
+			}
+			elseif ($fieldName === 'TITLE')
+			{
+				$result = self::mapFieldValue($fields, $fieldName, $isHtml);
+				if (empty($result))
+				{
+					$result = self::mapFieldValue($fields, 'HEADING', $isHtml);
+				}
+			}
+			elseif ($fieldName === 'PRICE')
+			{
+				$result = $fields[\Bitrix\Crm\Item::FIELD_NAME_OPPORTUNITY] ?? '';
+			}
+			elseif ($fieldName === \Bitrix\Crm\Item::FIELD_NAME_SOURCE_ID)
+			{
+				$result = self::MapReferenceValue(self::PrepareSources(), $fields, 'SOURCE_ID', $isHtml);
+			}
+			elseif ($fieldName === 'CREATED_BY_FULL_NAME')
+			{
+				$result = CCrmViewHelper::GetFormattedUserName($fields['CREATED_BY'] ?? 0, '', $isHtml);
+			}
+			elseif ($fieldName === 'PRICE_FORMATED')
+			{
+				$result = CCrmCurrency::MoneyToString(
+					$fields[\Bitrix\Crm\Item::FIELD_NAME_OPPORTUNITY] ?? 0,
+					$fields[\Bitrix\Crm\Item::FIELD_NAME_CURRENCY_ID] ?? ''
+				);
+			}
+			elseif ($fieldName === 'COMMENTS')
+			{
+				if($isBBCode)
+				{
+					$result = self::MapHtmlFieldAsBbCode($fields, 'COMMENTS');
+				}
+				elseif($isPlainText)
+				{
+					$result = self::MapHtmlFieldAsPlainText($fields, 'COMMENTS');
+				}
+				else
+				{
+					$result = self::MapFieldValue($fields, $fieldName, false);
+				}
+			}
+			elseif (mb_strpos($fieldName, 'UF_') !== 0)
+			{
+				$result = self::mapFieldValue($fields, $fieldName, $isHtml);
+			}
+		}
 
 		if ('' == $result)
 		{
@@ -806,7 +909,7 @@ class CCrmTemplateMapper extends CCrmTemplateMapperBase
 		$result = preg_replace("/<br(\s*\/\s*)?>/i", PHP_EOL, $result);
 		return strip_tags($result);
 	}
-	private static function MapReferenceValue(&$items, &$fields, $fieldID, $htmlEncode = false)
+	private static function MapReferenceValue($items, $fields, $fieldID, $htmlEncode = false)
 	{
 		$ID = isset($fields[$fieldID]) ? $fields[$fieldID] : '';
 		$result = isset($items[$ID]) ? $items[$ID] : $ID;

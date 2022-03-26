@@ -30,7 +30,9 @@ $frame = $this->createFrame()->begin();
 ?><div class="sidebar-widget sidebar-widget-birthdays">
 	<div class="sidebar-widget-top">
 		<div class="sidebar-widget-top-title"><?= Loc::getMessage('WIDGET_BIRTHDAY_TITLE') ?></div>
-	</div><?php
+	</div>
+	<div class="sidebar-widget-content">
+	<?php
 
 	$i = 0;
 
@@ -73,7 +75,9 @@ $frame = $this->createFrame()->begin();
 			</span>
 		</a><?php
 	}
-?></div>
+?>
+	</div>
+</div>
 <?php
 
 $frame->end();

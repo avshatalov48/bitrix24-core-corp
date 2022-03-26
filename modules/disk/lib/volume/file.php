@@ -26,7 +26,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 	 * @param array $collectData List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION.
 	 * @return $this
 	 */
-	public function measure($collectData = array(self::DISK_FILE, self::PREVIEW_FILE))
+	public function measure($collectData = [self::DISK_FILE])
 	{
 		$connection = Application::getConnection();
 		$sqlHelper = $connection->getSqlHelper();
@@ -352,6 +352,10 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 				'DELETED_TYPE' => 'files.DELETED_TYPE',
 			)
 		);
+		if ($subWhereSql != '')
+		{
+			$subWhereSql = " AND {$subWhereSql} ";
+		}
 
 		$selectSql = '';
 		$fromSql = '';
@@ -405,6 +409,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 		";
 
 		VolumeTable::createTemporally();
+		VolumeTable::clearTemporally();
 		$tableName = VolumeTable::getTableName();
 		$temporallyTableName = VolumeTable::getTemporallyName();
 
@@ -419,8 +424,8 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 			$columnList = Volume\QueryHelper::prepareUpdateOnSelect($columns, $this->getSelect(), 'destinationTbl', 'sourceQuery');
 			$querySql = "
 				UPDATE
-				    {$tableName} destinationTbl,
-				    ({$temporallyDataSource}) sourceQuery
+					{$tableName} destinationTbl,
+					({$temporallyDataSource}) sourceQuery
 				SET {$columnList}
 				WHERE destinationTbl.ID = {$filterId}
 			";
@@ -432,14 +437,14 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 
 		if (!$connection->lock(self::$lockName, self::$lockTimeout))
 		{
-			throw new Main\SystemException('Cannot get table lock for '.$indicatorType);
+			throw new Main\SystemException('Cannot get table lock for '.$indicatorType, self::ERROR_LOCK_TIMEOUT);
 		}
 
 		$connection->queryExecute($querySql);
 
 		$connection->unlock(self::$lockName);
 
-		VolumeTable::dropTemporally();
+		VolumeTable::clearTemporally();
 
 		return $this;
 	}
@@ -449,7 +454,7 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 	 * @param array $collectedData List types of collected data to return: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION.
 	 * @return DB\Result
 	 */
-	public function getMeasurementResult($collectedData = array(self::DISK_FILE, self::PREVIEW_FILE, self::ATTACHED_OBJECT, self::EXTERNAL_LINK, self::UNNECESSARY_VERSION, self::CRM_OBJECT))
+	public function getMeasurementResult($collectedData = array(self::DISK_FILE, self::ATTACHED_OBJECT, self::EXTERNAL_LINK, self::UNNECESSARY_VERSION, self::CRM_OBJECT))
 	{
 		$connection = Application::getConnection();
 
@@ -476,6 +481,10 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 				'ENTITY_TYPE' => 'storage.ENTITY_TYPE',
 			)
 		);
+		if ($whereSql != '')
+		{
+			$whereSql = " AND {$whereSql} ";
+		}
 
 		$orderSql = Volume\QueryHelper::prepareOrder(
 			$this->getOrder(array(
@@ -768,10 +777,6 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 
 
 		$fromSql = $buildQueryFiles($whereSql);
-		// $fromSql .= $buildPreviewSql($whereSql);
-		// $fromSql .= $buildQueryAttached($whereSql);
-		// $fromSql .= $buildQueryExternal($whereSql);
-		// $fromSql .= $buildQuerySharing($whereSql);
 
 		if ($orderKey == 'UNNECESSARY_VERSION_SIZE' || $orderKey == 'UNNECESSARY_VERSION_COUNT')
 		{
@@ -799,14 +804,12 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 		if($connection instanceof DB\MysqlCommonConnection)
 		{
 			$count = $connection->queryScalar('SELECT FOUND_ROWS() as CNT');
-			//$cursor->setCount($count);
 		}
 		else
 		{
 			$queryIdsSql = "SELECT COUNT(cntholder) AS CNT FROM (SELECT 1 cntholder FROM {$fromSql}) xxx";
 
 			$count = $connection->queryScalar($queryIdsSql);
-			//$cursor->setCount($count);
 		}
 
 		if ($count > 0)
@@ -846,7 +849,6 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 			if (in_array(self::SHARING_OBJECT, $collectedData))
 			{
 				$selectSql .= ', IFNULL(CNT_SHARING.SHARING_COUNT, 0) as SHARING_COUNT';
-				//$usingSql .= '+ IFNULL(CNT_SHARING.SHARING_COUNT, 0)';
 				$fromSql .= $buildQuerySharing($whereSql);
 			}
 

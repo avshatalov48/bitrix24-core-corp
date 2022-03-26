@@ -148,7 +148,10 @@ class Task extends StubConnector
 
 		// todo: move to \Bitrix\Tasks\Item\Task
 		$task = \CTaskItem::getInstance($this->entityId, $authorId);
-		\CTaskCommentItem::add($task, $fields);
+		if ($this->canRead($authorId))
+		{
+			\CTaskCommentItem::add($task, $fields);
+		}
 	}
 
 	/**

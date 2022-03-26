@@ -10,6 +10,7 @@ $MESS["TASKS_PANEL_TAB_PROJECTS"] = "Projects";
 $MESS["TASKS_PANEL_TAB_RECYCLEBIN"] = "Recycle Bin";
 $MESS["TASKS_PANEL_TAB_REPORTBOARD"] = "Report Board";
 $MESS["TASKS_PANEL_TAB_REPORTS"] = "Reports";
+$MESS["TASKS_PANEL_TAB_SCRUM"] = "Scrum";
 $MESS["TASKS_PANEL_TAB_TASKS"] = "Tasks";
 $MESS["TASKS_PANEL_TAB_TEMPLATES"] = "Templates";
 $MESS["TASKS_PANEL_TEXT_EFFECTIVE"] = "<strong>Efficiency</strong> is a performance indicator that shows how well people work with their tasks.";

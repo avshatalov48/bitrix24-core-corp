@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS['TASKS_REPLICATOR_TASK_CREATED'] = 'Создана задача по расписанию';
 $MESS['TASKS_REPLICATOR_TASK_CREATED_WITH_ERRORS'] = 'Создана задача по расписанию, с ошибками';
 $MESS['TASKS_REPLICATOR_TASK_WAS_NOT_CREATED'] = 'Задача по расписанию не была создана';
@@ -13,6 +13,6 @@ $MESS['TASKS_REPLICATOR_ILLEGAL_NEXT_TIME'] = 'Время следующего �
 $MESS['TASKS_REPLICATOR_PROCESS_ERROR'] = 'Ошибка процесса рассчета времени повтора';
 $MESS['TASKS_REPLICATOR_NEXT_TIME'] = 'Время следующего повтора: #TIME# (через #PERIOD# #SECONDS#)';
 $MESS['TASKS_REPLICATOR_SUBTREE_LOOP'] = 'Кажется, в дереве под-шаблонов есть зацикливание. Под-задачи не были созданы';
-$MESS['TASKS_REPLICATOR_SECOND_0'] = 'секунду';
-$MESS['TASKS_REPLICATOR_SECOND_1'] = 'секунды';
-$MESS['TASKS_REPLICATOR_SECOND_2'] = 'секунд';
+$MESS['TASKS_REPLICATOR_SECOND_PLURAL_0'] = 'секунду';
+$MESS['TASKS_REPLICATOR_SECOND_PLURAL_1'] = 'секунды';
+$MESS['TASKS_REPLICATOR_SECOND_PLURAL_2'] = 'секунд';

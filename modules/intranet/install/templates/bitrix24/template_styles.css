@@ -217,7 +217,7 @@ td.bx-layout-inner-inner-cont {
 }
 
 .header-logo-block-settings {
-	flex: 1;
+	flex: 1 0 30px;
 	order: 2;
 	margin: 0 15px 0 -15px;
 	max-width: 30px;
@@ -626,7 +626,20 @@ td.bx-layout-inner-inner-cont {
 
 .user-block-before { display: none; }
 
-.user-block:hover { background-color: #78808b; }
+.user-block:hover,
+.user-block.--hover,
+.user-block.--wait {
+	background-color: #78808b;
+}
+
+.user-block.--wait .ui-icon i,
+.user-block.--wait .user-name {
+	opacity: .3;
+}
+
+.user-block .main-ui-loader-svg-circle {
+	stroke-width: 3px;
+}
 
 .user-default-avatar {
 	background: #7b8691 url(/bitrix/js/ui/icons/b24/images/ui-user.svg?v2) no-repeat center;
@@ -957,9 +970,9 @@ td.bx-layout-inner-inner-cont {
 
 .start-page .feed-new-message-informer-place {
 	position: absolute;
-	width: 100%;
 	box-sizing: border-box;
-	left: 0;
+	left: 50%;
+/*	transform: translateX(-50%);*/
 	top: 20px;
 	z-index: 119;
 }
@@ -1070,7 +1083,7 @@ td.bx-layout-inner-inner-cont {
 	z-index: 2;
 	white-space: nowrap;
 	padding-left: 20px;
-	padding-right: 18px;
+	padding-right: 11px;
 }
 
 .pagetitle-menu-visible .pagetitle-menu {
@@ -1337,7 +1350,7 @@ td.bx-layout-inner-inner-cont {
 	margin-left: 68px;
 }
 
-#workarea-content {
+.workarea-content {
 	overflow: hidden;
 	background-color: #fff;
 	height: 100%;
@@ -4042,18 +4055,22 @@ a.td1:hover {
 }
 
 .new-message-balloon {
+	display: flex;
+	align-items: center;
+	margin: 20px 10px;
 	padding: 0 20px 0 12px;
 	height: 36px;
-	-webkit-border-radius: 30px;
-	border-radius: 30px;
 	background: rgba(47, 199, 247, .7);
-	font: bold 14px/36px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px/18px "Helvetica Neue", Arial, Helvetica, sans-serif;
 	color: #fff;
-	-webkit-transition: background .3s;
-	transition: background .3s;
-	-webkit-box-shadow: 0 3px 7px 1px rgba(0, 0, 0, .1);
+	white-space: nowrap;
+	border-radius: 30px;
 	box-shadow: 0 3px 7px 1px rgba(0, 0, 0, .1);
-	margin: 20px;
+	transition: background .3s;
+}
+
+.new-message-balloon .feed-new-message-informer-counter {
+	margin-left: 3px;
 }
 
 .new-message-balloon-wrap .feed-new-message-informer {
@@ -4076,12 +4093,10 @@ a.td1:hover {
 }
 
 .new-message-balloon-icon {
-	float: left;
-	margin: 10px 8px 0 0;
+	margin: 0 8px 0 0;
 	height: 16px;
 	width: 16px;
-	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Cdefs%3E%3Cstyle%3E.cls-1%20%7B%20fill%3A%20%23fff%3B%20fill-rule%3A%20evenodd%3B%20%7D%3C/style%3E%3C/defs%3E%3Cpath%20class%3D%22cls-1%22%20d%3D%22M8.094%2013.558a5.558%205.558%200%201%201%203.414-9.944l-1.466%201.78%205.95.585L14.22.324l-1.146%201.39a7.99%207.99%200%201%200%20.926%2011.736l-1.744-1.726a5.62%205.62%200%200%201-4.16%201.834z%22/%3E%3C/svg%3E');
-	background-repeat: no-repeat;
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2016%2016%22%3E%3Cdefs%3E%3Cstyle%3E.cls-1%20%7B%20fill%3A%20%23fff%3B%20fill-rule%3A%20evenodd%3B%20%7D%3C/style%3E%3C/defs%3E%3Cpath%20class%3D%22cls-1%22%20d%3D%22M8.094%2013.558a5.558%205.558%200%201%201%203.414-9.944l-1.466%201.78%205.95.585L14.22.324l-1.146%201.39a7.99%207.99%200%201%200%20.926%2011.736l-1.744-1.726a5.62%205.62%200%200%201-4.16%201.834z%22/%3E%3C/svg%3E') center no-repeat;
 }
 
 .new-message-balloon-wrap .feed-new-message-informer:hover .new-message-balloon {

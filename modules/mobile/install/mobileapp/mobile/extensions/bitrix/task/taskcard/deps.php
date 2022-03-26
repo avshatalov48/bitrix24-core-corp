@@ -1,9 +1,15 @@
 <?php
 return [
-	'notify',
-	'reload/listeners',
-	'selector/recipient',
-	'task',
-	'task/checklist',
-	'user/list',
+	'extensions'=> [
+		'notify',
+		'reload/listeners',
+		'selector/recipient',
+		'task',
+		'task/checklist',
+		'user/list',
+	],
+	'components' => [
+		'tasks.list',
+		'tasks.view',
+	]
 ];

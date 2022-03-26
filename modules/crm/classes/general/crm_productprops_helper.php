@@ -554,7 +554,7 @@ class CCrmProductPropsHelper
 			}
 
 			// Try to interpret value as FULL_NAME
-			$rsEntities = CCrmContact::GetListEx(array(), array('=FULL_NAME'=> $value), false, false, array('ID'));
+			$rsEntities = CCrmContact::GetListEx(array(), array('=FULL_NAME'=> $value, '@CATEGORY_ID' => 0, ), false, false, array('ID'));
 			while($arEntity = $rsEntities->Fetch())
 			{
 				$id = intval($arEntity['ID']);
@@ -564,7 +564,7 @@ class CCrmProductPropsHelper
 			if(preg_match('/\s*([^\s]+)\s+([^\s]+)\s*/', $value, $match) > 0)
 			{
 				// Try to interpret value as '#NAME# #LAST_NAME#'
-				$rsEntities = CCrmContact::GetListEx(array(), array('=NAME'=> $match[1], '=LAST_NAME'=> $match[2]),  false, false, array('ID'));
+				$rsEntities = CCrmContact::GetListEx(array(), array('=NAME'=> $match[1], '=LAST_NAME'=> $match[2], '@CATEGORY_ID' => 0,),  false, false, array('ID'));
 				while($arEntity = $rsEntities->Fetch())
 				{
 					$id = intval($arEntity['ID']);
@@ -572,7 +572,7 @@ class CCrmProductPropsHelper
 				}
 
 				// Try to interpret value as '#LAST_NAME# #NAME#'
-				$rsEntities = CCrmContact::GetListEx(array(), array('=LAST_NAME'=> $match[1], '=NAME'=> $match[2]),  false, false, array('ID'));
+				$rsEntities = CCrmContact::GetListEx(array(), array('=LAST_NAME'=> $match[1], '=NAME'=> $match[2], '@CATEGORY_ID' => 0, ),  false, false, array('ID'));
 				while($arEntity = $rsEntities->Fetch())
 				{
 					$id = intval($arEntity['ID']);
@@ -582,7 +582,7 @@ class CCrmProductPropsHelper
 			else
 			{
 				// Try to interpret value as '#LAST_NAME#'
-				$rsEntities = CCrmContact::GetListEx(array(), array('=LAST_NAME'=> $value),  false, false, array('ID'));
+				$rsEntities = CCrmContact::GetListEx(array(), array('=LAST_NAME'=> $value, '@CATEGORY_ID' => 0,),  false, false, array('ID'));
 				while($arEntity = $rsEntities->Fetch())
 				{
 					$id = intval($arEntity['ID']);
@@ -602,7 +602,7 @@ class CCrmProductPropsHelper
 				}
 			}
 
-			$rsEntities = CCrmCompany::GetList(array(), array('=TITLE'=> $value), array('ID'));
+			$rsEntities = CCrmCompany::GetList(array(), array('=TITLE'=> $value, '@CATEGORY_ID' => 0,), array('ID'));
 			while($arEntity = $rsEntities->Fetch())
 			{
 				$id = intval($arEntity['ID']);

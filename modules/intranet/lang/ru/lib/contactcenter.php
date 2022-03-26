@@ -4,6 +4,7 @@ $MESS["CONTACT_CENTER_TELEPHONY"] = "Телефония";
 $MESS["CONTACT_CENTER_WIDGET"] = "Виджет на сайт";
 $MESS["CONTACT_CENTER_FORM"] = "Форма на сайт";
 $MESS["CONTACT_CENTER_CALL"] = "Обратный звонок";
+$MESS["CONTACT_CENTER_WHATSAPP"] = "Обратный WhatsApp";
 $MESS["CONTACT_CENTER_CALLTRACKING"] = "Коллтрекинг";
 $MESS["CONTACT_CENTER_WIDGET_ADD"] = "Добавить новый виджет";
 $MESS["CONTACT_CENTER_FORM_ADD"] = "Добавить новую форму";

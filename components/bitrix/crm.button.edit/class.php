@@ -7,6 +7,7 @@ use Bitrix\Crm\SiteButton\ChannelManager;
 use Bitrix\Crm\SiteButton\Button;
 use Bitrix\Crm\SiteButton\Internals;
 use Bitrix\Crm\SiteButton\WorkTime;
+use Bitrix\Crm\WebForm;
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 	die();
@@ -363,6 +364,11 @@ class CCrmSiteButtonEditComponent extends \CBitrixComponent
 
 		$this->arResult['SCRIPT'] = \Bitrix\Crm\SiteButton\Script::getScript($this->button);
 
+		$this->arResult['SUPPORTING'] = [
+			'whatsapp' => WebForm\WhatsApp::canUse(),
+			'callback' => WebForm\Callback::canUse(),
+		];
+
 		return true;
 	}
 
@@ -428,6 +434,7 @@ class CCrmSiteButtonEditComponent extends \CBitrixComponent
 		$this->arResult['BUTTON_ITEM_OPEN_LINE'] = $this->getPreparedItem(Manager::ENUM_TYPE_OPEN_LINE);
 		$this->arResult['BUTTON_ITEM_CRM_FORM'] = $this->getPreparedItem(Manager::ENUM_TYPE_CRM_FORM);
 		$this->arResult['BUTTON_ITEM_CALLBACK'] = $this->getPreparedItem(Manager::ENUM_TYPE_CALLBACK);
+		$this->arResult['BUTTON_ITEM_WHATSAPP'] = $this->getPreparedItem(Manager::ENUM_TYPE_WHATSAPP);
 
 		$this->arResult['ADDITIONAL_CSS'] = array();
 		$this->arResult['BUTTON_ITEMS_DICTIONARY_PATH_EDIT'] = array();
@@ -534,6 +541,11 @@ class CCrmSiteButtonEditComponent extends \CBitrixComponent
 			'40' => '40 ' . Loc::getMessage('CRM_BUTTON_EDIT_UNIT_SECOND'),
 			'60' => '1 ' . Loc::getMessage('CRM_BUTTON_EDIT_UNIT_MINUTE'),
 			'120' => '2 ' . Loc::getMessage('CRM_BUTTON_EDIT_UNIT_MINUTE'),
+			'180' => '3 ' . Loc::getMessage('CRM_BUTTON_EDIT_UNIT_MINUTE'),
+			'240' => '4 ' . Loc::getMessage('CRM_BUTTON_EDIT_UNIT_MINUTE'),
+			'300' => '5 ' . Loc::getMessage('CRM_BUTTON_EDIT_UNIT_MINUTE'),
+			'420' => '7 ' . Loc::getMessage('CRM_BUTTON_EDIT_UNIT_MINUTE'),
+			'600' => '10 ' . Loc::getMessage('CRM_BUTTON_EDIT_UNIT_MINUTE'),
 		);
 
 		foreach ($list as $code => $name)

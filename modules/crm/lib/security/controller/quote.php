@@ -8,8 +8,6 @@ use Bitrix\Crm;
 class Quote extends Base
 {
 	/** @var string */
-	protected static $permissionEntityType = 'QUOTE';
-	/** @var string */
 	protected static $progressRegex = '/^QUOTE_ID([0-9A-Z\:\_\-]+)$/i';
 
 	/**
@@ -19,11 +17,6 @@ class Quote extends Base
 	public function getEntityTypeId(): int
 	{
 		return \CCrmOwnerType::Quote;
-	}
-
-	public function isPermissionEntityTypeSupported($entityType): bool
-	{
-		return $entityType === self::$permissionEntityType;
 	}
 
 	protected function getSelectFields(): array

@@ -51,9 +51,9 @@ class ActivityTable extends Entity\DataManager
 	 */
 	public static function getMap()
 	{
-		global $DB, $DBType;
+		global $DB;
 
-		$datetimeNull = (ToUpper($DBType) === 'MYSQL') ? 'CAST(NULL AS DATETIME)' : 'NULL';
+		$datetimeNull = 'CAST(NULL AS DATETIME)';
 
 		return array(
 			'ID' => array(

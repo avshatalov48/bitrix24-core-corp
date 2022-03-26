@@ -81,9 +81,9 @@
 			});
 
 			this.logToken = params.logToken || "";
-			if (CallEngine.getLogService() && this.logToken)
+			if (callEngine.getLogService() && this.logToken)
 			{
-				this.logger = new CallLogger(CallEngine.getLogService(), this.logToken);
+				this.logger = new CallLogger(callEngine.getLogService(), this.logToken);
 			}
 
 			this.eventEmitter = new JNEventEmitter();
@@ -344,7 +344,7 @@
 		log()
 		{
 			let text = CallUtil.getLogMessage.apply(CallUtil, arguments);
-			if (console && CallEngine.debugFlag)
+			if (console && callEngine.debugFlag)
 			{
 				let a = ["Call log [" + CallUtil.getTimeForLog() + "]: "];
 				console.log.apply(this, a.concat(Array.prototype.slice.call(arguments)));
@@ -523,7 +523,7 @@
 				data.reason = reason;
 			}
 
-			CallEngine.getRestClient().callMethod(ajaxActions.decline, data).then(() => this.destroy());
+			callEngine.getRestClient().callMethod(ajaxActions.decline, data).then(() => this.destroy());
 		};
 
 		hangup()
@@ -1266,7 +1266,7 @@
 
 			if (this.isInitiator())
 			{
-				let connectionId = CallEngine.getUuidv4();
+				let connectionId = callEngine.getUuidv4();
 				this._createPeerConnection(connectionId);
 				this.call.localStream.getTracks().forEach(track => this.peerConnection.addTrack(track, this.call.localStream));
 
@@ -2094,7 +2094,7 @@
 			data.callInstanceId = this.call.instanceId;
 			data.senderId = this.call.userId;
 			data.callId = this.call.id;
-			data.requestId = CallEngine.getUuidv4();
+			data.requestId = callEngine.getUuidv4();
 
 			this.call.log("Sending p2p signaling event " + eventName + "; " + JSON.stringify(data));
 			BX.PULL.sendMessage(data.userId, "im", eventName, data, expiry);
@@ -2109,10 +2109,10 @@
 
 			data.callId = this.call.id;
 			data.callInstanceId = this.call.instanceId;
-			data.requestId = CallEngine.getUuidv4();
+			data.requestId = callEngine.getUuidv4();
 
 			this.call.log("Sending ajax-based signaling event " + signalName + "; " + JSON.stringify(data));
-			return CallEngine.getRestClient().callMethod(signalName, data).catch(function (e)
+			return callEngine.getRestClient().callMethod(signalName, data).catch(function (e)
 			{
 				console.error(e);
 			});

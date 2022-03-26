@@ -1,8 +1,9 @@
 <?
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
-?>
 
-<?
+/** @global \CMain $APPLICATION */
+/** @var array $arResult */
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST'):
 	$APPLICATION->RestartBuffer();
 	?>
@@ -32,7 +33,7 @@ var str = '';
 <tr class="bx-after-heading">
 	<?if($arResult['ID'] > 0):?>
 			<td class="bx-field-value bx-padding" style="width: 96px">
-				<?=ID?>:
+				<?='ID'; ?>:
 			</td>
 			<td class="bx-field-value bx-padding" style="">
 				<?=$arResult['ID']?>

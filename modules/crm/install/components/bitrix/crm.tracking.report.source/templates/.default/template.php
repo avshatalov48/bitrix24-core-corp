@@ -119,6 +119,7 @@ foreach ($arResult['ROWS'] as $item)
 
 
 ?>
+<div class="crm-tracking-report-source">
 <span data-role="grid/selector/title" class="crm-tracking-report-source-selector-text"><?=htmlspecialcharsbx($arResult['PARENT']['NAME'])?></span>
 <span data-role="grid/selector" data-options="<?=htmlspecialcharsbx(Json::encode([
 	'items' => (count($arResult['SIBLINGS']['LIST']) > 1 ? $arResult['SIBLINGS']['LIST'] : []),
@@ -154,3 +155,5 @@ $APPLICATION->IncludeComponent(
 		'AJAX_OPTION_HISTORY' => 'N'
 	]
 );
+?>
+</div>

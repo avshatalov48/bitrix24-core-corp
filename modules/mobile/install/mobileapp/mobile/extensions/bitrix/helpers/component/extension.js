@@ -68,14 +68,31 @@
 		 */
 		static openLayout(options = {})
 		{
+			if (!options.name)
+			{
+				throw new Error('Component name is empty.');
+			}
+			let canOpenInDefault = options.canOpenInDefault || false;
+
+			let version = options.version;
+			if (!version)
+			{
+				version =
+					availableComponents[options.name] && availableComponents[options.name].version
+					|| '1.0'
+				;
+			}
+
 			let widgetParams = {};
 			widgetParams.name = "layout";
 			widgetParams.settings =  options.widgetParams || {};
 			widgetParams.settings.objectName = "layout";
+
 			PageManager.openComponent("JSStackComponent",
 				{
-					scriptPath: "/mobileapp/jn/" + options.name + "/?version=" + options.version,
+					scriptPath: "/mobileapp/jn/" + options.name + "/?version=" + version,
 					componentCode: options.name,
+					canOpenInDefault: canOpenInDefault,
 					params: options.componentParams,
 					rootWidget: widgetParams
 				});

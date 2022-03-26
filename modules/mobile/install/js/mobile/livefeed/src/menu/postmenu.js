@@ -130,6 +130,7 @@ class PostMenu
 				{
 					BlogPost.delete({
 						postId: this.postId,
+						context: this.context,
 					});
 				},
 				arrowFlag: false

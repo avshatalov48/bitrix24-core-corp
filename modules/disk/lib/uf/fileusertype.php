@@ -252,9 +252,6 @@ final class FileUserType
 
 	public static function onBeforeSave($userField, $value, $userId = false)
 	{
-		$userFieldManager = Driver::getInstance()->getUserFieldManager();
-
-		[$connectorClass, $moduleId] = $userFieldManager->getConnectorDataByEntityType($userField['ENTITY_ID']);
 		[$type, $realValue] = self::detectType($value);
 
 		if (empty($value))
@@ -271,7 +268,6 @@ final class FileUserType
 
 		if ($type === self::TYPE_NEW_OBJECT)
 		{
-			$errorCollection = new ErrorCollection();
 			$fileModel = self::getFileById($realValue);
 			if (!$fileModel || !$fileModel->getStorage())
 			{
@@ -288,20 +284,20 @@ final class FileUserType
 			}
 
 			$canUpdate = $fileModel->canUpdate($securityContext);
-			$attachedModel = AttachedObject::add([
-				'MODULE_ID' => $moduleId,
-				'OBJECT_ID' => $fileModel->getId(),
-				'ENTITY_ID' => $userField['VALUE_ID'],
-				'ENTITY_TYPE' => $connectorClass,
-				'IS_EDITABLE' => (int)$canUpdate,
-				'ALLOW_EDIT' => (int) ($canUpdate && (int)self::getValueForAllowEdit($userField)),
-				'CREATED_BY' => $userId === false? self::getActivityUserId() : $userId,
-			], $errorCollection);
+			$attachedModel = $fileModel->attachToEntity(
+				[
+					'id' => $userField['VALUE_ID'],
+					'type' => $userField['ENTITY_ID'],
+				],
+				[
+					'allowEdit' => $canUpdate,
+					'isEditable' => ($canUpdate && (int)self::getValueForAllowEdit($userField)),
+					'createdBy' => $userId === false? self::getActivityUserId() : $userId,
+				]
+			);
 
-			if (!$attachedModel || $errorCollection->hasErrors())
+			if (!$attachedModel)
 			{
-				$errorCollection[] = new Error(Loc::getMessage('DISK_FILE_USER_TYPE_ERROR_COULD_NOT_FIND_ATTACHED_OBJECT'), self::ERROR_COULD_NOT_FIND_ATTACHED_OBJECT);
-
 				return '';
 			}
 

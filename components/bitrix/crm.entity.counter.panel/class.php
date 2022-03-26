@@ -81,12 +81,6 @@ class CCrmEntityCounterPanelComponent extends CBitrixComponent
 			return;
 		}
 
-		if(!EntityCounterFactory::isEntityTypeSupported($this->entityTypeID))
-		{
-			$this->arResult['SHOW_STUB'] = true;
-			return;
-		}
-
 		if(isset($this->arParams['EXTRAS']) && is_array($this->arParams['EXTRAS']))
 		{
 			$this->extras = $this->arParams['EXTRAS'];
@@ -95,6 +89,12 @@ class CCrmEntityCounterPanelComponent extends CBitrixComponent
 		if(!EntityAuthorization::checkReadPermission($this->entityTypeID, 0, null, $this->extras))
 		{
 			$this->isVisible = false;
+		}
+
+		if(!EntityCounterFactory::isEntityTypeSupported($this->entityTypeID))
+		{
+			$this->arResult['SHOW_STUB'] = true;
+			return;
 		}
 
 		if(isset($this->arParams['PATH_TO_ENTITY_LIST']))
@@ -145,6 +145,7 @@ class CCrmEntityCounterPanelComponent extends CBitrixComponent
 		$this->arResult['ENTITY_CAPTION'] = GetMessage("CRM_COUNTER_{$this->entityTypeName}_CAPTION");
 
 		$this->arResult['ENTITY_NUMBER_DECLENSIONS'] = \Bitrix\Crm\MessageHelper::getEntityNumberDeclensionMessages($this->entityTypeID);
+		$this->arResult['ENTITY_PLURALS'] = \Bitrix\Crm\MessageHelper::getEntityPluralMessages($this->entityTypeID);
 
 		/*
 		 * Messages are used:

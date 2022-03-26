@@ -1,0 +1,3 @@
+<?php
+
+$MESS["MOBILE_LAYOUT_PROJECT_FIELDS_DATE_START_TITLE"] = "ДАТА СТАРТА";

@@ -132,6 +132,11 @@ HTML;
 
 		foreach (SmsManager::getSenderInfoList(true) as $sender)
 		{
+			if ($sender['isTemplatesBased'])
+			{
+				continue;
+			}
+
 			$providerData = [
 				'IS_INTERNAL' => $sender['isConfigurable'],
 				'ID' => $sender['id'],

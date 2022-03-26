@@ -18,9 +18,33 @@ class Tooltip extends Controller
 
 	public function cardAction(string $USER_ID): Json
 	{
+		Container::getInstance()->getLocalization()->loadMessages();
+		$result = [
+			'Toolbar' => '',
+			'ToolbarItems' => '',
+			'Toolbar2' => '',
+			'Name' => Loc::getMessage('CRM_TYPE_ITEM_NOT_FOUND'),
+			'Card' => '',
+			'Photo' => '',
+			'Scripts' => ''
+		];
+
 		[$this->entityTypeId, $this->itemId] = explode('-', $USER_ID);
 		$this->factory = Container::getInstance()->getFactory($this->entityTypeId);
+		if (!$this->factory)
+		{
+			return new Json([
+				'RESULT' => $result
+			]);
+		}
+
 		$this->item = $this->factory->getItem($this->itemId);
+		if (!$this->item)
+		{
+			return new Json([
+				'RESULT' => $result
+			]);
+		}
 		$this->detailUrl = Container::getInstance()->getRouter()->getItemDetailUrl(
 			$this->entityTypeId,
 			$this->itemId
@@ -57,7 +81,7 @@ class Tooltip extends Controller
 
 	private function getName(): string
 	{
-		return '<a href="' . $this->detailUrl . '" target="_blank">'.HtmlFilter::encode($this->item->getTitle()).'</a>';
+		return '<a href="' . $this->detailUrl . '" target="_blank">'.HtmlFilter::encode($this->item->getHeading()).'</a>';
 	}
 
 	private function getCard(): string

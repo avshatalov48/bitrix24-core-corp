@@ -19,7 +19,6 @@ use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\EntityPreset;
 use Bitrix\Crm\EntityRequisite;
-use Bitrix\Crm\EntityBankDetail;
 use Bitrix\Crm\Requisite;
 use Bitrix\Crm\RequisiteAddress;
 use Bitrix\Crm\Settings\ContactSettings;
@@ -389,16 +388,21 @@ if(!function_exists('__CrmImportPrepareDupControlTab'))
 			'SKIP' => GetMessage('CRM_FIELD_DUP_CONTROL_SKIP_DESCR')
 		);
 
-		$restriction = RestrictionManager::getDuplicateControlRestriction();
-		if(!$restriction->hasPermission())
+		$dupControlTypeLock = '';
+		$dupControlLockZoneStart = '';
+		$dupControlLockZoneEnd = '';
+		if(!RestrictionManager::isDuplicateControlPermitted())
 		{
-			$arResult['FIELDS']['tab_3'][] = array(
-				'id' => 'IMPORT_DUP_CONTROL_TYPE_DESCR',
-				'type' => 'custom',
-				'value' => '<input type="hidden" name="IMPORT_DUP_CONTROL_TYPE" value="NO_CONTROL"/>'.$restriction->getHtml(),
-				'colspan' => true
-			);
-			return '';
+			$dupControlLockScript = RestrictionManager::getDuplicateControlRestriction()->prepareInfoHelperScript();
+			$dupControlLockZoneStart =
+				"<span onclick=\""
+				. htmlspecialcharsbx(
+					RestrictionManager::getDuplicateControlRestriction()->prepareInfoHelperScript()
+				)
+				. "; return false;\">"
+			;
+			$dupControlLockZoneEnd = '</span>';
+			$dupControlTypeLock = '<span class="crm-dup-control-type-lock"></span>';
 		}
 
 		$dupCtrlPrefix = $arResult['DUP_CONTROL_PREFIX'] = 'dup_ctrl_';
@@ -408,12 +412,19 @@ if(!function_exists('__CrmImportPrepareDupControlTab'))
 			'value' =>
 				'<div class="crm-dup-control-type-radio-title">'.GetMessage('CRM_FIELD_DUP_CONTROL_TITLE').':</div>'.
 				'<div class="crm-dup-control-type-radio-wrap">'.
-				'<input type="radio" class="crm-dup-control-type-radio" id="'.$dupCtrlPrefix.'no_control" name="IMPORT_DUP_CONTROL_TYPE" value="NO_CONTROL" checked="checked" /><label class="crm-dup-control-type-label">'.GetMessage('CRM_FIELD_DUP_CONTROL_NO_CONTROL_CAPTION').'</label>'.
-				'<input type="radio" class="crm-dup-control-type-radio" id="'.$dupCtrlPrefix.'replace" name="IMPORT_DUP_CONTROL_TYPE" value="REPLACE" /><label class="crm-dup-control-type-label">'.GetMessage('CRM_FIELD_DUP_CONTROL_REPLACE_CAPTION').'</label>'.
-				'<input type="radio" class="crm-dup-control-type-radio" id="'.$dupCtrlPrefix.'merge" name="IMPORT_DUP_CONTROL_TYPE" value="MERGE" /><label class="crm-dup-control-type-label">'.GetMessage('CRM_FIELD_DUP_CONTROL_MERGE_CAPTION').'</label>'.
-				'<input type="radio" class="crm-dup-control-type-radio" id="'.$dupCtrlPrefix.'skip" name="IMPORT_DUP_CONTROL_TYPE" value="SKIP" /><label class="crm-dup-control-type-label">'.GetMessage('CRM_FIELD_DUP_CONTROL_SKIP_CAPTION').'</label>'.
+				'<input type="radio" class="crm-dup-control-type-radio" id="'.$dupCtrlPrefix.'no_control" name="IMPORT_DUP_CONTROL_TYPE" value="NO_CONTROL" checked="checked" /><label class="crm-dup-control-type-label">'.GetMessage('CRM_FIELD_DUP_CONTROL_NO_CONTROL_CAPTION').'</label>'
+				. $dupControlLockZoneStart .
+				$dupControlTypeLock . '<input type="radio" class="crm-dup-control-type-radio" id="' . $dupCtrlPrefix. 'replace" name="IMPORT_DUP_CONTROL_TYPE" value="REPLACE"' . ' /><label class="crm-dup-control-type-label">' . GetMessage('CRM_FIELD_DUP_CONTROL_REPLACE_CAPTION') . '</label>'.
+				$dupControlTypeLock . '<input type="radio" class="crm-dup-control-type-radio" id="' . $dupCtrlPrefix . 'merge" name="IMPORT_DUP_CONTROL_TYPE" value="MERGE"' . ' /><label class="crm-dup-control-type-label">' . GetMessage('CRM_FIELD_DUP_CONTROL_MERGE_CAPTION') . '</label>'.
+				$dupControlTypeLock . '<input type="radio" class="crm-dup-control-type-radio" id="' . $dupCtrlPrefix . 'skip" name="IMPORT_DUP_CONTROL_TYPE" value="SKIP"' . ' /><label class="crm-dup-control-type-label">' . GetMessage('CRM_FIELD_DUP_CONTROL_SKIP_CAPTION') . '</label>'
+				. $dupControlLockZoneEnd .
 				'</div>',
 			'colspan' => true
+		);
+		unset(
+			$dupControlTypeLock,
+			$dupControlLockZoneStart,
+			$dupControlLockZoneEnd
 		);
 
 		$dupControlTypeDescrId = $arResult['DUP_CONTROL_TYPE_DESCR_ID'] = 'dup_ctrl_type_descr';
@@ -1148,7 +1159,7 @@ elseif (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 			$arContact = $customFileImport->prepareContact($arData);
 			if(isset($arContact['COMPANY_TITLE']) && $arContact['COMPANY_TITLE'] !== '')
 			{
-				$obRes = CCrmCompany::GetListEx(array(), array('TITLE' => $arContact['COMPANY_TITLE']), false, false, array('ID'));
+				$obRes = CCrmCompany::GetListEx(array(), array('TITLE' => $arContact['COMPANY_TITLE'],'@CATEGORY_ID' => 0,), false, false, array('ID'));
 				if (is_object($obRes) && ($arRow = $obRes->Fetch()) !== false)
 				{
 					$arContact['COMPANY_ID'] = $arRow['ID'];
@@ -1207,7 +1218,7 @@ elseif (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 					}
 					elseif ($currentKey == 'COMPANY_TITLE')
 					{
-						$obRes = CCrmCompany::GetListEx(array(), array('TITLE' => $data), false, false, array('ID'));
+						$obRes = CCrmCompany::GetListEx(array(), array('TITLE' => $data, '@CATEGORY_ID' => 0,), false, false, array('ID'));
 						if (is_object($obRes) && ($arRow = $obRes->Fetch()) !== false)
 						{
 							$arContact['COMPANY_ID'] = $arRow['ID'];

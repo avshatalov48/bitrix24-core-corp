@@ -12,6 +12,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
  */
 
 use Bitrix\Crm\Integration;
+use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Tracking;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
@@ -23,7 +24,7 @@ if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvai
 {
 	CBitrix24::initLicenseInfoPopupJS();
 }
-Bitrix\Main\UI\Extension::load(['crm.merger.batchmergemanager']);
+Bitrix\Main\UI\Extension::load(['crm.merger.batchmergemanager', 'ui.icons.b24']);
 
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
@@ -40,6 +41,12 @@ if($arResult['NEED_TO_CONVERT_ADDRESSES']):
 endif;
 if($arResult['NEED_TO_CONVERT_UF_ADDRESSES']):
 	?><div id="convertCompanyUfAddressesWrapper"></div><?
+endif;
+if($arResult['NEED_TO_SHOW_DUP_INDEX_PROCESS']):
+	?><div id="backgroundCompanyIndexRebuildWrapper"></div><?
+endif;
+if($arResult['NEED_TO_SHOW_DUP_MERGE_PROCESS']):
+	?><div id="backgroundCompanyMergeWrapper"></div><?
 endif;
 
 if($arResult['NEED_FOR_REBUILD_DUP_INDEX']):
@@ -162,8 +169,8 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 			'TITLE' => GetMessage('CRM_COMPANY_DELETE_TITLE'),
 			'TEXT' => GetMessage('CRM_COMPANY_DELETE'),
 			'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
-				'{$gridManagerID}', 
-				BX.CrmUIGridMenuCommand.remove, 
+				'{$gridManagerID}',
+				BX.CrmUIGridMenuCommand.remove,
 				{ pathToRemove: '{$pathToRemove}' }
 			)"
 		);
@@ -227,13 +234,34 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 			}
 			$arEntitySubMenuItems[] = $quoteAction;
 		}
-		if($arResult['PERM_INVOICE'] && IsModuleInstalled('sale'))
+		if(
+			$arResult['PERM_INVOICE']
+			&& IsModuleInstalled('sale')
+			&& \Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled()
+		)
 		{
+			$localization = \Bitrix\Crm\Service\Container::getInstance()->getLocalization();
 			$arEntitySubMenuItems[] = array(
-				'TITLE' => GetMessage('CRM_DEAL_ADD_INVOICE_TITLE'),
-				'TEXT' => GetMessage('CRM_DEAL_ADD_INVOICE_SHORT'),
-				'ONCLICK' => "jsUtils.Redirect([], '".CUtil::JSEscape($arCompany['PATH_TO_INVOICE_ADD'])."');"
+				'TITLE' => $localization->appendOldVersionSuffix(GetMessage('CRM_DEAL_ADD_INVOICE_TITLE')),
+				'TEXT' => $localization->appendOldVersionSuffix(GetMessage('CRM_DEAL_ADD_INVOICE')),
+				'ONCLICK' => "jsUtils.Redirect([], '".CUtil::JSEscape($arContact['PATH_TO_INVOICE_ADD'])."');"
 			);
+		}
+		if (\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkAddPermissions(\CCrmOwnerType::SmartInvoice))
+		{
+			$arEntitySubMenuItems[] = [
+				'TITLE' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::SmartInvoice),
+				'TEXT' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::SmartInvoice),
+				'HREF' => \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl(
+					\CCrmOwnerType::SmartInvoice,
+					0,
+					null,
+					new \Bitrix\Crm\ItemIdentifier(
+						\CCrmOwnerType::Company,
+						$arCompany['ID']
+					)
+				),
+			];
 		}
 
 		if(!empty($arEntitySubMenuItems))
@@ -249,15 +277,18 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 
 		if($arCompany['EDIT'])
 		{
-			$arActions[] = $arActivityMenuItems[] = array(
-				'TITLE' => GetMessage('CRM_COMPANY_EVENT_TITLE'),
-				'TEXT' => GetMessage('CRM_COMPANY_EVENT'),
-				'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
-					'{$gridManagerID}', 
-					BX.CrmUIGridMenuCommand.createEvent, 
-					{ entityTypeName: BX.CrmEntityType.names.company, entityId: {$arCompany['ID']} }
-				)"
-			);
+			if (RestrictionManager::isHistoryViewPermitted())
+			{
+				$arActions[] = $arActivityMenuItems[] = array(
+					'TITLE' => GetMessage('CRM_COMPANY_EVENT_TITLE'),
+					'TEXT' => GetMessage('CRM_COMPANY_EVENT'),
+					'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
+						'{$gridManagerID}',
+						BX.CrmUIGridMenuCommand.createEvent,
+						{ entityTypeName: BX.CrmEntityType.names.company, entityId: {$arCompany['ID']} }
+					)"
+				);
+			}
 
 			if(IsModuleInstalled('subscribe'))
 			{
@@ -265,8 +296,8 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 					'TITLE' => GetMessage('CRM_COMPANY_ADD_EMAIL_TITLE'),
 					'TEXT' => GetMessage('CRM_COMPANY_ADD_EMAIL'),
 					'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
-						'{$gridManagerID}', 
-						BX.CrmUIGridMenuCommand.createActivity, 
+						'{$gridManagerID}',
+						BX.CrmUIGridMenuCommand.createActivity,
 						{ typeId: BX.CrmActivityType.email, settings: { ownerID: {$arCompany['ID']} } }
 					)"
 				);
@@ -278,8 +309,8 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 					'TITLE' => GetMessage('CRM_COMPANY_ADD_CALL_TITLE'),
 					'TEXT' => GetMessage('CRM_COMPANY_ADD_CALL'),
 					'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
-						'{$gridManagerID}', 
-						BX.CrmUIGridMenuCommand.createActivity, 
+						'{$gridManagerID}',
+						BX.CrmUIGridMenuCommand.createActivity,
 						{ typeId: BX.CrmActivityType.call, settings: { ownerID: {$arCompany['ID']} } }
 					)"
 				);
@@ -288,8 +319,8 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 					'TITLE' => GetMessage('CRM_COMPANY_ADD_MEETING_TITLE'),
 					'TEXT' => GetMessage('CRM_COMPANY_ADD_MEETING'),
 					'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
-						'{$gridManagerID}', 
-						BX.CrmUIGridMenuCommand.createActivity, 
+						'{$gridManagerID}',
+						BX.CrmUIGridMenuCommand.createActivity,
 						{ typeId: BX.CrmActivityType.meeting, settings: { ownerID: {$arCompany['ID']} } }
 					)"
 				);
@@ -298,8 +329,8 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 					'TITLE' => GetMessage('CRM_COMPANY_ADD_CALL_TITLE'),
 					'TEXT' => GetMessage('CRM_COMPANY_ADD_CALL_SHORT'),
 					'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
-						'{$gridManagerID}', 
-						BX.CrmUIGridMenuCommand.createActivity, 
+						'{$gridManagerID}',
+						BX.CrmUIGridMenuCommand.createActivity,
 						{ typeId: BX.CrmActivityType.call, settings: { ownerID: {$arCompany['ID']} } }
 					)"
 				);
@@ -308,8 +339,8 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 					'TITLE' => GetMessage('CRM_COMPANY_ADD_MEETING_TITLE'),
 					'TEXT' => GetMessage('CRM_COMPANY_ADD_MEETING_SHORT'),
 					'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
-						'{$gridManagerID}', 
-						BX.CrmUIGridMenuCommand.createActivity, 
+						'{$gridManagerID}',
+						BX.CrmUIGridMenuCommand.createActivity,
 						{ typeId: BX.CrmActivityType.meeting, settings: { ownerID: {$arCompany['ID']} } }
 					)"
 				);
@@ -321,8 +352,8 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 					'TITLE' => GetMessage('CRM_COMPANY_TASK_TITLE'),
 					'TEXT' => GetMessage('CRM_COMPANY_TASK'),
 					'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
-						'{$gridManagerID}', 
-						BX.CrmUIGridMenuCommand.createActivity, 
+						'{$gridManagerID}',
+						BX.CrmUIGridMenuCommand.createActivity,
 						{ typeId: BX.CrmActivityType.task, settings: { ownerID: {$arCompany['ID']} } }
 					)"
 				);
@@ -331,8 +362,8 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 					'TITLE' => GetMessage('CRM_COMPANY_TASK_TITLE'),
 					'TEXT' => GetMessage('CRM_COMPANY_TASK_SHORT'),
 					'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
-						'{$gridManagerID}', 
-						BX.CrmUIGridMenuCommand.createActivity, 
+						'{$gridManagerID}',
+						BX.CrmUIGridMenuCommand.createActivity,
 						{ typeId: BX.CrmActivityType.task, settings: { ownerID: {$arCompany['ID']} } }
 					)"
 				);
@@ -398,17 +429,14 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 		'data' => $arCompany,
 		'editable' => !$arCompany['EDIT'] ? ($arResult['INTERNAL'] ? 'N' : $arColumns) : 'Y',
 		'columns' => array(
-			'COMPANY_SUMMARY' => CCrmViewHelper::RenderClientSummary(
-				$arCompany['PATH_TO_COMPANY_SHOW'],
-				$arCompany['TITLE'],
-				Tracking\UI\Grid::enrichSourceName(
-					\CCrmOwnerType::Company,
-					$arCompany['ID'],
-					$arCompany['COMPANY_TYPE_NAME']
-				),
-				isset($arCompany['LOGO']) ? $arCompany['LOGO'] : '',
-				'_top'
-			),
+			'COMPANY_SUMMARY' => (new \Bitrix\Crm\Service\Display\ClientSummary(\CCrmOwnerType::Company, (int)$arCompany['ID']))
+				->withUrl((string)$arCompany['PATH_TO_COMPANY_SHOW'])
+				->withTitle((string)$arCompany['TITLE'])
+				->withDescription((string)$arCompany['COMPANY_TYPE_NAME'])
+				->withTracking(true)
+				->withPhoto((int)$arCompany['~LOGO'])
+				->render()
+			,
 			'ASSIGNED_BY' => $arCompany['~ASSIGNED_BY_ID'] > 0
 				? CCrmViewHelper::PrepareUserBaloonHtml(
 					array(
@@ -538,6 +566,26 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 
 	$arResult['GRID_DATA'][] = &$resultItem;
 	unset($resultItem);
+}
+
+if($arResult['ENABLE_TOOLBAR'])
+{
+	$APPLICATION->IncludeComponent(
+		'bitrix:crm.interface.toolbar',
+		'',
+		array(
+			'TOOLBAR_ID' => mb_strtolower($arResult['GRID_ID']).'_toolbar',
+			'BUTTONS' => array(
+				array(
+					'TEXT' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Company),
+					'LINK' => $arResult['PATH_TO_COMPANY_ADD'],
+					'ICON' => 'btn-new'
+				)
+			)
+		),
+		$component,
+		array('HIDE_ICONS' => 'Y')
+	);
 }
 
 //region Action Panel
@@ -823,6 +871,7 @@ $APPLICATION->IncludeComponent(
 	array(
 		'GRID_ID' => $arResult['GRID_ID'],
 		'HEADERS' => $arResult['HEADERS'],
+		'HEADERS_SECTIONS' => $arResult['HEADERS_SECTIONS'],
 		'ENABLE_FIELDS_SEARCH' => 'Y',
 		'SORT' => $arResult['SORT'],
 		'SORT_VARS' => $arResult['SORT_VARS'],
@@ -841,6 +890,7 @@ $APPLICATION->IncludeComponent(
 				'GET_FIELD' => '/bitrix/components/bitrix/crm.company.list/filter.ajax.php?action=field&filter_id='.urlencode($arResult['GRID_ID']).'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
 			),
 			'ENABLE_FIELDS_SEARCH' => 'Y',
+			'HEADERS_SECTIONS' => $arResult['HEADERS_SECTIONS'],
 			'CONFIG' => [
 				'popupColumnsCount' => 4,
 				'popupWidth' => 800,
@@ -1278,6 +1328,59 @@ if($arResult['NEED_TO_CONVERT_UF_ADDRESSES'])
 				serviceUrl: "<?='/bitrix/components/bitrix/crm.company.list/list.ajax.php?'.bitrix_sessid_get()?>",
 				actionName: "CONVERT_UF_ADDRESSES",
 				container: "convertCompanyUfAddressesWrapper",
+				enableLayout: true
+			}
+		);
+		manager.runAfter(100);
+	});
+</script><?
+}
+
+if($arResult['NEED_TO_SHOW_DUP_INDEX_PROCESS'])
+{?>
+<script type="text/javascript">
+	BX.ready(function () {
+		if (BX.AutorunProcessPanel.isExists("backgroundCompanyIndexRebuild"))
+		{
+			return;
+		}
+		BX.AutorunProcessManager.messages =
+			{
+				title: "<?=GetMessageJS('CRM_COMPANY_BACKGROUND_DUPLICATE_INDEX_REBUILD_TITLE')?>",
+				stateTemplate: "<?=GetMessageJS('CRM_COMPANY_BACKGROUND_DUPLICATE_INDEX_REBUILD_STATE')?>"
+			};
+		var manager = BX.AutorunProcessManager.create(
+			"backgroundCompanyIndexRebuild",
+			{
+				serviceUrl: "<?='/bitrix/components/bitrix/crm.company.list/list.ajax.php?'.bitrix_sessid_get()?>",
+				actionName: "BACKGROUND_INDEX_REBUILD",
+				container: "backgroundCompanyIndexRebuildWrapper",
+				enableLayout: true
+			}
+		);
+		manager.runAfter(100);
+	});
+</script><?
+}
+if($arResult['NEED_TO_SHOW_DUP_MERGE_PROCESS'])
+{?>
+<script type="text/javascript">
+	BX.ready(function () {
+		if (BX.AutorunProcessPanel.isExists("backgroundCompanyMerge"))
+		{
+			return;
+		}
+		BX.AutorunProcessManager.messages =
+			{
+				title: "<?=GetMessageJS('CRM_COMPANY_BACKGROUND_DUPLICATE_MERGE_TITLE')?>",
+				stateTemplate: "<?=GetMessageJS('CRM_COMPANY_BACKGROUND_DUPLICATE_MERGE_STATE')?>"
+			};
+		var manager = BX.AutorunProcessManager.create(
+			"backgroundCompanyMerge",
+			{
+				serviceUrl: "<?='/bitrix/components/bitrix/crm.company.list/list.ajax.php?'.bitrix_sessid_get()?>",
+				actionName: "BACKGROUND_MERGE",
+				container: "backgroundCompanyMergeWrapper",
 				enableLayout: true
 			}
 		);

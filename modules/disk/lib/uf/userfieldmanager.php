@@ -87,6 +87,7 @@ final class UserFieldManager implements IErrorable
 			'sonet_comment' => array(SonetCommentConnector::className(), 'socialnetwork'),
 			'iblock_element' => array(IblockElementConnector::className(), 'iblock'),
 			'iblock_workflow' => array(IblockWorkflowConnector::className(), 'iblock'),
+			'im_call' => [MessengerCallConnector::class, 'im'],
 		);
 	}
 
@@ -524,59 +525,87 @@ final class UserFieldManager implements IErrorable
 	 * @internal
 	 * @return array
 	 */
-	public function cloneUfValuesFromAttachedObject(array $attachedIds, $userId)
+	public function cloneUfValuesFromAttachedObject(array $attachedIds, $userId): ?array
 	{
 		$this->errorCollection->clear();
 
 		$userId = (int)$userId;
-		if($userId <= 0)
+		if ($userId <= 0)
 		{
-			$this->errorCollection->addOne(new Error('Invalid $userId'));
-			return null;
-		}
-		$userStorage = Driver::getInstance()->getStorageByUserId($userId);
-		if(!$userStorage)
-		{
-			$this->errorCollection->addOne(new Error("Could not find storage for user {$userId}"));
-			$this->errorCollection->add(Driver::getInstance()->getErrors());
-			return null;
-		}
-		$folder = $userStorage->getFolderForUploadedFiles();
-		if(!$folder)
-		{
-			$this->errorCollection->addOne(new Error("Could not create/find folder for upload"));
-			$this->errorCollection->add($userStorage->getErrors());
+			$this->errorCollection[] = new Error('Invalid $userId');
+
 			return null;
 		}
 
-		$newValues = array();
-		foreach($attachedIds as $id)
+		$userStorage = Driver::getInstance()->getStorageByUserId($userId);
+		if (!$userStorage)
 		{
-			list($type, $realValue) = FileUserType::detectType($id);
-			if(FileUserType::TYPE_ALREADY_ATTACHED != $type)
+			$this->errorCollection[] = new Error("Could not find storage for user {$userId}");
+			$this->errorCollection->add(Driver::getInstance()->getErrors());
+
+			return null;
+		}
+
+		$folder = $userStorage->getFolderForUploadedFiles();
+		if (!$folder)
+		{
+			$this->errorCollection[] = new Error("Could not create/find folder for upload");
+			$this->errorCollection->add($userStorage->getErrors());
+
+			return null;
+		}
+
+		$newValues = [];
+		foreach ($attachedIds as $id)
+		{
+			[$type, $realValue] = FileUserType::detectType($id);
+			if (FileUserType::TYPE_ALREADY_ATTACHED != $type)
 			{
 				continue;
 			}
-			$attachedObject = AttachedObject::loadById($realValue, array('OBJECT'));
-			if(!$attachedObject)
+
+			$attachedObject = AttachedObject::loadById($realValue, ['OBJECT']);
+			if (!$attachedObject)
 			{
 				continue;
 			}
-			if(!$attachedObject->canRead($userId))
+
+			if (!$attachedObject->canRead($userId))
 			{
 				continue;
 			}
+
 			$file = $attachedObject->getFile();
-			if(!$file)
+			if (!$file)
 			{
 				continue;
 			}
-			$newFile = $file->copyTo($folder, $userId, true);
-			if(!$newFile)
+
+			if (!$attachedObject->isSpecificVersion())
 			{
-				$this->errorCollection->add($file->getErrors());
-				continue;
+				$newFile = $file->copyTo($folder, $userId, true);
+				if (!$newFile)
+				{
+					$this->errorCollection->add($file->getErrors());
+					continue;
+				}
 			}
+			else
+			{
+				$version = $attachedObject->getVersion();
+				if (!$version)
+				{
+					continue;
+				}
+
+				$newFile = $version->createNewFile($folder, $userId, true);
+				if (!$newFile)
+				{
+					$this->errorCollection->add($file->getErrors());
+					continue;
+				}
+			}
+
 			$newValues[$id] = FileUserType::NEW_FILE_PREFIX . $newFile->getId();
 		}
 

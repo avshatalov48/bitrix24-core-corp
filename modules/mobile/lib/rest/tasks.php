@@ -5,6 +5,7 @@ use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Internals\Effective;
+use Bitrix\Tasks\Internals\Project\Pull\PullDictionary;
 use Bitrix\Tasks\Kanban\TimeLineTable;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\KpiLimit;
 use Bitrix\Tasks\Util\Type\DateTime;
@@ -39,6 +40,10 @@ class Tasks extends \IRestService
 				'callback' => [__CLASS__, 'validateLastSearchedGroups'],
 				'options' => ['private' => false],
 			],
+			'mobile.tasks.group.getCanCreateTask' => [
+				'callback' => [__CLASS__, 'getCanCreateTask'],
+				'options' => ['private' => false],
+			],
 			'mobile.task.link.params.get' => [
 				'callback' => [__CLASS__, 'getParamsToCreateLink'],
 				'options' => ['private' => false],
@@ -46,6 +51,9 @@ class Tasks extends \IRestService
 			'mobile.tasks.efficiency.get' => [
 				'callback' => [__CLASS__, 'getEfficiency'],
 				'options' => ['private' => false],
+			],
+			'mobile.tasks.project.list.startWatch' => [
+				'callback' => [__CLASS__, 'startWatchProjectList']
 			],
 		];
 	}
@@ -225,5 +233,57 @@ class Tasks extends \IRestService
 		}
 
 		return Effective::getAverageEfficiency(null, null, $userId, $groupId);
+	}
+
+	public static function startWatchProjectList(array $params): bool
+	{
+		$modules = ['mobile', 'tasks'];
+		foreach ($modules as $name)
+		{
+			if (!Loader::includeModule($name))
+			{
+				throw new \Bitrix\Rest\RestException(
+					"Module {$name} is not installed",
+					'SERVER_ERROR',
+					\CRestServer::STATUS_WRONG_REQUEST
+				);
+			}
+		}
+
+		$userId = ((int)$params['userId'] ?: User::getId());
+
+		return \CPullWatch::Add($userId, PullDictionary::PULL_PROJECTS_TAG, true);
+	}
+
+	public static function getCanCreateTask(array $params): bool
+	{
+		$modules = ['mobile', 'tasks', 'socialnetwork'];
+		foreach ($modules as $name)
+		{
+			if (!Loader::includeModule($name))
+			{
+				throw new \Bitrix\Rest\RestException(
+					"Module {$name} is not installed",
+					'SERVER_ERROR',
+					\CRestServer::STATUS_WRONG_REQUEST
+				);
+			}
+		}
+
+		$userId = (int)$params['userId'];
+		$groupId = (int)$params['groupId'];
+
+		if (!$userId && !$groupId)
+		{
+			throw new \Bitrix\Rest\RestException(
+				'No data to get efficiency',
+				'DATA_ERROR',
+				\CRestServer::STATUS_WRONG_REQUEST
+			);
+		}
+
+		$userId = ($userId ?: User::getId());
+
+		return SocialNetwork\Group::can($groupId, SocialNetwork\Group::ACTION_CREATE_TASKS, $userId);
 	}
 }

@@ -214,7 +214,9 @@ $pageAsset->addCss('/bitrix/js/calendar/planner-style.css');
 									case 'TEXT':?>
 										<div class="crm-activity-popup-info-location-container">
 										<span class="crm-activity-popup-info-location-text"><?=htmlspecialcharsbx($field['LABEL'])?>:</span>
-										<input type="text" name="<?= mb_strtolower($name)?>" value="<?=htmlspecialcharsbx($field['VALUE'])?>" class="crm-activity-popup-info-location" <?if($field['PLACEHOLDER'] != ''):?>placeholder="<?=htmlspecialcharsbx($field['PLACEHOLDER'])?>"<?endif?> data-role="focus-on-show">
+										<input type="text" name="<?= mb_strtolower($name)?>" value="<?=\CModule::IncludeModule('calendar')
+											? htmlspecialcharsbx(CCalendar::GetTextLocation($field['VALUE']))
+											: htmlspecialcharsbx($field['VALUE'])?>" class="crm-activity-popup-info-location" <?if($field['PLACEHOLDER'] != ''):?>placeholder="<?=htmlspecialcharsbx($field['PLACEHOLDER'])?>"<?endif?> data-role="focus-on-show">
 										</div><?
 										break;
 									case 'TEXTAREA':?>

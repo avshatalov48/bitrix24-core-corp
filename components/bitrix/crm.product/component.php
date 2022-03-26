@@ -38,7 +38,7 @@ $arParams['PATH_TO_CATALOG'] = (
 	: '#SITE_DIR#crm/catalog/'
 );
 
-if (\Bitrix\Catalog\Config\State::isProductCardSliderEnabled())
+if (\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isFullCatalogEnabled())
 {
 	LocalRedirect(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CATALOG']));
 }

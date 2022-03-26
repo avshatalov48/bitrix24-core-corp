@@ -126,7 +126,7 @@ Class voximplant extends CModule
 			$this->errors[] = GetMessage('VI_CHECK_PUBLIC_PATH');
 		}
 		if(!$this->errors && !$DB->Query("SELECT 'x' FROM b_voximplant_phone", true))
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/voximplant/install/db/".mb_strtolower($DB->type)."/install.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/voximplant/install/db/mysql/install.sql");
 
 		if($this->errors !== false)
 		{
@@ -568,7 +568,7 @@ Class voximplant extends CModule
 		$this->errors = false;
 
 		if (!$arParams['savedata'])
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/voximplant/install/db/".mb_strtolower($DB->type)."/uninstall.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/voximplant/install/db/mysql/uninstall.sql");
 
 		if(is_array($this->errors))
 			$arSQLErrors = $this->errors;

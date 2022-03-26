@@ -1,0 +1,20 @@
+<?php
+return [
+	'helpers/component',
+	'layout/ui/context-menu',
+	'layout/ui/empty-list',
+	'layout/ui/floating-button',
+	'notify',
+	'rest',
+	'selector/widget/factory',
+	'qrauth/utils',
+	'utils',
+	'utils/error-notifier',
+	'catalog/barcode-scanner',
+	'catalog/store/events',
+	'catalog/store/product-card',
+	'catalog/store/product-list-summary',
+	'catalog/store/product-list/menu/*',
+	'catalog/store/product-list/services/*',
+	'analytics-label',
+];

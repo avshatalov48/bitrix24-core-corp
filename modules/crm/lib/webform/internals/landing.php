@@ -60,6 +60,10 @@ class LandingTable extends ORM\Data\DataManager
 				'data_type' => 'integer',
 				'required' => true,
 			),
+			'LANDING' => array(
+				'data_type' => \Bitrix\Landing\Internals\LandingTable::class,
+				'reference' => array('=this.LANDING_ID' => 'ref.ID')
+			),
 			'FORM' => array(
 				'data_type' => FormTable::class,
 				'reference' => array('=this.ID' => 'ref.FORM_ID'),

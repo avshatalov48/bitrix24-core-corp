@@ -2,9 +2,8 @@
 
 BX.namespace('Tasks.Component');
 
-(function(){
-
-	if(typeof BX.Tasks.Component.TasksWidgetRelatedSelector != 'undefined')
+(function() {
+	if (typeof BX.Tasks.Component.TasksWidgetRelatedSelector != 'undefined')
 	{
 		return;
 	}
@@ -22,26 +21,13 @@ BX.namespace('Tasks.Component');
 				this.callConstruct(BX.Tasks.Component);
 
 				var manager = this.getManager();
-
 				manager.bindEvent('change', this.onChanged.bind(this));
-				manager.bindEvent('selector-discover', this.loadSelector.bind(this));
 
 				this.setTypes(this.option('types'), true);
 			},
 
 			onChanged: function(items)
 			{
-				if(this.option('inputSpecial'))
-				{
-					var value = '';
-					if(items[0])
-					{
-						value = this.subInstance('items').get(items[0]).data().ID;
-					}
-
-					this.control('sole-input').value = value;
-				}
-
 				// forward 'change' event
 				this.fireEvent('change', arguments);
 			},
@@ -49,7 +35,7 @@ BX.namespace('Tasks.Component');
 			getIdByValue: function(value)
 			{
 				var item = this.getManager().get(value);
-				if(item)
+				if (item)
 				{
 					return item.id();
 				}
@@ -57,27 +43,21 @@ BX.namespace('Tasks.Component');
 				return null;
 			},
 
-			deselect: function()
-			{
-				this.getManager().unload();
-			},
-
 			setTypes: function(types, initial)
 			{
 				this.vars.types = this.vars.types || {};
-				if(!initial && this.vars.types.TASK == types.TASK) // already chosen
+
+				if (!initial && this.vars.types.TASK === types.TASK) // already chosen
 				{
 					return;
 				}
 
 				this.vars.types = {};
-				BX.Tasks.each(types, function(item, k){
-
-					if(k == 'TASK' || k == 'TASK_TEMPLATE')
+				BX.Tasks.each(types, function(item, k) {
+					if (k === 'TASK' || k === 'TASK_TEMPLATE')
 					{
 						this.vars.types[k] = true;
 					}
-
 				}.bind(this));
 
 				this.changeTypes(types, initial);
@@ -87,20 +67,10 @@ BX.namespace('Tasks.Component');
 			{
 				var ctrl = this.subInstance('items');
 
-				if(!initial)
+				if (!initial)
 				{
-					// todo: remove all items that does not match given new types
 					// dropping all for now
 					ctrl.unload();
-
-					if(this.option('inputSpecial'))
-					{
-						var newName = BX.util.htmlspecialchars(
-							this.option('inputPrefix') + (types.TASK ? this.option('inputPostfixTask') : this.option('inputPostfixTaskTemplate'))
-						);
-
-						this.control('sole-input').setAttribute('name', newName);
-					}
 				}
 
 				ctrl.option('selectorCode', this.option(types.TASK ? 'selectorCodeTask' : 'selectorCodeTaskTemplate'));
@@ -108,44 +78,13 @@ BX.namespace('Tasks.Component');
 				ctrl.option('path', this.option(types.TASK ? 'pathTask' : 'pathTaskTemplate'));
 			},
 
-			loadSelector: function(type, p)
-			{
-				p.cancelAutoResolve();
-
-				var ctrl = this.subInstance('items');
-
-				var ids = [];
-				ctrl.each(function(item){
-					ids.push(item.data().ID);
-				});
-
-				this.callRemoteTemplate('getSelector', {type: type, parameters: {
-					COMPONENT_PARAMETERS: {
-						MULTIPLE: this.option('max') > 1 ? 'Y' : 'N',
-						NAME: ctrl.option('selectorCode'),
-						VALUE: ids // just initial value
-					}
-				}}).then(function(result){
-					if(result.isSuccess())
-					{
-						var scope = this.control('picker-content-'+(type.toLowerCase()));
-						BX.html(scope, result.getData()).then(function(){
-							p.resolve();
-						});
-					}
-					else
-					{
-						p.reject();
-					}
-				}.bind(this));
-			},
-
 			getManager: function()
 			{
-				return this.subInstance('items', function(){
+				return this.subInstance('items', function() {
 					return new this.constructor.ItemManager({
 						scope: this.scope(),
 						data: this.option('data'),
+						multiple: (this.option('max') > 1),
 						preRendered: true,
 						templateSubtaskLimitExceeded: this.option('templateSubtaskLimitExceeded')
 					});
@@ -154,8 +93,7 @@ BX.namespace('Tasks.Component');
 		}
 	});
 
-	// legacy popup - task selector
-	BX.Tasks.Component.TasksWidgetRelatedSelector.ItemManager = BX.Tasks.PopupItemSet.extend({
+	BX.Tasks.Component.TasksWidgetRelatedSelector.ItemManager = BX.Tasks.Util.ItemSet.extend({
 		sys: {
 			code: 'task-sel'
 		},
@@ -167,118 +105,182 @@ BX.namespace('Tasks.Component');
 			types: {}
 		},
 		methods: {
+			construct: function()
+			{
+				this.callConstruct(BX.Tasks.Util.ItemSet);
+				this.preselectedItems = this.option('data');
+			},
+
 			openAddForm: function()
 			{
 				if (this.option('templateSubtaskLimitExceeded'))
 				{
-					BX.UI.InfoHelper.show('limit_tasks_templates_subtasks');
+					BX.UI.InfoHelper.show('limit_tasks_templates_subtasks', {
+						isLimit: true,
+						limitAnalyticsLabels: {
+							module: 'tasks',
+							source: 'templateEdit'
+						}
+					});
 					return;
 				}
 
-				this.callMethod(BX.Tasks.PopupItemSet, 'openAddForm');
+				this.getDialog().show();
 			},
 
-			checkSelectorLoaded: function()
+			getDialog: function()
 			{
-				return this.instances.selector && this.instances.selector[this.getType()];
-			},
-
-			getSelector: function()
-			{
-				var p = new BX.Promise();
-
-				var type = this.getType();
-				this.instances.selector = this.instances.selector || {};
-
-				var code = this.option('selectorCode');
-
-				if(this.checkSelectorLoaded()) // already loaded
+				if (this.getType() === 'T')
 				{
-					p.resolve(this.instances.selector[type]);
-				}
-				else
-				{
-					var selector = window['O_'+code];
-
-					var processSelector = function(type, selector)
-					{
-						this.bindSelectorEvents(selector);
-						p.resolve(selector);
-
-						this.instances.selector[type] = selector;
-					};
-
-					if(selector)
-					{
-						processSelector.apply(this, [type, selector]);
-					}
-					else
-					{
-						// async load here
-						var dp = new BX.Promise();
-						dp.setAutoResolve(false); // in case of no event catch
-						this.fireEvent('selector-discover', [type, dp, this]);
-
-						dp.then(function(){
-
-							var selector = window['O_'+code];
-							if(selector)
-							{
-								processSelector.apply(this, [type, selector]);
-							}
-							else
-							{
-								p.reject(); // successful load, but unsuccessful placing
-							}
-
-						}.bind(this), function(){
-							p.reject();
-						});
-					}
+					return this.getTasksDialog();
 				}
 
-				return p;
+				return this.getTemplatesDialog();
 			},
 
-			getPickerContainer: function()
+			getTasksDialog: function()
 			{
-				return this.control('picker-content-'+(this.getType().toLowerCase()));
+				if (!this.tasksDialog)
+				{
+					this.tasksDialog = new BX.UI.EntitySelector.Dialog({
+						targetNode: this.scope(),
+						enableSearch: true,
+						multiple: this.option('multiple'),
+						dropdownMode: true,
+						compactView: true,
+						hideOnSelect: !this.option('multiple'),
+						hideOnDeselect: !this.option('multiple'),
+						context: 'TASKS_TASKS',
+						searchOptions: {
+							allowCreateItem: false,
+						},
+						preselectedItems: this.prepareDialogItems(this.preselectedItems),
+						entities: [
+							{
+								id: 'task'
+							}
+						],
+						events: {
+							'Item:onSelect': function(event) {
+								this.onSelectorItemSelected(event.getData().item);
+							}.bind(this),
+							'Item:onDeselect': function(event) {
+								this.onSelectorItemDeselected(event.getData().item);
+							}.bind(this)
+						}
+					});
+				}
+
+				return this.tasksDialog;
 			},
 
-			getType: function()
+			getTemplatesDialog: function()
 			{
-				return this.option('types').TASK ? 'T' : 'TT';
+				if (!this.templatesDialog)
+				{
+					this.templatesDialog = new BX.UI.EntitySelector.Dialog({
+						targetNode: this.scope(),
+						enableSearch: true,
+						multiple: this.option('multiple'),
+						dropdownMode: true,
+						compactView: true,
+						hideOnSelect: !this.option('multiple'),
+						hideOnDeselect: !this.option('multiple'),
+						context: 'TASKS_TEMPLATES',
+						searchOptions: {
+							allowCreateItem: false,
+						},
+						preselectedItems: this.prepareDialogItems(this.preselectedItems),
+						entities: [
+							{
+								id: 'task-template'
+							}
+						],
+						events: {
+							'Item:onSelect': function(event) {
+								this.onSelectorItemSelected(event.getData().item);
+							}.bind(this),
+							'Item:onDeselect': function(event) {
+								this.onSelectorItemDeselected(event.getData().item);
+							}.bind(this)
+						}
+					});
+				}
+
+				return this.templatesDialog;
+			},
+
+			onSelectorItemSelected: function(dialogItem)
+			{
+				this.addItem(this.prepareItemData(dialogItem));
+			},
+
+			onSelectorItemDeselected: function(dialogItem)
+			{
+				dialogItem = this.prepareItemData(dialogItem);
+
+				var id = (this.getType() + dialogItem.id);
+				var item = Object.values(this.vars.items).find(function(item) {
+					return (id.toString() === item.data().VALUE);
+				});
+				if (item)
+				{
+					this.callMethod(BX.Tasks.Util.ItemSet, 'deleteItem', [item]);
+				}
+			},
+
+			prepareItemData: function(item)
+			{
+				return {
+					id: item.getId(),
+					name: item.getTitle(),
+				};
+			},
+
+			prepareDialogItems: function(items)
+			{
+				var type = (this.getType() === 'T' ? 'task' : 'task-template');
+
+				return items.map(function(item) {
+					return [type, item.ID];
+				});
 			},
 
 			extractItemDisplay: function(data)
 			{
-				if(typeof data.DISPLAY != 'undefined')
+				if (typeof data.DISPLAY != 'undefined')
 				{
 					return data.DISPLAY;
 				}
 
-				if(typeof data.name != 'undefined')
+				if (typeof data.name != 'undefined')
 				{
 					return data.name;
 				}
 
 				return data.TITLE;
 			},
+
 			extractItemValue: function(data)
 			{
-				data.ID = data.ID || data.id;
+				data.ID = (data.ID || data.id);
 
-				if('VALUE' in data)
+				if ('VALUE' in data)
 				{
 					return data.VALUE;
 				}
 
-				return this.getType()+data.ID;
+				return (this.getType() + data.ID);
+			},
+
+			getType: function()
+			{
+				return (this.option('types').TASK ? 'T' : 'TT');
 			},
 
 			prepareData: function(data)
 			{
-				if(!('URL' in data))
+				if (!('URL' in data))
 				{
 					data.URL = this.option('path').toString().replace('#id#', data.ID);
 				}
@@ -286,77 +288,42 @@ BX.namespace('Tasks.Component');
 				return data;
 			},
 
-			bindSelectorEvents: function(selector)
-			{
-				BX.addCustomEvent(selector, 'on-change', BX.delegate(this.itemsChanged, this));
-
-				if (typeof this.instances.window != 'undefined' && this.instances.window)
-				{
-					BX.addCustomEvent(this.instances.window, "onAfterPopupShow", function() {
-						setTimeout(function() {
-							selector.searchInput.focus();
-						}, 100);
-					});
-				}
-			},
-
 			deleteItem: function(value, parameters)
 			{
-				if(BX.type.isString(value))
+				if (BX.type.isString(value))
 				{
 					value = this.get(value);
 				}
 
-				var taskId = value.data().ID;
+				var item = value.data();
 
-				if(this.callMethod(BX.Tasks.PopupItemSet, 'deleteItem', arguments))
+				this.callMethod(BX.Tasks.Util.ItemSet, 'deleteItem', arguments);
+				this.deleteFromPreselected(item);
+				this.deselectDialogItem(item);
+			},
+
+			deleteFromPreselected: function(item)
+			{
+				var itemToDelete = this.preselectedItems.findIndex(function(preselectedItem) {
+					return (preselectedItem.VALUE.toString() === item.VALUE.toString());
+				});
+				if (itemToDelete !== -1)
 				{
-					if(this.checkSelectorLoaded())
-					{
-						// un-select this item in the popup
-						this.getSelector().then(function(selector){
-							selector.unselect(taskId);
-						}.bind(this), function(){
-							BX.debug('unable to get selector');
-						});
-					}
+					this.preselectedItems.splice(itemToDelete, 1);
 				}
 			},
 
-			getSelectionDelta: function()
+			deselectDialogItem: function(item)
 			{
-				var added = [];
-				var deleted = [];
-
-				var temporal = BX.clone(this.vars.temporalItems);
-
-				this.each(function(item){
-
-					var id = item.data().ID;
-
-					if(!this.vars.temporalItems[id]) // that existing ID is not in selected list, remove it!
-					{
-						deleted.push(item.value());
-					}
-					else
-					{
-						delete(temporal[id]);
-					}
-
-				}.bind(this));
-
-				for(var k in temporal)
+				if (
+					(this.getType() === 'T' && this.tasksDialog)
+					|| (this.getType() === 'TT' && this.templatesDialog)
+				)
 				{
-					if(temporal[k])
-					{
-						// this will be added
-						added.push(k);
-					}
+					var dialogItem = this.getDialog().getItem(this.prepareDialogItems([item])[0]);
+					dialogItem && dialogItem.deselect();
 				}
-
-				return {added: added, deleted: deleted};
 			}
 		}
 	});
-
 }).call(this);

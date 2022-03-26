@@ -1,5 +1,15 @@
 <?php
 $MESS["DISK_FILE_EDITOR_ONLYOFFICE_BADGE_NEW_EDITOR_BITRIX24"] = "новинка";
+$MESS["DISK_FILE_EDITOR_ONLYOFFICE_CLOUD_ERROR_COMMON_DESCR"] = "На жаль, файл не вдалося відкрити. Спробуйте ще раз.";
+$MESS["DISK_FILE_EDITOR_ONLYOFFICE_CLOUD_ERROR_COMMON_TITLE"] = "Неможливо відкрити файл";
+$MESS["DISK_FILE_EDITOR_ONLYOFFICE_CLOUD_ERROR_DEMO_RESTRICTION_DESCR"] = "Пробний період закінчився. Для продовження роботи з Документами необхідно придбати ліцензійну версію Бітрікс24.";
+$MESS["DISK_FILE_EDITOR_ONLYOFFICE_CLOUD_ERROR_DEMO_RESTRICTION_TITLE"] = "Неможливо відкрити файл";
+$MESS["DISK_FILE_EDITOR_ONLYOFFICE_CLOUD_ERROR_RESTRICTION_DESCR"] = "У цей момент співробітники вже редагують документи. Це максимально можлива кількість. Ви зможете підключитися до редагування пізніше, коли хтось із ваших колег завершить роботу з документом або повернеться до перегляду.";
+$MESS["DISK_FILE_EDITOR_ONLYOFFICE_CLOUD_ERROR_RESTRICTION_TITLE"] = "Редагування недоступне";
+$MESS["DISK_FILE_EDITOR_ONLYOFFICE_CUSTOM_ERROR_FILE_TITLE"] = "Неможливо відкрити файл";
+$MESS["DISK_FILE_EDITOR_ONLYOFFICE_CUSTOM_ERROR_LARGE_FILE_DESCR"] = "На жаль, розмір файлу занадто великий, і ми не змогли відкрити його. Ви можете завантажити документ, а потім додати відредаговану версію на Диск, якщо це буде необхідно.";
+$MESS["DISK_FILE_EDITOR_ONLYOFFICE_CUSTOM_ERROR_LARGE_FILE_TITLE"] = "Неможливо відкрити файл";
+$MESS["DISK_FILE_EDITOR_ONLYOFFICE_CUSTOM_ERROR_RIGHTS_OR_NOT_FOUND_DESCR"] = "Файл не знайдено або доступ заборонено. Зверніться до власника файлу або адміністратора порталу.";
 $MESS["DISK_FILE_EDITOR_ONLYOFFICE_DISCARD_CHANGES"] = "Можливо, внесені зміни не будуть збережені";
 $MESS["DISK_FILE_EDITOR_ONLYOFFICE_ERROR_WITH_TABLE_NOTICE"] = "На жаль, редагування та створення таблиць через Бітрікс24 тимчасово недоступно. Ви можете завантажити документ або відредагувати його через інші програми.";
 $MESS["DISK_FILE_EDITOR_ONLYOFFICE_HEADER_BTN_DOWNLOAD"] = "Завантажити";

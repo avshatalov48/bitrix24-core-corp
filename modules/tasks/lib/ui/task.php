@@ -37,32 +37,36 @@ final class Task
 		return Util::replaceUrlParameters($url, array('PARENT_ID' => $taskId));
 	}
 
-	public static function makeFireEventUrl($url, $taskId, $eventType, array $eventOptions = array())
+	public static function makeFireEventUrl($url, $taskId, $eventType, array $eventOptions = [])
 	{
-		$taskId = intval($taskId);
-		if(!$taskId)
+		$taskId = (int)$taskId;
+		if (!$taskId)
 		{
 			return $url;
 		}
 
-		$urlParams = array(
+		$urlParams = [
 			'EVENT_TYPE' => $eventType,
 			'EVENT_TASK_ID' => $taskId,
 			'EVENT_OPTIONS[STAY_AT_PAGE]' => $eventOptions['STAY_AT_PAGE'],
-		);
+			'EVENT_OPTIONS[SCOPE]' => $eventOptions['SCOPE'],
+			'EVENT_OPTIONS[FIRST_GRID_TASK_CREATION_TOUR_GUIDE]' => $eventOptions['FIRST_GRID_TASK_CREATION_TOUR_GUIDE'],
+		];
 
 		return Util::replaceUrlParameters($url, $urlParams, array_keys($urlParams));
 	}
 
 	public static function cleanFireEventUrl($url)
 	{
-		$urlParams = array(
+		$urlParams = [
 			'EVENT_TYPE',
 			'EVENT_TASK_ID',
 			'EVENT_OPTIONS[STAY_AT_PAGE]',
-		);
+			'EVENT_OPTIONS[SCOPE]',
+			'EVENT_OPTIONS[FIRST_GRID_TASK_CREATION_TOUR_GUIDE]',
+		];
 
-		return Util::replaceUrlParameters($url, array(), $urlParams);
+		return Util::replaceUrlParameters($url, [], $urlParams);
 	}
 
 	/**

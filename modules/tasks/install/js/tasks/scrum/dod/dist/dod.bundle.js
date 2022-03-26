@@ -96,65 +96,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return TypeStorage;
 	}();
 
-	function _templateObject6() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<input type=\"text\" class=\"tasks-scrum-dod-settings-type-name-input\" value=\"", "\">\n\t\t"]);
-
-	  _templateObject6 = function _templateObject6() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject5() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-scrum-dod-settings-type-name\"></div>"]);
-
-	  _templateObject5 = function _templateObject5() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"sidebar-tab sidebar-tab-active\">\n\t\t\t\t<input type=\"text\" class=\"tasks-scrum-dod-settings-type-name-input\">\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject4 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"", "\">\n\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-type-name\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-type-edit\"></div>\n\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-type-remove\"></div>\n\t\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject3 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"sidebar-tab-link\">\n\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-type-name\">\n\t\t\t\t\t\t+ ", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"", "\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6;
 	var Tabs = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Tabs, _EventEmitter);
 
@@ -183,7 +125,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var _this2 = this;
 
 	      var sidebarClass = 'tasks-scrum-dod-settings-container-sidebar' + ' tasks-scrum-dod-settings-container-sidebar-settings';
-	      this.node = main_core.Tag.render(_templateObject(), sidebarClass, babelHelpers.toConsumableArray(this.typeStorage.getTypes().values()).map(function (type) {
+	      this.node = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"", "\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), sidebarClass, babelHelpers.toConsumableArray(this.typeStorage.getTypes().values()).map(function (type) {
 	        return _this2.renderTab(type);
 	      }));
 	      return this.node;
@@ -199,12 +141,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var _this3 = this;
 
 	      if (this.isEmptyType(type)) {
-	        var addNode = main_core.Tag.render(_templateObject2(), main_core.Loc.getMessage('TASKS_SCRUM_CREATE_TYPE'));
+	        var addNode = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"sidebar-tab-link\">\n\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-type-name\">\n\t\t\t\t\t\t+ ", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_CREATE_TYPE'));
 	        main_core.Event.bind(addNode, 'click', this.createType.bind(this));
 	        return addNode;
 	      } else {
 	        var tabClass = this.isActiveType(type) ? 'sidebar-tab sidebar-tab-active' : 'sidebar-tab';
-	        var tabNode = main_core.Tag.render(_templateObject3(), tabClass, main_core.Text.encode(type.getName()));
+	        var tabNode = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"", "\">\n\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-type-name\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-type-edit\"></div>\n\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-type-remove\"></div>\n\t\t\t\t</div>\n\t\t\t"])), tabClass, main_core.Text.encode(type.getName()));
 	        this.tabNodes.set(type.getId(), tabNode);
 	        main_core.Event.bind(tabNode, 'click', function (event) {
 	          var edit = event.target.classList.contains('tasks-scrum-dod-settings-type-edit');
@@ -265,8 +207,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.tabNodes.forEach(function (node) {
 	        main_core.Dom.removeClass(node, 'sidebar-tab-active');
 	      });
-	      var node = main_core.Tag.render(_templateObject4());
-	      var nameNode = main_core.Tag.render(_templateObject5());
+	      var node = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"sidebar-tab sidebar-tab-active\">\n\t\t\t\t<input type=\"text\" class=\"tasks-scrum-dod-settings-type-name-input\">\n\t\t\t</div>\n\t\t"])));
+	      var nameNode = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-scrum-dod-settings-type-name\"></div>"])));
 	      main_core.Dom.insertBefore(node, this.node.lastElementChild);
 	      var input = node.querySelector('input');
 	      main_core.Event.bind(input, 'change', function (event) {
@@ -295,7 +237,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function changeTypeName(type, typeNode) {
 	      var _this5 = this;
 
-	      var inputNode = main_core.Tag.render(_templateObject6(), main_core.Text.encode(type.getName()));
+	      var inputNode = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<input type=\"text\" class=\"tasks-scrum-dod-settings-type-name-input\" value=\"", "\">\n\t\t"])), main_core.Text.encode(type.getName()));
 	      var nameNode = typeNode.querySelector('.tasks-scrum-dod-settings-type-name');
 	      main_core.Event.bind(inputNode, 'change', function (event) {
 	        type.setName(event.target['value']);
@@ -398,6 +340,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      });
 	    }
 	  }, {
+	    key: "isNecessary",
+	    value: function isNecessary(data) {
+	      return this.sendRequest('doD', 'isNecessary', data);
+	    }
+	  }, {
 	    key: "getSettings",
 	    value: function getSettings(data) {
 	      return this.sendRequest('doD', 'getSettings', data);
@@ -460,45 +407,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return RequestSender;
 	}();
 
-	function _templateObject4$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t<label class=\"ui-ctl ui-ctl-checkbox\">\n\t\t\t\t\t<input type=\"checkbox\" class=\"ui-ctl-element ui-form-content-required-option\">\n\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</label>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject4$1 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form\">\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject3$1 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form\">\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-content ui-form-content-dod-list\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject2$1 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-dod-settings\">\n\t\t\t\t<div class=\"tasks-scrum-dod-settings-container\">\n\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-container-wrap\">\n\t\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-container-shell\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-container-sidebar-wrapper\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject$1 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$1, _templateObject2$1, _templateObject3$1, _templateObject4$1;
 	var Settings = /*#__PURE__*/function () {
 	  function Settings(params) {
 	    babelHelpers.classCallCheck(this, Settings);
@@ -542,12 +451,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        _this.addEmptyCreationType();
 
 	        return _this.render();
+	      }).catch(function (response) {
+	        _this.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
 	    key: "render",
 	    value: function render() {
-	      this.node = main_core.Tag.render(_templateObject$1(), this.tabs.render(), this.renderContainer());
+	      this.node = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-dod-settings\">\n\t\t\t\t<div class=\"tasks-scrum-dod-settings-container\">\n\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-container-wrap\">\n\t\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-container-shell\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-container-sidebar-wrapper\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.tabs.render(), this.renderContainer());
 	      return this.node;
 	    }
 	  }, {
@@ -562,19 +473,19 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "renderEditingForm",
 	    value: function renderEditingForm(type) {
-	      return main_core.Tag.render(_templateObject2$1(), this.renderRequiredOption(type));
+	      return main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form\">\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-content ui-form-content-dod-list\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.renderRequiredOption(type));
 	    }
 	  }, {
 	    key: "renderEmptyForm",
 	    value: function renderEmptyForm() {
-	      return main_core.Tag.render(_templateObject3$1(), main_core.Loc.getMessage('TASKS_SCRUM_CREATE_TYPE_PROMPT'));
+	      return main_core.Tag.render(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form\">\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_CREATE_TYPE_PROMPT'));
 	    }
 	  }, {
 	    key: "renderRequiredOption",
 	    value: function renderRequiredOption(type) {
 	      var _this2 = this;
 
-	      var node = main_core.Tag.render(_templateObject4$1(), main_core.Loc.getMessage('TASKS_SCRUM_DOD_OPTIONS_REQUIRED_LABEL'));
+	      var node = main_core.Tag.render(_templateObject4$1 || (_templateObject4$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t<label class=\"ui-ctl ui-ctl-checkbox\">\n\t\t\t\t\t<input type=\"checkbox\" class=\"ui-ctl-element ui-form-content-required-option\">\n\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</label>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_DOD_OPTIONS_REQUIRED_LABEL'));
 	      var checkbox = node.querySelector('.ui-form-content-required-option');
 	      checkbox.checked = type.isDodRequired();
 	      main_core.Event.bind(checkbox, 'click', function () {
@@ -592,6 +503,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var listContainer = this.node.querySelector('.ui-form-content-dod-list');
 	      var loader = this.showLoader(listContainer);
 	      this.requestSender.getChecklist({
+	        groupId: this.groupId,
 	        typeId: type.getId()
 	      }).then(function (response) {
 	        loader.hide();
@@ -704,6 +616,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }
 
 	      return this.requestSender.saveSettings({
+	        groupId: this.groupId,
 	        typeId: type.getId(),
 	        requiredOption: this.getRequiredOptionValue(),
 	        items: this.getChecklistItems()
@@ -774,25 +687,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Settings;
 	}();
 
-	function _templateObject2$2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form ui-form-line tasks-scrum-dod-form\">\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-after-icon ui-ctl-dropdown\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t\t\t\t<select class=\"ui-ctl-element tasks-scrum-dod-types\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</select>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-content tasks-scrum-dod-checklist\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject2$2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject$2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-form ui-form-line tasks-scrum-dod-form\">\n\t\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject$2 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$2, _templateObject2$2;
 	var List = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(List, _EventEmitter);
 
@@ -838,10 +733,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	        _this2.tabs.setTypeStorage(_this2.typeStorage);
 
-	        if (activeTypeId === 0) {
+	        var activeType = itemTypes.get(activeTypeId);
+
+	        if (main_core.Type.isUndefined(activeType)) {
 	          _this2.tabs.setActiveType(_this2.typeStorage.getNextType());
 	        } else {
-	          _this2.tabs.setActiveType(itemTypes.get(activeTypeId));
+	          _this2.tabs.setActiveType(activeType);
 	        }
 
 	        if (_this2.isEmpty()) {
@@ -853,11 +750,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        }
 
 	        return _this2.render();
+	      }).catch(function (response) {
+	        _this2.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
 	    key: "renderList",
 	    value: function renderList() {
+	      var _this3 = this;
+
 	      var listNode = this.node.querySelector('.tasks-scrum-dod-checklist');
 	      main_core.Dom.clean(listNode);
 	      var loader = this.showLoader(listNode);
@@ -868,23 +769,25 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }).then(function (response) {
 	        loader.hide();
 	        top.BX.Runtime.html(listNode, response.data.html);
+	      }).catch(function (response) {
+	        _this3.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
 	    key: "renderEmpty",
 	    value: function renderEmpty() {
-	      var _this3 = this;
+	      var _this4 = this;
 
-	      var node = main_core.Tag.render(_templateObject$2(), main_core.Loc.getMessage('TASKS_SCRUM_DOD_LABEL_EMPTY'));
+	      var node = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-form ui-form-line tasks-scrum-dod-form\">\n\t\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_DOD_LABEL_EMPTY'));
 	      main_core.Event.bind(node.querySelector('span'), 'click', function () {
-	        return _this3.emit('showSettings');
+	        return _this4.emit('showSettings');
 	      });
 	      return node;
 	    }
 	  }, {
 	    key: "render",
 	    value: function render() {
-	      var _this4 = this;
+	      var _this5 = this;
 
 	      var activeType = this.getActiveType();
 
@@ -893,23 +796,23 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        return "<option value=\"".concat(parseInt(typeData.id, 10), "\" ").concat(selected, ">").concat(main_core.Text.encode(typeData.name), "</option>");
 	      };
 
-	      this.node = main_core.Tag.render(_templateObject2$2(), main_core.Loc.getMessage('TASKS_SCRUM_DOD_LABEL_TYPES'), babelHelpers.toConsumableArray(this.typeStorage.getTypes().values()).map(function (typeData) {
+	      this.node = main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form ui-form-line tasks-scrum-dod-form\">\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-after-icon ui-ctl-dropdown\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t\t\t\t<select class=\"ui-ctl-element tasks-scrum-dod-types\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</select>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-content tasks-scrum-dod-checklist\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_DOD_LABEL_TYPES'), babelHelpers.toConsumableArray(this.typeStorage.getTypes().values()).map(function (typeData) {
 	        return renderOption(typeData);
 	      }).join(''));
 	      var typeSelector = this.node.querySelector('.tasks-scrum-dod-types');
 	      main_core.Event.bind(typeSelector, 'change', function (event) {
 	        var typeId = parseInt(event.target.value, 10);
 
-	        _this4.tabs.setActiveType(_this4.typeStorage.getType(typeId));
+	        _this5.tabs.setActiveType(_this5.typeStorage.getType(typeId));
 
-	        _this4.renderList();
+	        _this5.renderList();
 	      });
 	      return this.node;
 	    }
 	  }, {
 	    key: "save",
 	    value: function save() {
-	      var _this5 = this;
+	      var _this6 = this;
 
 	      var activeType = this.getActiveType();
 	      this.requestSender.saveList({
@@ -918,25 +821,27 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        groupId: this.groupId,
 	        items: this.getListItems()
 	      }).then(function () {
-	        if (_this5.isSkipNotifications()) {
-	          _this5.solve();
+	        if (_this6.isSkipNotifications()) {
+	          _this6.solve();
 	        } else {
-	          if (_this5.isListRequired(_this5.getActiveType())) {
-	            if (_this5.isAllToggled()) {
-	              _this5.emit('resolve');
+	          if (_this6.isListRequired(_this6.getActiveType())) {
+	            if (_this6.isAllToggled()) {
+	              _this6.emit('resolve');
 	            } else {
-	              _this5.emit('reject');
+	              _this6.emit('reject');
 
-	              _this5.showInfoPopup();
+	              _this6.showInfoPopup();
 	            }
 	          } else {
-	            if (_this5.isAllToggled()) {
-	              _this5.emit('resolve');
+	            if (_this6.isAllToggled()) {
+	              _this6.emit('resolve');
 	            } else {
-	              _this5.showConfirmPopup();
+	              _this6.showConfirmPopup();
 	            }
 	          }
 	        }
+	      }).catch(function (response) {
+	        _this6.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
@@ -995,7 +900,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var isAllToggled = true;
 	      var treeStructure = top.BX.Tasks.CheckListInstance.getTreeStructure();
 	      treeStructure.getDescendants().forEach(function (checkList) {
-	        if (!checkList.checkIsComplete()) {
+	        if (checkList.countTotalCount() > 0 && !checkList.checkIsComplete()) {
 	          isAllToggled = false;
 	        }
 	      });
@@ -1010,7 +915,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "showConfirmPopup",
 	    value: function showConfirmPopup() {
-	      var _this6 = this;
+	      var _this7 = this;
 
 	      var messageBox = new ui_dialogs_messagebox.MessageBox({
 	        message: main_core.Loc.getMessage('TASKS_SCRUM_DOD_CONFIRM_TEXT_COMPLETE'),
@@ -1020,7 +925,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          color: ui_buttons.Button.Color.SUCCESS,
 	          events: {
 	            click: function click() {
-	              _this6.emit('resolve');
+	              _this7.emit('resolve');
 
 	              messageBox.close();
 	            }
@@ -1030,7 +935,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          color: ui_buttons.Button.Color.LINK,
 	          events: {
 	            click: function click() {
-	              _this6.emit('reject');
+	              _this7.emit('reject');
 
 	              messageBox.close();
 	            }
@@ -1109,6 +1014,20 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }
 
 	  babelHelpers.createClass(Dod, [{
+	    key: "isNecessary",
+	    value: function isNecessary() {
+	      var _this2 = this;
+
+	      return this.requestSender.isNecessary({
+	        groupId: this.groupId,
+	        taskId: this.taskId
+	      }).then(function (response) {
+	        return response.data;
+	      }).catch(function (response) {
+	        _this2.requestSender.showErrorAlert(response);
+	      });
+	    }
+	  }, {
 	    key: "show",
 	    value: function show() {
 	      switch (this.view) {
@@ -1124,16 +1043,16 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "showSettings",
 	    value: function showSettings() {
-	      var _this2 = this;
+	      var _this3 = this;
 
 	      this.sidePanelManager.open('tasks-scrum-dod-settings-side-panel', {
 	        cacheable: false,
-	        width: 800,
+	        width: 1000,
 	        contentCallback: function contentCallback() {
 	          return ui_sidepanel_layout.Layout.createContent({
 	            extensions: ['tasks.scrum.dod'],
 	            title: main_core.Loc.getMessage('TASKS_SCRUM_DOD_TITLE'),
-	            content: _this2.createSettingsContent.bind(_this2),
+	            content: _this3.createSettingsContent.bind(_this3),
 	            design: {
 	              section: false
 	            },
@@ -1149,7 +1068,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "showList",
 	    value: function showList() {
-	      var _this3 = this;
+	      var _this4 = this;
 
 	      this.sidePanelManager.open('tasks-scrum-dod-list-side-panel', {
 	        cacheable: false,
@@ -1158,7 +1077,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          return ui_sidepanel_layout.Layout.createContent({
 	            extensions: ['tasks.scrum.dod'],
 	            title: main_core.Loc.getMessage('TASKS_SCRUM_DOD_TITLE'),
-	            content: _this3.createListContent.bind(_this3),
+	            content: _this4.createListContent.bind(_this4),
 	            design: {
 	              section: false
 	            },
@@ -1166,8 +1085,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	              var cancelButton = _ref.cancelButton,
 	                  SaveButton = _ref.SaveButton;
 	              return [new SaveButton({
-	                text: _this3.getListButtonText(),
-	                onclick: _this3.onSaveList.bind(_this3)
+	                text: _this4.getListButtonText(),
+	                onclick: _this4.onSaveList.bind(_this4)
 	              }), cancelButton];
 	            }
 	          });
@@ -1180,10 +1099,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "createSettingsContent",
 	    value: function createSettingsContent() {
-	      var _this4 = this;
+	      var _this5 = this;
 
 	      return new Promise(function (resolve, reject) {
-	        _this4.settings.renderContent().then(function (content) {
+	        _this5.settings.renderContent().then(function (content) {
 	          resolve(content);
 	        });
 	      });
@@ -1191,10 +1110,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "createListContent",
 	    value: function createListContent() {
-	      var _this5 = this;
+	      var _this6 = this;
 
 	      return new Promise(function (resolve, reject) {
-	        _this5.list.renderContent().then(function (content) {
+	        _this6.list.renderContent().then(function (content) {
 	          resolve(content);
 	        });
 	      });

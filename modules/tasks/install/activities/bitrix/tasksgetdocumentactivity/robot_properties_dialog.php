@@ -22,6 +22,6 @@ if ($isAdmin):
 
 <?php else: ?>
 <div class="bizproc-automation-popup-settings-alert">
-	<?=GetMessage('TASKS_GLDA_ACCESS_DENIED')?>
+	<?=GetMessage('TASKS_GLDA_ACCESS_DENIED_1')?>
 </div>
 <?php endif ?>

@@ -192,6 +192,7 @@ const MessageEditor = {
 					v-on:control-on-save="afterSaveControl"
 				/>
 			</div>
+		</div>
 	`
 };
 

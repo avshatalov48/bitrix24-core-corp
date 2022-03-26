@@ -3,7 +3,11 @@
 namespace Bitrix\Crm\Timeline\HistoryDataModel;
 
 use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Context;
+use Bitrix\Main\IO\Path;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Sale\Cashbox\CheckManager;
 
 /**
  * Class Presenter

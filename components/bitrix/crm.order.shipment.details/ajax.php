@@ -199,9 +199,12 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 	{
 		\CBitrixComponent::includeComponentClass('bitrix:crm.order.shipment.details');
 		$component = new \CCrmOrderShipmentDetailsComponent();
-		$component->initializeParams(
-			isset($this->request['PARAMS']) && is_array($this->request['PARAMS']) ? $this->request['PARAMS'] : []
-		);
+
+		$formDataContextParams = $this->request['FORM_DATA']['PARAMS'] ?? [];
+		$formDataParams = $this->request['PARAMS'] ?? [];
+		$componentParams = array_merge($formDataContextParams, $formDataParams);
+
+		$component->initializeParams($componentParams);
 		$component->setEntityID($shipment->getId());
 		$component->setShipment($shipment);
 

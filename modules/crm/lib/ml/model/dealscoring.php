@@ -34,9 +34,6 @@ class DealScoring extends Base
 
 		$cursor = DealCategoryTable::getList([
 			'select' => ['ID'],
-			'filter' => [
-				'=IS_LOCKED' => 'N'
-			],
 			'cache' => ['ttl' => static::CACHE_TTL]
 		]);
 
@@ -393,6 +390,14 @@ class DealScoring extends Base
 			return Loc::getMessage("CRM_DEAL_SCORING_MODEL_TITLE_DEFAULT");
 		}
 
+	}
+
+	public function hasAccess(int $userId = 0)
+	{
+		$categoryId = static::getModelCategory($this->name);
+		$userPermission = \CCrmPerms::GetUserPermissions($userId);
+
+		return \CCrmDeal::CheckReadPermission(0, $userPermission, $categoryId);
 	}
 
 	protected static function getUserFieldName()

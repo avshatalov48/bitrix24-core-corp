@@ -37,12 +37,6 @@ $arResult['WORKFLOW_OPTION'] = CVoxImplantConfig::GetLeadWorkflowExecution();
 
 $arResult['COMBINATION_INTERCEPT_GROUP'] = CVoxImplantConfig::GetCombinationInterceptGroup();
 
-$arResult['SHOW_AUTOPAY'] = !\Bitrix\Voximplant\Limits::isRestOnly() && \Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24') && !in_array($account->GetAccountLang(), array('ru', 'ua', 'kz', 'by'));
-if($arResult['SHOW_AUTOPAY'])
-{
-	$arResult['AUTOPAY_ALLOWED'] = CVoxImplantConfig::isAutoPayAllowed();
-}
-
 if ($request->isPost() && check_bitrix_sessid())
 {
 	if($request['CURRENT_LINE'] != $arResult['CURRENT_LINE'])
@@ -67,11 +61,6 @@ if ($request->isPost() && check_bitrix_sessid())
 		if($request['COMBINATION_INTERCEPT_GROUP'] != $arResult['COMBINATION_INTERCEPT_GROUP'])
 		{
 			CVoxImplantConfig::SetCombinationInterceptGroup($request['COMBINATION_INTERCEPT_GROUP']);
-		}
-
-		if($arResult['SHOW_AUTOPAY'] && $request['AUTOPAY_ALLOWED'] != $arResult['AUTOPAY_ALLOWED'])
-		{
-			CVoxImplantConfig::setAutoPayAllowed(($request['AUTOPAY_ALLOWED'] === 'Y'));
 		}
 	}
 

@@ -14,7 +14,11 @@ use Bitrix\Tasks\Exception;
 use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Internals\Counter\Template\TaskCounter;
 use Bitrix\Tasks\Internals\SearchIndex;
+use Bitrix\Tasks\Internals\Task\ParameterTable;
+use Bitrix\Tasks\Internals\Task\Result\ResultManager;
+use Bitrix\Tasks\Internals\Task\Result\ResultTable;
 use Bitrix\Tasks\Scrum\Service\TaskService;
 use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Manager;
@@ -198,8 +202,17 @@ final class Task extends Base
 			unset($row['REAL_STATUS']);
 		}
 
-		$row = $this->fillGroupInfo([$row])[0];
+		$row = $this->fillGroupInfo([$row], $params)[0];
 		$row = $this->fillUserInfo([$row])[0];
+		if (array_key_exists('WITH_RESULT_INFO', $params))
+		{
+			$row = $this->fillResultInfo([$row])[0];
+		}
+		if (in_array('COUNTERS', $select, true))
+		{
+			$row = $this->fillCounterInfo([$row])[0];
+		}
+
 		$this->formatDateFieldsForOutput($row);
 
 		if (in_array('NEW_COMMENTS_COUNT', $params['select'], true))
@@ -319,7 +332,7 @@ final class Task extends Base
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 */
-	private function fillGroupInfo(array $rows): array
+	private function fillGroupInfo(array $rows, array $params = []): array
 	{
 		static $groups = [];
 
@@ -334,13 +347,44 @@ final class Task extends Base
 		}
 		$groupIds = array_unique($groupIds);
 
-		$groupsData = SocialNetwork\Group::getData($groupIds, ['IMAGE_ID']);
+		$params['CURRENT_USER_ID'] = (int)$this->getCurrentUser()->getId();
+
+		$select = [
+			'IMAGE_ID',
+			'OPENED',
+			'NUMBER_OF_MEMBERS',
+			'AVATAR_TYPE'
+		];
+		$groupsData = SocialNetwork\Group::getData($groupIds, $select, $params);
+
+		$avatarTypes = (Loader::includeModule('socialnetwork') ? \Bitrix\Socialnetwork\Helper\Workgroup::getAvatarTypes() : []);
+
 		$groupsData = array_map(
-			static function ($group) {
+			static function ($group) use ($avatarTypes) {
+
+				$imageUrl = '';
+				if (
+					(int)$group['IMAGE_ID'] > 0
+					&& is_array($file = \CFile::GetFileArray($group['IMAGE_ID']))
+				)
+				{
+					$imageUrl = $file['SRC'];
+				}
+				elseif (
+					!empty($group['AVATAR_TYPE'])
+					&& isset($avatarTypes[$group['AVATAR_TYPE']])
+				)
+				{
+					$imageUrl = $avatarTypes[$group['AVATAR_TYPE']]['mobileUrl'];
+				}
+
 				return [
 					'ID' => $group['ID'],
 					'NAME' => $group['NAME'],
-					'IMAGE' => (is_array($file = \CFile::GetFileArray($group['IMAGE_ID'])) ? $file['SRC'] : ''),
+					'OPENED' => ($group['OPENED'] === 'Y'),
+					'MEMBERS_COUNT' => (int)$group['NUMBER_OF_MEMBERS'],
+					'IMAGE' => $imageUrl,
+					'ADDITIONAL_DATA' => ($group['ADDITIONAL_DATA'] ?? []),
 				];
 			},
 			$groupsData
@@ -359,6 +403,18 @@ final class Task extends Base
 		}
 
 		return $rows;
+	}
+
+	private function fillCounterInfo(array $tasks): array
+	{
+		$counter = new TaskCounter($this->getCurrentUser()->getId());
+
+		foreach ($tasks as $id => $task)
+		{
+			$tasks[$id]['COUNTER'] = $counter->getMobileRowCounter($task['ID']);
+		}
+
+		return $tasks;
 	}
 
 	/**
@@ -503,25 +559,6 @@ final class Task extends Base
 	}
 
 	/**
-	 * @param array $fields
-	 * @return array
-	 */
-	private function filterFields(array $fields): array
-	{
-		$fieldNames = array_keys($fields);
-		foreach ($fieldNames as $field)
-		{
-			if (mb_strpos($field, '~') === 0)
-			{
-				$fields[str_replace('~', '', $field)] = $fields[$field];
-				unset($fields[$field]);
-			}
-		}
-
-		return $fields;
-	}
-
-	/**
 	 * Remove existing task
 	 *
 	 * @param \CTaskItem $task
@@ -622,12 +659,20 @@ final class Task extends Base
 
 		$params['PUBLIC_MODE'] = 'Y'; // VERY VERY BAD HACK! DONT REPEAT IT !
 		$params['USE_MINIMAL_SELECT_LEGACY'] = 'N'; // VERY VERY BAD HACK! DONT REPEAT IT !
-		$params['RETURN_ACCESS'] = ($params['RETURN_ACCESS'] ?? 'N'); // VERY VERY BAD HACK! DONT REPEAT IT !
+		$params['RETURN_ACCESS'] = ($params['RETURN_ACCESS'] ?? 'N'); // VERY VERY BAD HACK! DONT REPEAT IT !.. too late
 
 		$result = Manager\Task::getList($this->getCurrentUser()->getId(), $getListParams, $params);
 		$tasks = array_values($result['DATA']);
-		$tasks = $this->fillGroupInfo($tasks);
+		$tasks = $this->fillGroupInfo($tasks, $params);
 		$tasks = $this->fillUserInfo($tasks);
+		if (array_key_exists('WITH_RESULT_INFO', $params))
+		{
+			$tasks = $this->fillResultInfo($tasks);
+		}
+		if (in_array('COUNTERS', $select, true))
+		{
+			$tasks = $this->fillCounterInfo($tasks);
+		}
 
 		foreach ($tasks as &$task)
 		{
@@ -664,6 +709,61 @@ final class Task extends Base
 			}
 		);
 
+	}
+
+	/**
+	 * @param array $tasks
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	private function fillResultInfo(array $tasks): array
+	{
+		if (empty($tasks))
+		{
+			return [];
+		}
+
+		$taskIds = [];
+		foreach ($tasks as $key => $task)
+		{
+			$taskIds[(int)$task['ID']] = $key;
+
+			$tasks[$key]['TASK_REQUIRE_RESULT'] = 'N';
+			$tasks[$key]['TASK_HAS_RESULT'] = 'N';
+		}
+
+		$hasResults = ResultTable::GetList([
+			'select' => ['TASK_ID'],
+			'filter' => [
+				'@TASK_ID' => array_keys($taskIds),
+				'=STATUS' => ResultTable::STATUS_OPENED,
+			],
+		])->fetchAll();
+
+		foreach ($hasResults as $row)
+		{
+			$taskId = $row['TASK_ID'];
+			$tasks[$taskIds[$taskId]]['TASK_HAS_RESULT'] = 'Y';
+		}
+
+		$requireResults = ParameterTable::getList([
+			'select' => ['TASK_ID'],
+			'filter' => [
+				'@TASK_ID' => array_keys($taskIds),
+				'=CODE' => ParameterTable::PARAM_RESULT_REQUIRED,
+				'=VALUE' => 'Y',
+			],
+		])->fetchAll();
+
+		foreach ($requireResults as $row)
+		{
+			$taskId = $row['TASK_ID'];
+			$tasks[$taskIds[$taskId]]['TASK_REQUIRE_RESULT'] = 'Y';
+		}
+
+		return $tasks;
 	}
 
 	/**
@@ -1056,12 +1156,14 @@ final class Task extends Base
 			return null;
 		}
 
-		if ($row['ALLOW_TIME_TRACKING'] === 'Y' && !$this->startTimer($task, true))
+		if ($row['ALLOW_TIME_TRACKING'] === 'N')
+		{
+			$task->startExecution($params);
+		}
+		else if (!$this->startTimer($task, true))
 		{
 			return null;
 		}
-
-		$task->startExecution($params);
 
 		return $this->getAction($task);
 	}
@@ -1109,6 +1211,8 @@ final class Task extends Base
 		if ($timer->start($task->getId()) === false)
 		{
 			$this->addError(new Error(GetMessage('TASKS_FAILED_START_TASK_TIMER')));
+
+			return null;
 		}
 
 		return true;
@@ -1178,6 +1282,18 @@ final class Task extends Base
 	{
 		try
 		{
+			$taskId = (int)$task->getId();
+			if (
+				array_key_exists('PLATFORM', $params)
+				&& in_array($params['PLATFORM'], ['web', 'mobile'])
+				&& ResultManager::requireResult($taskId)
+				&& !ResultManager::hasResult($taskId)
+			)
+			{
+				$this->errorCollection->add([new Error(GetMessage('TASKS_FAILED_RESULT_REQUIRED'))]);
+				return null;
+			}
+
 			$task->complete($params);
 		}
 		catch (TasksException $e)

@@ -16,4 +16,8 @@ if (!Main\Loader::includeModule('sale'))
  */
 class ShipmentItemStore extends Sale\ShipmentItemStore
 {
+	protected function needMoveReserve(): bool
+	{
+		return \CCrmSaleHelper::isWithOrdersMode();
+	}
 }

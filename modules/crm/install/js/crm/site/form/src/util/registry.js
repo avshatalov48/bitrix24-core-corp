@@ -44,7 +44,24 @@ const Type = {
 	},
 	object(val): Boolean
 	{
-		return typeof val === 'object';
+		if (!val || typeof val !== 'object' || Object.prototype.toString.call(val) !== '[object Object]')
+		{
+			return false;
+		}
+
+		const proto = Object.getPrototypeOf(val);
+		if (proto === null)
+		{
+			return true;
+		}
+
+		const objectCtorString = Function.prototype.toString.call(Object);
+		const ctor = proto.hasOwnProperty('constructor') && proto.constructor;
+
+		return (
+			typeof ctor === 'function' &&
+			Function.prototype.toString.call(ctor) === objectCtorString
+		);
 	},
 	string(val): Boolean
 	{

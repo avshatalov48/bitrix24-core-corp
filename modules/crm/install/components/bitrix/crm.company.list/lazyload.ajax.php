@@ -64,6 +64,13 @@ elseif(isset($filter['ASSOCIATED_CONTACT_ID']) && $filter['ASSOCIATED_CONTACT_ID
 {
 	$isPermitted = CCrmContact::CheckReadPermission($filter['ASSOCIATED_CONTACT_ID'], $userPermissions);
 }
+if (!$isPermitted)
+{
+	$isPermitted = \Bitrix\Crm\Service\Container::getInstance()->getParentFieldManager()->tryPrepareListComponentParametersWithParentItem(
+		\CCrmOwnerType::Company,
+		$componentParams
+	);
+}
 
 if(!$isPermitted)
 {

@@ -10,10 +10,14 @@ class CompanyProvider extends EntityProvider
 	protected static $dataClass = CompanyTable::class;
 
 	protected $enableMyCompanyOnly = false;
+	protected $categoryId;
 
 	public function __construct(array $options = [])
 	{
 		parent::__construct($options);
+
+		$this->categoryId = (int)($options['categoryId'] ?? 0);
+		$this->options['categoryId'] = $this->categoryId;
 
 		$this->enableMyCompanyOnly = (bool)($options['enableMyCompanyOnly'] ?? $this->enableMyCompanyOnly);
 		$this->options['enableMyCompanyOnly'] = $this->enableMyCompanyOnly;
@@ -52,6 +56,7 @@ class CompanyProvider extends EntityProvider
 		{
 			$filter['=IS_MY_COMPANY'] = 'Y';
 		}
+		$filter['=CATEGORY_ID'] = $this->categoryId;
 
 		$collection = static::$dataClass::getList([
 			'select' => ['ID'],
@@ -59,5 +64,18 @@ class CompanyProvider extends EntityProvider
 		])->fetchCollection();
 
 		return $collection->getIdList();
+	}
+
+	protected function getAdditionalFilter(): array
+	{
+		$filter = [
+			'=CATEGORY_ID' =>  $this->categoryId,
+		];
+		if ($this->enableMyCompanyOnly)
+		{
+			$filter['=IS_MY_COMPANY'] = 'Y';
+		}
+
+		return $filter;
 	}
 }

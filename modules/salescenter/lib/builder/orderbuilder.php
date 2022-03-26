@@ -155,4 +155,32 @@ class OrderBuilder extends Order\Builder\OrderBuilderCrm
 	{
 		return isset($this->formData['CONNECTOR']) && $this->formData['CONNECTOR'] === 'imessage';
 	}
+
+	public function buildShipments()
+	{
+		$this->prepareShipmentProducts();
+
+		return parent::buildShipments();
+	}
+
+	private function prepareShipmentProducts(): void
+	{
+		$basketFormData = $this->getBasketBuilder()->getFormData();
+
+		if (isset($this->formData['PRODUCT'], $basketFormData['PRODUCT']))
+		{
+			$this->formData['PRODUCT'] = $basketFormData['PRODUCT'];
+		}
+
+		if (isset($this->formData['SHIPMENT'], $basketFormData['SHIPMENT']))
+		{
+			foreach ($basketFormData['SHIPMENT'] as $index => $shipment)
+			{
+				if (isset($this->formData['SHIPMENT'][$index], $shipment['PRODUCT']))
+				{
+					$this->formData['SHIPMENT'][$index]['PRODUCT'] = $shipment['PRODUCT'];
+				}
+			}
+		}
+	}
 }

@@ -8,6 +8,7 @@ use Bitrix\Crm\Component\EntityDetails\BaseComponent;
 use Bitrix\Crm\Entity\EntityEditorConfigScope;
 use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\Filter;
+use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Crm\Statistics\StatisticEntryManager;
 use Bitrix\Crm\Exclusion;
 use Bitrix\Crm\Service;
@@ -873,10 +874,12 @@ abstract class Entity
 	 */
 	public function canAddItemToStage(string $stageId, \CCrmPerms $userPermissions): bool
 	{
-		return !(
-			$this->isInlineEditorSupported()
-			&& $this->getAddItemToStagePermissionType($stageId, $userPermissions) === BX_CRM_PERM_NONE
-		);
+		if (!$this->isInlineEditorSupported())
+		{
+			return false;
+		}
+
+		return ($this->getAddItemToStagePermissionType($stageId, $userPermissions) !== BX_CRM_PERM_NONE);
 	}
 
 	protected function getDataToCalculateTotalSums(string $fieldSum, array $filter, array $runtime): array
@@ -1031,25 +1034,16 @@ abstract class Entity
 	 *
 	 * @param array $parameters
 	 * @return \CDBResult
+	 * @throws Exception
 	 */
 	public function getItems(array $parameters): \CDBResult
 	{
-		/** @var \CAllCrmLead|\CAllCrmDeal|\CAllCrmInvoice $provider */
-		$provider = $this->getItemsProvider();
-		$method = method_exists($provider, 'getListEx') ? 'getListEx' : 'getList';
-
-		$options = [];
-		if(isset($parameters['limit'], $parameters['offset']))
+		$listEntity = \Bitrix\Crm\ListEntity\Entity::getInstance($this->getTypeName());
+		if (!$listEntity)
 		{
-			$options = [
-				'QUERY_OPTIONS' => [
-					'LIMIT' => $parameters['limit'],
-					'OFFSET' => $parameters['offset'],
-				],
-			];
+			throw new Exception('Wrong entity type name');
 		}
-
-		return $provider::$method($parameters['order'], $parameters['filter'], false, false, $parameters['select'], $options);
+		return $listEntity->getItems($parameters);
 	}
 
 	/**
@@ -1693,10 +1687,23 @@ abstract class Entity
 			{
 				$instance = ServiceLocator::getInstance()->get('crm.kanban.entity.order');
 			}
+			elseif($entityTypeName === \CCrmOwnerType::SmartInvoiceName)
+			{
+				$factory = Container::getInstance()->getFactory(\CCrmOwnerType::SmartInvoice);
+				$instance = ServiceLocator::getInstance()->get('crm.kanban.entity.smartInvoice');
+				if ($factory)
+				{
+					$instance->setFactory($factory);
+				}
+				else
+				{
+					return null;
+				}
+			}
 			else
 			{
 				$typeId = \CCrmOwnerType::ResolveID($entityTypeName);
-				if ($typeId !== \CCrmOwnerType::Undefined && \CCrmOwnerType::isPossibleDynamicTypeId($typeId))
+				if (\CCrmOwnerType::isPossibleDynamicTypeId($typeId))
 				{
 					$factory = Service\Container::getInstance()->getFactory($typeId);
 					if ($factory)
@@ -1849,7 +1856,7 @@ abstract class Entity
 			else
 			{
 				$this->displayedFields[$fieldId] =
-					(new Service\Display\Field($fieldId))
+					(Service\Display\Field::createByType('string', $fieldId)) // @todo is it correct use string for all?
 						->setTitle($title)
 				;
 			}
@@ -1895,17 +1902,13 @@ abstract class Entity
 		if ($factory && $factory->isObserversEnabled())
 		{
 			$result['OBSERVER'] =
-				(new Field('OBSERVER'))
-					->setType('user')
+				(Field::createByType('user', 'OBSERVER'))
 					->setIsMultiple(true)
 			;
 		}
 		if ($factory && $factory->isCrmTrackingEnabled())
 		{
-			$result['TRACKING_SOURCE_ID'] =
-				(new Field('TRACKING_SOURCE_ID'))
-					->setType('string')
-			;
+			$result['TRACKING_SOURCE_ID'] = Field::createByType('string', 'TRACKING_SOURCE_ID');
 		}
 
 		return $result;
@@ -2300,5 +2303,18 @@ abstract class Entity
 				: \FormatDate('x', $timestamp, $now)
 			)
 		);
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getSemanticIds(): array
+	{
+		return [];
+	}
+
+	public function getAllowStages(array $filter = []): array
+	{
+		return [];
 	}
 }

@@ -9,3 +9,7 @@ $MESS["SOD_DELIVERY"] = "Доставка";
 $MESS["SOD_FREE"] = "Бесплатно";
 $MESS["SOD_TAX"] = "НДС";
 $MESS["SOD_SUMMARY"] = "Итого";
+$MESS['SPOD_DOCUMENT_ACTION_OPEN'] = 'Открыть';
+$MESS['SPOD_DOCUMENT_ACTION_DOWNLOAD'] = 'Скачать';
+$MESS['SPOD_DOCUMENT_ACTION_SHARE'] = 'Переслать';
+$MESS['SPOD_DOCUMENT_TITLE'] = 'Ваш счёт';

@@ -1,4 +1,4 @@
-import {Instance, PageMenuInstance, DetailPageScrollInstance} from './feed';
+import {Instance, PageMenuInstance, PageScrollInstance} from './feed';
 import {Post} from './post';
 
 import {Loc, Type, Dom, Tag, Runtime} from 'main.core';
@@ -240,7 +240,7 @@ class Comments
 					}
 
 					Instance.setLastActivityDate();
-					DetailPageScrollInstance.checkScrollButton();
+					PageScrollInstance.checkScrollButton();
 
 					const logIdContainer = document.getElementById('post_log_id');
 					if (

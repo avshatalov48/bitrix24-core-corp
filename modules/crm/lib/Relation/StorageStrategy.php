@@ -83,6 +83,25 @@ abstract class StorageStrategy
 	}
 
 	/**
+	 * Replace all bindings of $oldItem to $newItem
+	 *
+	 * @param ItemIdentifier $oldItem
+	 * @param ItemIdentifier $newItem
+	 * @return Result
+	 */
+	public function replaceAllItemBindings(ItemIdentifier $oldItem, ItemIdentifier $newItem): Result
+	{
+		if ($oldItem->getEntityTypeId() !== $newItem->getEntityTypeId())
+		{
+			return (new Result())->addError(new Error(
+				'The items must have same entity type id'
+			));
+		}
+
+		return $this->replaceBindings($oldItem, $newItem);
+	}
+
+	/**
 	 * Write the binding record into the DB
 	 *
 	 * @param ItemIdentifier $parent
@@ -101,4 +120,13 @@ abstract class StorageStrategy
 	 * @return Result
 	 */
 	abstract protected function deleteBinding(ItemIdentifier $parent, ItemIdentifier $child): Result;
+
+	/**
+	 * Replace all binding records into the DB
+	 *
+	 * @param ItemIdentifier $fromItem
+	 * @param ItemIdentifier $toItem
+	 * @return Result
+	 */
+	abstract protected function replaceBindings(ItemIdentifier $fromItem, ItemIdentifier $toItem): Result;
 }

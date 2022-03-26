@@ -1,9 +1,8 @@
 <?php
 namespace Bitrix\Tasks\Rest\Controllers\Task;
 
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Rest\Controllers\Base;
-use Bitrix\Tasks\Internals;
+use Bitrix\Tasks\Internals\Counter;
 
 class Counters extends Base
 {
@@ -29,7 +28,7 @@ class Counters extends Base
 			$userId = $this->getCurrentUser()->getId();
 		}
 
-		$counterInstance = Internals\Counter::getInstance($userId);
+		$counterInstance = Counter::getInstance($userId);
 
 		return $counterInstance->getCounters($type, (int) $groupId);
 	}
@@ -72,4 +71,15 @@ class Counters extends Base
 
         return true;
     }
+
+	public function getProjectsTotalCounterAction(int $userId = 0): int
+	{
+		$userId = ($userId ?: (int)$this->getCurrentUser()->getId());
+		$counter = Counter::getInstance($userId);
+
+		return
+			$counter->get(Counter\CounterDictionary::COUNTER_SONET_TOTAL_EXPIRED)
+			+ $counter->get(Counter\CounterDictionary::COUNTER_SONET_TOTAL_COMMENTS)
+		;
+	}
 }

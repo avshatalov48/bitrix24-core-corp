@@ -113,8 +113,6 @@ include('InAppNotifier');
 				'ACCOMPLICES',
 				'AUDITORS',
 				'DEADLINE',
-				'COMMENTS_COUNT',
-				'NEW_COMMENTS_COUNT',
 				'FAVORITE',
 				'NOT_VIEWED',
 				'CHECKLIST',
@@ -122,7 +120,16 @@ include('InAppNotifier');
 				'ALLOW_CHANGE_DEADLINE',
 				'IS_MUTED',
 				'IS_PINNED',
+				'COUNTERS',
 			];
+		}
+
+		static get queryParams()
+		{
+			return {
+				GET_TASK_LIMIT_EXCEEDED: true,
+				WITH_RESULT_INFO: 'Y',
+			};
 		}
 
 		static getRemoveSheetItems()
@@ -223,6 +230,8 @@ include('InAppNotifier');
 				task_update: this.onPullUpdate,
 				task_remove: this.onPullDelete,
 				comment_add: this.onPullComment,
+				task_result_create: this.onPullTaskResultCreate,
+				task_result_delete: this.onPullTaskResultDelete,
 			};
 
 			BX.addCustomEvent('onPullEvent-tasks', (command, params) => {
@@ -322,7 +331,8 @@ include('InAppNotifier');
 		{
 			if (this.task.id === eventData.taskId)
 			{
-				this.updateTask({newCommentsCount: 0});
+				this.task.pseudoRead();
+				this.updateTaskCardInfo();
 			}
 		}
 
@@ -360,6 +370,27 @@ include('InAppNotifier');
 			}
 		}
 
+		onPullTaskResultCreate(data)
+		{
+			this.updateTaskResultData(data);
+		}
+
+		onPullTaskResultDelete(data)
+		{
+			this.updateTaskResultData(data);
+		}
+
+		updateTaskResultData(data)
+		{
+			if (data.taskId.toString() === this.task.id)
+			{
+				this.task.updateData({
+					taskRequireResult: data.taskRequireResult,
+					taskHasResult: data.taskHasResult,
+				})
+			}
+		}
+
 		onPullComment(data)
 		{
 			console.log('tasks.view.native::onPullComment', data);
@@ -378,9 +409,7 @@ include('InAppNotifier');
 			this.rest.call('get', {
 				taskId: entityId,
 				select: TaskCard.selectFields,
-				params: {
-					GET_TASK_LIMIT_EXCEEDED: true,
-				},
+				params: TaskCard.queryParams,
 			}).then(
 				(response) => {
 					const {task} = response.result;
@@ -408,9 +437,7 @@ include('InAppNotifier');
 			this.rest.call('get', {
 				taskId,
 				select: TaskCard.selectFields,
-				params: {
-					GET_TASK_LIMIT_EXCEEDED: true,
-				},
+				params: TaskCard.queryParams,
 			}).then(
 				(response) => {
 					const {task} = response.result;
@@ -1072,16 +1099,26 @@ include('InAppNotifier');
 
 		complete()
 		{
-			this.updateTask({
-				status: Task.statusList.completed,
-				activityDate: Date.now(),
-			});
-			this.redrawTaskPopupMenu();
-
-			this.task.complete().then(() => {
-				this.updateTask();
+			if (!this.task.isRequireResult || this.task.isHasResult)
+			{
+				this.updateTask({
+					status: Task.statusList.completed,
+					activityDate: Date.now(),
+				});
 				this.redrawTaskPopupMenu();
-			});
+
+				this.task.complete().then(() => {
+					this.updateTask();
+					this.redrawTaskPopupMenu();
+				});
+			}
+			else
+			{
+				const oldStatus = this.task.status;
+				this.task.complete().then(() => {}, () => this.task.status = oldStatus);
+				this.task.status = oldStatus;
+				this.updateTask();
+			}
 		}
 
 		renew()
@@ -1334,7 +1371,7 @@ include('InAppNotifier');
 
 			if (this.task.id === this.taskId)
 			{
-				this.task.newCommentsCount = 0;
+				this.task.pseudoRead();
 				this.onInitSuccess();
 				return;
 			}
@@ -1342,14 +1379,12 @@ include('InAppNotifier');
 			this.rest.call('get', {
 				taskId: this.taskId,
 				select: TaskCard.selectFields,
-				params: {
-					GET_TASK_LIMIT_EXCEEDED: true,
-				},
+				params: TaskCard.queryParams,
 			}).then((response) => {
 				const {task} = response.result;
-				task.newCommentsCount = 0;
 
 				this.task.setData(task);
+				this.task.pseudoRead();
 				this.taskLimitExceeded = task.taskLimitExceeded;
 
 				this.onInitSuccess();

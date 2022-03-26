@@ -22,6 +22,7 @@ Loc::loadMessages(__FILE__);
 CBitrixComponent::includeComponentClass("bitrix:tasks.base");
 
 class TasksTaskTemplateComponent extends TasksBaseComponent
+	implements \Bitrix\Main\Errorable, \Bitrix\Main\Engine\Contract\Controllerable
 {
 	/** @var null|Template */
 	protected $template = 		null;
@@ -36,6 +37,213 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 	protected $state =          null;
 
 	private $success =          false;
+
+	protected $errorCollection;
+
+	public function configureActions()
+	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return [];
+		}
+
+		return [
+			'saveChecklist' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'setPriority' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'setTags' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'delete' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+		];
+	}
+
+	public function __construct($component = null)
+	{
+		parent::__construct($component);
+		$this->init();
+	}
+
+	protected function init()
+	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$this->setUserId();
+		$this->errorCollection = new \Bitrix\Tasks\Util\Error\Collection();
+	}
+
+	protected function setUserId()
+	{
+		$this->userId = (int) \Bitrix\Tasks\Util\User::getId();
+	}
+
+	public function getErrorByCode($code)
+	{
+		// TODO: Implement getErrorByCode() method.
+	}
+
+	public function getErrors()
+	{
+		if (!empty($this->componentId))
+		{
+			return parent::getErrors();
+		}
+		return $this->errorCollection->toArray();
+	}
+
+	public function deleteAction($templateId)
+	{
+		$templateId = (int) $templateId;
+		if (!$templateId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Tasks\Access\TemplateAccessController::can($this->userId, \Bitrix\Tasks\Access\ActionDictionary::ACTION_TEMPLATE_EDIT, $templateId))
+		{
+			$this->addForbiddenError();
+			return [];
+		}
+
+		\CTaskTemplates::Delete($templateId);
+
+		return [];
+	}
+
+	public function setPriorityAction($templateId, $priority)
+	{
+		$templateId = (int) $templateId;
+		if (!$templateId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Tasks\Access\TemplateAccessController::can($this->userId, \Bitrix\Tasks\Access\ActionDictionary::ACTION_TEMPLATE_EDIT, $templateId))
+		{
+			$this->addForbiddenError();
+			return [];
+		}
+
+		$template = new Template($templateId);
+		$template->setData([
+			'PRIORITY' => $priority
+		]);
+		$template->save();
+
+		return [];
+	}
+
+	public function setTagsAction($templateId, $tags)
+	{
+		$templateId = (int) $templateId;
+		if (!$templateId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Tasks\Access\TemplateAccessController::can($this->userId, \Bitrix\Tasks\Access\ActionDictionary::ACTION_TEMPLATE_EDIT, $templateId))
+		{
+			$this->addForbiddenError();
+			return [];
+		}
+
+		$template = new Template($templateId);
+		$template->setData([
+			'SE_TAG' => $tags
+		]);
+		$template->save();
+
+		return [];
+	}
+
+	public function saveCheckListAction($templateId, $items, $params)
+	{
+		if (!is_array($items))
+		{
+			$items = [];
+		}
+
+		$templateId = (int) $templateId;
+		if (!$templateId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Tasks\Access\TemplateAccessController::can($this->userId, \Bitrix\Tasks\Access\ActionDictionary::ACTION_TEMPLATE_EDIT, $templateId))
+		{
+			$this->addForbiddenError();
+			return [];
+		}
+
+		foreach ($items as $id => $item)
+		{
+			$item['ID'] = ((int)$item['ID'] === 0? null : (int)$item['ID']);
+			$item['IS_COMPLETE'] = (int)$item['IS_COMPLETE'] > 0;
+			$item['IS_IMPORTANT'] = (int)$item['IS_IMPORTANT'] > 0;
+
+			if (is_array($item['MEMBERS']))
+			{
+				$members = [];
+
+				foreach ($item['MEMBERS'] as $number => $member)
+				{
+					$members[key($member)] = current($member);
+				}
+
+				$item['MEMBERS'] = $members;
+			}
+
+			$items[$item['NODE_ID']] = $item;
+			unset($items[$id]);
+		}
+
+		return TemplateCheckListFacade::merge($templateId, $this->userId, $items, $params);
+	}
+
+	protected function addForbiddenError()
+	{
+		$this->errorCollection->add('ACTION_NOT_ALLOWED.RESTRICTED', Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'));
+	}
 
 	/**
 	 * Function checks if user have basic permissions to launch the component
@@ -496,44 +704,5 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 		}
 
 		return $ids;
-	}
-
-	public static function getAllowedMethods()
-	{
-		return [
-			'saveCheckList',
-		];
-	}
-
-	public static function saveCheckList($items, $templateId, $userId, $params)
-	{
-		if (!is_array($items))
-		{
-			$items = [];
-		}
-
-		foreach ($items as $id => $item)
-		{
-			$item['ID'] = ((int)$item['ID'] === 0? null : (int)$item['ID']);
-			$item['IS_COMPLETE'] = (int)$item['IS_COMPLETE'] > 0;
-			$item['IS_IMPORTANT'] = (int)$item['IS_IMPORTANT'] > 0;
-
-			if (is_array($item['MEMBERS']))
-			{
-				$members = [];
-
-				foreach ($item['MEMBERS'] as $number => $member)
-				{
-					$members[key($member)] = current($member);
-				}
-
-				$item['MEMBERS'] = $members;
-			}
-
-			$items[$item['NODE_ID']] = $item;
-			unset($items[$id]);
-		}
-
-		return TemplateCheckListFacade::merge($templateId, $userId, $items, $params);
 	}
 }

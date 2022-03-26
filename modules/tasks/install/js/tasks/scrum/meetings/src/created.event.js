@@ -6,7 +6,8 @@ export type CreatedEventType = {
 	name: string,
 	color: string,
 	from: number,
-	to: number
+	to: number,
+	repeatable: boolean
 }
 
 export class CreatedEvent extends EventEmitter
@@ -25,6 +26,8 @@ export class CreatedEvent extends EventEmitter
 			return '';
 		}
 
+		event.color = (event.color === '' ? '#86b100' : event.color);
+
 		const colorBorder = this.convertHexToRGBA(event.color, 0.5);
 		const colorBackground = this.convertHexToRGBA(event.color, 0.15);
 
@@ -40,7 +43,7 @@ export class CreatedEvent extends EventEmitter
 					${this.renderVideoCallButton()}
 				</div>
 				<div class="tasks-scrum__widget-meetings--timetable-name">${Text.encode(event.name)}</div>
-				${this.renderRepetition()}
+				${event.repeatable ? this.renderRepetition() : ''}
 			</div>
 		`;
 
@@ -79,12 +82,10 @@ export class CreatedEvent extends EventEmitter
 
 	renderRepetition(): ?HTMLElement
 	{
-		return '';
-
 		return Tag.render`
 			<div class="tasks-scrum__widget-meetings--timetable-repetition">
 				<i class="tasks-scrum__widget-meetings--timetable-repetition-icon"></i>
-				<span></span>
+				<span>${Loc.getMessage('TSM_REPETITION_TITLE')}</span>
 			</div>
 		`;
 	}

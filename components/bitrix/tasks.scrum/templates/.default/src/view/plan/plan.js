@@ -54,6 +54,8 @@ import type {ShowLinkedTasksResponse} from '../../response';
 
 type Params = {
 	pathToTask: string,
+	pathToTaskCreate: string,
+	pathToBurnDown: string,
 	defaultSprintDuration: number,
 	activeSprintId: number,
 	backlog: BacklogParams,
@@ -66,7 +68,8 @@ type Params = {
 	defaultResponsible: ResponsibleType,
 	pageSize: number,
 	isShortView: 'Y' | 'N',
-	displayPriority: string
+	displayPriority: string,
+	mandatoryExists: 'Y' | 'N'
 }
 
 export class Plan extends View
@@ -78,6 +81,9 @@ export class Plan extends View
 		this.setEventNamespace('BX.Tasks.Scrum.Plan');
 
 		this.pathToTask = params.pathToTask;
+		this.pathToTaskCreate = params.pathToTaskCreate;
+		this.pathToBurnDown = params.pathToBurnDown;
+		this.mandatoryExists = params.mandatoryExists === 'Y';
 		this.defaultResponsible = params.defaultResponsible;
 		this.pageSize = parseInt(params.pageSize, 10);
 		this.activeSprintId = parseInt(params.activeSprintId, 10);
@@ -122,7 +128,8 @@ export class Plan extends View
 			defaultSprintDuration: params.defaultSprintDuration,
 			pageNumberToCompletedSprints: params.pageNumberToCompletedSprints,
 			displayPriority: params.displayPriority,
-			isShortView: params.isShortView
+			isShortView: params.isShortView,
+			mandatoryExists: params.mandatoryExists
 		});
 		this.planBuilder.subscribe('beforeCreateSprint', (baseEvent: BaseEvent) => {
 			const requestData = baseEvent.getData();
@@ -172,7 +179,8 @@ export class Plan extends View
 		this.filterHandler = new FilterHandler({
 			filter: this.filter,
 			requestSender: this.requestSender,
-			entityStorage: this.entityStorage
+			entityStorage: this.entityStorage,
+			planBuilder: this.planBuilder
 		});
 
 		this.epic = new Epic({
@@ -263,12 +271,12 @@ export class Plan extends View
 
 	bindHandlers()
 	{
-		this.entityStorage.getBacklog().subscribe('showInput', this.onShowInput.bind(this));
+		this.entityStorage.getBacklog().subscribe('showInput', this.onShowBacklogInput.bind(this));
+		this.entityStorage.getBacklog().subscribe('openAddTaskForm', this.onOpenAddTaskForm.bind(this));
 		this.entityStorage.getBacklog().subscribe('updateItem', this.onUpdateItem.bind(this));
 		this.entityStorage.getBacklog().subscribe('showTask', this.onShowTask.bind(this));
 		this.entityStorage.getBacklog().subscribe('changeTaskResponsible', this.onChangeTaskResponsible.bind(this));
 		this.entityStorage.getBacklog().subscribe('openAddEpicForm', this.onOpenEpicForm.bind(this));
-		// this.entityStorage.getBacklog().subscribe('openListEpicGrid', this.onOpenListEpicGrid.bind(this));
 		this.entityStorage.getBacklog().subscribe('tagsSearchOpen', this.onTagsSearchOpen.bind(this));
 		this.entityStorage.getBacklog().subscribe('tagsSearchClose', this.onTagsSearchClose.bind(this));
 		this.entityStorage.getBacklog().subscribe('epicSearchOpen', this.onEpicSearchOpen.bind(this));
@@ -299,7 +307,8 @@ export class Plan extends View
 
 	subscribeToSprint(sprint: Sprint)
 	{
-		sprint.subscribe('showInput', this.onShowInput.bind(this));
+		sprint.subscribe('showInput', this.onShowSprintInput.bind(this));
+		sprint.subscribe('createSprint', this.onCreateSprint.bind(this));
 		sprint.subscribe('updateItem', this.onUpdateItem.bind(this));
 		sprint.subscribe('getSubTasks', this.onGetSubTasks.bind(this));
 		sprint.subscribe('showTask', this.onShowTask.bind(this));
@@ -393,14 +402,46 @@ export class Plan extends View
 		}
 	}
 
-	onShowInput(baseEvent: BaseEvent)
+	onShowBacklogInput(baseEvent: BaseEvent)
 	{
-		const entity: Entity = baseEvent.getTarget();
+		const backlog: Backlog = baseEvent.getTarget();
 
-		this.input.setEntity(entity);
+		this.input.setEntity(backlog);
 		this.input.cleanBindNode();
 
 		this.renderInput();
+	}
+
+	onShowSprintInput(baseEvent: BaseEvent)
+	{
+		const sprint: Sprint = baseEvent.getTarget();
+
+		const showInput = () => {
+			this.input.setEntity(sprint);
+			this.input.cleanBindNode();
+
+			this.renderInput();
+		};
+
+		if (sprint.isHideContent())
+		{
+			sprint.subscribeOnce('toggleVisibilityContent', showInput.bind(this));
+			sprint.toggleVisibilityContent(sprint.getContentContainer());
+		}
+		else
+		{
+			showInput();
+		}
+	}
+
+	onOpenAddTaskForm()
+	{
+		this.sidePanel.openSidePanelByUrl(this.pathToTaskCreate.replace('#task_id#', 0));
+	}
+
+	onCreateSprint()
+	{
+		this.planBuilder.createSprint();
 	}
 
 	onRenderInput(baseEvent: BaseEvent)
@@ -768,7 +809,8 @@ export class Plan extends View
 		const sprintSidePanel = new SprintSidePanel({
 			sidePanel: this.sidePanel,
 			groupId: this.groupId,
-			views: this.views
+			views: this.views,
+			pathToBurnDown: this.pathToBurnDown
 		});
 
 		sprintSidePanel.showBurnDownChart(sprint);
@@ -803,9 +845,7 @@ export class Plan extends View
 		this.sprintAddMenu.addMenuItem({
 			text: Loc.getMessage('TASKS_SCRUM_BACKLOG_SPRINT_FIRST_ADD'),
 			onclick: (event, menuItem) => {
-				this.input.setEntity(entity);
-				this.input.cleanBindNode();
-				this.renderInput();
+				this.onShowSprintInput((new BaseEvent()).setTarget(entity));
 				menuItem.getMenuWindow().close();
 			}
 		});
@@ -866,6 +906,31 @@ export class Plan extends View
 	onEpicSearchOpen(baseEvent: BaseEvent)
 	{
 		this.tagSearcher.showEpicSearchDialog(this.input, baseEvent.getData());
+
+		this.tagSearcher.unsubscribeAll('createEpic');
+		this.tagSearcher.subscribe('createEpic', (baseEvent: BaseEvent) => {
+			const epicName: string = baseEvent.getData();
+
+			this.input.disable();
+
+			this.requestSender.createEpic(
+				{
+					groupId: this.groupId,
+					name: epicName
+				}
+			)
+				.then((response) => {
+					this.input.unDisable();
+					this.input.getInputNode().focus();
+					const epic: EpicType = response.data;
+					this.input.setEpic(epic);
+					this.epic.onAfterAdd((new BaseEvent()).setData(epic));
+				})
+				.catch((response) => {
+					this.requestSender.showErrorAlert(response);
+				})
+			;
+		});
 	}
 
 	onEpicSearchClose()
@@ -1257,6 +1322,7 @@ export class Plan extends View
 				sprint: {
 					activity: true,
 					disable : false,
+					multiple : (this.entityStorage.getSprintsAvailableForFilling(entity).size > 1),
 					callback: (event) => {
 						this.moveToSprint(entity, item, event.currentTarget);
 						stopSearch();

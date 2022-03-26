@@ -37,7 +37,7 @@ class Authorization extends ActionFilter\Base
 		}
 
 		$oldValue = JWT::$leeway;
-		JWT::$leeway = 3;
+		JWT::$leeway = 30;
 
 		try
 		{

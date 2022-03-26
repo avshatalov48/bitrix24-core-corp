@@ -1,4 +1,5 @@
 import {BalloonNotifier} from "./balloonnotifier";
+import {NextPageLoader} from './nextpageloader';
 import {NotificationBar} from "./notificationbar";
 import {Database} from "./database";
 import {PublicationQueue} from "./publicationqueue";
@@ -10,7 +11,7 @@ import {PinnedPanel} from "./pinned";
 import {Rating} from "./rating";
 import {ImportantManager} from "./important";
 import {SearchBar} from "./searchbar";
-import {DetailPageScroll} from "./detailpagescroll";
+import {PageScroll} from "./pagescroll";
 import {FollowManager} from './followmanager';
 import {Comments} from './comments';
 import {Post} from './post';
@@ -1000,6 +1001,26 @@ class Feed
 			}
 		}
 		else if (
+			e.target.classList.contains(`.${PageScrollInstance.class.scrollButton}`)
+			|| e.target.closest(`.${PageScrollInstance.class.scrollButton}`)
+		)
+		{
+			if (
+				e.target.classList.contains(`.${PageScrollInstance.class.scrollButtonTop}`)
+				|| e.target.closest(`.${PageScrollInstance.class.scrollButtonTop}`)
+			)
+			{
+				PageScrollInstance.scrollTo('top');
+			}
+			else if (
+				e.target.classList.contains(`.${PageScrollInstance.class.scrollButtonBottom}`)
+				|| e.target.closest(`.${PageScrollInstance.class.scrollButtonBottom}`)
+			)
+			{
+				PageScrollInstance.scrollTo('bottom');
+			}
+		}
+		else if (
 			(
 				e.target.closest(`.${this.class.listWrapper}`)
 				|| e.target.closest(`.${this.class.pinnedPanel}`)
@@ -1056,26 +1077,6 @@ class Feed
 
 				e.stopPropagation();
 				return e.preventDefault();
-			}
-			else if (
-				e.target.classList.contains(`.${DetailPageScrollInstance.class.scrollButton}`)
-				|| e.target.closest(`.${DetailPageScrollInstance.class.scrollButton}`)
-			)
-			{
-				if (
-					e.target.classList.contains(`.${DetailPageScrollInstance.class.scrollButtonTop}`)
-					|| e.target.closest(`.${DetailPageScrollInstance.class.scrollButtonTop}`)
-				)
-				{
-					DetailPageScrollInstance.scrollTo('top');
-				}
-				else if (
-					e.target.classList.contains(`.${DetailPageScrollInstance.class.scrollButtonBottom}`)
-					|| e.target.closest(`.${DetailPageScrollInstance.class.scrollButtonBottom}`)
-				)
-				{
-					DetailPageScrollInstance.scrollTo('bottom');
-				}
 			}
 		}
 		else if (e.target.closest(`.${this.class.postWrapper}`))
@@ -1363,6 +1364,9 @@ class Feed
 			case 'pageMenu':
 				result = 34;
 				break;
+			case 'tabs':
+				result = 41;
+				break;
 			default:
 		}
 
@@ -1442,6 +1446,7 @@ class Feed
 
 const Instance = new Feed();
 const BalloonNotifierInstance = new BalloonNotifier();
+const NextPageLoaderInstance = new NextPageLoader();
 const NotificationBarInstance = new NotificationBar();
 const DatabaseUnsentPostInstance = new Database();
 const PublicationQueueInstance = new PublicationQueue();
@@ -1453,7 +1458,7 @@ const PinnedPanelInstance = new PinnedPanel();
 const RatingInstance = new Rating();
 const ImportantManagerInstance = new ImportantManager();
 const SearchBarInstance = new SearchBar();
-const DetailPageScrollInstance = new DetailPageScroll();
+const PageScrollInstance = new PageScroll();
 const FollowManagerInstance = new FollowManager();
 const CommentsInstance = new Comments();
 const PageInstance = new Page();
@@ -1464,6 +1469,7 @@ export {
 
 	Instance,
 	BalloonNotifierInstance,
+	NextPageLoaderInstance,
 	NotificationBarInstance,
 	DatabaseUnsentPostInstance,
 	PublicationQueueInstance,
@@ -1475,7 +1481,7 @@ export {
 	RatingInstance,
 	ImportantManagerInstance,
 	SearchBarInstance,
-	DetailPageScrollInstance,
+	PageScrollInstance,
 	FollowManagerInstance,
 	CommentsInstance,
 	PageInstance,

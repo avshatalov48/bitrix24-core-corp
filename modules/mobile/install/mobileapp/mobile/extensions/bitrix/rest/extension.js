@@ -135,7 +135,7 @@
 		{
 			let result = ajaxAnswer.answer.result;
 			let error;
-			if (ajaxAnswer.answer.error)
+			if (ajaxAnswer.answer.hasOwnProperty('error'))
 			{
 				error = {code: ajaxAnswer.answer.error, description: ajaxAnswer.answer.error_description};
 			}
@@ -284,15 +284,20 @@
 		let onCreate = (typeof config["onCreate"] == "function"? config["onCreate"]: ()=>{});
 		let url = '/bitrix/services/main/ajax.php?' + BX.ajax.prepareData(getParameters);
 		let prepareData = true;
+
 		if (config.json) {
 			prepareData = false;
 			config.data = JSON.stringify(config.json);
+			config.headers = config.headers || {};
+			config.headers['Content-Type'] = 'application/json';
 		}
+
 		config = {
 			url: url,
 			method:"POST",
 			dataType:"json",
 			data: config.data,
+			headers: config.headers,
 			prepareData: prepareData
 		};
 
@@ -323,7 +328,17 @@
 		getParameters.action = action;
 		getParameters.c = component;
 		let onCreate = (typeof config["onCreate"] == "function"? config["onCreate"]: ()=>{});
-		let url = '/bitrix/services/main/ajax.php?' + BX.ajax.prepareData(getParameters);
+		let url = '/bitrix/services/main/ajax.php?' + BX.ajax.prepareData(
+			getParameters,
+			null,
+			/**
+			 * We need to avoid double encoding causing by mobile implementation of underlying XMLHttpRequest.open
+			 * It encodes URL when it is passed without domain
+			 *
+			 * Until we are passing URL here without domain here we are safe to not encode parameters
+			 */
+			false
+		);
 		config = {
 			url: url,
 			method:"POST",
@@ -333,6 +348,32 @@
 		let ajaxPromise = BX.ajax(config);
 		onCreate(config.xhr);
 		return ActionPromiseWrapper(ajaxPromise);
+	};
+
+	BX.ajax.prepareData = (originalData, prefix, encode = true) =>
+	{
+		var data = '';
+		if (null !== originalData)
+		{
+			for (var paramName in originalData)
+			{
+				if (originalData.hasOwnProperty(paramName))
+				{
+					if (data.length > 0)
+						data += '&';
+					var name = encode ? encodeURIComponent(paramName) : paramName;
+					if (prefix)
+						name = prefix + '[' + name + ']';
+					if (typeof originalData[paramName] === 'object')
+						data += BX.ajax.prepareData(originalData[paramName], name);
+					else
+					{
+						data += name + '=' + (encode ? encodeURIComponent(originalData[paramName]) : originalData[paramName]);
+					}
+				}
+			}
+		}
+		return data;
 	};
 
 	let prepareAjaxGetParameters = function(config)
@@ -373,16 +414,16 @@
 		return getParameters;
 	};
 
-	/**s
+	/**
 	 * @class RunActionExecutor
 	 */
 	class RunActionExecutor
 	{
-		constructor(action, options)
+		constructor(action, options, navigation = {})
 		{
 			this.action = action;
 			this.options = options || {};
-			this.currentAnswer = null;
+			this.navigation = navigation || {};
 			this.handler = null;
 			/**
 			 *
@@ -395,12 +436,11 @@
 		call(useCache = false)
 		{
 			this.abortCurrentRequest();
-			this.currentAnswer = null;
 			if (this.onCacheFetched && useCache)
 			{
 				if (!this.cacheId)
 				{
-					this.cacheId = Object.toMD5(this.options) + "/" + this.method;
+					this.cacheId = Object.toMD5(this.options) + '/' + Object.toMD5(this.navigation)  + '/' + this.action;
 				}
 				let cache = Application.storage.getObject(this.cacheId, null);
 				if(cache !== null)
@@ -409,16 +449,23 @@
 				}
 			}
 
-			BX.ajax.runAction(this.action, {data:this.options, onCreate:this.onRequestCreate.bind(this)})
-				.then(res =>
-				{
-					if (this.cacheId && res.error.length === 0)
+			BX.ajax.runAction(this.action, {
+				data:this.options,
+				navigation:this.navigation,
+				onCreate:this.onRequestCreate.bind(this)
+			})
+				.then(response => {
+					if (
+						useCache
+						&& this.cacheId
+						&& (!response.errors || response.errors.length === 0)
+					)
 					{
-						Application.storage.setObject(this.cacheId, result)
+						Application.storage.setObject(this.cacheId, response)
 					}
-					return this.__internalHandler(res, false);
+					return this.__internalHandler(response);
 				})
-				.catch(res => this.__internalHandler(res, false));
+				.catch(response => this.__internalHandler(response));
 		}
 
 		abortCurrentRequest()
@@ -441,13 +488,9 @@
 		 */
 		__internalHandler(ajaxAnswer)
 		{
-			let result = ajaxAnswer.data;
-			let errors = ajaxAnswer.errors;
-			this.currentAnswer = ajaxAnswer;
-
-			if (typeof this.handler == "function")
+			if (typeof this.handler === 'function')
 			{
-				this.handler(result, errors)
+				this.handler(ajaxAnswer)
 			}
 		}
 
@@ -485,8 +528,20 @@
 
 		updateOptions(options = null)
 		{
-			if(options != null && typeof options == "object")
+			if(options != null && typeof options === "object")
+			{
 				this.options = Object.assign(this.options, options);
+			}
+
+			return this;
+		}
+
+		updateNavigation(navigation = null)
+		{
+			if(navigation !== null && typeof navigation === "object")
+			{
+				this.navigation = Object.assign(this.navigation, navigation);
+			}
 
 			return this;
 		}

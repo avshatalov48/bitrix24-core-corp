@@ -44,8 +44,7 @@ class CBPCrmControlNotifyActivity
 	private function getResponsibleId()
 	{
 		$documentId = $this->GetDocumentId();
-		list($typeName, $ownerID) = explode('_', $documentId[2]);
-		$ownerTypeID = \CCrmOwnerType::ResolveID($typeName);
+		[$ownerTypeID, $ownerID] = CCrmBizProcHelper::resolveEntityId($documentId);
 
 		return CCrmOwnerType::GetResponsibleID($ownerTypeID, $ownerID, false);
 	}

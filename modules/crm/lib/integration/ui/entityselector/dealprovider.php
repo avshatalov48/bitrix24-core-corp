@@ -9,11 +9,6 @@ class DealProvider extends EntityProvider
 	/** @var DealTable */
 	protected static $dataClass = DealTable::class;
 
-	public function isAvailable(): bool
-	{
-		return \CCrmDeal::CheckReadPermission();
-	}
-
 	protected function getEntityTypeId(): int
 	{
 		return \CCrmOwnerType::Deal;

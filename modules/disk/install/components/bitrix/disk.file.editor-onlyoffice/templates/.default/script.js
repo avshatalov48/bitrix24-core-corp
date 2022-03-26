@@ -415,7 +415,7 @@ this.BX.Disk = this.BX.Disk || {};
 
 	      console.log('handleContentUpdated', data);
 
-	      if (!data.object.updatedBy) {
+	      if (!data.object.updatedBy || this.isCurrentUser(data.object.updatedBy)) {
 	        return;
 	      }
 
@@ -456,7 +456,7 @@ this.BX.Disk = this.BX.Disk || {};
 	  this.onlyOffice.reloadView();
 	}
 
-	var _templateObject$1;
+	var _templateObject$1, _templateObject2$1;
 
 	var CustomErrorControl = /*#__PURE__*/function () {
 	  function CustomErrorControl() {
@@ -466,21 +466,55 @@ this.BX.Disk = this.BX.Disk || {};
 	  babelHelpers.createClass(CustomErrorControl, [{
 	    key: "showWhenTooLarge",
 	    value: function showWhenTooLarge(fileName, container, targetNode, linkToDownload) {
-	      var containerClass = 'disk-fe-office-warning--popup';
-	      var downloadButton = new ui_buttons.Button({
-	        text: main_core.Loc.getMessage('DISK_FILE_EDITOR_ONLYOFFICE_HEADER_BTN_DOWNLOAD'),
-	        round: true,
-	        tag: ui_buttons.Button.Tag.LINK,
-	        link: linkToDownload,
-	        color: ui_buttons.Button.Color.SUCCESS,
-	        className: 'disk-fe-office-warning-btn',
-	        props: {
-	          target: '_blank'
-	        }
+	      this.showCommonWarning({
+	        container: container,
+	        targetNode: targetNode,
+	        title: main_core.Loc.getMessage('DISK_FILE_EDITOR_ONLYOFFICE_CUSTOM_ERROR_LARGE_FILE_TITLE'),
+	        description: main_core.Loc.getMessage('DISK_FILE_EDITOR_ONLYOFFICE_CUSTOM_ERROR_LARGE_FILE_DESCR'),
+	        fileName: fileName,
+	        linkToDownload: linkToDownload
 	      });
-	      var errorControl = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"disk-fe-office-warning-wrap\">\n\t\t\t\t<div class=\"disk-fe-office-warning-overlay\"></div>\n\t\t\t\t<div class=\"disk-fe-office-warning-box\">\n\t\t\t\t\t<div class=\"disk-fe-office-warning-icon\"></div>\n\t\t\t\t\t<div class=\"disk-fe-office-warning-title\">", "</div>\n\t\t\t\t\t<div class=\"disk-fe-office-warning-file-name\">", "</div>\n\t\t\t\t\t<div class=\"disk-fe-office-warning-desc\">", "</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('DISK_FILE_EDITOR_ONLYOFFICE_CUSTOM_ERROR_LARGE_FILE_TITLE'), main_core.Text.encode(fileName), main_core.Loc.getMessage('DISK_FILE_EDITOR_ONLYOFFICE_CUSTOM_ERROR_LARGE_FILE_DESCR'), downloadButton.render());
-	      main_core.Dom.addClass(container, containerClass);
-	      main_core.Dom.prepend(errorControl, targetNode);
+	    }
+	  }, {
+	    key: "showWhenNotFound",
+	    value: function showWhenNotFound(container, targetNode) {
+	      this.showCommonWarning({
+	        container: container,
+	        targetNode: targetNode,
+	        title: main_core.Loc.getMessage('DISK_FILE_EDITOR_ONLYOFFICE_CUSTOM_ERROR_FILE_TITLE'),
+	        description: main_core.Loc.getMessage('DISK_FILE_EDITOR_ONLYOFFICE_CUSTOM_ERROR_RIGHTS_OR_NOT_FOUND_DESCR')
+	      });
+	    }
+	  }, {
+	    key: "showCommonWarning",
+	    value: function showCommonWarning(options) {
+	      var containerClass = 'disk-fe-office-warning--popup';
+	      var fileNameNode = '';
+
+	      if (options.fileName) {
+	        fileNameNode = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"disk-fe-office-warning-file-name\">", "</div>"])), main_core.Text.encode(options.fileName));
+	      }
+
+	      var downloadButtonNode = '';
+
+	      if (options.linkToDownload) {
+	        var downloadButton = new ui_buttons.Button({
+	          text: main_core.Loc.getMessage('DISK_FILE_EDITOR_ONLYOFFICE_HEADER_BTN_DOWNLOAD'),
+	          round: true,
+	          tag: ui_buttons.Button.Tag.LINK,
+	          link: options.linkToDownload,
+	          color: ui_buttons.Button.Color.SUCCESS,
+	          className: 'disk-fe-office-warning-btn',
+	          props: {
+	            target: '_blank'
+	          }
+	        });
+	        downloadButtonNode = downloadButton.render();
+	      }
+
+	      var errorControl = main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"disk-fe-office-warning-wrap\">\n\t\t\t\t<div class=\"disk-fe-office-warning-overlay\"></div>\n\t\t\t\t<div class=\"disk-fe-office-warning-box\">\n\t\t\t\t\t<div class=\"disk-fe-office-warning-icon\"></div>\n\t\t\t\t\t<div class=\"disk-fe-office-warning-title\">", "</div>\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"disk-fe-office-warning-desc\">", "</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), options.title, fileNameNode, options.description, downloadButtonNode);
+	      main_core.Dom.addClass(options.container, containerClass);
+	      main_core.Dom.prepend(errorControl, options.targetNode);
 	    }
 	  }]);
 	  return CustomErrorControl;
@@ -549,9 +583,9 @@ this.BX.Disk = this.BX.Disk || {};
 
 	    if (currentSlider) {
 	      currentSlider.getData().set('documentSession', this.documentSession);
-	      this.loadDiskExtensionInTopWindow();
 	    }
 
+	    this.loadDiskExtensionInTopWindow();
 	    this.initPull();
 	    this.bindEvents();
 
@@ -600,8 +634,18 @@ this.BX.Disk = this.BX.Disk || {};
 	  }, {
 	    key: "bindEvents",
 	    value: function bindEvents() {
-	      main_core_events.EventEmitter.subscribe("SidePanel.Slider:onClose", this.handleClose.bind(this));
+	      var _this = this;
+
+	      main_core_events.EventEmitter.subscribe("SidePanel.Slider:onClose", this.handleSliderClose.bind(this));
 	      window.addEventListener("beforeunload", this.handleClose.bind(this));
+
+	      if (window.top !== window) {
+	        window.addEventListener("message", function (event) {
+	          if (event.data === 'closeIframe') {
+	            _this.handleClose();
+	          }
+	        });
+	      }
 
 	      if (this.editorJson.document.permissions.edit === true && this.editButton) {
 	        if (this.editButton.hasOwnProperty('mainButton')) {
@@ -660,8 +704,9 @@ this.BX.Disk = this.BX.Disk || {};
 	        onDocumentReady: this.handleDocumentReady.bind(this),
 	        onMetaChange: this.handleMetaChange.bind(this),
 	        onInfo: this.handleInfo.bind(this),
-	        onError: this.handleError.bind(this) // onRequestClose: this.handleClose.bind(this),
-
+	        onWarning: this.handleWarning.bind(this),
+	        onError: this.handleError.bind(this),
+	        onRequestClose: this.handleRequestClose.bind(this)
 	      };
 
 	      if (options.document.permissions.rename) {
@@ -778,14 +823,14 @@ this.BX.Disk = this.BX.Disk || {};
 	  }, {
 	    key: "handleSaveButtonClick",
 	    value: function handleSaveButtonClick() {
-	      var _this = this;
+	      var _this2 = this;
 
 	      pull_client.PULL.subscribe({
 	        moduleId: 'disk',
 	        command: 'onlyoffice',
 	        callback: function callback(data) {
-	          if (data.hash === _this.documentSession.hash) {
-	            _this.emitEventOnSaved();
+	          if (data.hash === _this2.documentSession.hash) {
+	            _this2.emitEventOnSaved();
 
 	            window.BX.Disk.showModalWithStatusAction();
 	            BX.SidePanel.Instance.close();
@@ -794,8 +839,61 @@ this.BX.Disk = this.BX.Disk || {};
 	      });
 	    }
 	  }, {
+	    key: "handleRequestClose",
+	    value: function handleRequestClose() {
+	      console.log('handleRequestClose');
+	      var currentSlider = BX.SidePanel.Instance.getSliderByWindow(window);
+
+	      if (!currentSlider) {
+	        return;
+	      }
+
+	      currentSlider.getData().set('dontInvokeRequestClose', true);
+	      this.handleClose();
+	      currentSlider.close();
+	    }
+	  }, {
+	    key: "handleSliderClose",
+	    value: function handleSliderClose(event) {
+	      console.log('handleSliderClose');
+	      var currentSlider = BX.SidePanel.Instance.getSliderByWindow(window);
+
+	      if (!currentSlider) {
+	        return;
+	      }
+
+	      var currentSliderData = currentSlider.getData();
+	      var uid = currentSliderData.get('uid');
+	      /** @type {BX.SidePanel.Event} */
+
+	      var _event$getData = event.getData(),
+	          _event$getData2 = babelHelpers.slicedToArray(_event$getData, 1),
+	          sliderEvent = _event$getData2[0];
+
+	      if (sliderEvent.getSlider().getData().get('uid') !== uid) {
+	        return;
+	      }
+
+	      if (this.isViewMode()) {
+	        this.handleClose();
+	        return;
+	      }
+
+	      if (this.editor.hasOwnProperty('requestClose')) {
+	        if (currentSliderData.get('dontInvokeRequestClose')) {
+	          return;
+	        }
+
+	        this.editor.requestClose();
+	        sliderEvent.denyAction();
+	      } else {
+	        this.handleClose();
+	      }
+	    }
+	  }, {
 	    key: "handleClose",
 	    value: function handleClose() {
+	      console.log('handleClose');
 	      pull_client.PULL.sendMessageToChannels([this.context.object.publicChannel], 'disk', 'exitDocument', {
 	        fromUserId: this.context.currentUser.id
 	      });
@@ -853,15 +951,20 @@ this.BX.Disk = this.BX.Disk || {};
 	      this.caughtInfoEvent = Date.now();
 	    }
 	  }, {
+	    key: "handleWarning",
+	    value: function handleWarning(d) {
+	      console.log('onlyoffice warning:', d.data);
+	    }
+	  }, {
 	    key: "handleError",
 	    value: function handleError(d) {
-	      var _this2 = this;
+	      var _this3 = this;
 
 	      console.log('onlyoffice error:', d.data);
 
 	      if (d.data.errorCode === -84) {
 	        setTimeout(function () {
-	          new CustomErrorControl().showWhenTooLarge(_this2.context.object.name, _this2.getEditorWrapperNode(), _this2.getContainer(), _this2.linkToDownload);
+	          new CustomErrorControl().showWhenTooLarge(_this3.context.object.name, _this3.getEditorWrapperNode(), _this3.getContainer(), _this3.linkToDownload);
 	        }, 100);
 	      }
 	    }

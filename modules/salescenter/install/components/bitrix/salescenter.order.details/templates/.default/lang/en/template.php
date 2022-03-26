@@ -9,3 +9,7 @@ $MESS["SOD_SUMMARY"] = "Total";
 $MESS["SOD_TAX"] = "Tax rate";
 $MESS["SOD_TOTAL_WEIGHT"] = "Total weight";
 $MESS["SOD_TPL_SUMOF"] = "order amount";
+$MESS["SPOD_DOCUMENT_ACTION_DOWNLOAD"] = "Download";
+$MESS["SPOD_DOCUMENT_ACTION_OPEN"] = "Open";
+$MESS["SPOD_DOCUMENT_ACTION_SHARE"] = "Forward";
+$MESS["SPOD_DOCUMENT_TITLE"] = "Your invoice";

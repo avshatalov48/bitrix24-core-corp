@@ -247,7 +247,7 @@ $url = CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_USER_TASKS_EDI
 								]
 						),
 						array(
-							"type" => ($can["EDIT"] ? "select-user" : "user"),
+							"type" => (($can["EDIT.RESPONSIBLE"] || $can['EDIT']) ? "select-user" : "user"),
 							"id" => "data[SE_RESPONSIBLE][0][ID]",
 							"name" => GetMessage("MB_TASKS_TASK_SETTINGS_RESPONSIBLE"),
 							"item" => $task["SE_RESPONSIBLE"],
@@ -315,6 +315,7 @@ $url = CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_USER_TASKS_EDI
 									"name" => GetMessage("MB_TASKS_TASK_SETTINGS_GROUP_ID"),
 									"item" => $templateData['GROUP'],
 									"value" => ($task["GROUP_ID"] > 0 ? $task["GROUP_ID"] : '0'),
+									'useLink' => 'Y',
 								]
 								: null
 						),
@@ -460,6 +461,17 @@ $component->arResult["HTML"] = [
 		*/?>
 	</div>
 </div>
+
+<?php
+$APPLICATION->IncludeComponent(
+	"bitrix:tasks.widget.result",
+	"mobile",
+	[
+		'TASK_ID' => $taskId,
+	],
+	$component,
+);
+?>
 
 <div id="task-comments-block"><?=$taskCommentsHtml?></div>
 

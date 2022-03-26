@@ -206,7 +206,7 @@ class Result extends Model
 
 	protected function checkField($field)
 	{
-		if($field['hidden'])
+		if($field['hidden'] || 1)
 		{
 			return true;
 		}
@@ -352,6 +352,12 @@ class Result extends Model
 							));
 						}
 						break;
+					case Internals\FieldTable::TYPE_ENUM_DATETIME:
+						if (is_numeric($value))
+						{
+							$value = DateTime::createFromTimestamp($value)->toString();
+						}
+						break;
 				}
 
 				$displayedValues .= str_replace(
@@ -397,6 +403,7 @@ class Result extends Model
 		$isCallback = $this->params['IS_CALLBACK'];
 		$callbackPhone = $this->params['CALLBACK_PHONE'];
 		$entities = $this->params['ENTITIES'];
+		$agreements = $this->params['AGREEMENTS'];
 
 		$resultEntity = new ResultEntity;
 		$resultEntity->setFormData($this->params['FORM']);
@@ -414,6 +421,7 @@ class Result extends Model
 		$resultEntity->setDuplicateMode($duplicateMode);
 		$resultEntity->setCallback($isCallback, $callbackPhone);
 		$resultEntity->setEntities($entities);
+		$resultEntity->setAgreements($agreements);
 
 		$resultEntity->add($scheme, $fields);
 		$this->resultEntity = $resultEntity;

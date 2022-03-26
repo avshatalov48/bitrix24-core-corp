@@ -186,10 +186,11 @@ abstract class BaseGrid extends Handler\Base implements IReportSingleData, IRepo
 			}
 			elseif($name === 'ASSOCIATED_DEAL_ID')
 			{
-				$result['=ORDER_DEAL.DEAL_ID'] = $v;
+				$result['=ORDER_BINDING.OWNER_ID'] = $v;
+				$result['=ORDER_BINDING.OWNER_TYPE_ID'] = \CCrmOwnerType::Deal;
 
-				$runtime[] = new Reference('ORDER_DEAL',
-					\Bitrix\Crm\Binding\OrderDealTable::getEntity(),
+				$runtime[] = new Reference('ORDER_BINDING',
+					\Bitrix\Crm\Binding\OrderEntityTable::getEntity(),
 					['=ref.ORDER_ID' => 'this.ID',],
 					['join_type' => 'LEFT',]
 				);

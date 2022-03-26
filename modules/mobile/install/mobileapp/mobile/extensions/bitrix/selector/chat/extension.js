@@ -96,7 +96,7 @@
 			this.sections.push({
 				id: 'common',
 				backgroundColor: '#ffffff',
-			})
+			});
 
 			this.sections.unshift({ id: "service" });
 			this.ui.setSections(this.sections);
@@ -137,5 +137,5 @@
 		}
 	}
 
-	window.ChatSelector = ChatSelector
+	window.ChatSelector = ChatSelector;
 })();

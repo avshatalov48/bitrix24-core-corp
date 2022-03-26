@@ -52,19 +52,22 @@ Page\Asset::getInstance()->addJs($templateFolder.'/js/tags-users-popup.js');
 Page\Asset::getInstance()->addJs($templateFolder.'/js/form-entity.js');
 Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/socialnetwork.blog.blog/templates/.default/style.css');
 
-$this->SetViewTarget('inside_pagetitle');
-$APPLICATION->includeComponent(
-	'bitrix:intranet.binding.menu',
-	'',
-	array(
-		'SECTION_CODE' => 'user_detail',
-		'MENU_CODE' => 'top_menu',
-		'CONTEXT' => [
-			'USER_ID' => $arResult['User']['ID']
-		]
-	)
-);
-$this->EndViewTarget();
+if (!in_array($arResult["User"]["STATUS"], ['email', 'extranet']))
+{
+	$this->SetViewTarget('inside_pagetitle');
+	$APPLICATION->includeComponent(
+		'bitrix:intranet.binding.menu',
+		'',
+		array(
+			'SECTION_CODE' => 'user_detail',
+			'MENU_CODE' => 'top_menu',
+			'CONTEXT' => [
+				'USER_ID' => $arResult['User']['ID']
+			]
+		)
+	);
+	$this->EndViewTarget();
+}
 
 if (
 	isset($arResult["Urls"]["CommonSecurity"])

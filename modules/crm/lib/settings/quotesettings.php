@@ -5,19 +5,20 @@ use Bitrix\Crm\Service\Container;
 
 class QuoteSettings
 {
+	use Traits\EnableFactory;
+
 	const VIEW_LIST = EntityViewSettings::LIST_VIEW;
 	const VIEW_KANBAN = EntityViewSettings::KANBAN_VIEW;
 
 	private static $current;
 	private $enableViewEvent;
 	private $isOpened;
-	private $isFactoryEnabled;
 
 	public function __construct()
 	{
 		$this->isOpened = new BooleanSetting('quote_opened_flag', true);
 		$this->enableViewEvent = new BooleanSetting('quote_enable_view_event', true);
-		$this->isFactoryEnabled = new BooleanSetting('quote_enable_factory', true);
+		$this->initIsFactoryEnabledSetting(\CCrmOwnerType::Quote);
 	}
 	/**
 	 * Get current instance
@@ -47,26 +48,6 @@ class QuoteSettings
 	public function setOpenedFlag($opened)
 	{
 		$this->isOpened->set($opened);
-	}
-
-	/**
-	 * Return true if new interface and api through Service\Factory is used to process quotes.
-	 *
-	 * @return bool
-	 */
-	public function isFactoryEnabled(): bool
-	{
-		return $this->isFactoryEnabled->get();
-	}
-
-	/**
-	 * Set state of isFactoryEnabled setting.
-	 *
-	 * @param bool $isEnabled
-	 */
-	public function setFactoryEnabled(bool $isEnabled): void
-	{
-		$this->isFactoryEnabled->set($isEnabled);
 	}
 
 	/**

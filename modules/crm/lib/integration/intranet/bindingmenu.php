@@ -2,7 +2,9 @@
 
 namespace Bitrix\Crm\Integration\Intranet;
 
+use Bitrix\Crm\Automation;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Intranet;
 use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
@@ -88,6 +90,23 @@ class BindingMenu
 			}
 		}
 
+		if (InvoiceSettings::getCurrent()->isSmartInvoiceEnabled())
+		{
+			foreach ($sections as $section)
+			{
+				if ($section === \Bitrix\Crm\Integration\Intranet\BindingMenu\SectionCode::TUNNELS)
+				{
+					continue;
+				}
+				$mapItem = new Intranet\Binding\Map\MapItem(
+					BindingMenu\CodeBuilder::getMapItemCode(\CCrmOwnerType::SmartInvoice),
+					BindingMenu\CodeBuilder::getRestPlacementCode($section->getCode(), \CCrmOwnerType::SmartInvoice),
+				);
+
+				$section->add($mapItem);
+			}
+		}
+
 		return new EventResult(
 			EventResult::SUCCESS,
 			[
@@ -153,8 +172,6 @@ class BindingMenu
 		if (
 			Option::get('crm', 'tmp_smart_scripts', 'N') !== 'Y'
 			|| !Loader::includeModule('bizproc')
-			|| !\CBPRuntime::isFeatureEnabled()
-			|| !method_exists(\Bitrix\Bizproc\Script\Manager::class, 'getListByDocument')
 		)
 		{
 			return $items;
@@ -169,8 +186,13 @@ class BindingMenu
 
 		foreach ([BindingMenu\SectionCode::SWITCHER, BindingMenu\SectionCode::DETAIL] as $placement)
 		{
-			foreach (['lead', 'deal',] as $entity)
+			foreach (['lead', 'deal', 'contact', 'company', 'order', 'smart_invoice'] as $entity)
 			{
+				if (!Automation\Factory::isScriptAvailable(\CCrmOwnerType::ResolveID($entity)))
+				{
+					continue;
+				}
+
 				$docType = \CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::ResolveID($entity));
 				$docTypeParam = '\''.\CUtil::JSEscape(\CBPDocument::signDocumentType($docType)).'\'';
 				$placementParam = '\''.\CUtil::JSEscape($placement).'\'';

@@ -171,11 +171,14 @@ class Openlines
 		}
 
 		if (
-			$command === self::COMMAND_OPERATOR_MESSAGE_ADD
-			|| $command === self::COMMAND_OPERATOR_MESSAGE_UPDATE
+			(
+				$command === self::COMMAND_OPERATOR_MESSAGE_ADD
+				|| $command === self::COMMAND_OPERATOR_MESSAGE_UPDATE
+			)
+			&& isset($params[0], $params[0]['MESSAGE_TEXT'])
 		)
 		{
-			$params['MESSAGE_TEXT'] = self::prepareMessage($params['MESSAGE_TEXT']);
+			$params[0]['MESSAGE_TEXT'] = self::prepareMessage($params[0]['MESSAGE_TEXT']);
 		}
 
 		return self::sendCommand($command, $params[0]);
@@ -187,7 +190,7 @@ class Openlines
 	 *
 	 * @return bool
 	 */
-	public static function sendCommand(string $command, array $params): bool
+	protected static function sendCommand(string $command, array $params): bool
 	{
 		$constList = (new \ReflectionClass(__CLASS__))->getConstants();
 		$whiteList = [];

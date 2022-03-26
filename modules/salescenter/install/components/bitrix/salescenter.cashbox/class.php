@@ -59,7 +59,7 @@ class SalesCenterCashboxComponent extends CBitrixComponent implements Main\Engin
 			return $result->addError(new Main\Error(Loc::getMessage('SALESCENTER_MODULE_ERROR')));
 		}
 
-		if (!SaleManager::getInstance()->isFullAccess())
+		if (!SaleManager::getInstance()->isFullAccess(true))
 		{
 			return $result->addError(new Main\Error(Loc::getMessage("SC_SALESCENTER_SALE_ACCESS_DENIED")));
 		}

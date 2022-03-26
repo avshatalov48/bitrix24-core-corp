@@ -21,6 +21,13 @@ return [
 	'settings' => [
 		'entities' => [
 			[
+				'id' => 'task',
+				'options' => [
+					'dynamicLoad' => true,
+					'dynamicSearch' => true,
+				],
+			],
+			[
 				'id' => 'task-tag',
 				'options' => [
 					'dynamicLoad' => true,
@@ -30,6 +37,13 @@ return [
 							'avatar' => '/bitrix/js/tasks/entity-selector/src/images/default-tag.svg',
 						],
 					],
+				],
+			],
+			[
+				'id' => 'task-template',
+				'options' => [
+					'dynamicLoad' => true,
+					'dynamicSearch' => true,
 				],
 			],
 		],

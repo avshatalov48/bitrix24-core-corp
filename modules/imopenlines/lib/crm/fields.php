@@ -1,10 +1,10 @@
 <?php
 namespace Bitrix\ImOpenLines\Crm;
 
-use \Bitrix\ImOpenLines\Tools,
-	\Bitrix\ImOpenLines\Session;
+use Bitrix\ImOpenLines\Tools;
+use Bitrix\ImOpenLines\Session;
 
-use \Bitrix\Im\User as ImUser;
+use Bitrix\Im;
 
 class Fields
 {
@@ -13,19 +13,21 @@ class Fields
 
 	/** @var string */
 	protected $code = '';
+	/** @var int */
+	protected $userId;
 	/** @var array */
-	protected $emails = array();
+	protected $emails = [];
 	/** @var array */
-	protected $phones = array();
+	protected $phones = [];
 	/** @var array */
-	protected $person = array(
+	protected $person = [
 		'NAME' => '',
 		'LAST_NAME' => '',
 		'SECOND_NAME' => '',
 		'EMAIL' => '',
 		'PHONE' => '',
 		'WEBSITE' => ''
-	);
+	];
 	/** @var string */
 	protected $title = '';
 
@@ -33,7 +35,7 @@ class Fields
 	 * @param Session $session
 	 * @return bool
 	 */
-	public function setSession($session)
+	public function setSession($session): bool
 	{
 		$result = false;
 
@@ -59,7 +61,7 @@ class Fields
 	 * @param $field
 	 * @return bool
 	 */
-	public function setCode($field)
+	public function setCode($field): bool
 	{
 		$this->code = $field;
 
@@ -74,12 +76,31 @@ class Fields
 		return $this->code;
 	}
 
+
 	/**
 	 * @param $field
 	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public function addPhone($field)
+	public function setUserId($field): bool
+	{
+		$this->userId = $field;
+
+		return true;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getUserId()
+	{
+		return $this->userId;
+	}
+
+	/**
+	 * @param $field
+	 * @return bool
+	 */
+	public function addPhone($field): bool
 	{
 		$result = false;
 
@@ -96,7 +117,6 @@ class Fields
 	/**
 	 * @param $fields
 	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public function setPhones($fields)
 	{
@@ -115,7 +135,7 @@ class Fields
 	/**
 	 * @return bool
 	 */
-	public function resetPhones()
+	public function resetPhones(): bool
 	{
 		$this->phones = [];
 
@@ -133,9 +153,8 @@ class Fields
 	/**
 	 * @param $field
 	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public function addEmail($field)
+	public function addEmail($field): bool
 	{
 		$result = false;
 
@@ -152,9 +171,8 @@ class Fields
 	/**
 	 * @param $fields
 	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public function setEmails($fields)
+	public function setEmails($fields): bool
 	{
 		$result = false;
 
@@ -171,7 +189,7 @@ class Fields
 	/**
 	 * @return bool
 	 */
-	public function resetEmails()
+	public function resetEmails(): bool
 	{
 		$this->emails = [];
 
@@ -189,9 +207,8 @@ class Fields
 	/**
 	 * @param array $fields
 	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public function setPerson(array $fields)
+	public function setPerson(array $fields): bool
 	{
 		$result = false;
 
@@ -229,9 +246,8 @@ class Fields
 	/**
 	 * @param int $userId
 	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public function setDataFromUser($userId = 0)
+	public function setDataFromUser($userId = 0): bool
 	{
 		$result = false;
 
@@ -242,7 +258,7 @@ class Fields
 
 		if(!empty($userId) && $userId>0)
 		{
-			$user = ImUser::getInstance($userId);
+			$user = Im\User::getInstance($userId);
 
 			if(!empty($user))
 			{
@@ -289,7 +305,7 @@ class Fields
 	 * @param string $field
 	 * @return bool
 	 */
-	public function setPersonName($field)
+	public function setPersonName($field): bool
 	{
 		$this->person['NAME'] = $field;
 
@@ -300,7 +316,7 @@ class Fields
 	 * @param string $field
 	 * @return bool
 	 */
-	public function setPersonLastName($field)
+	public function setPersonLastName($field): bool
 	{
 		$this->person['LAST_NAME'] = $field;
 
@@ -311,7 +327,7 @@ class Fields
 	 * @param string $field
 	 * @return bool
 	 */
-	public function setPersonSecondName($field)
+	public function setPersonSecondName($field): bool
 	{
 		$this->person['SECOND_NAME'] = $field;
 
@@ -321,38 +337,44 @@ class Fields
 	/**
 	 * @param $field
 	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public function setPersonEmail($field)
+	public function setPersonEmail($field): bool
 	{
+		$return = false;
+
 		if(Tools\Email::validate($field))
 		{
 			$this->person['EMAIL'] = $field;
 
-			return true;
+			$return = true;
 		}
+
+		return $return;
 	}
 
 	/**
 	 * @param $field
 	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public function setPersonPhone($field)
+	public function setPersonPhone($field): bool
 	{
+		$return = false;
+
 		if(Tools\Phone::validate($field))
 		{
 			$this->person['PHONE'] = $field;
 
-			return true;
+			$return = true;
 		}
+
+		return $return;
 	}
 
 	/**
 	 * @param string $field
 	 * @return bool
 	 */
-	public function setPersonWebsite($field)
+	public function setPersonWebsite($field): bool
 	{
 		$this->person['WEBSITE'] = $field;
 
@@ -419,7 +441,7 @@ class Fields
 	 * @param string $field
 	 * @return bool
 	 */
-	public function setTitle($field)
+	public function setTitle($field): bool
 	{
 		$this->title = $field;
 

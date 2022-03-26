@@ -5,6 +5,7 @@ $MESS["REQUISITE_LIST_ITEM_DELETE_CONFIRMATION_CONTENT"] = "Вы действи�
 $MESS["REQUISITE_LIST_ITEM_HIDE_CONFIRMATION_TITLE"] = "Очистить поля реквизита";
 $MESS["REQUISITE_LIST_ITEM_HIDE_CONFIRMATION_CONTENT"] = "Вы действительно хотите очистить поля реквизита?";
 $MESS["REQUISITE_LABEL_DETAILS_TEXT"] = "подробно";
+$MESS["REQUISITE_LABEL_DETAILS_SELECT"] = "выбрать";
 $MESS["CLIENT_REQUISITES_ADDRESS_SHOW_ADDRESS"] = "Показать адрес";
 $MESS["REQUISITE_TOOLTIP_SHOW_DETAILS"] = "подробнее";
 $MESS["REQUISITE_TOOLTIP_EDIT"] = "изменить";

@@ -242,14 +242,18 @@ if (isset($arResult['FILTERS']) && is_array($arResult['FILTERS']))
 
 <script type="text/javascript">
 	BX.ready(function() {
-		var taskLimitExceeded = <?=Json::encode($taskLimitExceeded)?>;
-		var kpiLimitExceeded = <?=Json::encode($kpiLimitExceeded)?>;
-		if (
-			taskLimitExceeded
-			|| kpiLimitExceeded
-		)
+		var taskLimitExceeded = <?= Json::encode($taskLimitExceeded) ?>;
+		var kpiLimitExceeded = <?= Json::encode($kpiLimitExceeded) ?>;
+
+		if (taskLimitExceeded || kpiLimitExceeded)
 		{
-			BX.UI.InfoHelper.show('limit_tasks_efficiency');
+			BX.UI.InfoHelper.show('limit_tasks_efficiency', {
+				isLimit: true,
+				limitAnalyticsLabels: {
+					module: 'tasks',
+					source: 'view',
+				},
+			});
 		}
 	});
 </script>

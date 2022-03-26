@@ -34,7 +34,6 @@
 							this.selfFolderUrl+"sale_discount_edit/",
 							this.selfFolderUrl+"sale_discount_preset_detail/",
 							this.selfFolderUrl+"sale_discount_coupon_edit/",
-							this.selfFolderUrl+"sale_discount_preset_list/",
 							this.selfFolderUrl+"sale_delivery_service_edit/",
 							this.selfFolderUrl+"sale_delivery_eservice_edit/",
 							this.selfFolderUrl+"sale_pay_system_edit/",

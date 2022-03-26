@@ -22,6 +22,7 @@ use Bitrix\ImConnector\Connector;
 /** $arResult['SAVE_STATUS']; */
 
 Loc::loadMessages(__FILE__);
+Loc::loadMessages(__DIR__ . '/meta.php');
 
 if($arParams['INDIVIDUAL_USE'] !== 'Y')
 {
@@ -42,6 +43,23 @@ $helpDeskLinkNoPage = str_replace(
 );
 
 $iconCode = Connector::getIconByConnector($arResult['CONNECTOR']);
+
+$langPostfix = $arResult['NEED_META_RESTRICTION_NOTE'] ? '_META_RU' : '';
+$lang = [
+	'index_title' => Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_INDEX_TITLE' . $langPostfix),
+	'index_subtitle' => Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_INDEX_SUBTITLE' . $langPostfix),
+	'index_additional_description' => Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_INDEX_ADDITIONAL_DESCRIPTION' . $langPostfix),
+];
+if ($arResult['NEED_META_RESTRICTION_NOTE'] && !$arResult['ACTIVE_STATUS'])
+{
+	$this->SetViewTarget('fb_meta_restriction_note');
+	?>
+	<div class="imconnector-restriction-note">
+		<?= Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_RESTRICTIONS_META_RU')?>
+	</div>
+	<?php
+	$this->EndViewTarget();
+}
 ?>
 	<form action="<?=$arResult['URL']['DELETE']?>" method="post" id="form_delete_<?=$arResult['CONNECTOR']?>">
 		<input type="hidden" name="<?=$arResult['CONNECTOR']?>_form" value="true">
@@ -251,12 +269,12 @@ else
 					</div>
 					<div class="imconnector-field-box" data-role="more-info">
 						<div class="imconnector-field-main-subtitle imconnector-field-section-main-subtitle">
-							<?= Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_INDEX_TITLE')?>
+							<?= $lang['index_title']?>
 						</div>
 						<div class="imconnector-field-box-content">
 
 							<div class="imconnector-field-box-content-text-light">
-								<?= Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_INDEX_SUBTITLE') ?>
+								<?= $lang['index_subtitle'] ?>
 							</div>
 
 							<ul class="imconnector-field-box-content-text-items">
@@ -267,7 +285,7 @@ else
 							</ul>
 
 							<div class="imconnector-field-box-content-text-light">
-								<?=Loc::getMessage('IMCONNECTOR_COMPONENT_FBINSTAGRAM_INDEX_ADDITIONAL_DESCRIPTION')?>
+								<?=$lang['index_additional_description']?>
 							</div>
 
 							<div class="imconnector-field-box-content-btn">

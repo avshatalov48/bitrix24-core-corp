@@ -41,23 +41,16 @@ global $APPLICATION;
 				'BIZPROC_AUTOMATION_CMP_TRIGGER_HELP_2' => GetMessage('TASKS_AUTOMATION_CMP_TRIGGER_HELP_TIP_2'),
 				'BIZPROC_AUTOMATION_CMP_ROBOT_HELP' => GetMessage('TASKS_AUTOMATION_CMP_ROBOT_HELP_TIP'),
 				'BIZPROC_AUTOMATION_CMP_ROBOT_HELP_ARTICLE_ID' => '8233939',
-			]
+			],
+			'CATEGORY_SELECTOR' => ['TEXT' => $arResult['GROUPS_SELECTOR']['CAPTION']],
 	], $this); ?>
 </div>
 <script>
 	BX.ready(function()
 	{
 		var viewType = '<?=CUtil::JSEscape($arResult['VIEW_TYPE'])?>';
-		var toolbarNode = document.querySelector('[data-role="automation-base-toolbar"]');
-		if (!toolbarNode)
-		{
-			return;
-		}
 
-		var selectorNode = BX.create('button', {
-			attrs: {className: 'ui-btn ui-btn-light-border ui-btn-dropdown tasks-automation-group-selector'},
-			text: '<?=CUtil::JSEscape($arResult['GROUPS_SELECTOR']['CAPTION'])?>'
-		});
+		var selectorNode = document.querySelector('[data-role="category-selector"]');
 
 		if (viewType === 'plan')
 		{
@@ -67,8 +60,6 @@ global $APPLICATION;
 		{
 			selectorNode.textContent = '<?=GetMessageJS('TASKS_AUTOMATION_CMP_SELECTOR_ITEM_PERSONAL')?>';
 		}
-
-		toolbarNode.insertBefore(selectorNode, toolbarNode.lastElementChild);
 
 		var menu = null;
 		var groups = <?=\Bitrix\Main\Web\Json::encode($arResult['GROUPS_SELECTOR']['GROUPS'])?>;

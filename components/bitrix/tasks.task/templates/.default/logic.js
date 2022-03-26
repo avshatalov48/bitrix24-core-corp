@@ -28,7 +28,6 @@ BX.namespace('Tasks.Component');
 				this.callConstruct(BX.Tasks.Util.Widget);
 
 				this.instances.calendar = false;
-				this.instances.query = false;
 				this.instances.helpWindow = false;
 
 				this.analyticsData = {};
@@ -318,7 +317,7 @@ BX.namespace('Tasks.Component');
 					BX.bind(elements[0], "change", this.passCtx(this.onWorktimeChange));
 				}
 
-				this.bindControl('form', 'submit', BX.delegate(this.onForumSubmit, this));
+				this.bindControl('form', 'submit', BX.delegate(this.onFormSubmit, this));
 				this.bindDelegateControl('submit', 'click', this.passCtx(this.onSubmitClick));
 
 				this.bindNestedControls();
@@ -531,7 +530,7 @@ BX.namespace('Tasks.Component');
 				}
 			},
 
-			onForumSubmit: function()
+			onFormSubmit: function()
 			{
 				var csrf = this.control('csrf');
 				if(csrf)
@@ -557,6 +556,7 @@ BX.namespace('Tasks.Component');
 
 			submit: function()
 			{
+				BX.Tasks.CheckListInstance.getTreeStructure().appendRequestLayout();
 				this.control('form').submit();
 			},
 
@@ -727,13 +727,9 @@ BX.namespace('Tasks.Component');
 					}
 
 					if (
-						(
-							flagName === 'SAVE_AS_TEMPLATE'
-							|| flagName === 'REPLICATE'
-						)
+						(flagName === 'SAVE_AS_TEMPLATE' || flagName === 'REPLICATE')
 						&& flagNode.value === 'Y'
-						&&
-						(
+						&& (
 							this.option('auxData').TASK_LIMIT_EXCEEDED
 							|| this.option('auxData').TASK_RECURRENT_RESTRICT
 						)
@@ -741,7 +737,15 @@ BX.namespace('Tasks.Component');
 					{
 						flagNode.value = 'N';
 						node.checked = false;
-						BX.UI.InfoHelper.show('limit_tasks_recurring_tasks');
+
+						var code = (flagName === 'REPLICATE' ? 'limit_tasks_recurring_tasks' : 'limit_tasks_template');
+						BX.UI.InfoHelper.show(code, {
+							isLimit: true,
+							limitAnalyticsLabels: {
+								module: 'tasks',
+								source: 'taskEdit'
+							}
+						});
 						return;
 					}
 
@@ -823,11 +827,6 @@ BX.namespace('Tasks.Component');
 
 					if (ctrl.count() > 0)
 					{
-						var query = new BX.Tasks.Util.Query({autoExec: true});
-						var args = {
-							userIds: ctrl.value().map(function(userId){ return userId.substring(1); })
-						};
-
 						var absenceNode = this.control('absence-message');
 
 						absenceNode.style.display = 'none';
@@ -836,28 +835,44 @@ BX.namespace('Tasks.Component');
 							absenceNode.removeChild(absenceNode.lastChild);
 						}
 
-						query.add('integration.intranet.absence', args, {}, BX.delegate(function(errors, data)
-						{
-							if (!errors.checkHasErrors())
-							{
-								if (data.RESULT.length > 0)
-								{
-									var text = data.RESULT.reduce(function(sum, current)
-									{
-										return sum + '<br />' + current; //TODO HTMLSPECIALCHARS!
-									});
-
-									var absenceAlert = new BX.UI.Alert({
-										icon: BX.UI.Alert.Icon.INFO,
-										color: BX.UI.Alert.Color.WARNING,
-										text: text
-									});
-
-									absenceNode.appendChild(absenceAlert.getContainer());
-									absenceNode.style.display = 'block';
-								}
+						BX.ajax.runComponentAction('bitrix:tasks.widget.member.selector', 'isAbsence', {
+							mode: 'class',
+							data: {
+								userIds: ctrl.value().map(function(userId){ return userId.substring(1); })
 							}
-						}, this));
+						}).then(
+							function(response)
+							{
+								if (
+									!response.status
+									|| response.status !== 'success'
+								)
+								{
+									return;
+								}
+								if (!response.data.length)
+								{
+									return;
+								}
+								var text = response.data.reduce(function(sum, current)
+								{
+									return sum + '<br />' + current; //TODO HTMLSPECIALCHARS!
+								});
+
+								var absenceAlert = new BX.UI.Alert({
+									icon: BX.UI.Alert.Icon.INFO,
+									color: BX.UI.Alert.Color.WARNING,
+									text: text
+								});
+
+								absenceNode.appendChild(absenceAlert.getContainer());
+								absenceNode.style.display = 'block';
+							}.bind(this),
+							function(response)
+							{
+
+							}.bind(this)
+						);
 					}
 				}.bind(this));
 			},
@@ -1146,7 +1161,9 @@ BX.namespace('Tasks.Component');
 						'TASK_CONTROL': true,
 						'ALLOW_CHANGE_DEADLINE': true,
 						'MATCH_WORK_TIME': true,
-						'FORM_FOOTER_PIN': true
+						'FORM_FOOTER_PIN': true,
+						'REQUIRE_RESULT': true,
+						'TASK_PARAM_3': true
 					};
 
 					if(!(name in allowed))
@@ -1179,15 +1196,6 @@ BX.namespace('Tasks.Component');
 
 			submitState: function()
 			{
-				if(!this.instances.query)
-				{
-					this.instances.query = new BX.Tasks.Util.Query({
-						url : this.option('template').COMPONENTURL,
-						autoExec: true,
-						autoExecDelay: 1500
-					});
-				}
-
 				var st = BX.clone(this.vars.state);
 
 				// send FORM_FOOTER_PIN, but dont send other flags in this manner, it looks pretty awkward
@@ -1198,7 +1206,22 @@ BX.namespace('Tasks.Component');
 					FORM_FOOTER_PIN: fp
 				};
 
-				this.instances.query.add('this.setstate', {state: st});
+				BX.ajax.runComponentAction('bitrix:tasks.task', 'setState', {
+					mode: 'class',
+					data: {
+						state:st
+					}
+				}).then(
+					function(response)
+					{
+
+					}.bind(this)
+				).catch(
+					function(response)
+					{
+
+					}.bind(this)
+				);
 			},
 
 			redrawState: function()

@@ -173,6 +173,11 @@ class DynamicTypeSearchContentBuilder extends SearchContentBuilder
 			$map->addText($this->prepareTokenCompatible($fields['TITLE']));
 		}
 
+		if (isset($fields['ACCOUNT_NUMBER']))
+		{
+			$map->addText($this->prepareTokenCompatible($fields['ACCOUNT_NUMBER']));
+		}
+
 		foreach ($this->getFieldsWithUsers() as $fieldName)
 		{
 			if (isset($fields[$fieldName]) && $fields[$fieldName] > 0)

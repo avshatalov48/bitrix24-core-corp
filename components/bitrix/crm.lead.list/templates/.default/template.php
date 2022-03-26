@@ -12,6 +12,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
  */
 
 use Bitrix\Crm\Integration;
+use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Tracking;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
@@ -47,10 +48,18 @@ use Bitrix\Main\Localization\Loc;
 ?><div id="batchDeletionWrapper"></div><?
 
 ?><div id="rebuildMessageWrapper"><?
+
+if($arResult['NEED_TO_SHOW_DUP_INDEX_PROCESS']):
+	?><div id="backgroundLeadIndexRebuildWrapper"></div><?
+endif;
+if($arResult['NEED_TO_SHOW_DUP_MERGE_PROCESS']):
+	?><div id="backgroundLeadMergeWrapper"></div><?
+endif;
+
 if($arResult['NEED_FOR_REBUILD_DUP_INDEX']):
-	?><div id="rebuildLeadDupIndexMsg" class="crm-view-message">
-		<?=GetMessage('CRM_LEAD_REBUILD_DUP_INDEX', array('#ID#' => 'rebuildLeadDupIndexLink', '#URL#' => '#'))?>
-	</div><?
+?><div id="rebuildLeadDupIndexMsg" class="crm-view-message">
+	<?=GetMessage('CRM_LEAD_REBUILD_DUP_INDEX', array('#ID#' => 'rebuildLeadDupIndexLink', '#URL#' => '#'))?>
+</div><?
 endif;
 
 if($arResult['NEED_FOR_REBUILD_SEARCH_CONTENT'])
@@ -244,15 +253,18 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 
 	if(!$isInternal)
 	{
-		$arActions[] = $arActivityMenuItems[] = array(
-			'TITLE' => GetMessage('CRM_LEAD_EVENT_TITLE'),
-			'TEXT' => GetMessage('CRM_LEAD_EVENT'),
-			'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
-				'{$gridManagerID}',
-				BX.CrmUIGridMenuCommand.createEvent,
-				{ entityTypeName: BX.CrmEntityType.names.lead, entityId: {$arLead['ID']} }
-			)"
-		);
+		if (RestrictionManager::isHistoryViewPermitted())
+		{
+			$arActions[] = $arActivityMenuItems[] = array(
+				'TITLE' => GetMessage('CRM_LEAD_EVENT_TITLE'),
+				'TEXT' => GetMessage('CRM_LEAD_EVENT'),
+				'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
+					'{$gridManagerID}',
+					BX.CrmUIGridMenuCommand.createEvent,
+					{ entityTypeName: BX.CrmEntityType.names.lead, entityId: {$arLead['ID']} }
+				)"
+			);
+		}
 
 		if($arLead['EDIT'])
 		{
@@ -960,6 +972,32 @@ if(!$isInternal
 }
 //endregion
 
+if($arResult['ENABLE_TOOLBAR'])
+{
+	$addButton =array(
+		'TEXT' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Lead),
+		'TITLE' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Lead),
+		'LINK' => $arResult['PATH_TO_LEAD_ADD'],
+		'ICON' => 'btn-new'
+	);
+
+	if(!empty($arResult['ADD_EVENT_NAME']))
+	{
+		$addButton['ONCLICK'] = "BX.onCustomEvent(window, '{$arResult['ADD_EVENT_NAME']}')";
+	}
+
+	$APPLICATION->IncludeComponent(
+		'bitrix:crm.interface.toolbar',
+		'',
+		array(
+			'TOOLBAR_ID' => mb_strtolower($arResult['GRID_ID']).'_toolbar',
+			'BUTTONS' => array($addButton)
+		),
+		$component,
+		array('HIDE_ICONS' => 'Y')
+	);
+}
+
 $messages = array();
 if(isset($arResult['ERRORS']) && is_array($arResult['ERRORS']))
 {
@@ -1000,6 +1038,7 @@ $APPLICATION->IncludeComponent(
 	array(
 		'GRID_ID' => $arResult['GRID_ID'],
 		'HEADERS' => $arResult['HEADERS'],
+		'HEADERS_SECTIONS' => $arResult['HEADERS_SECTIONS'],
 		'ENABLE_FIELDS_SEARCH' => 'Y',
 		'SORT' => $arResult['SORT'],
 		'SORT_VARS' => $arResult['SORT_VARS'],
@@ -1020,6 +1059,7 @@ $APPLICATION->IncludeComponent(
 				]
 			],
 			'ENABLE_FIELDS_SEARCH' => 'Y',
+			'HEADERS_SECTIONS' => $arResult['HEADERS_SECTIONS'],
 			'CONFIG' => [
 				'popupColumnsCount' => 4,
 				'popupWidth' => 800,
@@ -1496,4 +1536,57 @@ $APPLICATION->IncludeComponent(
 		}
 	);
 </script>
-<?endif;?>
+<?endif;
+
+if($arResult['NEED_TO_SHOW_DUP_INDEX_PROCESS'])
+{?>
+	<script type="text/javascript">
+		BX.ready(function () {
+			if (BX.AutorunProcessPanel.isExists("backgroundLeadIndexRebuild"))
+			{
+				return;
+			}
+			BX.AutorunProcessManager.messages =
+				{
+					title: "<?=GetMessageJS('CRM_LEAD_BACKGROUND_DUPLICATE_INDEX_REBUILD_TITLE')?>",
+					stateTemplate: "<?=GetMessageJS('CRM_LEAD_BACKGROUND_DUPLICATE_INDEX_REBUILD_STATE')?>"
+				};
+			var manager = BX.AutorunProcessManager.create(
+				"backgroundLeadIndexRebuild",
+				{
+					serviceUrl: "<?='/bitrix/components/bitrix/crm.lead.list/list.ajax.php?'.bitrix_sessid_get()?>",
+					actionName: "BACKGROUND_INDEX_REBUILD",
+					container: "backgroundLeadIndexRebuildWrapper",
+					enableLayout: true
+				}
+			);
+			manager.runAfter(100);
+		});
+	</script><?
+}
+if($arResult['NEED_TO_SHOW_DUP_MERGE_PROCESS'])
+{?>
+	<script type="text/javascript">
+		BX.ready(function () {
+			if (BX.AutorunProcessPanel.isExists("backgroundLeadMerge"))
+			{
+				return;
+			}
+			BX.AutorunProcessManager.messages =
+				{
+					title: "<?=GetMessageJS('CRM_LEAD_BACKGROUND_DUPLICATE_MERGE_TITLE')?>",
+					stateTemplate: "<?=GetMessageJS('CRM_LEAD_BACKGROUND_DUPLICATE_MERGE_STATE')?>"
+				};
+			var manager = BX.AutorunProcessManager.create(
+				"backgroundLeadMerge",
+				{
+					serviceUrl: "<?='/bitrix/components/bitrix/crm.lead.list/list.ajax.php?'.bitrix_sessid_get()?>",
+					actionName: "BACKGROUND_MERGE",
+					container: "backgroundLeadMergeWrapper",
+					enableLayout: true
+				}
+			);
+			manager.runAfter(100);
+		});
+	</script><?
+}

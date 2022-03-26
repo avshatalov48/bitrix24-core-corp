@@ -60,7 +60,16 @@ export class Backlog extends Entity
 			(baseEvent: BaseEvent) => this.emit('openAddEpicForm', baseEvent.getData())
 		);
 
-		this.header.subscribe('taskClick', () => this.emit('showInput'));
+		this.header.subscribe('taskClick', () => {
+			if (this.mandatoryExists)
+			{
+				this.emit('openAddTaskForm');
+			}
+			else
+			{
+				this.emit('showInput');
+			}
+		});
 	}
 
 	setBlank(backlog: Backlog)
@@ -72,7 +81,16 @@ export class Backlog extends Entity
 	{
 		this.dropzone = new Dropzone(backlog);
 
-		this.dropzone.subscribe('createTask', () => this.emit('showInput'));
+		this.dropzone.subscribe('createTask', () => {
+			if (this.mandatoryExists)
+			{
+				this.emit('openAddTaskForm');
+			}
+			else
+			{
+				this.emit('showInput');
+			}
+		});
 	}
 
 	setNumberTasks(numberTasks: number)

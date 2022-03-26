@@ -4,6 +4,7 @@ import { Button } from 'ui.buttons';
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import type { ItemDetailsComponentParams } from "crm.item-details-component";
 import { ItemDetailsComponent } from "crm.item-details-component";
+import { Conversion } from "crm.conversion";
 
 const printWindowWidth = 900;
 const printWindowHeight = 600;
@@ -19,9 +20,8 @@ declare type ConversionSettings = {
 	lockScript?: Function,
 	buttonId?: string,
 	menuButtonId?: string,
-	scheme?: {messages: Object},
+	converter?: Object,
 	schemeSelector?: Object,
-	converter?: {messages: Object, permissions: Object, settings: Object},
 };
 
 declare type PrintTemplate = {
@@ -110,53 +110,48 @@ class QuoteDetailsComponent extends ItemDetailsComponent
 
 	initConversionApi(): void
 	{
+		const converter = Conversion.Manager.Instance.initializeConverter(this.entityTypeId, this.conversionSettings.converter);
+		const schemeSelector = new Conversion.SchemeSelector(converter, this.conversionSettings.schemeSelector);
+
 		if (this.conversionSettings.lockScript)
 		{
-			const button = document.getElementById(this.conversionSettings.buttonId);
-			if (button)
-			{
-				Event.bind(button, 'click', this.conversionSettings.lockScript);
-			}
-			const menuButton = document.getElementById(this.conversionSettings.menuButtonId);
-			if (menuButton)
-			{
-				Event.bind(menuButton, 'click', this.conversionSettings.lockScript);
-			}
+			schemeSelector.subscribe('SchemeSelector:onSchemeSelected', this.conversionSettings.lockScript);
+			schemeSelector.subscribe('SchemeSelector:onContainerClick', this.conversionSettings.lockScript);
 
 			EventEmitter.subscribe('CrmCreateDealFromQuote', this.conversionSettings.lockScript);
 			EventEmitter.subscribe('CrmCreateInvoiceFromQuote', this.conversionSettings.lockScript);
-
-			return;
 		}
-
-		BX.CrmQuoteConversionScheme.messages = this.conversionSettings.scheme.messages;
-
-		BX.CrmQuoteConversionSchemeSelector.create(
-			"quote_converter",
-			this.conversionSettings.schemeSelector
-		);
-
-		BX.CrmQuoteConverter.messages = this.conversionSettings.converter.messages;
-		BX.CrmQuoteConverter.permissions = this.conversionSettings.converter.permissions;
-		BX.CrmQuoteConverter.settings = this.conversionSettings.converter.settings;
-
-		EventEmitter.subscribe('CrmCreateDealFromQuote', () =>
+		else
 		{
-			BX.CrmQuoteConverter.getCurrent().convert(
-				this.id,
-				BX.CrmQuoteConversionScheme.createConfig(BX.CrmQuoteConversionScheme.deal),
-				window.location.href,
-			);
-		});
+			schemeSelector.enableAutoConversion();
 
-		EventEmitter.subscribe('CrmCreateInvoiceFromQuote', () =>
-		{
-			BX.CrmQuoteConverter.getCurrent().convert(
-				this.id,
-				BX.CrmQuoteConversionScheme.createConfig(BX.CrmQuoteConversionScheme.invoice),
-				window.location.href,
-			);
-		});
+			const convertByEvent = (dstEntityTypeId: number) => {
+				const schemeItem = converter.getConfig().getScheme().getItemForSingleEntityTypeId(dstEntityTypeId);
+				if (!schemeItem)
+				{
+					console.error('SchemeItem with single entityTypeId ' + dstEntityTypeId  + ' is not found');
+					return;
+				}
+
+				converter.getConfig().updateFromSchemeItem(schemeItem);
+
+				converter.convert(this.id);
+			};
+
+			EventEmitter.subscribe('CrmCreateDealFromQuote', () => {
+				convertByEvent(BX.CrmEntityType.enumeration.deal);
+			});
+			EventEmitter.subscribe('CrmCreateInvoiceFromQuote', () => {
+				convertByEvent(BX.CrmEntityType.enumeration.invoice);
+			});
+			EventEmitter.subscribe('BX.Crm.ItemListComponent:onAddNewItemButtonClick', ((event: BaseEvent) => {
+				const dstEntityTypeId = Number(event.getData().entityTypeId);
+				if (dstEntityTypeId > 0)
+				{
+					convertByEvent(dstEntityTypeId);
+				}
+			}));
+		}
 	}
 
 	bindEvents(): void

@@ -1,0 +1,3 @@
+<?php
+$MESS["DISK_INTEGRATION_IM_CALL_CALL_RESUME_CREATED"] = "Создано резюме встречи";
+$MESS["DISK_INTEGRATION_IM_CALL_CALL_DOCUMENT_CREATED"] = "Создан документ";

@@ -13,6 +13,8 @@ export class Dropzone extends EventEmitter
 
 		this.entity = entity;
 
+		this.mandatoryExists = false;
+
 		this.node = null;
 	}
 
@@ -64,20 +66,46 @@ export class Dropzone extends EventEmitter
 				<div class="tasks-scrum__content-empty--title">
 					${Loc.getMessage('TASKS_SCRUM_SPRINT_BLANK_1')}
 				</div>
+				${this.renderSprintEmptyText()}
+			</div>
+		`;
+
+		if (!this.mandatoryExists)
+		{
+			Event.bind(
+				this.node.querySelector('.tasks-scrum__content-empty--btn-create'),
+				'click',
+				() => this.emit('createTask')
+			);
+		}
+
+		return this.node;
+	}
+
+	renderSprintEmptyText(): HTMLElement
+	{
+		if (this.mandatoryExists)
+		{
+			return Tag.render`
+				<div class="tasks-scrum__content-empty--text">
+					${Loc.getMessage('TASKS_SCRUM_SPRINT_BLANK_4')}
+				</div>
+			`;
+		}
+		else
+		{
+			return Tag.render`
 				<div class="tasks-scrum__content-empty--text">
 					<span class="tasks-scrum__content-empty--btn-create">
 						${Loc.getMessage('TASKS_SCRUM_SPRINT_BLANK_2')}
 					</span>${Loc.getMessage('TASKS_SCRUM_SPRINT_BLANK_3')}
 				</div>
-			</div>
-		`;
+			`;
+		}
+	}
 
-		Event.bind(
-			this.node.querySelector('.tasks-scrum__content-empty--btn-create'),
-			'click',
-			() => this.emit('createTask')
-		);
-
-		return this.node;
+	setMandatory()
+	{
+		this.mandatoryExists = true;
 	}
 }

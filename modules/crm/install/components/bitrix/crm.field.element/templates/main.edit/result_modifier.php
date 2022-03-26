@@ -48,12 +48,13 @@ if ($component->isDefaultMode())
 	$arResult['LIST_PREFIXES'] = array_flip(ElementType::getEntityTypeNames());
 
 	$arResult['SELECTOR_ENTITY_TYPES'] = [
-		'DEAL' => 'deals',
-		'CONTACT' => 'contacts',
-		'COMPANY' => 'companies',
-		'LEAD' => 'leads',
-		'ORDER' => 'orders',
-		'DYNAMIC' => 'dynamics'
+		\CCrmOwnerType::DealName => 'deals',
+		\CCrmOwnerType::ContactName => 'contacts',
+		\CCrmOwnerType::CompanyName => 'companies',
+		\CCrmOwnerType::LeadName => 'leads',
+		\CCrmOwnerType::OrderName => 'orders',
+		\CCrmOwnerType::CommonDynamicName => 'dynamics',
+		\CCrmOwnerType::SmartInvoiceName => 'smart_invoices',
 	];
 
 	$arResult['DYNAMIC_TYPE_TITLES'] = [];
@@ -88,7 +89,16 @@ if ($component->isDefaultMode())
 		if ($arResult['USE_SYMBOLIC_ID'])
 		{
 			[$type, $entityId] = explode('_', $value);
-			$entityTypeName = ElementType::getLongEntityType($type);
+			if (empty($entityId) && (int)$type > 0)
+			{
+				$entityId = $type;
+				$entityTypeName = reset($supportedTypes);
+				$value = \CCrmOwnerTypeAbbr::ResolveByTypeName($entityTypeName) . '_' . $entityId;
+			}
+			else
+			{
+				$entityTypeName = ElementType::getLongEntityType($type);
+			}
 			$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
 
 			$code = '';
@@ -108,7 +118,7 @@ if ($component->isDefaultMode())
 				if(!empty($entityType))
 				{
 					$entityTypeId = \CCrmOwnerType::ResolveId($entityType);
-					$value = \CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId) . '_' . $value;
+					$value = \CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId) . '_' . $matches[0];
 					$code = (
 						\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId)
 						? $arResult['SELECTOR_ENTITY_TYPES'][\CCrmOwnerType::CommonDynamicName] . '_' . $entityTypeId
@@ -127,7 +137,7 @@ if ($component->isDefaultMode())
 	}
 
 	$typesMap = \Bitrix\Crm\Service\Container::getInstance()->getDynamicTypesMap()->load([
-		'isLoadStages' => false
+		'isLoadStages' => false,
 	]);
 
 	$types = $typesMap->getTypes();
@@ -351,7 +361,7 @@ else if($component->isMobileMode())
 		{
 			$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
 
-			if (!\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+			if (!\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
 			{
 				continue;
 			}

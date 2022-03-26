@@ -233,7 +233,8 @@ abstract class EntityConversionMapper
 			}
 		}
 	}
-	protected static function mapUserField($srcEntityTypeID, $srcFieldID, array &$srcFields, $dstEntityTypeID, $dstFieldID, array &$dstFields, array $options = null)
+
+	public static function mapUserField($srcEntityTypeID, $srcFieldID, array &$srcFields, $dstEntityTypeID, $dstFieldID, array &$dstFields, array $options = null)
 	{
 		if(!isset($srcFields[$srcFieldID]))
 		{

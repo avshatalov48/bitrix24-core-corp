@@ -3,13 +3,11 @@
 namespace Bitrix\Tasks\Helper;
 
 use Bitrix\Main;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\SearchIndex;
-use Bitrix\Tasks\Scrum\Internal\EntityTable;
-use Bitrix\Tasks\Scrum\Service\BacklogService;
+use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Scrum\Service\EpicService;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\FilterLimit;
 use Bitrix\Tasks\Util\User;
@@ -147,7 +145,7 @@ class Filter extends Common
 		if ($isScrumProject)
 		{
 			$presets['filter_tasks_scrum'] = [
-				'name' => 'SCRUM',
+				'name' => Loc::getMessage('TASKS_PRESET_SCRUM'),
 				'default' => true,
 				'fields' => [
 					'STATUS' => [
@@ -155,7 +153,7 @@ class Filter extends Common
 						\CTasks::STATE_IN_PROGRESS,
 						\CTasks::STATE_SUPPOSEDLY_COMPLETED,
 						\CTasks::STATE_DEFERRED,
-						EntityTable::STATE_COMPLETED_IN_ACTIVE_SPRINT
+						EntityForm::STATE_COMPLETED_IN_ACTIVE_SPRINT
 					],
 				],
 				'sort' => 1,
@@ -584,11 +582,9 @@ class Filter extends Common
 				\CTasks::STATE_SUPPOSEDLY_COMPLETED => Loc::getMessage('TASKS_STATUS_4'),
 				\CTasks::STATE_COMPLETED => Loc::getMessage('TASKS_STATUS_5'),
 				\CTasks::STATE_DEFERRED => Loc::getMessage('TASKS_STATUS_6'),
+				EntityForm::STATE_COMPLETED_IN_ACTIVE_SPRINT => Loc::getMessage('TASKS_STATUS_8'),
 			];
-			if ($this->isTaskScrumEnabled())
-			{
-				$statusItems[EntityTable::STATE_COMPLETED_IN_ACTIVE_SPRINT] = Loc::getMessage('TASKS_STATUS_8');
-			}
+
 			$filter['STATUS'] = array(
 				'id' => 'STATUS',
 				'name' => Loc::getMessage('TASKS_FILTER_STATUS'),
@@ -637,7 +633,9 @@ class Filter extends Common
 				'id' => 'PROBLEM',
 				'name' => Loc::getMessage('TASKS_FILTER_PROBLEM'),
 				'type' => 'list',
-				'items' => $this->getAllowedTaskCategories()
+				'items' => $isScrumProject
+					? $this->getAllowedTaskScrumCategories()
+					: $this->getAllowedTaskCategories(),
 			);
 		}
 
@@ -943,16 +941,6 @@ class Filter extends Common
 	}
 
 	/**
-	 * @return bool
-	 * @throws Main\ArgumentNullException
-	 * @throws Main\ArgumentOutOfRangeException
-	 */
-	private function isTaskScrumEnabled(): bool
-	{
-		return (Option::get('tasks', 'tasks_scrum_enabled', 'N') === 'Y');
-	}
-
-	/**
 	 * Get available fields in filter.
 	 * @return array
 	 */
@@ -1011,6 +999,25 @@ class Filter extends Common
 		if ($this->getGroupId() > 0)
 		{
 			$taskCategories[] = \CTaskListState::VIEW_TASK_CATEGORY_PROJECT_EXPIRED;
+			$taskCategories[] = \CTaskListState::VIEW_TASK_CATEGORY_PROJECT_NEW_COMMENTS;
+		}
+		foreach ($taskCategories as $categoryId)
+		{
+			$list[$categoryId] = \CTaskListState::getTaskCategoryName($categoryId);
+		}
+
+		return $list;
+	}
+
+	private function getAllowedTaskScrumCategories(): array
+	{
+		$list = [];
+
+		$taskCategories = [
+			\CTaskListState::VIEW_TASK_CATEGORY_NEW_COMMENTS,
+		];
+		if ($this->getGroupId() > 0)
+		{
 			$taskCategories[] = \CTaskListState::VIEW_TASK_CATEGORY_PROJECT_NEW_COMMENTS;
 		}
 		foreach ($taskCategories as $categoryId)

@@ -49,6 +49,10 @@
 	padding: 15px 10px 15px 10px;
 }
 
+.tasks-scrum-epic-form-description.--editing {
+	border-bottom: 1px solid rgba(82, 92, 105, 0.2);
+}
+
 .tasks-scrum-epic-header-color {
 	width: 64px;
 	max-width: 64px;

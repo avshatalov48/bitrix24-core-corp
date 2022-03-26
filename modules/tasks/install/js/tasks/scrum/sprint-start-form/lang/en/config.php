@@ -14,3 +14,4 @@ $MESS["TASKS_SCRUM_SPRINT_START_FORM_TASK_COUNT_LABEL"] = "Sprint tasks";
 $MESS["TASKS_SCRUM_SPRINT_START_FORM_TIME_ROW_LABEL"] = "Time planning";
 $MESS["TASKS_SCRUM_SPRINT_START_FORM_TITLE"] = "Start sprint";
 $MESS["TASKS_SCRUM_SPRINT_START_FORM_WARN_TEXT"] = "There are #count# unrated tasks";
+$MESS["TSS_START_STORY_POINTS_HINT"] = "This view shows how many story points was expected by the sprint and how many the team has actually managed to implement. The number of story points is indicative of a task's relative complexity. This kind of estimate is necessary to understand the number of story points a team can manage within a sprint and plan the time accordingly.";

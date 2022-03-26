@@ -718,7 +718,7 @@ if(typeof BX.Crm.Component.FormRecurring === 'undefined')
 				else
 				{
 					var type = params.DEAL_TYPE_BEFORE;
-					var typeElement = this.getMessagePlural(countElement, "CRM_RECURRING_HINT_" + type);
+					var typeElement = BX.Loc.getMessagePlural('CRM_RECURRING_HINT_' + type, countElement);
 					var date = params.DEAL_DATEPICKER_BEFORE || "";
 					if (date.length > 0)
 					{
@@ -787,7 +787,7 @@ if(typeof BX.Crm.Component.FormRecurring === 'undefined')
 			}
 			else if (repeatTimes > 0 && till == this.constants.REPEAT_TILL_TIMES)
 			{
-				constraint = BX.message('CRM_RECURRING_HINT_END_TIMES').replace('#TIMES#', repeatTimes).replace('#TIMES_PLURAL#', this.getMessagePlural(repeatTimes, 'CRM_RECURRING_HINT_END_CONSTRAINT_TIMES'));
+				constraint = BX.message('CRM_RECURRING_HINT_END_TIMES').replace('#TIMES#', repeatTimes).replace('#TIMES_PLURAL#', BX.Loc.getMessagePlural('CRM_RECURRING_HINT_END_CONSTRAINT_TIMES', repeatTimes));
 
 			}
 			else
@@ -835,50 +835,6 @@ if(typeof BX.Crm.Component.FormRecurring === 'undefined')
 			return 0;
 		};
 
-		this.getMessagePlural = function(n, msgId)
-		{
-			var pluralForm, langId;
-	
-			langId = BX.message('LANGUAGE_ID');
-			n = parseInt(n);
-	
-			if (n < 0)
-			{
-				n = (-1) * n;
-			}
-	
-			if (langId)
-			{
-				switch (langId)
-				{
-					case 'de':
-					case 'en':
-						pluralForm = ((n !== 1) ? 1 : 0);
-						break;
-	
-					case 'ru':
-					case 'ua':
-						pluralForm = ( ((n%10 === 1) && (n%100 !== 11)) ? 0 : (((n%10 >= 2) && (n%10 <= 4) && ((n%100 < 10) || (n%100 >= 20))) ? 1 : 2) );
-						break;
-	
-					default:
-						pluralForm = 1;
-						break;
-				}
-			}
-			else
-			{
-				pluralForm = 1;
-			}
-	
-			if(BX.type.isArray(msgId))
-			{
-				return msgId[pluralForm];
-			}
-	
-			return (BX.message(msgId + '_PLURAL_' + pluralForm));
-		};
-		
 		this.getSelectedControlValues = function (selector)
 		{
 			var result = [];

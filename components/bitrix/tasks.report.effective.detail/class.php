@@ -120,7 +120,6 @@ class TasksReportEffectiveDetailComponent extends TasksBaseComponent
 		$violationFilter = [
 			'USER_ID' => $this->arParams['USER_ID'],
 			'=IS_VIOLATION' => 'Y',
-			'>TASK.RESPONSIBLE_ID' => 0,
 			[
 				'LOGIC' => 'OR',
 				[

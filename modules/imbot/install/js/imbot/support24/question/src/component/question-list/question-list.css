@@ -1,0 +1,209 @@
+.bx-imbot-support24-question-list {
+	height: calc(100% - 38px);
+	width: calc(100% - 45px);
+	padding: 20px 29px 18px 16px;
+}
+
+.bx-imbot-support24-question-list-empty {
+	padding: 5px 13px 5px 13px;
+}
+
+.bx-imbot-support24-question-list-empty-title {
+	font-family: "Open Sans", Helvetica, Arial, sans-serif;
+	font-size: 18px;
+	line-height: 26px;
+	color: #545c68;
+	margin-bottom: 16px;
+}
+
+.bx-imbot-support24-question-list-empty-title-dark {
+	color: #eaeaea;
+}
+
+.bx-imbot-support24-question-list-empty-description {
+	width: 400px;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 14px;
+	line-height: 21px;
+	color: #545c68;
+	margin-bottom: 39px;
+}
+
+.bx-imbot-support24-question-list-empty-description-dark {
+	color: #d5d7d6;
+}
+
+.bx-imbot-support24-question-list-button-ask-container {
+	display: flex;
+	align-items: center;
+	position: relative;
+	left: -5px;
+}
+
+.bx-imbot-support24-question-list-search-field {
+	display: flex;
+	padding-bottom: 19px;
+}
+
+.bx-imbot-support24-question-list-search-field-border {
+	border-bottom: 1px solid #f1f2f4;
+}
+
+.bx-imbot-support24-question-list-search-field-border-dark {
+	border-bottom: 1px solid rgba(171, 171, 171, 0.2);
+}
+
+.bx-imbot-support24-question-list-search-container {
+	width: 347px;
+}
+
+.bx-imbot-support24-question-list-ask-container {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-left: 8px;
+}
+
+.bx-imbot-support24-question-list-items {
+	max-height: 170px;
+	overflow-y: auto;
+	overflow-x: hidden;
+	position: absolute;
+	width: calc(100% - 26px);
+}
+
+.bx-imbot-support24-question-list-items-search-loader-svg-circle {
+	stroke: #868F99;
+	stroke-opacity: .6;
+	stroke-width: 3;
+}
+
+.bx-imbot-support24-question-list-items-search-loader-svg-circle-dark {
+	stroke: #fff;
+}
+
+.bx-imbot-support24-question-list-items-loader {
+	position: relative;
+	height: 51px;
+	max-width: 470px;
+}
+
+.bx-imbot-support24-question-list-items-loader-svg-circle {
+	stroke: #868F99;
+}
+
+.bx-imbot-support24-question-list-items-loader-svg-circle-dark {
+	stroke: #fff;
+	stroke-opacity: .6;
+}
+
+.bx-imbot-support24-question-list-items-move {
+	transition: transform .2s;
+}
+
+.bx-imbot-support24-question-list-items-enter-active, .bx-imbot-support24-question-list-items-leave-active {
+	transition: all .1s;
+}
+.bx-imbot-support24-question-list-items-enter, .bx-imbot-support24-question-list-items-leave-to {
+	opacity: 0;
+}
+
+.bx-imbot-support24-question-list-items-leave-active {
+	position: absolute;
+	width: 100%;
+}
+
+.bx-imbot-support24-question-list-items::-webkit-scrollbar {
+	width:17px;
+}
+
+.bx-imbot-support24-question-list-items::-webkit-scrollbar-track {
+	background-color: #feffff;
+}
+
+.bx-imbot-support24-question-list-items::-webkit-scrollbar-thumb {
+	background-image: -webkit-linear-gradient(right,transparent, transparent 8px, #e7e7e8 8px, #e7e7e8 13px, transparent 13px);
+	background-image: linear-gradient(to right, transparent, transparent 8px, #e7e7e8 8px,#e7e7e8 13px, transparent 13px);
+}
+
+.bx-imbot-support24-question-list-items:hover::-webkit-scrollbar-thumb:hover {
+	background-image: -webkit-linear-gradient(right,transparent, transparent 5px, #3bc8f5 5px, #3bc8f5 12px, transparent 12px);
+	background-image: linear-gradient(to right, transparent, transparent 5px, #3bc8f5 5px,#3bc8f5 12px, transparent 12px);
+}
+
+.bx-imbot-support24-question-list-items-dark::-webkit-scrollbar {
+	width: 7px;
+	background-image: none !important;
+	background-color: #4a4a4a;
+}
+
+.bx-imbot-support24-question-list-items-dark::-webkit-scrollbar-thumb {
+	border-width: 1px 1px 1px 2px;
+	border-color: rgb(74, 74, 74);
+	background-color: rgb(117, 117, 117);
+	background-image: none !important;
+}
+
+.bx-imbot-support24-question-list-items-dark::-webkit-scrollbar-thumb:hover {
+	border-width: 1px 1px 1px 2px;
+	border-color: rgb(74, 74, 74);
+	background-color: rgb(156, 156, 156);
+	background-image: none !important;
+}
+
+.bx-imbot-support24-question-list-items-dark::-webkit-scrollbar-track {
+	background-color: #3d3d3d;
+	border-width: 0;
+}
+
+.bx-imbot-support24-question-list-items-dark::-webkit-scrollbar-track:hover {
+	border-left: solid 1px rgb(74, 74, 74);
+	background-color: rgb(95, 95, 95);
+}
+
+.bx-imbot-support24-question-list-placeholder {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	position: relative;
+	right: -6px;
+}
+
+.bx-imbot-support24-question-list-placeholder-text {
+	font-family: "Open Sans", Helvetica, Arial, sans-serif;
+	font-size: 15px;
+	line-height: 26px;
+	color: #959ca4;
+}
+
+.bx-imbot-support24-question-list-placeholder-text-dark {
+	color: #c0c2c1;
+}
+
+.bx-imbot-support24-question-list-not-found-icon {
+	font-family: "Open Sans", Helvetica, Arial, sans-serif;
+	font-size: 29px;
+	line-height: 29px;
+	color: #bdc1c6;
+	margin-top: 37px;
+	margin-bottom: 18px;
+}
+
+.bx-imbot-support24-question-list-not-found-icon-dark {
+	color: #c0c2c1;
+}
+
+.bx-imbot-support24-question-list-loading-icon {
+	width: 39px;
+	height: 29px;
+	margin-top: 37px;
+	margin-bottom: 18px;
+}
+
+.bx-imbot-support24-question-list-tariff-lock {
+	width: 24px;
+	height: 24px;
+	background-image: url("data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xMi42OTE2IDE0LjcyNTlWMTYuNDcyM0gxMS4zMDg0VjE0LjcyNTlDMTEuMDU5NCAxNC41MjMxIDEwLjkwMDEgMTQuMjEzMSAxMC45MDAxIDEzLjg2NTZDMTAuOTAwMSAxMy4yNTQ1IDExLjM5MjUgMTIuNzU5IDEyIDEyLjc1OUMxMi42MDc0IDEyLjc1OSAxMy4wOTk5IDEzLjI1NDUgMTMuMDk5OSAxMy44NjU2QzEzLjA5OTkgMTQuMjEzMSAxMi45NDA1IDE0LjUyMzEgMTIuNjkxNiAxNC43MjU5Wk04Ljk4ODY3IDcuNjMwOTdDOC45ODg2NyA1Ljk1NzY2IDEwLjMzNjkgNC42MDExNyAxMS45OTk5IDQuNjAxMTdDMTMuNjYzIDQuNjAxMTcgMTUuMDExMiA1Ljk1NzY2IDE1LjAxMTIgNy42MzA5N1YxMC4xOTIySDguOTg4NjdWNy42MzA5N1pNMTYuNjAyNyAxMC4xOTIyVjcuNjMwOTdDMTYuNjAyNyA1LjA3MzMzIDE0LjU0MiAzIDEyIDNDOS40NTgwMyAzIDcuMzk3MzEgNS4wNzMzMyA3LjM5NzMxIDcuNjMwOTdWMTAuMTkyMkg2LjVDNi4yMjM4NiAxMC4xOTIyIDYgMTAuNDE2IDYgMTAuNjkyMlYxOC40NjI3QzYgMTguNzM4OCA2LjIyMzg2IDE4Ljk2MjcgNi41IDE4Ljk2MjdIMTcuNUMxNy43NzYxIDE4Ljk2MjcgMTggMTguNzM4OCAxOCAxOC40NjI3VjEwLjY5MjJDMTggMTAuNDE2IDE3Ljc3NjEgMTAuMTkyMiAxNy41IDEwLjE5MjJIMTYuNjAyN1oiIGZpbGw9IiM1MjVDNjkiLz4KPC9zdmc+Cg==");
+	margin-left: 7px !important;
+}

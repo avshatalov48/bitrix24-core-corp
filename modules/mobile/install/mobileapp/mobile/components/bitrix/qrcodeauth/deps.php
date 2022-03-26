@@ -1,2 +1,6 @@
 <?php
-return ['qrauth','qrauth/crm', 'rest'];
+return [
+	'extensions'=> [
+		'qrauth','qrauth/crm', 'rest'
+	]
+];

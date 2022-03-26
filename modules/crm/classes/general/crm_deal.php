@@ -50,6 +50,147 @@ class CAllCrmDeal
 		$this->cPerms = CCrmPerms::GetCurrentUserPermissions();
 	}
 
+	/**
+	 * Returns true if this class should invoke Service\Operation instead old API.
+	 * For a start it will return false by default. Please use this period to test your customization on compatibility with new API.
+	 * Later it will return true by default.
+	 * In several months this class will be declared as deprecated and old code will be deleted completely.
+	 *
+	 * @return bool
+	 */
+	public function isUseOperation(): bool
+	{
+		return static::isFactoryEnabled();
+	}
+
+	private static function isFactoryEnabled(): bool
+	{
+		return Crm\Settings\DealSettings::getCurrent()->isFactoryEnabled();
+	}
+
+	private function prepareOperation(Crm\Service\Operation $operation, array $options): void
+	{
+		CCrmEntityHelper::prepareOperationByOptions($operation, $options, $this->bCheckPermission);
+
+		//todo remove when all old entities use Operation. We will have to remove automation start in a number of different places
+
+		//since in old api automation is always started by hand when needed, there is a chance that workflows will be started twice
+		//when we move to Operation completely, it will be possible to remove this calls at all. but now it is just extra if-branches
+		$operation->disableAutomation();
+		$operation->disableBizProc();
+	}
+
+	/**
+	 * Is used to maintain backwards compatibility
+	 *
+	 * @param array $fields
+	 * @param bool $isNew
+	 */
+	private function prepareFieldsForOperation(array &$fields, bool $isNew): void
+	{
+		global $USER_FIELD_MANAGER;
+
+		$crmUserType = new \CCrmUserType($USER_FIELD_MANAGER, self::$sUFEntityID);
+
+		// use the same workarounds as old api
+		$crmUserType->PrepareUpdate($fields, ['IS_NEW' => $isNew]);
+
+		foreach ($crmUserType->GetAbstractFields() as $fieldName => $userField)
+		{
+			if (!isset($fields[$fieldName]))
+			{
+				continue;
+			}
+
+			$fieldValue = $fields[$fieldName];
+			// previously it was applied only for fields with type 'crm', expand it on other types for consistency
+			if ($userField['MULTIPLE'] === 'Y' && !is_iterable($fieldValue))
+			{
+				$fields[$fieldName] = [$fieldValue];
+			}
+		}
+
+		$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
+		if ($factory && array_key_exists('CATEGORY_ID', $fields))
+		{
+			$categoryId = (int)$fields['CATEGORY_ID'];
+			if (!$factory->isCategoryAvailable($categoryId))
+			{
+				$fields['CATEGORY_ID'] = $factory->createDefaultCategoryIfNotExist()->getId();
+			}
+		}
+	}
+
+	private function exposeFieldsAfterOperation(array $providedFields, \Bitrix\Crm\Item $item, bool $isAdd): array
+	{
+		static $alwaysExposed = [
+			'MODIFY_BY_ID',
+			'EXCH_RATE',
+			'ACCOUNT_CURRENCY_ID',
+			'OPPORTUNITY_ACCOUNT',
+			'TAX_VALUE_ACCOUNT',
+			'ID',
+		];
+
+		static $alwaysExposedOnAdd = [
+			'CREATED_BY_ID',
+			'ASSIGNED_BY_ID',
+			'TITLE',
+			'IS_RECURRING',
+			'CATEGORY_ID',
+			'STAGE_ID',
+			'STAGE_SEMANTIC_ID',
+			'IS_NEW',
+			'CURRENCY_ID',
+			'CLOSED',
+			'COMPANY_ID',
+		];
+
+		static $constantFieldsOnAdd = [
+			'~DATE_CREATE' => 'now()',
+			'~DATE_MODIFY' => 'now()',
+		];
+
+		static $constantFieldsOnUpdate = [
+			'~DATE_MODIFY' => 'now()',
+		];
+
+		$fieldsToExpose = array_merge($alwaysExposed, array_keys($providedFields));
+		if ($isAdd)
+		{
+			$fieldsToExpose = array_merge($alwaysExposed, $alwaysExposedOnAdd);
+		}
+
+		$result = [];
+		foreach ($item->getCompatibleData() as $fieldName => $value)
+		{
+			if (in_array($fieldName, $fieldsToExpose, true) || (mb_strpos($fieldName, 'UF_') === 0))
+			{
+				$result[$fieldName] = $value;
+			}
+		}
+
+		if ($isAdd)
+		{
+			$result = array_merge($result, $constantFieldsOnAdd);
+		}
+		else
+		{
+			$result = array_merge($result, $constantFieldsOnUpdate);
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param \Bitrix\Main\Error[] $errors
+	 * @return \CAdminException[]
+	 */
+	private function transformErrorsToCheckExceptions(array $errors): array
+	{
+		return \CCrmEntityHelper::transformOperationErrorsToCheckExceptions($errors);
+	}
+
 	// Service -->
 	public static function GetFieldCaption($fieldName)
 	{
@@ -60,13 +201,31 @@ class CAllCrmDeal
 		{
 			$result = Crm\Tracking\UI\Details::getFieldCaption($fieldName);
 		}
+		if (
+			!(is_string($result) && $result !== '')
+			&& Crm\Service\ParentFieldManager::isParentFieldName($fieldName)
+		)
+		{
+			$entityTypeId = Crm\Service\ParentFieldManager::getEntityTypeIdFromFieldName($fieldName);
+			$result = \CCrmOwnerType::GetDescription($entityTypeId);
+		}
 
 		return is_string($result) ? $result : '';
 	}
 	// Get Fields Metadata
 	public static function GetFieldsInfo()
 	{
-		if(!self::$FIELD_INFOS)
+		if (self::$FIELD_INFOS)
+		{
+			return self::$FIELD_INFOS;
+		}
+
+		if (static::isFactoryEnabled())
+		{
+			$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
+			self::$FIELD_INFOS = $factory->getFieldsInfoByMap();
+		}
+		else
 		{
 			self::$FIELD_INFOS = array(
 				'ID' => array(
@@ -189,6 +348,10 @@ class CAllCrmDeal
 					'TYPE' => 'user',
 					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
 				),
+				'MOVED_BY_ID' => [
+					'TYPE' => 'user',
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly],
+				],
 				'DATE_CREATE' => array(
 					'TYPE' => 'datetime',
 					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
@@ -197,6 +360,10 @@ class CAllCrmDeal
 					'TYPE' => 'datetime',
 					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
 				),
+				'MOVED_TIME' => [
+					'TYPE' => 'datetime',
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly],
+				],
 				'SOURCE_ID' => array(
 					'TYPE' => 'crm_status',
 					'CRM_STATUS_TYPE' => 'SOURCE'
@@ -222,11 +389,12 @@ class CAllCrmDeal
 				),
 				'ORIGIN_ID' => array(
 					'TYPE' => 'string'
-				)
+				),
 			);
 
 			// add utm fields
-			self::$FIELD_INFOS = self::$FIELD_INFOS + UtmTable::getUtmFieldsInfo();
+			self::$FIELD_INFOS += UtmTable::getUtmFieldsInfo();
+			self::$FIELD_INFOS += Crm\Service\Container::getInstance()->getParentFieldManager()->getParentFieldsInfo(\CCrmOwnerType::Deal);
 		}
 
 		return self::$FIELD_INFOS;
@@ -312,6 +480,9 @@ class CAllCrmDeal
 			'WEBFORM_ID' => array('FIELD' => 'L.WEBFORM_ID', 'TYPE' => 'int'),
 			'ORIGINATOR_ID' => array('FIELD' => 'L.ORIGINATOR_ID', 'TYPE' => 'string'), //EXTERNAL SYSTEM THAT OWNS THIS ITEM
 			'ORIGIN_ID' => array('FIELD' => 'L.ORIGIN_ID', 'TYPE' => 'string'), //ITEM ID IN EXTERNAL SYSTEM
+
+			'MOVED_BY_ID' => ['FIELD' => 'L.MOVED_BY_ID', 'TYPE' => 'int'],
+			'MOVED_TIME' => ['FIELD' => 'L.MOVED_TIME', 'TYPE' => 'datetime'],
 
 			// For compatibility only
 			'PRODUCT_ID' => array('FIELD' => 'L.PRODUCT_ID', 'TYPE' => 'string'),
@@ -410,6 +581,13 @@ class CAllCrmDeal
 
 		// add utm fields
 		$result = array_merge($result, UtmTable::getFieldsDescriptionByEntityTypeId(CCrmOwnerType::Deal));
+		$result = array_merge(
+			$result,
+			Crm\Service\Container::getInstance()->getParentFieldManager()->getParentFieldsSqlInfo(
+				CCrmOwnerType::Deal,
+				'L'
+			)
+		);
 
 		// add uf fields
 		if (
@@ -769,7 +947,7 @@ class CAllCrmDeal
 		}
 
 		$operationInfo = Crm\UI\Filter\EntityHandler::findFieldOperation('CATEGORY_ID', $arFilter);
-		if(is_array($operationInfo) && $operationInfo['OPERATION'] === '=')
+		if(is_array($operationInfo) && in_array($operationInfo['OPERATION'], ['=', 'IN']))
 		{
 			$categoryIDs = is_array($operationInfo['CONDITION'])
 				? $operationInfo['CONDITION'] : array($operationInfo['CONDITION']);
@@ -1461,7 +1639,7 @@ class CAllCrmDeal
 	{
 		global $DB;
 
-		if(!is_array($options))
+		if (!is_array($options))
 		{
 			$options = array();
 		}
@@ -1470,6 +1648,53 @@ class CAllCrmDeal
 		$this->checkExceptions = array();
 
 		$isRestoration = isset($options['IS_RESTORATION']) && $options['IS_RESTORATION'];
+
+		if ($this->isUseOperation())
+		{
+			$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
+			if (!$factory)
+			{
+				throw new Error('No factory for deal');
+			}
+			$item = $factory->createItem();
+
+			$this->prepareFieldsForOperation($arFields, true);
+			if (!$this->checkFieldsForOperation($arFields))
+			{
+				$arFields['RESULT_MESSAGE'] = &$this->LAST_ERROR;
+				return false;
+			}
+			$item->setFromCompatibleData($arFields);
+
+			if ($isRestoration)
+			{
+				$operation = $factory->getRestoreOperation($item);
+			}
+			elseif (isset($arFields['PERMISSION']) && $arFields['PERMISSION'] === 'IMPORT')
+			{
+				$operation = $factory->getImportOperation($item);
+			}
+			else
+			{
+				$operation = $factory->getAddOperation($item);
+			}
+
+			$this->prepareOperation($operation, $options);
+
+			$result = $operation->launch();
+			if ($result->isSuccess())
+			{
+				$arFields = $this->exposeFieldsAfterOperation($arFields, $item, true);
+
+				return $item->getId();
+			}
+
+			$this->checkExceptions = $this->transformErrorsToCheckExceptions($result->getErrors());
+			$this->LAST_ERROR = implode(', ', $result->getErrorMessages());
+			$arFields['RESULT_MESSAGE'] = &$this->LAST_ERROR;
+
+			return false;
+		}
 
 		$userID = isset($options['CURRENT_USER'])
 			? (int)$options['CURRENT_USER'] : CCrmSecurityHelper::GetCurrentUserID();
@@ -1492,6 +1717,15 @@ class CAllCrmDeal
 		{
 			unset($arFields['DATE_MODIFY']);
 			$arFields['~DATE_MODIFY'] = $DB->CurrentTimeFunction();
+		}
+
+		if(!($isRestoration && isset($arFields['MOVED_TIME'])))
+		{
+			unset($arFields['MOVED_TIME']);
+		}
+		if(!($isRestoration && isset($arFields['MOVED_BY_ID'])))
+		{
+			unset($arFields['MOVED_BY_ID']);
 		}
 
 		if($userID > 0)
@@ -1530,6 +1764,14 @@ class CAllCrmDeal
 			if (!isset($arFields['IS_RECURRING']))
 			{
 				$arFields['IS_RECURRING'] = 'N';
+			}
+			if (!isset($arFields['MOVED_BY_ID']))
+			{
+				$arFields['MOVED_BY_ID'] = (int)$userID;
+			}
+			if (!isset($arFields['MOVED_TIME']))
+			{
+				$arFields['MOVED_TIME'] = (new \Bitrix\Main\Type\DateTime())->toString();
 			}
 
 			//region Category
@@ -1887,6 +2129,12 @@ class CAllCrmDeal
 
 			// tracking of entity
 			Tracking\Entity::onAfterAdd(CCrmOwnerType::Deal, $ID, $arFields);
+			//region save parent relations
+			Crm\Service\Container::getInstance()->getParentFieldManager()->saveParentRelationsForIdentifier(
+				new Crm\ItemIdentifier(\CCrmOwnerType::Deal, $ID),
+				$arFields
+			);
+			//endregion
 
 			if($bUpdateSearch)
 			{
@@ -1990,7 +2238,8 @@ class CAllCrmDeal
 						"NOTIFY_TYPE" => IM_NOTIFY_FROM,
 						"NOTIFY_MODULE" => "crm",
 						"LOG_ID" => $logEventID,
-						"NOTIFY_EVENT" => "deal_add",
+						//"NOTIFY_EVENT" => "deal_add",
+						"NOTIFY_EVENT" => "changeAssignedBy",
 						"NOTIFY_TAG" => "CRM|DEAL_RESPONSIBLE|".$ID,
 						"NOTIFY_MESSAGE" => GetMessage("CRM_DEAL_RESPONSIBLE_IM_NOTIFY", Array("#title#" => "<a href=\"".$url."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx($arFields['TITLE'])."</a>")),
 						"NOTIFY_MESSAGE_OUT" => GetMessage("CRM_DEAL_RESPONSIBLE_IM_NOTIFY", Array("#title#" => htmlspecialcharsbx($arFields['TITLE'])))." (".$serverName.$url.")"
@@ -2039,23 +2288,50 @@ class CAllCrmDeal
 		return $result;
 	}
 
+	/**
+	 * When setting an incorrect value for date field, it will throw an exception. Old code expects to find a localized
+	 * message with error description in this case.
+	 *
+	 * Since there is no way to identify which field contains invalid value by an exception, we have to check values for
+	 * 'dangerous' fields before we set them to EntityObject.
+	 *
+	 * @param array $fields
+	 * @return bool
+	 */
+	private function checkFieldsForOperation(array $fields): bool
+	{
+		$errors = '';
+
+		if (!empty($fields['BEGINDATE']) && !CheckDateTime($fields['BEGINDATE']))
+		{
+			$errors .= GetMessage('CRM_ERROR_FIELD_INCORRECT', array('%FIELD_NAME%' => GetMessage('CRM_FIELD_BEGINDATE')))."<br />\n";
+		}
+
+		if (!empty($fields['CLOSEDATE']) && !CheckDateTime($fields['CLOSEDATE']))
+		{
+			$errors .= GetMessage('CRM_ERROR_FIELD_INCORRECT', array('%FIELD_NAME%' => GetMessage('CRM_FIELD_CLOSEDATE')))."<br />\n";
+		}
+
+		if (!empty($fields['EVENT_DATE']) && !CheckDateTime($fields['EVENT_DATE']))
+		{
+			$errors .= GetMessage('CRM_ERROR_FIELD_INCORRECT', array('%FIELD_NAME%' => GetMessage('CRM_FIELD_EVENT_DATE')))."<br />\n";
+		}
+
+		$this->LAST_ERROR .= $errors;
+
+		return empty($errors);
+	}
+
 	public function CheckFields(&$arFields, $ID = false, $options = array())
 	{
 		global $APPLICATION, $USER_FIELD_MANAGER;
 		$this->LAST_ERROR = '';
 		$this->checkExceptions = array();
 
+		$this->checkFieldsForOperation((array)$arFields);
+
 		if (($ID == false || isset($arFields['TITLE'])) && empty($arFields['TITLE']))
 			$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_IS_MISSING', array('%FIELD_NAME%' => GetMessage('CRM_DEAL_FIELD_TITLE')))."<br />\n";
-
-		if (!empty($arFields['BEGINDATE']) && !CheckDateTime($arFields['BEGINDATE']))
-			$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_INCORRECT', array('%FIELD_NAME%' => GetMessage('CRM_FIELD_BEGINDATE')))."<br />\n";
-
-		if (!empty($arFields['CLOSEDATE']) && !CheckDateTime($arFields['CLOSEDATE']))
-			$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_INCORRECT', array('%FIELD_NAME%' => GetMessage('CRM_FIELD_CLOSEDATE')))."<br />\n";
-
-		if (!empty($arFields['EVENT_DATE']) && !CheckDateTime($arFields['EVENT_DATE']))
-			$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_INCORRECT', array('%FIELD_NAME%' => GetMessage('CRM_FIELD_EVENT_DATE')))."<br />\n";
 
 		if(is_string($arFields['OPPORTUNITY']) && $arFields['OPPORTUNITY'] !== '')
 		{
@@ -2439,10 +2715,73 @@ class CAllCrmDeal
 		{
 			$options = array();
 		}
+		$options['IS_COMPARE_ENABLED'] = $bCompare;
 		$isSystemAction = isset($options['IS_SYSTEM_ACTION']) && $options['IS_SYSTEM_ACTION'];
 
 		$this->LAST_ERROR = '';
 		$this->checkExceptions = array();
+
+		if ($this->isUseOperation())
+		{
+			$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
+			if (!$factory)
+			{
+				throw new Error('No factory for deal');
+			}
+			$item = $factory->getItem($ID);
+			if (!$item)
+			{
+				return false;
+			}
+
+			$this->prepareFieldsForOperation($arFields, false);
+			if (!$this->checkFieldsForOperation($arFields))
+			{
+				$arFields['RESULT_MESSAGE'] = &$this->LAST_ERROR;
+				return false;
+			}
+			$item->setFromCompatibleData($arFields);
+
+			// region ship or unreserve
+			$processInventoryManagementResult = Crm\Reservation\EventsHandler\Deal::processInventoryManagement($item->getCompatibleData());
+			if ($processInventoryManagementResult->isSuccess())
+			{
+				$processInventoryManagementData = $processInventoryManagementResult->getData();
+				if (
+					isset($processInventoryManagementData['IS_EXECUTING'])
+					&& $processInventoryManagementData['IS_EXECUTING']
+				)
+				{
+					return true;
+				}
+			}
+			else
+			{
+				$this->LAST_ERROR = implode(', ', $processInventoryManagementResult->getErrorMessages());
+				$arFields['RESULT_MESSAGE'] = &$this->LAST_ERROR;
+
+				return false;
+			}
+			// endregion
+
+			$operation = $factory->getUpdateOperation($item);
+
+			$this->prepareOperation($operation, $options);
+
+			$result = $operation->launch();
+			if ($result->isSuccess())
+			{
+				$arFields = $this->exposeFieldsAfterOperation($arFields, $item, false);
+
+				return true;
+			}
+
+			$this->checkExceptions = $this->transformErrorsToCheckExceptions($result->getErrors());
+			$this->LAST_ERROR = implode(', ', $result->getErrorMessages());
+			$arFields['RESULT_MESSAGE'] = &$this->LAST_ERROR;
+
+			return false;
+		}
 
 		if(isset($options['CURRENT_USER']))
 		{
@@ -2461,15 +2800,13 @@ class CAllCrmDeal
 		if (!($arRow = $obRes->Fetch()))
 			return false;
 
-		if (isset($arFields['DATE_CREATE']))
-		{
-			unset($arFields['DATE_CREATE']);
-		}
-
-		if (isset($arFields['DATE_MODIFY']))
-		{
-			unset($arFields['DATE_MODIFY']);
-		}
+		unset(
+			$arFields['DATE_CREATE'],
+			$arFields['DATE_MODIFY'],
+			$arFields['CATEGORY_ID'],
+			$arFields['MOVED_BY_ID'],
+			$arFields['MOVED_TIME']
+		);
 
 		if(!$isSystemAction)
 		{
@@ -2513,11 +2850,6 @@ class CAllCrmDeal
 		else
 		{
 			//region Category, SemanticID and IsNew
-			//Category is read only
-			if(isset($arFields['CATEGORY_ID']))
-			{
-				unset($arFields['CATEGORY_ID']);
-			}
 
 			//Semantic ID depends on Stage ID and can't be assigned directly
 			$syncStageSemantics = isset($options['SYNCHRONIZE_STAGE_SEMANTICS']) && $options['SYNCHRONIZE_STAGE_SEMANTICS'];
@@ -2527,6 +2859,12 @@ class CAllCrmDeal
 					? self::GetSemanticID($arFields['STAGE_ID'], $arRow['CATEGORY_ID'])
 					: Bitrix\Crm\PhaseSemantics::UNDEFINED;
 				$arFields['IS_NEW'] = $arFields['STAGE_ID'] === self::GetStartStageID($arRow['CATEGORY_ID']) ? 'Y' : 'N';
+
+				if ($arFields['STAGE_ID'] !== $arRow['STAGE_ID'])
+				{
+					$arFields['MOVED_BY_ID'] = (int)$userID;
+					$arFields['MOVED_TIME'] = (new \Bitrix\Main\Type\DateTime())->toString();
+				}
 			}
 			else
 			{
@@ -2557,6 +2895,28 @@ class CAllCrmDeal
 			{
 				$arFields['ID'] = $ID;
 			}
+
+			// region ship or unreserve
+			$processInventoryManagementResult = Crm\Reservation\EventsHandler\Deal::processInventoryManagement($arFields);
+			if ($processInventoryManagementResult->isSuccess())
+			{
+				$processInventoryManagementData = $processInventoryManagementResult->getData();
+				if (
+					isset($processInventoryManagementData['IS_EXECUTING'])
+					&& $processInventoryManagementData['IS_EXECUTING']
+				)
+				{
+					return true;
+				}
+			}
+			else
+			{
+				$this->LAST_ERROR = implode(', ', $processInventoryManagementResult->getErrorMessages());
+				$arFields['RESULT_MESSAGE'] = &$this->LAST_ERROR;
+
+				return false;
+			}
+			// endregion
 
 			$enableSystemEvents = !isset($options['ENABLE_SYSTEM_EVENTS']) || $options['ENABLE_SYSTEM_EVENTS'] === true;
 			//region Before update event
@@ -3064,6 +3424,13 @@ class CAllCrmDeal
 			// update utm fields
 			UtmTable::updateEntityUtmFromFields(CCrmOwnerType::Deal, $ID, $arFields);
 
+			//region save parent relations
+			Crm\Service\Container::getInstance()->getParentFieldManager()->saveParentRelationsForIdentifier(
+				new Crm\ItemIdentifier(\CCrmOwnerType::Deal, $ID),
+				$arFields
+			);
+			//endregion
+
 			if($bUpdateSearch)
 			{
 				$arFilterTmp = Array('ID' => $ID);
@@ -3237,7 +3604,8 @@ class CAllCrmDeal
 								"NOTIFY_TYPE" => IM_NOTIFY_FROM,
 								"NOTIFY_MODULE" => "crm",
 								"LOG_ID" => $logEventID,
-								"NOTIFY_EVENT" => "deal_update",
+								//"NOTIFY_EVENT" => "deal_update",
+								"NOTIFY_EVENT" => "changeAssignedBy",
 								"NOTIFY_TAG" => "CRM|DEAL_RESPONSIBLE|".$ID,
 								"NOTIFY_MESSAGE" => GetMessage("CRM_DEAL_RESPONSIBLE_IM_NOTIFY", Array("#title#" => "<a href=\"".$url."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx($title)."</a>")),
 								"NOTIFY_MESSAGE_OUT" => GetMessage("CRM_DEAL_RESPONSIBLE_IM_NOTIFY", Array("#title#" => htmlspecialcharsbx($title)))." (".$serverName.$url.")"
@@ -3258,7 +3626,8 @@ class CAllCrmDeal
 								"NOTIFY_TYPE" => IM_NOTIFY_FROM,
 								"NOTIFY_MODULE" => "crm",
 								"LOG_ID" => $logEventID,
-								"NOTIFY_EVENT" => "deal_update",
+								//"NOTIFY_EVENT" => "deal_update",
+								"NOTIFY_EVENT" => "changeAssignedBy",
 								"NOTIFY_TAG" => "CRM|DEAL_RESPONSIBLE|".$ID,
 								"NOTIFY_MESSAGE" => GetMessage("CRM_DEAL_NOT_RESPONSIBLE_IM_NOTIFY", Array("#title#" => "<a href=\"".$url."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx($title)."</a>")),
 								"NOTIFY_MESSAGE_OUT" => GetMessage("CRM_DEAL_NOT_RESPONSIBLE_IM_NOTIFY", Array("#title#" => htmlspecialcharsbx($title)))." (".$serverName.$url.")"
@@ -3290,7 +3659,8 @@ class CAllCrmDeal
 									"NOTIFY_TYPE" => IM_NOTIFY_FROM,
 									"NOTIFY_MODULE" => "crm",
 									"LOG_ID" => $logEventID,
-									"NOTIFY_EVENT" => "deal_update",
+									//"NOTIFY_EVENT" => "deal_update",
+									"NOTIFY_EVENT" => "changeStage",
 									"NOTIFY_TAG" => "CRM|DEAL_PROGRESS|".$ID,
 									"NOTIFY_MESSAGE" => GetMessage("CRM_DEAL_PROGRESS_IM_NOTIFY_2", Array(
 										"#title#" => "<a href=\"".$url."\" class=\"bx-notifier-item-action\">".htmlspecialcharsbx($title)."</a>",
@@ -3339,7 +3709,6 @@ class CAllCrmDeal
 				}
 			}
 
-
 			if ($bResult && !$syncStageSemantics)
 			{
 				$item = Crm\Kanban\Entity::getInstance(self::$TYPE_NAME)
@@ -3368,6 +3737,28 @@ class CAllCrmDeal
 		if(!is_array($arOptions))
 		{
 			$arOptions = array();
+		}
+
+		if($this->isUseOperation())
+		{
+			$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
+			if(!$factory)
+			{
+				throw new Error('No factory for deal');
+			}
+			$item = $factory->getItem($ID);
+			if(!$item)
+			{
+				return false;
+			}
+
+			$operation = $factory->getDeleteOperation($item);
+
+			$this->prepareOperation($operation, $arOptions);
+
+			$result = $operation->launch();
+
+			return $result->isSuccess();
 		}
 
 		if(isset($arOptions['CURRENT_USER']))
@@ -3414,7 +3805,13 @@ class CAllCrmDeal
 			{
 				$err = GetMessage("MAIN_BEFORE_DEL_ERR").' '.$arEvent['TO_NAME'];
 				if ($ex = $APPLICATION->GetException())
-					$err .= ': '.$ex->GetString();
+				{
+					$err .= ': ' . $ex->GetString();
+					if ($ex->GetID() === 'system')
+					{
+						$err =  $ex->GetString();
+					}
+				}
 				$this->LAST_ERROR = $err;
 				$APPLICATION->ThrowException($this->LAST_ERROR);
 				return false;
@@ -3991,6 +4388,14 @@ class CAllCrmDeal
 		return CCrmProductRow::LoadRows('D', $ID);
 	}
 
+	/**
+	 * @return array
+	 */
+	public static function getSafeSaveRows(): array
+	{
+		return CCrmProductRow::getSafeSaveRows();
+	}
+
 	public static function SaveProductRows($ID, $arRows, $checkPerms = true, $regEvent = true, $syncOwner = true)
 	{
 		$result = CCrmProductRow::SaveRows('D', $ID, $arRows, null, $checkPerms, $regEvent, $syncOwner);
@@ -4066,31 +4471,23 @@ class CAllCrmDeal
 	}
 
 	/**
+	 * @deprecated
+	 *
 	 * Collects sum of shipments from orders related to deal $id
 	 * @param int $id Deal ID
 	 * @return int|float
 	 */
 	public static function calculateDeliveryTotal($id)
 	{
-		$total = 0;
-
-		$dbRes = Crm\Order\DealBinding::getList([
-			'select' => ['ORDER_ID'],
-			'filter' => [
-				'=DEAL_ID' => $id
-			]
-		]);
-
-		foreach ($dbRes as $binding)
+		$id = (int)$id;
+		if ($id <= 0)
 		{
-			$order = Crm\Order\Order::load($binding['ORDER_ID']);
-			if ($order)
-			{
-				$total += $order->getShipmentCollection()->getPriceDelivery();
-			}
+			return 0;
 		}
 
-		return $total;
+		$deal = new Crm\ItemIdentifier(\CCrmOwnerType::Deal, $id);
+
+		return Crm\Service\Container::getInstance()->getAccounting()->calculateDeliveryTotal($deal);
 	}
 
 	public static function GetCategoryID($ID)
@@ -4443,11 +4840,14 @@ class CAllCrmDeal
 		}
 
 		$canCreateInvoice = IsModuleInstalled('sale') && CCrmInvoice::CheckCreatePermission($userPermissions);
-		$canCreateQuote = CCrmQuote::CheckCreatePermission($userPermissions);
+		$userPermissions = Crm\Service\Container::getInstance()->getUserPermissions($userPermissions->GetUserID());
+		$canCreateSmartInvoice = $userPermissions->checkAddPermissions(\CCrmOwnerType::SmartInvoice);
+		$canCreateQuote = $userPermissions->checkAddPermissions(\CCrmOwnerType::Quote);
 
 		$params['CAN_CONVERT_TO_INVOICE'] = $canCreateInvoice;
+		$params['CAN_CONVERT_TO_SMART_INVOICE'] = $canCreateSmartInvoice;
 		$params['CAN_CONVERT_TO_QUOTE'] = $canCreateQuote;
-		$params['CAN_CONVERT'] = $params['CONVERT'] = ($canCreateInvoice || $canCreateQuote);
+		$params['CAN_CONVERT'] = $params['CONVERT'] = ($canCreateInvoice || $canCreateQuote || $canCreateSmartInvoice);
 		$params['CONVERSION_PERMITTED'] = true;
 	}
 
@@ -5658,4 +6058,3 @@ class CAllCrmDeal
 		return $result;
 	}
 }
-

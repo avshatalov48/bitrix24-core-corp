@@ -8,6 +8,15 @@ export type WaitingOptions = {
 	object: BaseObject,
 };
 
+export type CommonWarningOptions = {
+	container: HTMLElement,
+	targetNode: HTMLElement,
+	title: string,
+	fileName: string,
+	description: string,
+	linkToDownload: string,
+};
+
 export type EditorOptions = {
 	targetNode: HTMLElement,
 	saveButtonNode: HTMLElement,

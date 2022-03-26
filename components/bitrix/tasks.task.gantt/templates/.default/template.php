@@ -2,14 +2,14 @@
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 
-use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\UI\ScopeDictionary;
 
 $isIFrame = $_REQUEST['IFRAME'] == 'Y';
 
 Loc::loadMessages(__FILE__);
-CUtil::InitJSCore(array('popup', 'tooltip', 'gantt', 'tasks_util_query', 'task_info_popup', 'task-popups', 'CJSTask'));
+CUtil::InitJSCore(array('popup', 'tooltip', 'gantt', 'task_info_popup', 'task-popups', 'CJSTask'));
 
 \Bitrix\Main\UI\Extension::load([
 	'ui.counter',
@@ -25,15 +25,6 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/tasks/css/tasks.css");
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass . " " : "") . "page-one-column");
 
-if (\Bitrix\Tasks\Util\DisposableAction::needConvertTemplateFiles())
-{
-	$APPLICATION->IncludeComponent("bitrix:tasks.util.process",
-		'',
-		array(),
-		false,
-		array("HIDE_ICONS" => "Y")
-	);
-}
 $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", []);
 $APPLICATION->IncludeComponent(
 	'bitrix:main.calendar',
@@ -123,121 +114,22 @@ else
             ganttAux.unAttachedDeps = stillUnattached;
         },
         notificationRelease: BX.debounce(function () {
-            query.deleteAll();
-            query.add('task.notification.throttleRelease');
-            query.execute();
+			BX.ajax.runComponentAction('bitrix:tasks.task.gantt', 'notificationThrottleRelease', {
+				mode: 'class'
+			}).then(
+				function(response)
+				{
+
+				}.bind(this),
+				function(response)
+				{
+
+				}.bind(this)
+			);
         }, 1000 * 60)
     };
 
 	BX.Tasks.GanttActions.defaultPresetId = '<?=$arResult['DEFAULT_PRESET_KEY']?>';
-
-    var query = new BX.Tasks.Util.Query({
-        url: '/bitrix/components/bitrix/tasks.task.gantt/ajax.php'
-    });
-
-    query.bindEvent('executed', function (result)
-	{
-        if (!result.success || !result.data)
-        {
-            return showAjaxErrorPopup(result.clientProcessErrors, result.serverProcessErrors);
-        }
-
-        for (var k in result.data)
-        {
-            if (!result.data[k].SUCCESS && result.data[k].OPERATION !== 'task.dependence.add')
-            {
-                return showAjaxErrorPopup(result.data[k].ERRORS);
-            }
-
-            try
-			{
-                if (result.data[k].OPERATION == 'task.update')
-                {
-                    var shifted = result.data[k].RESULT.OPERATION_RESULT.SHIFT_RESULT;
-
-                    var lastDraggedTask = result.data[k].ARGUMENTS.id;
-
-                    for (var taskId in shifted)
-                    {
-                        if (parseInt(taskId) == parseInt(lastDraggedTask))
-                        {
-                            continue; // do not move the main task, it will be very annoying on slow connections
-                        }
-
-                        var task = ganttChart.getTaskById(taskId);
-                        if (task)
-                        {
-                            var s = shifted[task.id].START_DATE_PLAN_STRUCT;
-                            var e = shifted[task.id].END_DATE_PLAN_STRUCT;
-
-                            // backward correction
-                            ganttChart.updateTask(task.id, {
-                                dateStart: new Date(s.YEAR, s.MONTH - 1, s.DAY, s.HOUR, s.MINUTE, s.SECOND),
-                                dateEnd: new Date(e.YEAR, e.MONTH - 1, e.DAY, e.HOUR, e.MINUTE, e.SECOND)
-                            });
-                        }
-                    }
-                }
-                else if (result.data[k].OPERATION == 'task.dependence.add')
-                {
-                    if (!result.data[k].SUCCESS)
-                    {
-                        var from = result.data[k].ARGUMENTS.taskIdFrom;
-                        var to = result.data[k].ARGUMENTS.taskIdTo;
-
-                        var dep = ganttChart.getDependency(from, to);
-                        if (dep !== null)
-                        {
-                            ganttChart.removeDependency(dep);
-
-                            var messageDesc = [];
-                            var trialExpired = false;
-
-                            for (var m in result.data[k].ERRORS)
-                            {
-                                var error = result.data[k].ERRORS[m];
-
-                                if (error.TYPE != 'FATAL')
-                                {
-                                    continue;
-                                }
-
-                                if (error.CODE == 'ACTION_FAILED_REASON')
-                                {
-                                    messageDesc.push(error.MESSAGE);
-                                }
-
-                                if (error.CODE == 'TRIAL_EXPIRED')
-                                {
-                                    trialExpired = true;
-                                    break;
-                                }
-                            }
-
-                            if (trialExpired)
-                            {
-								BX.UI.InfoHelper.show('limit_tasks_gantt');
-                            }
-                            else
-							{
-                                if (messageDesc.length > 0)
-                                {
-                                    messageDesc = ': ' + messageDesc.join(', ').toLowerCase();
-                                }
-
-                                showAjaxErrorPopup(BX.message('TASKS_CANNOT_ADD_DEPENDENCY') + messageDesc);
-                            }
-                        }
-                    }
-                }
-            }
-            catch (e) {
-                BX.debug('operation failed');
-                BX.debug(result.data[k]);
-            }
-        }
-
-    });
 
     BX.ready(function () {
         ganttChart = new BX.GanttChart(
@@ -332,18 +224,17 @@ else
                         }
                     },
                     onTaskChange: function(updatedTasks) {
-                        query.deleteAll();
                         for (var i = 0; i < updatedTasks.length; i++)
 						{
                             if (updatedTasks[i].changes.length)
 							{
                                 var delta = {};
 
-                                if (BX.util.in_array("dateDeadline", updatedTasks[i].changes))
+                                if (BX.util.in_array('dateDeadline', updatedTasks[i].changes))
 								{
                                     delta['DEADLINE'] = tasksFormatDate(updatedTasks[i].dateDeadline);
                                 }
-                                if (BX.util.in_array("dateStart", updatedTasks[i].changes))
+                                if (BX.util.in_array('dateStart', updatedTasks[i].changes))
 								{
                                     delta['START_DATE_PLAN'] = tasksFormatDate(updatedTasks[i].dateStart);
 									if (updatedTasks[i].dateEnd)
@@ -351,7 +242,7 @@ else
 										delta['END_DATE_PLAN'] = tasksFormatDate(updatedTasks[i].dateEnd);
 									}
                                 }
-                                if (BX.util.in_array("dateEnd", updatedTasks[i].changes))
+                                if (BX.util.in_array('dateEnd', updatedTasks[i].changes))
 								{
                                     delta['END_DATE_PLAN'] = tasksFormatDate(updatedTasks[i].dateEnd);
 									if (updatedTasks[i].dateStart)
@@ -360,28 +251,34 @@ else
 									}
                                 }
 
-                                query.add(
-									'task.update',
+								BX.ajax.runComponentAction('bitrix:tasks.task', 'legacyUpdate', {
+									mode: 'class',
+									data: {
+										taskId: updatedTasks[i].task.id,
+										data: delta
+									}
+								}).then(function(response) {
+									if (
+										!response.status
+										|| response.status !== 'success'
+									)
 									{
-										id: updatedTasks[i].task.id,
-										data: delta,
-										parameters: {
-											RETURN_OPERATION_RESULT_DATA: true,
-											THROTTLE_MESSAGES: true
+										return;
+									}
+
+									void BX.ajax.runAction('tasks.analytics.hit', {
+										analyticsLabel: {
+											gantt: 'Y',
+											action: 'taskChangeDates',
+											taskId: response.data.ID
 										}
-									},
-									{
-                                    	code: 'task_update'
-                                	}
-								);
+									});
+								});
                             }
                         }
-                        query.execute();
                         ganttAux.notificationRelease();
                     },
                     onTaskMove: function (sourceId, targetId, before, newProjectId, newParentId) {
-                        query.deleteAll();
-
                         var data = {
                             sourceId: sourceId,
                             targetId: targetId,
@@ -397,37 +294,113 @@ else
                             data.newParentId = newParentId;
                         }
 
-                        query.add('task.sorting.move', {data: data}, {code: 'task_move'});
-                        query.execute();
+						BX.ajax.runComponentAction('bitrix:tasks.task.list', 'sortTask', {
+							mode: 'class',
+							data: {
+								data: data
+							}
+						}).then(
+							function(response)
+							{
+
+							}.bind(this),
+							function(response)
+							{
+
+							}.bind(this)
+						);
                     },
                     onDependencyAdd: function (dep) {
-                        if (dep !== null && dep.from && dep.to && dep.type >= 0) {
-                            query.deleteAll();
-                            query.add('task.dependence.add', {
-                                taskIdFrom: dep.from,
-                                taskIdTo: dep.to,
-                                linkType: dep.type
-                            });
-                            query.execute();
-                        }
+						if (
+							dep === null
+							|| !dep.from
+							|| !dep.to
+							|| dep.type <= 0
+						)
+						{
+							return;
+						}
+
+						BX.ajax.runComponentAction('bitrix:tasks.task.gantt', 'addDependence', {
+							mode: 'class',
+							data: {
+								taskFrom: dep.from,
+								taskTo: dep.to,
+								linkType: dep.type
+							}
+						}).then(
+							function(response) {
+								if (
+									!response.status
+									|| response.status !== 'success'
+								)
+								{
+									return;
+								}
+
+								void BX.ajax.runAction('tasks.analytics.hit', {
+									analyticsLabel: {
+										gantt: 'Y',
+										action: 'taskAddDependence',
+										taskFrom: dep.from,
+										taskTo: dep.to,
+										type: dep.type
+									}
+								});
+							},
+							function(response) {
+								BX.Tasks.alert(response.errors);
+							}
+						);
                     },
                     onDependencyDelete: function (dep) {
-                        if (dep !== null && dep.from && dep.to) {
-                            query.deleteAll();
-                            query.add('task.dependence.delete', {taskIdFrom: dep.from, taskIdTo: dep.to});
-                            query.execute();
-                        }
+						if (
+							dep === null
+							|| !dep.from
+							|| !dep.to
+						)
+						{
+							return;
+						}
+
+						BX.ajax.runComponentAction('bitrix:tasks.task.gantt', 'deleteDependence', {
+							mode: 'class',
+							data: {
+								taskFrom: dep.from,
+								taskTo: dep.to
+							}
+						}).then(function(response) {
+							void BX.ajax.runAction('tasks.analytics.hit', {
+								analyticsLabel: {
+									gantt: 'Y',
+									action: 'taskDeleteDependence',
+									taskFrom: dep.from,
+									taskTo: dep.to,
+									type: dep.type
+								}
+							});
+						});
                     },
                     onZoomChange: function (zoomLevel) {
-                        query.deleteAll();
-                        query.add('this.setviewstate', {
-                            state: {
-                                VIEW_PARAMETERS: {
-                                    ZOOM: zoomLevel
-                                }
-                            }
-                        });
-                        query.execute();
+						BX.ajax.runComponentAction('bitrix:tasks.task.gantt', 'setViewState', {
+							mode: 'class',
+							data: {
+								state: {
+									VIEW_PARAMETERS: {
+										ZOOM: zoomLevel
+									}
+								}
+							}
+						}).then(
+							function(response)
+							{
+
+							}.bind(this),
+							function(response)
+							{
+
+							}.bind(this)
+						);
                     }
                 }
             }
@@ -498,6 +471,13 @@ else
         ganttAux.tryAttachDeps(deps, true);
 
         ganttChart.draw();
+
+		void BX.ajax.runAction('tasks.analytics.hit', {
+			analyticsLabel: {
+				gantt: 'Y',
+				action: 'view'
+			}
+		});
     });
 
     // :(
@@ -537,64 +517,58 @@ if ($isBitrix24Template)
     $this->SetViewTarget('inside_pagetitle');
 }
 ?>
-<?php $APPLICATION->IncludeComponent(
+<?php
+$APPLICATION->IncludeComponent(
 	'bitrix:tasks.interface.header',
 	'',
-	array(
-		'FILTER_ID' => $arParams["FILTER_ID"],
-		'GRID_ID' => $arParams["GRID_ID"],
+	[
+		'FILTER_ID' => $arParams['FILTER_ID'],
+		'GRID_ID' => $arParams['GRID_ID'],
 		'FILTER' => $arResult['FILTER'],
 		'PRESETS' => $arResult['PRESETS'],
-
-		'SHOW_QUICK_FORM' => 'Y',
 		'GET_LIST_PARAMS' => $arResult['GET_LIST_PARAMS'],
 		'COMPANY_WORKTIME' => $arResult['COMPANY_WORKTIME'],
 		'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
-		'GANTT_MODE' => true,
 		'PROJECT_VIEW' => $arParams['PROJECT_VIEW'],
-
 		'USER_ID' => $arParams['USER_ID'],
 		'GROUP_ID' => $arParams['GROUP_ID'],
-
 		'MARK_ACTIVE_ROLE' => $arParams['MARK_ACTIVE_ROLE'],
 		'MARK_SECTION_ALL' => $arParams['MARK_SECTION_ALL'],
 		'MARK_SPECIAL_PRESET' => $arParams['MARK_SPECIAL_PRESET'],
 		'MARK_SECTION_PROJECTS' => $arParams['MARK_SECTION_PROJECTS'],
-
-
 		'PATH_TO_USER_TASKS' => $arParams['PATH_TO_USER_TASKS'],
 		'PATH_TO_USER_TASKS_TASK' => $arParams['PATH_TO_USER_TASKS_TASK'],
 		'PATH_TO_USER_TASKS_VIEW' => $arParams['PATH_TO_USER_TASKS_VIEW'],
 		'PATH_TO_USER_TASKS_REPORT' => $arParams['PATH_TO_USER_TASKS_REPORT'],
 		'PATH_TO_USER_TASKS_TEMPLATES' => $arParams['PATH_TO_USER_TASKS_TEMPLATES'],
 		'PATH_TO_USER_TASKS_PROJECTS_OVERVIEW' => $arParams['PATH_TO_USER_TASKS_PROJECTS_OVERVIEW'],
-
 		'PATH_TO_GROUP' => $arParams['PATH_TO_GROUP'],
 		'PATH_TO_GROUP_TASKS' => $arParams['PATH_TO_GROUP_TASKS'],
 		'PATH_TO_GROUP_TASKS_TASK' => $arParams['PATH_TO_GROUP_TASKS_TASK'],
 		'PATH_TO_GROUP_TASKS_VIEW' => $arParams['PATH_TO_GROUP_TASKS_VIEW'],
 		'PATH_TO_GROUP_TASKS_REPORT' => $arParams['PATH_TO_GROUP_TASKS_REPORT'],
-
 		'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'],
 		'PATH_TO_MESSAGES_CHAT' => $arParams['PATH_TO_MESSAGES_CHAT'],
 		'PATH_TO_VIDEO_CALL' => $arParams['PATH_TO_VIDEO_CALL'],
 		'PATH_TO_CONPANY_DEPARTMENT' => $arParams['PATH_TO_CONPANY_DEPARTMENT'],
-
+		'SHOW_QUICK_FORM' => 'Y',
 		'USE_EXPORT' => 'Y',
 		'USE_GROUP_BY_SUBTASKS' => 'Y',
-		'USE_GROUP_BY_GROUPS' => $arParams['NEED_GROUP_BY_GROUPS'] === 'Y' ? 'Y' : 'N',
+		'USE_GROUP_BY_GROUPS' => ($arParams['NEED_GROUP_BY_GROUPS'] === 'Y' ? 'Y' : 'N'),
 		'GROUP_BY_PROJECT' => $arResult['GROUP_BY_PROJECT'],
 		'SHOW_USER_SORT' => 'Y',
-		'SORT_FIELD'=>$arParams['SORT_FIELD'],
-		'SORT_FIELD_DIR'=>$arParams['SORT_FIELD_DIR'],
+		'SORT_FIELD' => $arParams['SORT_FIELD'],
+		'SORT_FIELD_DIR' => $arParams['SORT_FIELD_DIR'],
 		'USE_LIVE_SEARCH' => 'N',
-		'SHOW_SECTION_TEMPLATES'=>$arParams['GROUP_ID'] > 0 ? 'N' : 'Y',
-		'DEFAULT_ROLEID'=>$arParams['DEFAULT_ROLEID'],
-		'USE_AJAX_ROLE_FILTER'=>'Y'
-	),
+		'SHOW_SECTION_TEMPLATES' => ($arParams['GROUP_ID'] > 0 ? 'N' : 'Y'),
+		'DEFAULT_ROLEID' => $arParams['DEFAULT_ROLEID'],
+		'USE_AJAX_ROLE_FILTER' => 'Y',
+		'SCOPE' => ScopeDictionary::SCOPE_TASKS_GANTT,
+	],
 	$component,
-	array('HIDE_ICONS' => true)
-); ?>
+	['HIDE_ICONS' => true]
+);
+?>
 
 <?php
 if (is_array($arResult['ERROR']['FATAL']) && !empty($arResult['ERROR']['FATAL'])):

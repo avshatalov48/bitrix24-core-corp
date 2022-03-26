@@ -16,6 +16,7 @@ class Field
 	public const ERROR_CODE_REQUIRED_FIELD_ATTRIBUTE = 'CRM_FIELD_ERROR_REQUIRED';
 	public const ERROR_CODE_PRODUCTS_NOT_FETCHED = 'CRM_FIELD_ERROR_PRODUCTS_NOT_FETCHED';
 	public const ERROR_CODE_VALUE_NOT_VALID = 'CRM_FIELD_ERROR_VALUE_NOT_VALID';
+	public const ERROR_CODE_CATEGORY_NOT_AVAILABLE = 'CRM_FIELD_ERROR_CATEGORY_NOT_AVAILABLE';
 
 	public const MESSAGE_FIELD_VALUE_REQUIRED = 'CRM_FIELD_VALUE_REQUIRED_ERROR';
 	public const MESSAGE_FIELD_VALUE_NOT_UNIQUE = 'CRM_FIELD_NOT_UNIQUE_ERROR';
@@ -32,6 +33,7 @@ class Field
 	public const TYPE_USER = 'user';
 	public const TYPE_FILE = 'file';
 	public const TYPE_LOCATION = 'location';
+	public const TYPE_CRM_CATEGORY = 'crm_category';
 	public const TYPE_CRM_STATUS = 'crm_status';
 	public const TYPE_CRM_CURRENCY = 'crm_currency';
 	public const TYPE_CRM_COMPANY = 'crm_company';
@@ -39,6 +41,7 @@ class Field
 	public const TYPE_CRM_LEAD = 'crm_lead';
 	public const TYPE_CRM_DEAL = 'crm_deal';
 	public const TYPE_CRM_QUOTE = 'crm_quote';
+	public const TYPE_CRM_PRODUCT_ROW = 'crm_product_row';
 	public const TYPE_CRM_ENTITY = 'crm_entity';
 
 	public const VALUE_TYPE_PLAIN_TEXT = 'text';
@@ -59,6 +62,7 @@ class Field
 	protected $userField;
 	/** @var string|null */
 	protected $crmStatusType;
+	protected $valueType;
 
 	public function __construct(string $name, array $description)
 	{
@@ -68,6 +72,7 @@ class Field
 		$this->attributes = $description['ATTRIBUTES'] ?? [];
 		$this->settings = $description['SETTINGS'] ?? [];
 		$this->userField = $description['USER_FIELD'] ?? [];
+		$this->valueType = $description['VALUE_TYPE'] ?? null;
 		$this->crmStatusType = isset($description['CRM_STATUS_TYPE']) ? (string)$description['CRM_STATUS_TYPE'] : null;
 
 		Loc::loadMessages(__FILE__);
@@ -238,8 +243,24 @@ class Field
 			return true;
 		}
 
+		if (
+			$this->type === static::TYPE_CRM_CATEGORY
+			&& ($fieldValue === 0 || $fieldValue === "0")
+		)
+		{
+			return false;
+		}
+
 		// Interpret bool 'false' as non-empty for boolean type
 		if ($this->type === static::TYPE_BOOLEAN && (bool)$fieldValue === false)
+		{
+			return false;
+		}
+
+		if (
+			($this->type === static::TYPE_INTEGER || $this->type === static::TYPE_DOUBLE)
+			&& ($fieldValue === 0 || $fieldValue === 0.0 || $fieldValue === "0" || $fieldValue === "0.0" || $fieldValue === "0,0")
+		)
 		{
 			return false;
 		}
@@ -314,6 +335,11 @@ class Field
 	public function getUserField(): array
 	{
 		return $this->userField;
+	}
+
+	public function getValueType(): ?string
+	{
+		return $this->valueType;
 	}
 
 	/**
@@ -392,6 +418,16 @@ class Field
 	}
 
 	/**
+	 * Return true if this field has 'Progress' attribute
+	 *
+	 * @return bool
+	 */
+	public function isProgress(): bool
+	{
+		return in_array(\CCrmFieldInfoAttr::Progress, $this->getAttributes(), true);
+	}
+
+	/**
 	 * Get data about this field as array.
 	 *
 	 * @return array
@@ -404,6 +440,7 @@ class Field
 			'ATTRIBUTES' => $this->getAttributes(),
 			'SETTINGS' => $this->getSettings(),
 			'USER_FIELD' => $this->getUserField(),
+			'VALUE_TYPE' => $this->valueType,
 		];
 
 		if (!is_null($this->getCrmStatusType()))
@@ -495,5 +532,12 @@ class Field
 				'fieldName' => $this->getName(),
 			]
 		);
+	}
+
+	protected function getFactoryNotFoundError(int $entityTypeId): Error
+	{
+		$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeId);
+
+		return new Error("Can not find factory for the entity type {$entityTypeName}");
 	}
 }

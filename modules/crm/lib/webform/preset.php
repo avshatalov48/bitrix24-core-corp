@@ -12,6 +12,7 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
 use Bitrix\Crm\Integration\UserConsent;
+use Bitrix\Crm\Service\WebForm\Scenario\BaseScenario;
 
 Loc::loadMessages(__FILE__);
 
@@ -66,13 +67,13 @@ class Preset
 	{
 		return Internals\FormTable::getRow([
 			'select' => ['ID'],
-			'filter' => ['=IS_SYSTEM' => 'Y', '=XML_ID' => $xmlId],
+			'filter' => ['=IS_SYSTEM' => 'Y', '=XML_ID' => mb_substr($xmlId, 0, 50)],
 		]);
 	}
 
-	public function isInstalled($xmlId): ?bool
+	public function isInstalled($xmlId): bool
 	{
-		return $this->getInstalled($xmlId) ? true : false;
+		return (bool)$this->getInstalled($xmlId);
 	}
 
 	public function install(): bool
@@ -206,7 +207,7 @@ class Preset
 				'RESULT_SUCCESS_TEXT' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_RESULT_SUCCESS_TEXT'),
 				'RESULT_FAILURE_TEXT' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_RESULT_FAILURE_TEXT'),
 				'ENTITY_SCHEME' => (string) (self::isLeadEnabled() ? Entity::ENUM_ENTITY_SCHEME_LEAD : Entity::ENUM_ENTITY_SCHEME_DEAL),
-				//'TEMPLATE_ID' => Helper::ENUM_TEMPLATE_LIGHT,
+				'TEMPLATE_ID' => BaseScenario::SCENARIO_CONTACTS,
 				'COPYRIGHT_REMOVED' => 'N',
 				'IS_PAY' => 'N',
 				'DUPLICATE_MODE' => ResultEntity::DUPLICATE_CONTROL_MODE_MERGE,
@@ -261,7 +262,7 @@ class Preset
 				'RESULT_SUCCESS_TEXT' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_RESULT_SUCCESS_TEXT'),
 				'RESULT_FAILURE_TEXT' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_RESULT_FAILURE_TEXT'),
 				'ENTITY_SCHEME' => (string) (self::isLeadEnabled() ? Entity::ENUM_ENTITY_SCHEME_LEAD : Entity::ENUM_ENTITY_SCHEME_DEAL),
-				//'TEMPLATE_ID' => Helper::ENUM_TEMPLATE_LIGHT,
+				'TEMPLATE_ID' => BaseScenario::SCENARIO_FEEDBACK,
 				'COPYRIGHT_REMOVED' => 'N',
 				'IS_PAY' => 'N',
 				'DUPLICATE_MODE' => ResultEntity::DUPLICATE_CONTROL_MODE_MERGE,
@@ -365,9 +366,9 @@ class Preset
 			]
 		] + $list[0];
 
-		if (Loader::includeModule('voximplant'))
+		if (Callback::canUse())
 		{
-			$callbackNumbers = Callback::getPhoneNumbers();
+			$callbackNumbers = array_slice(Callback::getPhoneNumbers(), 0, 10);
 			foreach($callbackNumbers as $number)
 			{
 				$list[] = self::getCallback($number['CODE'], $number['NAME']);
@@ -397,7 +398,7 @@ class Preset
 			'RESULT_SUCCESS_TEXT' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_CB_RESULT_SUCCESS_TEXT'),
 			'RESULT_FAILURE_TEXT' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_RESULT_FAILURE_TEXT'),
 			'ENTITY_SCHEME' => (string) (self::isLeadEnabled() ? Entity::ENUM_ENTITY_SCHEME_LEAD : Entity::ENUM_ENTITY_SCHEME_DEAL),
-			//'TEMPLATE_ID' => Helper::ENUM_TEMPLATE_LIGHT,
+			'TEMPLATE_ID' => BaseScenario::SCENARIO_CALLBACK,
 			'COPYRIGHT_REMOVED' => 'N',
 			'IS_PAY' => 'N',
 			'IS_CALLBACK_FORM' => 'Y',
@@ -422,6 +423,44 @@ class Preset
 		];
 	}
 
+	private static function getWhatsApp(): array
+	{
+		return [
+			'XML_ID' => 'crm_preset_wa', //wa - whatsapp
+			'NAME' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_WA_NAME'),
+			'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_WA_CAPTION'),
+			'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_WA_DESCRIPTION'),
+			'RESULT_SUCCESS_TEXT' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_CB_RESULT_SUCCESS_TEXT'),
+			'RESULT_FAILURE_TEXT' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_RESULT_FAILURE_TEXT'),
+			'ENTITY_SCHEME' => (string) Entity::ENUM_ENTITY_SCHEME_DEAL,
+			'TEMPLATE_ID' => BaseScenario::SCENARIO_WHATSAPP,
+			'COPYRIGHT_REMOVED' => 'N',
+			'IS_PAY' => 'N',
+			'IS_WHATSAPP_FORM' => 'Y',
+			'DUPLICATE_MODE' => ResultEntity::DUPLICATE_CONTROL_MODE_MERGE,
+			'FORM_SETTINGS' => [
+				'DEAL_DC_ENABLED' => 'Y',
+			],
+			'BUTTON_CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_CB_BUTTON_CAPTION'),
+			'FIELDS' => [
+				[
+					'TYPE' => 'phone',
+					'CODE' => 'CONTACT_PHONE',
+					'CAPTION' => Loc::getMessage('CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_PHONE'),
+					'SORT' => 100,
+					'REQUIRED' => 'Y',
+					'MULTIPLE' => 'N',
+					'PLACEHOLDER' => '',
+				]
+			]
+		];
+	}
+
+	/**
+	 * Install version 2.
+	 *
+	 * @return void
+	 */
 	public static function installVersion2()
 	{
 		$formDb = Internals\FormTable::getList([
@@ -434,5 +473,23 @@ class Preset
 		{
 			Form::activate($form['ID'], true, self::getCurrentUserId());
 		}
+	}
+
+	/**
+	 * Install version 2.
+	 *
+	 * @return void
+	 */
+	public static function installWhatsAppDefaultForm()
+	{
+		$instance = new self();
+
+		$formData = self::getWhatsApp();
+		if($instance->isInstalled($formData['XML_ID']))
+		{
+			return;
+		}
+
+		$instance->addForm($formData);
 	}
 }

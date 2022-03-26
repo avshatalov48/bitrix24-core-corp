@@ -536,7 +536,7 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 				<?
 				break;
 			default:
-				if (\CCrmOwnerType::isPossibleDynamicTypeId($item['TREE_TYPE'])):
+				if (\CCrmOwnerType::isUseDynamicTypeBasedApproach($item['TREE_TYPE'])):
 					?>
 					<div class="crm-doc-cart<?= $selected ? ' crm-tree-active' : ''?><?= $counter == 1 ? ' crm-doc-cart-top' : ''?>">
 						<div class="crm-doc-cart-info">
@@ -552,12 +552,13 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 								]);
 								?>
 							</div>
+							<?CrmEntityTreeDrawActivity($item['ID'], $item['TREE_TYPE'], $result['ACTIVITY'], null, $result['DOCUMENT']);?>
 						</div>
 						<div class="crm-doc-cart-param">
 							<div class="crm-doc-info-progress">
 								<?if ($item['STAGE_ID']):
 									$typeStatusName = \CCrmOwnerType::ResolveName($item['TREE_TYPE']) . '_STAGE_' . $item['CATEGORY_ID'];
-									echo $renderProgressBar($item['STAGE_ID'], $statuses[$typeStatusName]);
+									echo $renderProgressBar($item['STAGE_ID'], $statuses[$typeStatusName] ?? []);
 								endif;?>
 								<table class="crm-doc-info-table">
 									<tr>

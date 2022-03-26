@@ -690,7 +690,7 @@ quickAnswersManager.prototype.setLastPage = function()
 
 quickAnswersManager.prototype._getPopupWindowItems = function()
 {
-	var popupContainer = BX('menu-popup-main_buttons_popup_search_category_list');
+	var popupContainer = BX('main_buttons_popup_search_category_list');
 	// BX.findChildren doesn't work here
 	if(popupContainer)
 	{
@@ -713,36 +713,39 @@ quickAnswersManager.prototype.bindMenuEvents = function()
 		setTimeout(BX.delegate(function()
 		{
 			var items = this._getPopupWindowItems();
-			var length = items.length;
-			for(var i = 0, index = 0; i < length; i++, index++)
+			if(items)
 			{
-				if(items[i].tagName != 'A')
+				var length = items.length;
+				for(var i = 0, index = 0; i < length; i++, index++)
 				{
-					index--;
-					continue;
-				}
-				if(this.sectionsByIndex.hasOwnProperty(index))
-				{
-					items[i].setAttribute('data-id', this.sectionsByIndex[index]);
-					BX.unbindAll(items[i]);
-					BX.bind(items[i], 'click', BX.delegate(function(e)
+					if(items[i].tagName != 'A')
 					{
-						var sectionId;
-						if(e.target.tagName != 'A')
+						index--;
+						continue;
+					}
+					if(this.sectionsByIndex.hasOwnProperty(index))
+					{
+						items[i].setAttribute('data-id', this.sectionsByIndex[index]);
+						BX.unbindAll(items[i]);
+						BX.bind(items[i], 'click', BX.delegate(function(e)
 						{
-							var parent = BX.findParent(e.target, {className: 'main-buttons-submenu-item'});
-							if(parent)
+							var sectionId;
+							if(e.target.tagName != 'A')
 							{
-								sectionId = parent.getAttribute('data-id');
+								var parent = BX.findParent(e.target, {className: 'main-buttons-submenu-item'});
+								if(parent)
+								{
+									sectionId = parent.getAttribute('data-id');
+								}
 							}
-						}
-						else
-						{
-							sectionId = e.target.getAttribute('data-id');
-						}
-						sectionId = sectionId || 0;
-						this.setSearchSection(sectionId, true)
-					}, this));
+							else
+							{
+								sectionId = e.target.getAttribute('data-id');
+							}
+							sectionId = sectionId || 0;
+							this.setSearchSection(sectionId, true)
+						}, this));
+					}
 				}
 			}
 		}, this), 100);

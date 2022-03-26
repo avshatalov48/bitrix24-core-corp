@@ -29,13 +29,17 @@ const Field = {
 						@input-focus="onFocus"
 						@input-key-down="onKeyDown"
 					></component>
-				</transition-group>	
+				</transition-group>
 					<a class="b24-form-control-add-btn"
 						v-if="field.multiple"
 						@click="addItem"
 					>
 						{{ field.messages.get('fieldAdd') }}
-					</a>	
+					</a>
+					<div
+						class="b24-form-control-comment"
+						v-if="field.hint && !field.hintOnFocus || field.hint && field.hintOnFocus && field.focused"
+						>{{field.hint}}</div>
 				</div>
 				<div v-if="!field.isComponentDuplicable">
 					<component v-bind:is="field.getComponentName()"
@@ -44,7 +48,11 @@ const Field = {
 						@input-blur="onBlur"
 						@input-focus="onFocus"
 						@input-key-down="onKeyDown"
-					></component>		
+					></component>
+					<div
+						class="b24-form-control-comment"
+						v-if="field.hint && !field.hintOnFocus || field.hint && field.hintOnFocus && field.focused"
+						>{{field.hint}}</div>
 				</div>
 			</div>
 		</transition>

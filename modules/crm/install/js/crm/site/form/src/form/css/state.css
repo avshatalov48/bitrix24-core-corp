@@ -2,7 +2,7 @@
 	position: absolute;
 	top: 0;
 	left: 0;
-	bottom: -5px;
+	bottom: 0;
 	right: 0;
 	background-color: #fff;
 }
@@ -12,7 +12,7 @@
 	position: absolute;
 	top: 0;
 	left: 0;
-	bottom: -5px;
+	bottom: 0;
 	right: 0;
 	background-color: #fff;
 	display: flex;
@@ -22,6 +22,18 @@
     overflow: hidden;
 	z-index: 15;
 }
+
+.b24-form-wrapper.b24-form-border-top .b24-form-state-container .b24-form-state,
+.b24-form-wrapper.b24-form-border-top .b24-form-state-container .b24-form-loader { top: -5px; }
+
+.b24-form-wrapper.b24-form-border-right .b24-form-state-container .b24-form-state,
+.b24-form-wrapper.b24-form-border-right .b24-form-state-container .b24-form-loader { right: -5px; }
+
+.b24-form-wrapper.b24-form-border-bottom .b24-form-state-container .b24-form-state,
+.b24-form-wrapper.b24-form-border-bottom .b24-form-state-container .b24-form-loader { bottom: -5px; }
+
+.b24-form-wrapper.b24-form-border-left .b24-form-state-container .b24-form-state,
+.b24-form-wrapper.b24-form-border-left .b24-form-state-container .b24-form-loader { left: -5px; }
 
 /*region b24-form-loader*/
 div.b24-form-loader {

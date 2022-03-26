@@ -14,62 +14,22 @@ $name = $arResult['additionalParameters']['NAME'];
 <tr valign="top">
 	<td><?= Loc::getMessage('USER_TYPE_CRM_ENTITY_TYPE') ?>:</td>
 	<td>
-		<input
-			type="checkbox"
-			name="<?= $name ?>[LEAD]"
-			value="Y"
-			<?= ($arResult['entityTypeLead'] === 'Y' ? 'checked="checked"' : '') ?>
-		>
-		<?= Loc::getMessage('USER_TYPE_CRM_ENTITY_TYPE_LEAD') ?>
-		<br>
-		<input
-			type="checkbox"
-			name="<?= $name ?>[CONTACT]"
-			value="Y"
-			<?= ($arResult['entityTypeContact'] === 'Y' ? 'checked="checked"' : '') ?>
-		>
-		<?= Loc::getMessage('USER_TYPE_CRM_ENTITY_TYPE_CONTACT') ?>
-		<br>
-		<input
-			type="checkbox"
-			name="<?= $name ?>[COMPANY]"
-			value="Y"
-			<?= ($arResult['entityTypeCompany'] === 'Y' ? 'checked="checked"' : '') ?>
-		>
-		<?= Loc::getMessage('USER_TYPE_CRM_ENTITY_TYPE_COMPANY') ?>
-		<br>
-		<input
-			type="checkbox"
-			name="<?= $name ?>[DEAL]"
-			value="Y"
-			<?= ($arResult['entityTypeDeal'] === 'Y' ? 'checked="checked"' : '') ?>
-		>
-		<?= Loc::getMessage('USER_TYPE_CRM_ENTITY_TYPE_DEAL') ?>
-		<br>
-		<input
-			type="checkbox"
-			name="<?= $name ?>[ORDER]"
-			value="Y"
-			<?= ($arResult['entityTypeOrder'] === 'Y' ? 'checked="checked"' : '') ?>
-		>
-		<?= Loc::getMessage('USER_TYPE_CRM_ENTITY_TYPE_ORDER') ?>
-
 		<?php
-		$settings = $arResult['userField']['SETTINGS'];
-		foreach ($arResult['dynamicTypes'] as $dynamicId => $dynamicTitle)
-		{
-			$dynamicEntityType = \CCrmOwnerType::ResolveName($dynamicId);
+		$isFirst = true;
+		foreach ($arResult['entities'] as $entityType => $isChecked):
+			if (!$isFirst)
+			{
+				echo '<br />';
+			}
+			$isFirst = false;
 			?>
-			<br>
 			<input
 				type="checkbox"
-				name="<?= $name ?>[<?= \CCrmOwnerType::ResolveName($dynamicId) ?>]"
+				name="<?= $name ?>[<?= $entityType ?>]"
 				value="Y"
-				<?= ((isset($settings[$dynamicEntityType]) && $settings[$dynamicEntityType] === 'Y') ? 'checked' : '') ?>
+				<?= ($isChecked === 'Y' ? 'checked="checked"' : '') ?>
 			>
-			<?php
-			print \Bitrix\Main\Text\HtmlFilter::encode($dynamicTitle);
-		}
-		?>
+			<?= \Bitrix\Main\Text\HtmlFilter::encode($arResult['titles'][$entityType]) ?>
+		<?php endforeach;?>
 	</td>
 </tr>

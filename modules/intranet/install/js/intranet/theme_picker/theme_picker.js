@@ -224,8 +224,6 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 
 	applyTheme: function(themeId)
 	{
-		BX.onCustomEvent('OnThemePickerApplyTheme');
-
 		if (!BX.type.isNotEmptyString(themeId) || themeId === this.getAppliedThemeId())
 		{
 			return false;
@@ -236,7 +234,7 @@ BX.Intranet.Bitrix24.ThemePicker.prototype =
 		{
 			return false;
 		}
-
+		BX.Event.EventEmitter.emit('BX.Intranet.Bitrix24:ThemePicker:onThemeApply', {id: themeId, theme: theme});
 		this.applyThemeAssets(theme);
 		this.removeThemeAssets(this.getAppliedThemeId());
 		this.setAppliedThemeId(themeId);

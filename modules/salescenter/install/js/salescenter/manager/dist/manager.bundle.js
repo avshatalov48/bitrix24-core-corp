@@ -829,6 +829,16 @@ this.BX = this.BX || {};
 	      Manager.openHelper(event, 'redirect=detail&code=11274792', 'pay_deal');
 	    }
 	  }, {
+	    key: "openHowPayDynamicEntityWorks",
+	    value: function openHowPayDynamicEntityWorks(event) {
+	      Manager.openHelper(event, 'redirect=detail&code=11274792', 'pay_dynamic_entity');
+	    }
+	  }, {
+	    key: "openHowPaySmartInvoiceWorks",
+	    value: function openHowPaySmartInvoiceWorks(event) {
+	      Manager.openHelper(event, 'redirect=detail&code=11274792', 'pay_smart_invoice');
+	    }
+	  }, {
 	    key: "openFormPagesHelp",
 	    value: function openFormPagesHelp(event) {
 	      Manager.openHelper(event, 'redirect=detail&code=9606749', 'forms');

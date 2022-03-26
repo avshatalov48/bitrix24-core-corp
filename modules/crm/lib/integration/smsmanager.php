@@ -141,8 +141,9 @@ class SmsManager implements ICanSendMessage
 					'shortName' => $sender->getShortName(),
 					'canUse' => $sender->canUse(),
 					'isDemo' => $sender->isConfigurable() ? $sender->isDemo() : null,
-					'manageUrl' => $sender->isConfigurable() ?
-						'/crm/configs/sms/?sender='.$sender->getId() : ''
+					'manageUrl' => $sender->getManageUrl(),
+					'isTemplatesBased' => $sender->isConfigurable() ? $sender->isTemplatesBased() : false,
+					'templates' => null, // will be loaded asynchronously
 				);
 
 				if ($getFromList)

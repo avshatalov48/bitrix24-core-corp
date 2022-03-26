@@ -51,7 +51,7 @@ class WebForm extends Platform
 
 	public static function onWebFormDelete(Main\Event $event)
 	{
-		$id = (int)$event->getParameter('id');
+		$id = (int)$event->getParameter('id')['ID'];
 		if ($id > 0)
 		{
 			$webForm = static::getInstanceByCode(static::getCodeByFormId($id));

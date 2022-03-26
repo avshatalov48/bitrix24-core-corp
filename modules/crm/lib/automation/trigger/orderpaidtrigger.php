@@ -9,7 +9,10 @@ class OrderPaidTrigger extends BaseTrigger
 {
 	public static function isSupported($entityTypeId)
 	{
-		return $entityTypeId === \CCrmOwnerType::Deal;
+		return
+			$entityTypeId === \CCrmOwnerType::Deal
+			|| \CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId)
+		;
 	}
 
 	public static function getCode()

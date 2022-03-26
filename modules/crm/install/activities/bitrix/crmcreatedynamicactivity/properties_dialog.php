@@ -10,19 +10,19 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 $chosenEntityTypeId = (int)$dialog->getCurrentValue('dynamic_type_id', 0);
 $chosenEntityValues = $dialog->getCurrentValue('dynamic_entities_fields');
 
-$dynamicTypeIdField = $dialog->getMap()['DynamicTypeId'];
-$dynamicEntitiesFields = $dialog->getMap()['DynamicEntitiesFields']['Map'];
+$typeIdField = $dialog->getMap()['DynamicTypeId'];
+$entitiesFields = $dialog->getMap()['DynamicEntitiesFields']['Map'];
 ?>
 <tr>
-	<td align="right" width="40%"><?=htmlspecialcharsbx($dynamicTypeIdField['Name'])?>:</td>
+	<td align="right" width="40%"><?=htmlspecialcharsbx($typeIdField['Name'])?>:</td>
 	<td width="60%">
 		<?=
-		$dialog->getFieldTypeObject($dynamicTypeIdField)->renderControl(
+		$dialog->getFieldTypeObject($typeIdField)->renderControl(
 			[
 				'Form' => $dialog->getFormName(),
-				'Field' => $dynamicTypeIdField['FieldName']
+				'Field' => $typeIdField['FieldName']
 			],
-			$dialog->getCurrentValue($dynamicTypeIdField['FieldName']),
+			$dialog->getCurrentValue($typeIdField['FieldName']),
 			true,
 			0
 		)
@@ -32,7 +32,7 @@ $dynamicEntitiesFields = $dialog->getMap()['DynamicEntitiesFields']['Map'];
 
 <tr>
 	<td colspan="2">
-		<?php foreach ($dynamicEntitiesFields as $entityTypeId => $fields): ?>
+		<?php foreach ($entitiesFields as $entityTypeId => $fields): ?>
 			<table
 				id="ccda-fields-map-<?= $entityTypeId ?>"
 				<?= $entityTypeId !== $chosenEntityTypeId ? 'hidden' : ''?>
@@ -45,15 +45,12 @@ $dynamicEntitiesFields = $dialog->getMap()['DynamicEntitiesFields']['Map'];
 						<td align="right" width="40%"><?=htmlspecialcharsbx($field['Name'])?>:</td>
 						<td width="60%">
 							<?=
-							$dialog->getFieldTypeObject($field)->renderControl(
-								[
-									'Form' => $dialog->getFormName(),
-									'Field' => $field['FieldName']
-								],
-								$dialog->getCurrentValue($field['FieldName'], $chosenEntityValues[$fieldId]),
+							$dialog->renderFieldControl(
+								$field,
+								$dialog->getCurrentValue($field, $chosenEntityValues[$fieldId]),
 								true,
-								0
-							)
+								\Bitrix\Bizproc\FieldType::RENDER_MODE_DESIGNER
+							);
 							?>
 						</td>
 					</tr>

@@ -10,6 +10,19 @@ use Bitrix\Main\ORM\Fields\StringField;
 /**
  * Class RecyclebinFileTable
  * @package Bitrix\Recyclebin\Model
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_RecyclebinFile_Query query()
+ * @method static EO_RecyclebinFile_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_RecyclebinFile_Result getById($id)
+ * @method static EO_RecyclebinFile_Result getList(array $parameters = array())
+ * @method static EO_RecyclebinFile_Entity getEntity()
+ * @method static \Bitrix\Recyclebin\Internals\Models\EO_RecyclebinFile createObject($setDefaultValues = true)
+ * @method static \Bitrix\Recyclebin\Internals\Models\EO_RecyclebinFile_Collection createCollection()
+ * @method static \Bitrix\Recyclebin\Internals\Models\EO_RecyclebinFile wakeUpObject($row)
+ * @method static \Bitrix\Recyclebin\Internals\Models\EO_RecyclebinFile_Collection wakeUpCollection($rows)
  */
 final class RecyclebinFileTable extends Entity\DataManager
 {

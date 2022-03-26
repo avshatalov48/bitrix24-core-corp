@@ -110,9 +110,13 @@ final class PaymentTrigger extends BaseTrigger
 
 				if (($order = $this->payment->getOrder()) && $order instanceof Order)
 				{
-					if ($binding = $order->getDealBinding())
+					$binding = $order->getEntityBinding();
+					if (
+						$binding
+						&& $binding->getOwnerTypeId() === \CCrmOwnerType::Deal
+					)
 					{
-						$userData = $this->getDealUserData($this->getDeal($binding->getDealId()));
+						$userData = $this->getDealUserData($this->getDeal($binding->getOwnerId()));
 					}
 					elseif ($collection = $order->getContactCompanyCollection())
 					{

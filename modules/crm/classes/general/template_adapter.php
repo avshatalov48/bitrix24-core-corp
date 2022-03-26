@@ -11,17 +11,37 @@ class CCrmTemplateAdapter extends CCrmTemplateAdapterBase
 {
 	private static $MAP_BY_LANG = array();
 
+	protected $supportedTypes;
+
 	public function GetSupportedTypes()
 	{
-		return array(
-			CCrmOwnerType::Lead,
-			CCrmOwnerType::Contact,
-			CCrmOwnerType::Company,
-			CCrmOwnerType::Deal,
-			CCrmOwnerType::Invoice,
-			CCrmOwnerType::Quote,
-			CCrmOwnerType::System,
-		);
+		if ($this->supportedTypes === null)
+		{
+			$this->supportedTypes = [
+				CCrmOwnerType::Lead,
+				CCrmOwnerType::Contact,
+				CCrmOwnerType::Company,
+				CCrmOwnerType::Deal,
+				CCrmOwnerType::Invoice,
+				CCrmOwnerType::Quote,
+				CCrmOwnerType::System,
+				CCrmOwnerType::SmartInvoice,
+			];
+
+			$typesMap = \Bitrix\Crm\Service\Container::getInstance()->getDynamicTypesMap()->load([
+				'isLoadStages' => false,
+				'isLoadCategories' => false,
+			]);
+			foreach ($typesMap->getTypes() as $type)
+			{
+				if ($type->getIsClientEnabled())
+				{
+					$this->supportedTypes[] = $type->getEntityTypeId();
+				}
+			}
+		}
+
+		return $this->supportedTypes;
 	}
 	public function IsTypeSupported($typeID)
 	{
@@ -247,6 +267,123 @@ class CCrmTemplateAdapter extends CCrmTemplateAdapterBase
 					//array('id' => 'PERSONAL_PHONE', 'name' => getMessage('CRM_TEMPLATE_ADAPTER_SENDER_PERSONAL_PHONE')),
 				)
 			);
+		}
+		elseif (\CCrmOwnerType::isUseDynamicTypeBasedApproach($typeID))
+		{
+			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($typeID);
+			if (!$factory)
+			{
+				return null;
+			}
+			$hiddenFields = [
+				\Bitrix\Crm\Item::FIELD_NAME_LOCATION_ID,
+				\Bitrix\Crm\Item::FIELD_NAME_OPENED,
+				\Bitrix\Crm\Item::FIELD_NAME_UPDATED_BY,
+				\Bitrix\Crm\Item::FIELD_NAME_MOVED_BY,
+				\Bitrix\Crm\Item::FIELD_NAME_OBSERVERS,
+				\Bitrix\Crm\Item::FIELD_NAME_MYCOMPANY_ID,
+			];
+			$sorting = [
+				\Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_ACCOUNT_NUMBER => 10,
+				\Bitrix\Crm\Item::FIELD_NAME_TITLE => 20,
+				'PRICE' => 30,
+				'PRICE_FORMATED' => 40,
+				\Bitrix\Crm\Item::FIELD_NAME_CURRENCY_ID => 50,
+				'COMPANY' => 60,
+				'CONTACT' => 70,
+				\Bitrix\Crm\Item::FIELD_NAME_BEGIN_DATE => 80,
+				\Bitrix\Crm\Item::FIELD_NAME_CREATED_TIME => 90,
+				\Bitrix\Crm\Item::FIELD_NAME_UPDATED_TIME => 100,
+				'ASSIGNED_BY_FULL_NAME' => 110,
+				'ASSIGNED_BY_WORK_POSITION' => 120,
+				'CREATED_BY_FULL_NAME' => 130,
+				\Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_COMMENTS => 140,
+			];
+			$fields = [];
+			foreach ($factory->getFieldsCollection() as $field)
+			{
+				if ($field->isUserField()
+					|| $field->isHidden()
+					|| !$field->isDisplayed()
+					|| $field->isProgress()
+					|| in_array($field->getName(), $hiddenFields, true)
+				)
+				{
+					continue;
+				}
+				if (\Bitrix\Crm\Service\ParentFieldManager::isParentFieldName($field->getName()))
+				{
+					$fields[] = [
+						'id' => $field->getName(),
+						'name' => $field->getTitle(),
+						'typeId' => \Bitrix\Crm\Service\ParentFieldManager::getEntityTypeIdFromFieldName($field->getName()),
+						'sort' => $sorting[$field->getName()] ?? 500,
+					];
+				}
+				else
+				{
+					$fields[] = [
+						'id' => $field->getName(),
+						'name' => $field->getTitle(),
+						'sort' => $sorting[$field->getName()] ?? 500,
+					];
+				}
+			}
+			if ($factory->isClientEnabled())
+			{
+				$fields[] = [
+					'id' => 'CONTACT',
+					'name' => $factory->getFieldCaption(\Bitrix\Crm\Item::FIELD_NAME_CONTACT_ID),
+					'typeId' => \CCrmOwnerType::Contact,
+					'sort' => $sorting['CONTACT'] ?? 500,
+				];
+				$fields[] = [
+					'id' => 'COMPANY',
+					'name' => $factory->getFieldCaption(\Bitrix\Crm\Item::FIELD_NAME_COMPANY_ID),
+					'typeId' => \CCrmOwnerType::Company,
+					'sort' => $sorting['COMPANY'] ?? 500,
+				];
+			}
+			$fields[] = [
+				'id' => 'ASSIGNED_BY_FULL_NAME',
+				'name' => getMessage('CRM_TEMPLATE_ADAPTER_ASSIGNED_BY_FULL_NAME'),
+				'sort' => $sorting['ASSIGNED_BY_FULL_NAME'] ?? 500,
+			];
+			$fields[] = [
+				'id' => 'ASSIGNED_BY_WORK_POSITION',
+				'name' => getMessage('CRM_TEMPLATE_ADAPTER_ASSIGNED_BY_POST'),
+				'sort' => $sorting['ASSIGNED_BY_WORK_POSITION'] ?? 500,
+			];
+			$fields[] = [
+				'id' => 'CREATED_BY_FULL_NAME',
+				'name' => getMessage('CRM_TEMPLATE_ADAPTER_CREATED_BY_FULL_NAME'),
+				'sort' => $sorting['CREATED_BY_FULL_NAME'] ?? 500,
+			];
+			$fields[] = [
+				'id' => 'PRICE',
+				'name' => GetMessage('CRM_TEMPLATE_ADAPTER_PRICE'),
+				'sort' => $sorting['PRICE'] ?? 500,
+			];
+			$fields[] = [
+				'id' => 'PRICE_FORMATED',
+				'name' => GetMessage('CRM_TEMPLATE_ADAPTER_PRICE_FORMATED'),
+				'sort' => $sorting['PRICE_FORMATED'] ?? 500,
+			];
+			$fields[] = [
+				'id' => 'MY_COMPANY',
+				'typeId' => \CCrmOwnerType::Company,
+				'name' => $factory->getFieldCaption(Bitrix\Crm\Item::FIELD_NAME_MYCOMPANY_ID),
+				'sort' => $sorting['MY_COMPANY'] ?? 500,
+			];
+
+			\Bitrix\Main\Type\Collection::sortByColumn($fields, 'sort');
+
+			$ufEntityId = $factory->getUserFieldEntityId();
+			self::$MAP_BY_LANG[LANGUAGE_ID][$typeID] = [
+				'typeId' => $typeID,
+				'typeName' => $factory->getEntityName(),
+				'fields' => $fields,
+			];
 		}
 		else
 		{

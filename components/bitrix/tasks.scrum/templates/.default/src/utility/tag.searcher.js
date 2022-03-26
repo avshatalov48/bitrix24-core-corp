@@ -334,14 +334,14 @@ export class TagSearcher extends EventEmitter
 			this.tagSearchDialog.subscribe('onHide', () => {
 				inputObject.setTagsSearchMode(false);
 			});
+
+			inputObject.subscribeOnce('onMetaEnter', () => {
+				this.tagSearchDialog.hide();
+				input.focus();
+			});
 		}
 
 		inputObject.setTagsSearchMode(true);
-
-		inputObject.subscribeOnce('onMetaEnter', () => {
-			this.tagSearchDialog.hide();
-			input.focus();
-		});
 
 		this.tagSearchDialog.show();
 
@@ -374,16 +374,33 @@ export class TagSearcher extends EventEmitter
 				height: 210,
 				multiple: false,
 				dropdownMode: true,
+				searchOptions: {
+					allowCreateItem: true,
+					footerOptions: {
+						label: Loc.getMessage('TASKS_SCRUM_SEARCHER_ACTIONS_EPIC_ADD')
+					}
+				},
 				items: this.getEpicList(),
 				events: {
+					'Search:onItemCreateAsync': (event) => {
+						return new Promise((resolve) => {
+							const dialog = event.getTarget();
+							const { searchQuery } = event.getData();
+							this.emit('createEpic', searchQuery.getQuery());
+							dialog.hide();
+							input.focus();
+							this.epicSearchDialog = null;
+							resolve();
+						});
+					},
 					'Item:onSelect': (event: BaseEvent) => {
 						const selectedItem = event.getData().item;
 						const selectedHashEpic = '@' + selectedItem.getTitle();
 						input.value = input.value.replace(
-							enteredHashEpicName === '' ? '@' : new RegExp(TagSearcher.epicRegExp,'g'),
+							selectedHashEpic === '' ? '@' : new RegExp(TagSearcher.epicRegExp, 'g'),
 							''
 						);
-						input.value = input.value + ' ' + selectedHashEpic
+						input.value = input.value + selectedHashEpic
 						input.focus();
 						selectedItem.deselect();
 						inputObject.setEpic(this.getEpicByName(selectedItem.getTitle()));
@@ -394,15 +411,19 @@ export class TagSearcher extends EventEmitter
 			this.epicSearchDialog.subscribe('onHide', () => {
 				inputObject.setEpicSearchMode(false);
 			});
+
+			inputObject.subscribe('onMetaEnter', () => {
+				this.emit(
+					'createEpic',
+					this.epicSearchDialog.getSearchTab().getLastSearchQuery().getQuery()
+				);
+				this.epicSearchDialog.hide();
+				this.epicSearchDialog = null;
+				input.focus();
+			});
 		}
 
 		inputObject.setEpicSearchMode(true);
-
-		inputObject.subscribeOnce('onEnter', () => {
-			this.epicSearchDialog.hide();
-			input.value = input.value.replace(new RegExp(TagSearcher.epicRegExp,'g'), '');
-			input.focus();
-		});
 
 		this.epicSearchDialog.show();
 		this.epicSearchDialog.search(enteredHashEpicName);

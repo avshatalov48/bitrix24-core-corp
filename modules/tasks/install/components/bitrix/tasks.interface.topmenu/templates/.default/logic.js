@@ -121,6 +121,12 @@ BX.namespace('Tasks.Component');
 						roleButton.querySelector('.main-buttons-item-counter').innerText = this.getCounterValue(data[0][role].total);
 					}
 				}.bind(this));
+
+				var scrumButton = BX('tasks_panel_menu_view_scrum');
+				if (scrumButton)
+				{
+					scrumButton.querySelector('.main-buttons-item-counter').innerText = this.getCounterValue(data.scrum_total_comments);
+				}
 			},
 
 			getCounterValue: function(value)

@@ -181,10 +181,35 @@ class Config
 			switch ($options['type'])
 			{
 				case 'product':
+					/**
+					 * @var \CIBlockResult $iblockItems
+					 */
+					$iblockItems = \CIBlockElement::GetList(
+						["SORT"=>"DESC"],
+						[
+							'=IBLOCK_ID' => \CCrmCatalog::EnsureDefaultExists(),
+							'!==PREVIEW_PICTURE' => null,
+							'!==DETAIL_PICTURE' => null,
+						],
+						false,
+						[
+							'nTopCount' => 3
+						],
+					);
+					$items = [];
+
+					while ($item = $iblockItems->Fetch())
+					{
+						$items[] = [
+							'value' => $item['ID'],
+							'label' => $item['NAME'],
+							'price' => \CCrmProduct::getPrice($item['ID'])['PRICE'],
+						];
+					}
 					$options += [
 						'bigPic' => true,
 						'multiple' => true,
-						'items' => [],
+						'items' => $items,
 					];
 					break;
 				default:

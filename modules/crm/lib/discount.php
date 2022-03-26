@@ -85,6 +85,11 @@ class Discount
 	{
 		$price = doubleval($price);
 		$discountRate = doubleval($discountRate);
+		if ($discountRate === 100.0)
+		{
+			return 0.0;
+		}
+
 		return (100 * $price) / (100 - $discountRate);
 	}
 

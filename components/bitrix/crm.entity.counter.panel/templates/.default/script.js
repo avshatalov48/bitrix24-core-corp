@@ -176,11 +176,7 @@ if(typeof(BX.CrmEntityCounterPanel) === "undefined")
 				total += this._items[i].getValue();
 			}
 
-			var caption = BX.CrmMessageHelper.getCurrent().prepareEntityNumberDeclension(
-				total,
-				BX.prop.getObject(this._settings, "entityNumberDeclensions", {})
-			);
-
+			var caption = BX.Loc.getMessagePlural("CRM_" + BX.CrmEntityType.resolveName(this._entityTypeId), total);
 			this._totalInfo = { value: total, caption: caption };
 		},
 		refreshLayout: function()

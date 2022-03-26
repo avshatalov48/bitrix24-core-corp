@@ -10,15 +10,16 @@ namespace Bitrix\Crm\SiteButton\Channel;
 
 use Bitrix\Crm\SiteButton\Manager;
 use Bitrix\Main\Loader;
-use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\ImOpenLines\Common;
 use Bitrix\Imopenlines\Model\ConfigTable;
 use Bitrix\ImConnector;
 use Bitrix\ImOpenLines\LiveChatManager;
 use Bitrix\Imopenlines\Model\LivechatTable;
+use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\WebPacker;
 use Bitrix\Crm\Tracking;
+use Bitrix\Notifications;
 
 Loc::loadMessages(__FILE__);
 
@@ -293,6 +294,7 @@ class ChannelOpenLine implements iProvider
 		$sort = 400;
 		$type = self::getType();
 		$connectors = self::getConnectors($lineId);
+		$detectingDisabled = ['livechat', 'notifications'];
 
 		foreach ($connectors as $connector)
 		{
@@ -308,7 +310,7 @@ class ChannelOpenLine implements iProvider
 				'show' => null,
 				'hide' => null,
 				'tracking' => [
-					'detecting' => $connector['code'] !== 'livechat',
+					'detecting' => !in_array($connector['code'], $detectingDisabled, true),
 					'channel' => [
 						'code' => Tracking\Channel\Base::Imol,
 						'value' => $connector['code'],
@@ -316,7 +318,7 @@ class ChannelOpenLine implements iProvider
 				]
 			);
 
-			if ($connector['code'] == 'livechat')
+			if ($connector['code'] === 'livechat')
 			{
 				$liveChatManager = new LiveChatManager($lineId);
 				$widget['script'] = $liveChatManager->getWidget(
@@ -354,7 +356,48 @@ class ChannelOpenLine implements iProvider
 				);
 			}
 
+			// we need localized title and url for this connector
+			if ($connector['code'] === 'notifications')
+			{
+				if (!Loader::includeModule('notifications'))
+				{
+					continue;
+				}
+				if (!Notifications\Settings::isScenarioEnabled(Notifications\Settings::SCENARIO_VIRTUAL_WHATSAPP))
+				{
+					continue;
+				}
+
+				$portalCode = Notifications\Alias::getCodeForScenario(Notifications\Settings::SCENARIO_VIRTUAL_WHATSAPP);
+				$url = ImConnector\Tools\Connectors\Notifications::getVirtualWhatsappLink($portalCode, $lang);
+				$widgetParams = [
+					'url' => $url,
+					'messages' => ImConnector\Tools\Connectors\Notifications::getWidgetLocalization($lang),
+					'disclaimerUrl' => ImConnector\Tools\Connectors\Notifications::getWidgetDisclaimerUrl($lang),
+				];
+				$widgetParamsEncoded = Json::encode($widgetParams);
+				$widget['title'] = Loc::getMessage("CRM_BUTTON_MANAGER_OPENLINE_VIRTUAL_WHATSAPP_TITLE");
+				$widget['script'] = ImConnector\Tools\Connectors\Notifications::getWidgetScript();
+				$widget['show'] = [
+					'js' => [
+						'desktop' =>'BX.NotificationsWidgetLoader.init('.$widgetParamsEncoded.').then(function(){window.BX.NotificationsWidget.Instance.show();})',
+					],
+					'url' => [
+						'mobile' => $url,
+						'force' => true,
+					],
+				];
+				$widget['hide'] = 'window.BX.NotificationsWidget.Instance.close();';
+				$widget['freeze'] = true;
+				$widget['classList'] = array(
+					'ui-icon',
+					'ui-icon-service-' . ImConnector\Connector::getIconByConnector('notifications_virtual_wa'),
+					'connector-icon-45'
+				);
+			}
+
 			$widgets[] = $widget;
+
 		}
 
 		return $widgets;
@@ -398,7 +441,7 @@ class ChannelOpenLine implements iProvider
 				continue;
 			}
 
-			if (empty($connector['url']) && empty($connector['url_im']))
+			if (empty($connector['url']) && empty($connector['url_im']) && $code != 'notifications')
 			{
 				continue;
 			}
@@ -420,7 +463,7 @@ class ChannelOpenLine implements iProvider
 			$list[] = array(
 				'id' => $id,
 				'code' => $code,
-				'icon' => $iconCodeMap[$code],
+				'icon' => $connector['icon'] ?? $iconCodeMap[$code],
 				'title' => $title,
 				'name' => $connector['connector_name'],
 				'desc' => $connector['name'],

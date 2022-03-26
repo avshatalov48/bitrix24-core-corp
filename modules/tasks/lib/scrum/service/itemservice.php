@@ -12,9 +12,11 @@ use Bitrix\Main\ORM\Query;
 use Bitrix\Main\Result;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Socialnetwork\UserToGroupTable;
+use Bitrix\Tasks\Scrum\Form\EntityForm;
+use Bitrix\Tasks\Scrum\Form\ItemForm;
+use Bitrix\Tasks\Scrum\Form\ItemInfo;
 use Bitrix\Tasks\Scrum\Internal\EntityTable;
 use Bitrix\Tasks\Scrum\Internal\ItemTable;
-use Bitrix\Tasks\Scrum\Internal\ItemInfoColumn;
 
 class ItemService implements Errorable
 {
@@ -43,7 +45,7 @@ class ItemService implements Errorable
 		$this->errorCollection = new ErrorCollection;
 	}
 
-	public function createTaskItem(ItemTable $item, PushService $pushService = null): ItemTable
+	public function createTaskItem(ItemForm $item, PushService $pushService = null): ItemForm
 	{
 		try
 		{
@@ -67,7 +69,9 @@ class ItemService implements Errorable
 		}
 		catch (\Exception $exception)
 		{
-			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_ADD_ITEM));
+			$this->errorCollection->setError(
+				new Error($exception->getMessage(), self::ERROR_COULD_NOT_ADD_ITEM)
+			);
 		}
 
 		return $item;
@@ -180,9 +184,9 @@ class ItemService implements Errorable
 		return self::$taskIdsByEpicId[$epicId];
 	}
 
-	public function getItemById(int $itemId): ItemTable
+	public function getItemById(int $itemId): ItemForm
 	{
-		$item = ItemTable::createItemObject();
+		$item = new ItemForm();
 
 		$queryObject = ItemTable::getList([
 			'filter' => ['ID' => $itemId],
@@ -190,7 +194,7 @@ class ItemService implements Errorable
 		]);
 		if ($itemData = $queryObject->fetch())
 		{
-			$item = ItemTable::createItemObject($itemData);
+			$item->fillFromDatabase($itemData);
 		}
 
 		return $item;
@@ -198,7 +202,7 @@ class ItemService implements Errorable
 
 	/**
 	 * @param array $itemIds Item ids.
-	 * @return ItemTable[]
+	 * @return ItemForm[]
 	 */
 	public function getItemsByIds(array $itemIds): array
 	{
@@ -212,7 +216,9 @@ class ItemService implements Errorable
 			]);
 			while ($itemData = $queryObject->fetch())
 			{
-				$item = ItemTable::createItemObject($itemData);
+				$item = new ItemForm();
+
+				$item->fillFromDatabase($itemData);
 
 				$items[$item->getId()] = $item;
 			}
@@ -248,13 +254,15 @@ class ItemService implements Errorable
 		}
 		catch (\Exception $exception)
 		{
-			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_ITEM));
+			$this->errorCollection->setError(
+				new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_ITEM)
+			);
 		}
 
 		return [];
 	}
 
-	public function getItemBySourceId(int $sourceId): ItemTable
+	public function getItemBySourceId(int $sourceId): ItemForm
 	{
 		try
 		{
@@ -270,14 +278,17 @@ class ItemService implements Errorable
 			{
 				$itemId = $itemData['ID'];
 			}
+
 			return $this->getItemById($itemId);
 		}
 		catch (\Exception $exception)
 		{
-			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_ITEM));
+			$this->errorCollection->setError(
+				new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_ITEM)
+			);
 		}
 
-		return ItemTable::createItemObject();
+		return new ItemForm();
 	}
 
 	public function getItemIdsBySourceIds(
@@ -298,7 +309,7 @@ class ItemService implements Errorable
 			}
 			if ($active)
 			{
-				$filter['ACTIVE'] = 'Y';
+				$filter['=ACTIVE'] = 'Y';
 			}
 
 			$queryParams = [
@@ -338,7 +349,9 @@ class ItemService implements Errorable
 		}
 		catch (\Exception $exception)
 		{
-			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_ITEM));
+			$this->errorCollection->setError(
+				new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_ITEM)
+			);
 		}
 
 		return $itemIds;
@@ -368,7 +381,9 @@ class ItemService implements Errorable
 		}
 		catch (\Exception $exception)
 		{
-			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_ITEM));
+			$this->errorCollection->setError(
+				new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_ITEM)
+			);
 		}
 
 		return $itemIds;
@@ -429,7 +444,8 @@ class ItemService implements Errorable
 		{
 			foreach ($itemIds as $itemId)
 			{
-				$item = ItemTable::createItemObject();
+				$item = new ItemForm();
+
 				$item->setId($itemId);
 				$item->setEntityId($entityId);
 
@@ -438,7 +454,9 @@ class ItemService implements Errorable
 		}
 		catch (\Exception $exception)
 		{
-			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_MOVE_ITEM));
+			$this->errorCollection->setError(
+				new Error($exception->getMessage(), self::ERROR_COULD_NOT_MOVE_ITEM)
+			);
 		}
 	}
 
@@ -459,7 +477,7 @@ class ItemService implements Errorable
 		}
 	}
 
-	public function changeItem(ItemTable $item, PushService $pushService = null): bool
+	public function changeItem(ItemForm $item, PushService $pushService = null): bool
 	{
 		try
 		{
@@ -494,7 +512,7 @@ class ItemService implements Errorable
 		}
 	}
 
-	public function removeItem(ItemTable $item, PushService $pushService = null): bool
+	public function removeItem(ItemForm $item, PushService $pushService = null): bool
 	{
 		try
 		{
@@ -578,7 +596,9 @@ class ItemService implements Errorable
 		}
 		catch (\Exception $exception)
 		{
-			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_CHANGE_SORT));
+			$this->errorCollection->setError(
+				new Error($exception->getMessage(), self::ERROR_COULD_NOT_CHANGE_SORT)
+			);
 		}
 	}
 
@@ -608,7 +628,7 @@ class ItemService implements Errorable
 	 * The method returns active items by entity id.
 	 *
 	 * @param int $entityId Entity id.
-	 * @return ItemTable[]
+	 * @return ItemForm[]
 	 */
 	public function getTaskItemsByEntityId(int $entityId): array
 	{
@@ -623,7 +643,11 @@ class ItemService implements Errorable
 		$itemObjects = [];
 		foreach ($items as $item)
 		{
-			$itemObjects[] = ItemTable::createItemObject($item);
+			$itemForm = new ItemForm();
+
+			$itemForm->fillFromDatabase($item);
+
+			$itemObjects[] = $itemForm;
 		}
 
 		return $itemObjects;
@@ -631,7 +655,7 @@ class ItemService implements Errorable
 
 	/**
 	 * @param array $sourceIds
-	 * @return ItemInfoColumn[]
+	 * @return ItemInfo[]
 	 */
 	public function getItemsInfoBySourceIds(array $sourceIds): array
 	{
@@ -680,13 +704,13 @@ class ItemService implements Errorable
 	/**
 	 * Returns a hierarchy of children by a parent entity id.
 	 *
-	 * @param EntityTable $entity Entity object.
+	 * @param EntityForm $entity Entity object.
 	 * @param PageNavigation|null $nav If you need to navigation.
 	 * @param array $filteredSourceIds If you need to get filtered items.
-	 * @return array ItemTable[]
+	 * @return array ItemForm[]
 	 */
 	public function getHierarchyChildItems(
-		EntityTable $entity,
+		EntityForm $entity,
 		PageNavigation $nav = null,
 		array $filteredSourceIds = []
 	): array
@@ -695,7 +719,7 @@ class ItemService implements Errorable
 			'select' => ['*'],
 			'filter' => [
 				'ENTITY_ID'=> $entity->getId(),
-				'ACTIVE' => 'Y',
+				'=ACTIVE' => 'Y',
 			],
 			'order' => [
 				'SORT' => 'ASC',
@@ -728,9 +752,11 @@ class ItemService implements Errorable
 				break;
 			}
 
-			$itemObject = ItemTable::createItemObject($item);
+			$itemForm = new ItemForm();
 
-			$tree[] = $itemObject;
+			$itemForm->fillFromDatabase($item);
+
+			$tree[] = $itemForm;
 		}
 
 		if ($nav)
@@ -758,7 +784,9 @@ class ItemService implements Errorable
 		}
 		catch (\Exception $exception)
 		{
-			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_ITEM));
+			$this->errorCollection->setError(
+				new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_ITEM)
+			);
 		}
 
 		return $sumStoryPoints;
@@ -767,10 +795,10 @@ class ItemService implements Errorable
 	/**
 	 * The method returns an array of data in the required format for the client app.
 	 *
-	 * @param ItemTable $item Data object.
+	 * @param ItemForm $item Data object.
 	 * @return array
 	 */
-	public function getItemData(ItemTable $item): array
+	public function getItemData(ItemForm $item): array
 	{
 		return [
 			'id' => $item->getId(),
@@ -787,7 +815,7 @@ class ItemService implements Errorable
 	/**
 	 * The method returns an array of data in the required format for the client app.
 	 *
-	 * @param ItemTable[] $items Items.
+	 * @param ItemForm[] $items Items.
 	 * @return array
 	 */
 	public function getItemsData(array $items): array
@@ -824,6 +852,8 @@ class ItemService implements Errorable
 
 	private function setErrors(Result $result, string $code): void
 	{
-		$this->errorCollection->setError(new Error(implode('; ', $result->getErrorMessages()), $code));
+		$this->errorCollection->setError(
+			new Error(implode('; ', $result->getErrorMessages()), $code)
+		);
 	}
 }

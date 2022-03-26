@@ -1,4 +1,7 @@
-<?if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?
+if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+use Bitrix\Crm\Restriction\RestrictionManager;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -46,15 +49,10 @@ else
 
 CUtil::InitJSCore(array('ajax', 'tooltip'));
 
-$restriction = \Bitrix\Crm\Restriction\RestrictionManager::getHistoryViewRestriction();
-if(!$restriction->hasPermission())
+if (!RestrictionManager::isHistoryViewPermitted())
 {
-	$arResult['ERROR'] = $restriction->getHtml();
-	if(!is_string($arResult['ERROR']) || $arResult['ERROR'] === '')
-	{
-		$arResult['ERROR'] = GetMessage('CRM_PERMISSION_DENIED');
-	}
-	$this->IncludeComponentTemplate();
+	$this->__templateName = '.default';
+	$this->IncludeComponentTemplate('restrictions');
 	return;
 }
 
@@ -376,7 +374,7 @@ if (!$arResult['INTERNAL'] || $arResult['SHOW_INTERNAL_FILTER'])
 
 $arResult['HEADERS'] = array();
 $arResult['HEADERS'][] = array('id' => 'ID', 'name' => 'ID', 'sort' => 'id', 'default' => false, 'editable' => false);
-$arResult['HEADERS'][] = array('id' => 'DATE_CREATE', 'name' => GetMessage('CRM_COLUMN_DATE_CREATE'), 'sort' => '', 'default' => true, 'editable' => false, 'width'=>'140px');
+$arResult['HEADERS'][] = array('id' => 'DATE_CREATE', 'name' => GetMessage('CRM_COLUMN_DATE_CREATE'), 'sort' => 'date_create', 'default' => true, 'editable' => false, 'width'=>'140px');
 if ($arResult['EVENT_ENTITY_LINK'] == 'Y')
 {
 	$arResult['HEADERS'][] = array('id' => 'ENTITY_TYPE', 'name' => GetMessage('CRM_COLUMN_ENTITY_TYPE'), 'sort' => '', 'default' => true, 'editable' => false);
@@ -439,7 +437,7 @@ foreach ($arFilter as $k => $v)
 \Bitrix\Crm\UI\Filter\EntityHandler::internalize($arResult['FILTER'], $arFilter);
 
 $_arSort = $gridOptions->GetSorting(array(
-	'sort' => array('id' => 'desc'),
+	'sort' => array('date_create' => 'desc'),
 	'vars' => array('by' => 'by', 'order' => 'order')
 ));
 

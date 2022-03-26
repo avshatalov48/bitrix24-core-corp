@@ -149,7 +149,7 @@ class CCrmFields
 			),
 			'CRM_INVOICE'=> array(
 				'ID' =>'CRM_INVOICE',
-				'NAME' => GetMessage('CRM_FIELDS_INVOICE'),
+				'NAME' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Invoice),
 				'DESC' => GetMessage('CRM_FIELDS_INVOICE_DESC')
 			),
 			'ORDER' => array(
@@ -158,6 +158,13 @@ class CCrmFields
 				'DESC' => GetMessage('CRM_FIELDS_ORDER_DESC')
 			)
 		);
+
+		if (\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isSmartInvoiceEnabled())
+		{
+			$localization = \Bitrix\Crm\Service\Container::getInstance()->getLocalization();
+			$arEntityType['CRM_INVOICE']['DESC'] = $localization->appendOldVersionSuffix($arEntityType['CRM_INVOICE']['DESC']);
+		}
+
 		//DEFERRED: CustomType
 		//return array_merge($arEntityType, \Bitrix\Crm\Activity\CustomType::getUserFieldTypes());
 		return $arEntityType;
@@ -501,6 +508,11 @@ class CCrmFields
 				{
 					$dynamicTypeName = \CCrmOwnerType::ResolveName($dynamicId);
 					$sVal .= '<input type="checkbox" name="ENTITY_TYPE['.$dynamicTypeName.']" '.((isset($settings[$dynamicTypeName]) && $settings[$dynamicTypeName] === 'Y')  ? "checked": "").' value="Y"> '.Main\Text\HtmlFilter::encode($dynamicTitle).'<br/>';
+				}
+
+				if (\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isSmartInvoiceEnabled())
+				{
+					$sVal .= '<input type="checkbox" name="ENTITY_TYPE[' . \CCrmOwnerType::SmartInvoiceName . ']" '.((isset($settings[\CCrmOwnerType::SmartInvoiceName]) && $settings[\CCrmOwnerType::SmartInvoiceName] === 'Y')  ? "checked": "").' value="Y"> '.Main\Text\HtmlFilter::encode(\CCrmOwnerType::GetCategoryCaption(\CCrmOwnerType::SmartInvoice)).'<br/>';
 				}
 
 				$arFields[] = array(

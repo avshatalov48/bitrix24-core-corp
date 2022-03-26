@@ -2,6 +2,7 @@
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Config\Option;
 use \Bitrix\Main\Type\Date;
 use Bitrix\Bitrix24;
@@ -69,12 +70,11 @@ class CIntranetLicenseWidgetComponent extends CBitrixComponent
 
 	public function executeComponent(): void
 	{
-		if (!Loader::includeModule('bitrix24'))
-		{
-			return;
-		}
-
-		if (Loader::includeModule('extranet') && \CExtranet::isExtranetSite())
+		if (
+			!(CurrentUser::get()->getId() > 0)
+			|| !Loader::includeModule('bitrix24')
+			|| Loader::includeModule('extranet') && \CExtranet::isExtranetSite()
+		)
 		{
 			return;
 		}

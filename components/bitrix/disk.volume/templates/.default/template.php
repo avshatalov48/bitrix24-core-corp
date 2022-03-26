@@ -392,7 +392,7 @@ if ($arResult['Storage']['FILE_COUNT'] > 0)
 				action: '<?= $component::ACTION_PURIFY ?>',
 				queueStop: 'Y',
 				doNotShowModalAlert: true,
-				doNotFollowRedirect: true,
+				//doNotFollowRedirect: true,
 				after: function(){
 					BX.Disk.measureManager.progressBarHide();
 

@@ -10,7 +10,10 @@ class AttributesProvider
 {
 	protected $userId;
 	protected $userAttributes;
+	protected $userAttributesCodes;
 	protected $entityAttributes;
+
+	private const CACHE_TIME = 8640000; // 100 days
 
 	public function __construct(int $userId)
 	{
@@ -30,6 +33,16 @@ class AttributesProvider
 		}
 
 		return $this->userAttributes;
+	}
+
+	public function getUserAttributesCodes(): array
+	{
+		if (!$this->userAttributesCodes)
+		{
+			$this->userAttributesCodes = $this->loadUserAccessCodes();
+		}
+
+		return $this->userAttributesCodes;
 	}
 
 	public function getEntityAttributes(): array
@@ -53,7 +66,7 @@ class AttributesProvider
 		}
 
 		$userAttributes = $this->getUserAttributes();
-		$defaultPermission = $permissions[$permissionEntityType][$operation]['-'];
+		$defaultPermission = $permissions[$permissionEntityType][$operation]['-'] ?? UserPermissions::PERMISSION_NONE;
 		foreach (array_keys($permissions[$permissionEntityType][$operation]) as $statusFieldName)
 		{
 			if ($statusFieldName === '-' && count($permissions[$permissionEntityType][$operation]) == 1)
@@ -119,7 +132,7 @@ class AttributesProvider
 		return $attributesByUser;
 	}
 
-	public function loadEntityAttributes(): array
+	protected function loadEntityAttributes(): array
 	{
 		$result = [
 			'INTRANET' => [],
@@ -223,14 +236,53 @@ class AttributesProvider
 
 	protected function getUserAccessCodes(): array
 	{
-		$result = [];
-		$userAccessCodes = \CAccess::GetUserCodes($this->getUserId());
-		while ($accessCode = $userAccessCodes->Fetch())
+		$userId = $this->getUserId();
+
+		$cache = \Bitrix\Main\Application::getInstance()->getCache();
+
+		$cacheId = 'crm_user_access_codes_' . $userId . '_' . md5(serialize($this->getUserAttributesCodes()));
+
+		if ($cache->initCache(self::CACHE_TIME, $cacheId, '/crm/user_access_codes/'))
 		{
-			$result[] = $accessCode;
+			$result = $cache->getVars();
+		}
+		else
+		{
+			$cache->startDataCache();
+			$result = [];
+			$userAccessCodes = \CAccess::GetUserCodes($this->getUserId());
+			while ($accessCode = $userAccessCodes->Fetch())
+			{
+				// imchat generates too much useless codes. Skip them:
+				if ($accessCode['PROVIDER_ID'] !== 'imchat')
+				{
+					$result[] = $accessCode;
+				}
+			}
+			$cache->endDataCache($result);
 		}
 
 		return $result;
+	}
+
+	protected function loadUserAccessCodes(): array
+	{
+		$userId = $this->getUserId();
+
+		$access = new \CAccess();
+		$access->UpdateCodes(['USER_ID' => $userId]);
+		$userAccessCodes = $access->GetUserCodesArray($userId);
+
+		$usefulUserAccessCodes = [];
+		foreach ($userAccessCodes as $code)
+		{
+			if (mb_substr($code, 0, 4) !== 'CHAT') // code started from "CHAT" is useless
+			{
+				$usefulUserAccessCodes[] = $code;
+			}
+		}
+
+		return $usefulUserAccessCodes;
 	}
 
 	protected function getSubDepartmentsIds($departmentId): array

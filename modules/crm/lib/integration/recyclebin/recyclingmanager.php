@@ -14,13 +14,20 @@ class RecyclingManager
 			throw new Main\InvalidOperationException("Could not load module RecycleBin.");
 		}
 
-		return [
+		$entities = [
 			\CCrmOwnerType::Lead => Crm\Integration\Recyclebin\Lead::getEntityName(),
 			\CCrmOwnerType::Deal => Crm\Integration\Recyclebin\Deal::getEntityName(),
 			\CCrmOwnerType::Contact => Crm\Integration\Recyclebin\Contact::getEntityName(),
 			\CCrmOwnerType::Company => Crm\Integration\Recyclebin\Company::getEntityName(),
 			\CCrmOwnerType::Activity => Crm\Integration\Recyclebin\Activity::getEntityName()
 		];
+
+		if (Crm\Settings\InvoiceSettings::getCurrent()->isSmartInvoiceEnabled())
+		{
+			$entities[\CCrmOwnerType::SmartInvoice] = Crm\Integration\Recyclebin\SmartInvoice::getEntityName();
+		}
+
+		return $entities;
 	}
 
 	/**
@@ -38,28 +45,9 @@ class RecyclingManager
 			throw new Main\InvalidOperationException("Could not load module RecycleBin.");
 		}
 
-		if($entityTypeID === \CCrmOwnerType::Lead)
-		{
-			return Crm\Integration\Recyclebin\Lead::getEntityName();
-		}
-		elseif($entityTypeID === \CCrmOwnerType::Contact)
-		{
-			return Crm\Integration\Recyclebin\Contact::getEntityName();
-		}
-		elseif($entityTypeID === \CCrmOwnerType::Company)
-		{
-			return Crm\Integration\Recyclebin\Company::getEntityName();
-		}
-		elseif($entityTypeID === \CCrmOwnerType::Deal)
-		{
-			return Crm\Integration\Recyclebin\Deal::getEntityName();
-		}
-		elseif($entityTypeID === \CCrmOwnerType::Activity)
-		{
-			return Crm\Integration\Recyclebin\Activity::getEntityName();
-		}
+		$entities = static::getEntityNames();
 
-		return '';
+		return $entities[$entityTypeID] ?? '';
 	}
 
 	//region Access to RecycleBin module
@@ -152,7 +140,8 @@ class RecyclingManager
 			Crm\Integration\Recyclebin\Company::prepareSurveyInfo(),
 			Crm\Integration\Recyclebin\Deal::prepareSurveyInfo(),
 			Crm\Integration\Recyclebin\Activity::prepareSurveyInfo(),
-			Crm\Integration\Recyclebin\Dynamic::prepareSurveyInfo()
+			Crm\Integration\Recyclebin\Dynamic::prepareSurveyInfo(),
+			Crm\Integration\Recyclebin\SmartInvoice::prepareSurveyInfo(),
 		);
 
 		return new Main\EventResult(

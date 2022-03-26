@@ -257,20 +257,35 @@ class ContactMerger extends EntityMerger
 			);
 		}
 	}
+
+	/**
+	 * Unbind dependencies from seed entity and bind them to target entity
+	 * @param int $seedID Seed entity ID.
+	 * @param int $targID Target entity ID.
+	 * @return void
+	 */
 	protected function rebind($seedID, $targID)
 	{
+		$seedID = (int)$seedID;
+		$targID = (int)$targID;
+
 		//Skip companies if they were processed by map
 		if(!($this->map !== null && isset($this->map['COMPANY_IDS'])))
 		{
 			Binding\ContactCompanyTable::rebindAllCompanies($seedID, $targID);
 		}
 
-		Binding\DealContactTable::rebindAllDeals($seedID, $targID);
-		Binding\QuoteContactTable::rebindAllQuotes($seedID, $targID);
+		$relations = \Bitrix\Crm\Service\Container::getInstance()
+			->getRelationManager()
+			->getChildRelations(\CCrmOwnerType::Contact)
+		;
+		$itemFrom = new Crm\ItemIdentifier(\CCrmOwnerType::Contact, $seedID);
+		$itemTo = new Crm\ItemIdentifier(\CCrmOwnerType::Contact, $targID);
+		foreach ($relations as $relation)
+		{
+			$relation->replaceAllItemBindings($itemFrom, $itemTo);
+		}
 
-		\CCrmDeal::Rebind(\CCrmOwnerType::Contact, $seedID, $targID);
-		\CCrmQuote::Rebind(\CCrmOwnerType::Contact, $seedID, $targID);
-		\CCrmInvoice::Rebind(\CCrmOwnerType::Contact, $seedID, $targID);
 		\CCrmActivity::Rebind(\CCrmOwnerType::Contact, $seedID, $targID);
 		\CCrmLiveFeed::Rebind(\CCrmOwnerType::Contact, $seedID, $targID);
 		\CCrmSonetRelation::RebindRelations(\CCrmOwnerType::Contact, $seedID, $targID);

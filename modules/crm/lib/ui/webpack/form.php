@@ -227,4 +227,14 @@ class Form extends Webpack\Base
 
 		return $this;
 	}
+
+	/**
+	 * @return bool
+	 */
+	public function build()
+	{
+		$result = parent::build();
+		WebForm\Form::cleanCacheByTag($this->getId());
+		return $result;
+	}
 }

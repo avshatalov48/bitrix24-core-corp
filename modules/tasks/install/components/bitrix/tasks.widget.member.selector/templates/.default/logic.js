@@ -282,9 +282,14 @@ BX.namespace('Tasks.Component');
 				var data = this.option('data');
 				var items = [];
 
+				var value = null;
 				for (var i = 0; i < data.length; i++)
 				{
-					items.push(this.prepareItemData(data[i]));
+					value = this.prepareItemData(data[i]);
+					if (value)
+					{
+						items.push(value);
+					}
 				}
 
 				return items;
@@ -303,9 +308,14 @@ BX.namespace('Tasks.Component');
 					return;
 				}
 
+				var value = null;
 				for (var i = 0; i < data.length; i++)
 				{
-					items.push(this.prepareItemData(data[i]));
+					value = this.prepareItemData(data[i]);
+					if (value)
+					{
+						items.push(value);
+					}
 				}
 
 				return items;
@@ -365,6 +375,11 @@ BX.namespace('Tasks.Component');
 					{
 						id = data.id;
 					}
+				}
+
+				if (id <= 0)
+				{
+					return null;
 				}
 
 				var mode = this.option('mode');
@@ -545,9 +560,12 @@ BX.namespace('Tasks.Component');
 					value = value.data();
 				}
 
-				var item = this.getDialog().getItem(this.prepareItemData(value));
-				item && item.deselect();
-
+				value = this.prepareItemData(value);
+				if (value)
+				{
+					var item = this.getDialog().getItem(value);
+					item && item.deselect();
+				}
 				this.dialogCallback = true;
 			},
 
@@ -560,9 +578,13 @@ BX.namespace('Tasks.Component');
 
 				this.dialogCallback = false;
 
-				var item = this.getDialog().getItem(this.prepareItemData(value));
-				item && item.select(true);
+				value = this.prepareItemData(value);
 
+				if (value)
+				{
+					var item = this.getDialog().getItem(value);
+					item && item.select(true);
+				}
 				this.dialogCallback = true;
 			}
 		}

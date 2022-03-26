@@ -67,6 +67,7 @@ class Manager
 			const group = {
 				logic: depGroup.logic || 'or',
 				list: [],
+				typeId: depGroup.typeId || 0,
 			};
 			depGroup.list.forEach(dep => this.addDependence(dep, group));
 			return group;
@@ -143,8 +144,10 @@ class Manager
 		}).forEach(dep => {
 
 			let list;
-			if (dep.group && dep.group.logic === 'and')
+			let logicAnd = true;
+			if (dep.group && dep.group.typeId > 0)
 			{
+				logicAnd = dep.group.logic === 'and';
 				list = dep.group.list.map(dep => {
 					let field = this.#form.getFields().filter(field => dep.condition.target === field.name)[0];
 					return {dep, field};
@@ -156,17 +159,25 @@ class Manager
 			}
 
 			// 3.check value&operation
-			const isOpposite = list.some(({dep, field}) => {
-				let values = field.values();
+			const checkFunction = item => {
+				const dep = item.dep;
+				const field: BaseField = item.field;
+				const values = field.getComparableValues();
 				if (values.length === 0)
 				{
 					values.push('');
 				}
+
 				return values
 					.filter(value => this.compare(value, dep.condition.value, dep.condition.operation))
-					.length === 0;
-			});
+					.length === 0
+				;
+			};
 
+			const isOpposite = logicAnd
+				? list.some(checkFunction)
+				: list.every(checkFunction)
+			;
 
 			// 4. run action
 			this.getFieldsByTarget(dep.action.target).forEach(field => {

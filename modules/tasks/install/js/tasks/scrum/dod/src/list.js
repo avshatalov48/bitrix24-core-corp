@@ -78,13 +78,14 @@ export class List extends EventEmitter
 
 				this.tabs.setTypeStorage(this.typeStorage);
 
-				if (activeTypeId === 0)
+				const activeType = itemTypes.get(activeTypeId);
+				if (Type.isUndefined(activeType))
 				{
 					this.tabs.setActiveType(this.typeStorage.getNextType());
 				}
 				else
 				{
-					this.tabs.setActiveType(itemTypes.get(activeTypeId));
+					this.tabs.setActiveType(activeType);
 				}
 
 				if (this.isEmpty())
@@ -98,6 +99,9 @@ export class List extends EventEmitter
 				}
 
 				return this.render();
+			})
+			.catch((response) => {
+				this.requestSender.showErrorAlert(response);
 			})
 		;
 	}
@@ -118,6 +122,9 @@ export class List extends EventEmitter
 			.then((response) => {
 				loader.hide();
 				top.BX.Runtime.html(listNode, response.data.html);
+			})
+			.catch((response) => {
+				this.requestSender.showErrorAlert(response);
 			})
 		;
 	}
@@ -231,6 +238,9 @@ export class List extends EventEmitter
 					}
 				}
 			})
+			.catch((response) => {
+				this.requestSender.showErrorAlert(response);
+			})
 		;
 	}
 
@@ -301,7 +311,7 @@ export class List extends EventEmitter
 
 		treeStructure.getDescendants()
 			.forEach((checkList) => {
-				if (!checkList.checkIsComplete())
+				if (checkList.countTotalCount() > 0 && !checkList.checkIsComplete())
 				{
 					isAllToggled = false;
 				}

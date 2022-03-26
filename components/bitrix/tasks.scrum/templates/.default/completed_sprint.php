@@ -60,6 +60,7 @@ $APPLICATION->IncludeComponent(
 	['HIDE_ICONS' => 'Y']
 );
 
+$pathToBurnDown = str_replace('#group_id#', $arParams['GROUP_ID'], $arParams['PATH_TO_SCRUM_BURN_DOWN']);
 ?>
 
 <script>
@@ -74,6 +75,7 @@ $APPLICATION->IncludeComponent(
 			userId: '<?= (int)$arParams['USER_ID'] ?>',
 			groupId: '<?= (int)$arParams['GROUP_ID'] ?>',
 			views: <?= Json::encode($arResult['views']) ?>,
+			pathToBurnDown: '<?= \CUtil::JSEscape($pathToBurnDown)?>',
 			completedSprint: <?= Json::encode($arResult['completedSprint']) ?>,
 			filterId: '<?= $filterId ?>',
 			sprints: <?= Json::encode($arResult['sprints']) ?>

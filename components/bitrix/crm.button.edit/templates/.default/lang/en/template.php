@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_BUTTON_EDIT_AVATAR_LOADED"] = "Uploaded photos";
 $MESS["CRM_BUTTON_EDIT_AVATAR_PRESET"] = "Standard";
 $MESS["CRM_BUTTON_EDIT_BTN_CHANGE"] = "change";
@@ -39,7 +39,10 @@ $MESS["CRM_WEBFORM_EDIT_CHANNELS"] = "Connected channels";
 $MESS["CRM_WEBFORM_EDIT_CHANNEL_ADD"] = "create";
 $MESS["CRM_WEBFORM_EDIT_CHANNEL_ADD_DESC"] = "There are currently no active channels. Open preferences to enable channels.";
 $MESS["CRM_WEBFORM_EDIT_CHANNEL_EDIT"] = "configure";
+$MESS["CRM_WEBFORM_EDIT_CHANNEL_EDIT_FORM"] = "configure form";
+$MESS["CRM_WEBFORM_EDIT_CHANNEL_EDIT_WHATSAPP"] = "configure WhatsApp";
 $MESS["CRM_WEBFORM_EDIT_CHANNEL_SETUP"] = "Settings";
+$MESS["CRM_WEBFORM_EDIT_CHANNEL_SETUP_APPROVE"] = "If your WhatsApp is configured, click to reload the page";
 $MESS["CRM_WEBFORM_EDIT_COPY_TO_CLIPBOARD"] = "Copy to Clipboard";
 $MESS["CRM_WEBFORM_EDIT_DESC"] = "Choose channels to communicate with your clients. You can enable or disable channels as required.
 Customize widget design and layout.
@@ -99,4 +102,3 @@ $MESS["CRM_WEBFORM_EDIT_SHOW_VIEW"] = "View";
 $MESS["CRM_WEBFORM_EDIT_SITE_HELLO_TITLE"] = "Auto welcome message";
 $MESS["CRM_WEBFORM_EDIT_SITE_SCRIPT"] = "Widget code";
 $MESS["CRM_WEBFORM_EDIT_SITE_SCRIPT_TIP"] = "Copy code and paste it into your website template code before &lt;/body&gt; close tag.";
-?>

@@ -52,8 +52,6 @@ $MESS["CRM_CONFIGS_QOUTE"] = "Предложения";
 $MESS["CRM_CONFIGS_CONTACT"] = "Контакт";
 $MESS["CRM_CONFIGS_COMPANY"] = "Компания";
 $MESS["CRM_CONFIGS_INVOICE"] = "Счёт";
-$MESS["CRM_CONFIGS_DESCRIPTION_WHERE_TO_BEGIN"] = "Первоначальные настройки позволят подготовить CRM для работы с
-	вашим бизнесом. Задай свои справочники, единицы измерения для товаров, налоги, валюту и другие настройки.";
 $MESS["CRM_CONFIGS_DESCRIPTION_SETTINGS_FORMS_AND_REPORTS"] = "Создайте свои поля для любого документа CRM.
 	Укажите какие поля должны участвовать в аналитических отчетах.";
 $MESS["CRM_CONFIGS_DESCRIPTION_PRINTED_FORMS_OF_DOCUMENTS"] = "Реквизиты вашей компании, логотип, печать, подпись,

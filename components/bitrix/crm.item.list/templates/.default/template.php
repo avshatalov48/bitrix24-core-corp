@@ -8,7 +8,7 @@ use Bitrix\Main\Localization\Loc;
 \Bitrix\Main\UI\Extension::load(
 	[
 		'ui.dialogs.messagebox',
-		'crm_common'
+		'crm_common',
 	]
 );
 

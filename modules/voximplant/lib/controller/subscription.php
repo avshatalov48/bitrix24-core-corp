@@ -7,6 +7,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Error;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Voximplant\Model\NumberTable;
+use Bitrix\Voximplant\Security\Permissions;
 
 class Subscription extends Controller
 {
@@ -45,6 +46,12 @@ class Subscription extends Controller
 
 	public function enqueueDisconnectAction($subscriptionId)
 	{
+		if (!Permissions::createWithCurrentUser()->canModifyLines())
+		{
+			$this->addError(new Error("Permission denied", "permission_denied"));
+			return null;
+		}
+
 		$numbersInSubscription = NumberTable::getList([
 			'filter' => [
 				'=SUBSCRIPTION_ID' => $subscriptionId
@@ -90,6 +97,12 @@ class Subscription extends Controller
 
 	public function cancelDisconnectAction($number)
 	{
+		if (!Permissions::createWithCurrentUser()->canModifyLines())
+		{
+			$this->addError(new Error("Permission denied", "permission_denied"));
+			return null;
+		}
+
 		$row = NumberTable::getRow([
 			'filter' => [
 				'=NUMBER' => $number

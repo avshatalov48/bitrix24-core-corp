@@ -57,10 +57,6 @@ class Operator
 
 	/**
 	 * @return bool[]|false[]
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	private function checkAccess()
 	{
@@ -152,35 +148,30 @@ class Operator
 
 	/**
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
-	public function answer()
+	public function answer(): bool
 	{
+		$result = false;
+
 		$access = $this->checkAccess();
-		if (!$access['RESULT'])
+		if ($access['RESULT'])
 		{
-			return false;
+			$chat = new Chat($this->chatId);
+			$resultAnswer = $chat->answer($this->userId);
+
+			if ($resultAnswer->isSuccess())
+			{
+				$result = true;
+			}
 		}
 
-		$chat = new Chat($this->chatId);
-		$chat->answer($this->userId);
-
-		return true;
+		return $result;
 	}
 
 	/**
 	 * Skip the dialogue.
 	 *
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function skip()
 	{
@@ -248,13 +239,8 @@ class Operator
 	/**
 	 * @param bool $active
 	 * @return Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
-	public function setPinMode($active = true)
+	public function setPinMode(bool $active = true): Result
 	{
 		$result = new Result();
 
@@ -263,7 +249,7 @@ class Operator
 		{
 			$chat = new Chat($this->chatId);
 			$resultSetPinMode = $chat->setPauseFlag([
-				'ACTIVE' => $active,
+				'ACTIVE' => $active === true? 'Y': 'N',
 				'USER_ID' => $this->userId
 			]);
 

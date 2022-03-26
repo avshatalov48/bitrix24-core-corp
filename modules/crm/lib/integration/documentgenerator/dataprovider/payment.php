@@ -256,22 +256,16 @@ class Payment extends CrmEntityDataProvider
 	protected function loadProductsData()
 	{
 		$result = [];
-		$orderId = $this->getOrderId();
-		if ($orderId > 0)
+		if ($this->payment)
 		{
-			$dbRes = BasketTable::getList([
-				'filter' => [
-					'=ORDER_ID' => $orderId,
-				],
-			]);
-
-			while($basketItem = $dbRes->fetch())
+			$basketItems = $this->payment->getPayableItemCollection()->getBasketItems();
+			foreach ($basketItems as $basketItem)
 			{
 				$result[] = Order::getProductProviderDataByBasketItem(
-					$basketItem,
+					$basketItem->getEntityObject()->toArray(),
 					new ItemIdentifier(
-						\CCrmOwnerType::Order,
-						$orderId
+						\CCrmOwnerType::OrderPayment,
+						$this->payment->getId(),
 					),
 					$this->data['CURRENCY'] ?? \CCrmCurrency::GetDefaultCurrencyID()
 				);

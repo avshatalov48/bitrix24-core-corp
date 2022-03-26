@@ -179,7 +179,7 @@ class Notifier
 				'KEYBOARD' => $params['KEYBOARD'] ?? '',
 				'PARAMS' => [
 					ImBot\Bot\Network::MESSAGE_PARAM_ALLOW_QUOTE => 'Y',
-					ImBot\Bot\Network::MESSAGE_PARAM_MENU_ACTION => 'SKIP:MENU',
+					'IMB_MENU_ACTION' => 'SKIP:MENU', /** @see \Bitrix\Imbot\Bot\Mixin\MESSAGE_PARAM_MENU_ACTION */
 				],
 			]
 		);
@@ -237,7 +237,7 @@ class Notifier
 
 			if (!empty($params['ATTACH']))
 			{
-				$messageFields['ATTACH'] = \CIMMessageParamAttach::GetAttachByJson($params['ATTACH']);
+				$messageFields['ATTACH'] = \CIMMessageParamAttach::getAttachByJson($params['ATTACH']);
 			}
 
 			// feedback button
@@ -253,7 +253,7 @@ class Notifier
 				}
 				$keyboard['BOT_ID'] = $classSupport::getBotId();
 				$messageFields['KEYBOARD'] =
-					Im\Bot\Keyboard::getKeyboardByJson($keyboard, [], ['ENABLE_FUNCTIONS' => 'Y']);
+					Im\Bot\Keyboard::getKeyboardByJson($keyboard);
 			}
 			else
 			{
@@ -274,7 +274,7 @@ class Notifier
 				$messageFields['KEYBOARD'] = $keyboard;
 			}
 
-			$messageId = \CIMMessenger::Add($messageFields);
+			$messageId = \CIMMessenger::add($messageFields);
 			if (!$messageId)
 			{
 				/**
@@ -344,7 +344,7 @@ class Notifier
 			'AUTHOR_ID' => $classSupport::getBotId(),
 			'USERS' => $adminGroupUsers,
 			'TITLE' => self::getChannelName(),
-			'TYPE' => \IM_MESSAGE_OPEN,
+			'TYPE' => \IM_MESSAGE_CHAT,
 			'ENTITY_TYPE' => self::CHAT_ENTITY_TYPE,
 			'ENTITY_ID' => $classSupport::getBotId(),
 		]);
@@ -375,6 +375,26 @@ class Notifier
 	}
 
 	/**
+	 * Sets up the new chanel's owner.
+	 *
+	 * @return void
+	 */
+	public static function changeChannelOwner(int $chatId, int $ownerId, int $previousOwnerId): void
+	{
+		$chat = new \CIMChat(0);
+		$chat->addUser($chatId, $ownerId, true, true, true);
+		$chat->setOwner($chatId, $ownerId, false);
+
+		Im\Model\ChatTable::update($chatId, ['ENTITY_ID' => $ownerId]);
+
+		Main\Application::getConnection()->queryExecute(
+			'UPDATE '. Im\Model\MessageTable::getTableName()
+			.' SET AUTHOR_ID = '. $ownerId
+			.' WHERE AUTHOR_ID = '. $previousOwnerId.' AND CHAT_ID = '.$chatId
+		);
+	}
+
+	/**
 	 * Returns notify's channel name.
 	 *
 	 * @return string
@@ -400,7 +420,7 @@ class Notifier
 		$classSupport = self::detectSupportBot();
 
 		$chat = new \CIMChat(0);
-		$chat->SetOwner($chatId, $classSupport::getBotId(), false);
+		$chat->setOwner($chatId, $classSupport::getBotId(), false);
 
 		$adminGroupUsers = self::getAdminGroupUsers();
 		$adminGroupUsers[] = $classSupport::getBotId();
@@ -425,7 +445,7 @@ class Notifier
 
 	/**
 	 * Detects installed support bot.
-	 * @return \Bitrix\Imbot\Bot\NetworkBot|string|null
+	 * @return \Bitrix\Imbot\Bot\SupportBot|string|null
 	 */
 	private static function detectSupportBot(): ?string
 	{
@@ -433,7 +453,7 @@ class Notifier
 
 		if ($classSupport === null)
 		{
-			/** @var \Bitrix\Imbot\Bot\NetworkBot $classSupport */
+			/** @var \Bitrix\Imbot\Bot\SupportBot $classSupport */
 			if (
 				\Bitrix\Main\Loader::includeModule('bitrix24')
 				&& \Bitrix\ImBot\Bot\Support24::isEnabled()

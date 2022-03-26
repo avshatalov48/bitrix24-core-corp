@@ -1,6 +1,8 @@
 <?php
 namespace Bitrix\Crm\Filter;
 
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm;
@@ -60,6 +62,11 @@ class DealDataProvider extends Main\Filter\EntityDataProvider
 		if($name === null)
 		{
 			$name = \CCrmDeal::GetFieldCaption($fieldID);
+		}
+		if (!$name && ParentFieldManager::isParentFieldName($fieldID))
+		{
+			$parentEntityTypeId = ParentFieldManager::getEntityTypeIdFromFieldName($fieldID);
+			$name = \CCrmOwnerType::GetDescription($parentEntityTypeId);
 		}
 
 		return $name;
@@ -445,6 +452,14 @@ class DealDataProvider extends Main\Filter\EntityDataProvider
 			array('type' => 'list', 'default' => true, 'partial' => true)
 		);
 
+		$parentFields = Container::getInstance()->getParentFieldManager()->getParentFieldsOptionsForFilterProvider(
+			\CCrmOwnerType::Deal
+		);
+		foreach ($parentFields as $code => $parentField)
+		{
+			$result[$code] = $this->createField($code, $parentField);
+		}
+
 		return $result;
 	}
 
@@ -456,7 +471,6 @@ class DealDataProvider extends Main\Filter\EntityDataProvider
 	 */
 	public function prepareFieldData($fieldID)
 	{
-
 		if($fieldID === 'CURRENCY_ID')
 		{
 			return array(
@@ -641,6 +655,13 @@ class DealDataProvider extends Main\Filter\EntityDataProvider
 			return array(
 				'params' => ['multiple' => 'Y'],
 				'items' => $orderSourceItems,
+			);
+		}
+		elseif (ParentFieldManager::isParentFieldName($fieldID))
+		{
+			return Container::getInstance()->getParentFieldManager()->prepareParentFieldDataForFilterProvider(
+				\CCrmOwnerType::Deal,
+				$fieldID
 			);
 		}
 

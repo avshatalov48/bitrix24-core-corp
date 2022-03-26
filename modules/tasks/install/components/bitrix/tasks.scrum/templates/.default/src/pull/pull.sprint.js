@@ -85,13 +85,21 @@ export class PullSprint
 				{
 					this.planBuilder.moveSprintToActiveListNode(sprint);
 				}
-				else
+
+				if (tmpSprint.getStatus() === 'completed')
 				{
-					this.planBuilder.updatePlannedSprints(this.entityStorage.getPlannedSprints(), false);
+					this.planBuilder.moveSprintToCompletedListNode(sprint);
 				}
+
+				this.planBuilder.updatePlannedSprints(
+					this.entityStorage.getPlannedSprints(),
+					tmpSprint.getStatus() === 'active'
+				);
 			}
 
 			sprint.updateYourself(tmpSprint);
+
+			this.planBuilder.updateSprintContainers();
 		}
 	}
 

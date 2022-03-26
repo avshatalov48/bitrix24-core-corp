@@ -598,19 +598,20 @@ class Lead
 	/**
 	 * Performs dropping entity.
 	 *
-	 * @return boolean
+	 * @return int
 	 */
 	public function clearEntity()
 	{
 		if (!$this->canClearEntity())
 		{
-			return false;
+			return -1;
 		}
 
 		$connection = \Bitrix\Main\Application::getConnection();
 
 		$query = $this->prepareQuery();
 
+		$dropped = -1;
 		if ($this->prepareFilter($query))
 		{
 			$query
@@ -626,8 +627,7 @@ class Lead
 
 			$res = $query->exec();
 
-			$success = true;
-
+			$dropped = 0;
 			$entity = new \CCrmLead(false);
 			while ($lead = $res->fetch())
 			{
@@ -639,6 +639,7 @@ class Lead
 				{
 					$connection->commitTransaction();
 					$this->incrementDroppedEntityCount();
+					$dropped ++;
 				}
 				else
 				{
@@ -661,13 +662,16 @@ class Lead
 
 				if ($this->hasTimeLimitReached())
 				{
-					$success = false;
 					break;
 				}
 			}
 		}
+		else
+		{
+			$this->collectError(new Main\Error('Filter error', self::ERROR_DELETION_FAILED));
+		}
 
-		return $success;
+		return $dropped;
 	}
 
 	/**
@@ -684,13 +688,13 @@ class Lead
 	/**
 	 * Performs dropping associated entity activities.
 	 *
-	 * @return boolean
+	 * @return int
 	 */
 	public function clearActivity()
 	{
 		if (!$this->canClearActivity())
 		{
-			return false;
+			return -1;
 		}
 
 		$userPermissions = \CCrmPerms::GetUserPermissions($this->getOwner());
@@ -700,7 +704,7 @@ class Lead
 
 		$query = $activityVolume->prepareQuery();
 
-		$success = true;
+		$dropped = -1;
 
 		if ($activityVolume->prepareFilter($query))
 		{
@@ -720,6 +724,7 @@ class Lead
 
 			$res = $query->exec();
 
+			$dropped = 0;
 			while ($activity = $res->fetch())
 			{
 				$this->setProcessOffset($activity['ID']);
@@ -734,6 +739,7 @@ class Lead
 					//todo: fail count here
 
 					$this->incrementDroppedActivityCount();
+					$dropped ++;
 				}
 				else
 				{
@@ -743,13 +749,16 @@ class Lead
 
 				if ($this->hasTimeLimitReached())
 				{
-					$success = false;
 					break;
 				}
 			}
 		}
+		else
+		{
+			$this->collectError(new Main\Error('Filter error', self::ERROR_DELETION_FAILED));
+		}
 
-		return $success;
+		return $dropped;
 	}
 
 	/**
@@ -766,13 +775,13 @@ class Lead
 	/**
 	 * Performs dropping associated entity events.
 	 *
-	 * @return boolean
+	 * @return int
 	 */
 	public function clearEvent()
 	{
 		if (!$this->canClearEvent())
 		{
-			return false;
+			return -1;
 		}
 
 		$eventVolume = new Volume\Event();
@@ -780,7 +789,7 @@ class Lead
 
 		$query = $eventVolume->prepareRelationQuery(static::className());
 
-		$success = true;
+		$dropped = -1;
 
 		if ($eventVolume->prepareFilter($query))
 		{
@@ -797,6 +806,7 @@ class Lead
 
 			$res = $query->exec();
 
+			$dropped = 0;
 			while ($event = $res->fetch())
 			{
 				$this->setProcessOffset($event['EVENT_ID']);
@@ -804,6 +814,7 @@ class Lead
 				if (Volume\Event::dropEvent($event['EVENT_ID'], $this->getOwner()))
 				{
 					$this->incrementDroppedEventCount();
+					$dropped ++;
 				}
 				else
 				{
@@ -813,13 +824,16 @@ class Lead
 
 				if ($this->hasTimeLimitReached())
 				{
-					$success = false;
 					break;
 				}
 			}
 		}
+		else
+		{
+			$this->collectError(new Main\Error('Filter error', self::ERROR_DELETION_FAILED));
+		}
 
-		return $success;
+		return $dropped;
 	}
 }
 

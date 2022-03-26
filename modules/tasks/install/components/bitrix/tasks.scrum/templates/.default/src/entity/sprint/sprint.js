@@ -117,7 +117,16 @@ export class Sprint extends Entity
 		this.header.subscribe('showBurnDownChart', () => this.emit('showSprintBurnDownChart'));
 		this.header.subscribe(
 			'showCreateMenu',
-			(baseEvent: BaseEvent) => this.emit('showSprintCreateMenu', baseEvent.getData())
+			(baseEvent: BaseEvent) => {
+				if (this.mandatoryExists)
+				{
+					this.emit('createSprint');
+				}
+				else
+				{
+					this.emit('showSprintCreateMenu', baseEvent.getData());
+				}
+			}
 		);
 	}
 
@@ -129,6 +138,11 @@ export class Sprint extends Entity
 	setDropzone(sprint: Sprint)
 	{
 		this.dropzone = new Dropzone(sprint);
+
+		if (this.mandatoryExists)
+		{
+			this.dropzone.setMandatory();
+		}
 
 		this.dropzone.subscribe('createTask', () => this.emit('showInput'));
 	}
@@ -477,8 +491,16 @@ export class Sprint extends Entity
 
 	removeYourself()
 	{
-		Dom.remove(this.node);
+		Event.bind(this.node, 'transitionend', this.removeNode.bind(this));
 
+		this.node.style.height = `${ this.node.scrollHeight }px`;
+		this.node.clientHeight;
+		this.node.style.height = '0';
+	}
+
+	removeNode()
+	{
+		Dom.remove(this.node);
 		this.node = null;
 	}
 
@@ -509,16 +531,6 @@ export class Sprint extends Entity
 
 		return this.node;
 	}
-
-	// renderLinkToCompletedSprint(): HTMLElement
-	// {
-	// 	//todo remove it method
-	// 	return Tag.render`
-	// 		<a href="${Text.encode(this.getViews().completedSprint.url)}">
-	// 			${Loc.getMessage('TASKS_SCRUM_COMPLETED_SPRINT_LINK')}
-	// 		</a>
-	// 	`;
-	// }
 
 	onAfterAppend()
 	{
@@ -582,6 +594,8 @@ export class Sprint extends Entity
 			if (event.isComposing || event.key === 'Escape' || event.key === 'Enter')
 			{
 				input.blur();
+
+				event.stopImmediatePropagation();
 			}
 		});
 

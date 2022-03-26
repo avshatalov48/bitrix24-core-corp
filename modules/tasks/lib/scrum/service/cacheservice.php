@@ -4,7 +4,6 @@ namespace Bitrix\Tasks\Scrum\Service;
 
 class CacheService
 {
-	const TEAM_SPEED_CHART = 'teamSpeedChart';
 	const COMPLETED_SPRINT = 'completedSprint';
 	const ITEM_TASKS = 'itemTasks';
 	const EPICS = 'epics';
@@ -17,11 +16,6 @@ class CacheService
 	private $cacheDir;
 
 	private $map = [
-		CacheService::TEAM_SPEED_CHART => [
-			'id' => 'tasks-scrum-team-speed-chart-',
-			'dir' => '/tasks/scrum/team_speed_chart/',
-			'time' => (3600 * 24),
-		],
 		CacheService::COMPLETED_SPRINT => [
 			'id' => 'tasks-scrum-sprint-',
 			'dir' => '/tasks/scrum/sprints/',

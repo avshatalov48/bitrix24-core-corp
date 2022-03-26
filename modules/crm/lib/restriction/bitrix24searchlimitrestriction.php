@@ -9,6 +9,9 @@ Loc::loadMessages(__FILE__);
 
 class Bitrix24SearchLimitRestriction extends Bitrix24QuantityRestriction
 {
+	private const CACHE_DIR = '/crm/entity_count/';
+	private const CACHE_TTL = 60*60; // 1 hour
+
 	public function __construct($name = '', $limit = 0)
 	{
 		$htmlInfo = null;
@@ -34,6 +37,14 @@ class Bitrix24SearchLimitRestriction extends Bitrix24QuantityRestriction
 
 	public function getCount($entityTypeID)
 	{
+		$cache = Main\Application::getInstance()->getCache();
+		$cacheId = 'crm_search_restriction_count_' . $entityTypeID;
+		if ($cache->initCache(self::CACHE_TTL, $cacheId, self::CACHE_DIR))
+		{
+			return (int)$cache->getVars()['count'];
+		}
+		$cache->startDataCache();
+
 		if($entityTypeID === \CCrmOwnerType::Lead)
 		{
 			$count = \CCrmLead::GetTotalCount();
@@ -69,13 +80,17 @@ class Bitrix24SearchLimitRestriction extends Bitrix24QuantityRestriction
 			{
 				$count = $factory->getItemsCount();
 			}
-
+			elseif (\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeID))
+			{
+				return 0;
+			}
 			else
 			{
 				$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
 				throw new Main\NotSupportedException("Entity type: '{$entityTypeName}' is not supported in current context");
 			}
 		}
+		$cache->endDataCache(['count' => $count]);
 
 		return $count;
 	}
@@ -184,7 +199,7 @@ class Bitrix24SearchLimitRestriction extends Bitrix24QuantityRestriction
 				"TO_USER_ID" => $userId,
 				"NOTIFY_TYPE" => IM_NOTIFY_SYSTEM,
 				"NOTIFY_MODULE" => "crm",
-				"NOTIFY_EVENT" => "search_limit_warning",
+				"NOTIFY_EVENT" => "other",
 				"NOTIFY_TAG" => "CRM|SEARCH_LIMIT_WARNING|".$entityTypeName,
 				"NOTIFY_MESSAGE" => $message,
 				"NOTIFY_MESSAGE_OUT" => $messageOut

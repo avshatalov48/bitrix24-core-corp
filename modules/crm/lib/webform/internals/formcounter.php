@@ -93,6 +93,10 @@ class FormCounterTable extends Entity\DataManager
 				'data_type' => 'integer',
 				'default_value' => 0,
 			),
+			'ENTITY_DYNAMIC' => array(
+				'data_type' => 'integer',
+				'default_value' => 0,
+			),
 		);
 	}
 
@@ -174,6 +178,11 @@ class FormCounterTable extends Entity\DataManager
 		foreach($counters as $counterName)
 		{
 			$counterName = $map[$counterName] ?? $counterName;
+			if (\CCrmOwnerType::isPossibleDynamicTypeId(\CCrmOwnerType::resolveID($counterName)))
+			{
+				$counterName = 'DYNAMIC';
+			}
+
 			$fieldName = $entityFieldPrefix . $counterName;
 			if(!isset($fieldsMap[$fieldName]))
 			{

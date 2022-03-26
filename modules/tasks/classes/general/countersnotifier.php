@@ -8,6 +8,8 @@
  * @deprecated
  */
 
+use Bitrix\Main\Localization\Loc;
+
 IncludeModuleLangFile(__FILE__);
 
 class CTaskCountersNotifier
@@ -43,9 +45,9 @@ class CTaskCountersNotifier
 				'NOTIFY_TYPE' => IM_NOTIFY_SYSTEM,
 				'NOTIFY_TAG' => 'TASKS|COUNTERS_NOTICE|' . $recipientId,
 				//'NOTIFY_SUB_TAG' => 'TASKS|COUNTERS_NOTICE|' . $recipientId,
-				'MESSAGE' => CTasksTools::getMessagePlural(
-					$tasksCounter,
+				'MESSAGE' => Loc::getMessagePlural(
 					'TASKS_COUNTERS_NOTICE_CONTENT_V2',
+					$tasksCounter,
 					array(
 						'#TASKS_COUNT#' => $tasksCounter,
 						'#HREF#'        => self::getTasksListLink($recipientId)

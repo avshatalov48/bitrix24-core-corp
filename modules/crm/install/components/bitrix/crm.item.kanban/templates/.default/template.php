@@ -59,6 +59,14 @@ $APPLICATION->IncludeComponent(
 		'EXTRA' => [
 			'CATEGORY_ID' => $arResult['categoryId'],
 		],
+		'HEADERS_SECTIONS' => [
+			[
+				'id'=> $arResult['entityTypeName'],
+				'name' => $arResult['entityTypeDescription'],
+				'default' => true,
+				'selected' => true,
+			],
+		],
 	],
 	$component
 );

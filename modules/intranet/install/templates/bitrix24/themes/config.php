@@ -95,8 +95,8 @@ return array(
 
 		"light:atmosphere" => array(
 			"title" => Loc::getMessage("BITRIX24_THEME_ATMOSPHERE"),
-			"prefetchImages" => array("atmosphere.jpg"),
-			"previewImage" => "atmosphere-preview.jpg",
+			"prefetchImages" => array("atmosphere2.jpg"),
+			"previewImage" => "atmosphere-preview2.jpg",
 			"width" => 1920,
 			"height" => 1080,
 			"resizable" => true
@@ -878,6 +878,24 @@ return array(
 			"height" => 1080,
 			"resizable" => true,
 			"releaseDate" => "8 March 2018"
+		),
+
+		"light:mail" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_MAIL"),
+			"prefetchImages" => array("mail.jpg"),
+			"previewImage" => "mail-preview.jpg",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
+		),
+
+		"light:robots" => array(
+			"title" => Loc::getMessage("BITRIX24_THEME_ROBOTS"),
+			"prefetchImages" => array("robots.png"),
+			"previewImage" => "robots-preview.png",
+			"width" => 1920,
+			"height" => 1080,
+			"resizable" => true,
 		),
 
 		"light:pattern-hearts" => array(

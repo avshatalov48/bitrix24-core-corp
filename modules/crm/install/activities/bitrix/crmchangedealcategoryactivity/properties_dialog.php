@@ -27,7 +27,7 @@ foreach ($dialog->getMap() as $fieldId => $field):
 <tr>
 	<td align="right" width="40%"></td>
 	<td width="60%">
-		<?=GetMessage('CRM_CDCA_PD_INFO')?>
+		<?=GetMessage('CRM_CDCA_PD_INFO_1')?>
 	</td>
 </tr>
 

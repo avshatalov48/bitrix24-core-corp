@@ -47,16 +47,8 @@ class CTasksTools
 	 */
 	public static function getMessagePlural($n, $msgId, $arReplace = false)
 	{
-		$pluralForm = self::getPluralForm($n, $returnFalseForUnknown = true);
-
-		if ($pluralForm !== false)
-			$msgId .= '_PLURAL_' . $pluralForm;
-		else
-			$msgId .= '_PLURAL_1';	// use by default
-
-		return(GetMessage($msgId, $arReplace));
+		return \Bitrix\Main\Localization\Loc::getMessagePlural($msgId, (int)$n, $arReplace);
 	}
-
 
 	/**
 	 * Not part of public API, for internal use only.
@@ -70,28 +62,7 @@ class CTasksTools
 		if ( ! defined('LANGUAGE_ID') )
 			return (false);
 
-		// info at http://docs.translatehouse.org/projects/localization-guide/en/latest/l10n/pluralforms.html?id=l10n/pluralforms
-		switch (LANGUAGE_ID)
-		{
-			case 'de':
-			case 'en':
-				$plural = (int) ($n !== 1);
-			break;
-
-			case 'ru':
-			case 'ua':
-				$plural = ( (($n%10 === 1) && ($n%100 !== 11)) ? 0 : ((($n%10 >= 2) && ($n%10 <= 4) && (($n%100 < 10) || ($n%100 >= 20))) ? 1 : 2) );
-			break;
-
-			default:
-				if ($returnFalseForUnknown)
-					$plural = false;
-				else
-					$plural = (int) ($n !== 1);
-			break;
-		}
-
-		return ($plural);
+		return \Bitrix\Main\Localization\Loc::getPluralForm($n);
 	}
 
 

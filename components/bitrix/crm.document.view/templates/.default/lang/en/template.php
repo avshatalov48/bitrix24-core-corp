@@ -19,6 +19,7 @@ $MESS["CRM_DOCUMENT_VIEW_SEND_SMS"] = "via sms";
 $MESS["CRM_DOCUMENT_VIEW_SHOW_FULL_DOCUMENT"] = "Show full document";
 $MESS["CRM_DOCUMENT_VIEW_SIGNED"] = "with signatures and stamp";
 $MESS["CRM_DOCUMENT_VIEW_SMS_PUBLIC_URL_NECESSARY"] = "Public link is required to send SMS";
+$MESS["CRM_DOCUMENT_VIEW_TRANSFORMATION_NO_PDF_ERROR"] = "Cannot find PDF version of the document. The file may not have been converted successfully.";
 $MESS["CRM_DOCUMENT_VIEW_TRANSFORMATION_PROGRESS"] = "Please wait until the conversion has completed";
 $MESS["CRM_DOCUMENT_VIEW_TRANSFORM_ERROR"] = "Cannot generate PDF file for the document.";
 $MESS["CRM_DOCUMENT_VIEW_TRY_AGAIN"] = "Try again";

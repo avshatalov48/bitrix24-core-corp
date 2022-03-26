@@ -17250,7 +17250,7 @@ namespace Bitrix\Crm\Binding {
 namespace Bitrix\Crm\Binding {
 	/**
 	 * EO_OrderDeal
-	 * @see \Bitrix\Crm\Binding\OrderDealTable
+	 * @see \Bitrix\Crm\Binding\OrderEntityTable
 	 *
 	 * Custom methods:
 	 * ---------------
@@ -17313,8 +17313,8 @@ namespace Bitrix\Crm\Binding {
 	 * @method static \Bitrix\Crm\Binding\EO_OrderDeal wakeUp($data)
 	 */
 	class EO_OrderDeal {
-		/* @var \Bitrix\Crm\Binding\OrderDealTable */
-		static public $dataClass = '\Bitrix\Crm\Binding\OrderDealTable';
+		/* @var \Bitrix\Crm\Binding\OrderEntityTable */
+		static public $dataClass = '\Bitrix\Crm\Binding\OrderEntityTable';
 		/**
 		 * @param bool|array $setDefaultValues
 		 */
@@ -17363,8 +17363,8 @@ namespace Bitrix\Crm\Binding {
 	 * @method int count() Countable
 	 */
 	class EO_OrderDeal_Collection implements \ArrayAccess, \Iterator, \Countable {
-		/* @var \Bitrix\Crm\Binding\OrderDealTable */
-		static public $dataClass = '\Bitrix\Crm\Binding\OrderDealTable';
+		/* @var \Bitrix\Crm\Binding\OrderEntityTable */
+		static public $dataClass = '\Bitrix\Crm\Binding\OrderEntityTable';
 	}
 }
 namespace Bitrix\Crm\Binding {

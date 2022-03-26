@@ -14,6 +14,7 @@ $this->SetViewTarget("sidebar", 250);
 	<div class="sidebar-widget-top">
 		<div class="sidebar-widget-top-title"><?=GetMessage("BLOG_WIDGET_TITLE")?></div>
 	</div>
+	<div class="sidebar-widget-content">
 	<?
 	$i = 0;
 	foreach($arResult as $arPost):
@@ -30,6 +31,7 @@ $this->SetViewTarget("sidebar", 250);
 		</span>
 	</a>
 	<?endforeach?>
+	</div>
 </div>
 
 

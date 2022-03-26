@@ -224,52 +224,6 @@ BX.namespace('Tasks.Component');
 		},
 		methods: {
 
-			/*
-			redraw: function()
-			{
-				var container = this.control('inputs');
-				var html = '';
-
-				var state = this.optionP('state');
-
-				if(BX.type.isElementNode(container))
-				{
-					if(typeof state.BLOCKS != 'undefined')
-					{
-						BX.Tasks.each(state.BLOCKS, function(block, bName){
-
-							var pinned = block.PINNED;
-							if(typeof pinned != 'undefined')
-							{
-								html += this.getHTMLByTemplate('block', {
-									NAME: bName,
-									TYPE: 'PINNED',
-									VALUE: pinned === true || pinned === 'true' ? '1' : '0'
-								});
-							}
-
-						}.bind(this));
-					}
-
-					if(typeof state.FLAGS != 'undefined')
-					{
-						BX.Tasks.each(state.FLAGS, function(checked, fName){
-
-							html += this.getHTMLByTemplate('flag', {
-								NAME: fName,
-								VALUE: checked === true || checked === 'true' ? '1' : '0'
-							});
-
-						}.bind(this));
-					}
-
-					container.innerHTML = html;
-
-					this.control('operation').removeAttribute('disabled');
-				}
-			},
-			*/
-
 			getBlock: function(name)
 			{
 				return this.optionP('state').BLOCKS[name];
@@ -385,10 +339,18 @@ BX.namespace('Tasks.Component');
 
 			sync: function()
 			{
-				this.parent().callRemoteTemplate('setState', {
-					structure: this.optionP('structure'),
-					value: this.optionP('state')
-				});
+				BX.ajax.runComponentAction('bitrix:tasks.widget.frame', 'setState', {
+					mode: 'class',
+					data: {
+						structure: this.optionP('structure'),
+						value: this.optionP('state')
+					}
+				}).then(
+					function(response)
+					{
+
+					}.bind(this)
+				);
 			}
 		}
 	});

@@ -51,7 +51,6 @@
 	padding: 8px 0;
 	overflow: hidden;
 	display: flex;
-	gap: 12px;
 	align-items: center;
 }
 
@@ -80,6 +79,7 @@
 	flex: 1 1 100%;
 	overflow: hidden;
 	word-wrap: break-word;
+	padding-left: 12px;
 }
 
 .task-detail-sidebar-info-user-name[href="javascript:void(0);"] {
@@ -137,8 +137,9 @@
 	text-decoration: none;
 }
 
-.task-detail-sidebar-info-user-name-link:hover {
-	border-bottom: 1px solid;
+.task-detail-sidebar-info-user-employee .task-detail-sidebar-info-user-name-link {
+	display: inline-block;
+	max-width: 185px;
 }
 
 .task-detail-sidebar-info-user-pos {

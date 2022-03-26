@@ -619,10 +619,23 @@ class CBPCrmSendSmsActivity extends CBPActivity
 			$providerId = $defaults['senderId'];
 			$messageFrom = $defaults['from'];
 
+			$firstSuitableProviderId = null;
+			$providers = SmsManager::getSenderSelectList();
+			foreach ($providers as $provider)
+			{
+				if ($providerId === $provider['id'] && $provider['isTemplatesBased'])
+				{
+					$providerId = null; // can't use templates based provider
+				}
+				if (!$firstSuitableProviderId && !$provider['isTemplatesBased'] && $provider['canUse'])
+				{
+					$firstSuitableProviderId = $provider['id'];
+				}
+			}
+
 			if (!$providerId)
 			{
-				$providerIds = array_keys(SmsManager::getSenderSelectList());
-				$providerId = current($providerIds);
+				$providerId = $firstSuitableProviderId;
 			}
 		}
 

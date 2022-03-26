@@ -1,5 +1,4 @@
 .sidebar-widget {
-	background: none repeat 0 0 #fff;
 	margin-bottom: 17px;
 }
 .sidebar-block {
@@ -19,6 +18,9 @@
 .sidebar-widget-top {
 	height: 40px;
 	position: relative;
+	border-radius: var(--sidebar-widget-top, var(--ui-theme-radius-md, 0));
+	border-bottom-left-radius: 0;
+	border-bottom-right-radius: 0;
 }
 .sidebar-widget-top-title {
 	color: #fff;
@@ -29,6 +31,20 @@
 	padding-left: 20px;
 	text-transform: uppercase;
 }
+
+.sidebar-widget-content, .sidebar-widget-item-wrap {
+	background: #fff;
+	border-radius: var(--sidebar-widget-content, var(--ui-theme-radius-md, 0));
+	border-top-left-radius: 0;
+	border-top-right-radius: 0;
+	padding-top: 10px;
+}
+
+.sidebar-widget-item-wrap {
+	padding-top: 0;
+	overflow: hidden;
+}
+
 .plus-icon {
 	border-bottom: none;
 	cursor: pointer;
@@ -372,12 +388,10 @@
 
 .sidebar-widget-popular .sidebar-widget-top {
 	background-color: #5cd1df;
-	margin-bottom: 10px;
 }
 
 .sidebar-widget-birthdays .sidebar-widget-top {
 	background-color: #f8a70b;
-	margin-bottom: 13px;
 }
 
 .sidebar-user-info {
@@ -452,9 +466,7 @@
 .task-item-inbox {
 	border-top: medium none;
 }
-.task-item:last-child {
-	border-radius: 0 0 5px 5px;
-}
+
 .task-item-my-responsibility, .task-item-my-complicity, .task-item-my-report {
 	color: #555555;
 	cursor: pointer;

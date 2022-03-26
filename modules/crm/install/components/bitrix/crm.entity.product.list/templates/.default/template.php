@@ -19,6 +19,7 @@ use Bitrix\Main\Web\Json;
 Extension::load([
 	'ui.notification',
 	'catalog.product-calculator',
+	'catalog.store-use',
 ]);
 
 /** @var array $grid */
@@ -31,6 +32,8 @@ $settings = &$arResult['SETTINGS'];
 $currency = &$arResult['CURRENCY'];
 /** @var array $measures */
 $measures = &$arResult['MEASURES'];
+/** @var array $stores */
+$stores = &$arResult['STORES'];
 
 /** @var array $moneyTemplate */
 $moneyTemplate = [];
@@ -77,14 +80,24 @@ $editorConfig = [
 	'componentName' => $component->getName(),
 	'signedParameters' => $component->getSignedParameters(),
 	'reloadUrl' => '/bitrix/components/bitrix/crm.entity.product.list/list.ajax.php',
+	'productUrlBuilderContext' => $arResult['URL_BUILDER_CONTEXT'],
 
 	'containerId' => $containerId,
 	'totalBlockContainerId' => $productTotalContainerId,
 	'gridId' => $gridId,
 	'formId' => $grid['FORM_ID'],
+	'entityId' => $arResult['ENTITY']['ID'] ?? 0,
+	'entityTypeId' => $arResult['ENTITY']['TYPE_ID'] ?? '',
 
 	'allowEdit' => $settings['ALLOW_EDIT'],
+	'allowCatalogPriceEdit' => $arResult['ALLOW_CATALOG_PRICE_EDIT'],
+	'allowCatalogPriceSave' => $arResult['ALLOW_CATALOG_PRICE_SAVE'],
+	'catalogPriceEditArticleCode' => $arResult['CATALOG_PRICE_EDIT_ARTICLE_CODE'],
+	'catalogPriceEditArticleHint' => $arResult['CATALOG_PRICE_EDIT_ARTICLE_HINT'],
+	'disableNotifyChangingPrice' => $arResult['CATALOG_PRICE_CHANGING_DISABLE_HINT'],
+
 	'dataFieldName' => $arResult['PRODUCT_DATA_FIELD_NAME'],
+	'defaultDateReservation' => $arResult['DEFAULT_DATE_RESERVATION'],
 
 	'rowIdPrefix' => $rowIdPrefix,
 
@@ -117,6 +130,8 @@ $editorConfig = [
 	'readOnly' => $isReadOnly,
 
 	'items' => [],
+
+	'isReserveBlocked' => $arResult['IS_RESERVE_BLOCKED'],
 ];
 
 $productIdMask = '#PRODUCT_ID_MASK#';
@@ -134,7 +149,10 @@ $grid['ROWS']['template_0'] = [
 	'DISCOUNT_RATE' => 0,
 	'DISCOUNT_SUM' => 0,
 	'DISCOUNT_ROW' => 0,
+	'BASE_PRICE_ID' => $arParams['BASE_PRICE_ID'],
+	'NAME' => '',
 	'PRICE' => 0,
+	'BASE_PRICE' => 0,
 	'PRICE_EXCLUSIVE' => 0,
 	'PRICE_NETTO' => 0,
 	'PRICE_BRUTTO' => 0,
@@ -143,6 +161,16 @@ $grid['ROWS']['template_0'] = [
 	'TAX_INCLUDED' => 'N',
 	'TAX_SUM' => 0,
 	'SUM' => 0,
+	'STORE_ID' => $arResult['DEFAULT_STORE_ID'],
+	'STORE_TITLE' => $stores[$arResult['DEFAULT_STORE_ID']]['TITLE'] ?? '',
+	'STORE_RESERVED' => 0,
+	'STORE_AVAILABLE' => 0,
+	'STORE_AMOUNT' => 0,
+	'COMMON_STORE_AMOUNT' => 0,
+	'COMMON_STORE_RESERVED' => 0,
+	'RESERVE_QUANTITY' => 0,
+	'DATE_RESERVE' => '',
+	'DATE_RESERVE_END' => '',
 	'CUSTOMIZED' => 'N',
 	'MEASURE_CODE' => $measures['DEFAULT']['CODE'],
 	'MEASURE_NAME' => $measures['DEFAULT']['SYMBOL'],
@@ -155,8 +183,6 @@ $rows = [];
 foreach ($grid['ROWS'] as $product)
 {
 	$rawProduct = $product;
-
-	$rawProduct['BASE_PRICE_ID'] = \CCatalogGroup::GetBaseGroup()['ID'];
 
 	$rowId = $rowIdPrefix.$rawProduct['ID'];
 
@@ -177,6 +203,8 @@ foreach ($grid['ROWS'] as $product)
 		$fixedProductName = '';
 	}
 
+	$measureName = htmlspecialcharsbx($rawProduct['MEASURE_NAME']);
+
 	$item = [
 		'ROW_ID' => $rowId,
 		'ID' => $rawProduct['ID'],
@@ -187,6 +215,7 @@ foreach ($grid['ROWS'] as $product)
 		'OFFERS_IBLOCK_ID' => $rawProduct['OFFERS_IBLOCK_ID'],
 		'OFFER_ID' => $rawProduct['OFFER_ID'],
 		'PRODUCT_NAME' => $productName,
+		'NAME' => $productName,
 		// 'IMAGES' => $rawProduct['IMAGES'],
 		'FIXED_PRODUCT_NAME' => $fixedProductName,
 		'QUANTITY' => $rawProduct['QUANTITY'],
@@ -194,6 +223,9 @@ foreach ($grid['ROWS'] as $product)
 		'DISCOUNT_RATE' => $rawProduct['DISCOUNT_RATE'],
 		'DISCOUNT_SUM' => $rawProduct['DISCOUNT_SUM'],
 		'DISCOUNT_ROW' => $rawProduct['QUANTITY'] * $rawProduct['DISCOUNT_SUM'],
+		'BASE_PRICE' => $rawProduct['BASE_PRICE'],
+		'CATALOG_PRICE' => $rawProduct['CATALOG_PRICE'] ?? $rawProduct['BASE_PRICE'],
+		'ENTERED_PRICE' => $rawProduct['BASE_PRICE'],
 		'PRICE' => $rawProduct['PRICE'],
 		'PRICE_EXCLUSIVE' => $rawProduct['PRICE_EXCLUSIVE'],
 		'PRICE_NETTO' => $rawProduct['PRICE_NETTO'],
@@ -207,66 +239,99 @@ foreach ($grid['ROWS'] as $product)
 		'MEASURE_CODE' => $rawProduct['MEASURE_CODE'],
 		'MEASURE_NAME' => $rawProduct['MEASURE_NAME'],
 		'SORT' => $rawProduct['SORT'],
+		'STORE_ID' => $rawProduct['STORE_ID'],
+		'STORE_TITLE' => $rawProduct['STORE_TITLE'],
+		'STORE_AVAILABLE' => $rawProduct['STORE_AVAILABLE'],
+		'STORE_RESERVED' => $rawProduct['STORE_RESERVED'],
+		'STORE_AMOUNT' => $rawProduct['STORE_AMOUNT'],
+		'COMMON_STORE_AMOUNT' => $rawProduct['COMMON_STORE_AMOUNT'],
+		'COMMON_STORE_RESERVED' => $rawProduct['COMMON_STORE_RESERVED'],
+		'RESERVE_QUANTITY' => $rawProduct['RESERVE_QUANTITY'],
+		'DATE_RESERVE' => $rawProduct['DATE_RESERVE'],
+		'DATE_RESERVE_END' => $rawProduct['DATE_RESERVE_END'],
+		'RESERVE_ID' => $rawProduct['RESERVE_ID'],
 		'IS_NEW' => $rawProduct['IS_NEW'],
+		'SKU_TREE' => $rawProduct['SKU_TREE'],
+		'DETAIL_URL' => $rawProduct['DETAIL_URL'],
+		'IMAGE_INFO' => $rawProduct['IMAGE_INFO'],
 	];
-
+	$selectorId = 'crm_grid_'.$rowId;
 	if ($rawProduct['ID'] !== $productIdMask)
 	{
 		$editorConfig['items'][] = [
 			'rowId' => $rowId,
+			'selectorId' => $selectorId,
 			'fields' => $item,
 		];
 	}
 
 	// region MAIN_INFO
-	$mainInfoColumn = $item['PRODUCT_NAME'];
-	ob_start();
-	$APPLICATION->IncludeComponent(
-		'bitrix:catalog.grid.product.field',
-		'',
-		[
-			'BUILDER_CONTEXT' => \Bitrix\Crm\Product\Url\ProductBuilder::TYPE_ID,
-			'GRID_ID' => $gridId,
-			'ROW_ID' => $rowId,
-			'GUID' => 'crm_grid_'.$rowId,
-			'PRODUCT_FIELDS' => [
-				'ID' => $rawProduct['PARENT_PRODUCT_ID'],
-				'NAME' => $item['PRODUCT_NAME'],
-				'IBLOCK_ID' => $item['IBLOCK_ID'],
-				'SKU_IBLOCK_ID' => $item['OFFERS_IBLOCK_ID'],
-				'SKU_ID' => $item['OFFER_ID'],
-				'BASE_PRICE_ID' => $item['BASE_PRICE_ID'],
-			],
-			'SKU_TREE' => $rawProduct['SKU_TREE'],
-			'MODE' => 'edit',
-			'ENABLE_SEARCH' => true,
-			'ENABLE_IMAGE_CHANGE_SAVING' => true,
-			'ENABLE_INPUT_DETAIL_LINK' => true,
-			'IS_NEW' => $item['IS_NEW'],
-		]
-	);
-	$productField = '<div class="main-grid-row-number"></div>' . ob_get_clean();
-	$product['MAIN_INFO'] = $productField;
+	$mainInfoColumn = HtmlFilter::encode($item['PRODUCT_NAME']);
+	if ($isReadOnly)
+	{
+		ob_start();
+		$APPLICATION->IncludeComponent(
+			'bitrix:catalog.grid.product.field',
+			'',
+			[
+				'IS_NEW' => $rawProduct['IS_NEW'],
+				'BUILDER_CONTEXT' => \Bitrix\Crm\Product\Url\ProductBuilder::TYPE_ID,
+				'GRID_ID' => $gridId,
+				'ROW_ID' => $rowId,
+				'GUID' => $selectorId,
+				'PRODUCT_FIELDS' => [
+					'ID' => $rawProduct['PARENT_PRODUCT_ID'],
+					'NAME' => $item['PRODUCT_NAME'],
+					'IBLOCK_ID' => $item['IBLOCK_ID'],
+					'SKU_IBLOCK_ID' => $item['OFFERS_IBLOCK_ID'],
+					'SKU_ID' => $item['OFFER_ID'],
+					'BASE_PRICE_ID' => $item['BASE_PRICE_ID'],
+				],
+				'SKU_TREE' => $rawProduct['SKU_TREE'],
+				'MODE' => 'view',
+				'ENABLE_SEARCH' => false,
+				'ENABLE_IMAGE_CHANGE_SAVING' => false,
+				'ENABLE_EMPTY_PRODUCT_ERROR' => false,
+				'ENABLE_INPUT_DETAIL_LINK' => true,
+				'ENABLE_SKU_SELECTION' => false,
+				'HIDE_UNSELECTED_ITEMS' => true,
+			]
+		);
+		$mainInfoColumn = '<div class="main-grid-row-number"></div>' . ob_get_clean();
+	}
+
 	// end region MAIN_INFO
 
 	// region PRICE
 	$price = $rawProduct['TAX_INCLUDED'] === 'N' ? $rawProduct['PRICE_NETTO'] : $rawProduct['PRICE_BRUTTO'];
-	$price = number_format($price, $pricePrecision, '.', '');
+	if ($price !== 0)
+	{
+		$price = number_format($price, $pricePrecision, '.', '');
+	}
 	$priceColumn = CCrmCurrency::MoneyToString($price, $currency['ID']);
+
+	$isDisabledPrice =
+		!$arResult['ALLOW_CATALOG_PRICE_EDIT']
+		&& $rawProduct['IS_NEW'] === 'N'
+		&& (int)$rawProduct['OFFER_ID'] > 0
+	;
+
 	$product['PRICE'] = [
 		'PRICE' => [
 			'NAME' => $rowId.'_PRICE',
 			'VALUE' => $price,
+			'DISABLED' => true,//$isDisabledPrice,
 		],
 		'CURRENCY' => [
 			'NAME' => $rowId.'_PRICE_CURRENCY',
 			'VALUE' => $currency['ID'],
+			'DISABLED' => true,
 		],
 	];
 	// end region PRICE
 
 	// region QUANTITY
-	$quantityColumn = (float)$rawProduct['QUANTITY'].' '.htmlspecialcharsbx($rawProduct['MEASURE_NAME']);
+	$quantityColumn = (float)$rawProduct['QUANTITY'] . ' ' . $measureName;
 	$product['QUANTITY'] = [
 		'PRICE' => [
 			'NAME' => $rowId.'_QUANTITY',
@@ -315,6 +380,7 @@ foreach ($grid['ROWS'] as $product)
 		'CURRENCY' => [
 			'NAME' => $rowId.'_DISCOUNT_ROW_CURRENCY',
 			'VALUE' => $currency['ID'],
+			'DISABLED' => true,
 		],
 	];
 	// end region DISCOUNT_ROW
@@ -393,13 +459,17 @@ foreach ($grid['ROWS'] as $product)
 		'CURRENCY' => [
 			'NAME' => $rowId.'_SUM_CURRENCY',
 			'VALUE' => $currency['ID'],
+			'DISABLED' => true,
 		],
 	];
 	// end region SUM
 
 	$columns = [
-		'MAIN_INFO' => HtmlFilter::encode($mainInfoColumn),
-		//'PROPERTIES' => $properties,
+		'MAIN_INFO' => $mainInfoColumn,
+		'STORE_INFO' => HtmlFilter::encode($product['STORE_TITLE']),
+		'RESERVE_INFO' => "<span data-name='RESERVE_QUANTITY'>" . $rawProduct['RESERVE_QUANTITY'] . " " . $measureName . "</span>",
+		'STORE_RESERVED' => "<span data-name='STORE_RESERVED'>" . $rawProduct['STORE_RESERVED'] . " " . $measureName . "</span>",
+		'STORE_AVAILABLE' => "<span data-name='STORE_AVAILABLE'>" . $rawProduct['STORE_AVAILABLE'] . " " . $measureName . "</span>",
 		'PRICE' => $priceColumn,
 		'QUANTITY' => $quantityColumn,
 		'SUM' => $sumColumn,
@@ -410,7 +480,7 @@ foreach ($grid['ROWS'] as $product)
 	{
 		$columns['TAX_RATE'] = $taxRateColumn;
 		$columns['TAX_INCLUDED'] = $taxIncludedColumn;
-		$columns['TAX_SUM'] = $taxSumColumn;
+		$columns['TAX_SUM'] = '<span data-name="TAX_SUM">' . $taxSumColumn . '</span>';
 	}
 
 	$rows[] = [
@@ -438,31 +508,6 @@ foreach ($rows as $key => $row)
 	}
 }
 
-// $cols = [];
-//
-// foreach ($grid['VISIBLE_COLUMNS'] as $column)
-// {
-// 	/*	if ($column['id'] == 'DISCOUNTS')
-// 			continue; */
-//
-// 	$item = ["column" => $column['id']];
-//
-// 	/*	if($column['id'] == 'MAIN_INFO' && !$isSetItems)
-// 			$item['rowspan'] = 2; */
-//
-// 	$cols[] = $item;
-// }
-//
-// $rowLayout = [$cols];
-//
-// if (!$isSetItems)
-// {
-// 	$rowLayout = array_merge($rowLayout, [
-// 		[
-// 			["data" => "DISCOUNTS", "column" => "DISCOUNTS", "colspan" => count($grid['VISIBLE_COLUMNS']) - 1]
-// 		]
-// 	]);
-// }
 ?>
 <div class="crm-entity-product-list-wrapper" id="<?=$containerId?>"><?php
 	if (!$isReadOnly)

@@ -1,5 +1,6 @@
 .tasks-scrum__widget-methodology--scope {
 	--tasks_scrum_meetings-black_alpha_09: rgba(0,0,0,.09);
+	--tasks_scrum_meetings-black_alpha_15: rgba(0,0,0,.15);
 
 	--tasks_scrum_meetings-white: rgba(255,255,255,1);
 	--tasks_scrum_meetings-white_alpha_85: rgba(255,255,255,.85);
@@ -7,6 +8,10 @@
 	--tasks_scrum_meetings-grey: rgba(82,92,105,1);
 	--tasks_scrum_meetings-grey_alpha_66: rgba(82,92,105,.66);
 	--tasks_scrum_meetings-grey_alpha_87: rgba(82,92,105,.87);
+
+	--tasks_scrum_meetings-green: rgba(85,208,224,1);
+
+	--tasks_scrum_meetings-blue: rgba(47,198,246,1);
 }
 
 .tasks-scrum__widget-methodology {
@@ -14,6 +19,11 @@
 	min-width: 156px;
 	-webkit-box-sizing: border-box;
 	        box-sizing: border-box;
+	border-radius: 12px;
+}
+
+.tasks-scrum__widget-methodology.--active {
+	background: var(--tasks_scrum_meetings-white);
 }
 
 .tasks-scrum__widget-methodology--conteiner {
@@ -55,6 +65,7 @@
 
 .tasks-scrum__widget-methodology--btn-box {
 	margin-top: 6px;
+	width: 100%;
 }
 
 .tasks-scrum__widget-methodology--btn-box .ui-qr-popupcomponentmaker__btn {
@@ -65,6 +76,7 @@
 	font: 11px/15px OpenSans-Regular, "Helvetica Neue", Helvetica, Arial, sans-serif;
 	color: var(--tasks_scrum_meetings-grey_alpha_66);
 	margin-bottom: 4px;
+	width: 100%;
 }
 
 .tasks-scrum__widget-methodology--btn-box-center {
@@ -83,17 +95,76 @@
 	cursor: pointer;
 }
 
+.tasks-scrum__widget-methodology--image-diagram {
+	height: 118px;
+	width: 304px;
+	margin: 5px 0 6px;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-image: url(/bitrix/js/tasks/scrum/methodology/images/tasks-scrum-methodology--team-speed-diagram.svg);
+	pointer-events: all;
+	cursor: pointer;
+}
+
+.tasks-scrum__widget-methodology--image-diagram.--disabled,
 .tasks-scrum__widget-methodology--image.--disabled {
 	opacity: 0.15;
 	pointer-events: none;
 }
 
-/*.tasks-scrum__widget-methodology--bg {*/
-/*	border-radius: 12px;*/
-/*	background: var(--tasks_scrum_meetings-white_alpha_85);*/
-/*	box-shadow: 0 1px 3px 0 var(--tasks_scrum_meetings-black_alpha_09);*/
-/*}*/
+.tasks-scrum__widget-methodology--label {
+	font: 9px/11px "OpenSans-SemiBold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: var(--tasks_scrum_meetings-white);
+	position: absolute;
+	right: 15px;
+	top: -5px;
+	background: var(--tasks_scrum_meetings-blue);
+	border-radius: 14px;
+	-webkit-box-shadow: 0 1px 1px var(--tasks_scrum_meetings-black_alpha_15);
+	        box-shadow: 0 1px 1px var(--tasks_scrum_meetings-black_alpha_15);
+	padding: 1px 8px;
+}
 
-/*.tasks-scrum__widget-methodology--bg.--active {*/
-/*	background: var(--tasks_scrum_meetings-white);*/
-/*}*/
+.tasks-scrum__widget-methodology--label.--hidden {
+	display: none;
+}
+
+.tasks-scrum__widget-methodology--training.--active {
+	cursor: pointer;
+}
+
+.tasks-scrum__widget-methodology--migration {
+	padding: 11px 10px 9px;
+	cursor: pointer;
+}
+
+.tasks-scrum__widget-methodology--migration::before {
+	content: '';
+	display: block;
+	width: 100%;
+	height: 100%;
+	-webkit-box-sizing: border-box;
+	        box-sizing: border-box;
+	position: absolute;
+	left: 0;
+	top: 0;
+	border: 1px solid var(--tasks_scrum_meetings-green);
+	border-radius: 12px;
+	pointer-events: none;
+}
+
+.ui-icon.tasks-scrum__widget-methodology--migration-btn > i {
+	background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='39' height='39' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M27.862 17.966l-.002.06a4.603 4.603 0 013.277 4.468 4.538 4.538 0 01-4.412 4.63H14.66v-.006l-.048.002a3.903 3.903 0 01-.146.003c-3.22 0-5.831-2.723-5.831-6.082a6.073 6.073 0 013.87-5.727c-.002-.03-.002-.06-.002-.09 0-2.746 2.133-4.973 4.766-4.973a4.772 4.772 0 014.412 3.09 4.459 4.459 0 011.54-.275c2.563 0 4.641 2.168 4.641 4.84l-.001.06zm-10.186-4.344l-3.101 3.316 3.101 3.315a.3.3 0 00.52-.205V17.97h5.058v-1.896h-5.059v-2.247a.3.3 0 00-.519-.204zm3.582 11.762l3.377-3.367-3.377-3.367a.3.3 0 00-.512.212v2.214H14.45v1.896h6.296v2.2a.3.3 0 00.512.212z' fill='%23fff'/%3E%3C/svg%3E");
+}
+
+.tasks-scrum__widget-methodology--content {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-ms-flex-wrap: wrap;
+	    flex-wrap: wrap;
+}
+
+.tasks-scrum__widget-methodology--label.--migration {
+	background: var(--tasks_scrum_meetings-green);
+}

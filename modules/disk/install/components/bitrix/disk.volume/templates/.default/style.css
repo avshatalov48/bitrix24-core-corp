@@ -686,52 +686,6 @@
 
 /* END OF DISC VOLUME */
 
-/* MENU RIGHT */
-.disk-volume-menu-right { margin-left: auto; }
-
-.disk-volume-menu-right .main-buttons { height: 62px; }
-
-.template-bitrix24 .disk-volume-menu-right .main-buttons-inner-container {
-	height: 62px !important;
-	background: transparent;
-}
-
-.disk-volume-menu-right .disk-volume-menu-right-item {
-	margin: 0 24px 0 0;
-	height: 62px;
-}
-
-.disk-volume-menu-right .disk-volume-menu-right-item:nth-last-child(2) { margin: 0; }
-
-.disk-volume-menu-right .main-buttons-item-link {
-	height: 62px;
-	color: #bac0c6;
-	font: 14px/62px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
-}
-
-.disk-volume-menu-right .main-buttons-item-more.main-buttons-item:after { top: 35px; }
-
-.disk-volume-menu-right-item.main-buttons-item-active {
-	height: 45px !important;
-	border-bottom: 2px solid #b1b8bf;
-	color: #535c6a;
-}
-
-.disk-volume-menu-right-item.main-buttons-item-active .main-buttons-item-link { color: #535c6a; }
-
-.disk-volume-menu-right .main-buttons-item-more.main-buttons-item:after { border-color: #bac0c6 transparent transparent transparent; }
-
-.disk-volume-menu-right .main-buttons-item-more.main-buttons-item-more:hover:after { border-color: #545c6a transparent transparent transparent; }
-
-.disk-volume-menu-right .main-buttons-item-active {
-	height: 45px !important;
-	border-bottom: 2px solid #b1b8bf;
-}
-
-.disk-volume-menu-right .main-buttons-item-active .main-buttons-item-link { color: #535c6a; }
-
-/* END OF MENU RIGHT */
-
 /* FOLDER LIST */
 .main-grid-cell-content a.bx-disk-file-title,
 .main-grid-cell-content a.bx-disk-folder-title {

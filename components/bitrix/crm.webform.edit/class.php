@@ -16,7 +16,7 @@ use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\WebForm\ReCaptcha;
 use Bitrix\Crm\WebForm\ResponsibleQueue;
 use Bitrix\Crm\Ads\AdsForm;
-
+use Bitrix\Main\Type\Date;
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 	die();
@@ -859,17 +859,24 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 
 		if($CrmPerms->HavePerm('WEBFORM', BX_CRM_PERM_NONE))
 		{
-			ShowError(Loc::getMessage('CRM_PERMISSION_DENIED'));
+			$this->errors[] = Loc::getMessage('CRM_PERMISSION_DENIED');
+			$this->showErrors();
 			return false;
 		}
-		$this->arResult['PERM_CAN_EDIT'] = !$CrmPerms->HavePerm('WEBFORM', BX_CRM_PERM_NONE, 'WRITE');
 
 		$id = $this->arParams['ELEMENT_ID'];
+		$this->arResult['PERM_CAN_EDIT'] = !$CrmPerms->HavePerm('WEBFORM', BX_CRM_PERM_NONE, 'WRITE');
+		if (!$this->arResult['PERM_CAN_EDIT'])
+		{
+			$this->errors[] = Loc::getMessage('CRM_PERMISSION_DENIED');
+			$this->showErrors();
+			return false;
+		}
+
 		$this->arResult['AVAILABLE_FIELDS'] = EntityFieldProvider::getFields();
 		$this->arResult['AVAILABLE_FIELDS_TREE'] = EntityFieldProvider::getFieldsTree();
 		$this->arResult['PRESET_AVAILABLE_FIELDS_TREE'] = EntityFieldProvider::getPresetFieldsTree();
 		$this->arResult['AVAILABLE_ENTITIES'] = Entity::getList();
-
 
 		$this->crmWebForm = new Form($id);
 
@@ -892,7 +899,6 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 		) ? 'Y' : 'N';
 
 		/* Case for making new callback form from contact-center*/
-		$formCreated = false;
 		if (intval($id) === 0)
 		{
 			$canUseCallBack = Loader::includeModule('voximplant');
@@ -932,6 +938,16 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 				? 'contacts'
 				: 'callback';
 
+			// add date to form name
+			$culture = \Bitrix\Main\Application::getInstance()->getContext()->getCulture();
+			$formData['NAME'] = Loc::getMessage(
+				'CRM_WEBFORM_SCENARIO_NAME_TEMPLATE',
+				[
+					'#NAME#' => $formData['NAME'],
+					'#DATE#' => FormatDate($culture->getDayMonthFormat(), new Date()),
+				]
+			);
+
 			$this->crmWebForm->merge($formData);
 			$this->crmWebForm->save();
 			if ($this->crmWebForm->hasErrors())
@@ -940,9 +956,7 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 				$this->showErrors();
 				return true;
 			}
-			$formCreated = true;
 		}
-
 
 		$this->arResult['FORM_ACTION'] = $GLOBALS['APPLICATION']->GetCurPageParam();
 
@@ -950,8 +964,7 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 		//// REDIRECTED (compatible mode)
 		//////////////////////////////////////
 		$landingUrl = WebForm\Internals\LandingTable::getLandingEditUrl($this->crmWebForm->getId());
-		$crmFormSettings = Crm\Settings\WebFormSettings::getCurrent();
-		if ($crmFormSettings->isNewEditorEnabled() && $landingUrl)
+		if ($landingUrl)
 		{
 			if (intval($id) === 0)
 			{
@@ -977,105 +990,12 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 			{
 				LocalRedirect($landingUrl);
 			}
-		}
-		elseif ($formCreated)
-		{
-			$this->arResult['FORM'] = $this->crmWebForm->get();
-			$this->arResult['FORM']['ID'] = $id = $this->crmWebForm->getId();
-			$this->arResult['FORM_ACTION'] = str_replace('/0/', "/$id/", $this->arResult['FORM_ACTION']);
+			return true;
 		}
 
-		$this->arResult['EDITOR_CHOISE'] = [
-			'newLink' => Manager::getEditUrl($this->crmWebForm->getId(), true),
-			'new' => Crm\Settings\WebFormSettings::EditorLanding,
-			'old' => Crm\Settings\WebFormSettings::EditorCrm,
-			'confirm' => $crmFormSettings->isEditorConfirmEnabled(),
-		];
-
-		/* Set invoice payer types */
-		$this->initInvoicePayerTypes();
-
-		$this->arResult['ERRORS'] = array();
-		$request = \Bitrix\Main\Context::getCurrent()->getRequest();
-		if($request->getRequestMethod() == "POST" && check_bitrix_sessid())
-		{
-			if(!$this->arResult['PERM_CAN_EDIT'])
-			{
-				ShowError(Loc::getMessage('CRM_PERMISSION_DENIED'));
-				return true;
-			}
-			elseif ($this->arResult['FORM']['IS_READONLY'] !== 'Y')
-			{
-				$this->processPost();
-				$this->arResult['ERRORS'] = $this->errors;
-			}
-
-		}
-
-		/* Set templates */
-		$this->setResultTemplates();
-		$this->setResultDuplicateModes();
-
-		/* Set fields */
-		$this->setResultFields();
-
-		/* Set dependencies */
-		$this->setResultDependencyFields();
-
-		/* Set preset fields */
-		$this->setResultPresetFields();
-
-		/* Set allowed entity schemes */
-		$this->setResultEntitySchemes();
-
-		/* Set dynamic entities */
-		$this->setResultDynamicEntities();
-
-		/* Set assigned user */
-		$this->setResultAssignedBy();
-
-		/* Set currency */
-		$this->setResultCurrency();
-
-		/* Set deal category */
-		$this->setResultDealCategory();
-
-		/* Set actions */
-		$this->setResultActions();
-
-		/* Set Ads form */
-		$this->setResultAdsForm();
-
-		/* Set call back form */
-		$this->setResultCallBackForm();
-
-		/* Set captcha data */
-		$this->prepareResultCaptcha();
-
-		/* Set licence */
-		$this->setResultLicence();
-
-		/* Boolean field items */
-		$this->arResult['BOOLEAN_FIELD_ITEMS'] = EntityFieldProvider::getBooleanFieldItems();
-
-		/* Copyright */
-		$this->arResult['CAN_REMOVE_COPYRIGHT'] = $this->crmWebForm->canRemoveCopyright();
-		$this->arResult['RESTRICTION_POPUP'] = \Bitrix\Crm\Restriction\RestrictionManager::getWebformRestriction()->prepareInfoHelperScript();
-
-
-		/* External analytics data */
-		$this->arResult['EXTERNAL_ANALYTICS_DATA'] = $this->crmWebForm->getExternalAnalyticsData();
-
-		$this->arResult['IS_RU_ZONE'] = Loader::includeModule('bitrix24')
-			? in_array(\CBitrix24::getPortalZone(), ['ru', 'kz', 'by'])
-			: in_array(LANGUAGE_ID, ['ru', 'kz', 'by'])
-		;
-		$this->arResult['IS_UA_ZONE_RU_LANG'] = Loader::includeModule('bitrix24') && LANGUAGE_ID === 'ua';
-
-		$replaceList = array('id' => $id, 'form_id' => $id);
-		$this->arResult['PATH_TO_WEB_FORM_LIST'] = CComponentEngine::makePathFromTemplate($this->arParams['PATH_TO_WEB_FORM_LIST'], $replaceList);
-
-		return true;
+		$this->errors[] = Loc::getMessage('CRM_MODULE_ERROR_NOT_FOUNT');
+		$this->showErrors();
+		return false;
 	}
 
 	public function checkParams()
@@ -1090,6 +1010,9 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 
 	public function executeComponent()
 	{
+		global $APPLICATION;
+		$APPLICATION->SetTitle(Loc::getMessage('CRM_WEBFORM_EDIT_TITLE'));
+
 		if (!$this->checkModules())
 		{
 			$this->showErrors();
@@ -1102,7 +1025,6 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 			return;
 		}
 
-		global $APPLICATION;
 		if (intval($this->arParams['ELEMENT_ID']) <= 0)
 		{
 			$APPLICATION->SetTitle(Loc::getMessage('CRM_WEBFORM_EDIT_TITLE_ADD'));
@@ -1161,6 +1083,12 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 			return false;
 		}
 
+		if (!Crm\Integration\Landing\FormLanding::getInstance()->canUse())
+		{
+			$this->errors[] = Loc::getMessage('CRM_MODULE_NOT_INSTALLED_LANDING');
+			return false;
+		}
+
 		return true;
 	}
 
@@ -1176,9 +1104,7 @@ class CCrmWebFormEditComponent extends \CBitrixComponent
 			return;
 		}
 
-		foreach($this->errors as $error)
-		{
-			ShowError($error);
-		}
+		$this->arResult['ERRORS'] = $this->errors;
+		$this->includeComponentTemplate('unavailable');
 	}
 }

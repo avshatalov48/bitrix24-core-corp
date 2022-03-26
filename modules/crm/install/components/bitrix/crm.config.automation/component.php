@@ -85,7 +85,7 @@ $arResult['HIDE_HELP'] = CUserOptions::GetOption('crm.config.automation', 'hide_
 
 if (isset($arParams['SET_TITLE']) && $arParams['SET_TITLE'] === 'Y')
 {
-	$APPLICATION->SetTitle(GetMessage('CRM_AUTOMATION_TITLE'));
+	$APPLICATION->SetTitle(GetMessage('CRM_AUTOMATION_TITLE_1'));
 }
 
 $this->IncludeComponentTemplate();

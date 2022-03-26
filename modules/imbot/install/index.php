@@ -8,15 +8,9 @@ if (class_exists('imbot'))
 	return;
 }
 
-Loc::loadMessages(__FILE__);
-
-Class imbot extends \CModule
+class imbot extends \CModule
 {
 	public $MODULE_ID = "imbot";
-	public $MODULE_VERSION;
-	public $MODULE_VERSION_DATE;
-	public $MODULE_NAME;
-	public $MODULE_DESCRIPTION;
 	public $MODULE_GROUP_RIGHTS = "Y";
 
 	public function __construct()
@@ -63,11 +57,6 @@ Class imbot extends \CModule
 		return true;
 	}
 
-	public function InstallEvents()
-	{
-		return true;
-	}
-
 	public function CheckModules()
 	{
 		global $APPLICATION;
@@ -77,7 +66,7 @@ Class imbot extends \CModule
 			$this->errors[] = Loc::getMessage('IMBOT_CHECK_PULL');
 		}
 
-		if (!IsModuleInstalled('im'))
+		if (!Main\ModuleManager::isModuleInstalled('im'))
 		{
 			$this->errors[] = Loc::getMessage('IMBOT_CHECK_IM');
 		}
@@ -95,10 +84,8 @@ Class imbot extends \CModule
 			$APPLICATION->ThrowException(implode("<br>", $this->errors));
 			return false;
 		}
-		else
-		{
-			return true;
-		}
+
+		return true;
 	}
 
 	public function InstallDB($params = Array())
@@ -110,10 +97,9 @@ Class imbot extends \CModule
 		if (!$DB->query("SELECT 'x' FROM b_im_bot_network_session WHERE 1=0", true))
 		{
 			$errors = $DB->runSqlBatch(sprintf(
-				'%s/bitrix/modules/%s/install/db/%s/install.sql',
+				'%s/bitrix/modules/%s/install/db/mysql/install.sql',
 				$_SERVER['DOCUMENT_ROOT'],
-				mb_strtolower($this->MODULE_ID),
-				mb_strtolower($DB->type)
+				mb_strtolower($this->MODULE_ID)
 			));
 			if($errors !== false)
 			{
@@ -143,10 +129,12 @@ Class imbot extends \CModule
 
 		\COption::SetOptionString("imbot", "portal_url", $params['PUBLIC_URL']);
 
-		RegisterModuleDependences('im', 'OnAfterUserRead', 'imbot', '\Bitrix\ImBot\Event', 'onUserRead');
-		RegisterModuleDependences('im', 'OnAfterMessagesLike', 'imbot', '\Bitrix\ImBot\Event', 'onMessageLike');
-		RegisterModuleDependences('im', 'OnStartWriting', 'imbot', '\Bitrix\ImBot\Event', 'onStartWriting');
-		RegisterModuleDependences('im', 'OnSessionVote', 'imbot', '\Bitrix\ImBot\Event', 'onSessionVote');
+		$eventManager = \Bitrix\Main\EventManager::getInstance();
+		$eventManager->registerEventHandlerCompatible('im', 'OnAfterUserRead', 'imbot', '\Bitrix\ImBot\Event', 'onUserRead');
+		$eventManager->registerEventHandlerCompatible('im', 'OnAfterMessagesLike', 'imbot', '\Bitrix\ImBot\Event', 'onMessageLike');
+		$eventManager->registerEventHandlerCompatible('im', 'OnStartWriting', 'imbot', '\Bitrix\ImBot\Event', 'onStartWriting');
+		$eventManager->registerEventHandlerCompatible('im', 'OnSessionVote', 'imbot', '\Bitrix\ImBot\Event', 'onSessionVote');
+		$eventManager->registerEventHandlerCompatible('rest', 'OnRestServiceBuildDescription', 'imbot', '\Bitrix\ImBot\RestService', 'onRestServiceBuildDescription');
 
 		Main\Loader::includeModule('imbot');
 
@@ -156,12 +144,8 @@ Class imbot extends \CModule
 	public function InstallFiles()
 	{
 		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imbot/install/public", $_SERVER["DOCUMENT_ROOT"]."/", true, true);
+		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imbot/install/js", $_SERVER["DOCUMENT_ROOT"]."/bitrix/js/",true, true);
 
-		return true;
-	}
-
-	public function UnInstallEvents()
-	{
 		return true;
 	}
 
@@ -202,12 +186,14 @@ Class imbot extends \CModule
 
 		Main\Loader::includeModule('imbot');
 
-		UnRegisterModuleDependences('im', 'OnAfterUserRead', 'imbot', '\Bitrix\ImBot\Event', 'onUserRead');
-		UnRegisterModuleDependences('im', 'OnAfterMessagesLike', 'imbot', '\Bitrix\ImBot\Event', 'onMessageLike');
-		UnRegisterModuleDependences('im', 'OnStartWriting', 'imbot', '\Bitrix\ImBot\Event', 'onStartWriting');
-		UnRegisterModuleDependences('im', 'OnSessionVote', 'imbot', '\Bitrix\ImBot\Event', 'onSessionVote');
+		$eventManager = \Bitrix\Main\EventManager::getInstance();
+		$eventManager->unRegisterEventHandler('im', 'OnAfterUserRead', 'imbot', '\Bitrix\ImBot\Event', 'onUserRead');
+		$eventManager->unRegisterEventHandler('im', 'OnAfterMessagesLike', 'imbot', '\Bitrix\ImBot\Event', 'onMessageLike');
+		$eventManager->unRegisterEventHandler('im', 'OnStartWriting', 'imbot', '\Bitrix\ImBot\Event', 'onStartWriting');
+		$eventManager->unRegisterEventHandler('im', 'OnSessionVote', 'imbot', '\Bitrix\ImBot\Event', 'onSessionVote');
+		$eventManager->unRegisterEventHandler('rest', 'OnRestServiceBuildDescription', 'imbot', '\Bitrix\ImBot\RestService', 'onRestServiceBuildDescription');
 
-		$dir = new Bitrix\Main\IO\Directory(Bitrix\Main\Application::getDocumentRoot().'/bitrix/modules/imbot/lib/bot/');
+		$dir = new Main\IO\Directory(Main\Application::getDocumentRoot().'/bitrix/modules/imbot/lib/bot/');
 		$dirList = $dir->getChildren();
 		foreach ($dirList as $dirElement)
 		{
@@ -227,10 +213,9 @@ Class imbot extends \CModule
 		if (!isset($arParams['savedata']) || $arParams['savedata'] !== true)
 		{
 			$errors = $DB->runSqlBatch(sprintf(
-				'%s/bitrix/modules/%s/install/db/%s/uninstall.sql',
+				'%s/bitrix/modules/%s/install/db/mysql/uninstall.sql',
 				$_SERVER['DOCUMENT_ROOT'],
-				strtolower($this->MODULE_ID),
-				strtolower($DB->type)
+				strtolower($this->MODULE_ID)
 			));
 			if ($errors !== false)
 			{
@@ -245,8 +230,14 @@ Class imbot extends \CModule
 		return true;
 	}
 
-	public function UnInstallFiles($arParams = array())
+	function UnInstallFiles()
 	{
+		if ($_ENV["COMPUTERNAME"] !== 'BX')
+		{
+			DeleteDirFilesEx("/bitrix/js/imbot/");
+		}
+
 		return true;
 	}
+
 }

@@ -39,15 +39,13 @@ class ImopenlinesIframeQuickAjaxController
 
 	protected function search()
 	{
-		global $APPLICATION;
-
 		$search = $this->requestData['SEARCH'];
 		$offset = $this->requestData['OFFSET'];
 		if(!$offset)
 		{
 			$offset = 0;
 		}
-		$search = $APPLICATION->convertCharset($search, 'UTF-8', LANG_CHARSET);
+		$search = \Bitrix\Main\Text\Encoding::convertEncoding($search, 'UTF-8', LANG_CHARSET);
 		$filter = [
 			[
 				'LOGIC' => 'OR',
@@ -59,20 +57,21 @@ class ImopenlinesIframeQuickAjaxController
 				],
 			],
 		];
-		$sectionId = intval($this->requestData['SECTION_ID']);
+		$sectionId = (int)$this->requestData['SECTION_ID'];
 		if($sectionId > 0)
 		{
 			$filter['CATEGORY'] = $sectionId;
 		}
+		$converter = \Bitrix\Main\Text\Converter::getHtmlConverter();
 		$answers = QuickAnswer::getList($filter, $offset);
 		$this->responseData['result'] = array();
 		foreach($answers as $answer)
 		{
 			$this->responseData['result'][] = array(
-				'name' => $answer->getName(),
-				'text' => $answer->getText(),
-				'id' => $answer->getId(),
-				'section' => $answer->getCategory(),
+				'name' => $converter->decode($answer->getName()),
+				'text' => $converter->decode($answer->getText()),
+				'id' => (int)$answer->getId(),
+				'section' => (int)$answer->getCategory(),
 			);
 		}
 		$this->responseData['allCount'] = QuickAnswer::getCount($filter);
@@ -80,17 +79,17 @@ class ImopenlinesIframeQuickAjaxController
 
 	protected function edit()
 	{
-		global $APPLICATION;
 		$text = $this->requestData['TEXT'];
-		$text = htmlspecialchars_decode($text);
-		$text = $APPLICATION->convertCharset($text, 'UTF-8', LANG_CHARSET);
+		$converter = \Bitrix\Main\Text\Converter::getHtmlConverter();
+		$text = $converter->decode($text);
+		$text = \Bitrix\Main\Text\Encoding::convertEncoding($text, 'UTF-8', LANG_CHARSET);
 		if(empty($text))
 		{
 			$this->errors[] = 'Text cannot be empty';
 			return false;
 		}
 		$id = $this->requestData['ID'];
-		$sectionId = intval($this->requestData['SECTION_ID']);
+		$sectionId = (int)$this->requestData['SECTION_ID'];
 
 		$answer = QuickAnswer::getById($id);
 		if($answer)
@@ -131,13 +130,14 @@ class ImopenlinesIframeQuickAjaxController
 
 	protected function prepareRequestData()
 	{
+		$converter = \Bitrix\Main\Text\Converter::getHtmlConverter();
 		$this->requestData = array(
-			'SEARCH' => htmlspecialcharsbx($this->request->get('search')),
-			'TEXT' => htmlspecialcharsbx($this->request->get('text')),
-			'ID' => intval($this->request->get('id')),
-			'SECTION_ID' => intval($this->request->get('sectionId')),
-			'OFFSET' => htmlspecialcharsbx($this->request->get('offset')),
-			'LINE_ID' => intval($this->request->get('lineId')),
+			'SEARCH' => $converter->encode($this->request->get('search')),
+			'TEXT' => $converter->encode($this->request->get('text')),
+			'ID' => (int)$this->request->get('id'),
+			'SECTION_ID' => (int)$this->request->get('sectionId'),
+			'OFFSET' => $converter->encode($this->request->get('offset')),
+			'LINE_ID' => (int)$this->request->get('lineId'),
 		);
 	}
 

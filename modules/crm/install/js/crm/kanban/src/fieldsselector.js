@@ -1,6 +1,6 @@
 import {UI} from 'ui.notification';
 import {PopupManager} from "main.popup";
-import {Dom, Loc, Tag, Text, Type} from "main.core";
+import {Dom, Event, Loc, Tag, Text, Type} from "main.core";
 
 type FieldsSelectorOptions = {
 	type: string,
@@ -8,6 +8,8 @@ type FieldsSelectorOptions = {
 	sections: Array,
 	selectedFields: Array,
 	ignoredFields: Object,
+	headersSections: Object,
+	defaultHeaderSectionId: ?string,
 	onSelect?: Function
 }
 
@@ -20,6 +22,7 @@ export default class FieldsSelector
 	{
 		this.popup = null;
 		this.fields = null;
+		this.fieldsPopupItems = null;
 		this.options = options;
 		this.type =
 			this.options.hasOwnProperty('type')
@@ -32,6 +35,13 @@ export default class FieldsSelector
 				? this.options.selectedFields.slice(0)
 				: []
 		;
+
+		this.enableHeadersSections = Boolean(this.options.headersSections);
+		this.headersSections = (this.options.headersSections ?? {});
+		this.defaultHeaderSectionId = (this.options.defaultHeaderSectionId ?? null);
+
+		this.fieldVisibleClass = 'crm-kanban-popup-field-search-list-item-visible';
+		this.fieldHiddenClass = 'crm-kanban-popup-field-search-list-item-hidden';
 	}
 
 	show()
@@ -154,14 +164,33 @@ export default class FieldsSelector
 
 		const container = Tag.render`<div class="crm-kanban-popup-field"></div>`;
 
-		this.getSections().forEach((section) =>
-		{
+		const headerWrapper = Tag.render`
+			<div class="crm-kanban-popup-field-search-header-wrapper">
+				<div class="ui-form-row-inline"></div>
+			</div>
+		`;
+
+		container.prepend(headerWrapper);
+
+		this.preparePopupContentHeaderSections(headerWrapper);
+		this.preparePopupContentHeaderSearch(headerWrapper);
+
+		this.getSections().map(section => {
+			const sectionWrapperId = this.getSectionWrapperNameBySectionName(section.name);
+			const sectionWrapper = Tag.render`
+				<div 
+					class="crm-kanban-popup-field-search-section" 
+					data-crm-kanban-popup-field-search-section="${sectionWrapperId}">
+				</div>
+			`;
+			Dom.append(sectionWrapper, container);
+
 			const sectionName = section.name;
 			if (sectionsWithFields.hasOwnProperty(sectionName) && sectionsWithFields[sectionName].length)
 			{
 				Dom.append(
 					Tag.render`<div class="crm-kanban-popup-field-title">${Text.encode(section.title)}</div>`,
-					container
+					sectionWrapper
 				);
 				Dom.append(
 					Tag.render`<div class="crm-kanban-popup-field-wrapper">
@@ -199,12 +228,189 @@ export default class FieldsSelector
 						}
 					)}
 					</div>`,
-					container
+					sectionWrapper
 				);
 			}
 		});
 
 		return container;
+	}
+
+	preparePopupContentHeaderSections(headerWrapper: HTMLElement): void
+	{
+		if (!this.enableHeadersSections)
+		{
+			return;
+		}
+
+		const headerSectionsWrapper = Tag.render`
+			<div class="ui-form-row">
+				<div class="ui-form-content crm-kanban-popup-field-search-section-wrapper"></div>
+			</div>
+		`;
+
+		headerWrapper.firstElementChild.appendChild(headerSectionsWrapper);
+
+		const headersSections = this.getHeadersSections();
+
+		for (let key in headersSections)
+		{
+			const itemClass = 'crm-kanban-popup-field-search-section-item-icon'
+				+ (headersSections[key].selected ? ` crm-kanban-popup-field-search-section-item-icon-active` : '');
+
+			const headerSectionItem = Tag.render`
+				<div class="crm-kanban-popup-field-search-section-item" data-kanban-popup-filter-section-button="${key}">
+					<div class="${itemClass}">
+						${Text.encode(headersSections[key].name)}
+					</div>
+				</div>
+			`;
+
+			headerSectionsWrapper.firstElementChild.appendChild(headerSectionItem);
+
+			if (this.type !== TYPE_VIEW)
+			{
+				break;
+			}
+
+			Event.bind(headerSectionItem, 'click', this.onFilterSectionClick.bind(this, headerSectionItem));
+		}
+	}
+
+	onFilterSectionClick(item: HTMLElement): void
+	{
+		const activeClass = 'crm-kanban-popup-field-search-section-item-icon-active';
+		const sectionId = item.dataset.kanbanPopupFilterSectionButton;
+		const sections = document.querySelectorAll(
+			`[data-crm-kanban-popup-field-search-section="${sectionId}"]`
+		);
+		if (Dom.hasClass(item.firstElementChild, activeClass))
+		{
+			Dom.removeClass(item.firstElementChild, activeClass);
+			this.filterSectionsToggle(sections, 'hide');
+		}
+		else
+		{
+			Dom.addClass(item.firstElementChild, activeClass);
+			this.filterSectionsToggle(sections, 'show');
+		}
+	}
+
+	filterSectionsToggle(sections: NodeList, action: string): void
+	{
+		Array.from(sections).map(section => {
+			(action === 'show' ? Dom.show(section) : Dom.hide(section));
+		});
+	}
+
+	preparePopupContentHeaderSearch(headerWrapper: HTMLElement): void
+	{
+		const searchForm = Tag.render`
+			<div class="ui-form-row">
+				<div class="ui-form-content crm-kanban-popup-field-search-input-wrapper">
+					<div class="ui-ctl ui-ctl-textbox ui-ctl-before-icon ui-ctl-after-icon">
+						<div class="ui-ctl-before ui-ctl-icon-search"></div>
+						<button class="ui-ctl-after ui-ctl-icon-clear"></button>
+						<input type="text" class="ui-ctl-element crm-kanban-popup-field-search-section-input">
+					</div>
+				</div>
+			</div>
+		`;
+
+		headerWrapper.firstElementChild.appendChild(searchForm);
+		const inputs = searchForm.getElementsByClassName('crm-kanban-popup-field-search-section-input');
+		if (inputs.length)
+		{
+			const input = inputs[0];
+			Event.bind(input, 'input', this.onFilterSectionSearchInput.bind(this, input));
+			Event.bind(input.previousElementSibling, 'click', this.onFilterSectionSearchInputClear.bind(this, input));
+		}
+	}
+
+	onFilterSectionSearchInput(input: HTMLElement): void
+	{
+		let search = input.value;
+		if (search.length)
+		{
+			search = search.toLowerCase();
+		}
+
+		this.getFieldsPopupItems().map(item => {
+			const title = item.innerText.toLowerCase();
+
+			if (search.length && title.indexOf(search) === -1)
+			{
+				Dom.removeClass(item, this.fieldVisibleClass);
+				Dom.addClass(item, this.fieldHiddenClass);
+			}
+			else
+			{
+				Dom.removeClass(item, this.fieldHiddenClass);
+				Dom.addClass(item, this.fieldVisibleClass);
+				item.style.display = 'block';
+			}
+		});
+	}
+
+	getFieldsPopupItems(): ?HTMLElement[]
+	{
+		if (!Type.isArray(this.fieldsPopupItems))
+		{
+			this.fieldsPopupItems = Array.from(
+				this.popup.getPopupContainer().querySelectorAll('.crm-kanban-popup-field-item')
+			);
+			this.prepareAnimation();
+		}
+
+		return this.fieldsPopupItems;
+	}
+
+	prepareAnimation(): void
+	{
+		this.fieldsPopupItems.map(item => {
+			Event.bind(item, 'animationend', this.onAnimationEnd.bind(this, item));
+		});
+	}
+
+	onAnimationEnd(item: HTMLElement): void
+	{
+		item.style.display = (
+			Dom.hasClass(item, this.fieldHiddenClass)
+				? 'none'
+				: 'block'
+		);
+	}
+
+	onFilterSectionSearchInputClear(input: HTMLElement): void
+	{
+		if (input.value.length)
+		{
+			input.value = '';
+			this.onFilterSectionSearchInput(input);
+		}
+	}
+
+	getSectionWrapperNameBySectionName(name: string): ?string
+	{
+		const headerSections = this.getHeadersSections();
+		for (let id in headerSections)
+		{
+			if (this.headersSections[id].sections && this.headersSections[id].sections.includes(name))
+			{
+				return this.headersSections[id].id;
+			}
+		}
+
+		return (
+			(this.headersSections[this.defaultHeaderSectionId] && this.defaultHeaderSectionId)
+				? this.headersSections[this.defaultHeaderSectionId].id
+				: null
+		);
+	}
+
+	getHeadersSections(): Object
+	{
+		return (this.headersSections ?? {});
 	}
 
 	distributeFieldsBySections(fields: Array)

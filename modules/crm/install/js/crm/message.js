@@ -5,6 +5,9 @@ if(typeof(BX.CrmMessageHelper) === "undefined")
 	};
 	BX.CrmMessageHelper.prototype =
 	{
+		/**
+		 * @deprecated
+		 */
 		getNumberDeclension: function (number, nominative, genitiveSingular, genitivePlural)
 		{
 			if(!BX.type.isNumber(number))
@@ -37,6 +40,9 @@ if(typeof(BX.CrmMessageHelper) === "undefined")
 			return (penultimateDigit !== 1 && lastDigit >= 2 && lastDigit <= 4
 				? genitiveSingular : genitivePlural);
 		},
+		/**
+		 * @deprecated
+		 */
 		prepareEntityNumberDeclension: function(number, entityDeclensions)
 		{
 			return (

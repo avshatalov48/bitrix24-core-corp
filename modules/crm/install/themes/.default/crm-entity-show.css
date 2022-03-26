@@ -1651,7 +1651,7 @@ div.crm-client-summary-wrapper .crm-client-photo-wrapper {
 	overflow: hidden;
 	margin-right: 10px;
 	min-width: 50px;
-	min-height: 50px;
+	/*min-height: 50px;*/
 	max-width: 50px;
 	max-height: 50px;
 	text-align: left;

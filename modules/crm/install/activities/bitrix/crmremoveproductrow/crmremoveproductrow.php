@@ -38,9 +38,19 @@ class CBPCrmRemoveProductRow extends CBPActivity
 
 	private function deleteRows($entityTypeId, $entityId): bool
 	{
-		$entityType = \CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId);
+		$complexDocumentId = CCrmBizProcHelper::ResolveDocumentId((int)$entityTypeId, (int)$entityId);
+		$entityDocument = $complexDocumentId[1];
 
-		return \CCrmProductRow::SaveRows($entityType, $entityId, [], null, false);
+		if (class_exists($entityDocument) && method_exists($entityDocument, 'setProductRows'))
+		{
+			return $entityDocument::setProductRows($complexDocumentId[2], [])->isSuccess();
+		}
+		else
+		{
+			$entityType = \CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId);
+
+			return \CCrmProductRow::SaveRows($entityType, $entityId, [], null, false);
+		}
 	}
 
 	public static function GetPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters, $arWorkflowVariables, $arCurrentValues = null, $formName = '', $popupWindow = null, $siteId = '')

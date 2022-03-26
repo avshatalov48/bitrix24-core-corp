@@ -1,0 +1,4 @@
+<?php
+$MESS['ENTITY_EDITOR_SECTION_SELECT_FIELD'] = 'Выбрать поле';
+$MESS['ENTITY_EDITOR_SECTION_ADD_FIELD'] = 'Добавить поле';
+$MESS['ENTITY_EDITOR_SECTION_SETTINGS'] = 'Раздел';

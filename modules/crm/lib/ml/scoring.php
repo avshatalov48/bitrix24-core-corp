@@ -463,17 +463,26 @@ class Scoring
 	 */
 	public static function getScoringModel($entityTypeId, $entityId)
 	{
+		static $cache = [];
+		$key = "{$entityTypeId}_{$entityId}";
+		if (isset($cache[$key]))
+		{
+			return $cache[$key];
+		}
+
 		switch ($entityTypeId)
 		{
 			case \CCrmOwnerType::Lead:
-				return new Model\LeadScoring(Model\LeadScoring::MODEL_NAME);
+				$cache[$key] = new Model\LeadScoring(Model\LeadScoring::MODEL_NAME);
+				return $cache[$key];
 			case \CCrmOwnerType::Deal:
 				$modelName = Model\DealScoring::getModelNameByDeal($entityId);
 				if(!$modelName)
 				{
 					return null;
 				}
-				return new Model\DealScoring($modelName);
+				$cache[$key] = new Model\DealScoring($modelName);
+				return $cache[$key];
 			default:
 				return null;
 		}
@@ -530,6 +539,17 @@ class Scoring
 		}
 		$result[] = Model\DealScoring::class;
 		return $result;
+	}
+
+	public static function hasAccess(string $modelName, int $userId = 0): bool
+	{
+		$model = static::getModelByName($modelName);
+		if (!$model)
+		{
+			return false;
+		}
+
+		return $model->hasAccess($userId);
 	}
 
 	/**

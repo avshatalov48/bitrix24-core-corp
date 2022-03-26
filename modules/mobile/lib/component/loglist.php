@@ -161,13 +161,17 @@ class LogList  extends \Bitrix\Socialnetwork\Component\LogListCommon
 		$pathInstance->setPaths($params);
 
 		$params['GROUP_ID'] = (int)$params['GROUP_ID']; // group page
+		if ($params['GROUP_ID'] > 0)
+		{
+			$params['ENTITY_TYPE'] = SONET_ENTITY_GROUP;
+		}
 		$params['USER_ID'] = (int)$params['USER_ID']; // profile page
 		$params['LOG_ID'] = (int)$params['LOG_ID']; // log entity page
 		$params['NEW_LOG_ID'] = (int)$params['NEW_LOG_ID'];
 
 		$params['FIND'] = ($request->get('FIND') ? trim($request->get('FIND')) : '');
 
-		$params['SHOW_RATING'] = (isset($params['SHOW_RATING']) ? $params['SHOW_RATING'] : 'Y');
+		$params['SHOW_RATING'] = ($params['SHOW_RATING'] ?? 'Y');
 
 		$paramsInstance->prepareNameTemplateParams($params);
 
@@ -307,8 +311,8 @@ class LogList  extends \Bitrix\Socialnetwork\Component\LogListCommon
 
 			$result['Events'] = false;
 
-			$processorInstance->processFilterData($result);
 			$processorInstance->processWorkgroupData($result);
+			$processorInstance->processFilterData($result);
 			$processorInstance->processNavData($result);
 			$counterProcessorInstance->processCounterTypeData($result);
 			$processorInstance->processLastTimestamp($result);

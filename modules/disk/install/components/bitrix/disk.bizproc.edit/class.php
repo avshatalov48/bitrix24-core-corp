@@ -163,10 +163,11 @@ class CDiskBizprocEditComponent extends BaseComponent implements SidePanelWrappa
 	protected function processActionDefault()
 	{
 		$this->arResult['ACTIVITY_GROUPS'] = array(
-			'document' => Loc::getMessage('BIZPROC_WFEDIT_CATEGORY_DOC'),
-			'logic' => Loc::getMessage('BIZPROC_WFEDIT_CATEGORY_CONSTR'),
+			'document' => Loc::getMessage('BIZPROC_WFEDIT_CATEGORY_DOC_1'),
+			'task' => Loc::getMessage('BIZPROC_WFEDIT_CATEGORY_TASKS_1'),
+			'logic' => Loc::getMessage('BIZPROC_WFEDIT_CATEGORY_CONSTR_1'),
 			'interaction' => Loc::getMessage('BIZPROC_WFEDIT_CATEGORY_INTER'),
-			'rest' => Loc::getMessage('BIZPROC_WFEDIT_CATEGORY_REST'),
+			'rest' => Loc::getMessage('BIZPROC_WFEDIT_CATEGORY_REST_1'),
 		);
 
 		$runtime = CBPRuntime::getRuntime(true);

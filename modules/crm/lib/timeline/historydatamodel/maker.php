@@ -56,10 +56,7 @@ class Maker
 	 */
 	protected function isFactoryBasedApproachSupported(int $entityTypeId): bool
 	{
-		return (
-			\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId)
-			|| ($entityTypeId === \CCrmOwnerType::Quote)
-		);
+		return \CCrmOwnerType::isUseFactoryBasedApproach($entityTypeId);
 	}
 
 	protected function getPresenter(int $timelineEntryType, EntityImplementation $entityImplementation): Presenter
@@ -79,6 +76,14 @@ class Maker
 		if ($timelineEntryType === TimelineType::CONVERSION)
 		{
 			return new Presenter\Conversion($entityImplementation);
+		}
+		if ($timelineEntryType === TimelineType::FINAL_SUMMARY)
+		{
+			return new Presenter\FinalSummary($entityImplementation);
+		}
+		if ($timelineEntryType === TimelineType::FINAL_SUMMARY_DOCUMENTS)
+		{
+			return new Presenter\FinalSummaryDocuments($entityImplementation);
 		}
 
 		return new Presenter($entityImplementation);

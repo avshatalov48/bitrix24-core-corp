@@ -36,7 +36,7 @@ body {
 }
 
 .logo img {
-	background-color: #535c69;
+	/*background-color: #535c69;*/
 	border-radius: 3px;
 }
 
@@ -117,7 +117,9 @@ body {
 }
 
 /* userblock styles */
-.user-block:hover {
+.user-block:hover,
+.user-block.--hover,
+.user-block.--wait {
 	background-color: #78808b;
 }
 
@@ -239,7 +241,6 @@ body {
 }
 
 .bx-placeholder-wrap {
-	background: #fff;
 	padding-top: 1px;
 }
 

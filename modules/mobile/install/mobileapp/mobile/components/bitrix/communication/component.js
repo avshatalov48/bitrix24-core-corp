@@ -3,14 +3,16 @@
 	if (typeof this.SocketConnection == 'undefined')
 	{
 		this.SocketConnection = new Connection();
-		ChatReadyCheck.wait().then(() => this.SocketConnection.start());
+		// ChatReadyCheck.wait().then(() => this.SocketConnection.start());
+		setTimeout(() => this.SocketConnection.start(), 0);
 	}
 	else
 	{
-		SocketConnection.disconnect(1000, "restart");
+		this.SocketConnection.disconnect(1000, "restart");
+		this.SocketConnection = new Connection();
 		setTimeout(() => {
-			this.SocketConnection = new Connection();
-			ChatReadyCheck.wait().then(() => this.SocketConnection.start());
+			this.SocketConnection.start();
+			// ChatReadyCheck.wait().then(() => this.SocketConnection.start());
 		}, 2000);
 	}
 
@@ -33,7 +35,8 @@
 			};
 
 			this.userCounterMapTabName = {
-				'**': 'stream',
+				'**': 'livefeed',
+				'bp_tasks': 'bp_tasks',
 				'im': 'messages',
 				'tasks_total': 'tasks_total',
 				'crm_activity_current_calltracker': 'crm_activity_current_calltracker',
@@ -308,7 +311,18 @@
 			clearTimeout(this.updateCountersTimeout);
 			this.updateCountersTimeout = null;
 
-			let total = Object.keys(this.counters)
+			if (Application.getApiVersion() >= 41)
+			{
+				this.counters['messages'] = this.counters['chats'] + this.counters['notifications'] + this.counters['openlines'];
+				this.counters['stream'] = this.counters['livefeed'] + (this.counters['bp_tasks'] ? this.counters['bp_tasks'] : 0);
+			}
+			else
+			{
+				this.counters['messages'] = this.counters['chats'];
+				this.counters['stream'] = this.counters['livefeed'];
+			}
+
+			this.total = Object.keys(this.counters)
 				.filter(counterType => this.isEnableApplicationCounterType(counterType))
 				.reduce((currentTotal, key) => {
 					let counter = Number(this.counters[key]);
@@ -317,20 +331,9 @@
 				}, 0)
 			;
 
-			console.info("AppCounters.update: update counters: "+total+"\n", this.counters);
-
-			if (Application.getApiVersion() >= 41)
-			{
-				this.counters['messages'] = this.counters['chats'] + this.counters['notifications'] + this.counters['openlines'];
-			}
-			else
-			{
-				this.counters['messages'] = this.counters['chats'];
-			}
+			console.info("AppCounters.update: update counters: "+ this.total+ "\n", this.counters);
 
 			Application.setBadges(this.counters);
-
-			this.total = total;
 
 			if (!Application.isBackground())
 			{

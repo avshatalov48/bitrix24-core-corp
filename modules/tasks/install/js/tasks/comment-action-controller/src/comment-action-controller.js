@@ -250,17 +250,49 @@ class CommentActionController
 		}
 
 		CommentActionController.isAjaxRunning = true;
-		CommentActionController.showNotification(action);
+		if (action !== 'taskComplete')
+		{
+			CommentActionController.showNotification(action);
+		}
 
 		const defaultData = {
 			taskId,
 		};
 
+		data = {...data, ...defaultData};
+		if (!data.params)
+		{
+			data.params = {};
+		}
+		data.params.PLATFORM = 'web';
+
 		ajax.runAction(CommentActionController.ajaxActions[action], {
-			data: {...data, ...defaultData},
-		}).then(() => {
-			CommentActionController.isAjaxRunning = false;
-		});
+			data: data,
+		}).then(
+			() => {
+				if (action === 'taskComplete')
+				{
+					CommentActionController.showNotification(action);
+				}
+				CommentActionController.isAjaxRunning = false;
+			},
+			(response) => {
+				if (
+					response
+					&& response.errors
+				)
+				{
+					const errorMsg = {
+						MESSAGE: response.errors[0].message,
+						DATA: {
+							ui: 'notification'
+						}
+					}
+					BX.Tasks.alert([errorMsg]);
+				}
+				CommentActionController.isAjaxRunning = false;
+			}
+		);
 	}
 
 	static showNotification(action: string): void

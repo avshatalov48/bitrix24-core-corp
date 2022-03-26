@@ -48,10 +48,6 @@ class CCrmShopPageController extends CBitrixComponent
 		{
 			ShowError($e->getMessage());
 		}
-		catch(LoaderException $e)
-		{
-			ShowError($e->getMessage());
-		}
 	}
 
 	/**

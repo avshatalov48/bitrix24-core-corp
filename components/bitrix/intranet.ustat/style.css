@@ -1356,10 +1356,10 @@
 
 .sidebar-pulse-block {
 	background-color: #2fc7f7;
-	border-radius: 1px;
 	cursor: pointer;
 	margin-bottom: 17px;
 	padding: 3px 3px 3px 7px;
+	border-radius: var(--sidebar-pulse-block, var(--ui-theme-radius-md, 0));
 }
 
 .sidebar-pulse-text {

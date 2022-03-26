@@ -28,13 +28,15 @@ class LeadConverter extends EntityConverter
 	/** @var bool */
 	private $enableActivityCompletion = true;
 
-	public function __construct(LeadConversionConfig $config = null)
+	public function __construct(EntityConversionConfig $config = null)
 	{
 		if($config === null)
 		{
 			$config = new LeadConversionConfig();
 		}
 		parent::__construct($config);
+
+		$this->setSourceFactory(Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Lead));
 	}
 	/**
 	 * Check if completion of lead activities is enabled.
@@ -53,6 +55,12 @@ class LeadConverter extends EntityConverter
 	public function enableActivityCompletion($enable)
 	{
 		$this->enableActivityCompletion = $enable;
+	}
+
+	protected function isUseNewApi(EntityConversionConfigItem $configItem): bool
+	{
+		// lead doesn't support factories yet
+		return false;
 	}
 
 	/**
@@ -104,10 +112,7 @@ class LeadConverter extends EntityConverter
 		$this->conversionTypeID = LeadConversionType::resolveByEntityFields($fields);
 		$this->isReturnCustomer = isset($fields['IS_RETURN_CUSTOMER']) &&$fields['IS_RETURN_CUSTOMER'] == 'Y';
 
-		if($this->currentPhase === LeadConversionPhase::INTERMEDIATE)
-		{
-			$this->currentPhase = LeadConversionPhase::COMPANY_CREATION;
-		}
+		$this->determineStartingPhase();
 	}
 	/**
 	 * Get converter entity type ID.
@@ -218,6 +223,7 @@ class LeadConverter extends EntityConverter
 	{
 		switch($this->currentPhase)
 		{
+			case static::PHASE_NEW_API:
 			case LeadConversionPhase::INTERMEDIATE:
 				$this->currentPhase = LeadConversionPhase::COMPANY_CREATION;
 				return true;
@@ -251,6 +257,11 @@ class LeadConverter extends EntityConverter
 	 */
 	public function executePhase()
 	{
+		if (parent::executePhase())
+		{
+			return true;
+		}
+
 		if($this->currentPhase === LeadConversionPhase::COMPANY_CREATION
 			|| $this->currentPhase === LeadConversionPhase::CONTACT_CREATION
 			|| $this->currentPhase === LeadConversionPhase::DEAL_CREATION)
@@ -270,7 +281,7 @@ class LeadConverter extends EntityConverter
 
 			$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
 			$config = $this->config->getItem($entityTypeID);
-			if(!$config->isActive())
+			if(!$config || !$config->isActive())
 			{
 				return false;
 			}

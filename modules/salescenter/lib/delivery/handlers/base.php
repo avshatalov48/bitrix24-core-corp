@@ -3,6 +3,9 @@
 namespace Bitrix\SalesCenter\Delivery\Handlers;
 
 use Bitrix\Sale\Delivery\Services\Table;
+use Bitrix\Main\Localization\Loc;
+
+Loc::loadMessages(__FILE__);
 
 /**
  * Class Base
@@ -97,7 +100,7 @@ abstract class Base implements HandlerContract
 	 */
 	public function getImagePath()
 	{
-		return $this->getImagesPath() . $this->getImageName();
+		return $this->getImagesPath() . $this->getImageName() . '?v=2';
 	}
 
 	/**
@@ -113,7 +116,7 @@ abstract class Base implements HandlerContract
 	 */
 	public function getInstalledImagePath()
 	{
-		return $this->getImagesPath() . sprintf('installed_%s', $this->getImageName());
+		return $this->getImagesPath() . sprintf('installed_%s', $this->getImageName()) . '?v=2';
 	}
 
 	/**
@@ -154,7 +157,15 @@ abstract class Base implements HandlerContract
 	 */
 	public function getShortDescription()
 	{
-		return null;
+		/** @var \Bitrix\Sale\Delivery\Services\Base $handlerClass */
+		$handlerClass = static::getHandlerClass();
+
+		return Loc::getMessage(
+			'SALESCENTER_DELIVERY_HANDLERS_SHORT_DESCRIPTION',
+			[
+				'#SERVICE_NAME#' => $handlerClass::getClassTitle()
+			]
+		);
 	}
 
 	/**

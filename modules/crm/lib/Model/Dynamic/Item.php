@@ -85,9 +85,12 @@ class Item extends UserField\Internal\Item implements \JsonSerializable
 
 	protected function resolveTitle(?string $title): ?string
 	{
-		if (empty($title) && $this->state !== State::RAW)
+		if (\CCrmOwnerType::isPossibleDynamicTypeId($this->getEntityTypeId()))
 		{
-			return $this->getDefaultTitle();
+			if (empty($title) && $this->state !== State::RAW)
+			{
+				return $this->getDefaultTitle();
+			}
 		}
 
 		return $title;

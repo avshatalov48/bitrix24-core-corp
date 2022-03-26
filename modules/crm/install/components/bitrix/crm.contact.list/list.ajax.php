@@ -21,7 +21,9 @@ define(
 			'BUILD_DUPLICATE_INDEX',
 			'CONVERT_ADDRESSES',
 			'CONVERT_UF_ADDRESSES',
-			'REBUILD_SECURITY_ATTRS'
+			'REBUILD_SECURITY_ATTRS',
+			'BACKGROUND_INDEX_REBUILD',
+			'BACKGROUND_MERGE',
 		],
 		true
 	)
@@ -50,6 +52,8 @@ if (!CModule::IncludeModule('crm'))
 }
 
 use Bitrix\Crm;
+use Bitrix\Crm\Agent\Duplicate\Background\ContactIndexRebuild;
+use Bitrix\Crm\Agent\Duplicate\Background\ContactMerge;
 use Bitrix\Crm\Agent\Requisite\ContactAddressConvertAgent;
 use Bitrix\Crm\Agent\Requisite\ContactUfAddressConvertAgent;
 
@@ -111,19 +115,19 @@ if ($_REQUEST['MODE'] == 'SEARCH')
 		else
 		{
 			$searchParts = preg_split('/[\s]+/', $search, 2, PREG_SPLIT_NO_EMPTY);
-     		if(count($searchParts) < 2)
-     		{
-		        $arFilter['LOGIC'] = 'OR';
-    			$arFilter['%NAME'] = $search;
-    			$arFilter['%LAST_NAME'] = $search;
-    		}
-    		else
-    		{
-			    $arFilter['LOGIC'] = 'OR';
-			    $arFilter["__INNER_FILTER_NAME_1"] = array('%NAME' => $searchParts[0], '%LAST_NAME' => $searchParts[1]);
-			    $arFilter["__INNER_FILTER_NAME_2"] = array('%LAST_NAME' => $searchParts[0], '%NAME' => $searchParts[1]);
-			    $arFilter["__INNER_FILTER_NAME_3"] = array('%NAME' => $searchParts[0], '%SECOND_NAME' => $searchParts[1]);
-    		}
+			if(count($searchParts) < 2)
+			{
+				$arFilter['LOGIC'] = 'OR';
+				$arFilter['%NAME'] = $search;
+				$arFilter['%LAST_NAME'] = $search;
+			}
+			else
+			{
+				$arFilter['LOGIC'] = 'OR';
+				$arFilter["__INNER_FILTER_NAME_1"] = ['%NAME' => $searchParts[0], '%LAST_NAME' => $searchParts[1]];
+				$arFilter["__INNER_FILTER_NAME_2"] = ['%LAST_NAME' => $searchParts[0], '%NAME' => $searchParts[1]];
+				$arFilter["__INNER_FILTER_NAME_3"] = ['%NAME' => $searchParts[0], '%SECOND_NAME' => $searchParts[1]];
+			}
 		}
 		$arContactTypeList = CCrmStatus::GetStatusListEx('CONTACT_TYPE');
 		$arSelect = array('ID', 'HONORIFIC', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'COMPANY_TITLE', 'PHOTO', 'TYPE_ID');
@@ -933,4 +937,57 @@ elseif ($action === 'CONVERT_UF_ADDRESSES')
 		]
 	);
 }
-?>
+elseif ($action === 'BACKGROUND_INDEX_REBUILD')
+{
+	$userId = CCrmSecurityHelper::GetCurrentUserID();
+	$isNeedToShowDupIndexProcess = false;
+	$agent = ContactIndexRebuild::getInstance($userId);
+	if ($agent->isActive())
+	{
+		$state = $agent->state()->getData();
+		if (isset($state['STATUS']) && $state['STATUS'] === ContactIndexRebuild::STATUS_RUNNING)
+		{
+			$isNeedToShowDupIndexProcess = true;
+		}
+	}
+
+	if(!$isNeedToShowDupIndexProcess)
+	{
+		__CrmContactListEndResponse(array('STATUS' => 'COMPLETED'));
+	}
+
+	__CrmContactListEndResponse(
+		[
+			'STATUS' => 'PROGRESS',
+			'PROCESSED_ITEMS' => (int)round(100 * $state['PROCESSED_ITEMS'] / $state['TOTAL_ITEMS']),
+			'TOTAL_ITEMS' => 100,
+		]
+	);
+}
+elseif ($action === 'BACKGROUND_MERGE')
+{
+	$userId = CCrmSecurityHelper::GetCurrentUserID();
+	$isNeedToShowDupMergeProcess = false;
+	$agent = ContactMerge::getInstance($userId);
+	if ($agent->isActive())
+	{
+		$state = $agent->state()->getData();
+		if (isset($state['STATUS']) && $state['STATUS'] === ContactMerge::STATUS_RUNNING)
+		{
+			$isNeedToShowDupMergeProcess = true;
+		}
+	}
+
+	if(!$isNeedToShowDupMergeProcess)
+	{
+		__CrmContactListEndResponse(array('STATUS' => 'COMPLETED'));
+	}
+
+	__CrmContactListEndResponse(
+		[
+			'STATUS' => 'PROGRESS',
+			'PROCESSED_ITEMS' => (int)round(100 * $state['PROCESSED_ITEMS'] / $state['FOUND_ITEMS']),
+			'TOTAL_ITEMS' => 100,
+		]
+	);
+}

@@ -21,7 +21,7 @@ class Number extends Field
 	{
 		$result = new Result();
 
-		if(!$item->isNew() && $this->isItemValueEmpty($item))
+		if (!$item->isNew() && $this->isItemValueEmpty($item))
 		{
 			$item->set($this->getName(), $item->getId());
 		}
@@ -33,30 +33,22 @@ class Number extends Field
 	{
 		$result = new FieldAfterSaveResult();
 
-		if($itemBeforeSave->isNew())
+		if ($itemBeforeSave->isNew() && empty($item->get($this->getName())))
 		{
 			$number = $this->getNumberByEvent($item->getId());
-			if(!$number)
+			if (!$number)
 			{
 				$number = $this->getNumberByNumerator($item->getId());
 			}
-			if(!$number)
+			if (!$number)
 			{
 				$number = $item->getId();
-				if(!$this->isValueUnique($number))
+				if (!$this->isValueUnique($number))
 				{
 					$number = null;
 				}
 			}
-			if(!$number)
-			{
-				$number = $this->getByMaxNumber();
-				if($number)
-				{
-					$this->createNumeratorTemplateIfNotExists($number);
-				}
-			}
-			if($number)
+			if ($number)
 			{
 				$result->setNewValue($this->getName(), $number);
 			}
@@ -73,12 +65,12 @@ class Number extends Field
 	{
 		$number = null;
 
-		if(!isset($this->settings['eventName']))
+		if (!isset($this->settings['eventName']))
 		{
 			return null;
 		}
 
-		foreach(GetModuleEvents("crm", $this->settings['eventName'], true) as $arEvent)
+		foreach (GetModuleEvents("crm", $this->settings['eventName'], true) as $arEvent)
 		{
 			$eventResult = ExecuteModuleEventEx($arEvent, [$id, 'NUMBER']);
 			if (is_string($eventResult))
@@ -87,7 +79,7 @@ class Number extends Field
 			}
 		}
 
-		if($number && !$this->isValueUnique($number))
+		if ($number && !$this->isValueUnique($number))
 		{
 			return null;
 		}
@@ -97,16 +89,16 @@ class Number extends Field
 
 	protected function getNumberByNumerator(int $id): ?string
 	{
-		$numerator = $this->getNumerator($id);
+		$numerator = $this->initNumerator($id);
 
-		if($numerator)
+		if ($numerator)
 		{
 			$tries = 0;
-			while($tries < static::MAX_TRIES)
+			while ($tries < static::MAX_TRIES)
 			{
 				$tries++;
 				$number = $numerator->getNext();
-				if($this->isValueUnique($number))
+				if ($this->isValueUnique($number))
 				{
 					return $number;
 				}
@@ -116,36 +108,71 @@ class Number extends Field
 		return null;
 	}
 
-	protected function getNumerator(int $id): ?Numerator\Numerator
+	public function previewNextNumber(): ?string
 	{
-		if($this->numerator === null)
+		$number = $this->getNumberByEvent(0);
+		if (!$number)
 		{
-			if(empty($this->settings['numeratorType']) || empty($this->settings['numeratorIdSettings']))
+			$numerator = $this->initNumerator(0);
+			if ($numerator)
+			{
+				$number = $numerator->previewNextNumber();
+			}
+		}
+
+		return $number;
+	}
+
+	public function getNumeratorType(): ?string
+	{
+		return $this->settings['numeratorType'] ?? null;
+	}
+
+	public function getNumerator(): ?Numerator\Numerator
+	{
+		if ($this->numerator === null)
+		{
+			$numeratorType = $this->getNumeratorType();
+			if (!$numeratorType)
 			{
 				return null;
 			}
-			$numeratorSettings = Numerator\Numerator::getOneByType($this->settings['numeratorType']);
-			if(!$numeratorSettings)
+			$numeratorSettings = Numerator\Numerator::getOneByType($numeratorType);
+			if (!$numeratorSettings)
 			{
-				return null;
+				$this->createNumeratorTemplateIfNotExists($numeratorType, $this->getByMaxNumber());
 			}
 
-			$this->numerator = Numerator\Numerator::load($numeratorSettings['id'], [$this->settings['numeratorIdSettings'] => $id]);
+			$this->numerator = Numerator\Numerator::load($numeratorSettings['id']);
 		}
 
 		return $this->numerator;
 	}
 
+	protected function initNumerator(int $id): ?Numerator\Numerator
+	{
+		$numerator = $this->getNumerator();
+
+		if ($numerator && !empty($this->settings['numeratorIdSettings']))
+		{
+			$source = [$this->settings['numeratorIdSettings'] => $id];
+			$numerator->setDynamicConfig($source);
+			$numerator->setHash($source);
+		}
+
+		return $numerator;
+	}
+
 	protected function getByMaxNumber(): ?string
 	{
 		$tableClassName = $this->settings['tableClassName'] ?? null;
-		if(!$tableClassName || !is_a($tableClassName, DataManager::class, true))
+		if (!$tableClassName || !is_a($tableClassName, DataManager::class, true))
 		{
 			return null;
 		}
 
 		$tries = 0;
-		while($tries < static::MAX_TRIES)
+		while ($tries < static::MAX_TRIES)
 		{
 			$number = null;
 			$tries++;
@@ -154,11 +181,11 @@ class Number extends Field
 					new ExpressionField('LAST_NUMBER', 'MAX(CAST(%s AS UNSIGNED))', [$this->getName()]),
 				],
 			])->fetch();
-			if($record && !empty($record['LAST_NUMBER']))
+			if ($record && !empty($record['LAST_NUMBER']))
 			{
 				$number = $record['LAST_NUMBER'] + 1;
 			}
-			if($this->isValueUnique($number))
+			if ($this->isValueUnique($number))
 			{
 				return $number;
 			}
@@ -167,29 +194,29 @@ class Number extends Field
 		return null;
 	}
 
-	protected function createNumeratorTemplateIfNotExists(int $maxLastId): self
+	protected function createNumeratorTemplateIfNotExists(string $numeratorType, $maxLastId = null): ?Numerator\Numerator
 	{
-		if($this->numerator || empty($this->settings['numeratorType']))
+		if ($this->numerator)
 		{
-			return $this;
+			return $this->numerator;
 		}
 
-		$numeratorForQuotes = Numerator\Numerator::create();
-		$numeratorForQuotes->setConfig([
+		$this->numerator = Numerator\Numerator::create();
+		$this->numerator->setConfig([
 			Numerator\Numerator::getType() =>
 				[
 					'name' => $this->getName(),
 					'template' => '{NUMBER}',
-					'type' => $this->settings['numeratorType'],
+					'type' => $numeratorType,
 				],
 			Numerator\Generator\SequentNumberGenerator::getType() =>
 				[
-					'start' => $maxLastId,
+					'start' => (int)$maxLastId,
 					'isDirectNumeration' => true,
 				],
 		]);
-		$numeratorForQuotes->save();
+		$this->numerator->save();
 
-		return $this;
+		return $this->numerator;
 	}
 }

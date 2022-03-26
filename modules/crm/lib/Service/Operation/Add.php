@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Service\Operation;
 
+use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\Field\Collection;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Item;
@@ -9,7 +10,7 @@ use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Operation;
-use Bitrix\Crm\Timeline\FactoryBasedController;
+use Bitrix\Crm\Statistics;
 use Bitrix\Crm\Timeline\MarkController;
 use Bitrix\Crm\Timeline\RelationController;
 use Bitrix\Crm\Timeline\TimelineManager;
@@ -50,6 +51,29 @@ class Add extends Operation
 		return $this->item->save($this->isCheckFieldsEnabled());
 	}
 
+	protected function isCountersUpdateNeeded(): bool
+	{
+		return true;
+	}
+
+	protected function getTypesOfCountersToReset(): array
+	{
+		return [
+			EntityCounterType::IDLE,
+			EntityCounterType::ALL,
+		];
+	}
+
+	protected function getUserIdsForCountersReset(): array
+	{
+		return [$this->item->getAssignedById()];
+	}
+
+	protected function registerStatistics(Statistics\OperationFacade $statisticsFacade): Result
+	{
+		return $statisticsFacade->add($this->item);
+	}
+
 	protected function createTimelineRecord(): void
 	{
 		$timelineController = TimelineManager::resolveController([
@@ -58,7 +82,6 @@ class Add extends Operation
 
 		if ($timelineController)
 		{
-			/** @see FactoryBasedController::onCreate() */
 			$timelineController->onCreate(
 				$this->item->getId(),
 				[

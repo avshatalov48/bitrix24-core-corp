@@ -288,6 +288,8 @@ else
 							array('supervisor' => $supervisorInv, 'clear_filter' => 'Y')
 						)*/
 
+	\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
+
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.kanban',
 		'',
@@ -299,7 +301,33 @@ else
 			),
 			'PATH_TO_IMPORT' => $arResult['PATH_TO_DEAL_IMPORT'],
 			'PATH_TO_DEAL_KANBANCATEGORY' => $arResult['PATH_TO_DEAL_KANBANCATEGORY'],
-			'PATH_TO_MERGE' => $arResult['PATH_TO_DEAL_MERGE']
+			'PATH_TO_MERGE' => $arResult['PATH_TO_DEAL_MERGE'],
+			'HEADERS_SECTIONS' => [
+				[
+					'id'=> CCrmOwnerType::DealName,
+					'name' => Loc::getMessage('CRM_COMMON_DEAL'),
+					'default' => true,
+					'selected' => true,
+				],
+				[
+					'id'=> CCrmOwnerType::ContactName,
+					'name' => Loc::getMessage('CRM_COMMON_CONTACT'),
+					'default' => false,
+					'selected' => true,
+					'sections' => [
+						'contact_fields',
+					],
+				],
+				[
+					'id'=> CCrmOwnerType::CompanyName,
+					'name' => Loc::getMessage('CRM_COMMON_COMPANY'),
+					'default' => false,
+					'selected' => true,
+					'sections' => [
+						'company_fields',
+					],
+				],
+			],
 		),
 		$component
 	);

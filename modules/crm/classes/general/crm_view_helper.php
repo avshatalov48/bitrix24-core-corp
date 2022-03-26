@@ -156,20 +156,7 @@ class CCrmViewHelper
 			$format = CSite::GetNameFormat(false);
 		}
 
-		$dbUser = CUser::GetList(
-			'id',
-			'asc',
-			array('ID'=> $userID),
-			array(
-				'FIELDS' => array(
-					'ID',
-					'NAME', 'SECOND_NAME', 'LAST_NAME',
-					'LOGIN', 'TITLE', 'EMAIL'
-				)
-			)
-		);
-
-		$user = $dbUser ? $dbUser->Fetch() : null;
+		$user = \Bitrix\Crm\Service\Container::getInstance()->getUserBroker()->getById($userID);
 		return is_array($user) ? CUser::FormatName($format, $user, true, $htmlEncode) : '';
 	}
 	public static function RenderInfo($url, $titleHtml, $descriptionHtml, array $options = null)
@@ -2326,9 +2313,9 @@ class CCrmViewHelper
 			{
 				$infos = self::PrepareOrderShipmentStatuses();
 			}
-			elseif (\CCrmOwnerType::isPossibleDynamicTypeId($arParams['ENTITY_TYPE_ID']))
+			elseif (\CCrmOwnerType::isUseFactoryBasedApproach((int)$arParams['ENTITY_TYPE_ID']))
 			{
-				$infos = self::PrepareItemsStatuses($arParams['ENTITY_TYPE_ID'], $arParams['CATEGORY_ID']);
+				$infos = self::PrepareItemsStatuses((int)$arParams['ENTITY_TYPE_ID'], (int)$arParams['CATEGORY_ID']);
 			}
 		}
 
@@ -2598,8 +2585,19 @@ class CCrmViewHelper
 		}
 		else
 		{
-			$arParams['PREFIX'] = \CCrmStatus::getDynamicEntityStatusPrefix($arParams['ENTITY_TYPE_ID'], $arParams['CATEGORY_ID']);
-			$arParams['FINAL_ID'] = $arParams['PREFIX'].':SUCCESS';
+			$arParams['PREFIX'] = \CCrmStatus::getDynamicEntityStatusPrefix((int)$arParams['ENTITY_TYPE_ID'], (int)$arParams['CATEGORY_ID']);
+			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory((int)$arParams['ENTITY_TYPE_ID']);
+			if ($factory)
+			{
+				$stages = $factory->getStages((int)$arParams['CATEGORY_ID']);
+				foreach ($stages as $stage)
+				{
+					if ($stage->getSemantics() === \Bitrix\Crm\PhaseSemantics::SUCCESS)
+					{
+						$arParams['FINAL_ID'] = $stage->getStatusId();
+					}
+				}
+			}
 			$arParams['ENTITY_TYPE_NAME'] = CCrmOwnerType::ResolveName($arParams['ENTITY_TYPE_ID']);
 		}
 
@@ -2998,7 +2996,7 @@ class CCrmViewHelper
 	{
 		$result = [];
 
-		$prefix = \CCrmStatus::getDynamicEntityStatusPrefix($entityTypeId, $categoryId);
+		$isFinalFailurePassed = false;
 		foreach (self::PrepareItemsStatuses($entityTypeId, $categoryId) as $status)
 		{
 			$info = [
@@ -3008,13 +3006,10 @@ class CCrmViewHelper
 				'color' => $status['COLOR'] ?? '',
 				'semantics' => $status['SEMANTICS'],
 			];
-			if ($status['SEMANTICS'] === 'F' && $status['STATUS_ID'] === $prefix.':FAIL')
+			if ($status['SEMANTICS'] === 'F')
 			{
-				$info['semantics'] = 'failure';
-			}
-			if ($status['SEMANTICS'] === 'F' && $status['STATUS_ID'] !== $prefix.':FAIL')
-			{
-				$info['semantics'] = 'apology';
+				$info['semantics'] = $isFinalFailurePassed ? 'apology' : 'failure';
+				$isFinalFailurePassed = true;
 			}
 			if ($status['SEMANTICS'] === 'S')
 			{

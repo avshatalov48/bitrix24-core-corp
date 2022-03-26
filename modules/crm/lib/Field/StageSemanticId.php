@@ -19,7 +19,13 @@ class StageSemanticId extends Field
 			$stage = $factory->getStage($item->getStageId());
 			if ($stage)
 			{
-				$item->set($this->getName(), $stage->getSemantics() ?? PhaseSemantics::PROCESS);
+				$semantics = $stage->getSemantics();
+				if (!PhaseSemantics::isDefined($semantics))
+				{
+					$semantics = PhaseSemantics::PROCESS;
+				}
+
+				$item->set($this->getName(), $semantics);
 			}
 		}
 

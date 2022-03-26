@@ -56,7 +56,14 @@ if(typeof(BX.Crm.OrderPaymentVoucher) === "undefined")
 			var settings = this._settings,
 				_this = this;
 
-			this._editor.save = function(){
+			// for compatibility
+			var saveFunctionName = 'save';
+			if ('performSaveAction' in this._editor)
+			{
+				saveFunctionName = 'performSaveAction';
+			}
+
+			this._editor[saveFunctionName] = function(action) {
 				this._toolPanel.setLocked(false);
 				this._toolPanel.clearErrors();
 				var fields = _this._editor.getAllControls();

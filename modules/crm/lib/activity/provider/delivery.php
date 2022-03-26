@@ -16,6 +16,7 @@ use Bitrix\Sale\Delivery\Requests\RequestResult;
 use Bitrix\Sale\Delivery\Services\Manager;
 use Bitrix\Sale\Repository\ShipmentRepository;
 use Bitrix\Location\Entity\Address;
+use Bitrix\Crm\ActivityBindingTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -93,15 +94,19 @@ class Delivery extends Activity\Provider\Base
 	 */
 	public static function getCustomViewLink(array $activityFields): ?string
 	{
-		if ($activityFields['OWNER_ID'] == \CCrmOwnerType::Deal)
+		$bindings = \CCrmActivity::GetBindings((int)$activityFields['ID']);
+		foreach ($bindings as $binding)
 		{
-			return parent::getCustomViewLink($activityFields);
+			if ((int)$binding['OWNER_TYPE_ID'] === \CCrmOwnerType::Deal)
+			{
+				return \CComponentEngine::MakePathFromTemplate(
+					CrmCheckPath('PATH_TO_DEAL_DETAILS', '', ''),
+					['deal_id' => $binding['OWNER_ID']]
+				);
+			}
 		}
 
-		return \CComponentEngine::MakePathFromTemplate(
-			CrmCheckPath('PATH_TO_DEAL_DETAILS', '', ''),
-			['deal_id' => $activityFields['OWNER_ID']]
-		);
+		return parent::getCustomViewLink($activityFields);
 	}
 
 	/**
@@ -384,7 +389,10 @@ class Delivery extends Activity\Provider\Base
 
 
 			$addressFrom = $shipment->getPropertyCollection()->getAddressFrom();
+			$addressFromValue = $addressFrom ? $addressFrom->getValue() : null;
+
 			$addressTo = $shipment->getPropertyCollection()->getAddressTo();
+			$addressToValue = $addressTo ? $addressTo->getValue() : null;
 
 			$result['SHIPMENTS'][] = [
 				'ID' => $shipment->getId(),
@@ -393,8 +401,8 @@ class Delivery extends Activity\Provider\Base
 				'PRICE_DELIVERY_FORMATTED' => SaleFormatCurrency($priceDelivery, $currency),
 				'BASE_PRICE_DELIVERY_FORMATTED' => SaleFormatCurrency($basePriceDelivery, $currency),
 				'CURRENCY' => $currency,
-				'ADDRESS_FROM_FORMATTED' => $addressFrom ? self::formatAddress($addressFrom->getValue()) : '',
-				'ADDRESS_TO_FORMATTED' => $addressTo ? self::formatAddress($addressTo->getValue()) : '',
+				'ADDRESS_FROM_FORMATTED' => is_array($addressFromValue) ? self::formatAddress($addressFromValue) : '',
+				'ADDRESS_TO_FORMATTED' => is_array($addressToValue) ? self::formatAddress($addressToValue) : '',
 			];
 
 			if (
@@ -444,16 +452,57 @@ class Delivery extends Activity\Provider\Base
 	}
 
 	/**
+	 * @param int $shipmentId
+	 */
+	public static function onShipmentDeleted(int $shipmentId): void
+	{
+		$shipmentBindingsList = ActivityBindingTable::getList([
+			'filter' => [
+				'OWNER_ID' => $shipmentId,
+				'OWNER_TYPE_ID' => \CCrmOwnerType::OrderShipment
+			]
+		]);
+		while ($shipmentBinding = $shipmentBindingsList->fetch())
+		{
+			ActivityBindingTable::delete((int)$shipmentBinding['ID']);
+
+			$activity = \CCrmActivity::GetByID((int)$shipmentBinding['ACTIVITY_ID'], false);
+			if ($activity)
+			{
+				$shipmentIds = isset($activity['SETTINGS']['FIELDS']['SHIPMENT_ID'])
+					? (
+					is_array($activity['SETTINGS']['FIELDS']['SHIPMENT_ID'])
+						? $activity['SETTINGS']['FIELDS']['SHIPMENT_ID']
+						: [$activity['SETTINGS']['FIELDS']['SHIPMENT_ID']]
+					)
+					: [];
+
+				$newShipmentIds = array_values(array_diff($shipmentIds, [$shipmentId]));
+				if (empty($newShipmentIds))
+				{
+					\CCrmActivity::Delete((int)$activity['ID'], false);
+				}
+				else
+				{
+					$newSettings = $activity['SETTINGS'];
+					$newSettings['FIELDS']['SHIPMENT_ID'] = $newShipmentIds;
+
+					\CCrmActivity::update(
+						$activity['ID'],
+						['SETTINGS' => $newSettings],
+						false
+					);
+				}
+			}
+		}
+	}
+
+	/**
 	 * @param array $address
 	 * @return string
 	 */
-	private static function formatAddress(?array $address): string
+	private static function formatAddress(array $address): string
 	{
-		if (!$address)
-		{
-			return '';
-		}
-
 		return StringConverter::convertToStringTemplate(
 			Address::fromArray($address),
 			FormatService::getInstance()->findDefault(LANGUAGE_ID)->getTemplate(TemplateType::AUTOCOMPLETE),

@@ -1,11 +1,14 @@
 <?php
 namespace Bitrix\Imbot\Update;
 
+use Bitrix\Im;
+use Bitrix\Imbot;
 use Bitrix\Imbot\Bot\Support24;
 use Bitrix\Imbot\Bot\SupportBox;
+use Bitrix\Imbot\Bot\Partner24;
 
 /*
- * \CAgent::AddAgent('\\Bitrix\\Imbot\\Update\\Agent::installSupport24Command();', 'imbot', "N", 300, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+300, "FULL"));
+ * \CAgent::addAgent('\\Bitrix\\Imbot\\Update\\Agent::installSupport24Command();', 'imbot', "N", 300, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::getOffset()+300, "FULL"));
  */
 
 final class Agent
@@ -15,53 +18,35 @@ final class Agent
 	 */
 	public static function installSupport24Command()
 	{
-		$botId = Support24::getBotId();
-		if (!$botId)
+		if (
+			\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24')
+			&& class_exists('\\Bitrix\\ImBot\\Bot\\Support24', true)
+			&& method_exists('\\Bitrix\\ImBot\\Bot\\Support24', 'registerCommands')
+		)
 		{
-			return "";
+			Support24::registerCommands();
 		}
-
-		if (!\Bitrix\Main\Loader::includeModule('im'))
-		{
-			return "";
-		}
-
-		$commandList = [];
-		$orm = \Bitrix\Im\Model\CommandTable::getList([
-			'filter' => [
-				'=MODULE_ID' => Support24::MODULE_ID,
-				'=BOT_ID' => $botId,
-				'=CLASS' => Support24::class,
-			],
-			'select' => [
-				'COMMAND'
-			]
-		]);
-		while ($row = $orm->fetch())
-		{
-			$commandList[] = $row['COMMAND'];
-		}
-
-		foreach (Support24::getCommandList() as $command => $commandParam)
-		{
-			if (!in_array($command, $commandList))
-			{
-				\Bitrix\Im\Command::register([
-					'MODULE_ID' => Support24::MODULE_ID,
-					'BOT_ID' => $botId,
-					'COMMAND' => $command,
-					'HIDDEN' => $commandParam['visible'] === true ? 'N' : 'Y',
-					'CLASS' => $commandParam['class'] ?? Support24::class,
-					'METHOD_COMMAND_ADD' => $commandParam['handler'] ?? 'onCommandAdd'
-				]);
-			}
-		}
-
-		return "";
+		return '';
 	}
 
 	/**
 	 * @return string
+	 */
+	public static function installSupport24App()
+	{
+		if (
+			\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24')
+			&& class_exists('\\Bitrix\\ImBot\\Bot\\Support24', true)
+			&& method_exists('\\Bitrix\\ImBot\\Bot\\Support24', 'registerApps')
+		)
+		{
+			Support24::registerApps();
+		}
+		return '';
+	}
+
+	/**
+	 * @deprecated
 	 */
 	public static function installSupport24SessionCommand()
 	{
@@ -73,49 +58,31 @@ final class Agent
 	 */
 	public static function installSupportBoxCommand()
 	{
-		$botId = SupportBox::getBotId();
-		if (!$botId)
+		if (
+			!\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24')
+			&& class_exists('\\Bitrix\\ImBot\\Bot\\SupportBox', true)
+			&& method_exists('\\Bitrix\\ImBot\\Bot\\SupportBox', 'registerCommands')
+		)
 		{
-			return "";
+			SupportBox::registerCommands();
 		}
+		return '';
+	}
 
-		if (!\Bitrix\Main\Loader::includeModule('im'))
+	/**
+	 * @return string
+	 */
+	public static function installSupportBoxApp()
+	{
+		if (
+			!\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24')
+			&& class_exists('\\Bitrix\\ImBot\\Bot\\SupportBox', true)
+			&& method_exists('\\Bitrix\\ImBot\\Bot\\SupportBox', 'registerApps')
+		)
 		{
-			return "";
+			SupportBox::registerApps();
 		}
-
-		$commandList = [];
-		$orm = \Bitrix\Im\Model\CommandTable::getList([
-			'filter' => [
-				'=MODULE_ID' => SupportBox::MODULE_ID,
-				'=BOT_ID' => $botId,
-				'=CLASS' => SupportBox::class,
-			],
-			'select' => [
-				'COMMAND'
-			]
-		]);
-		while ($row = $orm->fetch())
-		{
-			$commandList[] = $row['COMMAND'];
-		}
-
-		foreach (SupportBox::getCommandList() as $command => $commandParam)
-		{
-			if (!in_array($command, $commandList))
-			{
-				\Bitrix\Im\Command::register([
-					'MODULE_ID' => SupportBox::MODULE_ID,
-					'BOT_ID' => $botId,
-					'COMMAND' => $command,
-					'HIDDEN' => $commandParam['visible'] === true ? 'N' : 'Y',
-					'CLASS' => $commandParam['class'] ?? SupportBox::class,
-					'METHOD_COMMAND_ADD' => $commandParam['handler'] ?? 'onCommandAdd'
-				]);
-			}
-		}
-
-		return "";
+		return '';
 	}
 
 	/**
@@ -138,7 +105,12 @@ final class Agent
 		{
 			if (SupportBox::register())
 			{
-				SupportBox::addAgent();
+				SupportBox::addAgent([
+					'class' => SupportBox::class,
+					'agent' => 'refreshAgent()',
+					'regular' => true,
+					'delay' => random_int(60, 3600),
+				]);
 			}
 		}
 
@@ -153,9 +125,9 @@ final class Agent
 	public static function updateSupportBox()
 	{
 		if (
-			\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24') ||
-			!\Bitrix\Main\Loader::includeModule('im') ||
-			!\Bitrix\Main\Loader::includeModule('imbot')
+			\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24')
+			|| !\Bitrix\Main\Loader::includeModule('im')
+			|| !\Bitrix\Main\Loader::includeModule('imbot')
 		)
 		{
 			return '';
@@ -169,6 +141,33 @@ final class Agent
 			}
 		}
 
+		return '';
+	}
+
+	/**
+	 * @return string
+	 */
+	public static function installPartner24Command()
+	{
+		if (
+			!\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24')
+			|| !\Bitrix\Main\Loader::includeModule('im')
+			|| !\Bitrix\Main\Loader::includeModule('imbot')
+		)
+		{
+			return '';
+		}
+
+		if (
+			class_exists('\\Bitrix\\ImBot\\Bot\\Partner24', true)
+			&& method_exists('\\Bitrix\\ImBot\\Bot\\Partner24', 'registerCommands')
+		)
+		{
+			if (Partner24::getBotId() > 0)
+			{
+				Partner24::registerCommands(Partner24::getBotId());
+			}
+		}
 		return '';
 	}
 }

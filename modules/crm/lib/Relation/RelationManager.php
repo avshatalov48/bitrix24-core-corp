@@ -13,6 +13,7 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Relation;
 use Bitrix\Crm\RelationIdentifier;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Crm\Settings\QuoteSettings;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
@@ -22,6 +23,8 @@ class RelationManager
 	public const ERROR_CODE_BIND_TYPES_TYPES_ALREADY_BOUND = 'CRM_BIND_TYPES_TYPES_ALREADY_BOUND';
 	public const ERROR_CODE_UNBIND_TYPES_TYPES_NOT_BOUND = 'CRM_UNBIND_TYPES_TYPES_NOT_BOUND';
 	public const ERROR_CODE_UNBIND_TYPES_RELATION_IS_PREDEFINED = 'CRM_UNBIND_TYPES_RELATION_IS_PREDEFINED';
+	public const ERROR_CODE_UPDATE_TYPES_RELATION_IS_PREDEFINED = 'CRM_UPDATE_TYPES_RELATION_IS_PREDEFINED';
+	public const ERROR_CODE_UPDATE_TYPES_RELATION_NOT_BOUND = 'CRM_UPDATE_TYPES_RELATION_NOT_FOUND';
 	public const ERROR_CODE_UPDATE_TYPES_RELATION_NOT_FOUND = 'CRM_UPDATE_TYPES_RELATION_NOT_FOUND';
 
 	public const ERROR_CODE_BIND_ITEMS_TYPES_NOT_BOUND = 'CRM_BIND_ITEMS_TYPES_NOT_BOUND';
@@ -35,6 +38,9 @@ class RelationManager
 	/** @var EntityConversionMapTable */
 	protected $mapTableClass = EntityConversionMapTable::class;
 	protected $availableEntityTypes;
+	protected $relationsCache = [];
+	protected $customRelations;
+	protected $predefinedRelations;
 
 	/**
 	 * Return array of entities that can be bind.
@@ -48,12 +54,18 @@ class RelationManager
 			$this->availableEntityTypes = [];
 			$entityTypeIds = [
 				\CCrmOwnerType::Lead => \CCrmOwnerType::Lead,
+				\CCrmOwnerType::Contact => \CCrmOwnerType::Contact,
+				\CCrmOwnerType::Company => \CCrmOwnerType::Company,
 				\CCrmOwnerType::Deal => \CCrmOwnerType::Deal,
 				\CCrmOwnerType::Order => \CCrmOwnerType::Order,
 			];
 			if (QuoteSettings::getCurrent()->isFactoryEnabled())
 			{
 				$entityTypeIds[\CCrmOwnerType::Quote] = \CCrmOwnerType::Quote;
+			}
+			if (InvoiceSettings::getCurrent()->isSmartInvoiceEnabled())
+			{
+				$entityTypeIds[\CCrmOwnerType::SmartInvoice] = \CCrmOwnerType::SmartInvoice;
 			}
 			foreach ($entityTypeIds as $entityTypeId)
 			{
@@ -92,6 +104,10 @@ class RelationManager
 		{
 			unset($availableTypes[$currentEntityId]);
 		}
+		unset(
+			$availableTypes[\CCrmOwnerType::Contact],
+			$availableTypes[\CCrmOwnerType::Company],
+		);
 
 		return $availableTypes;
 	}
@@ -108,10 +124,7 @@ class RelationManager
 		{
 			unset($availableTypes[$currentEntityId]);
 		}
-		// for now only dynamic types available
 		unset(
-			$availableTypes[\CCrmOwnerType::Lead],
-			$availableTypes[\CCrmOwnerType::Deal],
 			$availableTypes[\CCrmOwnerType::Order]
 		);
 
@@ -124,6 +137,15 @@ class RelationManager
 			\CCrmOwnerType::Contact => \CCrmOwnerType::Contact,
 			\CCrmOwnerType::Company => \CCrmOwnerType::Company,
 		];
+	}
+
+	protected function dropRelationsCache(RelationIdentifier $identifier): void
+	{
+		unset(
+			$this->relationsCache[$identifier->getParentEntityTypeId()],
+			$this->relationsCache[$identifier->getChildEntityTypeId()],
+		);
+		$this->customRelations = null;
 	}
 
 	/**
@@ -146,35 +168,56 @@ class RelationManager
 		}
 
 		$entityObject = $this->mapTableClass::createObject();
+
 		$entityObject
 			->setSrcTypeId($relation->getParentEntityTypeId())
 			->setDstTypeId($relation->getChildEntityTypeId())
-			->setIsChildrenListEnabled($relation->isChildrenListEnabled())
-			->setRelationType(static::RELATION_TYPE)
 		;
 
-		return $this->saveEntityObject($entityObject);
+		$this->dropRelationsCache($relation->getIdentifier());
+
+		return $this->updateEntityObject($relation->getSettings(), $entityObject);
 	}
 
 	public function updateTypesBinding(Relation $relation): Result
 	{
-		$entityObject = $this->mapTableClass::getByPrimary([
-			'SRC_TYPE_ID' => $relation->getParentEntityTypeId(),
-			'DST_TYPE_ID' => $relation->getChildEntityTypeId(),
-		])->fetchObject();
-		if (!$entityObject)
+		$result = new Result();
+
+		$existingRelation = $this->getRelation($relation->getIdentifier());
+		if (!$existingRelation)
 		{
-			return (new Result())->addError(
+			return $result->addError(
 				new Error(
-					'Record containing relation is not found',
-					static::ERROR_CODE_UPDATE_TYPES_RELATION_NOT_FOUND
+					'The types are not bound',
+					static::ERROR_CODE_UPDATE_TYPES_RELATION_NOT_BOUND,
 				)
 			);
 		}
 
-		$entityObject->setIsChildrenListEnabled($relation->isChildrenListEnabled());
+		if ($existingRelation->isPredefined())
+		{
+			return $result->addError(
+				new Error(
+					"A predefined relation can't be updated",
+					static::ERROR_CODE_UPDATE_TYPES_RELATION_IS_PREDEFINED,
+				)
+			);
+		}
 
-		return $this->saveEntityObject($entityObject);
+		$entityObject = $this->fetchEntityObject($relation->getIdentifier());
+		if (!$entityObject)
+		{
+			return $result->addError(
+				new Error(
+					'Record containing relation is not found',
+					static::ERROR_CODE_UPDATE_TYPES_RELATION_NOT_FOUND,
+				)
+			);
+		}
+
+		$this->dropRelationsCache($relation->getIdentifier());
+
+		return $this->updateEntityObject($relation->getSettings(), $entityObject);
 	}
 
 	/**
@@ -206,6 +249,8 @@ class RelationManager
 				)
 			);
 		}
+
+		$this->dropRelationsCache($identifier);
 
 		return $this->deleteRelation($identifier);
 	}
@@ -291,6 +336,28 @@ class RelationManager
 	}
 
 	/**
+	 * Fetch is isolated in a separate method for testing purposes
+	 *
+	 * @param RelationIdentifier $identifier
+	 * @return EO_EntityConversionMap|null
+	 */
+	protected function fetchEntityObject(RelationIdentifier $identifier): ?EO_EntityConversionMap
+	{
+		return $this->mapTableClass::getByPrimary([
+			'SRC_TYPE_ID' => $identifier->getParentEntityTypeId(),
+			'DST_TYPE_ID' => $identifier->getChildEntityTypeId(),
+		])->fetchObject();
+	}
+
+	protected function updateEntityObject(Relation\Settings $settings, EO_EntityConversionMap $entityObject): Result
+	{
+		$entityObject->setIsChildrenListEnabled($settings->isChildrenListEnabled());
+		$entityObject->setRelationType($settings->getRelationType());
+
+		return $this->saveEntityObject($entityObject);
+	}
+
+	/**
 	 * Save is isolated in a separate method for testing purposes
 	 *
 	 * @param EO_EntityConversionMap $entityObject
@@ -347,9 +414,15 @@ class RelationManager
 	 */
 	public function getRelations(int $entityTypeId): Relation\Collection
 	{
-		$parentRelations = $this->getParentRelations($entityTypeId);
+		if (isset($this->relationsCache[$entityTypeId]))
+		{
+			return $this->relationsCache[$entityTypeId];
+		}
 
-		return $parentRelations->merge($this->getChildRelations($entityTypeId));
+		$parentRelations = $this->getParentRelations($entityTypeId);
+		$this->relationsCache[$entityTypeId] = $parentRelations->merge($this->getChildRelations($entityTypeId));
+
+		return $this->relationsCache[$entityTypeId];
 	}
 
 	/**
@@ -387,98 +460,217 @@ class RelationManager
 	 */
 	protected function getPredefinedRelations(): Relation\Collection
 	{
+		if ($this->predefinedRelations !== null)
+		{
+			return $this->predefinedRelations;
+		}
+
 		$quoteFactory = Container::getInstance()->getFactory(\CCrmOwnerType::Quote);
+
+		$bindingSettings =
+			(new Settings())
+				->setIsPredefined(true)
+				->setIsChildrenListEnabled(true)
+				->setRelationType(RelationType::BINDING)
+		;
+
+		$conversionSettings =
+			(clone $bindingSettings)
+				->setRelationType(RelationType::CONVERSION)
+		;
 
 		$predefinedRelations = [
 			//region Contact child predefined relations
-			Relation::createPredefined(\CCrmOwnerType::Contact, \CCrmOwnerType::Invoice)
+			(new Relation(
+				new RelationIdentifier(\CCrmOwnerType::Contact, \CCrmOwnerType::Invoice),
+				clone $bindingSettings
+			))
 				->setStorageStrategy(new StorageStrategy\Compatible(\CCrmInvoice::class, 'UF_CONTACT_ID')),
 
-			Relation::createPredefined(\CCrmOwnerType::Contact, \CCrmOwnerType::Quote)
+			(new Relation(
+				new RelationIdentifier(\CCrmOwnerType::Contact, \CCrmOwnerType::Quote),
+				clone $bindingSettings
+			))
 				->setStorageStrategy(new StorageStrategy\ContactToFactory($quoteFactory)),
 
-			Relation::createPredefined(\CCrmOwnerType::Contact, \CCrmOwnerType::Deal)
+			(new Relation(
+				new RelationIdentifier(\CCrmOwnerType::Contact, \CCrmOwnerType::Deal),
+				clone $bindingSettings
+			))
 				->setStorageStrategy(new StorageStrategy\EntityBinding(
 					[DealContactTable::class, 'getDealContactIDs'],
 					[DealContactTable::class, 'getContactDealIDs'],
 					[DealContactTable::class, 'bindContactIDs'],
-					[DealContactTable::class, 'unbindContactIDs']
+					[DealContactTable::class, 'unbindContactIDs'],
+					static function($fromId, $toId) {
+						DealContactTable::rebindAllDeals($fromId, $toId);
+						\CCrmDeal::Rebind(\CCrmOwnerType::Contact, $fromId, $toId);
+					}
 				)),
 
-			Relation::createPredefined(\CCrmOwnerType::Contact, \CCrmOwnerType::Lead)
+			(new Relation(
+				new RelationIdentifier(\CCrmOwnerType::Contact, \CCrmOwnerType::Lead),
+				clone $bindingSettings
+			))
 				->setStorageStrategy(new StorageStrategy\EntityBinding(
 					[LeadContactTable::class, 'getLeadContactIDs'],
 					[LeadContactTable::class, 'getContactLeadIDs'],
 					[LeadContactTable::class, 'bindContactIDs'],
-					[LeadContactTable::class, 'unbindContactIDs']
+					[LeadContactTable::class, 'unbindContactIDs'],
+					static function($fromId, $toId) {
+						LeadContactTable::rebindAllLeads($fromId, $toId);
+						\CCrmLead::Rebind(\CCrmOwnerType::Contact, $fromId, $toId);
+					}
 				)),
 
-			Relation::createPredefined(\CCrmOwnerType::Contact, \CCrmOwnerType::Order)
+			(new Relation(
+				new RelationIdentifier(\CCrmOwnerType::Contact, \CCrmOwnerType::Order),
+				clone $bindingSettings
+			))
 				->setStorageStrategy(new StorageStrategy\ContactToOrder()),
 			//endregion
 
 			//region Company child predefined relations
-			Relation::createPredefined(\CCrmOwnerType::Company, \CCrmOwnerType::Lead)
+			(new Relation(
+				new RelationIdentifier(\CCrmOwnerType::Company, \CCrmOwnerType::Lead),
+				clone $bindingSettings
+			))
 				->setStorageStrategy(new StorageStrategy\Compatible(\CCrmLead::class, 'COMPANY_ID')),
 
-			Relation::createPredefined(\CCrmOwnerType::Company, \CCrmOwnerType::Deal)
+			(new Relation(
+				new RelationIdentifier(\CCrmOwnerType::Company, \CCrmOwnerType::Deal),
+				clone $bindingSettings
+			))
 				->setStorageStrategy(new StorageStrategy\Compatible(\CCrmDeal::class, 'COMPANY_ID')),
 
-			Relation::createPredefined(\CCrmOwnerType::Company, \CCrmOwnerType::Quote)
+			(new Relation(
+				new RelationIdentifier(\CCrmOwnerType::Company, \CCrmOwnerType::Quote),
+				clone $bindingSettings
+			))
 				->setStorageStrategy(new StorageStrategy\Factory($quoteFactory, Item::FIELD_NAME_COMPANY_ID)),
 
-			Relation::createPredefined(\CCrmOwnerType::Company, \CCrmOwnerType::Invoice)
+			(new Relation(
+				new RelationIdentifier(\CCrmOwnerType::Company, \CCrmOwnerType::Invoice),
+				clone $bindingSettings
+			))
 				->setStorageStrategy(new StorageStrategy\Compatible(\CCrmInvoice::class, 'UF_COMPANY_ID')),
 
-			Relation::createPredefined(\CCrmOwnerType::Company, \CCrmOwnerType::Contact)
+			(new Relation(
+				new RelationIdentifier(\CCrmOwnerType::Company, \CCrmOwnerType::Contact),
+				clone $bindingSettings
+			))
 				->setStorageStrategy(new StorageStrategy\EntityBinding(
 					[ContactCompanyTable::class, 'getContactCompanyIDs'],
 					[ContactCompanyTable::class, 'getCompanyContactIDs'],
 					[ContactCompanyTable::class, 'bindCompanyIDs'],
-					[ContactCompanyTable::class, 'unbindCompanyIDs']
+					[ContactCompanyTable::class, 'unbindCompanyIDs'],
+					[ContactCompanyTable::class, 'rebindAllContacts']
 				)),
 
-			Relation::createPredefined(\CCrmOwnerType::Company, \CCrmOwnerType::Order)
+			(new Relation(
+				new RelationIdentifier(\CCrmOwnerType::Company, \CCrmOwnerType::Order),
+				clone $bindingSettings
+			))
 				->setStorageStrategy(new StorageStrategy\CompanyToOrder()),
 			//endregion
 
 			//region Deal child predefined relations
-			Relation::createPredefined(\CCrmOwnerType::Deal, \CCrmOwnerType::Quote)
+			(new Relation(
+				new RelationIdentifier(\CCrmOwnerType::Deal, \CCrmOwnerType::Quote),
+				clone $conversionSettings
+			))
 				->setStorageStrategy(new StorageStrategy\Factory($quoteFactory, Item\Quote::FIELD_NAME_DEAL_ID)),
 
-			Relation::createPredefined(\CCrmOwnerType::Deal, \CCrmOwnerType::Invoice)
+			(new Relation(
+				new RelationIdentifier(\CCrmOwnerType::Deal, \CCrmOwnerType::Invoice),
+				clone $conversionSettings
+			))
 				->setStorageStrategy(new StorageStrategy\Compatible(\CCrmInvoice::class, 'UF_DEAL_ID')),
 
-			Relation::createPredefined(\CCrmOwnerType::Deal, \CCrmOwnerType::Order)
-				->setStorageStrategy(new StorageStrategy\DealToOrder()),
+			(new Relation(
+				new RelationIdentifier(\CCrmOwnerType::Deal, \CCrmOwnerType::Order),
+				clone $bindingSettings
+			))
+				->setStorageStrategy(new StorageStrategy\EntityToOrder()),
 			//endregion
 
 			//region Lead child predefined relations
-			Relation::createPredefined(\CCrmOwnerType::Lead, \CCrmOwnerType::Company)
+			(new Relation(
+				new RelationIdentifier(\CCrmOwnerType::Lead, \CCrmOwnerType::Company),
+				clone $conversionSettings
+			))
 				->setStorageStrategy(new StorageStrategy\Compatible(\CCrmCompany::class, 'LEAD_ID')),
 
-			Relation::createPredefined(\CCrmOwnerType::Lead, \CCrmOwnerType::Contact)
+			(new Relation(
+				new RelationIdentifier(\CCrmOwnerType::Lead, \CCrmOwnerType::Contact),
+				clone $conversionSettings
+			))
 				->setStorageStrategy(new StorageStrategy\Compatible(\CCrmContact::class, 'LEAD_ID')),
 
-			Relation::createPredefined(\CCrmOwnerType::Lead, \CCrmOwnerType::Deal)
+			(new Relation(
+				new RelationIdentifier(\CCrmOwnerType::Lead, \CCrmOwnerType::Deal),
+				clone $conversionSettings
+			))
 				->setStorageStrategy(new StorageStrategy\Compatible(\CCrmDeal::class, 'LEAD_ID')),
 
-			Relation::createPredefined(\CCrmOwnerType::Lead, \CCrmOwnerType::Quote)
+			(new Relation(
+				new RelationIdentifier(\CCrmOwnerType::Lead, \CCrmOwnerType::Quote),
+				clone $bindingSettings
+			))
 				->setStorageStrategy(new StorageStrategy\Factory($quoteFactory, Item\Quote::FIELD_NAME_LEAD_ID)),
 			//endregion
 
 			//region Quote child predefined relations
-			Relation::createPredefined(\CCrmOwnerType::Quote, \CCrmOwnerType::Deal)
+			(new Relation(
+				new RelationIdentifier(\CCrmOwnerType::Quote, \CCrmOwnerType::Deal),
+				clone $conversionSettings
+			))
 				->setStorageStrategy(new StorageStrategy\Compatible(\CCrmDeal::class, 'QUOTE_ID')),
 
-			Relation::createPredefined(\CCrmOwnerType::Quote, \CCrmOwnerType::Invoice)
+			(new Relation(
+				new RelationIdentifier(\CCrmOwnerType::Quote, \CCrmOwnerType::Invoice),
+				clone $conversionSettings
+			))
 				->setStorageStrategy(new StorageStrategy\Compatible(\CCrmInvoice::class, 'UF_QUOTE_ID')),
 			//endregion
 		];
 
+		//region SmartInvoice predefined relations
+		$factory = Container::getInstance()->getFactory(\CCrmOwnerType::SmartInvoice);
+		if ($factory)
+		{
+
+			$predefinedRelations[] =
+				(new Relation(
+					new RelationIdentifier(\CCrmOwnerType::SmartInvoice, \CCrmOwnerType::Order),
+					clone $bindingSettings
+				))
+				->setStorageStrategy(new StorageStrategy\EntityToOrder())
+			;
+
+			$predefinedRelations[] =
+				(new Relation(
+					new RelationIdentifier(\CCrmOwnerType::Contact, \CCrmOwnerType::SmartInvoice),
+					clone $bindingSettings
+				))
+				->setStorageStrategy(new StorageStrategy\ContactToFactory($factory))
+			;
+
+			$predefinedRelations[] =
+				(new Relation(
+					new RelationIdentifier(\CCrmOwnerType::Company, \CCrmOwnerType::SmartInvoice),
+					clone $bindingSettings
+				))
+				->setStorageStrategy(new StorageStrategy\Factory($factory, Item::FIELD_NAME_COMPANY_ID))
+			;
+		}
+		//endregion
+
 		$this->mixinPredefinedRelationsForDynamic($predefinedRelations);
 
-		return new Relation\Collection($predefinedRelations);
+		$this->predefinedRelations = new Relation\Collection($predefinedRelations);
+
+		return $this->predefinedRelations;
 	}
 
 	protected function mixinPredefinedRelationsForDynamic(array &$predefinedRelations): void
@@ -489,27 +681,74 @@ class RelationManager
 			'isLoadCategories' => false,
 		]);
 
+		$bindingSettings =
+			(new Settings())
+				->setIsPredefined(true)
+				->setIsChildrenListEnabled(true)
+				->setRelationType(RelationType::BINDING)
+		;
+
 		foreach ($typesMap->getTypes() as $type)
 		{
+			$factory = Container::getInstance()->getDynamicFactoryByType($type);
+			if ($factory->isPaymentsEnabled())
+			{
+				$predefinedRelations[] =
+					(new Relation(
+						new RelationIdentifier($type->getEntityTypeId(), \CCrmOwnerType::Order),
+						clone $bindingSettings
+					))
+						->setStorageStrategy(new StorageStrategy\EntityToOrder())
+				;
+			}
+
 			if (!$type->getIsClientEnabled())
 			{
 				continue;
 			}
 
-			$factory = Container::getInstance()->getDynamicFactoryByType($type);
-
 			$predefinedRelations[] =
-				Relation::createPredefined(\CCrmOwnerType::Contact, $type->getEntityTypeId())
-					->setStorageStrategy(new StorageStrategy\ContactToFactory($factory))
-					->setChildrenListEnabled(true)
+				(new Relation(
+					new RelationIdentifier(\CCrmOwnerType::Contact, $type->getEntityTypeId()),
+					clone $bindingSettings
+				))
+				->setStorageStrategy(new StorageStrategy\ContactToFactory($factory))
 			;
 
 			$predefinedRelations[] =
-				Relation::createPredefined(\CCrmOwnerType::Company, $type->getEntityTypeId())
-					->setStorageStrategy(new StorageStrategy\Factory($factory, Item::FIELD_NAME_COMPANY_ID))
-					->setChildrenListEnabled(true)
+				(new Relation(
+					new RelationIdentifier(\CCrmOwnerType::Company, $type->getEntityTypeId()),
+					clone $bindingSettings
+				))
+				->setStorageStrategy(new StorageStrategy\Factory($factory, Item::FIELD_NAME_COMPANY_ID))
 			;
 		}
+	}
+
+	protected function getCustomRelations(): Collection
+	{
+		if ($this->customRelations === null)
+		{
+			$collection = $this->mapTableClass::getList([
+				'cache' => [
+					'ttl' => 86400,
+				],
+			])->fetchCollection();
+			foreach ($collection as $entityObject)
+			{
+				if (
+					!\CCrmOwnerType::IsDefined($entityObject->getSrcTypeId())
+					|| !\CCrmOwnerType::IsDefined($entityObject->getDstTypeId())
+					)
+				{
+					$collection->remove($entityObject);
+				}
+			}
+
+			$this->customRelations = $this->ormCollectionToRelationCollection($collection);
+		}
+
+		return $this->customRelations;
 	}
 
 	/**
@@ -521,16 +760,7 @@ class RelationManager
 	 */
 	protected function getCustomParentRelations(int $childEntityTypeId): Relation\Collection
 	{
-		$collection =
-			$this->mapTableClass::getList([
-				'filter' => [
-					'=DST_TYPE_ID' => $childEntityTypeId,
-				],
-			])
-				->fetchCollection()
-		;
-
-		return $this->ormCollectionToRelationCollection($collection);
+		return $this->getCustomRelations()->filterByChildEntityTypeId($childEntityTypeId);
 	}
 
 	/**
@@ -542,16 +772,7 @@ class RelationManager
 	 */
 	protected function getCustomChildRelations(int $parentEntityTypeId): Relation\Collection
 	{
-		$collection =
-			$this->mapTableClass::getList([
-				'filter' => [
-					'=SRC_TYPE_ID' => $parentEntityTypeId,
-				],
-			])
-				->fetchCollection()
-		;
-
-		return $this->ormCollectionToRelationCollection($collection);
+		return $this->getCustomRelations()->filterByParentEntityTypeId($parentEntityTypeId);
 	}
 
 	protected function ormCollectionToRelationCollection(
@@ -561,10 +782,12 @@ class RelationManager
 		$relations = new Relation\Collection();
 		foreach ($collection as $entityObject)
 		{
-			$relation = Relation::create(
-				$entityObject->getSrcTypeId(),
-				$entityObject->getDstTypeId(),
-				$entityObject->getIsChildrenListEnabled()
+			$relation = new Relation(
+				new RelationIdentifier(
+					$entityObject->getSrcTypeId(),
+					$entityObject->getDstTypeId()
+				),
+				Settings::createByEntityRelationObject($entityObject)
 			);
 			$relation->setStorageStrategy(new StorageStrategy\EntityRelationTable());
 
@@ -665,16 +888,19 @@ class RelationManager
 		$result = [];
 		foreach ($tabCodes as $tabCode => $entityTypeId)
 		{
-			$detailComponent = Container::getInstance()->getRouter()->getItemDetailComponentName($entityTypeId);
+			$serviceUrl = Container::getInstance()->getRouter()->getChildrenItemsListUrl(
+				$entityTypeId,
+				$parentEntityTypeId,
+				$parentEntityId
+			);
 			$factory = Container::getInstance()->getFactory($entityTypeId);
-			if ($entityTypeId === \CCrmOwnerType::Quote)
+			if ($factory && $serviceUrl)
 			{
 				$result[] = [
 					'id' => $tabCode,
-					'name' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Quote),
+					'name' => $factory->getEntityDescriptionInPlural(),
 					'loader' => [
-						'serviceUrl' =>
-							'/bitrix/components/bitrix/crm.quote.list/lazyload.ajax.php?&site' . SITE_ID . '&' . bitrix_sessid_get(),
+						'serviceUrl' => $serviceUrl,
 						'componentData' => [
 							'template' => '',
 							'params' => [
@@ -686,21 +912,6 @@ class RelationManager
 								'PARENT_ENTITY_ID' => $parentEntityId,
 							]
 						]
-					],
-					'enabled' => !$isNew,
-				];
-			}
-			elseif ($factory && $detailComponent)
-			{
-				$result[] = [
-					'id' => $tabCode,
-					'name' => $factory->getEntityDescription(),
-					'loader' => [
-						'serviceUrl' => Container::getInstance()->getRouter()->getChildrenItemsListUrl(
-							$entityTypeId,
-							$parentEntityTypeId,
-							$parentEntityId
-						),
 					],
 					'enabled' => !$isNew,
 				];
@@ -750,7 +961,7 @@ class RelationManager
 
 		return (
 			isset($this->getClientFieldEntityTypeIds()[$parentEntityTypeId])
-			&& \CCrmOwnerType::isPossibleDynamicTypeId($relation->getChildEntityTypeId())
+			&& \CCrmOwnerType::isUseDynamicTypeBasedApproach($relation->getChildEntityTypeId())
 		);
 	}
 }

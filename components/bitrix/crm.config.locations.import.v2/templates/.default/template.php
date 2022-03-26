@@ -243,7 +243,7 @@ Loc::loadMessages(__FILE__);
 			'class' => $remoteClassName
 		);
 
-		if(in_array(LANGUAGE_ID, array('ru', 'ua')))
+		if(LANGUAGE_ID === 'ru' && Bitrix\Sale\Delivery\Helper::getPortalZone() !== 'ua')
 		{
 			//////////////////////////////////////
 			// extra data: yamarket

@@ -110,7 +110,7 @@ CJSCore::Init(["voximplant.common", "ui.alerts", "ui.buttons", "ui.sidepanel-con
 						<tr>
 							<td colspan="5" class="tel-phones-list-td-footer">
 								<?if($verification['COUNTRY_CODE']==='RU'):?>
-									<a id="vi_docs_upload_btn_<?= htmlspecialcharsbx($verification['COUNTRY_CODE'])?>" href="#docs" class="ui-btn ui-btn-primary">
+									<a id="vi_docs_upload_btn_<?= htmlspecialcharsbx($verification['COUNTRY_CODE'])?>" href="<?= htmlspecialcharsbx($verification['UPLOAD_URL']) ?>" target="_blank" class="ui-btn ui-btn-primary">
 										<?=($verification['STATUS'] === 'REQUIRED'? GetMessage('VI_DOCS_UPLOAD_BTN'): GetMessage('VI_DOCS_UPDATE_BTN'))?>
 									</a>
 								<?endif?>
@@ -160,7 +160,9 @@ CJSCore::Init(["voximplant.common", "ui.alerts", "ui.buttons", "ui.sidepanel-con
 				<?endif?>
 			<?endif?>
             <script type="text/javascript">
-				BX.Voximplant.Documents.initUploader('<?=CUtil::JSEscape($verification['COUNTRY_CODE'])?>');
+				<?if(isset($verification['UPLOAD_IFRAME_URL'])):?>
+					BX.Voximplant.Documents.initUploader('<?=CUtil::JSEscape($verification['COUNTRY_CODE'])?>');
+				<?endif?>
             </script>
 			<? $previousCountry = $verification['COUNTRY_CODE'] ?>
         <?endforeach;?>

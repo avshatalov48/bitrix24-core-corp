@@ -76,7 +76,7 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 
 		if ($this->isAlreadyConverted($entityTypeId, $entityId))
 		{
-			$this->WriteToTrackingService(GetMessage("CRM_CVTDA_ALREADY_CONVERTED"), 0, CBPTrackingType::Error);
+			$this->WriteToTrackingService(GetMessage("CRM_CVTDA_ALREADY_CONVERTED_1"), 0, CBPTrackingType::Error);
 
 			return CBPActivityExecutionStatus::Closed;
 		}
@@ -137,6 +137,7 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 	{
 		$propertyMap = [
 			\CCrmOwnerType::Invoice => 'InvoiceId',
+			\CCrmOwnerType::SmartInvoice => 'InvoiceId',
 			\CCrmOwnerType::Quote => 'QuoteId',
 			\CCrmOwnerType::Deal => 'DealId',
 			\CCrmOwnerType::Contact => 'ContactId',
@@ -298,7 +299,7 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 	{
 		$items = [];
 
-		if ($documentType[1] == 'CCrmDocumentLead')
+		if ($documentType[1] === 'CCrmDocumentLead')
 		{
 			$items = [
 				\CCrmOwnerType::DealName => GetMessage('CRM_CVTDA_DEAL'),
@@ -306,12 +307,18 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 				\CCrmOwnerType::CompanyName => GetMessage('CRM_CVTDA_COMPANY'),
 			];
 		}
-		elseif ($documentType[1] == 'CCrmDocumentDeal')
+		elseif ($documentType[1] === 'CCrmDocumentDeal')
 		{
-			$items = [
-				\CCrmOwnerType::InvoiceName => GetMessage('CRM_CVTDA_INVOICE'),
-				\CCrmOwnerType::QuoteName => GetMessage('CRM_CVTDA_QUOTE'),
-			];
+			$dealConfig = Crm\Conversion\ConversionManager::getConfig(\CCrmOwnerType::Deal);
+
+			if ($dealConfig)
+			{
+				foreach ($dealConfig->getItems() as $configItem)
+				{
+					$dstTypeName = \CCrmOwnerType::ResolveName($configItem->getEntityTypeID());
+					$items[$dstTypeName] = \CCrmOwnerType::GetDescription($configItem->getEntityTypeID());
+				}
+			}
 		}
 
 		return $items;

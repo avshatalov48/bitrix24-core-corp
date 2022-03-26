@@ -33,6 +33,15 @@ class Cache
 		return 'QUEUE_USER_COUNT_LINES_' . $userId;
 	}
 
+	/**
+	 * @param string $userId
+	 * @return string
+	 */
+	public static function getUserIsOperatorCacheTag(string $userId): string
+	{
+		return 'QUEUE_USER_IS_OPERATOR_' . $userId;
+	}
+
 	public function __construct()
 	{
 		$application = Application::getInstance();
@@ -90,9 +99,25 @@ class Cache
 	/**
 	 * @return string
 	 */
+	public function getCacheIdIsOperator(): string
+	{
+		return $this->userId;
+	}
+
+	/**
+	 * @return string
+	 */
 	public function getCacheDirCountLinesOperator(): string
 	{
 		return '/imopenlines/queue/count/';
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getCacheDirIsOperator(): string
+	{
+		return '/imopenlines/queue/operators/';
 	}
 
 	/**
@@ -102,7 +127,7 @@ class Cache
 	{
 		$result = false;
 
-		if(
+		if (
 			$this->isError === false
 			&& !empty($this->userId)
 			&& !empty($this->lineId)
@@ -121,7 +146,25 @@ class Cache
 	{
 		$result = false;
 
-		if(
+		if (
+			$this->isError === false
+			&& !empty($this->userId)
+		)
+		{
+			$result = true;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function validIsOperator(): bool
+	{
+		$result = false;
+
+		if (
 			$this->isError === false
 			&& !empty($this->userId)
 		)
@@ -138,7 +181,7 @@ class Cache
 	public function initCacheQueueOperatorData(): bool
 	{
 		$result = false;
-		if($this->validQueueOperatorData())
+		if ($this->validQueueOperatorData())
 		{
 			$result = $this->cache->initCache(
 				self::CACHE_TIME,
@@ -156,7 +199,7 @@ class Cache
 	public function initCacheCountLinesOperator(): bool
 	{
 		$result = false;
-		if($this->validCountLinesOperator())
+		if ($this->validCountLinesOperator())
 		{
 			$result = $this->cache->initCache(
 				self::CACHE_TIME,
@@ -169,12 +212,30 @@ class Cache
 	}
 
 	/**
+	 * @return bool
+	 */
+	public function initCacheIsOperator(): bool
+	{
+		$result = false;
+		if ($this->validIsOperator())
+		{
+			$result = $this->cache->initCache(
+				self::CACHE_TIME,
+				$this->getCacheIdIsOperator(),
+				$this->getCacheDirIsOperator()
+			);
+		}
+
+		return $result;
+	}
+
+	/**
 	 * @return mixed
 	 */
 	public function getVarsQueueOperatorData()
 	{
 		$result = false;
-		if($this->validQueueOperatorData())
+		if ($this->validQueueOperatorData())
 		{
 			$result = $this->cache->getVars();
 		}
@@ -188,9 +249,34 @@ class Cache
 	public function getVarsCountLinesOperator()
 	{
 		$result = false;
-		if($this->validCountLinesOperator())
+		if ($this->validCountLinesOperator())
 		{
 			$result = $this->cache->getVars();
+		}
+
+		return $result;
+	}
+
+
+	/**
+	 * @return mixed
+	 */
+	public function getVarsIsOperator()
+	{
+		$result = false;
+		if ($this->validIsOperator())
+		{
+			$result = $this->cache->getVars();
+
+			if ($result !== true)
+			{
+				$countLines = $this->getVarsCountLinesOperator();
+
+				if ($countLines > 0)
+				{
+					$result = true;
+				}
+			}
 		}
 
 		return $result;
@@ -202,7 +288,7 @@ class Cache
 	public function startCacheQueueOperatorData(): bool
 	{
 		$result = false;
-		if($this->validQueueOperatorData())
+		if ($this->validQueueOperatorData())
 		{
 			$result = true;
 
@@ -220,13 +306,32 @@ class Cache
 	public function startCacheCountLinesOperator(): bool
 	{
 		$result = false;
-		if($this->validCountLinesOperator())
+		if ($this->validCountLinesOperator())
 		{
 			$result = true;
 
 			$this->cache->startDataCache();
 			$this->taggedCache->startTagCache($this->getCacheDirCountLinesOperator());
 			$this->taggedCache->registerTag(self::getUserCountLinesCacheTag($this->userId));
+		}
+
+		return $result;
+	}
+
+
+	/**
+	 * @return bool
+	 */
+	public function startCacheIsOperator(): bool
+	{
+		$result = false;
+		if ($this->validIsOperator())
+		{
+			$result = true;
+
+			$this->cache->startDataCache();
+			$this->taggedCache->startTagCache($this->getCacheDirIsOperator());
+			$this->taggedCache->registerTag(self::getUserIsOperatorCacheTag($this->userId));
 		}
 
 		return $result;
@@ -239,7 +344,7 @@ class Cache
 	public function endCacheQueueOperatorData($data = []): bool
 	{
 		$result = false;
-		if($this->validQueueOperatorData())
+		if ($this->validQueueOperatorData())
 		{
 			$result = true;
 
@@ -251,13 +356,31 @@ class Cache
 	}
 
 	/**
-	 * @param mixed $data
+	 * @param $data
 	 * @return bool
 	 */
-	public function endCacheCountLinesOperator($data = []): bool
+	public function endCacheCountLinesOperator($data): bool
 	{
 		$result = false;
-		if($this->validCountLinesOperator())
+		if ($this->validCountLinesOperator())
+		{
+			$result = true;
+
+			$this->taggedCache->endTagCache();
+			$this->cache->endDataCache($data);
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param bool $data
+	 * @return bool
+	 */
+	public function endCacheIsOperator(bool $data): bool
+	{
+		$result = false;
+		if ($this->validIsOperator())
 		{
 			$result = true;
 
@@ -287,9 +410,10 @@ class Cache
 				$this->taggedCache->clearByTag(self::getOperatorCacheTag($this->userId, $this->lineId));
 			}
 
-			if(!empty($this->userId))
+			if (!empty($this->userId))
 			{
 				$this->taggedCache->clearByTag(self::getUserCountLinesCacheTag($this->userId));
+				$this->taggedCache->clearByTag(self::getUserIsOperatorCacheTag($this->userId));
 			}
 		}
 

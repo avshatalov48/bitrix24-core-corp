@@ -2636,3 +2636,16 @@ table.task-table-hide-first-column > tr > td:first-child {
 .main-grid-row[data-type='task'] .ui-label:not(.task-attachment-counter):not(.task-checklist-counter) {
 	margin: 0 4px 4px 0;
 }
+
+.task-popup-notification {
+	width: 400px;
+	padding: 10px;
+	font-size: 14px;
+	color: #535c69;
+	line-height: 22px;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.task-popup-notification .task-popup-divider {
+	height: 10px;
+	line-height: 10px;
+}

@@ -1,3 +1,5 @@
+import {Type} from 'main.core';
+
 import {Grid} from './grid';
 
 export class PullController
@@ -66,6 +68,7 @@ export class PullController
 			project_counter: this.onProjectCounter.bind(this),
 			project_read_all: this.onProjectCommentsReadAll.bind(this),
 			comment_read_all: this.onProjectCommentsReadAll.bind(this),
+			scrum_read_all: this.onProjectCommentsReadAll.bind(this)
 		};
 	}
 
@@ -246,6 +249,11 @@ export class PullController
 
 	onCheckExistenceSuccess(response, groupId, params)
 	{
+		if (Type.isUndefined(response.data[groupId]))
+		{
+			return;
+		}
+
 		if (response.data[groupId] === false)
 		{
 			this.removeRow(groupId);
@@ -301,7 +309,14 @@ export class PullController
 				data: (rowData ? {[rowId]: rowData} : null),
 			},
 			signedParameters: this.signedParameters,
-		}).then(response => this.grid.addRow(rowId, response.data[rowId], params));
+		})
+			.then((response) => {
+				if (!Type.isUndefined(response.data[rowId]))
+				{
+					this.grid.addRow(rowId, response.data[rowId], params);
+				}
+			})
+		;
 	}
 
 	updateRow(rowId, rowData, params)
@@ -318,7 +333,14 @@ export class PullController
 				data: (rowData ? {[rowId]: rowData} : null),
 			},
 			signedParameters: this.signedParameters,
-		}).then(response => this.grid.updateRow(rowId, response.data[rowId], params));
+		})
+			.then((response) => {
+				if (!Type.isUndefined(response.data[rowId]))
+				{
+					this.grid.updateRow(rowId, response.data[rowId], params)
+				}
+			})
+		;
 	}
 
 	removeRow(rowId)
@@ -339,6 +361,11 @@ export class PullController
 			},
 			signedParameters: this.signedParameters,
 		}).then((response) => {
+			if (response.data === null)
+			{
+				return;
+			}
+
 			const {projectBefore, projectAfter} = response.data;
 
 			if (projectBefore === false && projectAfter === false)

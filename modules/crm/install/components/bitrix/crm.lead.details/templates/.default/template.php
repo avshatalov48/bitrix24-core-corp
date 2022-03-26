@@ -89,7 +89,7 @@ if (\Bitrix\Crm\Restriction\RestrictionManager::getLeadsRestriction()->hasPermis
 </script><?
 
 //$arResult['READ_ONLY'] = true;
-$editorContext = array('PARAMS' => $arResult['CONTEXT_PARAMS']);
+$editorContext = $arResult['CONTEXT'];
 if(isset($arResult['ORIGIN_ID']) && $arResult['ORIGIN_ID'] !== '')
 {
 	$editorContext['ORIGIN_ID'] = $arResult['ORIGIN_ID'];

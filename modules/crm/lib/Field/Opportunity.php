@@ -2,68 +2,78 @@
 
 namespace Bitrix\Crm\Field;
 
+use Bitrix\Crm\Currency;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
+use Bitrix\Crm\Service\Operation\FieldAfterSaveResult;
 use Bitrix\Main\Error;
-use Bitrix\Main\Result;
 
 class Opportunity extends Field
 {
-	protected function processLogic(Item $item, Context $context = null): Result
+	public function isValueEmpty($fieldValue): bool
 	{
-		$parentResult = parent::processLogic($item, $context);
+		return (float)($fieldValue) === 0.0;
+	}
 
-		$isManualOpportunity = $item->hasField(Item::FIELD_NAME_IS_MANUAL_OPPORTUNITY) && $item->getIsManualOpportunity();
-		$isAutoOpportunity = !$isManualOpportunity;
+	public function processAfterSave(Item $itemBeforeSave, Item $item, Context $context = null): FieldAfterSaveResult
+	{
+		$result = new FieldAfterSaveResult();
 
-		$products = $item->getProductRows();
-		$productsAreNotFetched = is_null($products) && !$item->isNew();
+		$products = $itemBeforeSave->getProductRows();
+		$productsAreNotFetched = is_null($products) && !$itemBeforeSave->isNew();
 		if ($productsAreNotFetched)
 		{
-			if (!$item->isChanged($this->getName()))
+			if (
+				!$itemBeforeSave->isChanged($this->getName())
+				|| ($item->getIsManualOpportunity() && $itemBeforeSave->isChanged($this->getName()))
+			)
 			{
-				return $parentResult;
-			}
-			if ($isManualOpportunity && $item->isChanged($this->getName()))
-			{
-				return $parentResult;
+				$this->syncOpportunityAccount($item, (float)$item->getOpportunity(), $result);
+
+				return $result;
 			}
 
-			return $parentResult->addError(new Error(
+			return $result->addError(new Error(
 				"Products are not fetched. Can't sync opportunity",
 				static::ERROR_CODE_PRODUCTS_NOT_FETCHED
 			));
 		}
 
-		if ($item->isNew())
+		$areProductsEmpty = is_null($products) || (count($products) <= 0);
+		$itemAlwaysHadNoProducts = $areProductsEmpty && !$itemBeforeSave->isChanged(Item::FIELD_NAME_PRODUCTS);
+
+		if ($itemAlwaysHadNoProducts || $item->getIsManualOpportunity())
 		{
-			$areProductsEmpty = is_null($products) || (count($products) <= 0);
-			$productsWereDeleted = false;
-			$itemAlwaysHadNoProducts = $areProductsEmpty;
-		}
-		else
-		{
-			$areProductsEmpty = (count($products) <= 0);
-			$productsWereDeleted = $areProductsEmpty && $item->isChanged(Item::FIELD_NAME_PRODUCTS);
-			$itemAlwaysHadNoProducts = $areProductsEmpty && !$item->isChanged(Item::FIELD_NAME_PRODUCTS);
+			$this->syncOpportunityAccount($item, (float)$item->getOpportunity(), $result);
+
+			return $result;
 		}
 
-		if ($isManualOpportunity || $itemAlwaysHadNoProducts)
-		{
-			return $parentResult;
-		}
+		//after this point opportunity is always in auto mode
 
-		if ($isAutoOpportunity && !$areProductsEmpty)
-		{
-			$item->set($this->getName(), Container::getInstance()->getAccounting()->calculateByItem($item)->getPrice());
-		}
-		elseif ($isAutoOpportunity && $productsWereDeleted)
-		{
-			$item->set($this->getName(), $item->getDefaultValue($this->getName()));
-		}
+		$accounting = Container::getInstance()->getAccounting();
 
-		return $parentResult;
+		$price = $accounting->calculateByItem($item)->getPrice();
+		$priceWithDelivery = $price + $accounting->calculateDeliveryTotal(ItemIdentifier::createByItem($item));
+
+		$opportunity = $priceWithDelivery;
+
+		$result->setNewValue($this->getName(), $opportunity);
+		$this->syncOpportunityAccount($item, (float)$opportunity, $result);
+
+		return $result;
+	}
+
+	private function syncOpportunityAccount(Item $item, float $newOpportunityValue, FieldAfterSaveResult $result): void
+	{
+		if ($item->hasField(Item::FIELD_NAME_OPPORTUNITY_ACCOUNT))
+		{
+			$opportunityAccount = Currency\Conversion::toAccountCurrency($newOpportunityValue, $item->getCurrencyId());
+
+			$result->setNewValue(Item::FIELD_NAME_OPPORTUNITY_ACCOUNT, $opportunityAccount);
+		}
 	}
 }

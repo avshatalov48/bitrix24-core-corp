@@ -372,6 +372,11 @@
 	font-weight: bold;
 }
 
+.task-options-item-destination-wrap {
+	display: flex;
+	flex-direction: column;
+}
+
 .task-options-destination-wrap .task-options-date {
 	width: 100%;
 	height: 38px;

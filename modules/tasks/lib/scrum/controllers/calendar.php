@@ -3,7 +3,9 @@
 namespace Bitrix\Tasks\Scrum\Controllers;
 
 use Bitrix\Main\Application;
+use Bitrix\Main\Engine\Action;
 use Bitrix\Main\Engine\Controller;
+use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -16,6 +18,9 @@ use Bitrix\Tasks\Util\User;
 
 class Calendar extends Controller
 {
+	const ERROR_COULD_NOT_LOAD_MODULE = 'TASKS_CC_01';
+	const ERROR_ACCESS_DENIED = 'TASKS_CC_02';
+
 	public function __construct(Request $request = null)
 	{
 		parent::__construct($request);
@@ -23,26 +28,55 @@ class Calendar extends Controller
 		$this->errorCollection = new ErrorCollection;
 	}
 
-	public function getMeetingsAction()
+	protected function processBeforeAction(Action $action)
 	{
-		if (!$this->checkModules())
+		if (
+			!Loader::includeModule('tasks')
+			|| !Loader::includeModule('socialnetwork')
+			|| !Loader::includeModule('calendar')
+		)
 		{
-			return null;
-		}
+			$this->errorCollection->setError(
+				new Error(
+					Loc::getMessage('TASKS_CC_ERROR_INCLUDE_MODULE_ERROR'),
+					self::ERROR_COULD_NOT_LOAD_MODULE
+				)
+			);
 
-		if (!Loader::includeModule('im'))
-		{
-			return null;
+			return false;
 		}
 
 		$post = $this->request->getPostList()->toArray();
 
 		$groupId = (is_numeric($post['groupId']) ? (int) $post['groupId'] : 0);
-
 		$userId = User::getId();
 
-		if (!$this->canReadGroupTasks($userId, $groupId))
+		if (!Group::canReadGroupTasks($userId, $groupId))
 		{
+			$this->errorCollection->setError(
+				new Error(
+					Loc::getMessage('TASKS_CC_ERROR_ACCESS_DENIED'),
+					self::ERROR_ACCESS_DENIED
+				)
+			);
+
+			return false;
+		}
+
+		return parent::processBeforeAction($action);
+	}
+
+	public function getMeetingsAction(int $groupId)
+	{
+		if (!Loader::includeModule('im'))
+		{
+			$this->errorCollection->setError(
+				new Error(
+					Loc::getMessage('TASKS_CC_ERROR_INCLUDE_MODULE_ERROR'),
+					self::ERROR_COULD_NOT_LOAD_MODULE
+				)
+			);
+
 			return null;
 		}
 
@@ -54,11 +88,13 @@ class Calendar extends Controller
 
 		$mapCreatedEvents = $this->getMapCreatedEventsByTemplate($info->getEvents());
 
-		$listEvents = $this->getUpcomingEventsForThisProject($userId, $groupId);
+		$listEvents = $this->getUpcomingEventsForThisProject($groupId);
 
 		$chats = $this->getEventChats($listEvents);
 
 		[$listEvents, $todayEvent] = $this->getEventForToday($listEvents);
+
+		$defaultSprintDuration = $this->getDefaultSprintDuration($groupId);
 
 		return [
 			'mapCreatedEvents' => $mapCreatedEvents,
@@ -66,32 +102,26 @@ class Calendar extends Controller
 			'listEvents' => array_values($listEvents),
 			'isTemplatesClosed' => $info->isTemplatesClosed(),
 			'chats' => $chats,
+			'defaultSprintDuration' => $defaultSprintDuration,
+			'calendarSettings' => $this->getCalendarSettings($defaultSprintDuration),
 		];
 	}
 
-	public function getChatAction()
+	public function getChatAction(int $groupId, int $chatId)
 	{
-		if (!$this->checkModules())
-		{
-			return null;
-		}
-
 		if (!Loader::includeModule('im'))
 		{
+			$this->errorCollection->setError(
+				new Error(
+					Loc::getMessage('TASKS_CC_ERROR_INCLUDE_MODULE_ERROR'),
+					self::ERROR_COULD_NOT_LOAD_MODULE
+				)
+			);
+
 			return null;
 		}
-
-		$post = $this->request->getPostList()->toArray();
-
-		$groupId = (is_numeric($post['groupId']) ? (int) $post['groupId'] : 0);
-		$chatId = (is_numeric($post['chatId']) ? (int) $post['chatId'] : 0);
 
 		$userId = User::getId();
-
-		if (!$this->canReadGroupTasks($userId, $groupId))
-		{
-			return null;
-		}
 
 		if ($chatId > 0)
 		{
@@ -111,26 +141,9 @@ class Calendar extends Controller
 		return $chatId;
 	}
 
-	public function saveEventInfoAction()
+	public function saveEventInfoAction(int $groupId, string $templateId, int $eventId)
 	{
-		if (!$this->checkModules())
-		{
-			return null;
-		}
-
-		$post = $this->request->getPostList()->toArray();
-
-		$groupId = (is_numeric($post['groupId']) ? (int) $post['groupId'] : 0);
-
 		$userId = User::getId();
-
-		if (!$this->canReadGroupTasks($userId, $groupId))
-		{
-			return null;
-		}
-
-		$templateId = (is_string($post['templateId'] ) ? $post['templateId'] : '');
-		$eventId = (is_numeric($post['eventId']) ? (int) $post['eventId'] : 0);
 
 		$eventData = $this->getEventData($userId, $eventId);
 		if (empty($eventData['ID']))
@@ -153,24 +166,8 @@ class Calendar extends Controller
 		];
 	}
 
-	public function closeTemplatesAction()
+	public function closeTemplatesAction(int $groupId)
 	{
-		if (!$this->checkModules())
-		{
-			return null;
-		}
-
-		$post = $this->request->getPostList()->toArray();
-
-		$groupId = (is_numeric($post['groupId']) ? (int) $post['groupId'] : 0);
-
-		$userId = User::getId();
-
-		if (!$this->canReadGroupTasks($userId, $groupId))
-		{
-			return null;
-		}
-
 		$backlogService = new BacklogService();
 
 		$backlog = $backlogService->getBacklogByGroupId($groupId);
@@ -180,20 +177,6 @@ class Calendar extends Controller
 		$backlogService->changeBacklog($backlog);
 
 		return '';
-	}
-
-	private function checkModules(): bool
-	{
-		return (
-			Loader::includeModule('tasks')
-			&& Loader::includeModule('socialnetwork')
-			&& Loader::includeModule('calendar')
-		);
-	}
-
-	private function canReadGroupTasks(int $userId, int $groupId): bool
-	{
-		return Group::canReadGroupTasks($userId, $groupId);
 	}
 
 	private function getMapCreatedEventsByTemplate(array $events): array
@@ -211,19 +194,11 @@ class Calendar extends Controller
 		return $map;
 	}
 
-	private function getUpcomingEventsForThisProject(int $userId, int $groupId): array
+	private function getUpcomingEventsForThisProject(int $groupId): array
 	{
-		$oneWeek = \DateInterval::createFromDateString('1 week')->format('%d') * 86400;
-		$twoWeek = \DateInterval::createFromDateString('2 weeks')->format('%d') * 86400;
-
-		$defaultSprintDuration = $twoWeek;
-		$group = Workgroup::getById($groupId);
-		if ($group)
-		{
-			$defaultSprintDuration = $oneWeek + $group->getDefaultSprintDuration();
-		}
-
 		$listEvents = [];
+
+		$defaultSprintDuration = $this->getDefaultSprintDuration($groupId) + 86400;
 
 		$sections = \CCalendarSect::getList([
 			'arFilter' => [
@@ -275,6 +250,7 @@ class Calendar extends Controller
 							'from' => $fromTs,
 							'to' => $toTs,
 							'color' => $event['COLOR'],
+							'repeatable' => $event['RRULE'] !== '',
 						];
 					}
 				}
@@ -485,5 +461,65 @@ class Calendar extends Controller
 		}
 
 		return $chats;
+	}
+
+	private function getDefaultSprintDuration(int $groupId): int
+	{
+		$group = Workgroup::getById($groupId);
+
+		if ($group)
+		{
+			return $group->getDefaultSprintDuration();
+		}
+		else
+		{
+			return \DateInterval::createFromDateString('2 weeks')->format('%d') * 86400;
+		}
+	}
+
+	private function getCalendarSettings(int $defaultSprintDuration): array
+	{
+		$settings = [];
+
+		$settings['workTimeStart'] = (int) \COption::getOptionString('calendar', 'work_time_start', 9);
+
+		$settings['weekDays'] = [];
+
+		$holidays = explode('|', \COption::getOptionString('calendar', 'week_holidays', 'SA|SU'));
+		foreach (\CCalendarSceleton::getWeekDays() as $day)
+		{
+			if (!in_array($day[2], $holidays, true))
+			{
+				$settings['weekDays'][$day[2]] = $day[2];
+			}
+		}
+
+		$weekStart = current($settings['weekDays']);
+		$settings['weekStart'][$weekStart] = $weekStart;
+
+		$oneWeek = \DateInterval::createFromDateString('1 week')->format('%d') * 86400;
+		$twoWeek = \DateInterval::createFromDateString('2 weeks')->format('%d') * 86400;
+		$threeWeek = \DateInterval::createFromDateString('3 weeks')->format('%d') * 86400;
+		$fourWeek = \DateInterval::createFromDateString('4 weeks')->format('%d') * 86400;
+		$interval = 1;
+		if ($defaultSprintDuration === $oneWeek)
+		{
+			$interval= 1;
+		}
+		elseif ($defaultSprintDuration === $twoWeek)
+		{
+			$interval= 2;
+		}
+		elseif ($defaultSprintDuration === $threeWeek)
+		{
+			$interval= 3;
+		}
+		elseif ($defaultSprintDuration === $fourWeek)
+		{
+			$interval= 4;
+		}
+		$settings['interval'] = $interval;
+
+		return $settings;
 	}
 }

@@ -93,7 +93,7 @@ if ($isBitrix24Template)
 	if (!$arResult['QUEUE_RUNNING'] && $arResult['DATA_COLLECTED'])
 	{
 		?>
-		<a href="<?= $component->getActionUrl(array('reload' => 'Y')); ?>" class="webform-small-button webform-small-button-blue crm-volume-reload-link">
+		<a href="<?= $component->getActionUrl(array('reload' => 'Y')); ?>" class="ui-btn ui-btn-primary crm-volume-reload-link">
 			<?= Loc::getMessage('CRM_VOLUME_MEASURE_DATA_REPEAT') ?>
 		</a>
 		<?
@@ -103,22 +103,16 @@ if ($isBitrix24Template)
 }
 
 
-
-
-
-
-
-
 ?>
 <div id="bx-crm-volume-main-block" class="crm-volume-wrap <? if ($arResult['QUEUE_RUNNING']): ?>crm-volume-running<? endif; ?>">
-	<div id="bx-crm-volume-stepper" class="crm-volume-stepper bx-ui-crm-volume-stepper" <? if ((isset($arResult['HAS_WORKER_IN_PROCESS']) && $arResult['HAS_WORKER_IN_PROCESS'] !== true) || $arResult["RELOAD"]): ?>style="display: none"<? endif; ?>>
-		<?
+	<div id="bx-crm-volume-stepper" class="crm-volume-stepper bx-ui-crm-volume-stepper" <?
+		if ((isset($arResult['HAS_WORKER_IN_PROCESS']) && $arResult['HAS_WORKER_IN_PROCESS'] !== true) || empty($arResult["PROCESS_BAR"])): ?>style="display: none"<? endif; ?>><?
+
 		if (isset($arResult['HAS_WORKER_IN_PROCESS']) && $arResult['HAS_WORKER_IN_PROCESS'] && $arResult["RELOAD"] !== true)
 		{
 			echo $arResult['PROCESS_BAR'];
 		}
-		?>
-	</div>
+	?></div>
 
 	<div id="bx-crm-volume-message-alert" class="crm-volume-alert ui-alert ui-alert-warning ui-alert-xs" style="display: none">
 		<span class="ui-btn-message"><?= Loc::getMessage('CRM_VOLUME_CLOSE_WARNING'); ?></span>
@@ -131,8 +125,8 @@ if ($isBitrix24Template)
 			<? else:?>
 				<?= Loc::getMessage('CRM_VOLUME_AGENT_FINISHED_COMMENT'); ?>
 			<? endif ?>
-
 		</span>
+		&nbsp;
 		<a href="<?= $component->getActionUrl(array('reload' => 'Y')); ?>" class="crm-volume-info-control-panel-link crm-volume-reload-link">
 			<?= Loc::getMessage('CRM_VOLUME_MEASURE_DATA_REPEAT'); ?>
 		</a>
@@ -156,9 +150,7 @@ if(!$arResult['DATA_COLLECTED'] || $arResult['QUEUE_RUNNING'])
 		</div>
 	</div>
 	<div id="bx-crm-volume-buttons" class="crm-volume-button-container">
-		<button id="bx-crm-volume-link-measure" class="webform-small-button webform-small-button-accept crm-volume-button-margin-top">
-			<span class="webform-small-button-text"><?= Loc::getMessage("CRM_VOLUME_MEASURE_DATA"); ?></span>
-		</button>
+		<button id="bx-crm-volume-link-measure" class="ui-btn ui-btn-success"><?= Loc::getMessage("CRM_VOLUME_MEASURE_DATA"); ?></button>
 	</div>
 
 	<div id="bx-crm-volume-process" class="crm-volume-container crm-volume-wrap-state">
@@ -420,7 +412,7 @@ if (!$arParams['IS_AJAX_REQUEST'])
 			{
 				BX.Crm.measureManager.stopQueue();
 
-				BX.removeClass(startMeasureButton, 'webform-button-wait');
+				BX.removeClass(startMeasureButton, 'ui-btn-wait');
 
 				BX.Crm.measureManager.modalWindow({
 					content: BX.message('CRM_VOLUME_PERFORMING_CANCEL_MEASURE'),
@@ -437,9 +429,8 @@ if (!$arParams['IS_AJAX_REQUEST'])
 					after: function(){
 						BX.Crm.measureManager.progressBarHide();
 
-						BX.removeClass(startMeasureButton, 'webform-button-wait');
-
-						//BX.addClass(spaceSelectorTrashCan, 'crm-volume-inprocess');
+						BX.removeClass(startMeasureButton, 'ui-btn-disabled');
+						startMeasureButton.disabled = false;
 
 						var w = BX.PopupWindowManager.getCurrentPopup();
 						if (w) {

@@ -130,7 +130,27 @@ class Compatible extends \Bitrix\Crm\Relation\StorageStrategy
 	 */
 	protected function createBinding(ItemIdentifier $parent, ItemIdentifier $child): Result
 	{
-		return $this->editBinding($child, $parent->getEntityId());
+		$toExcludeFromTimeline = [$parent];
+
+		$previousParentId = $this->getPreviousParentId($child);
+		if ($previousParentId > 0)
+		{
+			$toExcludeFromTimeline[] = new ItemIdentifier($parent->getEntityTypeId(), $previousParentId);
+		}
+
+		return $this->editBinding($child, $parent->getEntityId(), $toExcludeFromTimeline);
+	}
+
+	protected function getPreviousParentId(ItemIdentifier $child): int
+	{
+		$childEntry = $this->getList([
+			'select' => [$this->parentIdFieldName],
+			'filter' => [
+				'ID' => $child->getEntityId(),
+			],
+		]);
+
+		return (int)($childEntry[$this->parentIdFieldName] ?? 0);
 	}
 
 	/**
@@ -138,10 +158,16 @@ class Compatible extends \Bitrix\Crm\Relation\StorageStrategy
 	 */
 	protected function deleteBinding(ItemIdentifier $parent, ItemIdentifier $child): Result
 	{
-		return $this->editBinding($child, 0);
+		return $this->editBinding($child, 0, [$parent]);
 	}
 
-	protected function editBinding(ItemIdentifier $child, int $value): Result
+	/**
+	 * @param ItemIdentifier $child
+	 * @param int $value
+	 * @param ItemIdentifier[] $toExcludeFromTimeline
+	 * @return Result
+	 */
+	protected function editBinding(ItemIdentifier $child, int $value, array $toExcludeFromTimeline): Result
 	{
 		$result = new Result();
 
@@ -156,8 +182,19 @@ class Compatible extends \Bitrix\Crm\Relation\StorageStrategy
 		$fields = [
 			$this->parentIdFieldName => $value,
 		];
+		$options = [
+			'EXCLUDE_FROM_RELATION_REGISTRATION' => $toExcludeFromTimeline,
+		];
 
-		$isSuccess = $entity->Update($child->getEntityId(), $fields);
+		//methods have different signature
+		if ($entity instanceof \CCrmInvoice)
+		{
+			$isSuccess = $entity->Update($child->getEntityId(), $fields, $options);
+		}
+		else
+		{
+			$isSuccess = $entity->Update($child->getEntityId(), $fields, true, $options);
+		}
 
 		if (!$isSuccess)
 		{
@@ -165,5 +202,19 @@ class Compatible extends \Bitrix\Crm\Relation\StorageStrategy
 		}
 
 		return $result;
+	}
+
+	protected function replaceBindings(ItemIdentifier $fromItem, ItemIdentifier $toItem): Result
+	{
+		if (method_exists($this->compatibleChildEntityClass, 'Rebind'))
+		{
+			$this->compatibleChildEntityClass::Rebind(
+				$toItem->getEntityTypeId(),
+				$fromItem->getEntityId(),
+				$toItem->getEntityId()
+			);
+		}
+
+		return new Result();
 	}
 }

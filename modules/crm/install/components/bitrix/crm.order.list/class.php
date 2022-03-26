@@ -1,7 +1,7 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
-define('PUBLIC_MODE', 1);
+const PUBLIC_MODE = 1;
 
 use Bitrix\Main;
 use Bitrix\Crm\Order;
@@ -9,10 +9,10 @@ use Bitrix\Crm\Tracking;
 use Bitrix\Crm\Product\Url;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Settings\LayoutSettings;
-use \Bitrix\Main\Grid;
+use Bitrix\Main\Grid;
 use Bitrix\Crm\Agent\Search\OrderSearchContentRebuildAgent;
 use Bitrix\Iblock\Url\AdminPage\BuilderManager;
-
+use Bitrix\Catalog;
 
 Loc::loadMessages(__FILE__);
 
@@ -53,13 +53,12 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			$this->prepareExportParams($arParams);
 		}
 
-		$arParams['BUILDER_CONTEXT'] = isset($arParams['BUILDER_CONTEXT']) ? $arParams['BUILDER_CONTEXT'] : '';
 		if (
-			$arParams['BUILDER_CONTEXT'] != Url\ShopBuilder::TYPE_ID
-			&& $arParams['BUILDER_CONTEXT'] != Url\ProductBuilder::TYPE_ID
+			$arParams['BUILDER_CONTEXT'] !== Catalog\Url\ShopBuilder::TYPE_ID
+			&& $arParams['BUILDER_CONTEXT'] !== Url\ProductBuilder::TYPE_ID
 		)
 		{
-			$arParams['BUILDER_CONTEXT'] = Url\ShopBuilder::TYPE_ID;
+			$arParams['BUILDER_CONTEXT'] = Catalog\Url\ShopBuilder::TYPE_ID;
 		}
 
 		return $arParams;
@@ -270,8 +269,8 @@ class CCrmOrderListComponent extends \CBitrixComponent
 	 */
 	protected function addOrderDealRuntime(array &$runtime): void
 	{
-		$runtime[] = new Main\ORM\Fields\Relations\Reference('ORDER_DEAL',
-			\Bitrix\Crm\Binding\OrderDealTable::getEntity(),
+		$runtime[] = new Main\ORM\Fields\Relations\Reference('ORDER_ENTITY',
+			\Bitrix\Crm\Binding\OrderEntityTable::getEntity(),
 			['=ref.ORDER_ID' => 'this.ID',],
 			['join_type' => 'LEFT',]
 		);
@@ -693,6 +692,8 @@ class CCrmOrderListComponent extends \CBitrixComponent
 		$userType = new CCrmUserType($USER_FIELD_MANAGER, Order\Order::getUfId());
 		$orderUserFields = $userType->GetFields();
 		$propertyItterator = 0;
+		$parentEntityTypeID = 0;
+		$parentEntityId = 0;
 		foreach($filter as $k => $v)
 		{
 			$name = preg_replace('/^\W+/', '', $k);
@@ -727,13 +728,22 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			}
 			elseif($name === 'ASSOCIATED_DEAL_ID')
 			{
-				$result['=ORDER_DEAL.DEAL_ID'] = $v;
+				$result['=ORDER_ENTITY.OWNER_ID'] = $v;
+				$result['=ORDER_ENTITY.OWNER_TYPE_ID'] = CCrmOwnerType::Deal;
 				$this->addOrderDealRuntime($runtime);
+			}
+			elseif ($name === 'ASSOCIATED_ENTITY_TYPE_ID')
+			{
+				$parentEntityTypeID = (int)$v;
+			}
+			elseif ($name === 'ASSOCIATED_ENTITY_ID')
+			{
+				$parentEntityId = (int)$v;
 			}
 			elseif($name === 'HAS_ASSOCIATED_DEAL')
 			{
 				$key = sprintf(
-					'%s=ORDER_DEAL.ORDER_ID',
+					'%s=ORDER_ENTITY.OWNER_TYPE_ID',
 					($v === 'Y') ? '!' : ''
 				);
 				$result[$key] = null;
@@ -882,6 +892,13 @@ class CCrmOrderListComponent extends \CBitrixComponent
 					$result['@ID'] = new Bitrix\Main\DB\SqlExpression($permissionSql);
 				}
 			}
+		}
+
+		if ($parentEntityTypeID > 0 && $parentEntityId > 0)
+		{
+			$result['=ORDER_ENTITY.OWNER_ID'] = $parentEntityId;
+			$result['=ORDER_ENTITY.OWNER_TYPE_ID'] = $parentEntityTypeID;
+			$this->addOrderDealRuntime($runtime);
 		}
 
 		Tracking\UI\Filter::buildOrmFilter($result, $filter, \CCrmOwnerType::Order, $runtime);
@@ -1646,7 +1663,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 				$this->exportParams['STEXPORT_TOTAL_ITEMS'] = $nav->getRecordCount();
 				$this->exportParams['STEXPORT_IS_FIRST_PAGE'] = 'Y';
 			}
-			elseif ($enableNextPage)
+			elseif (!$enableNextPage)
 			{
 				$this->exportParams['STEXPORT_IS_LAST_PAGE'] = 'Y';
 			}
@@ -2136,7 +2153,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			$this->arResult['ORDER'],
 			$this->arResult['ORDER_UF'],
 			'<br />',
-			false,
+			$this->isExportMode(),
 			array(
 				'FILE_URL_TEMPLATE' =>
 					'/bitrix/components/bitrix/crm.order.details/show_file.php?ownerId=#owner_id#&fieldName=#field_name#&fileId=#file_id#'

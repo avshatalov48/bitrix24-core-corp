@@ -16,5 +16,5 @@ $MESS["CRM_CVTDA_REQUEST_DESCRIPTION_LEAD"] = "На основании Лида 
 $MESS["CRM_CVTDA_REQUEST_DESCRIPTION_DEAL"] = "На основании Сделки необходимо создать следующие документы: #ITEMS#";
 $MESS["CRM_CVTDA_INCORRECT_DOCUMENT"] = "Невозможно сконвертировать данный тип документа";
 $MESS["CRM_CVTDA_DEFAULT_CONTACT_NAME"] = "Без имени";
-$MESS["CRM_CVTDA_ALREADY_CONVERTED"] = "Документ уже сконвертирован, выполнение прервано";
+$MESS["CRM_CVTDA_ALREADY_CONVERTED_1"] = "Документ уже сконвертирован, выполнение прервано";
 ?>

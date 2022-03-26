@@ -52,6 +52,8 @@ $arResult['TOOLBAR_ID'] = $toolbarID;
 
 $arResult['BUTTONS'] = array();
 
+$isInSlider = ($arParams['IN_SLIDER'] === 'Y');
+
 if($arParams['ELEMENT_ID'] > 0)
 {
 	$dbRes = CCrmLead::GetListEx(array(), array('=ID' => $arParams['ELEMENT_ID'],  'CHECK_PERMISSIONS' => 'N'), false, false, array('ID', 'STATUS_ID', 'IS_RETURN_CUSTOMER'));
@@ -310,7 +312,7 @@ if($arParams['TYPE'] === 'list')
 		}
 	}
 
-	if ($bImport)
+	if ($bImport && !$isInSlider)
 	{
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('LEAD_IMPORT'),
@@ -338,7 +340,7 @@ if($arParams['TYPE'] === 'list')
 		$arResult['BUTTONS'][] = array('SEPARATOR' => true);
 	}
 
-	if ($bExport)
+	if ($bExport && !$isInSlider)
 	{
 		$entityType = \CCrmOwnerType::LeadName;
 		$stExportId = 'EXPORT_'.$entityType;
@@ -429,7 +431,7 @@ if($arParams['TYPE'] === 'list')
 		unset($entityType, $stExportId, $randomSequence, $stExportManagerId);
 	}
 
-	if ($bDedupe)
+	if ($bDedupe && !$isInSlider)
 	{
 		$restriction = \Bitrix\Crm\Restriction\RestrictionManager::getDuplicateControlRestriction();
 		if($restriction->hasPermission())
@@ -483,6 +485,7 @@ if($arParams['TYPE'] === 'list')
 		\Bitrix\Main\Loader::includeModule('rest')
 		&& is_callable('\Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl')
 		&& ($bAdd || $bWrite || $bConfig)
+		&& !$isInSlider
 	)
 	{
 		if ($bConfig)
@@ -503,7 +506,7 @@ if($arParams['TYPE'] === 'list')
 		$arResult['BUTTONS'][] = array('SEPARATOR' => true);
 	}
 
-	if ($bConfig)
+	if ($bConfig && !$isInSlider)
 	{
 		CCrmComponentHelper::RegisterScriptLink('/bitrix/js/crm/common.js');
 		$arResult['BUTTONS'][] = array(
@@ -518,7 +521,7 @@ if($arParams['TYPE'] === 'list')
 		);
 	}
 
-	if(is_array($arParams['ADDITIONAL_SETTINGS_MENU_ITEMS']))
+	if(is_array($arParams['ADDITIONAL_SETTINGS_MENU_ITEMS']) && !$isInSlider)
 	{
 		$arResult['BUTTONS'] = array_merge($arResult['BUTTONS'], $arParams['ADDITIONAL_SETTINGS_MENU_ITEMS']);
 	}

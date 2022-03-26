@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports,main_loader,main_popup,main_core,ui_vue) {
+(function (exports,main_loader,main_popup,main_core,ui_vue,main_core_events) {
 	'use strict';
 
 	var LoaderComponent = {
@@ -261,12 +261,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	var namespace = main_core.Reflection.namespace('BX.Intranet');
 
-	var _vue = /*#__PURE__*/new WeakMap();
+	var _vue = new WeakMap();
 
 	var InvitationWidget = /*#__PURE__*/function () {
 	  function InvitationWidget(params) {
-	    var _this = this;
-
 	    babelHelpers.classCallCheck(this, InvitationWidget);
 
 	    _vue.set(this, {
@@ -276,25 +274,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	    this.node = params.wrapper;
 	    this.isCrurrentUserAdmin = params.isCrurrentUserAdmin === "Y";
-	    this.enterTimeout = null;
-	    this.leaveTimeout = null;
-	    this.popupLeaveTimeout = null;
-	    this.stopMouseLeave = false;
 	    this.renderButton();
-	    main_core.Event.EventEmitter.subscribe('BX.Intranet.InvitationWidget:showInvitationSlider', function (event) {
-	      _this.closePopup();
-	    });
-	    main_core.Event.EventEmitter.subscribe('BX.Intranet.InvitationWidget:stopPopupMouseOut', function (event) {
-	      _this.stopMouseLeave = true;
-	    });
-	    main_core.Event.EventEmitter.subscribe('BX.Intranet.InvitationWidget:showPopupMenu', function () {
-	      _this.popup.setAutoHide(false);
-	    });
-	    main_core.Event.EventEmitter.subscribe('BX.Intranet.InvitationWidget:closePopupMenu', function () {
-	      _this.popup.setAutoHide(true);
-
-	      _this.stopMouseLeave = false;
-	    });
 	  }
 
 	  babelHelpers.createClass(InvitationWidget, [{
@@ -312,43 +292,21 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          }
 	        },
 	        methods: {
-	          onMouseOver: function onMouseOver(e) {
-	            clearTimeout(InvitationWidgetInstance.enterTimeout);
-	            InvitationWidgetInstance.enterTimeout = setTimeout(function () {
-	              InvitationWidgetInstance.enterTimeout = null;
-	              InvitationWidgetInstance.initPopup(e.target);
-	            }, 750);
-	          },
-	          onMouseOut: function onMouseOut() {
-	            if (InvitationWidgetInstance.enterTimeout !== null) {
-	              clearTimeout(InvitationWidgetInstance.enterTimeout);
-	              InvitationWidgetInstance.enterTimeout = null;
-	              return;
+	          togglePopup: function togglePopup(e) {
+	            if (InvitationWidgetInstance.popup && InvitationWidgetInstance.popup.isShown()) {
+	              return InvitationWidgetInstance.closePopup();
 	            }
 
-	            InvitationWidgetInstance.leaveTimeout = setTimeout(function () {
-	              if (!InvitationWidgetInstance.stopMouseLeave) {
-	                InvitationWidgetInstance.closePopup();
-	              }
-	            }, 500);
-	          },
-	          togglePopup: function togglePopup(e) {
-	            if (InvitationWidgetInstance.popup) {
-	              if (InvitationWidgetInstance.popup.isShown()) {
-	                InvitationWidgetInstance.closePopup();
-	              } else {
-	                InvitationWidgetInstance.initPopup(e.target);
-	              }
-	            }
+	            InvitationWidgetInstance.initPopup(e.target);
 	          }
 	        },
-	        template: "\n\t\t\t\t<button \n\t\t\t\t\tclass=\"ui-btn ui-btn-round license-btn license-btn-primary\" \n\t\t\t\t\t@mouseover=\"onMouseOver\"\n\t\t\t\t\t@mouseout=\"onMouseOut\"\n\t\t\t\t\t@click=\"togglePopup\"\n\t\t\t\t>{{ localize.INTRANET_INVITATION_WIDGET_INVITE }}</button>\n\t\t\t"
+	        template: "\n\t\t\t\t<button \n\t\t\t\t\tclass=\"ui-btn ui-btn-round license-btn license-btn-primary\" \n\t\t\t\t\t@click=\"togglePopup\"\n\t\t\t\t>{{ localize.INTRANET_INVITATION_WIDGET_INVITE }}</button>\n\t\t\t"
 	      }));
 	    }
 	  }, {
 	    key: "initPopup",
 	    value: function initPopup(bindElement) {
-	      var _this2 = this;
+	      var _this = this;
 
 	      if (this.popup) {
 	        this.popup.destroy();
@@ -375,32 +333,18 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        },
 	        bindElement: bindElement,
 	        content: this.renderPopupContent(),
+	        cachable: false,
 	        events: {
-	          onPopupClose: function onPopupClose() {
-	            _this2.popup.destroy();
+	          onFirstShow: function onFirstShow(event) {
+	            main_core_events.EventEmitter.subscribe('BX.Main.InterfaceButtons:onMenuShow', function () {
+	              if (_this.popup) {
+	                _this.popup.close();
+	              }
+	            });
 	          }
 	        }
 	      });
-	      this.initEvents();
 	      this.popup.show();
-	    }
-	  }, {
-	    key: "initEvents",
-	    value: function initEvents() {
-	      var _this3 = this;
-
-	      this.popup.getPopupContainer().addEventListener('mouseenter', function () {
-	        clearTimeout(_this3.enterTimeout);
-	        clearTimeout(_this3.leaveTimeout);
-	        clearTimeout(_this3.popupLeaveTimeout);
-	      });
-	      this.popup.getPopupContainer().addEventListener('mouseleave', function (event) {
-	        _this3.popupLeaveTimeout = setTimeout(function () {
-	          if (!_this3.stopMouseLeave) {
-	            _this3.closePopup();
-	          }
-	        }, 500);
-	      });
 	    }
 	  }, {
 	    key: "renderPopupContent",
@@ -438,5 +382,5 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	namespace.InvitationWidget = InvitationWidget;
 
-}((this.BX.Intranet.LicenseWidget = this.BX.Intranet.LicenseWidget || {}),BX,BX.Main,BX,BX));
+}((this.BX.Intranet.LicenseWidget = this.BX.Intranet.LicenseWidget || {}),BX,BX.Main,BX,BX,BX.Event));
 //# sourceMappingURL=script.js.map

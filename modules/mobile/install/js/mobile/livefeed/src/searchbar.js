@@ -1,4 +1,4 @@
-import {Instance} from './feed';
+import {Instance, PageInstance} from './feed';
 import {Post} from './post';
 import {Type, Runtime} from 'main.core';
 import {BaseEvent, EventEmitter} from 'main.core.events';
@@ -10,6 +10,7 @@ class SearchBar extends EventEmitter
 		super();
 		this.findTextMode = false;
 		this.ftMinTokenSize = 3;
+		this.hideByRefresh = false;
 	}
 
 	init(params)
@@ -26,6 +27,8 @@ class SearchBar extends EventEmitter
 
 		this.subscribe('onSearchBarCancelButtonClicked', this.searchBarEventCallback.bind(this));
 		this.subscribe('onSearchBarSearchButtonClicked', this.searchBarEventCallback.bind(this));
+		EventEmitter.subscribe('BX.MobileLivefeed.SearchBar::setHideByRefresh', this.setHideByRefresh.bind(this));
+		EventEmitter.subscribe('BX.MobileLivefeed.SearchBar::unsetHideByRefresh', this.unsetHideByRefresh.bind(this));
 
 		BXMobileApp.UI.Page.params.set({
 			useSearchBar: true,
@@ -70,58 +73,92 @@ class SearchBar extends EventEmitter
 		if (text.length >= this.ftMinTokenSize)
 		{
 			app.exec('showSearchBarProgress');
-
-			const event = new BaseEvent({
-				compatData: [{
-					text: text
-				}],
-			});
-			EventEmitter.emit('BX.MobileLF:onSearchBarRefreshStart', event);
+			this.emitRefreshEvent(text);
 		}
 		else
 		{
 			if (this.findTextMode)
 			{
-				EventEmitter.emit('BX.MobileLF:onSearchBarRefreshAbort');
-				app.exec('hideSearchBarProgress');
+				if (!this.hideByRefresh)
+				{
+					EventEmitter.emit('BX.MobileLF:onSearchBarRefreshAbort');
+				}
 
-				BX.frameCache.readCacheWithID('framecache-block-feed', (params) => {
+				if (BX.frameCache)
+				{
+					app.exec('hideSearchBarProgress');
 
-					const container = document.getElementById('bxdynamic_feed_refresh');
-					if (
-						!Type.isArray(params.items)
-						|| !container
-					)
-					{
-						return;
-					}
+					BX.frameCache.readCacheWithID('framecache-block-feed', (params) => {
 
-					const block = params.items.find(item => {
-						return (
-							Type.isStringFilled(item.ID)
-							&& item.ID === 'framecache-block-feed'
-						);
+						const container = document.getElementById('bxdynamic_feed_refresh');
+						if (
+							!Type.isArray(params.items)
+							|| !container
+						)
+						{
+							this.emitRefreshEvent();
+							return;
+						}
+
+						const block = params.items.find(item => {
+							return (
+								Type.isStringFilled(item.ID)
+								&& item.ID === 'framecache-block-feed'
+							);
+						});
+
+						if (Type.isUndefined(block))
+						{
+							return;
+						}
+
+						Runtime.html(container, block.CONTENT).then(() => {
+							BX.processHTML(block.CONTENT, true);
+						});
+
+						Post.moveTop();
+
+						setTimeout(() => {
+							BitrixMobile.LazyLoad.showImages();
+						}, 1000);
 					});
-
-					if (Type.isUndefined(block))
-					{
-						return;
-					}
-
-					Runtime.html(container, block.CONTENT).then(() => {
-						BX.processHTML(block.CONTENT, true);
-					});
-
-					Post.moveTop();
-
-					setTimeout(() => {
-						BitrixMobile.LazyLoad.showImages();
-					}, 1000);
-				});
+				}
+				else
+				{
+					this.emitRefreshEvent();
+				}
 			}
 
 			this.findTextMode = false;
 		}
+	}
+
+	setHideByRefresh()
+	{
+		this.hideByRefresh = true;
+	}
+
+	unsetHideByRefresh()
+	{
+		this.hideByRefresh = false;
+	}
+
+
+	emitRefreshEvent(text)
+	{
+		if (PageInstance.refreshXhr)
+		{
+			return;
+		}
+
+		text = text || '';
+
+		const event = new BaseEvent({
+			compatData: [{
+				text: text,
+			}],
+		});
+		EventEmitter.emit('BX.MobileLF:onSearchBarRefreshStart', event);
 	}
 }
 

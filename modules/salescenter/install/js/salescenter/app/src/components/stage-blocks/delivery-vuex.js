@@ -14,7 +14,7 @@ const DeliveryVuex = {
 			required: true
 		},
 		counter: {
-			type: String,
+			type: Number,
 			required: true
 		},
 		tiles: {

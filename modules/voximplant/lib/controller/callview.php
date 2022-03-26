@@ -7,6 +7,7 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
 use Bitrix\Voximplant\Rest\Helper;
+use Bitrix\Voximplant\Security\Permissions;
 
 class CallView extends Engine\Controller
 {
@@ -55,6 +56,13 @@ class CallView extends Engine\Controller
 
 	public function getLinesAction($showResApps = true)
 	{
+		$permissions = Permissions::createWithCurrentUser();
+		if (!$permissions->canPerform(Permissions::ENTITY_CALL, Permissions::ACTION_PERFORM))
+		{
+			$this->addError(new Error('Access denied', 'ACCESS_DENIED'));
+			return null;
+		}
+
 		return \CVoxImplantConfig::GetLinesEx([
 			'showRestApps' => $showResApps
 		]);

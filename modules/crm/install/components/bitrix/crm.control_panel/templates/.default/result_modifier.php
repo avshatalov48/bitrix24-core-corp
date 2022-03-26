@@ -17,7 +17,7 @@ if (!empty($arResult["ITEMS"]) && is_array($arResult["ITEMS"]))
 		] : false;
 
 		$panelItem = [
-			"TEXT" => $item["NAME"],
+			"TEXT" => $item["TEXT"] ?? $item["NAME"],
 			"CLASS" => "crm-menu-".$item["ICON"]." crm-menu-item-wrap",
 			"CLASS_SUBMENU_ITEM" => "crm-menu-more-".$item["ICON"],
 			"ID" => isset($item["MENU_ID"]) ? $item["MENU_ID"] : $item["ID"],
@@ -27,6 +27,7 @@ if (!empty($arResult["ITEMS"]) && is_array($arResult["ITEMS"]))
 			"IS_ACTIVE" => $arResult["ACTIVE_ITEM_ID"] === $item["ID"],
 			"IS_LOCKED" => $item["IS_LOCKED"] ? true : false,
 			"IS_DISABLED" => $item["IS_DISABLED"] ? true : false,
+			"ITEMS" => !empty($item["ITEMS"]) ? $item["ITEMS"] : false,
 		];
 
 		if (isset($item['URL']))

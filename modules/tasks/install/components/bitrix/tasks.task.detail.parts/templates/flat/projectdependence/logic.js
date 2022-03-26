@@ -112,7 +112,13 @@ BX.namespace('Tasks.Component');
 			{
 				if (this.option('restricted'))
 				{
-					BX.UI.InfoHelper.show('limit_tasks_gantt');
+					BX.UI.InfoHelper.show('limit_tasks_gantt', {
+						isLimit: true,
+						limitAnalyticsLabels: {
+							module: 'tasks',
+							source: 'taskEdit'
+						}
+					});
 					return;
 				}
 

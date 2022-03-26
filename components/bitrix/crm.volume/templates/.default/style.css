@@ -184,8 +184,6 @@
 	text-overflow: ellipsis;
 	-webkit-transition: border-bottom .3s;
 	transition: border-bottom .3s;
-	vertical-align: middle;
-	line-height: normal;
 }
 
 .crm-volume-info-control-panel-link:hover {

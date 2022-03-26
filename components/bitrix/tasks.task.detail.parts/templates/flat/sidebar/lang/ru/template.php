@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["TASKS_SIDEBAR_STATUS"] = "Статус";
 $MESS["TASKS_SIDEBAR_STAGE"] = "Стадия";
 $MESS["TASKS_SIDEBAR_START_DATE"] = "с";
@@ -37,7 +37,5 @@ $MESS["TASKS_TTDP_TEMPLATE_COPY_CURRENT_URL"] = "Скопировать ссыл
 $MESS["TASKS_SIDEBAR_AUTOMATION"] = "Автоматизация";
 $MESS["TASKS_SIDEBAR_ROBOTS_1"] = "Роботы";
 
-$MESS['ERROR_TASKS_CHANGE_DEADLINE_NULL']='Вы не можете удалять крайний срок';
-$MESS['ERROR_TASKS_CHANGE_DEADLINE_COUNT_OVER']='Вы больше не можете изменять крайний срок';
-$MESS['ERROR_TASKS_CHANGE_DEADLINE_MAXTIME_OVER']='Вы не можете указать крайний срок дальше, чем #DEADLINE#';
-?>
+$MESS['TASK_RESULT_SIDEBAR_HINT'] = 'Требуется отчет о работе';
+

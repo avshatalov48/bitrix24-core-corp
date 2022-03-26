@@ -21,6 +21,12 @@ class RpaAutomationComponent extends Rpa\Components\Base
 
 	public function executeComponent()
 	{
+		if (!$this->isIframe())
+		{
+			$this->includeComponentTemplate('kanban');
+			return;
+		}
+
 		$this->arResult['DOCUMENT_TYPE'] = Rpa\Integration\Bizproc\Document\Item::makeComplexType(
 			$this->arParams['typeId']
 		);

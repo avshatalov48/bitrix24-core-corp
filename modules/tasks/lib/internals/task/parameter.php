@@ -34,6 +34,22 @@ Loc::loadMessages(__FILE__);
 
 class ParameterTable extends Main\Entity\DataManager
 {
+	public const PARAM_SUBTASKS_TIME = 1;
+	public const PARAM_SUBTASKS_AUTOCOMPLETE = 2;
+	public const PARAM_RESULT_REQUIRED = 3;
+
+	/**
+	 * @return int[]
+	 */
+	public static function paramsList(): array
+	{
+		return [
+			self::PARAM_SUBTASKS_TIME,
+			self::PARAM_SUBTASKS_AUTOCOMPLETE,
+			self::PARAM_RESULT_REQUIRED,
+		];
+	}
+
 	/**
 	 * Returns DB table name for entity.
 	 *

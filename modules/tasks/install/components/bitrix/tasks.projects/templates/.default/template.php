@@ -1,15 +1,23 @@
 <?php
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\UI\Filter\Theme;
 use Bitrix\Main\Web\Json;
+use Bitrix\Main\Web\Uri;
+use Bitrix\Socialnetwork\Helper\Workgroup;
 use Bitrix\Tasks\Internals\Counter\CounterDictionary;
 use Bitrix\Tasks\Internals\Project\UserOption\UserOptionTypeDictionary;
+use Bitrix\Tasks\UI\ScopeDictionary;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ScrumLimit;
+use Bitrix\UI\Buttons\JsCode;
+use Bitrix\UI\Buttons\SettingsButton;
 
 Loc::loadMessages(__FILE__);
 
@@ -20,6 +28,7 @@ Extension::load([
 	'ui.buttons.icons',
 	'ui.icons',
 	'ui.label',
+	'ui.info-helper',
 	'socialnetwork.common',
 ]);
 
@@ -29,15 +38,17 @@ CJSCore::Init('tasks_integration_socialnetwork');
  * @var array $arParams
  * @var array $arResult
  * @var $APPLICATION
+ * @var $component
+ * @var $templateFolder
  */
 
-$title = Loc::getMessage('TASKS_PROJECTS_TITLE');
+$title = Loc::getMessage(($arResult['isScrumList'] ? 'TASKS_PROJECTS_SCRUM_TITLE' : 'TASKS_PROJECTS_TITLE'));
 $APPLICATION->SetPageProperty('title', $title);
 $APPLICATION->SetTitle($title);
 
 if (is_array($arResult['ERRORS']) && !empty($arResult['ERRORS']))
 {
-	$isUiIncluded = \Bitrix\Main\Loader::includeModule('ui');
+	$isUiIncluded = Loader::includeModule('ui');
 	foreach ($arResult['ERRORS'] as $error)
 	{
 		$message = $error['MESSAGE'];
@@ -60,6 +71,8 @@ if (is_array($arResult['ERRORS']) && !empty($arResult['ERRORS']))
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', "{$bodyClass} transparent-workarea");
 
+$scope = ($arResult['isScrumList'] ? ScopeDictionary::SCOPE_SCRUM_PROJECTS_GRID : ScopeDictionary::SCOPE_PROJECTS_GRID);
+
 $APPLICATION->IncludeComponent(
 	'bitrix:tasks.interface.topmenu',
 	'',
@@ -67,7 +80,8 @@ $APPLICATION->IncludeComponent(
 		'USER_ID' => $arParams['USER_ID'],
 		'SECTION_URL_PREFIX' => '',
 
-		'MARK_SECTION_PROJECTS_LIST' => 'Y',
+		'MARK_SECTION_PROJECTS_LIST' => $arParams['MARK_SECTION_PROJECTS_LIST'],
+		'MARK_SECTION_SCRUM_LIST' => $arParams['MARK_SECTION_SCRUM_LIST'],
 		'USE_AJAX_ROLE_FILTER' => 'N',
 
 		'PATH_TO_GROUP_TASKS' => $arParams['PATH_TO_GROUP_TASKS'],
@@ -83,6 +97,7 @@ $APPLICATION->IncludeComponent(
 		'PATH_TO_USER_TASKS_PROJECTS_OVERVIEW' => $arParams['PATH_TO_USER_TASKS_PROJECTS_OVERVIEW'],
 
 		'PATH_TO_CONPANY_DEPARTMENT' => $arParams['PATH_TO_CONPANY_DEPARTMENT'],
+		'SCOPE' => $scope,
 	],
 	$component,
 	['HIDE_ICONS' => true]
@@ -97,15 +112,39 @@ if ($isBitrix24Template)
 
 <div class="pagetitle-container pagetitle-flexible-space">
 	<?php
-	if (
-		CSocNetUser::IsCurrentUserModuleAdmin()
-		|| $GLOBALS['APPLICATION']->GetGroupRight('socialnetwork', false, 'Y', 'Y', [SITE_ID, false]) >= 'K'
-	)
+	if (Workgroup::canCreate())
 	{
+		$btnText =
+			$arResult['isScrumList']
+				? Loc::getMessage('TASKS_PROJECTS_SCRUM_ADD_PROJECT')
+				: Loc::getMessage('TASKS_PROJECTS_ADD_PROJECT')
+		;
+
+		$createProjectUrl = $arParams['PATH_TO_GROUP_CREATE'];
+		if ($arResult['isScrumList'])
+		{
+			$isScrumLimited = ScrumLimit::isLimitExceeded();
+			if ($isScrumLimited)
+			{
+				$sidePanelId = ScrumLimit::getSidePanelId();
+				$createProjectUrl = "javascript:BX.UI.InfoHelper.show('{$sidePanelId}', {isLimit: true, limitAnalyticsLabels: {module: 'tasks', source: 'scrumList'}});";
+			}
+			else
+			{
+				$uri = new Uri($createProjectUrl);
+				$uri->addParams([
+					'PROJECT_OPTIONS' => [
+						'scrum' => true,
+					]
+				]);
+
+				$createProjectUrl = $uri->getUri();
+			}
+		}
 		?>
 		<div class="pagetitle-container tasks-projects-filter-btn-add">
-			<a class="ui-btn ui-btn-success ui-btn-icon-add" href="<?= $arParams['PATH_TO_GROUP_CREATE'] ?>" id="projectAddButton">
-				<?= Loc::getMessage('TASKS_PROJECTS_ADD_PROJECT') ?>
+			<a class="ui-btn ui-btn-success ui-btn-icon-add" href="<?= $createProjectUrl ?>" id="projectAddButton">
+				<?= $btnText ?>
 			</a>
 		</div>
 		<?php
@@ -134,10 +173,48 @@ if ($isBitrix24Template)
 	?>
 </div>
 
+<?php if ($arResult['isScrumList'] && Loader::includeModule('ui')):
+	$settingsButton = new SettingsButton([
+		'classList' => ['ui-btn-themes'],
+	]);
+	$settingsButton->setMenu([
+			'items' => [
+				[
+					'text' => Loc::getMessage('TASKS_PROJECTS_SCRUM_MIGRATION'),
+					'href' => '/marketplace/?tag[]=migrator&tag[]=tasks',
+					'onclick' => new JsCode('arguments[1].getMenuWindow().close();'),
+				],
+			],
+		]
+	);
+	?>
+
+	<div class="pagetitle-container pagetitle-align-right-container">
+		<?= $settingsButton->render(); ?>
+	</div>
+<?php endif; ?>
+
 <?php
 if ($isBitrix24Template)
 {
 	$this->EndViewTarget();
+}
+
+if ($arResult['isScrumList'])
+{
+	$counters = [
+		CounterDictionary::COUNTER_SCRUM_TOTAL_COMMENTS,
+		CounterDictionary::COUNTER_SCRUM_FOREIGN_COMMENTS,
+	];
+}
+else
+{
+	$counters = [
+		CounterDictionary::COUNTER_SONET_TOTAL_EXPIRED,
+		CounterDictionary::COUNTER_SONET_TOTAL_COMMENTS,
+		CounterDictionary::COUNTER_SONET_FOREIGN_EXPIRED,
+		CounterDictionary::COUNTER_SONET_FOREIGN_COMMENTS,
+	];
 }
 
 $APPLICATION->IncludeComponent(
@@ -147,14 +224,9 @@ $APPLICATION->IncludeComponent(
 		'USER_ID' => $arParams['USER_ID'],
 		'GRID_ID' => $arResult['GRID_ID'],
 		'FILTER_ID' => $arResult['GRID_ID'],
-		'SCOPE' => 'projects_grid',
+		'SCOPE' => $scope,
 		'FILTER_FIELD' => 'COUNTERS',
-		'COUNTERS' => [
-			CounterDictionary::COUNTER_SONET_TOTAL_EXPIRED,
-			CounterDictionary::COUNTER_SONET_TOTAL_COMMENTS,
-			CounterDictionary::COUNTER_SONET_FOREIGN_EXPIRED,
-			CounterDictionary::COUNTER_SONET_FOREIGN_COMMENTS,
-		],
+		'COUNTERS' => $counters,
 	],
 	$component,
 	['HIDE_ICONS' => true]
@@ -194,6 +266,44 @@ $navigationHtml = ob_get_clean();
 <?php
 $stub = ($arResult['CURRENT_PAGE'] > 1 ? null : $arResult['STUB']);
 $stub = (count($arResult['ROWS']) > 0 ? null : $stub);
+
+if ($arResult['isScrumList'] && is_array($stub) && count($stub) > 2)
+{
+	$jiraIcon = $templateFolder. '/images/tasks-projects-jira.svg';
+	$asanaIcon = $templateFolder. '/images/tasks-projects-asana.svg';
+	$trelloIcon = $templateFolder. '/images/tasks-projects-trello.svg';
+
+	$stub = <<<HTML
+		<div class="tasks-scrum__transfer--contant">
+			<div class="tasks-scrum__transfer--title">{$stub['title']}</div>
+			<div class="tasks-scrum__transfer--description">{$stub['description']}</div>
+			<div class="tasks-scrum__transfer--content">
+				<div class="tasks-scrum__transfer--info">
+					<div class="tasks-scrum__transfer--info-text">
+						{$stub['migrationTitle']}
+					</div>
+					<div class="tasks-scrum__transfer--info-systems">
+						<div class="tasks-scrum__transfer--info-systems-item">
+							<img src="{$jiraIcon}" alt="Jira">
+						</div>
+						<div class="tasks-scrum__transfer--info-systems-item">
+							<img src="{$asanaIcon}" alt="Asana">
+						</div>
+						<div class="tasks-scrum__transfer--info-systems-item">
+							<img src="{$trelloIcon}" alt="Trello">
+						</div>
+						<div class="tasks-scrum__transfer--info-systems-item">{$stub['migrationOther']}</div>
+					</div>
+				</div>
+				<div class="tasks-scrum__transfer--btn-block">
+					<a href="/marketplace/?tag[]=migrator&tag[]=tasks" class="ui-btn ui-btn-primary ui-btn-round">
+						{$stub['migrationButton']}
+					</a>
+				</div>
+			</div>
+		</div>
+	HTML;
+}
 
 $APPLICATION->IncludeComponent(
 	'bitrix:main.ui.grid',
@@ -258,7 +368,12 @@ $APPLICATION->IncludeComponent(
 			TASKS_PROJECTS_MEMBERS_POPUP_TITLE_HEADS: '<?= GetMessageJS('TASKS_PROJECTS_MEMBERS_POPUP_TITLE_HEADS') ?>',
 			TASKS_PROJECTS_MEMBERS_POPUP_TITLE_MEMBERS: '<?= GetMessageJS('TASKS_PROJECTS_MEMBERS_POPUP_TITLE_MEMBERS') ?>',
 			TASKS_PROJECTS_MEMBERS_POPUP_EMPTY: '<?= GetMessageJS('TASKS_PROJECTS_MEMBERS_POPUP_EMPTY') ?>',
-			TASKS_PROJECTS_ENTITY_SELECTOR_TAG_SEARCH_FOOTER_ADD: '<?= GetMessageJS('TASKS_PROJECTS_ENTITY_SELECTOR_TAG_SEARCH_FOOTER_ADD') ?>'
+			TASKS_PROJECTS_ENTITY_SELECTOR_TAG_SEARCH_FOOTER_ADD: '<?= GetMessageJS('TASKS_PROJECTS_ENTITY_SELECTOR_TAG_SEARCH_FOOTER_ADD') ?>',
+			TASKS_PROJECTS_MEMBERS_POPUP_TITLE_SCRUM_TEAM: '<?= GetMessageJS('TASKS_PROJECTS_MEMBERS_POPUP_TITLE_SCRUM_TEAM') ?>',
+			TASKS_PROJECTS_MEMBERS_POPUP_TITLE_SCRUM_MEMBERS: '<?= GetMessageJS('TASKS_PROJECTS_MEMBERS_POPUP_TITLE_SCRUM_MEMBERS') ?>',
+			TASKS_PROJECTS_MEMBERS_POPUP_LABEL_SCRUM_OWNER: '<?= GetMessageJS('TASKS_PROJECTS_MEMBERS_POPUP_LABEL_SCRUM_OWNER') ?>',
+			TASKS_PROJECTS_MEMBERS_POPUP_LABEL_SCRUM_MASTER: '<?= GetMessageJS('TASKS_PROJECTS_MEMBERS_POPUP_LABEL_SCRUM_MASTER') ?>',
+			TASKS_PROJECTS_MEMBERS_POPUP_LABEL_SCRUM_TEAM: '<?= GetMessageJS('TASKS_PROJECTS_MEMBERS_POPUP_LABEL_SCRUM_TEAM') ?>'
 		});
 		var options = <?= Json::encode([
 			'signedParameters' => $this->getComponent()->getSignedParameters(),

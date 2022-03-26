@@ -153,6 +153,10 @@ foreach ($jsTemplates->getChildren() as $jsTemplate)
 						{
 							echo "<a class=\"disk-file-info-item-link\" target='_blank' href=\"{$entity['DETAIL_URL']}\">" . htmlspecialcharsbx($entity['TITLE']) . "</a>";
 						}
+						elseif(!empty($entity['JS_OPEN_DETAIL']))
+						{
+							echo "<a class=\"disk-file-info-item-link\" href=\"javascript:{$entity['JS_OPEN_DETAIL']}\">" . htmlspecialcharsbx($entity['TITLE']) . "</a>";
+						}
 						else
 						{
 							echo htmlspecialcharsbx($entity['TITLE']);

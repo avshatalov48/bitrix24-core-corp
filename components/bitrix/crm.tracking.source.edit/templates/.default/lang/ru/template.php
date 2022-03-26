@@ -7,6 +7,7 @@ $MESS["CRM_TRACKING_SOURCE_EDIT_UNAVAILABLE"] = "Настройка реклам
 $MESS["CRM_TRACKING_SOURCE_EDIT_INSTALL_SEO"] = "Для подключения рекламного кабинета установите модуль SEO.";
 $MESS["CRM_TRACKING_SOURCE_EDIT_CONNECTED"] = "%name% подключен";
 $MESS["CRM_TRACKING_SOURCE_EDIT_CONNECT"] = "Подключить";
+$MESS["CRM_TRACKING_SOURCE_EDIT_CONNECT_GOOGLE"] = "Войти с Google";
 $MESS["CRM_TRACKING_SOURCE_EDIT_DISCONNECT"] = "Отключить";
 $MESS["CRM_TRACKING_SOURCE_EDIT_CONNECTED"] = "Источник \"%name%\" подключен";
 $MESS["CRM_TRACKING_SOURCE_EDIT_AUTO_CONFIGURED"] = "Работает в автоматическом режиме и не требует настройки.";

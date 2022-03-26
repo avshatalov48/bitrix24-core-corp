@@ -3,9 +3,15 @@
 	'use strict';
 	BX.namespace('BX.Salescenter');
 
+	BX.Salescenter.Context = {
+		sms: 'sms',
+		chat: 'chat',
+	};
+
 	BX.Salescenter.Payments = {
 		gridId: 'CRM_ORDER_PAYMENT_LIST_V12',
 		sessionId: 0,
+		context: '',
 	};
 
 	BX.Salescenter.Payments.init = function(params)
@@ -17,6 +23,10 @@
 		if (params.gridId)
 		{
 			BX.Salescenter.Payments.gridId = params.gridId;
+		}
+		if (params.context)
+		{
+			BX.Salescenter.Payments.context = params.context;
 		}
 		this.isPaymentsLimitReached = (params.isPaymentsLimitReached === true);
 	};
@@ -39,7 +49,7 @@
 			BX.Salescenter.Payments.showFeaturePopup();
 		}
 
-		if (BX.Salescenter.Payments.sessionId <= 0)
+		if (BX.Salescenter.Payments.context === BX.Salescenter.Context.chat && BX.Salescenter.Payments.sessionId <= 0)
 		{
 			return;
 		}
@@ -61,6 +71,7 @@
 			data: {
 				paymentIds: paymentIds,
 				options: {
+					context: BX.Salescenter.Payments.context,
 					sessionId: BX.Salescenter.Payments.sessionId,
 				}
 			}
@@ -77,7 +88,12 @@
 						var previousSlider = BX.SidePanel.Instance.getPreviousSlider(slider);
 						if (previousSlider)
 						{
-							previousSlider.destroy();
+							if (BX.Salescenter.Payments.context === BX.Salescenter.Context.sms && response.data.paymentTitle)
+							{
+								previousSlider.getData().set('action', 'sendPayment');
+								previousSlider.getData().set('order', {title: response.data.paymentTitle});
+							}
+							previousSlider.close();
 						}
 						slider.destroy();
 					}

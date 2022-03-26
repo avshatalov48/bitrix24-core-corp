@@ -31,7 +31,7 @@ class OrderCheckController extends EntityController
 		$typeId = (int)$data['TYPE_CATEGORY_ID'];
 		$entity = $data['ASSOCIATED_ENTITY'];
 
-		$data['TITLE'] = Loc::getMessage('CRM_ORDER_CHECK_TITLE', [
+		$data['TITLE'] = Loc::getMessage('CRM_ORDER_CHECK_CONTROLLER_TITLE', [
 			'#CHECK_ID#' => $data['ASSOCIATED_ENTITY_ID']
 		]);
 
@@ -51,7 +51,7 @@ class OrderCheckController extends EntityController
 		{
 			if ($check)
 			{
-				$data['LEGEND'] = Loc::getMessage('CRM_ORDER_CHECK_LEGEND', [
+				$data['LEGEND'] = Loc::getMessage('CRM_ORDER_CHECK_CONTROLLER_LEGEND', [
 					'#DATE_CREATE#' => $entity['DATE_CREATE_FORMATTED'],
 					'#SUM_WITH_CURRENCY#' => $entity['SUM_WITH_CURRENCY']
 				]);

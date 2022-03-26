@@ -6,6 +6,106 @@
 {
 	const pathToExtension = '/bitrix/mobileapp/mobile/extensions/bitrix/task/';
 
+	class Counter
+	{
+		static get types()
+		{
+			return {
+				expired: {
+					expired: 'expired',
+					projectExpired: 'projectExpired',
+				},
+				newComments: {
+					newComments: 'newComments',
+					projectNewComments: 'projectNewComments',
+				},
+				my: {
+					expired: 'expired',
+					newComments: 'newComments',
+				},
+				project: {
+					projectExpired: 'projectExpired',
+					projectNewComments: 'projectNewComments',
+				},
+			};
+		}
+
+		static get colors()
+		{
+			return {
+				danger: 'danger',
+				success: 'success',
+				gray: 'gray',
+			};
+		}
+
+		constructor(task)
+		{
+			this.task = task;
+
+			this.set(this.getDefault());
+		}
+
+		getDefault()
+		{
+			return {
+				counters: {
+					[Counter.types.my.expired]: 0,
+					[Counter.types.my.newComments]: 0,
+					[Counter.types.project.projectExpired]: 0,
+					[Counter.types.project.projectNewComments]: 0,
+				},
+				color: Counter.colors.gray,
+				value: 0,
+			};
+		}
+
+		get()
+		{
+			return {
+				counters: this.counters,
+				color: this.color,
+				value: this.value,
+			};
+		}
+
+		set(counter)
+		{
+			this.counters = (counter.counters || this.counters);
+			this.color = (counter.color || this.color);
+			this.value = (counter.value || 0);
+		}
+
+		read()
+		{
+			Object.keys(this.counters).forEach((type) => {
+				if (Counter.types.newComments[type])
+				{
+					this.value -= this.counters[type];
+					this.counters[type] = 0;
+				}
+			});
+			this.value = (this.value < 0 ? 0 : this.value);
+			this.color = (
+				this.counters[Counter.types.expired.expired] > 0 ? Counter.colors.danger : Counter.colors.gray
+			);
+		}
+
+		getNewCommentsCount()
+		{
+			let count = 0;
+
+			Object.keys(this.counters).forEach((type) => {
+				if (Counter.types.newComments[type])
+				{
+					count += this.counters[type];
+				}
+			});
+
+			return count;
+		}
+	}
+
 	class Task
 	{
 		static checkMatchDates(date, datesToMatch)
@@ -48,9 +148,9 @@
 		static get counterColors()
 		{
 			return {
-				green: '#9DCF00',
-				red: '#FF5752',
-				gray: '#A8ADB4',
+				danger: '#ff5752',
+				gray: '#a8adb4',
+				success: '#9dcf00',
 			};
 		}
 
@@ -145,6 +245,8 @@
 			this.taskUrlTemplate = BX.componentParameters.get('PATH_TO_TASK_ADD', defaultTaskUrl);
 			this.error = false;
 
+			this._counter = new Counter(this);
+
 			this.setDefaultData();
 
 			this.isNewRecord = true;
@@ -169,12 +271,13 @@
 
 			this.files = [];
 
-			this.commentsCount = 0;
-			this.newCommentsCount = 0;
+			this.counter = {};
 
 			this.isMuted = false;
 			this.isPinned = false;
 			this.notViewed = false;
+			this.isRequireResult = false;
+			this.isHasResult = false;
 
 			this.rawAccess = {};
 
@@ -199,12 +302,13 @@
 
 			this.files = row.files || [];
 
-			this.commentsCount = row.commentsCount;
-			this.newCommentsCount = row.newCommentsCount;
+			this.counter = row.counter;
 
 			this.isMuted = row.isMuted === 'Y';
 			this.isPinned = row.isPinned === 'Y';
 			this.notViewed = row.notViewed === 'Y';
+			this.isRequireResult = row.taskRequireResult === 'Y';
+			this.isHasResult = row.taskHasResult === 'Y';
 
 			this.rawAccess = row.action;
 
@@ -233,33 +337,35 @@
 
 		updateData(row)
 		{
-			if (row.id)
+			const has = Object.prototype.hasOwnProperty;
+
+			if (has.call(row, 'id'))
 			{
 				this.id = row.id;
 			}
-			if (row.title)
+			if (has.call(row, 'title'))
 			{
 				this.title = row.title;
 			}
-			if (row.groupId)
+			if (has.call(row, 'groupId'))
 			{
 				this.groupId = row.groupId;
 			}
-			if (row.group)
+			if (has.call(row, 'group'))
 			{
 				this.group = (this.groupId > 0 && row.group ? row.group : {id: 0, name: '', image: ''});
 			}
 
-			if (row.status)
+			if (has.call(row, 'status'))
 			{
 				this.status = row.status;
 			}
-			if (row.subStatus)
+			if (has.call(row, 'subStatus'))
 			{
 				this.subStatus = row.subStatus;
 			}
 
-			if (row.creator)
+			if (has.call(row, 'creator'))
 			{
 				this.creator = row.creator;
 				if (
@@ -270,7 +376,7 @@
 					this.currentUser.icon = row.creator.icon;
 				}
 			}
-			if (row.responsible)
+			if (has.call(row, 'responsible'))
 			{
 				this.responsible = row.responsible;
 				if (
@@ -281,48 +387,52 @@
 					this.currentUser.icon = row.responsible.icon;
 				}
 			}
-			if (row.accomplices)
+			if (has.call(row, 'accomplices'))
 			{
 				this.accomplices = row.accomplices;
 			}
-			if (row.auditors)
+			if (has.call(row, 'auditors'))
 			{
 				this.auditors = row.auditors;
 			}
 
-			if (row.commentsCount)
+			if (has.call(row, 'counter'))
 			{
-				this.commentsCount = row.commentsCount;
-			}
-			if (row.newCommentsCount)
-			{
-				this.newCommentsCount = row.newCommentsCount;
+				this.counter = row.counter;
 			}
 
-			if (row.isMuted)
+			if (has.call(row, 'isMuted'))
 			{
 				this.isMuted = (row.isMuted === 'Y');
 			}
-			if (row.isPinned)
+			if (has.call(row, 'isPinned'))
 			{
 				this.isPinned = (row.isPinned === 'Y');
 			}
-			if (row.notViewed)
+			if (has.call(row, 'notViewed'))
 			{
 				this.notViewed = (row.notViewed === 'Y');
 			}
+			if (has.call(row, 'taskRequireResult'))
+			{
+				this.isRequireResult = (row.taskRequireResult === 'Y');
+			}
+			if (has.call(row, 'taskHasResult'))
+			{
+				this.isHasResult = (row.taskHasResult === 'Y');
+			}
 
-			if (row.action)
+			if (has.call(row, 'action'))
 			{
 				this.rawAccess = row.action;
 			}
 
-			if (row.deadline)
+			if (has.call(row, 'deadline'))
 			{
 				const deadline = Date.parse(row.deadline);
 				this.deadline = (deadline > 0 ? deadline : null);
 			}
-			if (row.activityDate)
+			if (has.call(row, 'activityDate'))
 			{
 				const activityDate = Date.parse(row.activityDate);
 				this.activityDate = (activityDate > 0 ? activityDate : null);
@@ -334,7 +444,15 @@
 			const has = Object.prototype.hasOwnProperty;
 			for (const key in data)
 			{
-				if (has.call(this, key))
+				if (key === '_counter')
+				{
+					this.counter = {
+						counters: data[key].counters,
+						color: data[key].color,
+						value: data[key].value,
+					};
+				}
+				else if (has.call(this, key))
 				{
 					this[key] = data[key];
 				}
@@ -392,31 +510,44 @@
 			this._subStatus = Number(subStatus);
 		}
 
-		get newCommentsCount()
+		get counter()
 		{
-			if (isNaN(this._newCommentsCount) || typeof this._newCommentsCount == "undefined")
-			{
-				return 0;
-			}
-
-			return this._newCommentsCount;
+			return this._counter.get();
 		}
 
-		set newCommentsCount(value)
+		set counter(counter)
 		{
-			if (value == null)
-			{
-				return;
-			}
+			this._counter.set(counter);
+		}
 
-			if (isNaN(value) || typeof value == "undefined")
-			{
-				this._newCommentsCount = 0;
-			}
-			else
-			{
-				this._newCommentsCount = Number(value);
-			}
+		getCounterValue()
+		{
+			return this.counter.value;
+		}
+
+		getCounterColor()
+		{
+			return this.counter.color;
+		}
+
+		getCounterMyExpiredCount()
+		{
+			return this.counter.counters[Counter.types.my.expired];
+		}
+
+		getCounterMyNewCommentsCount()
+		{
+			return this.counter.counters[Counter.types.my.newComments];
+		}
+
+		getCounterMyCount()
+		{
+			return (this.getCounterMyExpiredCount() + this.getCounterMyNewCommentsCount());
+		}
+
+		getNewCommentsCount()
+		{
+			return this._counter.getNewCommentsCount();
 		}
 
 		get accomplices()
@@ -783,25 +914,6 @@
 			};
 		}
 
-		getMessageInfo()
-		{
-			let count = this.newCommentsCount || 0;
-			let color = Task.counterColors.green;
-
-			if (this.isExpired && !this.isCompletedCounts && !this.isWaitCtrlCounts && !this.isDeferred)
-			{
-				count += 1;
-				color = Task.counterColors.red;
-			}
-
-			if (this.isMuted)
-			{
-				color = Task.counterColors.gray;
-			}
-
-			return {count, color};
-		}
-
 		save()
 		{
 			return new Promise((resolve, reject) => {
@@ -838,9 +950,14 @@
 								resolve();
 							},
 							(response) => {
-								console.log(response.ex.error_description);
+								console.log(response.answer.error_description);
 								this.error = true;
-								this.rawAccess = response.result.task.action;
+
+								InAppNotifier.showNotification({
+									message: response.answer.error_description.replace(/<\/?[^>]+(>|$)/g, ""),
+									backgroundColor: '#333333',
+									time: 5,
+								});
 
 								reject();
 							}
@@ -1034,9 +1151,14 @@
 			});
 		}
 
+		pseudoRead()
+		{
+			this._counter.read();
+		}
+
 		read()
 		{
-			this.newCommentsCount = 0;
+			this.pseudoRead();
 
 			return new Promise((resolve, reject) => {
 				(new Request())
@@ -1066,7 +1188,10 @@
 				(new Request())
 					.call('complete', {
 						taskId: this.id,
-						params: {HIDE: false},
+						params: {
+							HIDE: false,
+							PLATFORM: 'mobile',
+						},
 					})
 					.then(
 						(response) => {
@@ -1079,6 +1204,13 @@
 						(response) => {
 							console.log(response);
 							this.error = true;
+
+							const message = response.answer.error_description.replace(/<\/?[^>]+(>|$)/g, "");
+							InAppNotifier.showNotification({
+								message: message,
+								backgroundColor: '#333333',
+								time: 5,
+							});
 
 							reject();
 						}
@@ -1360,6 +1492,7 @@
 					userId: this.currentUser.id,
 					taskObject: this,
 				};
+				delete taskData.taskInfo.project;
 
 				BX.postComponentEvent('taskbackground::task::action', [taskData, taskId, params]);
 				console.log(`sendEvent to open task #${taskId}`);
@@ -1373,9 +1506,7 @@
 
 		getTaskInfo(withActions = true)
 		{
-			const state = this.getState() || {message: '', backgroundColor: '', fontColor: ''};
-			const messageInfo = this.getMessageInfo();
-
+			const state = (this.getState() || {message: '', backgroundColor: '', fontColor: ''});
 			const taskInfo = {
 				id: this.id,
 				title: this.title || '',
@@ -1383,7 +1514,7 @@
 				checkable: this.can.complete || this.can.approve || this.can.renew,
 				state: state.message,
 				date: this.activityDate / 1000,
-				messageCount: messageInfo.count,
+				messageCount: this.getCounterValue(),
 				creatorIcon: this.creator.icon,
 				responsibleIcon: this.responsible.icon,
 				actions: (withActions ? this.getSwipeActions() : []),
@@ -1399,7 +1530,7 @@
 						border: state.border,
 					},
 					counter: {
-						backgroundColor: messageInfo.color,
+						backgroundColor: Task.counterColors[this.getCounterColor()],
 					},
 					date: {
 						image: {

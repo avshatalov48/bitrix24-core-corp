@@ -189,9 +189,10 @@ class SortingTable extends Entity\DataManager
 		if (!$targetTask)
 		{
 			static::setTargetSorting($userId, $groupId, $sourceId, $targetId);
+			$targetTask = self::getTask($targetId, $userId, $groupId);
 		}
 
-		static::moveTaskToTarget($userId, $groupId, $sourceId, $targetId, $before);
+		static::moveTaskToTarget($userId, $groupId, $sourceId, $targetTask, $before);
 	}
 
 	private static function setTargetSorting($userId, $groupId, $sourceId, $targetId)
@@ -280,9 +281,8 @@ class SortingTable extends Entity\DataManager
 		return null;
 	}
 
-	private static function moveTaskToTarget($userId, $groupId, $sourceId, $targetId, $before)
+	private static function moveTaskToTarget($userId, $groupId, $sourceId, $targetTask, $before)
 	{
-		$targetTask = static::getTask($targetId, $userId, $groupId);
 		if (!$targetTask)
 		{
 			return false;

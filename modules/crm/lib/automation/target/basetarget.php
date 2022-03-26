@@ -1,11 +1,14 @@
 <?php
+
 namespace Bitrix\Crm\Automation\Target;
 
 use Bitrix\Bizproc\Automation\Engine\ConditionGroup;
+use Bitrix\Crm\Automation\Engine\TemplatesScheme;
 use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\Loader;
 use Bitrix\Crm\Automation\Factory;
 use Bitrix\Crm\Automation\Trigger\Entity\TriggerTable;
+use Bitrix\Main\Result;
 
 if (!Loader::includeModule('bizproc'))
 {
@@ -42,7 +45,9 @@ abstract class BaseTarget extends \Bitrix\Bizproc\Automation\Target\BaseTarget
 	public function getEntity()
 	{
 		if ($this->entity === null)
-			return array();
+		{
+			return [];
+		}
 
 		return $this->entity;
 	}
@@ -53,10 +58,19 @@ abstract class BaseTarget extends \Bitrix\Bizproc\Automation\Target\BaseTarget
 	}
 
 	abstract public function getEntityId();
+
 	abstract public function setEntityById($id);
-	abstract public function getResponsibleId();
+
+	public function getResponsibleId()
+	{
+		return \CCrmOwnerType::loadResponsibleId(
+			$this->getEntityTypeId(),
+			$this->getEntityId()
+		);
+	}
 
 	abstract public function getEntityStatus();
+
 	abstract public function setEntityStatus($statusId);
 
 	public function getDocumentStatus()
@@ -81,12 +95,12 @@ abstract class BaseTarget extends \Bitrix\Bizproc\Automation\Target\BaseTarget
 	public function getTriggers(array $statuses)
 	{
 		$result = [];
-		$iterator = TriggerTable::getList(array(
-			'filter' => array(
+		$iterator = TriggerTable::getList([
+			'filter' => [
 				'=ENTITY_TYPE_ID' => $this->getEntityTypeId(),
-				'@ENTITY_STATUS' => $statuses
-			)
-		));
+				'@ENTITY_STATUS' => $statuses,
+			],
+		]);
 
 		while ($row = $iterator->fetch())
 		{
@@ -97,7 +111,7 @@ abstract class BaseTarget extends \Bitrix\Bizproc\Automation\Target\BaseTarget
 				'ID' => $row['ID'],
 				'NAME' => $row['NAME'],
 				'CODE' => $row['CODE'],
-				'APPLY_RULES' => $row['APPLY_RULES']
+				'APPLY_RULES' => $row['APPLY_RULES'],
 			];
 		}
 
@@ -127,25 +141,27 @@ abstract class BaseTarget extends \Bitrix\Bizproc\Automation\Target\BaseTarget
 
 			if ($triggerId > 0)
 			{
-				TriggerTable::update($triggerId, array(
+				TriggerTable::update($triggerId, [
 					'NAME' => $trigger['NAME'],
 					'ENTITY_STATUS' => $trigger['DOCUMENT_STATUS'],
-					'APPLY_RULES' => is_array($trigger['APPLY_RULES']) ? $trigger['APPLY_RULES'] : null
-				));
+					'APPLY_RULES' => is_array($trigger['APPLY_RULES']) ? $trigger['APPLY_RULES'] : null,
+				]);
 			}
 			elseif (isset($trigger['CODE']) && isset($trigger['DOCUMENT_STATUS']))
 			{
 				$triggerClass = Factory::getTriggerByCode($trigger['CODE']);
 				if (!$triggerClass)
+				{
 					continue;
+				}
 
-				$addResult = TriggerTable::add(array(
+				$addResult = TriggerTable::add([
 					'NAME' => $trigger['NAME'],
 					'ENTITY_TYPE_ID' => $this->getEntityTypeId(),
 					'ENTITY_STATUS' => $trigger['DOCUMENT_STATUS'],
 					'CODE' => $trigger['CODE'],
-					'APPLY_RULES' => is_array($trigger['APPLY_RULES']) ? $trigger['APPLY_RULES'] : null
-				));
+					'APPLY_RULES' => is_array($trigger['APPLY_RULES']) ? $trigger['APPLY_RULES'] : null,
+				]);
 
 				if ($addResult->isSuccess())
 				{
@@ -234,5 +250,13 @@ abstract class BaseTarget extends \Bitrix\Bizproc\Automation\Target\BaseTarget
 				break;
 		}
 		return $docType;
+	}
+
+	public function getTemplatesScheme(): ?\Bitrix\Bizproc\Automation\Engine\TemplatesScheme
+	{
+		$templateScheme = new TemplatesScheme();
+		$templateScheme->build();
+
+		return $templateScheme;
 	}
 }

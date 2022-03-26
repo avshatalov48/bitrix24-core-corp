@@ -205,11 +205,7 @@ if (!empty($prevTaskIds))
 $arResult["TEMPLATE_DATA"]["TIMER_IS_RUNNING_FOR_CURRENT_USER"] = $taskData['TIMER_IS_RUNNING'] ? "Y" : "N";
 
 //Files in Comments
-$arResult["TEMPLATE_DATA"]["FILES_IN_COMMENTS"] = 0;
-if ($taskData["FORUM_ID"] > 0 && $taskData["FORUM_TOPIC_ID"] > 0)
-{
-	$arResult["TEMPLATE_DATA"]["FILES_IN_COMMENTS"] = \Bitrix\Tasks\Integration\Forum\Task\Comment::getFileCount($taskData["FORUM_TOPIC_ID"], $taskData["FORUM_ID"]);
-}
+$arResult["TEMPLATE_DATA"]["FILES_IN_COMMENTS"] = \Bitrix\Tasks\Integration\Forum\Task\Topic::getFileCount((int)$taskData["ID"]);
 
 $arResult['DATA']['TASK']['~DESCRIPTION'] = $arResult['DATA']['TASK']['DESCRIPTION'];
 //$arResult['DATA']['TASK']['DESCRIPTION'] = \Bitrix\Tasks\Util\UI::convertHtmlToSafeHtml($arResult['DATA']['TASK']['DESCRIPTION']);

@@ -100,6 +100,11 @@ class DynamicTypesLimit
 	 */
 	public function isTypeSettingsRestricted(int $entityTypeId): bool
 	{
+		if (!\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		{
+			return false;
+		}
+
 		return !$this->isFeatureEnabled();
 	}
 

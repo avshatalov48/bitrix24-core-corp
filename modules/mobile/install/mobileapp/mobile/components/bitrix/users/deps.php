@@ -1,6 +1,8 @@
 <?
 return [
-	"user/list", 
-	"user/profile",
-	"intranet/invite"
+	'extensions' => [
+		'user/list',
+		'user/profile',
+		'intranet/invite',
+	],
 ];

@@ -109,7 +109,7 @@ class CrmReportManagersRatingGridComponent extends \CBitrixComponent
 						"valueFormatted" => CCrmCurrency::MoneyToString($value["averageSuccessDealAmount"], $baseCurrency),
 						"delta" => CCrmCurrency::MoneyToString((float)$value["averageSuccessDealAmount"] - (float)$value["averageSuccessDealAmountPrev"], $baseCurrency),
 					],
-					"CONVERSION" => static::getConversion($value["totalDealCount"], $value["successDealCount"]),
+					"CONVERSION" => static::getConversion($value["totalDealCount"] ?? 0, $value["successDealCount"] ?? 0),
 				],
 				"actions" => []
 			];

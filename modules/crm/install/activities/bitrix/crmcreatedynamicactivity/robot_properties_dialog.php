@@ -11,17 +11,17 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 $chosenEntityTypeId = (int)$dialog->getCurrentValue('dynamic_type_id', 0);
 $chosenEntityValues = $dialog->getCurrentValue('dynamic_entities_fields');
 
-$dynamicTypeIdField = $dialog->getMap()['DynamicTypeId'];
-$dynamicEntitiesFields = $dialog->getMap()['DynamicEntitiesFields']['Map'];
+$typeIdField = $dialog->getMap()['DynamicTypeId'];
+$entitiesFields = $dialog->getMap()['DynamicEntitiesFields']['Map'];
 ?>
 <div class="bizproc-automation-popup-settings">
 	<span class="bizproc-automation-popup-settings-title bizproc-automation-popup-settings-title-autocomplete">
-		<?=htmlspecialcharsbx($dynamicTypeIdField['Name'])?>:
+		<?=htmlspecialcharsbx($typeIdField['Name'])?>:
 	</span>
-	<?=$dialog->renderFieldControl($dynamicTypeIdField, $dialog->getCurrentValue($dynamicTypeIdField))?>
+	<?=$dialog->renderFieldControl($typeIdField, $dialog->getCurrentValue($typeIdField))?>
 </div>
 
-<?php foreach ($dynamicEntitiesFields as $entityTypeId => $fields): ?>
+<?php foreach ($entitiesFields as $entityTypeId => $fields): ?>
 	<div id="ccda-fields-map-<?= $entityTypeId ?>" <?= $entityTypeId !== $chosenEntityTypeId ? 'hidden' : ''?>>
 		<?php foreach ($fields as $fieldId => $field): ?>
 			<div class="bizproc-automation-popup-settings">

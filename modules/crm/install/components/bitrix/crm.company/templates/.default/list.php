@@ -3,11 +3,14 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
 /** @var array $arResult */
 $cpID = ($arResult['MYCOMPANY_MODE'] === 'Y') ? 'MYCOMPANY_LIST' : 'COMPANY_LIST';
-$cpActiveItemID = ($arResult['MYCOMPANY_MODE'] === 'Y') ? '' : 'COMPANY';
+$cpActiveItemID = ($arResult['MYCOMPANY_MODE'] === 'Y') ? 'MY_COMPANY' : 'COMPANY';
 
 $isMyCompanyMode = (isset($arResult['MYCOMPANY_MODE']) && $arResult['MYCOMPANY_MODE'] === 'Y');
 
-if ($_REQUEST['IFRAME'] !== 'Y')
+
+$isSlider = ($_REQUEST['IFRAME'] == 'Y' && $_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER');
+
+if (!$isSlider)
 {
 	/** @var CMain $APPLICATION */
 	$APPLICATION->IncludeComponent(
@@ -72,54 +75,54 @@ else
 
 	$APPLICATION->ShowViewContent('crm-grid-filter');
 
-	if ($_REQUEST['IFRAME'] !== 'Y')
+	if (!$isSlider)
 	{
 		$APPLICATION->IncludeComponent(
 			'bitrix:crm.dedupe.autosearch',
 			'',
-			array(
+			[
 				'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
 				'PATH_TO_MERGE' => $arResult['PATH_TO_COMPANY_MERGE'],
 				'PATH_TO_DEDUPELIST' => $arResult['PATH_TO_COMPANY_DEDUPELIST']
-			),
+			],
 			$component,
+			['HIDE_ICONS' => 'Y']
+		);
+	}
+	$APPLICATION->IncludeComponent(
+		'bitrix:crm.company.menu',
+		'',
+		[
+			'PATH_TO_COMPANY_LIST' => $arResult['PATH_TO_COMPANY_LIST'],
+			'PATH_TO_COMPANY_SHOW' => $arResult['PATH_TO_COMPANY_SHOW'],
+			'PATH_TO_COMPANY_EDIT' => $arResult['PATH_TO_COMPANY_EDIT'],
+			'PATH_TO_COMPANY_IMPORT' => $arResult['PATH_TO_COMPANY_IMPORT'],
+			'PATH_TO_COMPANY_DEDUPE' => $arResult['PATH_TO_COMPANY_DEDUPE'],
+			'PATH_TO_COMPANY_DEDUPEWIZARD' => $arResult['PATH_TO_COMPANY_DEDUPEWIZARD'],
+			'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
+			'ELEMENT_ID' => $arResult['VARIABLES']['company_id'],
+			'TYPE' => 'list',
+			'MYCOMPANY_MODE' => ($arResult['MYCOMPANY_MODE'] === 'Y' ? 'Y' : 'N'),
+			'IN_SLIDER' => $isSlider ? 'Y' : 'N',
+		],
+		$component
+	);
+
+	if(\Bitrix\Main\ModuleManager::isModuleInstalled('rest'))
+	{
+		$APPLICATION->IncludeComponent(
+			'bitrix:app.placement',
+			'menu',
+			array(
+				'PLACEMENT' => "CRM_COMPANY_LIST_MENU",
+				"PLACEMENT_OPTIONS" => array(),
+				'INTERFACE_EVENT' => 'onCrmCompanyMenuInterfaceInit',
+				'MENU_EVENT_MODULE' => 'crm',
+				'MENU_EVENT' => 'onCrmCompanyListItemBuildMenu',
+			),
+			null,
 			array('HIDE_ICONS' => 'Y')
 		);
-
-		$APPLICATION->IncludeComponent(
-			'bitrix:crm.company.menu',
-			'',
-			array(
-				'PATH_TO_COMPANY_LIST'         => $arResult['PATH_TO_COMPANY_LIST'],
-				'PATH_TO_COMPANY_SHOW'         => $arResult['PATH_TO_COMPANY_SHOW'],
-				'PATH_TO_COMPANY_EDIT'         => $arResult['PATH_TO_COMPANY_EDIT'],
-				'PATH_TO_COMPANY_IMPORT'       => $arResult['PATH_TO_COMPANY_IMPORT'],
-				'PATH_TO_COMPANY_DEDUPE'       => $arResult['PATH_TO_COMPANY_DEDUPE'],
-				'PATH_TO_COMPANY_DEDUPEWIZARD' => $arResult['PATH_TO_COMPANY_DEDUPEWIZARD'],
-				'NAME_TEMPLATE'                => $arParams['NAME_TEMPLATE'],
-				'ELEMENT_ID'                   => $arResult['VARIABLES']['company_id'],
-				'TYPE'                         => 'list',
-				'MYCOMPANY_MODE'               => ($arResult['MYCOMPANY_MODE'] === 'Y' ? 'Y' : 'N')
-			),
-			$component
-		);
-
-		if(\Bitrix\Main\ModuleManager::isModuleInstalled('rest'))
-		{
-			$APPLICATION->IncludeComponent(
-				'bitrix:app.placement',
-				'menu',
-				array(
-					'PLACEMENT' => "CRM_COMPANY_LIST_MENU",
-					"PLACEMENT_OPTIONS" => array(),
-					'INTERFACE_EVENT' => 'onCrmCompanyMenuInterfaceInit',
-					'MENU_EVENT_MODULE' => 'crm',
-					'MENU_EVENT' => 'onCrmCompanyListItemBuildMenu',
-				),
-				null,
-				array('HIDE_ICONS' => 'Y')
-			);
-		}
 	}
 
 	$APPLICATION->IncludeComponent(

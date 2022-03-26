@@ -6,6 +6,7 @@ import {MenuManager} from 'main.popup';
 import {CurrencyCore} from 'currency.currency-core';
 import {MessageBox, MessageBoxButtons} from 'ui.dialogs.messagebox';
 import {Label, LabelColor} from 'ui.label';
+import DocumentManager from "./document-manager";
 
 declare var BX: {[key: string]: any};
 
@@ -18,18 +19,29 @@ type PaymentDocument = {
 	PAID?: 'Y' | 'N',
 	STAGE?: 'NOT_PAID' | 'SENT_NO_VIEWED' | 'VIEWED_NO_PAID' | 'PAID' | 'CANCEL' | 'REFUND',
 	DELIVERY_NAME?: string,
-	DEDUCTED?: 'Y' | 'N'
+	DEDUCTED?: 'Y' | 'N',
+	EMP_DEDUCTED_ID?: number,
+	STATUS?: 'Y' | 'N',
+	WAS_CANCELLED?: 'Y' | 'N',
+	ACCOUNT_NUMBER?: string,
 };
 
+type Phrases = {[string]: string};
+
 type EntityEditorPaymentDocumentsOptions = {
+	CONTEXT: string,
 	CURRENCY_FORMAT: {},
 	CURRENCY_ID: string,
-	DEAL_ID: number,
-	DEAL_AMOUNT: number,
+	OWNER_TYPE_ID: number,
+	OWNER_ID: number,
+	ENTITY_AMOUNT: number,
 	DOCUMENTS: Array<PaymentDocument>,
 	ORDER_IDS: Array<number>,
 	PARENT_CONTEXT: StartsSalescenterApp,
-	IS_DELIVERY_AVAILABLE: boolean
+	IS_DELIVERY_AVAILABLE: boolean,
+	IS_USED_INVENTORY_MANAGEMENT: boolean,
+	IS_INVENTORY_MANAGEMENT_RESTRICTED: boolean,
+	PHRASES: Phrases,
 };
 
 type Destroyable = {
@@ -40,6 +52,24 @@ type StartsSalescenterApp = {
 	startSalescenterApplication(): any
 };
 
+const SPECIFIC_REALIZATION_ERROR_CODES = [
+	'REALIZATION_ACCESS_DENIED',
+	'REALIZATION_CANNOT_DELETE',
+	'REALIZATION_ALREADY_DEDUCTED',
+	'REALIZATION_NOT_DEDUCTED',
+	'REALIZATION_PRODUCT_NOT_FOUND',
+	'SHIPMENT_ACCESS_DENIED',
+	'PAYMENT_ACCESS_DENIED',
+];
+
+const SPECIFIC_ERROR_CODES = SPECIFIC_REALIZATION_ERROR_CODES.concat([
+	'DEDUCTION_STORE_ERROR1',
+	'SALE_PROVIDER_SHIPMENT_QUANTITY_NOT_ENOUGH',
+	'SALE_SHIPMENT_EXIST_SHIPPED',
+	'SALE_PAYMENT_DELETE_EXIST_PAID',
+	'DDCT_DEDUCTION_QUANTITY_STORE_ERROR',
+]);
+
 type AjaxHandler = (...args: Array<any>) => any;
 
 export class EntityEditorPaymentDocuments
@@ -47,17 +77,27 @@ export class EntityEditorPaymentDocuments
 	_options: EntityEditorPaymentDocumentsOptions;
 	_isDeliveryAvailable: boolean;
 	_parentContext: StartsSalescenterApp;
+	_callContext: string;
 	_rootNode: HTMLElement;
 	_menus: Array<Destroyable>;
+	_phrases: Phrases;
 	static _rootNodeClass = 'crm-entity-widget-inner crm-entity-widget-inner--payment';
 
 	constructor(options: EntityEditorPaymentDocumentsOptions)
 	{
 		this._options = options;
+		this._phrases = {};
+		if (Type.isPlainObject(options.PHRASES))
+		{
+			this._phrases = options.PHRASES;
+		}
 		this._isDeliveryAvailable = this._options.IS_DELIVERY_AVAILABLE;
 		this._parentContext = options.PARENT_CONTEXT;
+		this._callContext = options.CONTEXT;
 		this._rootNode = Tag.render`<div class="${this.constructor._rootNodeClass}"></div>`;
 		this._menus = [];
+		this._isUsedInventoryManagement = this._options.IS_USED_INVENTORY_MANAGEMENT;
+		this._isInventoryManagementRestricted = this._options.IS_INVENTORY_MANAGEMENT_RESTRICTED;
 
 		this._subscribeToGlobalEvents();
 	}
@@ -73,7 +113,7 @@ export class EntityEditorPaymentDocuments
 		this._rootNode.innerHTML = '';
 		this._setupCurrencyFormat();
 
-		if (this.hasContent())
+		if (this._isUsedInventoryManagement || this.hasContent())
 		{
 			this._rootNode.classList.remove('is-hidden');
 			this._rootNode.append(Tag.render`
@@ -102,14 +142,15 @@ export class EntityEditorPaymentDocuments
 
 	reloadModel(onSuccess?: AjaxHandler, onError?: AjaxHandler)
 	{
-		if (!this._options.DEAL_ID)
+		if (!this._options.OWNER_ID)
 		{
 			return;
 		}
 
 		const data = {
 			data: {
-				dealId: this._options.DEAL_ID
+				ownerTypeId: this._options.OWNER_TYPE_ID,
+				ownerId: this._options.OWNER_ID
 			}
 		};
 
@@ -139,14 +180,14 @@ export class EntityEditorPaymentDocuments
 
 		this._loading(true);
 
-		ajax.runAction('crm.api.deal.fetchPaymentDocuments', data).then(successCallback, errorCallback);
+		ajax.runAction('crm.api.entity.fetchPaymentDocuments', data).then(successCallback, errorCallback);
 	}
 
 	_renderTitle(): HTMLElement
 	{
 		return Tag.render`
 			<div class="crm-entity-widget-payment-detail">
-				<div class="crm-entity-widget-payment-detail-caption">${Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TITLE')}</div>
+				<div class="crm-entity-widget-payment-detail-caption">${this._getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TITLE')}</div>
 			</div>
 		`;
 	}
@@ -161,7 +202,11 @@ export class EntityEditorPaymentDocuments
 			}
 			else if (doc.TYPE === 'SHIPMENT')
 			{
-				nodes.push(this._renderShipmentDocument(doc));
+				nodes.push(this._renderDeliveryDocument(doc));
+			}
+			else if (doc.TYPE === 'SHIPMENT_DOCUMENT')
+			{
+				nodes.push(this._renderRealizationDocument(doc));
 			}
 		});
 		return nodes;
@@ -289,7 +334,7 @@ export class EntityEditorPaymentDocuments
 		`;
 	}
 
-	_renderShipmentDocument(doc: PaymentDocument): HTMLElement
+	_renderDeliveryDocument(doc: PaymentDocument): HTMLElement
 	{
 		const labelOptions = {
 			text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_STATUS_WAITING'),
@@ -330,7 +375,12 @@ export class EntityEditorPaymentDocuments
 			},
 			{
 				text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE'),
+				className: (doc.DEDUCTED === 'Y') ? 'menu-popup-no-icon crm-entity-widget-shipment-menu-item-remove' : '',
 				onclick: () => {
+					if (doc.DEDUCTED === 'Y')
+					{
+						return false;
+					}
 					popupMenu.close();
 					MessageBox.show({
 						title: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_CONFIRM_TITLE'),
@@ -359,6 +409,15 @@ export class EntityEditorPaymentDocuments
 				items: menuItems
 			});
 			popupMenu.show();
+
+			const removeDocumentMenuItem = popupMenu.itemsContainer.querySelector('.crm-entity-widget-shipment-menu-item-remove');
+			if (removeDocumentMenuItem)
+			{
+				removeDocumentMenuItem.setAttribute('data-hint', Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_REMOVE_TIP'));
+				removeDocumentMenuItem.setAttribute('data-hint-no-icon', '');
+				BX.UI.Hint.init(popupMenu.itemsContainer);
+			}
+
 			this._menus.push(popupMenu);
 		};
 
@@ -366,6 +425,125 @@ export class EntityEditorPaymentDocuments
 			<div class="crm-entity-widget-payment-detail">
 				<a class="ui-link" onclick="${openSlider}">
 					${title} (${doc.DELIVERY_NAME}, ${sum})
+				</a>
+				<div class="crm-entity-widget-payment-detail-inner">
+					<div class="ui-label ui-label-md ui-label-light crm-entity-widget-payment-action" onclick="${openMenu}">
+						<span class="ui-label-inner">${Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ACTIONS_MENU')}</span>
+					</div>
+					${(new Label(labelOptions)).render()}
+				</div>
+			</div>
+		`;
+	}
+
+	_renderRealizationDocument(doc: PaymentDocument): HTMLElement
+	{
+		const labelOptions = {
+			customClass: 'crm-entity-widget-payment-label',
+			fill: true,
+		};
+		if (doc.DEDUCTED === 'Y')
+		{
+			labelOptions.text = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_STATUS_DEDUCTED');
+			labelOptions.color = LabelColor.LIGHT_GREEN;
+		}
+		else
+		{
+			if (doc.EMP_DEDUCTED_ID)
+			{
+				labelOptions.text = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_STATUS_CANCELLED');
+				labelOptions.color = LabelColor.LIGHT_ORANGE;
+			}
+			else
+			{
+				labelOptions.text = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_STATUS_DRAFT');
+				labelOptions.color = LabelColor.LIGHT;
+			}
+		}
+
+		let title = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_DATE').replace(/#DATE#/gi, doc.FORMATTED_DATE);
+		title = title.replace(/#DOCUMENT_ID#/gi, doc.ACCOUNT_NUMBER);
+		title = BX.util.htmlspecialchars(title);
+
+		const sum = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_AMOUNT').replace(/#SUM#/gi, this._renderMoney(doc.SUM));
+
+		let popupMenu;
+		let menuItems = [];
+
+		if (doc.DEDUCTED === 'Y')
+		{
+			menuItems.push({
+				text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_STATUS_CANCEL'),
+				className: (doc.DEDUCTED === 'Y') ? '' : 'menu-popup-item-accept-sm',
+				onclick: () => {
+					this._setRealizationDeductedStatus(doc, false);
+					popupMenu.close();
+				}
+			});
+		}
+		else
+		{
+			menuItems.push({
+				text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_STATUS_CONDUCT'),
+				className: (doc.DEDUCTED === 'Y') ? 'menu-popup-item-accept-sm' : '',
+				onclick: () => {
+					this._setRealizationDeductedStatus(doc, true);
+					popupMenu.close();
+				}
+			});
+		}
+
+		menuItems.push({
+			text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE'),
+			className: (doc.DEDUCTED === 'Y') ? 'menu-popup-no-icon crm-entity-widget-realization-menu-item-remove' : '',
+			onclick: () => {
+				if (doc.DEDUCTED === 'Y')
+				{
+					return false;
+				}
+				popupMenu.close();
+				MessageBox.show({
+					title: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_CONFIRM_TITLE'),
+					message: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_CONFIRM_REMOVE_TEXT'),
+					modal: true,
+					buttons: MessageBoxButtons.OK_CANCEL,
+					onOk: messageBox => {
+						messageBox.close();
+						this._removeDocument(doc);
+					},
+					onCancel: messageBox => {
+						messageBox.close();
+					},
+				});
+			}
+		});
+
+		const openSlider = () => this._viewRealizationSlider(doc.ID);
+
+		const openMenu = event => {
+			event.preventDefault();
+			popupMenu = MenuManager.create({
+				id: 'payment-documents-realization-action-' + doc.ID,
+				bindElement: event.target,
+				items: menuItems
+			});
+			popupMenu.show();
+
+			const removeDocumentMenuItem = popupMenu.itemsContainer.querySelector('.crm-entity-widget-realization-menu-item-remove');
+			if (removeDocumentMenuItem)
+			{
+				removeDocumentMenuItem.setAttribute('data-hint', Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REALIZATION_REMOVE_TIP'));
+				removeDocumentMenuItem.setAttribute('data-hint-no-icon', '');
+				BX.UI.Hint.init(popupMenu.itemsContainer);
+			}
+
+			this._menus.push(popupMenu);
+		};
+
+		return Tag.render`
+			<div class="crm-entity-widget-payment-detail">
+				<a class="ui-link" onclick="${openSlider}">
+					${title} (${sum})
 				</a>
 				<div class="crm-entity-widget-payment-detail-inner">
 					<div class="ui-label ui-label-md ui-label-light crm-entity-widget-payment-action" onclick="${openMenu}">
@@ -395,6 +573,25 @@ export class EntityEditorPaymentDocuments
 			});
 		}
 
+		if (this._isUsedInventoryManagement)
+		{
+			let menuItem = {
+				text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DOCUMENT_TYPE_SHIPMENT_DOCUMENT'),
+			};
+
+			if (this._isInventoryManagementRestricted)
+			{
+				menuItem.onclick = () => top.BX.UI.InfoHelper.show('limit_store_crm_integration');
+				menuItem.className = 'realization-document-tariff-lock';
+			}
+			else
+			{
+				menuItem.onclick = () => this._createRealizationSlider(latestOrderId);
+			}
+
+			menuItems.push(menuItem);
+		}
+
 		const openMenu = event => {
 			event.preventDefault();
 			const popupMenu = MenuManager.create({
@@ -417,7 +614,7 @@ export class EntityEditorPaymentDocuments
 
 	_calculateTotalSum()
 	{
-		let totalSum = parseFloat(this._options.DEAL_AMOUNT);
+		let totalSum = parseFloat(this._options.ENTITY_AMOUNT);
 		this._docs().forEach(doc => {
 			if (doc.TYPE === 'PAYMENT')
 			{
@@ -443,8 +640,8 @@ export class EntityEditorPaymentDocuments
 		const node = Tag.render`
 			<div class="crm-entity-widget-payment-total">
 				<span>
-					${Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TOTAL_SUM')}
-					<span data-hint="${Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TOTAL_SUM_TOOLTIP')}"></span>
+					${this._getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TOTAL_SUM')}
+					<span data-hint="${this._getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TOTAL_SUM_TOOLTIP')}"></span>
 				</span>
 				<span class="crm-entity-widget-payment-text">${this._renderMoney(totalSum)}</span>
 			</div>
@@ -490,37 +687,79 @@ export class EntityEditorPaymentDocuments
 	// @todo: provide test
 	_latestOrderId(): number
 	{
-		return Math.max(...this._orderIds());
+		const latestOrder = parseInt(Math.max(...this._orderIds()));
+		return latestOrder > 0 ? latestOrder : 0;
 	}
 
-	_dealEntityType(): number
+	_ownerTypeId(): number
 	{
-		return BX.CrmEntityType.enumeration.deal;
+		return this._options.OWNER_TYPE_ID || BX.CrmEntityType.enumeration.deal;
 	}
 
 	_createDeliverySlider(orderId: number)
 	{
+		let analyticsLabel = 'crmDealPaymentDocumentsCreateDeliverySlider';
+		if (BX.CrmEntityType.isDynamicTypeByTypeId(this._ownerTypeId()))
+		{
+			analyticsLabel = 'crmDynamicTypePaymentDocumentsCreateDeliverySlider';
+		}
+
 		const options = {
-			context: 'deal',
+			context: this._callContext,
 			templateMode: 'create',
 			mode: 'delivery',
-			analyticsLabel: 'crmDealPaymentDocumentsCreateDeliverySlider',
-			ownerTypeId: this._dealEntityType(),
-			ownerId: this._options.DEAL_ID,
+			analyticsLabel: analyticsLabel,
+			ownerTypeId: this._ownerTypeId(),
+			ownerId: this._options.OWNER_ID,
 			orderId: orderId,
 		};
 		this._context().startSalescenterApplication(orderId, options);
 	}
 
+	_createRealizationSlider(orderId: number)
+	{
+		let analyticsLabel = 'crmDealPaymentDocumentsCreateRealizationSlider';
+		if (BX.CrmEntityType.isDynamicTypeByTypeId(this._ownerTypeId()))
+		{
+			analyticsLabel = 'crmDynamicTypePaymentDocumentsCreateRealizationSlider';
+		}
+
+		const options = {
+			context: {
+				OWNER_TYPE_ID: this._ownerTypeId(),
+				OWNER_ID: this._options.OWNER_ID,
+				ORDER_ID: orderId,
+			},
+			analyticsLabel: analyticsLabel,
+			documentType: 'W',
+			sliderOptions: {
+				customLeftBoundary: 0,
+				loader: 'crm-entity-details-loader',
+				requestMethod: 'post',
+			}
+		};
+
+		DocumentManager.openNewRealizationDocument(options).then(function (result) {
+			this.reloadModel();
+			this._reloadOwner();
+		}.bind(this));
+	}
+
 	_chooseDeliverySlider(orderId: number)
 	{
+		let analyticsLabel = 'crmDealPaymentDocumentsChooseDeliverySlider';
+		if (BX.CrmEntityType.isDynamicTypeByTypeId(this._ownerTypeId()))
+		{
+			analyticsLabel = 'crmDynamicTypePaymentDocumentsChooseDeliverySlider';
+		}
+
 		const options = {
-			context: 'deal',
+			context: this._callContext,
 			templateMode: 'create',
 			mode: 'delivery',
-			analyticsLabel: 'crmDealPaymentDocumentsChooseDeliverySlider',
-			ownerTypeId: this._dealEntityType(),
-			ownerId: this._options.DEAL_ID,
+			analyticsLabel: analyticsLabel,
+			ownerTypeId: this._ownerTypeId(),
+			ownerId: this._options.OWNER_ID,
 			orderId: orderId,
 		};
 		this._context().startSalescenterApplication(orderId, options);
@@ -528,14 +767,20 @@ export class EntityEditorPaymentDocuments
 
 	_resendPaymentSlider(orderId: number, paymentId: number)
 	{
+		let analyticsLabel = 'crmDealPaymentDocumentsResendPaymentSlider';
+		if (BX.CrmEntityType.isDynamicTypeByTypeId(this._ownerTypeId()))
+		{
+			analyticsLabel = 'crmDynamicTypePaymentDocumentsResendPaymentSlider';
+		}
+
 		const options = {
 			disableSendButton: '',
 			context: 'deal',
-			mode: 'payment_delivery',
-			analyticsLabel: 'crmDealPaymentDocumentsResendPaymentSlider',
+			mode: this._ownerTypeId() === BX.CrmEntityType.enumeration.deal ? 'payment_delivery' : 'payment',
+			analyticsLabel: analyticsLabel,
 			templateMode: 'view',
-			ownerTypeId: this._dealEntityType(),
-			ownerId: this._options.DEAL_ID,
+			ownerTypeId: this._ownerTypeId(),
+			ownerId: this._options.OWNER_ID,
 			orderId: orderId,
 			paymentId: paymentId,
 		};
@@ -544,17 +789,47 @@ export class EntityEditorPaymentDocuments
 
 	_viewDeliverySlider(orderId: number, shipmentId: number)
 	{
+		let analyticsLabel = 'crmDealPaymentDocumentsViewDeliverySlider';
+		if (BX.CrmEntityType.isDynamicTypeByTypeId(this._ownerTypeId()))
+		{
+			analyticsLabel = 'crmDynamicTypePaymentDocumentsViewDeliverySlider';
+		}
+
 		const options = {
-			context: 'deal',
+			context: this._callContext,
 			templateMode: 'view',
 			mode: 'delivery',
-			analyticsLabel: 'crmDealPaymentDocumentsViewDeliverySlider',
-			ownerTypeId: this._dealEntityType(),
-			ownerId: this._options.DEAL_ID,
+			analyticsLabel: analyticsLabel,
+			ownerTypeId: this._ownerTypeId(),
+			ownerId: this._options.OWNER_ID,
 			orderId: orderId,
 			shipmentId: shipmentId,
 		};
 		this._context().startSalescenterApplication(orderId, options);
+	}
+
+	_viewRealizationSlider(documentId: number)
+	{
+		let analyticsLabel = 'crmDealPaymentDocumentsViewRealizationSlider';
+		if (BX.CrmEntityType.isDynamicTypeByTypeId(this._ownerTypeId()))
+		{
+			analyticsLabel = 'crmDynamicTypePaymentDocumentsViewRealizationSlider';
+		}
+
+		const options = {
+			ownerTypeId: this._ownerTypeId(),
+			ownerId: this._options.OWNER_ID,
+			analyticsLabel: analyticsLabel,
+			documentId: documentId,
+			sliderOptions: {
+				customLeftBoundary: 0,
+				loader: 'crm-entity-details-loader',
+			}
+		};
+
+		DocumentManager.openRealizationDetailDocument(documentId, options).then(function (result) {
+			this._reloadOwner();
+		}.bind(this));
 	}
 
 	_setPaymentPaidStatus(payment: PaymentDocument, isPaid: boolean)
@@ -577,11 +852,17 @@ export class EntityEditorPaymentDocuments
 
 		const doNothingOnSuccess = response => {};
 		const reloadModelOnError = response => {
+			this._showErrorOnAction(response);
 			this.reloadModel();
-			this._showCommonError();
 		};
 
-		ajax.runAction('sale.payment.setpaid', {
+		let actionName = 'sale.payment.setpaid';
+		if (this._isUsedInventoryManagement)
+		{
+			actionName = 'crm.order.payment.setPaid';
+		}
+
+		ajax.runAction(actionName, {
 			data: {
 				id: payment.ID,
 				value: strPaid,
@@ -607,11 +888,47 @@ export class EntityEditorPaymentDocuments
 
 		const doNothingOnSuccess = response => {};
 		const reloadModelOnError = response => {
+			this._showShipmentStatusError(response, shipment.ID);
 			this.reloadModel();
-			this._showCommonError();
 		};
 
-		ajax.runAction('sale.shipment.setshipped', {
+		let actionName = 'sale.shipment.setshipped';
+		if (this._isUsedInventoryManagement)
+		{
+			actionName = 'crm.api.realizationdocument.setShipped';
+		}
+
+		ajax.runAction(actionName, {
+			data: {
+				id: shipment.ID,
+				value: strShipped,
+			}
+		}).then(doNothingOnSuccess, reloadModelOnError);
+	}
+
+	_setRealizationDeductedStatus(shipment: PaymentDocument, isShipped: boolean)
+	{
+		const strShipped = isShipped ? 'Y' : 'N';
+
+		if (shipment.DEDUCTED && shipment.DEDUCTED === strShipped) {
+			return;
+		}
+
+		// positive approach - render success first, then do actual query
+		this._docs().forEach(doc => {
+			if (doc.TYPE === 'SHIPMENT_DOCUMENT' && doc.ID === shipment.ID) {
+				doc.DEDUCTED = strShipped;
+			}
+		});
+		this.render();
+
+		const doNothingOnSuccess = response => {};
+		const reloadModelOnError = response => {
+			this._showErrorOnAction(response);
+			this.reloadModel();
+		};
+
+		ajax.runAction('crm.api.realizationdocument.setShipped', {
 			data: {
 				id: shipment.ID,
 				value: strShipped,
@@ -622,13 +939,18 @@ export class EntityEditorPaymentDocuments
 	_removeDocument(doc: PaymentDocument)
 	{
 		let action;
+		let data = {
+			id: doc.ID
+		};
 
-		if (doc.TYPE === 'PAYMENT') {
-			action = 'sale.payment.delete';
-		} else if (doc.TYPE === 'SHIPMENT') {
-			action = 'sale.shipment.delete';
-		} else {
+		action = this._resolveRemoveDocumentActionName(doc.TYPE);
+		if (!action)
+		{
 			return;
+		}
+
+		if (doc.TYPE === 'SHIPMENT_DOCUMENT') {
+			data.value = 'N';
 		}
 
 		// positive approach - render success first, then do actual query
@@ -637,17 +959,109 @@ export class EntityEditorPaymentDocuments
 		});
 		this.render();
 
-		const doNothingOnSuccess = response => {};
+		const onSuccess = response => {
+			this._reloadOwner();
+		};
 		const reloadModelOnError = response => {
+			this._showErrorOnAction(response);
 			this.reloadModel();
-			this._showCommonError();
 		};
 
 		ajax.runAction(action, {
-			data: {
-				id: doc.ID
+			data: data
+		}).then(onSuccess, reloadModelOnError);
+	}
+
+	_resolveRemoveDocumentActionName(type: string)
+	{
+		let actionBaseName = 'sale';
+		if (this._isUsedInventoryManagement)
+		{
+			actionBaseName = 'crm.order';
+		}
+
+		let action = '';
+
+		if (type === 'PAYMENT') {
+			action = actionBaseName + '.payment.delete';
+		} else if (type === 'SHIPMENT') {
+			action = actionBaseName + '.shipment.delete';
+		} else if (type === 'SHIPMENT_DOCUMENT') {
+			action = 'crm.api.realizationdocument.setRealization';
+		}
+
+		return action;
+	}
+
+	_showShipmentStatusError(response, shipmentId)
+	{
+		let showCommonError = true;
+
+		if (this._isUsedInventoryManagement)
+		{
+			response.errors.forEach(error => {
+				if (SPECIFIC_ERROR_CODES.indexOf(error.code) > -1) {
+					showCommonError = false;
+
+					let notifyMessage = error.message;
+					if (SPECIFIC_REALIZATION_ERROR_CODES.indexOf(error.code) === -1)
+					{
+						notifyMessage = BX.util.htmlspecialchars(notifyMessage);
+					}
+
+					BX.UI.Notification.Center.notify({
+						content: notifyMessage,
+						actions: [
+							{
+								title: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_OPEN_REALIZATION_DOCUMENT'),
+								events: {
+									click: (event, balloon, action) =>
+									{
+										this._viewRealizationSlider(shipmentId);
+										balloon.close();
+									}
+								}
+							}
+						],
+					});
+				}
+			});
+		}
+
+		if (showCommonError)
+		{
+			this._showCommonError();
+		}
+	}
+
+	_showErrorOnAction(response)
+	{
+		let showCommonError = true;
+
+		response.errors.forEach(error => {
+			if (SPECIFIC_ERROR_CODES.indexOf(error.code) > -1) {
+				showCommonError = false;
+				this._showSpecificError(error.code, error.message);
 			}
-		}).then(doNothingOnSuccess, reloadModelOnError);
+		});
+
+		if (showCommonError)
+		{
+			this._showCommonError();
+		}
+	}
+
+	_showSpecificError(code, message)
+	{
+		let notifyMessage = message;
+		if (SPECIFIC_REALIZATION_ERROR_CODES.indexOf(code) === -1)
+		{
+			notifyMessage = BX.util.htmlspecialchars(notifyMessage);
+		}
+
+		BX.UI.Notification.Center.notify({
+			content: notifyMessage
+		});
 	}
 
 	_showCommonError()
@@ -707,16 +1121,8 @@ export class EntityEditorPaymentDocuments
 			{
 				return;
 			}
-			let orderId = false;
-			const orderIds = this._orderIds();
-			if (params.FIELDS && params.FIELDS.ID)
-			{
-				orderId = parseInt(params.FIELDS.ID);
-			}
-			if (orderId && orderIds.indexOf(orderId) > -1)
-			{
-				reloadWidget();
-			}
+
+			reloadWidget();
 		}, inCompatMode);
 
 		EventEmitter.subscribe('onPullEvent-salescenter', (command, params) => {
@@ -746,5 +1152,26 @@ export class EntityEditorPaymentDocuments
 				CurrencyCore.setCurrencyFormat(this._options.CURRENCY_ID, this._options.CURRENCY_FORMAT);
 			}
 		}
+	}
+
+	_reloadOwner()
+	{
+		if (this._parentContext instanceof BX.Crm.EntityEditorMoneyPay)
+		{
+			this._parentContext._editor.reload();
+			this._parentContext._editor.tapController('PRODUCT_LIST', function(controller) {
+				controller.reinitializeProductList();
+			});
+		}
+	}
+
+	_getMessage(phrase): ?string
+	{
+		if (Type.isPlainObject(this._phrases) && Type.isString(this._phrases[phrase]))
+		{
+			phrase = this._phrases[phrase];
+		}
+
+		return Loc.getMessage(phrase);
 	}
 }

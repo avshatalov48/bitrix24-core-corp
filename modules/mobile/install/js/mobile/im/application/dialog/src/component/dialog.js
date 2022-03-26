@@ -42,7 +42,7 @@ BitrixVue.component('bx-mobile-im-component-dialog',
 	data: function()
 	{
 		return {
-			dialogState: 'loading'
+			dialogState: 'none'
 		};
 	},
 	computed:
@@ -78,7 +78,7 @@ BitrixVue.component('bx-mobile-im-component-dialog',
 				color: ''
 			};
 
-			if (!this.showMessageDialog || !this.dialog.quoteId)
+			if (!this.isMessageLoaded || !this.dialog.quoteId)
 			{
 				return result;
 			}
@@ -119,10 +119,11 @@ BitrixVue.component('bx-mobile-im-component-dialog',
 		{
 			return this.application.options.darkBackground;
 		},
-		showMessageDialog()
+		isMessageLoaded()
 		{
-			let result = this.messageCollection && this.messageCollection.length > 0;
 			let timeout = ChatPerformance.getDialogShowTimeout();
+
+			let result = this.messageCollection && this.messageCollection.length > 0;
 			if (result)
 			{
 				if (timeout > 0)
@@ -341,9 +342,16 @@ BitrixVue.component('bx-mobile-im-component-dialog',
 			this.getApplication().setTextFocus();
 		}
 	},
+	watch:
+	{
+		dialogState(state)
+		{
+			this.getApplication().changeDialogState(state);
+		}
+	},
 	// language=Vue
 	template: `
-		<div :class="widgetClassName">
+		<div :class="widgetClassName" :data-message-loaded="isMessageLoaded">
 			<bx-im-component-dialog
 				:userId="application.common.userId"
 				:dialogId="application.dialog.dialogId"

@@ -2,7 +2,7 @@
 
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
 
-global $DB, $DBType;
+global $DB;
 
 if (!CModule::IncludeModule('catalog'))
 {
@@ -1807,4 +1807,19 @@ $anonymousId = \Bitrix\Main\Config\Option::get('sale', 'anonymous_user_id', 0);
 if ($anonymousId > 0)
 {
 	\CUser::AppendUserGroup($anonymousId, $groupId);
+}
+
+if (\Bitrix\Main\Config\Option::get('catalog', 'default_use_store_control', 'N') === 'Y')
+{
+	$platformCode = \Bitrix\Crm\Order\TradingPlatform\RealizationDocument::TRADING_PLATFORM_CODE;
+	$platform = \Bitrix\Crm\Order\TradingPlatform\RealizationDocument::getInstanceByCode($platformCode);
+	if (!$platform->isInstalled())
+	{
+		$platform->install();
+	}
+}
+
+if ($DB->TableExists("b_crm_shipment_realization") && $DB->TableExists("b_sale_order_delivery"))
+{
+	$DB->query("INSERT IGNORE INTO b_crm_shipment_realization (SHIPMENT_ID, IS_REALIZATION) SELECT ID, 'Y' FROM b_sale_order_delivery;");
 }

@@ -56,12 +56,21 @@ $companyID = isset($filter['COMPANY_ID']) ? $filter['COMPANY_ID'] : 0;
 $associatedCompanyID = isset($filter['ASSOCIATED_COMPANY_ID']) ? $filter['ASSOCIATED_COMPANY_ID'] : 0;
 $associatedDealID = isset($filter['ASSOCIATED_DEAL_ID']) ? $filter['ASSOCIATED_DEAL_ID'] : 0;
 
-if(($ID > 0 && !CCrmContact::CheckReadPermission($ID, $userPermissions))
-	|| ($leadID > 0 && !CCrmLead::CheckReadPermission($leadID, $userPermissions))
-	|| ($companyID > 0 && !CCrmCompany::CheckReadPermission($companyID, $userPermissions))
-	|| ($associatedCompanyID > 0 && !CCrmCompany::CheckReadPermission($associatedCompanyID, $userPermissions))
-	|| ($associatedDealID > 0 && !CCrmDeal::CheckReadPermission($associatedDealID, $userPermissions))
-)
+$isPermitted = (
+	($ID > 0 && CCrmContact::CheckReadPermission($ID, $userPermissions))
+	|| ($leadID > 0 && CCrmLead::CheckReadPermission($leadID, $userPermissions))
+	|| ($companyID > 0 && CCrmCompany::CheckReadPermission($companyID, $userPermissions))
+	|| ($associatedCompanyID > 0 && CCrmCompany::CheckReadPermission($associatedCompanyID, $userPermissions))
+	|| ($associatedDealID > 0 && CCrmDeal::CheckReadPermission($associatedDealID, $userPermissions))
+);
+if (!$isPermitted)
+{
+	$isPermitted = \Bitrix\Crm\Service\Container::getInstance()->getParentFieldManager()->tryPrepareListComponentParametersWithParentItem(
+		\CCrmOwnerType::Contact,
+		$componentParams
+	);
+}
+if (!$isPermitted)
 {
 	die();
 }

@@ -13,6 +13,7 @@ abstract class ErrorCode
 	public const ENTITY_NOT_SUPPORTED = 'ENTITY_TYPE_NOT_SUPPORTED';
 	public const OWNER_NOT_FOUND = 'OWNER_NOT_FOUND';
 	public const REQUIRED_ARG_MISSING = 'REQUIRED_ARG_MISSING';
+	public const INVALID_ARG_VALUE = 'INVALID_ARG_VALUE';
 
 	protected static function loadMessages(): void
 	{

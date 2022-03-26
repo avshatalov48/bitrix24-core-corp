@@ -8,6 +8,8 @@ class DealConversionConfig extends EntityConversionConfig
 	{
 		parent::__construct($options);
 
+		$this->srcEntityTypeID = \CCrmOwnerType::Deal;
+
 		$this->addItem(new EntityConversionConfigItem(\CCrmOwnerType::Invoice));
 		$this->addItem(new EntityConversionConfigItem(\CCrmOwnerType::Quote));
 	}

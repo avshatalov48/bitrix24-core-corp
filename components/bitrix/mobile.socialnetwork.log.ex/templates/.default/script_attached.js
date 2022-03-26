@@ -13,6 +13,7 @@ function __MSLOnFeedInit(params)
 	groupImage = params.groupImage;
 	tmstmp = parseInt(params.tmstmp);
 	strCounterType = params.strCounterType;
+	var canAddPost = (!BX.type.isUndefined(params.canAddPost) ? !!params.canAddPost : true);
 
 	oMSL.groupID = parseInt(params.groupID);
 	oMSL.ftMinTokenSize = parseInt(params.ftMinTokenSize);
@@ -56,87 +57,93 @@ function __MSLOnFeedInit(params)
 		{
 			BX.ready(function()
 			{
-				BX.MobileLivefeed.PageMenuInstance.listPageMenuItems.push({
-					id: 'addPost',
-					name: BX.message('MOBILE_EXT_LIVEFEED_LIST_MENU_ADD_POST'),
-					image: "/bitrix/templates/mobile_app/images/lenta/menu/pencil.png",
-					action: function()
-					{
-						if (Application.getApiVersion() >= BX.MobileLivefeed.Instance.getApiVersion('layoutPostForm'))
+				if (canAddPost)
+				{
+					BX.MobileLivefeed.PageMenuInstance.listPageMenuItems.push({
+						id: 'addPost',
+						name: BX.message('MOBILE_EXT_LIVEFEED_LIST_MENU_ADD_POST'),
+						image: "/bitrix/templates/mobile_app/images/lenta/menu/pencil.png",
+						action: function()
 						{
-							BX.MobileLivefeed.PostFormManagerInstance.show({
-								pageId: BX.MobileLivefeed.Instance.getPageId(),
-								groupId: groupID,
-								postId: 0,
-							});
-						}
-						else
-						{
-							oMSL.initPostForm({
-								groupId: groupID,
-								callback: function() {
-									app.exec('showPostForm', BX.MobileLivefeed.PostFormOldManagerInstance.show({
+							if (Application.getApiVersion() >= BX.MobileLivefeed.Instance.getApiVersion('layoutPostForm'))
+							{
+								BX.MobileLivefeed.PostFormManagerInstance.show({
+									pageId: BX.MobileLivefeed.Instance.getPageId(),
+									groupId: groupID,
+									postId: 0,
+								});
+							}
+							else
+							{
+								oMSL.initPostForm({
+									groupId: groupID,
+									callback: function() {
+										app.exec('showPostForm', BX.MobileLivefeed.PostFormOldManagerInstance.show({
+											groupId: groupID,
+										}));
+									}
+								});
+							}
+						},
+						arrowFlag: false
+					});
+				}
+
+				if (Application.getApiVersion() < BX.MobileLivefeed.Instance.getApiVersion('tabs'))
+				{
+					BX.MobileLivefeed.PageMenuInstance.listPageMenuItems.push({
+						id: 'groupTasks',
+						name: BX.message('MOBILE_EXT_LIVEFEED_LIST_MENU_GROUP_TASKS'),
+						image: '/bitrix/templates/mobile_app/images/lenta/menu/n_check.png',
+						icon: 'checkbox',
+						arrowFlag: true,
+						action: function() {
+
+							if (Application.getApiVersion() >= 31)
+							{
+								BXMobileApp.Events.postToComponent(
+									'taskbackground::task::action',
+									[{
 										groupId: groupID,
-									}));
+										groupName: BX.message('MSLLogTitle'),
+										groupImageUrl: groupImage,
+										ownerId: BX.message('USER_ID')
+									}],
+									'background'
+								);
+							}
+							else
+							{
+								var path = BX.message('MSLPathToTasksRouter');
+								path = path
+									.replace('__ROUTE_PAGE__', 'list')
+									.replace('#USER_ID#', BX.message('USER_ID'));
+								window.BXMobileApp.PageManager.loadPageUnique({
+									url: path,
+									bx24ModernStyle: true
+								});
+							}
+						}
+					});
+
+					BX.MobileLivefeed.PageMenuInstance.listPageMenuItems.push({
+						id: 'groupFiles',
+						name: BX.message('MOBILE_EXT_LIVEFEED_LIST_MENU_GROUP_FILES'),
+						image: '/bitrix/templates/mobile_app/images/lenta/menu/files.png',
+						action: function(){
+							app.openBXTable({
+								url: (BX.message('MobileSiteDir') ? BX.message('MobileSiteDir') : '/') + 'mobile/?mobile_action=disk_folder_list&type=group&path=/&entityId=' + groupID,
+								TABLE_SETTINGS: {
+									type: 'files',
+									name: BX.message('MSLLogTitle'),
+									useTagsInSearch : false
 								}
 							});
-						}
-					},
-					arrowFlag: false
-				});
-
-				BX.MobileLivefeed.PageMenuInstance.listPageMenuItems.push({
-					id: 'groupTasks',
-					name: BX.message('MOBILE_EXT_LIVEFEED_LIST_MENU_GROUP_TASKS'),
-					image: "/bitrix/templates/mobile_app/images/lenta/menu/n_check.png",
-					icon: 'checkbox',
-					arrowFlag: true,
-					action: function() {
-
-						if (Application.getApiVersion() >= 31)
-						{
-							BXMobileApp.Events.postToComponent(
-								'taskbackground::task::action',
-								[{
-									groupId: groupID,
-									groupName: BX.message('MSLLogTitle'),
-									groupImageUrl: groupImage,
-									ownerId: BX.message('USER_ID')
-								}],
-								'background'
-							);
-						}
-						else
-						{
-							var path = BX.message('MSLPathToTasksRouter');
-							path = path
-								.replace('__ROUTE_PAGE__', 'list')
-								.replace('#USER_ID#', BX.message('USER_ID'));
-							window.BXMobileApp.PageManager.loadPageUnique({
-								url: path,
-								bx24ModernStyle: true
-							});
-						}
-					}
-				});
-
-				BX.MobileLivefeed.PageMenuInstance.listPageMenuItems.push({
-					id: 'groupFiles',
-					name: BX.message('MOBILE_EXT_LIVEFEED_LIST_MENU_GROUP_FILES'),
-					image: "/bitrix/templates/mobile_app/images/lenta/menu/files.png",
-					action: function(){
-						app.openBXTable({
-							url: (BX.message('MobileSiteDir') ? BX.message('MobileSiteDir') : '/') + 'mobile/?mobile_action=disk_folder_list&type=group&path=/&entityId=' + groupID,
-							TABLE_SETTINGS : {
-								type : "files",
-								name:  BX.message('MSLLogTitle'),
-								useTagsInSearch : false
-							}
-						});
-					},
-					arrowFlag: true,
-					icon: "file"
-				});
+						},
+						arrowFlag: true,
+						icon: 'file',
+					});
+				}
 
 				if (BX.message('MSLPathToKnowledgeGroup'))
 				{
@@ -668,7 +675,7 @@ function __MSLOnFeedInit(params)
 				|| logID > 0
 			)
 			{
-				BX.MobileLivefeed.DetailPageScrollInstance.init();
+				BX.MobileLivefeed.PageScrollInstance.init();
 
 				setTimeout(function()
 				{
@@ -1191,8 +1198,12 @@ function __MSLPullDownInit(enable, bRefresh)
 				callback: function() {
 					if (!window.isPullDownLocked)
 					{
-						app.exec("hideSearchBar");
 						BX.MobileLivefeed.PageInstance.refresh(true);
+						BX.onCustomEvent('BX.MobileLivefeed.SearchBar::setHideByRefresh');
+						app.exec("hideSearchBar");
+						setTimeout(function() {
+							BX.onCustomEvent('BX.MobileLivefeed.SearchBar::unsetHideByRefresh');
+						}, 1000);
 					}
 				}
 			});
@@ -1445,7 +1456,11 @@ BitrixMSL.prototype.drawDetailPage = function(data)
 				: 'none'
 		);
 
-		BX('comments_control').addEventListener('click', BX.MobileLivefeed.CommentsInstance.setFocusOnCommentForm);
+		BX('comments_control').removeEventListener('click', BX.MobileLivefeed.CommentsInstance.setFocusOnCommentForm);
+		if (data.can_user_comment !== 'NO')
+		{
+			BX('comments_control').addEventListener('click', BX.MobileLivefeed.CommentsInstance.setFocusOnCommentForm);
+		}
 	}
 
 	if (!bReopen)
@@ -1827,6 +1842,16 @@ BitrixMSL.prototype.drawDetailPage = function(data)
 		}
 
 		oMSL.adjustDetailPageFocus();
+	}
+	else
+	{
+		if (
+			!BX.type.isUndefined(data.commentsNumNew)
+			&& parseInt(data.commentsNumNew) > 0
+		)
+		{
+			BX.MobileLivefeed.CommentsInstance.setFocusOnComments('list');
+		}
 	}
 
 	BX.removeAllCustomEvents('main.post.form/mobile_simple');
@@ -3111,48 +3136,60 @@ BitrixMSL.prototype.createTask = function(params)
 				taskData.GROUP_ID = parseInt(sonetGroupId[0]);
 			}
 
-			(new BX.Tasks.Util.Query({url: (BX.message('MobileSiteDir') ? BX.message('MobileSiteDir') + 'mobile/' : '/mobile/') + '?mobile_action=task_ajax'})).add(
-				'task.add',
-				{
-					data: taskData
+			BX.Mobile.Ajax.runComponentAction('bitrix:tasks.task', 'legacyAdd', {
+				mode: 'class',
+				data: {
+					data: taskData,
+					parameters: {
+						RETURN_ENTITY: true,
+						PLATFORM: 'mobile',
+					},
 				},
-				{},
+				onrequeststart: function(xhr) {
+					this.xhr = xhr;
+				}.bind(this),
+			}).then(
+				function(response)
 				{
-					onExecuted: BX.proxy(function(errors, data)
+					app.hidePopupLoader();
+
+					if (
+						typeof response.data != 'undefined'
+						&& typeof response.data.DATA != 'undefined'
+						&& typeof response.data.DATA.ID != 'undefined'
+						&& parseInt(response.data.DATA.ID) > 0
+					)
 					{
-						app.hidePopupLoader();
+						this.createTaskSetContentSuccess(response.data.DATA.ID);
 
-						if (
-							typeof data != 'undefined'
-							&& typeof data.RESULT != 'undefined'
-							&& typeof data.RESULT.DATA != 'undefined'
-							&& typeof data.RESULT.DATA.ID != 'undefined'
-							&& parseInt(data.RESULT.DATA.ID) > 0
-						)
-						{
-							this.createTaskSetContentSuccess(data.RESULT.DATA.ID);
-
-							BX.Mobile.Ajax.runAction('socialnetwork.api.livefeed.createTaskComment', {
-								data: {
-									params: {
-										postEntityType: (BX.type.isNotEmptyString(params.postEntityType) ? params.postEntityType : params.entityType),
-										entityType: params.entityType,
-										entityId: params.entityId,
-										taskId: data.RESULT.DATA.ID,
-										logId: (BX.type.isNumber(params.logId) ? params.logId : null)
-									}
+						BX.Mobile.Ajax.runAction('socialnetwork.api.livefeed.createTaskComment', {
+							data: {
+								params: {
+									postEntityType: (BX.type.isNotEmptyString(params.postEntityType) ? params.postEntityType : params.entityType),
+									entityType: params.entityType,
+									entityId: params.entityId,
+									taskId: response.data.DATA.ID,
+									logId: (BX.type.isNumber(params.logId) ? params.logId : null)
 								}
-							}).then(function(response) {
-							}, function(response) {
-							});
-						}
-						else
+							}
+						}).then(function(response) {
+						}, function(response) {
+						});
+					}
+				}.bind(this),
+				function(response)
+				{
+					if (response.errors && response.errors.length)
+					{
+						var errors = [];
+						for (var i = 0; i < response.errors.length; i++)
 						{
-							this.createTaskSetContentFailure(errors.getMessages());
+							errors.push(response.errors[i]['message']);
 						}
-					}, this)
-				}
-			).execute();
+						this.createTaskSetContentFailure(errors);
+					}
+				}.bind(this)
+			);
 		}
 		else
 		{

@@ -6,8 +6,11 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\SalesCenter\Delivery\Handlers\HandlersRepository;
 use Bitrix\Main\Engine\JsonPayload;
+use Bitrix\SalesCenter\Integration\SaleManager;
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+Loader::requireModule('salescenter');
 
 Loc::loadMessages(__FILE__);
 
@@ -24,6 +27,12 @@ class CSalesCenterDeliveryWizardComponentAjaxController extends Controller
 	 */
 	public function installAction(JsonPayload $settings)
 	{
+		if (!SaleManager::getInstance()->isFullAccess())
+		{
+			$this->addError(new Error('Access denied'));
+			return null;
+		}
+
 		$data = $settings->getData();
 		$code = $data['code'];
 
@@ -61,6 +70,12 @@ class CSalesCenterDeliveryWizardComponentAjaxController extends Controller
 	 */
 	public function updateAction(JsonPayload $settings)
 	{
+		if (!SaleManager::getInstance()->isFullAccess())
+		{
+			$this->addError(new Error('Access denied'));
+			return null;
+		}
+
 		$data = $settings->getData();
 		$id = $data['id'];
 		$code = $data['code'];
@@ -91,6 +106,12 @@ class CSalesCenterDeliveryWizardComponentAjaxController extends Controller
 	 */
 	public function deleteAction(int $id, string $code)
 	{
+		if (!SaleManager::getInstance()->isFullAccess())
+		{
+			$this->addError(new Error('Access denied'));
+			return null;
+		}
+
 		$wizard = $this->makeWizard($code);
 		if (!$wizard)
 		{

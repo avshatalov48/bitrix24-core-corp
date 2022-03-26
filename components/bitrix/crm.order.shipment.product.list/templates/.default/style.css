@@ -518,3 +518,7 @@ a.crm-order-product-store-add-item {
 .crm-entity-widget-content-input.barcode-error { border-color: #f00; }
 
 .crm-entity-widget-content-input.barcode-ok { border-color: #0f0; }
+
+a.crm-order-product-store-storeadder-hidden {
+	display: none;
+}

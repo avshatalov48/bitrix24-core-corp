@@ -1,0 +1,3 @@
+<?php
+$MESS["SELECTOR_COMPONENT_PICK_USER_2"] = "User";
+$MESS["SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_USER"] = "Start typing to find user";

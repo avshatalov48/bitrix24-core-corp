@@ -197,7 +197,7 @@ if (empty($arResult['RELOAD']) && empty($arResult['URL_RELOAD']))
 					?>
 				</div>
 			</div>
-			<?
+			<?php
 			if (count($arResult['LIST_LINE']) > 0)
 			{
 				?>
@@ -294,4 +294,5 @@ else
 	</html>
 	<?
 }
+$APPLICATION->ShowViewContent('fb_meta_restriction_note');
 ?>

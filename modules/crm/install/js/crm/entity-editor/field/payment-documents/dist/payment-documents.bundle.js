@@ -2,8 +2,103 @@ this.BX = this.BX || {};
 (function (exports,main_core_events,main_popup,currency_currencyCore,ui_dialogs_messagebox,main_core,ui_label) {
 	'use strict';
 
-	function _templateObject7() {
+	var DocumentManager = /*#__PURE__*/function () {
+	  function DocumentManager() {
+	    babelHelpers.classCallCheck(this, DocumentManager);
+	  }
+
+	  babelHelpers.createClass(DocumentManager, null, [{
+	    key: "openRealizationDetailDocument",
+	    value: function openRealizationDetailDocument(id) {
+	      var params = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+	      var url = DocumentManager.getRealizationDocumentDetailUrl(id, params);
+	      var sliderOptions = params.hasOwnProperty('sliderOptions') ? params.sliderOptions : {};
+	      return new Promise(function (resolve, reject) {
+	        DocumentManager.openSlider(url.toString(), sliderOptions).then(function (slider) {
+	          resolve(slider.getData());
+	        }).catch(function (reason) {});
+	      });
+	    }
+	  }, {
+	    key: "openNewRealizationDocument",
+	    value: function openNewRealizationDocument() {
+	      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+	      var sliderOptions = {};
+
+	      if (params.hasOwnProperty('sliderOptions')) {
+	        sliderOptions = params.sliderOptions;
+	        delete params.sliderOptions;
+	      }
+
+	      var url = DocumentManager.getNewRealizationDocumentUrl(params);
+	      return new Promise(function (resolve, reject) {
+	        DocumentManager.openSlider(url.toString(), sliderOptions).then(function (slider) {
+	          resolve(slider.getData());
+	        }).catch(function (reason) {});
+	      });
+	    }
+	  }, {
+	    key: "openSlider",
+	    value: function openSlider(url, options) {
+	      if (!main_core.Type.isPlainObject(options)) {
+	        options = {};
+	      }
+
+	      options = babelHelpers.objectSpread({}, {
+	        cacheable: false,
+	        allowChangeHistory: false,
+	        events: {}
+	      }, options);
+	      return new Promise(function (resolve) {
+	        if (main_core.Type.isString(url) && url.length > 1) {
+	          options.events.onClose = function (event) {
+	            resolve(event.getSlider());
+	          };
+
+	          BX.SidePanel.Instance.open(url, options);
+	        } else {
+	          resolve();
+	        }
+	      });
+	    }
+	  }, {
+	    key: "getRealizationDocumentDetailUrl",
+	    value: function getRealizationDocumentDetailUrl(id, params) {
+	      var url = new main_core.Uri('/shop/documents/details/sales_order/' + id + '/');
+
+	      if (main_core.Type.isPlainObject(params)) {
+	        url.setQueryParams(params);
+	      }
+
+	      return url;
+	    }
+	  }, {
+	    key: "getNewRealizationDocumentUrl",
+	    value: function getNewRealizationDocumentUrl(params) {
+	      var url = new main_core.Uri('/shop/documents/details/sales_order/0/?DOCUMENT_TYPE=W');
+
+	      if (main_core.Type.isPlainObject(params)) {
+	        url.setQueryParams(params);
+	      }
+
+	      return url;
+	    }
+	  }]);
+	  return DocumentManager;
+	}();
+
+	function _templateObject8() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-total\">\n\t\t\t\t<span>\n\t\t\t\t\t", "\n\t\t\t\t\t<span data-hint=\"", "\"></span>\n\t\t\t\t</span>\n\t\t\t\t<span class=\"crm-entity-widget-payment-text\">", "</span>\n\t\t\t</div>\n\t\t"]);
+
+	  _templateObject8 = function _templateObject8() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject7() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-add-box\">\n\t\t\t\t<a href=\"#\" class=\"crm-entity-widget-payment-add\" onclick=\"", "\">\n\t\t\t\t\t+ ", "\n\t\t\t\t</a>\n\t\t\t</div>\n\t\t"]);
 
 	  _templateObject7 = function _templateObject7() {
 	    return data;
@@ -13,7 +108,7 @@ this.BX = this.BX || {};
 	}
 
 	function _templateObject6() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-add-box\">\n\t\t\t\t<a href=\"#\" class=\"crm-entity-widget-payment-add\" onclick=\"", "\">\n\t\t\t\t\t+ ", "\n\t\t\t\t</a>\n\t\t\t</div>\n\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-detail\">\n\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t", " (", ")\n\t\t\t\t</a>\n\t\t\t\t<div class=\"crm-entity-widget-payment-detail-inner\">\n\t\t\t\t\t<div class=\"ui-label ui-label-md ui-label-light crm-entity-widget-payment-action\" onclick=\"", "\">\n\t\t\t\t\t\t<span class=\"ui-label-inner\">", "</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
 
 	  _templateObject6 = function _templateObject6() {
 	    return data;
@@ -71,14 +166,25 @@ this.BX = this.BX || {};
 
 	  return data;
 	}
+	var SPECIFIC_REALIZATION_ERROR_CODES = ['REALIZATION_ACCESS_DENIED', 'REALIZATION_CANNOT_DELETE', 'REALIZATION_ALREADY_DEDUCTED', 'REALIZATION_NOT_DEDUCTED', 'REALIZATION_PRODUCT_NOT_FOUND', 'SHIPMENT_ACCESS_DENIED', 'PAYMENT_ACCESS_DENIED'];
+	var SPECIFIC_ERROR_CODES = SPECIFIC_REALIZATION_ERROR_CODES.concat(['DEDUCTION_STORE_ERROR1', 'SALE_PROVIDER_SHIPMENT_QUANTITY_NOT_ENOUGH', 'SALE_SHIPMENT_EXIST_SHIPPED', 'SALE_PAYMENT_DELETE_EXIST_PAID', 'DDCT_DEDUCTION_QUANTITY_STORE_ERROR']);
 	var EntityEditorPaymentDocuments = /*#__PURE__*/function () {
 	  function EntityEditorPaymentDocuments(options) {
 	    babelHelpers.classCallCheck(this, EntityEditorPaymentDocuments);
 	    this._options = options;
+	    this._phrases = {};
+
+	    if (main_core.Type.isPlainObject(options.PHRASES)) {
+	      this._phrases = options.PHRASES;
+	    }
+
 	    this._isDeliveryAvailable = this._options.IS_DELIVERY_AVAILABLE;
 	    this._parentContext = options.PARENT_CONTEXT;
+	    this._callContext = options.CONTEXT;
 	    this._rootNode = main_core.Tag.render(_templateObject(), this.constructor._rootNodeClass);
 	    this._menus = [];
+	    this._isUsedInventoryManagement = this._options.IS_USED_INVENTORY_MANAGEMENT;
+	    this._isInventoryManagementRestricted = this._options.IS_INVENTORY_MANAGEMENT_RESTRICTED;
 
 	    this._subscribeToGlobalEvents();
 	  }
@@ -99,7 +205,7 @@ this.BX = this.BX || {};
 
 	      this._setupCurrencyFormat();
 
-	      if (this.hasContent()) {
+	      if (this._isUsedInventoryManagement || this.hasContent()) {
 	        this._rootNode.classList.remove('is-hidden');
 
 	        this._rootNode.append(main_core.Tag.render(_templateObject2(), this._renderTitle(), this._renderDocuments(), this._renderAddDocument(), this._renderTotalSum()));
@@ -119,13 +225,14 @@ this.BX = this.BX || {};
 	    value: function reloadModel(onSuccess, onError) {
 	      var _this = this;
 
-	      if (!this._options.DEAL_ID) {
+	      if (!this._options.OWNER_ID) {
 	        return;
 	      }
 
 	      var data = {
 	        data: {
-	          dealId: this._options.DEAL_ID
+	          ownerTypeId: this._options.OWNER_TYPE_ID,
+	          ownerId: this._options.OWNER_ID
 	        }
 	      };
 
@@ -161,12 +268,12 @@ this.BX = this.BX || {};
 
 	      this._loading(true);
 
-	      main_core.ajax.runAction('crm.api.deal.fetchPaymentDocuments', data).then(successCallback, errorCallback);
+	      main_core.ajax.runAction('crm.api.entity.fetchPaymentDocuments', data).then(successCallback, errorCallback);
 	    }
 	  }, {
 	    key: "_renderTitle",
 	    value: function _renderTitle() {
-	      return main_core.Tag.render(_templateObject3(), main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TITLE'));
+	      return main_core.Tag.render(_templateObject3(), this._getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TITLE'));
 	    }
 	  }, {
 	    key: "_renderDocuments",
@@ -179,7 +286,9 @@ this.BX = this.BX || {};
 	        if (doc.TYPE === 'PAYMENT') {
 	          nodes.push(_this2._renderPaymentDocument(doc));
 	        } else if (doc.TYPE === 'SHIPMENT') {
-	          nodes.push(_this2._renderShipmentDocument(doc));
+	          nodes.push(_this2._renderDeliveryDocument(doc));
+	        } else if (doc.TYPE === 'SHIPMENT_DOCUMENT') {
+	          nodes.push(_this2._renderRealizationDocument(doc));
 	        }
 	      });
 
@@ -300,8 +409,8 @@ this.BX = this.BX || {};
 	      return main_core.Tag.render(_templateObject4(), openSlider, title, sum, openMenu, main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ACTIONS_MENU'), new ui_label.Label(labelOptions).render());
 	    }
 	  }, {
-	    key: "_renderShipmentDocument",
-	    value: function _renderShipmentDocument(doc) {
+	    key: "_renderDeliveryDocument",
+	    value: function _renderDeliveryDocument(doc) {
 	      var _this4 = this;
 
 	      var labelOptions = {
@@ -340,7 +449,12 @@ this.BX = this.BX || {};
 	        }]
 	      }, {
 	        text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE'),
+	        className: doc.DEDUCTED === 'Y' ? 'menu-popup-no-icon crm-entity-widget-shipment-menu-item-remove' : '',
 	        onclick: function onclick() {
+	          if (doc.DEDUCTED === 'Y') {
+	            return false;
+	          }
+
 	          popupMenu.close();
 	          ui_dialogs_messagebox.MessageBox.show({
 	            title: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_CONFIRM_TITLE'),
@@ -371,6 +485,13 @@ this.BX = this.BX || {};
 	          items: menuItems
 	        });
 	        popupMenu.show();
+	        var removeDocumentMenuItem = popupMenu.itemsContainer.querySelector('.crm-entity-widget-shipment-menu-item-remove');
+
+	        if (removeDocumentMenuItem) {
+	          removeDocumentMenuItem.setAttribute('data-hint', main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_REMOVE_TIP'));
+	          removeDocumentMenuItem.setAttribute('data-hint-no-icon', '');
+	          BX.UI.Hint.init(popupMenu.itemsContainer);
+	        }
 
 	        _this4._menus.push(popupMenu);
 	      };
@@ -378,16 +499,119 @@ this.BX = this.BX || {};
 	      return main_core.Tag.render(_templateObject5(), openSlider, title, doc.DELIVERY_NAME, sum, openMenu, main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ACTIONS_MENU'), new ui_label.Label(labelOptions).render());
 	    }
 	  }, {
+	    key: "_renderRealizationDocument",
+	    value: function _renderRealizationDocument(doc) {
+	      var _this5 = this;
+
+	      var labelOptions = {
+	        customClass: 'crm-entity-widget-payment-label',
+	        fill: true
+	      };
+
+	      if (doc.DEDUCTED === 'Y') {
+	        labelOptions.text = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_STATUS_DEDUCTED');
+	        labelOptions.color = ui_label.LabelColor.LIGHT_GREEN;
+	      } else {
+	        if (doc.EMP_DEDUCTED_ID) {
+	          labelOptions.text = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_STATUS_CANCELLED');
+	          labelOptions.color = ui_label.LabelColor.LIGHT_ORANGE;
+	        } else {
+	          labelOptions.text = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_STATUS_DRAFT');
+	          labelOptions.color = ui_label.LabelColor.LIGHT;
+	        }
+	      }
+
+	      var title = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_DATE').replace(/#DATE#/gi, doc.FORMATTED_DATE);
+	      title = title.replace(/#DOCUMENT_ID#/gi, doc.ACCOUNT_NUMBER);
+	      title = BX.util.htmlspecialchars(title);
+	      var sum = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_AMOUNT').replace(/#SUM#/gi, this._renderMoney(doc.SUM));
+	      var popupMenu;
+	      var menuItems = [];
+
+	      if (doc.DEDUCTED === 'Y') {
+	        menuItems.push({
+	          text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_STATUS_CANCEL'),
+	          className: doc.DEDUCTED === 'Y' ? '' : 'menu-popup-item-accept-sm',
+	          onclick: function onclick() {
+	            _this5._setRealizationDeductedStatus(doc, false);
+
+	            popupMenu.close();
+	          }
+	        });
+	      } else {
+	        menuItems.push({
+	          text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_STATUS_CONDUCT'),
+	          className: doc.DEDUCTED === 'Y' ? 'menu-popup-item-accept-sm' : '',
+	          onclick: function onclick() {
+	            _this5._setRealizationDeductedStatus(doc, true);
+
+	            popupMenu.close();
+	          }
+	        });
+	      }
+
+	      menuItems.push({
+	        text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE'),
+	        className: doc.DEDUCTED === 'Y' ? 'menu-popup-no-icon crm-entity-widget-realization-menu-item-remove' : '',
+	        onclick: function onclick() {
+	          if (doc.DEDUCTED === 'Y') {
+	            return false;
+	          }
+
+	          popupMenu.close();
+	          ui_dialogs_messagebox.MessageBox.show({
+	            title: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_CONFIRM_TITLE'),
+	            message: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_CONFIRM_REMOVE_TEXT'),
+	            modal: true,
+	            buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+	            onOk: function onOk(messageBox) {
+	              messageBox.close();
+
+	              _this5._removeDocument(doc);
+	            },
+	            onCancel: function onCancel(messageBox) {
+	              messageBox.close();
+	            }
+	          });
+	        }
+	      });
+
+	      var openSlider = function openSlider() {
+	        return _this5._viewRealizationSlider(doc.ID);
+	      };
+
+	      var openMenu = function openMenu(event) {
+	        event.preventDefault();
+	        popupMenu = main_popup.MenuManager.create({
+	          id: 'payment-documents-realization-action-' + doc.ID,
+	          bindElement: event.target,
+	          items: menuItems
+	        });
+	        popupMenu.show();
+	        var removeDocumentMenuItem = popupMenu.itemsContainer.querySelector('.crm-entity-widget-realization-menu-item-remove');
+
+	        if (removeDocumentMenuItem) {
+	          removeDocumentMenuItem.setAttribute('data-hint', main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REALIZATION_REMOVE_TIP'));
+	          removeDocumentMenuItem.setAttribute('data-hint-no-icon', '');
+	          BX.UI.Hint.init(popupMenu.itemsContainer);
+	        }
+
+	        _this5._menus.push(popupMenu);
+	      };
+
+	      return main_core.Tag.render(_templateObject6(), openSlider, title, sum, openMenu, main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ACTIONS_MENU'), new ui_label.Label(labelOptions).render());
+	    }
+	  }, {
 	    key: "_renderAddDocument",
 	    value: function _renderAddDocument() {
-	      var _this5 = this;
+	      var _this6 = this;
 
 	      var latestOrderId = this._latestOrderId();
 
 	      var menuItems = [{
 	        text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DOCUMENT_TYPE_PAYMENT'),
 	        onclick: function onclick() {
-	          return _this5._context().startSalescenterApplication(latestOrderId);
+	          return _this6._context().startSalescenterApplication(latestOrderId);
 	        }
 	      }];
 
@@ -395,9 +619,29 @@ this.BX = this.BX || {};
 	        menuItems.push({
 	          text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DOCUMENT_TYPE_DELIVERY'),
 	          onclick: function onclick() {
-	            return _this5._createDeliverySlider(latestOrderId);
+	            return _this6._createDeliverySlider(latestOrderId);
 	          }
 	        });
+	      }
+
+	      if (this._isUsedInventoryManagement) {
+	        var menuItem = {
+	          text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DOCUMENT_TYPE_SHIPMENT_DOCUMENT')
+	        };
+
+	        if (this._isInventoryManagementRestricted) {
+	          menuItem.onclick = function () {
+	            return top.BX.UI.InfoHelper.show('limit_store_crm_integration');
+	          };
+
+	          menuItem.className = 'realization-document-tariff-lock';
+	        } else {
+	          menuItem.onclick = function () {
+	            return _this6._createRealizationSlider(latestOrderId);
+	          };
+	        }
+
+	        menuItems.push(menuItem);
 	      }
 
 	      var openMenu = function openMenu(event) {
@@ -409,15 +653,15 @@ this.BX = this.BX || {};
 	        });
 	        popupMenu.show();
 
-	        _this5._menus.push(popupMenu);
+	        _this6._menus.push(popupMenu);
 	      };
 
-	      return main_core.Tag.render(_templateObject6(), openMenu, main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CREATE_DOCUMENT'));
+	      return main_core.Tag.render(_templateObject7(), openMenu, main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CREATE_DOCUMENT'));
 	    }
 	  }, {
 	    key: "_calculateTotalSum",
 	    value: function _calculateTotalSum() {
-	      var totalSum = parseFloat(this._options.DEAL_AMOUNT);
+	      var totalSum = parseFloat(this._options.ENTITY_AMOUNT);
 
 	      this._docs().forEach(function (doc) {
 	        if (doc.TYPE === 'PAYMENT') {
@@ -438,7 +682,7 @@ this.BX = this.BX || {};
 	    value: function _renderTotalSum() {
 	      var totalSum = this._calculateTotalSum();
 
-	      var node = main_core.Tag.render(_templateObject7(), main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TOTAL_SUM'), main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TOTAL_SUM_TOOLTIP'), this._renderMoney(totalSum));
+	      var node = main_core.Tag.render(_templateObject8(), this._getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TOTAL_SUM'), this._getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TOTAL_SUM_TOOLTIP'), this._renderMoney(totalSum));
 	      BX.UI.Hint.init(node);
 	      return node;
 	    }
@@ -479,38 +723,80 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_latestOrderId",
 	    value: function _latestOrderId() {
-	      return Math.max.apply(Math, babelHelpers.toConsumableArray(this._orderIds()));
+	      var latestOrder = parseInt(Math.max.apply(Math, babelHelpers.toConsumableArray(this._orderIds())));
+	      return latestOrder > 0 ? latestOrder : 0;
 	    }
 	  }, {
-	    key: "_dealEntityType",
-	    value: function _dealEntityType() {
-	      return BX.CrmEntityType.enumeration.deal;
+	    key: "_ownerTypeId",
+	    value: function _ownerTypeId() {
+	      return this._options.OWNER_TYPE_ID || BX.CrmEntityType.enumeration.deal;
 	    }
 	  }, {
 	    key: "_createDeliverySlider",
 	    value: function _createDeliverySlider(orderId) {
+	      var analyticsLabel = 'crmDealPaymentDocumentsCreateDeliverySlider';
+
+	      if (BX.CrmEntityType.isDynamicTypeByTypeId(this._ownerTypeId())) {
+	        analyticsLabel = 'crmDynamicTypePaymentDocumentsCreateDeliverySlider';
+	      }
+
 	      var options = {
-	        context: 'deal',
+	        context: this._callContext,
 	        templateMode: 'create',
 	        mode: 'delivery',
-	        analyticsLabel: 'crmDealPaymentDocumentsCreateDeliverySlider',
-	        ownerTypeId: this._dealEntityType(),
-	        ownerId: this._options.DEAL_ID,
+	        analyticsLabel: analyticsLabel,
+	        ownerTypeId: this._ownerTypeId(),
+	        ownerId: this._options.OWNER_ID,
 	        orderId: orderId
 	      };
 
 	      this._context().startSalescenterApplication(orderId, options);
 	    }
 	  }, {
+	    key: "_createRealizationSlider",
+	    value: function _createRealizationSlider(orderId) {
+	      var analyticsLabel = 'crmDealPaymentDocumentsCreateRealizationSlider';
+
+	      if (BX.CrmEntityType.isDynamicTypeByTypeId(this._ownerTypeId())) {
+	        analyticsLabel = 'crmDynamicTypePaymentDocumentsCreateRealizationSlider';
+	      }
+
+	      var options = {
+	        context: {
+	          OWNER_TYPE_ID: this._ownerTypeId(),
+	          OWNER_ID: this._options.OWNER_ID,
+	          ORDER_ID: orderId
+	        },
+	        analyticsLabel: analyticsLabel,
+	        documentType: 'W',
+	        sliderOptions: {
+	          customLeftBoundary: 0,
+	          loader: 'crm-entity-details-loader',
+	          requestMethod: 'post'
+	        }
+	      };
+	      DocumentManager.openNewRealizationDocument(options).then(function (result) {
+	        this.reloadModel();
+
+	        this._reloadOwner();
+	      }.bind(this));
+	    }
+	  }, {
 	    key: "_chooseDeliverySlider",
 	    value: function _chooseDeliverySlider(orderId) {
+	      var analyticsLabel = 'crmDealPaymentDocumentsChooseDeliverySlider';
+
+	      if (BX.CrmEntityType.isDynamicTypeByTypeId(this._ownerTypeId())) {
+	        analyticsLabel = 'crmDynamicTypePaymentDocumentsChooseDeliverySlider';
+	      }
+
 	      var options = {
-	        context: 'deal',
+	        context: this._callContext,
 	        templateMode: 'create',
 	        mode: 'delivery',
-	        analyticsLabel: 'crmDealPaymentDocumentsChooseDeliverySlider',
-	        ownerTypeId: this._dealEntityType(),
-	        ownerId: this._options.DEAL_ID,
+	        analyticsLabel: analyticsLabel,
+	        ownerTypeId: this._ownerTypeId(),
+	        ownerId: this._options.OWNER_ID,
 	        orderId: orderId
 	      };
 
@@ -519,14 +805,20 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_resendPaymentSlider",
 	    value: function _resendPaymentSlider(orderId, paymentId) {
+	      var analyticsLabel = 'crmDealPaymentDocumentsResendPaymentSlider';
+
+	      if (BX.CrmEntityType.isDynamicTypeByTypeId(this._ownerTypeId())) {
+	        analyticsLabel = 'crmDynamicTypePaymentDocumentsResendPaymentSlider';
+	      }
+
 	      var options = {
 	        disableSendButton: '',
 	        context: 'deal',
-	        mode: 'payment_delivery',
-	        analyticsLabel: 'crmDealPaymentDocumentsResendPaymentSlider',
+	        mode: this._ownerTypeId() === BX.CrmEntityType.enumeration.deal ? 'payment_delivery' : 'payment',
+	        analyticsLabel: analyticsLabel,
 	        templateMode: 'view',
-	        ownerTypeId: this._dealEntityType(),
-	        ownerId: this._options.DEAL_ID,
+	        ownerTypeId: this._ownerTypeId(),
+	        ownerId: this._options.OWNER_ID,
 	        orderId: orderId,
 	        paymentId: paymentId
 	      };
@@ -536,13 +828,19 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_viewDeliverySlider",
 	    value: function _viewDeliverySlider(orderId, shipmentId) {
+	      var analyticsLabel = 'crmDealPaymentDocumentsViewDeliverySlider';
+
+	      if (BX.CrmEntityType.isDynamicTypeByTypeId(this._ownerTypeId())) {
+	        analyticsLabel = 'crmDynamicTypePaymentDocumentsViewDeliverySlider';
+	      }
+
 	      var options = {
-	        context: 'deal',
+	        context: this._callContext,
 	        templateMode: 'view',
 	        mode: 'delivery',
-	        analyticsLabel: 'crmDealPaymentDocumentsViewDeliverySlider',
-	        ownerTypeId: this._dealEntityType(),
-	        ownerId: this._options.DEAL_ID,
+	        analyticsLabel: analyticsLabel,
+	        ownerTypeId: this._ownerTypeId(),
+	        ownerId: this._options.OWNER_ID,
 	        orderId: orderId,
 	        shipmentId: shipmentId
 	      };
@@ -550,9 +848,32 @@ this.BX = this.BX || {};
 	      this._context().startSalescenterApplication(orderId, options);
 	    }
 	  }, {
+	    key: "_viewRealizationSlider",
+	    value: function _viewRealizationSlider(documentId) {
+	      var analyticsLabel = 'crmDealPaymentDocumentsViewRealizationSlider';
+
+	      if (BX.CrmEntityType.isDynamicTypeByTypeId(this._ownerTypeId())) {
+	        analyticsLabel = 'crmDynamicTypePaymentDocumentsViewRealizationSlider';
+	      }
+
+	      var options = {
+	        ownerTypeId: this._ownerTypeId(),
+	        ownerId: this._options.OWNER_ID,
+	        analyticsLabel: analyticsLabel,
+	        documentId: documentId,
+	        sliderOptions: {
+	          customLeftBoundary: 0,
+	          loader: 'crm-entity-details-loader'
+	        }
+	      };
+	      DocumentManager.openRealizationDetailDocument(documentId, options).then(function (result) {
+	        this._reloadOwner();
+	      }.bind(this));
+	    }
+	  }, {
 	    key: "_setPaymentPaidStatus",
 	    value: function _setPaymentPaidStatus(payment, isPaid) {
-	      var _this6 = this;
+	      var _this7 = this;
 
 	      var strPaid = isPaid ? 'Y' : 'N';
 	      var stage = isPaid ? 'PAID' : 'CANCEL';
@@ -574,12 +895,18 @@ this.BX = this.BX || {};
 	      var doNothingOnSuccess = function doNothingOnSuccess(response) {};
 
 	      var reloadModelOnError = function reloadModelOnError(response) {
-	        _this6.reloadModel();
+	        _this7._showErrorOnAction(response);
 
-	        _this6._showCommonError();
+	        _this7.reloadModel();
 	      };
 
-	      main_core.ajax.runAction('sale.payment.setpaid', {
+	      var actionName = 'sale.payment.setpaid';
+
+	      if (this._isUsedInventoryManagement) {
+	        actionName = 'crm.order.payment.setPaid';
+	      }
+
+	      main_core.ajax.runAction(actionName, {
 	        data: {
 	          id: payment.ID,
 	          value: strPaid
@@ -589,7 +916,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_setShipmentShippedStatus",
 	    value: function _setShipmentShippedStatus(shipment, isShipped) {
-	      var _this7 = this;
+	      var _this8 = this;
 
 	      var strShipped = isShipped ? 'Y' : 'N';
 
@@ -609,12 +936,53 @@ this.BX = this.BX || {};
 	      var doNothingOnSuccess = function doNothingOnSuccess(response) {};
 
 	      var reloadModelOnError = function reloadModelOnError(response) {
-	        _this7.reloadModel();
+	        _this8._showShipmentStatusError(response, shipment.ID);
 
-	        _this7._showCommonError();
+	        _this8.reloadModel();
 	      };
 
-	      main_core.ajax.runAction('sale.shipment.setshipped', {
+	      var actionName = 'sale.shipment.setshipped';
+
+	      if (this._isUsedInventoryManagement) {
+	        actionName = 'crm.api.realizationdocument.setShipped';
+	      }
+
+	      main_core.ajax.runAction(actionName, {
+	        data: {
+	          id: shipment.ID,
+	          value: strShipped
+	        }
+	      }).then(doNothingOnSuccess, reloadModelOnError);
+	    }
+	  }, {
+	    key: "_setRealizationDeductedStatus",
+	    value: function _setRealizationDeductedStatus(shipment, isShipped) {
+	      var _this9 = this;
+
+	      var strShipped = isShipped ? 'Y' : 'N';
+
+	      if (shipment.DEDUCTED && shipment.DEDUCTED === strShipped) {
+	        return;
+	      } // positive approach - render success first, then do actual query
+
+
+	      this._docs().forEach(function (doc) {
+	        if (doc.TYPE === 'SHIPMENT_DOCUMENT' && doc.ID === shipment.ID) {
+	          doc.DEDUCTED = strShipped;
+	        }
+	      });
+
+	      this.render();
+
+	      var doNothingOnSuccess = function doNothingOnSuccess(response) {};
+
+	      var reloadModelOnError = function reloadModelOnError(response) {
+	        _this9._showErrorOnAction(response);
+
+	        _this9.reloadModel();
+	      };
+
+	      main_core.ajax.runAction('crm.api.realizationdocument.setShipped', {
 	        data: {
 	          id: shipment.ID,
 	          value: strShipped
@@ -624,16 +992,20 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_removeDocument",
 	    value: function _removeDocument(doc) {
-	      var _this8 = this;
+	      var _this10 = this;
 
 	      var action;
+	      var data = {
+	        id: doc.ID
+	      };
+	      action = this._resolveRemoveDocumentActionName(doc.TYPE);
 
-	      if (doc.TYPE === 'PAYMENT') {
-	        action = 'sale.payment.delete';
-	      } else if (doc.TYPE === 'SHIPMENT') {
-	        action = 'sale.shipment.delete';
-	      } else {
+	      if (!action) {
 	        return;
+	      }
+
+	      if (doc.TYPE === 'SHIPMENT_DOCUMENT') {
+	        data.value = 'N';
 	      } // positive approach - render success first, then do actual query
 
 
@@ -642,19 +1014,109 @@ this.BX = this.BX || {};
 	      });
 	      this.render();
 
-	      var doNothingOnSuccess = function doNothingOnSuccess(response) {};
+	      var onSuccess = function onSuccess(response) {
+	        _this10._reloadOwner();
+	      };
 
 	      var reloadModelOnError = function reloadModelOnError(response) {
-	        _this8.reloadModel();
+	        _this10._showErrorOnAction(response);
 
-	        _this8._showCommonError();
+	        _this10.reloadModel();
 	      };
 
 	      main_core.ajax.runAction(action, {
-	        data: {
-	          id: doc.ID
+	        data: data
+	      }).then(onSuccess, reloadModelOnError);
+	    }
+	  }, {
+	    key: "_resolveRemoveDocumentActionName",
+	    value: function _resolveRemoveDocumentActionName(type) {
+	      var actionBaseName = 'sale';
+
+	      if (this._isUsedInventoryManagement) {
+	        actionBaseName = 'crm.order';
+	      }
+
+	      var action = '';
+
+	      if (type === 'PAYMENT') {
+	        action = actionBaseName + '.payment.delete';
+	      } else if (type === 'SHIPMENT') {
+	        action = actionBaseName + '.shipment.delete';
+	      } else if (type === 'SHIPMENT_DOCUMENT') {
+	        action = 'crm.api.realizationdocument.setRealization';
+	      }
+
+	      return action;
+	    }
+	  }, {
+	    key: "_showShipmentStatusError",
+	    value: function _showShipmentStatusError(response, shipmentId) {
+	      var _this11 = this;
+
+	      var showCommonError = true;
+
+	      if (this._isUsedInventoryManagement) {
+	        response.errors.forEach(function (error) {
+	          if (SPECIFIC_ERROR_CODES.indexOf(error.code) > -1) {
+	            showCommonError = false;
+	            var notifyMessage = error.message;
+
+	            if (SPECIFIC_REALIZATION_ERROR_CODES.indexOf(error.code) === -1) {
+	              notifyMessage = BX.util.htmlspecialchars(notifyMessage);
+	            }
+
+	            BX.UI.Notification.Center.notify({
+	              content: notifyMessage,
+	              actions: [{
+	                title: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_OPEN_REALIZATION_DOCUMENT'),
+	                events: {
+	                  click: function click(event, balloon, action) {
+	                    _this11._viewRealizationSlider(shipmentId);
+
+	                    balloon.close();
+	                  }
+	                }
+	              }]
+	            });
+	          }
+	        });
+	      }
+
+	      if (showCommonError) {
+	        this._showCommonError();
+	      }
+	    }
+	  }, {
+	    key: "_showErrorOnAction",
+	    value: function _showErrorOnAction(response) {
+	      var _this12 = this;
+
+	      var showCommonError = true;
+	      response.errors.forEach(function (error) {
+	        if (SPECIFIC_ERROR_CODES.indexOf(error.code) > -1) {
+	          showCommonError = false;
+
+	          _this12._showSpecificError(error.code, error.message);
 	        }
-	      }).then(doNothingOnSuccess, reloadModelOnError);
+	      });
+
+	      if (showCommonError) {
+	        this._showCommonError();
+	      }
+	    }
+	  }, {
+	    key: "_showSpecificError",
+	    value: function _showSpecificError(code, message) {
+	      var notifyMessage = message;
+
+	      if (SPECIFIC_REALIZATION_ERROR_CODES.indexOf(code) === -1) {
+	        notifyMessage = BX.util.htmlspecialchars(notifyMessage);
+	      }
+
+	      BX.UI.Notification.Center.notify({
+	        content: notifyMessage
+	      });
 	    }
 	  }, {
 	    key: "_showCommonError",
@@ -677,12 +1139,12 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_subscribeToGlobalEvents",
 	    value: function _subscribeToGlobalEvents() {
-	      var _this9 = this;
+	      var _this13 = this;
 
 	      var events = ['salescenter.app:onshipmentcreated', 'salescenter.app:onpaymentcreated', 'salescenter.app:onpaymentresend'];
 	      var timeout = 500;
 	      var reloadWidget = main_core.debounce(function () {
-	        _this9.reloadModel();
+	        _this13.reloadModel();
 	      }, timeout);
 	      var inCompatMode = {
 	        compatMode: true
@@ -707,17 +1169,7 @@ this.BX = this.BX || {};
 	          return;
 	        }
 
-	        var orderId = false;
-
-	        var orderIds = _this9._orderIds();
-
-	        if (params.FIELDS && params.FIELDS.ID) {
-	          orderId = parseInt(params.FIELDS.ID);
-	        }
-
-	        if (orderId && orderIds.indexOf(orderId) > -1) {
-	          reloadWidget();
-	        }
+	        reloadWidget();
 	      }, inCompatMode);
 	      main_core_events.EventEmitter.subscribe('onPullEvent-salescenter', function (command, params) {
 	        if (command !== 'onOrderPaymentViewed') {
@@ -726,7 +1178,7 @@ this.BX = this.BX || {};
 
 	        var orderId = false;
 
-	        var orderIds = _this9._orderIds();
+	        var orderIds = _this13._orderIds();
 
 	        if (params && params.ORDER_ID) {
 	          orderId = parseInt(params.ORDER_ID);
@@ -746,13 +1198,43 @@ this.BX = this.BX || {};
 	        }
 	      }
 	    }
+	  }, {
+	    key: "_reloadOwner",
+	    value: function _reloadOwner() {
+	      if (this._parentContext instanceof BX.Crm.EntityEditorMoneyPay) {
+	        this._parentContext._editor.reload();
+
+	        this._parentContext._editor.tapController('PRODUCT_LIST', function (controller) {
+	          controller.reinitializeProductList();
+	        });
+	      }
+	    }
+	  }, {
+	    key: "_getMessage",
+	    value: function _getMessage(phrase) {
+	      if (main_core.Type.isPlainObject(this._phrases) && main_core.Type.isString(this._phrases[phrase])) {
+	        phrase = this._phrases[phrase];
+	      }
+
+	      return main_core.Loc.getMessage(phrase);
+	    }
 	  }]);
 	  return EntityEditorPaymentDocuments;
 	}();
 	babelHelpers.defineProperty(EntityEditorPaymentDocuments, "_rootNodeClass", 'crm-entity-widget-inner crm-entity-widget-inner--payment');
 
-	function _templateObject5$1() {
+	function _templateObject6$1() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-description\">\n\t\t\t\t\t<span>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-cost\">\n\t\t\t\t\t<span>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
+
+	  _templateObject6$1 = function _templateObject6() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject5$1() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-document-description\">\n\t\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t\t", " (", ")\n\t\t\t\t\t</a>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-cost\">\n\t\t\t\t\t<span>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
 
 	  _templateObject5$1 = function _templateObject5() {
 	    return data;
@@ -811,7 +1293,13 @@ this.BX = this.BX || {};
 	  babelHelpers.createClass(TimelineSummaryDocuments, [{
 	    key: "_renderDealTotalSum",
 	    value: function _renderDealTotalSum() {
-	      return main_core.Tag.render(_templateObject$1(), main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DEAL_SUM'), this._renderMoney(this._options.DEAL_AMOUNT));
+	      var phrase = 'CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DEAL_SUM';
+
+	      if (Number(this._options.OWNER_TYPE_ID) === BX.CrmEntityType.enumeration.smartinvoice) {
+	        phrase = 'CRM_ENTITY_ED_PAYMENT_DOCUMENTS_INVOICE_SUM';
+	      }
+
+	      return main_core.Tag.render(_templateObject$1(), main_core.Loc.getMessage(phrase), this._renderMoney(this._options.ENTITY_AMOUNT));
 	    }
 	  }, {
 	    key: "render",
@@ -866,8 +1354,8 @@ this.BX = this.BX || {};
 	      return main_core.Tag.render(_templateObject3$1(), openSlider, title, new ui_label.Label(labelOptions).render(), this._renderMoney(doc.SUM));
 	    }
 	  }, {
-	    key: "_renderShipmentDocument",
-	    value: function _renderShipmentDocument(doc) {
+	    key: "_renderDeliveryDocument",
+	    value: function _renderDeliveryDocument(doc) {
 	      var _this2 = this;
 
 	      var labelOptions = {
@@ -891,17 +1379,57 @@ this.BX = this.BX || {};
 	      return main_core.Tag.render(_templateObject4$1(), openSlider, title, doc.DELIVERY_NAME, new ui_label.Label(labelOptions).render(), this._renderMoney(doc.SUM));
 	    }
 	  }, {
+	    key: "_renderRealizationDocument",
+	    value: function _renderRealizationDocument(doc) {
+	      var _this3 = this;
+
+	      var labelOptions = {
+	        fill: true,
+	        customClass: 'crm-entity-widget-payment-label'
+	      };
+
+	      if (doc.DEDUCTED === 'Y') {
+	        labelOptions.text = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_STATUS_DEDUCTED');
+	        labelOptions.color = ui_label.LabelColor.LIGHT_GREEN;
+	      } else {
+	        if (doc.EMP_DEDUCTED_ID) {
+	          labelOptions.text = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_STATUS_CANCELLED');
+	          labelOptions.color = ui_label.LabelColor.LIGHT_ORANGE;
+	        } else {
+	          labelOptions.text = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_STATUS_DRAFT');
+	          labelOptions.color = ui_label.LabelColor.LIGHT;
+	        }
+	      }
+
+	      var title = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_DATE').replace(/#DATE#/gi, doc.FORMATTED_DATE);
+	      title = title.replace(/#DOCUMENT_ID#/gi, doc.ACCOUNT_NUMBER);
+	      title = BX.util.htmlspecialchars(title);
+	      var sum = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_AMOUNT').replace(/#SUM#/gi, this._renderMoney(doc.SUM));
+
+	      var openSlider = function openSlider() {
+	        return _this3._viewRealizationSlider(doc.ID);
+	      };
+
+	      return main_core.Tag.render(_templateObject5$1(), openSlider, title, sum, new ui_label.Label(labelOptions).render(), this._renderMoney(doc.SUM));
+	    }
+	  }, {
 	    key: "_renderTotalSum",
 	    value: function _renderTotalSum() {
 	      var totalSum = this._calculateTotalSum();
 
-	      return main_core.Tag.render(_templateObject5$1(), main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TOTAL_SUM'), this._renderMoney(totalSum));
+	      var phrase = 'CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TOTAL_SUM';
+
+	      if (Number(this._options.OWNER_TYPE_ID) === BX.CrmEntityType.enumeration.smartinvoice) {
+	        phrase = 'CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TOTAL_INVOICE_SUM';
+	      }
+
+	      return main_core.Tag.render(_templateObject6$1(), main_core.Loc.getMessage(phrase), this._renderMoney(totalSum));
 	    }
 	  }, {
 	    key: "_filterSuccessfulDocuments",
 	    value: function _filterSuccessfulDocuments() {
 	      this._options.DOCUMENTS = this._options.DOCUMENTS.filter(function (item) {
-	        return item.TYPE === 'PAYMENT' && item.PAID === 'Y' || item.TYPE === 'SHIPMENT' && item.DEDUCTED === 'Y';
+	        return item.TYPE === 'PAYMENT' && item.PAID === 'Y' || item.TYPE === 'SHIPMENT' && item.DEDUCTED === 'Y' || item.TYPE === 'SHIPMENT_DOCUMENT' && item.DEDUCTED === 'Y';
 	      });
 	    }
 	  }]);

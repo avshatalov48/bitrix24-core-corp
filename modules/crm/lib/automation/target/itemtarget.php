@@ -82,7 +82,7 @@ class ItemTarget extends BaseTarget
 		$statusInfos = [];
 		foreach ($this->factory->getStages($categoryId) as $status)
 		{
-			$statusInfos[$status->getStatusId()] = $status;
+			$statusInfos[$status->getStatusId()] = $status->collectValues();
 		}
 		return $statusInfos;
 	}

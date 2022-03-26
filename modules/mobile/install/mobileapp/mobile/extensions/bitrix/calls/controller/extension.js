@@ -159,7 +159,7 @@
 
 		startCall(dialogId, video, associatedDialogData = {})
 		{
-			if (!this.isDeviceSupported())
+			if (!CallUtil.isDeviceSupported())
 			{
 				console.error(BX.message("MOBILE_CALL_UNSUPPORTED_VERSION"));
 				navigator.notification.alert(BX.message("MOBILE_CALL_UNSUPPORTED_VERSION"));
@@ -172,7 +172,7 @@
 			dialogId = dialogId.toString();
 			let provider = BX.Call.Provider.Plain;
 			let isGroupChat = dialogId.toString().substr(0, 4) === "chat";
-			if (CallEngine.isCallServerAllowed() && isGroupChat)
+			if (callEngine.isCallServerAllowed() && isGroupChat)
 			{
 				provider = BX.Call.Provider.Voximplant;
 			}
@@ -197,7 +197,7 @@
 				return this.maybeShowLocalVideo(video && !isGroupChat);
 			}).then(() =>
 			{
-				return CallEngine.createCall({
+				return callEngine.createCall({
 					entityType: "chat",
 					entityId: dialogId,
 					provider: provider,
@@ -238,7 +238,7 @@
 				console.error(error);
 				if (error instanceof DeviceAccessError)
 				{
-					this.showDeviceAccessConfirm(video, () => Application.openSettings());
+					CallUtil.showDeviceAccessConfirm(video, () => Application.openSettings());
 				}
 				else if (error instanceof CallJoinedElseWhereError)
 				{
@@ -265,7 +265,7 @@
 
 			this.requestDeviceAccess(video).then(() =>
 			{
-				return CallEngine.getCallWithId(callId);
+				return callEngine.getCallWithId(callId);
 			}).then((result) =>
 			{
 				this.currentCall = result.call;
@@ -277,8 +277,22 @@
 				});
 			}).then(() =>
 			{
+				// call could have been finished by this moment
+				if (!this.currentCall)
+				{
+					this.clearEverything();
+					return;
+				}
+
 				this.bindViewEvents();
 				this.callView.appendUsers(this.currentCall.getUsers());
+
+				if (this.getCallUsers(true).length > this.getMaxActiveMicrophonesCount())
+				{
+					this.currentCall.setMuted(true);
+					this.callView.setMuted(true);
+				}
+
 				CallUtil.getUsers(this.currentCall.id, this.getCallUsers(true)).then(
 					userData => this.callView.updateUserData(userData),
 				);
@@ -292,7 +306,7 @@
 				console.error(error);
 				if (error.code && error.code == "ALREADY_FINISHED")
 				{
-					navigator.notification.alert(BX.message("MOBILE_CALL_INTERNAL_ERROR").replace("#ERROR_CODE#", "E004"));
+					navigator.notification.alert(BX.message("MOBILE_CALL_ALREADY_FINISHED"));
 				}
 				else if (error instanceof CallJoinedElseWhereError)
 				{
@@ -300,7 +314,7 @@
 				}
 				else if (error instanceof DeviceAccessError)
 				{
-					this.showDeviceAccessConfirm(video, () => Application.openSettings());
+					CallUtil.showDeviceAccessConfirm(video, () => Application.openSettings());
 				}
 				else
 				{
@@ -313,13 +327,13 @@
 		{
 			console.warn("incoming.call", e);
 
-			if (!this.isDeviceSupported())
+			if (!CallUtil.isDeviceSupported())
 			{
 				navigator.notification.alert(BX.message("MOBILE_CALL_UNSUPPORTED_VERSION"));
 				return;
 			}
 
-			const newCall = CallEngine.calls[e.callId];
+			const newCall = callEngine.calls[e.callId];
 			this.callWithLegacyMobile = (e.isLegacyMobile === true);
 
 			if (this.currentCall)
@@ -365,24 +379,24 @@
 
 			const video = e.video === true;
 
-			this.currentCall = CallEngine.calls[newCall.id];
+			this.currentCall = callEngine.calls[newCall.id];
 
 			if ("callservice" in window)
 			{
 				const nativeCall = callservice.currentCall();
-				if (nativeCall && nativeCall.params.call.ID == newCall.id)
+				if (nativeCall && nativeCall.params.type === 'internal' && nativeCall.params.call.ID == newCall.id)
 				{
 					this.nativeCall = nativeCall;
 					if (Application.isBackground())
 					{
 						console.warn(CallUtil.getDateForLog() + ": Waking up p&p");
-						this.forceBackgroundConnectPull(10).then(() => {
+						CallUtil.forceBackgroundConnectPull(10).then(() => {
 							if (this.currentCall)
 							{
 								this.currentCall.repeatAnswerEvents();
 
 								console.warn(CallUtil.getDateForLog() + ": checking self state");
-								CallEngine.getRestClient().callMethod("im.call.getUserState", {callId: this.currentCall.id}).then(response => {
+								callEngine.getRestClient().callMethod("im.call.getUserState", {callId: this.currentCall.id}).then(response => {
 									let data = response.data();
 									let myState = data.STATE;
 
@@ -427,6 +441,9 @@
 					console.warn("Native call is connected, but we did not receive answered event.")
 					this.answerCurrentCall(this.nativeCall.params.video);
 				}
+			}).catch((error) => {
+				console.error(error);
+				this.clearEverything();
 			});
 		}
 
@@ -454,12 +471,18 @@
 				this.callView.setState({
 					status: "connecting",
 				});
+
+				if (this.getCallUsers(true).length > this.getMaxActiveMicrophonesCount())
+				{
+					this.currentCall.setMuted(true);
+					this.callView.setMuted(true);
+				}
 			}).catch(error =>
 			{
 				console.error(error);
 				if (error instanceof DeviceAccessError)
 				{
-					this.showDeviceAccessConfirm(
+					callUtil.showDeviceAccessConfirm(
 						useVideo,
 						() => Application.openSettings(),
 						() =>
@@ -515,6 +538,10 @@
 					chatCounter: this.chatCounter
 				}).then(() =>
 				{
+					if (!this.currentCall)
+					{
+						return reject("ALREADY_FINISHED");
+					}
 					media.audioPlayer().playSound("call_incoming", 10);
 					callInterface.indicator().setMode("incoming");
 					this.bindViewEvents();
@@ -552,7 +579,7 @@
 
 		onJoinCall(callId)
 		{
-			if (!this.isDeviceSupported())
+			if (!CallUtil.isDeviceSupported())
 			{
 				navigator.notification.alert(BX.message("MOBILE_CALL_UNSUPPORTED_VERSION"));
 				return;
@@ -726,7 +753,16 @@
 						{
 							if (eventName === "onViewRemoved")
 							{
-								this.rootWidget = null;
+								if (uicomponent.widgetLayer())
+								{
+									uicomponent.widgetLayer().close().then(() => {
+										this.rootWidget = null;
+									});
+								}
+								else
+								{
+									this.rootWidget = null;
+								}
 							}
 						});
 						return uicomponent.widgetLayer().show();
@@ -855,7 +891,7 @@
 		{
 			if (!this.currentCall)
 			{
-				console.warn("no current call");
+				CallUtil.warn("no current call");
 				return;
 			}
 			this.currentCall.log("onAppActive");
@@ -1351,6 +1387,11 @@
 			setTimeout(() => this.onCameraButtonClick(), 1000);
 		}
 
+		getMaxActiveMicrophonesCount()
+		{
+			return 4;
+		}
+
 		clearEverything()
 		{
 			if (this.currentCall)
@@ -1372,9 +1413,15 @@
 
 			if (uicomponent.widgetLayer())
 			{
-				uicomponent.widgetLayer().close();
+				uicomponent.widgetLayer().close().then(() => {
+					this.rootWidget = null;
+				});
 			}
-			this.rootWidget = null;
+			else
+			{
+				this.rootWidget = null;
+			}
+
 			this.callView = null;
 			callInterface.indicator().close();
 			this.callStartTime = null;
@@ -1392,11 +1439,6 @@
 			BX.postWebEvent("CallEvents::viewClosed", {});
 		}
 
-		isDeviceSupported()
-		{
-			return Application.getApiVersion() >= 36;
-		}
-
 		requestDeviceAccess(withVideo)
 		{
 			return new Promise((resolve, reject) =>
@@ -1412,66 +1454,6 @@
 						).catch(({justDenied}) => reject(new DeviceAccessError(justDenied)))
 					}
 				).catch(({justDenied}) => reject(new DeviceAccessError(justDenied)));
-			});
-		}
-
-		showDeviceAccessConfirm(withVideo, acceptCallback = () => { }, declineCallback = () => { })
-		{
-			return new Promise((resolve) =>
-			{
-				navigator.notification.confirm(
-					withVideo ? BX.message("MOBILE_CALL_MICROPHONE_CAMERA_REQUIRED") : BX.message("MOBILE_CALL_MICROPHONE_REQUIRED"),
-					(button) => button == 1 ? acceptCallback() : declineCallback(),
-					withVideo ? BX.message("MOBILE_CALL_NO_MICROPHONE_CAMERA_ACCESS") : BX.message("MOBILE_CALL_NO_MICROPHONE_ACCESS"),
-					[
-						BX.message("MOBILE_CALL_MICROPHONE_SETTINGS"),
-						BX.message("MOBILE_CALL_MICROPHONE_CANCEL"),
-					],
-				);
-			});
-		}
-
-		forceBackgroundConnectPull(timeoutSeconds = 10)
-		{
-			return new Promise((resolve, reject) => {
-
-				if (CallEngine.pullStatus === 'online')
-				{
-					resolve();
-					return;
-				}
-
-				var onConnectTimeout = function()
-				{
-					console.error("Timeout while waiting for p&p to connect");
-					BX.removeCustomEvent("onPullStatus", onPullStatus);
-					reject('connect timeout');
-				};
-				var connectionTimeout = setTimeout(onConnectTimeout, timeoutSeconds * 1000);
-
-				var onPullStatus = ({status, additional}) =>
-				{
-					if (!additional)
-					{
-						additional = {};
-					}
-					if (status === 'online')
-					{
-						BX.removeCustomEvent("onPullStatus", onPullStatus);
-						clearTimeout(connectionTimeout);
-						resolve();
-					}
-
-					if (status === 'offline' && additional.isError) // offline is fired on errors too
-					{
-						BX.removeCustomEvent("onPullStatus", onPullStatus);
-						clearTimeout(connectionTimeout);
-						reject('connect error');
-					}
-				};
-
-				BX.addCustomEvent("onPullStatus", onPullStatus);
-				BX.postComponentEvent("onPullForceBackgroundConnect", [], "communication");
 			});
 		}
 
@@ -1640,7 +1622,7 @@
 			}
 
 			// try to open url anyway, because in IOS canOpenUrl always returns false for jitsi
-			let openResult = Application.openUrl(confAddress);
+			Application.openUrl(confAddress);
 			navigator.notification.confirm(
 				BX.message("MOBILE_CALL_INSTALL_JITSI_MEET"),
 				(button) => {
@@ -1665,8 +1647,6 @@
 	{
 		uicomponent.widgetLayer().close();
 	}
-	if (Application.getApiVersion() >= 36)
-	{
-		setTimeout(() => window.callController = new CallController(), 500);
-	}
+
+	window.CallController = CallController;
 })();

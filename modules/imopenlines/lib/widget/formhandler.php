@@ -18,6 +18,8 @@ use	Bitrix\ImOpenLines\Crm\Common as CrmCommon;
 
 use Bitrix\Main\ErrorCollection;
 use	Bitrix\Main\Event;
+use Bitrix\Main\EventResult;
+use Bitrix\Main\LoaderException;
 use	Bitrix\Main\SystemException;
 use	Bitrix\Main\Localization\Loc;
 
@@ -115,6 +117,35 @@ class FormHandler
 		$formHandler->updateCrmBindings();
 		$formHandler->updateSession();
 		$formHandler->updateFormFilledFlag();
+
+		return true;
+	}
+
+	/**
+	 * Event handler for 'onSiteFormFillOpenlines' event (event is fired before CRM entities are created)
+	 *
+	 * @param Event $event
+	 *
+	 * @return bool
+	 * @throws LoaderException
+	 */
+	public static function onOpenlinesFormFill(Event $event): bool
+	{
+		$eventData = $event->getParameters();
+		$userCode = $eventData['properties']['openlinesCode'];
+
+		$session = new Session();
+		$session->load([
+			'USER_CODE' => $userCode,
+			'SKIP_CREATE' => 'Y'
+		]);
+
+		$crmManager = new Crm($session);
+		$assignedUserId = $crmManager->getResponsibleCrmId();
+
+		$event->addResult(new EventResult(EventResult::SUCCESS, [
+			'assignedById' => $assignedUserId
+		]));
 
 		return true;
 	}
@@ -236,13 +267,14 @@ class FormHandler
 			}
 		}
 		//validate, check and update email
+		$email = $this->getEmailFieldValue();
 		if (
-			$this->crmFields['EMAIL']
-			&& Tools\Email::validate($this->crmFields['EMAIL'])
-			&& !Tools\Email::isSame($this->user->getEmail(), $this->crmFields['EMAIL'])
+			$email
+			&& Tools\Email::validate($email)
+			&& !Tools\Email::isSame($this->user->getEmail(), $email)
 		)
 		{
-			$fieldsToUpdate['EMAIL'] = Tools\Email::normalize($this->crmFields['EMAIL']);
+			$fieldsToUpdate['EMAIL'] = Tools\Email::normalize($email);
 		}
 		//validate, check and update phone
 		if (
@@ -497,6 +529,11 @@ class FormHandler
 			}
 		}
 		$userCode = $this->session->getData('USER_CODE');
+		if (!$userCode)
+		{
+			return false;
+		}
+
 		$activityName = Loc::getMessage('IMOL_CRM_CREATE_ACTIVITY_2',
 			['#LEAD_NAME#' => $this->chat->getData('TITLE'), '#CONNECTOR_NAME#' => CrmCommon::getSourceName($userCode)]
 		);
@@ -695,6 +732,33 @@ class FormHandler
 		\CIMMessageParam::SendPull($this->messageId);
 
 		return true;
+	}
+
+	private function getEmailFieldValue()
+	{
+		if (empty($this->eventData['fields']))
+		{
+			return null;
+		}
+
+		$email = null;
+		foreach ($this->eventData['fields'] as $entity)
+		{
+			if (empty($entity['FM']) || empty($entity['FM']['EMAIL']))
+			{
+				continue;
+			}
+
+			$firstEmailKey = array_key_first($entity['FM']['EMAIL']);
+			if (empty($entity['FM']['EMAIL'][$firstEmailKey]) || empty($entity['FM']['EMAIL'][$firstEmailKey]['VALUE']))
+			{
+				continue;
+			}
+
+			$email = $entity['FM']['EMAIL'][$firstEmailKey]['VALUE'];
+		}
+
+		return $email;
 	}
 
 	/**

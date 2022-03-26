@@ -16,6 +16,7 @@ class Disk extends \IRestService
 		return [
 			'mobile.disk.folder.getchildren' => ['callback' => [__CLASS__, 'get'], 'options' => ['private' => false]],
 			'mobile.disk.getattachmentsdata' => ['callback' => [__CLASS__, 'getAttachmentsData'], 'options' => ['private' => false]],
+			'mobile.disk.getUploadedFilesFolder' => ['callback' => [__CLASS__, 'getUploadedFilesFolder'], 'options' => ['private' => false]],
 		];
 	}
 
@@ -174,5 +175,23 @@ class Disk extends \IRestService
 		}
 
 		return $result;
+	}
+
+	public static function getUploadedFilesFolder(array $params): ?int
+	{
+		global $USER;
+
+		$userId = ((int)$params['userId'] ?: (int)$USER->getId());
+
+		if (
+			!Loader::includeModule('disk')
+			|| !($storage = Driver::getInstance()->getStorageByUserId($userId))
+			|| !($folder = $storage->getFolderForUploadedFiles())
+		)
+		{
+			return null;
+		}
+
+		return $folder->getId();
 	}
 }

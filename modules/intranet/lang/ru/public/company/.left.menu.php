@@ -11,4 +11,9 @@ $MESS["COMPANY_MENU_LEADERS"] = "Доска почета";
 $MESS["COMPANY_MENU_BIRTHDAYS"] = "Дни рождения";
 $MESS["COMPANY_MENU_GALLERY"] = "Фотогалерея";
 $MESS["COMPANY_MENU_MY_PROCESSES"] = "Мои процессы";
+
+$MESS["COMPANY_MENU_EMPLOYEE_LIST"] = "Сотрудники";
+$MESS["COMPANY_MENU_TIMEMAN_SECTION"] = "Время и отчеты";
+$MESS["COMPANY_MENU_KNOWLEDGE_BASE"] = "База знаний";
+$MESS["COMPANY_MENU_CONFERENCES"] = "Видеоконференции";
 ?>

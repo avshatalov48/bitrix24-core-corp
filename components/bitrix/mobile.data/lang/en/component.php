@@ -3,6 +3,7 @@ $MESS["MD_COMPONENT_CALLTRACKER"] = "Call tracker";
 $MESS["MD_COMPONENT_IM_OPENLINES"] = "Open Channels";
 $MESS["MD_COMPONENT_IM_RECENT"] = "Chats";
 $MESS["MD_COMPONENT_MORE"] = "Menu";
+$MESS["MD_COMPONENT_NOTIFY"] = "Notifications";
 $MESS["MD_COMPONENT_TASKS_LIST"] = "Tasks";
 $MESS["MD_DISK_TABLE_FOLDERS_FILES"] = "Folders: #FOLDERS#  Files: #FILES#";
 $MESS["MD_EMPLOYEES_ALL"] = "All employees";

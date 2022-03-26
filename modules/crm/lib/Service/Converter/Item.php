@@ -40,6 +40,8 @@ class Item extends Converter
 			}
 		}
 
+		$data['ENTITY_TYPE_ID'] = $model->getEntityTypeId();
+
 		$data = $this->prepareData($data);
 
 		return $this->convertKeysToCamelCase($data);

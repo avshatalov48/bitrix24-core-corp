@@ -79,6 +79,7 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 				$fieldKey = 'STATUS_ID';
 				break;
 			default:
+				$targetStatus = (string)$targetStatus;
 				$entityTypeId = CCrmOwnerType::ResolveID($entityTypeName);
 				$factory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);
 

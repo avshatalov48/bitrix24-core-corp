@@ -1,6 +1,8 @@
 <?php
+
 namespace Bitrix\Crm\Conversion;
-use Bitrix\Main;
+
+use Bitrix\Crm\ItemIdentifier;
 
 class QuoteConversionWizard extends EntityConversionWizard
 {
@@ -8,24 +10,31 @@ class QuoteConversionWizard extends EntityConversionWizard
 	 * @param int $entityID Entity ID.
 	 * @param QuoteConversionConfig|null $config Configuration parameters.
 	 */
-	public function __construct($entityID = 0, QuoteConversionConfig $config = null)
+	public function __construct($entityID = 0, EntityConversionConfig $config = null)
 	{
 		$converter = new QuoteConverter($config);
 		$converter->setEntityID($entityID);
-		parent::__construct($converter);
 
+		parent::__construct($converter);
 	}
+
 	/**
 	 * Execute wizard.
+	 *
 	 * @param array|null $contextData Conversion context data.
 	 * @return bool
 	 */
 	public function execute(array $contextData = null)
 	{
+		if ($this->isNewApi())
+		{
+			return parent::execute($contextData);
+		}
+
 		/** @var QuoteConverter $converter */
 		$converter = $this->converter;
 
-		if(is_array($contextData) && !empty($contextData))
+		if (is_array($contextData) && !empty($contextData))
 		{
 			$converter->setContextData(array_merge($converter->getContextData(), $contextData));
 		}
@@ -38,15 +47,15 @@ class QuoteConversionWizard extends EntityConversionWizard
 			{
 				$converter->executePhase();
 			}
-			while($converter->moveToNextPhase());
+			while ($converter->moveToNextPhase());
 
 			$resultData = $converter->getResultData();
 
-			if(isset($resultData[\CCrmOwnerType::DealName]))
+			if (isset($resultData[\CCrmOwnerType::DealName]))
 			{
 				if ($this->isMobileContext)
 				{
-					$this->redirectUrl = "/mobile/crm/deal/?page=view&deal_id=".$resultData[\CCrmOwnerType::DealName];
+					$this->redirectUrl = "/mobile/crm/deal/?page=view&deal_id=" . $resultData[\CCrmOwnerType::DealName];
 				}
 				else
 				{
@@ -54,40 +63,44 @@ class QuoteConversionWizard extends EntityConversionWizard
 						\CCrmOwnerType::Deal,
 						$resultData[\CCrmOwnerType::DealName],
 						false,
-						array('ENABLE_SLIDER' => $this->enableSlider)
+						['ENABLE_SLIDER' => $this->enableSlider]
 					);
 				}
 			}
-			elseif(isset($resultData[\CCrmOwnerType::InvoiceName]))
+			elseif (isset($resultData[\CCrmOwnerType::InvoiceName]))
 			{
 				if ($this->isMobileContext)
 				{
-					$this->redirectUrl = "/mobile/crm/invoice/?page=view&invoice_id=".$resultData[\CCrmOwnerType::InvoiceName];
+					$this->redirectUrl = "/mobile/crm/invoice/?page=view&invoice_id="
+						. $resultData[\CCrmOwnerType::InvoiceName];
 				}
 				else
 				{
-					$this->redirectUrl = \CCrmOwnerType::GetEntityShowPath(\CCrmOwnerType::Invoice, $resultData[\CCrmOwnerType::InvoiceName], false);
+					$this->redirectUrl = \CCrmOwnerType::GetEntityShowPath(\CCrmOwnerType::Invoice,
+						$resultData[\CCrmOwnerType::InvoiceName], false);
 				}
 			}
 			$result = true;
 		}
-		catch(EntityConversionException $e)
+		catch (EntityConversionException $e)
 		{
 			$this->exception = $e;
-			if($e->getTargetType() === EntityConversionException::TARG_DST)
+			if ($e->getTargetType() === EntityConversionException::TARG_DST)
 			{
 				if ($this->isMobileContext)
 				{
-					switch($e->getDestinationEntityTypeID())
+					switch ($e->getDestinationEntityTypeID())
 					{
 						case (\CCrmOwnerType::Invoice):
 						{
-							$this->redirectUrl = "/mobile/crm/invoice/?page=edit&conv_quote_id=".$converter->getEntityID();
+							$this->redirectUrl = "/mobile/crm/invoice/?page=edit&conv_quote_id="
+								. $converter->getEntityID();
 							break;
 						}
 						case (\CCrmOwnerType::Quote):
 						{
-							$this->redirectUrl = "/mobile/crm/quote/?page=edit&conv_quote_id=".$converter->getEntityID();
+							$this->redirectUrl = "/mobile/crm/quote/?page=edit&conv_quote_id="
+								. $converter->getEntityID();
 							break;
 						}
 					}
@@ -95,10 +108,10 @@ class QuoteConversionWizard extends EntityConversionWizard
 				else
 				{
 					$config = $converter->getConfig();
-					$options = array(
+					$options = [
 						'ENTITY_SETTINGS' => $config->getEntityInitData($e->getDestinationEntityTypeID()),
-						'ENABLE_SLIDER' => $this->enableSlider
-					);
+						'ENABLE_SLIDER' => $this->enableSlider,
+					];
 
 					$this->redirectUrl = \CCrmUrlUtil::AddUrlParams(
 						\CCrmOwnerType::GetEntityEditPath(
@@ -107,12 +120,12 @@ class QuoteConversionWizard extends EntityConversionWizard
 							false,
 							$options
 						),
-						array('conv_quote_id' => $converter->getEntityID())
+						['conv_quote_id' => $converter->getEntityID()]
 					);
 				}
 			}
 		}
-		catch(\Exception $e)
+		catch (\Exception $e)
 		{
 			$this->errorText = $e->getMessage();
 		}
@@ -120,8 +133,10 @@ class QuoteConversionWizard extends EntityConversionWizard
 		$this->save();
 		return $result;
 	}
+
 	/**
 	 * Prepare entity fields for edit.
+	 *
 	 * @param int $entityTypeID Entity type ID.
 	 * @param array &$fields Entity fields.
 	 * @param bool|true $encode Encode fields flag.
@@ -133,43 +148,45 @@ class QuoteConversionWizard extends EntityConversionWizard
 		$converter = $this->converter;
 
 		$userFields = QuoteConversionMapper::getUserFields($entityTypeID);
-		$mappedFields = $converter->mapEntityFields($entityTypeID, array('ENABLE_FILES' => false));
+		$mappedFields = $converter->mapEntityFields($entityTypeID, ['ENABLE_FILES' => false]);
 
-		foreach($mappedFields as $k => $v)
+		foreach ($mappedFields as $k => $v)
 		{
-			if($k === 'PRODUCT_ROWS' || $k === 'CONTACT_BINDINGS')
+			if ($k === 'PRODUCT_ROWS' || $k === 'CONTACT_BINDINGS')
 			{
 				$fields[$k] = $v;
 				continue;
 			}
-			elseif(mb_strpos($k, 'UF_CRM') === 0)
+			elseif (mb_strpos($k, 'UF_CRM') === 0)
 			{
 				$userField = isset($userFields[$k]) ? $userFields[$k] : null;
-				if(is_array($userField))
+				if (is_array($userField))
 				{
 					// hack for UF
-					if($userField['USER_TYPE_ID'] === 'file')
+					if ($userField['USER_TYPE_ID'] === 'file')
 					{
 						$GLOBALS["{$k}_old_id"] = $v;
 					}
-					elseif(!isset($GLOBALS[$k]))
+					elseif (!isset($GLOBALS[$k]))
 					{
 						$GLOBALS[$k] = $_REQUEST[$k] = $v;
 					}
 				}
 			}
-			elseif($encode)
+			elseif ($encode)
 			{
 				$fields["~{$k}"] = $v;
-				if(!is_array($v))
+				if (!is_array($v))
 				{
 					$fields[$k] = htmlspecialcharsbx($v);
 				}
 			}
 		}
 	}
+
 	/**
 	 * Prepare entity fields for save.
+	 *
 	 * @param int $entityTypeID Entity type ID.
 	 * @param array &$fields Entity fields.
 	 * @return void
@@ -177,44 +194,33 @@ class QuoteConversionWizard extends EntityConversionWizard
 	public function prepareDataForSave($entityTypeID, array &$fields)
 	{
 		$dstUserFields = QuoteConversionMapper::getUserFields($entityTypeID);
-		foreach($dstUserFields as $dstName => $dstField)
+		foreach ($dstUserFields as $dstName => $dstField)
 		{
-			if($dstField['USER_TYPE_ID'] === 'file')
+			if ($dstField['USER_TYPE_ID'] === 'file')
 			{
 				$this->prepareFileUserFieldForSave($dstName, $dstField, $fields);
 			}
 		}
 
-		$mappedFields = $this->converter->mapEntityFields($entityTypeID, array('DISABLE_USER_FIELD_INIT' => true));
-		foreach($mappedFields as $k => $v)
+		$mappedFields = $this->converter->mapEntityFields($entityTypeID, ['DISABLE_USER_FIELD_INIT' => true]);
+		foreach ($mappedFields as $k => $v)
 		{
-			if(!isset($fields[$k]))
+			if (!isset($fields[$k]))
 			{
 				$fields[$k] = $v;
 			}
 		}
 	}
-	/**
-	 * Save wizard settings in session.
-	 * @return void
-	 */
-	public function save()
-	{
-		if(!isset($_SESSION['QUOTE_CONVERTER']))
-		{
-			$_SESSION['QUOTE_CONVERTER'] = array();
-		}
 
-		$_SESSION['QUOTE_CONVERTER'][$this->getEntityID()] = $this->externalize();
-	}
 	/**
 	 * Load wizard related to entity from session.
+	 *
 	 * @param int $entityID Entity ID.
 	 * @return QuoteConversionWizard|null
 	 */
 	public static function load($entityID)
 	{
-		if(!(isset($_SESSION['QUOTE_CONVERTER']) && $_SESSION['QUOTE_CONVERTER'][$entityID]))
+		if (!(isset($_SESSION['QUOTE_CONVERTER']) && $_SESSION['QUOTE_CONVERTER'][$entityID]))
 		{
 			return null;
 		}
@@ -223,16 +229,15 @@ class QuoteConversionWizard extends EntityConversionWizard
 		$item->internalize($_SESSION['QUOTE_CONVERTER'][$entityID]);
 		return $item;
 	}
+
 	/**
-	 * Remove wizard related to entity from session.
-	 * @param int $entityID Entity ID.
-	 * @return void
+	 * @inheritDoc
 	 */
 	public static function remove($entityID)
 	{
-		if(isset($_SESSION['QUOTE_CONVERTER']) && $_SESSION['QUOTE_CONVERTER'][$entityID])
+		if ($entityID > 0)
 		{
-			unset($_SESSION['QUOTE_CONVERTER'][$entityID]);
+			static::removeByIdentifier(new ItemIdentifier(\CCrmOwnerType::Quote, (int)$entityID));
 		}
 	}
 }

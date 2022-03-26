@@ -16,7 +16,7 @@ use Bitrix\Main\Localization\Loc;
 		$style = null;
 		if($item['personalPhoto'])
 		{
-			$style = 'style="background-image:url(' . $item['personalPhoto'] . '); background-size: 30px;"';
+			$style = 'style="background-image:url(\'' . htmlspecialcharsbx($item['personalPhoto']) . '\'); background-size: 30px;"';
 		}
 		?>
 		<span class="fields employee field-item">

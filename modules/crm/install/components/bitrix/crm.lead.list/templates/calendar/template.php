@@ -340,6 +340,7 @@ if(!Bitrix\Main\Grid\Context::isInternalRequest()
 				'GET_FIELD' => '/bitrix/components/bitrix/crm.lead.list/filter.ajax.php?action=field&filter_id='.urlencode($arResult['GRID_ID']).'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
 			),
 			'ENABLE_FIELDS_SEARCH' => 'Y',
+			'HEADERS_SECTIONS' => $arResult['HEADERS_SECTIONS'],
 			'CONFIG' => [
 				'popupColumnsCount' => 4,
 				'popupWidth' => 800,

@@ -25,6 +25,10 @@ final class Manager
 		{
 			return self::getPaymentScenarioBuilder();
 		}
+		elseif ($scenario === SettingsContainer::BUILDER_SCENARIO_RESERVATION)
+		{
+			return self::getReservationScenarioBuilder();
+		}
 
 		return self::getDefaultScenarioBuilder();
 	}
@@ -66,16 +70,40 @@ final class Manager
 	}
 
 	/**
-	 * @param array $settings
 	 * @return OrderBuilder
 	 * @throws Main\ArgumentOutOfRangeException
 	 */
-	private static function getOrderBuilder(array $settings = []): OrderBuilder
+	private static function getReservationScenarioBuilder(): OrderBuilder
+	{
+		return self::getOrderBuilder(
+			[
+				'createDefaultShipmentIfNeed' => false,
+				'createDefaultPaymentIfNeed' => false,
+				'clearReservesIfEmpty' => true,
+				'builderScenario' => SettingsContainer::BUILDER_SCENARIO_RESERVATION
+			],
+			\Bitrix\Sale\Helpers\Order\Builder\BasketBuilderSale::class
+		);
+	}
+
+	/**
+	 * @param array $settings
+	 * @param string|null $basketBuilderClass
+	 * @return OrderBuilder
+	 */
+	private static function getOrderBuilder(
+		array $settings = [],
+		string $basketBuilderClass = null
+	): OrderBuilder
 	{
 		$builder = new OrderBuilder(new SettingsContainer($settings));
 
+		$basketBuilderClass = is_null($basketBuilderClass)
+			? BasketBuilder::class
+			: $basketBuilderClass;
+
 		$builder->setBasketBuilder(
-			new BasketBuilder($builder)
+			new $basketBuilderClass($builder)
 		);
 
 		return $builder;

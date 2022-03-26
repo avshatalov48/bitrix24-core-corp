@@ -2,30 +2,53 @@
 
 namespace Bitrix\Crm\Ads\Form;
 
+use Bitrix\Crm\Ads\Internals\AdsFormLinkTable;
+use Bitrix\Crm\Tracking\Channel;
+use Bitrix\Crm\Tracking\Channel\FbLeadAds;
+use Bitrix\Crm\Tracking\Channel\VkLeadAds;
+use Bitrix\Crm\Tracking\Trace;
 use Bitrix\Crm\WebForm\Form;
+use Bitrix\Main\Application;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Crm\Ads\Internals\AdsFormLinkTable;
-use Bitrix\Crm\Tracking;
-use Bitrix\Seo\LeadAds\Service as LeadAdsService;
+use Bitrix\Seo\LeadAds\Service;
 use Bitrix\Seo\WebHook\Payload;
+use Throwable;
 
 Loc::loadMessages(__FILE__);
 
 /**
  * Class WebHookFormFillHandler.
+ *
  * @package Bitrix\Crm\Ads\Form
  */
 class WebHookFormFillHandler
 {
-	/** @var ErrorCollection $errorCollection Error collection.  */
-	protected $errorCollection = [];
+	/** @var ErrorCollection $errorCollection Error collection. */
+	protected $errorCollection;
 
-	/** @var  Payload\Batch $payload Payload. */
+	/** @var Payload\Batch $payload Payload. */
 	protected $payload;
+
+	/**@var Service|null $service */
+	protected $service;
+
+	/**
+	 * WebHookFormFillHandler constructor
+	 *
+	 * @param Payload\Batch $payload
+	 */
+	public function __construct(Payload\Batch $payload, Service $service)
+	{
+		$this->errorCollection = new ErrorCollection();
+		$this->payload = $payload;
+		$this->service = $service;
+	}
 
 	/**
 	 * Handle form fill.
@@ -33,206 +56,170 @@ class WebHookFormFillHandler
 	 * @param Event $event Web hook event.
 	 * @return EventResult
 	 */
-	public static function handleEvent(Event $event)
+	public static function handleEvent(Event $event): EventResult
 	{
+		/**@var Service|null $service */
+		$service = null;
+		$serviceLocator = ServiceLocator::getInstance();
+		if (Loader::includeModule('seo') && $serviceLocator->has("seo.leadads.service"))
+		{
+			$service = $serviceLocator->get("seo.leadads.service");
+		}
+
 		/** @var  Payload\Batch $payload Payload. */
 		$payload = $event->getParameter('PAYLOAD');
-		$instance = new self($payload);
+		$instance = new WebHookFormFillHandler($payload, $service);
 		$instance->process();
 
-		$eventResult = new EventResult(
-			$instance->hasErrors() ? EventResult::ERROR : EventResult::SUCCESS,
+		return new EventResult(
+			$instance->getErrorCollection()->count() > 0 ? EventResult::ERROR : EventResult::SUCCESS,
 			['ERROR_COLLECTION' => $instance->getErrorCollection(),]
 		);
-
-		return $eventResult;
 	}
 
-	public function __construct(Payload\Batch $payload)
+	/**
+	 * Method for fill Crm-forms from external service
+	 */
+	public function process(): void
 	{
-		$this->errorCollection = new ErrorCollection();
-		$this->payload = $payload;
-	}
+		if (!$application = Application::getInstance())
+		{
+			$this->addError("Can't load application instance.");
 
-	protected function check()
-	{
-		if (count($this->payload->getItems()) === 0)
+			return;
+		}
+		if (!$service = $this->service)
+		{
+			$this->addError("Can't load Seo service.");
+
+			return;
+		}
+		if (0 === count($this->payload->getItems()))
 		{
 			$this->addError('Empty payload items.');
-		}
 
-		if (!$this->payload->getCode())
+			return;
+		}
+		if (!($code = $this->payload->getCode()) || !$externalServiceType = $service::getTypeByEngine($code))
 		{
 			$this->addError('Empty payload code.');
-		}
 
-		return !$this->hasErrors();
-	}
-
-	public function process()
-	{
-		if (!$this->check())
-		{
 			return;
 		}
 
-		$type = $this->payload->getCode();
-		$type = explode('.', $type);
-		$type = $type[1];
-
-		foreach ($this->payload->getItems() as $item)
+		foreach ($this->payload->getItems() as $externalFormFillItem)
 		{
-			$this->processItem($type, $item);
-		}
-	}
-
-	protected function checkItem(Payload\LeadItem $item)
-	{
-		$adsResultId = null;
-		$adsFormId = null;
-		$adsLeadId = null;
-
-		if (!$item->getFormId())
-		{
-			$this->addError("Empty payload item parameters `formId`.");
-		}
-
-		if (!$item->getLeadId())
-		{
-			$this->addError("Empty payload item parameters `leadId`.");
-		}
-
-		return !$this->hasErrors();
-	}
-
-	protected function processItem($type, Payload\LeadItem $item)
-	{
-		if (!$this->checkItem($item))
-		{
-			return;
-		}
-
-		$adsResultId = $item->getLeadId();
-		$adsFormId = $item->getFormId();
-
-		// retrieve linked crm-forms
-		$crmForms = self::getLinkedCrmForms($type, $adsFormId);
-		if (count($crmForms) <= 0)
-		{
-			$this->addError("Linked crm-forms by ads-form-id `$adsFormId` not found.");
-		}
-
-		$adsForm = LeadAdsService::getInstance()->getForm($type);
-		$adsResult = $adsForm->getResult($item);
-		if (!$adsResult->isSuccess())
-		{
-			$this->errorCollection->add($adsResult->getErrors());
-		}
-
-		$incomeFields = array();
-		while ($item = $adsResult->fetch())
-		{
-			$incomeFields[$item['NAME']] = $item['VALUES'];
-		}
-
-		$addResultParameters = array(
-			'ORIGIN_ID' => $type . '/' . $adsResultId,
-			'COMMON_DATA' => []
-		);
-		foreach ($crmForms as $crmFormId)
-		{
-			// add result
-			$this->addResult($crmFormId, $incomeFields, $addResultParameters, $type);
-		}
-	}
-
-	protected static function getLinkedCrmForms($type, $adsFormId)
-	{
-		$linkDb = AdsFormLinkTable::getList(array(
-			'select' => array('WEBFORM_ID'),
-			'filter' => array(
-				'=ADS_FORM_ID' => $adsFormId,
-				'=ADS_TYPE' => $type
-			),
-			'limit' => 5,
-			'order' => array('DATE_INSERT' => 'DESC'),
-		));
-
-		$crmForms = array();
-		while ($link = $linkDb->fetch())
-		{
-			$crmForms[] = $link['WEBFORM_ID'];
-		}
-
-		return $crmForms;
-	}
-
-	protected function addResult($formId, array $incomeFields, array $addResultParameters, $type)
-	{
-		// check existing form
-		$form = new Form();
-		if (!$form->load($formId))
-		{
-			$this->addError("Can not load crm-form by id `$formId`.");
-			return false;
-		}
-
-		// check existing result
-		if ($form->hasResult($addResultParameters['ORIGIN_ID']))
-		{
-			return true;
-		}
-
-		$addResultParameters['COMMON_DATA']['TRACE_ID'] = Tracking\Trace::create()
-			->addChannel(
-			$type === LeadAdsService::TYPE_FACEBOOK
-				? new Tracking\Channel\FbLeadAds()
-				: new Tracking\Channel\VkLeadAds()
-			)
-			->addChannel(new Tracking\Channel\Form($formId))
-			->save();
-
-		// prepare fields
-		$fields = $form->getFieldsMap();
-		foreach ($fields as $fieldKey => $field)
-		{
-			$values = array();
-			if (isset($incomeFields[$field['name']]))
+			if (!$externalFormFillItem->getFormId())
 			{
-				$values = $incomeFields[$field['name']];
-				if(!is_array($values))
-				{
-					$values = array($values);
-				}
+				$this->addError("Empty payload item parameters `formId`.");
+				continue;
+			}
+			if (!$formFillId = $externalFormFillItem->getLeadId())
+			{
+				$this->addError("Empty payload item parameters `leadId`.");
+				continue;
 			}
 
-			$field['values'] = $values;
-			$fields[$fieldKey] = $field;
+			if ($application::getConnection()->lock($originId = "{$externalServiceType}/{$formFillId}"))
+			{
+				try
+				{
+					$this->processItem($externalServiceType, $externalFormFillItem, $originId);
+				}
+				catch (Throwable $throwable)
+				{
+					$this->addError($throwable->getMessage());
+				}
+				finally
+				{
+					$application::getConnection()->unlock($originId);
+				}
+			}
 		}
-
-		// add result
-		$result = $form->addResult($fields, $addResultParameters);
-		foreach ($result->getErrors() as $errorMessage)
-		{
-			$this->errorCollection->setError(new Error($errorMessage));
-		}
-
-		return ($result->getId() && $result->getId() > 0);
 	}
 
-	protected function addError($errorText)
+	/**
+	 * Add Error to collection
+	 *
+	 * @param string $errorText
+	 */
+	private function addError(string $errorText): void
 	{
 		$this->errorCollection->setError(new Error($errorText));
 	}
 
-	/**
-	 * Return true if it has errors.
-	 *
-	 * @return bool
-	 */
-	public function hasErrors()
+	private function processItem(string $serviceType, Payload\LeadItem $externalFormFillItem, string $originId): void
 	{
-		return $this->errorCollection->count() > 0;
+		$linkDb =
+			AdsFormLinkTable::query()
+				->setSelect(['WEBFORM_ID'])
+				->where('ADS_FORM_ID', $adsFormId = $externalFormFillItem->getFormId())
+				->where('ADS_TYPE', $serviceType)
+				->addOrder('DATE_INSERT', 'DESC')
+				->exec();
+
+		if ($linkDb->getSelectedRowsCount() <= 0)
+		{
+			$this->addError("Linked crm-forms by ads-form-id `{$adsFormId}` not found.");
+
+			return;
+		}
+
+		/**@var \Bitrix\Seo\LeadAds\Form */
+		$form = $this->service->getForm($serviceType);
+		$adsResult = $form->getResult($externalFormFillItem);
+
+		if (!$adsResult || !$adsResult->isSuccess())
+		{
+			$this->errorCollection->add($adsResult->getErrors());
+
+			return;
+		}
+
+		for ($incomeFields = []; $item = $adsResult->fetch();)
+		{
+			$incomeFields[$item['NAME']] = $item['VALUES'];
+		}
+
+		for (; $link = $linkDb->fetch();)
+		{
+			// check existing form
+			if (($form = new Form()) && !$form->load($link['WEBFORM_ID']))
+			{
+				$this->addError("Can not load crm-form by id `{$link['WEBFORM_ID']}`.");
+				continue;
+			}
+			// check existing result
+			if ($form->hasResult($originId))
+			{
+				continue;
+			}
+			// chek if map exists
+			if (!$mapper = $form->getIntegration()->getIntegrationFieldsMapper($serviceType, $adsFormId))
+			{
+				$this->addError("Mapper not exists for this form");
+				continue;
+			}
+
+			// add result
+			$result = $form->addResult(
+				$mapper->prepareFormFillResult($incomeFields),
+				[
+					'ORIGIN_ID' => $originId,
+					'COMMON_DATA' => [
+						'TRACE_ID' => Trace::create()
+							->addChannel($serviceType === Service::TYPE_FACEBOOK ? new FbLeadAds() : new VkLeadAds())
+							->addChannel(new Channel\Form($link['WEBFORM_ID']))
+							->save(),
+					],
+				]
+			);
+
+			foreach ($result->getErrors() as $errorMessage)
+			{
+				$this->addError($errorMessage);
+			}
+		}
 	}
 
 	/**
@@ -240,7 +227,7 @@ class WebHookFormFillHandler
 	 *
 	 * @return ErrorCollection
 	 */
-	public function getErrorCollection()
+	public function getErrorCollection(): ErrorCollection
 	{
 		return $this->errorCollection;
 	}

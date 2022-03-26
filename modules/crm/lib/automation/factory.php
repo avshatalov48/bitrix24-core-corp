@@ -7,6 +7,7 @@ use Bitrix\Crm\Automation\Target;
 use Bitrix\Crm\Automation\Trigger\BaseTrigger;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\QuoteSettings;
+use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\NotSupportedException;
@@ -36,15 +37,26 @@ class Factory
 	{
 		if (is_null(static::$supportedEntityTypes))
 		{
-			static::$supportedEntityTypes = [
-					\CCrmOwnerType::Lead,
-					\CCrmOwnerType::Deal,
-					\CCrmOwnerType::Order,
-			];
+			static::$supportedEntityTypes = [\CCrmOwnerType::Deal];
+
+			if (!Loader::includeModule('bitrix24') || Feature::isFeatureEnabled('crm_leads'))
+			{
+				static::$supportedEntityTypes[] = \CCrmOwnerType::Lead;
+			}
 
 			if (QuoteSettings::getCurrent()->isFactoryEnabled())
 			{
 				static::$supportedEntityTypes[] = \CCrmOwnerType::Quote;
+			}
+
+			if (InvoiceSettings::getCurrent()->isSmartInvoiceEnabled())
+			{
+				static::$supportedEntityTypes[] = \CCrmOwnerType::SmartInvoice;
+			}
+
+			if (\CCrmSaleHelper::isWithOrdersMode())
+			{
+				static::$supportedEntityTypes[] = \CCrmOwnerType::Order;
 			}
 		}
 
@@ -70,6 +82,16 @@ class Factory
 		}
 
 		return true;
+	}
+
+	public static function isScriptAvailable($entityTypeId, $ignoreLicense = false): bool
+	{
+		if ($entityTypeId === \CCrmOwnerType::Contact || $entityTypeId === \CCrmOwnerType::Company)
+		{
+			$entityTypeId = \CCrmOwnerType::Deal;
+		}
+
+		return static::isAutomationAvailable($entityTypeId, $ignoreLicense);
 	}
 
 	public static function isAutomationRunnable(int $entityTypeId): bool
@@ -172,6 +194,7 @@ class Factory
 			|| $entityTypeId === \CCrmOwnerType::Company
 			|| $entityTypeId === \CCrmOwnerType::Order
 			|| $entityTypeId === \CCrmOwnerType::Quote
+			|| $entityTypeId === \CCrmOwnerType::SmartInvoice
 			|| \CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId)
 		);
 	}
@@ -287,7 +310,19 @@ class Factory
 		{
 			return new Target\ItemTarget($entityTypeId);
 		}
-		elseif (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId) || $entityTypeId === \CCrmOwnerType::Quote)
+		elseif ($entityTypeId === \CCrmOwnerType::SmartInvoice)
+		{
+			return new Target\ItemTarget($entityTypeId);
+		}
+		elseif ($entityTypeId === \CCrmOwnerType::Contact)
+		{
+			return new Target\ContactTarget($entityTypeId);
+		}
+		elseif ($entityTypeId === \CCrmOwnerType::Company)
+		{
+			return new Target\CompanyTarget($entityTypeId);
+		}
+		elseif (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
 		{
 			return new Target\ItemTarget($entityTypeId);
 		}

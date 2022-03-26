@@ -39,9 +39,8 @@ Class tasks extends CModule
 		// Database tables creation
 		if (!$DB->Query("SELECT 'x' FROM b_tasks WHERE 1 = 0", true))
 		{
-			$dbType = mb_strtolower($DB->type);
 			$this->errors = $DB->RunSQLBatch(
-				$_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/tasks/install/db/{$dbType}/install.sql"
+				$_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/tasks/install/db/mysql/install.sql"
 			);
 		}
 
@@ -81,6 +80,7 @@ Class tasks extends CModule
 		RegisterModuleDependences('forum', 'OnBeforeCommentDelete', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Comment', 'onBeforeDelete');
 		RegisterModuleDependences('forum', 'OnCommentDelete', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Comment', 'onAfterDelete');
 		RegisterModuleDependences('forum', 'OnBeforeCommentAdd', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Comment', 'onBeforeAdd');
+		RegisterModuleDependences('forum', 'OnBeforeCommentUpdate', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Comment', 'onBeforeUpdate');
 		RegisterModuleDependences('forum', 'OnAfterCommentAdd', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Comment', 'onAfterAdd');
 		RegisterModuleDependences('forum', 'OnAfterCommentUpdate', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Comment', 'onAfterUpdate');
 
@@ -205,6 +205,54 @@ Class tasks extends CModule
 
 		$errors = static::createScrumItemFileField('TASKS_SCRUM_ITEM', $errors);
 		$errors = static::createScrumEpicFileField('TASKS_SCRUM_EPIC', $errors);
+
+		$errors = static::createResultFileField($errors);
+
+		return $errors;
+	}
+
+	private static function createResultFileField(array $errors): array
+	{
+		global $APPLICATION;
+		$userField = new CUserTypeEntity();
+
+		$fieldRes = \CUserTypeEntity::getList([], ['ENTITY_ID'  => 'TASKS_TASK_RESULT', 'FIELD_NAME' => 'UF_RESULT_FILES']);
+		if (!$fieldRes->Fetch())
+		{
+			$userFieldId = $userField->Add([
+				'ENTITY_ID' => 'TASKS_TASK_RESULT',
+				'FIELD_NAME' => 'UF_RESULT_FILES',
+				'USER_TYPE_ID' => 'disk_file',
+				'MULTIPLE' => 'Y',
+				'MANDATORY' => 'N',
+				'SHOW_FILTER' => 'N',
+				'SHOW_IN_LIST' => 'N',
+				'EDIT_IN_LIST' => 'N',
+				'IS_SEARCHABLE' => 'N',
+			]);
+
+			if (!$userFieldId && ($exception = $APPLICATION->getException()))
+			{
+				$errors[] = $exception->getString();
+			}
+		}
+
+		$fieldRes = \CUserTypeEntity::getList([], ['ENTITY_ID'  => 'TASKS_TASK_RESULT', 'FIELD_NAME' => 'UF_RESULT_PREVIEW']);
+		if (!$fieldRes->Fetch())
+		{
+			$userFieldId =  $userField->Add([
+				"ENTITY_ID" => "TASKS_TASK_RESULT",
+				"FIELD_NAME" => "UF_RESULT_PREVIEW",
+				"XML_ID" => "UF_BLOG_POST_URL_PRV",
+				"USER_TYPE_ID" => "url_preview",
+				"MULTIPLE" => "N",
+			]);
+
+			if (!$userFieldId && ($exception = $APPLICATION->getException()))
+			{
+				$errors[] = $exception->getString();
+			}
+		}
 
 		return $errors;
 	}
@@ -551,9 +599,8 @@ Class tasks extends CModule
 		{
 			$this->uninstallUserFields();
 
-			$dbType = mb_strtolower($DB->type);
 			$this->errors = $DB->RunSQLBatch(
-				$_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/tasks/install/db/{$dbType}/uninstall.sql"
+				$_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/tasks/install/db/mysql/uninstall.sql"
 			);
 		}
 
@@ -584,6 +631,7 @@ Class tasks extends CModule
 		UnRegisterModuleDependences('forum', 'OnBeforeCommentDelete', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Comment', 'onBeforeDelete');
 		UnRegisterModuleDependences('forum', 'OnCommentDelete', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Comment', 'onAfterDelete');
 		UnRegisterModuleDependences('forum', 'OnBeforeCommentAdd', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Comment', 'onBeforeAdd');
+		UnRegisterModuleDependences('forum', 'OnBeforeCommentUpdate', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Comment', 'onBeforeUpdate');
 		UnRegisterModuleDependences('forum', 'OnAfterCommentAdd', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Comment', 'onAfterAdd');
 		UnRegisterModuleDependences('forum', 'OnAfterCommentUpdate', 'tasks', '\Bitrix\Tasks\Integration\Forum\Task\Comment', 'onAfterUpdate');
 
@@ -698,6 +746,35 @@ Class tasks extends CModule
 
 		$this->deleteScrumItemFileFields('TASKS_SCRUM_ITEM');
 		$this->deleteScrumEpicFileFields('TASKS_SCRUM_EPIC');
+
+		$this->deleteResultFields();
+	}
+
+	private function deleteResultFields()
+	{
+		$userFieldRes = CUserTypeEntity::getList(
+			[],
+			[
+				'ENTITY_ID'  => 'TASKS_TASK_RESULT',
+				'FIELD_NAME' => 'UF_RESULT_FILES',
+			]
+		);
+		if ($userField = $userFieldRes->Fetch())
+		{
+			(new CUserTypeEntity())->delete($userField['ID']);
+		}
+
+		$userFieldRes = CUserTypeEntity::getList(
+			[],
+			[
+				'ENTITY_ID'  => 'TASKS_TASK_RESULT',
+				'FIELD_NAME' => 'UF_RESULT_PREVIEW',
+			]
+		);
+		if ($userField = $userFieldRes->Fetch())
+		{
+			(new CUserTypeEntity())->delete($userField['ID']);
+		}
 	}
 
 	private function deleteFileFields(string $entityId): void

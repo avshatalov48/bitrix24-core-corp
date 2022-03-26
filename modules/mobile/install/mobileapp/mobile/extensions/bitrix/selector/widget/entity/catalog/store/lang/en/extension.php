@@ -1,0 +1,5 @@
+<?php
+$MESS["SELECTOR_COMPONENT_CREATE_STORE"] = "Create warehouse";
+$MESS["SELECTOR_COMPONENT_CREATING_STORE"] = "Creating warehouse...";
+$MESS["SELECTOR_COMPONENT_PICK_STORE_2"] = "Warehouse";
+$MESS["SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_STORE"] = "Start typing to find warehouse";

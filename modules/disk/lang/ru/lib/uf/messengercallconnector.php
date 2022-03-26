@@ -1,0 +1,4 @@
+<?php
+$MESS["DISK_UF_IM_CALL_CONNECTOR_TITLE"] = "Чат \"#NAME#\"";
+$MESS["DISK_UF_IM_CALL_CONNECTOR_CALL_RESUME_UPDATED"] = "Изменено резюме встречи";
+$MESS["DISK_UF_IM_CALL_CONNECTOR_CALL_DOCUMENT_UPDATED"] = "Изменен документ";

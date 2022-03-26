@@ -26,10 +26,14 @@ if ($USER->IsJustAuthorized())
 
 		$arParams = false;
 		$userId = intval($USER->GetID());
-		if (mb_substr($_REQUEST['RECIPIENT_ID'], 0, 4) == 'chat')
+
+		if (\Bitrix\Im\Common::isChatId($_REQUEST['RECIPIENT_ID']))
 		{
-			$chatId = intval(mb_substr($_REQUEST['RECIPIENT_ID'], 4));
-			if (CIMChat::GetGeneralChatId() != $chatId || !CIMChat::CanSendMessageToGeneralChat($userId))
+			$chatId = \Bitrix\Im\Dialog::getChatId($_REQUEST['RECIPIENT_ID']);
+			if (
+				CIMChat::GetGeneralChatId() != $chatId
+				|| CIMChat::CanSendMessageToGeneralChat($userId)
+			)
 			{
 				$arParams = Array(
 					"FROM_USER_ID" => $userId,
@@ -54,7 +58,7 @@ if ($USER->IsJustAuthorized())
 		}
 		else
 		{
-			$result = Array('RESULT' => 'AUTHORIZE_ERROR');
+			$result = Array('RESULT' => 'ACCESS_ERROR');
 		}
 	}
 	else

@@ -12,7 +12,7 @@ const Automation = {
 			required: true
 		},
 		counter: {
-			type: String,
+			type: Number,
 			required: true
 		},
 		stageOnOrderPaid: {
@@ -21,7 +21,7 @@ const Automation = {
 		},
 		stageOnDeliveryFinished: {
 			type: String,
-			required: true,
+			required: false,
 		},
 		items: {
 			type: Array,
@@ -105,7 +105,14 @@ const Automation = {
 			},
 			isPayment()
 			{
-				return this.$root.$app.options.mode === 'payment_delivery';
+				return (
+					this.$root.$app.options.mode === 'payment_delivery'
+					|| this.$root.$app.options.mode === 'payment'
+				);
+			},
+			isHideDeliveryStage()
+			{
+				return this.$root.$app.options.mode === 'payment';
 			}
 		},
 	created()
@@ -127,7 +134,7 @@ const Automation = {
 			<template v-slot:block-container>
 				<div :class="containerClassMixin">
 					<div v-if="isPayment">
-						<stage-item-list 
+						<stage-item-list
 							v-on:on-choose-select-option="updatePaymentStage($event)"
 							:stages="paymentStages"
 							:editable="editable"
@@ -135,9 +142,9 @@ const Automation = {
 							<template v-slot:stage-list-text>${Loc.getMessage('SALESCENTER_AUTOMATION_BLOCK_TEXT')}</template>
 						</stage-item-list>
 					</div>
-					
-					<div>
-						<stage-item-list 
+
+					<div v-if="!isHideDeliveryStage">
+						<stage-item-list
 							v-on:on-choose-select-option="updateShipmentStage($event)"
 							:stages="shipmentStages"
 							:editable="editable"
@@ -146,7 +153,7 @@ const Automation = {
 						</stage-item-list>
 					</div>
 				</div>
-				
+
 			</template>
 		</stage-block-item>
 	`

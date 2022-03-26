@@ -45,7 +45,7 @@ class Action
 			],
 			[
 				'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_PING'),
-				'onclick' => "BX.UI.Notification.Center.notify({content: BX.message('TASKS_LIST_ACTION_PING_NOTIFICATION')}); BX.Tasks.GridActions.action('ping', {$taskId});",
+				'onclick' => "BX.Tasks.GridActions.action('ping', {$taskId});",
 			],
 			[
 				'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_VIEW'),
@@ -89,14 +89,14 @@ class Action
 		{
 			$taskRowActions[] = [
 				'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_ADD_TO_FAVORITES'),
-				'onclick' => 'BX.Tasks.GridActions.action("addToFavorite", '.$taskId.');',
+				'onclick' => 'BX.Tasks.GridActions.action("addFavorite", '.$taskId.');',
 			];
 		}
 		if ($actions['DELETE_FAVORITE'])
 		{
 			$taskRowActions[] = [
 				'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_REMOVE_FROM_FAVORITES'),
-				'onclick' => 'BX.Tasks.GridActions.action("removeFromFavorite", '.$taskId.');',
+				'onclick' => 'BX.Tasks.GridActions.action("deleteFavorite", '.$taskId.');',
 			];
 		}
 		if ($actions['COMPLETE'])
@@ -111,13 +111,6 @@ class Action
 			$taskRowActions[] = [
 				'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_RENEW'),
 				'onclick' => 'BX.Tasks.GridActions.action("renew", '.$taskId.');',
-			];
-		}
-		if ($actions['ACCEPT'])
-		{
-			$taskRowActions[] = [
-				'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_ACCEPT'),
-				'onclick' => 'BX.Tasks.GridActions.action("accept", '.$taskId.');',
 			];
 		}
 		if ($actions['APPROVE'])
@@ -156,6 +149,19 @@ class Action
 					'action' => 'edit',
 					'group_id' => $groupId,
 				]).'?COPY='.$taskId.'&viewType=VIEW_MODE_LIST',
+		];
+		$copyLink = tasksServerName() . CComponentEngine::MakePathFromTemplate(
+			$urlPath,
+			[
+				'user_id' => $userId,
+				'task_id' => $taskId,
+				'action' => 'view',
+				'group_id' => $groupId,
+			]
+		);
+		$taskRowActions[] = [
+			'text' => GetMessageJS('TASKS_GRID_TASK_ROW_ACTION_COPY_LINK'),
+			'onclick' => 'BX.Tasks.GridActions.action("copyLink", '.$taskId.', {copyLink: "'.$copyLink.'"});',
 		];
 
 		if ($this->checkCanUpdatePlan() === 'Y')

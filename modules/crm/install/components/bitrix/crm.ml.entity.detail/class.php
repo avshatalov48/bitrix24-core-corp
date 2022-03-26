@@ -33,6 +33,11 @@ class CCrmMlEntityDetailComponent extends CBitrixComponent
 	{
 		$this->setEntity($this->arParams['TYPE'], $this->arParams['ID']);
 
+		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
+		if (!CCrmAuthorizationHelper::CheckReadPermission($this->arParams['TYPE'], $this->arParams['ID'], $userPermissions))
+		{
+			$this->errorCollection[] = new \Bitrix\Main\Error("Access denied");
+		}
 		if(!\Bitrix\Main\Loader::includeModule("ml"))
 		{
 			$this->errorCollection[] = new \Bitrix\Main\Error("ML module is not installed");
@@ -62,7 +67,7 @@ class CCrmMlEntityDetailComponent extends CBitrixComponent
 
 		if ($this->arParams['SET_TITLE'] === 'Y')
 		{
-			if($this->model && $this->model->getState() === \Bitrix\Ml\Model::STATE_READY)
+			if($this->model && $this->model->getState() === \Bitrix\Ml\Model::STATE_READY && $this->arResult['ITEM'])
 			{
 				$GLOBALS['APPLICATION']->SetTitle($this->arResult['ITEM']['TITLE']);
 			}

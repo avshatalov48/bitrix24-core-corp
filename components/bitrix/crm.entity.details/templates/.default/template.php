@@ -80,13 +80,31 @@ $tabContainerId = "{$guid}_tabs";
 	$mainTabHTML = ob_get_clean();
 	//endregion
 	$menuTabs = array_map(function ($tab) use ($guid) {
+		$locked = false;
+		if (isset($tab['tariffLock']) && is_string($tab['tariffLock']) && $tab['tariffLock'] !== '')
+		{
+			$onClickValue = $tab['tariffLock'];
+			$locked = true;
+		}
+		else
+		{
+			$onClickValue = "BX.onCustomEvent('".htmlspecialcharsbx(CUtil::JSEscape($guid."_click_".$tab['id']))."');";
+		}
 		$result = [
 			'TEXT' => $tab['name'],
 			'ID' => $tab['id'],
-			'ON_CLICK' => "BX.onCustomEvent('".htmlspecialcharsbx(CUtil::JSEscape($guid."_click_".$tab['id']))."');",
+			'ON_CLICK' => $onClickValue,
 			'IS_ACTIVE' => isset($tab['active']) && $tab['active'],
-			'CLASS' => isset($tab['enabled']) && !$tab['enabled'] ? 'crm-entity-section-tab-disabled' : '',
+			'IS_PASSIVE' => isset($tab['enabled']) && !$tab['enabled'],
+			'IS_LOCKED' => $locked,
 		];
+
+		if (!empty($tab['url']))
+		{
+			$result['URL'] = (string)$tab['url'];
+			unset($result['ON_CLICK']);
+		}
+
 		return $result;
 	}, $tabs);
 
@@ -95,7 +113,7 @@ $tabContainerId = "{$guid}_tabs";
 		$menuTabs[] = [
 			'ID' => 'crm_rest_marketplace',
 			'TEXT' => \Bitrix\Main\Localization\Loc::getMessage('CRM_ENT_DETAIL_REST_BUTTON_2'),
-			'ON_CLICK' => 'BX.rest.Marketplace.open("'.\CUtil::PhpToJSObject($arResult['REST_PLACEMENT_CONFIG']).'")',
+			'ON_CLICK' => 'BX.rest.Marketplace.open(' . \CUtil::PhpToJSObject($arResult['REST_PLACEMENT_CONFIG']) . ')',
 		];
 	}
 	$tabContainerClassName = 'crm-entity-section crm-entity-section-tabs';
@@ -147,9 +165,9 @@ $tabContainerId = "{$guid}_tabs";
 			[
 				"ID" => $tabMenuContainerId,
 				"ITEMS" => $menuTabs,
-				"CLASS_ITEM_ACTIVE" => "crm-entity-section-tab-active",
 				"DISABLE_SETTINGS" => true,
 				"EDIT_MODE" => $mode,
+				"THEME" => 'flat-adaptive',
 			]
 		);
 		?>

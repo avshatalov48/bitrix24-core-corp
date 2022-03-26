@@ -70,7 +70,8 @@ elseif ($action == 'page' && !empty($column))
 		'ENTITY_TYPE' => $type,
 		'ADDITIONAL_FILTER' => array('COLUMN' => $column),
 		'PAGE' => $page,
-		'EXTRA' => $extra
+		'EXTRA' => $extra,
+		'ONLY_ITEMS' => ($onlyItems ?? 'N'),
 	));
 }
 //change stage

@@ -1,6 +1,8 @@
 <?
 return [
-	"helpers/holder",
-	"list",
-	"user/profile"
+	'extensions' => [
+		'helpers/holder',
+		'list',
+		'user/profile',
+	],
 ];

@@ -14,11 +14,6 @@ class Deal extends Base
 		return \CCrmOwnerType::Deal;
 	}
 
-	public function isPermissionEntityTypeSupported($entityType): bool
-	{
-		return Crm\Category\DealCategory::convertFromPermissionEntityType($entityType) >= 0;
-	}
-
 	protected function getSelectFields(): array
 	{
 		return [
@@ -43,11 +38,6 @@ class Deal extends Base
 	public function hasCategories(): bool
 	{
 		return true;
-	}
-
-	public function extractCategoryId(string $permissionEntityType): int
-	{
-		return Crm\Category\DealCategory::convertFromPermissionEntityType($permissionEntityType);
 	}
 
 	//region ProgressSteps

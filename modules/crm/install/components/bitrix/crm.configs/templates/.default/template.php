@@ -1,11 +1,15 @@
 <?
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
-use \Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Localization\Loc;
 
 /** @var array $arResult */
 
 $siteDir = rtrim(SITE_DIR, '/');
+
+$asset = Bitrix\Main\Page\Asset::getInstance();
+$asset->addJs('/bitrix/js/crm/common.js');
 
 /* Menu items */
 $tabs = array();
@@ -97,7 +101,10 @@ if($arResult['PERM_CONFIG'])
 		$items['tab_content_automation']['BP']['LOCKED'] = true;
 	}
 
-	$items['tab_content_automation']['AUTOMATION_LEAD']['URL'] = $siteDir.'/crm/configs/automation/LEAD/0/';
+	$items['tab_content_automation']['AUTOMATION_LEAD']['URL'] =
+		Container::getInstance()->getRouter()
+		->getAutomationUrl(CCrmOwnerType::Lead)
+	;
 	$items['tab_content_automation']['AUTOMATION_LEAD']['ICON_CLASS'] = 'img-automation';
 	$items['tab_content_automation']['AUTOMATION_LEAD']['NAME'] = GetMessage("CRM_CONFIGS_AUTOMATION_LEAD");
 
@@ -107,7 +114,10 @@ if($arResult['PERM_CONFIG'])
 		$items['tab_content_automation']['AUTOMATION_LEAD']['LOCKED'] = true;
 	}
 
-	$items['tab_content_automation']['AUTOMATION_DEAL']['URL'] = $siteDir.'/crm/configs/automation/DEAL/0/';
+	$items['tab_content_automation']['AUTOMATION_DEAL']['URL'] =
+		Container::getInstance()->getRouter()
+			->getAutomationUrl(CCrmOwnerType::Deal)
+	;
 	$items['tab_content_automation']['AUTOMATION_DEAL']['ICON_CLASS'] = 'img-automation';
 	$items['tab_content_automation']['AUTOMATION_DEAL']['NAME'] = GetMessage("CRM_CONFIGS_AUTOMATION_DEAL");
 
@@ -117,14 +127,20 @@ if($arResult['PERM_CONFIG'])
 		$items['tab_content_automation']['AUTOMATION_DEAL']['LOCKED'] = true;
 	}
 
-	$items['tab_content_automation']['AUTOMATION_ORDER']['URL'] = $siteDir.'/crm/configs/automation/ORDER/0/';
-	$items['tab_content_automation']['AUTOMATION_ORDER']['ICON_CLASS'] = 'img-automation';
-	$items['tab_content_automation']['AUTOMATION_ORDER']['NAME'] = GetMessage("CRM_CONFIGS_AUTOMATION_ORDER");
-
-	if(!$arResult['IS_AUTOMATION_ORDER_ENABLED'])
+	if (\CCrmSaleHelper::isWithOrdersMode())
 	{
-		$items['tab_content_automation']['AUTOMATION_ORDER']['URL'] = $automationOrderHelperUrl;
-		$items['tab_content_automation']['AUTOMATION_ORDER']['LOCKED'] = true;
+		$items['tab_content_automation']['AUTOMATION_ORDER']['URL'] =
+			Container::getInstance()->getRouter()
+				->getAutomationUrl(CCrmOwnerType::Order)
+		;;
+		$items['tab_content_automation']['AUTOMATION_ORDER']['ICON_CLASS'] = 'img-automation';
+		$items['tab_content_automation']['AUTOMATION_ORDER']['NAME'] = GetMessage("CRM_CONFIGS_AUTOMATION_ORDER");
+
+		if(!$arResult['IS_AUTOMATION_ORDER_ENABLED'])
+		{
+			$items['tab_content_automation']['AUTOMATION_ORDER']['URL'] = $automationOrderHelperUrl;
+			$items['tab_content_automation']['AUTOMATION_ORDER']['LOCKED'] = true;
+		}
 	}
 
 	/*if($arResult['IS_AUTOMATION_INVOICE_ENABLED'])
@@ -208,16 +224,30 @@ if($arResult['PERM_CONFIG'])
 	$items['tab_content_other']['REFERENCE']['NAME'] = GetMessage("CRM_CONFIGS_REFERENCE");
 	*/
 
-	if (\Bitrix\Main\Loader::includeModule('documentgenerator'))
+	if (\Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->isEnabled())
 	{
 		$items['tab_content_numerator']['DOCUMENT']['URL'] = $siteDir . '/crm/configs/document_numerators/';
 		$items['tab_content_numerator']['DOCUMENT']['ICON_CLASS'] = 'img-document';
 		$items['tab_content_numerator']['DOCUMENT']['NAME'] = GetMessage("CRM_CONFIGS_NUMERATOR_FOR_DOCUMENT");
 	}
 
-	$items['tab_content_numerator']['INVOICE']['URL'] = '#';
-	$items['tab_content_numerator']['INVOICE']['ICON_CLASS'] = 'img-invoice js-numerator-invoice';
-	$items['tab_content_numerator']['INVOICE']['NAME'] = GetMessage("CRM_CONFIGS_NUMERATOR_FOR_INVOICE");
+	$invoiceSettings = \Bitrix\Crm\Settings\InvoiceSettings::getCurrent();
+	if ($invoiceSettings->isOldInvoicesEnabled())
+	{
+		$items['tab_content_numerator'][\CCrmOwnerType::InvoiceName]['URL'] = '#';
+		$items['tab_content_numerator'][\CCrmOwnerType::InvoiceName]['ICON_CLASS'] = 'img-invoice js-numerator-invoice';
+		$items['tab_content_numerator'][\CCrmOwnerType::InvoiceName]['NAME'] = GetMessage("CRM_CONFIGS_NUMERATOR_FOR_INVOICE");
+	}
+	if ($invoiceSettings->isSmartInvoiceEnabled())
+	{
+		if ($invoiceSettings->isOldInvoicesEnabled())
+		{
+			$items['tab_content_numerator'][\CCrmOwnerType::InvoiceName]['NAME'] = \Bitrix\Crm\Service\Container::getInstance()->getLocalization()->appendOldVersionSuffix(GetMessage("CRM_CONFIGS_NUMERATOR_FOR_INVOICE"));
+		}
+		$items['tab_content_numerator'][\CCrmOwnerType::SmartInvoiceName]['URL'] = '#';
+		$items['tab_content_numerator'][\CCrmOwnerType::SmartInvoiceName]['ICON_CLASS'] = 'img-invoice js-numerator-smart-invoice';
+		$items['tab_content_numerator'][\CCrmOwnerType::SmartInvoiceName]['NAME'] = GetMessage("CRM_CONFIGS_NUMERATOR_FOR_INVOICE");
+	}
 
 	$items['tab_content_numerator']['QUOTE']['URL'] = '#';
 	$items['tab_content_numerator']['QUOTE']['ICON_CLASS'] = 'img-quote js-numerator-quote';
@@ -291,7 +321,6 @@ $items['tab_content_creation_on_the_basis']['INVOICE']['NAME'] = GetMessage("CRM
 */
 
 /* Content description */
-$contentDescription['tab_content_where_to_begin'] = GetMessage("CRM_CONFIGS_DESCRIPTION_WHERE_TO_BEGIN");
 $contentDescription['tab_content_settings_forms_and_reports'] = GetMessage("CRM_CONFIGS_DESCRIPTION_SETTINGS_FORMS_AND_REPORTS");
 $contentDescription['tab_content_printed_forms_of_documents'] = GetMessage("CRM_CONFIGS_DESCRIPTION_PRINTED_FORMS_OF_DOCUMENTS");
 $contentDescription['tab_content_rights'] = GetMessage("CRM_CONFIGS_DESCRIPTION_RIGHTS");
@@ -346,7 +375,7 @@ foreach($tabs as $tabId => $tabName)
 						</a>
 					<? endforeach; ?>
 					<div class="view-report-wrapper-inner-clarification">
-						<?=$contentDescription[$contentId]?>
+						<?=($contentDescription[$contentId] ?? '')?>
 					</div>
 				</div>
 				<? $counter++; ?>
@@ -363,10 +392,14 @@ foreach($tabs as $tabId => $tabName)
 
 <script type="text/javascript">
 	BX(function () {
+		BX.Crm.Page.initialize();
+
 		BX['CrmConfigClass_<?= $arResult['RAND_STRING']?>'] = new BX.CrmConfigClass({
 			randomString: '<?= $arResult['RAND_STRING'] ?>',
 			numeratorInvoiceId: '<?= CUtil::JSEscape($arResult['NUMERATOR_INVOICE_ID']) ?>',
 			numeratorInvoiceType: '<?= REGISTRY_TYPE_CRM_INVOICE ?>',
+			numeratorSmartInvoiceId: '<?= CUtil::JSEscape($arResult['NUMERATOR_SMART_INVOICE_ID']) ?>',
+			numeratorSmartInvoiceType: '<?= \Bitrix\Crm\Service\Factory\SmartInvoice::NUMERATOR_TYPE ?>',
 			numeratorQuoteId: '<?= CUtil::JSEscape($arResult['NUMERATOR_QUOTE_ID']) ?>',
 			numeratorQuoteType: '<?= REGISTRY_TYPE_CRM_QUOTE ?>',
 			tabs: <?=CUtil::PhpToJsObject(array_keys($tabs))?>

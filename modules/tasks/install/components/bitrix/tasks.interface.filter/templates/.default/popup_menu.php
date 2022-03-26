@@ -40,15 +40,18 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 			text: '<?=$submodes['VIEW_SUBMODE_WITH_SUBTASKS']['TITLE']?>',
 			className: (groupBySubTasks ? 'menu-popup-item-accept' : 'menu-popup-item-none'),
 			onclick: function(event, item) {
-				var query = new BX.Tasks.Util.Query({autoExec: true});
-				query.add(
-					'ui.listcontrols.togglegroupbytasks',
-					{
+				BX.ajax.runComponentAction('bitrix:tasks.interface.filter', 'toggleGroupByTasks', {
+					mode: 'class',
+					data: {
 						userId: <?= $arParams['USER_ID'] ?>
-					},
-					{},
-					BX.delegate(function(errors, data) {
-						if (!errors.checkHasErrors())
+					}
+				}).then(
+					function(response)
+					{
+						if (
+							response.status
+							&& response.status === 'success'
+						)
 						{
 							if (BX.hasClass(item.layout.item, "menu-popup-item-accept"))
 							{
@@ -73,7 +76,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 								window.location.reload();
 							}
 						}
-					})
+					}.bind(this),
+					function(response)
+					{
+
+					}.bind(this)
 				);
 			}
 		});
@@ -93,15 +100,18 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 			text: '<?=$submodes['VIEW_SUBMODE_WITH_GROUPS']['TITLE']?>',
 			className: (groupByGroups ? 'menu-popup-item-accept' : 'menu-popup-item-none'),
 			onclick: function(event, item) {
-				var query = new BX.Tasks.Util.Query({autoExec: true});
-				query.add(
-					'ui.listcontrols.togglegroupbygroups',
-					{
+				BX.ajax.runComponentAction('bitrix:tasks.interface.filter', 'toggleGroupByGroups', {
+					mode: 'class',
+					data: {
 						userId: <?= $arParams['USER_ID'] ?>
-					},
-					{},
-					BX.delegate(function(errors, data) {
-					if (!errors.checkHasErrors())
+					}
+				}).then(
+					function(response)
+					{
+						if (
+							response.status
+							&& response.status === 'success'
+						)
 						{
 							if (BX.hasClass(item.layout.item, "menu-popup-item-accept"))
 							{
@@ -126,7 +136,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 								window.location.reload();
 							}
 						}
-					})
+					}.bind(this),
+					function(response)
+					{
+
+					}.bind(this)
 				);
 			}
 		});

@@ -60,6 +60,7 @@ if($arParams['ELEMENT_ID'] > 0)
 $arResult['TOOLBAR_ID'] = $toolbarID;
 
 $arResult['BUTTONS'] = array();
+$isInSlider = ($arParams['IN_SLIDER'] === 'Y');
 
 if ($arParams['TYPE'] == 'list')
 {
@@ -186,9 +187,12 @@ if($arParams['TYPE'] === 'list')
 		);
 	}
 
-	$arResult['BUTTONS'][] = array('NEWBAR' => true);
+	if (!$isInSlider)
+	{
+		$arResult['BUTTONS'][] = ['NEWBAR' => true];
+	}
 
-	if ($bConfig)
+	if ($bConfig && !$isInSlider)
 	{
 		\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
 		$userFieldListUrl = \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getUserFieldListUrl(\CCrmOwnerType::Quote);
@@ -216,7 +220,7 @@ if($arParams['TYPE'] === 'list')
 		);
 	}*/
 
-	if ($bExport)
+	if ($bExport && !$isInSlider)
 	{
 		/*if($bImport)
 		{

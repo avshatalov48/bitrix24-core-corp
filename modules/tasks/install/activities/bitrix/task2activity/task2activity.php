@@ -484,7 +484,7 @@ class CBPTask2Activity
 					&& CCrmOwnerType::isPossibleDynamicTypeId($documentTypeId)
 				)
 				{
-					return $document['STAGE_ID'];
+					return $document['STAGE_ID'] ?? $document['STATUS_ID'] ?? '';
 				}
 				return '';
 		}
@@ -1067,7 +1067,7 @@ class CBPTask2Activity
 		self::$cycleCounter[$key]++;
 		if (self::$cycleCounter[$key] > self::CYCLE_LIMIT)
 		{
-			$this->WriteToTrackingService(GetMessage("BPSA_CYCLING_ERROR"), 0, CBPTrackingType::Error);
+			$this->WriteToTrackingService(GetMessage("BPSA_CYCLING_ERROR_1"), 0, CBPTrackingType::Error);
 			throw new Exception();
 		}
 	}

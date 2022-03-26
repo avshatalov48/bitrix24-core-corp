@@ -34,6 +34,13 @@ class LeadScoring extends Base
 	{
 		return Loc::getMessage("CRM_LEAD_SCORING_TITLE");
 	}
+
+	public function hasAccess(int $userId = 0)
+	{
+		$userPermission = \CCrmPerms::GetUserPermissions($userId);
+		return \CCrmAuthorizationHelper::CheckReadPermission(\CCrmOwnerType::Lead, 0, $userPermission);
+	}
+
 	/**
 	 * @return array
 	 */

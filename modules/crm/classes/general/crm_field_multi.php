@@ -18,6 +18,7 @@ class CCrmFieldMulti
 	const EMAIL = 'EMAIL';
 	const WEB = 'WEB';
 	const IM = 'IM';
+	const LINK = 'LINK';
 
 	function __construct()
 	{
@@ -50,12 +51,13 @@ class CCrmFieldMulti
 	{
 		if(self::$ENTITY_TYPE_INFOS === null)
 		{
-			self::$ENTITY_TYPE_INFOS = array(
-				'PHONE' => array('NAME' => GetMessage('CRM_FM_ENTITY_PHONE')),
-				'EMAIL' => array('NAME' => GetMessage('CRM_FM_ENTITY_EMAIL')),
-				'WEB' => array('NAME' => GetMessage('CRM_FM_ENTITY_WEB')),
-				'IM' => array('NAME' => GetMessage('CRM_FM_ENTITY_IM'))
-			);
+			self::$ENTITY_TYPE_INFOS = [
+				'PHONE' => ['NAME' => GetMessage('CRM_FM_ENTITY_PHONE')],
+				'EMAIL' => ['NAME' => GetMessage('CRM_FM_ENTITY_EMAIL')],
+				'WEB' => ['NAME' => GetMessage('CRM_FM_ENTITY_WEB')],
+				'IM' => ['NAME' => GetMessage('CRM_FM_ENTITY_IM')],
+				'LINK' => ['NAME' => GetMessage('CRM_FM_ENTITY_LINK')],
+			];
 		}
 		return self::$ENTITY_TYPE_INFOS;
 	}
@@ -69,45 +71,190 @@ class CCrmFieldMulti
 		if(self::$ENTITY_TYPES === null)
 		{
 			self::$ENTITY_TYPES = Array(
-				'PHONE' => Array(
-					'WORK'  => Array('FULL' => GetMessage('CRM_FM_ENTITY_PHONE_WORK'), 	'SHORT' => GetMessage('CRM_FM_ENTITY_PHONE_WORK_SHORT'), 'ABBR' => GetMessage('CRM_FM_ENTITY_PHONE_WORK_ABBR'), 'TEMPLATE' => '<a href="'.CCrmCallToUrl::Format('#VALUE#').'">#VALUE_HTML#</a>'),
-					'MOBILE'=> Array('FULL' => GetMessage('CRM_FM_ENTITY_PHONE_MOBILE'), 'SHORT' => GetMessage('CRM_FM_ENTITY_PHONE_MOBILE_SHORT'), 'ABBR' => GetMessage('CRM_FM_ENTITY_PHONE_MOBILE_ABBR'), 'TEMPLATE' => '<a href="'.CCrmCallToUrl::Format('#VALUE#').'">#VALUE_HTML#</a>'),
-					'FAX' 	=> Array('FULL' => GetMessage('CRM_FM_ENTITY_PHONE_FAX'), 'SHORT' => GetMessage('CRM_FM_ENTITY_PHONE_FAX_SHORT'), 'ABBR' => GetMessage('CRM_FM_ENTITY_PHONE_FAX_ABBR'), 'TEMPLATE' => '<a href="'.CCrmCallToUrl::Format('#VALUE#').'">#VALUE_HTML#</a>'),
-					'HOME' 	=> Array('FULL' => GetMessage('CRM_FM_ENTITY_PHONE_HOME'), 'SHORT' => GetMessage('CRM_FM_ENTITY_PHONE_HOME_SHORT'), 'ABBR' => GetMessage('CRM_FM_ENTITY_PHONE_HOME_ABBR'), 'TEMPLATE' => '<a href="'.CCrmCallToUrl::Format('#VALUE#').'">#VALUE_HTML#</a>'),
-					'PAGER' => Array('FULL' => GetMessage('CRM_FM_ENTITY_PHONE_PAGER'), 'SHORT' => GetMessage('CRM_FM_ENTITY_PHONE_PAGER_SHORT'), 'ABBR' => GetMessage('CRM_FM_ENTITY_PHONE_PAGER_ABBR'), 'TEMPLATE' => '<a href="'.CCrmCallToUrl::Format('#VALUE#').'">#VALUE_HTML#</a>'),
-					'MAILING' => Array('FULL' => GetMessage('CRM_FM_ENTITY_PHONE_MAILING'), 'SHORT' => GetMessage('CRM_FM_ENTITY_PHONE_MAILING_SHORT'), 'ABBR' => GetMessage('CRM_FM_ENTITY_PHONE_MAILING_ABBR'), 'TEMPLATE' => '<a href="'.CCrmCallToUrl::Format('#VALUE#').'">#VALUE_HTML#</a>'),
-					'OTHER' => Array('FULL' => GetMessage('CRM_FM_ENTITY_PHONE_OTHER'), 'SHORT' => GetMessage('CRM_FM_ENTITY_PHONE_OTHER_SHORT'), 'ABBR' => GetMessage('CRM_FM_ENTITY_PHONE_OTHER_ABBR'), 'TEMPLATE' => '<a href="'.CCrmCallToUrl::Format('#VALUE#').'">#VALUE_HTML#</a>'),
-				),
-				'WEB' => Array(
-					'WORK' 			=> Array('FULL' => GetMessage('CRM_FM_ENTITY_WEB_WORK'), 'SHORT' => GetMessage('CRM_FM_ENTITY_WEB_WORK_SHORT'), 'TEMPLATE' => '<a href="http://#VALUE_URL#" target="_blank">#VALUE_HTML#</a>'),
-					'HOME' 			=> Array('FULL' => GetMessage('CRM_FM_ENTITY_WEB_HOME'), 'SHORT' => GetMessage('CRM_FM_ENTITY_WEB_HOME_SHORT'), 'TEMPLATE' => '<a href="http://#VALUE_URL#" target="_blank">#VALUE_HTML#</a>'),
-					'FACEBOOK' 		=> Array('FULL' =>  GetMessage('CRM_FM_ENTITY_WEB_FACEBOOK'), 'SHORT' => GetMessage('CRM_FM_ENTITY_WEB_FACEBOOK_SHORT'), 'TEMPLATE' => '<a href="http://www.facebook.com/#VALUE_URL#/" target="_blank">#VALUE_HTML#</a>'),
-					'VK'			=> Array('FULL' =>  GetMessage('CRM_FM_ENTITY_WEB_VK'), 'SHORT' => GetMessage('CRM_FM_ENTITY_WEB_VK_SHORT'), 'TEMPLATE' => '<a href="https://vk.com/#VALUE_URL#" target="_blank">#VALUE_HTML#</a>'),
-					'LIVEJOURNAL' 	=> Array('FULL' =>  GetMessage('CRM_FM_ENTITY_WEB_LIVEJOURNAL'), 'SHORT' => GetMessage('CRM_FM_ENTITY_WEB_LIVEJOURNAL_SHORT'), 'TEMPLATE' => '<a href="http://#VALUE_URL#.livejournal.com/" target="_blank">#VALUE_HTML#</a>'),
-					'TWITTER' 		=> Array('FULL' =>  GetMessage('CRM_FM_ENTITY_WEB_TWITTER'), 'SHORT' => GetMessage('CRM_FM_ENTITY_WEB_TWITTER_SHORT'), 'TEMPLATE' => '<a href="http://twitter.com/#VALUE_URL#/" target="_blank">#VALUE_HTML#</a>'),
-					'OTHER' 		=> Array('FULL' =>  GetMessage('CRM_FM_ENTITY_WEB_OTHER'), 'SHORT' => GetMessage('CRM_FM_ENTITY_WEB_OTHER_SHORT'), 'TEMPLATE' => '<a href="http://#VALUE_URL#" target="_blank">#VALUE_HTML#</a>'),
-				),
-				'EMAIL' => Array(
-					'WORK'  => Array('FULL' => GetMessage('CRM_FM_ENTITY_EMAIL_WORK'), 'SHORT' => GetMessage('CRM_FM_ENTITY_EMAIL_WORK_SHORT'), 'ABBR' => GetMessage('CRM_FM_ENTITY_EMAIL_WORK_ABBR'), 'TEMPLATE' => '<a href="mailto:#VALUE_URL#">#VALUE_HTML#</a>'),
-					'HOME' 	=> Array('FULL' => GetMessage('CRM_FM_ENTITY_EMAIL_HOME'), 'SHORT' => GetMessage('CRM_FM_ENTITY_EMAIL_HOME_SHORT'), 'ABBR' => GetMessage('CRM_FM_ENTITY_EMAIL_HOME_ABBR'), 'TEMPLATE' => '<a href="mailto:#VALUE_URL#">#VALUE_HTML#</a>'),
-					'MAILING' 	=> Array('FULL' => GetMessage('CRM_FM_ENTITY_EMAIL_MAILING1'), 'SHORT' => GetMessage('CRM_FM_ENTITY_EMAIL_MAILING_SHORT'), 'ABBR' => GetMessage('CRM_FM_ENTITY_EMAIL_MAILING_ABBR'), 'TEMPLATE' => '<a href="mailto:#VALUE_URL#">#VALUE_HTML#</a>'),
-					'OTHER' => Array('FULL' =>  GetMessage('CRM_FM_ENTITY_EMAIL_OTHER'), 'SHORT' => GetMessage('CRM_FM_ENTITY_EMAIL_OTHER_SHORT'), 'ABBR' => GetMessage('CRM_FM_ENTITY_EMAIL_OTHER_ABBR'), 'TEMPLATE' => '<a href="mailto:#VALUE_URL#">#VALUE_HTML#</a>'),
-				),
-				'IM' => Array(
-					'FACEBOOK' => Array('FULL' => GetMessage('CRM_FM_ENTITY_IM_FACEBOOK'), 'SHORT' => GetMessage('CRM_FM_ENTITY_IM_FACEBOOK_SHORT'), 'TEMPLATE' => '<a href="https://m.me/#VALUE_URL#" target="_blank">#VALUE_HTML#</a>'),
-					'TELEGRAM' => Array('FULL' => GetMessage('CRM_FM_ENTITY_IM_TELEGRAM'), 'SHORT' => GetMessage('CRM_FM_ENTITY_IM_TELEGRAM_SHORT'), 'TEMPLATE' => '<a href="https://t.me/#VALUE_URL#" target="_blank">#VALUE_HTML#</a>'),
-					'VK' => Array('FULL' => GetMessage('CRM_FM_ENTITY_IM_VK'), 'SHORT' => GetMessage('CRM_FM_ENTITY_IM_VK_SHORT'), 'TEMPLATE' => '<a href="https://vk.com/#VALUE_URL#" target="_blank">#VALUE_HTML#</a>'),
-					'SKYPE' => Array('FULL' => GetMessage('CRM_FM_ENTITY_IM_SKYPE'), 'SHORT' => GetMessage('CRM_FM_ENTITY_IM_SKYPE_SHORT'), 'TEMPLATE' => '<a href="skype:#VALUE_URL#?chat">#VALUE_HTML#</a>'),
-					'VIBER' => Array('FULL' => GetMessage('CRM_FM_ENTITY_IM_VIBER'), 'SHORT' => GetMessage('CRM_FM_ENTITY_IM_VIBER_SHORT'), 'TEMPLATE' => '<a href="viber://chat?number=#VALUE_URL#" target="_blank">#VALUE_HTML#</a>'),
-					'INSTAGRAM' => Array('FULL' => GetMessage('CRM_FM_ENTITY_IM_INSTAGRAM'), 'SHORT' => GetMessage('CRM_FM_ENTITY_IM_INSTAGRAM_SHORT'), 'TEMPLATE' => '<a href="https://www.instagram.com/#VALUE_URL#" target="_blank">#VALUE_HTML#</a>'),
-					'BITRIX24' => Array('FULL' => GetMessage('CRM_FM_ENTITY_IM_BITRIX24'), 'SHORT' => GetMessage('CRM_FM_ENTITY_IM_BITRIX24_SHORT'), 'TEMPLATE' => '#VALUE_HTML#'),
-					'OPENLINE' => Array('FULL' => GetMessage('CRM_FM_ENTITY_IM_WIDGET'), 'SHORT' => GetMessage('CRM_FM_ENTITY_IM_WIDGET'), 'TEMPLATE' => '#VALUE_HTML#'),
-					'IMOL' => Array('FULL' => GetMessage('CRM_FM_ENTITY_IM_OPENLINE'), 'SHORT' => GetMessage('CRM_FM_ENTITY_IM_OPENLINE_SHORT'), 'TEMPLATE' => '#VALUE_HTML#'),
-					'ICQ' => Array('FULL' => GetMessage('CRM_FM_ENTITY_IM_ICQ'), 'SHORT' => GetMessage('CRM_FM_ENTITY_IM_ICQ_SHORT'), 'TEMPLATE' => '<a href="http://www.icq.com/people/#VALUE_URL#/" target="_blank">#VALUE_HTML#</a>'),
-					'MSN' => Array('FULL' => GetMessage('CRM_FM_ENTITY_IM_MSN'), 'SHORT' => GetMessage('CRM_FM_ENTITY_IM_MSN_SHORT'), 'TEMPLATE' => '<a href="msn:#VALUE_URL#">#VALUE_HTML#</a>'),
-					'JABBER'=> Array('FULL' => GetMessage('CRM_FM_ENTITY_IM_JABBER'), 'SHORT' => GetMessage('CRM_FM_ENTITY_IM_JABBER_SHORT'), 'TEMPLATE' => '#VALUE_HTML#'),
-					'OTHER' => Array('FULL' => GetMessage('CRM_FM_ENTITY_IM_OTHER'), 'SHORT' => GetMessage('CRM_FM_ENTITY_IM_OTHER_SHORT'), 'TEMPLATE' => '#VALUE_HTML#'),
-				),
+				'PHONE' => [
+					'WORK' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_PHONE_WORK'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_PHONE_WORK_SHORT'),
+						'ABBR' => GetMessage('CRM_FM_ENTITY_PHONE_WORK_ABBR'),
+						'TEMPLATE' => '<a href="' . CCrmCallToUrl::Format('#VALUE#') . '">#VALUE_HTML#</a>',
+					],
+					'MOBILE' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_PHONE_MOBILE'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_PHONE_MOBILE_SHORT'),
+						'ABBR' => GetMessage('CRM_FM_ENTITY_PHONE_MOBILE_ABBR'),
+						'TEMPLATE' => '<a href="' . CCrmCallToUrl::Format('#VALUE#') . '">#VALUE_HTML#</a>',
+					],
+					'FAX' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_PHONE_FAX'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_PHONE_FAX_SHORT'),
+						'ABBR' => GetMessage('CRM_FM_ENTITY_PHONE_FAX_ABBR'),
+						'TEMPLATE' => '<a href="' . CCrmCallToUrl::Format('#VALUE#') . '">#VALUE_HTML#</a>',
+					],
+					'HOME' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_PHONE_HOME'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_PHONE_HOME_SHORT'),
+						'ABBR' => GetMessage('CRM_FM_ENTITY_PHONE_HOME_ABBR'),
+						'TEMPLATE' => '<a href="' . CCrmCallToUrl::Format('#VALUE#') . '">#VALUE_HTML#</a>',
+					],
+					'PAGER' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_PHONE_PAGER'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_PHONE_PAGER_SHORT'),
+						'ABBR' => GetMessage('CRM_FM_ENTITY_PHONE_PAGER_ABBR'),
+						'TEMPLATE' => '<a href="' . CCrmCallToUrl::Format('#VALUE#') . '">#VALUE_HTML#</a>',
+					],
+					'MAILING' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_PHONE_MAILING'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_PHONE_MAILING_SHORT'),
+						'ABBR' => GetMessage('CRM_FM_ENTITY_PHONE_MAILING_ABBR'),
+						'TEMPLATE' => '<a href="' . CCrmCallToUrl::Format('#VALUE#') . '">#VALUE_HTML#</a>',
+					],
+					'OTHER' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_PHONE_OTHER'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_PHONE_OTHER_SHORT'),
+						'ABBR' => GetMessage('CRM_FM_ENTITY_PHONE_OTHER_ABBR'),
+						'TEMPLATE' => '<a href="' . CCrmCallToUrl::Format('#VALUE#') . '">#VALUE_HTML#</a>',
+					],
+				],
+				'WEB' => [
+					'WORK' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_WEB_WORK'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_WEB_WORK_SHORT'),
+						'TEMPLATE' => '<a href="http://#VALUE_URL#" target="_blank">#VALUE_HTML#</a>',
+					],
+					'HOME' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_WEB_HOME'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_WEB_HOME_SHORT'),
+						'TEMPLATE' => '<a href="http://#VALUE_URL#" target="_blank">#VALUE_HTML#</a>',
+					],
+					'FACEBOOK' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_WEB_FACEBOOK'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_WEB_FACEBOOK_SHORT'),
+						'TEMPLATE' => '<a href="http://www.facebook.com/#VALUE_URL#/" target="_blank">#VALUE_HTML#</a>',
+					],
+					'VK' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_WEB_VK'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_WEB_VK_SHORT'),
+						'TEMPLATE' => '<a href="https://vk.com/#VALUE_URL#" target="_blank">#VALUE_HTML#</a>',
+					],
+					'LIVEJOURNAL' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_WEB_LIVEJOURNAL'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_WEB_LIVEJOURNAL_SHORT'),
+						'TEMPLATE' => '<a href="http://#VALUE_URL#.livejournal.com/" target="_blank">#VALUE_HTML#</a>',
+					],
+					'TWITTER' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_WEB_TWITTER'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_WEB_TWITTER_SHORT'),
+						'TEMPLATE' => '<a href="http://twitter.com/#VALUE_URL#/" target="_blank">#VALUE_HTML#</a>',
+					],
+					'OTHER' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_WEB_OTHER'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_WEB_OTHER_SHORT'),
+						'TEMPLATE' => '<a href="http://#VALUE_URL#" target="_blank">#VALUE_HTML#</a>',
+					],
+				],
+				'EMAIL' => [
+					'WORK' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_EMAIL_WORK'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_EMAIL_WORK_SHORT'),
+						'ABBR' => GetMessage('CRM_FM_ENTITY_EMAIL_WORK_ABBR'),
+						'TEMPLATE' => '<a href="mailto:#VALUE_URL#">#VALUE_HTML#</a>',
+					],
+					'HOME' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_EMAIL_HOME'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_EMAIL_HOME_SHORT'),
+						'ABBR' => GetMessage('CRM_FM_ENTITY_EMAIL_HOME_ABBR'),
+						'TEMPLATE' => '<a href="mailto:#VALUE_URL#">#VALUE_HTML#</a>',
+					],
+					'MAILING' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_EMAIL_MAILING1'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_EMAIL_MAILING_SHORT'),
+						'ABBR' => GetMessage('CRM_FM_ENTITY_EMAIL_MAILING_ABBR'),
+						'TEMPLATE' => '<a href="mailto:#VALUE_URL#">#VALUE_HTML#</a>',
+					],
+					'OTHER' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_EMAIL_OTHER'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_EMAIL_OTHER_SHORT'),
+						'ABBR' => GetMessage('CRM_FM_ENTITY_EMAIL_OTHER_ABBR'),
+						'TEMPLATE' => '<a href="mailto:#VALUE_URL#">#VALUE_HTML#</a>',
+					],
+				],
+				'IM' => [
+					'FACEBOOK' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_IM_FACEBOOK'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_IM_FACEBOOK_SHORT'),
+						'TEMPLATE' => '<a href="https://m.me/#VALUE_URL#" target="_blank">#VALUE_HTML#</a>',
+					],
+					'TELEGRAM' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_IM_TELEGRAM'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_IM_TELEGRAM_SHORT'),
+						'TEMPLATE' => '<a href="https://t.me/#VALUE_URL#" target="_blank">#VALUE_HTML#</a>',
+					],
+					'VK' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_IM_VK'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_IM_VK_SHORT'),
+						'TEMPLATE' => '<a href="https://vk.com/#VALUE_URL#" target="_blank">#VALUE_HTML#</a>',
+					],
+					'SKYPE' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_IM_SKYPE'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_IM_SKYPE_SHORT'),
+						'TEMPLATE' => '<a href="skype:#VALUE_URL#?chat">#VALUE_HTML#</a>',
+					],
+					'VIBER' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_IM_VIBER'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_IM_VIBER_SHORT'),
+						'TEMPLATE' => '<a href="viber://chat?number=#VALUE_URL#" target="_blank">#VALUE_HTML#</a>',
+					],
+					'INSTAGRAM' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_IM_INSTAGRAM'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_IM_INSTAGRAM_SHORT'),
+						'TEMPLATE' => '<a href="https://www.instagram.com/#VALUE_URL#"'
+							. ' target="_blank">#VALUE_HTML#</a>',
+					],
+					'BITRIX24' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_IM_BITRIX24'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_IM_BITRIX24_SHORT'),
+						'TEMPLATE' => '#VALUE_HTML#',
+					],
+					'OPENLINE' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_IM_WIDGET'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_IM_WIDGET'),
+						'TEMPLATE' => '#VALUE_HTML#',
+					],
+					'IMOL' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_IM_OPENLINE'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_IM_OPENLINE_SHORT'),
+						'TEMPLATE' => '#VALUE_HTML#',
+					],
+					'ICQ' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_IM_ICQ'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_IM_ICQ_SHORT'),
+						'TEMPLATE' => '<a href="http://www.icq.com/people/#VALUE_URL#/"'
+							. ' target="_blank">#VALUE_HTML#</a>',
+					],
+					'MSN' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_IM_MSN'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_IM_MSN_SHORT'),
+						'TEMPLATE' => '<a href="msn:#VALUE_URL#">#VALUE_HTML#</a>',
+					],
+					'JABBER' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_IM_JABBER'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_IM_JABBER_SHORT'),
+						'TEMPLATE' => '#VALUE_HTML#',
+					],
+					'OTHER' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_IM_OTHER'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_IM_OTHER_SHORT'),
+						'TEMPLATE' => '#VALUE_HTML#',
+					],
+				],
+				'LINK' => [
+					'USER' => [
+						'FULL' => GetMessage('CRM_FM_ENTITY_LINK_USER'),
+						'SHORT' => GetMessage('CRM_FM_ENTITY_LINK_USER_SHORT'),
+						'ABBR' => GetMessage('CRM_FM_ENTITY_LINK_USER_ABBR'),
+						'TEMPLATE' => '#VALUE_HTML#',
+					],
+				],
 			);
 		}
 		return self::$ENTITY_TYPES;

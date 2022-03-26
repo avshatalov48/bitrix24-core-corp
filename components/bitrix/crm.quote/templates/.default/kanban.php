@@ -152,12 +152,22 @@ else
 				array('supervisor' => $supervisorInv, 'clear_filter' => 'Y')
 			)*/
 
+	\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
+
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.kanban',
 		'',
 		[
 			'ENTITY_TYPE' => $entityType,
 			'PATH_TO_QUOTE_DETAILS' => $arResult['PATH_TO_QUOTE_DETAILS'],
+			'HEADERS_SECTIONS' => [
+				[
+					'id'=> CCrmOwnerType::QuoteName,
+					'name' => Loc::getMessage('CRM_COMMON_QUOTE'),
+					'default' => true,
+					'selected' => true,
+				],
+			],
 		],
 		$component
 	);

@@ -1,0 +1,4 @@
+<?php
+$MESS['DETAIL_CARD_BUTTONS_TOOLBAR_SAVE'] = 'Сохранить';
+$MESS['DETAIL_CARD_BUTTONS_TOOLBAR_CANCEL'] = 'Отменить';
+

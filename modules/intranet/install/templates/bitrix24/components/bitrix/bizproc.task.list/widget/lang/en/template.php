@@ -2,6 +2,6 @@
 $MESS["BPTLWGT_MODULE_DISK"] = "Drive";
 $MESS["BPTLWGT_MODULE_IBLOCK"] = "Lists";
 $MESS["BPTLWGT_MODULE_LISTS"] = "Feed";
-$MESS["BPTLWGT_MY_PROCESSES"] = "My Requests";
+$MESS["BPTLWGT_MY_PROCESSES_1"] = "My Workflows";
 $MESS["BPTLWGT_RUNNING"] = "Pending";
 $MESS["BPTLWGT_TITLE"] = "Workflows";

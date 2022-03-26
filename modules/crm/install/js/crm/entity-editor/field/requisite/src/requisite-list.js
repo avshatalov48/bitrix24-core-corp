@@ -128,7 +128,14 @@ export class RequisiteList extends EventEmitter
 	add(item)
 	{
 		this._items.push(item);
-		this.notifyListChanged();
+		if (!item.isAddressOnly())
+		{
+			this.setSelected(this._items.indexOf(item));
+		}
+		else
+		{
+			this.notifyListChanged();
+		}
 	}
 
 	remove(item)
@@ -260,8 +267,6 @@ export class RequisiteListItem
 		{
 			this._data.value = {};
 		}
-		this._data.title = '';
-		this._data.subtitle = '';
 		if (Type.isPlainObject(this._data.value) && Type.isPlainObject(this._data.value.viewData))
 		{
 			this._data.title = this._data.value.viewData.title;

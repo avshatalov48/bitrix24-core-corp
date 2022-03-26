@@ -12,6 +12,7 @@ use Bitrix\Disk\Internals\FileTable;
 use Bitrix\Disk\Internals\RightTable;
 use Bitrix\Disk\Internals\SharingTable;
 use Bitrix\Disk\Internals\SimpleRightTable;
+use Bitrix\Disk\Internals\TrackedObjectTable;
 use Bitrix\Disk\Security\SecurityContext;
 use Bitrix\Main\Event;
 use Bitrix\Main\Localization\Loc;
@@ -393,6 +394,14 @@ final class FileLink extends File
 		{
 			return false;
 		}
+
+		Document\OnlyOffice\Models\DocumentSessionTable::deleteBatch([
+			'OBJECT_ID' => $this->id,
+		]);
+
+		TrackedObjectTable::deleteBatch([
+			'OBJECT_ID' => $this->id,
+		]);
 
 		$success = ExternalLinkTable::deleteByFilter(array(
 			'OBJECT_ID' => $this->id,

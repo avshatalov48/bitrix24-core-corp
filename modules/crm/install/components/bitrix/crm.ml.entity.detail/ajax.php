@@ -69,6 +69,13 @@ class CrmMlEntityDetailAjaxController extends \Bitrix\Main\Engine\Controller
 	 */
 	public function getCurrentPredictionAction($entityTypeId, $entityId)
 	{
+		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
+		if (!CCrmAuthorizationHelper::CheckReadPermission($entityTypeId, $entityId, $userPermissions))
+		{
+			$this->addError(new \Bitrix\Main\Error("Access denied"));
+			return null;
+		}
+
 		$lastPrediction = \Bitrix\Crm\Ml\Internals\PredictionHistoryTable::getRow([
 			"filter" => [
 				"=ENTITY_TYPE_ID" => $entityTypeId,
@@ -100,6 +107,13 @@ class CrmMlEntityDetailAjaxController extends \Bitrix\Main\Engine\Controller
 
 	public function getResultAction($entityType, $entityId)
 	{
+		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
+		if (!CCrmAuthorizationHelper::CheckReadPermission($entityType, $entityId, $userPermissions))
+		{
+			$this->addError(new \Bitrix\Main\Error("Access denied"));
+			return null;
+		}
+
 		CBitrixComponent::includeComponentClass('bitrix:crm.ml.entity.detail');
 		$component = new CCrmMlEntityDetailComponent();
 		$component->setEntity($entityType, $entityId);
@@ -121,6 +135,11 @@ class CrmMlEntityDetailAjaxController extends \Bitrix\Main\Engine\Controller
 	public function startModelTrainingAction($modelName)
 	{
 		$model = \Bitrix\Crm\Ml\Scoring::getModelByName($modelName);
+		if (!$model || !$model->hasAccess())
+		{
+			$this->addError(new \Bitrix\Main\Error("Access denied"));
+			return null;
+		}
 		$startTrainingResult = \Bitrix\Crm\Ml\Scoring::startModelTraining($model);
 
 		if(!$startTrainingResult->isSuccess())
@@ -141,6 +160,11 @@ class CrmMlEntityDetailAjaxController extends \Bitrix\Main\Engine\Controller
 	public function disableScoringAction($modelName)
 	{
 		$model = \Bitrix\Crm\Ml\Scoring::getModelByName($modelName);
+		if (!$model || !$model->hasAccess())
+		{
+			$this->addError(new \Bitrix\Main\Error("Access denied"));
+			return null;
+		}
 		$deletionResult = \Bitrix\Crm\Ml\Scoring::deleteMlModel($model);
 
 		if(!$deletionResult->isSuccess())

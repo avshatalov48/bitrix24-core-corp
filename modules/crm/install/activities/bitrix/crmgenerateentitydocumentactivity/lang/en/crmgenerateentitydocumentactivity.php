@@ -12,3 +12,4 @@ $MESS["CRM_GEDA_NAME_WAIT_FOR_EVENT_LOG"] = "Workflow is waiting for document to
 $MESS["CRM_GEDA_NAME_WAIT_FOR_EVENT_LOG_COMPLETE"] = "Document converted";
 $MESS["CRM_GEDA_NAME_WITH_STAMPS"] = "With signature and stamp";
 $MESS["CRM_GEDA_PROVIDER_NOT_FOUND"] = "Cannot find handler for this entity type";
+$MESS["CRM_GEDA_TRANSFORMATION_ERROR"] = "Error converting document: ";

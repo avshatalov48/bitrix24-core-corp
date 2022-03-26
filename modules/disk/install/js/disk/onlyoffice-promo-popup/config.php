@@ -10,6 +10,7 @@ return [
 		'main.core',
 		'ui.buttons',
 		'disk',
+		'ui.info-helper',
 		'disk_information_popups',
 		'ui.dialogs.messagebox',
 	],

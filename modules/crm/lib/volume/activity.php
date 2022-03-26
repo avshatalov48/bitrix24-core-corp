@@ -881,18 +881,18 @@ class Activity
 	/**
 	 * Performs dropping entity.
 	 *
-	 * @return boolean
+	 * @return int
 	 */
 	public function clearEntity()
 	{
 		if (!$this->canClearEntity())
 		{
-			return false;
+			return -1;
 		}
 
 		$query = $this->prepareQuery();
 
-		$success = true;
+		$dropped = -1;
 
 		if ($this->prepareFilter($query))
 		{
@@ -910,6 +910,7 @@ class Activity
 
 			$res = $query->exec();
 
+			$dropped = 0;
 			while ($activity = $res->fetch())
 			{
 				$this->setProcessOffset($activity['ID']);
@@ -923,6 +924,7 @@ class Activity
 					if (\CCrmActivity::Delete($activity['ID'], false, false))
 					{
 						$this->incrementDroppedEntityCount();
+						$dropped ++;
 					}
 					else
 					{
@@ -938,13 +940,16 @@ class Activity
 
 				if ($this->hasTimeLimitReached())
 				{
-					$success = false;
 					break;
 				}
 			}
 		}
+		else
+		{
+			$this->collectError(new Main\Error('Filter error', self::ERROR_DELETION_FAILED));
+		}
 
-		return $success;
+		return $dropped;
 	}
 
 	/**

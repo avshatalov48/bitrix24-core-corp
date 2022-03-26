@@ -41,48 +41,137 @@ BX.namespace('Tasks.Component');
 			itemFxHoverDelete: true
 		},
 		methods: {
-
-			bindEvents: function()
+			construct: function()
 			{
-				this.callMethod(BX.Tasks.Util.ItemSet, 'bindEvents');
-
-				BX.addCustomEvent(window, 'onTaskTagSelectAlt', this.onTagsChange.bind(this));
+				this.callConstruct(BX.Tasks.Util.ItemSet);
+				this.preselectedItems = this.option('data');
 			},
 
-			onTagsChange: function(tags)
+			openAddForm: function(node)
 			{
-				// add new
-				for(var k = 0; k < tags.length; k++)
+				this.getDialog(node).show();
+			},
+
+			getDialog: function(node)
+			{
+				if (!this.dialog)
 				{
-					var tag = {NAME: tags[k]};
-					this.addItem(tag);
+					this.dialog = new BX.UI.EntitySelector.Dialog({
+						targetNode: node,
+						enableSearch: true,
+						width: 350,
+						height: 400,
+						multiple: true,
+						dropdownMode: true,
+						compactView: true,
+						context: 'TASKS_TAG',
+						entities: [
+							{
+								id: 'task-tag'
+							}
+						],
+						selectedItems: this.preselectedItems.map(function(tag) {
+							return {
+								id: tag.NAME,
+								entityId: 'task-tag',
+								title: tag.NAME,
+								tabs: 'all'
+							};
+						}),
+						searchOptions: {
+							allowCreateItem: true
+						},
+						events: {
+							'Search:onItemCreateAsync': function (event) {
+								var promise = new BX.Promise();
+								var searchQuery = event.getData().searchQuery;
+								var dialog = event.getTarget();
+
+								setTimeout(function () {
+									var item = dialog.addItem({
+										id: searchQuery.getQuery(),
+										entityId: 'task-tag',
+										title: searchQuery.getQuery(),
+										tabs: 'all'
+									});
+									if (item)
+									{
+										item.select();
+									}
+									promise.fulfill();
+								}, 1000);
+
+								return promise;
+							},
+							'Item:onSelect': this.onTagsChange.bind(this),
+							'Item:onDeselect': this.onTagsChange.bind(this)
+						}
+					});
 				}
 
-				// delete deleted
-				this.each(function(item){
-					if(!BX.util.in_array(item.display(), tags))
+				return this.dialog;
+			},
+
+			onTagsChange: function()
+			{
+				var displayedItems = [];
+				this.each(function(item) {
+					displayedItems.push(item.display());
+				});
+
+				var tags = this.getDialog().getSelectedItems().map(function(item) {
+					return item.getId();
+				});
+				tags.forEach(function(tag) {
+					if (!BX.util.in_array(tag, displayedItems))
+					{
+						this.addItem({NAME: tag});
+					}
+				}.bind(this));
+
+				this.each(function(item) {
+					if (!BX.util.in_array(item.display(), tags))
 					{
 						this.deleteItem(item.value());
 					}
 				});
 			},
 
-			openAddForm: function(node)
-			{
-				if(!window.tasksTagsPopUp)
-				{
-					BX.debug('tasksTagsPopUp is not defined');
-					return;
-				}
-
-				window.tasksTagsPopUp.popupWindow.setBindElement(node);
-				window.tasksTagsPopUp.showPopup();
-			},
-
 			onItemDeleteByCross: function(value)
 			{
-				BX.onCustomEvent("onTaskTagDeleteByCross", [value.opts.data]);
 				this.callMethod(BX.Tasks.Util.ItemSet, 'onItemDeleteByCross', arguments);
+
+				var itemData = value.data();
+
+				this.deleteFromPreselected(itemData.VALUE.toString());
+				this.deselectDialogItem(itemData);
+			},
+
+			deleteFromPreselected: function(id)
+			{
+				var itemToDelete = this.preselectedItems.findIndex(function(item) {
+					return (this.extractItemValue(item) === id);
+				}.bind(this));
+				if (itemToDelete !== -1)
+				{
+					this.preselectedItems.splice(itemToDelete, 1);
+				}
+			},
+
+			deselectDialogItem: function(item)
+			{
+				if (this.dialog)
+				{
+					var dialogItem = this.getDialog().getItem(this.prepareDialogItems([item])[0]);
+					dialogItem && dialogItem.deselect();
+				}
+			},
+
+			prepareDialogItems: function(items)
+			{
+				return items.map(function(item) {
+					return ['task-tag', this.extractItemDisplay(item)];
+				}.bind(this));
 			},
 
 			extractItemDisplay: function(data)

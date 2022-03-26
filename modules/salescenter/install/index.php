@@ -76,7 +76,7 @@ class salescenter extends CModule
 
 		if(!$DB->Query("SELECT 'x' FROM b_salescenter_page", true))
 		{
-			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/db/".mb_strtolower($DB->type)."/install.sql");
+			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/db/mysql/install.sql");
 		}
 
 		if($errors !== false)
@@ -210,7 +210,7 @@ class salescenter extends CModule
 
 		if(!isset($params['savedata']) || $params['savedata'] !== "Y")
 		{
-			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/".$this->MODULE_ID."/install/db/".mb_strtolower($DB->type)."/uninstall.sql");
+			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/".$this->MODULE_ID."/install/db/mysql/uninstall.sql");
 		}
 
 		if($errors !== false)

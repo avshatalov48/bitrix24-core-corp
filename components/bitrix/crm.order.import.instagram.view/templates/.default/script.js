@@ -1345,13 +1345,13 @@ BX.Crm.Instagram.TileGrid.Item.prototype =
 										attrs: {
 											title: BX.type.isNumber(this.price) ? this.formattedPrice : ''
 										},
-										text: BX.type.isNumber(this.price) ? this.formattedPrice : BX.message('CRM_OIIV_NO_PRICE')
+										html: BX.type.isNumber(this.price) ? this.formattedPrice : BX.message('CRM_OIIV_NO_PRICE')
 									}),
 									this.item.currency = BX.create('span', {
 										props: {
 											className: 'crm-order-instagram-view-item-currency'
 										},
-										text: BX.type.isNumber(this.price) ? this.formattedCurrency : ''
+										html: BX.type.isNumber(this.price) ? this.formattedCurrency : ''
 									})
 								],
 								events: {
@@ -1616,11 +1616,11 @@ BX.Crm.Instagram.TileGrid.Item.prototype =
 				BX.removeClass(this.item.priceLink, 'crm-order-instagram-grid-item-title-link-renamed');
 			}.bind(this));
 
-			this.item.priceLink.setAttribute('title', formattedPrice);
+			this.item.priceLink.setAttribute('title', newPrice);
 
 			if (formattedPrice)
 			{
-				this.item.priceLink.textContent = formattedPrice;
+				this.item.priceLink.innerHTML = formattedPrice;
 				BX.removeClass(this.item.priceSubWrapper, 'crm-order-instagram-view-item-price-no');
 			}
 			else
@@ -1629,7 +1629,7 @@ BX.Crm.Instagram.TileGrid.Item.prototype =
 				BX.addClass(this.item.priceSubWrapper, 'crm-order-instagram-view-item-price-no');
 			}
 
-			this.item.currency.textContent = BX.type.isNumber(newPrice) ? this.formattedCurrency : '';
+			this.item.currency.innerHTML = BX.type.isNumber(newPrice) ? this.formattedCurrency : '';
 
 			this.price = BX.type.isNumber(newPrice) ? newPrice : null;
 			this.formattedPrice = formattedPrice;

@@ -451,7 +451,7 @@ class CCrmSaleHelper
 	}
 
 	/**
-	 * @param CAllUser $user
+	 * @param CUser $user
 	 * @param string $role
 	 * @return bool
 	 * @throws ArgumentException
@@ -460,7 +460,7 @@ class CCrmSaleHelper
 	 * @throws SystemException
 	 * @throws LoaderException
 	 */
-	private static function isCrmAccess(CAllUser $user, $role = "")
+	private static function isCrmAccess(CUser $user, $role = "")
 	{
 		$userId = $user->getID();
 		if ($user->isAdmin() || (Loader::includeModule("bitrix24") && CBitrix24::IsPortalAdmin($userId)))
@@ -599,17 +599,14 @@ class CCrmSaleHelper
 	 */
 	public static function addUserToShopGroup($newUserIds = [], $currentUserIds = [])
 	{
-		if (IsModuleInstalled("bitrix24"))
+		if (empty($newUserIds))
 		{
-			if (empty($newUserIds))
-			{
-				$newUserIds = self::getListUserIdFromCrmRoles(true);
-			}
-
-			self::deleteUserFromShopGroupByUserIds($currentUserIds);
-
-			self::addUserToShopGroupByUserIds($newUserIds);
+			$newUserIds = self::getListUserIdFromCrmRoles(true);
 		}
+
+		self::deleteUserFromShopGroupByUserIds($currentUserIds);
+
+		self::addUserToShopGroupByUserIds($newUserIds);
 	}
 
 	public static function deleteAllUserFromShopGroup()
@@ -699,10 +696,7 @@ class CCrmSaleHelper
 			}
 		}
 
-		if (IsModuleInstalled("bitrix24"))
-		{
-			CCrmSaleHelper::addUserToShopGroup();
-		}
+		CCrmSaleHelper::addUserToShopGroup();
 
 		return "";
 	}
@@ -860,10 +854,8 @@ class CCrmSaleHelper
 		{
 			return self::getShopGroupIdByType("admin");
 		}
-		else
-		{
-			return self::getShopGroupIdByType("manager");
-		}
+
+		return self::getShopGroupIdByType("manager");
 	}
 
 	private static function addUserToShopGroupByUserIds($newUserIds)
@@ -980,24 +972,24 @@ class CCrmSaleHelper
 		global $DB;
 
 		$DB->Query("
-			UPDATE 
-				b_sale_person_type 
-			SET 
-				ENTITY_REGISTRY_TYPE=NULL 
-			WHERE 
-				CODE='CRM_CONTACT' 
+			UPDATE
+				b_sale_person_type
+			SET
+				ENTITY_REGISTRY_TYPE=NULL
+			WHERE
+				CODE='CRM_CONTACT'
 				OR CODE='CRM_COMPANY'
 		");
 
 		$DB->Query("
-			UPDATE 
-				b_sale_person_type 
-			SET 
-				ENTITY_REGISTRY_TYPE='CRM_INVOICE' 
+			UPDATE
+				b_sale_person_type
+			SET
+				ENTITY_REGISTRY_TYPE='CRM_INVOICE'
 			WHERE (
-				CODE='CRM_CONTACT' 
+				CODE='CRM_CONTACT'
 				OR CODE='CRM_COMPANY'
-			) 
+			)
 			AND ENTITY_REGISTRY_TYPE IS NULL
 		");
 
@@ -1008,14 +1000,14 @@ class CCrmSaleHelper
 			if (!$dbRes->Fetch())
 			{
 				$DB->Query("
-					INSERT INTO 
+					INSERT INTO
 						b_sale_person_type (LID, NAME, SORT, ACTIVE, CODE, ENTITY_REGISTRY_TYPE)
 					SELECT
 						bspt.LID, bspt.NAME, bspt.SORT, bspt.ACTIVE, bspt.CODE, 'ORDER'
-					FROM 
+					FROM
 						b_sale_person_type  bspt
-					WHERE 
-						bspt.CODE='CRM_CONTACT' OR bspt.CODE='CRM_COMPANY' 
+					WHERE
+						bspt.CODE='CRM_CONTACT' OR bspt.CODE='CRM_COMPANY'
 				");
 
 				$DB->Query("
@@ -1037,11 +1029,11 @@ class CCrmSaleHelper
 		}
 
 		$DB->Query("
-			UPDATE 
-				b_sale_person_type 
-			SET 
-				ENTITY_REGISTRY_TYPE='ORDER' 
-			WHERE 
+			UPDATE
+				b_sale_person_type
+			SET
+				ENTITY_REGISTRY_TYPE='ORDER'
+			WHERE
 				ENTITY_REGISTRY_TYPE IS NULL
 		");
 
@@ -1109,7 +1101,7 @@ class CCrmSaleHelper
 
 		$DB->Query("
 			UPDATE
-				b_crm_order_props_form_queue bcopfq 
+				b_crm_order_props_form_queue bcopfq
 			INNER JOIN b_sale_person_type bspt ON bcopfq.PERSON_TYPE_ID=bspt.ID
 			INNER JOIN b_sale_person_type bspt2 ON bspt.CODE=bspt2.CODE AND bspt2.ENTITY_REGISTRY_TYPE='ORDER'
 			SET
@@ -1152,12 +1144,12 @@ class CCrmSaleHelper
 			FROM
 				b_sale_person_type bspt
 			INNER JOIN b_sale_person_type bspt2 ON bspt.CODE=bspt2.CODE AND bspt2.ENTITY_REGISTRY_TYPE='ORDER'
-			WHERE 
+			WHERE
 			(
-				bspt.CODE='CRM_CONTACT' 
+				bspt.CODE='CRM_CONTACT'
 				OR bspt.CODE='CRM_COMPANY'
-			) 
-			AND 
+			)
+			AND
 			bspt.ENTITY_REGISTRY_TYPE='CRM_INVOICE'
 		");
 		while ($data = $dbRes->Fetch())
@@ -1172,12 +1164,12 @@ class CCrmSaleHelper
 		foreach ($classList as $class)
 		{
 			$dbRes = $DB->Query("
-				SELECT 
-					bssr.ID AS SR_ID, bssr.PARAMS AS SR_PARAMS 
-				FROM 
+				SELECT
+					bssr.ID AS SR_ID, bssr.PARAMS AS SR_PARAMS
+				FROM
 					b_sale_service_rstr bssr
 				INNER JOIN b_sale_pay_system_action bspsa ON bssr.SERVICE_ID=bspsa.ID AND bssr.SERVICE_TYPE=1
-				WHERE 
+				WHERE
 					bssr.CLASS_NAME='".$DB->ForSql($class)."'
 					AND bspsa.ENTITY_REGISTRY_TYPE='ORDER'"
 			);
@@ -1241,6 +1233,19 @@ class CCrmSaleHelper
 				\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 3, "FULL")
 			);
 		}
+	}
+
+	/**
+	 * @return bool
+	 */
+	public static function isEnabledReservation(): bool
+	{
+		if (Loader::includeModule("sale"))
+		{
+			return \Bitrix\Sale\Configuration::isEnabledReservation();
+		}
+
+		return false;
 	}
 
 	/**

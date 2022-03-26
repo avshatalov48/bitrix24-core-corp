@@ -3,7 +3,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 /** @var array $arResult */
 $cpID = ($arResult['MYCOMPANY_MODE'] === 'Y') ? 'MYCOMPANY_LIST' : 'COMPANY_LIST';
-$cpActiveItemID = ($arResult['MYCOMPANY_MODE'] === 'Y') ? '' : 'COMPANY';
+$cpActiveItemID = ($arResult['MYCOMPANY_MODE'] === 'Y') ? 'MY_COMPANY' : 'COMPANY';
 
 $isMyCompanyMode = (isset($arResult['MYCOMPANY_MODE']) && $arResult['MYCOMPANY_MODE'] === 'Y');
 
@@ -35,14 +35,14 @@ $APPLICATION->IncludeComponent(
 	$component
 );
 $APPLICATION->IncludeComponent(
-	'bitrix:crm.company.menu', 
-	'', 
+	'bitrix:crm.company.menu',
+	'',
 	array(
 		'PATH_TO_COMPANY_LIST' => $arResult['PATH_TO_COMPANY_LIST'],
 		'PATH_TO_COMPANY_SHOW' => $arResult['PATH_TO_COMPANY_SHOW'],
 		'PATH_TO_COMPANY_EDIT' => $arResult['PATH_TO_COMPANY_EDIT'],
 		'PATH_TO_COMPANY_IMPORT' => $arResult['PATH_TO_COMPANY_IMPORT'],
-		'ELEMENT_ID' => $arResult['VARIABLES']['company_id'],    
+		'ELEMENT_ID' => $arResult['VARIABLES']['company_id'],
 		'TYPE' => 'import',
 		'MYCOMPANY_MODE' => ($arResult['MYCOMPANY_MODE'] === 'Y' ? 'Y' : 'N')
 	),
@@ -51,8 +51,8 @@ $APPLICATION->IncludeComponent(
 
 <?
 $APPLICATION->IncludeComponent(
-	'bitrix:crm.company.import', 
-	'', 
+	'bitrix:crm.company.import',
+	'',
 	array(
 		'PATH_TO_COMPANY_LIST' => $arResult['PATH_TO_COMPANY_LIST'],
 		'PATH_TO_COMPANY_IMPORT' => $arResult['PATH_TO_COMPANY_IMPORT'],

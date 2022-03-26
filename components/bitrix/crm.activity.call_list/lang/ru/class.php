@@ -12,4 +12,5 @@ $MESS["CRM_CALL_LIST_HAND_PICKED"] = "#ENTITIES# отобраны вручную
 $MESS["CRM_CALL_LIST_FILTERED"] = "#ENTITIES# отобраны в соответствии с";
 $MESS["CRM_CALL_LIST_DELETE"] = "Удалить";
 $MESS["CRM_CALL_LIST_ADD_MORE"] = "добавить еще";
+$MESS["CRM_CALL_LIST_ACCESS_DENIED"] = "Недостаточно прав"
 ?>

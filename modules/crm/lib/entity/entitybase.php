@@ -16,6 +16,8 @@ abstract class EntityBase
 	abstract public function checkReadPermission($entityID = 0, $userPermissions = null);
 	abstract public function checkDeletePermission($entityID = 0, $userPermissions = null);
 
+	protected $categories = [];
+
 	public function create(array $fields)
 	{
 		throw new Main\NotImplementedException('Method "create" must be overridden');
@@ -52,6 +54,8 @@ abstract class EntityBase
 		$filter = isset($params['filter']) && is_array($params['filter']) ? $params['filter'] : [];
 		$limit = isset($params['limit']) ? (int)$params['limit'] : 0;
 		$enablePermissionCheck = isset($params['enablePermissionCheck']) ? (bool)$params['enablePermissionCheck'] : true;
+
+		// @TODO optimise if filter is ['=CONTACT_ID' => xxx]
 
 		if (
 			!$this->areFieldsCompatibleWithOrm(array_keys($order))
@@ -396,5 +400,22 @@ abstract class EntityBase
 		}
 
 		return $result;
+	}
+
+	public function getCategoryId(int $id): int
+	{
+		if($id <= 0)
+		{
+			return 0;
+		}
+		if (!isset($this->categories[$id]))
+		{
+			$this->categories[$id] = (int)Crm\Service\Container::getInstance()
+				->getFactory($this->getEntityTypeID())
+				->getItemCategoryId($id)
+			;
+		}
+
+		return $this->categories[$id];
 	}
 }

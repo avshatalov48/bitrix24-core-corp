@@ -3,6 +3,7 @@ $MESS["CRM_DOCGEN_CRMENTITYDATAPROVIDER_COMMENT"] = "Создан новый д�
 $MESS["CRM_DOCGEN_CRMENTITYDATAPROVIDER_PULIC_LINK_VIEWED"] = "Клиент перешел на страницу документа <a class=\"document-title-link\">#TITLE#</a>";
 $MESS["CRM_DOCGEN_CRMENTITYDATAPROVIDER_MY_COMPANY_TITLE"] = "Моя компания";
 $MESS["CRM_DOCGEN_CRMENTITYDATAPROVIDER_BANK_DETAIL_TITLE"] = "Банковские реквизиты";
+$MESS["CRM_DOCGEN_CRMENTITYDATAPROVIDER_PAYMENT_QR_CODE_TITLE"] = "QR-код для оплаты";
 $MESS["CRM_DOCGEN_CRMENTITYDATAPROVIDER_COMPANY_TITLE"] = "Компания";
 $MESS["CRM_DOCGEN_CRMENTITYDATAPROVIDER_CONTACT_TITLE"] = "Контакт";
 $MESS["CRM_DOCGEN_CRMENTITYDATAPROVIDER_ASSIGNED_TITLE"] = "Ответственный";

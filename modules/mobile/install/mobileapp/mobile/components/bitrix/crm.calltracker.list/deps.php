@@ -1,6 +1,9 @@
 <?
 return [
-	'rest',
-	'notify',
-	'helpers/component',
+	'extensions' => [
+		'rest',
+		'notify',
+		'helpers/component',
+	],
+	'components' => ['tab.settings']
 ];

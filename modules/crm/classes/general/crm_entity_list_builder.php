@@ -17,12 +17,10 @@ class CCrmEntityListBuilder
 
 	function __construct($dbType, $tableName, $tableAlias, $fields, $ufEntityID = '', $fmEntityID = '',  $permissionCallback = array(), $afterPrepareSqlCallback = array())
 	{
-		global $DBType;
-
 		$this->dbType = strval($dbType);
 		if($this->dbType === '')
 		{
-			$this->dbType = $DBType;
+			$this->dbType = 'mysql';
 		}
 
 		$this->tableName = strval($tableName);
@@ -357,8 +355,18 @@ class CCrmEntityListBuilder
 		// Apply user permission logic
 		if(count($this->permissionCallback) > 0)
 		{
-			if ((!array_key_exists('CHECK_PERMISSIONS', $arFilter) || $arFilter['CHECK_PERMISSIONS'] !== 'N')
-				&& !CCrmPerms::IsAdmin())
+			$needCheckPermissions = (!array_key_exists('CHECK_PERMISSIONS', $arFilter) || $arFilter['CHECK_PERMISSIONS'] !== 'N');
+			if ($needCheckPermissions)
+			{
+				$permissionsUserId = null;
+				if (isset($arOptions['PERMS']) && is_object($arOptions['PERMS']))
+				{
+					/** @var \CCrmPerms $arOptions['PERMS'] */
+					$permissionsUserId = $arOptions['PERMS']->GetUserID();
+				}
+				$needCheckPermissions = !\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions($permissionsUserId)->isAdmin();
+			}
+			if ($needCheckPermissions)
 			{
 				if(count($arFilter) === 1 && isset($arFilter['ID']) || isset($arFilter['=ID']) || isset($arFilter['@ID']))
 				{

@@ -2,6 +2,7 @@
 namespace Bitrix\Tasks\Rest\Controllers;
 
 use Bitrix\Main\Engine;
+use Bitrix\Main\Loader;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Tasks\Integration\Socialnetwork;
 use Bitrix\Tasks\Internals\Project\Filter\MobileFilter;
@@ -43,6 +44,13 @@ class Project extends Base
 			$projects[$project['ID']] = $project;
 		}
 
+		$mode = (
+			isset($params['mode'])
+			&& $params['mode'] === 'mobile'
+				? 'mobile'
+				: 'web'
+		);
+
 		if (!empty($projects))
 		{
 			if (in_array('MEMBERS', $select, true))
@@ -51,7 +59,7 @@ class Project extends Base
 			}
 			if (in_array('IMAGE_ID', $select, true))
 			{
-				$projects = $provider->fillAvatars($projects);
+				$projects = $provider->fillAvatars($projects, $mode);
 			}
 			if (in_array('COUNTERS', $select, true))
 			{
@@ -60,6 +68,14 @@ class Project extends Base
 			if (in_array('ACTIONS', $select, true))
 			{
 				$projects = $this->fillActions($projects);
+			}
+			if (in_array('IS_EXTRANET', $select, true))
+			{
+				$projects = $this->fillIsExtranet($projects);
+			}
+			if ($mode === 'mobile')
+			{
+				$projects = $this->fillTabsData($projects);
 			}
 		}
 		$projects = $this->convertKeysToCamelCase($projects);
@@ -87,6 +103,60 @@ class Project extends Base
 					&& !$permissions['UserIsOwner']
 				),
 			];
+		}
+
+		return $projects;
+	}
+
+	private function fillIsExtranet(array $projects): array
+	{
+		foreach (array_keys($projects) as $id)
+		{
+			$projects[$id]['IS_EXTRANET'] = 'N';
+		}
+
+		if (!Loader::includeModule('extranet'))
+		{
+			return $projects;
+		}
+
+		$sites = [];
+		$extranetSiteId = \CExtranet::GetExtranetSiteID();
+		$projectsSiteIdsResult = \CSocNetGroup::GetSite(array_keys($projects));
+		while ($site = $projectsSiteIdsResult->Fetch())
+		{
+			$sites[$site['GROUP_ID']][] = $site['LID'];
+		}
+
+		foreach (array_keys($projects) as $id)
+		{
+			$projects[$id]['IS_EXTRANET'] = (in_array($extranetSiteId, $sites[$id], true) ? 'Y' : 'N');
+		}
+
+		return $projects;
+	}
+
+	private function fillTabsData(array $projects): array
+	{
+		$ids = array_keys($projects);
+		if (!empty($ids))
+		{
+			$additionalData = \Bitrix\Socialnetwork\Helper\Workgroup::getAdditionalData([
+				'ids' => $ids,
+				'features' => \Bitrix\Mobile\Project\Helper::getMobileFeatures(),
+				'mandatoryFeatures' => \Bitrix\Mobile\Project\Helper::getMobileMandatoryFeatures(),
+				'currentUserId' => (int)$this->getCurrentUser()->getId(),
+			]);
+
+			foreach (array_keys($projects) as $id)
+			{
+				if (!isset($additionalData[$id]))
+				{
+					continue;
+				}
+
+				$projects[$id]['ADDITIONAL_DATA'] = ($additionalData[$id] ?? []) ;
+			}
 		}
 
 		return $projects;

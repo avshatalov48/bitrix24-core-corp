@@ -41,23 +41,10 @@ $helper = $arResult['HELPER'];
 			    <span class="task-form-field-when-empty"><?=Loc::getMessage('TASKS_COMMON_ADD')?></span>
 		    </a>
 	    </span>
-		<?// component tasks.tags.selector is deprecated and should be removed ASAP ?>
-		<?$APPLICATION->IncludeComponent(
-			"bitrix:tasks.tags.selector",
-			".default",
-			array(
-				"NAME" => "TAGS",
-				"VALUE" => Tag::formatTagString($arParams['DATA']),
-				"SILENT" => 'Y'
-			),
-			null,
-			array("HIDE_ICONS" => "Y")
-		);?>
-
 		<?// in case of all items removed, the field should be sent anyway?>
 		<input type="hidden" name="<?=htmlspecialcharsbx($arParams["INPUT_PREFIX"])?>[]" value="" />
 	</div>
-	
+
 	<?$helper->initializeExtension();?>
 
 <?endif?>

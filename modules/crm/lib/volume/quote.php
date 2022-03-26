@@ -802,16 +802,18 @@ class Quote
 	/**
 	 * Performs dropping entity.
 	 *
-	 * @return boolean
+	 * @return int
 	 */
 	public function clearEntity()
 	{
 		if (!$this->canClearEntity())
 		{
-			return false;
+			return -1;
 		}
 
 		$query = $this->prepareQuery();
+
+		$dropped = -1;
 
 		if ($this->prepareFilter($query))
 		{
@@ -832,8 +834,7 @@ class Quote
 
 			$res = $query->exec();
 
-			$success = true;
-
+			$dropped = 0;
 			$entity = new \CCrmQuote(false);
 			while ($quote = $res->fetch())
 			{
@@ -850,6 +851,7 @@ class Quote
 					{
 						$connection->commitTransaction();
 						$this->incrementDroppedEntityCount();
+						$dropped ++;
 					}
 					else
 					{
@@ -866,7 +868,6 @@ class Quote
 							$err = 'Deletion failed with quote #'.$quote['QUOTE_ID'];
 						}
 						$this->collectError(new Main\Error($err, self::ERROR_DELETION_FAILED));
-
 						$this->incrementFailCount();
 					}
 				}
@@ -878,13 +879,16 @@ class Quote
 
 				if ($this->hasTimeLimitReached())
 				{
-					$success = false;
 					break;
 				}
 			}
 		}
+		else
+		{
+			$this->collectError(new Main\Error('Filter error', self::ERROR_DELETION_FAILED));
+		}
 
-		return $success;
+		return $dropped;
 	}
 
 	/**
@@ -901,13 +905,13 @@ class Quote
 	/**
 	 * Performs dropping associated entity activities.
 	 *
-	 * @return boolean
+	 * @return int
 	 */
 	public function clearActivity()
 	{
 		if (!$this->canClearActivity())
 		{
-			return false;
+			return -1;
 		}
 
 		$userPermissions = \CCrmPerms::GetUserPermissions($this->getOwner());
@@ -917,7 +921,7 @@ class Quote
 
 		$query = $activityVolume->prepareQuery();
 
-		$success = true;
+		$dropped = -1;
 
 		if ($activityVolume->prepareFilter($query))
 		{
@@ -937,6 +941,7 @@ class Quote
 
 			$res = $query->exec();
 
+			$dropped = 0;
 			while ($activity = $res->fetch())
 			{
 				$this->setProcessOffset($activity['ID']);
@@ -951,6 +956,7 @@ class Quote
 					//todo: fail count here
 
 					$this->incrementDroppedActivityCount();
+					$dropped ++;
 				}
 				else
 				{
@@ -960,13 +966,16 @@ class Quote
 
 				if ($this->hasTimeLimitReached())
 				{
-					$success = false;
 					break;
 				}
 			}
 		}
+		else
+		{
+			$this->collectError(new Main\Error('Filter error', self::ERROR_DELETION_FAILED));
+		}
 
-		return $success;
+		return $dropped;
 	}
 
 
@@ -984,13 +993,13 @@ class Quote
 	/**
 	 * Performs dropping associated entity events.
 	 *
-	 * @return boolean
+	 * @return int
 	 */
 	public function clearEvent()
 	{
 		if (!$this->canClearEvent())
 		{
-			return false;
+			return -1;
 		}
 
 		$eventVolume = new Volume\Event();
@@ -998,7 +1007,7 @@ class Quote
 
 		$query = $eventVolume->prepareRelationQuery(static::className());
 
-		$success = true;
+		$dropped = -1;
 
 		if ($eventVolume->prepareFilter($query))
 		{
@@ -1015,6 +1024,7 @@ class Quote
 
 			$res = $query->exec();
 
+			$dropped = 0;
 			while ($event = $res->fetch())
 			{
 				$this->setProcessOffset($event['EVENT_ID']);
@@ -1022,6 +1032,7 @@ class Quote
 				if (Volume\Event::dropEvent($event['EVENT_ID'], $this->getOwner()))
 				{
 					$this->incrementDroppedEventCount();
+					$dropped ++;
 				}
 				else
 				{
@@ -1031,13 +1042,16 @@ class Quote
 
 				if ($this->hasTimeLimitReached())
 				{
-					$success = false;
 					break;
 				}
 			}
 		}
+		else
+		{
+			$this->collectError(new Main\Error('Filter error', self::ERROR_DELETION_FAILED));
+		}
 
-		return $success;
+		return $dropped;
 	}
 }
 

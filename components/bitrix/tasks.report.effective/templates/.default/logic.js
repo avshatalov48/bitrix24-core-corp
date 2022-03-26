@@ -41,7 +41,7 @@ if (typeof(BX.FilterEntitySelector) === "undefined")
 					scope: field,
 					id: this.getId() + "-selector",
 					mode: this.getSetting("mode"),
-					query: query ? query : false,
+					query: false,
 					useSearch: true,
 					useAdd: false,
 					parent: this,
@@ -175,11 +175,6 @@ if (typeof(BX.FilterEntitySelector) === "undefined")
 							],
 							options: {
 								cacheable: false
-								// events: {
-								// 	onLoad: function(event) {
-								// 		console.log("onLoad");
-								// 	}
-								// }
 							},
 							stopParameters: [
 								"PAGEN_(\\d+)",
@@ -194,12 +189,15 @@ if (typeof(BX.FilterEntitySelector) === "undefined")
 
 			onFilterApply: function(id, data, ctx, promise, params)
 			{
-				if (
-					this.option('taskLimitExceeded')
-					|| this.option('kpiLimitExceeded')
-				)
+				if (this.option('taskLimitExceeded') || this.option('kpiLimitExceeded'))
 				{
-					BX.UI.InfoHelper.show('limit_tasks_efficiency');
+					BX.UI.InfoHelper.show('limit_tasks_efficiency', {
+						isLimit: true,
+						limitAnalyticsLabels: {
+							module: 'tasks',
+							source: 'filter'
+						},
+					});
 					return;
 				}
 
@@ -210,21 +208,39 @@ if (typeof(BX.FilterEntitySelector) === "undefined")
 				var requestData = ctx.getFilterFieldsValues();
 				requestData.userId = instance.option('userId');
 
-				instance.callRemote('this.getEfficiencyData', requestData).then(function(result)
-				{
-					var data = result.getData();
+				BX.ajax.runComponentAction('bitrix:tasks.report.effective', 'getEfficiencyData', {
+					mode: 'class',
+					data: {
+						userId: instance.option('userId')
+					}
+				}).then(
+					function(response)
+					{
+						if (
+							!response.status
+							|| response.status !== 'success'
+						)
+						{
+							return;
+						}
 
-					instance.render({
-						efficiency: data.EFFICIENCY,
-						completed: data.COMPLETED,
-						violations: data.VIOLATIONS,
-						inProgress: data.IN_PROGRESS,
-						graphData: data.GRAPH_DATA,
-						minPeriod: data.GRAPH_MIN_PERIOD
-					});
+						var data = response.data;
 
-					promise.fulfill();
-				});
+						instance.render({
+							efficiency: data.EFFICIENCY,
+							completed: data.COMPLETED,
+							violations: data.VIOLATIONS,
+							inProgress: data.IN_PROGRESS,
+							graphData: data.GRAPH_DATA,
+							minPeriod: data.GRAPH_MIN_PERIOD
+						});
+
+					}.bind(this),
+					function(response)
+					{
+
+					}.bind(this)
+				);
 			},
 
 			onSliderClose: function(event)
@@ -249,7 +265,6 @@ if (typeof(BX.FilterEntitySelector) === "undefined")
 				}
 				catch (e)
 				{
-					console.log(e);
 					document.location.href = document.location.href;
 				}
 			},

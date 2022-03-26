@@ -6,12 +6,14 @@ use Bitrix\Disk\File;
 use Bitrix\Disk\FileLink;
 use Bitrix\Disk\Folder;
 use Bitrix\Disk\FolderLink;
+use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\ExternalLinkTable;
 use Bitrix\Disk\Internals\FolderTable;
 use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\Disk\Internals\SharingTable;
 use Bitrix\Disk\BaseObject;
+use Bitrix\Disk\ProxyType;
 use Bitrix\Disk\Sharing;
 use Bitrix\Disk\Storage;
 use Bitrix\Disk\User;
@@ -1288,7 +1290,19 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 			$this->sendJsonErrorResponse();
 		}
 
-		$newCopy = $object->copyTo($targetObject, $this->getUser()->getId(), true);
+		if ($object->isLink())
+		{
+			$newCopy = $object->getRealObject()->copyTo($targetObject, $this->getUser()->getId(), true);
+			if ($newCopy)
+			{
+				$newCopy->rename($object->getName(), true);
+			}
+		}
+		else
+		{
+			$newCopy = $object->copyTo($targetObject, $this->getUser()->getId(), true);
+		}
+
 		if(!$newCopy)
 		{
 			$this->errorCollection->add(
@@ -1321,6 +1335,17 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		));
 	}
 
+	private function shouldBeBlockMove(Storage $storage): bool
+	{
+		$proxyType = $storage->getProxyType();
+		if (!($proxyType instanceof ProxyType\Common))
+		{
+			return false;
+		}
+
+		return !Bitrix24Manager::isFeatureEnabled('disk_common_storage');
+	}
+
 	protected function processActionMoveTo($objectId, $targetObjectId)
 	{
 		/** @var \Bitrix\Disk\File|\Bitrix\Disk\Folder $object */
@@ -1343,6 +1368,11 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		{
 			$this->errorCollection[] = new Error(Loc::getMessage('DISK_FOLDER_LIST_ERROR_COULD_NOT_FIND_OBJECT'), self::ERROR_COULD_NOT_FIND_OBJECT);
 			$this->sendJsonErrorResponse();
+		}
+
+		if ($this->shouldBeBlockMove($targetObject->getStorage()))
+		{
+			$this->sendJsonAccessDeniedResponse();
 		}
 
 		if(!$object->canMove($securityContext, $targetObject))

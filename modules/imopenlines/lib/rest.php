@@ -1,68 +1,92 @@
 <?php
 namespace Bitrix\ImOpenLines;
 
+use Bitrix\Main;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Web\Uri;
+use Bitrix\Main\Type\DateTime;
+use	Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Engine\UrlManager;
+use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\UserConsent\Consent;
+
 use Bitrix\ImOpenLines\Model\SessionTable;
 use Bitrix\ImOpenLines\Widget\FormHandler;
-use Bitrix\Main;
-use	Bitrix\Main\Localization\Loc;
-use	Bitrix\ImOpenLines\Crm\Common;
-use Bitrix\Main\Engine\CurrentUser;
 
-if(!\Bitrix\Main\Loader::includeModule('rest'))
+use Bitrix\Im;
+
+use Bitrix\Rest\SessionAuth;
+use Bitrix\Rest\RestException;
+
+use Bitrix\Crm\WebForm;
+
+use Bitrix\ImBot\Bot\Network;
+
+if (!Loader::includeModule('rest'))
+{
 	return;
+}
 
 Loc::loadMessages(__FILE__);
 
+/**
+ * Class Rest
+ *
+ * @package Bitrix\ImOpenLines
+ */
 class Rest extends \IRestService
 {
-	public static function onRestServiceBuildDescription()
+	/**
+	 * @return array[]
+	 */
+	public static function onRestServiceBuildDescription(): array
 	{
-		return array(
-			'imopenlines' => array(
-				'imopenlines.revision.get' => array(__CLASS__, 'revisionGet'),
+		return [
+			'imopenlines' => [
+				'imopenlines.revision.get' => [__CLASS__, 'revisionGet'],
 
-				'imopenlines.dialog.get' => array(__CLASS__, 'dialogGet'),
-				'imopenlines.dialog.user.depersonalization' => array('callback' => array(__CLASS__, 'dialogUserDepersonalization'), 'options' => array('private' => true)),
-				'imopenlines.dialog.form.send' => array(__CLASS__, 'dialogFormSend'),
+				'imopenlines.dialog.get' => [__CLASS__, 'dialogGet'],
+				'imopenlines.dialog.user.depersonalization' => ['callback' => [__CLASS__, 'dialogUserDepersonalization'], 'options' => ['private' => true]],
+				'imopenlines.dialog.form.send' => [__CLASS__, 'dialogFormSend'],
 
-				'imopenlines.operator.answer' => array(__CLASS__, 'operatorAnswer'),
-				'imopenlines.operator.skip' => array(__CLASS__, 'operatorSkip'),
-				'imopenlines.operator.spam' => array(__CLASS__, 'operatorSpam'),
-				'imopenlines.operator.transfer' => array(__CLASS__, 'operatorTransfer'),
-				'imopenlines.operator.finish' => array(__CLASS__, 'operatorFinish'),
+				'imopenlines.operator.answer' => [__CLASS__, 'operatorAnswer'],
+				'imopenlines.operator.skip' => [__CLASS__, 'operatorSkip'],
+				'imopenlines.operator.spam' => [__CLASS__, 'operatorSpam'],
+				'imopenlines.operator.transfer' => [__CLASS__, 'operatorTransfer'],
+				'imopenlines.operator.finish' => [__CLASS__, 'operatorFinish'],
 
-				'imopenlines.session.intercept' => array(__CLASS__, 'sessionIntercept'),
+				'imopenlines.session.intercept' => [__CLASS__, 'sessionIntercept'],
 
-				'imopenlines.bot.session.operator' => array(__CLASS__, 'botSessionOperator'),
-				'imopenlines.bot.session.send.message' =>  array('callback' => array(__CLASS__, 'botSessionSendAutoMessage'), 'options' => array('private' => true)), // legacy
-				'imopenlines.bot.session.message.send' => array(__CLASS__, 'botSessionSendAutoMessage'),
-				'imopenlines.bot.session.transfer' => array(__CLASS__, 'botSessionTransfer'),
-				'imopenlines.bot.session.finish' => array(__CLASS__, 'botSessionFinish'),
+				'imopenlines.bot.session.operator' => [__CLASS__, 'botSessionOperator'],
+				'imopenlines.bot.session.send.message' => ['callback' => [__CLASS__, 'botSessionSendAutoMessage'], 'options' => ['private' => true]], // legacy
+				'imopenlines.bot.session.message.send' => [__CLASS__, 'botSessionSendAutoMessage'],
+				'imopenlines.bot.session.transfer' => [__CLASS__, 'botSessionTransfer'],
+				'imopenlines.bot.session.finish' => [__CLASS__, 'botSessionFinish'],
 
-				'imopenlines.network.join' => array(__CLASS__, 'networkJoin'),
-				'imopenlines.network.message.add' => array(__CLASS__, 'networkMessageAdd'),
+				'imopenlines.network.join' => [__CLASS__, 'networkJoin'],
+				'imopenlines.network.message.add' => [__CLASS__, 'networkMessageAdd'],
 
-				'imopenlines.widget.config.get' =>  array('callback' => array(__CLASS__, 'widgetConfigGet'), 'options' => array()),
-				'imopenlines.widget.dialog.get' =>  array('callback' => array(__CLASS__, 'widgetDialogGet'), 'options' => array()),
-				'imopenlines.widget.user.register' =>  array('callback' => array(__CLASS__, 'widgetUserRegister'), 'options' => array()),
-				'imopenlines.widget.user.consent.apply' =>  array('callback' => array(__CLASS__, 'widgetUserConsentApply'), 'options' => array()),
-				'imopenlines.widget.user.get' =>  array('callback' => array(__CLASS__, 'widgetUserGet'), 'options' => array()),
-				'imopenlines.widget.operator.get' =>  array('callback' => array(__CLASS__, 'widgetOperatorGet'), 'options' => array()),
-				'imopenlines.widget.vote.send' =>  array('callback' => array(__CLASS__, 'widgetVoteSend'), 'options' => array()),
-				'imopenlines.widget.action.send' =>  array('callback' => array(__CLASS__, 'widgetActionSend'), 'options' => array()),
-				'imopenlines.widget.crm.bindings.get' =>  array('callback' => array(__CLASS__, 'widgetCrmBindingsGet'), 'options' => array()),
+				'imopenlines.widget.config.get' => ['callback' => [__CLASS__, 'widgetConfigGet'], 'options' => []],
+				'imopenlines.widget.dialog.get' => ['callback' => [__CLASS__, 'widgetDialogGet'], 'options' => []],
+				'imopenlines.widget.user.register' => ['callback' => [__CLASS__, 'widgetUserRegister'], 'options' => []],
+				'imopenlines.widget.user.consent.apply' => ['callback' => [__CLASS__, 'widgetUserConsentApply'], 'options' => []],
+				'imopenlines.widget.user.get' => ['callback' => [__CLASS__, 'widgetUserGet'], 'options' => []],
+				'imopenlines.widget.operator.get' => ['callback' => [__CLASS__, 'widgetOperatorGet'], 'options' => []],
+				'imopenlines.widget.vote.send' => ['callback' => [__CLASS__, 'widgetVoteSend'], 'options' => []],
+				'imopenlines.widget.action.send' => ['callback' => [__CLASS__, 'widgetActionSend'], 'options' => []],
+				'imopenlines.widget.crm.bindings.get' => ['callback' => [__CLASS__, 'widgetCrmBindingsGet'], 'options' => []],
 
-				'imopenlines.config.path.get' => array(__CLASS__, 'configGetPath'),
-				'imopenlines.config.get' => array(__CLASS__, 'configGet'),
-				'imopenlines.config.list.get' => array(__CLASS__, 'configListGet'),
-				'imopenlines.config.update' => array(__CLASS__, 'configUpdate'),
-				'imopenlines.config.add' => array(__CLASS__, 'configAdd'),
-				'imopenlines.config.delete' => array(__CLASS__, 'configDelete'),
+				'imopenlines.config.path.get' => [__CLASS__, 'configGetPath'],
+				'imopenlines.config.get' => [__CLASS__, 'configGet'],
+				'imopenlines.config.list.get' => [__CLASS__, 'configListGet'],
+				'imopenlines.config.update' => [__CLASS__, 'configUpdate'],
+				'imopenlines.config.add' => [__CLASS__, 'configAdd'],
+				'imopenlines.config.delete' => [__CLASS__, 'configDelete'],
 
-				'imopenlines.crm.chat.user.add' => array(__CLASS__, 'crmChatUserAdd'),
-				'imopenlines.crm.chat.getLastId' => array(__CLASS__, 'crmLastChatIdGet')
-			),
-		);
+				'imopenlines.crm.chat.user.add' => [__CLASS__, 'crmChatUserAdd'],
+				'imopenlines.crm.chat.getLastId' => [__CLASS__, 'crmLastChatIdGet']
+			],
+		];
 	}
 
 	public static function revisionGet($arParams, $n, \CRestServer $server)
@@ -74,26 +98,26 @@ class Rest extends \IRestService
 	{
 		$params = array_change_key_case($params, CASE_UPPER);
 
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
-			throw new \Bitrix\Rest\RestException("Messenger is not installed.", "IM_NOT_INSTALLED", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Messenger is not installed.', 'IM_NOT_INSTALLED', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$chatId = \Bitrix\ImOpenLines\Rest::getChatId($params);
+		$chatId = self::getChatId($params);
 		if (!$chatId)
 		{
-			throw new \Bitrix\Rest\RestException("You do not have access to the specified dialog", "ACCESS_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('You do not have access to the specified dialog', 'ACCESS_ERROR', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		if (!\Bitrix\ImOpenLines\Chat::hasAccess($chatId))
 		{
-			throw new \Bitrix\Rest\RestException("You do not have access to the specified dialog", "ACCESS_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('You do not have access to the specified dialog', 'ACCESS_ERROR', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$result = \Bitrix\Im\Chat::getById($chatId, ['LOAD_READED' => true, 'JSON' => true]);
+		$result = Im\Chat::getById($chatId, ['LOAD_READED' => true, 'JSON' => true]);
 		if (!$result)
 		{
-			throw new \Bitrix\Rest\RestException("You do not have access to the specified dialog", "ACCESS_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('You do not have access to the specified dialog', 'ACCESS_ERROR', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		$result['dialog_id'] = 'chat'.$chatId;
@@ -105,48 +129,45 @@ class Rest extends \IRestService
 	{
 		$params = array_change_key_case($params, CASE_UPPER);
 
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
-			throw new \Bitrix\Rest\RestException("Messenger is not installed.", "IM_NOT_INSTALLED", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Messenger is not installed.', 'IM_NOT_INSTALLED', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		if (!Main\Loader::includeModule('crm'))
+		if (!Loader::includeModule('crm'))
 		{
-			throw new \Bitrix\Rest\RestException("CRM module is not installed.", "CRM_NOT_INSTALLED", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('CRM module is not installed.', 'CRM_NOT_INSTALLED', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		if (!isset($params['SESSION_ID']))
 		{
-			throw new \Bitrix\Rest\RestException("You need to specify session id", "SESSION_ID_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('You need to specify session id', 'SESSION_ID_EMPTY', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		if (
-			!isset($params['CRM_FORM']['ID']) ||
-			!isset($params['CRM_FORM']['CODE']) ||
-			!isset($params['CRM_FORM']['SEC']) ||
-			!isset($params['CRM_FORM']['NAME'])
+			!isset($params['CRM_FORM']['ID'], $params['CRM_FORM']['CODE'], $params['CRM_FORM']['SEC'], $params['CRM_FORM']['NAME'])
 		)
 		{
-			throw new \Bitrix\Rest\RestException("You need to specify CRM-form details", "FORM_INFO_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('You need to specify CRM-form details', 'FORM_INFO_EMPTY', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		$sessionData = SessionTable::getByIdPerformance($params['SESSION_ID'])->fetch();
 		if (!$sessionData)
 		{
-			throw new \Bitrix\Rest\RestException("Error getting session info", "NO_SESSION_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Error getting session info', 'NO_SESSION_ERROR', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 		$session = new Session();
 		$session->load([
 			'USER_CODE' => $sessionData['USER_CODE'],
 			'SKIP_CREATE' => 'Y'
-	   	]);
+		]);
 
-		if (!\Bitrix\Im\Chat::isUserInChat($session->getData('CHAT_ID')))
+		if (!Im\Chat::isUserInChat($session->getData('CHAT_ID')))
 		{
-			throw new \Bitrix\Rest\RestException("You do not have access to the specified dialog", "ACCESS_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('You do not have access to the specified dialog', 'ACCESS_ERROR', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$formLink = \Bitrix\Crm\WebForm\Script::getPublicUrl([
+		$formLink = WebForm\Script::getPublicUrl([
 			'ID' => $params['CRM_FORM']['ID'],
 			'CODE' => $params['CRM_FORM']['CODE'],
 			'SECURITY_CODE' => $params['CRM_FORM']['SEC']
@@ -159,9 +180,9 @@ class Rest extends \IRestService
 			$operatorChat = $session->getChat();
 			$crmBindings = $operatorChat->getFieldData(Chat::FIELD_CRM);
 
-			$signedData = new \Bitrix\Crm\WebForm\Embed\Sign();
+			$signedData = new WebForm\Embed\Sign();
 			$signedData->setProperty('eventNamePostfix', FormHandler::EVENT_POSTFIX)
-					   ->setProperty('openlinesCode', $session->getData('USER_CODE'));
+					 ->setProperty('openlinesCode', $session->getData('USER_CODE'));
 
 			foreach ($crmBindings as $bindingType => $bindingId)
 			{
@@ -171,25 +192,25 @@ class Rest extends \IRestService
 				}
 			}
 
-			$uri = new \Bitrix\Main\Web\Uri($formLink);
+			$uri = new Uri($formLink);
 			$signedData->appendUriParameter($uri);
 
-			$urlManager = \Bitrix\Main\Engine\UrlManager::getInstance();
+			$urlManager = UrlManager::getInstance();
 			$host = $urlManager->getHostUrl();
 			$formLinkWithParams = $host . \CBXShortUri::GetShortUri($uri->getLocator());
 		}
 
-		return Im::addMessage([
-			"TO_CHAT_ID" => $session->getData('CHAT_ID'),
-			"MESSAGE" => FormHandler::buildSentFormMessageForClient($formLinkWithParams),
-			"AUTHOR_ID" => CurrentUser::get()->getId(),
-			"FROM_USER_ID" => CurrentUser::get()->getId(),
-			"IMPORTANT_CONNECTOR" => 'Y',
-			"PARAMS" => [
-				"COMPONENT_ID" => FormHandler::FORM_COMPONENT_NAME,
-				"CRM_FORM_ID" => $params['CRM_FORM']['ID'],
-				"CRM_FORM_SEC" => $params['CRM_FORM']['SEC'],
-				"CRM_FORM_FILLED" => 'N',
+		return \Bitrix\ImOpenlines\Im::addMessage([
+			'TO_CHAT_ID' => $session->getData('CHAT_ID'),
+			'MESSAGE' => FormHandler::buildSentFormMessageForClient($formLinkWithParams),
+			'AUTHOR_ID' => CurrentUser::get()->getId(),
+			'FROM_USER_ID' => CurrentUser::get()->getId(),
+			'IMPORTANT_CONNECTOR' => 'Y',
+			'PARAMS' => [
+				'COMPONENT_ID' => FormHandler::FORM_COMPONENT_NAME,
+				'CRM_FORM_ID' => $params['CRM_FORM']['ID'],
+				'CRM_FORM_SEC' => $params['CRM_FORM']['SEC'],
+				'CRM_FORM_FILLED' => 'N',
 			]
 		]);
 	}
@@ -198,14 +219,14 @@ class Rest extends \IRestService
 	{
 		$params = array_change_key_case($params, CASE_UPPER);
 
-		if ($server->getAuthType() == \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		if ($server->getAuthType() == SessionAuth\Auth::AUTH_TYPE)
 		{
-			throw new \Bitrix\Rest\RestException("Access for this method not allowed by session authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Access for this method not allowed by session authorization.', 'WRONG_AUTH_TYPE', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
-			throw new \Bitrix\Rest\RestException("Messenger is not installed.", "IM_NOT_INSTALLED", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Messenger is not installed.', 'IM_NOT_INSTALLED', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		global $USER;
@@ -213,35 +234,38 @@ class Rest extends \IRestService
 
 		if (!(
 			$USER->IsAdmin()
-			|| \Bitrix\Main\Loader::includeModule('bitrix24') && \CBitrix24::IsPortalAdmin($userId)
+			|| (
+				Loader::includeModule('bitrix24')
+				&& \CBitrix24::IsPortalAdmin($userId)
+			)
 		))
 		{
-			throw new \Bitrix\Rest\RestException("You don't have access to this method", "ACCESS_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('You don\'t have access to this method', 'ACCESS_ERROR', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		if (!isset($params['USER_CODE']) || empty($params['USER_CODE']))
 		{
-			throw new \Bitrix\Rest\RestException("User code is not specified", "USER_CODE_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('User code is not specified', 'USER_CODE_ERROR', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$guestUserId = \Bitrix\ImOpenLines\Common::getUserIdByCode($params['USER_CODE']);
+		$guestUserId = Common::getUserIdByCode($params['USER_CODE']);
 		if (!$guestUserId)
 		{
-			throw new \Bitrix\Rest\RestException("The specified user is not a client of openlines module", "USER_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('The specified user is not a client of openlines module', 'USER_ERROR', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		return \Bitrix\ImOpenLines\Common::depersonalizationLinesUser($guestUserId);
+		return Common::depersonalizationLinesUser($guestUserId);
 	}
 
 	public static function operatorAnswer($arParams, $n, \CRestServer $server)
 	{
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
 
-		$control = new \Bitrix\ImOpenLines\Operator($arParams['CHAT_ID']);
+		$control = new Operator($arParams['CHAT_ID']);
 		$result = $control->answer();
 		if (!$result)
 		{
-			throw new \Bitrix\Rest\RestException($control->getError()->msg, $control->getError()->code, \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException($control->getError()->msg, $control->getError()->code, \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		return true;
@@ -251,11 +275,11 @@ class Rest extends \IRestService
 	{
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
 
-		$control = new \Bitrix\ImOpenLines\Operator($arParams['CHAT_ID']);
+		$control = new Operator($arParams['CHAT_ID']);
 		$result = $control->skip();
 		if (!$result)
 		{
-			throw new \Bitrix\Rest\RestException($control->getError()->msg, $control->getError()->code, \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException($control->getError()->msg, $control->getError()->code, \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 
@@ -266,11 +290,11 @@ class Rest extends \IRestService
 	{
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
 
-		$control = new \Bitrix\ImOpenLines\Operator($arParams['CHAT_ID']);
+		$control = new Operator($arParams['CHAT_ID']);
 		$result = $control->markSpam();
 		if (!$result)
 		{
-			throw new \Bitrix\Rest\RestException($control->getError()->msg, $control->getError()->code, \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException($control->getError()->msg, $control->getError()->code, \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		return true;
@@ -281,25 +305,19 @@ class Rest extends \IRestService
 	 * @param $n
 	 * @param \CRestServer $server
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\Db\SqlQueryException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
-	 * @throws \Bitrix\Rest\RestException
+	 * @throws RestException
 	 */
 	public static function operatorFinish($arParams, $n, \CRestServer $server)
 	{
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
 
-		$control = new \Bitrix\ImOpenLines\Operator($arParams['CHAT_ID']);
+		$control = new Operator($arParams['CHAT_ID']);
 		$result = $control->closeDialog();
 		if (!$result->isSuccess())
 		{
 			$errors = $result->getErrors();
 			$error = current($errors);
-			throw new \Bitrix\Rest\RestException($error->getMessage(), $error->getCode(), \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException($error->getMessage(), $error->getCode(), \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		return true;
@@ -307,10 +325,10 @@ class Rest extends \IRestService
 
 	public static function operatorTransfer($arParams, $n, \CRestServer $server)
 	{
-		$arParams['CHAT_ID'] = intval($arParams['CHAT_ID']);
+		$arParams['CHAT_ID'] = (int)$arParams['CHAT_ID'];
 		if ($arParams['CHAT_ID'] <= 0)
 		{
-			throw new \Bitrix\Rest\RestException("Chat ID can't be empty", "CHAT_ID_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Chat ID can\'t be empty', 'CHAT_ID_EMPTY', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		$transferId = null;
@@ -328,38 +346,38 @@ class Rest extends \IRestService
 
 		if (isset($arParams['USER_ID']))
 		{
-			$arParams['USER_ID'] = intval($arParams['USER_ID']);
+			$arParams['USER_ID'] = (int)$arParams['USER_ID'];
 
 			if ($arParams['USER_ID'] <= 0)
 			{
-				throw new \Bitrix\Rest\RestException("User ID can't be empty", "USER_ID_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+				throw new RestException('User ID can\'t be empty', 'USER_ID_EMPTY', \CRestServer::STATUS_WRONG_REQUEST);
 			}
 
 			$transferId = $arParams['USER_ID'];
 		}
 		else if (isset($arParams['QUEUE_ID']))
 		{
-			$arParams['QUEUE_ID'] = intval($arParams['QUEUE_ID']);
+			$arParams['QUEUE_ID'] = (int)$arParams['QUEUE_ID'];
 
 			if ($arParams['QUEUE_ID'] <= 0)
 			{
-				throw new \Bitrix\Rest\RestException("QUEUE ID can't be empty", "QUEUE_ID_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+				throw new RestException('QUEUE ID can\'t be empty', 'QUEUE_ID_EMPTY', \CRestServer::STATUS_WRONG_REQUEST);
 			}
 
 			$transferId = 'queue'.$arParams['QUEUE_ID'];
 		}
 		else
 		{
-			throw new \Bitrix\Rest\RestException("Queue ID or User ID can't be empty", "TRANSFER_ID_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Queue ID or User ID can\'t be empty', 'TRANSFER_ID_EMPTY', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$control = new \Bitrix\ImOpenLines\Operator($arParams['CHAT_ID']);
-		$result = $control->transfer(Array(
+		$control = new Operator($arParams['CHAT_ID']);
+		$result = $control->transfer([
 			'TRANSFER_ID' => $transferId,
-		));
+		]);
 		if (!$result)
 		{
-			throw new \Bitrix\Rest\RestException("You can not redirect to this operator", "OPERATOR_WRONG", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('You can not redirect to this operator', 'OPERATOR_WRONG', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		return true;
@@ -367,18 +385,18 @@ class Rest extends \IRestService
 
 	public static function sessionIntercept($arParams, $n, \CRestServer $server)
 	{
-		$arParams['CHAT_ID'] = intval($arParams['CHAT_ID']);
+		$arParams['CHAT_ID'] = (int)$arParams['CHAT_ID'];
 		if ($arParams['CHAT_ID'] <= 0)
 		{
-			throw new \Bitrix\Rest\RestException("Chat ID can't be empty", "CHAT_ID_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Chat ID can\'t be empty', 'CHAT_ID_EMPTY', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$control = new \Bitrix\ImOpenLines\Operator($arParams['CHAT_ID']);
+		$control = new Operator($arParams['CHAT_ID']);
 		$result = $control->interceptSession();
 
 		if (!$result)
 		{
-			throw new \Bitrix\Rest\RestException("You can not redirect to this operator", "OPERATOR_WRONG", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('You can not redirect to this operator', 'OPERATOR_WRONG', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		return true;
@@ -387,23 +405,23 @@ class Rest extends \IRestService
 
 	public static function botSessionOperator($arParams, $n, \CRestServer $server)
 	{
-		if ($server->getAuthType() == \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		if ($server->getAuthType() == SessionAuth\Auth::AUTH_TYPE)
 		{
-			throw new \Bitrix\Rest\RestException("Access for this method not allowed by session authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+			throw new RestException('Access for this method not allowed by session authorization.', 'WRONG_AUTH_TYPE', \CRestServer::STATUS_FORBIDDEN);
 		}
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
 
-		$arParams['CHAT_ID'] = intval($arParams['CHAT_ID']);
+		$arParams['CHAT_ID'] = (int)$arParams['CHAT_ID'];
 		if ($arParams['CHAT_ID'] <= 0)
 		{
-			throw new \Bitrix\Rest\RestException("Chat ID can't be empty", "CHAT_ID_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Chat ID can\'t be empty', 'CHAT_ID_EMPTY', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$chat = new \Bitrix\Imopenlines\Chat($arParams['CHAT_ID']);
+		$chat = new Chat($arParams['CHAT_ID']);
 		$result = $chat->endBotSession();
 		if (!$result)
 		{
-			throw new \Bitrix\Rest\RestException("Operator is not a bot", "WRONG_CHAT", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Operator is not a bot', 'WRONG_CHAT', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		return true;
@@ -411,19 +429,19 @@ class Rest extends \IRestService
 
 	public static function botSessionSendAutoMessage($arParams, $n, \CRestServer $server)
 	{
-		if ($server->getAuthType() == \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		if ($server->getAuthType() == SessionAuth\Auth::AUTH_TYPE)
 		{
-			throw new \Bitrix\Rest\RestException("Access for this method not allowed by session authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+			throw new RestException('Access for this method not allowed by session authorization.', 'WRONG_AUTH_TYPE', \CRestServer::STATUS_FORBIDDEN);
 		}
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
 
-		$arParams['CHAT_ID'] = intval($arParams['CHAT_ID']);
+		$arParams['CHAT_ID'] = (int)$arParams['CHAT_ID'];
 		if ($arParams['CHAT_ID'] <= 0)
 		{
-			throw new \Bitrix\Rest\RestException("Chat ID can't be empty", "CHAT_ID_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Chat ID can\'t be empty', 'CHAT_ID_EMPTY', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$chat = new \Bitrix\Imopenlines\Chat($arParams['CHAT_ID']);
+		$chat = new Chat($arParams['CHAT_ID']);
 		$arParams['MESSAGE'] = !empty($arParams['MESSAGE']) ? $arParams['MESSAGE'] : '';
 		$chat->sendAutoMessage($arParams['NAME'], $arParams['MESSAGE']);
 
@@ -432,17 +450,17 @@ class Rest extends \IRestService
 
 	public static function botSessionTransfer($arParams, $n, \CRestServer $server)
 	{
-		if ($server->getAuthType() == \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		if ($server->getAuthType() == SessionAuth\Auth::AUTH_TYPE)
 		{
-			throw new \Bitrix\Rest\RestException("Access for this method not allowed by session authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+			throw new RestException('Access for this method not allowed by session authorization.', 'WRONG_AUTH_TYPE', \CRestServer::STATUS_FORBIDDEN);
 		}
-		$arParams['CHAT_ID'] = intval($arParams['CHAT_ID']);
+		$arParams['CHAT_ID'] = (int)$arParams['CHAT_ID'];
 
 		$arParams['LEAVE'] = isset($arParams['LEAVE']) && $arParams['LEAVE'] == 'Y'? 'Y': 'N';
 
 		if ($arParams['CHAT_ID'] <= 0)
 		{
-			throw new \Bitrix\Rest\RestException("Chat ID can't be empty", "CHAT_ID_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Chat ID can\'t be empty', 'CHAT_ID_EMPTY', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		$transferId = null;
@@ -460,32 +478,32 @@ class Rest extends \IRestService
 
 		if (isset($arParams['USER_ID']))
 		{
-			$arParams['USER_ID'] = intval($arParams['USER_ID']);
+			$arParams['USER_ID'] = (int)$arParams['USER_ID'];
 
 			if ($arParams['USER_ID'] <= 0)
 			{
-				throw new \Bitrix\Rest\RestException("User ID can't be empty", "USER_ID_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+				throw new RestException('User ID can\'t be empty', 'USER_ID_EMPTY', \CRestServer::STATUS_WRONG_REQUEST);
 			}
 
 			$transferId = $arParams['USER_ID'];
 		}
 		else if (isset($arParams['QUEUE_ID']))
 		{
-			$arParams['QUEUE_ID'] = intval($arParams['QUEUE_ID']);
+			$arParams['QUEUE_ID'] = (int)$arParams['QUEUE_ID'];
 
 			if ($arParams['QUEUE_ID'] <= 0)
 			{
-				throw new \Bitrix\Rest\RestException("QUEUE ID can't be empty", "QUEUE_ID_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+				throw new RestException('QUEUE ID can\'t be empty', 'QUEUE_ID_EMPTY', \CRestServer::STATUS_WRONG_REQUEST);
 			}
 
 			$transferId = 'queue'.$arParams['QUEUE_ID'];
 		}
 		else
 		{
-			throw new \Bitrix\Rest\RestException("Queue ID or User ID can't be empty", "TRANSFER_ID_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Queue ID or User ID can\'t be empty', 'TRANSFER_ID_EMPTY', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$bots = \Bitrix\Im\Bot::getListCache();
+		$bots = Im\Bot::getListCache();
 		$botFound = false;
 		$botId = 0;
 		foreach ($bots as $bot)
@@ -499,10 +517,10 @@ class Rest extends \IRestService
 		}
 		if (!$botFound)
 		{
-			throw new \Bitrix\Rest\RestException("Bot not found", "BOT_ID_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Bot not found', 'BOT_ID_ERROR', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$chat = new \Bitrix\Imopenlines\Chat($arParams['CHAT_ID']);
+		$chat = new Chat($arParams['CHAT_ID']);
 		$result = $chat->transfer(Array(
 			'FROM' => $botId,
 			'TO' => $transferId,
@@ -511,7 +529,7 @@ class Rest extends \IRestService
 		));
 		if (!$result)
 		{
-			throw new \Bitrix\Rest\RestException("You can not redirect to this operator", "OPERATOR_WRONG", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('You can not redirect to this operator', 'OPERATOR_WRONG', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		return true;
@@ -519,19 +537,19 @@ class Rest extends \IRestService
 
 	public static function botSessionFinish($arParams, $n, \CRestServer $server)
 	{
-		if ($server->getAuthType() == \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		if ($server->getAuthType() == SessionAuth\Auth::AUTH_TYPE)
 		{
-			throw new \Bitrix\Rest\RestException("Access for this method not allowed by session authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+			throw new RestException('Access for this method not allowed by session authorization.', 'WRONG_AUTH_TYPE', \CRestServer::STATUS_FORBIDDEN);
 		}
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
 
-		$arParams['CHAT_ID'] = intval($arParams['CHAT_ID']);
+		$arParams['CHAT_ID'] = (int)$arParams['CHAT_ID'];
 		if ($arParams['CHAT_ID'] <= 0)
 		{
-			throw new \Bitrix\Rest\RestException("Chat ID can't be empty", "CHAT_ID_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Chat ID can\'t be empty', 'CHAT_ID_EMPTY', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$bots = \Bitrix\Im\Bot::getListCache();
+		$bots = Im\Bot::getListCache();
 		$botFound = false;
 		$botId = 0;
 		foreach ($bots as $bot)
@@ -545,10 +563,10 @@ class Rest extends \IRestService
 		}
 		if (!$botFound)
 		{
-			throw new \Bitrix\Rest\RestException("Bot not found", "BOT_ID_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Bot not found', 'BOT_ID_ERROR', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$chat = new \Bitrix\Imopenlines\Chat($arParams['CHAT_ID']);
+		$chat = new Chat($arParams['CHAT_ID']);
 		$chat->answer($botId);
 		$chat->finish();
 
@@ -564,8 +582,8 @@ class Rest extends \IRestService
 	public static function configGetPath($arParams, $n, \CRestServer $server): array
 	{
 		return [
-			'SERVER_ADDRESS' => \Bitrix\ImOpenLines\Common::getServerAddress(),
-			'PUBLIC_PATH' => \Bitrix\ImOpenLines\Common::getContactCenterPublicFolder()
+			'SERVER_ADDRESS' => Common::getServerAddress(),
+			'PUBLIC_PATH' => Common::getContactCenterPublicFolder()
 		];
 	}
 
@@ -574,23 +592,23 @@ class Rest extends \IRestService
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
 		if (!isset($arParams['CODE']) || mb_strlen($arParams['CODE']) != 32)
 		{
-			throw new \Bitrix\Rest\RestException("You entered an invalid code", "CODE", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('You entered an invalid code', 'CODE', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('imbot'))
+		if (!Loader::includeModule('imbot'))
 		{
-			throw new \Bitrix\Rest\RestException("Module IMBOT is not installed", "IMBOT_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Module IMBOT is not installed', 'IMBOT_ERROR', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		if (\Bitrix\ImBot\Bot\Network::isFdcCode($arParams['CODE']))
+		if (Network::isFdcCode($arParams['CODE']))
 		{
-			throw new \Bitrix\Rest\RestException("Line not found", "NOT_FOUND", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Line not found', 'NOT_FOUND', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$result = \Bitrix\ImBot\Bot\Network::join($arParams['CODE']);
+		$result = Network::join($arParams['CODE']);
 		if (!$result)
 		{
-			throw new \Bitrix\Rest\RestException(\Bitrix\ImBot\Bot\Network::getError()->msg, \Bitrix\ImBot\Bot\Network::getError()->code, \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException(Network::getError()->msg, Network::getError()->code, \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		return $result;
@@ -598,29 +616,29 @@ class Rest extends \IRestService
 
 	public static function networkMessageAdd($arParams, $n, \CRestServer $server)
 	{
-		if ($server->getAuthType() == \Bitrix\Rest\SessionAuth\Auth::AUTH_TYPE)
+		if ($server->getAuthType() == SessionAuth\Auth::AUTH_TYPE)
 		{
-			throw new \Bitrix\Rest\RestException("Access for this method not allowed by session authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+			throw new RestException('Access for this method not allowed by session authorization.', 'WRONG_AUTH_TYPE', \CRestServer::STATUS_FORBIDDEN);
 		}
 		$arParams = array_change_key_case($arParams, CASE_UPPER);
 		if (!isset($arParams['CODE']) || mb_strlen($arParams['CODE']) != 32)
 		{
-			throw new \Bitrix\Rest\RestException("You entered an invalid code", "CODE", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('You entered an invalid code', 'CODE', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('imbot'))
+		if (!Loader::includeModule('imbot'))
 		{
-			throw new \Bitrix\Rest\RestException("Module IMBOT is not installed", "IMBOT_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Module IMBOT is not installed', 'IMBOT_ERROR', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		if (\Bitrix\ImBot\Bot\Network::isFdcCode($arParams['CODE']))
+		if (Network::isFdcCode($arParams['CODE']))
 		{
-			throw new \Bitrix\Rest\RestException("Line not found", "NOT_FOUND", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Line not found', 'NOT_FOUND', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		$networkBot = null;
 
-		$bots = \Bitrix\Im\Bot::getListCache();
+		$bots = Im\Bot::getListCache();
 		foreach ($bots as $bot)
 		{
 			if ($bot['APP_ID'] == $arParams['CODE'])
@@ -631,43 +649,45 @@ class Rest extends \IRestService
 		}
 		if (!$networkBot)
 		{
-			throw new \Bitrix\Rest\RestException("Line not found", "NOT_FOUND", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Line not found', 'NOT_FOUND', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		$arMessageFields = Array();
 
-		$arMessageFields['DIALOG_ID'] = intval($arParams['USER_ID']);
+		$arMessageFields['DIALOG_ID'] = (int)$arParams['USER_ID'];
 		if (empty($arMessageFields['DIALOG_ID']))
 		{
-			throw new \Bitrix\Rest\RestException("User ID can't be empty", "USER_ID_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('User ID can\'t be empty', 'USER_ID_EMPTY', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$isBitrix24 = \Bitrix\Main\Loader::includeModule('bitrix24');
+		$isBitrix24 = Loader::includeModule('bitrix24');
 		if (
-			$isBitrix24 && !\CBitrix24::IsNfrLicense()
-			|| !$isBitrix24 && !defined('IMOPENLINES_NETWORK_LIMIT')
+			$isBitrix24
+			&& !\CBitrix24::IsNfrLicense()
+			|| !$isBitrix24
+			&& !defined('IMOPENLINES_NETWORK_LIMIT')
 		)
 		{
-			$dateLimit = new \Bitrix\Main\Type\DateTime();
+			$dateLimit = new DateTime();
 			$dateLimit->add('-1 WEEK');
 
-			$check = \Bitrix\Imopenlines\Model\RestNetworkLimitTable::getList(Array(
-				'filter' => Array(
+			$check = Model\RestNetworkLimitTable::getList([
+				'filter' => [
 					'=BOT_ID' => $networkBot['BOT_ID'],
 					'=USER_ID' => $arMessageFields['DIALOG_ID'],
 					'>DATE_CREATE' => $dateLimit
-				)
-			))->fetch();
+				]
+			])->fetch();
 			if ($check)
 			{
-				throw new \Bitrix\Rest\RestException("You cant send more than one message per week to each user.", "USER_MESSAGE_LIMIT", \CRestServer::STATUS_WRONG_REQUEST);
+				throw new RestException('You cant send more than one message per week to each user.', 'USER_MESSAGE_LIMIT', \CRestServer::STATUS_WRONG_REQUEST);
 			}
 		}
 
 		$arMessageFields['MESSAGE'] = trim($arParams['MESSAGE']);
 		if ($arMessageFields['MESSAGE'] == '')
 		{
-			throw new \Bitrix\Rest\RestException("Message can't be empty", "MESSAGE_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Message can\'t be empty', 'MESSAGE_EMPTY', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		if (isset($arParams['ATTACH']) && !empty($arParams['ATTACH']))
@@ -681,12 +701,12 @@ class Rest extends \IRestService
 				}
 				else
 				{
-					throw new \Bitrix\Rest\RestException("You have exceeded the maximum allowable size of attach", "ATTACH_OVERSIZE", \CRestServer::STATUS_WRONG_REQUEST);
+					throw new RestException('You have exceeded the maximum allowable size of attach', 'ATTACH_OVERSIZE', \CRestServer::STATUS_WRONG_REQUEST);
 				}
 			}
 			else if ($arParams['ATTACH'])
 			{
-				throw new \Bitrix\Rest\RestException("Incorrect attach params", "ATTACH_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+				throw new RestException('Incorrect attach params', 'ATTACH_ERROR', \CRestServer::STATUS_WRONG_REQUEST);
 			}
 		}
 
@@ -703,14 +723,14 @@ class Rest extends \IRestService
 			}
 			$keyboard['BOT_ID'] = $arParams['BOT_ID'];
 
-			$keyboard = \Bitrix\Im\Bot\Keyboard::getKeyboardByJson($keyboard);
+			$keyboard = Im\Bot\Keyboard::getKeyboardByJson($keyboard);
 			if ($keyboard)
 			{
 				$arMessageFields['KEYBOARD'] = $keyboard;
 			}
 			else
 			{
-				throw new \Bitrix\Rest\RestException("Incorrect keyboard params", "KEYBOARD_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+				throw new RestException('Incorrect keyboard params', 'KEYBOARD_ERROR', \CRestServer::STATUS_WRONG_REQUEST);
 			}
 		}
 
@@ -720,36 +740,36 @@ class Rest extends \IRestService
 		}
 		$arMessageFields['PARAMS']['IMOL_QUOTE_MSG'] = 'Y';
 
-		$id = \Bitrix\Im\Bot::addMessage(array('BOT_ID' => $networkBot['BOT_ID']), $arMessageFields);
+		$id = Im\Bot::addMessage(array('BOT_ID' => $networkBot['BOT_ID']), $arMessageFields);
 		if (!$id)
 		{
-			throw new \Bitrix\Rest\RestException("Message isn't added", "WRONG_REQUEST", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Message isn\'t added', 'WRONG_REQUEST', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		\Bitrix\Imopenlines\Model\RestNetworkLimitTable::add(Array('BOT_ID' => $networkBot['BOT_ID'], 'USER_ID' => $arMessageFields['DIALOG_ID']));
+		Model\RestNetworkLimitTable::add(Array('BOT_ID' => $networkBot['BOT_ID'], 'USER_ID' => $arMessageFields['DIALOG_ID']));
 
 		return true;
 	}
 
 	public static function widgetUserRegister($params, $n, \CRestServer $server)
 	{
-		if ($server->getAuthType() != \Bitrix\Imopenlines\Widget\Auth::AUTH_TYPE)
+		if ($server->getAuthType() != Widget\Auth::AUTH_TYPE)
 		{
-			throw new \Bitrix\Rest\RestException("Access for this method allowed only by livechat authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+			throw new RestException('Access for this method allowed only by livechat authorization.', 'WRONG_AUTH_TYPE', \CRestServer::STATUS_FORBIDDEN);
 		}
 
 		$params = array_change_key_case($params, CASE_UPPER);
 
-		$params['CONFIG_ID'] = intval($params['CONFIG_ID']);
+		$params['CONFIG_ID'] = (int)$params['CONFIG_ID'];
 		if ($params['CONFIG_ID'] <= 0)
 		{
-			throw new \Bitrix\Rest\RestException("Config id is not specified.", "CONFIG_ID_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Config id is not specified.', 'CONFIG_ID_EMPTY', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$config = \Bitrix\Imopenlines\Model\ConfigTable::getById($params['CONFIG_ID'])->fetch();
+		$config = Model\ConfigTable::getById($params['CONFIG_ID'])->fetch();
 		if (!$config)
 		{
-			throw new \Bitrix\Rest\RestException("Config is not found.", "CONFIG_NOT_FOUND", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Config is not found.', 'CONFIG_NOT_FOUND', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		if (
@@ -772,27 +792,27 @@ class Rest extends \IRestService
 			'WORK_POSITION' => $params['POSITION'],
 			'USER_HASH' => $params['USER_HASH'],
 		];
-		$userData = \Bitrix\Imopenlines\Widget\User::register($userDataFields);
+		$userData = Widget\User::register($userDataFields);
 		if (!$userData)
 		{
-			throw new \Bitrix\Rest\RestException(
-				\Bitrix\Imopenlines\Widget\User::getError()->msg,
-				\Bitrix\Imopenlines\Widget\User::getError()->code,
+			throw new RestException(
+				Widget\User::getError()->msg,
+				Widget\User::getError()->code,
 				\CRestServer::STATUS_WRONG_REQUEST
 			);
 		}
 
-		$dialogData = \Bitrix\Imopenlines\Widget\Dialog::register($userData['ID'], $config['ID']);
+		$dialogData = Widget\Dialog::register($userData['ID'], $config['ID']);
 		if (!$dialogData)
 		{
-			throw new \Bitrix\Rest\RestException(
-				\Bitrix\Imopenlines\Widget\Dialog::getError()->msg,
-				\Bitrix\Imopenlines\Widget\Dialog::getError()->code,
+			throw new RestException(
+				Widget\Dialog::getError()->msg,
+				Widget\Dialog::getError()->code,
 				\CRestServer::STATUS_WRONG_REQUEST
 			);
 		}
 
-		\Bitrix\Imopenlines\Widget\Auth::authorizeById($userData['ID'], true, true);
+		Widget\Auth::authorizeById($userData['ID'], true, true);
 
 		$result = [
 			'id' => (int)$userData['ID'],
@@ -813,7 +833,7 @@ class Rest extends \IRestService
 			$clientChat->updateFieldData([Chat::FIELD_LIVECHAT => ['WELCOME_FORM_NEEDED' => 'N']]);
 		}
 
-		\Bitrix\ImOpenLines\Widget\Cache::set($userData['ID'], [
+		Widget\Cache::set($userData['ID'], [
 			'TRACE_DATA' => (string)$params['TRACE_DATA'],
 	 		'CUSTOM_DATA' => (string)$params['CUSTOM_DATA'],
 		]);
@@ -823,34 +843,34 @@ class Rest extends \IRestService
 
 	public static function widgetUserConsentApply($params, $n, \CRestServer $server)
 	{
-		if ($server->getAuthType() != \Bitrix\Imopenlines\Widget\Auth::AUTH_TYPE)
+		if ($server->getAuthType() != Widget\Auth::AUTH_TYPE)
 		{
-			throw new \Bitrix\Rest\RestException("Access for this method allowed only by livechat authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+			throw new RestException('Access for this method allowed only by livechat authorization.', 'WRONG_AUTH_TYPE', \CRestServer::STATUS_FORBIDDEN);
 		}
 
 		global $USER;
 		if (!$USER->IsAuthorized())
 		{
-			throw new \Bitrix\Rest\RestException("Access for this method allowed only for authorized users.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+			throw new RestException('Access for this method allowed only for authorized users.', 'WRONG_AUTH_TYPE', \CRestServer::STATUS_FORBIDDEN);
 		}
 
 		$params = array_change_key_case($params, CASE_UPPER);
 
-		$params['CONFIG_ID'] = intval($params['CONFIG_ID']);
+		$params['CONFIG_ID'] = (int)$params['CONFIG_ID'];
 		if ($params['CONFIG_ID'] <= 0)
 		{
-			throw new \Bitrix\Rest\RestException("Config id is not specified.", "CONFIG_ID_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Config id is not specified.', 'CONFIG_ID_EMPTY', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$config = \Bitrix\Imopenlines\Model\ConfigTable::getById($params['CONFIG_ID'])->fetch();
+		$config = Model\ConfigTable::getById($params['CONFIG_ID'])->fetch();
 		if (!$config)
 		{
-			throw new \Bitrix\Rest\RestException("Config is not found.", "CONFIG_NOT_FOUND", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Config is not found.', 'CONFIG_NOT_FOUND', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
-			throw new \Bitrix\Rest\RestException("Messenger is not installed.", "IM_NOT_INSTALLED", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Messenger is not installed.', 'IM_NOT_INSTALLED', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		if ($config['AGREEMENT_MESSAGE'] != 'Y')
@@ -858,24 +878,24 @@ class Rest extends \IRestService
 			return false;
 		}
 
-		$chat = \Bitrix\Im\Model\ChatTable::getList(array(
+		$chat = Im\Model\ChatTable::getList([
 			'select' => ['ID'],
-			'filter' => array(
+			'filter' => [
 				'=ENTITY_TYPE' => 'LIVECHAT',
 				'=ENTITY_ID' => $config['ID'].'|'.$USER->GetID()
-			),
+			],
 			'limit' => 1
-		))->fetch();
+		])->fetch();
 		if (!$chat)
 		{
-			throw new \Bitrix\Rest\RestException("Chat is not found.", "CHAT_NOT_FOUND", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Chat is not found.', 'CHAT_NOT_FOUND', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		\Bitrix\Main\UserConsent\Consent::addByContext(
-			intval($config['AGREEMENT_ID']),
+		Consent::addByContext(
+			(int)$config['AGREEMENT_ID'],
 			'imopenlines/livechat',
 			$chat['ID'],
-			Array('URL' => trim($params['CONSENT_URL']))
+			['URL' => trim($params['CONSENT_URL'])]
 		);
 
 		return true;
@@ -883,22 +903,22 @@ class Rest extends \IRestService
 
 	public static function widgetVoteSend($params, $n, \CRestServer $server)
 	{
-		if ($server->getAuthType() != \Bitrix\Imopenlines\Widget\Auth::AUTH_TYPE)
+		if ($server->getAuthType() != Widget\Auth::AUTH_TYPE)
 		{
-			throw new \Bitrix\Rest\RestException("Access for this method allowed only by livechat authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+			throw new RestException('Access for this method allowed only by livechat authorization.', 'WRONG_AUTH_TYPE', \CRestServer::STATUS_FORBIDDEN);
 		}
 
 		$params = array_change_key_case($params, CASE_UPPER);
 
-		$params['SESSION_ID'] = intval($params['SESSION_ID']);
+		$params['SESSION_ID'] = (int)$params['SESSION_ID'];
 		if ($params['SESSION_ID'] <= 0)
 		{
-			throw new \Bitrix\Rest\RestException("Session id is not specified.", "SESSION_ID_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Session id is not specified.', 'SESSION_ID_EMPTY', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		$action = mb_strtolower($params['ACTION']);
 
-		\Bitrix\ImOpenlines\Session::voteAsUser($params['SESSION_ID'], $action);
+		Session::voteAsUser($params['SESSION_ID'], $action);
 
 		return true;
 	}
@@ -912,16 +932,16 @@ class Rest extends \IRestService
 			$arParams['ID'] = $arParams['MESSAGE_ID'];
 		}
 
-		$arParams['ID'] = intval($arParams['ID']);
+		$arParams['ID'] = (int)$arParams['ID'];
 		if ($arParams['ID'] <= 0)
 		{
-			throw new \Bitrix\Rest\RestException("Message ID can't be empty", "MESSAGE_ID_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Message ID can\'t be empty', 'MESSAGE_ID_ERROR', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$result = \Bitrix\ImOpenLines\Widget\Action::execute($arParams['ID'], $arParams['ACTION_VALUE']);
+		$result = Widget\Action::execute($arParams['ID'], $arParams['ACTION_VALUE']);
 		if ($result === false)
 		{
-			throw new \Bitrix\Rest\RestException("Incorrect params", "PARAMS_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Incorrect params', 'PARAMS_ERROR', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		return true;
@@ -929,53 +949,53 @@ class Rest extends \IRestService
 
 	public static function widgetCrmBindingsGet($params, $n, \CRestServer $server)
 	{
-		if ($server->getAuthType() != \Bitrix\Imopenlines\Widget\Auth::AUTH_TYPE)
+		if ($server->getAuthType() != Widget\Auth::AUTH_TYPE)
 		{
-			throw new \Bitrix\Rest\RestException("Access for this method allowed only by livechat authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+			throw new RestException('Access for this method allowed only by livechat authorization.', 'WRONG_AUTH_TYPE', \CRestServer::STATUS_FORBIDDEN);
 		}
 
-		if (!\Bitrix\Main\Loader::includeModule('crm'))
+		if (!Loader::includeModule('crm'))
 		{
-			throw new \Bitrix\Rest\RestException("CRM module is not installed.", "NO_CRM", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('CRM module is not installed.', 'NO_CRM', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		$params = array_change_key_case($params, CASE_UPPER);
 
 		if (!is_string($params['OPENLINES_CODE']) || $params['OPENLINES_CODE' === ''])
 		{
-			throw new \Bitrix\Rest\RestException("Wrong imopenlines code.", "WRONG_IMOL_CODE", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Wrong imopenlines code.', 'WRONG_IMOL_CODE', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$parsedOpenlinesCode = \Bitrix\ImOpenLines\Chat::parseLinesChatEntityId($params['OPENLINES_CODE']);
+		$parsedOpenlinesCode = Chat::parseLinesChatEntityId($params['OPENLINES_CODE']);
 		$configId = $parsedOpenlinesCode['lineId'];
 		$clientChatId = $parsedOpenlinesCode['connectorChatId'];
 		$userId = $parsedOpenlinesCode['connectorUserId'];
 
 		if (!$configId || !$clientChatId || !$userId)
 		{
-			throw new \Bitrix\Rest\RestException("Wrong imopenlines code.", "WRONG_IMOL_CODE", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Wrong imopenlines code.', 'WRONG_IMOL_CODE', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		// get operator chat from IMOL code
-		$operatorChat = new \Bitrix\ImOpenLines\Chat();
+		$operatorChat = new Chat();
 		$chatLoadResult = $operatorChat->load(['USER_CODE' => $params['OPENLINES_CODE'], 'ONLY_LOAD' => 'Y']);
 		if (!$chatLoadResult)
 		{
-			throw new \Bitrix\Rest\RestException("Error loading chat", "CHAT_LOAD_ERROR", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Error loading chat', 'CHAT_LOAD_ERROR', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		// check if current user is in chat
-		$isUserInChat = \Bitrix\Im\Chat::isUserInChat($operatorChat->getData('ID'));
+		$isUserInChat = Im\Chat::isUserInChat($operatorChat->getData('ID'));
 		if (!$isUserInChat)
 		{
-			throw new \Bitrix\Rest\RestException("You dont have access to this chat", "ACCESS_DENIED", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('You dont have access to this chat', 'ACCESS_DENIED', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		// get crm bindings from field data
 		$crmBindings = $operatorChat->getFieldData(Chat::FIELD_CRM);
 
 		// sign bindings if they exist
-		$signedData =  (new \Bitrix\Crm\WebForm\Embed\Sign);
+		$signedData = (new WebForm\Embed\Sign);
 		$bindingsExist = false;
 		foreach ($crmBindings as $bindingType => $bindingId)
 		{
@@ -996,18 +1016,18 @@ class Rest extends \IRestService
 
 	public static function widgetUserGet($params, $n, \CRestServer $server)
 	{
-		if ($server->getAuthType() != \Bitrix\Imopenlines\Widget\Auth::AUTH_TYPE)
+		if ($server->getAuthType() != Widget\Auth::AUTH_TYPE)
 		{
-			throw new \Bitrix\Rest\RestException("Access for this method allowed only by livechat authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+			throw new RestException('Access for this method allowed only by livechat authorization.', 'WRONG_AUTH_TYPE', \CRestServer::STATUS_FORBIDDEN);
 		}
 
 		global $USER;
 		if (!$USER->IsAuthorized())
 		{
-			throw new \Bitrix\Rest\RestException("Access for this method allowed only for authorized users.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+			throw new RestException('Access for this method allowed only for authorized users.', 'WRONG_AUTH_TYPE', \CRestServer::STATUS_FORBIDDEN);
 		}
 
-		$result = \Bitrix\Imopenlines\Widget\User::get($USER->GetID());
+		$result = Widget\User::get($USER->GetID());
 
 		return self::objectEncode($result);
 	}
@@ -1022,12 +1042,12 @@ class Rest extends \IRestService
 			$clientId = $server->getClientId();
 			if (!$clientId)
 			{
-				throw new \Bitrix\Rest\RestException("Get application public channel available only for application authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_WRONG_REQUEST);
+				throw new RestException('Get application public channel available only for application authorization.', 'WRONG_AUTH_TYPE', \CRestServer::STATUS_WRONG_REQUEST);
 			}
 			$type = $clientId;
 		}
 
-		$users = Array();
+		$users = [];
 		if (is_string($params['USERS']))
 		{
 			$params['USERS'] = \CUtil::JsObjectToPhp($params['USERS']);
@@ -1036,7 +1056,7 @@ class Rest extends \IRestService
 		{
 			foreach ($params['USERS'] as $userId)
 			{
-				$userId = intval($userId);
+				$userId = (int)$userId;
 				if ($userId > 0)
 				{
 					$users[$userId] = $userId;
@@ -1046,11 +1066,11 @@ class Rest extends \IRestService
 
 		if (empty($users))
 		{
-			throw new \Bitrix\Rest\RestException("A wrong format for the USERS field is passed", "INVALID_FORMAT", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('A wrong format for the USERS field is passed', 'INVALID_FORMAT', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		global $USER;
-		$operators = \Bitrix\ImOpenLines\Model\SessionTable::getList([
+		$operators = Model\SessionTable::getList([
 			'select' => ['OPERATOR_ID'],
 			'filter' => [
 				'=USER_ID' => $USER->GetID(),
@@ -1066,11 +1086,11 @@ class Rest extends \IRestService
 			if (!in_array((string)$user, $operators, true))
 			{
 				//TODO: Exception details
-				throw new \Bitrix\Rest\RestException("Wrong operator ID");
+				throw new RestException('Wrong operator ID');
 			}
 		}
 
-		$configParams = Array();
+		$configParams = [];
 		$configParams['TYPE'] = $type;
 		$configParams['USERS'] = $users;
 		$configParams['JSON'] = true;
@@ -1078,7 +1098,7 @@ class Rest extends \IRestService
 		$config = \Bitrix\Pull\Channel::getPublicIds($configParams);
 		if (!$config)
 		{
-			throw new \Bitrix\Rest\RestException("Push & Pull server is not configured", "SERVER_ERROR", \CRestServer::STATUS_INTERNAL);
+			throw new RestException('Push & Pull server is not configured', 'SERVER_ERROR', \CRestServer::STATUS_INTERNAL);
 		}
 
 		return $config;
@@ -1089,44 +1109,40 @@ class Rest extends \IRestService
 	 * @param $n
 	 * @param \CRestServer $server
 	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
-	 * @throws \Bitrix\Rest\RestException
+	 * @throws RestException
 	 */
 	public static function widgetDialogGet($params, $n, \CRestServer $server)
 	{
-		if ($server->getAuthType() != \Bitrix\Imopenlines\Widget\Auth::AUTH_TYPE)
+		if ($server->getAuthType() != Widget\Auth::AUTH_TYPE)
 		{
-			throw new \Bitrix\Rest\RestException("Access for this method allowed only by livechat authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+			throw new RestException('Access for this method allowed only by livechat authorization.', 'WRONG_AUTH_TYPE', \CRestServer::STATUS_FORBIDDEN);
 		}
 
 		global $USER;
 		if (!$USER->IsAuthorized())
 		{
-			throw new \Bitrix\Rest\RestException("Access for this method allowed only for authorized users.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+			throw new RestException('Access for this method allowed only for authorized users.', 'WRONG_AUTH_TYPE', \CRestServer::STATUS_FORBIDDEN);
 		}
 
 		$params = array_change_key_case($params, CASE_UPPER);
 
-		$params['CONFIG_ID'] = intval($params['CONFIG_ID']);
+		$params['CONFIG_ID'] = (int)$params['CONFIG_ID'];
 		if ($params['CONFIG_ID'] <= 0)
 		{
-			throw new \Bitrix\Rest\RestException("Config id is not specified.", "WRONG_REQUEST", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Config id is not specified.', 'WRONG_REQUEST', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		\Bitrix\ImOpenLines\Widget\Cache::set($USER->GetId(), [
+		Widget\Cache::set($USER->GetId(), [
 	 		'TRACE_DATA' => (string)$params['TRACE_DATA'],
 	 		'CUSTOM_DATA' => (string)$params['CUSTOM_DATA'],
 		]);
 
-		$result = \Bitrix\Imopenlines\Widget\Dialog::get($USER->GetID(), $params['CONFIG_ID']);
+		$result = Widget\Dialog::get($USER->GetID(), $params['CONFIG_ID']);
 		if (!$result)
 		{
-			throw new \Bitrix\Rest\RestException(
-				\Bitrix\Imopenlines\Widget\Dialog::getError()->msg,
-				\Bitrix\Imopenlines\Widget\Dialog::getError()->code,
+			throw new RestException(
+				Widget\Dialog::getError()->msg,
+				Widget\Dialog::getError()->code,
 				\CRestServer::STATUS_WRONG_REQUEST
 			);
 		}
@@ -1139,29 +1155,23 @@ class Rest extends \IRestService
 	 * @param $n
 	 * @param \CRestServer $server
 	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentNullException
-	 * @throws Main\ArgumentOutOfRangeException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
-	 * @throws \Bitrix\Rest\RestException
+	 * @throws RestException
 	 */
 	public static function widgetConfigGet($params, $n, \CRestServer $server)
 	{
-		if ($server->getAuthType() != \Bitrix\Imopenlines\Widget\Auth::AUTH_TYPE)
+		if ($server->getAuthType() != Widget\Auth::AUTH_TYPE)
 		{
-			throw new \Bitrix\Rest\RestException("Access for this method allowed only by livechat authorization.", "WRONG_AUTH_TYPE", \CRestServer::STATUS_FORBIDDEN);
+			throw new RestException('Access for this method allowed only by livechat authorization.', 'WRONG_AUTH_TYPE', \CRestServer::STATUS_FORBIDDEN);
 		}
 
 		$params = array_change_key_case($params, CASE_UPPER);
 
-		$config = \Bitrix\Imopenlines\Widget\Config::getByCode($params['CODE']);
+		$config = Widget\Config::getByCode($params['CODE']);
 		if (!$config)
 		{
-			throw new \Bitrix\Rest\RestException(
-				\Bitrix\Imopenlines\Widget\Config::getError()->msg,
-				\Bitrix\Imopenlines\Widget\Config::getError()->code,
+			throw new RestException(
+				Widget\Config::getError()->msg,
+				Widget\Config::getError()->code,
 				\CRestServer::STATUS_WRONG_REQUEST
 			);
 		}
@@ -1170,10 +1180,10 @@ class Rest extends \IRestService
 		$config['OPERATORS'] = array_slice($config['OPERATORS'], 0, 3);
 
 		//get security code and statuses texts for welcome CRM-form
-		if ($config['CRM_FORMS_SETTINGS']['USE_WELCOME_FORM'] && Main\Loader::includeModule('crm'))
+		if ($config['CRM_FORMS_SETTINGS']['USE_WELCOME_FORM'] && Loader::includeModule('crm'))
 		{
 			$welcomeFormId = (int)$config['CRM_FORMS_SETTINGS']['WELCOME_FORM_ID'];
-			$welcomeForm = new \Bitrix\Crm\WebForm\Form($welcomeFormId);
+			$welcomeForm = new WebForm\Form($welcomeFormId);
 			if ($welcomeForm && $welcomeForm->isActive())
 			{
 				$config['CRM_FORMS_SETTINGS']['WELCOME_FORM_SEC'] = $welcomeForm->get()['SECURITY_CODE'];
@@ -1190,7 +1200,7 @@ class Rest extends \IRestService
 			'FORMAT_DATE' => $coreMessages['FORMAT_DATE'],
 			'FORMAT_DATETIME' => $coreMessages['FORMAT_DATETIME'],
 			'AMPM_MODE' => IsAmPmMode(true),
-			'UTF_MODE' => \Bitrix\Main\Application::getInstance()->isUtfMode() ? 'Y' : 'N',
+			'UTF_MODE' => Main\Application::getInstance()->isUtfMode() ? 'Y' : 'N',
 			'isCloud' => IsModuleInstalled('bitrix24'),
 		];
 
@@ -1199,11 +1209,11 @@ class Rest extends \IRestService
 
 	public static function configGet($arParams, $n, \CRestServer $server)
 	{
-		$arParams['CONFIG_ID'] = intval($arParams['CONFIG_ID']);
+		$arParams['CONFIG_ID'] = (int)$arParams['CONFIG_ID'];
 
 		if ($arParams['CONFIG_ID'] <= 0)
 		{
-			throw new \Bitrix\Rest\RestException("Config ID can't be empty", "CONFIG_ID_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Config ID can\'t be empty', 'CONFIG_ID_EMPTY', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		$arParams['WITH_QUEUE'] = isset($arParams['WITH_QUEUE']) ? $arParams['WITH_QUEUE'] == 'Y' : true;
@@ -1229,7 +1239,7 @@ class Rest extends \IRestService
 	 * @param $n
 	 * @param \CRestServer $server
 	 * @return bool
-	 * @throws \Bitrix\Rest\RestException
+	 * @throws RestException
 	 */
 	public static function configUpdate($arParams, $n, \CRestServer $server)
 	{
@@ -1239,12 +1249,12 @@ class Rest extends \IRestService
 
 		if ($arParams['CONFIG_ID'] <= 0)
 		{
-			throw new \Bitrix\Rest\RestException("Config ID can't be empty", "CONFIG_ID_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Config ID can\'t be empty', 'CONFIG_ID_EMPTY', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		if (!Config::canEditLine($arParams['CONFIG_ID']))
 		{
-			throw new \Bitrix\Rest\RestException("Permission denied", "CONFIG_WRONG_USER_PERMISSION", \CRestServer::STATUS_FORBIDDEN);
+			throw new RestException('Permission denied', 'CONFIG_WRONG_USER_PERMISSION', \CRestServer::STATUS_FORBIDDEN);
 		}
 
 		$arParams['PARAMS'] = !empty($arParams['PARAMS']) && is_array($arParams['PARAMS']) ? $arParams['PARAMS'] : [];
@@ -1264,11 +1274,6 @@ class Rest extends \IRestService
 	 * @param $n
 	 * @param \CRestServer $server
 	 * @return array|bool|int
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public static function configAdd($arParams, $n, \CRestServer $server)
 	{
@@ -1283,11 +1288,7 @@ class Rest extends \IRestService
 	 * @param $n
 	 * @param \CRestServer $server
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
-	 * @throws \Bitrix\Rest\RestException
+	 * @throws RestException
 	 */
 	public static function configDelete($arParams, $n, \CRestServer $server)
 	{
@@ -1295,12 +1296,12 @@ class Rest extends \IRestService
 
 		if ($arParams['CONFIG_ID'] <= 0)
 		{
-			throw new \Bitrix\Rest\RestException("Config ID can't be empty", "CONFIG_ID_EMPTY", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Config ID can\'t be empty', 'CONFIG_ID_EMPTY', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		if (!Config::canEditLine($arParams['CONFIG_ID']))
 		{
-			throw new \Bitrix\Rest\RestException("Permission denied", "CONFIG_WRONG_USER_PERMISSION", \CRestServer::STATUS_FORBIDDEN);
+			throw new RestException('Permission denied', 'CONFIG_WRONG_USER_PERMISSION', \CRestServer::STATUS_FORBIDDEN);
 		}
 
 		$config = new Config();
@@ -1315,34 +1316,34 @@ class Rest extends \IRestService
 	{
 		if (empty($arParams['CRM_ENTITY_TYPE']) || empty($arParams['CRM_ENTITY']))
 		{
-			throw new \Bitrix\Rest\RestException("Empty CRM data", "CRM_CHAT_EMPTY_CRM_DATA", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Empty CRM data', 'CRM_CHAT_EMPTY_CRM_DATA', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
-			throw new \Bitrix\Rest\RestException("Messenger is not installed.", "IM_NOT_INSTALLED", \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Messenger is not installed.', 'IM_NOT_INSTALLED', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$chatId = Common::getLastChatIdByCrmEntity($arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY']);
+		$chatId = Crm\Common::getLastChatIdByCrmEntity($arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY']);
 
 		if ($chatId > 0)
 		{
 			if (!Config::canJoin($chatId, $arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY']))
 			{
-				throw new \Bitrix\Rest\RestException("You don't have access to join user to chat", "CHAT_JOIN_PERMISSION_DENIED", \CRestServer::STATUS_FORBIDDEN);
+				throw new RestException('You don\'t have access to join user to chat', 'CHAT_JOIN_PERMISSION_DENIED', \CRestServer::STATUS_FORBIDDEN);
 			}
 
-			$arParams['USER_ID'] = intval($arParams['USER_ID']);
+			$arParams['USER_ID'] = (int)$arParams['USER_ID'];
 			if ($arParams['USER_ID'] <= 0)
 			{
-				throw new \Bitrix\Rest\RestException("Empty User ID", "CRM_CHAT_EMPTY_USER", \CRestServer::STATUS_WRONG_REQUEST);
+				throw new RestException('Empty User ID', 'CRM_CHAT_EMPTY_USER', \CRestServer::STATUS_WRONG_REQUEST);
 			}
 
-			$user = \Bitrix\Im\User::getInstance($arParams['USER_ID']);
+			$user = Im\User::getInstance($arParams['USER_ID']);
 
 			if (!$user->isExists() || !$user->isActive())
 			{
-				throw new \Bitrix\Rest\RestException("User not active", "CRM_CHAT_USER_NOT_ACTIVE", \CRestServer::STATUS_WRONG_REQUEST);
+				throw new RestException('User not active', 'CRM_CHAT_USER_NOT_ACTIVE', \CRestServer::STATUS_WRONG_REQUEST);
 			}
 
 			$CIMChat = new \CIMChat(0);
@@ -1350,7 +1351,7 @@ class Rest extends \IRestService
 
 			if (!$result)
 			{
-				throw new \Bitrix\Rest\RestException("You don't have access or user already member in chat", "WRONG_REQUEST", \CRestServer::STATUS_WRONG_REQUEST);
+				throw new RestException('You don\'t have access or user already member in chat', 'WRONG_REQUEST', \CRestServer::STATUS_WRONG_REQUEST);
 			}
 		}
 
@@ -1364,14 +1365,14 @@ class Rest extends \IRestService
 	{
 		if (empty($arParams['CRM_ENTITY_TYPE']) || empty($arParams['CRM_ENTITY']))
 		{
-			throw new \Bitrix\Rest\RestException('Empty CRM data', 'CRM_CHAT_EMPTY_CRM_DATA', \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Empty CRM data', 'CRM_CHAT_EMPTY_CRM_DATA', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
-		$chatId = Common::getLastChatIdByCrmEntity($arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY']);
+		$chatId = Crm\Common::getLastChatIdByCrmEntity($arParams['CRM_ENTITY_TYPE'], $arParams['CRM_ENTITY']);
 
 		if ($chatId === 0)
 		{
-			throw new \Bitrix\Rest\RestException('Could not find CRM entity', 'CRM_CHAT_EMPTY_CRM_DATA', \CRestServer::STATUS_WRONG_REQUEST);
+			throw new RestException('Could not find CRM entity', 'CRM_CHAT_EMPTY_CRM_DATA', \CRestServer::STATUS_WRONG_REQUEST);
 		}
 
 		return $chatId;
@@ -1379,21 +1380,21 @@ class Rest extends \IRestService
 
 	private static function getChatId(array $params)
 	{
-		if (!Main\Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			return null;
 		}
 
 		if (isset($params['CHAT_ID']))
 		{
-			return intval($params['CHAT_ID']);
+			return (int)$params['CHAT_ID'];
 		}
 
 		if (isset($params['DIALOG_ID']))
 		{
-			if (\Bitrix\Im\Common::isChatId($params['DIALOG_ID']))
+			if (Im\Common::isChatId($params['DIALOG_ID']))
 			{
-				return \Bitrix\Im\Dialog::getChatId($params['DIALOG_ID']);
+				return Im\Dialog::getChatId($params['DIALOG_ID']);
 			}
 
 			return null;
@@ -1401,17 +1402,17 @@ class Rest extends \IRestService
 
 		if (isset($params['SESSION_ID']))
 		{
-			return \Bitrix\ImOpenLines\Chat::getChatIdBySession($params['SESSION_ID']);
+			return Chat::getChatIdBySession($params['SESSION_ID']);
 		}
 
 		if (isset($params['USER_CODE']))
 		{
-			if (mb_substr($params['USER_CODE'], 0, 5) === 'imol|')
+			if (mb_strpos($params['USER_CODE'], 'imol|') === 0)
 			{
 				$params['USER_CODE'] = mb_substr($params['USER_CODE'], 5);
 			}
 
-			return \Bitrix\ImOpenLines\Chat::getChatIdByUserCode($params['USER_CODE']);
+			return Chat::getChatIdByUserCode($params['USER_CODE']);
 		}
 
 		return null;
@@ -1433,13 +1434,13 @@ class Rest extends \IRestService
 				{
 					$value = self::objectEncode($value, $options);
 				}
-				else if ($value instanceof \Bitrix\Main\Type\DateTime)
+				else if ($value instanceof DateTime)
 				{
 					$value = date('c', $value->getTimestamp());
 				}
 				else if (is_string($key) && in_array($key, $options['IMAGE_FIELD']) && is_string($value) && $value && mb_strpos($value, 'http') !== 0)
 				{
-					$value = \Bitrix\ImOpenLines\Common::getServerAddress().$value;
+					$value = Common::getServerAddress().$value;
 				}
 
 				$key = str_replace('_', '', lcfirst(ucwords(mb_strtolower($key), '_')));

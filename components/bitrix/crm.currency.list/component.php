@@ -27,16 +27,20 @@ $arResult['GRID_ID'] = 'CRM_CURRENCY_LIST';
 $arResult['FORM_ID'] = isset($arParams['FORM_ID']) ? $arParams['FORM_ID'] : '';
 $arResult['TAB_ID'] = isset($arParams['TAB_ID']) ? $arParams['TAB_ID'] : '';
 
-$arResult['HEADERS'] = array(
-	array('id' => 'ID', 'name' => GetMessage('CRM_COLUMN_ID'), 'sort' => 'ID', 'default' => true, 'editable' => false),
-	array('id' => 'NAME', 'name' => GetMessage('CRM_COLUMN_NAME'), 'sort' => 'NAME', 'default' => true, 'editable' => false, 'params' => array('size' => 60)),
-	array('id' => 'SORT', 'name' => GetMessage('CRM_COLUMN_SORT'), 'sort' => 'SORT', 'default' => true, 'editable' => true),
-	array('id' => 'EXCH_RATE', 'name' => GetMessage('CRM_COLUMN_EXCH_RATE'), 'sort' => false, 'default' => true, 'editable' => true),
-	array('id' => 'AMOUNT_CNT', 'name' => GetMessage('CRM_COLUMN_AMOUNT_CNT'), 'sort' => false, 'default' => true, 'editable' => true),
-	array('id' => 'BASE', 'name' => GetMessage('CRM_COLUMN_CURRENCY_LIST_BASE'), 'sort' => false, 'default' => true, 'editable' => false, 'type'=>'checkbox'),
-	array('id' => 'ACCOUNTING', 'name' => GetMessage('CRM_COLUMN_ACCOUNTING'), 'sort' => false, 'default' => true, 'editable' => true, 'type'=>'checkbox'),
-	array('id' => 'INVOICE_DEF', 'name' => GetMessage('CRM_COLUMN_INVOICE_DEF'), 'sort' => false, 'default' => true, 'editable' => false, 'type'=>'checkbox')	
-);
+$arResult['HEADERS'] = [
+	['id' => 'ID', 'name' => GetMessage('CRM_COLUMN_ID'), 'sort' => 'ID', 'default' => true, 'editable' => false],
+	['id' => 'NAME', 'name' => GetMessage('CRM_COLUMN_NAME'), 'sort' => 'NAME', 'default' => true, 'editable' => false, 'params' => ['size' => 60]],
+	['id' => 'SORT', 'name' => GetMessage('CRM_COLUMN_SORT'), 'sort' => 'SORT', 'default' => true, 'editable' => true],
+	['id' => 'EXCH_RATE', 'name' => GetMessage('CRM_COLUMN_EXCH_RATE'), 'sort' => false, 'default' => true, 'editable' => true],
+	['id' => 'AMOUNT_CNT', 'name' => GetMessage('CRM_COLUMN_AMOUNT_CNT'), 'sort' => false, 'default' => true, 'editable' => true],
+	['id' => 'BASE', 'name' => GetMessage('CRM_COLUMN_CURRENCY_LIST_BASE'), 'sort' => false, 'default' => true, 'editable' => false, 'type'=>'checkbox'],
+	['id' => 'ACCOUNTING', 'name' => GetMessage('CRM_COLUMN_ACCOUNTING'), 'sort' => false, 'default' => true, 'editable' => true, 'type'=>'checkbox'],
+];
+
+// if (\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
+// {
+	$arResult['HEADERS'][] = ['id' => 'INVOICE_DEF', 'name' => GetMessage('CRM_COLUMN_INVOICE_DEF'), 'sort' => false, 'default' => true, 'editable' => false, 'type'=>'checkbox'];
+// }
 
 //Show error message if required
 if($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['error']))

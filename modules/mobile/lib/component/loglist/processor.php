@@ -6,6 +6,8 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Socialnetwork\ComponentHelper;
+use Bitrix\Socialnetwork\LogRightTable;
+use Bitrix\Socialnetwork\UserToGroupTable;
 
 Loader::requireModule('socialnetwork');
 
@@ -70,6 +72,7 @@ class Processor extends \Bitrix\Socialnetwork\Component\LogListCommon\Processor
 
 		unset($this->eventsList[$type][$key]);
 	}
+
 	public function getEventsList($type = 'main')
 	{
 		$result = [];
@@ -82,33 +85,14 @@ class Processor extends \Bitrix\Socialnetwork\Component\LogListCommon\Processor
 		return $this->eventsList[$type];
 	}
 
-	public function getMicroblogUserId(&$result)
-	{
-		$params = $this->getComponent()->arParams;
-
-		if(
-			(
-				$params['GROUP_ID'] <= 0
-				&& \CSocNetFeatures::isActiveFeature(SONET_ENTITY_USER, $result['currentUserId'], 'blog')
-			)
-			|| (
-				$params['GROUP_ID'] > 0
-				&& \CSocNetFeatures::isActiveFeature(SONET_ENTITY_GROUP, $params['GROUP_ID'], 'blog')
-			)
-		)
-		{
-			$result['MICROBLOG_USER_ID'] = $result['currentUserId'];
-		}
-	}
-
 	public function processNavData(&$result)
 	{
 		$params = $this->getComponent()->arParams;
 		$request = $this->getRequest();
 
-		if($params['LOG_ID'] <= 0)
+		if ($params['LOG_ID'] <= 0)
 		{
-			if(!$result['AJAX_CALL'])
+			if (!$result['AJAX_CALL'])
 			{
 				$this->setNavParams([
 					'nTopCount' => $params['PAGE_SIZE']
@@ -118,7 +102,7 @@ class Processor extends \Bitrix\Socialnetwork\Component\LogListCommon\Processor
 			}
 			else
 			{
-				if((int)$request->get('PAGEN_'.($GLOBALS['NavNum'] + 1)) > 0)
+				if ((int)$request->get('PAGEN_'.($GLOBALS['NavNum'] + 1)) > 0)
 				{
 					$result['PAGE_NUMBER'] = (int)$request->get('PAGEN_'.($GLOBALS['NavNum'] + 1));
 				}
@@ -139,7 +123,7 @@ class Processor extends \Bitrix\Socialnetwork\Component\LogListCommon\Processor
 	{
 		$params = $this->getComponent()->arParams;
 
-		if(
+		if (
 			$params['LOG_ID'] <= 0
 			&& $params['NEW_LOG_ID'] <= 0
 			&& !$result['AJAX_CALL']
@@ -156,14 +140,14 @@ class Processor extends \Bitrix\Socialnetwork\Component\LogListCommon\Processor
 				false,
 				['ID', 'NAME', 'OPENED', 'IMAGE_ID']
 			);
-			if($workgroupFields = $res->fetch())
+			if ($workgroupFields = $res->fetch())
 			{
 				$result['GROUP_NAME'] = $workgroupFields['NAME'];
 				$result['GROUP_IMAGE'] = (is_array($file = \CFile::GetFileArray($workgroupFields['IMAGE_ID'])) ? $file['SRC'] : '');
-				if(
+				if (
 					$workgroupFields['OPENED'] === 'Y'
 					&& !\CSocNetUser::isCurrentUserModuleAdmin()
-					&& !in_array(\CSocNetUserToGroup::getUserRole($result['currentUserId'], $workgroupFields['ID']), [SONET_ROLES_OWNER, SONET_ROLES_MODERATOR, SONET_ROLES_USER])
+					&& !in_array(\CSocNetUserToGroup::getUserRole($result['currentUserId'], $workgroupFields['ID']), UserToGroupTable::getRolesMember(), true)
 				)
 				{
 					$result['GROUP_READ_ONLY'] = 'Y';
@@ -191,23 +175,28 @@ class Processor extends \Bitrix\Socialnetwork\Component\LogListCommon\Processor
 		}
 		else
 		{
-			if($params['DESTINATION'] > 0)
+			if ($params['DESTINATION'] > 0)
 			{
 				$this->setFilterKey('LOG_RIGHTS', $params['DESTINATION']);
 				$this->showPinnedPanel = false;
 			}
-			elseif($params['GROUP_ID'] > 0)
+			elseif ($params['GROUP_ID'] > 0)
 			{
 				$this->setFilterKey('LOG_RIGHTS', 'SG'.(int)$params['GROUP_ID']);
-				$this->setFilterKey('LOG_RIGHTS_SG', 'OSG'.(int)$params['GROUP_ID'].'_'.SONET_ROLES_AUTHORIZED);
+
+				if ($result['GROUP_READ_ONLY'] === 'Y')
+				{
+					$this->setFilterKey('LOG_RIGHTS_SG', 'OSG' . (int)$params['GROUP_ID'] . '_' . SONET_ROLES_AUTHORIZED);
+				}
+
 				$this->showPinnedPanel = false;
 			}
 
-			if($params['FIND'] <> '')
+			if ($params['FIND'] <> '')
 			{
 				$fullTextEnabled = \Bitrix\Socialnetwork\LogIndexTable::getEntity()->fullTextIndexEnabled('CONTENT');
 				$operation = ($fullTextEnabled ? '*' : '*%');
-				if(
+				if (
 					!$fullTextEnabled
 					|| mb_strlen($params['FIND']) >= $result['ftMinTokenSize']
 				)
@@ -217,7 +206,7 @@ class Processor extends \Bitrix\Socialnetwork\Component\LogListCommon\Processor
 				$this->showPinnedPanel = false;
 			}
 
-			if($params['IS_CRM'] !== 'Y')
+			if ($params['IS_CRM'] !== 'Y')
 			{
 				$logRightsFilterValue = $this->getFilterKey('LOG_RIGHTS');
 
@@ -234,19 +223,19 @@ class Processor extends \Bitrix\Socialnetwork\Component\LogListCommon\Processor
 			}
 		}
 
-		if(
+		if (
 			$params['LOG_ID'] <= 0
 			&& $params['NEW_LOG_ID'] <= 0
 		)
 		{
-			if(isset($params['EXACT_EVENT_ID']))
+			if (isset($params['EXACT_EVENT_ID']))
 			{
 				$this->setFilterKey('EVENT_ID', [$params['EXACT_EVENT_ID']]);
 			}
-			elseif(is_array($params['EVENT_ID']))
+			elseif (is_array($params['EVENT_ID']))
 			{
 				$arraysToMerge = [];
-				foreach($params['EVENT_ID'] as $eventId)
+				foreach ($params['EVENT_ID'] as $eventId)
 				{
 					$arraysToMerge[] = \CSocNetLogTools::findFullSetByEventID($eventId);
 				}
@@ -254,18 +243,18 @@ class Processor extends \Bitrix\Socialnetwork\Component\LogListCommon\Processor
 
 				$this->setFilterKey('EVENT_ID', array_unique($eventIdFullSet));
 			}
-			elseif($params['EVENT_ID'])
+			elseif ($params['EVENT_ID'])
 			{
 				$this->setFilterKey('EVENT_ID', \CSocNetLogTools::findFullSetByEventID($params['EVENT_ID']));
 			}
 
-			if((int)$params['CREATED_BY_ID'] > 0) // from preset
+			if ((int)$params['CREATED_BY_ID'] > 0) // from preset
 			{
 				$this->setFilterKey('USER_ID', $params['CREATED_BY_ID']);
 			}
 		}
 
-		if(
+		if (
 			(
 				$params['GROUP_ID'] > 0
 				|| $params['USER_ID'] > 0
@@ -276,9 +265,9 @@ class Processor extends \Bitrix\Socialnetwork\Component\LogListCommon\Processor
 			$eventIdFilterValue = [];
 
 			$allowedEventIdList = \CSocNetAllowed::getAllowedLogEvents();
-			foreach($allowedEventIdList as $eventId => $eventData)
+			foreach ($allowedEventIdList as $eventId => $eventData)
 			{
-				if(
+				if (
 					array_key_exists('HIDDEN', $eventData)
 					&& $eventData['HIDDEN']
 				)
@@ -294,22 +283,23 @@ class Processor extends \Bitrix\Socialnetwork\Component\LogListCommon\Processor
 				($params["GROUP_ID"] > 0 ? $params['GROUP_ID'] : $params['USER_ID'])
 			);
 			$allowedFeaturesList = \CSocNetAllowed::getAllowedFeatures();
-			foreach($featuresList as $featureId)
+			foreach ($featuresList as $featureId)
 			{
-				if(
+				if (
 					array_key_exists($featureId, $allowedFeaturesList)
 					&& array_key_exists('subscribe_events', $allowedFeaturesList[$featureId])
 				)
 				{
-					foreach($allowedFeaturesList[$featureId]['subscribe_events'] as $eventId => $eventData)
+					foreach ($allowedFeaturesList[$featureId]['subscribe_events'] as $eventId => $eventData)
 					{
 						$eventIdFilterValue[] = $eventId;
 					}
 				}
 			}
 			$this->setFilterKey('EVENT_ID', $eventIdFilterValue);
-		};
-		if(
+		}
+
+		if (
 			$this->getFilterKey('EVENT_ID') === false
 			|| (is_array($this->getFilterKey('EVENT_ID')) && empty($this->getFilterKey('EVENT_ID')))
 		)
@@ -320,63 +310,63 @@ class Processor extends \Bitrix\Socialnetwork\Component\LogListCommon\Processor
 		$this->setFilterKey('SITE_ID', ($result['bExtranetSite'] ? SITE_ID : [SITE_ID, false]));
 		$this->setFilterKey('<=LOG_DATE', 'NOW');
 
-		if(
+		if (
 			$params['LOG_ID'] <= 0
 			&& $params['NEW_LOG_ID'] <= 0
 			&& in_array($params['FILTER'], ['favorites', 'my', 'important', 'work', 'bizproc', 'blog'])
 		)
 		{
-			if($params['FILTER'] === 'favorites')
+			if ($params['FILTER'] === 'favorites')
 			{
 				$this->setFilterKey('>FAVORITES_USER_ID', 0);
 			}
-			elseif($params['FILTER'] === 'my')
+			elseif ($params['FILTER'] === 'my')
 			{
 				$this->setFilterKey('USER_ID', $result['currentUserId']);
 			}
-			elseif($params['FILTER'] === 'important')
+			elseif ($params['FILTER'] === 'important')
 			{
 				$this->setFilterKey('EVENT_ID', 'blog_post_important');
 			}
-			elseif($params['FILTER'] === 'work')
+			elseif ($params['FILTER'] === 'work')
 			{
 				$this->setFilterKey('EVENT_ID', ['tasks', 'timeman_entry', 'report']);
 			}
-			elseif($params['FILTER'] === 'bizproc')
+			elseif ($params['FILTER'] === 'bizproc')
 			{
 				$this->setFilterKey('EVENT_ID', 'lists_new_element');
 			}
-			elseif($params['FILTER'] === 'blog')
+			elseif ($params['FILTER'] === 'blog')
 			{
 				$blogPostLivefeedProvider = new \Bitrix\Socialnetwork\Livefeed\BlogPost;
 				$this->setFilterKey('EVENT_ID', $blogPostLivefeedProvider->getEventId());
 			}
 		}
 
-		if(!ComponentHelper::checkLivefeedTasksAllowed())
+		if (!ComponentHelper::checkLivefeedTasksAllowed())
 		{
 			$eventIdFilter = $this->getFilterKey('EVENT_ID');
 			$notEventIdFilter = $this->getFilterKey('!EVENT_ID');
 
-			if(empty($notEventIdFilter))
+			if (empty($notEventIdFilter))
 			{
 				$notEventIdFilter = [];
 			}
-			elseif(!is_array($notEventIdFilter))
+			elseif (!is_array($notEventIdFilter))
 			{
 				$notEventIdFilter = [$notEventIdFilter];
 			}
 
-			if(empty($eventIdFilter))
+			if (empty($eventIdFilter))
 			{
 				$eventIdFilter = [];
 			}
-			elseif(!is_array($eventIdFilter))
+			elseif (!is_array($eventIdFilter))
 			{
 				$eventIdFilter = [$eventIdFilter];
 			}
 
-			if(ModuleManager::isModuleInstalled('tasks'))
+			if (ModuleManager::isModuleInstalled('tasks'))
 			{
 				$notEventIdFilter = array_merge($notEventIdFilter, ['tasks']);
 				$eventIdFilter = array_filter($eventIdFilter, function ($eventId)
@@ -384,19 +374,18 @@ class Processor extends \Bitrix\Socialnetwork\Component\LogListCommon\Processor
 					return ($eventId !== 'tasks');
 				});
 			}
-			if(
+			if (
 				ModuleManager::isModuleInstalled('crm')
 				&& Option::get('crm', 'enable_livefeed_merge', 'N') === 'Y'
 			)
 			{
 				$notEventIdFilter = array_merge($notEventIdFilter, ['crm_activity_add']);
-				$eventIdFilter = array_filter($eventIdFilter, function ($eventId)
-				{
+				$eventIdFilter = array_filter($eventIdFilter, static function ($eventId) {
 					return ($eventId !== 'crm_activity_add');
 				});
 			}
 
-			if(!empty($notEventIdFilter))
+			if (!empty($notEventIdFilter))
 			{
 				$this->setFilterKey('!EVENT_ID', $notEventIdFilter);
 			}
@@ -461,7 +450,7 @@ class Processor extends \Bitrix\Socialnetwork\Component\LogListCommon\Processor
 
 		if ($params['LOG_ID'] > 0)
 		{
-			$listParams['CHECK_RIGHTS_OSG'] = 'Y';
+			$listParams['CHECK_RIGHTS_OSG'] = ($this->checkAnyOpenedWorkgroupByLogId($params['LOG_ID']) ? 'Y' : 'N');
 		}
 
 		if ($result['bExtranetSite'])
@@ -481,6 +470,41 @@ class Processor extends \Bitrix\Socialnetwork\Component\LogListCommon\Processor
 		}
 
 		$this->setListParams($listParams);
+	}
+
+	private function checkAnyOpenedWorkgroupByLogId($logId = 0): bool
+	{
+		$result = false;
+
+		$logId = (int)$logId;
+		if ($logId <= 0)
+		{
+			return $result;
+		}
+
+		$workgroupIdList = [];
+
+		$res = LogRightTable::getList([
+			'filter' => [
+				'LOG_ID' => $logId,
+			],
+			'select' => [ 'GROUP_CODE' ]
+		]);
+		while ($logRightFields = $res->fetch())
+		{
+			if (preg_match('/^SG(\d+)$/', $logRightFields['GROUP_CODE'], $matches))
+			{
+				$workgroupIdList[] = $matches[1];
+			}
+		}
+
+		$workgroupIdList = array_unique($workgroupIdList);
+		if (empty($workgroupIdList))
+		{
+			return $result;
+		}
+
+		return \Bitrix\Socialnetwork\Helper\Workgroup::checkAnyOpened($workgroupIdList);
 	}
 
 	public function processOrderData()
@@ -589,9 +613,9 @@ class Processor extends \Bitrix\Socialnetwork\Component\LogListCommon\Processor
 			);
 			$event->send();
 
-			foreach($event->getResults() as $eventResult)
+			foreach ($event->getResults() as $eventResult)
 			{
-				if($eventResult->getType() == \Bitrix\Main\EventResult::SUCCESS)
+				if ($eventResult->getType() == \Bitrix\Main\EventResult::SUCCESS)
 				{
 					$eventParams = $eventResult->getParameters();
 
@@ -641,14 +665,14 @@ class Processor extends \Bitrix\Socialnetwork\Component\LogListCommon\Processor
 
 		if (is_array($result['Events']))
 		{
-			foreach($result['Events'] as $eventFields)
+			foreach ($result['Events'] as $eventFields)
 			{
 				$logEventsData[(int)$eventFields['ID']] = $eventFields['EVENT_ID'];
 			}
 		}
 		if (is_array($result['pinnedEvents']))
 		{
-			foreach($result['pinnedEvents'] as $eventFields)
+			foreach ($result['pinnedEvents'] as $eventFields)
 			{
 				$logEventsData[(int)$eventFields['ID']] = $eventFields['EVENT_ID'];
 			}

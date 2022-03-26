@@ -25,6 +25,7 @@ final class Sharing extends Internals\Model
 	const CODE_GROUP        = 'G';
 	const CODE_SOCNET_GROUP = 'SG';
 	const CODE_DEPARTMENT   = 'DR';
+	const CODE_CHAT         = 'CHAT';
 
 	const STATUS_IS_UNREPLIED = SharingTable::STATUS_IS_UNREPLIED;
 	const STATUS_IS_APPROVED  = SharingTable::STATUS_IS_APPROVED;
@@ -33,6 +34,7 @@ final class Sharing extends Internals\Model
 	const TYPE_TO_USER       = SharingTable::TYPE_TO_USER;
 	const TYPE_TO_GROUP      = SharingTable::TYPE_TO_GROUP;
 	const TYPE_TO_DEPARTMENT = SharingTable::TYPE_TO_DEPARTMENT;
+	const TYPE_TO_CHAT       = SharingTable::TYPE_TO_CHAT;
 
 	/** @var int */
 	protected $parentId;
@@ -206,7 +208,7 @@ final class Sharing extends Internals\Model
 			$dataToInsert['TO_ENTITY'] = $entity;
 			$dataToInsert['TYPE'] = $type;
 			$dataToInsert['TASK_NAME'] = $taskName;
-			if($type == SharingTable::TYPE_TO_DEPARTMENT)
+			if($type == SharingTable::TYPE_TO_DEPARTMENT || $type == SharingTable::TYPE_TO_CHAT)
 			{
 				$dataToInsert['STATUS'] = SharingTable::STATUS_IS_APPROVED;
 			}
@@ -359,11 +361,19 @@ final class Sharing extends Internals\Model
 	 */
 	public static function parseEntityValue($entity)
 	{
+		$codes = [
+			self::CODE_USER,
+			self::CODE_SOCNET_GROUP,
+			self::CODE_DEPARTMENT,
+			self::CODE_CHAT,
+		];
+
 		preg_match(
-			'%(' . self::CODE_USER . '|' . self::CODE_SOCNET_GROUP . '|' . self::CODE_DEPARTMENT . '){1,2}([0-9]+)%u',
+			'%(' . implode('|', $codes) . ')([0-9]+)%u',
 			$entity,
 			$m
 		);
+
 		[, $code, $id] = $m;
 		if($code === null || $id === null)
 		{
@@ -377,6 +387,8 @@ final class Sharing extends Internals\Model
 				return array(SharingTable::TYPE_TO_GROUP, $id);
 			case self::CODE_DEPARTMENT:
 				return array(SharingTable::TYPE_TO_DEPARTMENT, $id);
+			case self::CODE_CHAT:
+				return array(SharingTable::TYPE_TO_CHAT, $id);
 		}
 		return null;
 	}
@@ -593,7 +605,7 @@ final class Sharing extends Internals\Model
 			return null;
 		}
 
-		$uri = (new DocumentService())->getActionUri('goToPreview', [
+		$uri = (new DocumentService())->getActionUri('goToEditOrPreview', [
 			'serviceCode' => 'onlyoffice',
 			'objectId' => $sharingModel->getLinkObjectId(),
 		]);
@@ -628,9 +640,11 @@ final class Sharing extends Internals\Model
 					$linkToViewDocument = self::generateLinkToViewDocument($sharingModel, $objectToSharing);
 					$pathInListing = $urlManager::getUrlFocusController('showObjectInGrid', array(
 						'objectId' => $sharingModel->getLinkObjectId(),
+						'type' => $isFolder ? 'folder' : 'file',
 					));
 					$uriToDisconnect = $urlManager::getUrlFocusController('showObjectInGrid', array(
 						'objectId' => $sharingModel->getLinkObjectId(),
+						'type' => $isFolder ? 'folder' : 'file',
 						'cmd' => 'detach',
 					));
 					[$subTag, $tag] = $sharingModel->getNotifyTags();
@@ -934,7 +948,7 @@ final class Sharing extends Internals\Model
 
 	/**
 	 * Returns link object model.
-	 * @return null|\Bitrix\Disk\BaseObject
+	 * @return null|\Bitrix\Disk\FileLink|\Bitrix\Disk\FolderLink
 	 */
 	public function getLinkObject()
 	{
@@ -1453,6 +1467,7 @@ final class Sharing extends Internals\Model
 			$linkToViewDocument = self::generateLinkToViewDocument($sharingModel, $sharingModel->getLinkObject());
 			$pathInListing = Driver::getInstance()->getUrlManager()->getUrlFocusController('showObjectInGrid', array(
 				'objectId' => $sharingModel->getLinkObjectId(),
+				'type' => $isFolder ? 'folder' : 'file',
 			));
 			$message = Loc::getMessage(
 				$isFolder ? 'DISK_SHARING_MODEL_AUTOCONNECT_NOTIFY' : 'DISK_SHARING_MODEL_AUTOCONNECT_NOTIFY_FILE',

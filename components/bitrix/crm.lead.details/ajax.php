@@ -173,6 +173,7 @@ elseif($action === 'SAVE')
 		$sourceFields['ORIGIN_ID'] = '';
 	}
 
+	Crm\Service\EditorAdapter::fillParentFieldFromContextEnrichedData($_POST);
 	foreach(array_keys($fieldsInfo) as $fieldName)
 	{
 		if(\CCrmFieldMulti::IsSupportedType($fieldName) && is_array($_POST[$fieldName]))

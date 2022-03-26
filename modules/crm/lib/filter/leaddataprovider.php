@@ -1,6 +1,8 @@
 <?php
 namespace Bitrix\Crm\Filter;
 
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Main;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
@@ -43,6 +45,11 @@ class LeadDataProvider extends Main\Filter\EntityDataProvider
 		if($name === null)
 		{
 			$name = \CCrmLead::GetFieldCaption($fieldID);
+		}
+		if (!$name && ParentFieldManager::isParentFieldName($fieldID))
+		{
+			$parentEntityTypeId = ParentFieldManager::getEntityTypeIdFromFieldName($fieldID);
+			$name = \CCrmOwnerType::GetDescription($parentEntityTypeId);
 		}
 
 		return $name;
@@ -375,6 +382,14 @@ class LeadDataProvider extends Main\Filter\EntityDataProvider
 		}
 		//endregion
 
+		$parentFields = Container::getInstance()->getParentFieldManager()->getParentFieldsOptionsForFilterProvider(
+			\CCrmOwnerType::Lead
+		);
+		foreach ($parentFields as $code => $parentField)
+		{
+			$result[$code] = $this->createField($code, $parentField);
+		}
+
 		$result['ACTIVE_TIME_PERIOD'] = $this->createField(
 			'ACTIVE_TIME_PERIOD',
 			[
@@ -549,6 +564,14 @@ class LeadDataProvider extends Main\Filter\EntityDataProvider
 				array('ENTITY_TYPE_ID' => \CCrmOwnerType::Lead)
 			);
 		}
+		elseif (ParentFieldManager::isParentFieldName($fieldID))
+		{
+			return Container::getInstance()->getParentFieldManager()->prepareParentFieldDataForFilterProvider(
+				\CCrmOwnerType::Lead,
+				$fieldID
+			);
+		}
+
 		return null;
 	}
 

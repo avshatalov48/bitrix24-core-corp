@@ -3,6 +3,7 @@
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\EntityRequisite;
+use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\StatusTable;
 
 class CCrmComponentHelper
@@ -398,7 +399,7 @@ class CCrmComponentHelper
 				];
 				break;
 			case "requisite_address":
-				$featureRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getAddressSearchRestriction();
+				$featureRestriction = RestrictionManager::getAddressSearchRestriction();
 				$addressTypeInfos = [];
 				foreach (EntityAddressType::getAllDescriptions() as $id => $desc)
 				{
@@ -430,7 +431,7 @@ class CCrmComponentHelper
 				];
 				break;
 			case "address":
-				$featureRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getAddressSearchRestriction();
+				$featureRestriction = RestrictionManager::getAddressSearchRestriction();
 				$result = [
 					'multiple' => false,
 					'autocompleteEnabled' => $featureRestriction->hasPermission(),
@@ -442,6 +443,57 @@ class CCrmComponentHelper
 		}
 
 		return $result;
+	}
+
+	public static function getEventTabParams(
+		int $entityId,
+		string $tabName,
+		string $entityTypeName,
+		array $result
+	): array
+	{
+		$tabParams = [
+			'id' => 'tab_event',
+			'name' => $tabName,
+		];
+
+		if ($entityId > 0)
+		{
+			if (!RestrictionManager::isHistoryViewPermitted())
+			{
+				$tabParams['tariffLock'] = RestrictionManager::getHistoryViewRestriction()->prepareInfoHelperScript();
+			}
+			else
+			{
+				$tabParams['loader'] = [
+					'serviceUrl' =>
+						'/bitrix/components/bitrix/crm.event.view/lazyload.ajax.php?&site='
+						. SITE_ID . '&' . bitrix_sessid_get()
+					,
+					'componentData' => [
+						'template' => '',
+						'contextId' => "{$entityTypeName}_{$entityId}_EVENT",
+						'params' => [
+							'AJAX_OPTION_ADDITIONAL' => "{$entityTypeName}_{$entityId}_EVENT",
+							'ENTITY_TYPE' => $entityTypeName,
+							'ENTITY_ID' => $entityId,
+							'PATH_TO_USER_PROFILE' => $result['PATH_TO_USER_PROFILE'],
+							'TAB_ID' => 'tab_event',
+							'INTERNAL' => 'Y',
+							'SHOW_INTERNAL_FILTER' => 'Y',
+							'PRESERVE_HISTORY' => true,
+							'NAME_TEMPLATE' => $result['NAME_TEMPLATE']
+						]
+					]
+				];
+			}
+		}
+		else
+		{
+			$tabParams['enabled'] = false;
+		}
+
+		return $tabParams;
 	}
 }
 
@@ -930,7 +982,7 @@ class CCrmInstantEditorHelper
 				$fmParts = explode('.', mb_substr($fieldName, 3));
 				if(count($fmParts) === 3)
 				{
-					list($fmType, $fmValueType, $fmID) = $fmParts;
+					[$fmType, $fmValueType, $fmID] = $fmParts;
 
 					$fmType = strval($fmType);
 					$fmValueType = strval($fmValueType);

@@ -1,5 +1,5 @@
 this.BX = this.BX || {};
-(function (exports,rest_client,main_popup,main_loader,salescenter_marketplace,salescenter_component_stageBlock_tile,Hint,catalog_productForm,main_core_events,ui_vue,DeliverySelector,ui_fonts_ruble,currency,salescenter_component_stageBlock_automation,AutomationStage,salescenter_component_stageBlock_timeline,popup,ui_buttons,ui_buttons_icons,ui_forms,ui_fonts_opensans,ui_pinner,ui_vue_vuex,TimeLineItem,salescenter_component_stageBlock_smsMessage,salescenter_manager,salescenter_component_stageBlock,ui_notification,Tile,main_core,salescenter_lib) {
+(function (exports,rest_client,main_loader,salescenter_marketplace,salescenter_component_stageBlock_tile,Hint,catalog_productForm,main_core_events,ui_vue,DeliverySelector,ui_fonts_ruble,currency,salescenter_component_stageBlock_automation,AutomationStage,salescenter_component_stageBlock_timeline,main_popup,ui_icons_disk,popup,ui_buttons,ui_buttons_icons,ui_forms,ui_fonts_opensans,ui_pinner,ui_vue_vuex,salescenter_component_stageBlock_smsMessage,salescenter_manager,TimeLineItem,salescenter_component_stageBlock,ui_notification,Tile,main_core,salescenter_lib) {
 	'use strict';
 
 	DeliverySelector = DeliverySelector && DeliverySelector.hasOwnProperty('default') ? DeliverySelector['default'] : DeliverySelector;
@@ -255,6 +255,178 @@ this.BX = this.BX || {};
 	  return OrderCreationModel;
 	}(ui_vue_vuex.VuexBuilderModel);
 
+	var DocumentSelectorModel = /*#__PURE__*/function (_VuexBuilderModel) {
+	  babelHelpers.inherits(DocumentSelectorModel, _VuexBuilderModel);
+
+	  function DocumentSelectorModel() {
+	    babelHelpers.classCallCheck(this, DocumentSelectorModel);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(DocumentSelectorModel).apply(this, arguments));
+	  }
+
+	  babelHelpers.createClass(DocumentSelectorModel, [{
+	    key: "getName",
+
+	    /**
+	     * @inheritDoc
+	     */
+	    value: function getName() {
+	      return 'documentSelector';
+	    }
+	  }, {
+	    key: "getActions",
+	    value: function getActions() {
+	      return {
+	        addDocument: function addDocument(_ref, _ref2) {
+	          var commit = _ref.commit,
+	              dispatch = _ref.dispatch;
+	          var document = _ref2.document;
+	          commit('addDocument', {
+	            document: document
+	          });
+	          dispatch('setBoundDocumentId', {
+	            boundDocumentId: document.id
+	          });
+	        },
+	        setBoundDocumentId: function setBoundDocumentId(_ref3, _ref4) {
+	          var state = _ref3.state,
+	              commit = _ref3.commit;
+	          var boundDocumentId = _ref4.boundDocumentId;
+
+	          if (state.paymentId > 0) {
+	            rest_client.rest.callMethod('crm.documentgenerator.document.bindToPayment', {
+	              id: boundDocumentId,
+	              paymentId: state.paymentId
+	            }).then(function () {
+	              commit('setBoundDocumentId', {
+	                boundDocumentId: boundDocumentId
+	              });
+	            }).catch(function (response) {
+	              console.error(response);
+	            });
+	          } else {
+	            commit('setBoundDocumentId', {
+	              boundDocumentId: boundDocumentId
+	            });
+	          }
+	        },
+	        loadTemplates: function loadTemplates(_ref5) {
+	          var state = _ref5.state,
+	              commit = _ref5.commit;
+
+	          if (Number(state.entityTypeId) <= 0 || Number(state.entityId) <= 0) {
+	            commit('setTemplates', {
+	              templates: []
+	            });
+	            return;
+	          }
+
+	          rest_client.rest.callMethod('crm.documentgenerator.template.listForItem', {
+	            entityTypeId: state.entityTypeId,
+	            entityId: state.entityId
+	          }).then(function (response) {
+	            if (response.answer.result.templates) {
+	              commit('setTemplates', {
+	                templates: response.answer.result.templates
+	              });
+	            }
+	          }).catch(function (response) {
+	            console.error(response);
+	          });
+	        }
+	      };
+	    }
+	  }, {
+	    key: "getState",
+	    value: function getState() {
+	      return {
+	        entityTypeId: null,
+	        entityId: null,
+	        paymentId: null,
+	        documents: [],
+	        templates: [],
+	        boundDocumentId: null,
+	        selectedTemplateId: null
+	      };
+	    }
+	  }, {
+	    key: "getGetters",
+	    value: function getGetters() {
+	      return {
+	        getTemplates: function getTemplates(state) {
+	          return state.templates;
+	        },
+	        getDocuments: function getDocuments(state) {
+	          return state.documents;
+	        },
+	        getBoundDocumentId: function getBoundDocumentId(state) {
+	          return state.boundDocumentId;
+	        },
+	        getSelectedTemplateId: function getSelectedTemplateId(state) {
+	          return state.selectedTemplateId;
+	        }
+	      };
+	    }
+	  }, {
+	    key: "getMutations",
+	    value: function getMutations() {
+	      return {
+	        fillState: function fillState(state, payload) {
+	          state.entityTypeId = payload.entityTypeId;
+	          state.entityId = payload.entityId;
+	          state.paymentId = payload.paymentId;
+	          state.documents = payload.documents;
+	          state.templates = payload.templates;
+	          state.boundDocumentId = payload.boundDocumentId;
+	          state.selectedTemplateId = payload.selectedTemplateId;
+	        },
+	        setTemplates: function setTemplates(state, payload) {
+	          if (babelHelpers.typeof(payload.templates) === 'object') {
+	            state.templates = payload.templates;
+	          }
+	        },
+	        setBoundDocumentId: function setBoundDocumentId(state, payload) {
+	          if (typeof payload.boundDocumentId === 'number') {
+	            state.boundDocumentId = payload.boundDocumentId;
+	          }
+	        },
+	        setSelectedTemplateId: function setSelectedTemplateId(state, payload) {
+	          if (typeof payload.selectedTemplateId === 'number') {
+	            state.selectedTemplateId = payload.selectedTemplateId;
+	            state.boundDocumentId = null;
+	          }
+	        },
+	        addDocument: function addDocument(state, payload) {
+	          if (babelHelpers.typeof(payload.document) === 'object') {
+	            var newDocument = payload.document;
+
+	            if (!newDocument.id) {
+	              return;
+	            }
+
+	            var documents = state.documents || [];
+	            var isUpdated = false;
+
+	            for (var index in documents) {
+	              if (documents[index].id === newDocument.id) {
+	                documents[index] = newDocument;
+	                isUpdated = true;
+	                break;
+	              }
+	            }
+
+	            if (!isUpdated) {
+	              documents.unshift(newDocument);
+	            }
+
+	            state.documents = documents;
+	          }
+	        }
+	      };
+	    }
+	  }]);
+	  return DocumentSelectorModel;
+	}(ui_vue_vuex.VuexBuilderModel);
+
 	var MixinTemplatesType = {
 	  data: function data() {
 	    return {
@@ -441,7 +613,7 @@ this.BX = this.BX || {};
 	      required: true
 	    },
 	    counter: {
-	      type: String,
+	      type: Number,
 	      required: true
 	    },
 	    tiles: {
@@ -544,17 +716,14 @@ this.BX = this.BX || {};
 	      showTaxBlock: this.$root.$app.options.showProductTaxes,
 	      totalResultLabel: this.$root.$app.options.mode === 'delivery' ? main_core.Loc.getMessage('SALESCENTER_SHIPMENT_PRODUCT_BLOCK_TOTAL') : null,
 	      urlBuilderContext: this.$root.$app.options.urlProductBuilderContext,
+	      isCatalogPriceEditEnabled: this.$root.$app.options.isCatalogPriceEditEnabled,
+	      fieldHints: this.$root.$app.options.fieldHints,
 	      hideUnselectedProperties: this.$root.$app.options.templateMode === 'view',
 	      showCompilationModeSwitcher: this.$root.$app.options.showCompilationModeSwitcher === 'Y'
 	    });
-
-	    if (this.isNeedDisableSubmit()) {
-	      this.$store.commit('orderCreation/disableSubmit');
-	    } else {
-	      this.$store.commit('orderCreation/enableSubmit');
-	    }
-
+	    this.checkProductErrors();
 	    main_core_events.EventEmitter.subscribe(this.productForm, 'ProductForm:onBasketChange', main_core.Runtime.debounce(this.onBasketChange, 500, this));
+	    main_core_events.EventEmitter.subscribe(this.productForm, 'ProductForm:onErrorsChange', main_core.Runtime.debounce(this.checkProductErrors, 500, this));
 	  },
 	  methods: {
 	    onBasketChange: function onBasketChange(event) {
@@ -636,6 +805,13 @@ this.BX = this.BX || {};
 	        });
 	      });
 	    },
+	    checkProductErrors: function checkProductErrors() {
+	      if (this.isNeedDisableSubmit()) {
+	        this.$store.commit('orderCreation/disableSubmit');
+	      } else {
+	        this.$store.commit('orderCreation/enableSubmit');
+	      }
+	    },
 	    isNeedDisableSubmit: function isNeedDisableSubmit() {
 	      var basket = this.$store.getters['orderCreation/getBasket']();
 
@@ -650,7 +826,7 @@ this.BX = this.BX || {};
 	      return filledProducts.length <= 0;
 	    }
 	  },
-	  template: "\n\t\t<div class=\"salescenter-app-payment-side\">\n\t\t\t<div class=\"salescenter-app-page-content\">\n\t\t\t\t<div class=\"salescenter-app-form-wrapper\"></div>\n\t\t\t\t<slot name=\"footer\"></slot>\n\t\t\t</div>\t\t\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"salescenter-app-payment-side\">\n\t\t\t<div class=\"salescenter-app-page-content\">\n\t\t\t\t<div class=\"salescenter-app-form-wrapper\"></div>\n\t\t\t\t<slot name=\"footer\"></slot>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
 	var Product$1 = {
@@ -660,7 +836,7 @@ this.BX = this.BX || {};
 	      required: true
 	    },
 	    counter: {
-	      type: String,
+	      type: Number,
 	      required: true
 	    },
 	    title: {
@@ -911,7 +1087,7 @@ this.BX = this.BX || {};
 	      required: true
 	    },
 	    counter: {
-	      type: String,
+	      type: Number,
 	      required: true
 	    },
 	    tiles: {
@@ -1039,7 +1215,7 @@ this.BX = this.BX || {};
 	      required: true
 	    },
 	    counter: {
-	      type: String,
+	      type: Number,
 	      required: true
 	    },
 	    tiles: {
@@ -1103,7 +1279,7 @@ this.BX = this.BX || {};
 	      required: true
 	    },
 	    counter: {
-	      type: String,
+	      type: Number,
 	      required: true
 	    },
 	    manager: {
@@ -1183,7 +1359,7 @@ this.BX = this.BX || {};
 	      required: true
 	    },
 	    counter: {
-	      type: String,
+	      type: Number,
 	      required: true
 	    },
 	    stageOnOrderPaid: {
@@ -1192,7 +1368,7 @@ this.BX = this.BX || {};
 	    },
 	    stageOnDeliveryFinished: {
 	      type: String,
-	      required: true
+	      required: false
 	    },
 	    items: {
 	      type: Array,
@@ -1256,7 +1432,10 @@ this.BX = this.BX || {};
 	      });
 	    },
 	    isPayment: function isPayment() {
-	      return this.$root.$app.options.mode === 'payment_delivery';
+	      return this.$root.$app.options.mode === 'payment_delivery' || this.$root.$app.options.mode === 'payment';
+	    },
+	    isHideDeliveryStage: function isHideDeliveryStage() {
+	      return this.$root.$app.options.mode === 'payment';
 	    }
 	  },
 	  created: function created() {
@@ -1266,7 +1445,7 @@ this.BX = this.BX || {};
 
 	    this.initStages(this.shipmentStages, this.stageOnDeliveryFinished);
 	  },
-	  template: "\n\t\t<stage-block-item\n\t\t\t:config=\"configForBlock\"\n\t\t\t:class=\"statusClassMixin\"\n\t\t\t@on-adjust-collapsed=\"saveCollapsedOption\"\n\t\t>\n\t\t\t<template v-slot:block-title-title>".concat(main_core.Loc.getMessage('SALESCENTER_AUTOMATION_BLOCK_TITLE'), "</template>\n\t\t\t<template v-slot:block-container>\n\t\t\t\t<div :class=\"containerClassMixin\">\n\t\t\t\t\t<div v-if=\"isPayment\">\n\t\t\t\t\t\t<stage-item-list \n\t\t\t\t\t\t\tv-on:on-choose-select-option=\"updatePaymentStage($event)\"\n\t\t\t\t\t\t\t:stages=\"paymentStages\"\n\t\t\t\t\t\t\t:editable=\"editable\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<template v-slot:stage-list-text>").concat(main_core.Loc.getMessage('SALESCENTER_AUTOMATION_BLOCK_TEXT'), "</template>\n\t\t\t\t\t\t</stage-item-list>\n\t\t\t\t\t</div>\n\t\t\t\t\t\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<stage-item-list \n\t\t\t\t\t\t\tv-on:on-choose-select-option=\"updateShipmentStage($event)\"\n\t\t\t\t\t\t\t:stages=\"shipmentStages\"\n\t\t\t\t\t\t\t:editable=\"editable\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<template v-slot:stage-list-text>").concat(main_core.Loc.getMessage('SALESCENTER_AUTOMATION_DELIVERY_FINISHED'), "</template>\n\t\t\t\t\t\t</stage-item-list>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t\n\t\t\t</template>\n\t\t</stage-block-item>\n\t")
+	  template: "\n\t\t<stage-block-item\n\t\t\t:config=\"configForBlock\"\n\t\t\t:class=\"statusClassMixin\"\n\t\t\t@on-adjust-collapsed=\"saveCollapsedOption\"\n\t\t>\n\t\t\t<template v-slot:block-title-title>".concat(main_core.Loc.getMessage('SALESCENTER_AUTOMATION_BLOCK_TITLE'), "</template>\n\t\t\t<template v-slot:block-container>\n\t\t\t\t<div :class=\"containerClassMixin\">\n\t\t\t\t\t<div v-if=\"isPayment\">\n\t\t\t\t\t\t<stage-item-list\n\t\t\t\t\t\t\tv-on:on-choose-select-option=\"updatePaymentStage($event)\"\n\t\t\t\t\t\t\t:stages=\"paymentStages\"\n\t\t\t\t\t\t\t:editable=\"editable\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<template v-slot:stage-list-text>").concat(main_core.Loc.getMessage('SALESCENTER_AUTOMATION_BLOCK_TEXT'), "</template>\n\t\t\t\t\t\t</stage-item-list>\n\t\t\t\t\t</div>\n\n\t\t\t\t\t<div v-if=\"!isHideDeliveryStage\">\n\t\t\t\t\t\t<stage-item-list\n\t\t\t\t\t\t\tv-on:on-choose-select-option=\"updateShipmentStage($event)\"\n\t\t\t\t\t\t\t:stages=\"shipmentStages\"\n\t\t\t\t\t\t\t:editable=\"editable\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<template v-slot:stage-list-text>").concat(main_core.Loc.getMessage('SALESCENTER_AUTOMATION_DELIVERY_FINISHED'), "</template>\n\t\t\t\t\t\t</stage-item-list>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\n\t\t\t</template>\n\t\t</stage-block-item>\n\t")
 	};
 
 	var Send = {
@@ -1321,6 +1500,342 @@ this.BX = this.BX || {};
 	  template: "\n\t\t<div class=\"salescenter-app-payment-by-sms-timeline\">\n\t\t\t<template v-for=\"(item) in timelineItems\">\n\t\t\t\t<timeline-item-payment-block\t:item=\"item\"\tv-if=\"isPayment(item)\"/>\n\t\t\t\t<timeline-item-block\t\t\t:item=\"item\" \tv-else/>\n\t\t\t</template>\n\t\t</div>\n\t"
 	};
 
+	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+
+	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+	var DocumentSelector = {
+	  props: {
+	    counter: {
+	      type: Number,
+	      required: true
+	    },
+	    templateAddUrl: {
+	      type: String,
+	      required: false
+	    }
+	  },
+	  mixins: [StageMixin],
+	  components: {
+	    'stage-block-item': salescenter_component_stageBlock.Block
+	  },
+	  computed: babelHelpers.objectSpread({
+	    status: function status() {
+	      if (this.model && this.model.templates && this.model.templates.length || this.model.documents && this.model.documents.length) {
+	        return salescenter_component_stageBlock.StatusTypes.complete;
+	      }
+
+	      if (this.templateAddUrl && this.templateAddUrl.length) {
+	        return salescenter_component_stageBlock.StatusTypes.current;
+	      }
+
+	      return salescenter_component_stageBlock.StatusTypes.disabled;
+	    },
+	    configForBlock: function configForBlock() {
+	      return {
+	        counter: this.counter,
+	        titleItems: [],
+	        installed: true,
+	        collapsible: false,
+	        checked: this.counterCheckedMixin,
+	        showHint: false,
+	        initialCollapseState: false
+	      };
+	    },
+	    getDocumentTitle: function getDocumentTitle() {
+	      var currentDocument = this.getCurrentDocument();
+
+	      if (currentDocument) {
+	        return currentDocument.title;
+	      }
+
+	      return main_core.Loc.getMessage('SALESCENTER_DOCUMENT_SELECTOR_BLOCK_CREATE_NEW_TEMPLATE');
+	    },
+	    withStamps: function withStamps() {
+	      var isWithStamps = '';
+	      var currentDocument = this.getCurrentDocument();
+
+	      if (currentDocument) {
+	        if (currentDocument.isWithStamps) {
+	          isWithStamps = main_core.Loc.getMessage('SALESCENTER_DOCUMENT_SELECTOR_BLOCK_WITH_SIGNS');
+	        } else {
+	          isWithStamps = main_core.Loc.getMessage('SALESCENTER_DOCUMENT_SELECTOR_BLOCK_WITHOUT_SIGNS');
+	        }
+	      }
+
+	      return isWithStamps;
+	    },
+	    hasData: function hasData() {
+	      var document = this.getCurrentDocument();
+	      return document && document.detailUrl;
+	    }
+	  }, ui_vue_vuex.Vuex.mapState({
+	    model: function model(state) {
+	      return state.documentSelector;
+	    }
+	  })),
+	  methods: {
+	    handleDocumentClick: function handleDocumentClick(_ref) {
+	      var target = _ref.target;
+
+	      if (this.getCurrentDocument() !== null) {
+	        this.openSelectorMenu(target);
+	      } else {
+	        this.openTemplatesList();
+	      }
+	    },
+	    openSelectorMenu: function openSelectorMenu(bindElement) {
+	      main_popup.MenuManager.show({
+	        id: 'payment-document-selector',
+	        bindElement: bindElement,
+	        items: this.prepareSelectorMenuItems(),
+	        closeByEsc: true,
+	        cacheable: false
+	      });
+	    },
+	    closeSelectorMenu: function closeSelectorMenu() {
+	      main_popup.MenuManager.destroy('payment-document-selector');
+	    },
+	    prepareSelectorMenuItems: function prepareSelectorMenuItems() {
+	      var _this = this;
+
+	      var items = [];
+
+	      if (this.model.documents) {
+	        var _iterator = _createForOfIteratorHelper(this.model.documents),
+	            _step;
+
+	        try {
+	          var _loop = function _loop() {
+	            var document = _step.value;
+	            items.push({
+	              text: document.title,
+	              onclick: function onclick() {
+	                _this.closeSelectorMenu();
+
+	                _this.$store.dispatch('documentSelector/setBoundDocumentId', {
+	                  boundDocumentId: document.id
+	                });
+	              }
+	            });
+	          };
+
+	          for (_iterator.s(); !(_step = _iterator.n()).done;) {
+	            _loop();
+	          }
+	        } catch (err) {
+	          _iterator.e(err);
+	        } finally {
+	          _iterator.f();
+	        }
+	      }
+
+	      var templateListItem = {
+	        text: main_core.Loc.getMessage('SALESCENTER_DOCUMENT_SELECTOR_BLOCK_CREATE_NEW_DOCUMENT'),
+	        items: []
+	      };
+
+	      if (this.model.templates) {
+	        if (items.length > 0) {
+	          items.push({
+	            delimiter: true
+	          });
+	        }
+
+	        var _iterator2 = _createForOfIteratorHelper(this.model.templates),
+	            _step2;
+
+	        try {
+	          var _loop2 = function _loop2() {
+	            var template = _step2.value;
+	            templateListItem.items.push({
+	              text: template.title,
+	              onclick: function onclick() {
+	                _this.closeSelectorMenu();
+
+	                _this.$store.commit('documentSelector/setSelectedTemplateId', {
+	                  selectedTemplateId: template.id
+	                });
+	              }
+	            });
+	          };
+
+	          for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+	            _loop2();
+	          }
+	        } catch (err) {
+	          _iterator2.e(err);
+	        } finally {
+	          _iterator2.f();
+	        }
+	      }
+
+	      if (this.templateAddUrl) {
+	        if (templateListItem.items.length > 0) {
+	          templateListItem.items.push({
+	            delimiter: true
+	          });
+	        }
+
+	        templateListItem.items.push({
+	          text: main_core.Loc.getMessage('SALESCENTER_DOCUMENT_SELECTOR_BLOCK_CREATE_NEW_TEMPLATE'),
+	          onclick: function onclick() {
+	            _this.closeSelectorMenu();
+
+	            _this.openTemplatesList();
+	          }
+	        });
+	      }
+
+	      if (templateListItem.items.length > 0) {
+	        items.push(templateListItem);
+	      }
+
+	      return items;
+	    },
+	    openTemplatesList: function openTemplatesList() {
+	      var _this2 = this;
+
+	      salescenter_manager.Manager.openSlider(this.templateAddUrl, {
+	        width: 930
+	      }).then(function () {
+	        _this2.$store.dispatch('documentSelector/loadTemplates');
+	      });
+	    },
+	    handleEditDocumentClick: function handleEditDocumentClick() {
+	      var _this3 = this;
+
+	      var currentDocument = this.getCurrentDocument();
+
+	      if (currentDocument.detailUrl) {
+	        salescenter_manager.Manager.openSlider(currentDocument.detailUrl, {
+	          width: 980
+	        }).then(function (slider) {
+	          var document = slider.getData().get('document');
+
+	          if (document) {
+	            _this3.$store.dispatch('documentSelector/addDocument', {
+	              document: document
+	            });
+	          }
+	        });
+	      }
+	    },
+	    getCurrentDocument: function getCurrentDocument() {
+	      var document = null;
+
+	      if (this.model.boundDocumentId > 0) {
+	        document = this.getDocumentById(this.model.boundDocumentId);
+	      }
+
+	      if (!document && this.model.selectedTemplateId > 0) {
+	        document = this.getStubDocumentByTemplate(this.model.selectedTemplateId);
+	      }
+
+	      if (!document) {
+	        var documents = this.model.documents;
+
+	        if (documents && documents[0]) {
+	          document = documents[0];
+	          this.$store.dispatch('documentSelector/setBoundDocumentId', {
+	            boundDocumentId: document.id
+	          });
+	        }
+	      }
+
+	      if (!document) {
+	        var templates = this.model.templates;
+
+	        if (templates && templates[0]) {
+	          document = this.getStubDocumentByTemplate(templates[0].id);
+	          this.$store.commit('documentSelector/setSelectedTemplateId', {
+	            selectedTemplateId: templates[0].id
+	          });
+	        }
+	      }
+
+	      return document;
+	    },
+	    getDocumentById: function getDocumentById(id) {
+	      var _iterator3 = _createForOfIteratorHelper(this.model.documents),
+	          _step3;
+
+	      try {
+	        for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+	          var document = _step3.value;
+
+	          if (document.id === id) {
+	            return document;
+	          }
+	        }
+	      } catch (err) {
+	        _iterator3.e(err);
+	      } finally {
+	        _iterator3.f();
+	      }
+
+	      return null;
+	    },
+	    getTemplateById: function getTemplateById(id) {
+	      var _iterator4 = _createForOfIteratorHelper(this.model.templates),
+	          _step4;
+
+	      try {
+	        for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
+	          var template = _step4.value;
+
+	          if (template.id === id) {
+	            return template;
+	          }
+	        }
+	      } catch (err) {
+	        _iterator4.e(err);
+	      } finally {
+	        _iterator4.f();
+	      }
+
+	      return null;
+	    },
+	    getStubDocumentByTemplate: function getStubDocumentByTemplate(templateId) {
+	      var template = this.getTemplateById(templateId);
+
+	      if (!template) {
+	        return null;
+	      }
+
+	      var paymentId = this.$root.$app.options.paymentId || 0;
+	      var title = null;
+	      var detailUrl = null;
+
+	      if (paymentId > 0) {
+	        title = main_core.Loc.getMessage('SALESCENTER_DOCUMENT_SELECTOR_BLOCK_DOCUMENT_NEW_SUFFIX', {
+	          '#TITLE#': template.title
+	        });
+	        detailUrl = main_core.Uri.addParam(template.documentCreationUrl, {
+	          values: {
+	            _paymentId: paymentId
+	          }
+	        });
+	      } else {
+	        title = main_core.Loc.getMessage('SALESCENTER_DOCUMENT_SELECTOR_BLOCK_DOCUMENT_CREATED_LATER_SUFFIX', {
+	          '#TITLE#': template.title
+	        });
+	        detailUrl = null;
+	      }
+
+	      return {
+	        id: 0,
+	        title: title,
+	        detailUrl: detailUrl,
+	        isWithStamps: template.isWithStamps
+	      };
+	    }
+	  },
+	  // language=Vue
+	  template: "\n\t\t<stage-block-item\n\t\t\t:class=\"statusClassMixin\"\n\t\t\t:config=\"configForBlock\"\n\t\t>\n\t\t\t<template v-slot:block-title-title>".concat(main_core.Loc.getMessage('SALESCENTER_DOCUMENT_SELECTOR_BLOCK_TITLE'), "</template>\n\t\t\t<template v-slot:block-container>\n\t\t\t\t<div :class=\"containerClassMixin\">\t\t\t\t\t\t\t\t\t\t\n\t\t\t\t\t<div class=\"salescenter-app-payment-item-container-document-selector\">\n\t\t\t\t\t\t<div class=\"salescenter-app-payment-item-container-document-selector-selector\">\n\t\t\t\t\t\t\t<div class=\"salescenter-app-payment-item-container-document-selector-selector-file\">\n\t\t\t\t\t\t\t\t<div class=\"ui-icon ui-icon-lg ui-icon-file-pdf\"><i></i></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"salescenter-app-payment-item-container-document-selector-title\">\n\t\t\t\t\t\t\t\t<div \n\t\t\t\t\t\t\t\t\tref=\"selectorNode\"\n\t\t\t\t\t\t\t\t\tclass=\"salescenter-app-payment-item-container-document-selector-title-button\"\n\t\t\t\t\t\t\t\t\t@click=\"handleDocumentClick\"\n\t\t\t\t\t\t\t\t>{{getDocumentTitle}}</div>\n\t\t\t\t\t\t\t\t<div class=\"salescenter-app-payment-item-container-document-selector-title-sign\">{{withStamps}}</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div\n\t\t\t\t\t\t\tv-if=\"hasData\"\n\t\t\t\t\t\t\tclass=\"salescenter-app-payment-item-container-document-selector-edit\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div \n\t\t\t\t\t\t\t\tclass=\"salescenter-app-payment-item-container-document-selector-edit-button\"\n\t\t\t\t\t\t\t\t@click=\"handleEditDocumentClick\"\n\t\t\t\t\t\t\t>\n                              <svg width=\"14\" height=\"14\" viewBox=\"0 0 14 14\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n                                <path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M11.4359 0.03479L13.9865 2.61221L4.00879 12.563L1.45822 9.98561L11.4359 0.03479ZM0.0256074 13.6726C0.00148857 13.7639 0.0273302 13.8603 0.0927957 13.9275C0.159984 13.9947 0.25646 14.0205 0.347767 13.9947L3.19896 13.2265L0.793965 10.8223L0.0256074 13.6726Z\" fill=\"#525C69\"/>\n                              </svg>\n                              ").concat(main_core.Loc.getMessage('SALESCENTER_RIGHT_ACTION_EDIT'), "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</stage-block-item>\n\t")
+	};
+
 	var StageBlocksList = {
 	  components: {
 	    'chat-message-block': ChatMessage,
@@ -1330,13 +1845,14 @@ this.BX = this.BX || {};
 	    'delivery-block': DeliveryVuex,
 	    'automation-block': Automation,
 	    'send-block': Send,
-	    'timeline-block': TimeLine
+	    'timeline-block': TimeLine,
+	    'document-selector-block': DocumentSelector
 	  },
 	  data: function data() {
 	    var stages = {
 	      message: {
 	        status: salescenter_component_stageBlock.StatusTypes.complete,
-	        manager: this.$root.$app.options.dealResponsible,
+	        manager: this.$root.$app.options.entityResponsible,
 	        titleTemplate: main_core.Loc.getMessage('SALESCENTER_APP_CHAT_MESSAGE_TITLE'),
 	        showHint: this.$root.$app.options.templateMode !== 'view',
 	        editorTemplate: this.$root.$app.sendingMethodDesc.text,
@@ -1355,14 +1871,21 @@ this.BX = this.BX || {};
 	        initialCollapseState: this.$root.$app.options.isPaySystemCollapsed ? this.$root.$app.options.isPaySystemCollapsed === 'Y' : this.$root.$app.options.paySystemList.isSet
 	      },
 	      cashbox: {},
-	      delivery: {
+	      automation: {},
+	      documentSelector: {
+	        status: salescenter_component_stageBlock.StatusTypes.complete
+	      }
+	    };
+
+	    if (this.$root.$app.options.hasOwnProperty('deliveryList')) {
+	      stages.delivery = {
 	        isHidden: this.$root.$app.options.templateMode === 'view' && parseInt(this.$root.$app.options.shipmentId) <= 0,
 	        status: this.$root.$app.options.deliveryList.isInstalled ? salescenter_component_stageBlock.StatusTypes.complete : salescenter_component_stageBlock.StatusTypes.disabled,
 	        tiles: this.getTileCollection(this.$root.$app.options.deliveryList.items),
 	        installed: this.$root.$app.options.deliveryList.isInstalled,
 	        initialCollapseState: this.$root.$app.options.isDeliveryCollapsed ? this.$root.$app.options.isDeliveryCollapsed === 'Y' : this.$root.$app.options.deliveryList.isInstalled
-	      }
-	    };
+	      };
+	    }
 
 	    if (this.$root.$app.options.cashboxList.hasOwnProperty('items')) {
 	      stages.cashbox = {
@@ -1379,7 +1902,7 @@ this.BX = this.BX || {};
 	        status: salescenter_component_stageBlock.StatusTypes.complete,
 	        stageOnOrderPaid: this.$root.$app.options.stageOnOrderPaid,
 	        stageOnDeliveryFinished: this.$root.$app.options.stageOnDeliveryFinished,
-	        items: this.$root.$app.options.dealStageList,
+	        items: this.$root.$app.options.entityStageList,
 	        initialCollapseState: this.$root.$app.options.isAutomationCollapsed ? this.$root.$app.options.isAutomationCollapsed === 'Y' : false
 	      };
 	    }
@@ -1388,6 +1911,12 @@ this.BX = this.BX || {};
 	      stages.timeline = {
 	        items: this.getTimelineCollection(this.$root.$app.options.timeline)
 	      };
+	    }
+
+	    if (this.$root.$app.hasOwnProperty('documentSelector')) {
+	      if (this.$root.$app.documentSelector.templateAddUrl) {
+	        stages.documentSelector.templateAddUrl = this.$root.$app.documentSelector.templateAddUrl;
+	      }
 	    }
 
 	    return {
@@ -1410,6 +1939,9 @@ this.BX = this.BX || {};
 	    },
 	    submitButtonLabel: function submitButtonLabel() {
 	      return main_core.Loc.getMessage('SALESCENTER_SEND');
+	    },
+	    isShowDocumentSelector: function isShowDocumentSelector() {
+	      return this.$root.$app.hasOwnProperty('documentSelector');
 	    }
 	  },
 	  methods: {
@@ -1488,7 +2020,7 @@ this.BX = this.BX || {};
 	  beforeUpdate: function beforeUpdate() {
 	    this.initCounter();
 	  },
-	  template: "\n\t\t<div>\n\t\t\t<chat-message-block\n\t\t\t\t@stage-block-sms-send-on-change-provider=\"changeProvider\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.message.status\"\n\t\t\t\t:manager=\"stages.message.manager\"\n\t\t\t\t:titleTemplate=\"stages.message.titleTemplate\"\n\t\t\t\t:showHint=\"stages.message.showHint\"\n\t\t\t\t:editorTemplate=\"stages.message.editorTemplate\"\n\t\t\t\t:editorUrl=\"stages.message.editorUrl\"\n\t\t\t/>\t\n\t\t\t<product-block \n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.product.status\"\n\t\t\t\t:title=\"stages.product.title\"\n\t\t\t\t:hintTitle=\"stages.product.hintTitle\"\n\t\t\t/>\n\t\t\t<paysystem-block\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'PAY_SYSTEM')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.paysystem.status\"\n\t\t\t\t:tiles=\"stages.paysystem.tiles\"\n\t\t\t\t:installed=\"stages.paysystem.installed\"\n\t\t\t\t:titleItems=\"stages.paysystem.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.paysystem.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<cashbox-block\n\t\t\t\tv-if=\"hasStageCashBox\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'CASHBOX')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.cashbox.status\"\n\t\t\t\t:tiles=\"stages.cashbox.tiles\"\n\t\t\t\t:installed=\"stages.cashbox.installed\"\n\t\t\t\t:titleItems=\"stages.cashbox.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.cashbox.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<delivery-block\n\t\t\t\tv-if=\"!stages.delivery.isHidden\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'DELIVERY')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.delivery.status\"\n\t\t\t\t:tiles=\"stages.delivery.tiles\"\n\t\t\t\t:installed=\"stages.delivery.installed\"\n\t\t\t\t:isCollapsible=\"true\"\n\t\t\t\t:initialCollapseState=\"stages.delivery.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<automation-block\n\t\t\t\tv-if=\"hasStageAutomation\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.automation.status\"\n\t\t\t\t:stageOnOrderPaid=\"stages.automation.stageOnOrderPaid\"\n\t\t\t\t:stageOnDeliveryFinished=\"stages.automation.stageOnDeliveryFinished\"\n\t\t\t\t:items=\"stages.automation.items\"\n\t\t\t\t:initialCollapseState=\"stages.automation.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<send-block\n\t\t\t\t@on-submit=\"onSend\"\n\t\t\t\t:buttonEnabled=\"isSendAllowed\"\n\t\t\t\t:buttonLabel=\"submitButtonLabel\"\n\t\t\t/>\n\t\t\t<timeline-block\n\t\t\t\tv-if=\"hasStageTimeLine\"\n\t\t\t\t:timelineItems=\"stages.timeline.items\"\n\t\t\t/>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div>\n\t\t\t<chat-message-block\n\t\t\t\t@stage-block-sms-send-on-change-provider=\"changeProvider\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.message.status\"\n\t\t\t\t:manager=\"stages.message.manager\"\n\t\t\t\t:titleTemplate=\"stages.message.titleTemplate\"\n\t\t\t\t:showHint=\"stages.message.showHint\"\n\t\t\t\t:editorTemplate=\"stages.message.editorTemplate\"\n\t\t\t\t:editorUrl=\"stages.message.editorUrl\"\n\t\t\t/>\t\n\t\t\t<product-block \n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.product.status\"\n\t\t\t\t:title=\"stages.product.title\"\n\t\t\t\t:hintTitle=\"stages.product.hintTitle\"\n\t\t\t/>\n\t\t\t<paysystem-block\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'PAY_SYSTEM')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.paysystem.status\"\n\t\t\t\t:tiles=\"stages.paysystem.tiles\"\n\t\t\t\t:installed=\"stages.paysystem.installed\"\n\t\t\t\t:titleItems=\"stages.paysystem.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.paysystem.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<cashbox-block\n\t\t\t\tv-if=\"hasStageCashBox\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'CASHBOX')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.cashbox.status\"\n\t\t\t\t:tiles=\"stages.cashbox.tiles\"\n\t\t\t\t:installed=\"stages.cashbox.installed\"\n\t\t\t\t:titleItems=\"stages.cashbox.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.cashbox.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<delivery-block\n\t\t\t\tv-if=\"stages.delivery && !stages.delivery.isHidden\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'DELIVERY')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.delivery.status\"\n\t\t\t\t:tiles=\"stages.delivery.tiles\"\n\t\t\t\t:installed=\"stages.delivery.installed\"\n\t\t\t\t:isCollapsible=\"true\"\n\t\t\t\t:initialCollapseState=\"stages.delivery.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<document-selector-block\n\t\t\t\tv-if=\"isShowDocumentSelector\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:templateAddUrl=\"stages.documentSelector.templateAddUrl\"\n\t\t\t/>\n\t\t\t<automation-block\n\t\t\t\tv-if=\"hasStageAutomation\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.automation.status\"\n\t\t\t\t:stageOnOrderPaid=\"stages.automation.stageOnOrderPaid\"\n\t\t\t\t:stageOnDeliveryFinished=\"stages.automation.stageOnDeliveryFinished\"\n\t\t\t\t:items=\"stages.automation.items\"\n\t\t\t\t:initialCollapseState=\"stages.automation.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<send-block\n\t\t\t\t@on-submit=\"onSend\"\n\t\t\t\t:buttonEnabled=\"isSendAllowed\"\n\t\t\t\t:buttonLabel=\"submitButtonLabel\"\n\t\t\t/>\n\t\t\t<timeline-block\n\t\t\t\tv-if=\"hasStageTimeLine\"\n\t\t\t\t:timelineItems=\"stages.timeline.items\"\n\t\t\t/>\n\t\t</div>\n\t"
 	};
 
 	var ComponentMixin = {
@@ -1631,11 +2163,11 @@ this.BX = this.BX || {};
 	  template: "\n\t\t<div v-if=\"isVisible\" class=\"salescenter-app-banner\" >\n\t\t\t<div class=\"salescenter-app-banner-inner\">\n\t\t\t\t<div class=\"salescenter-app-banner-title\">\n\t\t\t\t\t".concat(main_core.Loc.getMessage('SALESCENTER_BANNER_TITLE'), "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"salescenter-app-banner-content\">\n\t\t\t\t\t<div class=\"salescenter-app-banner-text\">\n\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_BANNER_TEXT'), "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"salescenter-app-banner-btn-block\">\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"openControlPanel\"\n\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-sm ui-btn-primary salescenter-app-banner-btn-connect\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_BANNER_BTN_CONFIGURE'), "\n\t\t\t\t\t\t</button>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"hide\"\n\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-sm ui-btn-link salescenter-app-banner-btn-hide\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_BANNER_BTN_HIDE'), "\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div\n\t\t\t\t\t@click=\"hide\"\n\t\t\t\t\tclass=\"salescenter-app-banner-close\"\n\t\t\t\t>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t")
 	};
 
-	function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 
-	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
 
-	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+	function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 	var Chat = {
 	  mixins: [MixinTemplatesType, ComponentMixin],
 	  data: function data() {
@@ -1686,7 +2218,7 @@ this.BX = this.BX || {};
 	      var paymentsLimitStartNode = this.$root.$nodes.paymentsLimit;
 	      var paymentsLimitNode = this.$refs['paymentsLimit'];
 
-	      var _iterator = _createForOfIteratorHelper(paymentsLimitStartNode.children),
+	      var _iterator = _createForOfIteratorHelper$1(paymentsLimitStartNode.children),
 	          _step;
 
 	      try {
@@ -1924,21 +2456,29 @@ this.BX = this.BX || {};
 	      });
 	      this.hideActionsPopup();
 	    },
+	    getPaymentItemTitle: function getPaymentItemTitle() {
+	      if (!this.isOrderPublicUrlAvailable) {
+	        return null;
+	      }
+
+	      if (this.$root.$app.options.mode === 'payment') {
+	        return this.localize.SALESCENTER_LEFT_PAYMENT_ADD_2;
+	      }
+
+	      return this.localize.SALESCENTER_LEFT_PAYMENT_AND_DELIVERY;
+	    },
 	    showPaymentForm: function showPaymentForm() {
 	      this.isShowPayment = true;
 	      this.isShowPreview = false;
-
-	      if (this.isOrderPublicUrlAvailable) {
-	        this.setPageTitle(this.localize.SALESCENTER_LEFT_PAYMENT_AND_DELIVERY);
-	      } else {
-	        this.setPageTitle(this.localize.SALESCENTER_DEFAULT_TITLE);
-	      }
+	      var title = this.getPaymentItemTitle() || this.localize.SALESCENTER_DEFAULT_TITLE;
+	      this.setPageTitle(title);
 	    },
 	    showOrdersList: function showOrdersList() {
 	      var _this6 = this;
 
 	      this.hideActionsPopup();
 	      salescenter_manager.Manager.showOrdersList({
+	        context: this.$root.$app.context,
 	        ownerId: this.$root.$app.ownerId,
 	        ownerTypeId: this.$root.$app.ownerTypeId
 	      }).then(function () {
@@ -1950,6 +2490,7 @@ this.BX = this.BX || {};
 
 	      this.hideActionsPopup();
 	      salescenter_manager.Manager.showPaymentsList({
+	        context: this.$root.$app.context,
 	        ownerId: this.$root.$app.ownerId,
 	        ownerTypeId: this.$root.$app.ownerTypeId
 	      }).then(function () {
@@ -2279,14 +2820,14 @@ this.BX = this.BX || {};
 	      return state.orderCreation;
 	    }
 	  })),
-	  template: "\n\t\t<div\n\t\t\t:class=\"wrapperClass\"\n\t\t\t:style=\"wrapperStyle\"\n\t\t\tclass=\"salescenter-app-wrapper salescenter-app-chat-wrapper\"\n\t\t>\n\t\t\t<div class=\"ui-sidepanel-sidebar salescenter-app-sidebar\" ref=\"sidebar\">\n\t\t\t\t<ul class=\"ui-sidepanel-menu\" ref=\"sidepanelMenu\">\n\t\t\t\t\t<li v-if=\"this.$root.$app.isPaymentCreationAvailable\" :class=\"{ 'salescenter-app-sidebar-menu-active': this.isShowPayment}\" class=\"ui-sidepanel-menu-item\" @click=\"showPaymentForm\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_PAYMENT_AND_DELIVERY}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li :class=\"{'salescenter-app-sidebar-menu-active': isPagesOpen}\" class=\"ui-sidepanel-menu-item\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\" @click.stop.prevent=\"isPagesOpen = !isPagesOpen;\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_PAGES}}</div>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-toggle-btn\">{{this.isPagesOpen ? this.localize.SALESCENTER_SUBMENU_CLOSE : this.localize.SALESCENTER_SUBMENU_OPEN}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t\t<ul class=\"ui-sidepanel-submenu\" :style=\"{height: pagesSubmenuHeight}\">\n\t\t\t\t\t\t\t<li v-for=\"page in pages\" v-if=\"!page.isWebform\" :key=\"page.id\"\n\t\t\t\t\t\t\t:class=\"{\n\t\t\t\t\t\t\t\t'ui-sidepanel-submenu-active': (currentPage && currentPage.id == page.id && isShowPreview),\n\t\t\t\t\t\t\t\t'ui-sidepanel-submenu-edit-mode': (editedPageId === page.id)\n\t\t\t\t\t\t\t}\" class=\"ui-sidepanel-submenu-item\">\n\t\t\t\t\t\t\t\t<a :title=\"page.name\" class=\"ui-sidepanel-submenu-link\" @click.stop=\"onPageClick(page)\">\n\t\t\t\t\t\t\t\t\t<input class=\"ui-sidepanel-input\" :value=\"page.name\" v-on:keyup.enter=\"saveMenuItem($event)\" @blur=\"saveMenuItem($event)\" />\n\t\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{page.name}}</div>\n\t\t\t\t\t\t\t\t\t<div v-if=\"lastAddedPages.includes(page.id)\" class=\"ui-sidepanel-badge-new\"></div>\n\t\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-edit-btn\"><span class=\"ui-sidepanel-edit-btn-icon\" @click=\"editMenuItem($event, page);\"></span></div>\n\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t\t<li class=\"salescenter-app-helper-nav-item salescenter-app-menu-add-page\" @click.stop=\"showAddPageActionPopup($event)\">\n\t\t\t\t\t\t\t\t<span class=\"salescenter-app-helper-nav-item-text salescenter-app-helper-nav-item-add\">+</span><span class=\"salescenter-app-helper-nav-item-text\">{{localize.SALESCENTER_RIGHT_ACTION_ADD}}</span>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t</ul>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li v-if=\"this.$root.$app.isWithOrdersMode\" @click=\"showOrdersList\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_ORDERS}}</div>\n\t\t\t\t\t\t\t<span class=\"ui-sidepanel-counter\" ref=\"ordersCounter\" v-show=\"ordersCount > 0\">{{ordersCount}}</span>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li v-if=\"this.$root.$app.isWithOrdersMode\" @click=\"showOrderAdd\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_ORDER_ADD}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li v-if=\"!this.$root.$app.isWithOrdersMode\" @click=\"showPaymentsList\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_PAYMENTS}}</div>\n\t\t\t\t\t\t\t<span class=\"ui-sidepanel-counter\" ref=\"paymentsCounter\" v-show=\"paymentsCount > 0\">{{paymentsCount}}</span>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li v-if=\"this.$root.$app.isCatalogAvailable\" @click=\"showCatalog\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_CATALOG}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li :class=\"{'salescenter-app-sidebar-menu-active': isFormsOpen}\" class=\"ui-sidepanel-menu-item\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\" @click.stop.prevent=\"onFormsClick();\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_FORMS_ALL}}</div>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-toggle-btn\">{{this.isPagesOpen ? this.localize.SALESCENTER_SUBMENU_CLOSE : this.localize.SALESCENTER_SUBMENU_OPEN}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t\t<ul class=\"ui-sidepanel-submenu\" :style=\"{height: formsSubmenuHeight}\">\n\t\t\t\t\t\t\t<li v-for=\"page in pages\" v-if=\"page.isWebform\" :key=\"page.id\"\n\t\t\t\t\t\t\t :class=\"{\n\t\t\t\t\t\t\t\t'ui-sidepanel-submenu-active': (currentPage && currentPage.id == page.id && isShowPreview),\n\t\t\t\t\t\t\t\t'ui-sidepanel-submenu-edit-mode': (editedPageId === page.id)\n\t\t\t\t\t\t\t}\" class=\"ui-sidepanel-submenu-item\">\n\t\t\t\t\t\t\t\t<a :title=\"page.name\" class=\"ui-sidepanel-submenu-link\" @click.stop=\"onPageClick(page)\">\n\t\t\t\t\t\t\t\t\t<input class=\"ui-sidepanel-input\" :value=\"page.name\" v-on:keyup.enter=\"saveMenuItem($event)\" @blur=\"saveMenuItem($event)\" />\n\t\t\t\t\t\t\t\t\t<div v-if=\"lastAddedPages.includes(page.id)\" class=\"ui-sidepanel-badge-new\"></div>\n\t\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{page.name}}</div>\n\t\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-edit-btn\"><span class=\"ui-sidepanel-edit-btn-icon\" @click=\"editMenuItem($event, page);\"></span></div>\n\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t\t<li class=\"salescenter-app-helper-nav-item salescenter-app-menu-add-page\" @click.stop=\"showAddPageActionPopup($event, true)\">\n\t\t\t\t\t\t\t\t<span class=\"salescenter-app-helper-nav-item-text salescenter-app-helper-nav-item-add\">+</span><span class=\"salescenter-app-helper-nav-item-text\">{{localize.SALESCENTER_RIGHT_ACTION_ADD}}</span>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t</ul>\n\t\t\t\t\t</li>\n\t\t\t\t</ul>\n\t\t\t</div>\n\t\t\t<div class=\"salescenter-app-right-side\">\n\t\t\t\t<div class=\"salescenter-app-page-header\" v-show=\"isShowPreview && !isShowStartInfo\">\n\t\t\t\t\t<div class=\"salescenter-btn-action ui-btn ui-btn-link ui-btn-dropdown ui-btn-xs\" @click=\"showActionsPopup($event)\">{{localize.SALESCENTER_RIGHT_ACTIONS_BUTTON}}</div>\n\t\t\t\t\t<div class=\"salescenter-btn-delimiter salescenter-btn-action\"></div>\n\t\t\t\t\t<div class=\"salescenter-btn-action ui-btn ui-btn-link ui-btn-xs ui-btn-icon-edit\" @click=\"editPage\">{{localize.SALESCENTER_RIGHT_ACTION_EDIT}}</div>\n\t\t\t\t</div>\n\t\t\t\t<start\n\t\t\t\t\tv-if=\"isShowStartInfo\"\n\t\t\t\t\t@on-successfully-connected=\"onSuccessfullyConnected\"\n\t\t\t\t>\n\t\t\t\t</start>\n\t\t\t\t<template v-else-if=\"isFrameError && isShowPreview\">\n\t\t\t\t\t<div class=\"salescenter-app-page-content salescenter-app-lost\">\n\t\t\t\t\t\t<div class=\"salescenter-app-lost-block ui-title-1 ui-text-center ui-color-medium\">{{localize.SALESCENTER_ERROR_TITLE}}</div>\n\t\t\t\t\t\t<div v-if=\"currentPage.isFrameDenied === true\" class=\"salescenter-app-lost-helper ui-color-medium\">{{localize.SALESCENTER_RIGHT_FRAME_DENIED}}</div>\n\t\t\t\t\t\t<div v-else-if=\"currentPage.isActive !== true\" class=\"salescenter-app-lost-helper salescenter-app-not-active ui-color-medium\">{{localize.SALESCENTER_RIGHT_NOT_ACTIVE}}</div>\n\t\t\t\t\t\t<div v-else class=\"salescenter-app-lost-helper ui-color-medium\">{{localize.SALESCENTER_ERROR_TEXT}}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<div v-show=\"isShowPreview && !isShowStartInfo && !isFrameError\" class=\"salescenter-app-page-content\">\n\t\t\t\t\t<template v-for=\"page in pages\">\n\t\t\t\t\t\t<iframe class=\"salescenter-app-demo\" v-show=\"currentPage && currentPage.id == page.id\" :src=\"getFrameSource(page)\" frameborder=\"0\" @error=\"onFrameError(page.id)\" @load=\"onFrameLoad(page.id)\" :key=\"page.id\"></iframe>\n\t\t\t\t\t</template>\n\t\t\t\t\t<div class=\"salescenter-app-demo-overlay\" :class=\"{\n\t\t\t\t\t\t'salescenter-app-demo-overlay-loading': this.isShowLoader\n\t\t\t\t\t}\">\n\t\t\t\t\t\t<div v-show=\"isShowLoader\" ref=\"previewLoader\"></div>\n\t\t\t\t\t\t<div v-if=\"lastModified\" class=\"salescenter-app-demo-overlay-modification\">{{lastModified}}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t    <template v-if=\"this.$root.$app.isPaymentsLimitReached\">\n\t\t\t        <div ref=\"paymentsLimit\" v-show=\"isShowPayment && !isShowStartInfo\"></div>\n\t\t\t\t</template>\n\t\t\t\t<template v-else>\n\t\t\t\t\t<chat-receiving-payment\n\t\t\t\t\t\tv-if=\"isShowPayment && !isShowStartInfo\"\n\t\t\t\t\t\t:key=\"order.basketVersion\"\n\t\t\t\t\t\t@stage-block-send-on-send=\"send($event)\"\n\t\t\t\t\t/>\n\t\t        </template>\n\t\t\t</div>\n\t\t\t<div class=\"ui-button-panel-wrapper salescenter-button-panel\" ref=\"buttonsPanel\">\n\t\t\t\t<div class=\"ui-button-panel\">\n\t\t\t\t\t<button :class=\"{'ui-btn-disabled': !this.isAllowedSubmitButton}\" class=\"ui-btn ui-btn-md ui-btn-success\" @click=\"send($event)\">{{localize.SALESCENTER_SEND}}</button>\n\t\t\t\t\t<button class=\"ui-btn ui-btn-md ui-btn-link\" @click=\"close\">{{localize.SALESCENTER_CANCEL}}</button>\n\t\t\t\t\t<button v-if=\"isShowPayment && !isShowStartInfo && !this.$root.$app.isPaymentsLimitReached && this.$root.$app.isWithOrdersMode\" class=\"ui-btn ui-btn-md ui-btn-link btn-send-crm\" @click=\"send($event, 'y')\">{{localize.SALESCENTER_SAVE_ORDER}}</button>\n\t\t\t\t</div>\n\t\t\t\t<div v-if=\"this.order.errors.length > 0\" ref=\"errorBlock\"></div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div\n\t\t\t:class=\"wrapperClass\"\n\t\t\t:style=\"wrapperStyle\"\n\t\t\tclass=\"salescenter-app-wrapper salescenter-app-chat-wrapper\"\n\t\t>\n\t\t\t<div class=\"ui-sidepanel-sidebar salescenter-app-sidebar\" ref=\"sidebar\">\n\t\t\t\t<ul class=\"ui-sidepanel-menu\" ref=\"sidepanelMenu\">\n\t\t\t\t\t<li v-if=\"this.$root.$app.isPaymentCreationAvailable\" :class=\"{ 'salescenter-app-sidebar-menu-active': this.isShowPayment}\" class=\"ui-sidepanel-menu-item\" @click=\"showPaymentForm\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{getPaymentItemTitle()}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li :class=\"{'salescenter-app-sidebar-menu-active': isPagesOpen}\" class=\"ui-sidepanel-menu-item\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\" @click.stop.prevent=\"isPagesOpen = !isPagesOpen;\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_PAGES}}</div>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-toggle-btn\">{{this.isPagesOpen ? this.localize.SALESCENTER_SUBMENU_CLOSE : this.localize.SALESCENTER_SUBMENU_OPEN}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t\t<ul class=\"ui-sidepanel-submenu\" :style=\"{height: pagesSubmenuHeight}\">\n\t\t\t\t\t\t\t<li v-for=\"page in pages\" v-if=\"!page.isWebform\" :key=\"page.id\"\n\t\t\t\t\t\t\t:class=\"{\n\t\t\t\t\t\t\t\t'ui-sidepanel-submenu-active': (currentPage && currentPage.id == page.id && isShowPreview),\n\t\t\t\t\t\t\t\t'ui-sidepanel-submenu-edit-mode': (editedPageId === page.id)\n\t\t\t\t\t\t\t}\" class=\"ui-sidepanel-submenu-item\">\n\t\t\t\t\t\t\t\t<a :title=\"page.name\" class=\"ui-sidepanel-submenu-link\" @click.stop=\"onPageClick(page)\">\n\t\t\t\t\t\t\t\t\t<input class=\"ui-sidepanel-input\" :value=\"page.name\" v-on:keyup.enter=\"saveMenuItem($event)\" @blur=\"saveMenuItem($event)\" />\n\t\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{page.name}}</div>\n\t\t\t\t\t\t\t\t\t<div v-if=\"lastAddedPages.includes(page.id)\" class=\"ui-sidepanel-badge-new\"></div>\n\t\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-edit-btn\"><span class=\"ui-sidepanel-edit-btn-icon\" @click=\"editMenuItem($event, page);\"></span></div>\n\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t\t<li class=\"salescenter-app-helper-nav-item salescenter-app-menu-add-page\" @click.stop=\"showAddPageActionPopup($event)\">\n\t\t\t\t\t\t\t\t<span class=\"salescenter-app-helper-nav-item-text salescenter-app-helper-nav-item-add\">+</span><span class=\"salescenter-app-helper-nav-item-text\">{{localize.SALESCENTER_RIGHT_ACTION_ADD}}</span>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t</ul>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li v-if=\"this.$root.$app.isWithOrdersMode\" @click=\"showOrdersList\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_ORDERS}}</div>\n\t\t\t\t\t\t\t<span class=\"ui-sidepanel-counter\" ref=\"ordersCounter\" v-show=\"ordersCount > 0\">{{ordersCount}}</span>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li v-if=\"this.$root.$app.isWithOrdersMode\" @click=\"showOrderAdd\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_ORDER_ADD}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li v-if=\"!this.$root.$app.isWithOrdersMode\" @click=\"showPaymentsList\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_PAYMENTS}}</div>\n\t\t\t\t\t\t\t<span class=\"ui-sidepanel-counter\" ref=\"paymentsCounter\" v-show=\"paymentsCount > 0\">{{paymentsCount}}</span>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li v-if=\"this.$root.$app.isCatalogAvailable\" @click=\"showCatalog\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_CATALOG}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li :class=\"{'salescenter-app-sidebar-menu-active': isFormsOpen}\" class=\"ui-sidepanel-menu-item\">\n\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\" @click.stop.prevent=\"onFormsClick();\">\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{localize.SALESCENTER_LEFT_FORMS_ALL}}</div>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-toggle-btn\">{{this.isFormsOpen ? this.localize.SALESCENTER_SUBMENU_CLOSE : this.localize.SALESCENTER_SUBMENU_OPEN}}</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t\t<ul class=\"ui-sidepanel-submenu\" :style=\"{height: formsSubmenuHeight}\">\n\t\t\t\t\t\t\t<li v-for=\"page in pages\" v-if=\"page.isWebform\" :key=\"page.id\"\n\t\t\t\t\t\t\t :class=\"{\n\t\t\t\t\t\t\t\t'ui-sidepanel-submenu-active': (currentPage && currentPage.id == page.id && isShowPreview),\n\t\t\t\t\t\t\t\t'ui-sidepanel-submenu-edit-mode': (editedPageId === page.id)\n\t\t\t\t\t\t\t}\" class=\"ui-sidepanel-submenu-item\">\n\t\t\t\t\t\t\t\t<a :title=\"page.name\" class=\"ui-sidepanel-submenu-link\" @click.stop=\"onPageClick(page)\">\n\t\t\t\t\t\t\t\t\t<input class=\"ui-sidepanel-input\" :value=\"page.name\" v-on:keyup.enter=\"saveMenuItem($event)\" @blur=\"saveMenuItem($event)\" />\n\t\t\t\t\t\t\t\t\t<div v-if=\"lastAddedPages.includes(page.id)\" class=\"ui-sidepanel-badge-new\"></div>\n\t\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{page.name}}</div>\n\t\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-edit-btn\"><span class=\"ui-sidepanel-edit-btn-icon\" @click=\"editMenuItem($event, page);\"></span></div>\n\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t\t<li class=\"salescenter-app-helper-nav-item salescenter-app-menu-add-page\" @click.stop=\"showAddPageActionPopup($event, true)\">\n\t\t\t\t\t\t\t\t<span class=\"salescenter-app-helper-nav-item-text salescenter-app-helper-nav-item-add\">+</span><span class=\"salescenter-app-helper-nav-item-text\">{{localize.SALESCENTER_RIGHT_ACTION_ADD}}</span>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t</ul>\n\t\t\t\t\t</li>\n\t\t\t\t</ul>\n\t\t\t</div>\n\t\t\t<div class=\"salescenter-app-right-side\">\n\t\t\t\t<div class=\"salescenter-app-page-header\" v-show=\"isShowPreview && !isShowStartInfo\">\n\t\t\t\t\t<div class=\"salescenter-btn-action ui-btn ui-btn-link ui-btn-dropdown ui-btn-xs\" @click=\"showActionsPopup($event)\">{{localize.SALESCENTER_RIGHT_ACTIONS_BUTTON}}</div>\n\t\t\t\t\t<div class=\"salescenter-btn-delimiter salescenter-btn-action\"></div>\n\t\t\t\t\t<div class=\"salescenter-btn-action ui-btn ui-btn-link ui-btn-xs ui-btn-icon-edit\" @click=\"editPage\">{{localize.SALESCENTER_RIGHT_ACTION_EDIT}}</div>\n\t\t\t\t</div>\n\t\t\t\t<start\n\t\t\t\t\tv-if=\"isShowStartInfo\"\n\t\t\t\t\t@on-successfully-connected=\"onSuccessfullyConnected\"\n\t\t\t\t>\n\t\t\t\t</start>\n\t\t\t\t<template v-else-if=\"isFrameError && isShowPreview\">\n\t\t\t\t\t<div class=\"salescenter-app-page-content salescenter-app-lost\">\n\t\t\t\t\t\t<div class=\"salescenter-app-lost-block ui-title-1 ui-text-center ui-color-medium\">{{localize.SALESCENTER_ERROR_TITLE}}</div>\n\t\t\t\t\t\t<div v-if=\"currentPage.isFrameDenied === true\" class=\"salescenter-app-lost-helper ui-color-medium\">{{localize.SALESCENTER_RIGHT_FRAME_DENIED}}</div>\n\t\t\t\t\t\t<div v-else-if=\"currentPage.isActive !== true\" class=\"salescenter-app-lost-helper salescenter-app-not-active ui-color-medium\">{{localize.SALESCENTER_RIGHT_NOT_ACTIVE}}</div>\n\t\t\t\t\t\t<div v-else class=\"salescenter-app-lost-helper ui-color-medium\">{{localize.SALESCENTER_ERROR_TEXT}}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<div v-show=\"isShowPreview && !isShowStartInfo && !isFrameError\" class=\"salescenter-app-page-content\">\n\t\t\t\t\t<template v-for=\"page in pages\">\n\t\t\t\t\t\t<iframe class=\"salescenter-app-demo\" v-show=\"currentPage && currentPage.id == page.id\" :src=\"getFrameSource(page)\" frameborder=\"0\" @error=\"onFrameError(page.id)\" @load=\"onFrameLoad(page.id)\" :key=\"page.id\"></iframe>\n\t\t\t\t\t</template>\n\t\t\t\t\t<div class=\"salescenter-app-demo-overlay\" :class=\"{\n\t\t\t\t\t\t'salescenter-app-demo-overlay-loading': this.isShowLoader\n\t\t\t\t\t}\">\n\t\t\t\t\t\t<div v-show=\"isShowLoader\" ref=\"previewLoader\"></div>\n\t\t\t\t\t\t<div v-if=\"lastModified\" class=\"salescenter-app-demo-overlay-modification\">{{lastModified}}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t    <template v-if=\"this.$root.$app.isPaymentsLimitReached\">\n\t\t\t        <div ref=\"paymentsLimit\" v-show=\"isShowPayment && !isShowStartInfo\"></div>\n\t\t\t\t</template>\n\t\t\t\t<template v-else>\n\t\t\t\t\t<chat-receiving-payment\n\t\t\t\t\t\tv-if=\"isShowPayment && !isShowStartInfo\"\n\t\t\t\t\t\t:key=\"order.basketVersion\"\n\t\t\t\t\t\t@stage-block-send-on-send=\"send($event)\"\n\t\t\t\t\t/>\n\t\t        </template>\n\t\t\t</div>\n\t\t\t<div class=\"ui-button-panel-wrapper salescenter-button-panel\" ref=\"buttonsPanel\">\n\t\t\t\t<div class=\"ui-button-panel\">\n\t\t\t\t\t<button :class=\"{'ui-btn-disabled': !this.isAllowedSubmitButton}\" class=\"ui-btn ui-btn-md ui-btn-success\" @click=\"send($event)\">{{localize.SALESCENTER_SEND}}</button>\n\t\t\t\t\t<button class=\"ui-btn ui-btn-md ui-btn-link\" @click=\"close\">{{localize.SALESCENTER_CANCEL}}</button>\n\t\t\t\t\t<button v-if=\"isShowPayment && !isShowStartInfo && !this.$root.$app.isPaymentsLimitReached && this.$root.$app.isWithOrdersMode\" class=\"ui-btn ui-btn-md ui-btn-link btn-send-crm\" @click=\"send($event, 'y')\">{{localize.SALESCENTER_SAVE_ORDER}}</button>\n\t\t\t\t</div>\n\t\t\t\t<div v-if=\"this.order.errors.length > 0\" ref=\"errorBlock\"></div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
-	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper$2(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$2(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 
-	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
+	function _unsupportedIterableToArray$2(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$2(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$2(o, minLen); }
 
-	function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+	function _arrayLikeToArray$2(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 	var SmsMessage = {
 	  props: {
 	    initSenders: {
@@ -2306,7 +2847,7 @@ this.BX = this.BX || {};
 	      required: true
 	    },
 	    counter: {
-	      type: String,
+	      type: Number,
 	      required: true
 	    },
 	    manager: {
@@ -2389,7 +2930,7 @@ this.BX = this.BX || {};
 	      var bitrix24ConnectUrlError;
 
 	      if (!this.currentSender) {
-	        var _iterator = _createForOfIteratorHelper$1(this.senders),
+	        var _iterator = _createForOfIteratorHelper$2(this.senders),
 	            _step;
 
 	        try {
@@ -2547,7 +3088,7 @@ this.BX = this.BX || {};
 	        initPushedToUseBitrix24Notifications: this.$root.$app.options.pushedToUseBitrix24Notifications,
 	        status: salescenter_component_stageBlock.StatusTypes.complete,
 	        selectedSmsSender: this.$root.$app.sendingMethodDesc.provider,
-	        manager: this.$root.$app.options.dealResponsible,
+	        manager: this.$root.$app.options.entityResponsible,
 	        phone: this.$root.$app.options.contactPhone,
 	        titleTemplate: this.$root.$app.sendingMethodDesc.sent ? main_core.Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_MESSAGE_2_PAST_TIME') : main_core.Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_MESSAGE_2'),
 	        showHint: this.$root.$app.options.templateMode !== 'view',
@@ -2568,12 +3109,12 @@ this.BX = this.BX || {};
 	      },
 	      cashbox: {},
 	      delivery: {
-	        isHidden: this.$root.$app.options.templateMode === 'view' && parseInt(this.$root.$app.options.shipmentId) <= 0,
 	        status: this.$root.$app.options.deliveryList.isInstalled ? salescenter_component_stageBlock.StatusTypes.complete : salescenter_component_stageBlock.StatusTypes.disabled,
 	        tiles: this.getTileCollection(this.$root.$app.options.deliveryList.items),
 	        installed: this.$root.$app.options.deliveryList.isInstalled,
 	        initialCollapseState: this.$root.$app.options.isDeliveryCollapsed ? this.$root.$app.options.isDeliveryCollapsed === 'Y' : this.$root.$app.options.deliveryList.isInstalled
-	      }
+	      },
+	      automation: {}
 	    };
 
 	    if (this.$root.$app.options.cashboxList.hasOwnProperty('items')) {
@@ -2591,7 +3132,7 @@ this.BX = this.BX || {};
 	        status: salescenter_component_stageBlock.StatusTypes.complete,
 	        stageOnOrderPaid: this.$root.$app.options.stageOnOrderPaid,
 	        stageOnDeliveryFinished: this.$root.$app.options.stageOnDeliveryFinished,
-	        items: this.$root.$app.options.dealStageList,
+	        items: this.$root.$app.options.entityStageList,
 	        initialCollapseState: this.$root.$app.options.isAutomationCollapsed ? this.$root.$app.options.isAutomationCollapsed === 'Y' : false
 	      };
 	    }
@@ -2619,6 +3160,9 @@ this.BX = this.BX || {};
 	    },
 	    submitButtonLabel: function submitButtonLabel() {
 	      return this.editable ? main_core.Loc.getMessage('SALESCENTER_SEND') : main_core.Loc.getMessage('SALESCENTER_RESEND');
+	    },
+	    isHideDeliveryStage: function isHideDeliveryStage() {
+	      return this.isViewWithoutDelivery();
 	    }
 	  },
 	  methods: {
@@ -2689,6 +3233,9 @@ this.BX = this.BX || {};
 	    },
 	    saveCollapsedOption: function saveCollapsedOption(type, value) {
 	      BX.userOptions.save('salescenter', 'add_payment_collapse_options', type, value);
+	    },
+	    isViewWithoutDelivery: function isViewWithoutDelivery() {
+	      return this.$root.$app.options.templateMode === 'view' && parseInt(this.$root.$app.options.shipmentId) <= 0;
 	    }
 	  },
 	  created: function created() {
@@ -2697,7 +3244,186 @@ this.BX = this.BX || {};
 	  beforeUpdate: function beforeUpdate() {
 	    this.initCounter();
 	  },
-	  template: "\n\t\t<div>\n\t\t\t<sms-message-block\n\t\t\t\t@stage-block-sms-send-on-change-provider=\"changeProvider\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.message.status\"\n\t\t\t\t:initSenders=\"stages.message.initSenders\"\n\t\t\t\t:initCurrentSenderCode=\"stages.message.initCurrentSenderCode\"\n\t\t\t\t:initPushedToUseBitrix24Notifications=\"stages.message.initPushedToUseBitrix24Notifications\"\n\t\t\t\t:selectedSmsSender=\"stages.message.selectedSmsSender\"\n\t\t\t\t:manager=\"stages.message.manager\"\n\t\t\t\t:phone=\"stages.message.phone\"\n\t\t\t\t:titleTemplate=\"stages.message.titleTemplate\"\n\t\t\t\t:showHint=\"stages.message.showHint\"\n\t\t\t\t:editorTemplate=\"stages.message.editorTemplate\"\n\t\t\t\t:editorUrl=\"stages.message.editorUrl\"\n\t\t\t/>\t\n\t\t\t<product-block \n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.product.status\"\n\t\t\t\t:title=\"stages.product.title\"\n\t\t\t\t:hintTitle=\"stages.product.hintTitle\"\n\t\t\t/>\n\t\t\t<paysystem-block\n\t\t\t\tv-if=\"editable\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'PAY_SYSTEM')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.paysystem.status\"\n\t\t\t\t:tiles=\"stages.paysystem.tiles\"\n\t\t\t\t:installed=\"stages.paysystem.installed\"\n\t\t\t\t:titleItems=\"stages.paysystem.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.paysystem.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<cashbox-block\n\t\t\t\tv-if=\"editable && hasStageCashBox\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'CASHBOX')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.cashbox.status\"\n\t\t\t\t:tiles=\"stages.cashbox.tiles\"\n\t\t\t\t:installed=\"stages.cashbox.installed\"\n\t\t\t\t:titleItems=\"stages.cashbox.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.cashbox.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<delivery-block\n\t\t\t\tv-if=\"!stages.delivery.isHidden\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'DELIVERY')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.delivery.status\"\n\t\t\t\t:tiles=\"stages.delivery.tiles\"\n\t\t\t\t:installed=\"stages.delivery.installed\"\n\t\t\t\t:isCollapsible=\"true\"\n\t\t\t\t:initialCollapseState=\"stages.delivery.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<automation-block\n\t\t\t\tv-if=\"editable && hasStageAutomation\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.automation.status\"\n\t\t\t\t:stageOnOrderPaid=\"stages.automation.stageOnOrderPaid\"\n\t\t\t\t:stageOnDeliveryFinished=\"stages.automation.stageOnDeliveryFinished\"\n\t\t\t\t:items=\"stages.automation.items\"\n\t\t\t\t:initialCollapseState=\"stages.automation.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<send-block\n\t\t\t\t@on-submit=\"onSend\"\n\t\t\t\t:buttonEnabled=\"sendAllowed\"\n\t\t\t\t:showWhatClientSeesControl=\"!editable\"\n\t\t\t\t:buttonLabel=\"submitButtonLabel\"\n\t\t\t/>\n\t\t\t<timeline-block\n\t\t\t\tv-if=\"hasStageTimeLine\"\n\t\t\t\t:timelineItems=\"stages.timeline.items\"\n\t\t\t/>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div>\n\t\t\t<sms-message-block\n\t\t\t\t@stage-block-sms-send-on-change-provider=\"changeProvider\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.message.status\"\n\t\t\t\t:initSenders=\"stages.message.initSenders\"\n\t\t\t\t:initCurrentSenderCode=\"stages.message.initCurrentSenderCode\"\n\t\t\t\t:initPushedToUseBitrix24Notifications=\"stages.message.initPushedToUseBitrix24Notifications\"\n\t\t\t\t:selectedSmsSender=\"stages.message.selectedSmsSender\"\n\t\t\t\t:manager=\"stages.message.manager\"\n\t\t\t\t:phone=\"stages.message.phone\"\n\t\t\t\t:titleTemplate=\"stages.message.titleTemplate\"\n\t\t\t\t:showHint=\"stages.message.showHint\"\n\t\t\t\t:editorTemplate=\"stages.message.editorTemplate\"\n\t\t\t\t:editorUrl=\"stages.message.editorUrl\"\n\t\t\t/>\n\t\t\t<product-block\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.product.status\"\n\t\t\t\t:title=\"stages.product.title\"\n\t\t\t\t:hintTitle=\"stages.product.hintTitle\"\n\t\t\t/>\n\t\t\t<paysystem-block\n\t\t\t\tv-if=\"editable\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'PAY_SYSTEM')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.paysystem.status\"\n\t\t\t\t:tiles=\"stages.paysystem.tiles\"\n\t\t\t\t:installed=\"stages.paysystem.installed\"\n\t\t\t\t:titleItems=\"stages.paysystem.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.paysystem.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<cashbox-block\n\t\t\t\tv-if=\"editable && hasStageCashBox\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'CASHBOX')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.cashbox.status\"\n\t\t\t\t:tiles=\"stages.cashbox.tiles\"\n\t\t\t\t:installed=\"stages.cashbox.installed\"\n\t\t\t\t:titleItems=\"stages.cashbox.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.cashbox.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<delivery-block\n\t\t\t\tv-if=\"!isHideDeliveryStage\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'DELIVERY')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.delivery.status\"\n\t\t\t\t:tiles=\"stages.delivery.tiles\"\n\t\t\t\t:installed=\"stages.delivery.installed\"\n\t\t\t\t:isCollapsible=\"true\"\n\t\t\t\t:initialCollapseState=\"stages.delivery.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<automation-block\n\t\t\t\tv-if=\"editable && hasStageAutomation\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.automation.status\"\n\t\t\t\t:stageOnOrderPaid=\"stages.automation.stageOnOrderPaid\"\n\t\t\t\t:stageOnDeliveryFinished=\"stages.automation.stageOnDeliveryFinished\"\n\t\t\t\t:items=\"stages.automation.items\"\n\t\t\t\t:initialCollapseState=\"stages.automation.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<send-block\n\t\t\t\t@on-submit=\"onSend\"\n\t\t\t\t:buttonEnabled=\"sendAllowed\"\n\t\t\t\t:showWhatClientSeesControl=\"!editable\"\n\t\t\t\t:buttonLabel=\"submitButtonLabel\"\n\t\t\t/>\n\t\t\t<timeline-block\n\t\t\t\tv-if=\"hasStageTimeLine\"\n\t\t\t\t:timelineItems=\"stages.timeline.items\"\n\t\t\t/>\n\t\t</div>\n\t"
+	};
+
+	var EntityCreatePaymentStages = {
+	  components: {
+	    'send-block': Send,
+	    'cashbox-block': Cashbox,
+	    'product-block': Product$1,
+	    'paysystem-block': PaySystem,
+	    'automation-block': Automation,
+	    'sms-message-block': SmsMessage,
+	    'timeline-block': TimeLine,
+	    'document-selector-block': DocumentSelector
+	  },
+	  props: {
+	    sendAllowed: {
+	      type: Boolean,
+	      required: true
+	    }
+	  },
+	  data: function data() {
+	    var stages = {
+	      message: {
+	        initSenders: this.$root.$app.options.senders,
+	        initCurrentSenderCode: this.$root.$app.options.currentSenderCode,
+	        initPushedToUseBitrix24Notifications: this.$root.$app.options.pushedToUseBitrix24Notifications,
+	        status: salescenter_component_stageBlock.StatusTypes.complete,
+	        selectedSmsSender: this.$root.$app.sendingMethodDesc.provider,
+	        manager: this.$root.$app.options.entityResponsible,
+	        phone: this.$root.$app.options.contactPhone,
+	        titleTemplate: this.$root.$app.sendingMethodDesc.sent ? main_core.Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_MESSAGE_2_PAST_TIME') : main_core.Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_MESSAGE_2'),
+	        showHint: this.$root.$app.options.templateMode !== 'view',
+	        editorTemplate: this.$root.$app.sendingMethodDesc.text,
+	        editorUrl: this.$root.$app.orderPublicUrl
+	      },
+	      product: {
+	        status: this.$root.$app.options.basket && this.$root.$app.options.basket.length > 0 ? salescenter_component_stageBlock.StatusTypes.complete : salescenter_component_stageBlock.StatusTypes.current,
+	        title: this.$root.$app.options.templateMode === 'view' ? main_core.Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_PAYMENT_VIEW') : main_core.Loc.getMessage('SALESCENTER_PRODUCT_BLOCK_TITLE_SHORT'),
+	        hintTitle: this.$root.$app.options.templateMode === 'view' ? '' : main_core.Loc.getMessage('SALESCENTER_PRODUCT_SET_BLOCK_TITLE_SHORT')
+	      },
+	      paysystem: {
+	        status: this.$root.$app.options.paySystemList.isSet ? salescenter_component_stageBlock.StatusTypes.complete : salescenter_component_stageBlock.StatusTypes.disabled,
+	        tiles: this.getTileCollection(this.$root.$app.options.paySystemList.items),
+	        installed: this.$root.$app.options.paySystemList.isSet,
+	        titleItems: this.getTitleItems(this.$root.$app.options.paySystemList.items),
+	        initialCollapseState: this.$root.$app.options.isPaySystemCollapsed ? this.$root.$app.options.isPaySystemCollapsed === 'Y' : this.$root.$app.options.paySystemList.isSet
+	      },
+	      cashbox: {},
+	      automation: {},
+	      documentSelector: {
+	        status: salescenter_component_stageBlock.StatusTypes.complete
+	      }
+	    };
+
+	    if (this.$root.$app.options.cashboxList.hasOwnProperty('items')) {
+	      stages.cashbox = {
+	        status: this.$root.$app.options.cashboxList.isSet ? salescenter_component_stageBlock.StatusTypes.complete : salescenter_component_stageBlock.StatusTypes.disabled,
+	        tiles: this.getTileCollection(this.$root.$app.options.cashboxList.items),
+	        installed: this.$root.$app.options.cashboxList.isSet,
+	        titleItems: this.getTitleItems(this.$root.$app.options.cashboxList.items),
+	        initialCollapseState: this.$root.$app.options.isCashboxCollapsed ? this.$root.$app.options.isCashboxCollapsed === 'Y' : this.$root.$app.options.cashboxList.isSet
+	      };
+	    }
+
+	    if (this.$root.$app.options.isAutomationAvailable) {
+	      stages.automation = {
+	        status: salescenter_component_stageBlock.StatusTypes.complete,
+	        stageOnOrderPaid: this.$root.$app.options.stageOnOrderPaid,
+	        items: this.$root.$app.options.entityStageList,
+	        initialCollapseState: this.$root.$app.options.isAutomationCollapsed ? this.$root.$app.options.isAutomationCollapsed === 'Y' : false
+	      };
+	    }
+
+	    if (this.$root.$app.options.hasOwnProperty('timeline')) {
+	      stages.timeline = {
+	        items: this.getTimelineCollection(this.$root.$app.options.timeline)
+	      };
+	    }
+
+	    if (this.$root.$app.hasOwnProperty('documentSelector')) {
+	      if (this.$root.$app.documentSelector.templateAddUrl) {
+	        stages.documentSelector.templateAddUrl = this.$root.$app.documentSelector.templateAddUrl;
+	      }
+	    }
+
+	    return {
+	      stages: stages
+	    };
+	  },
+	  mixins: [StageMixin, MixinTemplatesType],
+	  computed: {
+	    hasStageTimeLine: function hasStageTimeLine() {
+	      return this.stages.timeline.hasOwnProperty('items') && this.stages.timeline.items.length > 0;
+	    },
+	    hasStageAutomation: function hasStageAutomation() {
+	      return this.stages.automation.hasOwnProperty('items');
+	    },
+	    hasStageCashBox: function hasStageCashBox() {
+	      return this.stages.cashbox.hasOwnProperty('tiles');
+	    },
+	    submitButtonLabel: function submitButtonLabel() {
+	      return this.editable ? main_core.Loc.getMessage('SALESCENTER_SEND') : main_core.Loc.getMessage('SALESCENTER_RESEND');
+	    },
+	    isShowDocumentSelector: function isShowDocumentSelector() {
+	      return this.$root.$app.hasOwnProperty('documentSelector');
+	    }
+	  },
+	  methods: {
+	    initCounter: function initCounter() {
+	      this.counter = 1;
+	    },
+	    getTimelineCollection: function getTimelineCollection(items) {
+	      var list = [];
+	      Object.values(items).forEach(function (options) {
+	        return list.push(TimeLineItem.Factory.create(options));
+	      });
+	      return list;
+	    },
+	    getTileCollection: function getTileCollection(items) {
+	      var tiles = [];
+	      Object.values(items).forEach(function (options) {
+	        return tiles.push(Tile.Factory.create(options));
+	      });
+	      return tiles;
+	    },
+	    getTitleItems: function getTitleItems(items) {
+	      var result = [];
+	      items.forEach(function (item) {
+	        if (![Tile.More.type(), Tile.Offer.type()].includes(item.type)) {
+	          result.push(item);
+	        }
+	      });
+	      return result;
+	    },
+	    stageRefresh: function stageRefresh(e, type) {
+	      BX.ajax.runComponentAction("bitrix:salescenter.app", "getAjaxData", {
+	        mode: "class",
+	        data: {
+	          type: type
+	        }
+	      }).then(function (response) {
+	        if (response.data) {
+	          this.refreshTilesByType(response.data, type);
+	        }
+	      }.bind(this), function () {
+	        ui_notification.UI.Notification.Center.notify({
+	          content: main_core.Loc.getMessage('SALESCENTER_DATA_UPDATE_ERROR')
+	        });
+	      });
+	    },
+	    refreshTilesByType: function refreshTilesByType(data, type) {
+	      if (type === 'PAY_SYSTEM') {
+	        this.stages.paysystem.status = data.isSet ? salescenter_component_stageBlock.StatusTypes.complete : salescenter_component_stageBlock.StatusTypes.disabled;
+	        this.stages.paysystem.tiles = this.getTileCollection(data.items);
+	        this.stages.paysystem.installed = data.isSet;
+	      } else if (type === 'CASHBOX') {
+	        this.stages.cashbox.status = data.isSet ? salescenter_component_stageBlock.StatusTypes.complete : salescenter_component_stageBlock.StatusTypes.disabled;
+	        this.stages.cashbox.tiles = this.getTileCollection(data.items);
+	        this.stages.cashbox.installed = data.isSet;
+	        this.stages.cashbox.titleItems = this.getTitleItems(data.items);
+	      }
+	    },
+	    onSend: function onSend(event) {
+	      this.$emit('stage-block-send-on-send', event);
+	    },
+	    changeProvider: function changeProvider(value) {
+	      this.$root.$app.sendingMethodDesc.provider = value;
+	      BX.userOptions.save('salescenter', 'payment_sms_provider_options', 'latest_selected_provider', value);
+	    },
+	    saveCollapsedOption: function saveCollapsedOption(type, value) {
+	      BX.userOptions.save('salescenter', 'add_payment_collapse_options', type, value);
+	    }
+	  },
+	  created: function created() {
+	    this.initCounter();
+	  },
+	  beforeUpdate: function beforeUpdate() {
+	    this.initCounter();
+	  },
+	  template: "\n\t\t<div>\n\t\t\t<sms-message-block\n\t\t\t\t@stage-block-sms-send-on-change-provider=\"changeProvider\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.message.status\"\n\t\t\t\t:initSenders=\"stages.message.initSenders\"\n\t\t\t\t:initCurrentSenderCode=\"stages.message.initCurrentSenderCode\"\n\t\t\t\t:initPushedToUseBitrix24Notifications=\"stages.message.initPushedToUseBitrix24Notifications\"\n\t\t\t\t:selectedSmsSender=\"stages.message.selectedSmsSender\"\n\t\t\t\t:manager=\"stages.message.manager\"\n\t\t\t\t:phone=\"stages.message.phone\"\n\t\t\t\t:titleTemplate=\"stages.message.titleTemplate\"\n\t\t\t\t:showHint=\"stages.message.showHint\"\n\t\t\t\t:editorTemplate=\"stages.message.editorTemplate\"\n\t\t\t\t:editorUrl=\"stages.message.editorUrl\"\n\t\t\t/>\n\t\t\t<product-block\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.product.status\"\n\t\t\t\t:title=\"stages.product.title\"\n\t\t\t\t:hintTitle=\"stages.product.hintTitle\"\n\t\t\t/>\n\t\t\t<paysystem-block\n\t\t\t\tv-if=\"editable\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'PAY_SYSTEM')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.paysystem.status\"\n\t\t\t\t:tiles=\"stages.paysystem.tiles\"\n\t\t\t\t:installed=\"stages.paysystem.installed\"\n\t\t\t\t:titleItems=\"stages.paysystem.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.paysystem.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<cashbox-block\n\t\t\t\tv-if=\"editable && hasStageCashBox\"\n\t\t\t\t@on-stage-tile-collection-slider-close=\"stageRefresh($event, 'CASHBOX')\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.cashbox.status\"\n\t\t\t\t:tiles=\"stages.cashbox.tiles\"\n\t\t\t\t:installed=\"stages.cashbox.installed\"\n\t\t\t\t:titleItems=\"stages.cashbox.titleItems\"\n\t\t\t\t:initialCollapseState=\"stages.cashbox.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<document-selector-block\n\t\t\t\tv-if=\"isShowDocumentSelector\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:templateAddUrl=\"stages.documentSelector.templateAddUrl\"\n\t\t\t/>\n\t\t\t<automation-block\n\t\t\t\tv-if=\"editable && hasStageAutomation\"\n\t\t\t\t:counter=\"counter++\"\n\t\t\t\t:status=\"stages.automation.status\"\n\t\t\t\t:stageOnOrderPaid=\"stages.automation.stageOnOrderPaid\"\n\t\t\t\t:items=\"stages.automation.items\"\n\t\t\t\t:initialCollapseState=\"stages.automation.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t<send-block\n\t\t\t\t@on-submit=\"onSend\"\n\t\t\t\t:buttonEnabled=\"sendAllowed\"\n\t\t\t\t:showWhatClientSeesControl=\"!editable\"\n\t\t\t\t:buttonLabel=\"submitButtonLabel\"\n\t\t\t/>\n\t\t\t<timeline-block\n\t\t\t\tv-if=\"hasStageTimeLine\"\n\t\t\t\t:timelineItems=\"stages.timeline.items\"\n\t\t\t/>\n\t\t</div>\n\t"
 	};
 
 	var Send$1 = {
@@ -2746,14 +3472,15 @@ this.BX = this.BX || {};
 	        tiles: this.getTileCollection(this.$root.$app.options.deliveryList.items),
 	        installed: this.$root.$app.options.deliveryList.isInstalled,
 	        initialCollapseState: this.$root.$app.options.isDeliveryCollapsed ? this.$root.$app.options.isDeliveryCollapsed === 'Y' : this.$root.$app.options.deliveryList.isInstalled
-	      }
+	      },
+	      automation: {}
 	    };
 
 	    if (this.$root.$app.options.isAutomationAvailable) {
 	      stages.automation = {
 	        status: salescenter_component_stageBlock.StatusTypes.complete,
 	        stageOnDeliveryFinished: this.$root.$app.options.stageOnDeliveryFinished,
-	        items: this.$root.$app.options.dealStageList,
+	        items: this.$root.$app.options.entityStageList,
 	        initialCollapseState: this.$root.$app.options.isAutomationCollapsed ? this.$root.$app.options.isAutomationCollapsed === 'Y' : false
 	      };
 	    }
@@ -2833,11 +3560,11 @@ this.BX = this.BX || {};
 	  template: "\n\t\t<div>\n\t\t\t<product-block \n\t\t\t\t:counter=\t\"counter++\"\n\t\t\t\t:status= \t\"stages.product.status\"\n\t\t\t\t:title=\t\t\"stages.product.title\"\t\t\n\t\t\t\t:hintTitle=\t\t\"''\"\n\t\t\t/>\n\t\t\t\n\t\t\t<delivery-block\t\t\t\t\t\t\tv-on:on-stage-tile-collection-slider-close=\"stageRefresh($event, 'DELIVERY')\"\n\t\t\t\t:counter=\t\"counter++\"\n\t\t\t\t:status=  \t\"stages.delivery.status\"\n\t\t\t\t:tiles=  \t\"stages.delivery.tiles\"\n\t\t\t\t:installed=\t\"stages.delivery.installed\"\n\t\t\t\t:isCollapsible=\"false\"\n\t\t\t\t:initialCollapseState = \"stages.delivery.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t\t\t\t\t\t\t\n\t\t\t<automation-block v-if=\"editable && hasStageAutomation\"\n\t\t\t\t:counter=\t\"counter++\"\n\t\t\t\t:status=\t\"stages.automation.status\"\n\t\t\t\t:stageOnDeliveryFinished=\t\"stages.automation.stageOnDeliveryFinished\"\n\t\t\t\t:items=\t\t\"stages.automation.items\"\n\t\t\t\t:initialCollapseState = \"stages.automation.initialCollapseState\"\n\t\t\t\t@on-save-collapsed-option=\"saveCollapsedOption\"\n\t\t\t/>\n\t\t\t\n\t\t\t<send-block\n\t\t\t\tv-if=\"!isViewTemplateMode\"\n\t\t\t\t@on-submit=\"onSend\"\n\t\t\t\t:buttonEnabled=\"sendAllowed\"\n\t\t\t/>\n\t\t</div>\n\t"
 	};
 
-	function _createForOfIteratorHelper$2(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$2(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper$3(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$3(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 
-	function _unsupportedIterableToArray$2(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$2(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$2(o, minLen); }
+	function _unsupportedIterableToArray$3(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$3(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$3(o, minLen); }
 
-	function _arrayLikeToArray$2(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+	function _arrayLikeToArray$3(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 	var Deal = {
 	  mixins: [MixinTemplatesType, ComponentMixin],
 	  data: function data() {
@@ -2848,6 +3575,7 @@ this.BX = this.BX || {};
 	  },
 	  components: {
 	    'deal-receiving-payment': StageBlocksList$1,
+	    'crm-entity-create-payment': EntityCreatePaymentStages,
 	    'deal-creating-shipment': StageBlocksListShipment,
 	    'start': Start
 	  },
@@ -2900,6 +3628,11 @@ this.BX = this.BX || {};
 	      BX.Salescenter.Manager.openFeedbackPayOrderForm(event);
 	    },
 	    howItWorks: function howItWorks(event) {
+	      if (this.mode === 'payment') {
+	        BX.Salescenter.Manager.openHowPaySmartInvoiceWorks(event);
+	        return;
+	      }
+
 	      BX.Salescenter.Manager.openHowPayDealWorks(event);
 	    },
 	    openIntegrationWindow: function openIntegrationWindow(event) {
@@ -2950,7 +3683,7 @@ this.BX = this.BX || {};
 
 	      var isCurrentSenderConnected = false;
 
-	      var _iterator = _createForOfIteratorHelper$2(this.$root.$app.options.senders),
+	      var _iterator = _createForOfIteratorHelper$3(this.$root.$app.options.senders),
 	          _step;
 
 	      try {
@@ -3006,6 +3739,9 @@ this.BX = this.BX || {};
 	    title: function title() {
 	      return this.$root.$app.options.title;
 	    },
+	    getTitleForPaymentDeliveryMenuItem: function getTitleForPaymentDeliveryMenuItem() {
+	      return main_core.Loc.getMessage('SALESCENTER_LEFT_TAKE_PAYMENT_AND_CREATE_SHIPMENT');
+	    },
 	    // classes region
 	    paymentDeliveryFormSubmitButtonClass: function paymentDeliveryFormSubmitButtonClass() {
 	      return {
@@ -3019,7 +3755,7 @@ this.BX = this.BX || {};
 	    },
 	    paymentDeliveryMenuItemClass: function paymentDeliveryMenuItemClass() {
 	      return {
-	        'salescenter-app-sidebar-menu-active': this.activeMenuItem === 'payment_delivery'
+	        'salescenter-app-sidebar-menu-active': this.activeMenuItem === 'payment_delivery' || this.activeMenuItem === 'payment'
 	      };
 	    },
 	    deliveryMenuItemClass: function deliveryMenuItemClass() {
@@ -3035,7 +3771,7 @@ this.BX = this.BX || {};
 	      return state.orderCreation;
 	    }
 	  })),
-	  template: "\n\t\t<div\n\t\t\t:class=\"wrapperClass\"\n\t\t\t:style=\"wrapperStyle\"\n\t\t\tclass=\"salescenter-app-wrapper\"\n\t\t>\n\t\t\t<div class=\"ui-sidepanel-sidebar salescenter-app-sidebar\">\n\t\t\t\t<ul class=\"ui-sidepanel-menu\">\n\t\t\t\t\t<template v-if=\"templateMode === 'view'\">\n\t\t\t\t\t\t<li class=\"ui-sidepanel-menu-item salescenter-app-sidebar-menu-active\">\n\t\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{title}}</div>\n\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t</li>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<li\n\t\t\t\t\t\t\tv-if=\"initialMode === 'payment_delivery'\"\n\t\t\t\t\t\t\t@click=\"reload('payment_delivery')\"\n\t\t\t\t\t\t\t:class=\"paymentDeliveryMenuItemClass\"\n\t\t\t\t\t\t\tclass=\"ui-sidepanel-menu-item\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">\n\t\t\t\t\t\t\t\t\t".concat(main_core.Loc.getMessage('SALESCENTER_LEFT_TAKE_PAYMENT_AND_CREATE_SHIPMENT'), "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t</li>\n\t\t\t\t\t\t<li\n\t\t\t\t\t\t\tv-if=\"isOnlyDeliveryItemVisible\"\n\t\t\t\t\t\t\t@click=\"reload('delivery')\"\n\t\t\t\t\t\t\t:class=\"deliveryMenuItemClass\"\n\t\t\t\t\t\t\tclass=\"ui-sidepanel-menu-item\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">\n\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_LEFT_CREATE_SHIPMENT'), "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t</li>\n\t\t\t\t\t</template>\n\t\t\t\t\t\n\t\t\t\t\t<li class=\"ui-sidepanel-menu-item ui-sidepanel-menu-item-sm ui-sidepanel-menu-item-separate\">\n\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t@click=\"specifyCompanyContacts\"\n\t\t\t\t\t\t\tclass=\"ui-sidepanel-menu-link\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_LEFT_PAYMENT_COMPANY_CONTACTS'), "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li\n\t\t\t\t\t\tv-if=\"isSuggestScenarioMenuItemVisible\"\n\t\t\t\t\t\tclass=\"ui-sidepanel-menu-item ui-sidepanel-menu-item-sm\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t@click=\"suggestScenario($event)\"\n\t\t\t\t\t\t\tclass=\"ui-sidepanel-menu-link\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_LEFT_PAYMENT_OFFER_SCRIPT'), "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\t\t\t\t\t\n\t\t\t\t\t<li class=\"ui-sidepanel-menu-item ui-sidepanel-menu-item-sm\">\n\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t@click=\"howItWorks($event)\"\n\t\t\t\t\t\t\tclass=\"ui-sidepanel-menu-link\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_LEFT_PAYMENT_HOW_WORKS'), "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li\n\t\t\t\t\t\tv-if=\"isAllowedFreeMessagesButton\"\n\t\t\t\t\t\tclass=\"ui-sidepanel-menu-item ui-sidepanel-menu-item-sm\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t@click=\"freeMessages($event)\"\n\t\t\t\t\t\t\tclass=\"ui-sidepanel-menu-link\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_LEFT_PAYMENT_FREE_MESSAGES'), "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li\n\t\t\t\t\t\tv-if=\"isRequestIntegrationMenuItemVisible\"\n\t\t\t\t\t\tclass=\"ui-sidepanel-menu-item ui-sidepanel-menu-item-sm\">\n\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t@click=\"openIntegrationWindow($event)\"\n\t\t\t\t\t\t\tclass=\"ui-sidepanel-menu-link\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_LEFT_PAYMENT_INTEGRATION'), "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t</ul>\n\t\t\t</div>\n\t\t\t<div class=\"salescenter-app-right-side\">\n\t\t\t\t<start\n\t\t\t\t\tv-if=\"needShowStoreConnection\"\n\t\t\t\t\t@on-successfully-connected=\"onSuccessfullyConnected\"\n\t\t\t\t>\n\t\t\t\t</start>\n\t\t        <template v-else>\n\t\t\t        <deal-receiving-payment\n\t\t\t        \tv-if=\"mode === 'payment_delivery'\"\n\t\t\t        \t@stage-block-send-on-send=\"sendPaymentDeliveryForm($event)\"\n\t\t\t        \t:sendAllowed=\"isAllowedPaymentDeliverySubmitButton\"\n\t\t\t        />\n\t\t\t        <deal-creating-shipment\n\t\t\t        \tv-else-if=\"mode === 'delivery'\"\n\t\t\t        \t@stage-block-send-on-send=\"sendDeliveryForm($event)\"\n\t\t\t        \t:sendAllowed=\"isAllowedDeliverySubmitButton\"\n\t\t\t        />\n\t\t        </template>\n\t\t\t</div>\n\t\t\t<div class=\"ui-button-panel-wrapper salescenter-button-panel\" ref=\"buttonsPanel\">\n\t\t\t\t<div class=\"ui-button-panel\">\n\t\t\t\t\t<template v-if=\"mode === 'payment_delivery'\">\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"sendPaymentDeliveryForm($event)\"\n\t\t\t\t\t\t\t:class=\"paymentDeliveryFormSubmitButtonClass\"\n\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-md ui-btn-success\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{sendPaymentDeliveryFormButtonText}}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"close\"\n\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-md ui-btn-link\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_CANCEL'), "\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"mode === 'delivery'\">\n\t\t\t\t\t\t<template v-if=\"editable\">\n\t\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t\t@click=\"sendDeliveryForm($event)\"\n\t\t\t\t\t\t\t\t:class=\"deliveryFormSubmitButtonClass\"\n\t\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-md ui-btn-success\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_CREATE_SHIPMENT'), "\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t\t@click=\"close\"\n\t\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-md ui-btn-link\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_CANCEL'), "\n\t\t\t\t\t\t\t</button>\t\t\t\t\t\t\t\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</template>\n\t\t\t\t</div>\n\t\t\t\t<div v-if=\"this.order.errors.length > 0\" ref=\"errorBlock\"></div>\n\t\t\t</div>\n\t\t</div>\n\t")
+	  template: "\n\t\t<div\n\t\t\t:class=\"wrapperClass\"\n\t\t\t:style=\"wrapperStyle\"\n\t\t\tclass=\"salescenter-app-wrapper\"\n\t\t>\n\t\t\t<div class=\"ui-sidepanel-sidebar salescenter-app-sidebar\">\n\t\t\t\t<ul class=\"ui-sidepanel-menu\">\n\t\t\t\t\t<template v-if=\"templateMode === 'view'\">\n\t\t\t\t\t\t<li class=\"ui-sidepanel-menu-item salescenter-app-sidebar-menu-active\">\n\t\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">{{title}}</div>\n\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t</li>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<li\n\t\t\t\t\t\t\tv-if=\"initialMode === 'payment_delivery'\"\n\t\t\t\t\t\t\t@click=\"reload('payment_delivery')\"\n\t\t\t\t\t\t\t:class=\"paymentDeliveryMenuItemClass\"\n\t\t\t\t\t\t\tclass=\"ui-sidepanel-menu-item\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">\n\t\t\t\t\t\t\t\t\t{{getTitleForPaymentDeliveryMenuItem}}\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t</li>\n\t\t\t\t\t\t<li\n\t\t\t\t\t\t\tv-if=\"isOnlyDeliveryItemVisible\"\n\t\t\t\t\t\t\t@click=\"reload('delivery')\"\n\t\t\t\t\t\t\t:class=\"deliveryMenuItemClass\"\n\t\t\t\t\t\t\tclass=\"ui-sidepanel-menu-item\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<a class=\"ui-sidepanel-menu-link\">\n\t\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">\n\t\t\t\t\t\t\t\t\t".concat(main_core.Loc.getMessage('SALESCENTER_LEFT_CREATE_SHIPMENT'), "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t</li>\n\t\t\t\t\t</template>\n\n\t\t\t\t\t<li class=\"ui-sidepanel-menu-item ui-sidepanel-menu-item-sm ui-sidepanel-menu-item-separate\">\n\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t@click=\"specifyCompanyContacts\"\n\t\t\t\t\t\t\tclass=\"ui-sidepanel-menu-link\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_LEFT_PAYMENT_COMPANY_CONTACTS'), "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li\n\t\t\t\t\t\tv-if=\"isSuggestScenarioMenuItemVisible\"\n\t\t\t\t\t\tclass=\"ui-sidepanel-menu-item ui-sidepanel-menu-item-sm\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t@click=\"suggestScenario($event)\"\n\t\t\t\t\t\t\tclass=\"ui-sidepanel-menu-link\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_LEFT_PAYMENT_OFFER_SCRIPT'), "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li class=\"ui-sidepanel-menu-item ui-sidepanel-menu-item-sm\">\n\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t@click=\"howItWorks($event)\"\n\t\t\t\t\t\t\tclass=\"ui-sidepanel-menu-link\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_LEFT_PAYMENT_HOW_WORKS'), "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li\n\t\t\t\t\t\tv-if=\"isAllowedFreeMessagesButton\"\n\t\t\t\t\t\tclass=\"ui-sidepanel-menu-item ui-sidepanel-menu-item-sm\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t@click=\"freeMessages($event)\"\n\t\t\t\t\t\t\tclass=\"ui-sidepanel-menu-link\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_LEFT_PAYMENT_FREE_MESSAGES'), "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t\t<li\n\t\t\t\t\t\tv-if=\"isRequestIntegrationMenuItemVisible\"\n\t\t\t\t\t\tclass=\"ui-sidepanel-menu-item ui-sidepanel-menu-item-sm\">\n\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t@click=\"openIntegrationWindow($event)\"\n\t\t\t\t\t\t\tclass=\"ui-sidepanel-menu-link\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div class=\"ui-sidepanel-menu-link-text\">\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_LEFT_PAYMENT_INTEGRATION'), "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</li>\n\t\t\t\t</ul>\n\t\t\t</div>\n\t\t\t<div class=\"salescenter-app-right-side\">\n\t\t\t\t<start\n\t\t\t\t\tv-if=\"needShowStoreConnection\"\n\t\t\t\t\t@on-successfully-connected=\"onSuccessfullyConnected\"\n\t\t\t\t>\n\t\t\t\t</start>\n\t\t        <template v-else>\n\t\t\t        <deal-receiving-payment\n\t\t\t        \tv-if=\"mode === 'payment_delivery'\"\n\t\t\t        \t@stage-block-send-on-send=\"sendPaymentDeliveryForm($event)\"\n\t\t\t        \t:sendAllowed=\"isAllowedPaymentDeliverySubmitButton\"\n\t\t\t        />\n\t\t\t        <deal-creating-shipment\n\t\t\t        \tv-else-if=\"mode === 'delivery'\"\n\t\t\t        \t@stage-block-send-on-send=\"sendDeliveryForm($event)\"\n\t\t\t        \t:sendAllowed=\"isAllowedDeliverySubmitButton\"\n\t\t\t        />\n\t\t\t        <crm-entity-create-payment\n\t\t\t        \tv-if=\"mode === 'payment'\"\n\t\t\t        \t@stage-block-send-on-send=\"sendPaymentDeliveryForm($event)\"\n\t\t\t        \t:sendAllowed=\"isAllowedPaymentDeliverySubmitButton\"\n\t\t\t        />\n\t\t        </template>\n\t\t\t</div>\n\t\t\t<div class=\"ui-button-panel-wrapper salescenter-button-panel\" ref=\"buttonsPanel\">\n\t\t\t\t<div class=\"ui-button-panel\">\n\t\t\t\t\t<template v-if=\"mode === 'payment_delivery' || mode === 'payment'\">\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"sendPaymentDeliveryForm($event)\"\n\t\t\t\t\t\t\t:class=\"paymentDeliveryFormSubmitButtonClass\"\n\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-md ui-btn-success\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{sendPaymentDeliveryFormButtonText}}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"close\"\n\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-md ui-btn-link\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_CANCEL'), "\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"mode === 'delivery'\">\n\t\t\t\t\t\t<template v-if=\"editable\">\n\t\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t\t@click=\"sendDeliveryForm($event)\"\n\t\t\t\t\t\t\t\t:class=\"deliveryFormSubmitButtonClass\"\n\t\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-md ui-btn-success\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_CREATE_SHIPMENT'), "\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t\t@click=\"close\"\n\t\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-md ui-btn-link\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('SALESCENTER_CANCEL'), "\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</template>\n\t\t\t\t</div>\n\t\t\t\t<div v-if=\"this.order.errors.length > 0\" ref=\"errorBlock\"></div>\n\t\t\t</div>\n\t\t</div>\n\t")
 	};
 
 	var App = /*#__PURE__*/function () {
@@ -3053,7 +3789,8 @@ this.BX = this.BX || {};
 	      isOrderPublicUrlAvailable: false,
 	      isCatalogAvailable: false,
 	      isOrderPublicUrlExists: false,
-	      isWithOrdersMode: true
+	      isWithOrdersMode: true,
+	      documentSelector: DocumentSelectorParams | null
 	    };
 	    babelHelpers.classCallCheck(this, App);
 	    this.slider = BX.SidePanel.Instance.getTopSlider();
@@ -3081,6 +3818,7 @@ this.BX = this.BX || {};
 	    this.orderPublicUrl = '';
 	    this.fileControl = options.fileControl;
 	    this.currencyCode = options.currencyCode;
+	    this.assignedById = options.assignedById;
 
 	    if (main_core.Type.isString(options.stageOnOrderPaid)) {
 	      this.stageOnOrderPaid = options.stageOnOrderPaid;
@@ -3158,6 +3896,12 @@ this.BX = this.BX || {};
 
 	    this.isPaymentCreationAvailable = this.sessionId > 0 && this.dialogId.length > 0 || this.ownerTypeId && this.ownerId;
 	    this.connector = main_core.Type.isString(options.connector) ? options.connector : '';
+
+	    if (main_core.Type.isPlainObject(options.documentSelector)) {
+	      this.documentSelector = options.documentSelector;
+	      this.documentSelector.paymentId = this.options.paymentId;
+	    }
+
 	    main_core.Event.ready(function () {
 	      _this.pull = BX.PULL;
 
@@ -3239,7 +3983,7 @@ this.BX = this.BX || {};
 	            'chat': Chat,
 	            'deal': Deal
 	          },
-	          template: _this3.context === 'deal' ? "<deal :key=\"componentKey\" @on-reload=\"reload\"/>" : "<chat :key=\"componentKey\" @on-reload=\"reload\"/>",
+	          template: _this3.isPaymentMode() ? "<deal :key=\"componentKey\" @on-reload=\"reload\"/>" : "<chat :key=\"componentKey\" @on-reload=\"reload\"/>",
 	          store: _this3.store,
 	          created: function created() {
 	            this.$app = context;
@@ -3251,6 +3995,10 @@ this.BX = this.BX || {};
 	              orderSelector: document.getElementById('salescenter-app-order-selector')
 	            };
 	            this.initOrderSelector();
+
+	            if (context.documentSelector) {
+	              this.$store.commit('documentSelector/fillState', context.documentSelector);
+	            }
 	          },
 	          mounted: function mounted() {
 	            resolve();
@@ -3638,8 +4386,14 @@ this.BX = this.BX || {};
 	        deliveryExtraServicesValues: this.store.getters['orderCreation/getDeliveryExtraServicesValues'],
 	        connector: this.connector,
 	        context: this.context,
-	        currency: this.currencyCode
+	        currency: this.currencyCode,
+	        assignedById: this.assignedById
 	      };
+
+	      if (this.documentSelector) {
+	        data.boundDocumentId = this.store.getters['documentSelector/getBoundDocumentId'];
+	        data.selectedTemplateId = this.store.getters['documentSelector/getSelectedTemplateId'];
+	      }
 
 	      if (this.stageOnOrderPaid !== null) {
 	        data.stageOnOrderPaid = this.stageOnOrderPaid;
@@ -3682,7 +4436,8 @@ this.BX = this.BX || {};
 	          salescenter_manager.Manager.showOrdersList({
 	            orderId: result.data.order.id,
 	            ownerId: _this9.ownerId,
-	            ownerTypeId: _this9.ownerTypeId
+	            ownerTypeId: _this9.ownerTypeId,
+	            context: _this9.context
 	          });
 	        } else {
 	          _this9.slider.data.set('action', 'sendPayment');
@@ -3691,6 +4446,10 @@ this.BX = this.BX || {};
 
 	          if (result.data.deal) {
 	            _this9.slider.data.set('deal', result.data.deal);
+	          }
+
+	          if (result.data.entity) {
+	            _this9.slider.data.set('entity', result.data.entity);
 	          }
 
 	          _this9.closeApplication();
@@ -3722,16 +4481,25 @@ this.BX = this.BX || {};
 	      }
 
 	      this.startProgress(buttonEvent);
+	      var options = {
+	        sendingMethod: this.sendingMethod,
+	        sendingMethodDesc: this.sendingMethodDesc,
+	        stageOnOrderPaid: this.stageOnOrderPaid,
+	        ownerTypeId: this.ownerTypeId,
+	        ownerId: this.ownerId
+	      };
+
+	      if (this.documentSelector) {
+	        options.boundDocumentId = this.store.getters['documentSelector/getBoundDocumentId'];
+	        options.selectedTemplateId = this.store.getters['documentSelector/getSelectedTemplateId'];
+	      }
+
 	      BX.ajax.runAction('salescenter.order.resendPayment', {
 	        data: {
 	          orderId: this.orderId,
 	          paymentId: this.options.paymentId,
 	          shipmentId: this.options.shipmentId,
-	          options: {
-	            sendingMethod: this.sendingMethod,
-	            sendingMethodDesc: this.sendingMethodDesc,
-	            stageOnOrderPaid: this.stageOnOrderPaid
-	          }
+	          options: options
 	        },
 	        getParameters: {
 	          context: this.context
@@ -3799,11 +4567,16 @@ this.BX = this.BX || {};
 	      main_core_events.EventEmitter.emit(eventName, data);
 	      BX.SidePanel.Instance.postMessage(this.slider, eventName, data);
 	    }
+	  }, {
+	    key: "isPaymentMode",
+	    value: function isPaymentMode() {
+	      return this.context === 'deal';
+	    }
 	  }], [{
 	    key: "initStore",
 	    value: function initStore() {
 	      var builder = new ui_vue_vuex.VuexBuilder();
-	      return builder.addModel(ApplicationModel.create()).addModel(OrderCreationModel.create()).useNamespace(true).build();
+	      return builder.addModel(ApplicationModel.create()).addModel(OrderCreationModel.create()).addModel(DocumentSelectorModel.create()).useNamespace(true).build();
 	    }
 	  }, {
 	    key: "showError",
@@ -3815,5 +4588,5 @@ this.BX = this.BX || {};
 
 	exports.App = App;
 
-}((this.BX.Salescenter = this.BX.Salescenter || {}),BX,BX.Main,BX,BX.Salescenter,BX.Salescenter.Component.StageBlock,BX.Salescenter.Component.StageBlock,BX.Catalog,BX.Event,BX,BX.Salescenter,BX,BX,BX.Salescenter.Component.StageBlock,BX.Salescenter.AutomationStage,BX.Salescenter.Component.StageBlock.TimeLine,BX,BX.UI,BX,BX,BX,BX,BX,BX.Salescenter,BX.Salescenter.Component.StageBlock,BX.Salescenter,BX.Salescenter.Component,BX,BX.Salescenter.Tile,BX,BX.Salescenter));
+}((this.BX.Salescenter = this.BX.Salescenter || {}),BX,BX,BX.Salescenter,BX.Salescenter.Component.StageBlock,BX.Salescenter.Component.StageBlock,BX.Catalog,BX.Event,BX,BX.Salescenter,BX,BX,BX.Salescenter.Component.StageBlock,BX.Salescenter.AutomationStage,BX.Salescenter.Component.StageBlock.TimeLine,BX.Main,BX,BX,BX.UI,BX,BX,BX,BX,BX,BX.Salescenter.Component.StageBlock,BX.Salescenter,BX.Salescenter,BX.Salescenter.Component,BX,BX.Salescenter.Tile,BX,BX.Salescenter));
 //# sourceMappingURL=app.bundle.js.map

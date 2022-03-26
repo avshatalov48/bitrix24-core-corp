@@ -14,6 +14,8 @@ use Bitrix\Tasks\Integration\Network\MemberSelector;
 use Bitrix\Tasks\Scrum\Checklist\TypeChecklistFacade;
 use Bitrix\Tasks\Scrum\Checklist\ItemChecklistFacade;
 use Bitrix\Tasks\Util\User;
+use Bitrix\Tasks\Access\TaskAccessController;
+use Bitrix\Tasks\Access\ActionDictionary;
 
 Loc::loadMessages(__FILE__);
 
@@ -23,7 +25,10 @@ CBitrixComponent::includeComponentClass("bitrix:tasks.base");
  * Class TasksWidgetCheckListNewComponent
  */
 class TasksWidgetCheckListNewComponent extends TasksBaseComponent
+	implements \Bitrix\Main\Errorable, \Bitrix\Main\Engine\Contract\Controllerable
 {
+	protected $errorCollection;
+
 	private static $nodeId = 0;
 	private static $facade;
 	private static $map = [
@@ -58,6 +63,65 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 	];
 	private static $optionsMap = [];
 
+	public function configureActions()
+	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return [];
+		}
+
+		return [
+			'saveChecklist' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'updateTaskOption' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+		];
+	}
+
+	public function __construct($component = null)
+	{
+		parent::__construct($component);
+		$this->init();
+	}
+
+	protected function init()
+	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$this->setUserId();
+		$this->errorCollection = new \Bitrix\Tasks\Util\Error\Collection();
+	}
+
+	protected function setUserId()
+	{
+		$this->userId = (int) \Bitrix\Tasks\Util\User::getId();
+	}
+
+	public function getErrorByCode($code)
+	{
+		// TODO: Implement getErrorByCode() method.
+	}
+
+	public function getErrors()
+	{
+		if (!empty($this->componentId))
+		{
+			return parent::getErrors();
+		}
+		return $this->errorCollection->toArray();
+	}
+
 	public function getSignature()
 	{
 		$seedPhrase = ToLower($this->getName().$this->getTemplateName());
@@ -66,6 +130,109 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 			$seedPhrase = trim(ToLower($this->arParams['SIGNATURE_SEED']));
 		}
 		return preg_replace('#[^a-zA-Z0-9]#', '_', $seedPhrase).'_'.$this->getInPageNumber();
+	}
+
+	public function updateTaskOptionAction($option, $value, $userId, $entityType)
+	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		if (empty(static::$optionsMap))
+		{
+			static::createOptionsMap();
+		}
+
+		$typeCallback = static::$optionsMap[mb_strtoupper($option)]['TYPE_CALLBACK'];
+
+		$optionName = static::$map[$entityType]['OPTIONS']['PREFIX'].$option;
+		$optionValue = (is_callable($typeCallback) ? $typeCallback($value) : $value);
+
+		User::setOption($optionName, $optionValue, $userId);
+	}
+
+	public function saveChecklistAction($taskId, $items = [], $params)
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		if (!is_array($items))
+		{
+			$items = [];
+		}
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_CHECKLIST_SAVE, $taskId, $items))
+		{
+			$this->addForbiddenError();
+			return null;
+		}
+
+		if (isset($params['openTime']) && $params['openTime'])
+		{
+			$openTime = $params['openTime'];
+			$lastUpdateTime = \Bitrix\Tasks\Internals\Task\LogTable::getList([
+				'select' => ['CREATED_DATE'],
+				'filter' => [
+					'TASK_ID' => $taskId,
+					'!USER_ID' => $this->userId,
+					'%FIELD' => 'CHECKLIST',
+				],
+				'order' => ['CREATED_DATE' => 'DESC'],
+				'limit' => 1,
+			])->fetch();
+
+			if ($lastUpdateTime)
+			{
+				$lastUpdateTime = $lastUpdateTime['CREATED_DATE']->getTimestamp();
+				if ($lastUpdateTime > $openTime)
+				{
+					$result = [
+						'PREVENT_CHECKLIST_SAVE' => 'It looks like someone has already changed checklist.'
+					];
+					return $result;
+				}
+			}
+		}
+
+		foreach ($items as $id => $item)
+		{
+			$item['ID'] = ((int)$item['ID'] === 0? null : (int)$item['ID']);
+			$item['IS_COMPLETE'] = ($item['IS_COMPLETE'] === true) || ((int)$item['IS_COMPLETE'] > 0) ;
+			$item['IS_IMPORTANT'] = ($item['IS_IMPORTANT'] === true) || ((int)$item['IS_IMPORTANT'] > 0);
+
+			if (is_array($item['MEMBERS']))
+			{
+				$members = [];
+
+				foreach ($item['MEMBERS'] as $member)
+				{
+					$members[key($member)] = current($member);
+				}
+
+				$item['MEMBERS'] = $members;
+			}
+
+			$items[$item['NODE_ID']] = $item;
+			unset($items[$id]);
+		}
+
+		$result = \Bitrix\Tasks\CheckList\Task\TaskCheckListFacade::merge($taskId, $this->userId, $items, $params);
+
+		$result = array_merge(
+			($result->getData() ?? []),
+			['OPEN_TIME' => (new DateTime())->getTimestamp()]
+		);
+
+		return $result;
 	}
 
 	/**
@@ -359,34 +526,8 @@ class TasksWidgetCheckListNewComponent extends TasksBaseComponent
 		return $userOptions;
 	}
 
-	/**
-	 * @return array
-	 */
-	public static function getAllowedMethods()
+	private function addForbiddenError()
 	{
-		return [
-			'updateTaskOption',
-		];
-	}
-
-	/**
-	 * @param $option
-	 * @param $value
-	 * @param $userId
-	 * @param $entityType
-	 */
-	public static function updateTaskOption($option, $value, $userId, $entityType): void
-	{
-		if (empty(static::$optionsMap))
-		{
-			static::createOptionsMap();
-		}
-
-		$typeCallback = static::$optionsMap[mb_strtoupper($option)]['TYPE_CALLBACK'];
-
-		$optionName = static::$map[$entityType]['OPTIONS']['PREFIX'].$option;
-		$optionValue = (is_callable($typeCallback) ? $typeCallback($value) : $value);
-
-		User::setOption($optionName, $optionValue, $userId);
+		$this->errorCollection->add('ACTION_NOT_ALLOWED.RESTRICTED', \Bitrix\Main\Localization\Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'));
 	}
 }

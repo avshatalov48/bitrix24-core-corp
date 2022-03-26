@@ -1,4 +1,9 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 /** @var CBitrixComponentTemplate $this */
 /** @var array $arParams */
 /** @var array $arResult */
@@ -7,6 +12,7 @@
 /** @global CMain $APPLICATION */
 
 use Bitrix\Main\Loader;
+use Bitrix\Mobile\Livefeed\Helper;
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/components/bitrix/mobile.socialnetwork.log.entry/include.php");
 
@@ -40,12 +46,12 @@ if (
 		{
 			$commentId = (
 				isset($comment["EVENT"]["SOURCE_ID"])
-				&& intval($comment["EVENT"]["SOURCE_ID"]) > 0
-					? intval($comment["EVENT"]["SOURCE_ID"])
+				&& (int)$comment["EVENT"]["SOURCE_ID"] > 0
+					? (int)$comment["EVENT"]["SOURCE_ID"]
 					: $comment["EVENT"]["ID"]
 			);
 
-			if ($ufData = \Bitrix\Mobile\Livefeed\Helper::getDiskDataByCommentText($comment['EVENT']['MESSAGE']))
+			if ($ufData = Helper::getDiskDataByCommentText($comment['EVENT']['MESSAGE']))
 			{
 				$commentInlineDiskData[$commentId] = $ufData;
 				$inlineDiskObjectIdList = array_merge($inlineDiskObjectIdList, $ufData['OBJECT_ID']);
@@ -57,7 +63,7 @@ if (
 
 		$inlineDiskAttachedObjectIdImageList = [];
 		$entityAttachedObjectIdList = [];
-		if ($ufData = \Bitrix\Mobile\Livefeed\Helper::getDiskUFDataForComments($inlineDiskObjectIdList, $inlineDiskAttachedObjectIdList))
+		if ($ufData = Helper::getDiskUFDataForComments($inlineDiskObjectIdList, $inlineDiskAttachedObjectIdList))
 		{
 			$inlineDiskAttachedObjectIdImageList = $ufData['ATTACHED_OBJECT_DATA'];
 			$entityAttachedObjectIdList = $ufData['ENTITIES_DATA'];
@@ -67,19 +73,22 @@ if (
 		{
 			$commentId = (
 				isset($comment["EVENT"]["SOURCE_ID"])
-				&& intval($comment["EVENT"]["SOURCE_ID"]) > 0
-					? intval($comment["EVENT"]["SOURCE_ID"])
+				&& (int)$comment["EVENT"]["SOURCE_ID"] > 0
+					? (int)$comment["EVENT"]["SOURCE_ID"]
 					: $comment["EVENT"]["ID"]
 			);
 			$arResult["LAST_COMMENT_TS"] = ($arResult["LAST_COMMENT_TS"] ?: $comment["LOG_DATE_TS"]);
 
+			$textFormatted = ($comment['EVENT_FORMATTED']['MESSAGE'] ?? $comment['EVENT']['MESSAGE']);
+			$textFormatted = CSocNetTextParser::closetags(htmlspecialcharsback($textFormatted));
+
 			$arResult["RECORDS"][$commentId] = array(
 				"ID" => $commentId,
 				"NEW" => (
-					($arResult["COUNTER_TYPE"] == "**")
-					&& $comment["EVENT"]["USER_ID"] != $USER->GetID()
-					&& intval($arResult["LAST_LOG_TS"]) > 0
-					&& (MakeTimeStamp($comment["EVENT"]["LOG_DATE"]) - intval($arResult["TZ_OFFSET"])) > $arResult["LAST_LOG_TS"]
+					($arResult["COUNTER_TYPE"] === "**")
+					&& (int)$comment["EVENT"]["USER_ID"] !== (int)$USER->GetID()
+					&& (int)$arResult["LAST_LOG_TS"] > 0
+					&& (MakeTimeStamp($comment["EVENT"]["LOG_DATE"]) - (int)$arResult["TZ_OFFSET"]) > $arResult["LAST_LOG_TS"]
 						? "Y"
 						: "N"
 				),
@@ -96,26 +105,25 @@ if (
 				"FILES" => $comment["EVENT_FORMATTED"]["FILES"],
 				"UF" => $comment["UF"],
 				"~POST_MESSAGE_TEXT" => $comment["EVENT"]["MESSAGE"],
-				"POST_MESSAGE_TEXT" => CSocNetTextParser::closetags(htmlspecialcharsback((array_key_exists("EVENT_FORMATTED", $comment) && array_key_exists("MESSAGE", $comment["EVENT_FORMATTED"]) ? $comment["EVENT_FORMATTED"]["MESSAGE"] : $comment["EVENT"]["MESSAGE"]))),
+				"POST_MESSAGE_TEXT" => $textFormatted,
 				"RATING_VOTE_ID" => false,
-				"AUX" => (isset($comment["AUX"]) ? $comment["AUX"] : ''),
+				"AUX" => ($comment["AUX"] ?? ''),
 				"ORIGINAL_COMMENT_ID" => $comment["EVENT"]["ID"],
-				"CAN_DELETE" => (isset($comment["CAN_DELETE"]) ? $comment["CAN_DELETE"] : true)
+				"CAN_DELETE" => ($comment["CAN_DELETE"] ?? true)
 			);
 		}
 
 		if ($arParams["IS_LIST"])
 		{
-			$arResult["RECORDS"] = array_filter($arResult["RECORDS"], function ($value) { return (
+			$arResult["RECORDS"] = array_filter($arResult["RECORDS"], static function ($value) { return (
 				isset($value['NEW'])
-				&& $value['NEW'] == 'Y'
+				&& $value['NEW'] === 'Y'
 			); });
 
 			if (!empty($arResult["RECORDS"]))
 			{
 				$arResult["RECORDS"] = array_slice($arResult["RECORDS"], 0, 3, true);
 			}
-//			$arParams["PAGE_SIZE"] = count($arResult["RECORDS"]);
 		}
 
 		foreach($arResult["RECORDS"] as $commentId => $record)
@@ -128,7 +136,7 @@ if (
 				&& $arParams["SHOW_RATING"] === "Y"
 			)
 			{
-				$voteId = $originalComment["EVENT"]["RATING_TYPE_ID"].'_'.$originalComment["EVENT"]["RATING_ENTITY_ID"].'-'.(time()+rand(0, 1000));
+				$voteId = $originalComment["EVENT"]["RATING_TYPE_ID"] . '_' . $originalComment["EVENT"]["RATING_ENTITY_ID"] . '-' . (time() + random_int(0, 1000));
 
 				$arResult["RECORDS"][$commentId]["RATING_VOTE_ID"] = $voteId;
 				$arResult["RECORDS"][$commentId]["RATING_USER_HAS_VOTED"] = $arResult["RATING_COMMENTS"][$originalComment["EVENT"]["RATING_ENTITY_ID"]]["USER_HAS_VOTED"];
@@ -140,7 +148,7 @@ if (
 				&& isset($commentInlineDiskData[$commentId])
 			)
 			{
-				$inlineAttachedImagesId = \Bitrix\Mobile\Livefeed\Helper::getCommentInlineAttachedImagesId([
+				$inlineAttachedImagesId = Helper::getCommentInlineAttachedImagesId([
 					'commentId' => $commentId,
 					'inlineDiskAttachedObjectIdImageList' => $inlineDiskAttachedObjectIdImageList,
 					'commentInlineDiskData' => $commentInlineDiskData[$commentId],
@@ -182,6 +190,6 @@ elseif (!empty($arResult["Event"]["EVENT"]["ID"]))
 
 $arResult['MOBILE_API_VERSION'] = (
 	Loader::includeModule('mobileapp')
-	? \CMobile::getApiVersion()
-	: intval($APPLICATION->getPageProperty('api_version'))
+	? CMobile::getApiVersion()
+	: (int)$APPLICATION->getPageProperty('api_version')
 );

@@ -2,105 +2,7 @@ this.BX = this.BX || {};
 (function (exports,main_core) {
 	'use strict';
 
-	function _templateObject10() {
-	  var data = babelHelpers.taggedTemplateLiteral(["", ""]);
-
-	  _templateObject10 = function _templateObject10() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject9() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<input \n\t\t\t\tonchange=\"", "\" \n\t\t\t\tname=\"", "\"\n\t\t\t\tvalue=\"\"\n\t\t\t\tclass=\"", "\"\n\t\t\t\ttype=\"file\">"]);
-
-	  _templateObject9 = function _templateObject9() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject8() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"", "\">", "</div>"]);
-
-	  _templateObject8 = function _templateObject8() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject7() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t", "\n\t\t\t\t<div class=\"", "", "\">\n\t\t\t\t\t", "", "\n\t\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject7 = function _templateObject7() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject6() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t", "\n\t\t\t\t<div class=\"", " ", "\">\n\t\t\t\t\t<div class=\"", "\"></div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject6 = function _templateObject6() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject5() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t", "\n\t\t\t\t<label class=\"", " ", "\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t</label>\n\t\t\t\t<span></span>\n\t\t\t\t", "\n\t\t\t"]);
-
-	  _templateObject5 = function _templateObject5() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<label class=\"", " ", "\">", "", "", "</label>"]);
-
-	  _templateObject4 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-ctl-after\" data-hint=\"", "\"></span>"]);
-
-	  _templateObject3 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["", ""]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["", ""]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10;
 	var Form = /*#__PURE__*/function () {
 	  function Form(id) {
 	    var _this = this;
@@ -148,7 +50,7 @@ this.BX = this.BX || {};
 	      this.config.forEach(function (section) {
 	        result += _this2.renderSection(section);
 	      });
-	      var nodes = main_core.Tag.render(_templateObject(), result);
+	      var nodes = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["", ""])), result);
 
 	      if (!main_core.Type.isArray(nodes)) {
 	        nodes = [nodes];
@@ -184,14 +86,14 @@ this.BX = this.BX || {};
 	        field.input = field.html;
 	        field.html = field.html.innerHTML;
 	      } else {
-	        field.input = main_core.Tag.render(_templateObject2(), field.html);
+	        field.input = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["", ""])), field.html);
 	      }
 
 	      var label = '';
 	      var hint = '';
 
 	      if (field.hint) {
-	        hint = main_core.Tag.render(_templateObject3(), main_core.Text.encode(field.hint));
+	        hint = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-ctl-after\" data-hint=\"", "\"></span>"])), main_core.Text.encode(field.hint));
 	      }
 
 	      var title = '';
@@ -201,7 +103,7 @@ this.BX = this.BX || {};
 	      }
 
 	      if (field.html.indexOf('type="checkbox"') > 0) {
-	        label = main_core.Tag.render(_templateObject4(), this.classes.get('controlInner'), this.classes.get('controlCheckbox'), field.input, field.title ? '<div class="' + this.classes.get('controlCheckboxLabel') + '">' + main_core.Text.encode(field.title) + '</div>' : '', hint);
+	        label = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<label class=\"", " ", "\">", "", "", "</label>"])), this.classes.get('controlInner'), this.classes.get('controlCheckbox'), field.input, field.title ? '<div class="' + this.classes.get('controlCheckboxLabel') + '">' + main_core.Text.encode(field.title) + '</div>' : '', hint);
 	      } else if (field.type === 'file') {
 	        var hiddenFileInput = '';
 
@@ -214,14 +116,14 @@ this.BX = this.BX || {};
 	          hiddenFileInput = this.renderFieldInput(hiddenFileField);
 	        }
 
-	        label = main_core.Tag.render(_templateObject5(), title, this.classes.get('controlInner'), this.classes.get('controlFile'), field.input, field.label ? '<div class="ui-ctl-label-text">' + main_core.Text.encode(field.label) + '</div>' : '', hiddenFileInput);
+	        label = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t", "\n\t\t\t\t<label class=\"", " ", "\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t</label>\n\t\t\t\t<span></span>\n\t\t\t\t", "\n\t\t\t"])), title, this.classes.get('controlInner'), this.classes.get('controlFile'), field.input, field.label ? '<div class="ui-ctl-label-text">' + main_core.Text.encode(field.label) + '</div>' : '', hiddenFileInput);
 	      } else if (field.type === 'list' || field.html.indexOf('select') > 0) {
-	        label = main_core.Tag.render(_templateObject6(), title, this.classes.get('controlSelect'), this.classes.get('controlInner'), this.classes.get('controlSelectIcon'), field.input);
+	        label = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t", "\n\t\t\t\t<div class=\"", " ", "\">\n\t\t\t\t\t<div class=\"", "\"></div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), title, this.classes.get('controlSelect'), this.classes.get('controlInner'), this.classes.get('controlSelectIcon'), field.input);
 	      } else {
-	        label = main_core.Tag.render(_templateObject7(), title, this.classes.get('controlInner'), hint ? ' ' + this.classes.get('controlAfterIcon') : '', field.input, hint);
+	        label = main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t", "\n\t\t\t\t<div class=\"", "", "\">\n\t\t\t\t\t", "", "\n\t\t\t\t</div>\n\t\t\t"])), title, this.classes.get('controlInner'), hint ? ' ' + this.classes.get('controlAfterIcon') : '', field.input, hint);
 	      }
 
-	      result = main_core.Tag.render(_templateObject8(), this.classes.get('controlContainer'), label);
+	      result = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["<div class=\"", "\">", "</div>"])), this.classes.get('controlContainer'), label);
 	      return result;
 	    }
 	    /**
@@ -283,7 +185,7 @@ this.BX = this.BX || {};
 	          target.parentNode.nextSibling.innerText = main_core.Text.encode(value);
 	        };
 
-	        result = main_core.Tag.render(_templateObject9(), onFileChange, main_core.Text.encode(field.name), this.classes.get('controlInput'));
+	        result = main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["<input \n\t\t\t\tonchange=\"", "\" \n\t\t\t\tname=\"", "\"\n\t\t\t\tvalue=\"\"\n\t\t\t\tclass=\"", "\"\n\t\t\t\ttype=\"file\">"])), onFileChange, main_core.Text.encode(field.name), this.classes.get('controlInput'));
 	      }
 
 	      return result;
@@ -321,7 +223,7 @@ this.BX = this.BX || {};
 	      }
 
 	      result += "</div>";
-	      result = main_core.Tag.render(_templateObject10(), result);
+	      result = main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["", ""])), result);
 	      section.elements.forEach(function (element) {
 	        if (main_core.Type.isObject(element) && element.name) {
 	          var field = Form.getByName(_this3.fields, element.name);

@@ -2,7 +2,6 @@
 
 namespace Bitrix\Crm\Controller;
 
-use Bitrix\Crm\Conversion\ConversionManager;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Integration\Intranet\CustomSection;
 use Bitrix\Crm\Model\Dynamic\TypeTable;
@@ -58,7 +57,15 @@ class Type extends Base
 			'type',
 			static function($className, $id)
 			{
-				return Container::getInstance()->getType((int)$id);
+				$id = (int)$id;
+				$type = Container::getInstance()->getType($id);
+
+				if ($type && \CCrmOwnerType::isDynamicTypeBasedStaticEntity($type->getEntityTypeId()))
+				{
+					return null;
+				}
+
+				return $type;
 			}
 		);
 
@@ -86,6 +93,9 @@ class Type extends Base
 		$parameters = [];
 
 		$parameters['filter'] = $this->removeDotsFromKeys($this->convertKeysToUpper((array)$filter));
+		$parameters['filter'][] = [
+			'!@ENTITY_TYPE_ID' => \CCrmOwnerType::getDynamicTypeBasedStaticEntityTypeIds(),
+		];
 		if(is_array($order))
 		{
 			$parameters['order'] = $this->convertKeysToUpper($order);
@@ -115,6 +125,17 @@ class Type extends Base
 	{
 		$dataClass = Container::getInstance()->getDynamicTypeDataClass();
 		$fields['name'] = $dataClass::generateName($fields['title']);
+		$entityTypeId = $fields['entityTypeId'] ?? 0;
+		if (
+			!empty($entityTypeId)
+			&& in_array((int)$entityTypeId, \CCrmOwnerType::getDynamicTypeBasedStaticEntityTypeIds(), true)
+		)
+		{
+			$this->addError(new Error('entityTypeId is out of allowed range', ErrorCode::INVALID_ARG_VALUE));
+
+			return null;
+		}
+
 		$type = $dataClass::createObject();
 
 		return $this->updateAction($type, $fields);
@@ -215,23 +236,23 @@ class Type extends Base
 
 	protected function saveConversionMap(int $entityTypeId, array $fields): void
 	{
-		$conversionMap = $fields['CONVERSION_MAP'] ?? null;
-		if (!is_array($conversionMap))
-		{
-			return;
-		}
-
-		if (array_key_exists('sourceTypes', $conversionMap))
-		{
-			$sourceTypes = $this->normalizeTypes((array)$conversionMap['sourceTypes']);
-			ConversionManager::setSourceTypes($entityTypeId, $sourceTypes);
-		}
-
-		if (array_key_exists('destinationTypes', $conversionMap))
-		{
-			$destinationTypes = $this->normalizeTypes((array)$conversionMap['destinationTypes']);
-			ConversionManager::setDestinationTypes($entityTypeId, $destinationTypes);
-		}
+		// $conversionMap = $fields['CONVERSION_MAP'] ?? null;
+		// if (!is_array($conversionMap))
+		// {
+		// 	return;
+		// }
+		//
+		// if (array_key_exists('sourceTypes', $conversionMap))
+		// {
+		// 	$sourceTypes = $this->normalizeTypes((array)$conversionMap['sourceTypes']);
+		// 	\Bitrix\Crm\Conversion\ConversionManager::setSourceTypes($entityTypeId, $sourceTypes);
+		// }
+		//
+		// if (array_key_exists('destinationTypes', $conversionMap))
+		// {
+		// 	$destinationTypes = $this->normalizeTypes((array)$conversionMap['destinationTypes']);
+		// 	\Bitrix\Crm\Conversion\ConversionManager::setDestinationTypes($entityTypeId, $destinationTypes);
+		// }
 	}
 
 	protected function saveLinkedUserFields(string $entityTypeName, array $fields): void
@@ -277,10 +298,11 @@ class Type extends Base
 			$availableForBindingEntityTypes = $relationManager->getAvailableForParentBindingEntityTypes($entityTypeId);
 			$selectedParentTypes = $this->prepareRelationsData((array)$relations['PARENT']);
 
+			$relationsCollection = $relationManager->getRelations($entityTypeId);
 			foreach ($availableForBindingEntityTypes as $availableTypeId => $description)
 			{
 				$typeResult = $this->processRelation(
-					$relationManager,
+					$relationsCollection,
 					new RelationIdentifier($availableTypeId, $entityTypeId),
 					$selectedParentTypes[$availableTypeId] ?? null
 				);
@@ -298,7 +320,7 @@ class Type extends Base
 			foreach ($availableForBindingEntityTypes as $availableTypeId => $description)
 			{
 				$typeResult = $this->processRelation(
-					$relationManager,
+					$relationsCollection,
 					new RelationIdentifier($entityTypeId, $availableTypeId),
 					$selectedChildTypes[$availableTypeId] ?? null
 				);
@@ -349,12 +371,13 @@ class Type extends Base
 	 * @return Result
 	 */
 	protected function processRelation(
-		Relation\RelationManager $relationManager,
+		Relation\Collection $relations,
 		RelationIdentifier $identifier,
 		?array $relationData
 	): Result
 	{
-		$relation = $relationManager->getRelation($identifier);
+		$relationManager = Container::getInstance()->getRelationManager();
+		$relation = $relations->get($identifier);
 		if ($relationData)
 		{
 			if ($relation)
@@ -367,11 +390,12 @@ class Type extends Base
 			}
 			else
 			{
+				$settings = (new Relation\Settings())
+					->setIsChildrenListEnabled($relationData['isChildrenListEnabled']);
 				return $relationManager->bindTypes(
-					Relation::create(
-						$identifier->getParentEntityTypeId(),
-						$identifier->getChildEntityTypeId(),
-						$relationData['isChildrenListEnabled']
+					new Relation(
+						$identifier,
+						$settings,
 					)
 				);
 			}

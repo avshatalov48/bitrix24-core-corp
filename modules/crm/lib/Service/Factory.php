@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Service;
 
 use Bitrix\Crm\Category\Entity\Category;
+use Bitrix\Crm\Cleaning\CleaningManager;
 use Bitrix\Crm\Conversion\EntityConversionConfig;
 use Bitrix\Crm\Currency;
 use Bitrix\Crm\EO_Status;
@@ -10,8 +11,10 @@ use Bitrix\Crm\EO_Status_Collection;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\EventHistory\TrackedObject;
+use Bitrix\Crm\Statistics;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Crm\UI\Filter\EntityHandler;
+use Bitrix\Crm\UtmTable;
 use Bitrix\Main\Application;
 use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\Localization\Loc;
@@ -30,6 +33,7 @@ abstract class Factory
 	protected $stageCollections;
 	protected $userType;
 	protected $editorAdapter;
+	protected $isParentFieldsAdded = false;
 
 	/** @var StatusTable */
 	protected $statusTableClassName = StatusTable::class;
@@ -66,6 +70,15 @@ abstract class Factory
 	public function getFieldsInfo(): array
 	{
 		$settings = $this->getFieldsSettings();
+
+		if ($this->isCrmTrackingEnabled())
+		{
+			/** @noinspection AdditionOperationOnArraysInspection */
+			$settings += UtmTable::getUtmFieldsInfo();
+		}
+		/** @noinspection AdditionOperationOnArraysInspection */
+		$settings += Container::getInstance()->getParentFieldManager()->getParentFieldsInfo($this->getEntityTypeId());
+
 		foreach ($settings as $name => &$field)
 		{
 			$field['TITLE'] = $this->getFieldCaption($name);
@@ -166,6 +179,12 @@ abstract class Factory
 			return $titles[$commonFieldName];
 		}
 
+		if (ParentFieldManager::isParentFieldName($commonFieldName))
+		{
+			$parentEntityTypeId = ParentFieldManager::getEntityTypeIdFromFieldName($commonFieldName);
+			return \CCrmOwnerType::GetDescription($parentEntityTypeId);
+		}
+
 		if (!$this->isFieldExists($commonFieldName))
 		{
 			return $commonFieldName;
@@ -215,9 +234,6 @@ abstract class Factory
 	 * @param mixed $fieldValue
 	 *
 	 * @return string
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function getFieldValueCaption(string $commonFieldName, $fieldValue): string
 	{
@@ -267,10 +283,9 @@ abstract class Factory
 				return $stage ? $stage->getName() : $statusId;
 			}
 
-			if ($commonFieldName === Item::FIELD_NAME_SOURCE_ID)
-			{
-				return StatusTable::getStatusesList(StatusTable::ENTITY_ID_SOURCE)[$statusId] ?? $statusId;
-			}
+			$entityId = $field->getCrmStatusType();
+
+			return (StatusTable::getStatusesList($entityId)[$statusId] ?? $statusId);
 		}
 		if ($field->getType() === Field::TYPE_CRM_CURRENCY)
 		{
@@ -278,11 +293,17 @@ abstract class Factory
 		}
 		if ($field->getType() === Field::TYPE_CRM_COMPANY)
 		{
-			return Container::getInstance()->getCompanyBroker()->getTitle((int)$fieldValue) ?? Loc::getMessage('CRM_COMMON_EMPTY');
+			return
+				Container::getInstance()->getCompanyBroker()->getTitle((int)$fieldValue)
+				?? Loc::getMessage('CRM_COMMON_EMPTY')
+			;
 		}
 		if ($field->getType() === Field::TYPE_CRM_CONTACT)
 		{
-			return Container::getInstance()->getContactBroker()->getFormattedName((int)$fieldValue) ?? Loc::getMessage('CRM_COMMON_EMPTY');
+			return
+				Container::getInstance()->getContactBroker()->getFormattedName((int)$fieldValue)
+				?? Loc::getMessage('CRM_COMMON_EMPTY')
+			;
 		}
 		if($field instanceof Field\Category)
 		{
@@ -291,6 +312,10 @@ abstract class Factory
 			{
 				return $category->getName();
 			}
+		}
+		if ($field->getType() === Field::TYPE_LOCATION)
+		{
+			return \CCrmLocations::getLocationString($fieldValue);
 		}
 
 		return (string)$fieldValue;
@@ -303,9 +328,6 @@ abstract class Factory
 	 * @param array $parameters
 	 *
 	 * @return Item[]
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function getItems(array $parameters = []): array
 	{
@@ -457,6 +479,7 @@ abstract class Factory
 	 */
 	public function getItemsCount(array $filter = []): int
 	{
+		$this->addParentFieldsReferences();
 		$tableName = $this->getDataClass()::getTableName();
 		if (!Application::getConnection()->isTableExists($tableName))
 		{
@@ -466,7 +489,7 @@ abstract class Factory
 		$params = $this->replaceCommonFieldNames(['filter' => $filter]);
 		$normalizedFilter = $params['filter'] ?? [];
 
-		return (int)$this->getDataClass()::getCount($normalizedFilter);
+		return $this->getDataClass()::getCount($normalizedFilter);
 	}
 
 	/**
@@ -483,6 +506,7 @@ abstract class Factory
 		string $operation = UserPermissions::OPERATION_READ
 	): int
 	{
+		$this->addParentFieldsReferences();
 		$params = $this->replaceCommonFieldNames(['filter' => $filter]);
 		$filter = $params['filter'] ?? [];
 
@@ -493,25 +517,29 @@ abstract class Factory
 			$operation
 		);
 
-		return (int)$this->getDataClass()::getCount($filter);
+		return $this->getDataClass()::getCount($filter);
 	}
 
 	protected function prepareGetListParameters(array $parameters): array
 	{
+		$this->addParentFieldsReferences();
+
 		$parameters['select'] = !empty($parameters['select']) ? $parameters['select'] : ['*'];
 
 		if (in_array('*', $parameters['select'], true))
 		{
 			$parameters['select'][] = 'UF_*';
+			$parameters['select'][] = 'PARENT_ID_*';
 		}
 
-		$selectWithoutContacts = array_diff($parameters['select'], [Item::FIELD_NAME_CONTACTS]);
+		$selectWithoutContacts = array_diff($parameters['select'], [Item::FIELD_NAME_CONTACTS, Item::FIELD_NAME_CONTACT_IDS]);
 		$isContactsInSelect = ($parameters['select'] !== $selectWithoutContacts);
+
 		$parameters['select'] = $selectWithoutContacts;
 
 		if ($isContactsInSelect && $this->isClientEnabled())
 		{
-			$parameters['select'][] = 'CONTACT_BINDINGS';
+			$parameters['select'][] = Item::FIELD_NAME_CONTACT_BINDINGS;
 			$parameters['select'][] = Item::FIELD_NAME_CONTACT_ID;
 		}
 
@@ -521,6 +549,19 @@ abstract class Factory
 		}
 
 		return $this->replaceCommonFieldNames($parameters);
+	}
+
+	protected function addParentFieldsReferences(): void
+	{
+		if (!$this->isParentFieldsAdded)
+		{
+			$this->isParentFieldsAdded = true;
+
+			Container::getInstance()->getParentFieldManager()->addParentFieldsReferences(
+				static::getDataClass()::getEntity(),
+				$this->getEntityTypeId()
+			);
+		}
 	}
 
 	/**
@@ -588,6 +629,7 @@ abstract class Factory
 		{
 			if (preg_match(str_replace('#COMMON_FIELD_NAME#', $commonFieldName, $regex), $key))
 			{
+				/** @var string $key */
 				$key = str_replace($commonFieldName, $entityFieldName, $key);
 			}
 		}
@@ -603,6 +645,8 @@ abstract class Factory
 	 */
 	public function createItem(array $data = []): Item
 	{
+		$this->addParentFieldsReferences();
+
 		/** @var EntityObject $object */
 		$object = $this->getDataClass()::createObject();
 		$item = $this->getItemByEntityObject($object);
@@ -709,6 +753,16 @@ abstract class Factory
 	}
 
 	/**
+	 * Return human-readable language specific description for category of items of this entity.
+	 *
+	 * @return string
+	 */
+	public function getEntityDescriptionInPlural(): string
+	{
+		return \CCrmOwnerType::GetCategoryCaption($this->getEntityTypeId());
+	}
+
+	/**
 	 * Returns true if this entity supports multiple assigned.
 	 *
 	 * @return bool
@@ -737,6 +791,45 @@ abstract class Factory
 	 */
 	public function isCategoriesEnabled(): bool
 	{
+		return $this->isCategoriesSupported();
+	}
+
+	/**
+	 * Returns true if the category with the provided $categoryId is available for usage (is not locked or restricted)
+	 *
+	 * @param int $categoryId
+	 * @return bool
+	 */
+	public function isCategoryAvailable(int $categoryId): bool
+	{
+		if (!$this->isCategoriesSupported())
+		{
+			return false;
+		}
+
+		if (!$this->isCategoryExists($categoryId))
+		{
+			return false;
+		}
+
+		return $this->checkIfCategoryAvailable($categoryId);
+	}
+
+	protected function checkIfCategoryAvailable(int $categoryId): bool
+	{
+		return true;
+	}
+
+	public function isCategoryExists(int $categoryId): bool
+	{
+		foreach ($this->getCategories() as $category)
+		{
+			if ($category->getId() === $categoryId)
+			{
+				return true;
+			}
+		}
+
 		return false;
 	}
 
@@ -948,6 +1041,14 @@ abstract class Factory
 		return new $className($name, $description);
 	}
 
+	public function clearFieldsCollectionCache(): self
+	{
+		$this->clearUserFieldsInfoCache();
+		$this->fieldsCollection = null;
+
+		return $this;
+	}
+
 	/**
 	 * Returns add operation for this entity.
 	 *
@@ -957,7 +1058,15 @@ abstract class Factory
 	 */
 	public function getAddOperation(Item $item, Context $context = null): Operation\Add
 	{
-		return new Operation\Add($item, $this->getOperationSettings($context), $this->getFieldsCollection());
+		$add = new Operation\Add($item, $this->getOperationSettings($context), $this->getFieldsCollection());
+
+		$this->configureAddOrImportOperation($add);
+
+		return $add;
+	}
+
+	protected function configureAddOrImportOperation(Operation $operation): void
+	{
 	}
 
 	/**
@@ -983,18 +1092,24 @@ abstract class Factory
 	{
 		$operation = new Operation\Delete($item, $this->getOperationSettings($context), $this->getFieldsCollection());
 
+		$operation->setCleaner(CleaningManager::getCleaner($this->getEntityTypeId(), $item->getId()));
+
 		if ($this->isRecyclebinEnabled() && \Bitrix\Crm\Recycling\BaseController::isEnabled())
 		{
 			$operation->addAction(
 				Operation::ACTION_BEFORE_SAVE,
-				new Operation\Action\MoveToBin($item)
+				new Operation\Action\MoveToBin(),
 			);
 		}
 
 		return $operation;
 	}
 
-	public function getConversionOperation(Item $item, EntityConversionConfig $configs, Context $context = null): Operation\Conversion
+	public function getConversionOperation(
+		Item $item,
+		EntityConversionConfig $configs,
+		Context $context = null
+	): Operation\Conversion
 	{
 		$operation = new Operation\Conversion($item, $this->getOperationSettings($context), $this->getFieldsCollection());
 		$operation->setConfigs($configs);
@@ -1015,6 +1130,20 @@ abstract class Factory
 		return new Operation\Copy($item, $this->getOperationSettings($context), $this->getFieldsCollection());
 	}
 
+	public function getRestoreOperation(Item $item, Context $context = null): Operation\Restore
+	{
+		return new Operation\Restore($item, $this->getOperationSettings($context), $this->getFieldsCollection());
+	}
+
+	public function getImportOperation(Item $item, Context $context = null): Operation\Import
+	{
+		$import = new Operation\Import($item, $this->getOperationSettings($context), $this->getFieldsCollection());
+
+		$this->configureAddOrImportOperation($import);
+
+		return $import;
+	}
+
 	protected function getOperationSettings(?Context $context): Operation\Settings
 	{
 		if (!$context)
@@ -1023,6 +1152,8 @@ abstract class Factory
 		}
 
 		$settings = new Operation\Settings($context);
+
+		$settings->setStatisticsFacade($this->getStatisticsFacade());
 
 		if (!$this->isAutomationEnabled())
 		{
@@ -1034,7 +1165,17 @@ abstract class Factory
 			$settings->disableBizProc();
 		}
 
+		if (!$this->isDeferredCleaningEnabled())
+		{
+			$settings->disableDeferredCleaning();
+		}
+
 		return $settings;
+	}
+
+	protected function getStatisticsFacade(): ?Statistics\OperationFacade
+	{
+		return null;
 	}
 
 	/**
@@ -1044,7 +1185,6 @@ abstract class Factory
 	 * @param Item|null $item
 	 *
 	 * @return TrackedObject
-	 * @throws \Bitrix\Main\ArgumentException
 	 */
 	public function getTrackedObject(Item $itemBeforeSave, Item $item = null): TrackedObject
 	{
@@ -1102,7 +1242,7 @@ abstract class Factory
 
 	public function isStagesEnabled(): bool
 	{
-		return true;
+		return $this->isStagesSupported();
 	}
 
 	/**
@@ -1111,9 +1251,6 @@ abstract class Factory
 	 * @param int|null $categoryId
 	 *
 	 * @return EO_Status_Collection
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function getStages(int $categoryId = null): EO_Status_Collection
 	{
@@ -1154,25 +1291,27 @@ abstract class Factory
 			return $this->stages[$statusId];
 		}
 
-		$stage = $this->statusTableClassName::getList([
-			'filter' => [
-				'=STATUS_ID' => $statusId,
-				'=ENTITY_ID' => $this->getStagesEntityId(),
-			],
-		])->fetchObject();
-		if (!$stage)
+		if ($this->isCategoriesSupported())
 		{
-			$stage = $this->statusTableClassName::getList([
-				'filter' => [
-					'=STATUS_ID' => $statusId,
-				],
-			])->fetchObject();
-		}
-		if ($stage)
-		{
-			$this->stages[$stage->getStatusId()] = $stage;
+			$stagesArrays = [];
+			foreach ($this->getCategories() as $category)
+			{
+				$stagesArrays[] = $this->getStages($category->getId())->getAll();
+			}
 
-			return $stage;
+			$stages = $stagesArrays ? array_merge(...$stagesArrays) : [];
+		}
+		else
+		{
+			$stages = $this->getStages()->getAll();
+		}
+
+		foreach ($stages as $stage)
+		{
+			if ($stage->getStatusId() === $statusId)
+			{
+				return $stage;
+			}
 		}
 
 		return null;
@@ -1340,6 +1479,26 @@ abstract class Factory
 		return false;
 	}
 
+	/**
+	 * Return true if payments procession is enabled for this entity.
+	 *
+	 * @return bool
+	 */
+	public function isPaymentsEnabled(): bool
+	{
+		return false;
+	}
+
+	/**
+	 * Returns true if after item deletion data that was linked to the item is deleted on agent by default
+	 *
+	 * @return bool
+	 */
+	public function isDeferredCleaningEnabled(): bool
+	{
+		return true;
+	}
+
 	public function getEditorAdapter(): EditorAdapter
 	{
 		if (!$this->editorAdapter)
@@ -1358,7 +1517,9 @@ abstract class Factory
 			{
 				$this->editorAdapter->addEntityField(
 					EditorAdapter::getOpportunityField(
-						$this->getFieldCaption(EditorAdapter::FIELD_OPPORTUNITY)
+						$this->getFieldCaption(EditorAdapter::FIELD_OPPORTUNITY),
+						EditorAdapter::FIELD_OPPORTUNITY,
+						$this->isPaymentsEnabled()
 					)
 				);
 				$this->editorAdapter->addEntityField(

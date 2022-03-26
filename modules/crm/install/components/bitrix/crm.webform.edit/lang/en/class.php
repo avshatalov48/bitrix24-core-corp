@@ -1,8 +1,10 @@
-<?
+<?php
 $MESS["BIZPROC_MODULE_NOT_INSTALLED"] = "The Business Processes module is not installed.";
+$MESS["CRM_MODULE_ERROR_NOT_FOUNT"] = "Form not found";
 $MESS["CRM_MODULE_NOT_INSTALLED"] = "The CRM module is not installed.";
 $MESS["CRM_MODULE_NOT_INSTALLED_CATALOG"] = "The Commercial Catalog module is not installed.";
 $MESS["CRM_MODULE_NOT_INSTALLED_CURRENCY"] = "The Currency module is not installed.";
+$MESS["CRM_MODULE_NOT_INSTALLED_LANDING"] = "The \"landing\" module is not installed.";
 $MESS["CRM_MODULE_NOT_INSTALLED_REST"] = "The REST module is not installed.";
 $MESS["CRM_MODULE_NOT_INSTALLED_SALE"] = "The e-Store module is not installed.";
 $MESS["CRM_PERMISSION_DENIED"] = "Access denied";
@@ -23,4 +25,4 @@ $MESS["CRM_WEBFORM_EDIT_SECOND_SHORT"] = "sec";
 $MESS["CRM_WEBFORM_EDIT_TITLE"] = "Edit CRM form";
 $MESS["CRM_WEBFORM_EDIT_TITLE_ADD"] = "Create CRM Form";
 $MESS["CRM_WEBFORM_EDIT_TITLE_VIEW"] = "View CRM Form";
-?>
+$MESS["CRM_WEBFORM_SCENARIO_NAME_TEMPLATE"] = "#NAME# of #DATE#";

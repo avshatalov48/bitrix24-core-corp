@@ -427,6 +427,12 @@ class OneDriveHandler extends DocumentHandler implements FileCreatable, CloudImp
 			return null;
 		}
 
+		$filename = $http->getHeaders()->getFilename();
+		if ($filename)
+		{
+			$fileData->setName($filename);
+		}
+
 		return $fileData;
 	}
 

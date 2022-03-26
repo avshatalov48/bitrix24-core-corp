@@ -12,7 +12,7 @@ interface IVolumeClearFile extends \Bitrix\Crm\Volume\IVolumeClear
 
 	/**
 	 * Performs dropping entity attachments.
-	 * @return boolean
+	 * @return int
 	 */
 	public function clearFiles();
 

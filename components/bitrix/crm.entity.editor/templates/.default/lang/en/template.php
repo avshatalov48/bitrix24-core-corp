@@ -1,5 +1,7 @@
 <?php
 $MESS["CRM_EDITOR_ADDRESS"] = "Address";
+$MESS["CRM_EDITOR_ADD_BANK_DETAILS"] = "Add banking details";
+$MESS["CRM_EDITOR_ADD_REQUISITE"] = "Add details";
 $MESS["CRM_EDITOR_CANCEL_CONFIRMATION"] = "Are you sure you want to cancel the changes?";
 $MESS["CRM_EDITOR_CLOSE_CONFIRMATION"] = "The changes have not been saved. Are you sure you want to close the slider panel?";
 $MESS["CRM_EDITOR_CONFIRMATION"] = "Confirmation";
@@ -12,7 +14,7 @@ $MESS["CRM_EDITOR_MANUAL_OPPORTUNITY_CHANGE_VALUE_AUTO"] = "Calculate automatica
 $MESS["CRM_EDITOR_MANUAL_OPPORTUNITY_CHANGE_VALUE_MANUAL"] = "Use currently saved value";
 $MESS["CRM_EDITOR_MANUAL_OPPORTUNITY_CONFIRMATION_TEXT"] = "The total amount will no longer be recalculated automatically. Are you sure you want to continue?";
 $MESS["CRM_EDITOR_MANUAL_OPPORTUNITY_CONFIRMATION_TITLE"] = "Disable deal total auto calculation";
-$MESS["CRM_EDITOR_MANUAL_OPPORTUNITY_SET_AUTOMATIC"] = "Enable deal total auto calculation";
+$MESS["CRM_EDITOR_MANUAL_OPPORTUNITY_SET_TO_AUTOMATIC"] = "Auto calculate total amount";
 $MESS["CRM_EDITOR_PAYMENT_NOT_PAID"] = "Unpaid";
 $MESS["CRM_EDITOR_PAYMENT_PAID"] = "Paid";
 $MESS["CRM_EDITOR_PHONE"] = "Phone";
@@ -71,6 +73,7 @@ $MESS["CRM_ENTITY_ED_DISK_UPLOAD_FILE"] = "Upload file";
 $MESS["CRM_ENTITY_ED_DISK_UPLOAD_FILE_LEGEND"] = "Add using drag'n'drop";
 $MESS["CRM_ENTITY_ED_DISPLAY_COMPANY_AT_FIRST"] = "Show company first";
 $MESS["CRM_ENTITY_ED_DISPLAY_CONTACT_AT_FIRST"] = "Show contacts first";
+$MESS["CRM_ENTITY_ED_DOCUMENT_NUMBER_NUMERATOR_SETTINGS_CONTEXT_ITEM"] = "Configure auto numbering template";
 $MESS["CRM_ENTITY_ED_DUP_CTRL_SHORT_SUMMARY_TITLE"] = "found";
 $MESS["CRM_ENTITY_ED_DUP_CTRL_WARNING_ACCEPT_BTN_TITLE"] = "Ignore and save";
 $MESS["CRM_ENTITY_ED_DUP_CTRL_WARNING_CANCEL_BTN_TITLE"] = "Cancel";

@@ -66,8 +66,31 @@ class Project extends Content
 			$onClick = '';
 		}
 
+		$iconClassList = [
+			'tasks-grid-avatar',
+		];
+
+		$photo = (!empty($groupImage) ? "<i style='background-image: url(\"{$groupImage}\")'></i>" : "<i></i>");
+
+		if (
+			empty($groupImage)
+			&& !empty($row['GROUP_AVATAR_TYPE'])
+			&& Main\Loader::includeModule('socialnetwork')
+		)
+		{
+			$iconClassList[] = 'sonet-common-workgroup-avatar';
+			$iconClassList[] = '--' . htmlspecialcharsbx(\Bitrix\Socialnetwork\Helper\Workgroup::getAvatarTypeWebCssClass($row['GROUP_AVATAR_TYPE']));
+		}
+		else
+		{
+			$iconClassList[] = 'ui-icon';
+			$iconClassList[] = 'ui-icon-common-user-group';
+		}
+
+		$iconClass = implode(' ', $iconClassList);
+
 		return "<a class='{$selector}' onclick='{$onClick}' href='javascript:void(0)'>
-					<span class='ui-icon ui-icon-common-user-group tasks-grid-avatar'><i ". ((!empty($groupImage)) ? "style='background-image: url(\"{$groupImage}\");'" : "") ."></i></span>
+					<span class='{$iconClass}'>{$photo}</span>
 					<span class='tasks-grid-group-inner'>{$groupName}</span><span class='tasks-grid-filter-remove'></span>
 				</a>";
 

@@ -136,8 +136,7 @@
 		start: function ()
 		{
 			this.status = Statuses.PROGRESS;
-			this.status =
-				this.startTime = (new Date()).getTime();
+			this.startTime = (new Date()).getTime();
 			this.initFileData().then(() =>
 			{
 				if (!this.fileEntry.folderId)
@@ -559,6 +558,10 @@
 			}
 
 		},
+		deleteTask: function (taskId)
+		{
+			this.queue = this.queue.filter(queueItem => queueItem.id !== taskId);
+		},
 		/**
 		 * @param {BX.FileUploadTask} taskEntry
 		 */
@@ -644,11 +647,13 @@
 		{
 			if (task)
 			{
-				if (event == BX.FileUploadEvents.TASK_CREATED)
+				let isNewTask = event === BX.FileUploadEvents.TASK_CREATED;
+				if (isNewTask)
 				{
 					task.beforeInitAction = () => this.resizeIfNeeded(task);
-					this.updateTaskInfoInDatabase(task, true);
 				}
+
+				this.updateTaskInfoInDatabase(task, isNewTask);
 
 			}
 

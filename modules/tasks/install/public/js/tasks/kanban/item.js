@@ -625,7 +625,18 @@ BX.Tasks.Kanban.Item.prototype = {
 				});
 				this.scrumDod.subscribe('resolve', function() { taskCompletePromise.fulfill() });
 				this.scrumDod.subscribe('reject', function() { taskCompletePromise.reject() });
-				this.scrumDod.showList();
+				this.scrumDod.isNecessary()
+					.then(function(isNecessary) {
+						if (isNecessary)
+						{
+							this.scrumDod.showList();
+						}
+						else
+						{
+							taskCompletePromise.fulfill();
+						}
+					}.bind(this))
+				;
 			}.bind(this));
 		}
 		else
@@ -1239,7 +1250,7 @@ BX.Tasks.Kanban.Item.prototype = {
 			this.storyPointsNode = BX.create('div', {
 				props: {
 					className: 'tasks-kanban-item-story-points',
-					title: 'Story Points'
+					title: BX.message('TASKS_KANBAN_ITEM_STORY_POINTS_TITLE')
 				},
 				text: this.getDataKey('storyPoints'),
 			});

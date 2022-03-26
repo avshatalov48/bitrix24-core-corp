@@ -1,9 +1,8 @@
 <?php
 namespace Bitrix\Crm\Conversion;
-use Bitrix\Main;
 class EntityConversionConfigItem
 {
-	/** @var \CCrmOwnerType */
+	/** @var int */
 	protected $entityTypeID = \CCrmOwnerType::Undefined;
 	/** @var bool */
 	protected $active = false;
@@ -68,11 +67,13 @@ class EntityConversionConfigItem
 
 	public function toJavaScript()
 	{
-		return array(
+		return [
 			'active' => $this->active ? 'Y' : 'N',
 			'enableSync' => $this->enableSynchronization ? 'Y' : 'N',
-			'initData' => $this->initData
-		);
+			'initData' => $this->initData,
+			'entityTypeId' => $this->getEntityTypeID(),
+			'title' => \CCrmOwnerType::GetDescription($this->getEntityTypeID()),
+		];
 	}
 
 	public function fromJavaScript(array $params)

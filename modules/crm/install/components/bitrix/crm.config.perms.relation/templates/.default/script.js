@@ -39,7 +39,7 @@ function CrmPermAddRow(obSelected)
 			if (BX.Access.GetProviderName(provider) != '')
 				td.innerHTML = '<b>'+BX.Access.GetProviderName(provider)+':</b> '+ BX.util.htmlspecialchars(obSelected[provider][id].name);
 			else 
-				td.innerHTML = obSelected[provider][id].name;
+				td.innerHTML = BX.util.htmlspecialchars(obSelected[provider][id].name);
 			var select = BX.findChild(clone_el, {tag:'select'}, true, false);
 			select.name = 'PERMS['+id+'][]';	
 			el.parentNode.insertBefore(clone_el, el);

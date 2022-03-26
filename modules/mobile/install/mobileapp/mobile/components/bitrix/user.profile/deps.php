@@ -1,5 +1,7 @@
 <?
 return [
-	"reload/listeners", // reload vars after reload script
-	"user/profile"
+	'extensions' => [
+		'reload/listeners', // reload vars after reload script
+		'user/profile',
+	],
 ];

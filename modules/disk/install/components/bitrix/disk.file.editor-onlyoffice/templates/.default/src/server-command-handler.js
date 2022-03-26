@@ -30,7 +30,7 @@ export default class ServerCommandHandler extends BaseCommandHandler
 	{
 		console.log('handleContentUpdated', data);
 
-		if (!data.object.updatedBy)
+		if (!data.object.updatedBy || this.isCurrentUser(data.object.updatedBy))
 		{
 			return;
 		}

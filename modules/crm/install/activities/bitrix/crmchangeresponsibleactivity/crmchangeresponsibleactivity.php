@@ -138,7 +138,7 @@ class CBPCrmChangeResponsibleActivity extends CBPActivity
 	{
 		$lastUserId = $this->getStorage()->getValue('lastUserId');
 
-		if ($lastUserId)
+		if ($lastUserId && count($target) > 1)
 		{
 			$searchKey = array_search($lastUserId, $target);
 			if ($searchKey !== false)

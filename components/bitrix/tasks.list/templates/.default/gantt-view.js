@@ -11,11 +11,86 @@ var tasksListNS = {
 	}
 };
 
+function SetServerCloseStatus(taskId, status, params)
+{
+	var columnsIds = null;
+	var data = {
+		mode : status,
+		sessid : BX.message("bitrix_sessid"),
+		path_to_task: BX.message("TASKS_PATH_TO_TASK"),
+		id : taskId
+	};
+
+	if ((typeof tasksListNS !== 'undefined') && tasksListNS.getColumnsOrder)
+	{
+		columnsIds = tasksListNS.getColumnsOrder();
+		data['columnsOrder'] = columnsIds;
+	}
+
+	if (params)
+	{
+		for(var i in params)
+		{
+			data[i] = params[i];
+		}
+	}
+
+	BX.ajax({
+		method      : 'POST',
+		dataType    : 'json',
+		url         :  tasksListAjaxUrl + '&_CODE=' + status + '&viewType=VIEW_MODE_GANTT',
+		data        :  data,
+		processData :  true,
+		onsuccess   : (function(taskId){
+			return function(reply)
+			{
+				if (
+					reply.status === 'failure'
+					&& reply.message
+				)
+				{
+					BX.UI.Notification.Center.notify({content: reply.message});
+					return;
+				}
+
+				if (reply.status != 'success')
+					return;
+
+				ganttChart.updateTask(taskId, {status: "completed", dateCompleted: new Date()});
+
+				var taskInfo = BX.parseJSON(reply.tasksRenderJSON);
+
+				// replace menu items here
+				quickInfoData[taskId].menuItems = taskInfo.menuItems;
+				quickInfoData[taskId].realStatus = taskInfo.realStatus;
+				tasksMenuPopup[taskId] = taskInfo.menuItems;
+
+				if (typeof(ganttChart) != "undefined")
+				{
+					ganttChart.getTaskById(taskId).setMenuItems(__FilterMenuByStatus(quickInfoData[taskId]));
+
+					var ganttTask = ganttChart.getTaskById(taskId);
+					if (ganttTask)
+					{
+						ganttChart.updateTask(ganttTask.id, taskInfo);
+					}
+				}
+
+				if (BX.TasksTimerManager)
+					BX.TasksTimerManager.reLoadInitTimerDataFromServer();
+
+				if (window.BX.TasksIFrameInst)
+					window.BX.TasksIFrameInst.onTaskChanged(taskInfo, null, null, null, taskInfo.html);
+			};
+		})(taskId),
+	});
+
+	__InvalidateMenus([taskId, "c" + taskId]);
+}
 
 function CloseTask(taskId)
 {
-	ganttChart.updateTask(taskId, {status: "completed", dateCompleted: new Date()});
-	SetServerStatus(taskId, "close", { bGannt: true });
+	SetServerCloseStatus(taskId, "close", { bGannt: true });
 }
 
 function StartTask(taskId)
@@ -57,7 +132,7 @@ function AddToFavorite(taskId, parameters)
 		id : taskId,
 		bGannt: true
 	};
-	
+
 	BX.ajax({
 		"method": "POST",
 		"dataType": "html",
@@ -147,7 +222,7 @@ function TASKS_table_view_onDeleteClick_onSuccess(taskId, data)
 function onPopupTaskChanged(task) {
 	__RenewMenuItems(task);
 	__InvalidateMenus([task.id, "c" + task.id]);
-	
+
 	if (task.parentTaskId)
 	{
 		var parentTask = ganttChart.getTaskById(task.parentTaskId);
@@ -168,7 +243,7 @@ function onPopupTaskChanged(task) {
 		{
 			ganttChart.updateTask(task.id, task);
 		}
-		
+
 	}
 	else if(task.projectId && !ganttChart.getProjectById(task.projectId))
 	{

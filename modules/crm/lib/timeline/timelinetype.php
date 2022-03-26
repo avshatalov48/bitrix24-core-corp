@@ -23,4 +23,5 @@ class TimelineType
 	const FINAL_SUMMARY = 18;
 	const DELIVERY = 19;
 	const FINAL_SUMMARY_DOCUMENTS = 20;
+	const STORE_DOCUMENT = 21;
 }

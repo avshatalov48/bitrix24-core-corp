@@ -53,11 +53,18 @@
 	align-items: center;
 	height: 56px;
 	border-bottom: 1px solid #D7D9DE;
+	border-radius: var(profile-menu-top, var(--ui-theme-radius-md, 0));
+	border-bottom-left-radius: 0;
+	border-bottom-right-radius: 0;
 }
 
 .profile-menu-group .profile-menu-top {
 	height: 73px;
 	box-sizing: border-box;
+}
+
+.profile-menu-iframe .profile-menu-top {
+	border-bottom: none;
 }
 
 .profile-menu-group .profile-menu-links-item {
@@ -193,7 +200,7 @@
 .profile-menu-group .profile-menu-name {
 	margin: 1px 9px 0 0;
 	max-width: 100%;
-	font: 24px/27px "OpenSans-Light", Helvetica, Arial, sans-serif;
+	font: 24px/31px "OpenSans-Light", Helvetica, Arial, sans-serif;
 	color: #333;
 	white-space: nowrap;
 	overflow: hidden;

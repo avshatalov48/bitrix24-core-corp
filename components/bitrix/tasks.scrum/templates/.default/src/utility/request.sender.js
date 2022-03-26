@@ -42,11 +42,6 @@ export class RequestSender
 		});
 	}
 
-	updateItems(data): Promise
-	{
-		return this.sendRequestToComponent(data, 'updateItems');
-	}
-
 	removeItems(data): Promise
 	{
 		return this.sendRequestToComponent(data, 'removeItems');
@@ -205,6 +200,11 @@ export class RequestSender
 	getSubTaskItems(data): Promise
 	{
 		return this.sendRequestToComponent(data, 'getSubTaskItems');
+	}
+
+	createEpic(data): Promise
+	{
+		return this.sendRequest('bitrix:tasks.scrum.epic.createEpic', data);
 	}
 
 	showErrorAlert(response: ErrorResponse, alertTitle?: string)

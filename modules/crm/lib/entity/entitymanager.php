@@ -1,30 +1,34 @@
 <?php
 namespace Bitrix\Crm\Entity;
 
+use Bitrix\Crm;
+use Bitrix\Crm\Component\EntityDetails\BaseComponent;
+use Bitrix\Crm\EntityRequisite;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
+use Bitrix\Main\Result;
 
 class EntityManager
 {
 	public static function resolveByTypeID($entityTypeID)
 	{
-		if(!is_int($entityTypeID))
+		if (!is_int($entityTypeID))
 		{
 			$entityTypeID = (int)$entityTypeID;
 		}
-
-		if($entityTypeID === \CCrmOwnerType::Lead)
+		if ($entityTypeID === \CCrmOwnerType::Lead)
 		{
 			return Lead::getInstance();
 		}
-		elseif($entityTypeID === \CCrmOwnerType::Deal)
+		if ($entityTypeID === \CCrmOwnerType::Deal)
 		{
 			return Deal::getInstance();
 		}
-		elseif($entityTypeID === \CCrmOwnerType::Contact)
+		if ($entityTypeID === \CCrmOwnerType::Contact)
 		{
 			return Contact::getInstance();
 		}
-		elseif($entityTypeID === \CCrmOwnerType::Company)
+		if($entityTypeID === \CCrmOwnerType::Company)
 		{
 			return Company::getInstance();
 		}
@@ -45,22 +49,21 @@ class EntityManager
 	{
 		if(empty($entityIDs))
 		{
-			return array();
+			return [];
 		}
-
-		if($entityTypeID === \CCrmOwnerType::Lead)
+		if ($entityTypeID === \CCrmOwnerType::Lead)
 		{
 			return Lead::selectExisted($entityIDs);
 		}
-		elseif($entityTypeID === \CCrmOwnerType::Deal)
+		if ($entityTypeID === \CCrmOwnerType::Deal)
 		{
 			return Deal::selectExisted($entityIDs);
 		}
-		elseif($entityTypeID === \CCrmOwnerType::Contact)
+		if ($entityTypeID === \CCrmOwnerType::Contact)
 		{
 			return Contact::selectExisted($entityIDs);
 		}
-		elseif($entityTypeID === \CCrmOwnerType::Company)
+		if ($entityTypeID === \CCrmOwnerType::Company)
 		{
 			return Company::selectExisted($entityIDs);
 		}

@@ -4,6 +4,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\SalesCenter\Delivery\Handlers\HandlersRepository;
 use Bitrix\Main\Loader;
 use Bitrix\Sale\Delivery\Services;
+use Bitrix\SalesCenter\Integration\SaleManager;
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
@@ -16,14 +17,18 @@ class SalesCenterDeliveryWizard extends CBitrixComponent
 		if (!Loader::includeModule('salescenter'))
 		{
 			ShowError(Loc::getMessage('SALESCENTER_DELIVERY_INSTALLATION_MODULE_ERROR'));
-			$this->includeComponentTemplate();
 			return;
 		}
 
 		if (!Loader::includeModule('sale'))
 		{
 			ShowError(Loc::getMessage('SALESCENTER_DELIVERY_INSTALLATION_SALE_MODULE_ERROR'));
-			$this->includeComponentTemplate();
+			return;
+		}
+
+		if(!SaleManager::getInstance()->isFullAccess(true))
+		{
+			ShowError(Loc::getMessage("SALESCENTER_DELIVERY_INSTALLATION_ACCESS_DENIED"));
 			return;
 		}
 

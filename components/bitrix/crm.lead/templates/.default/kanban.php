@@ -185,6 +185,8 @@ else
 						)
 	 */
 
+	\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
+
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.kanban',
 		'',
@@ -192,7 +194,15 @@ else
 			'ENTITY_TYPE' => $entityType,
 			'SHOW_ACTIVITY' => 'Y',
 			'PATH_TO_IMPORT' => $arResult['PATH_TO_LEAD_IMPORT'],
-			'PATH_TO_MERGE' => $arResult['PATH_TO_LEAD_MERGE']
+			'PATH_TO_MERGE' => $arResult['PATH_TO_LEAD_MERGE'],
+			'HEADERS_SECTIONS' => [
+				[
+					'id'=> CCrmOwnerType::LeadName,
+					'name' => Loc::getMessage('CRM_COMMON_LEAD'),
+					'default' => true,
+					'selected' => true,
+				],
+			],
 		),
 		$component
 	);

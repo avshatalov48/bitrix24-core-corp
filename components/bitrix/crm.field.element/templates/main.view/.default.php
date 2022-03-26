@@ -19,6 +19,7 @@ if(\CCrmSipHelper::isEnabled())
 	Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
 }
 
+$emptyEntityLabels = $arResult['emptyEntityLabels'];
 $publicMode = (isset($arParams['PUBLIC_MODE']) && $arParams['PUBLIC_MODE'] === true);
 ?>
 
@@ -26,7 +27,7 @@ $publicMode = (isset($arParams['PUBLIC_MODE']) && $arParams['PUBLIC_MODE'] === t
 		<?php
 		foreach($arResult['value'] as $entityType => $arEntity)
 		{
-			if (empty($arEntity['items']))
+			if (empty($arEntity['items']) && empty($emptyEntityLabels[$entityType]))
 			{
 				continue;
 			}
@@ -44,37 +45,43 @@ $publicMode = (isset($arParams['PUBLIC_MODE']) && $arParams['PUBLIC_MODE'] === t
 				<td class="field_crm_entity">
 					<?php
 					$first = true;
-					foreach($arEntity['items'] as $entityId => $entity)
+					if (empty($arEntity['items']))
 					{
-						echo(!$first ? ', ' : '');
-
-						if($publicMode)
-						{
-							print HtmlFilter::encode($entity['ENTITY_TITLE']);
-						}
-						else
-						{
-							$entityTypeLower = mb_strtolower($entityType);
-
-							$crmBalloonClass = (
-							$entityType === 'LEAD' || $entityType === 'DEAL'
-								? '_no_photo' : '_' . $entityTypeLower
-							);
-							?>
-							<a
-								href="<?= HtmlFilter::encode($entity['ENTITY_LINK']) ?>"
-								target="_blank"
-								bx-tooltip-user-id="<?= ($entity['ENTITY_TYPE_ID_WITH_ENTITY_ID'] ?? $entityId) ?>"
-								bx-tooltip-loader="<?= $arEntity['tooltipLoaderUrl'] ?>"
-								bx-tooltip-classname="crm_balloon<?= $crmBalloonClass ?>"
-							>
-								<?= HtmlFilter::encode($entity['ENTITY_TITLE']) ?>
-							</a>
-							<?php
-						}
-						$first = false;
+						print ($emptyEntityLabels[$entityType] ?? '');
 					}
+					else
+					{
+						foreach($arEntity['items'] as $entityId => $entity)
+						{
+							echo(!$first ? ', ' : '');
 
+							if($publicMode)
+							{
+								print HtmlFilter::encode($entity['ENTITY_TITLE']);
+							}
+							else
+							{
+								$entityTypeLower = mb_strtolower($entityType);
+
+								$crmBalloonClass = (
+								$entityType === 'LEAD' || $entityType === 'DEAL'
+									? '_no_photo' : '_' . $entityTypeLower
+								);
+								?>
+								<a
+									href="<?= HtmlFilter::encode($entity['ENTITY_LINK']) ?>"
+									target="_blank"
+									bx-tooltip-user-id="<?= ($entity['ENTITY_TYPE_ID_WITH_ENTITY_ID'] ?? $entityId) ?>"
+									bx-tooltip-loader="<?= $arEntity['tooltipLoaderUrl'] ?>"
+									bx-tooltip-classname="crm_balloon<?= $crmBalloonClass ?>"
+								>
+									<?= HtmlFilter::encode($entity['ENTITY_TITLE']) ?>
+								</a>
+								<?php
+							}
+							$first = false;
+						}
+					}
 					?>
 				</td>
 			</tr>

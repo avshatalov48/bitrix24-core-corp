@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Display\Field;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Crm\UserField\Display;
 
@@ -921,7 +922,7 @@ class CCrmUserType
 			}
 
 			// Try to interpret value as FULL_NAME
-			$rsEntities = CCrmContact::GetListEx(array(), array('=FULL_NAME'=> $value), false, false, array('ID'));
+			$rsEntities = CCrmContact::GetListEx(array(), array('=FULL_NAME'=> $value, '@CATEGORY_ID' => 0,), false, false, array('ID'));
 			while($arEntity = $rsEntities->Fetch())
 			{
 				$ID = intval($arEntity['ID']);
@@ -931,7 +932,7 @@ class CCrmUserType
 			if(preg_match('/\s*([^\s]+)\s+([^\s]+)\s*/', $value, $match) > 0)
 			{
 				// Try to interpret value as '#NAME# #LAST_NAME#'
-				$rsEntities = CCrmContact::GetListEx(array(), array('=NAME'=> $match[1], '=LAST_NAME'=> $match[2]),  false, false, array('ID'));
+				$rsEntities = CCrmContact::GetListEx(array(), array('=NAME'=> $match[1], '=LAST_NAME'=> $match[2], '@CATEGORY_ID' => 0,),  false, false, array('ID'));
 				while($arEntity = $rsEntities->Fetch())
 				{
 					$ID = intval($arEntity['ID']);
@@ -939,7 +940,7 @@ class CCrmUserType
 				}
 
 				// Try to interpret value as '#LAST_NAME# #NAME#'
-				$rsEntities = CCrmContact::GetListEx(array(), array('=LAST_NAME'=> $match[1], '=NAME'=> $match[2]),  false, false, array('ID'));
+				$rsEntities = CCrmContact::GetListEx(array(), array('=LAST_NAME'=> $match[1], '=NAME'=> $match[2], '@CATEGORY_ID' => 0,),  false, false, array('ID'));
 				while($arEntity = $rsEntities->Fetch())
 				{
 					$ID = intval($arEntity['ID']);
@@ -949,7 +950,7 @@ class CCrmUserType
 			else
 			{
 				// Try to interpret value as '#LAST_NAME#'
-				$rsEntities = CCrmContact::GetListEx(array(), array('=LAST_NAME'=> $value),  false, false, array('ID'));
+				$rsEntities = CCrmContact::GetListEx(array(), array('=LAST_NAME'=> $value, '@CATEGORY_ID' => 0,),  false, false, array('ID'));
 				while($arEntity = $rsEntities->Fetch())
 				{
 					$ID = intval($arEntity['ID']);
@@ -969,7 +970,7 @@ class CCrmUserType
 				}
 			}
 
-			$rsEntities = CCrmCompany::GetList(array(), array('=TITLE'=> $value), array('ID'));
+			$rsEntities = CCrmCompany::GetList(array(), array('=TITLE'=> $value, '@CATEGORY_ID' => 0,), array('ID'));
 			while($arEntity = $rsEntities->Fetch())
 			{
 				$ID = intval($arEntity['ID']);
@@ -1238,7 +1239,7 @@ class CCrmUserType
 		&$rawValues,
 		&$preparedValues,
 		$delimiter = '<br />',
-		$textonly = false,
+		$isInExportMode = false,
 		$options = []
 	)
 	{
@@ -1262,11 +1263,10 @@ class CCrmUserType
 		$display = Display::createByEntityTypeId($entityTypeId);
 		$displayOptions =
 			\Bitrix\Crm\Service\Display\Options::createFromArray($options)
-				->setReturnMultipleFieldsAsSingle(true)
 				->setMultipleFieldsDelimiter((string)$delimiter)
-				->setUseTextMode((bool)$textonly)
 		;
-		$strategy = new \Bitrix\Crm\UserField\DisplayStrategy\BulkStrategy($entityTypeId);
+		$context = ($isInExportMode ? Field::EXPORT_CONTEXT : Field::GRID_CONTEXT);
+		$strategy = (new \Bitrix\Crm\UserField\DisplayStrategy\BulkStrategy($entityTypeId))->setContext($context);
 		$strategy->setDisplayOptions($displayOptions);
 
 		$display->setStrategy($strategy);

@@ -3,16 +3,16 @@
 namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 
 use Bitrix\Crm\Binding\EntityContactTable;
+use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\Integration\DocumentGenerator\Value\Money;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\Model\Dynamic\Type;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\StatusTable;
 use Bitrix\DocumentGenerator\DataProvider\ArrayDataProvider;
 use Bitrix\DocumentGenerator\DataProvider\Filterable;
-use Bitrix\DocumentGenerator\DataProvider\User;
 use Bitrix\DocumentGenerator\DataProviderManager;
-use Bitrix\Main\IO\Path;
 use Bitrix\Main\Localization\Loc;
 
 abstract class Dynamic extends ProductsDataProvider implements Filterable
@@ -42,7 +42,7 @@ abstract class Dynamic extends ProductsDataProvider implements Filterable
 			return $this->fields;
 		}
 
-		if($factory->isCategoriesSupported())
+		if ($factory->isCategoriesSupported())
 		{
 			$this->fields['CATEGORY'] = [
 				'TITLE' => Loc::getMessage('CRM_COMMON_CATEGORY'),
@@ -59,7 +59,7 @@ abstract class Dynamic extends ProductsDataProvider implements Filterable
 			'PREVIOUS_STAGE' => Item::FIELD_NAME_PREVIOUS_STAGE_ID,
 		];
 
-		if($factory->isStagesEnabled())
+		if ($factory->isStagesEnabled())
 		{
 			foreach ($fieldsWithStages as $providerFieldName => $valueFieldName)
 			{
@@ -167,7 +167,7 @@ abstract class Dynamic extends ProductsDataProvider implements Filterable
 
 	protected function getFactory(): ?Factory\Dynamic
 	{
-		if(\CCrmOwnerType::isPossibleDynamicTypeId($this->getCrmOwnerType()))
+		if(\CCrmOwnerType::isUseDynamicTypeBasedApproach($this->getCrmOwnerType()))
 		{
 			/** @noinspection PhpIncompatibleReturnTypeInspection */
 			return Container::getInstance()->getFactory($this->getCrmOwnerType());
@@ -246,27 +246,36 @@ abstract class Dynamic extends ProductsDataProvider implements Filterable
 
 		foreach($types as $type)
 		{
-			foreach($typesMap->getCategories($type->getEntityTypeId()) as $category)
-			{
-				if ($type->getIsCategoriesEnabled())
-				{
-					$name = Loc::getMessage('CRM_DOCGEN_DATAPROVIDER_DYNAMIC_PROVIDER_WITH_CATEGORY_TITLE', [
-						'#TYPE#' => $type->getTitle(),
-						'#CATEGORY#' => $category->getName(),
-					]);
-				}
-				else
-				{
-					$name = $type->getTitle();
-				}
-				$result[] = [
-					'NAME' => $name,
-					'PROVIDER' => static::getProviderCode($type->getEntityTypeId(), $category->getId())
-				];
-			}
+			static::extendProvidersListForType($result, $type, $typesMap->getCategories($type->getEntityTypeId()));
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @param Type $type
+	 * @param \Bitrix\Crm\Model\EO_ItemCategory[]|Category[] $categories
+	 */
+	protected static function extendProvidersListForType(array &$providers, Type $type, array $categories): void
+	{
+		foreach($categories as $category)
+		{
+			if ($type->getIsCategoriesEnabled())
+			{
+				$name = Loc::getMessage('CRM_DOCGEN_DATAPROVIDER_DYNAMIC_PROVIDER_WITH_CATEGORY_TITLE', [
+					'#TYPE#' => static::getLangName(),
+					'#CATEGORY#' => $category->getName(),
+				]);
+			}
+			else
+			{
+				$name = static::getLangName();
+			}
+			$providers[] = [
+				'NAME' => $name,
+				'PROVIDER' => static::getProviderCode($type->getEntityTypeId(), $category->getId())
+			];
+		}
 	}
 
 	public function hasAccess($userId): bool

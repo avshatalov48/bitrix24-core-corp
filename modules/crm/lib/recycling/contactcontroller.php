@@ -151,6 +151,12 @@ class ContactController extends BaseController
 			$slots['INVOICE_IDS'] = $invoiceIDs;
 		}
 
+		$orderIds = OrderBinder::getInstance()->getBoundEntityIDs(\CCrmOwnerType::Contact, $entityID);
+		if(!empty($orderIds))
+		{
+			$slots['ORDER_IDS'] = $orderIds;
+		}
+
 		$slots = array_merge(
 			$slots,
 			DynamicBinderManager::getInstance()
@@ -379,6 +385,16 @@ class ContactController extends BaseController
 				\CCrmOwnerType::Contact,
 				$newEntityID,
 				$invoiceIDs
+			);
+		}
+
+		$orderIds = isset($slots['ORDER_IDS']) ? $slots['ORDER_IDS'] : null;
+		if(is_array($orderIds) && !empty($orderIds))
+		{
+			OrderBinder::getInstance()->bindEntities(
+				\CCrmOwnerType::Contact,
+				$newEntityID,
+				$orderIds
 			);
 		}
 

@@ -122,8 +122,9 @@ if ($isErrorOccured)
 	}
 }
 
-use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Crm\Agent\Duplicate\Background\LeadIndexRebuild;
+use Bitrix\Crm\Agent\Duplicate\Background\LeadMerge;
 use Bitrix\Crm\Context\GridContext;
 use Bitrix\Crm\LeadAddress;
 use Bitrix\Crm\EntityAddress;
@@ -133,6 +134,8 @@ use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\WebForm\Manager as WebFormManager;
 use Bitrix\Crm\Conversion\LeadConversionDispatcher;
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
 
 $isInCalendarMode = isset($arParams['CALENDAR_MODE']) && ($arParams['CALENDAR_MODE'] === 'Y');
 
@@ -525,7 +528,6 @@ if(!$bInternal)
 			}
 		}
 	}
-
 }
 //endregion
 
@@ -587,7 +589,7 @@ $arResult['HEADERS'] = array_merge(
 	)
 );
 
-$CCrmFieldMulti->PrepareListHeaders($arResult['HEADERS']);
+$CCrmFieldMulti->PrepareListHeaders($arResult['HEADERS'], ['LINK']);
 if($isInExportMode)
 {
 	$CCrmFieldMulti->ListAddHeaders($arResult['HEADERS']);
@@ -635,6 +637,20 @@ foreach ($utmList as $utmCode => $utmName)
 }
 
 $CCrmUserType->ListAddHeaders($arResult['HEADERS']);
+
+Crm\Service\Container::getInstance()->getParentFieldManager()->prepareGridHeaders(
+	\CCrmOwnerType::Lead,
+	$arResult['HEADERS']
+);
+
+$arResult['HEADERS_SECTIONS'] = [
+	[
+		'id' => 'LEAD',
+		'name' => Loc::getMessage('CRM_COLUMN_LEAD'),
+		'default' => true,
+		'selected' => true,
+	],
+];
 
 $arBPData = array();
 if ($isBizProcInstalled)
@@ -921,6 +937,11 @@ foreach ($arFilter as $k => $v)
 {
 	if(in_array($k, $arImmutableFilters, true))
 	{
+		continue;
+	}
+	if (Crm\Service\ParentFieldManager::isParentFieldName($k))
+	{
+		$arFilter[$k] = Crm\Service\ParentFieldManager::transformEncodedFilterValueIntoInteger($k, $v);
 		continue;
 	}
 
@@ -1974,7 +1995,7 @@ if ($isInCalendarMode)
 	{
 		if ($calendarModeItem['selected'])
 		{
-			list($calendarModeItemUserFieldId, $calendarModeItemUserFieldType, $calendarModeItemUserFieldName) =
+			[$calendarModeItemUserFieldId, $calendarModeItemUserFieldType, $calendarModeItemUserFieldName] =
 				\Bitrix\Crm\Integration\Calendar::parseUserfieldKey($calendarModeItem['id']);
 			if ($calendarModeItemUserFieldName && !in_array($calendarModeItemUserFieldName, $arSelect, true))
 			{
@@ -2261,6 +2282,11 @@ if ($arResult['ENABLE_BIZPROC'] && !empty($arResult['LEAD']))
 		$allDocumentStates[$documentState['DOCUMENT_ID'][2]][$stateId] = $documentState;
 	}
 }
+
+$parentFieldValues = Crm\Service\Container::getInstance()->getParentFieldManager()->loadParentElementsByChildren(
+	\CCrmOwnerType::Lead,
+	$arResult['LEAD']
+);
 
 foreach($arResult['LEAD'] as &$arLead)
 {
@@ -2635,6 +2661,21 @@ foreach($arResult['LEAD'] as &$arLead)
 	{
 		$activitylessItems[] = $entityID;
 	}
+
+	if (isset($parentFieldValues[$entityID]))
+	{
+		foreach ($parentFieldValues[$entityID] as $parentEntityTypeId => $parentEntity)
+		{
+			if ($isInExportMode)
+			{
+				$arLead[$parentEntity['code']] = $parentEntity['title'];
+			}
+			else
+			{
+				$arLead[$parentEntity['code']] = $parentEntity['value'];
+			}
+		}
+	}
 }
 unset($arLead);
 
@@ -2662,6 +2703,25 @@ $CCrmUserType->ListAddEnumFieldsValue(
 			'/bitrix/components/bitrix/crm.lead.show/show_file.php?ownerId=#owner_id#&fieldName=#field_name#&fileId=#file_id#'
 	)
 );
+
+$arResult['ENABLE_TOOLBAR'] = $arParams['ENABLE_TOOLBAR'] ?? false;
+if ($arResult['ENABLE_TOOLBAR'])
+{
+	if($bInternal && isset($arParams['PARENT_ENTITY_TYPE_ID']) && isset($arParams['PARENT_ENTITY_ID']))
+	{
+		$parentEntityTypeId = (int)$arParams['PARENT_ENTITY_TYPE_ID'];
+		$parentEntityId = (int)$arParams['PARENT_ENTITY_ID'];
+		if (\CCrmOwnerType::IsDefined($parentEntityTypeId) && $parentEntityId > 0)
+		{
+			$arResult['PATH_TO_LEAD_ADD'] = Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl(
+				\CCrmOwnerType::Lead,
+				0,
+				null,
+				new Crm\ItemIdentifier($parentEntityTypeId, $parentEntityId)
+			);
+		}
+	}
+}
 
 if (isset($arResult['LEAD_ID']) && !empty($arResult['LEAD_ID']))
 {
@@ -2826,6 +2886,36 @@ if (!$isInExportMode)
 				$arResult['NEED_FOR_REBUILD_LEAD_ATTRS'] = true;
 			}
 		}
+
+		//region Show the process of indexing duplicates
+		$isNeedToShowDupIndexProcess = false;
+		$agent = LeadIndexRebuild::getInstance($userID);
+		if ($agent->isActive())
+		{
+			$state = $agent->state()->getData();
+			if (isset($state['STATUS']) && $state['STATUS'] === LeadIndexRebuild::STATUS_RUNNING)
+			{
+				$isNeedToShowDupIndexProcess = true;
+			}
+		}
+		$arResult['NEED_TO_SHOW_DUP_INDEX_PROCESS'] = $isNeedToShowDupIndexProcess;
+		unset($isNeedToShowDupIndexProcess, $agent);
+		//endregion Show the process of indexing duplicates
+
+		//region Show the process of merge duplicates
+		$isNeedToShowDupMergeProcess = false;
+		$agent = LeadMerge::getInstance($userID);
+		if ($agent->isActive())
+		{
+			$state = $agent->state()->getData();
+			if (isset($state['STATUS']) && $state['STATUS'] === LeadMerge::STATUS_RUNNING)
+			{
+				$isNeedToShowDupMergeProcess = true;
+			}
+		}
+		$arResult['NEED_TO_SHOW_DUP_MERGE_PROCESS'] = $isNeedToShowDupMergeProcess;
+		unset($isNeedToShowDupMergeProcess, $agent);
+		//endregion Show the process of merge duplicates
 	}
 
 	$this->IncludeComponentTemplate();

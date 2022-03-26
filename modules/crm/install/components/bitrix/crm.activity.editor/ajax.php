@@ -1629,6 +1629,13 @@ elseif($action == 'SAVE_EMAIL')
 		}
 	}
 
+	if (count($commData) > 10)
+	{
+		__CrmActivityEditorEndResponse([
+			'ERROR' => \Bitrix\Main\Localization\Loc::getMessage('CRM_ACTIVITY_EMAIL_MESSAGE_TO_MANY_RECIPIENTS')
+		]);
+	}
+
 	$sourceList = \CCrmStatus::getStatusList('SOURCE');
 	if (isset($sourceList['EMAIL']))
 	{
@@ -1907,7 +1914,7 @@ elseif($action == 'SAVE_EMAIL')
 	);
 	if (
 		'Y' !== $data['ownerRcpt']
-		&& (in_array($ownerTypeID, $nonRcptOwnerTypes) || CCrmOwnerType::isPossibleDynamicTypeId($ownerTypeID))
+		&& (in_array($ownerTypeID, $nonRcptOwnerTypes) || CCrmOwnerType::isUseDynamicTypeBasedApproach($ownerTypeID))
 		&& $ownerID > 0
 	)
 	{
@@ -2501,7 +2508,7 @@ elseif($action == 'SAVE_EMAIL')
 
 	$context = new Mail\Context();
 	$context->setCategory(Mail\Context::CAT_EXTERNAL);
-	$context->setPriority(Mail\Context::PRIORITY_NORMAL);
+	$context->setPriority(count($commData) > 2 ? Mail\Context::PRIORITY_LOW : Mail\Context::PRIORITY_NORMAL);
 	$context->setCallback(
 		(new Mail\Callback\Config())
 			->setModuleId('crm')

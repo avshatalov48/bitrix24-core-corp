@@ -112,28 +112,40 @@ class CCrmNotifierSchemeType
 
 	public static function PrepareNotificationSchemes()
 	{
-		return array(
-			'crm' => array(
-				'incoming_email' => array(
+		return [
+			'crm' => [
+				'incoming_email' => [
 					'NAME' => GetMessage('CRM_NOTIFY_SCHEME_ACTIVITY_EMAIL_INCOMING'),
 					'MAIL' => true,
 					'XMPP' => true,
-				),
-				"post" => Array(
-					"NAME" => GetMessage('CRM_NOTIFY_SCHEME_LIVEFEED_POST')
-				),
-				'mention' => array(
-					'NAME' => GetMessage('CRM_NOTIFY_SCHEME_LIVEFEED_MENTION')
-				),
-				self::WebFormName => array(
+				],
+				"post" => [
+					"NAME" => GetMessage('CRM_NOTIFY_SCHEME_LIVEFEED_POST'),
+				],
+				'mention' => [
+					'NAME' => GetMessage('CRM_NOTIFY_SCHEME_LIVEFEED_MENTION'),
+				],
+				self::WebFormName => [
 					'NAME' => GetMessage('CRM_NOTIFY_SCHEME_WEBFORM'),
-					"LIFETIME" => 86400*7
-				),
-				self::CallbackName => array(
+					"LIFETIME" => 86400 * 7,
+				],
+				self::CallbackName => [
 					'NAME' => GetMessage('CRM_NOTIFY_SCHEME_CALLBACK'),
-					"LIFETIME" => 86400*7
-				)
-			),
-		);
+					"LIFETIME" => 86400 * 7,
+				],
+				'changeAssignedBy' => [
+					'NAME' => GetMessage('CRM_NOTIFY_SCHEME_ENTITY_ASSIGNED_BY'),
+				],
+				'changeStage' => [
+					'NAME' => GetMessage('CRM_NOTIFY_SCHEME_ENTITY_STAGE'),
+				],
+				'merge' => [
+					'NAME' => GetMessage('CRM_NOTIFY_SCHEME_MERGE'),
+				],
+				'other' => [
+					'NAME' => GetMessage('CRM_NOTIFY_SCHEME_OTHER'),
+				],
+			],
+		];
 	}
 }

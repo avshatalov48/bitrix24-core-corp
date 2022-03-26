@@ -1,2 +1,9 @@
 <?php
-return ["helpers/component"];
+return [
+	'extensions' => [
+		'helpers/component',
+	],
+	'components' => [
+		'user.disk',
+	],
+];

@@ -238,6 +238,11 @@
 	background-position: -5px -126px
 }
 
+.crm-button-edit-channel-lines-container-active .crm-button-edit-channel-lines-title-container .crm-button-edit-channel-lines-title-inner .crm-button-edit-channel-lines-title-icon-default-whatsapp {
+	background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 44 44' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M37.277 6.634C33.224 2.576 27.833.34 22.09.338 10.257.338.626 9.968.621 21.805a21.432 21.432 0 0 0 2.866 10.733L.44 43.662l11.381-2.985a21.447 21.447 0 0 0 10.26 2.613h.008c11.832 0 21.464-9.631 21.468-21.469a21.338 21.338 0 0 0-6.281-15.187ZM13.372 22.586c-.268-.358-2.19-2.909-2.19-5.55 0-2.64 1.385-3.937 1.877-4.474.491-.537 1.073-.671 1.43-.671.358 0 .716.003 1.029.019.329.017.771-.126 1.206.92.448 1.075 1.52 3.715 1.654 3.984.135.268.224.581.045.94-.178.357-.268.58-.536.894-.268.314-.563.7-.805.94-.268.267-.548.558-.235 1.095.313.537 1.389 2.293 2.984 3.716 2.049 1.828 3.777 2.394 4.314 2.662.536.269.849.224 1.162-.134.313-.358 1.34-1.566 1.698-2.103.358-.537.716-.447 1.207-.269.492.18 3.13 1.477 3.666 1.745.536.269.894.403 1.028.627.134.224.134 1.298-.313 2.55-.447 1.254-2.59 2.398-3.621 2.551-.924.138-2.094.196-3.379-.212a30.823 30.823 0 0 1-3.058-1.13c-5.38-2.324-8.895-7.742-9.163-8.1Z' fill='%23525B68'/%3E%3C/svg%3E");
+	opacity: 1;
+}
+
 /* End of title container active */
 
 .crm-button-edit-channel-lines-title-inner {
@@ -264,6 +269,13 @@
 
 .crm-button-edit-channel-lines-title-icon-default-callback {
 	background-position: -5px -101px;
+}
+
+.crm-button-edit-channel-lines-title-icon-default-whatsapp {
+	background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 44 44' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M37.277 6.634C33.224 2.576 27.833.34 22.09.338 10.257.338.626 9.968.621 21.805a21.432 21.432 0 0 0 2.866 10.733L.44 43.662l11.381-2.985a21.447 21.447 0 0 0 10.26 2.613h.008c11.832 0 21.464-9.631 21.468-21.469a21.338 21.338 0 0 0-6.281-15.187ZM13.372 22.586c-.268-.358-2.19-2.909-2.19-5.55 0-2.64 1.385-3.937 1.877-4.474.491-.537 1.073-.671 1.43-.671.358 0 .716.003 1.029.019.329.017.771-.126 1.206.92.448 1.075 1.52 3.715 1.654 3.984.135.268.224.581.045.94-.178.357-.268.58-.536.894-.268.314-.563.7-.805.94-.268.267-.548.558-.235 1.095.313.537 1.389 2.293 2.984 3.716 2.049 1.828 3.777 2.394 4.314 2.662.536.269.849.224 1.162-.134.313-.358 1.34-1.566 1.698-2.103.358-.537.716-.447 1.207-.269.492.18 3.13 1.477 3.666 1.745.536.269.894.403 1.028.627.134.224.134 1.298-.313 2.55-.447 1.254-2.59 2.398-3.621 2.551-.924.138-2.094.196-3.379-.212a30.823 30.823 0 0 1-3.058-1.13c-5.38-2.324-8.895-7.742-9.163-8.1Z' fill='%23525B68'/%3E%3C/svg%3E");
+	background-repeat: no-repeat;
+	background-position: center;
+	opacity: .5;
 }
 
 /* END OF HEADER ICONS */
@@ -480,6 +492,11 @@ select::-ms-expand {
 	-moz-transition: color .3s ease;
 	transition: color .3s ease;
 	cursor: pointer;
+}
+.crm-button-edit-channel-lines-display-options-settings-button--whatsapp {
+	text-align: center;
+	display: block;
+	margin-top: 10px;
 }
 
 .crm-button-edit-channel-lines-inner-create-button-item {

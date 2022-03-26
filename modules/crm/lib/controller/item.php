@@ -41,6 +41,10 @@ class Item extends Base
 					ErrorCode::NOT_FOUND)
 			);
 		}
+		else
+		{
+			Container::getInstance()->getItemConverter()->preprocessUpperFieldNames(array_keys($factory->getFieldsInfo()));
+		}
 
 		return $factory;
 	}
@@ -91,6 +95,7 @@ class Item extends Base
 	 */
 	public function listAction(
 		int $entityTypeId,
+		array $select = ['*'],
 		array $order = null,
 		array $filter = null,
 		PageNavigation $pageNavigation = null
@@ -102,6 +107,12 @@ class Item extends Base
 			return null;
 		}
 		$parameters = [];
+
+		$select = array_map(static function($fieldName) {
+			return Container::getInstance()->getOrmObjectConverter()->convertFieldNameFromCamelCaseToUpperCase($fieldName);
+		}, $select);
+		$select = $this->prepareSelect($factory, $select);
+		$parameters['select'] = $select;
 		$parameters['filter'] = $this->convertKeysToUpper((array)$filter);
 		$parameters['filter'] = $this->prepareFilter($factory, $parameters['filter']);
 		if(is_array($order))
@@ -116,7 +127,7 @@ class Item extends Base
 		}
 
 		$items = $factory->getItemsFilteredByPermissions($parameters);
-		$items = array_values($this->getJsonForItems($factory, $items));
+		$items = array_values($this->getJsonForItems($factory, $items, $select));
 
 		return new Page(
 			'items',
@@ -271,6 +282,7 @@ class Item extends Base
 				{
 					if (isset($currentFiles[$fileId]))
 					{
+						Container::getInstance()->getFileUploader()->registerFileId($field, $fileId);
 						$result[] = $fileId;
 					}
 
@@ -292,6 +304,7 @@ class Item extends Base
 			{
 				if ((int)$fileData['ID'] === $item->get($fieldName))
 				{
+					Container::getInstance()->getFileUploader()->registerFileId($field, $fileData['ID']);
 					return;
 				}
 
@@ -357,8 +370,6 @@ class Item extends Base
 		$result = $operation->launch();
 		if ($result->isSuccess())
 		{
-			Container::getInstance()->getParentFieldManager()->saveItemRelations($item, $fields);
-
 			return [
 				'item' => $this->getJsonForItems($factory, [$operation->getItem()])[$item->getId()],
 			];
@@ -414,8 +425,6 @@ class Item extends Base
 		$result = $operation->launch();
 		if ($result->isSuccess())
 		{
-			Container::getInstance()->getParentFieldManager()->saveItemRelations($item, $fields);
-
 			$item = $operation->getItem();
 
 			return [
@@ -569,6 +578,32 @@ class Item extends Base
 		return $this->removeDotsFromKeys($filter);
 	}
 
+	protected function prepareSelect(Service\Factory $factory, array $select): array
+	{
+		if (in_array('*', $select, true))
+		{
+			return ['*'];
+		}
+
+		$select = array_values($select);
+		$select = $this->removeDotsFromValues($select);
+
+		if (in_array('UF_*', $select, true))
+		{
+			foreach ($factory->getFieldsCollection() as $field)
+			{
+				if ($field->isUserField())
+				{
+					$select[] = $field->getName();
+				}
+			}
+		}
+
+		return array_filter($select, static function ($fieldName) use ($factory) {
+			return $factory->isFieldExists($fieldName);
+		});
+	}
+
 	/**
 	 * Return information about fields.
 	 *
@@ -661,49 +696,93 @@ class Item extends Base
 	}
 
 	/**
+	 * @param Service\Factory $factory
 	 * @param \Bitrix\Crm\Item[] $items
 	 * @return array
 	 */
-	protected function getJsonForItems(Service\Factory $factory, array $items): array
+	protected function getJsonForItems(Service\Factory $factory, array $items, array $select = null): array
 	{
 		$result = [];
-		foreach ($items as $item)
-		{
-			$result[$item->getId()] = $item->jsonSerialize();
-		}
-		if (empty($result))
-		{
-			return $result;
-		}
 
-		$parentFieldManager = Container::getInstance()->getParentFieldManager();
-		$entityTypeId = $factory->getEntityTypeId();
-		$parentFields = $parentFieldManager->getParentFieldsInfo($entityTypeId);
-		if (empty($parentFields))
-		{
-			return $result;
-		}
-		$parentFieldNames = array_keys($parentFields);
-		$casedFieldNames = array_combine($parentFieldNames, $parentFieldNames);
-		$casedFieldNames = array_flip($this->convertKeysToCamelCase($casedFieldNames));
+		$isCheckSelect = (is_array($select) && !in_array('*', $select, true));
 
-		$parentFieldValues = $parentFieldManager->getParentFields(
-			array_keys($result),
-			$parentFieldNames,
-			$entityTypeId
-		);
-		foreach ($result as $itemId => $itemData)
+		$fileFields = [];
+		$fieldsCollection = $factory->getFieldsCollection();
+		foreach ($fieldsCollection as $field)
 		{
-			foreach ($casedFieldNames as $fieldName)
+			if (
+				$isCheckSelect
+				&& in_array($field->getName(), $select, true)
+				&& $field->isFileUserField()
+			)
 			{
-				$result[$itemId][$fieldName] = null;
+				$fileFields[$field->getName()] = $field;
 			}
 		}
-		foreach ($parentFieldValues as $itemId => $parents)
+		$fileFields = Container::getInstance()->getItemConverter()->convertKeysToCamelCase($fileFields);
+		foreach ($items as $item)
 		{
-			foreach ($parents as $parentValue)
+			$itemId = $item->getId();
+			$result[$itemId] = $item->jsonSerialize();
+
+			foreach ($fileFields as $fieldName => $field)
 			{
-				$result[$itemId][$casedFieldNames[$parentValue['code']]] = $parentValue['id'];
+				$result[$itemId][$fieldName] = $this->prepareFileFieldValue($field, $item);
+			}
+
+		}
+
+		if ($isCheckSelect)
+		{
+			$select = $this->convertKeysToCamelCase(array_flip($select));
+			foreach ($result as &$item)
+			{
+				$item = array_intersect_key($item, $select);
+			}
+		}
+
+		return $result;
+	}
+
+	protected function prepareFileFieldValue(Field $field, \Bitrix\Crm\Item $item): array
+	{
+		$result = [];
+
+		$router = Container::getInstance()->getRouter();
+		$itemId = $item->getId();
+		$fieldName = $field->getName();
+		$value = $item->get($fieldName);
+		if (is_array($value))
+		{
+			foreach ($value as $singleValue)
+			{
+				if ($singleValue > 0)
+				{
+					$result[] = [
+						'id' => (int)$singleValue,
+						'url' => $router->getFileUrl(
+							$item->getEntityTypeId(),
+							$itemId,
+							$fieldName,
+							(int)$singleValue
+						),
+					];
+				}
+			}
+		}
+		else
+		{
+			if ($value > 0)
+			{
+				$result = [
+					'id' => (int)$value,
+					'url' => $router->getFileUrl(
+						$item->getEntityTypeId(),
+						$itemId,
+						$fieldName,
+						(int)$value
+					),
+				];
 			}
 		}
 

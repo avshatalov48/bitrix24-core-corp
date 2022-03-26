@@ -29,13 +29,12 @@
 
 .intranet-contact-item {
 	width: 179px;
-	min-height: 105px;
+	min-height: 122px;
 	height: 50px;
 	border-radius: 1px;
 	background-color: #fff;
 	display: flex;
 	flex-direction: column;
-	justify-content: flex-end;
 	align-items: center;
 	box-sizing: border-box;
 	cursor: pointer;
@@ -43,6 +42,7 @@
 	position: relative;
 	box-shadow: 0 1px 2px rgba(0,0,0,.15);
 	padding-bottom: 15px;
+	justify-content: flex-start;
 }
 
 .intranet-contact-item:hover {
@@ -51,19 +51,24 @@
 	transform: translate(0, -1px);
 }
 
+.intranet-contact-name {
+	flex: 1;
+	display: flex;
+	align-items: center;
+}
+
 .intranet-contact-name-text {
 	color: #525c69;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
 	max-width: 185px;
 	display: inline-block;
 	vertical-align: middle;
-	font: 13px/20px 'OpenSans-Semibold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/14px 'OpenSans-Semibold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	text-align: center;
 }
 
 .intranet-contact-logo-container {
-	margin-bottom: 15px;
+	margin-bottom: 12px;
+	margin-top: 25px;
 }
 
 .intranet-contact-logo {

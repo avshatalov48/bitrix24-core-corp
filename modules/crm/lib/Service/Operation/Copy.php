@@ -3,14 +3,11 @@
 namespace Bitrix\Crm\Service\Operation;
 
 use Bitrix\Crm\Item;
-use Bitrix\Crm\ProductRow;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Service\Operation;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\ORM\Fields\FieldTypeMask;
-use Bitrix\Main\ORM\Objectify\Values;
 use Bitrix\Main\Result;
 
 class Copy extends Operation
@@ -117,30 +114,20 @@ class Copy extends Operation
 			}
 		}
 
+		if (isset($originalData[Item::FIELD_NAME_PRODUCTS]) && is_array($originalData[Item::FIELD_NAME_PRODUCTS]))
+		{
+			foreach ($originalData[Item::FIELD_NAME_PRODUCTS] as &$originalProductRow)
+			{
+				//do not copy primary key, it will cause sql error
+				unset($originalProductRow['ID']);
+			}
+			unset($originalProductRow);
+		}
+
 		$copy->setFromCompatibleData($originalData);
+
 		// if stages are disabled, it doesn't present in a compatible data
 		$copy->setStageId($original->getStageId());
-
-		$originalProducts = $original->hasField(Item::FIELD_NAME_PRODUCTS) ? $original->getProductRows() : null;
-		if (!is_null($originalProducts))
-		{
-			$copyProducts = [];
-
-			foreach ($originalProducts as $originalProduct)
-			{
-				$data = $originalProduct->collectValues(Values::ALL, FieldTypeMask::SCALAR);
-				unset($data['ID']);
-				$copyProducts[] = ProductRow::createFromArray($data);
-			}
-
-			$copy->setProductRows($copyProducts);
-		}
-
-		$observers = $original->hasField(Item::FIELD_NAME_OBSERVERS) ? $original->getObservers() : null;
-		if (!is_null($observers))
-		{
-			$copy->setObservers($observers);
-		}
 	}
 
 	protected function getCopyAddOperation(Factory $factory, Item $copy): Operation\Add

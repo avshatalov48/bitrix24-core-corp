@@ -3,15 +3,15 @@
 namespace Bitrix\Crm\Service\Operation;
 
 use Bitrix\Crm\Automation\Helper;
+use Bitrix\Crm\Counter\EntityCounterManager;
 use Bitrix\Crm\Field\Collection;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Item;
-use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Operation;
-use Bitrix\Crm\Timeline\FactoryBasedController;
+use Bitrix\Crm\Statistics;
 use Bitrix\Crm\Timeline\MarkController;
 use Bitrix\Crm\Timeline\RelationController;
 use Bitrix\Crm\Timeline\TimelineManager;
@@ -67,10 +67,20 @@ class Update extends Operation
 			}
 		}
 
-		return (
-			$this->item->hasField(Item::FIELD_NAME_PRODUCTS)
-			&& $this->item->isChanged(Item::FIELD_NAME_PRODUCTS)
-		);
+		$additionalFields = [Item::FIELD_NAME_PRODUCTS, Item::FIELD_NAME_FM];
+
+		foreach ($additionalFields as $fieldName)
+		{
+			if (
+				$this->item->hasField($fieldName)
+				&& $this->item->isChanged($fieldName)
+			)
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -90,6 +100,68 @@ class Update extends Operation
 		return true;
 	}
 
+	protected function isCountersUpdateNeeded(): bool
+	{
+		return true;
+	}
+
+	protected function getCountersCodes(): array
+	{
+		$codes = parent::getCountersCodes();
+
+		if (!$this->item->isCategoriesSupported())
+		{
+			return $codes;
+		}
+
+		$previousCategoryId = $this->itemBeforeSave->remindActual(Item::FIELD_NAME_CATEGORY_ID);
+		$currentCategoryId = $this->item->getCategoryId();
+
+		if ($previousCategoryId !== $currentCategoryId)
+		{
+			$codesForPreviousCategory = EntityCounterManager::prepareCodes(
+				$this->item->getEntityTypeId(),
+				$this->getTypesOfCountersToReset(),
+				[
+					'EXTENDED_MODE' => true,
+					'DEAL_CATEGORY_ID' => $previousCategoryId,
+				],
+			);
+
+			$codes = array_merge($codes, $codesForPreviousCategory);
+		}
+
+		return $codes;
+	}
+
+	protected function getUserIdsForCountersReset(): array
+	{
+		$userIds = [];
+
+		$previousAssigned = $this->itemBeforeSave->remindActual(Item::FIELD_NAME_ASSIGNED);
+		$currentAssigned = $this->item->getAssignedById();
+
+		if ($previousAssigned !== $currentAssigned)
+		{
+			if ($previousAssigned > 0)
+			{
+				$userIds[] = $previousAssigned;
+			}
+
+			if ($currentAssigned > 0)
+			{
+				$userIds[] = $currentAssigned;
+			}
+		}
+
+		return $userIds;
+	}
+
+	protected function registerStatistics(Statistics\OperationFacade $statisticsFacade): Result
+	{
+		return $statisticsFacade->update($this->itemBeforeSave, $this->item);
+	}
+
 	protected function saveToHistory(): Result
 	{
 		$factory = Container::getInstance()->getFactory($this->item->getEntityTypeId());
@@ -106,7 +178,6 @@ class Update extends Operation
 
 		if ($timelineController)
 		{
-			/** @see FactoryBasedController::onModify() */
 			$timelineController->onModify(
 				$this->itemBeforeSave->getId(),
 				[
@@ -233,7 +304,7 @@ class Update extends Operation
 		{
 			$result->addError($restriction->getUpdateItemRestrictedError());
 		}
-		$updateOperationRestriction = RestrictionManager::getUpdateOperationRestriction(ItemIdentifier::createByItem($this->item));
+		$updateOperationRestriction = RestrictionManager::getUpdateOperationRestriction($this->getItemIdentifier());
 		if (!$updateOperationRestriction->hasPermission())
 		{
 			$result->addError(

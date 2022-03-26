@@ -4,18 +4,27 @@
 	padding:0;
 	margin:3px 0 20px;
 }
-.b24-app-block-header{
+.b24-app-block-header {
 	font-size:12px;
 	color:#fff;
 	line-height:19px;
 	font-weight:bold;
 	text-transform:uppercase;
 	padding:7px 20px 6px;
+	border-radius: var(--b24-app-block-header, var(--ui-theme-radius-md, 0));
+	border-bottom-left-radius: 0;
+	border-bottom-right-radius: 0;
 }
 .b24-app-desktop .b24-app-block-header{background:#47E4C2;}
 .b24-app-mobile  .b24-app-block-header{background:#48c2f9;}
 
-.b24-app-block-content{padding:13px 8px;}
+.b24-app-block-content {
+	padding: 13px 8px;
+	border-radius: var(--b24-app-block-content, var(--ui-theme-radius-md, 0));
+	border-top-left-radius: 0;
+	border-top-right-radius: 0;
+}
+
 .b24-app-desktop .b24-app-block-content{background:#FFF;}
 .b24-app-mobile  .b24-app-block-content{background:#FFF;}
 

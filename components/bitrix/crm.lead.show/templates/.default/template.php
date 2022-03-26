@@ -5,6 +5,7 @@ use \Bitrix\Crm\Integration\StorageType;
 use \Bitrix\Crm\Conversion\LeadConversionScheme;
 use \Bitrix\Crm\Category\DealCategory;
 use \Bitrix\Crm\Conversion\EntityConverter;
+use Bitrix\Crm\Restriction\RestrictionManager;
 
 global $APPLICATION;
 $APPLICATION->AddHeadScript('/bitrix/js/crm/instant_editor.js');
@@ -152,14 +153,20 @@ $arTabs[] = array(
 	'icon' => '',
 	'fields' => $arResult['FIELDS']['tab_tree']
 );
-$arTabs[] = array(
+$tabEventParams = [
 	'id' => 'tab_event',
 	//'name' => GetMessage('CRM_TAB_HISTORY')." ($arResult[EVENT_COUNT])",
 	'name' => GetMessage('CRM_TAB_HISTORY'),
 	'title' => GetMessage('CRM_TAB_HISTORY_TITLE'),
 	'icon' => '',
 	'fields' => $arResult['FIELDS']['tab_event']
-);
+];
+if (isset($arResult['TAB_EVENT_TARIFF_LOCK']) && $arResult['TAB_EVENT_TARIFF_LOCK'] === 'Y')
+{
+	$tabEventParams['tariffLock']  = RestrictionManager::getHistoryViewRestriction()->prepareInfoHelperScript();
+}
+$arTabs[] = $tabEventParams;
+unset($tabEventParams);
 if(!empty($arResult['LISTS']))
 {
 	foreach($arResult['LIST_IBLOCK'] as $iblockId => $iblockName)

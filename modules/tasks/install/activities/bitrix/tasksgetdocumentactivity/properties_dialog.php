@@ -51,6 +51,6 @@ if ($isAdmin):
 			valign="top"
 			colspan="2"
 			style="color: red"
-		><?= GetMessage('TASKS_GLDA_ACCESS_DENIED') ?></td>
+		><?= GetMessage('TASKS_GLDA_ACCESS_DENIED_1') ?></td>
 	</tr>
 <?php endif ?>

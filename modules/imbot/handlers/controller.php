@@ -216,5 +216,3 @@ else
 		]]
 	]);
 }
-
-\CMain::FinalActions();

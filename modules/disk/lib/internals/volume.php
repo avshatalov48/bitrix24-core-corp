@@ -101,7 +101,8 @@ final class VolumeTable extends DataManager
 			),
 			'CREATE_TIME' => array(
 				'data_type' => 'datetime',
-				'default_value' => function() {
+				'default_value' => function()
+				{
 					return new Main\Type\DateTime();
 				},
 			),
@@ -396,12 +397,8 @@ final class VolumeTable extends DataManager
 	 */
 	public static function dropTemporally()
 	{
-		$connection = Main\Application::getConnection();
 		$tableName = static::getTemporallyName();
-		if ($connection->isTableExists($tableName))
-		{
-			$connection->query("DROP TABLE {$tableName}");
-		}
+		Main\Application::getConnection()->query("DROP TEMPORARY TABLE IF EXISTS {$tableName}");
 	}
 
 	/**
@@ -412,7 +409,7 @@ final class VolumeTable extends DataManager
 	{
 		$tableName = static::getTemporallyName();
 		$sourceTableName = static::getTableName();
-		Main\Application::getConnection()->query("CREATE TEMPORARY TABLE IF NOT EXISTS {$tableName} LIKE {$sourceTableName}");
+		Main\Application::getConnection()->query("CREATE TEMPORARY TABLE IF NOT EXISTS {$tableName} SELECT * FROM {$sourceTableName} LIMIT 0");
 	}
 
 	/**

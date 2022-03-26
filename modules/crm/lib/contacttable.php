@@ -7,6 +7,8 @@
  */
 namespace Bitrix\Crm;
 
+use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Entity\IntegerField;
 use Bitrix\Main\IO\Path;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM;
@@ -51,6 +53,8 @@ class ContactTable extends ORM\Data\DataManager
 
 	public static function getMap()
 	{
+		Container::getInstance()->getLocalization()->loadMessages();
+
 		global $DB;
 
 		return array(
@@ -320,7 +324,25 @@ class ContactTable extends ORM\Data\DataManager
 				)
 			),
 			new StringField('PHOTO'),
+			(new IntegerField('CATEGORY_ID'))
+				->configureDefaultValue([static::class, 'getDefaultCategoryId'])
+				->configureTitle(Loc::getMessage('CRM_COMMON_CLIENT_CATEGORY'))
+			,
 		);
+	}
+
+	public static function getDefaultCategoryId(): ?int
+	{
+		$factory = static::getFactory();
+
+		if($factory)
+		{
+			$category = static::getFactory()->getDefaultCategory();
+
+			return $category ? $category->getId() : null;
+		}
+
+		return null;
 	}
 
 	public static function disableUserFieldsCheck(): void
@@ -337,5 +359,15 @@ class ContactTable extends ORM\Data\DataManager
 		}
 
 		parent::checkUfFields($object, $ufdata, $result);
+	}
+
+	protected static function getEntityTypeId(): int
+	{
+		return \CCrmOwnerType::Contact;
+	}
+
+	protected static function getFactory(): \Bitrix\Crm\Service\Factory
+	{
+		return Container::getInstance()->getFactory(static::getEntityTypeId());
 	}
 }

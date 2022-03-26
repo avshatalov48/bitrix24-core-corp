@@ -41,12 +41,8 @@ Class intranet extends CModule
 	{
 		global $DB, $APPLICATION;
 
-		$arCurPhpVer = Explode(".", PhpVersion());
-		if (intval($arCurPhpVer[0]) < 5)
-			return true;
-
 		if (!$DB->Query("SELECT 'x' FROM b_intranet_sharepoint ", true))
-			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"].'/bitrix/modules/'.$this->MODULE_ID.'/install/db/'.mb_strtolower($DB->type).'/install.sql');
+			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"].'/bitrix/modules/'.$this->MODULE_ID.'/install/db/mysql/install.sql');
 
 		if (!empty($errors))
 		{
@@ -191,9 +187,10 @@ Class intranet extends CModule
 		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationExport', 'intranet', '\Bitrix\Intranet\Integration\Rest\Configuration\Controller', 'onExport');
 		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationImport', 'intranet', '\Bitrix\Intranet\Integration\Rest\Configuration\Controller', 'onImport');
 
-		//for control button
+		// for control button and secretary
 		$eventManager->registerEventHandler('tasks', 'onTaskUpdate', 'intranet', '\Bitrix\Intranet\Integration\Tasks', 'onTaskUpdate');
 		$eventManager->registerEventHandler('calendar', 'OnAfterCalendarEntryUpdate', 'intranet', '\Bitrix\Intranet\Integration\Calendar', 'onCalendarEventUpdate');
+		$eventManager->registerEventHandler('calendar', 'OnAfterCalendarEventDelete', 'intranet', '\Bitrix\Intranet\Integration\Calendar', 'OnCalendarEventDelete');
 
 		CAgent::AddAgent('\\Bitrix\\Intranet\\UStat\\UStat::recountHourlyCompanyActivity();', "intranet", "N", 60);
 		CAgent::AddAgent('\\Bitrix\\Intranet\\UStat\\UStat::recount();', "intranet", "N", 3600);
@@ -248,10 +245,6 @@ Class intranet extends CModule
 	function InstallEvents()
 	{
 		global $DB;
-
-		$arCurPhpVer = Explode(".", PhpVersion());
-		if (intval($arCurPhpVer[0]) < 5)
-			return true;
 
 		$sIn = "'INTRANET_USER_INVITATION'";
 		$rs = $DB->Query("SELECT count(*) C FROM b_event_type WHERE EVENT_NAME IN (".$sIn.") ", false, "File: ".__FILE__."<br>Line: ".__LINE__);
@@ -629,23 +622,11 @@ Class intranet extends CModule
 
 	function DoInstall()
 	{
-		global $APPLICATION;
-		$curPhpVer = PhpVersion();
-		$arCurPhpVer = Explode(".", $curPhpVer);
-		if (intval($arCurPhpVer[0]) < 5)
+		if (!IsModuleInstalled("intranet"))
 		{
-			$this->errors = array(GetMessage("INTR_PHP_L439", array("#VERS#" => $curPhpVer)));
-			$GLOBALS["errors"] = $this->errors;
-			$APPLICATION->IncludeAdminFile(GetMessage("INTR_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/install/step1.php");
-		}
-		else
-		{
-			if (!IsModuleInstalled("intranet"))
-			{
-				$this->InstallDB();
-				$this->InstallEvents();
-				$this->InstallFiles();
-			}
+			$this->InstallDB();
+			$this->InstallEvents();
+			$this->InstallFiles();
 		}
 	}
 

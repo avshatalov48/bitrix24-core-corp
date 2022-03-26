@@ -77,6 +77,13 @@ elseif($quoteID > 0)
 {
 	$isPermitted = CCrmQuote::CheckReadPermission($quoteID, $userPermissions);
 }
+if (!$isPermitted)
+{
+	$isPermitted = \Bitrix\Crm\Service\Container::getInstance()->getParentFieldManager()->tryPrepareListComponentParametersWithParentItem(
+		\CCrmOwnerType::Deal,
+		$componentParams
+	);
+}
 
 if(!$isPermitted)
 {

@@ -9,15 +9,22 @@ BX.CrmConfigClass = (function ()
 		{
 			this.numeratorQuote.dataset.type = parameters.numeratorQuoteType;
 			this.numeratorQuote.dataset.id = parameters.numeratorQuoteId;
+			BX.bind(this.numeratorQuote, 'click', BX.delegate(this.onNumeratorClick, this, ''));
 		}
-		BX.bind(this.numeratorQuote, 'click', BX.delegate(this.onNumeratorClick, this, ''));
 		this.numeratorInvoice = document.querySelector('.js-numerator-invoice');
 		if (this.numeratorInvoice)
 		{
 			this.numeratorInvoice.dataset.type = parameters.numeratorInvoiceType;
 			this.numeratorInvoice.dataset.id = parameters.numeratorInvoiceId;
+			BX.bind(this.numeratorInvoice, 'click', BX.delegate(this.onNumeratorClick, this, ''));
 		}
-		BX.bind(this.numeratorInvoice, 'click', BX.delegate(this.onNumeratorClick, this, ''));
+		this.numeratorSmartInvoice = document.querySelector('.js-numerator-smart-invoice');
+		if (this.numeratorSmartInvoice)
+		{
+			this.numeratorSmartInvoice.dataset.type = parameters.numeratorSmartInvoiceType;
+			this.numeratorSmartInvoice.dataset.id = parameters.numeratorSmartInvoiceId;
+			BX.bind(this.numeratorSmartInvoice, 'click', BX.delegate(this.onNumeratorClick, this, ''));
+		}
 		BX.addCustomEvent('SidePanel.Slider:onMessage', BX.delegate(function (event)
 		{
 			if (event.getEventId() === 'numerator-saved-event')
@@ -26,6 +33,10 @@ BX.CrmConfigClass = (function ()
 				if (this.numeratorInvoice && this.numeratorInvoice.dataset.type === numeratorData.type && !this.numeratorInvoice.dataset.id)
 				{
 					this.numeratorInvoice.dataset.id = numeratorData.id;
+				}
+				if (this.numeratorSmartInvoice && this.numeratorSmartInvoice.dataset.type === numeratorData.type && !this.numeratorSmartInvoice.dataset.id)
+				{
+					this.numeratorSmartInvoice.dataset.id = numeratorData.id;
 				}
 				if (this.numeratorQuote && this.numeratorQuote.dataset.type === numeratorData.type && !this.numeratorQuote.dataset.id)
 				{

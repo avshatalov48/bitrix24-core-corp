@@ -4,7 +4,10 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-\Bitrix\Main\UI\Extension::load('ui.entity-selector');
+use Bitrix\Main\UI\Extension;
+use Bitrix\Tasks\UI\ScopeDictionary;
+
+Extension::load(['ui.entity-selector']);
 
 $projectId = 0;
 $projectName = GetMessage("TASKS_QUICK_IN_GROUP");
@@ -97,7 +100,7 @@ if (is_array($arResult["GROUP"]))
 			button: "task-quick-form-button",
 			gridId: "<?=CUtil::JSEscape($arParams["GRID_ID"])?>",
 			getListParams: "<?=CUtil::JSEscape(serialize($arParams["GET_LIST_PARAMS"]))?>",
-			ganttMode: <?= (isset($arParams["GANTT_MODE"]) && $arParams["GANTT_MODE"] === true ? "true" : "false")?>,
+			ganttMode: <?= (isset($arParams["SCOPE"]) && $arParams["SCOPE"] === ScopeDictionary::SCOPE_TASKS_GANTT ? "true" : "false")?>,
 			groupByProject: <?=CUtil::PhpToJSObject($arParams["GROUP_BY_PROJECT"])?>,
 			destination: <?=CUtil::PhpToJSObject($arResult["DESTINATION"])?>,
 			nameTemplate: "<?=CUtil::JSEscape($arParams["NAME_TEMPLATE"])?>",
@@ -109,7 +112,8 @@ if (is_array($arResult["GROUP"]))
 			messages: {
 				taskInProject: "<?=GetMessageJs("TASKS_QUICK_IN_GROUP")?>"
 			},
-			networkEnabled: <?= \Bitrix\Tasks\Integration\Network\MemberSelector::isNetworkEnabled() ? "true" : "false"; ?>
+			networkEnabled: <?= \Bitrix\Tasks\Integration\Network\MemberSelector::isNetworkEnabled() ? "true" : "false"; ?>,
+			scope: '<?= CUtil::JSEscape($arParams['SCOPE']) ?>'
 		});
 	</script>
 </div>

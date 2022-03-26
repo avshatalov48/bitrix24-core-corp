@@ -235,6 +235,12 @@
 			return ""
 		}
 
+		setListener(listener)
+		{
+			this.listener = listener;
+
+			return this;
+		}
 	}
 
 	window.BaseSelectorProvider = SelectorProvider

@@ -2,29 +2,47 @@
 
 namespace Bitrix\ImBot\Bot;
 
-abstract class Base
+use Bitrix\ImBot\Error;
+use Bitrix\Main\Config\Option;
+
+abstract class Base implements ChatBot
 {
 	const MODULE_ID = "imbot";
 	const BOT_CODE = "";
 
-	/** @var \Bitrix\ImBot\Error  */
+	/** @var Error  */
 	protected static $lastError;
 
+	/**
+	 * Register bot at portal.
+	 *
+	 * @param array $params
+	 *
+	 * @return int
+	 */
+	abstract public static function register(array $params = []);
+
+	/**
+	 * Unregister bot at portal.
+	 *
+	 * @return bool
+	 */
+	abstract public static function unRegister();
 
 	/**
 	 * Returns registered bot Id.
 	 *
 	 * @return bool|int
 	 */
-	public static function getBotId()
+	public static function getBotId(): int
 	{
 		$class = self::getClassName();
 		if (!$class::BOT_CODE)
 		{
-			return false;
+			return 0;
 		}
 
-		return \Bitrix\Main\Config\Option::get(self::MODULE_ID, $class::BOT_CODE."_bot_id", 0);
+		return (int)Option::get(self::MODULE_ID, $class::BOT_CODE."_bot_id", 0);
 	}
 
 	/**
@@ -42,7 +60,15 @@ abstract class Base
 			return false;
 		}
 
-		\Bitrix\Main\Config\Option::set(self::MODULE_ID, $class::BOT_CODE."_bot_id", $id);
+		$optionId = $class::BOT_CODE. '_bot_id';
+		if ($id > 0)
+		{
+			Option::set(self::MODULE_ID, $optionId, $id);
+		}
+		else
+		{
+			Option::delete(self::MODULE_ID, ['name' => $optionId]);
+		}
 
 		return true;
 	}
@@ -146,7 +172,7 @@ abstract class Base
 			$avatarUrl = \Bitrix\Main\Application::getDocumentRoot().'/bitrix/modules/imbot/install/avatar/'.$class::BOT_CODE.'/default.png';
 		}
 
-		$avatarUrl = $avatarUrl? \CFile::MakeFileArray($avatarUrl): '';
+		$avatarUrl = $avatarUrl? \CFile::makeFileArray($avatarUrl): '';
 
 		return $avatarUrl;
 	}
@@ -174,7 +200,7 @@ abstract class Base
 
 		if ($iconId)
 		{
-			$iconId = \CFile::SaveFile(\CFile::MakeFileArray($iconId), 'imbot');
+			$iconId = \CFile::saveFile(\CFile::makeFileArray($iconId), 'imbot');
 		}
 
 		return $iconId;
@@ -189,14 +215,36 @@ abstract class Base
 	}
 
 	/**
-	 * @return \Bitrix\ImBot\Error
+	 * @return Error
 	 */
 	public static function getError()
 	{
-		if (!self::$lastError)
+		if (!(self::$lastError instanceof Error))
 		{
-			self::$lastError = new \Bitrix\ImBot\Error(null, '', '');
+			self::$lastError = new Error(null, '', '');
 		}
 		return self::$lastError;
 	}
+
+	/**
+	 * @param Error $error
+	 * @return void
+	 */
+	public static function addError($error): void
+	{
+		self::$lastError = $error;
+	}
+
+	/**
+	 * Tells true if error has occurred.
+	 *
+	 * @return boolean
+	 */
+	public static function hasError(): bool
+	{
+		return
+			(self::$lastError instanceof Error)
+			&& self::$lastError->error;
+	}
+
 }

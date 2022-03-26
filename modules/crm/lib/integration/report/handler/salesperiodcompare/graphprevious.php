@@ -4,8 +4,10 @@ namespace Bitrix\Crm\Integration\Report\Handler\SalesPeriodCompare;
 
 use Bitrix\Crm\Integration\Report\Handler\SalesDynamics\BaseGraph;
 use Bitrix\Crm\PhaseSemantics;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Main\ORM\Query\Query;
+use Bitrix\Main\SystemException;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 
@@ -49,10 +51,12 @@ class GraphPrevious extends BaseGraph
 	public function padNormalizedData(&$normalizedData)
 	{
 		$filterParameters = $this->getFilterParameters();
-		if(isset($filterParameters['PREVIOUS_PERIOD']))
+		if(!isset($filterParameters['PREVIOUS_PERIOD']))
 		{
-			$minDate = DateTime::createFromUserTime($filterParameters['PREVIOUS_PERIOD']['from']);
+			throw new SystemException(Loc::getMessage("CRM_REPORT_PERIOD_COMPARE_ERROR_PREV_PERIOD_UNSET"));
 		}
+
+		$minDate = DateTime::createFromUserTime($filterParameters['PREVIOUS_PERIOD']['from']);
 
 		reset($normalizedData);
 		$firstKey = key($normalizedData);

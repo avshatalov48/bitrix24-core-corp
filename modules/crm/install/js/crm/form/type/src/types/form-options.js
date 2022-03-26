@@ -55,10 +55,16 @@ type ResultItem = {
 	url: string;
 };
 
+type RefillItem = {
+	active: boolean;
+	caption: string;
+};
+
 type Result = {
 	success: ResultItem;
 	failure: ResultItem;
 	redirectDelay: number;
+	refill: RefillItem
 };
 
 type Callback = {
@@ -106,9 +112,17 @@ type IntegrationCase = {
 	active: boolean;
 	date: string;
 	providerCode: string;
+	linkDirection: number;
 	form: IntegrationCaseForm;
 	account: IntegrationCaseAccount;
+	fieldsMapping:Array<IntegrationMapping>;
 };
+type IntegrationMapping = {
+	crmFieldKey:string;
+	adsFieldKey:string;
+	multiple:boolean;
+	items: Object
+}
 type IntegrationProvider = {
 	code: string;
 	title: string;
@@ -140,7 +154,7 @@ type EmbeddingViews = {
 };
 type Embedding = {
 	scripts: EmbeddingScripts;
-	vuews: EmbeddingViews;
+	views: EmbeddingViews;
 };
 
 export type FormOptions = {

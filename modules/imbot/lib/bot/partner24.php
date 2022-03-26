@@ -1,12 +1,14 @@
-<?php
+<?php declare(strict_types=1);
+
 namespace Bitrix\ImBot\Bot;
 
+use Bitrix\ImBot\DialogSession;
 use Bitrix\Main;
 use Bitrix\Main\Config\Option;
 use Bitrix\Im;
 use Bitrix\ImBot;
 
-class Partner24 extends Network implements NetworkBot
+class Partner24 extends Network implements SupportBot
 {
 	public const
 		BOT_CODE = 'partner24',
@@ -29,15 +31,16 @@ class Partner24 extends Network implements NetworkBot
 	/**
 	 * @return string
 	 */
-	public static function getSupportLevel()
+	public static function getSupportLevel(): string
 	{
 		return Support24::getSupportLevel();
 	}
 
 	/**
+	 * Detects client's support level.
 	 * @return string
 	 */
-	public static function getLicenceLanguage()
+	public static function getLicenceLanguage(): string
 	{
 		return Support24::getLicenceLanguage();
 	}
@@ -45,15 +48,16 @@ class Partner24 extends Network implements NetworkBot
 	/**
 	 * @return string
 	 */
-	public static function getPartnerName()
+	public static function getPartnerName(): string
 	{
 		return Option::get('imbot', self::OPTION_BOT_SUPPORT_NAME, '');
 	}
 
 	/**
+	 * Returns OL code.
 	 * @return string
 	 */
-	public static function getBotCode()
+	public static function getBotCode(): string
 	{
 		return Option::get('imbot', self::OPTION_BOT_SUPPORT_CODE, '');
 	}
@@ -86,6 +90,8 @@ class Partner24 extends Network implements NetworkBot
 			$botId = parent::getNetworkBotId($supportCode, true);
 			if ($botId)
 			{
+				self::updateBotProperties();
+
 				return $botId;
 			}
 
@@ -137,24 +143,24 @@ class Partner24 extends Network implements NetworkBot
 			return false;
 		}
 
-		self::deactivate(self::getCurrentUser()->getId());
+		self::deactivate((int)self::getCurrentUser()->getId());
 
 		$result = false;
-		$code = self::getBotCode();
+		$botCode = self::getBotCode();
 		$botId = self::getBotId();
 
-		if ($code !== '')
+		if ($botCode !== '')
 		{
 			self::sendRequestFinalizeSession();
 
-			$result = parent::unRegister($code, $notifyController);
+			$result = parent::unRegister($botCode, $notifyController);
 
 			if (is_array($result) && isset($result['result']))
 			{
 				$result = $result['result'];
 				if ($result)
 				{
-					Option::delete('imbot', ['name' => parent::BOT_CODE.'_'.$code.'_bot_id']);
+					Option::delete(self::MODULE_ID, ['name' => parent::BOT_CODE.'_'.$botCode.'_bot_id']);
 				}
 			}
 		}
@@ -166,16 +172,29 @@ class Partner24 extends Network implements NetworkBot
 
 		if ($result)
 		{
-			Option::set('imbot', self::OPTION_BOT_ID, 0);
+			Option::delete(self::MODULE_ID, ['name' => self::OPTION_BOT_ID]);
 
-			Option::set('imbot', self::OPTION_BOT_ACTIVE, false);
-			Option::set('imbot', self::OPTION_BOT_WAIT_ACTIVATION, false);
+			Option::set(self::MODULE_ID, self::OPTION_BOT_ACTIVE, false);
+			Option::set(self::MODULE_ID, self::OPTION_BOT_WAIT_ACTIVATION, false);
 
-			Option::set('imbot', self::OPTION_BOT_SUPPORT_CODE, '');
-			Option::set('imbot', self::OPTION_BOT_SUPPORT_NAME, '');
+			Option::set(self::MODULE_ID, self::OPTION_BOT_SUPPORT_CODE, '');
+			Option::set(self::MODULE_ID, self::OPTION_BOT_SUPPORT_NAME, '');
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Returns command's property list.
+	 * @return array{class: string, handler: string, visible: bool, context: string}[]
+	 */
+	public static function getCommandList(): array
+	{
+		$commandList = parent::getCommandList();
+
+		unset($commandList[self::COMMAND_UNREGISTER]);
+
+		return $commandList;
 	}
 
 	/**
@@ -183,7 +202,7 @@ class Partner24 extends Network implements NetworkBot
 	 *
 	 * @return bool
 	 */
-	public static function isEnabled()
+	public static function isEnabled(): bool
 	{
 		return self::getBotId() > 0;
 	}
@@ -191,33 +210,33 @@ class Partner24 extends Network implements NetworkBot
 	/**
 	 * @return bool|int
 	 */
-	public static function getBotId()
+	public static function getBotId(): int
 	{
-		return Option::get('imbot', self::OPTION_BOT_ID, 0);
+		return (int)Option::get(self::MODULE_ID, self::OPTION_BOT_ID, 0);
 	}
 
 	/**
 	 * @return string
 	 */
-	public static function getBotName()
+	public static function getBotName(): string
 	{
-		return Option::get('imbot', self::OPTION_BOT_NAME, '');
+		return Option::get(self::MODULE_ID, self::OPTION_BOT_NAME, '');
 	}
 
 	/**
 	 * @return string
 	 */
-	public static function getBotDesc()
+	public static function getBotDesc(): string
 	{
-		return Option::get('imbot', self::OPTION_BOT_DESC, '');
+		return Option::get(self::MODULE_ID, self::OPTION_BOT_DESC, '');
 	}
 
 	/**
 	 * @return string
 	 */
-	public static function getBotAvatar()
+	public static function getBotAvatar(): string
 	{
-		return Option::get('imbot', self::OPTION_BOT_AVATAR, '');
+		return Option::get(self::MODULE_ID, self::OPTION_BOT_AVATAR, '');
 	}
 
 	/**
@@ -225,7 +244,7 @@ class Partner24 extends Network implements NetworkBot
 	 */
 	public static function isActiveSupport()
 	{
-		return (bool)Option::get('imbot', self::OPTION_BOT_ACTIVE, false);
+		return (bool)Option::get(self::MODULE_ID, self::OPTION_BOT_ACTIVE, false);
 	}
 
 	/**
@@ -233,7 +252,7 @@ class Partner24 extends Network implements NetworkBot
 	 */
 	public static function isWaitingActivation()
 	{
-		return (bool)Option::get('imbot', self::OPTION_BOT_WAIT_ACTIVATION, false);
+		return (bool)Option::get(self::MODULE_ID, self::OPTION_BOT_WAIT_ACTIVATION, false);
 	}
 
 	/**
@@ -243,7 +262,7 @@ class Partner24 extends Network implements NetworkBot
 	 */
 	public static function isActiveSupportForAll()
 	{
-		return (bool)Option::get('imbot', self::OPTION_BOT_FOR_ALL, false);
+		return (bool)Option::get(self::MODULE_ID, self::OPTION_BOT_FOR_ALL, false);
 	}
 
 	/**
@@ -253,7 +272,7 @@ class Partner24 extends Network implements NetworkBot
 	 */
 	public static function allowIntegratorAccessAlongSupport24()
 	{
-		$regulagSupportLevel = Option::get('imbot', self::OPTION_BOT_REGULAR_SUPPORT, self::REGULAR_SUPPORT_NONE);
+		$regulagSupportLevel = Option::get(self::MODULE_ID, self::OPTION_BOT_REGULAR_SUPPORT, self::REGULAR_SUPPORT_NONE);
 
 		return ($regulagSupportLevel === self::REGULAR_SUPPORT_INTEGRATOR);
 	}
@@ -297,17 +316,19 @@ class Partner24 extends Network implements NetworkBot
 	}
 
 	/**
+	 * @inheritDoc
 	 * @return bool
 	 */
-	public static function isNeedUpdateBotFieldsAfterNewMessage()
+	public static function isNeedUpdateBotFieldsAfterNewMessage(): bool
 	{
 		return false;
 	}
 
 	/**
+	 * @inheritDoc
 	 * @return bool
 	 */
-	public static function isNeedUpdateBotAvatarAfterNewMessage()
+	public static function isNeedUpdateBotAvatarAfterNewMessage(): bool
 	{
 		return (bool)self::getBotAvatar() !== true;
 	}
@@ -383,7 +404,7 @@ class Partner24 extends Network implements NetworkBot
 			}
 
 			$chat = new \CIMChat(self::getBotId());
-			$chat->DeleteUser(mb_substr($dialogId, 4), self::getBotId());
+			$chat->deleteUser(mb_substr($dialogId, 4), self::getBotId());
 
 			return true;
 		}
@@ -425,8 +446,11 @@ class Partner24 extends Network implements NetworkBot
 	}
 
 	/**
-	 * @param int $messageId
-	 * @param array $messageFields
+	 * Event handler on message add.
+	 * @see \Bitrix\Im\Bot::onMessageAdd
+	 *
+	 * @param int $messageId Message Id.
+	 * @param array $messageFields Event arguments.
 	 *
 	 * @return bool
 	 */
@@ -437,7 +461,7 @@ class Partner24 extends Network implements NetworkBot
 			return false;
 		}
 
-		if ($messageFields['MESSAGE_TYPE'] != IM_MESSAGE_PRIVATE)
+		if (!self::checkMembershipRestriction($messageFields))
 		{
 			$groupLimited = self::getMessage('GROUP_LIMITED');
 			if ($groupLimited)
@@ -450,14 +474,12 @@ class Partner24 extends Network implements NetworkBot
 				]);
 			}
 
-			$chat = new \CIMChat(self::getBotId());
-			$chat->DeleteUser($messageFields['CHAT_ID'], self::getBotId());
+			(new \CIMChat(self::getBotId()))->deleteUser($messageFields['CHAT_ID'], self::getBotId());
 
 			return true;
 		}
 
 		$message = '';
-
 		if (self::isActiveSupport())
 		{
 			if (!self::isActiveSupportForUser($messageFields['FROM_USER_ID']))
@@ -476,6 +498,8 @@ class Partner24 extends Network implements NetworkBot
 
 		if (!empty($message))
 		{
+			self::markMessageUndelivered($messageId);
+
 			self::sendMessage([
 				'DIALOG_ID' => $messageFields['FROM_USER_ID'],
 				'MESSAGE' => $message,
@@ -490,6 +514,7 @@ class Partner24 extends Network implements NetworkBot
 	}
 
 	/**
+	 * @see \Bitrix\ImBot\Event::onStartWriting
 	 * @param array $params
 	 *
 	 * @return bool
@@ -502,7 +527,7 @@ class Partner24 extends Network implements NetworkBot
 			{
 				return false;
 			}
-			else if (!self::isActiveSupportForUser($params['USER_ID']))
+			if (!self::isActiveSupportForUser($params['USER_ID']))
 			{
 				return false;
 			}
@@ -520,13 +545,19 @@ class Partner24 extends Network implements NetworkBot
 	public static function onAfterSupportCodeChange($currentCode = '', $previousCode = '')
 	{
 		if (!Main\Loader::includeModule('im'))
+		{
 			return false;
+		}
 
 		if (!Main\Loader::includeModule('bitrix24'))
+		{
 			return false;
+		}
 
 		if (!self::getBotId())
+		{
 			return false;
+		}
 
 		$currentLicence = \CBitrix24::getLicenseType(\CBitrix24::LICENSE_TYPE_CURRENT);
 
@@ -539,8 +570,8 @@ class Partner24 extends Network implements NetworkBot
 
 		self::sendMessageForRecent(self::getMessage('CHANGE_CODE'));
 
-		Option::set('imbot', "network_".$previousCode."_bot_id", 0);
-		Option::set('imbot', "network_".$currentCode."_bot_id", self::getBotId());
+		Option::delete(self::MODULE_ID, ['name' => "network_".$previousCode."_bot_id"]);
+		Option::set(self::MODULE_ID, "network_".$currentCode."_bot_id", self::getBotId());
 
 		self::sendRequestFinalizeSession([
 			'MESSAGE' => self::getMessage('PARTNER_INFO_DEACTIVATE')
@@ -558,8 +589,7 @@ class Partner24 extends Network implements NetworkBot
 				'PREVIOUS_BOT_CODE' => $previousCode,
 				'CURRENT_BOT_CODE' => $currentCode,
 				'MESSAGE' => self::getMessage('PARTNER_INFO_DEACTIVATE'),
-			],
-			true
+			]
 		);
 
 		return true;
@@ -612,13 +642,21 @@ class Partner24 extends Network implements NetworkBot
 	public static function sendRequestFinalizeSession(array $params = [])
 	{
 		if (!Main\Loader::includeModule('im'))
+		{
 			return false;
+		}
 
 		if (!Main\Loader::includeModule('bitrix24'))
+		{
 			return false;
+		}
 
 		if (!self::getBotId())
+		{
 			return false;
+		}
+
+		(new DialogSession)->clearSessions(['BOT_ID' => self::getBotId()]);
 
 		$currentLicence = \CBitrix24::getLicenseType(\CBitrix24::LICENSE_TYPE_CURRENT);
 		$currentCode = self::getBotCode();
@@ -682,6 +720,9 @@ class Partner24 extends Network implements NetworkBot
 
 		Im\Bot::update(['BOT_ID' => self::getBotId()], $botParams);
 
+		self::registerCommands(self::getBotId());
+		self::registerApps(self::getBotId());
+
 		return true;
 	}
 
@@ -691,7 +732,7 @@ class Partner24 extends Network implements NetworkBot
 	 *
 	 * @return string
 	 */
-	public static function replacePlaceholders($message, $userId = 0)
+	public static function replacePlaceholders($message, $userId = 0): string
 	{
 		return Support24::replacePlaceholders($message, $userId);
 	}
@@ -701,7 +742,7 @@ class Partner24 extends Network implements NetworkBot
 	 *
 	 * @return string
 	 */
-	public static function getMessage($code)
+	public static function getMessage($code): string
 	{
 		static $messages;
 		if ($messages === null)
@@ -722,15 +763,17 @@ class Partner24 extends Network implements NetworkBot
 	 */
 	private static function sendMessageForRecent($message)
 	{
+		$users = [self::getBotId()];
 		foreach (self::getRecentDialogs() as $dialog)
 		{
-			if ($dialog['USER_ID'] == self::getBotId())
+			if (in_array($dialog['USER_ID'], $users))
 			{
 				continue;
 			}
 
-			if ($dialog['RECENTLY_TALK'] == 'Y')
+			if ($dialog['RECENTLY_TALK'] == 'Y' && $dialog['MESSAGE_TYPE'] == \IM_MESSAGE_PRIVATE)
 			{
+				$users[] = $dialog['USER_ID'];
 				self::sendMessage([
 					'DIALOG_ID' => $dialog['USER_ID'],
 					'MESSAGE' => $message,
@@ -762,6 +805,10 @@ class Partner24 extends Network implements NetworkBot
 	 */
 	public static function activate(int $userId, string $supportCode, string $supportName = null)
 	{
+		if (!Main\Loader::includeModule('im'))
+		{
+			return false;
+		}
 		if (self::getBotId())
 		{
 			return self::change($userId, $supportCode, $supportName);
@@ -783,9 +830,10 @@ class Partner24 extends Network implements NetworkBot
 			'URL_PREVIEW' => 'N'
 		]);
 
-		self::clientMessageSend([
+		self::clientMessageAdd([
 			'BOT_ID' => self::getBotId(),
 			'USER_ID' => $userId,
+			'DIALOG_ID' => $userId,
 			'ATTACH' => [['MESSAGE' => self::getMessage('PARTNER_INFO_ACTIVATE')]],
 		]);
 
@@ -803,20 +851,33 @@ class Partner24 extends Network implements NetworkBot
 	 */
 	public static function deactivate(int $userId)
 	{
-		if(!self::isActiveSupport())
+		if (!Main\Loader::includeModule('im'))
+		{
+			return false;
+		}
+		if (!self::isActiveSupport())
 		{
 			return true;
 		}
 
-		$messageCode = Support24::isActivePaidSupport()? 'DEACTIVATE_PAID': 'DEACTIVATE_FREE';
+		$messageCode = Support24::isActivePaidSupport() ? 'DEACTIVATE_PAID' : 'DEACTIVATE_FREE';
 		self::sendMessageForRecent(self::getMessage($messageCode));
 
 		self::sendRequestFinalizeSession([
 			'MESSAGE' => self::getMessage('PARTNER_INFO_DEACTIVATE')
 		]);
 
-		Option::set('imbot', self::OPTION_BOT_ACTIVE, false);
-		Option::set('imbot', self::OPTION_BOT_WAIT_ACTIVATION, false);
+		$previousCode = self::getBotCode();
+		$disallowCode = '000disabled000000000000000000000';
+
+		Option::set(self::MODULE_ID, self::OPTION_BOT_ACTIVE, false);
+		Option::set(self::MODULE_ID, self::OPTION_BOT_WAIT_ACTIVATION, false);
+
+		self::setOptions($disallowCode, self::getBotName());
+		self::updateBotProperties();
+
+		self::setNetworkBotId($previousCode, 0);
+		self::setNetworkBotId($disallowCode, self::getBotId());
 
 		return true;
 	}
@@ -830,14 +891,19 @@ class Partner24 extends Network implements NetworkBot
 	 */
 	public static function change(int $userId, string $supportCode, string $supportName = null)
 	{
+		if (!Main\Loader::includeModule('im'))
+		{
+			return false;
+		}
 		$prevSupportCode = self::getBotCode();
 
 		self::setOptions($supportCode, $supportName);
 		self::onAfterSupportCodeChange($supportCode, $prevSupportCode);
 
-		self::clientMessageSend([
+		self::clientMessageAdd([
 			'BOT_ID' => self::getBotId(),
 			'USER_ID' => $userId,
+			'DIALOG_ID' => $userId,
 			'ATTACH' => [['MESSAGE' => self::getMessage('PARTNER_INFO_ACTIVATE')]],
 		]);
 
@@ -871,7 +937,7 @@ class Partner24 extends Network implements NetworkBot
 		}
 
 		Option::set('imbot', self::OPTION_BOT_SUPPORT_CODE, $supportCode);
-		Option::set('imbot', self::OPTION_BOT_SUPPORT_NAME, $supportName ? $supportName : '');
+		Option::set('imbot', self::OPTION_BOT_SUPPORT_NAME, $supportName ?: '');
 
 		return true;
 	}

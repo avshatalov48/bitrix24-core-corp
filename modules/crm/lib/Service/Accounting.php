@@ -4,6 +4,8 @@ namespace Bitrix\Crm\Service;
 
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\InvalidOperationException;
 
 class Accounting
 {
@@ -51,6 +53,59 @@ class Accounting
 		return $this;
 	}
 
+	private function isResultCached(Item $item): bool
+	{
+		if ($item->isNew())
+		{
+			return false;
+		}
+
+		$hash = $this->compileHash($item);
+
+		return isset($this->cache[$hash]);
+	}
+
+	private function compileHash(Item $item): string
+	{
+		$ownerHash = serialize($item->getData());
+
+		$productRows = $item->getProductRows() ? $item->getProductRows()->toArray() : [];
+		$productRowsHash = serialize($productRows);
+
+		// return result from cache only if a current item is exactly the same as previous
+		return md5($ownerHash . $productRowsHash);
+	}
+
+	private function getResultFromCache(Item $item): Accounting\Result
+	{
+		if ($item->isNew())
+		{
+			throw new ArgumentException('Accounting result caching for new items is not possible');
+		}
+
+		$hash = $this->compileHash($item);
+
+		$result = $this->cache[$hash] ?? null;
+		if (!$result)
+		{
+			throw new InvalidOperationException('Result for this item is not cached yet');
+		}
+
+		return $result;
+	}
+
+	private function cacheResult(Item $item, Accounting\Result $result): void
+	{
+		if ($item->isNew())
+		{
+			return;
+		}
+
+		$hash = $this->compileHash($item);
+
+		$this->cache[$hash] = $result;
+	}
+
 	/**
 	 * Calculate total sums based on current tax mode and $item`s fields.
 	 * This method stores calculation result in inner cache.
@@ -60,28 +115,12 @@ class Accounting
 	 */
 	public function calculateByItem(Item $item): Accounting\Result
 	{
-		if ($item->getId() <= 0)
+		if ($this->isResultCached($item))
 		{
-			$hash = $item->getEntityTypeId() . '_new';
-		}
-		else
-		{
-			$hash = ItemIdentifier::createByItem($item)->getHash();
-		}
-		if (isset($this->cache[$hash]))
-		{
-			return $this->cache[$hash];
+			return $this->getResultFromCache($item);
 		}
 
-		$productRows = $item->getProductRows();
-		if ($productRows !== null)
-		{
-			$productRows = $productRows->toArray();
-		}
-		else
-		{
-			$productRows = [];
-		}
+		$productRows = $item->getProductRows() ? $item->getProductRows()->toArray() : [];
 		$personTypeId = $this->resolvePersonTypeId($item);
 
 		$locationId = null;
@@ -90,11 +129,13 @@ class Accounting
 			$locationId = $item->get(Item::FIELD_NAME_LOCATION_ID);
 		}
 
-		$this->cache[$hash] = Accounting\Result::initializeFromArray(
+		$result = Accounting\Result::initializeFromArray(
 			$this->calculate($productRows, $item->getCurrencyId(), $personTypeId, $locationId)
 		);
 
-		return $this->cache[$hash];
+		$this->cacheResult($item, $result);
+
+		return $result;
 	}
 
 	/**
@@ -134,6 +175,24 @@ class Accounting
 			SITE_ID,
 			$options
 		);
+	}
+
+	public function calculateDeliveryTotal(ItemIdentifier $itemIdentifier): float
+	{
+		$orderIds = \Bitrix\Crm\Binding\OrderEntityTable::getOrderIdsByOwner(
+			$itemIdentifier->getEntityId(),
+			$itemIdentifier->getEntityTypeId(),
+		);
+
+		$orders = Container::getInstance()->getOrderBroker()->getBunchByIds($orderIds);
+
+		$total = 0;
+		foreach ($orders as $order)
+		{
+			$total += $order->getShipmentCollection()->getPriceDelivery();
+		}
+
+		return (float)$total;
 	}
 
 	/**

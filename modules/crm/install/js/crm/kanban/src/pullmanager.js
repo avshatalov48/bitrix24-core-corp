@@ -96,7 +96,7 @@ export default class PullManager
 		if (item)
 		{
 			const oldPrice = parseFloat(item.data.price);
-			const oldColumnId = item.data.columnId;
+			const oldColumnId = item.columnId;
 
 			for (let key in paramsItem.data)
 			{
@@ -114,17 +114,23 @@ export default class PullManager
 
 			this.grid.insertItem(item);
 
-			const newColumn = this.grid.getColumn(paramsItem.data.columnId);
+			const newColumnId = paramsItem.data.columnId;
+			const newColumn = this.grid.getColumn(newColumnId);
 			const newPrice = parseFloat(paramsItem.data.price);
 
-			if (oldColumnId !== paramsItem.data.columnId)
+			item.columnId = newColumnId;
+
+			if (oldColumnId !== newColumnId)
 			{
 				const oldColumn = this.grid.getColumn(oldColumnId);
 				oldColumn.decPrice(oldPrice);
 				oldColumn.renderSubTitle();
 
-				newColumn.incPrice(newPrice);
-				newColumn.renderSubTitle();
+				if (newColumn)
+				{
+					newColumn.incPrice(newPrice);
+					newColumn.renderSubTitle();
+				}
 			}
 			else
 			{
@@ -140,7 +146,6 @@ export default class PullManager
 				}
 			}
 
-			item.columnId = paramsItem.data.columnId;
 			this.queue.push(item.id);
 
 			return true;

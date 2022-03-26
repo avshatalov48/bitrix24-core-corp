@@ -54,6 +54,18 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        this.dialog.redrawHeader();
 	      }
 	    }
+	  }, {
+	    key: "handleGeneralChatAccess",
+	    value: function handleGeneralChatAccess() {
+	      app.closeController();
+	    }
+	  }, {
+	    key: "handleChatUserLeave",
+	    value: function handleChatUserLeave(params) {
+	      if (params.userId === this.controller.application.getUserId() && params.dialogId === this.controller.application.getDialogId()) {
+	        app.closeController();
+	      }
+	    }
 	  }]);
 	  return MobileImCommandHandler;
 	}();
@@ -213,7 +225,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  },
 	  data: function data() {
 	    return {
-	      dialogState: 'loading'
+	      dialogState: 'none'
 	    };
 	  },
 	  computed: babelHelpers.objectSpread({
@@ -243,7 +255,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        color: ''
 	      };
 
-	      if (!this.showMessageDialog || !this.dialog.quoteId) {
+	      if (!this.isMessageLoaded || !this.dialog.quoteId) {
 	        return result;
 	      }
 
@@ -276,11 +288,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    isDarkBackground: function isDarkBackground() {
 	      return this.application.options.darkBackground;
 	    },
-	    showMessageDialog: function showMessageDialog() {
+	    isMessageLoaded: function isMessageLoaded() {
 	      var _this = this;
 
-	      var result = this.messageCollection && this.messageCollection.length > 0;
 	      var timeout = ChatPerformance.getDialogShowTimeout();
+	      var result = this.messageCollection && this.messageCollection.length > 0;
 
 	      if (result) {
 	        if (timeout > 0) {
@@ -493,8 +505,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      this.getApplication().setTextFocus();
 	    }
 	  },
+	  watch: {
+	    dialogState: function dialogState(state) {
+	      this.getApplication().changeDialogState(state);
+	    }
+	  },
 	  // language=Vue
-	  template: "\n\t\t<div :class=\"widgetClassName\">\n\t\t\t<bx-im-component-dialog\n\t\t\t\t:userId=\"application.common.userId\"\n\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t:enableReadMessages=\"application.dialog.enableReadMessages\"\n\t\t\t\t:enableReactions=\"true\"\n\t\t\t\t:enableDateActions=\"false\"\n\t\t\t\t:enableCreateContent=\"false\"\n\t\t\t\t:enableGestureQuote=\"application.options.quoteEnable\"\n\t\t\t\t:enableGestureQuoteFromRight=\"application.options.quoteFromRight\"\n\t\t\t\t:enableGestureMenu=\"true\"\n\t\t\t\t:showMessageUserName=\"isDialog\"\n\t\t\t\t:showMessageAvatar=\"isDialog\"\n\t\t\t\t:showMessageMenu=\"false\"\n\t\t\t\t:skipDataRequest=\"true\"\n\t\t\t />\n\t\t\t<template v-if=\"application.options.showSmiles\">\n\t\t\t\t<MobileSmiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\" @hideSmiles=\"onHideSmiles\" />\n\t\t\t</template>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div :class=\"widgetClassName\" :data-message-loaded=\"isMessageLoaded\">\n\t\t\t<bx-im-component-dialog\n\t\t\t\t:userId=\"application.common.userId\"\n\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t:enableReadMessages=\"application.dialog.enableReadMessages\"\n\t\t\t\t:enableReactions=\"true\"\n\t\t\t\t:enableDateActions=\"false\"\n\t\t\t\t:enableCreateContent=\"false\"\n\t\t\t\t:enableGestureQuote=\"application.options.quoteEnable\"\n\t\t\t\t:enableGestureQuoteFromRight=\"application.options.quoteFromRight\"\n\t\t\t\t:enableGestureMenu=\"true\"\n\t\t\t\t:showMessageUserName=\"isDialog\"\n\t\t\t\t:showMessageAvatar=\"isDialog\"\n\t\t\t\t:showMessageMenu=\"false\"\n\t\t\t\t:skipDataRequest=\"true\"\n\t\t\t />\n\t\t\t<template v-if=\"application.options.showSmiles\">\n\t\t\t\t<MobileSmiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\" @hideSmiles=\"onHideSmiles\" />\n\t\t\t</template>\n\t\t</div>\n\t"
 	}, {
 	  immutable: true
 	});
@@ -507,6 +524,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	 * @subpackage mobile
 	 * @copyright 2001-2020 Bitrix
 	 */
+	var STORAGE_PREFIX = 'chatBackgroundQueue';
+	var FILES_STORAGE_NAME = 'uploadTasks';
+	var MESSAGES_STORAGE_NAME = 'tasks';
+	var NO_INTERNET_CONNECTION_ERROR_CODE = -2;
+	var HTTP_OK_STATUS_CODE = 200;
 	var MobileDialogApplication = /*#__PURE__*/function () {
 	  /* region 01. Initialize and store data */
 	  function MobileDialogApplication() {
@@ -522,9 +544,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    this.eventBus = new ui_vue.VueVendorV2();
 	    this.timer = new im_lib_timer.Timer();
 	    this.messagesQueue = [];
-	    this.windowFocused = true; //alert('Pause: open console for debug');
+	    this.windowFocused = true;
+	    window.imDialogUploadTasks = [];
+	    window.imDialogMessagesTasks = [];
+	    this.messagesSet = false; //alert('Pause: open console for debug');
 
 	    this.initCore().then(function () {
+	      return _this.subscribeToEvents();
+	    }).then(function () {
 	      return _this.initComponentParams();
 	    }).then(function (result) {
 	      return _this.initMobileEntity(result);
@@ -536,6 +563,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      return _this.initEnvironment();
 	    }).then(function () {
 	      return _this.initMobileEnvironment();
+	    }).then(function () {
+	      return _this.initUnsentStorage();
 	    }).then(function () {
 	      return _this.initPullClient();
 	    }).then(function () {
@@ -554,6 +583,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          resolve();
 	        });
 	      });
+	    }
+	  }, {
+	    key: "subscribeToEvents",
+	    value: function subscribeToEvents() {
+	      main_core_events.EventEmitter.subscribe(im_const.EventType.dialog.messagesSet, this.onMessagesSet.bind(this));
 	    }
 	  }, {
 	    key: "initComponentParams",
@@ -659,9 +693,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function initEnvironment() {
 	      console.log('4. initEnvironment');
 	      this.setTextareaMessage = im_lib_utils.Utils.debounce(this.controller.application.setTextareaMessage, 300, this.controller.application);
-
-	      if (im_lib_utils.Utils.platform.isIos() && Application.getApiVersion() >= 39) ;
-
 	      return new Promise(function (resolve, reject) {
 	        return resolve();
 	      });
@@ -776,7 +807,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          }
 	        });
 	      });
-	      BXMobileApp.UI.Page.TextPanel.setParams(this.getKeyboardParams());
+	      BXMobileApp.UI.Page.TextPanel.getText(function (initialText) {
+	        BXMobileApp.UI.Page.TextPanel.setParams(_this6.getKeyboardParams({
+	          text: initialText
+	        }));
+	      });
 	      this.changeChatKeyboardStatus();
 	      BX.MobileUploadProvider.setListener(this.executeUploaderEvent.bind(this));
 	      this.fileUpdateProgress = im_lib_utils.Utils.throttle(function (chatId, fileId, progress, size) {
@@ -784,6 +819,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          chatId: chatId,
 	          id: fileId,
 	          fields: {
+	            status: im_const.FileStatus.upload,
 	            size: size,
 	            progress: progress
 	          }
@@ -820,7 +856,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function initPullClient() {
 	      var _this7 = this;
 
-	      console.log('6. initPullClient');
+	      console.log('7. initPullClient');
 
 	      if (this.storedEvents && this.storedEvents.length > 0 && this.controller.application.isUnreadMessagesLoaded()) {
 	        //sort events and get first 50 (to match unread messages cache size)
@@ -832,6 +868,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          _this7.storedEvents = _this7.storedEvents.filter(function (event) {
 	            BX.onCustomEvent('chatrecent::push::get', [event]);
 	            return false;
+	          }); // scroll to first push message in dialog before load all messages from server
+
+	          main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollToBottom, {
+	            chatId: _this7.controller.application.getChatId(),
+	            duration: 300,
+	            cancelIfScrollChange: true
 	          });
 	        }, 50);
 	      }
@@ -841,16 +883,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        controller: this.controller,
 	        dialog: this
 	      }));
-	      mobile_pull_client.PULL.subscribe({
-	        type: BX.PullClient.SubscriptionType.Server,
-	        moduleId: 'im',
-	        command: 'chatUserLeave',
-	        callback: function callback(params) {
-	          if (params.userId === _this7.controller.application.getUserId() && params.dialogId === _this7.controller.application.getDialogId()) {
-	            app.closeController();
-	          }
-	        }
-	      });
 	      mobile_pull_client.PULL.subscribe({
 	        type: mobile_pull_client.PullClient.SubscriptionType.Status,
 	        callback: this.eventStatusInteraction.bind(this)
@@ -872,7 +904,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function initComplete() {
 	      var _this8 = this;
 
-	      console.log('7. init complete');
+	      console.log('8. initComplete');
 	      this.controller.getStore().subscribe(function (mutation) {
 	        return _this8.eventStoreInteraction(mutation);
 	      });
@@ -882,6 +914,65 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        dialogId: this.controller.application.getDialogId()
 	      }, true], 'im.recent');
 	      return this.requestData();
+	    }
+	  }, {
+	    key: "cancelUnsentFile",
+	    value: function cancelUnsentFile(fileId) {
+	      var taskId = "imDialogFileUpload|".concat(fileId);
+	      BX.MobileUploadProvider.cancelTasks([taskId]);
+	      window.imDialogUploadTasks = window.imDialogUploadTasks.filter(function (entry) {
+	        return taskId !== entry.taskId;
+	      });
+	    }
+	  }, {
+	    key: "initUnsentStorage",
+	    value: function initUnsentStorage() {
+	      var _this9 = this;
+
+	      console.log('6. initUnsentStorage');
+	      return new Promise(function (resolve) {
+	        var filesPromise = _this9.loadUnsentFiles();
+
+	        var messagesPromise = _this9.loadUnsentMessages();
+
+	        Promise.all([filesPromise, messagesPromise]).then(resolve);
+	      });
+	    }
+	  }, {
+	    key: "loadUnsentMessages",
+	    value: function loadUnsentMessages() {
+	      var userId = this.controller.application.getUserId();
+	      var dialogId = this.controller.application.getDialogId();
+	      var storageId = "".concat(STORAGE_PREFIX, "_").concat(userId);
+	      return ApplicationStorage.getObject(MESSAGES_STORAGE_NAME, {}, storageId).then(function (tasks) {
+	        for (var queueType in tasks) {
+	          if (queueType === dialogId) {
+	            tasks[queueType].forEach(function (task) {
+	              if (dialogId === task.extra.dialogId) {
+	                window.imDialogMessagesTasks.push(task);
+	              }
+	            });
+	          }
+	        }
+	      });
+	    }
+	  }, {
+	    key: "loadUnsentFiles",
+	    value: function loadUnsentFiles() {
+	      var userId = this.controller.application.getUserId();
+	      var dialogId = this.controller.application.getDialogId();
+	      var storageId = "".concat(STORAGE_PREFIX, "_").concat(userId);
+	      return ApplicationStorage.getObject(FILES_STORAGE_NAME, {}, storageId).then(function (result) {
+	        Object.values(result).forEach(function (task) {
+	          if (typeof task.eventData.file !== 'undefined' && dialogId === task.eventData.file.params.dialogId) {
+	            window.imDialogUploadTasks.push(task);
+	          }
+	        }); // we need it to show a progress bar for the uploading
+
+	        if (window.imDialogUploadTasks.length > 0) {
+	          BX.MobileUploadProvider.registerTaskLoaders(window.imDialogUploadTasks);
+	        }
+	      });
 	    }
 	  }, {
 	    key: "ready",
@@ -897,9 +988,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "requestData",
 	    value: function requestData() {
-	      var _this9 = this;
+	      var _this10 = this;
 
-	      console.log('4. requestData');
+	      console.log('-> requestData');
 
 	      if (this.requestDataSend) {
 	        return this.requestDataSend;
@@ -916,69 +1007,70 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        var _query;
 
 	        var query = (_query = {}, babelHelpers.defineProperty(_query, im_const.RestMethodHandler.mobileBrowserConstGet, [im_const.RestMethod.mobileBrowserConstGet, {}]), babelHelpers.defineProperty(_query, im_const.RestMethodHandler.imChatGet, [im_const.RestMethod.imChatGet, {
-	          dialog_id: _this9.controller.application.getDialogId()
+	          dialog_id: _this10.controller.application.getDialogId()
 	        }]), babelHelpers.defineProperty(_query, im_const.RestMethodHandler.imDialogMessagesGetInit, [im_const.RestMethod.imDialogMessagesGet, {
-	          dialog_id: _this9.controller.application.getDialogId(),
-	          limit: _this9.controller.application.getRequestMessageLimit(),
+	          dialog_id: _this10.controller.application.getDialogId(),
+	          limit: _this10.controller.application.getRequestMessageLimit(),
 	          convert_text: 'Y'
 	        }]), babelHelpers.defineProperty(_query, im_const.RestMethodHandler.imRecentUnread, [im_const.RestMethod.imRecentUnread, {
-	          dialog_id: _this9.controller.application.getDialogId(),
+	          dialog_id: _this10.controller.application.getDialogId(),
 	          action: 'N'
 	        }]), babelHelpers.defineProperty(_query, im_const.RestMethodHandler.imCallGetCallLimits, [im_const.RestMethod.imCallGetCallLimits, {}]), _query);
 
-	        if (im_lib_utils.Utils.dialog.isChatId(_this9.controller.application.getDialogId())) {
+	        if (im_lib_utils.Utils.dialog.isChatId(_this10.controller.application.getDialogId())) {
 	          query[im_const.RestMethodHandler.imUserGet] = [im_const.RestMethod.imUserGet, {}];
 	        } else {
 	          query[im_const.RestMethodHandler.imUserListGet] = [im_const.RestMethod.imUserListGet, {
-	            id: [_this9.controller.application.getUserId(), _this9.controller.application.getDialogId()]
+	            id: [_this10.controller.application.getUserId(), _this10.controller.application.getDialogId()]
 	          }];
 	        }
 
-	        _this9.controller.restClient.callBatch(query, function (response) {
+	        _this10.controller.restClient.callBatch(query, function (response) {
 	          if (!response) {
-	            _this9.requestDataSend = null;
+	            _this10.requestDataSend = null;
 
-	            _this9.setError('EMPTY_RESPONSE', 'Server returned an empty response.');
+	            _this10.setError('EMPTY_RESPONSE', 'Server returned an empty response.');
 
 	            resolve();
 	            return false;
 	          }
 
+	          console.log('<-- requestData', response);
 	          var constGet = response[im_const.RestMethodHandler.mobileBrowserConstGet];
 
 	          if (constGet.error()) {
 	            console.warn('Error load dialog', constGet.error().ex.error, constGet.error().ex.error_description);
 	            console.warn('Try connect...');
 	            setTimeout(function () {
-	              return _this9.requestData();
+	              return _this10.requestData();
 	            }, 5000);
 	          } else {
-	            _this9.controller.executeRestAnswer(im_const.RestMethodHandler.mobileBrowserConstGet, constGet);
+	            _this10.controller.executeRestAnswer(im_const.RestMethodHandler.mobileBrowserConstGet, constGet);
 	          }
 
 	          var callLimits = response[im_const.RestMethodHandler.imCallGetCallLimits];
 
 	          if (callLimits && !callLimits.error()) {
-	            _this9.controller.executeRestAnswer(im_const.RestMethodHandler.imCallGetCallLimits, callLimits);
+	            _this10.controller.executeRestAnswer(im_const.RestMethodHandler.imCallGetCallLimits, callLimits);
 	          }
 
 	          var userGet = response[im_const.RestMethodHandler.imUserGet];
 
 	          if (userGet && !userGet.error()) {
-	            _this9.controller.executeRestAnswer(im_const.RestMethodHandler.imUserGet, userGet);
+	            _this10.controller.executeRestAnswer(im_const.RestMethodHandler.imUserGet, userGet);
 	          }
 
 	          var userListGet = response[im_const.RestMethodHandler.imUserListGet];
 
 	          if (userListGet && !userListGet.error()) {
-	            _this9.controller.executeRestAnswer(im_const.RestMethodHandler.imUserListGet, userListGet);
+	            _this10.controller.executeRestAnswer(im_const.RestMethodHandler.imUserListGet, userListGet);
 	          }
 
 	          var chatGetResult = response[im_const.RestMethodHandler.imChatGet];
 
-	          _this9.controller.executeRestAnswer(im_const.RestMethodHandler.imChatGet, chatGetResult);
+	          _this10.controller.executeRestAnswer(im_const.RestMethodHandler.imChatGet, chatGetResult);
 
-	          _this9.redrawHeader();
+	          _this10.redrawHeader();
 
 	          var dialogMessagesGetResult = response[im_const.RestMethodHandler.imDialogMessagesGetInit];
 
@@ -988,33 +1080,33 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              useLetterImage: true
 	            });
 
-	            _this9.timer.stop('data', 'load', true);
+	            _this10.timer.stop('data', 'load', true);
 
-	            _this9.controller.getStore().dispatch('dialogues/saveDialog', {
-	              dialogId: _this9.controller.application.getDialogId(),
-	              chatId: _this9.controller.application.getChatId()
+	            _this10.controller.getStore().dispatch('dialogues/saveDialog', {
+	              dialogId: _this10.controller.application.getDialogId(),
+	              chatId: _this10.controller.application.getChatId()
 	            });
 
-	            if (_this9.controller.pullBaseHandler) {
-	              _this9.controller.pullBaseHandler.option.skip = false;
+	            if (_this10.controller.pullBaseHandler) {
+	              _this10.controller.pullBaseHandler.option.skip = false;
 	            }
 
-	            _this9.controller.getStore().dispatch('application/set', {
+	            _this10.controller.getStore().dispatch('application/set', {
 	              dialog: {
 	                enableReadMessages: true
 	              }
 	            }).then(function () {
-	              _this9.controller.executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGetInit, dialogMessagesGetResult);
+	              _this10.controller.executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGetInit, dialogMessagesGetResult);
 	            });
 
-	            _this9.processSendMessages();
+	            _this10.processSendMessages();
 	          }
 
-	          _this9.requestDataSend = null;
+	          _this10.requestDataSend = null;
 	          resolve();
 	        }, false, false, im_lib_utils.Utils.getLogTrackingParams({
 	          name: 'mobile.im.dialog',
-	          dialog: _this9.controller.application.getDialogData()
+	          dialog: _this10.controller.application.getDialogData()
 	        }));
 	      });
 	      return this.requestDataSend;
@@ -1068,8 +1160,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      } else if (eventName === BX.MobileUploaderConst.TASK_CANCELLED || eventName === BX.MobileUploaderConst.TASK_NOT_FOUND) {
 	        this.cancelUploadFile(eventData.file.params.file.id);
 	      } else if (eventName === BX.MobileUploaderConst.FILE_CREATED_FAILED || eventName === BX.MobileUploaderConst.FILE_UPLOAD_FAILED || eventName === BX.MobileUploaderConst.FILE_READ_ERROR || eventName === BX.MobileUploaderConst.TASK_STARTED_FAILED) {
-	        console.error('ChatDialog.disk.eventRouter: ', eventName, eventData, taskId);
-	        this.fileError(eventData.file.params.chatId, eventData.file.params.file.id, eventData.file.params.id);
+	        var _eventData$error, _eventData$error$erro;
+
+	        console.error('ChatDialog.disk.eventRouter: ', eventName, eventData, taskId); // show file error only if it is not internet connection error
+
+	        if ((eventData === null || eventData === void 0 ? void 0 : (_eventData$error = eventData.error) === null || _eventData$error === void 0 ? void 0 : (_eventData$error$erro = _eventData$error.error) === null || _eventData$error$erro === void 0 ? void 0 : _eventData$error$erro.code) !== NO_INTERNET_CONNECTION_ERROR_CODE) {
+	          this.fileError(eventData.file.params.chatId, eventData.file.params.file.id, eventData.file.params.id);
+	        }
 	      }
 
 	      return true;
@@ -1124,7 +1221,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "redrawHeader",
 	    value: function redrawHeader() {
-	      var _this10 = this;
+	      var _this11 = this;
 
 	      var headerProperties;
 
@@ -1144,7 +1241,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (!this.headerMenuInited) {
 	        BXMobileApp.UI.Page.TopBar.title.params.useLetterImage = true;
 	        BXMobileApp.UI.Page.TopBar.title.setCallback(function () {
-	          return _this10.openHeaderMenu();
+	          return _this11.openHeaderMenu();
 	        });
 	        this.headerMenuInited = true;
 	      }
@@ -1164,6 +1261,57 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        BXMobileApp.UI.Page.TopBar.title.params.imageColor = headerProperties.color;
 	      }
 
+	      return true;
+	    }
+	  }, {
+	    key: "setIosInset",
+	    value: function setIosInset() {
+	      if (!im_lib_utils.Utils.platform.isIos() || Application.getApiVersion() <= 39) {
+	        return false;
+	      }
+
+	      var getScrollElement = function getScrollElement() {
+	        return document.getElementsByClassName("bx-im-dialog-list")[0];
+	      };
+
+	      var setTopInset = function setTopInset(scrollElement) {
+	        scrollElement.style.paddingTop = window.safeAreaInsets.top + "px";
+	      };
+
+	      var onScrollChange = function onScrollChange() {
+	        var scrollElement = getScrollElement();
+
+	        if (!scrollElement) {
+	          return false;
+	        }
+
+	        if (scrollElement.scrollTop <= window.safeAreaInsets.top) {
+	          setTopInset(scrollElement);
+	          scrollElement.removeEventListener("scroll", onScrollChange);
+	        }
+	      };
+
+	      if (this.iosInsetEventSetted) {
+	        return true;
+	      }
+
+	      this.iosInsetEventSetted = true;
+	      var onInsetsChanged = im_lib_utils.Utils.debounce(function () {
+	        var scrollElement = getScrollElement();
+
+	        if (!scrollElement) {
+	          return false;
+	        }
+
+	        if (window.safeAreaInsets && scrollElement.scrollTop <= window.safeAreaInsets.top) {
+	          setTopInset(scrollElement);
+	        } else {
+	          scrollElement.removeEventListener("scroll", onScrollChange);
+	          scrollElement.addEventListener("scroll", onScrollChange);
+	        }
+	      }, 100);
+	      BXMobileApp.addCustomEvent("onInsetsChanged", onInsetsChanged);
+	      setTimeout(onInsetsChanged, 1000);
 	      return true;
 	    }
 	  }, {
@@ -1198,7 +1346,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (showLastDate) {
 	        result.desc = showLastDate;
 	      } else {
-	        if (user.workPosition) {
+	        if (user.extranet) {
+	          result.desc = this.getLocalize('IM_LIST_EXTRANET');
+	        } else if (user.workPosition) {
 	          result.desc = user.workPosition;
 	        } else {
 	          result.desc = this.getLocalize('MOBILE_HEADER_MENU_CHAT_TYPE_USER');
@@ -1243,6 +1393,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }
 
 	      result.desc = chatTypeTitle;
+
+	      if (dialog.entityType === 'SUPPORT24_QUESTION') {
+	        result.avatar = encodeURI(this.controller.getHost() + "/bitrix/mobileapp/mobile/components/bitrix/im.recent/images/avatar_24_question_x3.png");
+	        result.desc = '';
+	      }
+
 	      return result;
 	    }
 	  }, {
@@ -1258,6 +1414,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var keyboardShow = true;
 
 	      if (dialog.type === 'announcement' && !dialog.managerList.includes(this.controller.application.getUserId())) {
+	        keyboardShow = false;
+	      } else if (dialog.restrictions.send === false) {
 	        keyboardShow = false;
 	      }
 
@@ -1278,7 +1436,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "setHeaderButtons",
 	    value: function setHeaderButtons() {
-	      var _this11 = this;
+	      var _this12 = this;
 
 	      if (this.callMenuSetted) {
 	        return true;
@@ -1302,7 +1460,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	                callback: function callback() {
 	                  fabric.Answers.sendCustomEvent("vueChatAddUserButton", {});
 
-	                  _this11.openAddUserDialog();
+	                  _this12.openAddUserDialog();
 	                }
 	              }]
 	            });
@@ -1312,6 +1470,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            });
 	          }
 
+	          this.callMenuSetted = true;
+	          return true;
+	        }
+
+	        if (!dialogData.restrictions.call) {
+	          app.exec("setRightButtons", {
+	            items: []
+	          });
 	          this.callMenuSetted = true;
 	          return true;
 	        }
@@ -1335,17 +1501,17 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        items: [{
 	          type: "call_audio",
 	          callback: function callback() {
-	            if (im_lib_utils.Utils.dialog.isChatId(_this11.controller.application.getDialogId())) {
+	            if (im_lib_utils.Utils.dialog.isChatId(_this12.controller.application.getDialogId())) {
 	              BXMobileApp.Events.postToComponent("onCallInvite", {
-	                dialogId: _this11.controller.application.getDialogId(),
+	                dialogId: _this12.controller.application.getDialogId(),
 	                video: false,
-	                chatData: _this11.controller.application.getDialogData()
+	                chatData: _this12.controller.application.getDialogData()
 	              }, "calls");
 	            } else {
-	              var _userData = _this11.controller.getStore().getters['users/get'](_this11.controller.application.getDialogId(), true);
+	              var _userData = _this12.controller.getStore().getters['users/get'](_this12.controller.application.getDialogId(), true);
 
 	              BXMobileApp.Events.postToComponent("onCallInvite", {
-	                userId: _this11.controller.application.getDialogId(),
+	                userId: _this12.controller.application.getDialogId(),
 	                video: false,
 	                userData: babelHelpers.defineProperty({}, _userData.id, _userData)
 	              }, "calls");
@@ -1357,17 +1523,17 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          callback: function callback() {
 	            fabric.Answers.sendCustomEvent("vueChatCallVideoButton", {});
 
-	            if (im_lib_utils.Utils.dialog.isChatId(_this11.controller.application.getDialogId())) {
+	            if (im_lib_utils.Utils.dialog.isChatId(_this12.controller.application.getDialogId())) {
 	              BXMobileApp.Events.postToComponent("onCallInvite", {
-	                dialogId: _this11.controller.application.getDialogId(),
+	                dialogId: _this12.controller.application.getDialogId(),
 	                video: true,
-	                chatData: _this11.controller.application.getDialogData()
+	                chatData: _this12.controller.application.getDialogData()
 	              }, "calls");
 	            } else {
 	              BXMobileApp.Events.postToComponent("onCallInvite", {
-	                dialogId: _this11.controller.application.getDialogId(),
+	                dialogId: _this12.controller.application.getDialogId(),
 	                video: true,
-	                userData: babelHelpers.defineProperty({}, _this11.controller.application.getDialogId(), _this11.controller.getStore().getters['users/get'](_this11.controller.application.getDialogId(), true))
+	                userData: babelHelpers.defineProperty({}, _this12.controller.application.getDialogId(), _this12.controller.getStore().getters['users/get'](_this12.controller.application.getDialogId(), true))
 	              }, "calls");
 	            }
 	          }
@@ -1418,7 +1584,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "openCallMenu",
 	    value: function openCallMenu() {
-	      var _this12 = this;
+	      var _this13 = this;
 
 	      fabric.Answers.sendCustomEvent("vueChatCallAudioButton", {});
 	      var userData = this.controller.getStore().getters['users/get'](this.controller.application.getDialogId(), true);
@@ -1431,7 +1597,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	          if (params.id === 'audio') {
 	            BXMobileApp.Events.postToComponent("onCallInvite", {
-	              userId: _this12.controller.application.getDialogId(),
+	              userId: _this13.controller.application.getDialogId(),
 	              video: false,
 	              userData: babelHelpers.defineProperty({}, user.id, user)
 	            }, "calls");
@@ -1488,7 +1654,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "leaveChat",
 	    value: function leaveChat() {
-	      var _this13 = this;
+	      var _this14 = this;
 
 	      var confirm = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 
@@ -1499,7 +1665,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          buttons: [this.getLocalize('MOBILE_HEADER_MENU_LEAVE_YES'), this.getLocalize('MOBILE_HEADER_MENU_LEAVE_NO')],
 	          callback: function callback(button) {
 	            if (button === 1) {
-	              _this13.leaveChat(true);
+	              _this14.leaveChat(true);
 	            }
 	          }
 	        });
@@ -1632,7 +1798,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	    /* region 02. Push & Pull */
 	    value: function eventStoreInteraction(data) {
-	      var _this14 = this;
+	      var _this15 = this;
 
 	      if (data.type === 'dialogues/update' && data.payload && data.payload.fields) {
 	        if (data.payload.dialogId !== this.controller.application.getDialogId()) {
@@ -1655,7 +1821,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        }
 	      } else if (data.type === 'dialogues/set') {
 	        data.payload.forEach(function (dialog) {
-	          if (dialog.dialogId !== _this14.controller.application.getDialogId()) {
+	          if (dialog.dialogId !== _this15.controller.application.getDialogId()) {
 	            return;
 	          }
 
@@ -1669,26 +1835,32 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "eventStatusInteraction",
 	    value: function eventStatusInteraction(data) {
-	      var _this15 = this;
+	      var _this16 = this;
 
 	      if (data.status === mobile_pull_client.PullClient.PullStatus.Online) {
+	        // restart background tasks (messages and files) to resend files after we got connection again
+	        if (this.messagesSet) {
+	          BXMobileApp.Events.postToComponent('chatbackground::task::restart', [], 'background');
+	          BXMobileApp.Events.postToComponent('chatuploader::task::restart', [], 'background');
+	        }
+
 	        if (this.pullRequestMessage) {
 	          this.controller.pullBaseHandler.option.skip = true;
 	          this.getDialogUnread().then(function () {
-	            _this15.controller.pullBaseHandler.option.skip = false;
+	            _this16.controller.pullBaseHandler.option.skip = false;
 
-	            _this15.processSendMessages();
+	            _this16.processSendMessages();
 
 	            main_core_events.EventEmitter.emit(im_const.EventType.dialog.readVisibleMessages, {
-	              chatId: _this15.controller.application.getChatId()
+	              chatId: _this16.controller.application.getChatId()
 	            });
 	            main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollOnStart, {
-	              chatId: _this15.controller.application.getChatId()
+	              chatId: _this16.controller.application.getChatId()
 	            });
 	          }).catch(function () {
-	            _this15.controller.pullBaseHandler.option.skip = false;
+	            _this16.controller.pullBaseHandler.option.skip = false;
 
-	            _this15.processSendMessages();
+	            _this16.processSendMessages();
 	          });
 	          this.pullRequestMessage = false;
 	        } else {
@@ -1724,12 +1896,15 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "getKeyboardParams",
 	    value: function getKeyboardParams() {
-	      var _this16 = this;
+	      var _this17 = this;
 
+	      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	      var dialogData = this.controller.application.getDialogData();
+	      var initialText = dialogData ? dialogData.textareaMessage : '';
+	      initialText = initialText || params.text;
 	      var siteDir = this.getLocalize('SITE_DIR');
 	      return {
-	        text: dialogData ? dialogData.textareaMessage : '',
+	        text: initialText,
 	        placeholder: this.getLocalize('MOBILE_CHAT_PANEL_PLACEHOLDER'),
 	        smileButton: {},
 	        useImageButton: true,
@@ -1791,23 +1966,23 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          var attachedFiles = data.attachedFiles instanceof Array ? data.attachedFiles : [];
 
 	          if (attachedFiles.length <= 0) {
-	            _this16.clearText();
+	            _this17.clearText();
 
-	            _this16.hideSmiles();
+	            _this17.hideSmiles();
 
-	            var editId = _this16.controller.getStore().getters['dialogues/getEditId'](_this16.controller.application.getDialogId());
+	            var editId = _this17.controller.getStore().getters['dialogues/getEditId'](_this17.controller.application.getDialogId());
 
 	            if (editId) {
-	              _this16.updateMessage(editId, text);
+	              _this17.updateMessage(editId, text);
 	            } else {
-	              _this16.addMessage(text);
+	              _this17.addMessage(text);
 	            }
 	          } else {
 	            attachedFiles.forEach(function (file) {
 	              // disk
 	              if (typeof file.dataAttributes !== 'undefined') {
 	                fabric.Answers.sendCustomEvent("vueChatFileDisk", {});
-	                return _this16.uploadFile({
+	                return _this17.uploadFile({
 	                  source: 'disk',
 	                  name: file.name,
 	                  type: file.type.toString().toLowerCase(),
@@ -1823,7 +1998,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	              if (file.type === 'audio/mp4') {
 	                fabric.Answers.sendCustomEvent("vueChatFileAudio", {});
-	                return _this16.uploadFile({
+	                return _this17.uploadFile({
 	                  source: 'audio',
 	                  name: 'mobile_audio_' + new Date().toJSON().slice(0, 19).replace('T', '_').split(':').join('-') + '.mp3',
 	                  type: 'mp3',
@@ -1854,7 +2029,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              } // file
 
 
-	              return _this16.uploadFile({
+	              return _this17.uploadFile({
 	                source: 'gallery',
 	                name: filename,
 	                type: file.type.toString().toLowerCase(),
@@ -1879,27 +2054,27 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            var text = data.text.toString();
 
 	            if (text.trim().length > 2) {
-	              _this16.controller.application.startWriting();
+	              _this17.controller.application.startWriting();
 	            }
 
 	            if (text.length === 0) {
-	              _this16.setTextareaMessage({
+	              _this17.setTextareaMessage({
 	                message: ''
 	              });
 
-	              _this16.controller.application.stopWriting();
+	              _this17.controller.application.stopWriting();
 	            } else {
-	              _this16.setTextareaMessage({
+	              _this17.setTextareaMessage({
 	                message: text
 	              });
 	            }
 	          } else if (data.event === "onSmileSelect") {
-	            _this16.controller.showSmiles();
+	            _this17.controller.showSmiles();
 	          } else if (Application.getPlatform() !== "android") {
 	            if (data.event === "getFocus") {
 	              if (im_lib_utils.Utils.platform.isIos() && im_lib_utils.Utils.platform.getIosVersion() > 12) {
 	                main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollToBottom, {
-	                  chatId: _this16.controller.application.getChatId(),
+	                  chatId: _this17.controller.application.getChatId(),
 	                  duration: 300,
 	                  cancelIfScrollChange: true
 	                });
@@ -1914,14 +2089,16 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "addMessage",
 	    value: function addMessage(text) {
-	      var _this17 = this;
+	      var _this18 = this;
 
 	      var file = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+	      var messageUuid = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
 
 	      if (!text && !file) {
 	        return false;
 	      }
 
+	      var uuid = messageUuid || ChatUtils.getUuidv4();
 	      var quoteId = this.controller.getStore().getters['dialogues/getQuoteId'](this.controller.application.getDialogId());
 
 	      if (quoteId) {
@@ -1946,11 +2123,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        }
 	      }
 
-	      console.warn('addMessage', text, file);
+	      console.warn('addMessage', text, file, uuid);
 
 	      if (!this.controller.application.isUnreadMessagesLoaded()) {
 	        this.sendMessage({
-	          id: 0,
+	          id: uuid,
 	          chatId: this.controller.application.getChatId(),
 	          dialogId: this.controller.application.getDialogId(),
 	          text: text,
@@ -1968,6 +2145,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }
 
 	      this.controller.getStore().dispatch('messages/add', {
+	        id: uuid,
 	        chatId: this.controller.application.getChatId(),
 	        authorId: this.controller.application.getUserId(),
 	        text: text,
@@ -1975,23 +2153,23 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        sending: !file
 	      }).then(function (messageId) {
 	        main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollToBottom, {
-	          chatId: _this17.controller.application.getChatId(),
+	          chatId: _this18.controller.application.getChatId(),
 	          cancelIfScrollChange: true
 	        });
 
-	        _this17.messagesQueue.push({
+	        _this18.messagesQueue.push({
 	          id: messageId,
-	          chatId: _this17.controller.application.getChatId(),
-	          dialogId: _this17.controller.application.getDialogId(),
+	          chatId: _this18.controller.application.getChatId(),
+	          dialogId: _this18.controller.application.getDialogId(),
 	          text: text,
 	          file: file,
 	          sending: false
 	        });
 
-	        if (_this17.controller.application.getChatId()) {
-	          _this17.processSendMessages();
+	        if (_this18.controller.application.getChatId()) {
+	          _this18.processSendMessages();
 	        } else {
-	          _this17.requestData();
+	          _this18.requestData();
 	        }
 	      });
 	      return true;
@@ -1999,7 +2177,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "uploadFile",
 	    value: function uploadFile(file) {
-	      var _this18 = this;
+	      var _this19 = this;
 
 	      var text = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
 
@@ -2007,13 +2185,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        return false;
 	      }
 
-	      console.warn('addFile', file, text);
+	      var fileMessageUuid = ChatUtils.getUuidv4();
+	      console.warn('addFile', file, text, fileMessageUuid);
 
 	      if (!this.controller.application.isUnreadMessagesLoaded()) {
 	        this.addMessage(text, {
 	          id: 0,
 	          source: file
-	        });
+	        }, fileMessageUuid);
 	        return true;
 	      }
 
@@ -2033,33 +2212,51 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        authorName: this.controller.application.getCurrentUser().name,
 	        urlPreview: !file.preview ? '' : file.preview.url
 	      })).then(function (fileId) {
-	        return _this18.addMessage(text, babelHelpers.objectSpread({
+	        return _this19.addMessage(text, babelHelpers.objectSpread({
 	          id: fileId
-	        }, file));
+	        }, file), fileMessageUuid);
 	      });
 	      return true;
 	    }
 	  }, {
 	    key: "cancelUploadFile",
 	    value: function cancelUploadFile(fileId) {
-	      var _this19 = this;
+	      var _this20 = this;
 
+	      this.cancelUnsentFile(fileId);
 	      var element = this.messagesQueue.find(function (element) {
 	        return element.file && element.file.id === fileId;
 	      });
 
+	      if (!element) {
+	        var messages = this.controller.getStore().getters['messages/get'](this.controller.application.getChatId());
+	        var messageToDelete = messages.find(function (element) {
+	          return element.params.FILE_ID && element.params.FILE_ID.includes(fileId);
+	        });
+
+	        if (messageToDelete) {
+	          element = {
+	            id: messageToDelete.id,
+	            chatId: messageToDelete.chatId,
+	            file: {
+	              id: messageToDelete.params.FILE_ID[0]
+	            }
+	          };
+	        }
+	      }
+
 	      if (element) {
-	        BX.MobileUploadProvider.cancelTasks(['imDialog' + fileId]);
+	        BX.MobileUploadProvider.cancelTasks(['imDialogFileUpload|' + fileId]);
 	        this.controller.getStore().dispatch('messages/delete', {
 	          chatId: element.chatId,
 	          id: element.id
 	        }).then(function () {
-	          _this19.controller.getStore().dispatch('files/delete', {
+	          _this20.controller.getStore().dispatch('files/delete', {
 	            chatId: element.chatId,
 	            id: element.file.id
 	          });
 
-	          _this19.messagesQueue = _this19.messagesQueue.filter(function (el) {
+	          _this20.messagesQueue = _this20.messagesQueue.filter(function (el) {
 	            return el.id !== element.id;
 	          });
 	        });
@@ -2068,7 +2265,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "retryUploadFile",
 	    value: function retryUploadFile(fileId) {
-	      var _this20 = this;
+	      var _this21 = this;
 
 	      var element = this.messagesQueue.find(function (element) {
 	        return element.file && element.file.id === fileId;
@@ -2082,7 +2279,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        chatId: element.chatId,
 	        id: element.id
 	      }).then(function () {
-	        _this20.controller.getStore().dispatch('files/update', {
+	        _this21.controller.getStore().dispatch('files/update', {
 	          chatId: element.chatId,
 	          id: element.file.id,
 	          fields: {
@@ -2098,7 +2295,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "processSendMessages",
 	    value: function processSendMessages() {
-	      var _this21 = this;
+	      var _this22 = this;
 
 	      this.messagesQueue.filter(function (element) {
 	        return !element.sending;
@@ -2107,7 +2304,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	        if (element.file) {
 	          if (element.file.source === 'disk') {
-	            _this21.fileCommit({
+	            _this22.fileCommit({
 	              chatId: element.chatId,
 	              dialogId: element.dialogId,
 	              diskId: element.file.uploadLink,
@@ -2117,18 +2314,18 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              fileType: im_model.FilesModel.getType(element.file.name)
 	            }, element);
 	          } else {
-	            if (_this21.controller.application.getDiskFolderId()) {
-	              _this21.sendMessageWithFile(element);
+	            if (_this22.controller.application.getDiskFolderId()) {
+	              _this22.sendMessageWithFile(element);
 	            } else {
 	              element.sending = false;
 
-	              _this21.requestDiskFolderId();
+	              _this22.requestDiskFolderId();
 	            }
 	          }
 	        } else {
 	          element.sending = true;
 
-	          _this21.sendMessage(element);
+	          _this22.sendMessage(element);
 	        }
 	      });
 	      return true;
@@ -2144,6 +2341,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function sendMessage(message) {
 	      message.text = message.text.replace(/^([-]{21}\n)/gm, '-'.repeat(54) + '\n');
 	      this.controller.application.stopWriting(message.dialogId);
+	      window.imDialogMessagesTasks.push({
+	        taskId: 'sendMessage|' + message.id
+	      });
 	      BXMobileApp.Events.postToComponent('chatbackground::task::add', ['sendMessage|' + message.id, [im_const.RestMethod.imMessageAdd, {
 	        'TEMPLATE_ID': message.id,
 	        'DIALOG_ID': message.dialogId,
@@ -2157,6 +2357,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var fileExtension = message.file.name.toString().toLowerCase().split('.').splice(-1)[0];
 	      var attachPreviewFile = fileType !== im_const.FileType.image && message.file.preview;
 	      var needConvert = fileType === im_const.FileType.image && message.file.type !== 'image/gif' || fileType === im_const.FileType.video;
+	      window.imDialogUploadTasks.push({
+	        taskId: 'imDialogFileUpload|' + message.file.id
+	      });
 	      BX.MobileUploadProvider.addTasks([{
 	        url: message.file.uploadLink,
 	        params: message,
@@ -2170,7 +2373,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        },
 	        previewUrl: attachPreviewFile ? message.file.preview.url : '',
 	        folderId: this.controller.application.getDiskFolderId(),
-	        taskId: 'imDialog' + message.file.id,
+	        taskId: 'imDialogFileUpload|' + message.file.id,
 	        onDestroyEventName: 'onimdiskmessageaddsuccess'
 	      }]);
 	    }
@@ -2198,8 +2401,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "fileCommit",
 	    value: function fileCommit(params, message) {
-	      var _this22 = this;
-
 	      var queryParams = {
 	        chat_id: params.chatId,
 	        message: params.messageText,
@@ -2213,18 +2414,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        queryParams.disk_id = params.diskId;
 	      }
 
-	      this.controller.restClient.callMethod(im_const.RestMethod.imDiskFileCommit, queryParams, null, null, im_lib_utils.Utils.getLogTrackingParams({
-	        name: im_const.RestMethod.imDiskFileCommit,
-	        data: {
-	          timMessageType: params.fileType
-	        },
-	        dialog: this.controller.application.getDialogData(params.dialogId)
-	      })).then(function (response) {
-	        _this22.controller.executeRestAnswer(im_const.RestMethodHandler.imDiskFileCommit, response, message);
-	      }).catch(function (error) {
-	        _this22.controller.executeRestAnswer(im_const.RestMethodHandler.imDiskFileCommit, error, message);
-	      });
-	      return true;
+	      BXMobileApp.Events.postToComponent('chatbackground::task::add', ['uploadFileFromDisk|' + message.id, [im_const.RestMethod.imDiskFileCommit, queryParams], message], 'background');
 	    }
 	  }, {
 	    key: "requestDiskFolderId",
@@ -2602,7 +2792,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        if (dialogData.type === im_const.DialogType.call) {
 	          this.headerMenu.setItems([HeaderMenuItem.create('call_chat_call').setTitle(this.getLocalize('MOBILE_HEADER_MENU_AUDIO_CALL')).setIcon(HeaderMenuIcon.phone).skip(dialogData.entityId === 'UNIFY_CALL_CHAT'), HeaderMenuItem.create('goto_crm').setTitle(gotoCrmLocalize).setIcon(HeaderMenuIcon.lifefeed).skip(dialogData.entityId === 'UNIFY_CALL_CHAT' || !gotoCrmLocalize), HeaderMenuItem.create('reload').setTitle(this.getLocalize('MOBILE_HEADER_MENU_RELOAD')).setIcon(HeaderMenuIcon.reload)]);
 	        } else {
-	          var items = [HeaderMenuItem.create('notify').setTitle(notifyToggleText).setIcon(notifyToggleIcon), HeaderMenuItem.create('user_list').setTitle(this.getLocalize('MOBILE_HEADER_MENU_USER_LIST')).setIcon(HeaderMenuIcon.user), HeaderMenuItem.create('user_add').setTitle(this.getLocalize('MOBILE_HEADER_MENU_USER_ADD')).setIcon(HeaderMenuIcon.user_plus).skip(!dialogData.restrictions.extend), HeaderMenuItem.create('leave').setTitle(this.getLocalize('MOBILE_HEADER_MENU_LEAVE')).setIcon(HeaderMenuIcon.cross).skip(!dialogData.restrictions.leave), HeaderMenuItem.create('reload').setTitle(this.getLocalize('MOBILE_HEADER_MENU_RELOAD')).setIcon(HeaderMenuIcon.reload)];
+	          var items = [HeaderMenuItem.create('notify').setTitle(notifyToggleText).setIcon(notifyToggleIcon).skip(!dialogData.restrictions.mute), HeaderMenuItem.create('user_list').setTitle(this.getLocalize('MOBILE_HEADER_MENU_USER_LIST')).setIcon(HeaderMenuIcon.user).skip(!dialogData.restrictions.userList), HeaderMenuItem.create('user_add').setTitle(this.getLocalize('MOBILE_HEADER_MENU_USER_ADD')).setIcon(HeaderMenuIcon.user_plus).skip(!dialogData.restrictions.extend), HeaderMenuItem.create('leave').setTitle(this.getLocalize('MOBILE_HEADER_MENU_LEAVE')).setIcon(HeaderMenuIcon.cross).skip(!dialogData.restrictions.leave), HeaderMenuItem.create('reload').setTitle(this.getLocalize('MOBILE_HEADER_MENU_RELOAD')).setIcon(HeaderMenuIcon.reload)];
 	          items.push(HeaderMenuItem.create('reload').setTitle(this.getLocalize('MOBILE_HEADER_MENU_RELOAD')).setIcon(HeaderMenuIcon.reload));
 
 	          if (dialogData.type === im_const.DialogType.crm && gotoCrmLocalize) {
@@ -2612,7 +2802,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          this.headerMenu.setItems(items);
 	        }
 	      } else {
-	        this.headerMenu.setItems([HeaderMenuItem.create('profile').setTitle(this.getLocalize('MOBILE_HEADER_MENU_PROFILE')).setIcon('user').skip(im_lib_utils.Utils.dialog.isChatId(this.controller.application.getDialogId())), HeaderMenuItem.create('user_add').setTitle(this.getLocalize('MOBILE_HEADER_MENU_USER_ADD')).setIcon(HeaderMenuIcon.user_plus), HeaderMenuItem.create('reload').setTitle(this.getLocalize('MOBILE_HEADER_MENU_RELOAD')).setIcon(HeaderMenuIcon.reload)]);
+	        var shouldSkipUserAdd = false;
+	        var userData = this.controller.getStore().getters['users/get'](this.controller.application.getDialogId(), true);
+
+	        if (userData.bot && userData.externalAuthId === 'support24') {
+	          shouldSkipUserAdd = true;
+	        }
+
+	        this.headerMenu.setItems([HeaderMenuItem.create('profile').setTitle(this.getLocalize('MOBILE_HEADER_MENU_PROFILE')).setIcon('user').skip(im_lib_utils.Utils.dialog.isChatId(this.controller.application.getDialogId())), HeaderMenuItem.create('user_add').setTitle(this.getLocalize('MOBILE_HEADER_MENU_USER_ADD')).setIcon(HeaderMenuIcon.user_plus).skip(shouldSkipUserAdd), HeaderMenuItem.create('reload').setTitle(this.getLocalize('MOBILE_HEADER_MENU_RELOAD')).setIcon(HeaderMenuIcon.reload)]);
 	      }
 
 	      this.headerMenu.show(true);
@@ -2944,6 +3141,15 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "hideSmiles",
 	    value: function hideSmiles() {// this.controller.hideSmiles();
 	    }
+	  }, {
+	    key: "changeDialogState",
+	    value: function changeDialogState(state) {
+	      console.log("changeDialogState -> ".concat(state));
+
+	      if (state === 'show') {
+	        this.setIosInset();
+	      }
+	    }
 	    /* endregion 05. Templates and template interaction */
 
 	    /* region 05. Interaction and utils */
@@ -2965,6 +3171,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        this.controller.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, successObject, _data.extra);
 	      } else if (action === 'readMessage') {
 	        this.processMarkReadMessages();
+	      } else if (action === 'uploadFileFromDisk') {
+	        this.controller.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, successObject, _data.extra);
 	      }
 	    }
 	  }, {
@@ -2984,10 +3192,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          return false;
 	        }
 	      };
-	      console.log('Dialog.executeBackgroundTaskFailure', action, data);
+	      console.log('Dialog.executeBackgroundTaskFailure', action, data); // Handle an error only for API error when server status is 200.
+	      // Otherwise we don't want to draw errors, because background queue will resend messages.
 
-	      if (action === 'sendMessage') {
-	        this.controller.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, errorObject, data.extra);
+	      if (data.status === HTTP_OK_STATUS_CODE) {
+	        if (action === 'sendMessage' || action === 'uploadFileFromDisk') {
+	          this.controller.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, errorObject, data.extra);
+	        }
 	      }
 	    }
 	    /* endregion 05. Interaction and utils */
@@ -3036,6 +3247,17 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      return this.controller.getLocalize(name);
 	    }
 	    /* endregion 06. Interaction and utils */
+
+	    /* region 07. Event handlers */
+
+	  }, {
+	    key: "onMessagesSet",
+	    value: function onMessagesSet() {
+	      this.messagesSet = true;
+	      BXMobileApp.Events.postToComponent('chatbackground::task::restart', [], 'background');
+	      BXMobileApp.Events.postToComponent('chatuploader::task::restart', [], 'background');
+	    }
+	    /* endregion 07. Event handlers */
 
 	  }]);
 	  return MobileDialogApplication;

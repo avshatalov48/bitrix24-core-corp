@@ -1,4 +1,5 @@
-<?
+<?php
+$MESS["TASKS_KANBAN_RESULT_REQUIRED"] = "Task creator requires that you provide a task report.<br> Leave a comment to the task and mark it as a task status summary.";
 $MESS["TASK_ACCESS_NOTIFY_MESSAGE"] = "Please <a href=\"#URL#\">configure kanban project task stages</a> for me, or grant me an appropriate permission so I could do it myself.";
 $MESS["TASK_KANBAN_PERSONAL_TITLE"] = "Planner";
 $MESS["TASK_KANBAN_TITLE"] = "Kanban";
@@ -23,4 +24,3 @@ $MESS["TASK_LIST_TITLE_TIMELINE"] = "Deadline";
 $MESS["TASK_LIST_UNKNOWN_ACTION"] = "Unknown action.";
 $MESS["TASK_LIST_USER_NOT_FOUND"] = "The user was not found.";
 $MESS["TASK_PROJECT_TITLE"] = "Project";
-?>

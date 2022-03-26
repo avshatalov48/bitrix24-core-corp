@@ -237,10 +237,16 @@ $this->EndViewTarget();
 
 <script type="text/javascript">
 	BX.ready(function() {
-		var taskLimitExceeded = <?=Json::encode($taskLimitExceeded)?>;
+		var taskLimitExceeded = <?= Json::encode($taskLimitExceeded) ?>;
 		if (taskLimitExceeded)
 		{
-			BX.UI.InfoHelper.show('limit_tasks_supervisor_view');
+			BX.UI.InfoHelper.show('limit_tasks_supervisor_view', {
+				isLimit: true,
+				limitAnalyticsLabels: {
+					module: 'tasks',
+					source: 'view'
+				}
+			});
 		}
 	});
 </script>

@@ -348,6 +348,8 @@ class CTaskPlannerMaintance
 			);
 			while ($arRes = $dbRes->Fetch())
 			{
+				$arRes['TITLE'] = \Bitrix\Main\Text\Emoji::decode($arRes['TITLE']);
+
 				$tasks[$arRes['ID']] = $arRes;
 
 				$task2member[$arRes['ID']]['ACCOMPLICES'] = array();

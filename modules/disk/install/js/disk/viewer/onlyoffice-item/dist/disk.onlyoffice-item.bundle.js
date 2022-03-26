@@ -26,6 +26,11 @@ this.BX.Disk = this.BX.Disk || {};
 	      this.controller.preload = 0;
 	    }
 	  }, {
+	    key: "enableEditInsteadPreview",
+	    value: function enableEditInsteadPreview() {
+	      this.openEditInsteadPreview = true;
+	    }
+	  }, {
 	    key: "setPropertiesByNode",
 	    value: function setPropertiesByNode(node) {
 	      babelHelpers.get(babelHelpers.getPrototypeOf(OnlyOfficeItem.prototype), "setPropertiesByNode", this).call(this, node);

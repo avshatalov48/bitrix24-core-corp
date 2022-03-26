@@ -24,16 +24,16 @@ Loc::loadMessages(__FILE__);
 
 class Connector
 {
-	const TYPE_LIVECHAT = 'livechat';
-	const TYPE_NETWORK = 'network';
-	const TYPE_CONNECTOR = 'connector';
+	public const TYPE_LIVECHAT = 'livechat';
+	public const TYPE_NETWORK = 'network';
+	public const TYPE_CONNECTOR = 'connector';
 
-	const EVENT_IMOPENLINE_MESSAGE_SEND = 'OnImopenlineMessageSend';
-	const EVENT_IMOPENLINE_MESSAGE_RECEIVE = 'OnImopenlineMessageReceive';
+	public const EVENT_IMOPENLINE_MESSAGE_SEND = 'OnImopenlineMessageSend';
+	public const EVENT_IMOPENLINE_MESSAGE_RECEIVE = 'OnImopenlineMessageReceive';
 
 	public const LOCK_MAX_ITERATIONS = 3;
 
-	static $noVote = [
+	public static $noVote = [
 		self::TYPE_LIVECHAT,
 		//self::TYPE_NETWORK
 	];
@@ -221,6 +221,7 @@ class Connector
 						$session = new Session();
 						$resultLoadSession = $session->load([
 							'USER_CODE' => self::getUserCode($params['connector']),
+							//TODO: ??
 							'CONNECTOR' => $params,
 							'DEFERRED_JOIN' => 'Y',
 							'VOTE_SESSION' => $voteSession? 'Y': 'N'
@@ -684,13 +685,6 @@ class Connector
 	 *
 	 * @param $params
 	 * @return Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentNullException
-	 * @throws Main\ArgumentOutOfRangeException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function sendMessage($params): Result
 	{
@@ -798,7 +792,7 @@ class Connector
 
 			if (
 				$params['no_session'] !== 'Y' &&
-				$params['message']['system'] != 'Y' &&
+				$params['message']['system'] !== 'Y' &&
 				$result->isSuccess() &&
 				!ImUser::getInstance($session->getData('OPERATOR_ID'))->isBot()
 			)
@@ -808,7 +802,10 @@ class Connector
 
 			if ($result->isSuccess())
 			{
-				$fields['user'] = Queue::getUserData($actualLineId, $fields['message']['user_id']);
+				if (!empty($fields['message']['user_id']))
+				{
+					$fields['user'] = Queue::getUserData($actualLineId, $fields['message']['user_id']);
+				}
 
 				$connector = new Output($params['connector']['connector_id'], $params['connector']['line_id']);
 				$resultSendMessage = $connector->sendMessage([$fields]);
@@ -963,9 +960,7 @@ class Connector
 
 		if ($connectorId == self::TYPE_NETWORK)
 		{}
-		else if ($connectorId == self::TYPE_NETWORK)
-		{}
-		else if (Loader::includeModule('imconnector'))
+		else
 		{
 			$status = \Bitrix\ImConnector\Status::getInstance($connectorId, $lineId);
 			if (!$status->isStatus() || !Config::isConfigActive($lineId))
@@ -1140,19 +1135,13 @@ class Connector
 	 * @param $messageId
 	 * @param $messageFields
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentNullException
-	 * @throws Main\ArgumentOutOfRangeException
-	 * @throws Main\LoaderException
-	 * @throws Main\NotImplementedException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public static function onMessageSend($messageId, $messageFields)
 	{
-		if ($messageFields['CHAT_ENTITY_TYPE'] != 'LINES')
+		if ($messageFields['CHAT_ENTITY_TYPE'] !== 'LINES')
+		{
 			return false;
+		}
 
 		$messageFields['MESSAGE_ID'] = $messageId;
 		Log::write($messageFields, 'CONNECTOR MESSAGE SEND');
@@ -1161,15 +1150,17 @@ class Connector
 		{
 			$user = ImUser::getInstance($messageFields['AUTHOR_ID']);
 			if ($user->isConnector())
+			{
 				return false;
+			}
 		}
 
 		if (
-			(
-				$messageFields['SILENT_CONNECTOR'] == 'Y' ||
-				$messageFields['CHAT_'.Chat::getFieldName(Chat::FIELD_SILENT_MODE)] == 'Y'
+			$messageFields['IMPORTANT_CONNECTOR'] !== 'Y'
+			&& (
+				$messageFields['SILENT_CONNECTOR'] === 'Y' ||
+				$messageFields['CHAT_'.Chat::getFieldName(Chat::FIELD_SILENT_MODE)] === 'Y'
 			)
-			&& $messageFields['IMPORTANT_CONNECTOR'] != 'Y'
 		)
 		{
 			\CIMMessageParam::Set($messageId, ['CLASS' => 'bx-messenger-content-item-system']);
@@ -1177,11 +1168,15 @@ class Connector
 			return false;
 		}
 
-		if ($messageFields['SKIP_CONNECTOR'] == 'Y')
+		if ($messageFields['SKIP_CONNECTOR'] === 'Y')
+		{
 			return false;
+		}
 
-		if ($messageFields['IMPORTANT_CONNECTOR'] != 'Y' && $messageFields['SYSTEM'] == 'Y')
+		if ($messageFields['IMPORTANT_CONNECTOR'] !== 'Y' && $messageFields['SYSTEM'] === 'Y')
+		{
 			return false;
+		}
 
 		//TODO: Replace with the method \Bitrix\ImOpenLines\Chat::parseLinesChatEntityId or \Bitrix\ImOpenLines\Chat::parseLiveChatEntityId
 		[$connectorId, $lineId, $connectorChatId, $connectorUserId] = explode('|', $messageFields['CHAT_ENTITY_ID']);
@@ -1199,7 +1194,7 @@ class Connector
 			$messageFields['PARAMS'] = $eventMessageFields['PARAMS'];
 		}
 
-		if ($connectorId == self::TYPE_LIVECHAT)
+		if ($connectorId === self::TYPE_LIVECHAT)
 		{
 			$resultLoadSession = false;
 
@@ -1217,13 +1212,20 @@ class Connector
 				{
 					$params[$key] = $value;
 				}
-				else if (mb_strpos($key, 'IMOL_') === 0)
+				elseif (mb_strpos($key, 'IMOL_') === 0)
 				{
 					$params[$key] = $value;
 				}
-				else if (mb_strpos($key, 'IS_') === 0)
+				elseif (mb_strpos($key, 'IS_') === 0)
 				{
 					$params[$key] = $value;
+				}
+				elseif ($key === 'FILE_ID')
+				{
+					foreach ($value as $fileId)
+					{
+						$messageFields['MESSAGE'] .= ' [DISK='.$fileId.']';
+					}
 				}
 			}
 
@@ -1286,8 +1288,9 @@ class Connector
 
 					//for livechat only condition
 					if (
-						!ImUser::getInstance($session->getData('OPERATOR_ID'))->isBot() &&
-						$messageFields['SYSTEM'] != 'Y'
+						$messageFields['SYSTEM'] !== 'Y'
+						&& !ImUser::getInstance($session->getData('OPERATOR_ID'))->isBot()
+
 					)
 					{
 						KpiManager::setSessionLastKpiMessageAnswered($session->getData('ID'));
@@ -1297,9 +1300,9 @@ class Connector
 
 			$isActiveKeyboard = false;
 			if (
-				!empty($connectorChatId) &&
-				$connectorChatId > 0 &&
-				Loader::includeModule('imconnector'))
+				!empty($connectorChatId)
+				&& $connectorChatId > 0
+				&& Loader::includeModule('imconnector'))
 			{
 				//Processing for native messages
 				$interactiveMessage = InteractiveMessage\Output::getInstance($messageFields['TO_CHAT_ID'], ['connectorId' => 'livechat']);
@@ -1310,18 +1313,25 @@ class Connector
 
 			$mid = Im::addMessage($message);
 			if (
-				$messageId &&
-				$mid &&
-				($messageFields['NO_SESSION_OL'] === 'Y' || $resultLoadSession)
+				$messageId
+				&& $mid
+				&& (
+					$messageFields['NO_SESSION_OL'] === 'Y'
+					||
+					$resultLoadSession
+				)
 			)
 			{
 				$paramsMessageLiveChat = ['CONNECTOR_MID' => $messageId];
 
-				if(!empty($session) && $resultLoadSession)
+				if (
+					!empty($session)
+					&& $resultLoadSession
+				)
 				{
 					$userData = Queue::getUserData($session->getData('CONFIG_ID'), $messageFields['AUTHOR_ID'], true);
 
-					if(!empty($userData))
+					if (!empty($userData))
 					{
 						$paramsMessageLiveChat['NAME'] = $userData['NAME'];
 					}
@@ -1332,14 +1342,14 @@ class Connector
 				}
 
 				\CIMMessageParam::Set($messageId, ['CONNECTOR_MID' => $mid]);
-				\CIMMessageParam::SendPull($messageId, $paramsMessageLiveChat);
+				\CIMMessageParam::SendPull($messageId, ['CONNECTOR_MID']);
 				\CIMMessageParam::Set($mid, $paramsMessageLiveChat);
-				\CIMMessageParam::SendPull($mid, $paramsMessageLiveChat);
+				\CIMMessageParam::SendPull($mid, array_keys($paramsMessageLiveChat));
 			}
 			if(
-				$messageFields['NO_SESSION_OL'] !== 'Y' &&
-				!empty($session) &&
-				$resultLoadSession
+				$messageFields['NO_SESSION_OL'] !== 'Y'
+				&& !empty($session)
+				&& $resultLoadSession
 			)
 			{
 				\Bitrix\ImOpenLines\Mail::addSessionToMailQueue($session->getData('ID'), false);
@@ -1364,11 +1374,11 @@ class Connector
 				{
 					$params[$key] = $value;
 				}
-				else if (mb_strpos($key, 'IMOL_') === 0)
+				elseif (mb_strpos($key, 'IMOL_') === 0)
 				{
 					$params[$key] = $value;
 				}
-				else if (mb_strpos($key, 'IS_') === 0)
+				elseif (mb_strpos($key, 'IS_') === 0)
 				{
 					$params[$key] = $value;
 				}
@@ -1400,12 +1410,16 @@ class Connector
 				{
 					$fileModel = \Bitrix\Disk\File::loadById($file['id']);
 					if (!$fileModel)
+					{
 						continue;
+					}
 
 					$file['link'] = \CIMDisk::GetFileLink($fileModel);
 
 					if (!$file['link'])
+					{
 						continue;
+					}
 
 					$merged = false;
 					if (\Bitrix\Disk\TypeFile::isImage($fileModel))
@@ -1439,13 +1453,14 @@ class Connector
 			if (empty($attaches) && empty($files) && empty($messageFields['MESSAGE']) && $messageFields['MESSAGE'] !== "0" && empty($params['url']))
 				return false;
 
-			if ($messageFields['SYSTEM'] != 'Y' &&
-				self::isEnableSendMessageWithSignature($connectorId, $lineId) &&
-				$messageFields['AUTHOR_ID'] > 0 &&
-				!self::isNeedRichLinkData($connectorId, $messageFields['MESSAGE'])
+			if (
+				$messageFields['SYSTEM'] !== 'Y'
+				&& $messageFields['AUTHOR_ID'] > 0
+				&& self::isEnableSendMessageWithSignature($connectorId, $lineId)
+				&& !self::isNeedRichLinkData($connectorId, $messageFields['MESSAGE'])
 			)
 			{
-				$messageFields['MESSAGE'] = '[b]' . htmlspecialchars_decode(self::getOperatorName($lineId, $messageFields['AUTHOR_ID'], $messageFields['CHAT_ENTITY_ID'])) . ':[/b]'.($messageFields['MESSAGE'] <> ''? '[br] '.$messageFields['MESSAGE']: '');
+				$messageFields['MESSAGE'] = '[b]' . htmlspecialchars_decode(self::getOperatorName($lineId, $messageFields['AUTHOR_ID'], $messageFields['CHAT_ENTITY_ID'])) . ':[/b]'.($messageFields['MESSAGE'] !== ''? '[br] '.$messageFields['MESSAGE']: '');
 			}
 
 			$fields = [
@@ -2177,10 +2192,6 @@ class Connector
 	 * @param $userId
 	 * @param string $userCodeSession
 	 * @return array|string
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public static function getOperatorName($lineId, $userId, $userCodeSession = '')
 	{
@@ -2207,13 +2218,13 @@ class Connector
 	 * @param int $lineId OpenLine Id.
 	 * @param int $userId User Id.
 	 * @param string $userCodeSession Combined session code, ex. 'livechat|1|33|14'.
-	 * @return string
+	 * @return string|null
 	 * @throws Main\ArgumentException
 	 * @throws Main\LoaderException
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 */
-	public static function getOperatorAvatar(int $lineId, int $userId, string $userCodeSession = ''): string
+	public static function getOperatorAvatar(int $lineId, int $userId, string $userCodeSession = ''): ?string
 	{
 		$actualLineId = Queue::getActualLineId([
 			'LINE_ID' =>  $lineId,
@@ -2244,10 +2255,6 @@ class Connector
 	 * @param $connectorId
 	 * @param int $lineId
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public static function isEnableSendMessageWithSignature($connectorId, $lineId = 0)
 	{
@@ -2294,7 +2301,6 @@ class Connector
 	 * @param string $connector
 	 * @param string $message
 	 * @return bool
-	 * @throws Main\LoaderException
 	 */
 	public static function isNeedRichLinkData(string $connector, $message): bool
 	{

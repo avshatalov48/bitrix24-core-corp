@@ -1,20 +1,33 @@
 <?php
+
 namespace Bitrix\ImBot\Bot;
 
-use Bitrix\ImBot\Log;
+use Bitrix\ImBot\DialogSession;
 use Bitrix\Main;
 use Bitrix\Main\Config\Option;
-use Bitrix\Im;
-use Bitrix\ImBot;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Im;
+use Bitrix\Im\Bot\Keyboard;
+use Bitrix\ImBot;
+use Bitrix\ImBot\Log;
+use Bitrix\ImBot\ItrMenu;
+use Bitrix\Imbot\Bot\Mixin;
 
-class Support24 extends Network implements NetworkBot, MenuBot
+
+class Support24 extends Network implements MenuBot, SupportBot, SupportQuestion
 {
+	use Mixin\NetworkMenuBot;
+	use Mixin\SupportQuestion;
+	use Mixin\SupportQueueNumber;
+
 	public const
 		BOT_CODE = 'support24',
 
+		CHAT_ENTITY_TYPE = 'SUPPORT24_QUESTION',// specialized support chats
+
 		COMMAND_SUPPORT24 = 'support24',
 		COMMAND_START_DIALOG = 'startDialog',
+
 		COMMAND_ACTIVATE_PARTNER = 'activatePartnerSupport',
 		COMMAND_DEACTIVATE_PARTNER = 'deactivatePartnerSupport',
 		COMMAND_DECLINE_PARTNER_REQUEST = 'declinePartnerRequest',
@@ -32,7 +45,8 @@ class Support24 extends Network implements NetworkBot, MenuBot
 		SCHEDULE_DELETE_ALL = null,
 
 		INVOLVEMENT_LAST_MESSAGE_BLOCK_TIME = 8, // hour
-		HIDE_DIALOG_TIME = 5; // minuts
+		HIDE_DIALOG_TIME = 5 // minutes
+	;
 
 	protected const LIST_BOX_SUPPORT_CODES = [
 		'ru' => '4df232699a9e1d0487c3972f26ea8d25',
@@ -63,7 +77,8 @@ class Support24 extends Network implements NetworkBot, MenuBot
 		OPTION_BOT_FREE_MENU_STAGE = 'support24_free_menu_stage',
 		OPTION_BOT_PAID_MENU_STAGE = 'support24_paid_menu_stage',
 		OPTION_BOT_FREE_MESSAGES = 'support24_free_messages',
-		OPTION_BOT_PAID_MESSAGES = 'support24_paid_messages';
+		OPTION_BOT_PAID_MESSAGES = 'support24_paid_messages'
+	;
 
 	//region Register
 
@@ -113,19 +128,9 @@ class Support24 extends Network implements NetworkBot, MenuBot
 			'onAfterUserAuthorize'/** @see Support24::onAfterUserAuthorize */
 		);
 
-		foreach (self::getCommandList() as $commandName => $commandParam)
-		{
-			Im\Command::register([
-				'MODULE_ID' => self::MODULE_ID,
-				'BOT_ID' => $botId,
-				'COMMAND' => $commandName,
-				'HIDDEN' => $commandParam['visible'] === true ? 'N' : 'Y',
-				'CLASS' => $commandParam['class'] ?? __CLASS__,
-				'METHOD_COMMAND_ADD' => $commandParam['handler'] ?? 'onCommandAdd' /** @see Support24::onCommandAdd */
-			]);
-		}
-
 		self::scheduleAction(1, self::SCHEDULE_ACTION_WELCOME, '', 10);
+
+		self::restoreQuestionHistory();
 
 		return $botId;
 	}
@@ -146,21 +151,21 @@ class Support24 extends Network implements NetworkBot, MenuBot
 		}
 
 		$result = false;
-		$code = self::getBotCode();
+		$botCode = self::getBotCode();
 		$botId = self::getBotId();
 
-		if ($code !== '')
+		if ($botCode !== '')
 		{
 			self::sendRequestFinalizeSession();
 
-			$result = parent::unRegister($code, $notifyController);
+			$result = parent::unRegister($botCode, $notifyController);
 
 			if (is_array($result) && isset($result['result']))
 			{
 				$result = $result['result'];
 				if ($result)
 				{
-					Option::delete(self::MODULE_ID, ['name' => parent::BOT_CODE.'_'.$code.'_bot_id']);
+					Option::delete(self::MODULE_ID, ['name' => parent::BOT_CODE.'_'.$botCode.'_bot_id']);
 				}
 			}
 		}
@@ -174,7 +179,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 		{
 			self::deleteScheduledAction(self::SCHEDULE_DELETE_ALL);
 
-			Option::set(self::MODULE_ID, self::OPTION_BOT_ID, 0);
+			Option::delete(self::MODULE_ID, ['name' => self::OPTION_BOT_ID]);
 
 			$eventManager = Main\EventManager::getInstance();
 			$eventManager->unregisterEventHandler(
@@ -198,7 +203,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 
 	/**
 	 * Returns command's property list.
-	 * @return array{handler: string, visible: bool, context: string}[]
+	 * @return array{class: string, handler: string, visible: bool, context: string}[]
 	 */
 	public static function getCommandList(): array
 	{
@@ -206,60 +211,79 @@ class Support24 extends Network implements NetworkBot, MenuBot
 
 		unset($commandList[self::COMMAND_UNREGISTER]);
 
-		return array_merge($commandList, [
-			self::COMMAND_SUPPORT24 => [
-				'command' => self::COMMAND_SUPPORT24,
-				'handler' => 'onCommandAdd',/** @see Support24::onCommandAdd */
-				'visible' => false,
-				'context' => [
-					[
-						'COMMAND_CONTEXT' => 'KEYBOARD',
-						'MESSAGE_TYPE' => \IM_MESSAGE_PRIVATE,
-						'TO_USER_ID' => self::getBotId(),
+		return array_merge(
+			$commandList,
+			self::getQueueNumberCommandList(),
+			self::getMenuCommandList(),
+			[
+				self::COMMAND_NETWORK_SESSION => [
+					'command' => self::COMMAND_NETWORK_SESSION,
+					'handler' => 'onCommandAdd',/** @see Support24::onCommandAdd */
+					'visible' => false,
+					'context' => [
+						[
+							'COMMAND_CONTEXT' => 'KEYBOARD',
+							'MESSAGE_TYPE' => \IM_MESSAGE_PRIVATE,
+							'TO_USER_ID' => static::getBotId(),
+						],
+						[
+							'COMMAND_CONTEXT' => 'KEYBOARD',
+							'MESSAGE_TYPE' => \IM_MESSAGE_CHAT,
+							'CHAT_ENTITY_TYPE' => self::CHAT_ENTITY_TYPE,
+						],
 					],
 				],
-			],
-			self::COMMAND_MENU => [
-				'command' => self::COMMAND_MENU,
-				'handler' => 'onCommandAdd',/** @see Support24::onCommandAdd */
-				'visible' => false,
-				'context' => [
-					[
-						'COMMAND_CONTEXT' => 'KEYBOARD',
-						'MESSAGE_TYPE' => \IM_MESSAGE_PRIVATE,
-						'TO_USER_ID' => self::getBotId(),
+				self::COMMAND_SUPPORT24 => [
+					'command' => self::COMMAND_SUPPORT24,
+					'handler' => 'onCommandAdd',/** @see Support24::onCommandAdd */
+					'visible' => false,
+					'context' => [
+						[
+							'COMMAND_CONTEXT' => 'KEYBOARD',
+							'MESSAGE_TYPE' => \IM_MESSAGE_PRIVATE,
+							'TO_USER_ID' => self::getBotId(),
+						],
+						[
+							'COMMAND_CONTEXT' => 'KEYBOARD',
+							'MESSAGE_TYPE' => \IM_MESSAGE_CHAT,
+							'CHAT_ENTITY_TYPE' => self::CHAT_ENTITY_TYPE,
+						],
 					],
 				],
-			],
-			self::COMMAND_START_DIALOG => [
-				'command' => self::COMMAND_START_DIALOG,
-				'handler' => 'onCommandAdd',/** @see Support24::onCommandAdd */
-				'visible' => false,
-				'context' => [
-					[
-						'COMMAND_CONTEXT' => 'KEYBOARD',
-						'CHAT_ENTITY_TYPE' => ImBot\Service\Notifier::CHAT_ENTITY_TYPE,
+				self::COMMAND_START_DIALOG => [
+					'command' => self::COMMAND_START_DIALOG,
+					'handler' => 'onCommandAdd',/** @see Support24::onCommandAdd */
+					'visible' => false,
+					'context' => [
+						[
+							'COMMAND_CONTEXT' => 'KEYBOARD',
+							'CHAT_ENTITY_TYPE' => ImBot\Service\Notifier::CHAT_ENTITY_TYPE,
+						],
+						[
+							'COMMAND_CONTEXT' => 'KEYBOARD',
+							'MESSAGE_TYPE' => \IM_MESSAGE_CHAT,
+							'CHAT_ENTITY_TYPE' => self::CHAT_ENTITY_TYPE,
+						],
 					],
 				],
-			],
-			self::COMMAND_QUEUE_NUMBER => [
-				'command' => self::COMMAND_QUEUE_NUMBER,
-				'handler' => 'onCommandAdd',/** @see Support24::onCommandAdd */
-				'visible' => false,
-				'context' => [
-					[
-						'COMMAND_CONTEXT' => 'KEYBOARD',
-						'MESSAGE_TYPE' => \IM_MESSAGE_PRIVATE,
-						'TO_USER_ID' => self::getBotId(),
-					],
-					[
-						'COMMAND_CONTEXT' => 'TEXTAREA',
-						'MESSAGE_TYPE' => \IM_MESSAGE_PRIVATE,
-						'TO_USER_ID' => self::getBotId(),
-					],
-				],
-			],
-		]);
+			]
+		);
+	}
+
+	/**
+	 * Returns app's property list.
+	 * @return array{command: string, icon: string, js: string, context: string, lang: string}[]
+	 */
+	public static function getAppList(): array
+	{
+		$appList = parent::getAppList();
+
+		if (self::isEnabledQuestionFunctional())
+		{
+			$appList = array_merge($appList, self::getQuestionAppList());
+		}
+
+		return $appList;
 	}
 
 	//endregion
@@ -275,7 +299,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 		{
 			return self::SUPPORT_LEVEL_PARTNER;
 		}
-		else if (self::getBotId() > 0)
+		if (self::getBotId() > 0)
 		{
 			return self::getSupportLevel();
 		}
@@ -284,9 +308,10 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	}
 
 	/**
+	 * Detects client's support level.
 	 * @return string
 	 */
-	public static function getSupportLevel()
+	public static function getSupportLevel(): string
 	{
 		if (Main\Loader::includeModule('bitrix24'))
 		{
@@ -310,7 +335,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	/**
 	 * @return string
 	 */
-	public static function getLicenceLanguage()
+	public static function getLicenceLanguage(): string
 	{
 		$lang = 'en';
 		if (Main\Loader::includeModule('bitrix24'))
@@ -337,9 +362,10 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	//region Param getters
 
 	/**
+	 * Returns OL code.
 	 * @return string
 	 */
-	public static function getBotCode()
+	public static function getBotCode(): string
 	{
 		if (Main\Loader::includeModule('bitrix24'))
 		{
@@ -374,7 +400,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	 *
 	 * @return bool
 	 */
-	public static function isEnabled()
+	public static function isEnabled(): bool
 	{
 		return self::getBotId() > 0;
 	}
@@ -382,15 +408,15 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	/**
 	 * @return bool|int
 	 */
-	public static function getBotId()
+	public static function getBotId(): int
 	{
-		return Option::get('imbot', self::OPTION_BOT_ID, 0);
+		return (int)Option::get('imbot', self::OPTION_BOT_ID, 0);
 	}
 
 	/**
 	 * @return string
 	 */
-	public static function getBotName()
+	public static function getBotName(): string
 	{
 		$optionName = self::getSupportLevel() == self::SUPPORT_LEVEL_FREE ?
 			self::OPTION_BOT_FREE_NAME : self::OPTION_BOT_PAID_NAME;
@@ -400,7 +426,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	/**
 	 * @return string
 	 */
-	public static function getBotDesc()
+	public static function getBotDesc(): string
 	{
 		$optionName = self::getSupportLevel() == self::SUPPORT_LEVEL_FREE ?
 			self::OPTION_BOT_FREE_DESC : self::OPTION_BOT_PAID_DESC;
@@ -410,7 +436,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	/**
 	 * @return string
 	 */
-	public static function getBotAvatar()
+	public static function getBotAvatar(): string
 	{
 		$optionName = self::getSupportLevel() == self::SUPPORT_LEVEL_FREE ?
 			self::OPTION_BOT_FREE_AVATAR : self::OPTION_BOT_PAID_AVATAR;
@@ -422,50 +448,51 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	 *
 	 * @return bool
 	 */
-	public static function hasBotMenu()
+	public static function hasBotMenu(): bool
 	{
-		return !empty(self::getBotMenu());
+		return (self::getBotMenu() instanceof ItrMenu);
 	}
 
 	/**
 	 * Returns stored data for ITR menu.
 	 *
-	 * @return array
+	 * @return ItrMenu|null
 	 */
-	public static function getBotMenu()
+	public static function getBotMenu(): ?ItrMenu
 	{
-		if (self::isStagePortal())
+		static $hasMenu;
+		if ($hasMenu === null)
 		{
-			if (self::getSupportLevel() == self::SUPPORT_LEVEL_FREE)
+			$hasMenu = false;
+
+			if (self::isStagePortal())
 			{
-				$menuType = self::OPTION_BOT_FREE_MENU_STAGE;
+				if (self::getSupportLevel() == self::SUPPORT_LEVEL_FREE)
+				{
+					$menuType = self::OPTION_BOT_FREE_MENU_STAGE;
+				}
+				else
+				{
+					$menuType = self::OPTION_BOT_PAID_MENU_STAGE;
+				}
+			}
+			elseif (self::getSupportLevel() == self::SUPPORT_LEVEL_FREE)
+			{
+				$menuType = self::OPTION_BOT_FREE_MENU;
 			}
 			else
 			{
-				$menuType = self::OPTION_BOT_PAID_MENU_STAGE;
+				$menuType = self::OPTION_BOT_PAID_MENU;
 			}
-		}
-		elseif (self::getSupportLevel() == self::SUPPORT_LEVEL_FREE)
-		{
-			$menuType = self::OPTION_BOT_FREE_MENU;
-		}
-		else
-		{
-			$menuType = self::OPTION_BOT_PAID_MENU;
-		}
-
-		static $structure;
-		if ($structure === null)
-		{
-			$structure = [];
 
 			$json = Option::get(self::MODULE_ID, $menuType, '');
-
 			if ($json)
 			{
 				try
 				{
 					$structure = Main\Web\Json::decode($json);
+					self::instanceMenu()->setStructure($structure);
+					$hasMenu = true;
 				}
 				catch (Main\ArgumentException $e)
 				{
@@ -473,7 +500,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 			}
 		}
 
-		return $structure;
+		return $hasMenu ? self::instanceMenu() : null;
 	}
 
 	/**
@@ -492,11 +519,11 @@ class Support24 extends Network implements NetworkBot, MenuBot
 		$generationDate = (int)Option::get('imbot', self::OPTION_BOT_FREE_START_DATE, 0);
 		if ($generationDate == 0)
 		{
-			Option::set('imbot', self::OPTION_BOT_FREE_START_DATE, time());
+			Option::set('imbot', self::OPTION_BOT_FREE_START_DATE, \time());
 			return true;
 		}
 
-		$isActive = time() - $generationDate < 86400 * self::getFreeSupportLifeTime();
+		$isActive = \time() - $generationDate < 86400 * self::getFreeSupportLifeTime();
 
 		return !$isActive;
 	}
@@ -567,8 +594,6 @@ class Support24 extends Network implements NetworkBot, MenuBot
 		return false;
 	}
 
-
-
 	/**
 	 * @return bool
 	 */
@@ -629,17 +654,19 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	}
 
 	/**
+	 * @inheritDoc
 	 * @return bool
 	 */
-	public static function isNeedUpdateBotFieldsAfterNewMessage()
+	public static function isNeedUpdateBotFieldsAfterNewMessage(): bool
 	{
 		return false;
 	}
 
 	/**
+	 * @inheritDoc
 	 * @return bool
 	 */
-	public static function isNeedUpdateBotAvatarAfterNewMessage()
+	public static function isNeedUpdateBotAvatarAfterNewMessage(): bool
 	{
 		return (bool)self::getBotAvatar() !== true;
 	}
@@ -660,7 +687,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	 */
 	public static function onReceiveCommand($command, $params)
 	{
-		if ($command === self::COMMAND_OPERATOR_QUEUE_NUMBER)
+		if ($command === Mixin\COMMAND_OPERATOR_QUEUE_NUMBER)
 		{
 			Log::write($params, "NETWORK: $command");
 
@@ -704,18 +731,10 @@ class Support24 extends Network implements NetworkBot, MenuBot
 			return false;
 		}
 
-		$message = '';
-
 		$messageFields = $joinFields;
 		$messageFields['DIALOG_ID'] = $dialogId;
 
-		// allow support bot membership in notification channel
-		if ($messageFields['CHAT_ENTITY_TYPE'] === ImBot\Service\Notifier::CHAT_ENTITY_TYPE)
-		{
-			return true;
-		}
-
-		if ($messageFields['CHAT_TYPE'] != \IM_MESSAGE_PRIVATE)
+		if (!self::checkMembershipRestriction($messageFields))
 		{
 			$groupLimited = self::getMessage('GROUP_LIMITED');
 			if ($groupLimited)
@@ -723,17 +742,28 @@ class Support24 extends Network implements NetworkBot, MenuBot
 				self::sendMessage([
 					'DIALOG_ID' => $messageFields['DIALOG_ID'],
 					'MESSAGE' => $groupLimited,
-					'SYSTEM' => 'N',
 					'URL_PREVIEW' => 'N'
 				]);
 			}
 
-			$chat = new \CIMChat(self::getBotId());
-			$chat->DeleteUser(mb_substr($dialogId, 4), self::getBotId());
+			(new \CIMChat(self::getBotId()))->deleteUser(mb_substr($dialogId, 4), self::getBotId());
 
 			return true;
 		}
 
+		// specialized support chats
+		if (
+			$messageFields['MESSAGE_TYPE'] === \IM_MESSAGE_CHAT
+			&& $messageFields['CHAT_ENTITY_TYPE'] === self::CHAT_ENTITY_TYPE
+			&& self::hasBotMenu()
+		)
+		{
+			self::showMenu(['DIALOG_ID' => $dialogId]);
+			return true;
+		}
+
+		// welcome message
+		$message = '';
 		if (
 			self::isActivePartnerSupport()
 			&& !self::isUserIntegrator($messageFields['USER_ID'])
@@ -778,26 +808,22 @@ class Support24 extends Network implements NetworkBot, MenuBot
 				$message = self::getMessage('WELCOME_LIMITED');
 			}
 		}
-
-		if (empty($message))
+		if (!empty($message))
 		{
-			return true;
+			\CUserOptions::setOption(
+				self::MODULE_ID,
+				self::OPTION_BOT_WELCOME_SHOWN,
+				\time(),
+				false,
+				$messageFields['USER_ID']
+			);
+
+			self::sendMessage([
+				'DIALOG_ID' => $messageFields['USER_ID'],
+				'MESSAGE' => $message,
+				'URL_PREVIEW' => 'N'
+			]);
 		}
-
-		\CUserOptions::SetOption(
-			self::MODULE_ID,
-			self::OPTION_BOT_WELCOME_SHOWN,
-			time(),
-			false,
-			$messageFields['USER_ID']
-		);
-
-		self::sendMessage([
-			'DIALOG_ID' => $messageFields['USER_ID'],
-			'MESSAGE' => $message,
-			'SYSTEM' => 'N',
-			'URL_PREVIEW' => 'N'
-		]);
 
 		if (
 			self::getSupportLevel() == self::SUPPORT_LEVEL_FREE
@@ -826,23 +852,89 @@ class Support24 extends Network implements NetworkBot, MenuBot
 		if (!empty($messageFields['DIALOG_ID']))
 		{
 			self::startDialogSession([
-				'BOT_ID' => static::getBotId(),
-				'DIALOG_ID' => (int)$messageFields['DIALOG_ID'],
+				'DIALOG_ID' => $messageFields['DIALOG_ID'],
 				'GREETING_SHOWN' => 'Y',
 			]);
-			self::stopMenuTrack((int)$messageFields['DIALOG_ID']);
+			self::stopMenuTrack((string)$messageFields['DIALOG_ID']);
 		}
 
 		return parent::operatorMessageAdd($messageId, $messageFields);
 	}
 
 	/**
-	 * Event handler on `clientMessageAdd`.
-	 *
-	 * @inheritDoc
-	 *
-	 * @param int $messageId
+	 * Chechs if bot
 	 * @param array $messageFields
+	 * @return bool
+	 */
+	protected static function checkMembershipRestriction(array $messageFields): bool
+	{
+		return (
+			// Standard network one-to-one conversation
+			(
+				$messageFields['MESSAGE_TYPE'] === \IM_MESSAGE_PRIVATE
+			)
+			// allow conversation in specialized questioning chat
+			|| (
+				$messageFields['MESSAGE_TYPE'] === \IM_MESSAGE_CHAT
+				&& $messageFields['CHAT_ENTITY_TYPE'] === self::CHAT_ENTITY_TYPE
+			)
+			// allow support bot membership in the notification channel
+			|| (
+				$messageFields['MESSAGE_TYPE'] === \IM_MESSAGE_CHAT
+				&& $messageFields['CHAT_ENTITY_TYPE'] === \Bitrix\ImBot\Service\Notifier::CHAT_ENTITY_TYPE
+			)
+		);
+	}
+
+	/**
+	 * @param array $messageFields
+	 * @return bool
+	 */
+	protected static function checkMessageRestriction(array $messageFields): bool
+	{
+		$bot = Im\Bot::getCache($messageFields['BOT_ID']);
+		if (mb_substr($bot['CODE'], 0, 7) != parent::BOT_CODE)
+		{
+			return false;
+		}
+
+		return
+			// Allow one-to-one conversation
+			(
+				$messageFields['TO_USER_ID'] == $messageFields['BOT_ID']
+			)
+			// allow conversation in specialized questioning chat
+			|| (
+				$messageFields['MESSAGE_TYPE'] === \IM_MESSAGE_CHAT
+				&& $messageFields['CHAT_ENTITY_TYPE'] === self::CHAT_ENTITY_TYPE
+			);
+	}
+
+	/**
+	 * @param array $messageFields
+	 * @return bool
+	 */
+	protected static function checkTypingRestriction(array $messageFields): bool
+	{
+		return
+			// Allow only one-to-one conversation
+			(
+				empty($messageFields['CHAT']) && empty($messageFields['RELATION'])
+			)
+			||
+			// allow conversation in specialized questioning chat
+			(
+				$messageFields['CHAT']['TYPE'] === \IM_MESSAGE_CHAT
+				&& $messageFields['CHAT']['ENTITY_TYPE'] === self::CHAT_ENTITY_TYPE
+			);
+	}
+
+	/**
+	 * Event handler on message add.
+	 * @see \Bitrix\Im\Bot::onMessageAdd
+	 *
+	 * @param int $messageId Message Id.
+	 * @param array $messageFields Event arguments.
 	 *
 	 * @return bool
 	 */
@@ -853,27 +945,57 @@ class Support24 extends Network implements NetworkBot, MenuBot
 			return false;
 		}
 
+		$fromUserId = (int)$messageFields['FROM_USER_ID'];
+		$dialogId = (string)$messageFields['FROM_USER_ID'];
+		$isChat = $messageFields['CHAT_ENTITY_TYPE'] === self::CHAT_ENTITY_TYPE;
+		if ($isChat)
+		{
+			$dialogId = 'chat'.(int)$messageFields['CHAT_ID'];
+		}
+
 		// check restrictions
-		if ($messageFields['MESSAGE_TYPE'] != IM_MESSAGE_PRIVATE)
+		if (!self::checkMembershipRestriction($messageFields))
 		{
 			$groupLimited = self::getMessage('GROUP_LIMITED');
 			if ($groupLimited)
 			{
 				self::sendMessage([
-					'DIALOG_ID' => 'chat'.$messageFields['CHAT_ID'],
+					'TO_USER_ID' => $fromUserId,
+					'DIALOG_ID' => $dialogId,
 					'MESSAGE' => $groupLimited,
-					'SYSTEM' => 'N',
+					'SYSTEM' => 'Y',
 					'URL_PREVIEW' => 'N'
 				]);
 			}
 
-			$chat = new \CIMChat(self::getBotId());
-			$chat->DeleteUser($messageFields['CHAT_ID'], self::getBotId());
+			(new \CIMChat(self::getBotId()))->deleteUser($messageFields['CHAT_ID'], self::getBotId());
 
 			return true;
 		}
 
-		$fromUserId = (int)$messageFields['FROM_USER_ID'];
+		// specialized support chats
+		if (
+			self::isEnabledQuestionFunctional()
+			&& !(self::instanceDialogSession($dialogId)->getSessionId() > 0)
+			&& !self::allowAdditionalQuestion()
+		)
+		{
+			self::markMessageUndelivered($messageId);
+
+			$questionDisallowed = self::getQuestionDisallowMessage();
+			if ($questionDisallowed)
+			{
+				self::sendMessage([
+					'DIALOG_ID' => $dialogId,
+					'MESSAGE' => $questionDisallowed,
+					'KEYBOARD' => self::getQuestionResumeButton(),
+					'URL_PREVIEW' => 'N',
+					'SYSTEM' => 'Y',
+				]);
+			}
+
+			return true;
+		}
 
 		$allowShowMenu = self::hasBotMenu();
 		$warningRestrictionMessage = '';
@@ -920,82 +1042,23 @@ class Support24 extends Network implements NetworkBot, MenuBot
 			}
 		}
 
-		// check user vote for session by direct text input '1' or '0'
-		if (
-			$messageFields['COMMAND_CONTEXT'] === 'TEXTAREA'
-			&& ($messageFields['MESSAGE'] === '1' || $messageFields['MESSAGE'] === '0')
-		)
-		{
-			$i = 0;
-			$voteMessage = null;
-			$lastMessages = (new \CIMMessage())->getLastMessage($fromUserId, self::getBotId(), false, false);
-			foreach ($lastMessages['message'] as $message)
-			{
-				if (
-					$message['senderId'] == self::getBotId()
-					&& isset($message['params'], $message['params'][self::MESSAGE_PARAM_IMOL_VOTE])
-					&& isset($message['params'], $message['params'][self::MESSAGE_PARAM_IMOL_VOTE_LIKE])
-					&& isset($message['params'], $message['params'][self::MESSAGE_PARAM_IMOL_VOTE_DISLIKE])
-					&& (int)$message['params'][self::MESSAGE_PARAM_IMOL_VOTE] > 0 //SESSION_ID
-				)
-				{
-					$voteMessage = $message;
-					break;
-				}
-				// check only 7 last messages
-				if (++$i > 7)
-				{
-					break;
-				}
-			}
-			if ($voteMessage)
-			{
-				$isActionLike = $messageFields['MESSAGE'] === '1';
-
-				self::sendMessage([
-					'DIALOG_ID' => $fromUserId,
-					'MESSAGE' => $isActionLike
-						? $voteMessage['params'][self::MESSAGE_PARAM_IMOL_VOTE_LIKE]
-						: $voteMessage['params'][self::MESSAGE_PARAM_IMOL_VOTE_DISLIKE],
-					'SYSTEM' => 'N',
-					'URL_PREVIEW' => 'N',
-				]);
-
-				$voteParams = [
-					'BOT_ID' => self::getBotId(),
-					'USER_ID' => $fromUserId,
-					'ACTION' => ($isActionLike ? 'like' : 'dislike'),
-					'SESSION_ID' => $voteMessage['params'][self::MESSAGE_PARAM_IMOL_VOTE],//SESSION_ID
-					'MESSAGE' => [
-						'MESSAGE' => $voteMessage['text'],
-						'PARAMS' => $voteMessage['params'],//CONNECTOR_MID
-					]
-				];
-
-				return self::clientSessionVote($voteParams);
-			}
-		}
-
 		// ITR menu on before any dialog starts
 		if ($allowShowMenu)
 		{
-			if (!self::isMenuTrackFinished($fromUserId))
+			if (!self::isMenuTrackFinished((string)$dialogId))
 			{
-				$prevMenuState = self::getMenuState($fromUserId);
-				$lastMenuItemId = is_array($prevMenuState['track']) ? end($prevMenuState['track']) : null;
-
+				$lastMenuItemId = self::getBotMenu()->setDialogId($dialogId)->getLastTrackItemId();
 				if (!$lastMenuItemId && !empty($warningRestrictionMessage))
 				{
 					// show restriction warning message first
 					self::sendMessage([
-						'DIALOG_ID' => $fromUserId,
+						'DIALOG_ID' => $dialogId,
 						'MESSAGE' => $warningRestrictionMessage,
-						'SYSTEM' => 'N',
 						'URL_PREVIEW' => 'N',
 					]);
 				}
 
-				if ($lastMenuItemId !== self::MENU_EXIT_ID)
+				if ($lastMenuItemId !== ItrMenu::MENU_EXIT_ID)
 				{
 					self::markMessageUndelivered($messageId);
 
@@ -1003,26 +1066,19 @@ class Support24 extends Network implements NetworkBot, MenuBot
 					if ($undeliveredMessage)
 					{
 						self::sendMessage([
-							'DIALOG_ID' => $fromUserId,
+							'DIALOG_ID' => $dialogId,
 							'MESSAGE' => $undeliveredMessage,
-							'SYSTEM' => 'N',
 							'URL_PREVIEW' => 'N',
 						]);
 					}
 
-					$menuState = self::showMenu([
-						'BOT_ID' => self::getBotId(),
-						'DIALOG_ID' => $fromUserId,
+					self::showMenu([
+						'DIALOG_ID' => $dialogId,
 						'FULL_REDRAW' => true,
+						'UNDELIVERED_MESSAGE' => $messageId
 					]);
-					$menuState['messages'][] = $messageId;
 
-					self::saveMenuState(
-						$fromUserId,
-						$menuState
-					);
-
-					if (!self::isMenuTrackFinished($fromUserId, $menuState))
+					if (!self::isMenuTrackFinished((string)$dialogId))
 					{
 						return false;//continue menu travel
 					}
@@ -1033,48 +1089,133 @@ class Support24 extends Network implements NetworkBot, MenuBot
 			// disallow start dialog
 			!empty($warningRestrictionMessage)
 			// allow start dialog if greeting has been shown @see
-			&& self::allowSendStartMessage(['BOT_ID' => self::getBotId(), 'USER_ID' => $messageFields['DIALOG_ID']])
+			&& self::allowSendStartMessage(['BOT_ID' => self::getBotId(), 'DIALOG_ID' => $messageFields['DIALOG_ID']])
 		)
 		{
 			self::markMessageUndelivered($messageId);
 
 			// show restriction warning message
 			self::sendMessage([
-				'DIALOG_ID' => $fromUserId,
+				'DIALOG_ID' => $dialogId,
 				'MESSAGE' => $warningRestrictionMessage,
-				'SYSTEM' => 'N',
 				'URL_PREVIEW' => 'N',
 			]);
 
 			return true;
 		}
-		elseif (!empty($messageFields['DIALOG_ID']))
+		elseif ($dialogId)
 		{
 			self::startDialogSession([
-				'BOT_ID' => self::getBotId(),
-				'DIALOG_ID' => $messageFields['DIALOG_ID'],
+				'DIALOG_ID' => $dialogId,
 				'GREETING_SHOWN' => 'Y',
 			]);
-			self::stopMenuTrack((int)$messageFields['DIALOG_ID']);
+			self::stopMenuTrack((string)$dialogId);
+		}
+
+		// add menu action
+		if ($relatedMessages = (new \CIMHistory)->getRelatedMessages($messageId, 1, 0, false, false))
+		{
+			foreach ($relatedMessages['message'] as $message)
+			{
+				if (
+					$message['system'] != 'Y'
+					&& isset($message['params'][self::MESSAGE_PARAM_ALLOW_QUOTE])
+					&& $message['params'][self::MESSAGE_PARAM_ALLOW_QUOTE] === 'Y'
+				)
+				{
+					$messageParameters = IM\Model\MessageParamTable::getList([
+						'select' => ['PARAM_VALUE'],
+						'filter' => [
+							'=MESSAGE_ID' => $message['id'],
+							'=PARAM_NAME' => Mixin\MESSAGE_PARAM_MENU_ACTION,
+						]
+					]);
+					if (($relatedMessageParam = $messageParameters->fetch()) && !empty($relatedMessageParam['PARAM_VALUE']))
+					{
+						$messageFields['PARAMS'] = $messageFields['PARAMS'] ?? [];
+						$messageFields['PARAMS'][Mixin\MESSAGE_PARAM_MENU_ACTION] = $relatedMessageParam['PARAM_VALUE'];
+					}
+					break;
+				}
+			}
 		}
 
 		return parent::onMessageAdd($messageId, $messageFields);
 	}
 
 	/**
+	 * @param int $messageId Message Id.
+	 * @param array $messageFields Event arguments.
+	 *
+	 * @return bool
+	 */
+	public static function onMessageUpdate($messageId, $messageFields)
+	{
+		if (!self::checkMessageRestriction($messageFields))
+		{
+			return false;
+		}
+
+		if (
+			self::hasBotMenu()
+			&& !self::isMenuTrackFinished($messageFields['DIALOG_ID'])
+		)
+		{
+			// don't send event of menu redrawing
+			return false;
+		}
+
+		return self::clientMessageUpdate($messageId, $messageFields);
+	}
+
+	/**
+	 * @param int $messageId Message Id.
+	 * @param array $messageFields Event arguments.
+	 *
+	 * @return bool
+	 */
+	public static function onMessageDelete($messageId, $messageFields)
+	{
+		if (!self::checkMessageRestriction($messageFields))
+		{
+			return false;
+		}
+
+		if (
+			self::hasBotMenu()
+			&& !self::isMenuTrackFinished($messageFields['DIALOG_ID'])
+		)
+		{
+			// don't send event of menu redrawing
+			return false;
+		}
+
+		return self::clientMessageDelete($messageId, $messageFields);
+	}
+
+	/**
 	 * Handler for `StartWriting` event.
+	 * @see \Bitrix\ImBot\Event::onStartWriting
 	 *
 	 * @inheritDoc
 	 *
-	 * @param array $params
-	 * @param int $params['BOT_ID'] Bot id.
-	 * @param int $params['DIALOG_ID'] Dialog id.
-	 * @param int $params['USER_ID'] User id.
+	 * @param array $params <pre>
+	 * [
+	 * 	(int) BOT_ID Bot id.
+	 * 	(string) DIALOG_ID Dialog id.
+	 * 	(int) USER_ID User id.
+	 * ]
+	 * <pre>
 	 *
 	 * @return bool
 	 */
 	public static function onStartWriting($params)
 	{
+		if (!self::checkTypingRestriction($params))
+		{
+			return false;
+		}
+
 		if (self::isActivePartnerSupport())
 		{
 			if (!self::isUserIntegrator($params['USER_ID']))
@@ -1083,7 +1224,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 			}
 		}
 
-		if (self::getSupportLevel() == self::SUPPORT_LEVEL_FREE)
+		if (self::getSupportLevel() === self::SUPPORT_LEVEL_FREE)
 		{
 			if (self::isActiveFreeSupport())
 			{
@@ -1097,7 +1238,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 				return false;
 			}
 		}
-		else if (self::getSupportLevel() == self::SUPPORT_LEVEL_PAID)
+		else if (self::getSupportLevel() === self::SUPPORT_LEVEL_PAID)
 		{
 			if (!self::isActivePaidSupportForUser($params['USER_ID']))
 			{
@@ -1105,24 +1246,27 @@ class Support24 extends Network implements NetworkBot, MenuBot
 			}
 		}
 
+		if ($params['BOT_ID'] == $params['DIALOG_ID'])
+		{
+			$params['DIALOG_ID'] = (string)$params['USER_ID'];
+		}
+
+		$dialogId = (string)$params['DIALOG_ID'];
+
 		// ITR menu on before any dialog starts
 		if (self::hasBotMenu())
 		{
-			if (!self::isMenuTrackFinished((int)$params['USER_ID']))
+			if (!self::isMenuTrackStarted($dialogId) && !self::isMenuTrackFinished($dialogId))
 			{
-				$menuState = self::showMenu([
-					'BOT_ID' => $params['BOT_ID'],
-					'DIALOG_ID' => $params['USER_ID'],
-				]);
-				self::saveMenuState(
-					(int)$params['USER_ID'],
-					$menuState
-				);
-
-				if (!self::isMenuTrackFinished((int)$params['USER_ID'], $menuState))
+				self::showMenu(['DIALOG_ID' => $dialogId]);
+				if (!self::isMenuTrackFinished($dialogId))
 				{
 					return false;//continue menu travel
 				}
+			}
+			elseif (self::isMenuTrackStarted($dialogId) && !self::isMenuTrackFinished($dialogId))
+			{
+				return false;//do nothing
 			}
 		}
 
@@ -1157,17 +1301,16 @@ class Support24 extends Network implements NetworkBot, MenuBot
 			if (!empty($message))
 			{
 				self::sendMessage([
-					'DIALOG_ID' => $params['USER_ID'],
+					'DIALOG_ID' => $dialogId,
 					'MESSAGE' => $message,
 					'SYSTEM' => 'N',
 					'URL_PREVIEW' => 'N'
 				]);
 				self::startDialogSession([
-					'BOT_ID' => $params['BOT_ID'],
-					'DIALOG_ID' => $params['USER_ID'],
+					'DIALOG_ID' => $dialogId,
 					'GREETING_SHOWN' => 'Y',
 				]);
-				self::stopMenuTrack((int)$params['USER_ID']);
+				self::stopMenuTrack($dialogId);
 			}
 		}
 
@@ -1194,86 +1337,9 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	 */
 	protected static function finishDialogSession($params)
 	{
-		if (isset($params['DIALOG_ID']) && preg_match('/^[0-9]+$/i', $params['DIALOG_ID']))
-		{
-			$userId = (int)$params['DIALOG_ID'];
-			self::scheduleAction($userId, self::SCHEDULE_ACTION_HIDE_DIALOG, '', self::HIDE_DIALOG_TIME);
-		}
+		self::scheduleAction($params['DIALOG_ID'], self::SCHEDULE_ACTION_HIDE_DIALOG, '', self::HIDE_DIALOG_TIME);
 
 		return parent::finishDialogSession($params);
-	}
-
-	/**
-	 * @param array $params Command arguments.
-	 * <pre>
-	 * [
-	 * 	(int) MESSAGE_ID
-	 * 	(int) DIALOG_ID
-	 * 	(int) SESSION_ID
-	 * 	(int) QUEUE_NUMBER
-	 * ]
-	 * </pre>
-	 *
-	 * @return bool
-	 */
-	protected static function operatorQueueNumber(array $params): bool
-	{
-		if (!Main\Loader::includeModule('im'))
-		{
-			return false;
-		}
-
-		$queueNumber = $params['QUEUE_NUMBER'] ?: 1;
-		$answerText = self::getMessage('QUEUE_NUMBER');
-		if (!$answerText)
-		{
-			$answerText = Loc::getMessage('SUPPORT24_QUEUE_NUMBER');
-		}
-		$answerText = str_replace('#QUEUE_NUMBER#', $queueNumber, $answerText);
-
-
-		// button
-		$buttonText = self::getMessage('QUEUE_NUMBER_REFRESH');
-		if (!$buttonText)
-		{
-			$buttonText = Loc::getMessage('SUPPORT24_QUEUE_NUMBER_REFRESH');
-		}
-		$keyboard = new Im\Bot\Keyboard(self::getBotId());
-		$button = [
-			'COMMAND' => self::COMMAND_QUEUE_NUMBER,
-			'TEXT' => $buttonText,
-			'DISPLAY' => 'LINE',
-			'BG_COLOR' => '#29619b',
-			'TEXT_COLOR' => '#fff',
-		];
-		$keyboard->addButton($button);
-
-		$message = [
-			'DIALOG_ID' => $params['DIALOG_ID'],
-			'MESSAGE' => $answerText,
-			'SYSTEM' => 'Y',
-			'URL_PREVIEW' => 'N',
-			'MESSAGE_TYPE' => \IM_MESSAGE_PRIVATE,
-			'PARAMS' => [
-				self::MESSAGE_PARAM_QUEUE_NUMBER => $queueNumber,
-				self::MESSAGE_PARAM_ALLOW_QUOTE => 'N',
-			],
-			'KEYBOARD' => $keyboard,
-		];
-		if (!empty($params['MESSAGE_ID']))
-		{
-			$message['EDIT_FLAG'] = 'N';
-			if (self::updateMessage((int)$params['MESSAGE_ID'], $message) === false)
-			{
-				self::sendMessage($message);
-			}
-		}
-		else
-		{
-			self::sendMessage($message);
-		}
-
-		return true;
 	}
 
 	/**
@@ -1283,8 +1349,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	 * <pre>
 	 * [
 	 * 	(int) BOT_ID Bot id.
-	 * 	(int) DIALOG_ID Dialg id.
-	 * 	(int) USER_ID User id.
+	 * 	(string) DIALOG_ID Dialog id.
 	 * ]
 	 * </pre>
 	 *
@@ -1292,42 +1357,39 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	 */
 	public static function allowSendStartMessage(array $params)
 	{
-		$res = ImBot\Model\NetworkSessionTable::getList([
-			'select' => [
-				'GREETING_SHOWN',
-			],
-			'filter' => [
-				'=BOT_ID' => $params['BOT_ID'],
-				'=DIALOG_ID' => $params['USER_ID'],
-			]
-		]);
-		if ($sessData = $res->fetch())
+		if (empty($params['DIALOG_ID']) && !empty($params['USER_ID']))
 		{
-			if ($sessData['GREETING_SHOWN'] == 'Y')
-			{
-				return false;
-			}
+			$params['DIALOG_ID'] = (string)$params['USER_ID'];
+		}
+		$sessData = self::instanceDialogSession($params['DIALOG_ID'])->load();
+		if ($sessData && $sessData['GREETING_SHOWN'] === 'Y')
+		{
+			return false;
 		}
 
 		return true;
 	}
 
 	/**
-	 * @param array $params
+	 * Handler for "im:OnSessionVote" event.
+	 * @param array $params Event arguments.
 	 *
 	 * @return bool
 	 */
-	protected static function clientSessionVote($params)
+	public static function onSessionVote(array $params): bool
 	{
-		if (!empty($params['BOT_ID']) && !empty($params['USER_ID']))
+		if (!empty($params['BOT_ID']) && !empty($params['DIALOG_ID']))
 		{
-			self::deleteDialogSessions([
-				'BOT_ID' => $params['BOT_ID'],
-				'DIALOG_ID' => $params['USER_ID'],
-			]);
+			if ($params['BOT_ID'] == $params['DIALOG_ID'])
+			{
+				$params['DIALOG_ID'] = (string)$params['USER_ID'];
+			}
+			self::instanceDialogSession($params['DIALOG_ID'])->clearSessions();
 		}
 
-		return parent::clientSessionVote($params);
+		self::scheduleAction($params['DIALOG_ID'], self::SCHEDULE_ACTION_HIDE_DIALOG, '', self::HIDE_DIALOG_TIME);
+
+		return self::clientSessionVote($params);
 	}
 
 	/**
@@ -1363,7 +1425,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 		$previousZone = \CBitrix24::getPortalZone(\CBitrix24::LICENSE_TYPE_PREVIOUS);
 		$currentZone = \CBitrix24::getPortalZone(\CBitrix24::LICENSE_TYPE_CURRENT);
 
-		$currentDemoState = $currentLicence == 'demo';
+		$currentDemoState = \CBitrix24::isDemoLicense();
 		Option::set('imbot', self::OPTION_BOT_DEMO_ACTIVE, $currentDemoState);
 
 		$isSupportLevelChange = $previousSupportLevel != $currentSupportLevel;
@@ -1398,12 +1460,14 @@ class Support24 extends Network implements NetworkBot, MenuBot
 
 		if ($isSupportLevelChange)
 		{
+			(new DialogSession)->clearSessions(['BOT_ID' => self::getBotId()]);
+
 			self::deleteScheduledAction(self::SCHEDULE_DELETE_ALL);
 		}
 
 		if ($currentDemoState)
 		{
-			Option::set('imbot', self::OPTION_BOT_FREE_START_DATE, time());
+			Option::set('imbot', self::OPTION_BOT_FREE_START_DATE, \time());
 		}
 
 		self::updateBotProperties();
@@ -1415,8 +1479,8 @@ class Support24 extends Network implements NetworkBot, MenuBot
 			'IS_SUPPORT_CODE_CHANGE' => $isZoneChanges,
 		]);
 
-		Option::set('imbot', "network_".$previousCode."_bot_id", 0);
-		Option::set('imbot', "network_".$currentCode."_bot_id", self::getBotId());
+		Option::delete(self::MODULE_ID, ['name' => "network_".$previousCode."_bot_id"]);
+		Option::set(self::MODULE_ID, "network_".$currentCode."_bot_id", self::getBotId());
 
 		$http = self::instanceHttpClient();
 		$http->query(
@@ -1483,6 +1547,8 @@ class Support24 extends Network implements NetworkBot, MenuBot
 			$currentCode = Option::get('imbot', self::OPTION_BOT_FREE_CODE, "");
 		}
 
+		(new DialogSession)->clearSessions(['BOT_ID' => self::getBotId()]);
+
 		self::updateBotProperties();
 
 		self::sendNotifyAboutChangeLevel([
@@ -1490,8 +1556,8 @@ class Support24 extends Network implements NetworkBot, MenuBot
 			'IS_SUPPORT_CODE_CHANGE' => true,
 		]);
 
-		Option::set('imbot', "network_".$previousCode."_bot_id", 0);
-		Option::set('imbot', "network_".$currentCode."_bot_id", self::getBotId());
+		Option::delete(self::MODULE_ID, ['name' => "network_".$previousCode."_bot_id"]);
+		Option::set(self::MODULE_ID, "network_".$currentCode."_bot_id", self::getBotId());
 
 		$currentLicence = \CBitrix24::getLicenseType(\CBitrix24::LICENSE_TYPE_CURRENT);
 
@@ -1532,7 +1598,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 
 			if ($messageFields['COMMAND_PARAMS'] === self::COMMAND_ACTIVATE_PARTNER)
 			{
-				$keyboard = new Im\Bot\Keyboard(self::getBotId());
+				$keyboard = new Keyboard(self::getBotId());
 				$keyboard->addButton([
 					"DISPLAY" => "LINE",
 					"TEXT" => self::getMessage('PARTNER_BUTTON_MANAGE'),
@@ -1542,7 +1608,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 				$messageParams[self::MESSAGE_PARAM_KEYBOARD] = $keyboard;
 
 				$attach = new \CIMMessageParamAttach(null, \CIMMessageParamAttach::NORMAL);
-				$attach->AddMessage(self::getMessage('PARTNER_REQUEST_PROCESSED'));
+				$attach->addMessage(self::getMessage('PARTNER_REQUEST_PROCESSED'));
 				$messageParams[self::MESSAGE_PARAM_ATTACH] = $attach;
 
 				$result = Partner24::acceptRequest($messageFields['FROM_USER_ID']);
@@ -1558,7 +1624,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 					Partner24::deactivate($messageFields['FROM_USER_ID']);
 
 					$attach = new \CIMMessageParamAttach(null, \CIMMessageParamAttach::NORMAL);
-					$attach->AddMessage(self::getMessage('PARTNER_REQUEST_PROCESSED'));
+					$attach->addMessage(self::getMessage('PARTNER_REQUEST_PROCESSED'));
 					$messageParams[self::MESSAGE_PARAM_ATTACH] = $attach;
 				}
 				elseif ($messageFields['COMMAND_PARAMS'] === self::COMMAND_DECLINE_PARTNER_REQUEST)
@@ -1566,20 +1632,20 @@ class Support24 extends Network implements NetworkBot, MenuBot
 					Partner24::declineRequest($messageFields['FROM_USER_ID']);
 
 					$attach = new \CIMMessageParamAttach(null, \CIMMessageParamAttach::PROBLEM);
-					$attach->AddMessage(self::getMessage('PARTNER_REQUEST_REJECTED'));
+					$attach->addMessage(self::getMessage('PARTNER_REQUEST_REJECTED'));
 					$messageParams[self::MESSAGE_PARAM_ATTACH] = $attach;
 				}
 				$messageParams[self::MESSAGE_PARAM_KEYBOARD] = 'N';
 			}
 
-			\CIMMessageParam::Set($messageId, $messageParams);
-			\CIMMessageParam::SendPull($messageId, [self::MESSAGE_PARAM_ATTACH, self::MESSAGE_PARAM_KEYBOARD]);
+			\CIMMessageParam::set($messageId, $messageParams);
+			\CIMMessageParam::sendPull($messageId, [self::MESSAGE_PARAM_ATTACH, self::MESSAGE_PARAM_KEYBOARD]);
 
 			return true;
 		}
 		elseif ($messageFields['COMMAND'] === self::COMMAND_START_DIALOG)
 		{
-			$message = (new \CIMChat(0))->getMessage($messageId);
+			$message = (new \CIMChat(self::getBotId()))->getMessage($messageId);
 
 			// duplicate message
 			self::operatorMessageAdd(0, [
@@ -1589,7 +1655,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 				'MESSAGE' => $message['MESSAGE'],
 				'PARAMS' => [
 					self::MESSAGE_PARAM_ALLOW_QUOTE => 'Y',
-					self::MESSAGE_PARAM_MENU_ACTION => 'SKIP:MENU',
+					Mixin\MESSAGE_PARAM_MENU_ACTION => 'SKIP:MENU',
 				],
 			]);
 
@@ -1600,7 +1666,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 				$forward = Loc::getMessage('SUPPORT24_START_DIALOG_'. ($userGender == 'F' ? 'F' : 'M'));
 			}
 
-			\CIMMessenger::Add([
+			\CIMMessenger::add([
 				'MESSAGE_TYPE' => \IM_MESSAGE_CHAT,
 				'SYSTEM' => 'Y',
 				'FROM_USER_ID' => self::getBotId(),
@@ -1615,13 +1681,9 @@ class Support24 extends Network implements NetworkBot, MenuBot
 
 			return true;
 		}
-		elseif ($messageFields['COMMAND'] === self::COMMAND_QUEUE_NUMBER)
+		elseif ($messageFields['COMMAND'] === Mixin\COMMAND_QUEUE_NUMBER)
 		{
-			$sessionId = self::getDialogSessionId([
-				'BOT_ID' => static::getBotId(),
-				'DIALOG_ID' => $messageFields['DIALOG_ID'],
-			]);
-
+			$sessionId = self::instanceDialogSession($messageFields['DIALOG_ID'])->getSessionId();
 			if (!$sessionId)
 			{
 				$lastMessages = (new \CIMMessage())->getLastMessage($messageFields['FROM_USER_ID'], static::getBotId(), false, false);
@@ -1655,6 +1717,92 @@ class Support24 extends Network implements NetworkBot, MenuBot
 
 			return true;
 		}
+		elseif ($messageFields['COMMAND'] === ItrMenu::COMMAND_MENU)
+		{
+			if (
+				self::isEnabledQuestionFunctional()
+				&& !(self::instanceDialogSession($messageFields['DIALOG_ID'])->getSessionId() > 0)
+			)
+			{
+				if ($messageFields['COMMAND_PARAMS'] === Mixin\COMMAND_RESUME_SESSION)
+				{
+					self::dropMessage((int)$messageId);
+
+					// restart itr
+					if (self::hasBotMenu())
+					{
+						self::showMenu([
+							'DIALOG_ID' => $messageFields['DIALOG_ID'],
+							'FULL_REDRAW' => true,
+						]);
+					}
+
+					return true;
+				}
+
+				// block only redirect on operator
+				if (
+					self::isQuitMenuCommand($messageFields)
+					&& !self::allowAdditionalQuestion()
+				)
+				{
+					self::resetMenuState($messageFields['DIALOG_ID']);
+
+					static::disableMessageButtons((int)$messageId);
+
+					$questionDisallowed = self::getQuestionDisallowMessage();
+					if ($questionDisallowed)
+					{
+						self::sendMessage([
+							'DIALOG_ID' => $messageFields['DIALOG_ID'],
+							'MESSAGE' => $questionDisallowed,
+							'KEYBOARD' => self::getQuestionResumeButton(),
+							'URL_PREVIEW' => 'N',
+							'SYSTEM' => 'Y',
+						]);
+					}
+
+					return false;
+				}
+			}
+
+			self::handleMenuCommand($messageId, $messageFields);
+
+			return true;
+		}
+
+		elseif (
+			$messageFields['COMMAND'] === self::COMMAND_NETWORK_SESSION
+			&& $messageFields['COMMAND_PARAMS'] === 'resume' /** @see Mixin\COMMAND_RESUME_SESSION */
+		)
+		{
+			if (
+				self::isEnabledQuestionFunctional()
+				&& !(self::instanceDialogSession($messageFields['DIALOG_ID'])->getSessionId() > 0)
+			)
+			{
+				self::dropMessage((int)$messageId);
+
+				if (!self::allowAdditionalQuestion())
+				{
+					$questionDisallowed = self::getQuestionDisallowMessage();
+					if ($questionDisallowed)
+					{
+						self::sendMessage([
+							'DIALOG_ID' => $messageFields['DIALOG_ID'],
+							'MESSAGE' => $questionDisallowed,
+							'KEYBOARD' => self::getQuestionResumeButton(),
+							'URL_PREVIEW' => 'N',
+							'SYSTEM' => 'Y',
+						]);
+					}
+
+					return false;
+				}
+
+				return true;
+			}
+		}
 
 		return parent::onCommandAdd($messageId, $messageFields);
 	}
@@ -1686,9 +1834,10 @@ class Support24 extends Network implements NetworkBot, MenuBot
 		$isDemoLevelChange = (bool)$params['IS_DEMO_LEVEL_CHANGE'];
 		$isActiveFreeSupport = self::isActiveFreeSupport();
 
+		$users = [self::getBotId()];
 		foreach (self::getRecentDialogs() as $dialog)
 		{
-			if ($dialog['USER_ID'] == self::getBotId())
+			if (in_array($dialog['USER_ID'], $users))
 			{
 				continue;
 			}
@@ -1764,8 +1913,9 @@ class Support24 extends Network implements NetworkBot, MenuBot
 				continue;
 			}
 
-			if ($dialog['RECENTLY_TALK'] == 'Y')
+			if ($dialog['RECENTLY_TALK'] == 'Y' && $dialog['MESSAGE_TYPE'] == \IM_MESSAGE_PRIVATE)
 			{
+				$users[] = $dialog['USER_ID'];
 				self::sendMessage([
 					'DIALOG_ID' => $dialog['USER_ID'],
 					'MESSAGE' => $message,
@@ -1800,13 +1950,21 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	public static function sendRequestFinalizeSession(array $params = [])
 	{
 		if (!Main\Loader::includeModule('im'))
+		{
 			return false;
+		}
 
 		if (!Main\Loader::includeModule('bitrix24'))
+		{
 			return false;
+		}
 
 		if (!self::getBotId())
+		{
 			return false;
+		}
+
+		(new DialogSession)->clearSessions(['BOT_ID' => self::getBotId()]);
 
 		$currentLicence = \CBitrix24::getLicenseType(\CBitrix24::LICENSE_TYPE_CURRENT);
 
@@ -1822,7 +1980,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 		$message = $params['MESSAGE'] ?? '';
 
 		$http = self::instanceHttpClient();
-		$http->query(
+		$response = $http->query(
 			'clientRequestFinalizeSession',
 			[
 				'BOT_ID' => self::getBotId(),
@@ -1834,7 +1992,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 			false
 		);
 
-		return true;
+		return $response !== false && !isset($response['error']);
 	}
 
 	/**
@@ -1844,7 +2002,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	 */
 	public static function onAfterUserAuthorize($params)
 	{
-		$auth = \CHTTP::ParseAuthRequest();
+		$auth = \CHTTP::parseAuthRequest();
 		if (
 			isset($auth["basic"])
 			&& $auth["basic"]["username"] <> ''
@@ -1895,7 +2053,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 		$botCache = Im\Bot::getCache(self::getBotId());
 		if ($botCache['APP_ID'] !== self::getBotCode())
 		{
-			Option::set(self::MODULE_ID, parent::BOT_CODE.'_'.$botCache['APP_ID']."_bot_id", 0);
+			Option::delete(self::MODULE_ID, ['name' => parent::BOT_CODE.'_'.$botCache['APP_ID']."_bot_id"]);
 			Option::set(self::MODULE_ID, parent::BOT_CODE.'_'.self::getBotCode()."_bot_id", self::getBotId());
 		}
 
@@ -1925,6 +2083,9 @@ class Support24 extends Network implements NetworkBot, MenuBot
 
 		Im\Bot::update(['BOT_ID' => self::getBotId()], $botParams);
 
+		self::registerCommands(self::getBotId());
+		self::registerApps(self::getBotId());
+
 		return true;
 	}
 
@@ -1944,7 +2105,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 		{
 			if (self::getSupportLevel() == self::SUPPORT_LEVEL_FREE)
 			{
-				$isShown = (int)\CUserOptions::GetOption(self::MODULE_ID, self::OPTION_BOT_WELCOME_SHOWN, 0, $userId);
+				$isShown = (int)\CUserOptions::getOption(self::MODULE_ID, self::OPTION_BOT_WELCOME_SHOWN, 0, $userId);
 				if ($isShown == 0)
 				{
 					if (self::isActiveFreeSupport() && self::isActiveFreeSupportForUser($userId))
@@ -1952,7 +2113,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 						self::scheduleAction($userId, self::SCHEDULE_ACTION_WELCOME, '', 10);
 					}
 
-					\CUserOptions::SetOption(self::MODULE_ID, self::OPTION_BOT_WELCOME_SHOWN, time(), false, $userId);
+					\CUserOptions::setOption(self::MODULE_ID, self::OPTION_BOT_WELCOME_SHOWN, \time(), false, $userId);
 				}
 			}
 
@@ -1992,7 +2153,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	protected static function checkPortalStageMode(int $userId, bool $delayAction = false)
 	{
 		$session = Main\Application::getInstance()->getSession();
-		$time = time();
+		$time = \time();
 		if (
 			!$session->has(self::OPTION_BOT_STAGE_ACTIVE)
 			|| ($time - (int)$session->get(self::OPTION_BOT_STAGE_ACTIVE)) > 86400
@@ -2066,7 +2227,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 			}
 		}
 		// remove recent talking
-		$notifyUsers = array_diff($notifyUsers, $recentUsers);
+		$notifyUsers = array_unique(array_diff($notifyUsers, $recentUsers));
 		if (!$notifyUsers)
 		{
 			return false;
@@ -2086,11 +2247,10 @@ class Support24 extends Network implements NetworkBot, MenuBot
 						'URL_PREVIEW' => 'N'
 					]);
 
-					$menuState = self::showMenu([
-						'BOT_ID' => self::getBotId(),
-						'DIALOG_ID' => $userId,
-					]);
-					self::saveMenuState($userId, $menuState);
+					if (self::hasBotMenu())
+					{
+						self::showMenu(['DIALOG_ID' => $userId]);
+					}
 				}
 			}
 		}
@@ -2108,13 +2268,15 @@ class Support24 extends Network implements NetworkBot, MenuBot
 						'URL_PREVIEW' => 'N'
 					]);
 
-					$menuState = self::getMenuState($userId) or [];
-					if (isset($menuState['message_id']))
+					if (self::hasBotMenu())
 					{
-						self::disableMessageButtons((int)$menuState['message_id']);
+						$messageId = self::getBotMenu()->setDialogId((string)$userId)->getMessageId();
+						if ($messageId)
+						{
+							self::disableMessageButtons((int)$messageId);
+						}
+						self::resetMenuState((string)$userId);
 					}
-
-					self::saveMenuState($userId, null);
 				}
 			}
 		}
@@ -2127,160 +2289,125 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	//region Schedule actions
 
 	/**
-	 * @param int|string $userId
+	 * @param string $target
 	 * @param string $action
 	 * @param string $code
 	 * @param int $delayMinutes
 	 *
-	 * @return bool
+	 * @return void
 	 */
-	public static function scheduleAction($userId, $action, $code = '', $delayMinutes = 1)
+	public static function scheduleAction($target, $action, $code = '', $delayMinutes = 1): void
 	{
-		if (!($userId === self::USER_LEVEL_ADMIN || $userId === self::USER_LEVEL_BUSINESS))
-		{
-			$userId = (int)$userId;
-			if ($userId <= 0)
-			{
-				return false;
-			}
-		}
-
-		$agentName = __CLASS__."::scheduledActionAgent('{$userId}', '{$action}', '{$code}');";
-		$result = \CAgent::GetList([], ['MODULE_ID'=>'imbot', '=NAME'=> $agentName]);
-		while ($agent = $result->Fetch())
-		{
-			\CAgent::Delete($agent['ID']);
-		}
-
-		$delaySeconds = (int)$delayMinutes * 60;
-
-		\CAgent::AddAgent(
-			$agentName,
-			'imbot',
-			'N',
-			$delaySeconds,
-			'',
-			'Y',
-			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + $delaySeconds, 'FULL')
-		);
-
-		return true;
+		$agentName = "scheduledActionAgent('{$target}', '{$action}', '{$code}')";
+		self::deleteAgent(['agent' => $agentName]);
+		self::addAgent([
+			'class' => __CLASS__,
+			'agent' => $agentName,
+			'delay' => $delayMinutes * 60,
+		]);
 	}
 
 	/**
-	 * @param int|string|null $userId
+	 * @param string $target
 	 * @param string $action
 	 * @param string $code
-	 *
-	 * @return bool
+	 * @return void
 	 */
-	public static function deleteScheduledAction($userId = null, $action = '', $code = '')
+	public static function deleteScheduledAction($target = '', $action = '', $code = ''): void
 	{
-		if (!($userId === self::USER_LEVEL_ADMIN || $userId === self::USER_LEVEL_BUSINESS))
-		{
-			$userId = intval($userId);
-		}
 		$action = trim($action);
 		$code = trim($code);
 
-		$filter = ['MODULE_ID' => 'imbot'];
-
-		if (!$userId)
+		$filter = [];
+		if (!$target)
 		{
-			$filter['NAME'] = __CLASS__."::scheduledActionAgent(%";
+			$filter['mask'] = "scheduledActionAgent(";
 		}
 		else
 		{
 			if ($action && $code)
 			{
-				$filter['=NAME'] = __CLASS__."::scheduledActionAgent('{$userId}', '{$action}', '{$code}');";
+				$filter['agent'] = "scheduledActionAgent('{$target}', '{$action}', '{$code}')";
 			}
 			else if ($action)
 			{
-				$filter['NAME'] = __CLASS__."::scheduledActionAgent('{$userId}', '{$action}', %";
+				$filter['mask'] = "scheduledActionAgent('{$target}', '{$action}',";
 			}
 			else
 			{
-				$filter['NAME'] = __CLASS__."::scheduledActionAgent('{$userId}', %";
+				$filter['mask'] = "scheduledActionAgent('{$target}',";
 			}
 		}
 
-		$result = \CAgent::GetList([], $filter);
-		while($agent = $result->Fetch())
-		{
-			\CAgent::Delete($agent['ID']);
-		}
-
-		return true;
+		self::deleteAgent($filter);
 	}
 
 	/**
-	 * @param int|string $userId
+	 * @param string $target
 	 * @param string $action
 	 * @param string $code
-	 *
 	 * @return string
 	 */
-	public static function scheduledActionAgent($userId, $action, $code = '')
+	public static function scheduledActionAgent($target, $action, $code = ''): string
 	{
-		self::execScheduleAction($userId, $action, $code);
+		self::execScheduleAction($target, $action, $code);
 
-		return "";
+		return '';
 	}
 
 	/**
-	 * @param int|string $userId
+	 * @param string $target
 	 * @param string $action
 	 * @param string $code
-	 *
 	 * @return bool
 	 */
-	public static function execScheduleAction($userId, $action, $code = '')
+	public static function execScheduleAction($target, $action, $code = ''): bool
 	{
 		if (!Main\Loader::includeModule('im'))
 		{
 			return false;
 		}
 
-		if (!($userId === self::USER_LEVEL_ADMIN || $userId === self::USER_LEVEL_BUSINESS))
+		if ($action === self::SCHEDULE_ACTION_WELCOME)
 		{
-			$userId = intval($userId);
-			if ($userId <= 0)
+			if (!is_numeric($target))
 			{
+				// only for user
 				return false;
 			}
-		}
-
-		if ($action == self::SCHEDULE_ACTION_WELCOME)
-		{
 			if (self::getSupportLevel() != self::SUPPORT_LEVEL_FREE)
 			{
 				return true;
 			}
-			else if (!self::isActiveFreeSupport() || !self::isActiveFreeSupportForUser($userId))
+			if (!self::isActiveFreeSupport() || !self::isActiveFreeSupportForUser($target))
 			{
 				return true;
 			}
 
-			\CIMMessage::GetChatId($userId, self::getBotId());
+			\CIMMessage::getChatId($target, self::getBotId());
 		}
-		elseif ($action == self::SCHEDULE_ACTION_INVOLVEMENT)
+		elseif ($action === self::SCHEDULE_ACTION_INVOLVEMENT)
 		{
+			if (!is_numeric($target))
+			{
+				// only for user
+				return false;
+			}
 			if (self::getSupportLevel() != self::SUPPORT_LEVEL_FREE)
 			{
 				return true;
 			}
-			else if (!self::isActiveFreeSupport() || !self::isActiveFreeSupportForUser($userId))
+			if (!self::isActiveFreeSupport() || !self::isActiveFreeSupportForUser($target))
 			{
 				return true;
 			}
 
 			$generationDate = (int)Option::get('imbot', self::OPTION_BOT_FREE_START_DATE, 0);
-			$currentDay = (int)floor((time() - $generationDate) / 86400) + 1;
+			$currentDay = (int)floor((\time() - $generationDate) / 86400) + 1;
 
-			self::scheduleAction($userId, self::SCHEDULE_ACTION_INVOLVEMENT, '', 24*60);
+			self::scheduleAction($target, self::SCHEDULE_ACTION_INVOLVEMENT, '', 24*60);
 
-			$message = self::getMessage($currentDay);
+			$message = self::getMessage((string)$currentDay);
 			if ($message == '')
 			{
 				return false;
@@ -2299,7 +2426,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 					b_im_relation RU LEFT JOIN b_im_message MU ON RU.LAST_ID = MU.ID
 				WHERE
 					RB.USER_ID = ".self::getBotId()."
-				and RU.USER_ID = ".$userId."
+				and RU.USER_ID = ".$target."
 				and RB.MESSAGE_TYPE = '".IM_MESSAGE_PRIVATE."'
 				and RU.MESSAGE_TYPE = '".IM_MESSAGE_PRIVATE."'
 				and RB.CHAT_ID = RU.CHAT_ID
@@ -2315,7 +2442,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 			}
 
 			self::sendMessage([
-				'DIALOG_ID' => $userId,
+				'DIALOG_ID' => $target,
 				'MESSAGE' => $message,
 				'SYSTEM' => 'N',
 				'URL_PREVIEW' => 'N'
@@ -2323,7 +2450,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 
 			return true;
 		}
-		elseif ($action == self::SCHEDULE_ACTION_MESSAGE)
+		elseif ($action === self::SCHEDULE_ACTION_MESSAGE)
 		{
 			$code = trim($code);
 			if ($code == '')
@@ -2338,15 +2465,15 @@ class Support24 extends Network implements NetworkBot, MenuBot
 			}
 
 			self::sendMessage([
-				'DIALOG_ID' => $userId,
+				'DIALOG_ID' => $target,
 				'MESSAGE' => $message,
 				'SYSTEM' => 'N',
 				'URL_PREVIEW' => 'N'
 			]);
 		}
-		elseif ($action == self::SCHEDULE_ACTION_PARTNER_JOIN)
+		elseif ($action === self::SCHEDULE_ACTION_PARTNER_JOIN)
 		{
-			$keyboard = new Im\Bot\Keyboard(self::getBotId());
+			$keyboard = new Keyboard(self::getBotId());
 			$keyboard->addButton([
 				"DISPLAY" => "LINE",
 				"TEXT" => self::getMessage('PARTNER_BUTTON_YES'),
@@ -2367,7 +2494,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 			]);
 
 			self::sendMessage([
-				'DIALOG_ID' => $userId,
+				'DIALOG_ID' => $target,
 				'MESSAGE' => self::getMessage('PARTNER_REQUEST'),
 				'KEYBOARD' => $keyboard,
 				'SYSTEM' => 'N',
@@ -2376,12 +2503,29 @@ class Support24 extends Network implements NetworkBot, MenuBot
 
 			return true;
 		}
-		elseif ($action == self::SCHEDULE_ACTION_HIDE_DIALOG)
+		elseif ($action === self::SCHEDULE_ACTION_HIDE_DIALOG)
 		{
-			$botId = self::getBotId();
-			\CIMContactList::DialogHide($botId, $userId);
+			if (\Bitrix\Im\Common::isChatId($target))
+			{
+				$chatId = self::getChatId($target);
+				if ($chatId > 0)
+				{
+					$relations = Im\Chat::getRelation($chatId, ['SELECT' => ['ID', 'USER_ID']]);
+					foreach($relations as $relation)
+					{
+						if ((int)$relation['USER_ID'] != static::getBotId())
+						{
+							\CIMContactList::dialogHide($target, (int)$relation['USER_ID']);
+						}
+					}
+				}
+			}
+			else
+			{
+				\CIMContactList::dialogHide(self::getBotId(), $target);
+			}
 		}
-		elseif ($action == self::SCHEDULE_ACTION_CHECK_STAGE)
+		elseif ($action === self::SCHEDULE_ACTION_CHECK_STAGE)
 		{
 			if ($code === 'START')
 			{
@@ -2410,7 +2554,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	 *
 	 * @return string
 	 */
-	public static function getMessage($code, $supportLevel = null)
+	public static function getMessage(string $code, $supportLevel = null): ?string
 	{
 		if (!$supportLevel)
 		{
@@ -2445,7 +2589,7 @@ class Support24 extends Network implements NetworkBot, MenuBot
 	 *
 	 * @return string
 	 */
-	public static function replacePlaceholders($message, $userId = 0)
+	public static function replacePlaceholders($message, $userId = 0): string
 	{
 		if (!Main\Loader::includeModule('im'))
 		{
@@ -2507,5 +2651,21 @@ class Support24 extends Network implements NetworkBot, MenuBot
 
 		return $message;
 	}
+
+	/**
+	 * @param string $command
+	 * @param string $lang
+	 * @return array{TITLE: string, PARAMS: string}
+	 */
+	public static function onAppLang($command, $lang = null): array
+	{
+		if ($command === Mixin\COMMAND_ADD_QUESTION)
+		{
+			return self::getSupportQuestionAppLang($lang);
+		}
+
+		return [];
+	}
+
 	//endregion
 }

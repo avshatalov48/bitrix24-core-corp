@@ -166,24 +166,21 @@ final class FileAttributes extends ItemAttributes
 		return in_array($contentType, self::getInputContentTypes(), true);
 	}
 
-	protected static function getInputContentTypes()
+	protected static function getInputContentTypes(): array
 	{
-		return [
+		$types = [
 			MimeType::getByFileExtension('pdf'),
-			MimeType::getByFileExtension('doc'),
-			MimeType::getByFileExtension('docm'),
-			MimeType::getByFileExtension('docx'),
-			MimeType::getByFileExtension('rtf'),
 			'application/rtf',
-			MimeType::getByFileExtension('xls'),
-			MimeType::getByFileExtension('xlt'),
-			MimeType::getByFileExtension('xlsx'),
-			MimeType::getByFileExtension('xlsm'),
-			MimeType::getByFileExtension('ppt'),
-			MimeType::getByFileExtension('pptx'),
-			MimeType::getByFileExtension('pptm'),
 			'application/vnd.ms-powerpoint',
 		];
+
+		$editableExtensions = OnlyOfficeHandler::listEditableExtensions();
+		foreach ($editableExtensions as $extension)
+		{
+			$types[] = MimeType::getByFileExtension($extension);
+		}
+
+		return $types;
 	}
 
 	public function __toString()

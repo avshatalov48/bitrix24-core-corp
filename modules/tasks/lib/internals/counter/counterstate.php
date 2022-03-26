@@ -278,12 +278,14 @@ class CounterState implements \Iterator
 			CounterDictionary::META_PROP_PROJECT => [],
 			CounterDictionary::META_PROP_GROUP => [],
 			CounterDictionary::META_PROP_SONET => [],
-			CounterDictionary::META_PROP_NONE => []
+			CounterDictionary::META_PROP_SCRUM => [],
+			CounterDictionary::META_PROP_NONE => [],
 		];
 
 		$user = UserRegistry::getInstance($this->userId);
 		$groups = $user->getUserGroups(UserRegistry::MODE_GROUP);
 		$projects = $user->getUserGroups(UserRegistry::MODE_PROJECT);
+		$scrum = $user->getUserGroups(UserRegistry::MODE_SCRUM);
 
 		$tmpHeap[] = [];
 		foreach ($this->state as $item)
@@ -298,7 +300,7 @@ class CounterState implements \Iterator
 			$value = $item['VALUE'];
 			$type = $item['TYPE'];
 
-			$meta = $this->getMetaProp($item, $groups, $projects);
+			$meta = $this->getMetaProp($item, $groups, $projects, $scrum);
 			$subType = $this->getItemSubType($type);
 
 			if (!isset($tmpHeap[$meta][$type][$groupId][$taskId]))
@@ -354,12 +356,18 @@ class CounterState implements \Iterator
 			)
 			{
 				$this->counters[$meta][CounterDictionary::COUNTER_GROUPS_TOTAL_EXPIRED][0] += $value;
-				$this->counters[CounterDictionary::META_PROP_SONET][CounterDictionary::COUNTER_GROUPS_TOTAL_EXPIRED][0] += $value;
-				$this->counters[CounterDictionary::META_PROP_ALL][CounterDictionary::COUNTER_GROUPS_TOTAL_EXPIRED][0] += $value;
+				if (in_array($meta, [CounterDictionary::META_PROP_PROJECT, CounterDictionary::META_PROP_GROUP]))
+				{
+					$this->counters[CounterDictionary::META_PROP_ALL][CounterDictionary::COUNTER_GROUPS_TOTAL_EXPIRED][0] += $value;
+					$this->counters[CounterDictionary::META_PROP_SONET][CounterDictionary::COUNTER_GROUPS_TOTAL_EXPIRED][0] += $value;
+				}
 
 				$this->counters[$meta][CounterDictionary::COUNTER_GROUPS_FOREIGN_EXPIRED][0] -= $value;
-				$this->counters[CounterDictionary::META_PROP_SONET][CounterDictionary::COUNTER_GROUPS_FOREIGN_EXPIRED][0] -= $value;
-				$this->counters[CounterDictionary::META_PROP_ALL][CounterDictionary::COUNTER_GROUPS_FOREIGN_EXPIRED][0] -= $value;
+				if (in_array($meta, [CounterDictionary::META_PROP_PROJECT, CounterDictionary::META_PROP_GROUP]))
+				{
+					$this->counters[CounterDictionary::META_PROP_ALL][CounterDictionary::COUNTER_GROUPS_FOREIGN_EXPIRED][0] -= $value;
+					$this->counters[CounterDictionary::META_PROP_SONET][CounterDictionary::COUNTER_GROUPS_FOREIGN_EXPIRED][0] -= $value;
+				}
 
 				$tmpHeap[$meta][CounterDictionary::COUNTER_GROUPS_TOTAL_EXPIRED][0][$taskId] = $value;
 			}
@@ -370,12 +378,18 @@ class CounterState implements \Iterator
 			)
 			{
 				$this->counters[$meta][CounterDictionary::COUNTER_GROUPS_TOTAL_COMMENTS][0] += $value;
-				$this->counters[CounterDictionary::META_PROP_SONET][CounterDictionary::COUNTER_GROUPS_TOTAL_COMMENTS][0] += $value;
-				$this->counters[CounterDictionary::META_PROP_ALL][CounterDictionary::COUNTER_GROUPS_TOTAL_COMMENTS][0] += $value;
+				if (in_array($meta, [CounterDictionary::META_PROP_PROJECT, CounterDictionary::META_PROP_GROUP]))
+				{
+					$this->counters[CounterDictionary::META_PROP_ALL][CounterDictionary::COUNTER_GROUPS_TOTAL_COMMENTS][0] += $value;
+					$this->counters[CounterDictionary::META_PROP_SONET][CounterDictionary::COUNTER_GROUPS_TOTAL_COMMENTS][0] += $value;
+				}
 
 				$this->counters[$meta][CounterDictionary::COUNTER_GROUPS_FOREIGN_COMMENTS][0] -= $value;
-				$this->counters[CounterDictionary::META_PROP_SONET][CounterDictionary::COUNTER_GROUPS_FOREIGN_COMMENTS][0] -= $value;
-				$this->counters[CounterDictionary::META_PROP_ALL][CounterDictionary::COUNTER_GROUPS_FOREIGN_COMMENTS][0] -= $value;
+				if (in_array($meta, [CounterDictionary::META_PROP_PROJECT, CounterDictionary::META_PROP_GROUP]))
+				{
+					$this->counters[CounterDictionary::META_PROP_ALL][CounterDictionary::COUNTER_GROUPS_FOREIGN_COMMENTS][0] -= $value;
+					$this->counters[CounterDictionary::META_PROP_SONET][CounterDictionary::COUNTER_GROUPS_FOREIGN_COMMENTS][0] -= $value;
+				}
 
 				$tmpHeap[$meta][CounterDictionary::COUNTER_GROUPS_TOTAL_COMMENTS][0][$taskId] = $value;
 			}
@@ -386,8 +400,11 @@ class CounterState implements \Iterator
 			)
 			{
 				$this->counters[$meta][CounterDictionary::COUNTER_GROUPS_FOREIGN_EXPIRED][0] += $value;
-				$this->counters[CounterDictionary::META_PROP_SONET][CounterDictionary::COUNTER_GROUPS_FOREIGN_EXPIRED][0] += $value;
-				$this->counters[CounterDictionary::META_PROP_ALL][CounterDictionary::COUNTER_GROUPS_FOREIGN_EXPIRED][0] += $value;
+				if (in_array($meta, [CounterDictionary::META_PROP_PROJECT, CounterDictionary::META_PROP_GROUP]))
+				{
+					$this->counters[CounterDictionary::META_PROP_ALL][CounterDictionary::COUNTER_GROUPS_FOREIGN_EXPIRED][0] += $value;
+					$this->counters[CounterDictionary::META_PROP_SONET][CounterDictionary::COUNTER_GROUPS_FOREIGN_EXPIRED][0] += $value;
+				}
 
 				$tmpHeap[$meta][CounterDictionary::COUNTER_GROUPS_FOREIGN_EXPIRED][0][$taskId] = $value;
 			}
@@ -398,8 +415,11 @@ class CounterState implements \Iterator
 			)
 			{
 				$this->counters[$meta][CounterDictionary::COUNTER_GROUPS_FOREIGN_COMMENTS][0] += $value;
-				$this->counters[CounterDictionary::META_PROP_SONET][CounterDictionary::COUNTER_GROUPS_FOREIGN_COMMENTS][0] += $value;
-				$this->counters[CounterDictionary::META_PROP_ALL][CounterDictionary::COUNTER_GROUPS_FOREIGN_COMMENTS][0] += $value;
+				if (in_array($meta, [CounterDictionary::META_PROP_PROJECT, CounterDictionary::META_PROP_GROUP]))
+				{
+					$this->counters[CounterDictionary::META_PROP_ALL][CounterDictionary::COUNTER_GROUPS_FOREIGN_COMMENTS][0] += $value;
+					$this->counters[CounterDictionary::META_PROP_SONET][CounterDictionary::COUNTER_GROUPS_FOREIGN_COMMENTS][0] += $value;
+				}
 
 				$tmpHeap[$meta][CounterDictionary::COUNTER_GROUPS_FOREIGN_COMMENTS][0][$taskId] = $value;
 			}
@@ -439,10 +459,18 @@ class CounterState implements \Iterator
 
 	/**
 	 * @param array $item
+	 * @param array $groups
+	 * @param array $projects
+	 * @param array $scrum
 	 * @return string
 	 */
-	private function getMetaProp(array $item, array $groups, array $projects): string
+	private function getMetaProp(array $item, array $groups, array $projects, array $scrum): string
 	{
+		if (array_key_exists($item['GROUP_ID'], $scrum))
+		{
+			return CounterDictionary::META_PROP_SCRUM;
+		}
+
 		if (array_key_exists($item['GROUP_ID'], $groups))
 		{
 			return CounterDictionary::META_PROP_GROUP;

@@ -4,11 +4,14 @@ namespace Bitrix\Tasks\Scrum\Service;
 use Bitrix\Main\Error;
 use Bitrix\Main\Errorable;
 use Bitrix\Main\ErrorCollection;
-use Bitrix\Tasks\Integration\Recyclebin\Task as TaskRecycleBin;
+use Bitrix\Tasks\Integration\Recyclebin;
+use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Kanban\StagesTable;
 use Bitrix\Tasks\Kanban\TaskStageTable;
 use Bitrix\Tasks\ProjectsTable;
+use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Scrum\Internal\EntityTable;
+use Bitrix\Tasks\Util\User;
 
 class KanbanService implements Errorable
 {
@@ -56,7 +59,7 @@ class KanbanService implements Errorable
 			return [];
 		}
 
-		if ($entity->getEntityType() === EntityTable::BACKLOG_TYPE)
+		if ($entity->getEntityType() === EntityForm::BACKLOG_TYPE)
 		{
 			return [];
 		}
@@ -92,7 +95,7 @@ class KanbanService implements Errorable
 			return 0;
 		}
 
-		if ($entity->getEntityType() === EntityTable::BACKLOG_TYPE)
+		if ($entity->getEntityType() === EntityForm::BACKLOG_TYPE)
 		{
 			return 0;
 		}
@@ -190,6 +193,7 @@ class KanbanService implements Errorable
 				$this->errorCollection->setError(
 					new Error('Failed to get the default stage', self::ERROR_COULD_NOT_ADD_TASK)
 				);
+
 				return false;
 			}
 
@@ -209,7 +213,10 @@ class KanbanService implements Errorable
 		}
 		catch (\Exception $exception)
 		{
-			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_ADD_TASK));
+			$this->errorCollection->setError(
+				new Error($exception->getMessage(), self::ERROR_COULD_NOT_ADD_TASK)
+			);
+
 			return false;
 		}
 	}
@@ -242,7 +249,9 @@ class KanbanService implements Errorable
 		}
 		catch (\Exception $exception)
 		{
-			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_ADD_ONE_TASK));
+			$this->errorCollection->setError(
+				new Error($exception->getMessage(), self::ERROR_COULD_NOT_ADD_ONE_TASK)
+			);
 		}
 	}
 
@@ -266,7 +275,9 @@ class KanbanService implements Errorable
 		}
 		catch (\Exception $exception)
 		{
-			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_ADD_ONE_TASK));
+			$this->errorCollection->setError(
+				new Error($exception->getMessage(), self::ERROR_COULD_NOT_ADD_ONE_TASK)
+			);
 		}
 
 		return false;
@@ -289,7 +300,9 @@ class KanbanService implements Errorable
 		}
 		catch (\Exception $exception)
 		{
-			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_ADD_ONE_TASK));
+			$this->errorCollection->setError(
+				new Error($exception->getMessage(), self::ERROR_COULD_NOT_ADD_ONE_TASK)
+			);
 		}
 
 		return false;
@@ -313,7 +326,9 @@ class KanbanService implements Errorable
 		}
 		catch (\Exception $exception)
 		{
-			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_ADD_ONE_TASK));
+			$this->errorCollection->setError(
+				new Error($exception->getMessage(), self::ERROR_COULD_NOT_ADD_ONE_TASK)
+			);
 		}
 	}
 
@@ -348,7 +363,10 @@ class KanbanService implements Errorable
 		}
 		catch (\Exception $exception)
 		{
-			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_REMOVE_TASK));
+			$this->errorCollection->setError(
+				new Error($exception->getMessage(), self::ERROR_COULD_NOT_REMOVE_TASK)
+			);
+
 			return false;
 		}
 	}
@@ -380,10 +398,12 @@ class KanbanService implements Errorable
 		}
 		catch (\Exception $exception)
 		{
-			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_GET_STAGES));
+			$this->errorCollection->setError(
+				new Error($exception->getMessage(), self::ERROR_COULD_NOT_GET_STAGES)
+			);
 		}
 
-		$stages = [
+		return [
 			'NEW' => [
 				'COLOR' => '00C4FB',
 				'SYSTEM_TYPE' => StagesTable::SYS_TYPE_DEFAULT
@@ -397,8 +417,6 @@ class KanbanService implements Errorable
 				'SYSTEM_TYPE' => StagesTable::SYS_TYPE_FINISH
 			]
 		];
-
-		return $stages;
 	}
 
 	public function getFinishedTaskIdsInSprint(int $sprintId): array
@@ -411,6 +429,7 @@ class KanbanService implements Errorable
 				'=STAGE.ENTITY_TYPE' => StagesTable::WORK_MODE_ACTIVE_SPRINT,
 			]);
 		}
+
 		return $this->finishedTaskIdsCache[$sprintId];
 	}
 
@@ -424,28 +443,17 @@ class KanbanService implements Errorable
 				'=STAGE.ENTITY_TYPE' => StagesTable::WORK_MODE_ACTIVE_SPRINT,
 			]);
 		}
+
 		return $this->unFinishedTaskIdsCache[$sprintId];
 	}
 
 	public function extractFinishedTaskIds(array $taskIds): array
 	{
-		$finishedTaskIds = [];
-
-		foreach ($taskIds as $taskId)
-		{
-			if (
-				$this->getTaskIds([
-					'=STAGE.SYSTEM_TYPE' => StagesTable::SYS_TYPE_FINISH,
-					'=TASK_ID' => $taskId,
-					'=STAGE.ENTITY_TYPE' => StagesTable::WORK_MODE_ACTIVE_SPRINT,
-				])
-			)
-			{
-				$finishedTaskIds[] = $taskId;
-			}
-		}
-
-		return $finishedTaskIds;
+		return $this->getTaskIds([
+			'=STAGE.SYSTEM_TYPE' => StagesTable::SYS_TYPE_FINISH,
+			'=TASK_ID' => $taskIds,
+			'=STAGE.ENTITY_TYPE' => StagesTable::WORK_MODE_ACTIVE_SPRINT,
+		]);
 	}
 
 	public function getKanbanSortValue(int $groupId): string
@@ -468,6 +476,70 @@ class KanbanService implements Errorable
 	public function getErrorByCode($code)
 	{
 		return $this->errorCollection->getErrorByCode($code);
+	}
+
+	public function moveTask(int $taskId, int $groupId, array $stage): bool
+	{
+		$itemService = new ItemService();
+		$entityService = new EntityService();
+
+		$scrumItem = $itemService->getItemBySourceId($taskId);
+		if ($itemService->getErrors() || $scrumItem->isEmpty())
+		{
+			return false;
+		}
+
+		$entity = $entityService->getEntityById($scrumItem->getEntityId());
+		if ($entityService->getErrors() || $entity->isEmpty())
+		{
+			return false;
+		}
+
+		if ($entity->getEntityType() === EntityForm::BACKLOG_TYPE)
+		{
+			return false;
+		}
+
+		$featurePerms = \CSocNetFeaturesPerms::currentUserCanPerformOperation(
+			SONET_ENTITY_GROUP,
+			[$groupId],
+			'tasks',
+			'sort'
+		);
+		$isAccess = (is_array($featurePerms) && isset($featurePerms[$groupId]) && $featurePerms[$groupId]);
+		if (!$isAccess)
+		{
+			return false;
+		}
+
+		$taskObject = new \CTasks;
+
+		$queryObject = TaskStageTable::getList([
+			'filter' => [
+				'TASK_ID' => $taskId,
+				'=STAGE.ENTITY_TYPE' => StagesTable::WORK_MODE_ACTIVE_SPRINT,
+				'STAGE.ENTITY_ID' => $entity->getId()
+			]
+		]);
+		if ($taskStage = $queryObject->fetch())
+		{
+			TaskStageTable::update($taskStage['ID'], [
+				'STAGE_ID' => $stage['ID'],
+			]);
+
+			$taskObject->update($taskId, ['STAGE_ID' => $stage['ID']]);
+		}
+
+		if ($stage['SYSTEM_TYPE'] === StagesTable::SYS_TYPE_FINISH)
+		{
+			$this->completeTask($taskId);
+		}
+		else
+		{
+			$this->renewTask($taskId);
+		}
+
+		return true;
 	}
 
 	private function getTaskIds(array $filter): array
@@ -495,7 +567,9 @@ class KanbanService implements Errorable
 		}
 		catch (\Exception $exception)
 		{
-			$this->errorCollection->setError(new Error($exception->getMessage(), self::ERROR_COULD_NOT_GET_TASKS));
+			$this->errorCollection->setError(
+				new Error($exception->getMessage(), self::ERROR_COULD_NOT_GET_TASKS)
+			);
 		}
 
 		return array_values($taskIds);
@@ -516,9 +590,9 @@ class KanbanService implements Errorable
 				'filter' => [
 					'!ID' => $sprintId,
 					'GROUP_ID' => $sprintData['GROUP_ID'],
-					'STATUS' => EntityTable::SPRINT_COMPLETED
+					'=STATUS' => EntityForm::SPRINT_COMPLETED
 				],
-				'order' => ['ID' => 'DESC']
+				'order' => ['DATE_END' => 'DESC']
 			]);
 			return (($fields = $queryObjectLastSprint->fetch()) ? $fields['ID'] : 0);
 		}
@@ -680,7 +754,7 @@ class KanbanService implements Errorable
 	{
 		try
 		{
-			return TaskRecycleBin::isInTheRecycleBin($taskIds);
+			return Recyclebin\Task::isInTheRecycleBin($taskIds);
 		}
 		catch (\Exception $exception)
 		{
@@ -692,6 +766,39 @@ class KanbanService implements Errorable
 			);
 
 			return [];
+		}
+	}
+
+	private function completeTask(int $taskId)
+	{
+		$task = \CTaskItem::getInstance($taskId, User::getId());
+		if (
+			$task->checkAccess(ActionDictionary::ACTION_TASK_COMPLETE)
+			|| $task->checkAccess(ActionDictionary::ACTION_TASK_APPROVE)
+		)
+		{
+			$task->complete();
+		}
+	}
+
+	private function renewTask(int $taskId)
+	{
+		$task = \CTaskItem::getInstance($taskId, User::getId());
+		if (
+			$task->checkAccess(ActionDictionary::ACTION_TASK_RENEW)
+			|| $task->checkAccess(ActionDictionary::ACTION_TASK_APPROVE)
+		)
+		{
+			$queryObject = \CTasks::getList(
+				[],
+				['ID' => $taskId, '=STATUS' => \CTasks::STATE_COMPLETED],
+				['ID'],
+				['USER_ID' => User::getId()]
+			);
+			if ($queryObject->fetch())
+			{
+				$task->renew();
+			}
 		}
 	}
 }

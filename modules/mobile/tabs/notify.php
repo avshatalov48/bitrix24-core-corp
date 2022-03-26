@@ -69,44 +69,20 @@ class Notify implements Tabable
 
 	public function getDataInternal()
 	{
-		$data = [
+		return [
 			"sort" => $this->defaultSortValue(),
 			"imageName" => "bell",
 			"badgeCode" => "notifications",
 			"id" => $this->getId(),
-		];
-
-		if ($this->isNext())
-		{
-			$data["component"] = [
-				"name" => "JSStackComponent",
-				"titleParams" => [
-					"useLargeTitleMode" => true,
-					"text" => $this->getTitle()
-				],
-				"componentCode" => "im.notify",
-				"scriptPath" => Manager::getComponentPath("im.notify"),
-				"rootWidget" => [
-					"name" => "layout",
-					"settings" => [
-						'objectName' => "layoutWidget",
-					],
-				],
-			];
-		}
-		else
-		{
-			$data["page"] = [
+			"page" => [
 				"titleParams" => [
 					"useLargeTitleMode" => true,
 					"text" => $this->getTitle()
 				],
 				"page_id" => "im.notify",
 				"url" => $this->context->siteDir . "mobile/im/notify.php",
-			];
-		}
-
-		return $data;
+			]
+		];
 	}
 
 	public function shouldShowInMenu()

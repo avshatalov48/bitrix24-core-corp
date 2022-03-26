@@ -602,20 +602,21 @@ class Deal
 	/**
 	 * Performs dropping entity.
 	 *
-	 * @return boolean
+	 * @return int
 	 */
 	public function clearEntity()
 	{
 		if (!$this->canClearEntity())
 		{
-			return false;
+			return -1;
 		}
 
 		$query = $this->prepareQuery();
 
+		$dropped = -1;
+
 		if ($this->prepareFilter($query))
 		{
-
 			$query
 				->addSelect('ID', 'DEAL_ID')
 				->setLimit(self::MAX_ENTITY_PER_INTERACTION)
@@ -629,14 +630,13 @@ class Deal
 
 			$res = $query->exec();
 
-			$success = true;
-
 			$userPermissions = \CCrmPerms::GetUserPermissions($this->getOwner());
 
 			$connection = \Bitrix\Main\Application::getConnection();
 
 			$crmDeal = new \CCrmDeal(false);
 
+			$dropped = 0;
 			while ($deal = $res->fetch())
 			{
 				$this->setProcessOffset($deal['DEAL_ID']);
@@ -648,6 +648,8 @@ class Deal
 					if($crmDeal->Delete($deal['DEAL_ID'], array('CURRENT_USER' => $this->getOwner())))
 					{
 						$connection->commitTransaction();
+						$this->incrementDroppedEntityCount();
+						$dropped ++;
 					}
 					else
 					{
@@ -664,11 +666,9 @@ class Deal
 							$err = 'Deletion failed with deal #'.$deal['DEAL_ID'];
 						}
 						$this->collectError(new Main\Error($err, self::ERROR_DELETION_FAILED));
-
 						$this->incrementFailCount();
 					}
 
-					$this->incrementDroppedEntityCount();
 				}
 				else
 				{
@@ -678,13 +678,16 @@ class Deal
 
 				if ($this->hasTimeLimitReached())
 				{
-					$success = false;
 					break;
 				}
 			}
 		}
+		else
+		{
+			$this->collectError(new Main\Error('Filter error', self::ERROR_DELETION_FAILED));
+		}
 
-		return $success;
+		return $dropped;
 	}
 
 
@@ -703,13 +706,13 @@ class Deal
 	/**
 	 * Performs dropping associated entity activities.
 	 *
-	 * @return boolean
+	 * @return int
 	 */
 	public function clearActivity()
 	{
 		if (!$this->canClearActivity())
 		{
-			return false;
+			return -1;
 		}
 
 		$userPermissions = \CCrmPerms::GetUserPermissions($this->getOwner());
@@ -719,7 +722,7 @@ class Deal
 
 		$query = $activityVolume->prepareQuery();
 
-		$success = true;
+		$dropped = -1;
 
 		if ($activityVolume->prepareFilter($query))
 		{
@@ -739,6 +742,7 @@ class Deal
 
 			$res = $query->exec();
 
+			$dropped = 0;
 			while ($activity = $res->fetch())
 			{
 				$this->setProcessOffset($activity['ID']);
@@ -753,6 +757,7 @@ class Deal
 					//todo: fail count here
 
 					$this->incrementDroppedActivityCount();
+					$dropped ++;
 				}
 				else
 				{
@@ -762,13 +767,16 @@ class Deal
 
 				if ($this->hasTimeLimitReached())
 				{
-					$success = false;
 					break;
 				}
 			}
 		}
+		else
+		{
+			$this->collectError(new Main\Error('Filter error', self::ERROR_DELETION_FAILED));
+		}
 
-		return $success;
+		return $dropped;
 	}
 
 
@@ -786,13 +794,13 @@ class Deal
 	/**
 	 * Performs dropping associated entity events.
 	 *
-	 * @return boolean
+	 * @return int
 	 */
 	public function clearEvent()
 	{
 		if (!$this->canClearEvent())
 		{
-			return false;
+			return -1;
 		}
 
 		$eventVolume = new Volume\Event();
@@ -800,7 +808,7 @@ class Deal
 
 		$query = $eventVolume->prepareRelationQuery(static::className());
 
-		$success = true;
+		$dropped = -1;
 
 		if ($eventVolume->prepareFilter($query))
 		{
@@ -817,6 +825,7 @@ class Deal
 
 			$res = $query->exec();
 
+			$dropped = 0;
 			while ($event = $res->fetch())
 			{
 				$this->setProcessOffset($event['EVENT_ID']);
@@ -824,6 +833,7 @@ class Deal
 				if (Volume\Event::dropEvent($event['EVENT_ID'], $this->getOwner()))
 				{
 					$this->incrementDroppedEventCount();
+					$dropped ++;
 				}
 				else
 				{
@@ -833,13 +843,16 @@ class Deal
 
 				if ($this->hasTimeLimitReached())
 				{
-					$success = false;
 					break;
 				}
 			}
 		}
+		else
+		{
+			$this->collectError(new Main\Error('Filter error', self::ERROR_DELETION_FAILED));
+		}
 
-		return $success;
+		return $dropped;
 	}
 }
 

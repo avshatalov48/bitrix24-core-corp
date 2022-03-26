@@ -6,6 +6,9 @@ CREATE TABLE b_im_bot_network_session(
 	SESSION_ID int(18) default 0,
 	GREETING_SHOWN enum('Y','N') not null default 'N',
 	MENU_STATE mediumtext null,
+	DATE_CREATE datetime not null default current_timestamp,
+	DATE_FINISH datetime null default null,
+	DATE_LAST_ACTIVITY datetime null default current_timestamp  ON UPDATE current_timestamp,
 	PRIMARY KEY PK_B_IM_BOT_SESS (ID),
 	UNIQUE UX_B_IM_BOT_SESS (BOT_ID, DIALOG_ID)
 );

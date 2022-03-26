@@ -451,33 +451,35 @@ final class CB24SearchTitle
 		return $result;
 	}
 
-	final public static function getMenuItems($searchString = false)
+	final public static function
+	getMenuItems($searchString = false)
 	{
 		global $APPLICATION;
 
 		$result = array();
 
-		$arMenuResult = $APPLICATION->IncludeComponent(
-			"bitrix:menu",
-			"left_vertical",
-			array(
-				"ROOT_MENU_TYPE" => file_exists($_SERVER["DOCUMENT_ROOT"].SITE_DIR.".superleft.menu_ext.php")
-					? "superleft" : "top",
-				"MENU_CACHE_TYPE" => "Y",
-				"MENU_CACHE_TIME" => "604800",
-				"MENU_CACHE_USE_GROUPS" => "N",
-				"MENU_CACHE_USE_USERS" => "Y",
-				"CACHE_SELECTED_ITEMS" => "N",
-				"MENU_CACHE_GET_VARS" => array(),
-				"MAX_LEVEL" => "2",
-				"CHILD_MENU_TYPE" => "left", // may be 'top' for b24
-				"USE_EXT" => "Y",
-				"DELAY" => "N",
-				"ALLOW_MULTI_SELECT" => "N",
-				"RETURN" => "Y"
-			),
+		$isBitrix24 = file_exists($_SERVER["DOCUMENT_ROOT"] . SITE_DIR . ".superleft.menu_ext.php");
+		$menuTypes = $isBitrix24 ? ['superleft', 'left', 'sub'] : ['top', 'left', 'sub'];
+
+		$arMenuResult = $APPLICATION->includeComponent(
+			'bitrix:menu',
+			'left_vertical',
+			[
+				'MENU_TYPES' => $menuTypes,
+				'MENU_CACHE_TYPE' => 'Y',
+				'MENU_CACHE_TIME' => '604800',
+				'MENU_CACHE_USE_GROUPS' => 'N',
+				'MENU_CACHE_USE_USERS' => 'Y',
+				'CACHE_SELECTED_ITEMS' => 'N',
+				'MENU_CACHE_GET_VARS' => [],
+				'MAX_LEVEL' => '3',
+				'USE_EXT' => 'Y',
+				'DELAY' => 'N',
+				'ALLOW_MULTI_SELECT' => 'N',
+				'RETURN' => 'Y'
+			],
 			false,
-			array("HIDE_ICONS" => "Y")
+			['HIDE_ICONS' => 'Y']
 		);
 
 		foreach($arMenuResult as $menuItem)

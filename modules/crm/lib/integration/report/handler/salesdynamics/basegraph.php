@@ -24,7 +24,7 @@ class BaseGraph extends Handler\Deal implements IReportMultipleGroupedData
 	const GROUP_DAY = 1;
 	const GROUP_MONTH = 2;
 	const GROUP_WEEK_DAY = 3;
-	
+
 	const DATE_INDEX_FORMAT = "Y-m-d";
 
 	const STEP_DAY = "1d";
@@ -125,7 +125,7 @@ class BaseGraph extends Handler\Deal implements IReportMultipleGroupedData
 				$amount = \CCrmCurrency::ConvertMoney($value["SUM"], $value["CURRENCY_ID"], $baseCurrency);
 			}
 			$totalAmount += $amount;
-			
+
 			if(isset($normalizedData[$dateIndex]))
 			{
 				$normalizedData[$dateIndex]["SUM"] += $amount;
@@ -353,7 +353,7 @@ class BaseGraph extends Handler\Deal implements IReportMultipleGroupedData
 		$toTimestamp = $to->getTimestamp();
 		if($toTimestamp < $fromTimestamp)
 		{
-			throw new ArgumentException("To date should past to from date");
+			throw new ArgumentException(Loc::getMessage("CRM_REPORT_SALES_DYNAMICS_ERROR_DATE_FROM_SHOULD_PRECED_DATE_TO"));
 		}
 
 		$currentDate = clone($from);

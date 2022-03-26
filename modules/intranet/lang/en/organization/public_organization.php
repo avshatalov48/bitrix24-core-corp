@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["ABSENCE_FORM_2"] = "Choose an absent user
 ";
 $MESS["APP_RIGHTS"] = "User access permissions";
@@ -134,9 +134,9 @@ $MESS["HONOR_FORM_2"] = "Select user to honor";
 $MESS["IFS_EF_Blog"] = "User and Group Blog Feeds";
 $MESS["IFS_EF_Gallery"] = "Users Photo Galleries";
 $MESS["IFS_EF_staff"] = "Personnel; reference documents; organization structure; honored users";
-$MESS["IM_CL_STRUCTURE"] = "Community";
+$MESS["IM_CL_STRUCTURE"] = "Organization";
 $MESS["IM_CL_USER_B24"] = "Member";
-$MESS["IM_CTL_CHAT_STRUCTURE"] = "Community structure";
+$MESS["IM_CTL_CHAT_STRUCTURE"] = "Organization structure";
 $MESS["IM_C_ABOUT_CHAT"] = "A private chat is available to only the invited users. #BR##BR# This chat is perfect for business discussions that involve and concern certain people. #BR##BR# It's not only your co-workers that you can invite to this chat; send invites to your clients, partners and other persons related to your business who use Bitrix24. To add a new chat member, enter the first and last names, e-mail or their display name. #BR##BR#Complete #PROFILE_START#your profile#PROFILE_END# to let other people find you.";
 $MESS["IM_C_ABOUT_OPEN"] = "A public chat is open to all of your colleagues. #BR##BR# Use this chat to discuss topics that are of importance to anybody in your company.#BR##BR# Once a public chat is created, a notification is sent to #CHAT_START#Common chat#CHAT_END#. Your colleagues can then view chat messages and join the chat if they want to.#BR##BR# Your initial message is crucial to spark other's interest in your new chat.";
 $MESS["IM_C_ABOUT_PRIVATE"] = "A person-to-person chat is visible to only you and your contact. #BR##BR# Find a person you want to chat with by their name, position or department. #BR##BR# You can also chat with any of your clients, partners or other persons using Bitrix24. Find them by their name, e-mail or display name you think they use. #BR##BR# Complete #PROFILE_START#your profile#PROFILE_END# to help other people find you.";
@@ -156,7 +156,7 @@ $MESS["INTRANET_MAILDOMAIN_NOMAILBOX2_MESSAGE"] = "<p>You have registered the do
 
 <p>Share your knowledge and help them learn to create their own mailboxes, or register mailboxes on their Bitrix24 page.</p>
 
-<p><a href=\"#LEARNMORE_LINK#\">How to register mailboxes for your employees</a></p>
+<p><a href=\"#LEARNMORE_LINK#\">How to register mailboxes for your employees or users</a></p>
 
 <p>If you still have questions, please contact our <a href=\"#SUPPORT_LINK#\">helpdesk</a>.</p>
 ";
@@ -254,16 +254,16 @@ $MESS["ISV_B24_INVITE"] = "Invite users";
 $MESS["ISV_EMPLOYEES"] = "USERS";
 $MESS["ISV_EMP_COUNT_1"] = "#NUM# user";
 $MESS["ISV_EMP_COUNT_2"] = "#NUM# users";
+$MESS["ISV_EMP_COUNT_3"] = "#NUM# users";
+$MESS["ISV_EMP_COUNT_4"] = "#NUM# users";
 $MESS["ISV_EMP_COUNT_21"] = "#NUM# user";
 $MESS["ISV_EMP_COUNT_22"] = "#NUM# users";
 $MESS["ISV_EMP_COUNT_23"] = "#NUM# users";
 $MESS["ISV_EMP_COUNT_24"] = "#NUM# users";
-$MESS["ISV_EMP_COUNT_3"] = "#NUM# users";
 $MESS["ISV_EMP_COUNT_31"] = "#NUM# user";
 $MESS["ISV_EMP_COUNT_32"] = "#NUM# users";
 $MESS["ISV_EMP_COUNT_33"] = "#NUM# users";
 $MESS["ISV_EMP_COUNT_34"] = "#NUM# users";
-$MESS["ISV_EMP_COUNT_4"] = "#NUM# users";
 $MESS["ISV_EMP_COUNT_41"] = "#NUM# user";
 $MESS["ISV_EMP_COUNT_42"] = "#NUM# users";
 $MESS["ISV_EMP_COUNT_43"] = "#NUM# users";
@@ -293,7 +293,7 @@ $MESS["LM_POPUP_TAB_STRUCTURE"] = "Users and divisions";
 $MESS["MEETING_DESCRIPTION"] = "We'll have to hold a meeting to discuss the deployment of intranet portal in our organization.";
 $MESS["MENU_COMPANY"] = "ORGANIZATION";
 $MESS["MENU_COMPANY_CALENDAR"] = "Organization calendar";
-$MESS["MENU_COMPANY_SECTION"] = "Community";
+$MESS["MENU_COMPANY_SECTION"] = "Organization";
 $MESS["MENU_EMPLOYEE"] = "Users";
 $MESS["MENU_STRUCTURE"] = "Organization Structure";
 $MESS["ML_COL_DESC_0"] = "User photos collection";
@@ -327,7 +327,7 @@ $MESS["SONET_GROUP_DESCRIPTION_3"] = "Sporting life";
 $MESS["SONET_LIVEFEED_RENDERPARTS_USER_ALL"] = "To all users";
 $MESS["SONET_TASK_DESCRIPTION_2"] = "Invite new users to join the intranet portal";
 $MESS["SONET_TASK_TITLE_2"] = "Invite new users";
-$MESS["SONET_UP1_WORK_POSITION"] = "Position in community";
+$MESS["SONET_UP1_WORK_POSITION"] = "Position in organization";
 $MESS["STATE_FORM_2"] = "Choose the User whose status has changed";
 $MESS["SUBSCRIBE_POSTING_BODY"] = "Hi! We've uploaded new holiday photos.";
 $MESS["SUBSCRIBE_POSTING_SUBJECT"] = "Our Photos!";
@@ -349,4 +349,3 @@ $MESS["wiz_company_logo"] = "Organization Logo:";
 $MESS["wiz_company_name"] = "Organization Name:";
 $MESS["wiz_demo_structure"] = "Install Sample Organization Structure";
 $MESS["wiz_slogan"] = "My Organization";
-?>

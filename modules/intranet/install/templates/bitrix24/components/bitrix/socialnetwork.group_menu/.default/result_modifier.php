@@ -410,7 +410,7 @@ $sliderPages = [
 //	'General' => [],
 //	'view' => [],
 	'group_lists' => [],
-	'forum' => [],
+//	'forum' => [],
 	'wiki' => [],
 	'photo' => [],
 ];

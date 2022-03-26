@@ -41,7 +41,7 @@ BX.namespace('Tasks.Component');
 						scope: field,
 						id: this.getId() + "-selector",
 						mode: this.getSetting("mode"),
-						query: query ? query : false,
+						query: false,
 						useSearch: true,
 						useAdd: false,
 						parent: this,
@@ -134,23 +134,10 @@ BX.namespace('Tasks.Component');
 				this.callConstruct(BX.Tasks.Component);
 				this.filterOwnerInit();
 				BX.Tasks.Component.TasksProjectsOverview.addInstance(this);
-				// create sub-instances through this.subInstance(), do some initialization, etc
-
-				// do ajax call, like
-				// this.callRemote('this.sampleCreateTask', {data: {TITLE: 'Sample Task'}}).then(function(result){ ... });
-				// dont care about CSRF, SITE_ID and LANGUAGE_ID: it will be sent and checked automatically
 			},
 
 			bindEvents: function() {
 				this.bindDelegateControl('members-list', 'click', this.showMembersListPopup);
-
-				// do some permanent event bindings here, like i.e.
-				/*
-				this.bindControlPassCtx('some-div', 'click', this.showAddPopup);
-				this.bindControlPassCtx('some-div', 'click', this.showActionPopup);
-				this.bindControlPassCtx('some-div', 'click', this.showUnHideFieldPopup);
-				this.bindDelegateControl('some-div', 'keypress', this.jamEnter, this.control('new-item-place'));
-				*/
 			},
 
 			filterOwnerInit: function() {
@@ -199,7 +186,9 @@ BX.namespace('Tasks.Component');
 				popups[groupId].show();
 			},
 			renderMembersList: function(groupId) {
-				//this because call throw "instance" variable in showMembersListPopup
+				/**
+				 * @Deprecated since tasks 22.400.0, will be removed
+				 */
 				var query = new BX.Tasks.Util.Query({ autoExec: true });
 
 				var data = BX.create('DIV', {

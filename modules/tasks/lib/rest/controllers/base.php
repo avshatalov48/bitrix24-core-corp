@@ -102,4 +102,22 @@ class Base extends Controller
             ),
         ];
     }
+
+	/**
+	 * @param array $fields
+	 * @return array
+	 */
+	protected function filterFields(array $fields): array
+	{
+		foreach (array_keys($fields) as $field)
+		{
+			if (mb_strpos($field, '~') === 0)
+			{
+				$fields[str_replace('~', '', $field)] = $fields[$field];
+				unset($fields[$field]);
+			}
+		}
+
+		return $fields;
+	}
 }

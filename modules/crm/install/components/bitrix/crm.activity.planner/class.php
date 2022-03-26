@@ -558,10 +558,7 @@ class CrmActivityPlannerComponent extends \Bitrix\Crm\Component\Base
 			$activity['PROVIDER_TYPE_ID'] = $provider::getTypeId($activity);
 		}
 
-		if (!$error
-			&& $userId !== (int)$activity['RESPONSIBLE_ID']
-			&& !CCrmActivity::CheckReadPermission($activity['OWNER_TYPE_ID'], $activity['OWNER_ID'])
-		)
+		if (!$error && !$provider::checkReadPermission($activity, \CCrmSecurityHelper::getCurrentUserId()))
 		{
 			$error = Loc::getMessage('CRM_ACTIVITY_PLANNER_NO_READ_PERMISSION');
 		}

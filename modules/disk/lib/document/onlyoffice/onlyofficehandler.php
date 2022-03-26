@@ -2,6 +2,7 @@
 
 namespace Bitrix\Disk\Document\OnlyOffice;
 
+use Bitrix\Disk\Document;
 use Bitrix\Disk\Document\Contract\FileCreatable;
 use Bitrix\Disk\Document\DocumentHandler;
 use Bitrix\Disk\Document\FileData;
@@ -51,6 +52,31 @@ class OnlyOfficeHandler extends DocumentHandler implements FileCreatable, IViewe
 		return self::isEnabled();
 	}
 
+	public static function listEditableExtensions(): array
+	{
+		return [
+			'doc',
+			'docx',
+			'docm',
+			'rtf',
+			'xls',
+			'xlsx',
+			'xlt',
+			'xlsm',
+			'ppt',
+			'pptx',
+			'pptm',
+			'xodt',
+		];
+	}
+
+	public static function isEditable($extension): bool
+	{
+		return
+			in_array($extension, static::listEditableExtensions(), true)
+			|| in_array(ltrim($extension, '.'), static::listEditableExtensions(), true)
+		;
+	}
 
 	/**
 	 * Return link for authorize user in external service.
@@ -217,44 +243,6 @@ class OnlyOfficeHandler extends DocumentHandler implements FileCreatable, IViewe
 		return $result;
 	}
 
-	public static function saveForceDocument(string $documentKey): Result
-	{
-		$result = new Result();
-
-		$http = new HttpClient([
-			'socketTimeout' => 5,
-			'streamTimeout' => 10,
-			'version' => HttpClient::HTTP_1_1,
-		]);
-
-		$postBody = [
-			'c' => self::CMD_FORCE_SAVE,
-			'key' => $documentKey,
-		];
-		$http->setHeader('Content-Type', 'application/json');
-		$secretKey = ServiceLocator::getInstance()->get('disk.onlyofficeConfiguration')->getSecretKey();
-		$http->setHeader('Authorization', 'Bearer ' . JWT::encode($postBody, $secretKey));
-
-		$url = self::getApiUrlRoot() . '/coauthoring/CommandService.ashx';
-		$postFields = Json::encode($postBody);
-		if ($http->post($url, $postFields) === false)
-		{
-			return $result->addError(new Main\Error('Server is not available.'));
-		}
-		if ($http->getStatus() !== 200)
-		{
-			return $result->addError(new Main\Error('Server is not available. Status ' . $http->getStatus()));
-		}
-
-		$response = Json::decode($http->getResult());
-		if (isset($response['error']) && $response['error'] !== 0)
-		{
-			return $result->addError(new Main\Error("Server sent error code {{$response['error']}}"));
-		}
-
-		return $result;
-	}
-
 	public static function renameDocument(string $documentKey, string $newName): Result
 	{
 		$result = new Result();
@@ -277,6 +265,16 @@ class OnlyOfficeHandler extends DocumentHandler implements FileCreatable, IViewe
 				'title' => $newName,
 			],
 		];
+
+		$configuration = new Document\OnlyOffice\Configuration();
+		$cloudRegistrationData = $configuration->getCloudRegistrationData();
+		if ($cloudRegistrationData)
+		{
+			$renameDocument = new Document\OnlyOffice\Cloud\RenameDocument($cloudRegistrationData['serverHost']);
+
+			return $renameDocument->rename($postBody);
+		}
+
 		$http->setHeader('Content-Type', 'application/json');
 		$secretKey = ServiceLocator::getInstance()->get('disk.onlyofficeConfiguration')->getSecretKey();
 		$http->setHeader('Authorization', 'Bearer ' . JWT::encode($postBody, $secretKey));

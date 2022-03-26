@@ -163,8 +163,22 @@ BX.namespace('BX.Tasks.Integration');
 
 				if(i > 0)
 				{
-					// send with delay, using query
-                    this.getQuery().add('integration.socialnetwork.setdestinationlast', {items: result, context: this.option('lastSelectedContext')});
+					BX.ajax.runComponentAction('bitrix:tasks.widget.member.selector', 'setDestination', {
+						mode: 'class',
+						data: {
+							items: result,
+							context: this.option('lastSelectedContext')
+						}
+					}).then(
+						function(response)
+						{
+							dataFetchingInProgress = false;
+						}.bind(this),
+						function(response)
+						{
+							dataFetchingInProgress = false;
+						}.bind(this)
+					);
 				}
 
 				this.vars.changed = false;
@@ -179,59 +193,45 @@ BX.namespace('BX.Tasks.Integration');
 
 					params.role = this.getRole();
 					params.groupId = 0;
-					// debugger;
+
 					if (targetInput && targetInput.dataset && targetInput.dataset.groupid)
 					{
 						params.groupId = targetInput.dataset.groupid;
 					}
 
 					dataFetchingInProgress = true;
-                    // send immediately, regardless the delay
-                    this.getQuery().add(
-	                    'integration.socialnetwork.getdestinationdata',
-						// arguments
-						{context: this.option('lastSelectedContext')},
-						// parameters
-	                    params
-                    ).execute();
-				}
-			},
 
-			getQuery: function()
-			{
-				if(typeof this.instances.query == 'undefined')
-				{
-                    if(this.option('query'))
-                    {
-                        this.instances.query = this.option('query');
-                    }
-                    else
-                    {
-                        this.instances.query = new BX.Tasks.Util.Query({
-                            autoExec: true
-                        });
-                    }
-					this.instances.query.bindEvent('executed', BX.delegate(this.onQueryExecuted, this));
-				}
-
-				return this.instances.query;
-			},
-
-			onQueryExecuted: function(result)
-			{
-				dataFetchingInProgress = false;
-
-				if(result.success)
-				{
-					if(typeof result.data != 'undefined' && typeof result.data['get_destination_data'] != 'undefined')
-					{
-						if(result.data['get_destination_data'].SUCCESS)
-						{
-							role = this.getRole();
-							dataCache[role] = result.data['get_destination_data'].RESULT;
-							this.initializeDialog();
+					BX.ajax.runComponentAction('bitrix:tasks.widget.member.selector', 'getDestination', {
+						mode: 'class',
+						data: {
+							context: this.option('lastSelectedContext')
 						}
-					}
+					}).then(
+						function(response)
+						{
+							dataFetchingInProgress = false;
+
+							if (
+								!response.status
+								|| response.status !== 'success'
+							)
+							{
+								return;
+							}
+
+							role = this.getRole();
+							dataCache[role] = response.data;
+
+							if (this.vars.intendOpen)
+							{
+								this.open();
+							}
+						}.bind(this),
+						function(response)
+						{
+							dataFetchingInProgress = false;
+						}.bind(this)
+					);
 				}
 			},
 

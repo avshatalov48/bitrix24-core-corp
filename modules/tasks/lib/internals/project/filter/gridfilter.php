@@ -243,16 +243,33 @@ class GridFilter extends Filter
 
 	public function getFilterFields(): array
 	{
-		return [
+		if ($this->isScrum)
+		{
+			$counterItems = [
+				'NEW_COMMENTS' => Loc::getMessage('TASKS_PROJECT_GRID_FILTER_FIELD_COUNTERS_NEW_COMMENTS'),
+				'PROJECT_NEW_COMMENTS' => Loc::getMessage('TASKS_PROJECT_GRID_FILTER_FIELD_COUNTERS_PROJECT_NEW_COMMENTS'),
+			];
+		}
+		else
+		{
+			$counterItems = [
+				'EXPIRED' => Loc::getMessage('TASKS_PROJECT_GRID_FILTER_FIELD_COUNTERS_EXPIRED'),
+				'NEW_COMMENTS' => Loc::getMessage('TASKS_PROJECT_GRID_FILTER_FIELD_COUNTERS_NEW_COMMENTS'),
+				'PROJECT_EXPIRED' => Loc::getMessage('TASKS_PROJECT_GRID_FILTER_FIELD_COUNTERS_PROJECT_EXPIRED'),
+				'PROJECT_NEW_COMMENTS' => Loc::getMessage('TASKS_PROJECT_GRID_FILTER_FIELD_COUNTERS_PROJECT_NEW_COMMENTS'),
+			];
+		}
+
+		$fields = [
 			'NAME' => [
 				'id' => 'NAME',
-				'name' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_NAME'),
+				'name' => Loc::getMessage('TASKS_PROJECT_GRID_FILTER_FIELD_NAME'),
 				'type' => 'string',
 				'default' => true,
 			],
 			'OWNER_ID' => [
 				'id' => 'OWNER_ID',
-				'name' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_DIRECTOR'),
+				'name' => Loc::getMessage('TASKS_PROJECT_GRID_FILTER_FIELD_DIRECTOR'),
 				'type' => 'dest_selector',
 				'params' => [
 					'apiVersion' => '3',
@@ -271,7 +288,7 @@ class GridFilter extends Filter
 			],
 			'MEMBER' => [
 				'id' => 'MEMBER_ID',
-				'name' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_MEMBER'),
+				'name' => Loc::getMessage('TASKS_PROJECT_GRID_FILTER_FIELD_MEMBER'),
 				'type' => 'dest_selector',
 				'params' => [
 					'apiVersion' => '3',
@@ -288,66 +305,70 @@ class GridFilter extends Filter
 				],
 				'default' => true,
 			],
-			'IS_PROJECT' => [
-				'id' => 'IS_PROJECT',
-				'name' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_IS_PROJECT'),
-				'type' => 'list',
-				'items' => [
-					'Y' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_IS_PROJECT_Y'),
-					'N' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_IS_PROJECT_N'),
-				],
-			],
-			'TYPE' => [
-				'id' => 'TYPE',
-				'name' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_TYPE'),
-				'type' => 'list',
-				'items' => $this->getProjectTypes(),
-			],
-			'PROJECT_DATE' => [
-				'id' => 'PROJECT_DATE',
-				'name' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_PROJECT_DATE'),
-				'type' => 'date',
-			],
 			'CLOSED' => [
 				'id' => 'CLOSED',
-				'name' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_CLOSED'),
+				'name' => Loc::getMessage('TASKS_PROJECT_GRID_FILTER_FIELD_CLOSED'),
 				'type' => 'list',
 				'items' => [
-					'Y' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_CLOSED_Y'),
-					'N' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_CLOSED_N'),
+					'Y' => Loc::getMessage('TASKS_PROJECT_GRID_FILTER_FIELD_CLOSED_Y'),
+					'N' => Loc::getMessage('TASKS_PROJECT_GRID_FILTER_FIELD_CLOSED_N'),
 				],
 			],
 			'ID' => [
 				'id' => 'ID',
-				'name' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_ID'),
+				'name' => Loc::getMessage('TASKS_PROJECT_GRID_FILTER_FIELD_ID'),
 				'type' => 'number',
 				'default' => false,
 			],
 			'TAGS' => [
 				'id' => 'TAGS',
-				'name' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_TAG'),
+				'name' => Loc::getMessage('TASKS_PROJECT_GRID_FILTER_FIELD_TAG'),
 				'type' => 'string',
 				'default' => false,
 			],
 			'COUNTERS' => [
 				'id' => 'COUNTERS',
-				'name' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_COUNTERS'),
+				'name' => Loc::getMessage('TASKS_PROJECT_GRID_FILTER_FIELD_COUNTERS'),
 				'type' => 'list',
-				'items' => [
-					'EXPIRED' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_COUNTERS_EXPIRED'),
-					'NEW_COMMENTS' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_COUNTERS_NEW_COMMENTS'),
-					'PROJECT_EXPIRED' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_COUNTERS_PROJECT_EXPIRED'),
-					'PROJECT_NEW_COMMENTS' => Loc::getMessage('TASKS_PROJECTS_FILTER_COLUMN_COUNTERS_PROJECT_NEW_COMMENTS'),
-				],
+				'items' => $counterItems,
 			],
 		];
+
+		if (!$this->isScrum)
+		{
+			$fields['IS_PROJECT'] = [
+				'id' => 'IS_PROJECT',
+				'name' => Loc::getMessage('TASKS_PROJECT_GRID_FILTER_FIELD_IS_PROJECT'),
+				'type' => 'list',
+				'items' => [
+					'Y' => Loc::getMessage('TASKS_PROJECT_GRID_FILTER_FIELD_IS_PROJECT_Y'),
+					'N' => Loc::getMessage('TASKS_PROJECT_GRID_FILTER_FIELD_IS_PROJECT_N'),
+				],
+			];
+			$fields['TYPE'] = [
+				'id' => 'TYPE',
+				'name' => Loc::getMessage('TASKS_PROJECT_GRID_FILTER_FIELD_TYPE'),
+				'type' => 'list',
+				'items' => $this->getProjectTypes(),
+			];
+			$fields['PROJECT_DATE'] = [
+				'id' => 'PROJECT_DATE',
+				'name' => Loc::getMessage('TASKS_PROJECT_GRID_FILTER_FIELD_PROJECT_DATE'),
+				'type' => 'date',
+			];
+		}
+
+		return $fields;
 	}
 
 	public function getPresets(): array
 	{
 		return [
 			'my' => [
-				'name' => Loc::getMessage('TASKS_PROJECTS_PRESET_MY'),
+				'name' => $this->isScrum
+					? Loc::getMessage('TASKS_PROJECT_GRID_FILTER_SCRUM_PRESET_MY')
+					: Loc::getMessage('TASKS_PROJECT_GRID_FILTER_PRESET_MY')
+				,
 				'fields' => [
 					'CLOSED' => 'N',
 					'MEMBER_ID' => $this->userId,
@@ -356,14 +377,14 @@ class GridFilter extends Filter
 				'default' => true,
 			],
 			'active_project' => [
-				'name' => Loc::getMessage('TASKS_PROJECTS_PRESET_ACTIVE_PROJECT'),
+				'name' => Loc::getMessage('TASKS_PROJECT_GRID_FILTER_PRESET_ACTIVE_PROJECT'),
 				'fields' => [
 					'CLOSED' => 'N',
 				],
 				'default' => false,
 			],
 			'inactive_project' => [
-				'name' => Loc::getMessage('TASKS_PROJECTS_PRESET_INACTIVE_PROJECT'),
+				'name' => Loc::getMessage('TASKS_PROJECT_GRID_FILTER_PRESET_INACTIVE_PROJECT'),
 				'fields' => [
 					'CLOSED' => 'Y',
 				],

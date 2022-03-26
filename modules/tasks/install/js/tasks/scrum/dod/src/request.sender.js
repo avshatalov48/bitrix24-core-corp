@@ -26,6 +26,11 @@ export class RequestSender
 		});
 	}
 
+	isNecessary(data: RequestParams): Promise
+	{
+		return this.sendRequest('doD', 'isNecessary', data);
+	}
+
 	getSettings(data: RequestParams): Promise
 	{
 		return this.sendRequest('doD', 'getSettings', data);

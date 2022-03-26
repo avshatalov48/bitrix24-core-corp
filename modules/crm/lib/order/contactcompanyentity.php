@@ -315,4 +315,106 @@ abstract class ContactCompanyEntity extends Sale\Internals\CollectableEntity
 	{
 		return null;
 	}
+
+	public static function rebind(int $oldEntityId, int $newEntityId)
+	{
+		\Bitrix\Crm\Binding\OrderContactCompanyTable::rebind(static::getEntityType(), $oldEntityId, $newEntityId);
+	}
+
+	public static function unbind(int $entityId)
+	{
+		$itemsToUpdatePrimaryFlag = OrderContactCompanyTable::query()
+			->where('ENTITY_ID', $entityId)
+			->where('ENTITY_TYPE_ID', static::getEntityType())
+			->where('IS_PRIMARY', true)
+			->setSelect(['ID', 'ORDER_ID', ])
+			->exec()
+		;
+		$orderIds = [];
+		while($item = $itemsToUpdatePrimaryFlag->fetch())
+		{
+			$orderIds[] = $item['ORDER_ID'];
+		}
+
+		// remove from db:
+		OrderContactCompanyTable::unbind(static::getEntityType(), $entityId);
+
+		// update IS_PRIMARY:
+		static::updateIsPrimaryBulk($orderIds);
+	}
+
+	public static function unbindFromOrders(int $entityId, array $orderIds)
+	{
+		$bindings = OrderContactCompanyTable::query()
+			->where('ENTITY_TYPE_ID',static::getEntityType())
+			->where('ENTITY_ID', $entityId)
+			->whereIn('ORDER_ID', $orderIds)
+			->setSelect(['ID', 'ORDER_ID', 'IS_PRIMARY',])
+			->exec()
+		;
+		$needUpdatePrimaryInOrders = [];
+
+		while ($binding = $bindings->fetch())
+		{
+			OrderContactCompanyTable::delete($binding['ID']);
+			if ($binding['IS_PRIMARY'] === 'Y')
+			{
+				$needUpdatePrimaryInOrders[] = $binding['ORDER_ID'];
+			}
+		}
+
+		static::updateIsPrimaryBulk($needUpdatePrimaryInOrders);
+	}
+
+	public static function bindToOrders(int $entityId, array $orderIds)
+	{
+		foreach ($orderIds as $orderId)
+		{
+			$order = \Bitrix\Crm\Order\Order::load($orderId);
+			if (!$order)
+			{
+				continue;
+			}
+			$entityTypeId = static::getEntityType();
+			$contactCompanyCollection = $order->getContactCompanyCollection();
+			$item = static::create($contactCompanyCollection);
+			$item->setField('ENTITY_ID', $entityId);
+			$item->setField('ENTITY_TYPE_ID', $entityTypeId);
+			$contactCompanyCollection->addItem($item);
+			if (
+				$entityTypeId ==  \CCrmOwnerType::Contact
+				&& !$contactCompanyCollection->getPrimaryContact()
+			)
+			{
+				$item->setField('IS_PRIMARY', 'Y');
+			}
+			if (
+				$entityTypeId == \CCrmOwnerType::Company
+				&& !$contactCompanyCollection->getPrimaryCompany()
+			)
+			{
+				$item->setField('IS_PRIMARY', 'Y');
+			}
+			$item->save();
+		}
+	}
+
+	protected static function updateIsPrimaryBulk(array $orderIds): void
+	{
+		$orderIds = array_unique($orderIds);
+
+		foreach ($orderIds as $orderId)
+		{
+			$newPrimaryItem = OrderContactCompanyTable::query()
+				->where('ENTITY_TYPE_ID', static::getEntityType())
+				->where('ORDER_ID', $orderId)
+				->setSelect(['ID'])
+				->fetch()
+			;
+			if ($newPrimaryItem)
+			{
+				OrderContactCompanyTable::update($newPrimaryItem['ID'], ['IS_PRIMARY' => true]);
+			}
+		}
+	}
 }

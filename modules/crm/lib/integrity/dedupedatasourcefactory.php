@@ -15,7 +15,8 @@ class DedupeDataSourceFactory
 			return new OrganizationDedupeDataSource($params);
 		}
 		elseif($typeID === DuplicateIndexType::COMMUNICATION_PHONE
-			|| $typeID === DuplicateIndexType::COMMUNICATION_EMAIL)
+			|| $typeID === DuplicateIndexType::COMMUNICATION_EMAIL
+			|| $typeID === DuplicateIndexType::COMMUNICATION_SLUSER)
 		{
 			return new CommunicationDedupeDataSource($typeID, $params);
 		}

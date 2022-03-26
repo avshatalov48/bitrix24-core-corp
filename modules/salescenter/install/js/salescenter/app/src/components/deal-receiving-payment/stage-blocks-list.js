@@ -23,7 +23,7 @@ export default {
 		'paysystem-block': PaySystem,
 		'automation-block': Automation,
 		'sms-message-block': SmsMessage,
-		'timeline-block': TimeLine
+		'timeline-block': TimeLine,
 	},
 	props: {
 		sendAllowed: {
@@ -40,7 +40,7 @@ export default {
 				initPushedToUseBitrix24Notifications: this.$root.$app.options.pushedToUseBitrix24Notifications,
 				status: Status.complete,
 				selectedSmsSender: this.$root.$app.sendingMethodDesc.provider,
-				manager: this.$root.$app.options.dealResponsible,
+				manager: this.$root.$app.options.entityResponsible,
 				phone: this.$root.$app.options.contactPhone,
 				titleTemplate: this.$root.$app.sendingMethodDesc.sent
 					? Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_MESSAGE_2_PAST_TIME')
@@ -71,17 +71,14 @@ export default {
 			},
 			cashbox: {},
 			delivery: {
-				isHidden: (
-					this.$root.$app.options.templateMode === 'view'
-					&& parseInt(this.$root.$app.options.shipmentId) <= 0
-				),
 				status: this.$root.$app.options.deliveryList.isInstalled
 					? Status.complete
 					: Status.disabled,
 				tiles: this.getTileCollection(this.$root.$app.options.deliveryList.items),
 				installed: this.$root.$app.options.deliveryList.isInstalled,
 				initialCollapseState: this.$root.$app.options.isDeliveryCollapsed ? this.$root.$app.options.isDeliveryCollapsed === 'Y' : this.$root.$app.options.deliveryList.isInstalled,
-			}
+			},
+			automation: {},
 		};
 
 		if (this.$root.$app.options.cashboxList.hasOwnProperty('items'))
@@ -103,7 +100,7 @@ export default {
 				status: Status.complete,
 				stageOnOrderPaid: this.$root.$app.options.stageOnOrderPaid,
 				stageOnDeliveryFinished: this.$root.$app.options.stageOnDeliveryFinished,
-				items: this.$root.$app.options.dealStageList,
+				items: this.$root.$app.options.entityStageList,
 				initialCollapseState: this.$root.$app.options.isAutomationCollapsed ? this.$root.$app.options.isAutomationCollapsed === 'Y' : false,
 			};
 		}
@@ -139,6 +136,10 @@ export default {
 		submitButtonLabel()
 		{
 			return this.editable ? Loc.getMessage('SALESCENTER_SEND') : Loc.getMessage('SALESCENTER_RESEND');
+		},
+		isHideDeliveryStage()
+		{
+			return this.isViewWithoutDelivery();
 		},
 	},
 	methods: {
@@ -239,6 +240,13 @@ export default {
 		{
 			BX.userOptions.save('salescenter', 'add_payment_collapse_options', type, value);
 		},
+		isViewWithoutDelivery()
+		{
+			return (
+				this.$root.$app.options.templateMode === 'view'
+				&& parseInt(this.$root.$app.options.shipmentId) <= 0
+			);
+		}
 	},
 	created()
 	{
@@ -264,8 +272,8 @@ export default {
 				:showHint="stages.message.showHint"
 				:editorTemplate="stages.message.editorTemplate"
 				:editorUrl="stages.message.editorUrl"
-			/>	
-			<product-block 
+			/>
+			<product-block
 				:counter="counter++"
 				:status="stages.product.status"
 				:title="stages.product.title"
@@ -294,7 +302,7 @@ export default {
 				@on-save-collapsed-option="saveCollapsedOption"
 			/>
 			<delivery-block
-				v-if="!stages.delivery.isHidden"
+				v-if="!isHideDeliveryStage"
 				@on-stage-tile-collection-slider-close="stageRefresh($event, 'DELIVERY')"
 				:counter="counter++"
 				:status="stages.delivery.status"

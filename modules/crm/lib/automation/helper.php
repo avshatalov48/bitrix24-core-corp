@@ -3,6 +3,7 @@ namespace Bitrix\Crm\Automation;
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\QuoteSettings;
+use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
@@ -29,6 +30,11 @@ class Helper
 			return [];
 		}
 		if ($entityTypeId === \CCrmOwnerType::Quote && !QuoteSettings::getCurrent()->isFactoryEnabled())
+		{
+			return [];
+		}
+
+		if ($entityTypeId === \CCrmOwnerType::SmartInvoice && !InvoiceSettings::getCurrent()->isSmartInvoiceEnabled())
 		{
 			return [];
 		}

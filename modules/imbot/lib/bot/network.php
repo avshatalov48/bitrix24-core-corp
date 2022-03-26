@@ -7,8 +7,10 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Im;
+use Bitrix\Im\Bot\Keyboard;
 use Bitrix\ImBot;
 use Bitrix\ImBot\Log;
+use Bitrix\ImBot\DialogSession;
 
 class Network extends Base implements NetworkBot
 {
@@ -25,27 +27,14 @@ class Network extends Base implements NetworkBot
 		COMMAND_START_DIALOG_SESSION = 'startDialogSession',
 		COMMAND_FINISH_DIALOG_SESSION = 'finishDialogSession',
 		COMMAND_CHECK_PUBLIC_URL = 'checkPublicUrl',
-		COMMAND_OPERATOR_QUEUE_NUMBER = 'operatorQueueNumber',
-		COMMAND_QUEUE_NUMBER = 'queueNumber',
-
 		COMMAND_NETWORK_SESSION = 'session',
-
 		COMMAND_CONNECTOR_REGISTER = 'RegisterConnector',
 		COMMAND_CONNECTOR_UPDATE = 'UpdateConnector',
 		COMMAND_CONNECTOR_UNREGISTER = 'UnRegisterConnector',
 
-		COMMAND_MENU = 'menu',
-		MENU_EXIT_ID = 'exit',
-		MENU_ENTRANCE_ID = 'default',
-		MENU_ACTION_NEXT = 'MENU',
-		MENU_ACTION_LINK = 'LINK',
-		MENU_ACTION_HELP = 'HELPCODE',
-		MENU_ACTION_QUEUE = 'QUEUE',
-		MENU_BUTTON_DISABLED = '#aaa',
-		MENU_BUTTON_ACTIVE = "#29619b",
+		BUTTON_DISABLED_COLOR = '#aaa',
+		BUTTON_DEFAULT_COLOR = '#29619b',
 
-		MESSAGE_PARAM_MENU_ACTION = 'IMB_MENU_ACTION',// menu action parameter
-		MESSAGE_PARAM_QUEUE_NUMBER = 'IMB_QUEUE_NUMBER',// position in OL line
 		MESSAGE_PARAM_ALLOW_QUOTE = 'IMOL_QUOTE_MSG',// allow|disallow to quote message
 		MESSAGE_PARAM_SESSION_ID = 'IMOL_SID',// OL session Id
 		MESSAGE_PARAM_IMOL_VOTE = 'IMOL_VOTE',// vote flag
@@ -130,8 +119,8 @@ class Network extends Base implements NetworkBot
 		}
 
 		$properties = [
-			'NAME' => $params['LINE_NAME'],
-			'WORK_POSITION' => $params['LINE_DESC'] ? $params['LINE_DESC'] : Loc::getMessage('IMBOT_NETWORK_BOT_WORK_POSITION'),
+			'NAME' => mb_substr($params['LINE_NAME'], 0, 50),
+			'WORK_POSITION' => $params['LINE_DESC'] ? mb_substr($params['LINE_DESC'], 0, 255) : Loc::getMessage('IMBOT_NETWORK_BOT_WORK_POSITION'),
 		];
 
 		$avatarData = self::uploadAvatar($params['LINE_AVATAR']);
@@ -147,9 +136,11 @@ class Network extends Base implements NetworkBot
 			'TYPE' => Im\Bot::TYPE_NETWORK,
 			'INSTALL_TYPE' => Im\Bot::INSTALL_TYPE_SILENT,
 			'CLASS' => isset($params['CLASS']) ? $params['CLASS'] : static::class,
-			'METHOD_MESSAGE_ADD' => 'onMessageAdd',/** @see ImBot\Bot\Network::onMessageAdd */
-			'METHOD_BOT_DELETE' => 'onBotDelete',/** @see ImBot\Bot\Network::onBotDelete */
-			'METHOD_WELCOME_MESSAGE' => 'onChatStart',/** @see ImBot\Bot\Network::onChatStart */
+			'METHOD_MESSAGE_ADD' => 'onMessageAdd',/** @see Network::onMessageAdd */
+			'METHOD_MESSAGE_UPDATE' => 'onMessageUpdate',/** @see Network::onMessageUpdate */
+			'METHOD_MESSAGE_DELETE' => 'onMessageDelete',/** @see Network::onMessageDelete */
+			'METHOD_BOT_DELETE' => 'onBotDelete',/** @see Network::onBotDelete */
+			'METHOD_WELCOME_MESSAGE' => 'onChatStart',/** @see Network::onChatStart */
 			'TEXT_PRIVATE_WELCOME_MESSAGE' => isset($params['LINE_WELCOME_MESSAGE']) ? $params['LINE_WELCOME_MESSAGE'] : '',
 			'PROPERTIES' => $properties
 		];
@@ -194,20 +185,11 @@ class Network extends Base implements NetworkBot
 				]);
 			}
 
-			// Add commands only for Bot\Network. Children do it by its self.
+			// Add commands for Bot\Network only. Children do it by its self.
 			if (__CLASS__ == static::getClassName())
 			{
-				foreach (self::getCommandList() as $commandName => $commandParam)
-				{
-					Im\Command::register([
-						'MODULE_ID' => self::MODULE_ID,
-						'BOT_ID' => $botId,
-						'COMMAND' => $commandName,
-						'HIDDEN' => $commandParam['visible'] === true ? 'N' : 'Y',
-						'CLASS' => $commandParam['class'] ?? static::class,
-						'METHOD_COMMAND_ADD' => $commandParam['handler'] ?? 'onCommandAdd'/** @see ImBot\Bot\Network::onCommandAdd */
-					]);
-				}
+				self::registerCommands($botId);
+				self::registerApps($botId);
 			}
 		}
 
@@ -240,7 +222,7 @@ class Network extends Base implements NetworkBot
 			return false;
 		}
 
-		$result = Im\Bot::unRegister(['BOT_ID' => $botId]);
+		$result = (bool)Im\Bot::unRegister(['BOT_ID' => $botId]);
 		if (!$result)
 		{
 			return false;
@@ -250,10 +232,10 @@ class Network extends Base implements NetworkBot
 
 		if ($notifyController)
 		{
-			$result = self::sendUnregisterRequest($code, $botId);
+			$result = (bool)self::sendUnregisterRequest($code, $botId);
 		}
 
-		self::deleteDialogSessions(['BOT_ID' => $botId]);
+		(new DialogSession)->clearSessions(['BOT_ID' => $botId]);
 
 		return $result;
 	}
@@ -289,6 +271,149 @@ class Network extends Base implements NetworkBot
 				],
 			],
 		];
+	}
+
+	/**
+	 * Returns app's property list.
+	 * @return array{command: string, icon: string, js: string, context: string, lang: string}[]
+	 */
+	public static function getAppList(): array
+	{
+		return [];
+	}
+
+	/**
+	 * Register bot's command.
+	 * @return bool
+	 */
+	public static function registerCommands(?int $botId = null): bool
+	{
+		$botId = $botId ?: static::getBotId();
+		if (!$botId)
+		{
+			return false;
+		}
+
+		if (!Main\Loader::includeModule('im'))
+		{
+			return false;
+		}
+
+		$commandList = [];
+		$res = Im\Model\CommandTable::getList([
+			'filter' => [
+				'=MODULE_ID' => static::MODULE_ID,
+				'=BOT_ID' => $botId,
+			]
+		]);
+		while ($row = $res->fetch())
+		{
+			$commandList[$row['COMMAND']] = $row;
+		}
+
+		Im\Command::clearCache();
+		foreach (static::getCommandList() as $commandParam)
+		{
+			if (!isset($commandList[$commandParam['command']]))
+			{
+				Im\Command::register([
+					'MODULE_ID' => static::MODULE_ID,
+					'BOT_ID' => $botId,
+					'COMMAND' => $commandParam['command'],
+					'HIDDEN' => $commandParam['visible'] === true ? 'N' : 'Y',
+					'CLASS' => $commandParam['class'] ?? static::class,
+					'METHOD_COMMAND_ADD' => $commandParam['handler'] ?? 'onCommandAdd'
+				]);
+			}
+			elseif (
+				($commandList[$commandParam['command']]['CLASS'] != ($commandParam['class'] ?? static::class))
+				|| ($commandList[$commandParam['command']]['METHOD_COMMAND_ADD'] != ($commandParam['handler'] ?? 'onCommandAdd'))
+			)
+			{
+				Im\Command::update(
+					['COMMAND_ID' => $commandList[$commandParam['command']]['ID']],
+					[
+						'HIDDEN' => $commandParam['visible'] === true ? 'N' : 'Y',
+						'CLASS' => $commandParam['class'] ?? static::class,
+						'METHOD_COMMAND_ADD' => $commandParam['handler'] ?? 'onCommandAdd'
+					]
+				);
+			}
+			unset($commandList[$commandParam['command']]);
+		}
+		foreach ($commandList as $commandParam)
+		{
+			Im\Command::unRegister(['COMMAND_ID' => $commandParam['ID']]);
+		}
+
+		return true;
+	}
+
+	/**
+	 * Register bot's command.
+	 * @return bool
+	 */
+	public static function registerApps(?int $botId = null): bool
+	{
+		$botId = $botId ?: static::getBotId();
+		if (!$botId)
+		{
+			return false;
+		}
+
+		if (!Main\Loader::includeModule('im'))
+		{
+			return false;
+		}
+
+		$appList = [];
+		$res = Im\Model\AppTable::getList([
+			'filter' => [
+				'=MODULE_ID' => static::MODULE_ID,
+				'=BOT_ID' => $botId,
+				'=CLASS' => static::class,
+			]
+		]);
+		while ($row = $res->fetch())
+		{
+			$appList[$row['CODE']] = $row;
+		}
+
+		Im\App::clearCache();
+		foreach (static::getAppList() as $appParam)
+		{
+			if (!isset($appList[$appParam['command']]))
+			{
+				$iconId = '';
+				if (Main\IO\File::isFileExists(Main\Application::getDocumentRoot() . $appParam['icon']))
+				{
+					$iconId = Main\Application::getDocumentRoot() . $appParam['icon'];
+				}
+				if ($iconId)
+				{
+					$icon = \CFile::makeFileArray($iconId);
+					$icon['MODULE_ID'] = static::MODULE_ID;
+					$iconId = \CFile::saveFile($icon, static::MODULE_ID);
+				}
+				Im\App::register([
+					'MODULE_ID' => static::MODULE_ID,
+					'BOT_ID' => $botId,
+					'CODE' => $appParam['command'],
+					'ICON_ID' => $iconId,
+					'JS' => $appParam['js'] ?? '',
+					'CONTEXT' => $appParam['context'],
+					'CLASS' => $appParam['class'] ?? static::class,
+					'METHOD_LANG_GET' => $appParam['lang'] ?? 'onAppLang',
+				]);
+			}
+			unset($appList[$appParam['command']]);
+		}
+		foreach ($appList as $appParam)
+		{
+			Im\App::unRegister(['ID' => $appParam['ID']]);
+		}
+
+		return true;
 	}
 
 	/**
@@ -341,10 +466,10 @@ class Network extends Base implements NetworkBot
 			return false;
 		}
 
-		$result = self::getNetworkBotId($code, true);
-		if ($result)
+		$botId = self::getNetworkBotId($code, true);
+		if ($botId)
 		{
-			return $result;
+			return $botId;
 		}
 
 		$result = self::search($code, true);
@@ -417,7 +542,7 @@ class Network extends Base implements NetworkBot
 	 *
 	 * @return bool
 	 */
-	public static function sendUnregisterRequest($code, $botId)
+	public static function sendUnregisterRequest($code, $botId): bool
 	{
 		$http = self::instanceHttpClient();
 
@@ -496,7 +621,7 @@ class Network extends Base implements NetworkBot
 		$message = $params['MESSAGE'] ?? '';
 
 		$http = self::instanceHttpClient();
-		$http->query(
+		$response = $http->query(
 			'clientChangeLicence',
 			[
 				'BOT_ID' => static::getBotId(),
@@ -511,7 +636,7 @@ class Network extends Base implements NetworkBot
 			false
 		);
 
-		return true;
+		return $response !== false && !isset($response['error']);
 	}
 
 	/**
@@ -540,6 +665,8 @@ class Network extends Base implements NetworkBot
 			return false;
 		}
 
+		(new DialogSession)->clearSessions(['BOT_ID' => static::getBotId()]);
+
 		if (Main\Loader::includeModule('bitrix24'))
 		{
 			$currentLicence = \CBitrix24::getLicenseType(\CBitrix24::LICENSE_TYPE_CURRENT);
@@ -560,7 +687,7 @@ class Network extends Base implements NetworkBot
 		$botCode = $params['BOT_CODE'] ?? static::getBotCode();
 
 		$http = self::instanceHttpClient();
-		$http->query(
+		$response = $http->query(
 			'clientRequestFinalizeSession',
 			[
 				'BOT_ID' => static::getBotId(),
@@ -572,7 +699,7 @@ class Network extends Base implements NetworkBot
 			false
 		);
 
-		return true;
+		return $response !== false && !isset($response['error']);
 	}
 
 	/**
@@ -664,9 +791,14 @@ class Network extends Base implements NetworkBot
 		// check for local address
 		$host = $parsedUrl['host'];
 		if (
-			strtolower($host) == 'localhost' ||
-			preg_match('#^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$#', $host) &&
-			preg_match('#^(127|10|172\.16|192\.168)\.#', $host)
+			(
+				strtolower($host) == 'localhost'
+			)
+			||
+			(
+				preg_match('#^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$#', $host)
+				&& preg_match('#^(127|10|172\.16|192\.168)\.#', $host)
+			)
 		)
 		{
 			$message = Loc::getMessage('IMBOT_NETWORK_ERROR_PUBLIC_URL_LOCALHOST', ['#HOST#' => $host]);
@@ -678,6 +810,24 @@ class Network extends Base implements NetworkBot
 			self::$lastError = new ImBot\Error(
 				__METHOD__,
 				'PUBLIC_URL_LOCALHOST',
+				$message
+			);
+
+			return false;
+		}
+
+		$error = (new \Bitrix\Main\Web\Uri($publicUrl))->convertToPunycode();
+		if ($error instanceof \Bitrix\Main\Error)
+		{
+			$message = Loc::getMessage('IMBOT_NETWORK_ERROR_CONVERTING_PUNYCODE', ['#HOST#' => $host, '#ERROR#' => $error->getMessage()]);
+			if (empty($message))
+			{
+				$message = 'Error converting hostname '.$host.' to punycode: '.$error->getMessage();
+			}
+
+			self::$lastError = new ImBot\Error(
+				__METHOD__,
+				'PUBLIC_URL_MALFORMED',
 				$message
 			);
 
@@ -721,6 +871,9 @@ class Network extends Base implements NetworkBot
 		}
 
 		$http = self::instanceHttpClient();
+
+		$http->setPortalDomain($parsedUrl['scheme'].'://'.$parsedUrl['host']);
+
 		$result = $http->query(self::COMMAND_CHECK_PUBLIC_URL, [], true);
 
 		if (isset($result['error']))
@@ -753,13 +906,54 @@ class Network extends Base implements NetworkBot
 		return isset($result['result']) && ($result['result'] === 'OK');
 	}
 
+	//endregion
+
+	//region Interface Network
+
 	/**
-	 * Allows to update bot fields (name, desc, avatar, welcome mess) using data from imcomming message
+	 * Allows updating bot fields (name, desc, avatar, welcome mess) using data from incoming message.
+	 *
 	 * @return bool
 	 */
-	public static function isNeedUpdateBotFieldsAfterNewMessage()
+	public static function isNeedUpdateBotFieldsAfterNewMessage(): bool
 	{
 		return true;
+	}
+	/**
+	 * Allows updating bot's avatar using data from incoming message.
+	 *
+	 * @return bool
+	 */
+	public static function isNeedUpdateBotAvatarAfterNewMessage(): bool
+	{
+		return true;
+	}
+
+	/**
+	 * @return string
+	 */
+	public static function getSupportLevel(): string
+	{
+		return self::SUPPORT_LEVEL_NONE;
+	}
+
+	/**
+	 * Detects client's support level.
+	 * @return string
+	 */
+	public static function getAccessLevel(): string
+	{
+		$userAccess = self::USER_LEVEL_REGULAR;
+		if (self::isUserAdmin(self::getCurrentUser()->getId()))
+		{
+			$userAccess = self::USER_LEVEL_ADMIN;
+		}
+		elseif (self::isUserIntegrator(self::getCurrentUser()->getId()))
+		{
+			$userAccess = self::USER_LEVEL_INTEGRATOR;
+		}
+
+		return $userAccess;
 	}
 
 	//endregion
@@ -786,15 +980,17 @@ class Network extends Base implements NetworkBot
 	 * 	(array) KEYBOARD
 	 * 	(array) PARAMS
 	 * 	(array) USER
-	 * 	(string) LINE
-	 * 	(string) CONNECTOR_MID
+	 * 	(array) LINE
+	 * 	(int) CONNECTOR_MID
 	 * ]</pre>
 	 *
 	 * @return ImBot\Error|array
 	 */
 	public static function onReceiveCommand($command, $params)
 	{
-		if($command === self::COMMAND_OPERATOR_MESSAGE_ADD)
+		$result = ['RESULT' => 'OK'];
+
+		if ($command === self::COMMAND_OPERATOR_MESSAGE_ADD)
 		{
 			Log::write($params, 'NETWORK: operatorMessageAdd');
 
@@ -803,15 +999,13 @@ class Network extends Base implements NetworkBot
 				'BOT_CODE' => $params['BOT_CODE'],
 				'DIALOG_ID' => $params['DIALOG_ID'],
 				'MESSAGE' => $params['MESSAGE'],
-				'FILES' => isset($params['FILES'])? $params['FILES']: '',
-				'ATTACH' => isset($params['ATTACH'])? $params['ATTACH']: '',
-				'KEYBOARD' => isset($params['KEYBOARD'])? $params['KEYBOARD']: '',
-				'PARAMS' => isset($params['PARAMS'])? $params['PARAMS']: '',
-				'USER' => isset($params['USER'])? $params['USER']: '',
-				'LINE' => isset($params['LINE'])? $params['LINE']: ''
+				'FILES' => $params['FILES'] ?? '',
+				'ATTACH' => $params['ATTACH'] ?? '',
+				'KEYBOARD' => $params['KEYBOARD'] ?? '',
+				'PARAMS' => $params['PARAMS'] ?? '',
+				'USER' => $params['USER'] ?? '',
+				'LINE' => $params['LINE'] ?? ''
 			]);
-
-			$result = ['RESULT' => 'OK'];
 		}
 
 		else if($command === self::COMMAND_OPERATOR_MESSAGE_UPDATE)
@@ -822,13 +1016,12 @@ class Network extends Base implements NetworkBot
 				'BOT_ID' => $params['BOT_ID'],
 				'DIALOG_ID' => $params['DIALOG_ID'],
 				'MESSAGE' => $params['MESSAGE'],
-				'FILES' => isset($params['FILES'])? $params['FILES']: '',
-				'ATTACH' => isset($params['ATTACH'])? $params['ATTACH']: '',
-				'KEYBOARD' => isset($params['KEYBOARD'])? $params['KEYBOARD']: '',
-				'PARAMS' => isset($params['PARAMS'])? $params['PARAMS']: '',
+				'FILES' => $params['FILES'] ?? '',
+				'ATTACH' => $params['ATTACH'] ?? '',
+				'KEYBOARD' => $params['KEYBOARD'] ?? '',
+				'PARAMS' => $params['PARAMS'] ?? '',
 				'CONNECTOR_MID' => $params['CONNECTOR_MID'],
 			]);
-			$result = ['RESULT' => 'OK'];
 		}
 
 		else if($command === self::COMMAND_OPERATOR_MESSAGE_DELETE)
@@ -840,8 +1033,6 @@ class Network extends Base implements NetworkBot
 				'DIALOG_ID' => $params['DIALOG_ID'],
 				'CONNECTOR_MID' => $params['CONNECTOR_MID'],
 			]);
-
-			$result = ['RESULT' => 'OK'];
 		}
 
 		else if($command === self::COMMAND_OPERATOR_START_WRITING)
@@ -853,8 +1044,6 @@ class Network extends Base implements NetworkBot
 				'DIALOG_ID' => $params['DIALOG_ID'],
 				'USER' => isset($params['USER'])? $params['USER']: ''
 			]);
-
-			$result = ['RESULT' => 'OK'];
 		}
 
 		else if($command === self::COMMAND_OPERATOR_MESSAGE_RECEIVED)
@@ -868,8 +1057,6 @@ class Network extends Base implements NetworkBot
 				'CONNECTOR_MID' => $params['CONNECTOR_MID'],
 				'SESSION_ID' => $params['SESSION_ID']
 			]);
-
-			$result = ['RESULT' => 'OK'];
 		}
 
 		// operator OL session start
@@ -878,13 +1065,10 @@ class Network extends Base implements NetworkBot
 			Log::write($params, 'NETWORK: startDialogSession');
 
 			static::startDialogSession([
-				'BOT_ID' => $params['BOT_ID'],
 				'DIALOG_ID' => $params['DIALOG_ID'],
 				'SESSION_ID' => $params['SESSION_ID'],
 				'PARENT_ID' => $params['PARENT_ID'],
 			]);
-
-			$result = ['RESULT' => 'OK'];
 		}
 
 		// operator OL session finish
@@ -893,13 +1077,10 @@ class Network extends Base implements NetworkBot
 			Log::write($params, 'NETWORK: finishDialogSession');
 
 			static::finishDialogSession([
-				'BOT_ID' => $params['BOT_ID'],
 				'DIALOG_ID' => $params['DIALOG_ID'],
 				'SESSION_ID' => $params['SESSION_ID'],
 				'PARENT_ID' => $params['PARENT_ID'],
 			]);
-
-			$result = ['RESULT' => 'OK'];
 		}
 
 		// checking access to public url
@@ -923,187 +1104,39 @@ class Network extends Base implements NetworkBot
 	//region Client commands
 
 	/**
-	 * @param int $messageId
 	 * @param array $messageFields
-	 *
 	 * @return bool
 	 */
-	protected static function clientMessageAdd($messageId, $messageFields)
+	protected static function checkMembershipRestriction(array $messageFields): bool
 	{
-		if ($messageFields['SYSTEM'] == 'Y')
-		{
-			return false;
-		}
+		// Allow only one-to-one conversation
+		return $messageFields['MESSAGE_TYPE'] === \IM_MESSAGE_PRIVATE;
+	}
 
-		if ($messageFields['MESSAGE_TYPE'] != IM_MESSAGE_PRIVATE)
-		{
-			$chat = new \CIMChat($messageFields['BOT_ID']);
-			$chat->DeleteUser($messageFields['CHAT_ID'], $messageFields['BOT_ID']);
-			return false;
-		}
-
-		if ($messageFields['TO_USER_ID'] != $messageFields['BOT_ID'])
-		{
-			return false;
-		}
-
+	/**
+	 * @param array $messageFields
+	 * @return bool
+	 */
+	protected static function checkMessageRestriction(array $messageFields): bool
+	{
 		$bot = Im\Bot::getCache($messageFields['BOT_ID']);
 		if (mb_substr($bot['CODE'], 0, 7) != self::BOT_CODE)
 		{
 			return false;
 		}
 
-		$files = [];
-		if (isset($messageFields['FILES']) && Main\Loader::includeModule('disk'))
-		{
-			foreach ($messageFields['FILES'] as $file)
-			{
-				$fileModel = \Bitrix\Disk\File::loadById($file['id']);
-				if (!$fileModel)
-					continue;
+		// Allow only this bot as recipient
+		return $messageFields['TO_USER_ID'] == $messageFields['BOT_ID'];
+	}
 
-				$file['link'] = \CIMDisk::GetFileLink($fileModel);
-				if (!$file['link'])
-					continue;
-
-				$merged = false;
-				if (\Bitrix\Disk\TypeFile::isImage($fileModel))
-				{
-					$source = $fileModel->getFile();
-					if ($source)
-					{
-						$files[] = [
-							'name' => $file['name'],
-							'type' => $file['type'],
-							'link' => $file['link'],
-							'width' => (int)$source["WIDTH"],
-							'height' => (int)$source["HEIGHT"],
-							'size' => $file['size']
-						];
-						$merged = true;
-					}
-				}
-
-				if (!$merged)
-				{
-					$files[] = [
-						'name' => $file['name'],
-						'type' => $file['type'],
-						'link' => $file['link'],
-						'size' => $file['size']
-					];
-				}
-			}
-		}
-
-		$messageFields['MESSAGE'] = preg_replace("/\\[CHAT=[0-9]+\\](.*?)\\[\\/CHAT\\]/", "\\1",  $messageFields['MESSAGE']);
-		$messageFields['MESSAGE'] = preg_replace("/\\[USER=[0-9]+\\](.*?)\\[\\/USER\\]/", "\\1",  $messageFields['MESSAGE']);
-
-		$messageParams = [];
-
-		$relatedMessageId = null;
-		$relatedMessageText = null;
-		$history = new \CIMHistory();
-		if ($relatedMessages = $history->getRelatedMessages($messageId, 1, 0, false, false))
-		{
-			foreach($relatedMessages['message'] as $message)
-			{
-				if (
-					isset($message['params'][self::MESSAGE_PARAM_ALLOW_QUOTE])
-					&& $message['params'][self::MESSAGE_PARAM_ALLOW_QUOTE] === 'Y'
-				)
-				{
-					$relatedMessageId = $message['id'];
-					$relatedMessageText = $message['text'];
-				}
-			}
-		}
-		if ($relatedMessageText)
-		{
-			if ($relatedMessageId)
-			{
-				//$relatedMessageParam = \CIMMessageParam::Get($relatedMessageId, self::MESSAGE_PARAM_MENU_ACTION);
-				$messageParameters = IM\Model\MessageParamTable::getList([
-					'select' => ['PARAM_VALUE'],
-					'filter' => [
-						'=MESSAGE_ID' => $relatedMessageId,
-						'=PARAM_NAME' => self::MESSAGE_PARAM_MENU_ACTION,
-					]
-				]);
-				if (($relatedMessageParam = $messageParameters->fetch()) && !empty($relatedMessageParam['PARAM_VALUE']))
-				{
-					$messageParams[self::MESSAGE_PARAM_MENU_ACTION] = $relatedMessageParam['PARAM_VALUE'];
-				}
-			}
-
-			$messageFields['MESSAGE'] =
-				str_repeat("-", 54)."\n".
-				$relatedMessageText."\n".
-				str_repeat("-", 54)."\n".
-				$messageFields['MESSAGE'];
-		}
-
-		\CIMMessageParam::Set($messageId, [
-			self::MESSAGE_PARAM_SENDING => 'Y',
-			self::MESSAGE_PARAM_SENDING_TIME => time()
-		]);
-
-		$result = self::clientMessageSend([
-			'BOT_ID' => $messageFields['BOT_ID'],
-			'USER_ID' => $messageFields['DIALOG_ID'],
-			'MESSAGE' => [
-				'ID' => $messageId,
-				'TYPE' => $messageFields['MESSAGE_TYPE'],
-				'TEXT' => $messageFields['MESSAGE'],
-			],
-			'FILES' => $files,
-			'PARAMS' => $messageParams,
-		]);
-		if (isset($result['error']))
-		{
-			self::$lastError = new ImBot\Error(__METHOD__, $result['error']['code'], $result['error']['msg']);
-
-			$message = '';
-
-			if (self::getError()->code == 'LINE_DISABLED')
-			{
-				if (class_exists('Bitrix\ImBot\Bot\Support24'))
-				{
-					$message = ImBot\Bot\Support24::replacePlaceholders(
-						ImBot\Bot\Support24::getMessage('LINE_DISABLED'),
-						$messageFields['FROM_USER_ID']
-					);
-				}
-
-				if (empty($message))
-				{
-					$message = Loc::getMessage('IMBOT_NETWORK_ERROR_LINE_DISABLED');
-				}
-			}
-			else
-			{
-				$message = Loc::getMessage('IMBOT_NETWORK_ERROR_NOT_FOUND');
-			}
-
-			Im\Bot::addMessage(['BOT_ID' => $messageFields['BOT_ID']], [
-				'DIALOG_ID' => $messageFields['DIALOG_ID'],
-				'MESSAGE' => $message,
-				'SYSTEM' => 'Y'
-			]);
-
-			\CIMMessageParam::Set($messageId, [
-				self::MESSAGE_PARAM_DELIVERED => 'N',
-				self::MESSAGE_PARAM_SENDING => 'N',
-				self::MESSAGE_PARAM_SENDING_TIME => 0
-			]);
-		}
-		\CIMMessageParam::SendPull($messageId, [
-			self::MESSAGE_PARAM_DELIVERED,
-			self::MESSAGE_PARAM_SENDING,
-			self::MESSAGE_PARAM_SENDING_TIME
-		]);
-
-		return true;
+	/**
+	 * @param array $messageFields
+	 * @return bool
+	 */
+	protected static function checkTypingRestriction(array $messageFields): bool
+	{
+		// Allow only one-to-one conversation
+		return empty($messageFields['CHAT']) && empty($messageFields['RELATION']);
 	}
 
 	/**
@@ -1113,6 +1146,7 @@ class Network extends Base implements NetworkBot
 	 * <pre>
 	 * [
 	 * 	(int) USER_ID
+	 * 	(int|string) DIALOG_ID
 	 * 	(string|array) MESSAGE
 	 * 	(int) BOT_ID
 	 * 	(array) FILES
@@ -1123,7 +1157,7 @@ class Network extends Base implements NetworkBot
 	 *
 	 * @return bool|array
 	 */
-	public static function clientMessageSend(array $fields)
+	public static function clientMessageAdd(array $fields)
 	{
 		$user = self::getUserInfo((int)$fields['USER_ID']);
 
@@ -1142,7 +1176,7 @@ class Network extends Base implements NetworkBot
 			$portalTariffName = \CBitrix24::getLicenseName();
 			$portalCreateTime = \CBitrix24::getCreateTime();
 
-			if ($portalTariff == 'demo')
+			if (\CBitrix24::isDemoLicense())
 			{
 				$portalTariff = \CBitrix24::getLicenseType(\CBitrix24::LICENSE_TYPE_PREVIOUS);
 				$portalTariff = $portalTariff.'+demo';
@@ -1153,7 +1187,7 @@ class Network extends Base implements NetworkBot
 
 			if (!$portalCreateTime)
 			{
-				$portalCreateTime = time();
+				$portalCreateTime = \time();
 			}
 
 			if (\CBitrix24::isIntegrator($fields['USER_ID']))
@@ -1193,13 +1227,12 @@ class Network extends Base implements NetworkBot
 		$messageText = is_array($fields['MESSAGE']) ? (string)$fields['MESSAGE']['TEXT'] : (string)$fields['MESSAGE'];
 
 		$http = self::instanceHttpClient();
-		$result = $http->query(
+		$response = $http->query(
 			'clientMessageAdd',
 			[
 				'BOT_ID' => $fields['BOT_ID'],
-				'DIALOG_ID' => $fields['USER_ID'],
+				'DIALOG_ID' => $fields['DIALOG_ID'],
 				'MESSAGE_ID' => $messageId,
-				'MESSAGE_TYPE' => \IM_MESSAGE_PRIVATE,
 				'MESSAGE_TEXT' => $messageText,
 				'FILES' => $fields['FILES'] ?? null,
 				'ATTACH' => $fields['ATTACH'] ?? null,
@@ -1208,7 +1241,7 @@ class Network extends Base implements NetworkBot
 			]
 		);
 
-		return $result;
+		return $response;
 	}
 
 	/**
@@ -1221,62 +1254,49 @@ class Network extends Base implements NetworkBot
 	 */
 	protected static function clientMessageUpdate($messageId, $messageFields)
 	{
-		if (
-			$messageFields['MESSAGE_TYPE'] != \IM_MESSAGE_PRIVATE
-			|| $messageFields['TO_USER_ID'] != $messageFields['BOT_ID']
-		)
-		{
-			return false;
-		}
+		$messageFields['MESSAGE'] = self::removeMentions($messageFields['MESSAGE'] ?? '');
 
-		$bot = Im\Bot::getCache($messageFields['BOT_ID']);
-		if (mb_substr($bot['CODE'], 0, 7) != self::BOT_CODE)
+		if ($relatedMessages = (new \CIMHistory)->getRelatedMessages($messageId, 1, 0, false, false))
 		{
-			return false;
-		}
-
-		$messageFields['MESSAGE'] = preg_replace("/\\[CHAT=[0-9]+\\](.*?)\\[\\/CHAT\\]/", "\\1",  $messageFields['MESSAGE']);
-		$messageFields['MESSAGE'] = preg_replace("/\\[USER=[0-9]+\\](.*?)\\[\\/USER\\]/", "\\1",  $messageFields['MESSAGE']);
-
-		$history = new \CIMHistory();
-		if ($result = $history->GetRelatedMessages($messageId, 1, 0, false, false))
-		{
-			$botMessageText = '';
-			foreach ($result['message'] as $message)
+			$relatedMessageText = '';
+			foreach ($relatedMessages['message'] as $message)
 			{
 				if (
-					isset($message['params'][self::MESSAGE_PARAM_ALLOW_QUOTE])
+					$message['system'] != 'Y'
+					&& isset($message['params'][self::MESSAGE_PARAM_ALLOW_QUOTE])
 					&& $message['params'][self::MESSAGE_PARAM_ALLOW_QUOTE] == 'Y'
 				)
 				{
-					$botMessageText = $message['text'];
+					$relatedMessageText = $message['text'];
+					break;
 				}
-				break;
 			}
-			if ($botMessageText)
+			if ($relatedMessageText)
 			{
 				$messageFields['MESSAGE'] =
 					str_repeat("-", 54)."\n".
-					$botMessageText."\n".
+					$relatedMessageText."\n".
 					str_repeat("-", 54)."\n".
 					$messageFields['MESSAGE'];
 			}
 		}
 
+		$user = self::getUserInfo((int)($messageFields['FROM_USER_ID'] ?? $messageFields['AUTHOR_ID']));
+
 		$http = self::instanceHttpClient();
-		$http->query(
+		$response = $http->query(
 			'clientMessageUpdate',
 			[
 				'BOT_ID' => $messageFields['BOT_ID'],
 				'DIALOG_ID' => $messageFields['DIALOG_ID'],
 				'MESSAGE_ID' => $messageId,
-				'CONNECTOR_MID' => $messageFields['PARAMS'][self::MESSAGE_PARAM_CONNECTOR_MID][0],
+				'CONNECTOR_MID' => $messageFields['PARAMS'][self::MESSAGE_PARAM_CONNECTOR_MID][0] ?? '',
 				'MESSAGE_TEXT' => $messageFields['MESSAGE'],
-				'USER' => self::getUserInfo((int)$messageFields['FROM_USER_ID'])
+				'USER' => $user,
 			]
 		);
 
-		return true;
+		return $response !== false && !isset($response['error']);
 	}
 
 	/**
@@ -1289,36 +1309,23 @@ class Network extends Base implements NetworkBot
 	 */
 	protected static function clientMessageDelete($messageId, $messageFields)
 	{
-		if (
-			$messageFields['MESSAGE_TYPE'] != IM_MESSAGE_PRIVATE
-			|| $messageFields['TO_USER_ID'] != $messageFields['BOT_ID']
-		)
-		{
-			return false;
-		}
+		$messageFields['MESSAGE'] = self::removeMentions($messageFields['MESSAGE'] ?? '');
 
-		$bot = Im\Bot::getCache($messageFields['BOT_ID']);
-		if (mb_substr($bot['CODE'], 0, 7) != self::BOT_CODE)
-		{
-			return false;
-		}
-
-		$messageFields['MESSAGE'] = preg_replace("/\\[CHAT=[0-9]+\\](.*?)\\[\\/CHAT\\]/", "\\1",  $messageFields['MESSAGE']);
-		$messageFields['MESSAGE'] = preg_replace("/\\[USER=[0-9]+\\](.*?)\\[\\/USER\\]/", "\\1",  $messageFields['MESSAGE']);
+		$user = self::getUserInfo((int)($messageFields['FROM_USER_ID'] ?? $messageFields['AUTHOR_ID']));
 
 		$http = self::instanceHttpClient();
-		$http->query(
+		$response = $http->query(
 			'clientMessageDelete',
 			[
 				'BOT_ID' => $messageFields['BOT_ID'],
 				'DIALOG_ID' => $messageFields['DIALOG_ID'],
 				'MESSAGE_ID' => $messageId,
-				'CONNECTOR_MID' => $messageFields['PARAMS'][self::MESSAGE_PARAM_CONNECTOR_MID][0],
-				'USER' => self::getUserInfo((int)$messageFields['FROM_USER_ID'])
+				'CONNECTOR_MID' => $messageFields['PARAMS'][self::MESSAGE_PARAM_CONNECTOR_MID][0] ?? '',
+				'USER' => $user,
 			]
 		);
 
-		return true;
+		return $response !== false && !isset($response['error']);
 	}
 
 	/**
@@ -1337,14 +1344,15 @@ class Network extends Base implements NetworkBot
 	 * 	(int) COMMAND_ID
 	 * 	(string) COMMAND_PARAMS
 	 * 	(string) COMMAND_CONTEXT
-	 * ]</pre>
+	 * ]
+	 * </pre>
 	 *
 	 * @return bool
 	 */
 	protected static function clientCommandSend(array $params)
 	{
 		$http = self::instanceHttpClient();
-		$http->query(
+		$response = $http->query(
 			'clientCommandSend',
 			[
 				'BOT_ID' => $params['BOT_ID'],
@@ -1360,43 +1368,63 @@ class Network extends Base implements NetworkBot
 			false
 		);
 
-		return true;
+		return $response !== false && !isset($response['error']);
 	}
 
 	/**
+	 * @see \Bitrix\Botcontroller\Bot\Network\Command\ClientStartWriting
 	 * @param array $params Command arguments.
+	 * <pre>
+	 * [
+	 * 	(int) BOT_ID
+	 * 	(string) DIALOG_ID
+	 * 	(int) USER_ID
+	 * ]
+	 * </pre>
 	 *
 	 * @return bool
 	 */
 	protected static function clientStartWriting($params)
 	{
 		$http = self::instanceHttpClient();
-		$http->query(
+		$response = $http->query(
 			'clientStartWriting',
 			[
 				'BOT_ID' => $params['BOT_ID'],
-				'DIALOG_ID' => $params['USER_ID'],
+				'DIALOG_ID' => $params['DIALOG_ID'],
 				'USER_ID' => $params['USER_ID'],
 			],
 			false
 		);
 
-		return true;
+		return $response !== false && !isset($response['error']);
 	}
 
 	/**
+	 * @see \Bitrix\Botcontroller\Bot\Network\Command\ClientSessionVote
 	 * @param array $params Command arguments.
+	 * <pre>
+	 * [
+	 * 	(int) BOT_ID
+	 * 	(string) DIALOG_ID
+	 * 	(int) USER_ID
+	 * 	(int) SESSION_ID
+	 * 	(int) MESSAGE_ID
+	 * 	(array) MESSAGE
+	 * 	(string) ACTION
+	 * ]
+	 * </pre>
 	 *
 	 * @return bool
 	 */
 	protected static function clientSessionVote($params)
 	{
 		$http = self::instanceHttpClient();
-		$http->query(
+		$response = $http->query(
 			'clientSessionVote',
 			[
 				'BOT_ID' => $params['BOT_ID'],
-				'DIALOG_ID' => $params['USER_ID'],
+				'DIALOG_ID' => $params['DIALOG_ID'],
 				'SESSION_ID' => $params['SESSION_ID'],
 				'MESSAGE_ID' => $params['MESSAGE']['PARAMS'][self::MESSAGE_PARAM_CONNECTOR_MID][0],
 				'ACTION' => $params['ACTION'],
@@ -1405,59 +1433,37 @@ class Network extends Base implements NetworkBot
 			false
 		);
 
-		return true;
+		return $response !== false && !isset($response['error']);
 	}
 
 	/**
+	 * @see \Bitrix\Botcontroller\Bot\Network\Command\ClientMessageReceived
 	 * @param array $params Command arguments.
+	 * <pre>
+	 * [
+	 * 	(int) BOT_ID
+	 * 	(string) DIALOG_ID
+	 * 	(int) MESSAGE_ID
+	 * 	(int) CONNECTOR_MID
+	 * ]
+	 * </pre>
 	 *
 	 * @return bool
 	 */
 	protected static function clientMessageReceived($params)
 	{
 		$http = self::instanceHttpClient();
-		$query = $http->query(
-			'clientMessageReceived',
-			$params
-		);
-		if (isset($query->error))
-		{
-			return false;
-		}
-
-		return true;
-	}
-
-
-	/**
-	 * Sends command from user to network line.
-	 *
-	 * @param array $params Command arguments.
-	 * <pre>
-	 * [
-	 * 	(int) BOT_ID
-	 * 	(string) DIALOG_ID
-	 * 	(string) MESSAGE_ID
-	 * 	(int) SESSION_ID
-	 * ]
-	 * </pre>
-	 *
-	 * @return bool
-	 */
-	protected static function requestQueueNumber(array $params)
-	{
-		$http = self::instanceHttpClient();
 		$response = $http->query(
-			'clientQueueNumber',
+			'clientMessageReceived',
 			[
 				'BOT_ID' => $params['BOT_ID'],
 				'DIALOG_ID' => $params['DIALOG_ID'],
-				'SESSION_ID' => $params['SESSION_ID'],
 				'MESSAGE_ID' => $params['MESSAGE_ID'],
+				'CONNECTOR_MID' => $params['CONNECTOR_MID'],
 			]
 		);
 
-		return $response !== false && !isset($response->error);
+		return $response !== false && !isset($response['error']);
 	}
 
 	//endregion
@@ -1478,8 +1484,9 @@ class Network extends Base implements NetworkBot
 	 * 	(array) KEYBOARD
 	 * 	(array) PARAMS
 	 * 	(array) USER
-	 * 	(string) LINE
-	 * ]</pre>
+	 * 	(array) LINE
+	 * ]
+	 * </pre>
 	 * @return bool
 	 */
 	protected static function operatorMessageAdd($messageId, $messageFields)
@@ -1492,7 +1499,7 @@ class Network extends Base implements NetworkBot
 		if (!empty($messageFields['BOT_CODE']))
 		{
 			$list = Im\Bot::getListCache();
-			foreach ($list as $botId => $botData)
+			foreach ($list as $botData)
 			{
 				if ($botData['TYPE'] != Im\Bot::TYPE_NETWORK)
 				{
@@ -1501,23 +1508,33 @@ class Network extends Base implements NetworkBot
 
 				if ($messageFields['BOT_CODE'] == $botData['APP_ID'])
 				{
-					$messageFields['BOT_ID'] = intval($botData['BOT_ID']);
+					$messageFields['BOT_ID'] = (int)$botData['BOT_ID'];
 					break;
 				}
 			}
-			if (intval($messageFields['BOT_ID']) <= 0)
+			if ((int)$messageFields['BOT_ID'] <= 0)
 			{
 				return false;
 			}
 		}
 
-		$attach = null;
-		if (!empty($messageFields['ATTACH']))
+		$message = [
+			'DIALOG_ID' => $messageFields['DIALOG_ID'],
+			'MESSAGE' => $messageFields['MESSAGE'],
+			'PARAMS' => [],
+			'URL_PREVIEW' => 'Y',
+		];
+
+		if (!empty($messageFields['PARAMS']))
 		{
-			$attach = \CIMMessageParamAttach::GetAttachByJson($messageFields['ATTACH']);
+			$message['PARAMS'] = $messageFields['PARAMS'];
 		}
 
-		$keyboard = [];
+		if ($messageId > 0)
+		{
+			$message['PARAMS'][self::MESSAGE_PARAM_CONNECTOR_MID] = [$messageId];
+		}
+
 		if (!empty($messageFields['KEYBOARD']))
 		{
 			$keyboard = ['BOT_ID' => $messageFields['BOT_ID']];
@@ -1529,138 +1546,134 @@ class Network extends Base implements NetworkBot
 			{
 				$keyboard = $messageFields['KEYBOARD'];
 			}
-			$keyboard = Im\Bot\Keyboard::getKeyboardByJson($keyboard, [], ['ENABLE_FUNCTIONS' => 'Y']);
+			$keyboard = Keyboard::getKeyboardByJson($keyboard);
+			$message['KEYBOARD'] = $keyboard;
+		}
+
+		if (!empty($messageFields['ATTACH']))
+		{
+			$message['ATTACH'] = \CIMMessageParamAttach::getAttachByJson($messageFields['ATTACH']);
 		}
 
 		if (!empty($messageFields['FILES']))
 		{
-			if (!$attach)
+			if (!($message['ATTACH'] instanceof \CIMMessageParamAttach))
 			{
-				$attach = new \CIMMessageParamAttach(null, \CIMMessageParamAttach::CHAT);
+				$message['ATTACH'] = new \CIMMessageParamAttach(null, \CIMMessageParamAttach::CHAT);
 			}
-			foreach ($messageFields['FILES'] as $key => $value)
+			foreach ($messageFields['FILES'] as $value)
 			{
 				if ($value['type'] === 'image')
 				{
-					$attach->AddImages([[
-						"NAME" => $value['name'],
-						"LINK" => $value['link'],
-						"WIDTH" => (int)$value['width'],
-						"HEIGHT" => (int)$value['height'],
+					$message['ATTACH']->addImages([[
+						'NAME' => $value['name'],
+						'LINK' => $value['link'],
+						'WIDTH' => (int)$value['width'],
+						'HEIGHT' => (int)$value['height'],
 					]]);
 				}
 				else
 				{
-					$attach->AddFiles([[
-						"NAME" => $value['name'],
-						"LINK" => $value['link'],
-						"SIZE" => $value['size'],
+					$message['ATTACH']->addFiles([[
+						'NAME' => $value['name'],
+						'LINK' => $value['link'],
+						'SIZE' => $value['size'],
 					]]);
 				}
 			}
 		}
 
-		$params = [];
-		if (!empty($messageFields['PARAMS']))
+		// url preview
+		if (isset($messageFields['URL_PREVIEW']) && $messageFields['URL_PREVIEW'] === 'N')
 		{
-			$params = $messageFields['PARAMS'];
+			$message['URL_PREVIEW'] = 'N';
 		}
-
-		$params[self::MESSAGE_PARAM_CONNECTOR_MID] = [$messageId];
 
 		if (!empty($messageFields['USER']))
 		{
-			$params['USER_ID'] = $messageFields['USER']['ID'];
-			$nameTemplateSite = \CSite::GetNameFormat(false);
-			$userName = \CUser::FormatName($nameTemplateSite, $messageFields['USER'], true, false);
+			$message['PARAMS']['USER_ID'] = $messageFields['USER']['ID'];
+			$nameTemplateSite = \CSite::getNameFormat(false);
+			$userName = \CUser::formatName($nameTemplateSite, $messageFields['USER'], true, false);
 			if ($userName)
 			{
-				$params['NAME'] = $userName;
+				$message['PARAMS']['NAME'] = $userName;
 			}
-			if (Main\Loader::includeModule('im'))
+			$userAvatar = Im\User::uploadAvatar($messageFields['USER']['PERSONAL_PHOTO'], $messageFields['BOT_ID']);
+			if ($userAvatar)
 			{
-				$userAvatar = Im\User::uploadAvatar($messageFields['USER']['PERSONAL_PHOTO'], $messageFields['BOT_ID']);
-				if ($userAvatar)
-				{
-					$params['AVATAR'] = $userAvatar;
-				}
+				$message['PARAMS']['AVATAR'] = $userAvatar;
 			}
 		}
 
-		$needUpdateBotFields = true;
-		$needUpdateBotAvatar = true;
-
-		$bot = Im\Bot::getCache($messageFields['BOT_ID']);
-		if ($bot['MODULE_ID'] && Main\Loader::includeModule($bot['MODULE_ID']) && class_exists($bot["CLASS"]))
+		// Update bot fields (name, desc, avatar, welcome mess) using data from incoming message
+		if (!empty($messageFields['LINE']))
 		{
-			if (method_exists($bot["CLASS"], 'isNeedUpdateBotFieldsAfterNewMessage'))
+			$needUpdateBotFields = true;
+			$needUpdateBotAvatar = true;
+
+			$bot = Im\Bot::getCache($messageFields['BOT_ID']);
+			if ($bot['MODULE_ID'] && Main\Loader::includeModule($bot['MODULE_ID']) && class_exists($bot["CLASS"]))
 			{
-				$needUpdateBotFields = call_user_func_array([$bot["CLASS"], 'isNeedUpdateBotFieldsAfterNewMessage'], []);
+				if (method_exists($bot["CLASS"], 'isNeedUpdateBotFieldsAfterNewMessage'))
+				{
+					$needUpdateBotFields = call_user_func_array([$bot["CLASS"], 'isNeedUpdateBotFieldsAfterNewMessage'], []);
+				}
+				if (method_exists($bot["CLASS"], 'isNeedUpdateBotAvatarAfterNewMessage'))
+				{
+					$needUpdateBotAvatar = call_user_func_array([$bot["CLASS"], 'isNeedUpdateBotAvatarAfterNewMessage'], []);
+				}
 			}
-			if (method_exists($bot["CLASS"], 'isNeedUpdateBotAvatarAfterNewMessage'))
+			if ($needUpdateBotFields || $needUpdateBotAvatar)
 			{
-				$needUpdateBotAvatar = call_user_func_array([$bot["CLASS"], 'isNeedUpdateBotAvatarAfterNewMessage'], []);
+				$botData = Im\User::getInstance($messageFields['BOT_ID']);
+
+				if ($needUpdateBotFields)
+				{
+					$updateFields = [];
+					if ($messageFields['LINE']['NAME'] != htmlspecialcharsback($botData->getName()))
+					{
+						$updateFields['NAME'] = $messageFields['LINE']['NAME'];
+					}
+					if ($messageFields['LINE']['DESC'] != htmlspecialcharsback($botData->getWorkPosition()))
+					{
+						$updateFields['WORK_POSITION'] = $messageFields['LINE']['DESC'];
+					}
+					if ($messageFields['LINE']['WELCOME_MESSAGE'] != $bot['TEXT_PRIVATE_WELCOME_MESSAGE'])
+					{
+						Im\Bot::update(['BOT_ID' => $messageFields['BOT_ID']], [
+							'TEXT_PRIVATE_WELCOME_MESSAGE' => $messageFields['LINE']['WELCOME_MESSAGE']
+						]);
+					}
+					if (!empty($updateFields))
+					{
+						self::getCurrentUser()->update($messageFields['BOT_ID'], $updateFields);
+					}
+				}
+
+				if ($needUpdateBotAvatar && !empty($messageFields['LINE']['AVATAR']))
+				{
+					$botAvatar = Im\User::uploadAvatar($messageFields['LINE']['AVATAR'], $messageFields['BOT_ID']);
+					if ($botAvatar && $botData->getAvatarId() != $botAvatar)
+					{
+						$connection = Main\Application::getConnection();
+						$connection->query("UPDATE b_user SET PERSONAL_PHOTO = ".(int)$botAvatar." WHERE ID = ".(int)$messageFields['BOT_ID']);
+					}
+				}
+
 			}
 		}
 
-		// Update bot fields (name, desc, avatar, welcome mess) using data from imcomming message
-		if (!empty($messageFields['LINE']) && ($needUpdateBotFields || $needUpdateBotAvatar))
+		$connectorMid = Im\Bot::addMessage(['BOT_ID' => $messageFields['BOT_ID']], $message);
+
+		if ($messageId > 0)
 		{
-			$botData = Im\User::getInstance($messageFields['BOT_ID']);
-
-			$updateFields = [];
-
-			if ($needUpdateBotFields)
-			{
-				if ($messageFields['LINE']['NAME'] != htmlspecialcharsback($botData->getName()))
-				{
-					$updateFields['NAME'] = $messageFields['LINE']['NAME'];
-				}
-				if ($messageFields['LINE']['DESC'] != htmlspecialcharsback($botData->getWorkPosition()))
-				{
-					$updateFields['WORK_POSITION'] = $messageFields['LINE']['DESC'];
-				}
-
-				if ($messageFields['LINE']['WELCOME_MESSAGE'] != $bot['TEXT_PRIVATE_WELCOME_MESSAGE'])
-				{
-					Im\Bot::update(['BOT_ID' => $messageFields['BOT_ID']], [
-						'TEXT_PRIVATE_WELCOME_MESSAGE' => $messageFields['LINE']['WELCOME_MESSAGE']
-					]);
-				}
-			}
-
-			if ($needUpdateBotAvatar && !empty($messageFields['LINE']['AVATAR']))
-			{
-				$userAvatar = Im\User::uploadAvatar($messageFields['LINE']['AVATAR'], $messageFields['BOT_ID']);
-				if ($userAvatar && $botData->getAvatarId() != $userAvatar)
-				{
-					$connection = Main\Application::getConnection();
-					$connection->query("UPDATE b_user SET PERSONAL_PHOTO = ".(int)$userAvatar." WHERE ID = ".(int)$messageFields['BOT_ID']);
-				}
-			}
-
-			if (!empty($updateFields))
-			{
-				self::getCurrentUser()->update($messageFields['BOT_ID'], $updateFields);
-			}
+			self::clientMessageReceived([
+				'BOT_ID' => $messageFields['BOT_ID'],
+				'DIALOG_ID' => $messageFields['DIALOG_ID'],
+				'MESSAGE_ID' => $messageId,
+				'CONNECTOR_MID' => $connectorMid,
+			]);
 		}
-
-		$messageFields['URL_PREVIEW'] = isset($messageFields['URL_PREVIEW']) && $messageFields['URL_PREVIEW'] == 'N'? 'N': 'Y';
-		$connectorMid = Im\Bot::addMessage(['BOT_ID' => $messageFields['BOT_ID']], [
-			'DIALOG_ID' => $messageFields['DIALOG_ID'],
-			'MESSAGE' => $messageFields['MESSAGE'],
-			'URL_PREVIEW' => $messageFields['URL_PREVIEW'],
-			'ATTACH' => $attach,
-			'KEYBOARD' => $keyboard,
-			'PARAMS' => $params
-		]);
-
-		self::clientMessageReceived([
-			'BOT_ID' => $messageFields['BOT_ID'],
-			'DIALOG_ID' => $messageFields['DIALOG_ID'],
-			'MESSAGE_ID' => $messageId,
-			'CONNECTOR_MID' => $connectorMid,
-		]);
 
 		return true;
 	}
@@ -1702,7 +1715,7 @@ class Network extends Base implements NetworkBot
 		$attach = null;
 		if (!empty($messageFields['ATTACH']))
 		{
-			$attach = \CIMMessageParamAttach::GetAttachByJson($messageFields['ATTACH']);
+			$attach = \CIMMessageParamAttach::getAttachByJson($messageFields['ATTACH']);
 		}
 
 		$keyboard = [];
@@ -1717,7 +1730,7 @@ class Network extends Base implements NetworkBot
 			{
 				$keyboard = $messageFields['KEYBOARD'];
 			}
-			$keyboard = Im\Bot\Keyboard::getKeyboardByJson($keyboard, [], ['ENABLE_FUNCTIONS' => 'Y']);
+			$keyboard = Keyboard::getKeyboardByJson($keyboard);
 		}
 
 		if (!empty($messageFields['FILES']))
@@ -1728,7 +1741,7 @@ class Network extends Base implements NetworkBot
 			}
 			foreach ($messageFields['FILES'] as $key => $value)
 			{
-				$attach->AddFiles([[
+				$attach->addFiles([[
 					'NAME' => $value['name'],
 					'LINK' => $value['link'],
 					'SIZE' => $value['size'],
@@ -1791,8 +1804,8 @@ class Network extends Base implements NetworkBot
 		if (!empty($params['USER']))
 		{
 			$params['USER_ID'] = $params['USER']['ID'];
-			$nameTemplateSite = \CSite::GetNameFormat(false);
-			$userName = \CUser::FormatName($nameTemplateSite, $params['USER'], true, false);
+			$nameTemplateSite = \CSite::getNameFormat(false);
+			$userName = \CUser::formatName($nameTemplateSite, $params['USER'], true, false);
 			if ($userName)
 			{
 				$params['NAME'] = $userName;
@@ -1808,10 +1821,11 @@ class Network extends Base implements NetworkBot
 	 * [
 	 * 	(int) MESSAGE_ID
 	 * 	(int) BOT_ID
-	 * 	(int) DIALOG_ID
+	 * 	(string) DIALOG_ID
 	 * 	(int) CONNECTOR_MID
 	 * 	(int) SESSION_ID
-	 * ]</pre>
+	 * ]
+	 * </pre>
 	 * @return bool
 	 */
 	protected static function operatorMessageReceived($params)
@@ -1830,7 +1844,30 @@ class Network extends Base implements NetworkBot
 			return false;
 		}
 
-		$chatId = \CIMMessage::GetChatId($params['BOT_ID'], $params['DIALOG_ID']);
+		$chatId = -1;
+		if (\Bitrix\Im\Common::isChatId($params['DIALOG_ID']))
+		{
+			$chatCheckRes = \Bitrix\Im\Model\BotChatTable::getList([
+				'select' => ['CHAT_ID'],
+				'filter' => [
+					'=BOT_ID' => (int)$params['BOT_ID'],
+					'=CHAT_ID' => (int)\Bitrix\Im\Dialog::getChatId($params['DIALOG_ID']),
+				]
+			]);
+			if ($chatCheck = $chatCheckRes->fetch())
+			{
+				$chatId = (int)$chatCheck['CHAT_ID'];
+			}
+		}
+		else
+		{
+			$chatId = (int)\CIMMessage::getChatId($params['BOT_ID'], $params['DIALOG_ID']);
+		}
+		if ($chatId <= 0)
+		{
+			return false;
+		}
+
 		if ($messageData['CHAT_ID'] != $chatId)
 		{
 			return false;
@@ -1861,16 +1898,13 @@ class Network extends Base implements NetworkBot
 			$messageParams[self::MESSAGE_PARAM_SESSION_ID] = $params['SESSION_ID'];
 		}
 
-		\CIMMessageParam::Set($params['MESSAGE_ID'], $messageParams);
-		\CIMMessageParam::SendPull($params['MESSAGE_ID'], array_keys($messageParams));
+		\CIMMessageParam::set($params['MESSAGE_ID'], $messageParams);
+		\CIMMessageParam::sendPull($params['MESSAGE_ID'], array_keys($messageParams));
 
 		if ((int)$params['SESSION_ID'] > 0)
 		{
-			self::startDialogSession([
-				'BOT_ID' => static::getBotId(),
-				'DIALOG_ID' => (int)$params['DIALOG_ID'],
-				'SESSION_ID' => (int)$params['SESSION_ID'],
-			]);
+			self::instanceDialogSession($params['DIALOG_ID'])
+				->setSessionId((int)$params['SESSION_ID']);
 		}
 
 		return true;
@@ -1894,14 +1928,190 @@ class Network extends Base implements NetworkBot
 	}
 
 	/**
+	 * Event handler on message add.
+	 * @see \Bitrix\Im\Bot::onMessageAdd
+	 *
 	 * @param int $messageId Message Id.
 	 * @param array $messageFields Event arguments.
+	 * <pre>
+	 * [
+	 * 	(int) BOT_ID
+	 * 	(int) CHAT_ID
+	 * 	(int) FROM_USER_ID
+	 * 	(string) DIALOG_ID
+	 * 	(string) MESSAGE_TYPE
+	 * 	(string) MESSAGE
+	 * 	(string) SYSTEM = Y|N
+	 * 	(array) FILES
+	 * 	(array) PARAMS
+	 * ]
+	 * </pre>
 	 *
 	 * @return bool
 	 */
 	public static function onMessageAdd($messageId, $messageFields)
 	{
-		return static::clientMessageAdd($messageId, $messageFields);
+		if ($messageFields['SYSTEM'] === 'Y')
+		{
+			return false;
+		}
+
+		if (!static::checkMembershipRestriction($messageFields))
+		{
+			(new \CIMChat($messageFields['BOT_ID']))->deleteUser($messageFields['CHAT_ID'], $messageFields['BOT_ID']);
+			return false;
+		}
+
+		if (!static::checkMessageRestriction($messageFields))
+		{
+			return false;
+		}
+
+		self::instanceDialogSession($messageFields['DIALOG_ID'])->update(['DATE_LAST_ACTIVITY' => new Main\Type\DateTime]);
+
+		// check user vote for session by direct text input '1' or '0'
+		if (self::checkSessionVoteMessage($messageFields))
+		{
+			return true;
+		}
+
+		$files = [];
+		if (isset($messageFields['FILES']) && Main\Loader::includeModule('disk'))
+		{
+			foreach ($messageFields['FILES'] as $file)
+			{
+				$fileModel = \Bitrix\Disk\File::loadById($file['id']);
+				if (!$fileModel)
+				{
+					continue;
+				}
+
+				$file['link'] = \CIMDisk::getFileLink($fileModel);
+				if (!$file['link'])
+				{
+					continue;
+				}
+
+				$merged = false;
+				if (\Bitrix\Disk\TypeFile::isImage($fileModel))
+				{
+					$source = $fileModel->getFile();
+					if ($source)
+					{
+						$files[] = [
+							'name' => $file['name'],
+							'type' => $file['type'],
+							'link' => $file['link'],
+							'width' => (int)$source["WIDTH"],
+							'height' => (int)$source["HEIGHT"],
+							'size' => $file['size']
+						];
+						$merged = true;
+					}
+				}
+
+				if (!$merged)
+				{
+					$files[] = [
+						'name' => $file['name'],
+						'type' => $file['type'],
+						'link' => $file['link'],
+						'size' => $file['size']
+					];
+				}
+			}
+		}
+
+		$messageFields['MESSAGE'] = self::removeMentions($messageFields['MESSAGE'] ?? '');
+
+		$messageParams = $messageFields['PARAMS'] ?? [];
+
+		if ($relatedMessages = (new \CIMHistory)->getRelatedMessages($messageId, 1, 0, false, false))
+		{
+			foreach ($relatedMessages['message'] as $message)
+			{
+				if (
+					$message['system'] != 'Y'
+					&& isset($message['params'][self::MESSAGE_PARAM_ALLOW_QUOTE])
+					&& $message['params'][self::MESSAGE_PARAM_ALLOW_QUOTE] === 'Y'
+				)
+				{
+					$messageFields['MESSAGE'] =
+						str_repeat("-", 54)."\n".
+						$message['text']. "\n".
+						str_repeat("-", 54)."\n".
+						$messageFields['MESSAGE'];
+					break;
+				}
+			}
+		}
+
+		\CIMMessageParam::set($messageId, [
+			self::MESSAGE_PARAM_SENDING => 'Y',
+			self::MESSAGE_PARAM_SENDING_TIME => \time()
+		]);
+
+		$isSuccessful = true;
+
+		$result = self::clientMessageAdd([
+			'BOT_ID' => $messageFields['BOT_ID'],
+			'USER_ID' => $messageFields['FROM_USER_ID'],
+			'DIALOG_ID' => $messageFields['DIALOG_ID'],
+			'MESSAGE' => [
+				'ID' => $messageId,
+				'TYPE' => $messageFields['MESSAGE_TYPE'],
+				'TEXT' => $messageFields['MESSAGE'],
+			],
+			'FILES' => $files,
+			'PARAMS' => $messageParams,
+		]);
+		if (isset($result['error']))
+		{
+			$isSuccessful = false;
+			self::$lastError = new ImBot\Error(__METHOD__, $result['error']['code'], $result['error']['msg']);
+
+			$message = '';
+
+			if (self::getError()->code == 'LINE_DISABLED')
+			{
+				if (class_exists('Bitrix\ImBot\Bot\Support24'))
+				{
+					$message = ImBot\Bot\Support24::replacePlaceholders(
+						ImBot\Bot\Support24::getMessage('LINE_DISABLED'),
+						$messageFields['FROM_USER_ID']
+					);
+				}
+
+				if (empty($message))
+				{
+					$message = Loc::getMessage('IMBOT_NETWORK_ERROR_LINE_DISABLED');
+				}
+			}
+			else
+			{
+				$message = Loc::getMessage('IMBOT_NETWORK_ERROR_NOT_FOUND');
+			}
+
+			Im\Bot::addMessage(['BOT_ID' => $messageFields['BOT_ID']], [
+				'DIALOG_ID' => $messageFields['DIALOG_ID'],
+				'MESSAGE' => $message,
+				'SYSTEM' => 'Y'
+			]);
+
+			\CIMMessageParam::set($messageId, [
+				self::MESSAGE_PARAM_DELIVERED => 'N',
+				self::MESSAGE_PARAM_SENDING => 'N',
+				self::MESSAGE_PARAM_SENDING_TIME => 0
+			]);
+		}
+
+		\CIMMessageParam::sendPull($messageId, [
+			self::MESSAGE_PARAM_DELIVERED,
+			self::MESSAGE_PARAM_SENDING,
+			self::MESSAGE_PARAM_SENDING_TIME
+		]);
+
+		return $isSuccessful;
 	}
 
 	/**
@@ -1912,6 +2122,11 @@ class Network extends Base implements NetworkBot
 	 */
 	public static function onMessageUpdate($messageId, $messageFields)
 	{
+		if (!static::checkMessageRestriction($messageFields))
+		{
+			return false;
+		}
+
 		return static::clientMessageUpdate($messageId, $messageFields);
 	}
 
@@ -1923,27 +2138,140 @@ class Network extends Base implements NetworkBot
 	 */
 	public static function onMessageDelete($messageId, $messageFields)
 	{
+		if (!static::checkMessageRestriction($messageFields))
+		{
+			return false;
+		}
+
 		return static::clientMessageDelete($messageId, $messageFields);
 	}
 
 	/**
+	 * @see \Bitrix\ImBot\Event::onStartWriting
 	 * @param array $params Event arguments.
 	 *
 	 * @return bool
 	 */
 	public static function onStartWriting($params)
 	{
+		if ($params['BOT_ID'] == $params['DIALOG_ID'])
+		{
+			$params['DIALOG_ID'] = (string)$params['USER_ID'];
+		}
+
+		if (!static::checkTypingRestriction($params))
+		{
+			return false;
+		}
+
 		return static::clientStartWriting($params);
 	}
 
 	/**
+	 * Handler for "im:OnSessionVote" event.
 	 * @param array $params Event arguments.
 	 *
 	 * @return bool
 	 */
-	public static function onSessionVote($params)
+	public static function onSessionVote(array $params): bool
 	{
+		if ($params['BOT_ID'] == $params['DIALOG_ID'])
+		{
+			$params['DIALOG_ID'] = (string)$params['USER_ID'];
+		}
+
 		return static::clientSessionVote($params);
+	}
+
+	/**
+	 * Performs checking if it is user voting for session by direct text input '1' or '0'.
+	 * @param array $messageFields Message arguments.
+	 * @return bool
+	 */
+	public static function checkSessionVoteMessage(array $messageFields): bool
+	{
+		$botId = static::getBotId() ?: (int)$messageFields['BOT_ID'];
+		if (
+			$botId > 0
+			&& $messageFields['COMMAND_CONTEXT'] === 'TEXTAREA'
+			&& ($messageFields['MESSAGE'] === '1' || $messageFields['MESSAGE'] === '0')
+		)
+		{
+
+			$voteMessage = null;
+
+			$fromUserId = (int)$messageFields['FROM_USER_ID'];
+			if (Im\Common::isChatId($messageFields['DIALOG_ID']))
+			{
+				if (!static::checkMessageRestriction($messageFields))
+				{
+					return false;
+				}
+				$dialogId = (string)$messageFields['DIALOG_ID'];
+				$lastMessages = (new \CIMChat)->getLastMessage((int)$messageFields['CHAT_ID'], $botId);
+			}
+			else
+			{
+				$dialogId = (string)$messageFields['FROM_USER_ID'];
+				$lastMessages = (new \CIMMessage)->getLastMessage($fromUserId, $botId, false, false);
+			}
+
+			$i = 0;
+			foreach ($lastMessages['message'] as $message)
+			{
+				if (
+					isset($message['params'])
+					&& isset($message['params'][self::MESSAGE_PARAM_IMOL_VOTE])
+					&& isset($message['params'][self::MESSAGE_PARAM_IMOL_VOTE_LIKE])
+					&& isset($message['params'][self::MESSAGE_PARAM_IMOL_VOTE_DISLIKE])
+					&& (int)$message['params'][self::MESSAGE_PARAM_IMOL_VOTE] > 0 //SESSION_ID
+				)
+				{
+					$voteMessage = $message;
+					break;
+				}
+				// check only 7 last messages
+				if (++$i > 10)
+				{
+					break;
+				}
+			}
+			if ($voteMessage)
+			{
+				$isActionLike = $messageFields['MESSAGE'] === '1';
+				$sessionId = (int)$voteMessage['params'][self::MESSAGE_PARAM_IMOL_VOTE];
+
+				\CIMMessageParam::set($voteMessage['id'], [self::MESSAGE_PARAM_IMOL_VOTE => ($isActionLike ? 'like' : 'dislike')]);
+				\CIMMessageParam::sendPull($voteMessage['id'], [self::MESSAGE_PARAM_IMOL_VOTE]);
+
+				self::sendMessage([
+					'DIALOG_ID' => $dialogId,
+					'MESSAGE' => $isActionLike
+						? $voteMessage['params'][self::MESSAGE_PARAM_IMOL_VOTE_LIKE]
+						: $voteMessage['params'][self::MESSAGE_PARAM_IMOL_VOTE_DISLIKE],
+					'SYSTEM' => 'N',
+					'URL_PREVIEW' => 'N',
+				]);
+
+				$voteParams = [
+					'BOT_ID' => $botId,
+					'DIALOG_ID' => $dialogId,
+					'USER_ID' => $fromUserId,
+					'ACTION' => ($isActionLike ? 'like' : 'dislike'),
+					'SESSION_ID' => $sessionId,
+					'MESSAGE' => [
+						'MESSAGE' => $voteMessage['text'],
+						'PARAMS' => $voteMessage['params'],//CONNECTOR_MID
+					]
+				];
+
+				static::onSessionVote($voteParams);
+
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -1956,7 +2284,6 @@ class Network extends Base implements NetworkBot
 	{
 		return static::onReceiveCommand($command, $params);
 	}
-
 
 	/**
 	 * @param int $messageId Message Id.
@@ -1972,7 +2299,8 @@ class Network extends Base implements NetworkBot
 	 * 	(int) TO_USER_ID
 	 * 	(int) FROM_USER_ID
 	 * 	(int) CONNECTOR_MID
-	 * ]</pre>
+	 * ]
+	 * </pre>
 	 *
 	 * @return bool
 	 */
@@ -1988,7 +2316,7 @@ class Network extends Base implements NetworkBot
 		{
 			if (empty($messageFields['CONNECTOR_MID']))
 			{
-				$messageParams = \CIMMessageParam::Get($messageId, self::MESSAGE_PARAM_CONNECTOR_MID);
+				$messageParams = \CIMMessageParam::get($messageId, self::MESSAGE_PARAM_CONNECTOR_MID);
 				$messageFields['CONNECTOR_MID'] = $messageParams[0];
 			}
 
@@ -2009,85 +2337,6 @@ class Network extends Base implements NetworkBot
 			return true;
 		}
 
-		elseif ($messageFields['COMMAND'] === self::COMMAND_MENU)
-		{
-			if (
-				$messageFields['COMMAND_PARAMS'] === self::MENU_EXIT_ID
-				|| preg_match("/^".self::MENU_EXIT_ID.";([a-z0-9;:_\/]+)/i", $messageFields['COMMAND_PARAMS'], $commandParams)
-			)
-			{
-				$menuState = self::getMenuState((int)$messageFields['FROM_USER_ID']) or [];
-				$lastItemId = end($menuState['track']);
-				$menuState['track'][] = self::MENU_EXIT_ID;//finish
-
-				self::disableMessageButtons((int)$messageId, false);
-
-				\CIMMessageParam::Set($messageId, [
-					self::MESSAGE_PARAM_SENDING => 'Y',
-					self::MESSAGE_PARAM_SENDING_TIME => time(),
-				]);
-				\CIMMessageParam::SendPull($messageId, [
-					self::MESSAGE_PARAM_SENDING,
-					self::MESSAGE_PARAM_SENDING_TIME,
-					self::MESSAGE_PARAM_KEYBOARD
-				]);
-
-				$params = [
-					self::MESSAGE_PARAM_ALLOW_QUOTE => 'N'
-				];
-				if (isset($commandParams, $commandParams[1]))
-				{
-					$menuState['menu_action'] = $commandParams[1];
-					$params[self::MESSAGE_PARAM_MENU_ACTION] = $commandParams[1];
-				}
-				self::sendMenuResult(
-					[
-						'BOT_ID' => static::getBotId(),
-						'DIALOG_ID' => $messageFields['FROM_USER_ID'],
-						'MESSAGE_ID' => $messageId,
-						'PARAMS' => $params,
-					],
-					$menuState
-				);
-
-				if ($lastItemId)
-				{
-					$lastItem = self::getMenuItem($lastItemId);
-					$buttonData = self::detectClickedMenuButton($lastItemId, $lastItem, $menuState);
-					// forward massage
-					if (!empty($buttonData['forward_text']))
-					{
-						self::sendMessage([
-							'FROM_USER_ID' => static::getBotId(),
-							'DIALOG_ID' => $messageFields['FROM_USER_ID'],
-							//'MESSAGE' => Loc::getMessage('IMBOT_NETWORK_BOT_DIALOG_FORWARD'),
-							'MESSAGE' => $buttonData['forward_text'],
-							'SYSTEM' => 'Y',
-							'URL_PREVIEW' => 'N',
-							'PARAMS' => [self::MESSAGE_PARAM_ALLOW_QUOTE => 'N'],
-						]);
-					}
-				}
-
-			}
-			else
-			{
-				$menuState = self::showMenu([
-					'BOT_ID' => static::getBotId(),
-					'DIALOG_ID' => $messageFields['DIALOG_ID'],
-					'COMMAND' => $messageFields['COMMAND'],
-					'COMMAND_PARAMS' => $messageFields['COMMAND_PARAMS'],
-					'MESSAGE_ID' => (int)$messageId,
-				]);
-			}
-
-			self::saveMenuState(
-				(int)$messageFields['FROM_USER_ID'],
-				$menuState
-			);
-
-			return true;
-		}
 		elseif ($messageFields['COMMAND'] === self::COMMAND_UNREGISTER)
 		{
 			$grantAccess = Main\ModuleManager::isModuleInstalled('bitrix24')
@@ -2222,14 +2471,6 @@ class Network extends Base implements NetworkBot
 		return $isAdmin[$userId];
 	}
 
-	/**
-	 * @return string
-	 */
-	public static function getSupportLevel()
-	{
-		return self::SUPPORT_LEVEL_NONE;
-	}
-
 	//endregion
 
 	//region Bitrix24
@@ -2238,7 +2479,7 @@ class Network extends Base implements NetworkBot
 	 * Detects bitrix24 portal's stage type.
 	 * @return string
 	 */
-	protected static function getPortalStage()
+	protected static function getPortalStage(): string
 	{
 		static $portalType;
 		if ($portalType === null)
@@ -2294,6 +2535,7 @@ class Network extends Base implements NetworkBot
 			SELECT
 				RU.USER_ID,
 				RU.CHAT_ID,
+				RU.MESSAGE_TYPE, 
 				IF(UNIX_TIMESTAMP(M.DATE_CREATE) > UNIX_TIMESTAMP() - {$depth}, 'Y', 'N') RECENTLY_TALK,
 				M.ID AS MESSAGE_ID
 			FROM
@@ -2305,8 +2547,8 @@ class Network extends Base implements NetworkBot
 			WHERE
 				RB.USER_ID = {$botId}
 				and RU.USER_ID != {$botId}
-				and RB.MESSAGE_TYPE = '".\IM_MESSAGE_PRIVATE."'
-				and RU.MESSAGE_TYPE = '".\IM_MESSAGE_PRIVATE."'
+				and RB.MESSAGE_TYPE IN('".\IM_MESSAGE_PRIVATE."', '".\IM_MESSAGE_CHAT."')
+				and RU.MESSAGE_TYPE IN('".\IM_MESSAGE_PRIVATE."', '".\IM_MESSAGE_CHAT."')
 		";
 		if ($res = Main\Application::getInstance()->getConnection()->query($query))
 		{
@@ -2322,9 +2564,57 @@ class Network extends Base implements NetworkBot
 		}
 	}
 
+	/**
+	 * @param string $dialogId
+	 * @return int
+	 */
+	protected static function getChatId(string $dialogId): int
+	{
+		$chatId = -1;
+		if (Im\Common::isChatId($dialogId))
+		{
+			$chatCheckRes = \Bitrix\Im\Model\BotChatTable::getList([
+				'select' => ['CHAT_ID'],
+				'filter' => [
+					'=BOT_ID' => (int)static::getBotId(),
+					'=CHAT_ID' => (int)Im\Dialog::getChatId($dialogId),
+				]
+			]);
+			if ($chatCheck = $chatCheckRes->fetch())
+			{
+				$chatId = (int)$chatCheck['CHAT_ID'];
+			}
+		}
+		else
+		{
+			$chatId = (int)\CIMMessage::getChatId(static::getBotId(), $dialogId);
+		}
+
+		return $chatId;
+	}
+
 	//endregion
 
 	//region Service functions
+
+	/**
+	 * @param string $code
+	 * @return bool
+	 */
+	public static function checkCodeBlacklist(string $code): bool
+	{
+		return in_array($code, self::$blackListOfCodes, true);
+	}
+
+	/**
+	 * @return \CMain
+	 */
+	protected static function getApplication(): \CMain
+	{
+		/** @global \CMain $APPLICATION */
+		global $APPLICATION;
+		return $APPLICATION;
+	}
 
 	/**
 	 * Returns web client.
@@ -2375,7 +2665,7 @@ class Network extends Base implements NetworkBot
 	 * ]
 	 * </pre>.
 	 */
-	protected static function getUserInfo(int $userId)
+	protected static function getUserInfo(int $userId): array
 	{
 		$result = [];
 
@@ -2385,7 +2675,7 @@ class Network extends Base implements NetworkBot
 			$avatarUrl = '';
 			if ($user['PERSONAL_PHOTO'])
 			{
-				$fileTmp = \CFile::ResizeImageGet(
+				$fileTmp = \CFile::resizeImageGet(
 					$user['PERSONAL_PHOTO'],
 					['width' => 300, 'height' => 300],
 					\BX_RESIZE_IMAGE_EXACT,
@@ -2489,7 +2779,7 @@ class Network extends Base implements NetworkBot
 			}
 			else
 			{
-				$res = \CGroup::GetGroupUserEx(1);
+				$res = \CGroup::getGroupUserEx(1);
 				while ($row = $res->fetch())
 				{
 					$users[] = (int)$row["USER_ID"];
@@ -2506,7 +2796,7 @@ class Network extends Base implements NetworkBot
 	 *
 	 * @return string
 	 */
-	public static function getLangMessage($messageCode = '')
+	public static function getLangMessage($messageCode = ''): string
 	{
 		return Loc::getMessage($messageCode);
 	}
@@ -2519,7 +2809,7 @@ class Network extends Base implements NetworkBot
 	 *
 	 * @return string
 	 */
-	public static function replacePlaceholders($message, $userId = 0)
+	public static function replacePlaceholders($message, $userId = 0): string
 	{
 		if (!Main\Loader::includeModule('im'))
 		{
@@ -2544,6 +2834,25 @@ class Network extends Base implements NetworkBot
 		}
 
 		return $message;
+	}
+
+	/**
+	 * Removes mentions from message.
+	 *
+	 * @param string $messageText
+	 *
+	 * @return string
+	 */
+	protected static function removeMentions(string $messageText): string
+	{
+		if ($messageText === '0')
+		{
+			return '#ZERO#';
+		}
+		$messageText = preg_replace("/\\[CHAT=[0-9]+\\](.*?)\\[\\/CHAT\\]/", "\\1",  $messageText);
+		$messageText = preg_replace("/\\[USER=[0-9]+\\](.*?)\\[\\/USER\\]/", "\\1",  $messageText);
+
+		return $messageText;
 	}
 
 	/**
@@ -2573,13 +2882,13 @@ class Network extends Base implements NetworkBot
 		try
 		{
 			$hash = md5($hash . $avatarUrl);
-			$tempPath =  \CFile::GetTempName('', $hash.'.'.$matches[1]);
+			$tempPath =  \CFile::getTempName('', $hash.'.'.$matches[1]);
 
 			$http = new Main\Web\HttpClient();
 			$http->setPrivateIp(false);
 			if ($http->download($avatarUrl, $tempPath))
 			{
-				$recordFile = \CFile::MakeFileArray($tempPath);
+				$recordFile = \CFile::makeFileArray($tempPath);
 			}
 			else
 			{
@@ -2591,7 +2900,7 @@ class Network extends Base implements NetworkBot
 			return '';
 		}
 
-		if (!\CFile::IsImage($recordFile['name'], $recordFile['type']))
+		if (!\CFile::isImage($recordFile['name'], $recordFile['type']))
 		{
 			return '';
 		}
@@ -2610,564 +2919,7 @@ class Network extends Base implements NetworkBot
 
 	//endregion
 
-	//region Menu
 
-	/**
-	 * Checks if bot has ITR menu.
-	 * @see \Bitrix\Imbot\Bot\MenuBot::hasBotMenu
-	 *
-	 * @return bool
-	 */
-	public static function hasBotMenu()
-	{
-		return false;
-	}
-
-	/**
-	 * Returns stored data for ITR menu.
-	 * @see \Bitrix\Imbot\Bot\MenuBot::getBotMenu
-	 *
-	 * @return array
-	 */
-	public static function getBotMenu()
-	{
-		return [];
-	}
-
-	/**
-	 * Returns user's menu track.
-	 * @see \Bitrix\Imbot\Bot\MenuBot::getMenuState
-	 *
-	 * @param int $dialogId User id.
-	 *
-	 * @return array|null
-	 */
-	public static function getMenuState(int $dialogId)
-	{
-		static $menuState;
-		if ($menuState === null)
-		{
-			$res = ImBot\Model\NetworkSessionTable::getList([
-				'select' => [
-					'MENU_STATE',
-				],
-				'filter' => [
-					'=BOT_ID' => static::getBotId(),
-					'=DIALOG_ID' => $dialogId,
-				]
-			]);
-			if ($sessData = $res->fetch())
-			{
-				if (!empty($sessData['MENU_STATE']))
-				{
-					try
-					{
-						$menuState = Main\Web\Json::decode($sessData['MENU_STATE']);
-					}
-					catch (Main\ArgumentException $e)
-					{
-					}
-					if (
-						!is_array($menuState)
-						|| !array_key_exists('track', $menuState)
-					)
-					{
-						$menuState = null;
-					}
-				}
-			}
-		}
-
-		return $menuState;
-	}
-
-	/**
-	 * Saves user's menu track.
-	 * @see \Bitrix\Imbot\Bot\MenuBot::saveMenuState
-	 *
-	 * @param int $dialogId User id.
-	 * @param array|null $menuState User menu track.
-	 *
-	 * @return void
-	 */
-	public static function saveMenuState(int $dialogId, ?array $menuState = null)
-	{
-		self::startDialogSession([
-			'BOT_ID' => static::getBotId(),
-			'DIALOG_ID' => $dialogId,
-			'GREETING_SHOWN' => 'Y',
-			'MENU_STATE' => $menuState,
-		]);
-	}
-
-	/**
-	 * Checks if menu track has been completed.
-	 *
-	 * @param int $dialogId User id.
-	 * @param array|null $menuState User menu track.
-	 *
-	 * @return bool
-	 */
-	public static function isMenuTrackFinished(int $dialogId, ?array $menuState = null)
-	{
-		if (!is_array($menuState))
-		{
-			$menuState = self::getMenuState($dialogId);
-		}
-		$lastMenuItemId = is_array($menuState['track']) ? end($menuState['track']) : null;
-
-		return ($lastMenuItemId === self::MENU_EXIT_ID);
-	}
-
-	/**
-	 * Stops show menu to user.
-	 *
-	 * @param int $dialogId User id.
-	 *
-	 * @return void
-	 */
-	public static function stopMenuTrack(int $dialogId)
-	{
-		$menuState = self::getMenuState($dialogId) or [];
-		$lastMenuItemId = is_array($menuState['track']) ? end($menuState['track']) : null;
-		if (self::MENU_EXIT_ID !== $lastMenuItemId)
-		{
-			$menuState['track'][] = self::MENU_EXIT_ID;//do not show menu
-			self::saveMenuState($dialogId, $menuState);
-		}
-		$messageId = isset($menuState['message_id']) ? (int)$menuState['message_id'] : null;
-		if ($messageId)
-		{
-			self::disableMessageButtons((int)$messageId);
-		}
-	}
-
-	/**
-	 * Returns menu item.
-	 *
-	 * @param string $itemId Item id.
-	 * @param array|null $menuData
-	 *
-	 * @return array|null
-	 */
-	protected static function getMenuItem(string $itemId, ?array $menuData = null)
-	{
-		$menuData = $menuData ?: static::getBotMenu();
-		if (is_array($menuData))
-		{
-			foreach ($menuData['elements'] as $item)
-			{
-				if ($item['id'] === $itemId)
-				{
-					return $item;
-				}
-			}
-		}
-
-		return null;
-	}
-
-	/**
-	 * Returns menu item.
-	 *
-	 * @param string $itemId Item id.
-	 * @param array $menuItem
-	 *
-	 * @return array|null
-	 */
-	protected static function detectClickedMenuButton(string $itemId, array $menuItem, array $menuState)
-	{
-		$clickedButton = null;
-		if (isset($menuItem['buttons']))
-		{
-			foreach ($menuItem['buttons'] as $buttonData)
-			{
-				if ($buttonData['action'] == self::MENU_ACTION_NEXT && $buttonData['action_value'] == $itemId)
-				{
-					$clickedButton = $buttonData;
-					break;
-				}
-				elseif ($buttonData['action'] == self::MENU_ACTION_QUEUE)
-				{
-					if (
-						isset($menuState['menu_action'])
-						&& !empty($menuState['menu_action'])
-						&& isset($buttonData['action_value'])
-						&& !empty($buttonData['action_value'])
-						&& $menuState['menu_action'] === $buttonData['action_value']
-					)
-					{
-						$clickedButton = $buttonData;
-						break;
-					}
-					elseif (
-						(
-							!isset($menuState['menu_action'])
-							|| empty($menuState['menu_action'])
-						)
-						&&
-						(
-							!isset($buttonData['action_value'])
-							|| empty($buttonData['action_value'])
-						)
-					)
-					{
-						$clickedButton = $buttonData;
-						break;
-					}
-				}
-				elseif ($buttonData['action_value'] == self::MENU_EXIT_ID)
-				{
-					$clickedButton = $buttonData;
-					break;
-				}
-			}
-		}
-
-		return $clickedButton;
-	}
-
-	/**
-	 * Display ITR menu.
-	 * @see \Bitrix\Imbot\Bot\MenuBot::showMenu
-	 *
-	 * @param array $params Command arguments.
-	 * <pre>
-	 * [
-	 *   (int) BOT_ID Bot id.
-	 *   (int) DIALOG_ID Dialog id.
-	 *   (int) MESSAGE_ID Previous message id.
-	 *   (string) COMMAND
-	 *   (string) COMMAND_PARAMS
-	 *   (bool) FULL_REDRAW Drop previous menu block.
-	 * ]
-	 * </pre>.
-	 *
-	 * @return array|null
-	 */
-	public static function showMenu(array $params)
-	{
-		$getLast = function ($arr)
-		{
-			return !empty($arr) && is_array($arr) ? end($arr) : null;
-		};
-
-		$newMenuState = ['message_id' => 0, 'track' => [], 'messages' => []];
-		$previousMenuState = self::getMenuState((int)$params['DIALOG_ID']);
-		if ($previousMenuState)
-		{
-			$lastMenuItemId = $getLast($previousMenuState['track']);
-			if ($lastMenuItemId === self::MENU_EXIT_ID)
-			{
-				return $previousMenuState;//finish has reached
-			}
-
-			$newMenuState = $previousMenuState;
-		}
-
-		$menuData = static::getBotMenu();
-		if (!is_array($menuData))
-		{
-			return null;
-		}
-
-		$previousMessageId = null;
-
-		$currentMenuItemId = $menuData['start'] ?? self::MENU_ENTRANCE_ID;
-
-		// go to next menu level
-		if (
-			$params['COMMAND'] === self::COMMAND_MENU &&
-			!empty($params['COMMAND_PARAMS']) &&
-			is_string($params['COMMAND_PARAMS']) &&
-			self::getMenuItem($params['COMMAND_PARAMS'], $menuData)
-		)
-		{
-			$currentMenuItemId = $params['COMMAND_PARAMS'];
-			$previousMessageId = (int)$params['MESSAGE_ID'];
-		}
-		// redraw menu
-		elseif ($previousMenuState)
-		{
-			$previousMessageId = (int)$previousMenuState['message_id'];
-			$lastMenuItemId = $getLast($previousMenuState['track']);
-			if ($lastMenuItemId !== null)
-			{
-				$currentMenuItemId = $lastMenuItemId;
-			}
-		}
-
-		$menuItem = self::getMenuItem($currentMenuItemId, $menuData);
-		if ($menuItem)
-		{
-			if ($currentMenuItemId !== $getLast($newMenuState['track']))
-			{
-				$newMenuState['track'][] = $currentMenuItemId;//append track
-			}
-
-			$message = [
-				'DIALOG_ID' => $params['DIALOG_ID'],
-				'MESSAGE' => $menuItem['text'],
-				'SYSTEM' => 'N',
-				'URL_PREVIEW' => 'N',
-				'MESSAGE_TYPE' => IM_MESSAGE_PRIVATE,
-			];
-
-			if (isset($menuItem['buttons']))
-			{
-				$userAccess = self::USER_LEVEL_REGULAR;
-				if (self::isUserAdmin(self::getCurrentUser()->getId()))
-				{
-					$userAccess = self::USER_LEVEL_ADMIN;
-				}
-				elseif (self::isUserIntegrator(self::getCurrentUser()->getId()))
-				{
-					$userAccess = self::USER_LEVEL_INTEGRATOR;
-				}
-
-				$supportLevel = mb_strtoupper(static::getSupportLevel());
-
-				$keyboard = new Im\Bot\Keyboard(static::getBotId());
-
-				foreach ($menuItem['buttons'] as $buttonData)
-				{
-					// check access
-					if (isset($buttonData['access']))
-					{
-						$buttonAccess = preg_split("/[\s,]+/", $buttonData['access']);
-						if ($buttonAccess && !in_array($userAccess, $buttonAccess, true))
-						{
-							continue;
-						}
-					}
-
-					// check support level
-					if (isset($buttonData['support_level']))
-					{
-						$buttonSupportLevel = preg_split("/[\s,]+/", $buttonData['support_level']);
-						if ($buttonSupportLevel && !in_array($supportLevel, $buttonSupportLevel, true))
-						{
-							continue;
-						}
-					}
-
-					$button = [
-						"TEXT" => $buttonData['text'],
-						"DISPLAY" => ($buttonData['display'] ?? "BLOCK"),
-						"BG_COLOR" => ($buttonData['back_color'] ??  self::MENU_BUTTON_ACTIVE),
-						"TEXT_COLOR" => ($buttonData['text_color'] ?? "#fff"),
-						"BLOCK" => "Y",
-					];
-					switch ($buttonData['action'])
-					{
-						case self::MENU_ACTION_NEXT:
-							$button["COMMAND"] = self::COMMAND_MENU;
-							$button["COMMAND_PARAMS"] = $buttonData['action_value'];
-							break;
-
-						case self::MENU_ACTION_LINK:
-							$button["LINK"] = $buttonData['action_value'];
-							break;
-
-						case self::MENU_ACTION_HELP:
-							if ($buttonData['action_value'] && !empty($buttonData['action_value']))
-							{
-								$button["FUNCTION"] = "BX.Helper.show(\'redirect=detail&HD_ID=".$buttonData['action_value']."\')";
-							}
-							else
-							{
-								$button["FUNCTION"] = "BX.Helper.show()";
-							}
-							break;
-
-						case self::MENU_ACTION_QUEUE:
-							$button["COMMAND"] = self::COMMAND_MENU;
-							$button["COMMAND_PARAMS"] = self::MENU_EXIT_ID;
-							// add some additional action params
-							if ($buttonData['action_value'] && !empty($buttonData['action_value']))
-							{
-								$button["COMMAND_PARAMS"] .= ';'.$buttonData['action_value'];
-							}
-							break;
-					}
-					$keyboard->addButton($button);
-				}
-				$message['KEYBOARD'] = $keyboard;
-			}
-			else
-			{
-				if ($previousMessageId)
-				{
-					self::disableMessageButtons((int)$previousMessageId);
-				}
-				// reset menu if there are no buttons further
-				$newMenuState = null;
-				$previousMessageId = null;
-			}
-
-			$fullRedraw = (bool)($params['FULL_REDRAW'] === true);
-
-			if ($previousMessageId && !$fullRedraw)
-			{
-				$message['EDIT_FLAG'] = 'N';
-				self::updateMessage($previousMessageId, $message);
-			}
-			else
-			{
-				if ($previousMessageId && $fullRedraw)
-				{
-					self::dropMessage($previousMessageId);
-				}
-
-				$result = self::sendMessage($message);
-
-				if ($newMenuState && $result[0])
-				{
-					$newMenuState['message_id'] = $result[0];
-				}
-			}
-		}
-
-		return $newMenuState;
-	}
-
-	/**
-	 * Sends result of the user interaction with ITR menu to operator.
-	 * @see \Bitrix\Imbot\Bot\MenuBot::sendMenuResult
-	 *
-	 * @param array $params Command arguments.
-	 * <pre>
-	 * [
-	 *   (int) BOT_ID Bot id.
-	 *   (int) DIALOG_ID Dialog id.
-	 *   (int) MESSAGE_ID Message id.
-	 *   (array) PARAMS Some extra action data.
-	 * ]
-	 * @param array|null $menuState Saved user track.
-	 *
-	 * @return bool
-	 */
-	public static function sendMenuResult(array $params, ?array $menuState = null)
-	{
-		$menuState = $menuState ?: self::getMenuState((int)$params['DIALOG_ID']);
-		if (
-			!is_array($menuState) ||
-			!array_key_exists('track', $menuState) ||
-			!array_key_exists('message_id', $menuState)
-		)
-		{
-			return false;
-		}
-
-		$menuData = static::getBotMenu();
-		if (!is_array($menuData))
-		{
-			return false;
-		}
-
-		$userId = (int)$params['DIALOG_ID'];
-
-		$startMenuItemId = $menuData['start'] ?? self::MENU_ENTRANCE_ID;
-		$previousMenuItem = self::getMenuItem($startMenuItemId, $menuData);
-
-		$level = 0;
-		$blocks = [];
-		foreach ($menuState['track'] as $itemId)
-		{
-			$menuItem = self::getMenuItem($itemId, $menuData);
-			if (!$menuItem && $itemId != self::MENU_EXIT_ID)
-			{
-				continue;
-			}
-			if ($itemId == $startMenuItemId)
-			{
-				$previousMenuItem = $menuItem;
-				continue;
-			}
-
-			$buttonData = self::detectClickedMenuButton($itemId, $previousMenuItem, $menuState);
-			$answer = $buttonData['text'] ?? '';
-
-
-			if (isset($previousMenuItem['buttons']))
-			{
-				foreach ($previousMenuItem['buttons'] as $buttonData)
-				{
-					if ($buttonData['action'] == self::MENU_ACTION_NEXT && $buttonData['action_value'] == $itemId)
-					{
-						$answer = $buttonData['text'];
-						break;
-					}
-					elseif ($buttonData['action'] == self::MENU_ACTION_QUEUE)
-					{
-						if (
-							isset($menuState['menu_action'])
-							&& !empty($menuState['menu_action'])
-							&& isset($buttonData['action_value'])
-							&& !empty($buttonData['action_value'])
-							&& $menuState['menu_action'] === $buttonData['action_value']
-						)
-						{
-							$answer = $buttonData['text'];
-							break;
-						}
-						elseif (
-							(
-								!isset($menuState['menu_action'])
-								|| empty($menuState['menu_action'])
-							)
-							&&
-							(
-								!isset($buttonData['action_value'])
-								|| empty($buttonData['action_value'])
-							)
-						)
-						{
-							$answer = $buttonData['text'];
-							break;
-						}
-					}
-					elseif ($buttonData['action_value'] == self::MENU_EXIT_ID)
-					{
-						$answer = $buttonData['text'];
-						break;
-					}
-				}
-			}
-
-			$level ++;
-			if ($level > 1)
-			{
-				$blocks[] = ["DELIMITER" => ['SIZE' => 200, 'COLOR' => "#c6c6c6"]];
-			}
-			$blocks[] = ["GRID" => [[
-				"NAME" => $level.". ". static::replacePlaceholders($previousMenuItem['text'], $userId),
-				"VALUE" => static::replacePlaceholders($answer, $userId),
-				'COLOR' => "#239991",
-				"DISPLAY" => "BLOCK",
-				"WIDTH" => "500"
-			]]];
-
-			$previousMenuItem = $menuItem;
-		}
-
-		return self::clientMessageSend([
-			'BOT_ID' => static::getBotId(),
-			'USER_ID' => (int)$params['DIALOG_ID'],
-			'ATTACH' => Main\Web\Json::encode([
-				'ID' => 1,
-				'COLOR' => "#239991",
-				'BLOCKS' => $blocks,
-			]),
-			'MESSAGE' => [
-				'ID' => ($params['MESSAGE_ID'] ?: 0),
-				'TEXT' => Loc::getMessage('IMBOT_NETWORK_BOT_MENU_RESULT'),
-			],
-			'PARAMS' => ($params['PARAMS'] ?? null),
-		]);
-	}
-
-	//endregion
 
 	//region Message
 
@@ -3179,11 +2931,11 @@ class Network extends Base implements NetworkBot
 	 * [
 	 * 	(int) TO_USER_ID
 	 * 	(int) FROM_USER_ID
-	 * 	(int|string) DIALOG_ID
+	 * 	(string) DIALOG_ID
 	 * 	(array) PARAMS
 	 * 	(string) MESSAGE
 	 * 	(array | \CIMMessageParamAttach) ATTACH
-	 * 	(array | Im\Bot\Keyboard) KEYBOARD
+	 * 	(array | Keyboard) KEYBOARD
 	 * 	(string) SYSTEM - N|Y
 	 * 	(string) URL_PREVIEW  - N|Y
 	 * ]
@@ -3199,18 +2951,17 @@ class Network extends Base implements NetworkBot
 		}
 
 		$userId = 0;
-
 		if (isset($messageFields['TO_USER_ID']))
 		{
 			$userId = $messageFields['TO_USER_ID'];
 		}
-		else if (isset($messageFields['DIALOG_ID']))
+		elseif (isset($messageFields['DIALOG_ID']))
 		{
 			if (preg_match('/^[0-9]+$/i', $messageFields['DIALOG_ID']))
 			{
 				$userId = $messageFields['DIALOG_ID'];
 			}
-			else if (
+			elseif (
 				$messageFields['DIALOG_ID'] === self::USER_LEVEL_ADMIN
 				|| $messageFields['DIALOG_ID'] === self::USER_LEVEL_BUSINESS
 			)
@@ -3220,7 +2971,7 @@ class Network extends Base implements NetworkBot
 				{
 					$users = self::getAdministrators();
 				}
-				else if ($messageFields['DIALOG_ID'] === self::USER_LEVEL_BUSINESS)
+				elseif ($messageFields['DIALOG_ID'] === self::USER_LEVEL_BUSINESS)
 				{
 					$users = self::getBusinessUsers();
 				}
@@ -3245,7 +2996,7 @@ class Network extends Base implements NetworkBot
 
 		$messageFields['MESSAGE'] = static::replacePlaceholders($messageFields['MESSAGE'], $userId);
 
-		$messageId = \CIMMessenger::Add($messageFields);
+		$messageId = \CIMMessenger::add($messageFields);
 		if ($messageId)
 		{
 			return [$messageId];
@@ -3272,13 +3023,13 @@ class Network extends Base implements NetworkBot
 			return false;
 		}
 
-		$result = (bool)\CIMMessageParam::Set($messageId, [
+		$result = (bool)\CIMMessageParam::set($messageId, [
 			self::MESSAGE_PARAM_DELIVERED => 'N',
 			self::MESSAGE_PARAM_SENDING => 'N',
 			self::MESSAGE_PARAM_SENDING_TIME => 0
 		]);
 
-		\CIMMessageParam::SendPull($messageId, [
+		\CIMMessageParam::sendPull($messageId, [
 			self::MESSAGE_PARAM_DELIVERED,
 			self::MESSAGE_PARAM_SENDING,
 			self::MESSAGE_PARAM_SENDING_TIME
@@ -3305,9 +3056,9 @@ class Network extends Base implements NetworkBot
 			return false;
 		}
 
-		\CIMMessenger::DisableMessageCheck();
-		$result = (bool)\CIMMessage::Delete($messageId, null, true);
-		\CIMMessenger::EnableMessageCheck();
+		\CIMMessenger::disableMessageCheck();
+		$result = (bool)\CIMMessenger::delete($messageId, null, true, false);
+		\CIMMessenger::enableMessageCheck();
 
 		return $result;
 	}
@@ -3320,7 +3071,7 @@ class Network extends Base implements NetworkBot
 	 *  (int) TO_USER_ID
 	 *  (int) FROM_USER_ID
 	 *  (array | \CIMMessageParamAttach) ATTACH
-	 *  (array | Im\Bot\Keyboard) KEYBOARD
+	 *  (array | Keyboard) KEYBOARD
 	 *  (array) FILES
 	 *  (string) MESSAGE
 	 *  (string) URL_PREVIEW
@@ -3340,13 +3091,7 @@ class Network extends Base implements NetworkBot
 			return false;
 		}
 
-		$messageRes = Im\Model\MessageTable::getList([
-			'select' => ['ID'],
-			'filter' => [
-				'=ID' => $messageId,
-				'=AUTHOR_ID' => static::getBotId(),
-			],
-		]);
+		$messageRes = Im\Model\MessageTable::getByPrimary($messageId);
 		if (!($message = $messageRes->fetch()))
 		{
 			return false;
@@ -3354,10 +3099,10 @@ class Network extends Base implements NetworkBot
 
 		if (isset($messageFields['ATTACH']) && (!$messageFields['ATTACH'] instanceof \CIMMessageParamAttach))
 		{
-			$messageFields['ATTACH'] = \CIMMessageParamAttach::GetAttachByJson($messageFields['ATTACH']);
+			$messageFields['ATTACH'] = \CIMMessageParamAttach::getAttachByJson($messageFields['ATTACH']);
 		}
 
-		if (isset($messageFields['KEYBOARD']) && (!$messageFields['KEYBOARD'] instanceof Im\Bot\Keyboard))
+		if (isset($messageFields['KEYBOARD']) && (!$messageFields['KEYBOARD'] instanceof Keyboard))
 		{
 			$keyboard = ['BOT_ID' => static::getBotId()];
 			if (!isset($messageFields['KEYBOARD']['BUTTONS']))
@@ -3368,7 +3113,7 @@ class Network extends Base implements NetworkBot
 			{
 				$keyboard = $messageFields['KEYBOARD'];
 			}
-			$messageFields['KEYBOARD'] = Im\Bot\Keyboard::getKeyboardByJson($keyboard, [], ['ENABLE_FUNCTIONS' => 'Y']);
+			$messageFields['KEYBOARD'] = Keyboard::getKeyboardByJson($keyboard, [], ['ENABLE_FUNCTIONS' => 'Y']);
 		}
 
 		if (!empty($messageFields['FILES']) && is_array($messageFields['FILES']))
@@ -3377,23 +3122,39 @@ class Network extends Base implements NetworkBot
 			{
 				$messageFields['ATTACH'] = new \CIMMessageParamAttach(null, \CIMMessageParamAttach::CHAT);
 			}
-			foreach ($messageFields['FILES'] as $key => $value)
+			foreach ($messageFields['FILES'] as $value)
 			{
-				$messageFields['ATTACH']->AddFiles([[
-					'NAME' => $value['name'],
-					'LINK' => $value['link'],
-					'SIZE' => $value['size'],
-				]]);
+				if ($value['type'] === 'image')
+				{
+					$messageFields['ATTACH']->addImages([[
+						'NAME' => $value['name'],
+						'LINK' => $value['link'],
+						'WIDTH' => (int)$value['width'],
+						'HEIGHT' => (int)$value['height'],
+					]]);
+				}
+				else
+				{
+					$messageFields['ATTACH']->addFiles([[
+						'NAME' => $value['name'],
+						'LINK' => $value['link'],
+						'SIZE' => $value['size'],
+					]]);
+				}
 			}
 		}
 
+		$userId = 0;
 		if (isset($messageFields['TO_USER_ID']))
 		{
 			$userId = (int)$messageFields['TO_USER_ID'];
 		}
 		elseif (isset($messageFields['DIALOG_ID']))
 		{
-			$userId = (int)$messageFields['DIALOG_ID'];
+			if (!Im\Common::isChatId($messageFields['DIALOG_ID']))
+			{
+				$userId = (int)$messageFields['DIALOG_ID'];
+			}
 		}
 
 		$messageFields['MESSAGE'] = static::replacePlaceholders($messageFields['MESSAGE'], $userId);
@@ -3410,7 +3171,20 @@ class Network extends Base implements NetworkBot
 	}
 
 	/**
-	 * Disables keyboard buttons in ITR menu message.
+	 * Enables keyboard buttons in message.
+	 *
+	 * @param int $messageId Message Id.
+	 * @param bool $sendPullNotify Allow send push request.
+	 *
+	 * @return bool
+	 */
+	protected static function enableMessageButtons(int $messageId, bool $sendPullNotify = true)
+	{
+		return self::switchButtonsAvailability(true, $messageId, $sendPullNotify);
+	}
+
+	/**
+	 * Disables keyboard buttons in message.
 	 *
 	 * @param int $messageId Message Id.
 	 * @param bool $sendPullNotify Allow send push request.
@@ -3418,6 +3192,20 @@ class Network extends Base implements NetworkBot
 	 * @return bool
 	 */
 	protected static function disableMessageButtons(int $messageId, bool $sendPullNotify = true)
+	{
+		return self::switchButtonsAvailability(false, $messageId, $sendPullNotify);
+	}
+
+	/**
+	 * Disables keyboard buttons in message.
+	 *
+	 * @param bool $availability Availability flat to set.
+	 * @param int $messageId Message Id.
+	 * @param bool $sendPullNotify Allow send push request.
+	 *
+	 * @return bool
+	 */
+	private static function switchButtonsAvailability(bool $availability, int $messageId, bool $sendPullNotify = true)
 	{
 		if (!Main\Loader::includeModule('im'))
 		{
@@ -3473,19 +3261,27 @@ class Network extends Base implements NetworkBot
 			return false;
 		}
 
-		$keyboard = new Im\Bot\Keyboard(static::getBotId());
+		$keyboard = new Keyboard(static::getBotId());
 
 		foreach ($buttons as $buttonData)
 		{
-			$buttonData['BG_COLOR'] = self::MENU_BUTTON_DISABLED;
-			$buttonData['DISABLED'] = 'Y';
+			if ($availability)
+			{
+				$buttonData['BG_COLOR'] = static::BUTTON_DEFAULT_COLOR;
+				$buttonData['DISABLED'] = 'N';
+			}
+			else
+			{
+				$buttonData['BG_COLOR'] = static::BUTTON_DISABLED_COLOR;
+				$buttonData['DISABLED'] = 'Y';
+			}
 			$keyboard->addButton($buttonData);
 		}
 
-		\CIMMessageParam::Set($messageId, [self::MESSAGE_PARAM_KEYBOARD => $keyboard]);
+		\CIMMessageParam::set($messageId, [self::MESSAGE_PARAM_KEYBOARD => $keyboard]);
 		if ($sendPullNotify)
 		{
-			\CIMMessageParam::SendPull($messageId, [self::MESSAGE_PARAM_KEYBOARD]);
+			\CIMMessageParam::sendPull($messageId, [self::MESSAGE_PARAM_KEYBOARD]);
 		}
 
 		return true;
@@ -3537,10 +3333,10 @@ class Network extends Base implements NetworkBot
 
 		$send['AVATAR'] = '';
 
-		$fields['AVATAR'] = intval($fields['AVATAR']);
+		$fields['AVATAR'] = (int)$fields['AVATAR'];
 		if ($fields['AVATAR'])
 		{
-			$fileTmp = \CFile::ResizeImageGet(
+			$fileTmp = \CFile::resizeImageGet(
 				$fields['AVATAR'],
 				['width' => 300, 'height' => 300],
 				BX_RESIZE_IMAGE_EXACT,
@@ -3628,10 +3424,10 @@ class Network extends Base implements NetworkBot
 		{
 			$update['FIELDS']['AVATAR'] = '';
 
-			$fields['AVATAR'] = intval($fields['AVATAR']);
+			$fields['AVATAR'] = (int)$fields['AVATAR'];
 			if ($fields['AVATAR'])
 			{
-				$fileTmp = \CFile::ResizeImageGet(
+				$fileTmp = \CFile::resizeImageGet(
 					$fields['AVATAR'],
 					['width' => 300, 'height' => 300],
 					BX_RESIZE_IMAGE_EXACT,
@@ -3707,87 +3503,54 @@ class Network extends Base implements NetworkBot
 	//region OL session
 
 	/**
+	 * @param string|null $dialogId
+	 * @return ImBot\DialogSession
+	 */
+	protected static function instanceDialogSession(?string $dialogId = null): ImBot\DialogSession
+	{
+		static $dialogSession;
+		if (!($dialogSession instanceof ImBot\DialogSession))
+		{
+			$dialogSession = new ImBot\DialogSession(static::getBotId(), $dialogId);
+		}
+
+		return $dialogSession;
+	}
+
+	/**
 	 * Start openlines session.
+	 * @see \Bitrix\ImBot\DialogSession::start
 	 *
 	 * @param array $params Command arguments.
 	 * <pre>
 	 * [
-	 * 	(int) BOT_ID
 	 * 	(string) DIALOG_ID
 	 * 	(int) SESSION_ID Current session Id.
+	 * 	(int) PARENT_ID Previous session Id.
 	 * 	(string) GREETING_SHOWN - Y|N
 	 * 	(array) MENU_STATE
-	 * ]</pre>
+	 * ]
+	 * </pre>
 	 *
 	 * @return bool
 	 */
 	protected static function startDialogSession($params)
 	{
-		if (empty($params['BOT_ID']) || empty($params['DIALOG_ID']))
+		if (empty($params['DIALOG_ID']))
 		{
 			return false;
 		}
 
-		$newData = [];
-
-		if (!empty($params['GREETING_SHOWN']))
-		{
-			$newData['GREETING_SHOWN'] = $params['GREETING_SHOWN'];
-		}
-		if (array_key_exists('MENU_STATE', $params))
-		{
-			if (is_array($params['MENU_STATE']))
-			{
-				$params['MENU_STATE'] = Main\Web\Json::encode($params['MENU_STATE']);
-			}
-			$newData['MENU_STATE'] = $params['MENU_STATE'];
-		}
-
-		$filter = [
-			'=BOT_ID' => $params['BOT_ID'],
-			'=DIALOG_ID' => $params['DIALOG_ID'],
-		];
-		if (!empty($params['SESSION_ID']))
-		{
-			$newData['SESSION_ID'] = (int)$params['SESSION_ID'];
-		}
-
-		$res = ImBot\Model\NetworkSessionTable::getList([
-			'select' => ['*'],
-			'filter' => $filter
-		]);
-		if ($sessData = $res->fetch())
-		{
-			foreach ($newData as $field => $value)
-			{
-				if ($sessData[$field] === $newData[$field])
-				{
-					unset($newData[$field]);
-				}
-			}
-			if (!empty($newData))
-			{
-				ImBot\Model\NetworkSessionTable::update($sessData['ID'], $newData);
-			}
-		}
-		else
-		{
-			$newData['BOT_ID'] = $params['BOT_ID'];
-			$newData['DIALOG_ID'] = $params['DIALOG_ID'];
-
-			ImBot\Model\NetworkSessionTable::add($newData);
-		}
-
-		return true;
+		return self::instanceDialogSession($params['DIALOG_ID'])->start($params);
 	}
 
 	/**
 	 * Finalizes openlines session.
+	 * @see \Bitrix\ImBot\DialogSession::finish
 	 *
 	 * @param array $params Command arguments.
 	 * <pre>
 	 * [
-	 * 	(int) BOT_ID
 	 * 	(string) DIALOG_ID
 	 * 	(int) SESSION_ID Current session Id.
 	 * ]
@@ -3797,89 +3560,12 @@ class Network extends Base implements NetworkBot
 	 */
 	protected static function finishDialogSession($params)
 	{
-		if (empty($params['BOT_ID']) || empty($params['DIALOG_ID']))
+		if (empty($params['DIALOG_ID']))
 		{
 			return false;
 		}
 
-		$res = ImBot\Model\NetworkSessionTable::getList([
-			'select' => ['ID'],
-			'filter' => [
-				'=BOT_ID' => $params['BOT_ID'],
-				'=DIALOG_ID' => $params['DIALOG_ID'],
-				'=SESSION_ID' => (int)$params['SESSION_ID'],
-			]
-		]);
-		if ($sess = $res->fetch())
-		{
-			ImBot\Model\NetworkSessionTable::update($sess['ID'], ['SESSION_ID' => 0, 'MENU_STATE' => null]);
-		}
-
-		return true;
-	}
-
-	/**
-	 * Returns current session id.
-	 *
-	 * @param array $params Command arguments.
-	 * <pre>
-	 * [
-	 * 	(int) BOT_ID
-	 * 	(string) DIALOG_ID
-	 * ]
-	 * </pre>
-	 *
-	 * @return int|null
-	 */
-	protected static function getDialogSessionId(array $params): ?int
-	{
-		if (empty($params['BOT_ID']) || empty($params['DIALOG_ID']))
-		{
-			return null;
-		}
-
-		$res = ImBot\Model\NetworkSessionTable::getList([
-			'select' => ['SESSION_ID'],
-			'filter' => [
-				'=BOT_ID' => $params['BOT_ID'],
-				'=DIALOG_ID' => $params['DIALOG_ID'],
-				'>SESSION_ID' => 0,
-			]
-		]);
-		if ($sess = $res->fetch())
-		{
-			return (int)$sess['SESSION_ID'];
-		}
-
-		return null;
-	}
-
-	/**
-	 * Deletes bot's session data.
-	 *
-	 * @param array $params Params for session select.
-	 *
-	 * @return void
-	 */
-	protected static function deleteDialogSessions(array $params): void
-	{
-		if (empty($params))
-		{
-			return;
-		}
-		$filter = [];
-		foreach ($params as $key => $value)
-		{
-			$filter["={$key}"] = $value;
-		}
-		$res = ImBot\Model\NetworkSessionTable::getList([
-			'select' => ['ID'],
-			'filter' => $filter
-		]);
-		while ($sess = $res->fetch())
-		{
-			ImBot\Model\NetworkSessionTable::delete($sess['ID']);
-		}
+		return self::instanceDialogSession($params['DIALOG_ID'])->finish($params);
 	}
 
 	//endregion
@@ -3888,14 +3574,28 @@ class Network extends Base implements NetworkBot
 
 	/**
 	 * Saves new open line bot id.
-	 * @param string $code Line code.
-	 * @param int $id Bot Id.
+	 *
+	 * @param string $lineCode Line code.
+	 * @param int $botId Bot Id.
 	 *
 	 * @return bool
 	 */
-	public static function setNetworkBotId($code, $id)
+	public static function setNetworkBotId($lineCode, $botId)
 	{
-		Option::set(self::MODULE_ID, self::BOT_CODE.'_'.$code."_bot_id", $id);
+		if (!$lineCode)
+		{
+			return false;
+		}
+
+		$optionId = self::BOT_CODE. '_' . $lineCode. '_bot_id';
+		if ($botId > 0)
+		{
+			Option::set(self::MODULE_ID, $optionId, $botId);
+		}
+		else
+		{
+			Option::delete(self::MODULE_ID, ['name' => $optionId]);
+		}
 
 		return true;
 	}
@@ -3944,9 +3644,9 @@ class Network extends Base implements NetworkBot
 	/**
 	 * @return bool|int
 	 */
-	public static function getBotId()
+	public static function getBotId(): int
 	{
-		return false;
+		return 0;
 	}
 	/**
 	 * @param int $id
@@ -3962,9 +3662,108 @@ class Network extends Base implements NetworkBot
 	 * Returns OL code.
 	 * @return string
 	 */
-	public static function getBotCode()
+	public static function getBotCode(): string
 	{
 		return '';
+	}
+
+	//endregion
+
+	//region Schedule actions
+
+	/**
+	 * Adds agent.
+	 *
+	 * @param array $params
+	 * <pre>
+	 * [
+	 *    (string) agent
+	 *    (string) class
+	 *    (string) next_execution
+	 *    (int) delay
+	 *    (bool) regular
+	 *    (int) interval
+	 * ]
+	 * </pre>
+	 *
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 */
+	public static function addAgent(array $params): bool
+	{
+		if (empty($params['agent']))
+		{
+			throw new Main\ArgumentException('Agent name must be defined');
+		}
+		$agentName = $params['agent'];
+		$className = $params['class'] ?? static::class;
+
+		$regular = (bool)($params['regular'] ?? false);
+		$interval = (int)($params['interval'] ?? 86400);
+		$delay = (int)($params['delay'] ?? 0);
+		$nextExecutionTime = $params['next_execution'] ?? '';
+		if (empty($nextExecutionTime) && $delay > 0)
+		{
+			$nextExecutionTime = \ConvertTimeStamp(\time() + \CTimeZone::getOffset() + $delay, 'FULL');
+		}
+
+		$agentAdded = true;
+		$agents = \CAgent::getList([], ['=NAME' => $className.'::'.$agentName.';']);
+		if (!$agents->fetch())
+		{
+			$agentAdded = (bool)(\CAgent::addAgent(
+					$className.'::'.$agentName.';',
+					'imbot',
+					($regular ? 'Y' : 'N'),
+					($regular ? $interval : $delay),
+					'',
+					'Y',
+					$nextExecutionTime
+				) !== false);
+		}
+
+		return $agentAdded;
+	}
+
+	/**
+	 * Removes agents.
+	 *
+	 * @param array $params
+	 * <pre>
+	 * [
+	 *    (string) agent
+	 *    (string) mask
+	 *    (string) class
+	 * ]
+	 * </pre>
+	 *
+	 * @return bool
+	 * @throws Main\ArgumentException
+	 */
+	public static function deleteAgent(array $params): bool
+	{
+		$filter = ['MODULE_ID' => 'imbot'];
+		$className = $params['class'] ?? static::class;
+		if ($params['agent'])
+		{
+			$filter['=NAME'] = $className.'::'.$params['agent'].';';
+		}
+		elseif ($params['mask'])
+		{
+			$filter['NAME'] = $className.'::'.$params['mask'].'%';
+		}
+		if (empty($filter['NAME']) && empty($filter['=NAME']))
+		{
+			throw new Main\ArgumentException('Agent name must be defined');
+		}
+
+		$agents = \CAgent::getList([], $filter);
+		while ($agent = $agents->fetch())
+		{
+			\CAgent::delete($agent['ID']);
+		}
+
+		return true;
 	}
 
 	//endregion
@@ -3972,69 +3771,14 @@ class Network extends Base implements NetworkBot
 	//region First days customer
 
 	/**
+	 * @deprecated
 	 * @param string $text
 	 *
 	 * @return bool
 	 */
 	public static function isFdcCode($text)
 	{
-		return in_array($text, self::$blackListOfCodes);
-	}
-
-	/**
-	 * @deprecated
-	 */
-	public static function addFdc($userId)
-	{
-		return "";
-	}
-
-	/**
-	 * @deprecated
-	 */
-	public static function sendTextFdc($userId, $text = '30-1')
-	{
-		return '';
-	}
-
-	/**
-	 * @deprecated
-	 */
-	public static function removeFdc($userId)
-	{
-		return "";
-	}
-
-	/**
-	 * @deprecated
-	 */
-	public static function fdcOnChatStart($dialogId, $joinFields)
-	{
-		return false;
-	}
-
-	/**
-	 * @deprecated
-	 */
-	public static function fdcOnMessageAdd($messageId, $messageFields)
-	{
-		return false;
-	}
-
-	/**
-	 * @deprecated
-	 */
-	public static function fdcOnAfterUserAuthorize($params)
-	{
-		return true;
-	}
-
-	/**
-	 * @deprecated
-	 */
-	public static function fdcAddWelcomeMessageAgent($userId)
-	{
-		return "";
+		return self::checkCodeBlacklist($text);
 	}
 
 	//endregion

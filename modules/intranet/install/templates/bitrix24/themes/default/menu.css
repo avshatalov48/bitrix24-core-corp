@@ -9,7 +9,7 @@ a.menu-item-link {
 	color: #000;
 }
 
-.menu-item-active .menu-item-link-text,
+.menu-items-view-mode .menu-item-active .menu-item-link-text,
 .menu-animation-opening-mode .menu-item-active .menu-item-link-text {
 	background-color: #717a84;
 	color: #fff;
@@ -29,11 +29,6 @@ a.menu-item-link {
 .menu-collapsed-mode.menu-sliding-mode .menu-item-plus:hover .menu-item-plus-icon:before,
 .menu-collapsed-mode.menu-sliding-mode .menu-item-plus:hover .menu-item-plus-icon:after {
 	opacity: 1;
-}
-
-.menu-item-index {
-	background-color: #d5dbdf;
-	color: #717a84;
 }
 
 .menu-favorites-more-btn,

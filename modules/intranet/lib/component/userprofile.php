@@ -222,8 +222,12 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 		return $this->errorCollection->toArray();
 	}
 
-	protected function getUserData()
+	protected function getUserData(): ?array
 	{
+		if ($this->arParams["ID"] <= 0)
+		{
+			return null;
+		}
 		global $USER;
 
 		$filter = [

@@ -11,7 +11,7 @@ use Bitrix\Main\Web\Json;
 
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
-Extension::load(["ui.icons"]);
+Extension::load(["ui.icons", "ui.buttons", "ui.feedback.form"]);
 
 foreach ($arResult['ERRORS'] as $error)
 {

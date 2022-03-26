@@ -284,15 +284,30 @@ class CompanyMerger extends EntityMerger
 	 */
 	protected function rebind($seedID, $targID)
 	{
-		//Skip contacts if they were processed by map
-		if(!($this->map !== null && isset($this->map['CONTACT_ID'])))
+		$seedID = (int)$seedID;
+		$targID = (int)$targID;
+
+		$relations = \Bitrix\Crm\Service\Container::getInstance()
+			->getRelationManager()
+			->getChildRelations(\CCrmOwnerType::Company)
+		;
+		$itemFrom = new Crm\ItemIdentifier(\CCrmOwnerType::Company, $seedID);
+		$itemTo = new Crm\ItemIdentifier(\CCrmOwnerType::Company, $targID);
+		foreach ($relations as $relation)
 		{
-			Binding\ContactCompanyTable::rebindAllContacts($seedID, $targID);
+			if (
+				($relation->getChildEntityTypeId() === \CCrmOwnerType::Contact)
+				&& $this->map !== null
+				&& isset($this->map['CONTACT_ID'])
+			)
+			{
+				//Skip contacts if they were processed by map
+				continue;
+			}
+
+			$relation->replaceAllItemBindings($itemFrom, $itemTo);
 		}
 
-		\CCrmDeal::Rebind(\CCrmOwnerType::Company, $seedID, $targID);
-		\CCrmQuote::Rebind(\CCrmOwnerType::Company, $seedID, $targID);
-		\CCrmInvoice::Rebind(\CCrmOwnerType::Company, $seedID, $targID);
 		\CCrmActivity::Rebind(\CCrmOwnerType::Company, $seedID, $targID);
 		\CCrmLiveFeed::Rebind(\CCrmOwnerType::Company, $seedID, $targID);
 		\CCrmSonetRelation::RebindRelations(\CCrmOwnerType::Company, $seedID, $targID);

@@ -47,6 +47,10 @@ if ($request->get('signedParameters'))
 
 $params['PRODUCTS'] = $request->get('products');
 $params['LOCATION_ID'] = $request->get('locationId');
+if ($request->get('currencyId'))
+{
+	$params['CURRENCY_ID'] = $request->get('currencyId');
+}
 
 $APPLICATION->IncludeComponent(
 	$componentName,

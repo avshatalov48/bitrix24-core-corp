@@ -41,6 +41,7 @@ $this->getComponent()->addJsRouter($this);
 
 \Bitrix\Main\UI\Extension::load([
 	'crm.item-details-component',
+	'crm.conversion',
 	'ui.layout-form',
 	'ui.alerts',
 	'bp_starter',

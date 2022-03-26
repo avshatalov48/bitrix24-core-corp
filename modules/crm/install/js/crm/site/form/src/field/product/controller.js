@@ -2,6 +2,7 @@ import * as ListField from '../list/controller';
 import * as Item from './item';
 import * as Component from "./component";
 import * as Util from "../../util/registry";
+import * as Transform from "../transform";
 
 type Options = {
 	type: ?string;
@@ -49,10 +50,15 @@ class Controller extends ListField.Controller
 	constructor(options: Options)
 	{
 		super(options);
+		if (this.hasChangeablePrice())
+		{
+			this.multiple = false;
+		}
 		this.currency = options.currency;
-		this.validators.push(value => {
-			return !value.changeablePrice || value.price > 0;
-		});
+		this.validators.push(value => !value.changeablePrice || value.price > 0);
+		this.validators.push(value => !value.changeablePrice || Transform.Validator.Money(value.price));
+		this.filters.push(value => !value.changeablePrice || Transform.Filter.Money(value.price));
+		this.normalizers.push(value => !value.changeablePrice ? value : Transform.Normalizer.Money(value.price));
 	}
 
 	getOriginalType(): string
@@ -78,6 +84,16 @@ class Controller extends ListField.Controller
 			.split('#')
 			.map(item => item.replace('|-|||-|', '&amp;#').replace('|||||', '&#'))
 		;
+	}
+
+	addItem(options: Options): ?Item
+	{
+		if (!options.value && !options.label && !options.price)
+		{
+			options.selected = false;
+		}
+
+		return super.addItem(options);
 	}
 }
 

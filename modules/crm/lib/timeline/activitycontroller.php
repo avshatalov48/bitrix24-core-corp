@@ -159,7 +159,10 @@ class ActivityController extends EntityController
 				{
 					$pushParams['HISTORY_ITEM'] = $this->prepareHistoryDataModel(
 						$historyFields,
-						array('ENABLE_USER_INFO' => true)
+						[
+							'ENABLE_USER_INFO' => true,
+							'CURRENT_USER' => $params['CURRENT_USER'] ?? null,
+						]
 					);
 				}
 			}
@@ -167,7 +170,11 @@ class ActivityController extends EntityController
 			{
 				$pushParams['SCHEDULE_ITEM'] = self::prepareScheduleDataModel(
 					$fields,
-					array('ENABLE_USER_INFO' => true, 'ENABLE_MULTIFIELD_INFO' => true)
+					[
+						'ENABLE_USER_INFO' => true,
+						'ENABLE_MULTIFIELD_INFO' => true,
+						'CURRENT_USER' => $params['CURRENT_USER'] ?? null,
+					]
 				);
 			}
 
@@ -214,7 +221,7 @@ class ActivityController extends EntityController
 		$historyEntryID = 0;
 		if (isset($params['CURRENT_FIELDS']['SETTINGS']['MISSED_CALL']) && $params['CURRENT_FIELDS']['SETTINGS']['MISSED_CALL'] === true)
 		{
-			$created = new DateTime($params['CURRENT_FIELDS']['CREATED'], Date::convertFormatToPhp(FORMAT_DATETIME));
+			$created = DateTime::createFromUserTime($params['CURRENT_FIELDS']['CREATED']);
 		}
 		if(!$prevCompleted && $curCompleted)
 		{
@@ -302,7 +309,10 @@ class ActivityController extends EntityController
 				{
 					$pushParams['HISTORY_ITEM'] = $this->prepareHistoryDataModel(
 						$historyFields,
-						array('ENABLE_USER_INFO' => true)
+						[
+							'ENABLE_USER_INFO' => true,
+							'CURRENT_USER' => $params['CURRENT_USER'] ?? null,
+						]
 					);
 				}
 			}
@@ -310,7 +320,11 @@ class ActivityController extends EntityController
 			{
 				$pushParams['SCHEDULE_ITEM'] = self::prepareScheduleDataModel(
 					$currentFields,
-					array('ENABLE_USER_INFO' => true, 'ENABLE_MULTIFIELD_INFO' => true)
+					[
+						'ENABLE_USER_INFO' => true,
+						'ENABLE_MULTIFIELD_INFO' => true,
+						'CURRENT_USER' => $params['CURRENT_USER'] ?? null,
+					]
 				);
 			}
 
@@ -484,7 +498,7 @@ class ActivityController extends EntityController
 			\CCrmActivityType::Email,
 			\CCrmActivityType::Call,
 			\CCrmActivityType::Meeting,
-			\CCrmActivityType::Task
+			\CCrmActivityType::Task,
 		], true))
 		{
 			return true;
@@ -512,7 +526,8 @@ class ActivityController extends EntityController
 			Activity\Provider\RestApp::getId(),
 			Activity\Provider\Delivery::getId(),
 			Activity\Provider\Zoom::getId(),
-			Activity\Provider\CallTracker::getId()
+			Activity\Provider\CallTracker::getId(),
+			Activity\Provider\StoreDocument::getId(),
 		];
 	}
 
@@ -547,7 +562,8 @@ class ActivityController extends EntityController
 			$options = array();
 		}
 
-		$permissions = self::getUsePermissions();
+		$userId = $options['CURRENT_USER'] ?? self::getUserID();
+		$permissions = \CCrmPerms::GetUserPermissions($userId);
 
 		\CCrmActivity::PrepareDescriptionFields(
 			$data,
@@ -580,7 +596,7 @@ class ActivityController extends EntityController
 		}
 
 		$data['PERMISSIONS'] = array(
-			'USER_ID' => self::getUserID(),
+			'USER_ID' => $userId,
 			'POSTPONE' => \CCrmActivity::CheckItemPostponePermission($data, $permissions),
 			'COMPLETE' => \CCrmActivity::CheckItemCompletePermission($data, $permissions)
 		);
@@ -608,7 +624,7 @@ class ActivityController extends EntityController
 			if($sessionID > 0)
 			{
 				$data['OPENLINE_INFO'] = array(
-					'MESSAGES' => \Bitrix\Crm\Integration\OpenLineManager::getSessionMessages($sessionID, 3)
+					'MESSAGES' => \Bitrix\Crm\Integration\OpenLineManager::getSessionMessages($sessionID, 5)
 				);
 			}
 		}
@@ -789,7 +805,7 @@ class ActivityController extends EntityController
 			if($sessionID > 0)
 			{
 				$fields['OPENLINE_INFO'] = array(
-					'MESSAGES' => \Bitrix\Crm\Integration\OpenLineManager::getSessionMessages($sessionID, 3)
+					'MESSAGES' => \Bitrix\Crm\Integration\OpenLineManager::getSessionMessages($sessionID, 5)
 				);
 			}
 		}

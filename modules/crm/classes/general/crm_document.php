@@ -1712,7 +1712,7 @@ class CCrmDocument
 		//Crutch for Bitrix24 context (user group management is not suppotted)
 		if(IsModuleInstalled('bitrix24'))
 		{
-			$siteID = CAllSite::GetDefSite();
+			$siteID = CSite::GetDefSite();
 			$dbResult = CGroup::GetList(
 				'',
 				'',
@@ -1860,6 +1860,13 @@ class CCrmDocument
 				break;
 			case 'LEAD':
 				$exists = CCrmLead::Exists($arDocumentID['ID']);
+				break;
+			default:
+				$entityTypeId = $arDocumentID['TYPE_ID'] ?? 0;
+				$factory = Service\Container::getInstance()->getFactory($entityTypeId);
+				$item = isset($factory) ? $factory->getItem($arDocumentID['ID']) : null;
+
+				$exists = isset($item);
 				break;
 		}
 
@@ -2216,7 +2223,7 @@ class CCrmDocument
 		if (count($parts) > 1)
 		{
 			$entityTypeId = CCrmOwnerType::ResolveID(
-				CCrmOwnerTypeAbbr::ResolveName($parts[0] . $parts[1]) 
+				CCrmOwnerTypeAbbr::ResolveName($parts[0] . $parts[1])
 				?: CCrmOwnerTypeAbbr::ResolveName($parts[0])
 			);
 			$entityId = (int)end($parts);
@@ -2294,6 +2301,17 @@ class CCrmDocument
 		}
 
 		return $name;
+	}
+
+	public static function getDocumentTypeCaption($documentType)
+	{
+		$typeId = CCrmOwnerType::ResolveID($documentType);
+		if ($typeId === CCrmOwnerType::Undefined)
+		{
+			return '';
+		}
+
+		return CCrmOwnerType::GetCategoryCaption($typeId);
 	}
 
 	protected static function getSystemUserId()
@@ -2381,6 +2399,7 @@ class CCrmDocument
 			if ($row['ORIGIN_ID'])
 			{
 				\Bitrix\Rest\UsageStatTable::logBizProc($row['ORIGIN_ID'], $clientCode);
+				\Bitrix\Rest\UsageStatTable::finalize();
 			}
 		}
 	}

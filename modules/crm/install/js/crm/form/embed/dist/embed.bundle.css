@@ -1,0 +1,142 @@
+.crm-form-embed-slider-wrapper {
+	/*padding: 20px;*/
+}
+
+.crm-form-embed-slider-wrapper .inline-options {
+	display: inline-block;
+	margin: 0 5px 10px 0;
+}
+
+.crm-form-embed-slider-wrapper a {
+	color: #2067b0;
+	text-decoration: none;
+	-webkit-transition: border-bottom-color 0.2s linear;
+	-o-transition: border-bottom-color 0.2s linear;
+	transition: border-bottom-color 0.2s linear;
+}
+.crm-form-embed-slider-wrapper a:hover,
+.crm-form-embed-slider-wrapper a:focus {
+	color: #2067b0;
+}
+
+.crm-form-embed-inner-section {
+	background: #f8f9fa;
+	border-top: 1px solid #eff1f3;
+	padding: 20px;
+}
+
+.crm-form-embed-script {
+	width: 100%;
+	margin: 0 14px 0 0;
+	height: 100%;
+	padding: 10px 10px;
+	border-radius: 2px;
+	border: 1px solid #caced7;
+	background: #fff;
+	font: 12px/18px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	overflow: hidden;
+	color: #2a2a2a;
+	-webkit-box-sizing: border-box;
+	box-sizing: border-box;
+}
+
+.crm-form-embed-script pre {
+	padding: 0;
+	margin: 0;
+}
+
+.crm-form-embed-script pre span{
+	overflow: hidden;
+	word-break: break-word;
+	white-space: break-spaces;
+	font: 12px/18px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+}
+
+.crm-form-embed-script.crm-form-embed-publink {
+	padding: 10px 10px;
+}
+
+.crm-form-embed-btn-copy {
+	margin-top: 10px;
+}
+
+/* widget block */
+
+.crm-form-embed-widgets-block {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	    -ms-flex-align: center;
+	        align-items: center;
+	-webkit-box-pack: justify;
+	    -ms-flex-pack: justify;
+	        justify-content: space-between;
+	padding: 7px 0;
+}
+
+.crm-form-embed-widgets-block + .crm-form-embed-widgets-block {
+	border-top: 1px solid #eeeff0;
+}
+
+.crm-form-embed-widgets-name-block {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-orient: vertical;
+	-webkit-box-direction: normal;
+	    -ms-flex-direction: column;
+	        flex-direction: column;
+}
+
+.crm-form-embed-widgets-name {
+	color: #333;
+	font-size: 15px;
+	line-height: 21px;
+	overflow: hidden;
+	-o-text-overflow: ellipsis;
+	   text-overflow: ellipsis;
+	white-space: nowrap;
+	max-width: 350px;
+}
+
+.crm-form-embed-widgets-detail {
+	color: #a8adb4;
+	font-size: 13px;
+	line-height: 17px;
+	overflow: hidden;
+	-o-text-overflow: ellipsis;
+	   text-overflow: ellipsis;
+	/*white-space: nowrap;*/
+	/*max-width: 300px;*/
+}
+
+.crm-form-embed-widgets-control {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-align: center;
+	    -ms-flex-align: center;
+	        align-items: center;
+}
+
+.crm-form-embed-widgets-all-buttons {
+	text-align: center;
+	margin: 10px 0;
+}
+
+.crm-form-embed-field-item-text-button {
+	display: inline-block;
+	font: 14px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #2067b0; /* #80868e */
+	border-bottom: 1px dashed #2067b0; /* #d8d8d8 */
+	-webkit-transition: all 200ms ease;
+	-o-transition: all 200ms ease;
+	transition: all 200ms ease;
+	cursor: pointer;
+	margin-right: 13px;
+}
+
+.crm-form-embed-field-item-wrapper[hidden] {
+	display: none;
+}

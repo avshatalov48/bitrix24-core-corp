@@ -46,6 +46,7 @@ $MESS["TASKS_STATUS_8"] = "Завершена в активном спринте
 $MESS["TASKS_PRIORITY"] = "Важность";
 $MESS["TASKS_PRIORITY_1"] = "Нет";
 $MESS["TASKS_PRIORITY_2"] = "Да";
+$MESS["TASKS_PRESET_SCRUM"] = "Скрам";
 $MESS["TASKS_PRESET_IN_PROGRESS"] = "В работе";
 $MESS["TASKS_PRESET_DEFERRED"] = "Отложены";
 $MESS["TASKS_PRESET_COMPLETED"] = "Завершены";

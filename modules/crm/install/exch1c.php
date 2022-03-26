@@ -1,8 +1,9 @@
-<?if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+<?php
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 use	Bitrix\Sale\BusinessValue;
 
-global $DB, $DBType;
+global $DB;
 
 $firstPass = (COption::GetOptionString('crm', '~CRM_INVOICE_EXCH1C_UPDATE_12_5_17', 'N') !== 'Y');
 
@@ -83,26 +84,11 @@ if ($firstPass)
 	// convert PREVIEW_TEXT field to DETAIL_TEXT
 	if (!empty($iblockType))
 	{
-		$strSql = '';
-		switch(mb_strtoupper($DBType))
-		{
-			case 'MYSQL':
-			case 'ORACLE':
-				$strSql = 'UPDATE b_iblock_element E '.
-					'SET E.DETAIL_TEXT = E.PREVIEW_TEXT, E.DETAIL_TEXT_TYPE = E.PREVIEW_TEXT_TYPE '.
-					'WHERE E.IBLOCK_ID IN (SELECT B.ID FROM b_iblock B WHERE B.IBLOCK_TYPE_ID = \''.$iblockType.'\') '.
-					'AND E.PREVIEW_TEXT IS NOT NULL AND E.DETAIL_TEXT IS NULL';
-				break;
-			case 'MSSQL':
-				$strSql = 'UPDATE E '.
-					'SET E.DETAIL_TEXT = E.PREVIEW_TEXT, E.DETAIL_TEXT_TYPE = E.PREVIEW_TEXT_TYPE '.
-					'FROM b_iblock_element E '.
-					'WHERE E.IBLOCK_ID IN (SELECT B.ID FROM b_iblock B WHERE B.IBLOCK_TYPE_ID = \''.$iblockType.'\') '.
-					'AND E.PREVIEW_TEXT IS NOT NULL AND E.DETAIL_TEXT IS NULL';
-				break;
-		}
-		if ($strSql)
-			$DB->Query($strSql, true);
+		$strSql = 'UPDATE b_iblock_element E '.
+			'SET E.DETAIL_TEXT = E.PREVIEW_TEXT, E.DETAIL_TEXT_TYPE = E.PREVIEW_TEXT_TYPE '.
+			'WHERE E.IBLOCK_ID IN (SELECT B.ID FROM b_iblock B WHERE B.IBLOCK_TYPE_ID = \''.$iblockType.'\') '.
+			'AND E.PREVIEW_TEXT IS NOT NULL AND E.DETAIL_TEXT IS NULL';
+		$DB->Query($strSql, true);
 	}
 
 	if (intval($catalogId) > 0)

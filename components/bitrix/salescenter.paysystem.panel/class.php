@@ -78,7 +78,7 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 			return;
 		}
 
-		if(!SaleManager::getInstance()->isManagerAccess())
+		if(!SaleManager::getInstance()->isManagerAccess(true))
 		{
 			$this->showError(Loc::getMessage('SPP_ACCESS_DENIED'));
 			return;

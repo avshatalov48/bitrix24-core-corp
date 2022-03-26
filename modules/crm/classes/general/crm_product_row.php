@@ -165,6 +165,13 @@ class CAllCrmProductRow
 		return $ID;
 	}
 
+	/**
+	 * @deprecated
+	 * @see \Bitrix\Crm\ProductRowTable::update
+	 *
+	 * Careless usage of this method can cause awful data loss!
+	 *
+	 */
 	public static function Update($ID, $arFields, $checkPerms = true, $regEvent = true)
 	{
 		global $DB;
@@ -447,7 +454,7 @@ class CAllCrmProductRow
 			'CUSTOMIZED' => array('FIELD' => 'PR.CUSTOMIZED', 'TYPE' => 'char'),
 			'MEASURE_CODE' => array('FIELD' => 'PR.MEASURE_CODE', 'TYPE' => 'int'),
 			'MEASURE_NAME' => array('FIELD' => 'PR.MEASURE_NAME', 'TYPE' => 'string'),
-			'SORT' => array('FIELD' => 'PR.SORT', 'TYPE' => 'int')
+			'SORT' => array('FIELD' => 'PR.SORT', 'TYPE' => 'int'),
 		);
 	}
 
@@ -557,6 +564,7 @@ class CAllCrmProductRow
 			case CCrmOwnerTypeAbbr::Quote:
 			case CCrmOwnerTypeAbbr::Lead:
 			case CCrmOwnerTypeAbbr::Invoice:
+			case CCrmOwnerTypeAbbr::SmartInvoice:
 				$result = CCrmOwnerTypeAbbr::ResolveName($ownerType);
 				break;
 		}
@@ -664,6 +672,8 @@ class CAllCrmProductRow
 			}
 		}
 
+		$basketReservation = new \Bitrix\Crm\Reservation\BasketReservation();
+
 		$measurelessProductIDs = array();
 		$dbRes = self::GetList(array('SORT' => 'ASC', 'ID'=>'ASC'), $filter);
 		$results = array();
@@ -711,6 +721,8 @@ class CAllCrmProductRow
 				}
 			}
 
+			$basketReservation->addProduct($ary);
+
 			if($assoc)
 			{
 				$results[(int)$ary['ID']] = $ary;
@@ -718,6 +730,19 @@ class CAllCrmProductRow
 			else
 			{
 				$results[] = $ary;
+			}
+		}
+
+		$reservedProducts = $basketReservation->getReservedProducts();
+		if ($reservedProducts)
+		{
+			foreach ($results as $index => $row)
+			{
+				$reservedProductData = $reservedProducts[$row['ID']] ?? null;
+				if ($reservedProductData)
+				{
+					$results[$index] = array_merge($row, $reservedProductData);
+				}
 			}
 		}
 
@@ -914,7 +939,7 @@ class CAllCrmProductRow
 				'MEASURE_CODE' => $measureCode,
 				'MEASURE_NAME' => $arRow['MEASURE_NAME'],
 				'CUSTOMIZED' => 'Y', //Is always enabled for disable requests to product catalog
-				'SORT' => $arRow['SORT']
+				'SORT' => $arRow['SORT'],
 			);
 
 			if(isset($prices['PRICE_ACCOUNT']))
@@ -922,6 +947,7 @@ class CAllCrmProductRow
 				$safeRow['PRICE_ACCOUNT'] = $prices['PRICE_ACCOUNT'];
 			}
 
+			$safeRow['ORIGINAL_ROW'] = $arRow;
 			$arSafeRows[] = &$safeRow;
 			unset($safeRow);
 		}
@@ -1048,6 +1074,20 @@ class CAllCrmProductRow
 				return false;
 			}
 			$discountRate = round(doubleval($product['DISCOUNT_RATE']), 2);
+
+			if ($discountRate === 100.0)
+			{
+				if (!isset($product['DISCOUNT_SUM']) || empty($product['DISCOUNT_SUM']))
+				{
+					//impossible to calculate discount sum
+					self::RegisterError(
+						'Discount Sum (DISCOUNT_SUM) is required if Percentage Discount Type (DISCOUNT_TYPE_ID) '
+						. 'is defined and Discount Rate (DISCOUNT_RATE) is 100%'
+					);
+
+					return false;
+				}
+			}
 
 			if(isset($product['DISCOUNT_SUM']))
 			{
@@ -1818,6 +1858,12 @@ class CAllCrmProductRow
 		}
 		return true;
 	}
+
+	/**
+	 * @param array[][] $from - array of arrays with product row arrays (3-dimensions deep)
+	 * @param array[][] $to - array of arrays with product row arrays (3-dimensions deep)
+	 * @return array[] - array of product row arrays (2-dimensions deep)
+	 */
 	public static function GetDiff(array $from, array $to)
 	{
 		$map = array();

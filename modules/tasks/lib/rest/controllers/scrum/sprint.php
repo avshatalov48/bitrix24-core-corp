@@ -9,21 +9,27 @@
 namespace Bitrix\Tasks\Rest\Controllers\Scrum;
 
 use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Tasks\Rest\Controllers\Base;
-use Bitrix\Tasks\Scrum\Internal\EntityTable;
-use Bitrix\Tasks\Scrum\Internal\ItemTable;
+use Bitrix\Tasks\Scrum\Form\EntityForm;
+use Bitrix\Tasks\Scrum\Service\BacklogService;
 use Bitrix\Tasks\Scrum\Service\EntityService;
 use Bitrix\Tasks\Scrum\Service\ItemService;
+use Bitrix\Tasks\Scrum\Service\KanbanService;
+use Bitrix\Tasks\Scrum\Service\RobotService;
 use Bitrix\Tasks\Scrum\Service\SprintService;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Tasks\Scrum\Service\TaskService;
 
 class Sprint extends Base
 {
 	use UserTrait;
 
 	/**
-	 * @return \string[][][]
+	 * Returns available fields.
+	 *
+	 * @return array
 	 */
 	public function getFieldsAction(): array
 	{
@@ -45,10 +51,10 @@ class Sprint extends Base
 					'type' => 'integer',
 				],
 				'dateStart' => [
-					'type' => 'integer',
+					'type' => 'string',
 				],
 				'dateEnd' => [
-					'type' => 'integer',
+					'type' => 'string',
 				],
 				'status' => [
 					'type' => 'string',
@@ -58,24 +64,26 @@ class Sprint extends Base
 	}
 
 	/**
-	 * @param $id
-	 * @return array|null
+	 * Returns sprint.
+	 *
+	 * @param int $id Sprint id.
+	 * @return null
 	 */
-	public function getAction($id)
+	public function getAction(int $id)
 	{
 		$id = (int) $id;
 		if (!$id)
 		{
-			$this->errorCollection->add([new Error('Item not found')]);
+			$this->errorCollection->add([new Error('Sprint id not found')]);
 
 			return null;
 		}
 
 		$sprint = (new SprintService())->getSprintById($id);
 
-		if (empty($sprint))
+		if ($sprint->isEmpty())
 		{
-			$this->errorCollection->add([new Error('Item not found')]);
+			$this->errorCollection->add([new Error('Sprint not found')]);
 
 			return null;
 		}
@@ -91,15 +99,17 @@ class Sprint extends Base
 	}
 
 	/**
-	 * @param $fields
+	 * Adds sprint.
+	 *
+	 * @param array $fields Sprint fields.
 	 * @return array|null
 	 */
-	public function addAction($fields)
+	public function addAction(array $fields)
 	{
-		$groupId = array_key_exists('groupId', $fields) ? (int)$fields['groupId'] : 0;
+		$groupId = array_key_exists('groupId', $fields) ? (int) $fields['groupId'] : 0;
 		if (!$groupId)
 		{
-			$this->errorCollection->add([new Error('Item not created')]);
+			$this->errorCollection->add([new Error('Group id not found')]);
 
 			return null;
 		}
@@ -111,18 +121,68 @@ class Sprint extends Base
 			return null;
 		}
 
-		$tmpId = array_key_exists('tmpId', $fields) ? (int)$fields['tmpId'] : 0;
-		$name = array_key_exists('name', $fields) ? (string)$fields['name'] : '';
-		$sort = array_key_exists('sort', $fields) ? (int)$fields['sort'] : 0;
-		$createdBy = array_key_exists('createdBy', $fields) ? (int)$fields['createdBy'] : 0;
-		$modifiedBy = array_key_exists('modifiedBy', $fields) ? (int)$fields['modifiedBy'] : 0;
-		$dateStart = array_key_exists('dateStart', $fields) ? (int)$fields['dateStart'] : 0;
-		$dateEnd = array_key_exists('dateEnd', $fields) ? (int)$fields['dateEnd'] : 0;
-		$status = array_key_exists('status', $fields) ? (string)$fields['status'] : EntityTable::SPRINT_COMPLETED;
+		$name = array_key_exists('name', $fields) ? (string) $fields['name'] : '';
+		$sort = array_key_exists('sort', $fields) ? (int) $fields['sort'] : 0;
 
-		$sprint = EntityTable::createEntityObject();
+		$createdBy = 0;
+		if (array_key_exists('createdBy', $fields) && is_numeric($fields['createdBy']))
+		{
+			$createdBy = (int) $fields['createdBy'];
+			if (!$this->existsUser($createdBy))
+			{
+				$this->errorCollection->add([new Error('createdBy user not found')]);
+
+				return null;
+			}
+		}
+		$createdBy = $createdBy ?? $this->getUserId();
+
+		$modifiedBy = 0;
+		if (array_key_exists('modifiedBy', $fields) && is_numeric($fields['modifiedBy']))
+		{
+			$modifiedBy = (int) $fields['modifiedBy'];
+			if (!$this->existsUser($modifiedBy))
+			{
+				$this->errorCollection->add([new Error('modifiedBy user not found')]);
+
+				return null;
+			}
+		}
+		$modifiedBy = $modifiedBy ?? $this->getUserId();
+
+		$dateStart = array_key_exists('dateStart', $fields) ? $this->formatDateField($fields['dateStart']) : false;
+		if ($dateStart === false)
+		{
+			$this->errorCollection->add([new Error('Incorrect dateStart format')]);
+
+			return null;
+		}
+
+		$dateEnd = array_key_exists('dateEnd', $fields) ? $this->formatDateField($fields['dateEnd']) : false;
+		if ($dateEnd === false)
+		{
+			$this->errorCollection->add([new Error('Incorrect dateEnd format')]);
+
+			return null;
+		}
+
+		$status = array_key_exists('status', $fields) ? (string) $fields['status'] : '';
+
+		$availableStatuses = [
+			EntityForm::SPRINT_ACTIVE,
+			EntityForm::SPRINT_PLANNED,
+			EntityForm::SPRINT_COMPLETED,
+		];
+		if (!in_array($status, $availableStatuses, true))
+		{
+			$this->errorCollection->add([new Error('Incorrect sprint status')]);
+
+			return null;
+		}
+
+		$sprint = new EntityForm();
+
 		$sprint->setGroupId($groupId);
-		$sprint->setTmpId($tmpId);
 		$sprint->setName($name);
 		$sprint->setSort($sort);
 		$sprint->setCreatedBy($createdBy);
@@ -133,21 +193,42 @@ class Sprint extends Base
 
 		$sprintService = new SprintService();
 
+		$activeSprint = $sprintService->getActiveSprintByGroupId($groupId);
+		if (!$activeSprint->isEmpty() && $sprint->isActiveSprint())
+		{
+			$this->errorCollection->add([new Error('Unable to add two active sprint')]);
+
+			return null;
+		}
+
 		$sprint = $sprintService->createSprint($sprint);
+
+		$sprint = $sprintService->getSprintById($sprint->getId());
+
+		if (!empty($sprintService->getErrors()))
+		{
+			$this->errorCollection->add([new Error('Unable to add sprint')]);
+
+			return null;
+		}
+
 		return $sprint->toArray();
 	}
 
 	/**
-	 * @param $id
-	 * @param $fields
+	 * Updates sprint.
+	 *
+	 * @param int $id Sprint id.
+	 * @param array $fields Sprint fields.
 	 * @return array|null
 	 */
-	public function updateAction($id, $fields)
+	public function updateAction(int $id, array $fields)
 	{
 		$id = (int) $id;
 		if (!$id)
 		{
-			$this->errorCollection->add([new Error('Item not found')]);
+			$this->errorCollection->add([new Error('Sprint id not found')]);
+
 			return null;
 		}
 
@@ -156,14 +237,14 @@ class Sprint extends Base
 
 		if (!$sprint->getId())
 		{
-			$this->errorCollection->add([new Error('Item not found')]);
+			$this->errorCollection->add([new Error('Sprint not found')]);
 
 			return null;
 		}
 
-		if ($sprint->getEntityType() !== EntityTable::SPRINT_TYPE)
+		if ($sprint->getEntityType() !== EntityForm::SPRINT_TYPE)
 		{
-			$this->errorCollection->add([new Error('Item not found')]);
+			$this->errorCollection->add([new Error('Sprint not found')]);
 
 			return null;
 		}
@@ -171,12 +252,26 @@ class Sprint extends Base
 		if (!$this->checkAccess($sprint->getGroupId()))
 		{
 			$this->errorCollection->add([new Error('Access denied')]);
+
 			return null;
 		}
 
 		if (array_key_exists('groupId', $fields) && is_numeric($fields['groupId']))
 		{
-			$sprint->setGroupId((int)$fields['groupId']);
+			$groupId = (int) $fields['groupId'];
+			$itemService = new ItemService();
+
+			$isGroupUpdatingAction = ($sprint->getGroupId() !== $groupId);
+			$hasSprintItems = (!empty($itemService->getItemIdsByEntityId($sprint->getId())));
+
+			if ($isGroupUpdatingAction && $hasSprintItems)
+			{
+				$this->errorCollection->add([new Error('It is forbidden move a sprint with items')]);
+
+				return null;
+			}
+
+			$sprint->setGroupId($groupId);
 		}
 
 		if (array_key_exists('name', $fields) && is_string($fields['name']))
@@ -186,58 +281,118 @@ class Sprint extends Base
 
 		if (array_key_exists('sort', $fields) && is_numeric($fields['sort']))
 		{
-			$sprint->setSort((int)$fields['sort']);
+			$sprint->setSort((int) $fields['sort']);
 		}
 
 		if (array_key_exists('createdBy', $fields) && is_numeric($fields['createdBy']))
 		{
-			$sprint->setCreatedBy((int)$fields['createdBy']);
+			$createdBy = (int) $fields['createdBy'];
+			if (!$this->existsUser($createdBy))
+			{
+				$this->errorCollection->add([new Error('createdBy user not found')]);
+
+				return null;
+			}
+
+			$sprint->setCreatedBy($createdBy);
 		}
 
+		$modifiedBy = 0;
 		if (array_key_exists('modifiedBy', $fields) && is_numeric($fields['modifiedBy']))
 		{
-			$sprint->setModifiedBy((int)$fields['modifiedBy']);
+			$modifiedBy = (int) $fields['modifiedBy'];
+			if (!$this->existsUser($modifiedBy))
+			{
+				$this->errorCollection->add([new Error('modifiedBy user not found')]);
+
+				return null;
+			}
+		}
+		$sprint->setModifiedBy($modifiedBy ?? $this->getUserId());
+
+		if (array_key_exists('dateStart', $fields))
+		{
+			$dateStart = $this->formatDateField($fields['dateStart']);
+
+			if ($dateStart === false)
+			{
+				$this->errorCollection->add([new Error('Incorrect dateStart format')]);
+
+				return null;
+			}
+
+			$sprint->setDateStart(DateTime::createFromTimestamp($dateStart));
 		}
 
-		if (array_key_exists('dateStart', $fields) && is_numeric($fields['dateStart']))
+		if (array_key_exists('dateEnd', $fields))
 		{
-			$sprint->setDateStart(DateTime::createFromTimestamp((int)$fields['dateStart']));
-		}
+			$dateEnd = $this->formatDateField($fields['dateEnd']);
 
-		if (array_key_exists('dateEnd', $fields) && is_numeric($fields['dateEnd']))
-		{
-			$sprint->setDateEnd(DateTime::createFromTimestamp((int)$fields['dateEnd']));
-		}
+			if ($dateEnd === false)
+			{
+				$this->errorCollection->add([new Error('Incorrect dateEnd format')]);
 
-		if (array_key_exists('status', $fields) && is_string($fields['status']))
-		{
-			$sprint->setStatus($fields['status']);
+				return null;
+			}
+
+			$sprint->setDateEnd(DateTime::createFromTimestamp($dateEnd));
 		}
 
 		$sprintService = new SprintService();
 
+		if (array_key_exists('status', $fields) && is_string($fields['status']))
+		{
+			$availableStatuses = [
+				EntityForm::SPRINT_ACTIVE,
+				EntityForm::SPRINT_PLANNED,
+				EntityForm::SPRINT_COMPLETED,
+			];
+			if (!in_array($fields['status'], $availableStatuses, true))
+			{
+				$this->errorCollection->add([new Error('Incorrect sprint status')]);
+
+				return null;
+			}
+
+			$sprint->setStatus($fields['status']);
+
+			$activeSprint = $sprintService->getActiveSprintByGroupId($sprint->getGroupId());
+			if (!$activeSprint->isEmpty() && $sprint->isActiveSprint())
+			{
+				$this->errorCollection->add([new Error('Unable to add two active sprint')]);
+
+				return null;
+			}
+		}
+
 		if (!$sprintService->changeSprint($sprint))
 		{
-			$this->errorCollection->add([new Error('Item not updated')]);
+			$this->errorCollection->add([new Error('Sprint not updated')]);
+
 			return null;
 		}
+
+		$sprint = $sprintService->getSprintById($sprint->getId());
 
 		return $sprint->toArray();
 	}
 
 	/**
-	 * @param $id
+	 * Removes sprint.
+	 *
+	 * @param int $id Sprint id.
 	 * @return array|null
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function deleteAction($id)
+	public function deleteAction(int $id)
 	{
 		$id = (int) $id;
 		if (!$id)
 		{
-			$this->errorCollection->add([new Error('Item not found')]);
+			$this->errorCollection->add([new Error('Sprint not found')]);
+
 			return null;
 		}
 
@@ -246,13 +401,13 @@ class Sprint extends Base
 
 		if (!$sprint->getId())
 		{
-			$this->errorCollection->add([new Error('Item not found')]);
+			$this->errorCollection->add([new Error('Sprint not found')]);
 
 			return null;
 		}
-		if ($sprint->getEntityType() !== EntityTable::SPRINT_TYPE)
+		if ($sprint->getEntityType() !== EntityForm::SPRINT_TYPE)
 		{
-			$this->errorCollection->add([new Error('Item not found')]);
+			$this->errorCollection->add([new Error('Sprint not found')]);
 
 			return null;
 		}
@@ -264,25 +419,58 @@ class Sprint extends Base
 			return null;
 		}
 
+		$itemService = new ItemService();
+		$backlogService = new BacklogService();
+
+		$backlog = $backlogService->getBacklogByGroupId($sprint->getGroupId());
+
+		$hasSprintItems = (!empty($itemService->getItemIdsByEntityId($sprint->getId())));
+
+		if ($hasSprintItems)
+		{
+			if ($backlog->isEmpty())
+			{
+				$this->errorCollection->add([new Error('It is forbidden remove a sprint with items')]);
+
+				return null;
+			}
+			else
+			{
+				$itemService->moveItemsToEntity(
+					$itemService->getItemIdsByEntityId($sprint->getId()),
+					$backlog->getId()
+				);
+
+				if ($itemService->getErrors())
+				{
+					$this->errorCollection->add([new Error('Sprint items have not been moved to backlog')]);
+
+					return null;
+				}
+			}
+		}
+
 		$sprintService = new SprintService();
 		if (!$sprintService->removeSprint($sprint))
 		{
-			$this->errorCollection->add([new Error('Item not deleted')]);
+			$this->errorCollection->add([new Error('Sprint not deleted')]);
 		}
 
 		return [];
 	}
 
 	/**
-	 * @param $id
+	 * Start sprint.
+	 *
+	 * @param int $id Sprint id.
 	 * @return array|null
 	 */
-	public function startAction($id)
+	public function startAction(int $id)
 	{
 		$id = (int) $id;
 		if (!$id)
 		{
-			$this->errorCollection->add([new Error('Item not found')]);
+			$this->errorCollection->add([new Error('Sprint id not found')]);
 
 			return null;
 		}
@@ -292,13 +480,21 @@ class Sprint extends Base
 
 		if (!$sprint->getId())
 		{
-			$this->errorCollection->add([new Error('Item not found')]);
+			$this->errorCollection->add([new Error('Sprint not found')]);
 
 			return null;
 		}
-		if ($sprint->getEntityType() !== EntityTable::SPRINT_TYPE)
+
+		if ($sprint->getEntityType() !== EntityForm::SPRINT_TYPE)
 		{
-			$this->errorCollection->add([new Error('Item not found')]);
+			$this->errorCollection->add([new Error('Sprint not found')]);
+
+			return null;
+		}
+
+		if (!$sprint->isPlannedSprint())
+		{
+			$this->errorCollection->add([new Error('Sprint must be planned')]);
 
 			return null;
 		}
@@ -311,36 +507,55 @@ class Sprint extends Base
 		}
 
 		$sprintService = new SprintService();
-		$sprint = $sprintService->startSprint($sprint);
+
+		$kanbanService = new KanbanService();
+		$taskService = new TaskService($this->getUserId());
+		$itemService = new ItemService();
+		$backlogService = new BacklogService();
+		$robotService = (Loader::includeModule('bizproc') ? new RobotService() : null);
+
+		$sprint = $sprintService->startSprint(
+			$sprint,
+			$taskService,
+			$kanbanService,
+			$itemService,
+			$backlogService,
+			$robotService
+		);
+
+		if (!empty($sprintService->getErrors()))
+		{
+			$this->errorCollection->add([new Error('Unable to start sprint')]);
+
+			return null;
+		}
 
 		return $sprint->toArray();
 	}
 
 	/**
-	 * @param $id
+	 * Completes active sprint.
+	 *
+	 * @param int $id Group id.
 	 * @return array|null
 	 */
-	public function finishAction($id)
+	public function completeAction(int $id)
 	{
-		$id = (int) $id;
-		if (!$id)
+		$groupId = (int) $id;
+		if (!$groupId)
 		{
-			$this->errorCollection->add([new Error('Item not found')]);
-			return null;
-		}
-
-		$entityService = new EntityService();
-		$sprint = $entityService->getEntityById($id);
-
-		if (!$sprint->getId())
-		{
-			$this->errorCollection->add([new Error('Item not found')]);
+			$this->errorCollection->add([new Error('Group id not found')]);
 
 			return null;
 		}
-		if ($sprint->getEntityType() !== EntityTable::SPRINT_TYPE)
+
+		$sprintService = new SprintService();
+
+		$sprint = $sprintService->getActiveSprintByGroupId($groupId);
+
+		if ($sprint->isEmpty())
 		{
-			$this->errorCollection->add([new Error('Item not found')]);
+			$this->errorCollection->add([new Error('Sprint not found')]);
 
 			return null;
 		}
@@ -352,13 +567,35 @@ class Sprint extends Base
 			return null;
 		}
 
-		$sprintService = new SprintService();
-		$sprint = $sprintService->completeSprint($sprint);
+		$entityService = new EntityService();
+		$kanbanService = new KanbanService();
+		$itemService = new ItemService();
+		$taskService = new TaskService($this->getUserId());
+		$backlogService = new BacklogService();
+
+		$backlog = $backlogService->getBacklogByGroupId($sprint->getGroupId());
+
+		$sprint = $sprintService->completeSprint(
+			$sprint,
+			$entityService,
+			$taskService,
+			$kanbanService,
+			$itemService,
+			$backlog->getId()
+		);
+		if ($sprintService->getErrors())
+		{
+			$this->errorCollection->add($this->getErrors());
+
+			return null;
+		}
 
 		return $sprint->toArray();
 	}
 
 	/**
+	 * Returns list sprints.
+	 *
 	 * @param PageNavigation $nav
 	 * @param array $filter
 	 * @param array $select
@@ -372,13 +609,14 @@ class Sprint extends Base
 		$order = []
 	)
 	{
-		$filter['=ENTITY_TYPE'] = EntityTable::SPRINT_TYPE;
+		$filter['=ENTITY_TYPE'] = EntityForm::SPRINT_TYPE;
 
 		$queryResult = (new EntityService($this->getUserId()))->getList($nav, $filter, $select, $order);
 
 		if (!$queryResult)
 		{
-			$this->errorCollection->add([new Error('Couldn\'t load list.')]);
+			$this->errorCollection->add([new Error('Could not load list')]);
+
 			return [];
 		}
 
@@ -393,7 +631,11 @@ class Sprint extends Base
 				break;
 			}
 
-			$sprints[] = EntityTable::createEntityObject($data)->toArray();
+			$sprint = new EntityForm();
+
+			$sprint->fillFromDatabase($data);
+
+			$sprints[] = $sprint->toArray();
 		}
 
 		if ($nav)
@@ -402,5 +644,20 @@ class Sprint extends Base
 		}
 
 		return $sprints;
+	}
+
+	private function formatDateField($inputDate): ?int
+	{
+		if (is_numeric($inputDate))
+		{
+			$date = (int) $inputDate;
+		}
+		else
+		{
+			$date = (is_string($inputDate) ? $inputDate : '');
+			$date = strtotime($date);
+		}
+
+		return $date;
 	}
 }

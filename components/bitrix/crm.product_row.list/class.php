@@ -78,6 +78,8 @@ class CCrmProductRowListComponent extends \CBitrixComponent implements \Bitrix\M
 			return null;
 		}
 
+		$this->initComponent('bitrix:crm.product_row.list');
+		$this->initComponentTemplate('');
 		$visibleFields = $this->getCreateDialogVisibleFields();
 		$propsUSerTypes = $this->getProductPropsTypes();
 		return $this->prepareCreateDialogFields(

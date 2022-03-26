@@ -1,4 +1,5 @@
-<?
+<?php
+
 $MESS["CRM_DEAL_ENTITY_ID_FIELD"] = "ID";
 $MESS["CRM_DEAL_ENTITY_TITLE_FIELD"] = "Название";
 $MESS["CRM_DEAL_ENTITY_OPENED_FIELD"] = "Доступна для всех";
@@ -51,4 +52,9 @@ $MESS["CRM_DEAL_ENTITY_ORIGINATOR_BY_FIELD"] = "Привязка";
 $MESS["CRM_DEAL_ENTITY_CATEGORY_ID_FIELD"] = "Направление сделки";
 $MESS["CRM_DEAL_ENTITY_WEBFORM_ID_FIELD"] = "Создана CRM-формой";
 $MESS["CRM_DEAL_ENTITY_ORDER_STAGE_FIELD"] = "Статус оплаты сделки";
-?>
+$MESS["CRM_DEAL_ENTITY_STAGE_SEMANTIC_ID_FIELD"] = "Группа стадии";
+$MESS["CRM_DEAL_ENTITY_IS_NEW_FIELD"] = "Новая сделка";
+$MESS["CRM_DEAL_ENTITY_IS_RECURRING_FIELD"] = "Регулярная сделка";
+$MESS["CRM_DEAL_ENTITY_IS_RETURN_CUSTOMER_FIELD"] = "Повторная сделка";
+$MESS["CRM_DEAL_ENTITY_IS_REPEATED_APPROACH_FIELD"] = "Повторное обращение";
+$MESS["CRM_DEAL_ENTITY_ADDITIONAL_INFO_FIELD"] = "Дополнительная информация";

@@ -475,13 +475,25 @@ else
 				$arFields['CLOSED'] = $arSrcElement['CLOSED'];
 			}
 
-			if(isset($_POST['OPPORTUNITY']))
+			if (
+				!isset($arSrcElement['IS_MANUAL_OPPORTUNITY'])
+				|| $arSrcElement['IS_MANUAL_OPPORTUNITY'] != 'N'
+				|| (
+					$arSrcElement['IS_MANUAL_OPPORTUNITY'] == 'N'
+					&& isset($arSrcElement['OPPORTUNITY'])
+					&& $arSrcElement['OPPORTUNITY'] <= 0
+				)
+			)
 			{
-				$arFields['OPPORTUNITY'] = trim($_POST['OPPORTUNITY']);
-			}
-			elseif(isset($arSrcElement['OPPORTUNITY']))
-			{
-				$arFields['OPPORTUNITY'] = $arSrcElement['OPPORTUNITY'];
+				if (isset($_POST['OPPORTUNITY']))
+				{
+					$arFields['OPPORTUNITY'] = trim($_POST['OPPORTUNITY']);
+				}
+				elseif (isset($arSrcElement['OPPORTUNITY']))
+				{
+					$arFields['OPPORTUNITY'] = $arSrcElement['OPPORTUNITY'];
+				}
+				$arFields['IS_MANUAL_OPPORTUNITY'] = ($arFields['OPPORTUNITY'] > 0 ? 'Y' : 'N');
 			}
 
 			if(isset($_POST['CURRENCY_ID']))
@@ -937,8 +949,14 @@ $currencyFld = array(
 	'name' => GetMessage('CRM_FIELD_CURRENCY_ID')
 );
 $isExternal = false;
+$readonlyOpportunity = (
+	isset($arResult['ELEMENT']['IS_MANUAL_OPPORTUNITY'])
+	&& $arResult['ELEMENT']['IS_MANUAL_OPPORTUNITY'] === 'N'
+	&& isset($arResult['ELEMENT']['OPPORTUNITY'])
+	&& $arResult['ELEMENT']['OPPORTUNITY'] > 0
+);
 $arResult['CURRENCY_LIST'] = CCrmCurrencyHelper::PrepareListItems();
-if(!$isExternal && $arResult["IS_EDIT_PERMITTED"])
+if(!$isExternal && $arResult["IS_EDIT_PERMITTED"] && !$readonlyOpportunity)
 {
 	$currencyFld['type'] = 'select';
 	$currencyFld['params'] = array('sale_order_marker' => 'Y');
@@ -956,7 +974,7 @@ $arResult['FIELDS'][] = &$currencyFld;
 
 $opportunityFld = array(
 	'id' => 'OPPORTUNITY',
-	'type' => $arResult["IS_EDIT_PERMITTED"] ? 'text' : 'label',
+	'type' => ($arResult["IS_EDIT_PERMITTED"] && !$readonlyOpportunity) ? 'text' : 'label',
 	'name' => GetMessage('CRM_FIELD_OPPORTUNITY'),
 	'params' => array('size' => 21, 'sale_order_marker' => 'Y'),
 	'value' => isset($arResult['ELEMENT']['OPPORTUNITY']) ? $arResult['ELEMENT']['OPPORTUNITY'] : ''

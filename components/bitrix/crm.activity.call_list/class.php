@@ -223,9 +223,15 @@ class CrmActivityCallListComponent extends \CBitrixComponent
 		));
 		
 		$records = array();
+		$userPermissions = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
 		while ($row = $cursor->fetch())
 		{
 			$entityId = $row['ELEMENT_ID'];
+			if (!$userPermissions->checkReadPermissions($callList->getEntityTypeId(), (int)$entityId))
+			{
+				continue;
+			}
+
 			$records[$entityId] = array(
 				'ENTITY_ID' => $entityId,
 				'STATUS' => \Bitrix\Crm\CallList\Item::getStatusName($row['STATUS_ID']),
@@ -422,11 +428,23 @@ class CrmActivityCallListComponent extends \CBitrixComponent
 
 		if($callListId)
 		{
-			$callList = \Bitrix\Crm\CallList\CallList::createWithId($callListId);
-			$result['CALL_LIST'] = $callList->toArray();
-			$result['CALL_LIST']['NEW'] = false;
-			$result['CALL_LIST']['ENTITY_CAPTION'] = $this->getEntityCaption($callList->getEntityTypeId(), true);
-			$result['CALL_LIST']['ITEMS'] = $this->prepareItems($callList);
+			try
+			{
+				$callList = \Bitrix\Crm\CallList\CallList::createWithId($callListId);
+				$result['CALL_LIST'] = $callList->toArray();
+				$result['CALL_LIST']['NEW'] = false;
+				$result['CALL_LIST']['ENTITY_CAPTION'] = self::getEntityCaption($callList->getEntityTypeId(), true);
+				$result['CALL_LIST']['ITEMS'] = $this->prepareItems($callList);
+			}
+			catch (Main\SystemException $exception)
+			{
+				$result['ERRORS'] =
+					$exception->getCode() === 403
+						? Loc::getMessage("CRM_CALL_LIST_ACCESS_DENIED")
+						: $exception->getMessage();
+
+				return $result;
+			}
 		}
 		else
 		{
@@ -600,55 +618,64 @@ class CrmActivityCallListComponent extends \CBitrixComponent
 	{
 		$result = array();
 		$callListId = $this->arParams['ACTIVITY']['ASSOCIATED_ENTITY_ID'];
-		$callList = \Bitrix\Crm\CallList\CallList::createWithId($callListId, true);
-
-		$result['ACTIVITY'] = $this->arParams['ACTIVITY'];
-		$result['CALL_LIST'] = $callList->toArray();
-		if($result['CALL_LIST']['WEBFORM_ID'] > 0)
+		try
 		{
-			$webform = \Bitrix\Crm\WebForm\Internals\FormTable::getById($result['CALL_LIST']['WEBFORM_ID'])->fetch();
-			$result['CALL_LIST']['WEBFORM_SECURITY_CODE'] = $webform['SECURITY_CODE'];
-			$result['CALL_LIST']['WEBFORM_NAME'] = $webform['NAME'];
-			$result['CALL_LIST']['WEBFORM_URL'] = Bitrix\Crm\WebForm\Manager::getEditUrl($result['CALL_LIST']['WEBFORM_ID']);
-		}
-		$started = false;
-		foreach ($callList->getItems() as $item)
-		{
-			if($item->getStatusId() !== 'NEW')
+			$callList = \Bitrix\Crm\CallList\CallList::createWithId($callListId, true);
+			$result['ACTIVITY'] = $this->arParams['ACTIVITY'];
+			$result['CALL_LIST'] = $callList->toArray();
+			if($result['CALL_LIST']['WEBFORM_ID'] > 0)
 			{
-				$started = true;
-				break;
+				$webform = \Bitrix\Crm\WebForm\Internals\FormTable::getById($result['CALL_LIST']['WEBFORM_ID'])->fetch();
+				$result['CALL_LIST']['WEBFORM_SECURITY_CODE'] = $webform['SECURITY_CODE'];
+				$result['CALL_LIST']['WEBFORM_NAME'] = $webform['NAME'];
+				$result['CALL_LIST']['WEBFORM_URL'] = Bitrix\Crm\WebForm\Manager::getEditUrl($result['CALL_LIST']['WEBFORM_ID']);
 			}
-		}
-		$result['CALL_LIST']['STARTED'] = $started;
-		$result['CALL_LIST']['ENTITY_CAPTION'] = $this->getEntityCaption($callList->getEntityTypeId(), true);
-		$result['CALL_LIST']['ITEMS'] = $this->prepareItems($callList);
-		$result['CALL_LIST']['TOTAL_COUNT'] = $callList->getItemsCount();
-		$result['CALL_LIST']['FILTER_TEXT'] = Loc::getMessage(
-			($callList->isFiltered() ? 'CRM_CALL_LIST_FILTERED' : 'CRM_CALL_LIST_HAND_PICKED'),
-			array('#ENTITIES#' => static::getEntityCaption($callList->getEntityTypeId(), true))
-		);
-		
-		$statusList = CCrmStatus::GetStatusList('CALL_LIST', true);
-		$stats = array();
-		foreach ($statusList as $status => $statusName)
-		{
-			$stats[$status] = array(
-				'NAME' => $statusName,
-				'COUNT' => 0
+			$started = false;
+			foreach ($callList->getItems() as $item)
+			{
+				if($item->getStatusId() !== 'NEW')
+				{
+					$started = true;
+					break;
+				}
+			}
+			$result['CALL_LIST']['STARTED'] = $started;
+			$result['CALL_LIST']['ENTITY_CAPTION'] = $this->getEntityCaption($callList->getEntityTypeId(), true);
+			$result['CALL_LIST']['ITEMS'] = $this->prepareItems($callList);
+			$result['CALL_LIST']['TOTAL_COUNT'] = $callList->getItemsCount();
+			$result['CALL_LIST']['FILTER_TEXT'] = Loc::getMessage(
+				($callList->isFiltered() ? 'CRM_CALL_LIST_FILTERED' : 'CRM_CALL_LIST_HAND_PICKED'),
+				array('#ENTITIES#' => static::getEntityCaption($callList->getEntityTypeId(), true))
 			);
-		}
 
-		$completeCount = 0;
-		foreach ($callList->getItems() as $item)
+			$statusList = CCrmStatus::GetStatusList('CALL_LIST', true);
+			$stats = array();
+			foreach ($statusList as $status => $statusName)
+			{
+				$stats[$status] = array(
+					'NAME' => $statusName,
+					'COUNT' => 0
+				);
+			}
+
+			$completeCount = 0;
+			foreach ($callList->getItems() as $item)
+			{
+				if ($item->getStatusId() != 'IN_WORK')
+					$completeCount++;
+
+				$stats[$item->getStatusId()]['COUNT']++;
+			}
+			$result['CALL_LIST']['COMPLETE_COUNT'] = $completeCount;
+			$result['CALL_LIST']['STATUS_STATS'] = $stats;
+		}
+		catch (\Bitrix\Main\SystemException $exception)
 		{
-			if ($item->getStatusId() != 'IN_WORK')
-				$completeCount++;
-
-			$stats[$item->getStatusId()]['COUNT']++;
+			$result['ERRORS'] =
+				$exception->getCode() === 403
+					? Loc::getMessage("CRM_CALL_LIST_ACCESS_DENIED")
+					: $exception->getMessage();
 		}
-		$result['CALL_LIST']['COMPLETE_COUNT'] = $completeCount;
-		$result['CALL_LIST']['STATUS_STATS'] = $stats;
 		return $result;
 	}
 

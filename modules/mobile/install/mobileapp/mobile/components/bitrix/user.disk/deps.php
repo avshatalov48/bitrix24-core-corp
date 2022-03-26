@@ -1,1 +1,3 @@
-<? return ["disk"];
+<? return [
+	'extensions' => ['disk']
+];

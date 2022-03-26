@@ -393,6 +393,10 @@
 	margin: 7px 0;
 }
 
+.tasks-scrum__item.--full-view .tasks-scrum__item--responsible {
+	max-width: calc(100% - 50px);
+}
+
 .tasks-scrum__item--responsible-photo {
 	width: 20px;
 	height: 20px;

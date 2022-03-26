@@ -44,7 +44,7 @@ final class Bitrix24Scenario
 			return true;
 		}
 
-		if (!($GLOBALS['USER'] instanceof \CUser))
+		if (!($GLOBALS['USER'] instanceof \CUser) || !($GLOBALS['USER']->getId()))
 		{
 			return true;
 		}
@@ -61,12 +61,16 @@ final class Bitrix24Scenario
 		{
 			$user = UserTable::getById($GLOBALS['USER']->getId())->fetchObject();
 			$dateInstallationOnlyOffice = $this->getDateInstallationOnlyOffice();
-			if (!$dateInstallationOnlyOffice)
+			if (!$user || !$dateInstallationOnlyOffice)
 			{
 				return true;
 			}
 
-			$result = $user->getDateRegister()->getTimestamp() > $dateInstallationOnlyOffice->getTimestamp();
+			$result = true;
+			if ($user->getDateRegister())
+			{
+				$result = $user->getDateRegister()->getTimestamp() > $dateInstallationOnlyOffice->getTimestamp();
+			}
 
 			\CUserOptions::setOption(
 				Driver::INTERNAL_MODULE_ID,

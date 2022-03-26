@@ -68,13 +68,18 @@ class DealTarget extends BaseTarget
 
 		$fields = array('STAGE_ID' => $statusId);
 		$CCrmDeal = new \CCrmDeal(false);
-		$CCrmDeal->Update($id, $fields, true, true, array(
+		$updateResult = $CCrmDeal->Update($id, $fields, true, true, array(
 			'DISABLE_USER_FIELD_CHECK' => true,
 			'REGISTER_SONET_EVENT' => true,
 			'CURRENT_USER' => 0 //System user
 		));
 
-		$this->setEntityField('STAGE_ID', $statusId);
+		if ($updateResult)
+		{
+			$this->setEntityField('STAGE_ID', $statusId);
+		}
+
+		return $updateResult;
 	}
 
 	public function getEntityStatuses()

@@ -1,11 +1,14 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 $runtime = CBPRuntime::GetRuntime();
 $runtime->IncludeActivityFile('SetFieldActivity');
 
-class CBPCrmSetContactField
-	extends CBPSetFieldActivity
+class CBPCrmSetContactField extends CBPSetFieldActivity
 {
 	public function Execute()
 	{
@@ -67,7 +70,7 @@ class CBPCrmSetContactField
 	{
 		$id = null;
 
-		list($entityType, $entityId) = mb_split('_(?=[^_]*$)', $this->GetDocumentId()[2]);
+		[$entityType, $entityId] = mb_split('_(?=[^_]*$)', $this->GetDocumentId()[2]);
 
 		if ($entityType === \CCrmOwnerType::LeadName)
 		{
@@ -90,5 +93,45 @@ class CBPCrmSetContactField
 		}
 
 		return $id ? CCrmBizProcHelper::ResolveDocumentId(\CCrmOwnerType::Contact, $id) : null;
+	}
+
+	public function collectUsages()
+	{
+		$usages = [];
+		$this->collectUsagesRecursive($this->arProperties, $usages);
+
+		return $usages;
+	}
+
+	//todo: make parent method 'collectUsagesRecursive' protected
+	protected function collectUsagesRecursive($val, &$usages)
+	{
+		if (is_array($val))
+		{
+			foreach ($val as $v)
+			{
+				$this->collectUsagesRecursive($v, $usages);
+			}
+		}
+		elseif (is_string($val))
+		{
+			$parsed = static::parseExpression($val);
+			if ($parsed)
+			{
+				$usages[] = $this->getObjectSourceType($parsed['object'], $parsed['field']);
+			}
+			else
+			{
+				//parse properties
+				$val = preg_replace_callback(
+					static::ValueInlinePattern,
+					function($matches) use (&$usages)
+					{
+						$usages[] = $this->getObjectSourceType($matches['object'], $matches['field']);
+					},
+					$val
+				);
+			}
+		}
 	}
 }

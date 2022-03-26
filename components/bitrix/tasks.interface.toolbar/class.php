@@ -10,11 +10,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
  * @copyright 2001-2015 Bitrix
  */
 
-use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Helper;
 use Bitrix\Tasks\Internals\Counter;
-use Bitrix\Tasks\Internals\Counter\CounterDictionary;
 use Bitrix\Tasks\Ui\Filter;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\User;

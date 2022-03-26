@@ -58,19 +58,23 @@
 	        box-shadow: none;
 }
 
-.tasks-scrum__side-panel-start--info-basic-textarea::-webkit-input-placeholder, .tasks-scrum__side-panel-start--info-basic-input::-webkit-input-placeholder {
+.tasks-scrum__side-panel-start--info-basic-textarea::-webkit-input-placeholder,
+.tasks-scrum__side-panel-start--info-basic-input::-webkit-input-placeholder {
 	color: var(--tasks_scrum_start-grey-2);
 }
 
-.tasks-scrum__side-panel-start--info-basic-textarea::-moz-placeholder, .tasks-scrum__side-panel-start--info-basic-input::-moz-placeholder {
+.tasks-scrum__side-panel-start--info-basic-textarea::-moz-placeholder,
+.tasks-scrum__side-panel-start--info-basic-input::-moz-placeholder {
 	color: var(--tasks_scrum_start-grey-2);
 }
 
-.tasks-scrum__side-panel-start--info-basic-textarea:-ms-input-placeholder, .tasks-scrum__side-panel-start--info-basic-input:-ms-input-placeholder {
+.tasks-scrum__side-panel-start--info-basic-textarea:-ms-input-placeholder,
+.tasks-scrum__side-panel-start--info-basic-input:-ms-input-placeholder {
 	color: var(--tasks_scrum_start-grey-2);
 }
 
-.tasks-scrum__side-panel-start--info-basic-textarea::-ms-input-placeholder, .tasks-scrum__side-panel-start--info-basic-input::-ms-input-placeholder {
+.tasks-scrum__side-panel-start--info-basic-textarea::-ms-input-placeholder,
+.tasks-scrum__side-panel-start--info-basic-input::-ms-input-placeholder {
 	color: var(--tasks_scrum_start-grey-2);
 }
 

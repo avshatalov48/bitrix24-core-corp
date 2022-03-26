@@ -18,7 +18,6 @@ class Registry
 		return new Main\EventResult(
 			Main\EventResult::SUCCESS,
 			[
-				'\Bitrix\Crm\Product\Url\ShopBuilder',
 				'\Bitrix\Crm\Product\Url\ProductBuilder',
 			],
 			'crm'

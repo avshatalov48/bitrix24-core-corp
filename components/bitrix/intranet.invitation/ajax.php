@@ -1,4 +1,5 @@
-<?
+<?php
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Loader;
@@ -57,13 +58,21 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		return true;
 	}
 
+	protected function getDefaultPreFilters()
+	{
+		return array_merge(
+			parent::getDefaultPreFilters(),
+			[ new \Bitrix\Intranet\ActionFilter\UserType(['employee']) ]
+		);
+	}
+
 	public function configureActions()
 	{
 		return [
 			'getSliderContent' => [
 				'-prefilters' => [
 					ActionFilter\Csrf::class,
-				],
+				]
 			],
 		];
 	}
@@ -115,7 +124,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		return $response;
 	}
 
-	protected function isExtranetInstalled()
+	protected function isExtranetInstalled(): bool
 	{
 		$bExtranetInstalled = ModuleManager::IsModuleInstalled("extranet");
 		if ($bExtranetInstalled)
@@ -171,7 +180,10 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 	protected function prepareUsersForResponse($userIds)
 	{
-		if (!Loader::includeModule("socialnetwork"))
+		if (
+			!Loader::includeModule("socialnetwork")
+			|| empty($userIds)
+		)
 		{
 			return [];
 		}
@@ -392,7 +404,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 	public function extranetAction()
 	{
-		if (!$this->isInvitingUsersAllowed() || !$this->isExtranetInstalled())
+		if (!$this->isExtranetInstalled())
 		{
 			return false;
 		}
@@ -403,9 +415,18 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			return "user_limit";
 		}
 
+		$userOptions = \Bitrix\Main\Context::getCurrent()->getRequest()->getPost('userOptions');
+
 		if (
-			!isset($_POST["SONET_GROUPS_CODE"])
-			|| empty($_POST["SONET_GROUPS_CODE"])
+			(
+				!isset($_POST["SONET_GROUPS_CODE"])
+				|| empty($_POST["SONET_GROUPS_CODE"])
+			)
+			&& (
+				!is_array($userOptions)
+				|| !isset($userOptions['checkWorkgroupWhenInvite'])
+				|| $userOptions['checkWorkgroupWhenInvite'] !== 'false'
+			)
 		)
 		{
 			$this->addError(new \Bitrix\Main\Error(Loc::getMessage("BX24_INVITE_DIALOG_ERROR_EXTRANET_NO_SONET_GROUP_INVITE")));
@@ -417,8 +438,16 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 		$newUsers = [
 			"ITEMS" => $userData["ITEMS"],
-			"SONET_GROUPS_CODE" => isset($userData["SONET_GROUPS_CODE"]) ? $userData["SONET_GROUPS_CODE"] : []
+			"SONET_GROUPS_CODE" => $userData["SONET_GROUPS_CODE"] ?? []
 		];
+
+		foreach ($newUsers as $key => $item)
+		{
+			if (!empty($item['UF_DEPARTMENT']))
+			{
+				unset($newUsers[$key]);
+			}
+		}
 
 		$res = $this->registerNewUser($newUsers, $strError);
 

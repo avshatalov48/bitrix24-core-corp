@@ -53,22 +53,6 @@ class Event
 	 */
 	public function canClearEntity()
 	{
-		$restriction = Crm\Restriction\RestrictionManager::getHistoryViewRestriction();
-		if(!$restriction->hasPermission())
-		{
-			$error = $restriction->getHtml();
-			if(is_string($error) && $error !== '')
-			{
-				$this->collectError(new Main\Error($error));
-			}
-			else
-			{
-				$this->collectError(new Main\Error('', self::ERROR_PERMISSION_DENIED));
-			}
-
-			return false;
-		}
-
 		return true;
 	}
 
@@ -687,7 +671,7 @@ class Event
 				$entity = new \CCrmEvent();
 				while ($relation = $relationsList->fetch())
 				{
-					if ($entity->Delete($relation['ID'], array('CURRENT_USER' => $deletedBy)) === false)
+					if ($entity->delete($relation['ID'], ['CURRENT_USER' => $deletedBy]) === false)
 					{
 						$success = false;
 					}
@@ -696,13 +680,12 @@ class Event
 
 			if ($success)
 			{
-				$files = unserialize($event['FILES'], ['allowed_classes' => false]);
+				$files = \unserialize($event['FILES'], ['allowed_classes' => false]);
 				if (is_array($files))
 				{
 					for ($i = count($files) - 1; $i >= 0; $i--)
 					{
-						\CFile::Delete((int)$files[$i]);
-						//todo: How to count fail here
+						\CFile::delete((int)$files[$i]);
 					}
 				}
 			}
@@ -723,21 +706,22 @@ class Event
 	 * @param int $eventId Event Id.
 	 * @param int $deletedBy Who did it.
 	 *
-	 * @return boolean
+	 * @return int
 	 */
 	public static function dropEventFiles($eventId, $deletedBy)
 	{
-		$success = true;
+		$droppedCount = 0;
 
 		$eventRes = Crm\EventTable::getByPrimary($eventId);
 		if ($event = $eventRes->fetch())
 		{
-			$files = unserialize($event['FILES'], ['allowed_classes' => false]);
+			$files = \unserialize($event['FILES'], ['allowed_classes' => false]);
 			if (is_array($files))
 			{
 				for ($i = count($files) - 1; $i >= 0; $i--)
 				{
-					\CFile::Delete((int)$files[$i]);
+					\CFile::delete((int)$files[$i]);
+					$droppedCount ++;
 
 					//todo: How to count fail here
 
@@ -745,28 +729,28 @@ class Event
 				}
 				if (count($files) > 0)
 				{
-					Crm\EventTable::update($eventId, array('FILES' => serialize($files)));
+					Crm\EventTable::update($eventId, ['FILES' => serialize($files)]);
 				}
 				else
 				{
-					Crm\EventTable::update($eventId, array('FILES' => null));
+					Crm\EventTable::update($eventId, ['FILES' => null]);
 				}
 			}
 		}
 
-		return $success;
+		return $droppedCount;
 	}
 
 	/**
 	 * Performs dropping entity.
 	 *
-	 * @return boolean
+	 * @return int
 	 */
 	public function clearEntity()
 	{
 		if (!$this->canClearEntity())
 		{
-			return false;
+			return -1;
 		}
 
 		if (count($this->getFilter()) > 0)
@@ -778,12 +762,14 @@ class Event
 			$query = $this->prepareNonRelationQuery();
 		}
 
+		$dropped = -1;
+
 		if ($this->prepareFilter($query))
 		{
 			$query
 				->addSelect('EVENT_ID')
 				->setLimit(self::MAX_ENTITY_PER_INTERACTION)
-				->setOrder(array('EVENT_ID' => 'ASC'));
+				->setOrder(['EVENT_ID' => 'ASC']);
 
 			if ($this->getProcessOffset() > 0)
 			{
@@ -792,7 +778,7 @@ class Event
 
 			$res = $query->exec();
 
-			$success = true;
+			$dropped = 0;
 			while ($event = $res->fetch())
 			{
 				$this->setProcessOffset($event['EVENT_ID']);
@@ -800,6 +786,7 @@ class Event
 				if (self::dropEvent($event['EVENT_ID'], $this->getOwner()))
 				{
 					$this->incrementDroppedEntityCount();
+					$dropped ++;
 				}
 				else
 				{
@@ -809,24 +796,27 @@ class Event
 
 				if ($this->hasTimeLimitReached())
 				{
-					$success = false;
 					break;
 				}
 			}
 		}
+		else
+		{
+			$this->collectError(new Main\Error('Filter error', self::ERROR_DELETION_FAILED));
+		}
 
-		return $success;
+		return $dropped;
 	}
 
 	/**
 	 * Performs dropping entity attachments.
-	 * @return boolean
+	 * @return int
 	 */
 	public function clearFiles()
 	{
 		if (!$this->canClearFile())
 		{
-			return false;
+			return -1;
 		}
 
 		if (count($this->getFilter()) > 0)
@@ -838,6 +828,8 @@ class Event
 			$query = $this->prepareNonRelationQuery();
 		}
 
+		$dropped = -1;
+
 		if ($this->prepareFilter($query))
 		{
 			$query
@@ -846,19 +838,25 @@ class Event
 				->setOrder(array('EVENT_ID' => 'ASC'))
 				->whereNotNull('FILES')
 			;
+			/*
 			if ($this->getProcessOffset() > 0)
 			{
-				$query->where('EVENT_ID', '>', $this->getProcessOffset());
+				$query->where('EVENT_ID', '>=', $this->getProcessOffset());
 			}
+			*/
 
 			$result = $query->exec();
 
-			$success = true;
+			$dropped = 0;
 			while ($event = $result->fetch())
 			{
-				if (self::dropEventFiles($event['EVENT_ID'], $this->getOwner()))
+				$this->setProcessOffset($event['EVENT_ID']);
+
+				$droppedCount = self::dropEventFiles($event['EVENT_ID'], $this->getOwner());
+				if ($droppedCount >= 0)
 				{
-					$this->incrementDroppedFileCount();
+					$this->incrementDroppedFileCount($droppedCount);
+					$dropped ++;
 				}
 				else
 				{
@@ -867,14 +865,15 @@ class Event
 
 				if ($this->hasTimeLimitReached())
 				{
-					$success = false;
 					break;
 				}
-
-				$this->setProcessOffset($event['EVENT_ID']);
 			}
 		}
+		else
+		{
+			$this->collectError(new Main\Error('Filter error', self::ERROR_DELETION_FAILED));
+		}
 
-		return $success;
+		return $dropped;
 	}
 }

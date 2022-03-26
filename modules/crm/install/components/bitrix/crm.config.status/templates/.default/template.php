@@ -732,6 +732,7 @@ function getColorText($color, &$iconClass, &$blockClass)
 <?endforeach;?>
 
 		BX.CrmConfigStatusClass.semanticEntityTypes = <?=CUtil::PhpToJsObject(array_keys($arResult["ENTITY"]))?>;
+		BX.CrmConfigStatusClass.entityInfos = <?=CUtil::PhpToJsObject($arResult["ENTITY"])?>;
 
 		BX['<?=$jsClass?>'] = new BX.CrmConfigStatusClass({
 			randomString: '<?= $arResult['RAND_STRING'] ?>',

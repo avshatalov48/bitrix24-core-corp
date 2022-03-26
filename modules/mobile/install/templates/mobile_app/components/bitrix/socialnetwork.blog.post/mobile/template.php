@@ -112,7 +112,7 @@ if(!empty($arResult["Post"]))
 				{
 					window.arLogTs.entry_<?= (int)$arParams['LOG_ID']?> = <?= ((int)$arParams['LAST_LOG_TS'] - (int)$arResult['TZ_OFFSET'])?>;
 				}
-			</script><?
+			</script><?php
 		}
 		else
 		{
@@ -141,7 +141,7 @@ if(!empty($arResult["Post"]))
 						readOnly: '<?=(!!$arResult["ReadOnly"] ? 'Y' : 'N')?>'
 					});
 				});	
-			</script><?
+			</script><?php
 		}
 
 		$topWrapClassList = [
@@ -172,9 +172,9 @@ if(!empty($arResult["Post"]))
 			 data-livefeed-post-read-only="<?=((bool)$arResult['ReadOnly'] ? 'Y' : 'N')?>"
 			 data-livefeed-post-content-type-id="BLOG_POST"
 			 data-livefeed-post-content-id="<?=(int)$arResult['Post']['ID']?>"
-		><?
-			?><div id="post_item_top_wrap_<?=(int)$arParams["LOG_ID"]?>" class="<?=implode(' ', $topWrapClassList)?>"><?
-				?><div class="post-item-top" id="post_item_top_<?=(int)$arParams["LOG_ID"]?>"><?
+		><?php
+			?><div id="post_item_top_wrap_<?=(int)$arParams["LOG_ID"]?>" class="<?=implode(' ', $topWrapClassList)?>"><?php
+				?><div class="post-item-top" id="post_item_top_<?=(int)$arParams["LOG_ID"]?>"><?php
 
 					$avatarId = 'post_item_avatar_' . (int)$arParams['LOG_ID'];
 					$avatarDataSrc = (
@@ -183,38 +183,38 @@ if(!empty($arResult["Post"]))
 							: ''
 					);
 
-					?><div class="avatar" id="<?= $avatarId ?>" <?= $avatarDataSrc ?>></div><?
+					?><div class="avatar" id="<?= $avatarId ?>" <?= $avatarDataSrc ?>></div><?php
 
 					if($arResult["arUser"]["PERSONAL_PHOTO_resized"]["src"] <> '')
 					{
-						?><script>BitrixMobile.LazyLoad.registerImage("<?=$avatarId?>");</script><?
+						?><script>BitrixMobile.LazyLoad.registerImage("<?=$avatarId?>");</script><?php
 					}
 
-					?><div class="post-item-pinned-block"><?
+					?><div class="post-item-pinned-block"><?php
 
 						if (
 							!empty($arParams['PINNED_PANEL_DATA'])
 							&& $arParams['PINNED_PANEL_DATA']['TITLE'] <> ''
 						)
 						{
-							?><div class="post-item-pinned-title"><?=$arParams['PINNED_PANEL_DATA']['TITLE']?></div><?
+							?><div class="post-item-pinned-title"><?=$arParams['PINNED_PANEL_DATA']['TITLE']?></div><?php
 						}
 
-						?><div class="post-item-pinned-text-box"><?
-							?><div class="post-item-pinned-desc"><?
+						?><div class="post-item-pinned-text-box"><?php
+							?><div class="post-item-pinned-desc"><?php
 								if (
 									!empty($arParams['PINNED_PANEL_DATA'])
 									&& $arParams['PINNED_PANEL_DATA']['DESCRIPTION'] <> ''
 								)
 								{
-									?><?=$arParams['PINNED_PANEL_DATA']['DESCRIPTION']?><?
+									?><?=$arParams['PINNED_PANEL_DATA']['DESCRIPTION']?><?php
 								}
-							?></div><?
-						?></div><?
+							?></div><?php
+						?></div><?php
 
-					?></div><?
+					?></div><?php
 
-					?><div class="post-item-top-cont"><?
+					?><div class="post-item-top-cont"><?php
 
 						$arTmpUser = array(
 								"NAME" => $arResult["arUser"]["~NAME"],
@@ -223,7 +223,7 @@ if(!empty($arResult["Post"]))
 								"LOGIN" => $arResult["arUser"]["~LOGIN"],
 								"NAME_LIST_FORMATTED" => "",
 							);
-						?><a class="post-item-top-title<?=($arResult["arUser"]["isExtranet"] ? ' post-item-top-title-extranet' : '')?>" href="<?=$arResult["arUser"]["url"]?>"><?=CUser::FormatName($arParams["NAME_TEMPLATE"], $arTmpUser, ($arParams["SHOW_LOGIN"] != "N" ? true : false))?></a><?
+						?><a class="post-item-top-title<?=($arResult["arUser"]["isExtranet"] ? ' post-item-top-title-extranet' : '')?>" href="<?=$arResult["arUser"]["url"]?>"><?=CUser::FormatName($arParams["NAME_TEMPLATE"], $arTmpUser, ($arParams["SHOW_LOGIN"] != "N" ? true : false))?></a><?php
 
 						$strTopic = "";
 
@@ -243,7 +243,7 @@ if(!empty($arResult["Post"]))
 									$i++;
 									if ($i == 4)
 									{
-										$more_cnt = $cnt + intval($arResult["Post"]["SPERM_HIDDEN"]) - 3;
+										$more_cnt = $cnt + (int)$arResult["Post"]["SPERM_HIDDEN"] - 3;
 										$suffix = (
 										($more_cnt % 100) > 10
 										&& ($more_cnt % 100) < 20
@@ -256,7 +256,7 @@ if(!empty($arResult["Post"]))
 									}
 
 									$className = "post-item-destination ".(
-										$val["NAME"] == "All"
+										$val["NAME"] === "All"
 											? "post-item-dest-all-users"
 											: "post-item-dest-users".(
 											(isset($val["IS_EXTRANET"]) && $val["IS_EXTRANET"] == "Y")
@@ -267,7 +267,7 @@ if(!empty($arResult["Post"]))
 										);
 
 									$strTopic .= ($i != 1 ? ", " : " ").(
-										$val["NAME"] != "All"
+										$val["NAME"] !== "All"
 											? '<a href="'.$val["URL"].'" class="'.$className.'">'.$val["NAME"].'</a>'
 											: '<span class="'.$className.'">'.GetMessage("BLOG_DESTINATION_ALL").'</span>'
 										);
@@ -364,16 +364,16 @@ if(!empty($arResult["Post"]))
 							}
 						}
 
-						?><div class="post-item-top-topic"><?=$strTopic ?></div><?
+						?><div class="post-item-top-topic"><?=$strTopic ?></div><?php
 
-						?><div class="lenta-item-time" id="datetime_block_detail_<?=$arParams["LOG_ID"]?>"><?
+						?><div class="lenta-item-time" id="datetime_block_detail_<?=$arParams["LOG_ID"]?>"><?php
 							echo \CComponentUtil::getDateTimeFormatted([
 								'TIMESTAMP' => MakeTimeStamp($arResult["Post"]["DATE_PUBLISH"]),
 								'TZ_OFFSET' => $arResult["TZ_OFFSET"]
 							]);
-						?></div><?
+						?></div><?php
 
-					?></div><? // post-item-top-cont
+					?></div><?php // post-item-top-cont
 
 					$rightCornerNodeClassesList = [ 'lenta-item-right-corner' ];
 					if ($arResult['MOBILE_API_VERSION'] >= 34)
@@ -381,7 +381,7 @@ if(!empty($arResult["Post"]))
 						$rightCornerNodeClassesList[] = 'lenta-item-right-corner-menu';
 					}
 
-					?><div class="<?=implode(' ', $rightCornerNodeClassesList)?>"><?
+					?><div class="<?=implode(' ', $rightCornerNodeClassesList)?>"><?php
 
 						$useFavorites = (
 							!$arResult["ReadOnly"]
@@ -452,11 +452,11 @@ if(!empty($arResult["Post"]))
 								onclick="oMSL.showPostMenu(event)"
 							>
 								<div class="lenta-menu-item"></div>
-							</div><?
+							</div><?php
 
 							if ($usePinned)
 							{
-								?><div class="lenta-item-pin"></div><?
+								?><div class="lenta-item-pin"></div><?php
 							}
 						}
 						else
@@ -468,17 +468,17 @@ if(!empty($arResult["Post"]))
 									data-favorites="<?=($favoritesValue ? "Y" : "N")?>"
 									class="lenta-item-fav<?=($favoritesValue ? " lenta-item-fav-active" : "")?>"
 									onclick="__MSLSetFavorites(<?=$arParams["LOG_ID"]?>, this, event);"
-								></div><?
+								></div><?php
 							}
 							else
 							{
-								?><div class="lenta-item-fav-placeholder"></div><?
+								?><div class="lenta-item-fav-placeholder"></div><?php
 							}
 						}
 
-					?></div><?
+					?></div><?php
 
-				?></div><?
+				?></div><?php
 
 				$postItemClassList = [];
 				if (
@@ -529,7 +529,7 @@ if(!empty($arResult["Post"]))
 				 class="<?=implode(' ', $postItemClassList)?>"
 				 id="post_block_check_cont_<?=$arParams["LOG_ID"]?>"
 				 bx-data-has-title="<?=$arResult['Post']['MICRO'] !== 'Y' ? 'Y' : 'N'?>"
-				 bx-content-view-xml-id="BLOG_POST-<?=(int)$arResult["Post"]["ID"]?>"><?
+				 bx-content-view-xml-id="BLOG_POST-<?=(int)$arResult["Post"]["ID"]?>"><?php
 
 					$importantIcon = ($arParams['EVENT_ID'] === 'blog_post_important' ? '<div class="info-block-important-icon"></div>' : '');
 
@@ -550,14 +550,14 @@ if(!empty($arResult["Post"]))
 							$titleClassList[] = 'lenta-important-block-title';
 						}
 
-						?><div class="post-text-title-container"><?
-							?><div class="<?=implode(' ', $titleClassList)?>" id="post_text_title_<?=(int)$arParams["LOG_ID"]?>"><?=$arResult["Post"]["TITLE"]?></div><?
-							?><?=$importantIcon;?><?
-						?></div><?
+						?><div class="post-text-title-container"><?php
+							?><div class="<?=implode(' ', $titleClassList)?>" id="post_text_title_<?=(int)$arParams["LOG_ID"]?>"><?=$arResult["Post"]["TITLE"]?></div><?php
+							?><?=$importantIcon;?><?php
+						?></div><?php
 					}
 					else
 					{
-						?><?=$importantIcon?><?
+						?><?=$importantIcon?><?php
 					}
 
 					$textClassList = [
@@ -576,7 +576,7 @@ if(!empty($arResult["Post"]))
 						if (!empty($arResult['Post']['IMPORTANT']))
 						{
 							?><div class="post-item-important">
-								<input id="important_post_<?= $arResult['Post']['ID'] ?>" bx-data-post-id="<?= $arResult['Post']['ID'] ?>" type="checkbox" onclick="return BX.MobileLivefeed.ImportantManagerInstance.setPostRead(this);" <?if ($arResult['Post']['IMPORTANT']['IS_READ'] === 'Y'): ?>checked="checked" <? endif;?>/>
+								<input id="important_post_<?= $arResult['Post']['ID'] ?>" bx-data-post-id="<?= $arResult['Post']['ID'] ?>" type="checkbox" onclick="return BX.MobileLivefeed.ImportantManagerInstance.setPostRead(this);" <?php if ($arResult['Post']['IMPORTANT']['IS_READ'] === 'Y') { ?>checked="checked" <?php } ?>/>
 								<span class="checked webform-small-button"><?= Loc::getMessage('BLOG_ALREADY_READ') ?></span>
 								<label for="important_post_<?= $arResult['Post']['ID'] ?>" class="unchecked ui-btn ui-btn-md ui-btn-success ui-btn-round"><?= Loc::getMessage(trim('BLOG_READ_'.$arResult['Post']['IMPORTANT']['USER']['PERSONAL_GENDER'])) ?></label><?php
 
@@ -593,15 +593,15 @@ if(!empty($arResult["Post"]))
 
 					if (!empty($arResult["images"]))
 					{
-						?><div class="post-item-attached-img-wrap"><?
+						?><div class="post-item-attached-img-wrap"><?php
 							$jsIds = "";
 							foreach($arResult["images"] as $val)
 							{
 								$id = "blog-post-attached-".mb_strtolower(randString(5));
 								$jsIds .= $jsIds !== "" ? ', "'.$id.'"' : '"'.$id.'"';
-								?><div class="post-item-attached-img-block"><img class="post-item-attached-img" id="<?=$id?>" src="<?=CMobileLazyLoad::getBase64Stub()?>" data-src="<?=$val["small"]?>" data-bx-image="<?=$val["full"]?>" alt="" border="0"></div><?
+								?><div class="post-item-attached-img-block"><img class="post-item-attached-img" id="<?=$id?>" src="<?=CMobileLazyLoad::getBase64Stub()?>" data-src="<?=$val["small"]?>" data-bx-image="<?=$val["full"]?>" alt="" border="0"></div><?php
 							}
-						?></div><script>BitrixMobile.LazyLoad.registerImages([<?=$jsIds?>], oMSL.checkVisibility);</script><?
+						?></div><script>BitrixMobile.LazyLoad.registerImages([<?=$jsIds?>], oMSL.checkVisibility);</script><?php
 					}
 
 					$showPostProperties = ($arResult['POST_PROPERTIES']['SHOW'] === "Y");
@@ -610,7 +610,7 @@ if(!empty($arResult["Post"]))
 						|| !empty($arResult["GRATITUDE"])
 					)
 					{
-						?><div class="post-item-attached-file-wrap" id="post_block_check_files_<?=$arParams["LOG_ID"]?>"><?
+						?><div class="post-item-attached-file-wrap" id="post_block_check_files_<?=$arParams["LOG_ID"]?>"><?php
 
 						if($showPostProperties)
 						{
@@ -619,7 +619,7 @@ if(!empty($arResult["Post"]))
 							{
 								if(!empty($arPostField["VALUE"]))
 								{
-									?><?$APPLICATION->IncludeComponent(
+									$APPLICATION->IncludeComponent(
 										"bitrix:system.field.view",
 										$arPostField["USER_TYPE"]["USER_TYPE_ID"],
 										array(
@@ -630,7 +630,7 @@ if(!empty($arResult["Post"]))
 										),
 										null,
 										array("HIDE_ICONS"=>"Y")
-									);?><?
+									);
 								}
 							}
 							if ((int)$eventHandlerID > 0)
@@ -641,14 +641,14 @@ if(!empty($arResult["Post"]))
 
 						if (!empty($arResult["URL_PREVIEW"]))
 						{
-							?><?=$arResult["URL_PREVIEW"]?><?
+							?><?=$arResult["URL_PREVIEW"]?><?php
 						}
 
 						if (!empty($arResult["GRATITUDE"]))
 						{
-							?><div class="lenta-info-block lenta-block-grat"><?
-								?><div class="lenta-block-grat-medal<?=($arResult["GRATITUDE"]["TYPE"]["XML_ID"] <> '' ? " lenta-block-grat-medal-".$arResult["GRATITUDE"]["TYPE"]["XML_ID"] : "")?>"></div><?
-								?><div class="lenta-block-grat-users"><?
+							?><div class="lenta-info-block lenta-block-grat"><?php
+								?><div class="lenta-block-grat-medal<?=($arResult["GRATITUDE"]["TYPE"]["XML_ID"] <> '' ? " lenta-block-grat-medal-".$arResult["GRATITUDE"]["TYPE"]["XML_ID"] : "")?>"></div><?php
+								?><div class="lenta-block-grat-users"><?php
 									$jsIds = "";
 
 									$hiddenBlock = '';
@@ -671,13 +671,13 @@ if(!empty($arResult["Post"]))
 
 										?><div class="lenta-block-grat-user">
 											<div class="lenta-new-grat-avatar">
-												<div class="avatar" id="<?=$avatarId?>"<?if($arGratUser["AVATAR_SRC"]):?> data-src="<?=$arGratUser["AVATAR_SRC"]?>"<?endif?>></div>
+												<div class="avatar" id="<?=$avatarId?>"<?php if($arGratUser["AVATAR_SRC"]) { ?> data-src="<?=$arGratUser["AVATAR_SRC"]?>"<?php } ?>></div>
 											</div>
 											<div class="lenta-info-block-content">
 												<div class="lenta-important-block-title"><a href="<?=($arGratUser['URL'] ? $arGratUser['URL'] : 'javascript:void(0);')?>"><?=CUser::FormatName($arParams["NAME_TEMPLATE"], $arGratUser)?></a></div>
 												<div class="lenta-important-block-text"><?=htmlspecialcharsbx($arGratUser["WORK_POSITION"])?></div>
 											</div>
-										</div><?
+										</div><?php
 
 										if ($counter >= $counterLimit)
 										{
@@ -702,8 +702,8 @@ if(!empty($arResult["Post"]))
 										}
 										$smallGratUsersList = array_reverse($smallGratUsersList);
 
-										?><div class="lenta-block-grat-users-small-cont"><?
-											?><div class="lenta-block-grat-users-small"><?
+										?><div class="lenta-block-grat-users-small-cont"><?php
+											?><div class="lenta-block-grat-users-small"><?php
 												$counter = 1;
 												foreach($smallGratUsersList as $arGratUser)
 												{
@@ -714,30 +714,30 @@ if(!empty($arResult["Post"]))
 														$jsIds .= $jsIds !== "" ? ', "'.$avatarId.'"' : '"'.$avatarId.'"';
 													}
 
-													?><div class="avatar avatar-small" id="<?=$avatarId?>"<?if($arGratUser["AVATAR_SRC"]):?> data-src="<?=$arGratUser["AVATAR_SRC"]?>"<?endif?>></div><?
+													?><div class="avatar avatar-small" id="<?=$avatarId?>"<?php if($arGratUser["AVATAR_SRC"]) { ?> data-src="<?=$arGratUser["AVATAR_SRC"]?>"<?php } ?>></div><?php
 													$counter++;
 												}
-											?></div><?
+											?></div><?php
 
 											if ($moreCount > 0)
 											{
-												?><div class="lenta-block-grat-users-small-more">+<?=$moreCount?></div><?
+												?><div class="lenta-block-grat-users-small-more">+<?=$moreCount?></div><?php
 											}
-										?></div><?
-										?><div class="lenta-block-grat-users-small-hidden" style="display: none"><?
-											?><?=$hiddenBlock?><?
-										?></div><?
+										?></div><?php
+										?><div class="lenta-block-grat-users-small-hidden" style="display: none"><?php
+											?><?=$hiddenBlock?><?php
+										?></div><?php
 									}
-								?></div><?
-							?></div><?
+								?></div><?php
+							?></div><?php
 
 							if($jsIds <> '')
 							{
-								?><script>BitrixMobile.LazyLoad.registerImages([<?=$jsIds?>]);</script><?
+								?><script>BitrixMobile.LazyLoad.registerImages([<?=$jsIds?>]);</script><?php
 							}
 						}
 
-						?></div><?
+						?></div><?php
 					}
 
 					$postMoreBlockStyle = (
@@ -746,7 +746,7 @@ if(!empty($arResult["Post"]))
 							? 'style="display: none;"'
 							: ''
 					);
-					?><div class="post-more-block" id="post_more_block_<?=$arParams["LOG_ID"]?>"<?=$postMoreBlockStyle?>></div><?
+					?><div class="post-more-block" id="post_more_block_<?=$arParams["LOG_ID"]?>"<?=$postMoreBlockStyle?>></div><?php
 
 					if (
 						isset($arParams['TARGET'])
@@ -756,18 +756,18 @@ if(!empty($arResult["Post"]))
 						$targetHtml = ob_get_contents();
 					}
 
-				?></div><? // post-item-post-block, post_block_check_cont_..
+				?></div><?php // post-item-post-block, post_block_check_cont_..
 
 				if(!empty($arResult["UF_FILE"]))
 				{
-					?><div id="post_block_files_<?=$arParams["LOG_ID"]?>" class="post-item-attached-file-wrap post-item-attached-disk-file-wrap"><?
+					?><div id="post_block_files_<?=$arParams["LOG_ID"]?>" class="post-item-attached-file-wrap post-item-attached-disk-file-wrap"><?php
 
 					$eventHandlerID = AddEventHandler('main', 'system.field.view.file', '__blogUFfileShowMobile');
 					$arPostField = $arResult["UF_FILE"];
 
-					if(!empty($arPostField["VALUE"]))
+					if (!empty($arPostField["VALUE"]))
 					{
-						?><?$APPLICATION->IncludeComponent(
+						$APPLICATION->IncludeComponent(
 							"bitrix:system.field.view",
 							$arPostField["USER_TYPE"]["USER_TYPE_ID"],
 							array(
@@ -780,7 +780,7 @@ if(!empty($arResult["Post"]))
 							),
 							null,
 							array("HIDE_ICONS"=>"Y")
-						);?><?
+						);
 					}
 
 					if (
@@ -791,7 +791,7 @@ if(!empty($arResult["Post"]))
 						RemoveEventHandler('main', 'system.field.view.file', $eventHandlerID);
 					}
 
-					?></div><?
+					?></div><?php
 				}
 
 				if ($arResult["is_ajax_post"] !== "Y")
@@ -799,7 +799,7 @@ if(!empty($arResult["Post"]))
 					ob_start();
 				}
 
-				?><div class="post-item-inform-wrap-left"><?
+				?><div class="post-item-inform-wrap-left"><?php
 
 				if (
 					$arParams["SHOW_RATING"] === "Y"
@@ -820,7 +820,7 @@ if(!empty($arResult["Post"]))
 					 class="post-item-informers bx-ilike-block"
 					 id="rating_block_<?=$arParams['LOG_ID']?>"
 					 data-counter="<?= (int)$arResult['RATING'][$arResult['Post']['ID']]['TOTAL_VOTES'] ?>"
-					><?
+					><?php
 						?><span
 						 data-rating-vote-id="<?= htmlspecialcharsbx($voteId) ?>"
 						 data-rating-entity-type-id="BLOG_POST"
@@ -839,12 +839,12 @@ if(!empty($arResult["Post"]))
 								$likeClassList[] = 'bx-you-like-button';
 								$likeClassList[] = 'bx-you-like-button-'.mb_strtolower($emotion);
 							}
-							?><span class="<?=implode(' ', $likeClassList)?>"><?
-								?><span class="bx-ilike-icon-new"></span><?
-								?><span class="bx-ilike-text"><?=\CRatingsComponentsMain::getRatingLikeMessage($emotion)?></span><?
-							?></span><?
-						?></span><?
-					?></span><?
+							?><span class="<?=implode(' ', $likeClassList)?>"><?php
+								?><span class="bx-ilike-icon-new"></span><?php
+								?><span class="bx-ilike-text"><?=\CRatingsComponentsMain::getRatingLikeMessage($emotion)?></span><?php
+							?></span><?php
+						?></span><?php
+					?></span><?php
 				}
 
 				if (
@@ -925,18 +925,23 @@ if(!empty($arResult["Post"]))
 
 					if ($arResult["GetCommentsOnly"])
 					{
-						?><?=$strCommentsBlock?><?
+						?><?=$strCommentsBlock?><?php
 						die();
 					}
 
 					if (!$arParams["IS_LIST"]) // detail, non-empty
 					{
-						?><div id="comments_control_<?=$arParams["LOG_ID"]?>" class="post-item-informers post-item-inform-comments"><?
-							?><div class="post-item-inform-comments-box"><?
-								?><span class="post-item-inform-icon"></span><?
-								?><div class="post-item-inform-left"><?=Loc::getMessage('BLOG_MOBILE_COMMENTS_ACTION')?></div><?
-							?></div><?
-						?></div><?
+						$onClick = '';
+						if ($arResult['CanComment'])
+						{
+							$onClick = 'onclick="BX.MobileLivefeed.CommentsInstance.setFocusOnCommentForm();"';
+						}
+						?><div id="comments_control_<?=$arParams["LOG_ID"]?>" class="post-item-informers post-item-inform-comments" <?= $onClick ?>"><?php
+							?><div class="post-item-inform-comments-box"><?php
+								?><span class="post-item-inform-icon"></span><?php
+								?><div class="post-item-inform-left"><?=Loc::getMessage('BLOG_MOBILE_COMMENTS_ACTION')?></div><?php
+							?></div><?php
+						?></div><?php
 					}
 					else
 					{
@@ -945,7 +950,7 @@ if(!empty($arResult["Post"]))
 								$arParams["USE_FOLLOW"] != "Y"
 								|| $arParams["FOLLOW"] == "Y"
 							)
-							&& intval($arCommentsResult["newCountWOMark"]) > 0
+							&& (int)$arCommentsResult["newCountWOMark"] > 0
 						);
 
 						$commentsBlockClassList = [
@@ -957,41 +962,41 @@ if(!empty($arResult["Post"]))
 							$commentsBlockClassList[] = 'post-item-inform-likes-active';
 						}
 
-						?><div id="comments_control_<?=$arParams["LOG_ID"]?>" class="<?=implode(' ', $commentsBlockClassList)?>"><?
-							?><div class="post-item-inform-comments-box"><?
-								?><span class="post-item-inform-icon"></span><?
+						?><div id="comments_control_<?=$arParams["LOG_ID"]?>" class="<?=implode(' ', $commentsBlockClassList)?>"><?php
+							?><div class="post-item-inform-comments-box"><?php
+								?><span class="post-item-inform-icon"></span><?php
 
 								$num_comments = (isset($arParams["COMMENTS_COUNT"]) ? $arParams["COMMENTS_COUNT"] : intval($arResult["Post"]["NUM_COMMENTS"]));
 
-								?><div class="post-item-inform-left" id="informer_comments_text2_<?=$arParams["LOG_ID"]?>" style="display: <?=($num_comments > 0 ? "inline-block" : "none")?>;"><?
-									?><?=Loc::getMessage('BLOG_MOBILE_COMMENTS')?><? // BLOG_MOBILE_COMMENTS_2
-								?></div><?
-								?><div class="post-item-inform-left" id="informer_comments_text_<?=$arParams["LOG_ID"]?>" style="display: <?=($num_comments <= 0 ? "inline-block" : "none")?>;"><?
-									?><?=Loc::getMessage('BLOG_MOBILE_COMMENTS')?><?
-								?></div><?
+								?><div class="post-item-inform-left" id="informer_comments_text2_<?=$arParams["LOG_ID"]?>" style="display: <?=($num_comments > 0 ? "inline-block" : "none")?>;"><?php
+									?><?=Loc::getMessage('BLOG_MOBILE_COMMENTS')?><?php // BLOG_MOBILE_COMMENTS_2
+								?></div><?php
+								?><div class="post-item-inform-left" id="informer_comments_text_<?=$arParams["LOG_ID"]?>" style="display: <?=($num_comments <= 0 ? "inline-block" : "none")?>;"><?php
+									?><?=Loc::getMessage('BLOG_MOBILE_COMMENTS')?><?php
+								?></div><?php
 
-								?><div class="post-item-inform-right" id="informer_comments_<?=$arParams["LOG_ID"]?>" style="display: <?=($num_comments > 0 ? 'inline-block' : 'none')?>;"><?
+								?><div class="post-item-inform-right" id="informer_comments_<?=$arParams["LOG_ID"]?>" style="display: <?=($num_comments > 0 ? 'inline-block' : 'none')?>;"><?php
 									if ($showNewComments)
 									{
-										?><span id="informer_comments_all_<?=$arParams["LOG_ID"]?>"><?
-											$old_comments = intval(abs($num_comments - intval($arCommentsResult["newCountWOMark"])));
-											?><?=($old_comments > 0 ? $old_comments : '')?><?
-										?></span><?
-										?><span id="informer_comments_new_<?=$arParams["LOG_ID"]?>" class="post-item-inform-right-new"><?
-											?><span class="post-item-inform-right-new-sign">+</span><?
-											?><span class="post-item-inform-right-new-value"><?=intval($arCommentsResult["newCountWOMark"])?></span><?
-										?></span><?
+										?><span id="informer_comments_all_<?=$arParams["LOG_ID"]?>"><?php
+											$old_comments = (int)abs($num_comments - intval($arCommentsResult["newCountWOMark"]));
+											?><?=($old_comments > 0 ? $old_comments : '')?><?php
+										?></span><?php
+										?><span id="informer_comments_new_<?=$arParams["LOG_ID"]?>" class="post-item-inform-right-new"><?php
+											?><span class="post-item-inform-right-new-sign">+</span><?php
+											?><span class="post-item-inform-right-new-value"><?= (int)$arCommentsResult["newCountWOMark"] ?></span><?php
+										?></span><?php
 									}
 									else
 									{
-										?><?=$num_comments?><?
+										?><?=$num_comments?><?php
 									}
-								?></div><?
+								?></div><?php
 
-							?></div><?
+							?></div><?php
 
 
-						?></div><?
+						?></div><?php
 					}
 				}
 				else
@@ -1001,21 +1006,21 @@ if(!empty($arResult["Post"]))
 
 				if ($bHasComments)
 				{
-					?><div id="log_entry_follow_<?=(int)$arParams["LOG_ID"]?>" data-follow="<?=($arParams["FOLLOW"] === "Y" ? "Y" : "N")?>" style="display: none;"></div><?
+					?><div id="log_entry_follow_<?=(int)$arParams["LOG_ID"]?>" data-follow="<?=($arParams["FOLLOW"] === "Y" ? "Y" : "N")?>" style="display: none;"></div><?php
 				}
 
 				if ($arResult["bTasksAvailable"])
 				{
-					?><div id="log_entry_use_tasks_<?=(int)$arParams["LOG_ID"]?>" data-use-tasks="Y" style="display: none;"></div><?
+					?><div id="log_entry_use_tasks_<?=(int)$arParams["LOG_ID"]?>" data-use-tasks="Y" style="display: none;"></div><?php
 				}
 
-				?></div><? // class="post-item-inform-wrap-left"
+				?></div><?php // class="post-item-inform-wrap-left"
 
-				?><div class="post-item-inform-wrap-right"><?
-					?><a id="post_more_limiter_<?=(int)$arParams["LOG_ID"]?>" class="post-item-more" ontouchstart="this.classList.toggle('post-item-more-pressed')" ontouchend="this.classList.toggle('post-item-more-pressed')" style="visibility: hidden;"><?
-						?><?=GetMessage("BLOG_LOG_EXPAND")?><?
-					?></a><?
-				?></div><?
+				?><div class="post-item-inform-wrap-right"><?php
+					?><a id="post_more_limiter_<?=(int)$arParams["LOG_ID"]?>" class="post-item-more" ontouchstart="this.classList.toggle('post-item-more-pressed')" ontouchend="this.classList.toggle('post-item-more-pressed')" style="visibility: hidden;"><?php
+						?><?=GetMessage("BLOG_LOG_EXPAND")?><?php
+					?></a><?php
+				?></div><?php
 
 				?><script>
 					BX.ready(function() {
@@ -1024,10 +1029,9 @@ if(!empty($arResult["Post"]))
 							window.arCanUserComment[<?=$arParams["LOG_ID"]?>] = <?=($arCommentsResult && $arCommentsResult["CanUserComment"] ? "true" : "false")?>;
 						}
 					});
-				</script><?
+				</script><?php
 
-				$strBottomBlock = ob_get_contents();
-				ob_end_clean(); // outer buffer
+				$strBottomBlock = ob_get_clean();
 
 				if (
 					$arParams["SHOW_RATING"] === "Y"
@@ -1037,9 +1041,9 @@ if(!empty($arResult["Post"]))
 					)
 				)
 				{
-					?><div class="post-item-inform-wrap-tree" id="<?=(!$arParams["IS_LIST"] ? 'rating-footer-wrap' : 'rating-footer-wrap_'.intval($arParams["LOG_ID"]))?>"><?
-						?><div class="feed-post-emoji-top-panel-outer"><?
-							?><div id="feed-post-emoji-top-panel-container-<?=htmlspecialcharsbx($voteId)?>" class="feed-post-emoji-top-panel-box <?=(intval($arResult["RATING"][$arResult["Post"]["ID"]]["TOTAL_POSITIVE_VOTES"]) > 0 ? 'feed-post-emoji-top-panel-container-active' : '')?>"><?
+					?><div class="post-item-inform-wrap-tree" id="<?=(!$arParams["IS_LIST"] ? 'rating-footer-wrap' : 'rating-footer-wrap_'. (int)$arParams["LOG_ID"]) ?>"><?php
+						?><div class="feed-post-emoji-top-panel-outer"><?php
+							?><div id="feed-post-emoji-top-panel-container-<?=htmlspecialcharsbx($voteId)?>" class="feed-post-emoji-top-panel-box <?= ((int)$arResult["RATING"][$arResult["Post"]["ID"]]["TOTAL_POSITIVE_VOTES"] > 0 ? 'feed-post-emoji-top-panel-container-active' : '') ?>"><?php
 								$APPLICATION->IncludeComponent(
 									"bitrix:rating.vote",
 									"like_react",
@@ -1064,29 +1068,29 @@ if(!empty($arResult["Post"]))
 									$component,
 									array("HIDE_ICONS" => "Y")
 								);
-							?></div><?
-						?></div><?
-					?></div><?
+							?></div><?php
+						?></div><?php
+					?></div><?php
 				}
 
 			if ($strBottomBlock <> '')
 			{
-				?><div id="post_item_inform_wrap" class="post-item-inform-wrap"><?
-					?><?=$strBottomBlock;?><?
-				?></div><?
+				?><div id="post_item_inform_wrap" class="post-item-inform-wrap"><?php
+					?><?=$strBottomBlock;?><?php
+				?></div><?php
 			}
 
-			?></div><? // post-item-top-wrap
+			?></div><?php // post-item-top-wrap
 
 			if (
 				$arResult["Post"]["ENABLE_COMMENTS"] == "Y"
 				&& $strCommentsBlock <> ''
 			)
 			{
-				?><?=$strCommentsBlock?><?
+				?><?=$strCommentsBlock?><?php
 			}
 
-		?></div><? // post-wrap / lenta-item
+		?></div><?php // post-wrap / lenta-item
 	}
 }
 elseif(!$arResult["bFromList"])

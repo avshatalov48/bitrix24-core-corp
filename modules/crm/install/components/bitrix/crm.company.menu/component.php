@@ -52,6 +52,8 @@ $arResult['TOOLBAR_ID'] = $toolbarID;
 
 $arResult['BUTTONS'] = array();
 
+$isInSlider = ($arParams['IN_SLIDER'] === 'Y');
+
 if ($arParams['TYPE'] == 'list')
 {
 	$bRead   = CCrmCompany::CheckReadPermission(0, $CrmPerms);
@@ -197,7 +199,7 @@ if($arParams['TYPE'] === 'list')
 		unset($link);
 	}
 
-	if (!$isMyCompanyMode && $bImport)
+	if (!$isMyCompanyMode && $bImport && !$isInSlider)
 	{
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('COMPANY_IMPORT'),
@@ -214,7 +216,7 @@ if($arParams['TYPE'] === 'list')
 		);
 	}
 
-	if ($bExport)
+	if ($bExport && !$isInSlider)
 	{
 		$arResult['BUTTONS'][] = array('SEPARATOR' => true);
 
@@ -309,7 +311,7 @@ if($arParams['TYPE'] === 'list')
 		unset($entityType, $stExportId, $randomSequence, $stExportManagerId);
 	}
 
-	if (!$isMyCompanyMode && $bDedupe)
+	if (!$isMyCompanyMode && $bDedupe && !$isInSlider)
 	{
 		$arResult['BUTTONS'][] = array('SEPARATOR' => true);
 

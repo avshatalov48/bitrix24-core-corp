@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль CRM не установлен.";
 $MESS["CRM_ORDER_NOT_FOUND"] = "Заказ не найден";
 $MESS["CRM_ORDER_CREATION_PAGE_TITLE"] = "Создание заказа";
@@ -36,7 +36,6 @@ $MESS["CRM_ORDER_TITLE"] = "Заказ ID (#ID#), № #ACCOUNT_NUMBER#";
 $MESS["CRM_ORDER_FIELD_USER_DESCRIPTION"] = "Комментарий покупателя";
 $MESS["CRM_ORDER_SECTION_PAYMENT"] = "Оплата";
 $MESS["CRM_ORDER_SECTION_SHIPMENT"] = "Отгрузка";
-$MESS["CRM_ORDER_SECTION_PROPERTIES"] = "Свойства заказа";
 $MESS["CRM_ORDER_NOT_SELECTED"] = "не заполнено";
 $MESS["CRM_ORDER_CREATE_NEW_PROFILE"] = "Создать новый";
 $MESS["CRM_ORDER_CHOOSE_PAY_SYSTEM"] = "(Выберите способ оплаты)";
@@ -54,3 +53,4 @@ $MESS["CRM_ORDER_ERROR_PAYSYSTEM_SERVICE"] = "Платёжная система 
 $MESS["CRM_ORDER_ERROR_DELIVERY_SERVICE"] = "Служба доставки \"#NAME#\" не подходит для отгрузки из-за установленных ограничений";
 $MESS["CRM_ORDER_FIELD_BUDGET"] = "Остаток средств на внутреннем счёте покупателя";
 $MESS["CRM_ORDER_SHIPMENT_PROPS"] = "Свойства отгрузки";
+$MESS["CATALOG_MODULE_NOT_INSTALLED"] = "Модуль catalog не установлен.";

@@ -22,13 +22,8 @@ if (!Loader::includeModule('bizproc'))
 
 class Item extends \CCrmDocument implements \IBPWorkflowDocument
 {
-	protected const CONVERT_TO_BP = 0;
-	protected const CONVERT_TO_DOCUMENT = 1;
-
-	public static function getDocumentType($documentId): string
-	{
-		return static::GetDocumentInfo($documentId)['TYPE'];
-	}
+	public const CONVERT_TO_BP = 0;
+	public const CONVERT_TO_DOCUMENT = 1;
 
 	public static function getDocumentTypeName($documentType)
 	{
@@ -63,7 +58,7 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 		if (
 			isset($factory)
 			&& $factory->isCategoriesSupported()
-			&& !array_key_exists('DocumentCategoryId', $arParameters)
+			&& !isset($arParameters['DocumentCategoryId'])
 		)
 		{
 			$arParameters['DocumentCategoryId'] = $factory->createDefaultCategoryIfNotExist()->getId();;
@@ -77,15 +72,84 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 		);
 	}
 
+	public static function addProductRows(string $documentId, array $productRows): Result
+	{
+		$documentInfo = static::GetDocumentInfo($documentId);
+		$result = new Result();
+
+		if (!$documentInfo)
+		{
+			$result->addError(new Error('Invalid document type'));
+		}
+		else
+		{
+			$factory = Container::getInstance()->getFactory($documentInfo['TYPE_ID']);
+			$item = isset($factory) ? $factory->getItem($documentInfo['ID']) : null;
+		}
+
+		if (isset($factory, $item))
+		{
+			foreach ($productRows as $row)
+			{
+				$addResult = $item->addToProductRows($row);
+				if (!$addResult->isSuccess())
+				{
+					$result->addErrors($addResult->getErrors());
+				}
+			}
+
+			if ($result->isSuccess())
+			{
+				$operation = $factory->getUpdateOperation($item, static::getContext());
+				$result = static::launchOperation($operation);
+			}
+		}
+
+		return $result;
+	}
+
+	public static function setProductRows(string $documentId, array $productRows): Result
+	{
+		$documentInfo = static::GetDocumentInfo($documentId);
+		$result = new Result();
+
+		if (!$documentInfo)
+		{
+			$result->addError(new Error('Invalid document id'));
+		}
+		else
+		{
+			$factory = Container::getInstance()->getFactory($documentInfo['TYPE_ID']);
+			$item = isset($factory) ? $factory->getItem($documentInfo['ID']) : null;
+		}
+
+		if (isset($factory, $item))
+		{
+			$result = $item->setProductRows($productRows);
+		}
+		else
+		{
+			$errorMessage = Loc::getMessage('CRM_ENTITY_EXISTENCE_ERROR', ['#DOCUMENT_ID#' => $documentId]);
+			$result->addError(new Error($errorMessage));
+		}
+
+		if (isset($factory, $item) && $result->isSuccess())
+		{
+			$result = static::launchOperation($factory->getUpdateOperation($item));
+		}
+
+		return $result;
+	}
+
 	public static function CreateDocument($parentDocumentId, $fields)
 	{
 		$entityTypeId = static::GetDocumentInfo($parentDocumentId)['TYPE_ID'];
 
-		$factory = Container::getInstance()->getFactory($entityTypeId);
-		$newItem = $factory->createItem([]);
-
 		$documentFieldsMap = static::getEntityFields($entityTypeId);
 		$compatibleFields = [];
+
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+		$newItem = $factory->createItem([]);
 
 		static::prepareContactFields($fields);
 		self::prepareStageFields($factory, $fields);
@@ -171,6 +235,11 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 			);
 		}
 
+		if (isset($documentFieldValues['OPPORTUNITY']))
+		{
+			$documentFieldValues['IS_MANUAL_OPPORTUNITY'] = $documentFieldValues['OPPORTUNITY'] > 0 ? 'Y' : 'N';
+		}
+
 		$item->setFromCompatibleData($documentFieldValues);
 
 		$updateOperation = $factory->getUpdateOperation($item, static::getContext());
@@ -221,11 +290,17 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 
 			case FieldType::USER:
 				$documentId = \CCrmBizProcHelper::ResolveDocumentId($item->getEntityTypeId(), $item->getId());
-				return
-					mb_substr($fieldInfo['bpValue'], 0, mb_strlen('user_')) === 'user_'
-						? (int)mb_substr($fieldInfo['bpValue'], mb_strlen('user_'))
-						: static::GetUsersFromUserGroup($fieldInfo['bpValue'], $documentId[2])
-				;
+				if (mb_strpos($fieldInfo['bpValue'], 'user_') === 0)
+				{
+					return (int)mb_substr($fieldInfo['bpValue'], mb_strlen('user_'));
+				}
+				else
+				{
+					$group = \CBPHelper::convertToSimpleGroups([$fieldInfo['bpValue']])[0] ?? null;
+					$userIds = static::GetUsersFromUserGroup($group, $documentId[2]);
+
+					return $fieldInfo['Description']['Multiple'] ? $userIds : $userIds[0];
+				}
 
 			case FieldType::FILE:
 				$file = false;
@@ -344,7 +419,7 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 		$factory = Container::getInstance()->getFactory($documentInfo['TYPE_ID']);
 		$item = isset($factory) ? $factory->getItem($documentInfo['ID']) : null;
 
-		return isset($item) ? $item->getTitle() : '';
+		return isset($item) ? $item->getHeading() : '';
 	}
 
 	public static function normalizeDocumentId($documentId, string $docType = null)
@@ -391,6 +466,10 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 	public static function getEntityFields($entityTypeId)
 	{
 		$factory = Container::getInstance()->getFactory($entityTypeId);
+		if (is_null($factory))
+		{
+			throw new \Exception(Loc::getMessage('CRM_BP_DOCUMENT_ITEM_ENTITY_TYPE_ERROR'));
+		}
 		$entityFields = [];
 
 		foreach ($factory->getFieldsInfo() as $fieldId => $field)
@@ -404,6 +483,7 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 			$editable =
 				!\CCrmFieldInfoAttr::isFieldHasAttribute($field, \CCrmFieldInfoAttr::ReadOnly)
 				&& !\CCrmFieldInfoAttr::isFieldHasAttribute($field, \CCrmFieldInfoAttr::Immutable)
+				&& static::isEditableField($field)
 			;
 
 			$required = \CCrmFieldInfoAttr::isFieldHasAttribute($field, \CCrmFieldInfoAttr::Required);
@@ -437,9 +517,17 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 		return $entityFields;
 	}
 
-	protected static function convertFieldId(string $fieldId, int $convertTo = self::CONVERT_TO_BP): string
+	protected static function isEditableField(array $field): bool
 	{
-		$map = [Crm\Item::FIELD_NAME_OBSERVERS => 'OBSERVER_IDS'];
+		return $field['TYPE'] !== Crm\Field::TYPE_CRM_PRODUCT_ROW;
+	}
+
+	public static function convertFieldId(string $fieldId, int $convertTo = self::CONVERT_TO_BP): string
+	{
+		$map = [
+			Crm\Item::FIELD_NAME_OBSERVERS => 'OBSERVER_IDS',
+			Crm\Item::FIELD_NAME_PRODUCTS => 'PRODUCT_IDS',
+		];
 
 		if ($fieldId === Crm\Item::FIELD_NAME_CONTACTS)
 		{
@@ -478,6 +566,8 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 		switch ($type)
 		{
 			case 'integer':
+			case 'crm_product_row':
+			case 'location':
 				return FieldType::INT;
 
 			case 'boolean':
@@ -492,8 +582,11 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 			case 'iblock_element':
 				return 'UF:' . $type;
 
+			case 'crm_deal':
 			case 'crm_company':
 			case 'crm_contact':
+			case 'crm_entity':
+			case 'crm_lead':
 				return 'UF:crm';
 
 			case 'enumeration':
@@ -549,6 +642,18 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 
 			case 'crm_company':
 				return ['COMPANY' => 'Y'];
+
+			case 'crm_deal':
+			case 'crm_entity':
+			case 'crm_lead':
+				if (isset($field['SETTINGS'], $field['SETTINGS']['parentEntityTypeId']))
+				{
+					$entityType = \CCrmOwnerType::ResolveName($field['SETTINGS']['parentEntityTypeId']);
+
+					return [$entityType => 'Y'];
+				}
+
+				return null;
 
 			case 'crm_status':
 				return

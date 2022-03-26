@@ -130,7 +130,7 @@ if(in_array('contact', $arParams['ENTITY_TYPE']))
 {
 	$obRes = \CCrmContact::GetListEx(
 		array('ID' => 'DESC'),
-		array(),
+		array('@CATEGORY_ID' => 0),
 		false,
 		array('nTopCount' => $preloadItemsCnt),
 		array('ID', 'HONORIFIC', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'COMPANY_TITLE', 'PHOTO')
@@ -184,7 +184,7 @@ if(in_array('company', $arParams['ENTITY_TYPE']))
 	$arCompanyIndustryList = CCrmStatus::GetStatusListEx('INDUSTRY');
 	$obRes = \CCrmCompany::GetListEx(
 		array('ID' => 'DESC'),
-		array(),
+		array('@CATEGORY_ID' => 0),
 		false,
 		array('nTopCount' => $preloadItemsCnt),
 		array('ID', 'TITLE', 'COMPANY_TYPE', 'INDUSTRY', 'LOGO')

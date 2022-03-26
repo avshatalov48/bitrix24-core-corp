@@ -64,7 +64,7 @@ final class Factory
 				$class = Service\Google\Source::class;
 				break;
 			case Base::Fb:
-				//$class = Facebook::class;
+				$class = Service\Facebook\Source::class;
 				break;
 			case Base::Vk:
 				//$class = Vk::class;
@@ -73,7 +73,7 @@ final class Factory
 				//$class = Yandex::class;
 				break;
 			case Base::Ig:
-				//$class = Instagram::class;
+				$class = Service\Instagram\Source::class;
 				break;
 		}
 

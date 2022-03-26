@@ -49,15 +49,20 @@ export class RobotButton extends EventEmitter
 	{
 		if (this.isShowLimitSidePanel())
 		{
-			// eslint-disable-next-line
-			BX.UI.InfoHelper.show('limit_tasks_robots');
+			BX.UI.InfoHelper.show('limit_tasks_robots', {
+				isLimit: true,
+				limitAnalyticsLabels: {
+					module: 'tasks',
+					source: 'scrumActiveSprint',
+				},
+			});
 		}
 		else
 		{
 			const url = '/bitrix/components/bitrix/tasks.automation/slider.php?site_id='
 				+ Loc.getMessage('SITE_ID') + '&project_id=' + this.groupId;
 
-			this.sidePanel.openSidePanelByUrl(url);
+			this.sidePanel.openSidePanel(url, {customLeftBoundary: 0});
 		}
 	}
 

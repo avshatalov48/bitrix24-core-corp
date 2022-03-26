@@ -26,23 +26,23 @@ if (!function_exists('lambda_sgkrg456d_funcFormatForHuman') )
 
 		if ($hours < 24)
 		{
-			$duration = $hours." ".CTasksTools::getMessagePlural($hours, "TASKS_TASK_DURATION_HOURS");
+			$duration = $hours . " " . Loc::getMessagePlural("TASKS_TASK_DURATION_HOURS", $hours);
 		}
 		elseif ($houresInResid = $hours % 24)
 		{
 			$days = intval($hours / 24);
 			$duration = $days
 				. " "
-				. CTasksTools::getMessagePlural($days, "TASKS_TASK_DURATION_DAYS")
+				. Loc::getMessagePlural("TASKS_TASK_DURATION_DAYS", $days)
 				. " "
 				. intval($houresInResid)
 				. " "
-				. CTasksTools::getMessagePlural(intval($houresInResid), "TASKS_TASK_DURATION_HOURS");
+				. Loc::getMessagePlural("TASKS_TASK_DURATION_HOURS", intval($houresInResid));
 		}
 		else
 		{
 			$days = (int) ($hours / 24);
-			$duration = $days." ".CTasksTools::getMessagePlural($days, "TASKS_TASK_DURATION_DAYS");
+			$duration = $days . " " . Loc::getMessagePlural("TASKS_TASK_DURATION_DAYS", $days);
 		}
 
 		return ($duration);
@@ -67,24 +67,24 @@ if (!function_exists('lambda_sgkrg457d_funcFormatForHumanMinutes') )
 
 		if ($minutes < 60)
 		{
-			$duration = $minutes . ' ' . CTasksTools::getMessagePlural(
-					$minutes,
-					'TASKS_TASK_DURATION_MINUTES'
+			$duration = $minutes . ' ' . Loc::getMessagePlural(
+					'TASKS_TASK_DURATION_MINUTES',
+					(int)$minutes
 				);
 		}
 		elseif ($minutesInResid = $minutes % 60)
 		{
 			$duration = $hours
 				. ' '
-				. CTasksTools::getMessagePlural($hours, "TASKS_TASK_DURATION_HOURS")
+				. Loc::getMessagePlural("TASKS_TASK_DURATION_HOURS", $hours)
 				. ' '
 				. (int) $minutesInResid
 				. ' '
-				. CTasksTools::getMessagePlural((int) $minutesInResid, "TASKS_TASK_DURATION_MINUTES");
+				. Loc::getMessagePlural("TASKS_TASK_DURATION_MINUTES", (int)$minutesInResid);
 		}
 		else
 		{
-			$duration = $hours." ".CTasksTools::getMessagePlural($hours, "TASKS_TASK_DURATION_HOURS");
+			$duration = $hours . " " . Loc::getMessagePlural("TASKS_TASK_DURATION_HOURS", $hours);
 		}
 
 		if ($bDataInSeconds && ($in < 3600))
@@ -93,7 +93,7 @@ if (!function_exists('lambda_sgkrg457d_funcFormatForHumanMinutes') )
 			{
 				$duration .= ' ' . (int) $secondsInResid
 					. ' '
-					. CTasksTools::getMessagePlural((int) $secondsInResid, "TASKS_TASK_DURATION_SECONDS");
+					. Loc::getMessagePlural("TASKS_TASK_DURATION_SECONDS", (int)$secondsInResid);
 			}
 		}
 

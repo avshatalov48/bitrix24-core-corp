@@ -2,8 +2,6 @@
 
 namespace Bitrix\Crm\Security\Controller;
 
-use Bitrix\Crm;
-
 class Contact extends Base
 {
 	/** @var string */
@@ -14,9 +12,14 @@ class Contact extends Base
 		return \CCrmOwnerType::Contact;
 	}
 
-	public function isPermissionEntityTypeSupported($entityType): bool
+	public function hasCategories(): bool
 	{
-		return $entityType === self::$permissionEntityType;
+		return true;
+	}
+
+	protected function extractCategoryFromFields(array $fields): int
+	{
+		return (isset($fields['CATEGORY_ID']) ? (int)$fields['CATEGORY_ID'] : 0);
 	}
 
 	protected function getSelectFields(): array
@@ -25,6 +28,7 @@ class Contact extends Base
 			'ID',
 			'ASSIGNED_BY_ID',
 			'OPENED',
+			'CATEGORY_ID',
 		];
 	}
 

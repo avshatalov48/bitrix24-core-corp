@@ -22,9 +22,12 @@ class UI
 		return ToLower(mb_substr($str, 0, 1)).mb_substr($str, 1);
 	}
 
+	/**
+	 * @deprecated
+	 */
 	public static function getPluralForm($n)
 	{
-		return ( (($n%10 === 1) && ($n%100 !== 11)) ? 0 : ((($n%10 >= 2) && ($n%10 <= 4) && (($n%100 < 10) || ($n%100 >= 20))) ? 1 : 2) );
+		return \Bitrix\Main\Localization\Loc::getPluralForm($n);
 	}
 
 	/**
@@ -68,7 +71,7 @@ class UI
 	 * @param false $immediate
 	 * @return array
 	 */
-	public static function getAvatars(array $fileIds, int $width = 50, int $height = 50, bool $immediate = false): array
+	public static function getAvatars(array $fileIds, int $width = 50, int $height = 50, bool $immediate = true): array
 	{
 		if (empty($fileIds))
 		{
@@ -80,6 +83,7 @@ class UI
 		$res = \CFile::GetList([], ['@ID' => implode(',', $fileIds)]);
 		while ($file = $res->Fetch())
 		{
+			$file['SRC'] = \CFile::GetFileSRC($file);
 			$fileInfo = \CFile::ResizeImageGet(
 				$file,
 				[
@@ -89,7 +93,7 @@ class UI
 				BX_RESIZE_IMAGE_EXACT,
 				false,
 				false,
-				(bool)$immediate
+				$immediate
 			);
 
 			$avatars[$file['ID']] = $fileInfo['src'];

@@ -53,7 +53,7 @@ class OrderBuilderCrm extends OrderBuilder
 			->setContactCompanyCollection()
 			->setProperties()
 			->setUser()
-			->setDealBinding()
+			->setEntityBinding()
 			->buildBasket()
 			->buildShipments()
 			->buildPayments()
@@ -237,22 +237,24 @@ class OrderBuilderCrm extends OrderBuilder
 		return parent::buildShipments();
 	}
 
-	protected function setDealBinding()
+	protected function setEntityBinding()
 	{
-		$dealId = $this->formData['DEAL_ID'] ?? 0;
+		$ownerId = $this->formData['OWNER_ID'] ?? 0;
+		$ownerTypeId = $this->formData['OWNER_TYPE_ID'] ?? 0;
 
-		if ($dealId)
+		if ($ownerId && $ownerTypeId)
 		{
-			$dealBinding = $this->order->getDealBinding();
+			$binding = $this->order->getEntityBinding();
 
-			if ($dealBinding === null)
+			if ($binding === null)
 			{
-				$dealBinding = $this->order->createDealBinding();
+				$binding = $this->order->createEntityBinding();
 			}
 
-			if ($dealBinding)
+			if ($binding)
 			{
-				$dealBinding->setField('DEAL_ID', $this->formData['DEAL_ID']);
+				$binding->setField('OWNER_ID', $ownerId);
+				$binding->setField('OWNER_TYPE_ID', $ownerTypeId);
 			}
 		}
 

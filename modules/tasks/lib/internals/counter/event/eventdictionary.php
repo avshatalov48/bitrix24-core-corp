@@ -24,6 +24,7 @@ class EventDictionary
 		EVENT_AFTER_COMMENT_DELETE 		= 'onAfterCommentDelete',
 		EVENT_AFTER_COMMENTS_READ_ALL 	= 'onAfterCommentsReadAll',
 		EVENT_AFTER_PROJECT_READ_ALL 	= 'onAfterProjectReadAll',
+		EVENT_AFTER_SCRUM_READ_ALL 		= 'onAfterScrumReadAll',
 
 		EVENT_TASK_EXPIRED 				= 'onTaskExpired',
 		EVENT_TASK_EXPIRED_SOON			= 'onTaskExpiredSoon',

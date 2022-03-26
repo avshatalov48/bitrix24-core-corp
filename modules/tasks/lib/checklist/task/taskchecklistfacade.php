@@ -158,15 +158,14 @@ class TaskCheckListFacade extends CheckListFacade
 		else
 		{
 			$checkListLog->logAddingChanges();
-			static::postChangesComment($taskId, $userId);
 			SearchIndex::setTaskSearchIndex($taskId);
-		}
 
-		$members = $checkList->getFields()['MEMBERS'];
-		if (is_array($members) && !empty($members))
-		{
-			$task = new CTaskItem($taskId, $userId);
-			static::addMembersToTask($task, $members);
+			$members = $checkList->getFields()['MEMBERS'];
+			if (is_array($members) && !empty($members))
+			{
+				$task = new CTaskItem($taskId, $userId);
+				static::addMembersToTask($task, $members);
+			}
 		}
 	}
 
@@ -260,15 +259,14 @@ class TaskCheckListFacade extends CheckListFacade
 		else
 		{
 			$checkListLog->logUpdatingChanges();
-			static::postChangesComment($taskId, $userId);
 			SearchIndex::setTaskSearchIndex($taskId);
-		}
 
-		$members = $newCheckList->getFields()['MEMBERS'];
-		if (is_array($members) && !empty($members))
-		{
-			$task = new CTaskItem($taskId, $userId);
-			static::addMembersToTask($task, $members);
+			$members = $newCheckList->getFields()['MEMBERS'];
+			if (is_array($members) && !empty($members))
+			{
+				$task = new CTaskItem($taskId, $userId);
+				static::addMembersToTask($task, $members);
+			}
 		}
 	}
 
@@ -293,21 +291,16 @@ class TaskCheckListFacade extends CheckListFacade
 				$checkListLog = new TaskCheckListLog($taskId, $userId);
 				$collectedData = $checkListLog->getActionFields(TaskCheckListLog::ACTION_DELETE, $itemsToLog);
 				$checkListLog->logItemsChanges($collectedData);
-
-				static::postChangesComment($taskId, $userId);
 			}
 		}
 		else
 		{
 			$checkList = $data['CHECKLIST'];
-
 			$checkListLog = new TaskCheckListLog($taskId, $userId, $checkList);
 			$checkListLog->actionRemove($checkList->getFields()['TITLE']);
 
-			static::postChangesComment($taskId, $userId);
+			SearchIndex::setTaskSearchIndex($taskId);
 		}
-
-		SearchIndex::setTaskSearchIndex($taskId);
 	}
 
 	/**
@@ -342,9 +335,9 @@ class TaskCheckListFacade extends CheckListFacade
 		{
 			$checkListLog = new TaskCheckListLog($taskId, $userId);
 			$checkListLog->logItemsChanges(static::$collectedData);
-
-			static::postChangesComment($taskId, $userId);
 		}
+
+		SearchIndex::setTaskSearchIndex($taskId);
 
 		static::logToAnalyticsFile($data['PARAMETERS']);
 	}
@@ -355,8 +348,6 @@ class TaskCheckListFacade extends CheckListFacade
 	 */
 	private static function postChangesComment($taskId, $userId): void
 	{
-		return;
-
 		$commentPoster = CommentPoster::getInstance($taskId, $userId);
 		$commentPoster->appendChecklistChangesMessage();
 

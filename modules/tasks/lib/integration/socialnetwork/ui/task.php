@@ -100,7 +100,7 @@ final class Task extends \Bitrix\Tasks\Integration\Socialnetwork
 
 		// here we must have user-related personalized link. Because of cache usage, the #USER_PERSONAL_TASK_URL#
 		// is replaced by socialnetwork just before feed display
-		$taskHtmlTitle = '<a href="#USER_PERSONAL_TASK_URL#">'.$arFields["TITLE"].'</a>';
+		$taskHtmlTitle = '<a href="#USER_PERSONAL_TASK_URL#">'.\Bitrix\Main\Text\Emoji::decode($arFields["TITLE"]).'</a>';
 
 		// Prepare event title (depends on action and gender of actor)
 		{

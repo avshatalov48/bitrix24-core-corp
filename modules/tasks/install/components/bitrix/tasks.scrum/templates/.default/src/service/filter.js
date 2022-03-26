@@ -1,4 +1,4 @@
-import {Dom} from 'main.core';
+import {Dom, Type} from 'main.core';
 import {BaseEvent, EventEmitter} from 'main.core.events';
 import {RequestSender} from '../utility/request.sender';
 
@@ -104,6 +104,12 @@ export class Filter extends EventEmitter
 		const fieldOptions = this.filterManager.getFieldByName(name);
 
 		if (!fieldInstances || !fieldOptions)
+		{
+			return;
+		}
+
+		const found = fieldInstances.options.ITEMS.find((listItem) => listItem.NAME === item.NAME);
+		if (!Type.isUndefined(found))
 		{
 			return;
 		}

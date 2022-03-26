@@ -1,0 +1,4 @@
+<?php
+$MESS["FIELDS_PRODUCT_ADD_PRODUCT"] = "Add products";
+$MESS["FIELDS_PRODUCT_COUNT"] = "Items";
+$MESS["FIELDS_PRODUCT_PRICE"] = "Amount";

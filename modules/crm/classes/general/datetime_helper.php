@@ -49,20 +49,6 @@ class CCrmDateTimeHelper
 
 	public static function GetMaxDatabaseDate()
 	{
-		global $DBType;
-		$dbType = mb_strtoupper($DBType);
-		if($dbType === 'MYSQL')
-		{
-			return "'9999-12-31 00:00:00'";
-		}
-		elseif($dbType === 'MSSQL')
-		{
-			return "CONVERT(DATETIME, '9999-12-31 00:00:00', 121)";
-		}
-		elseif($dbType === 'ORACLE')
-		{
-			return "TO_DATE('9999-12-31 00:00:00', 'YYYY-MM-DD HH24:MI:SS')";
-		}
 		return "'9999-12-31 00:00:00'";
 	}
 	public static function IsMaxDatabaseDate($datetime, $format = false)

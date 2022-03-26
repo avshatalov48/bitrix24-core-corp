@@ -133,29 +133,42 @@ class AjaxProcessor
 		Header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 		$response = $result->getData();
 
-		if(!$result->isSuccess())
+		$error = $this->prepareResponseError($result);
+		if ($error)
 		{
-			$response['ERROR'] = implode(', ', $result->getErrorMessages());
-		}
-
-		if($result->hasWarnings() && $this->showWarnings)
-		{
-			$warningString = implode(', ', $result->getWarningMessages());
-
-			if (empty($response['ERROR']))
-			{
-				$response['ERROR'] = $warningString;
-			}
-			else
-			{
-				$response['ERROR'] .= ', '.$warningString;
-			}
+			$response['ERROR'] = $error;
 		}
 
 		if(!empty($response))
 		{
 			echo \CUtil::PhpToJSObject($response);
 		}
+	}
+
+	protected function prepareResponseError(Result $result): string
+	{
+		$response = '';
+
+		if (!$result->isSuccess())
+		{
+			$response = implode(', ', $result->getErrorMessages());
+		}
+
+		if ($result->hasWarnings() && $this->showWarnings)
+		{
+			$warningString = implode(', ', $result->getWarningMessages());
+
+			if (empty($response))
+			{
+				$response = $warningString;
+			}
+			else
+			{
+				$response .= ', '.$warningString;
+			}
+		}
+
+		return $response;
 	}
 
 	protected function getActionMethodName($action)

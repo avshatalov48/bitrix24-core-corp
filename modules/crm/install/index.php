@@ -336,7 +336,7 @@ class crm extends CModule
 
 		if (!$DB->Query("SELECT 'x' FROM b_crm_lead", true))
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/crm/install/db/' . mb_strtolower($DB->type) . '/install.sql');
+			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/crm/install/db/mysql/install.sql');
 
 			COption::SetOptionString('crm', '~crm_install_time', time());
 
@@ -733,47 +733,44 @@ class crm extends CModule
 		//endregion
 
 		//region FULL TEXT INDEXES
-		if ($DB->type === "MYSQL")
+		if ($DB->Query("CREATE FULLTEXT INDEX IX_B_CRM_LEAD_SEARCH ON b_crm_lead(SEARCH_CONTENT)", true))
 		{
-			if ($DB->Query("CREATE FULLTEXT INDEX IX_B_CRM_LEAD_SEARCH ON b_crm_lead(SEARCH_CONTENT)", true))
-			{
-				\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_lead", serialize(["SEARCH_CONTENT" => true]));
-			}
+			\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_lead", serialize(["SEARCH_CONTENT" => true]));
+		}
 
-			if ($DB->Query("CREATE FULLTEXT INDEX IX_B_CRM_DEAL_SEARCH ON b_crm_deal(SEARCH_CONTENT)", true))
-			{
-				\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_deal", serialize(["SEARCH_CONTENT" => true]));
-			}
+		if ($DB->Query("CREATE FULLTEXT INDEX IX_B_CRM_DEAL_SEARCH ON b_crm_deal(SEARCH_CONTENT)", true))
+		{
+			\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_deal", serialize(["SEARCH_CONTENT" => true]));
+		}
 
-			if ($DB->Query("CREATE FULLTEXT INDEX IX_B_CRM_QUOTE_SEARCH ON b_crm_quote(SEARCH_CONTENT)", true))
-			{
-				\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_quote", serialize(["SEARCH_CONTENT" => true]));
-			}
+		if ($DB->Query("CREATE FULLTEXT INDEX IX_B_CRM_QUOTE_SEARCH ON b_crm_quote(SEARCH_CONTENT)", true))
+		{
+			\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_quote", serialize(["SEARCH_CONTENT" => true]));
+		}
 
-			if ($DB->Query("CREATE FULLTEXT INDEX IX_B_CRM_CONTACT_SEARCH ON b_crm_contact(SEARCH_CONTENT)", true))
-			{
-				\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_contact", serialize(["SEARCH_CONTENT" => true]));
-			}
+		if ($DB->Query("CREATE FULLTEXT INDEX IX_B_CRM_CONTACT_SEARCH ON b_crm_contact(SEARCH_CONTENT)", true))
+		{
+			\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_contact", serialize(["SEARCH_CONTENT" => true]));
+		}
 
-			if ($DB->Query("CREATE FULLTEXT INDEX IX_B_CRM_COMPANY_SEARCH ON b_crm_company(SEARCH_CONTENT)", true))
-			{
-				\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_company", serialize(["SEARCH_CONTENT" => true]));
-			}
+		if ($DB->Query("CREATE FULLTEXT INDEX IX_B_CRM_COMPANY_SEARCH ON b_crm_company(SEARCH_CONTENT)", true))
+		{
+			\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_company", serialize(["SEARCH_CONTENT" => true]));
+		}
 
-			if ($DB->Query("CREATE FULLTEXT INDEX IX_B_CRM_ACT_SEARCH ON b_crm_act(SEARCH_CONTENT)", true))
-			{
-				\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_act", serialize(["SEARCH_CONTENT" => true]));
-			}
+		if ($DB->Query("CREATE FULLTEXT INDEX IX_B_CRM_ACT_SEARCH ON b_crm_act(SEARCH_CONTENT)", true))
+		{
+			\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_act", serialize(["SEARCH_CONTENT" => true]));
+		}
 
-			if ($DB->Query("CREATE FULLTEXT INDEX IX_B_CRM_INVOICE_SEARCH ON b_crm_invoice(SEARCH_CONTENT)", true))
-			{
-				\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_invoice", serialize(["SEARCH_CONTENT" => true]));
-			}
+		if ($DB->Query("CREATE FULLTEXT INDEX IX_B_CRM_INVOICE_SEARCH ON b_crm_invoice(SEARCH_CONTENT)", true))
+		{
+			\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_invoice", serialize(["SEARCH_CONTENT" => true]));
+		}
 
-			if ($DB->Query("CREATE FULLTEXT INDEX IX_B_CRM_TIMELINE_SEARCH ON b_crm_timeline_search(SEARCH_CONTENT)", true))
-			{
-				\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_timeline_search", serialize(["SEARCH_CONTENT" => true]));
-			}
+		if ($DB->Query("CREATE FULLTEXT INDEX IX_B_CRM_TIMELINE_SEARCH ON b_crm_timeline_search(SEARCH_CONTENT)", true))
+		{
+			\Bitrix\Main\Config\Option::set("main", "~ft_b_crm_timeline_search", serialize(["SEARCH_CONTENT" => true]));
 		}
 		//endregion
 
@@ -828,25 +825,60 @@ class crm extends CModule
 				$CCrmFields = new CCrmFields($USER_FIELD_MANAGER, $entityId);
 				$arFields = $CCrmFields->GetFields();
 				foreach ($arFields as $arField)
+				{
 					$CCrmFields->DeleteField($arField['ID']);
+				}
 			}
 
-			$userType = \CUserTypeEntity::getList(
+			$userFieldEntity = new \CUserTypeEntity;
+			$userField = \CUserTypeEntity::getList(
 				[],
 				[
 					'ENTITY_ID' => 'CRM_ACTIVITY',
 					'FIELD_NAME' => 'UF_MAIL_MESSAGE',
 				]
-			)->fetch()
-			;
-
-			if ($userType)
+			)->fetch();
+			if ($userField)
 			{
-				$userField = new \CUserTypeEntity;
-				$userField->delete($userType['ID']);
+				$userFieldEntity->delete($userField['ID']);
 			}
 
-			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/crm/install/db/' . mb_strtolower($DB->type) . '/uninstall.sql');
+			$typeFactory = \Bitrix\Main\DI\ServiceLocator::getInstance()->get('crm.type.factory');
+			$types = \Bitrix\Crm\Model\Dynamic\TypeTable::getList()->fetchCollection();
+			$tableNamesToDelete = [];
+			foreach ($types as $type)
+			{
+				$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($type->getEntityTypeId());
+				if ($factory)
+				{
+					$connection = \Bitrix\Main\Application::getConnection();
+					foreach($factory->getUserFields() as $userField)
+					{
+						try
+						{
+							$userFieldEntity->delete($userField['ID']);
+						}
+						catch(\Bitrix\Main\DB\SqlQueryException $e)
+						{
+							// do nothing
+						}
+					}
+				}
+
+				$tableNamesToDelete[] = $type->getTableName();
+				$tableNamesToDelete[] = $typeFactory->getItemIndexDataClass($type)::getTableName();
+			}
+			foreach ($tableNamesToDelete as $tableName)
+			{
+				if ($connection->isTableExists($tableName))
+				{
+					$connection->dropTable($tableName);
+				}
+			}
+
+			\Bitrix\Crm\Service\Container::getInstance()->getDynamicTypesMap()->invalidateTypesCollectionCache();
+
+			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/crm/install/db/mysql/uninstall.sql');
 
 			if (CModule::IncludeModule('socialnetwork'))
 			{
@@ -869,9 +901,9 @@ class crm extends CModule
 
 			$DB->Query("DELETE FROM b_user_counter WHERE CODE LIKE 'crm_%'");
 			$CACHE_MANAGER->CleanDir("user_counter");
-		}
 
-		COption::RemoveOption('crm');
+			COption::RemoveOption('crm');
+		}
 
 		$stackCacheManager->Clear('b_crm_status');
 		$stackCacheManager->Clear('b_crm_perms');
@@ -1194,7 +1226,6 @@ class crm extends CModule
 
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
 		$eventManager->registerEventHandler('main', 'OnAfterSetOption_~crm_webform_max_activated', 'crm', '\Bitrix\Crm\WebForm\Form', 'onAfterSetOptionCrmWebFormMaxActivated');
-		$eventManager->registerEventHandler('main', 'OnAfterSetOption_crm_deal_category_limit', 'crm', '\Bitrix\Crm\Restriction\RestrictionManager', 'onDealCategoryLimitChange');
 
 		$eventManager->registerEventHandler('mail', 'OnMessageObsolete', 'crm', 'CCrmEMail', 'OnImapEmailMessageObsolete');
 		$eventManager->registerEventHandler('crm', 'OnActivityModified', 'crm', 'CCrmEMail', 'OnActivityModified');
@@ -1355,9 +1386,15 @@ class crm extends CModule
 		$eventManager->registerEventHandler('crm', '\Bitrix\Crm\WebForm\Internals\Form::OnAfterUpdate', 'crm', '\Bitrix\Crm\Order\TradingPlatform\WebForm', 'onWebFormUpdate');
 		$eventManager->registerEventHandler('crm', '\Bitrix\Crm\WebForm\Internals\Form::OnAfterDelete', 'crm', '\Bitrix\Crm\Order\TradingPlatform\WebForm', 'onWebFormDelete');
 
+		$eventManager->registerEventHandler('crm', '\Bitrix\Crm\Model\Dynamic\Type::OnAfterAdd', 'crm', '\Bitrix\Crm\Order\TradingPlatform\DynamicEntity', 'onEntityAdd');
+		$eventManager->registerEventHandler('crm', '\Bitrix\Crm\Model\Dynamic\Type::OnAfterUpdate', 'crm', '\Bitrix\Crm\Order\TradingPlatform\DynamicEntity', 'onEntityUpdate');
+		$eventManager->registerEventHandler('crm', '\Bitrix\Crm\Model\Dynamic\Type::OnAfterDelete', 'crm', '\Bitrix\Crm\Order\TradingPlatform\DynamicEntity', 'onEntityDelete');
+
 		$eventManager->registerEventHandler('sale', 'OnCheckCollateDocuments', 'crm', '\Bitrix\Crm\Order\EventsHandler\Check', 'OnCheckCollateDocuments');
 		$eventManager->registerEventHandler('sale', 'OnBeforeSalePaymentEntitySaved', 'crm', '\Bitrix\Crm\Order\EventsHandler\Payment', 'OnBeforeSalePaymentEntitySaved');
 		$eventManager->registerEventHandler('sale', 'OnSaleShipmentEntitySaved', 'crm', '\Bitrix\Crm\Order\EventsHandler\Shipment', 'OnSaleShipmentEntitySaved');
+		$eventManager->registerEventHandler('sale', 'OnBeforeSaleShipmentDeleted', 'crm', '\Bitrix\Crm\Order\EventsHandler\Shipment', 'OnBeforeSaleShipmentDeleted');
+		$eventManager->registerEventHandler('sale', 'OnSaleShipmentDeleted', 'crm', '\Bitrix\Crm\Order\EventsHandler\Shipment', 'OnSaleShipmentDeleted');
 		$eventManager->registerEventHandler('sale', 'onSalePsBeforeInitiatePay', 'crm', '\Bitrix\Crm\Order\EventsHandler\PaySystem', 'onSalePsBeforeInitiatePay');
 		$eventManager->registerEventHandler('sale', 'onComponentSaleOrderCheckoutPaymentPayAction', 'crm', '\Bitrix\Crm\Order\EventsHandler\SaleOrderCheckout', 'onPaymentPayAction');
 
@@ -1448,11 +1485,91 @@ class crm extends CModule
 		);
 
 		$eventManager->registerEventHandler(
+			'imopenlines',
+			'OnImopenlineDelete',
+			'crm',
+			'\Bitrix\Crm\SiteButton\Manager',
+			'onImopenlineDelete'
+		);
+
+		$eventManager->registerEventHandler(
 			'main',
 			'OnBeforeUserTypeAdd',
 			'crm',
 			'\Bitrix\Crm\Service\EventHandler',
 			'OnBeforeUserTypeAdd'
+		);
+
+		$eventManager->registerEventHandler(
+			'catalog',
+			'Bitrix\Catalog\Model\Price::OnAfterUpdate',
+			'crm',
+			'\Bitrix\Crm\WebForm\Manager',
+			'onCatalogPriceAfterUpdate'
+		);
+
+		$eventManager->registerEventHandler(
+			'catalog',
+			'DocumentCard:onCollectRightColumnContent',
+			'crm',
+			'\Bitrix\Crm\Integration\Catalog\DocumentCardTimeline',
+			'onCollectRightColumnContent'
+		);
+
+		$eventManager->registerEventHandler(
+			'catalog',
+			'OnDocumentAdd',
+			'crm',
+			'\Bitrix\Crm\Integration\Catalog\DocumentCardTimeline',
+			'onDocumentCreate'
+		);
+
+		$eventManager->registerEventHandler(
+			'catalog',
+			'OnDocumentUpdate',
+			'crm',
+			'\Bitrix\Crm\Integration\Catalog\DocumentCardTimeline',
+			'onDocumentUpdate'
+		);
+
+		$eventManager->registerEventHandler(
+			'catalog',
+			'DocumentCard:onConductFailureAfterSave',
+			'crm',
+			'\Bitrix\Crm\Integration\Catalog\DocumentCardTimeline',
+			'onConductFailureAfterSave'
+		);
+
+		$eventManager->registerEventHandler(
+			'sale',
+			'OnSaleOrderSaved',
+			'crm',
+			'\Bitrix\Crm\Order\EventsHandler\BasketReservation',
+			'OnSaleOrderSaved'
+		);
+
+		$eventManager->registerEventHandler(
+			'sale',
+			'\Bitrix\Sale\Reservation\Internals\BasketReservation::OnAfterDelete',
+			'crm',
+			'\Bitrix\Crm\Order\EventsHandler\BasketReservation',
+			'onAfterDelete'
+		);
+
+		$eventManager->registerEventHandler(
+			'crm',
+			'OnBeforeCrmDealDelete',
+			'crm',
+			'\Bitrix\Crm\Order\EventsHandler\Deal',
+			'onBeforeCrmDealDelete'
+		);
+
+		$eventManager->registerEventHandler(
+			'sale',
+			'OnSaleShipmentEntitySaved',
+			'crm',
+			'\Bitrix\Crm\Integration\Sale\ShipmentDocumentAnalytics',
+			'onSaleShipmentEntitySaved'
 		);
 	}
 
@@ -1526,6 +1643,27 @@ class crm extends CModule
 			'\\Bitrix\\Crm\\Agent\\Duplicate\\Automatic\\CompanyDuplicateIndexRebuildAgent::run();',
 			'crm', 'N', 3600
 		);
+
+		CAgent::AddAgent(
+			"\\Bitrix\\Crm\\Service\\Factory\\SmartInvoice::createTypeIfNotExists();",
+			"crm",
+			"N",
+			60,
+			'',
+			'Y',
+			$startTime
+		);
+
+		// set initial values for MOVED_BY_ID and MOVED_TIME fields in leads
+		if (\Bitrix\Main\Config\Option::get('crm', 'need_set_lead_moved_by_field') === 'Y')
+		{
+			\Bitrix\Crm\Agent\MovedByField\LeadFieldAgent::bind();
+		}
+		// set initial values for MOVED_BY_ID and MOVED_TIME fields in deals
+		if (\Bitrix\Main\Config\Option::get('crm', 'need_set_deal_moved_by_field') === 'Y')
+		{
+			\Bitrix\Crm\Agent\MovedByField\DealFieldAgent::bind();
+		}
 	}
 
 	private function uninstallEventHandlers()
@@ -1724,6 +1862,10 @@ class crm extends CModule
 		$eventManager->unregisterEventHandler('crm', '\Bitrix\Crm\WebForm\Internals\Form::OnAfterUpdate', 'crm', '\Bitrix\Crm\Order\TradingPlatform\WebForm', 'onWebFormUpdate');
 		$eventManager->unregisterEventHandler('crm', '\Bitrix\Crm\WebForm\Internals\Form::OnAfterDelete', 'crm', '\Bitrix\Crm\Order\TradingPlatform\WebForm', 'onWebFormDelete');
 
+		$eventManager->unregisterEventHandler('crm', '\Bitrix\Crm\Model\Dynamic\Type::OnAfterAdd', 'crm', '\Bitrix\Crm\Order\TradingPlatform\DynamicEntity', 'onEntityAdd');
+		$eventManager->unregisterEventHandler('crm', '\Bitrix\Crm\Model\Dynamic\Type::OnAfterUpdate', 'crm', '\Bitrix\Crm\Order\TradingPlatform\DynamicEntity', 'onEntityUpdate');
+		$eventManager->unregisterEventHandler('crm', '\Bitrix\Crm\Model\Dynamic\Type::OnAfterDelete', 'crm', '\Bitrix\Crm\Order\TradingPlatform\DynamicEntity', 'onEntityDelete');
+
 		$eventManager->unregisterEventHandler('sale', 'onSalePsInitiatePayError', 'crm', '\Bitrix\Crm\Order\EventsHandler\PaySystem', 'onSalePsInitiatePayError');
 
 		$eventManager->unRegisterEventHandler('recyclebin', 'OnModuleSurvey', 'crm', '\Bitrix\Crm\Integration\Recyclebin\RecyclingManager', 'OnModuleSurvey');
@@ -1830,6 +1972,8 @@ class crm extends CModule
 		$eventManager->unRegisterEventHandler('sale', 'OnCheckCollateDocuments', 'crm', '\Bitrix\Crm\Order\EventsHandler\Check', 'OnCheckCollateDocuments');
 		$eventManager->unRegisterEventHandler('sale', 'OnBeforeSalePaymentEntitySaved', 'crm', '\Bitrix\Crm\Order\EventsHandler\Payment', 'OnBeforeSalePaymentEntitySaved');
 		$eventManager->unRegisterEventHandler('sale', 'OnSaleShipmentEntitySaved', 'crm', '\Bitrix\Crm\Order\EventsHandler\Shipment', 'OnSaleShipmentEntitySaved');
+		$eventManager->unRegisterEventHandler('sale', 'OnBeforeSaleShipmentDeleted', 'crm', '\Bitrix\Crm\Order\EventsHandler\Shipment', 'OnBeforeSaleShipmentDeleted');
+		$eventManager->unRegisterEventHandler('sale', 'OnSaleShipmentDeleted', 'crm', '\Bitrix\Crm\Order\EventsHandler\Shipment', 'OnSaleShipmentDeleted');
 		$eventManager->unRegisterEventHandler('sale', 'onSalePsBeforeInitiatePay', 'crm', '\Bitrix\Crm\Order\EventsHandler\PaySystem', 'onSalePsBeforeInitiatePay');
 		$eventManager->unRegisterEventHandler('sale', 'onComponentSaleOrderCheckoutPaymentPayAction', 'crm', '\Bitrix\Crm\Order\EventsHandler\SaleOrderCheckout', 'onPaymentPayAction');
 
@@ -1842,11 +1986,91 @@ class crm extends CModule
 		);
 
 		$eventManager->unRegisterEventHandler(
+			'imopenlines',
+			'OnImopenlineDelete',
+			'crm',
+			'\Bitrix\Crm\SiteButton\Manager',
+			'onImopenlineDelete'
+		);
+
+		$eventManager->unRegisterEventHandler(
 			'main',
 			'OnBeforeUserTypeAdd',
 			'crm',
 			'\Bitrix\Crm\Service\EventHandler',
 			'OnBeforeUserTypeAdd'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'catalog',
+			'Bitrix\Catalog\Model\Price::OnAfterUpdate',
+			'crm',
+			'\Bitrix\Crm\WebForm\Manager',
+			'onCatalogPriceAfterUpdate'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'catalog',
+			'DocumentCard:onCollectRightColumnContent',
+			'crm',
+			'\Bitrix\Crm\Integration\Catalog\DocumentCardTimeline',
+			'onCollectRightColumnContent'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'catalog',
+			'OnDocumentAdd',
+			'crm',
+			'\Bitrix\Crm\Integration\Catalog\DocumentCardTimeline',
+			'onDocumentCreate'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'catalog',
+			'OnDocumentUpdate',
+			'crm',
+			'\Bitrix\Crm\Integration\Catalog\DocumentCardTimeline',
+			'onDocumentUpdate'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'catalog',
+			'DocumentCard:onConductFailureAfterSave',
+			'crm',
+			'\Bitrix\Crm\Integration\Catalog\DocumentCardTimeline',
+			'onConductFailureAfterSave'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'sale',
+			'OnSaleOrderSaved',
+			'crm',
+			'\Bitrix\Crm\Order\EventsHandler\BasketReservation',
+			'OnSaleOrderSaved'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'sale',
+			'\Bitrix\Sale\Reservation\Internals\BasketReservation::OnAfterDelete',
+			'crm',
+			'\Bitrix\Crm\Order\EventsHandler\BasketReservation',
+			'onAfterDelete'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'crm',
+			'OnBeforeCrmDealDelete',
+			'crm',
+			'\Bitrix\Crm\Order\EventsHandler\Deal',
+			'onBeforeCrmDealDelete'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'sale',
+			'OnSaleShipmentEntitySaved',
+			'crm',
+			'\Bitrix\Crm\Integration\Sale\ShipmentDocumentAnalytics',
+			'onSaleShipmentEntitySaved'
 		);
 	}
 

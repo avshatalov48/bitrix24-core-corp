@@ -367,7 +367,9 @@
 				if (this.scrumMethodology === null)
 				{
 					this.scrumMethodology = new BX.Tasks.Scrum.Methodology({
-						groupId: this.groupId
+						groupId: this.groupId,
+						teamSpeedPath: this.urls.ScrumTeamSpeed,
+						burnDownPath: this.urls.ScrumBurnDown
 					});
 				}
 

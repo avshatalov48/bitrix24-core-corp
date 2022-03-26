@@ -460,6 +460,7 @@ elseif($action == 'SAVE_SMS_MESSAGE')
 	$messageFrom = isset($_REQUEST['MESSAGE_FROM']) ? (string)$_REQUEST['MESSAGE_FROM'] : null;
 	$messageTo = isset($_REQUEST['MESSAGE_TO']) ? (string)$_REQUEST['MESSAGE_TO'] : null;
 	$messageBody = isset($_REQUEST['MESSAGE_BODY']) ? (string)$_REQUEST['MESSAGE_BODY'] : null;
+	$messageTemplate = $_REQUEST['MESSAGE_TEMPLATE'] ?? null;
 
 	$comEntityTypeID = isset($_REQUEST['TO_ENTITY_TYPE_ID']) ? (int)$_REQUEST['TO_ENTITY_TYPE_ID'] : 0;
 	$comEntityID = isset($_REQUEST['TO_ENTITY_ID']) ? (int)$_REQUEST['TO_ENTITY_ID'] : 0;
@@ -513,18 +514,19 @@ elseif($action == 'SAVE_SMS_MESSAGE')
 		];
 	}
 
-	$result = \Bitrix\Crm\Integration\SmsManager::sendMessage(array(
+	$result = \Bitrix\Crm\Integration\SmsManager::sendMessage([
 		'SENDER_ID' => $senderId,
 		'AUTHOR_ID' => $responsibleID,
 		'MESSAGE_FROM' => $messageFrom,
 		'MESSAGE_TO' => $messageTo,
 		'MESSAGE_BODY' => $messageBody,
-		'MESSAGE_HEADERS' => array(
+		'MESSAGE_TEMPLATE' => $messageTemplate,
+		'MESSAGE_HEADERS' => [
 			'module_id' => 'crm',
-			'bindings' => $bindings
-		),
+			'bindings' => $bindings,
+		],
 		'ADDITIONAL_FIELDS' => $additionalFields
-	));
+	]);
 
 	__CrmTimelineEndResponse(
 		$result->isSuccess()

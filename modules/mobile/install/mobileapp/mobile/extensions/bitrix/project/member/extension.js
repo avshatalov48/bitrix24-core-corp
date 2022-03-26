@@ -313,35 +313,27 @@
 			}
 		}
 
-		open()
+		open(parentWidget = null)
 		{
+			const widget = (parentWidget || PageManager);
+
 			if (Application.getApiVersion() >= 27)
 			{
-				PageManager.openComponent('JSStackComponent', {
-					scriptPath: availableComponents['user.profile'].publicUrl,
-					params: {
-						userId: this.id,
-						isBackdrop: true,
+				widget.openWidget('list', {
+					backdrop: {
+						bounceEnable: false,
+						swipeAllowed: true,
+						showOnTop: true,
+						hideNavigationBar: false,
+						horizontalSwipeAllowed: false,
 					},
-					canOpenInDefault: true,
-					rootWidget: {
-						name: 'list',
-						groupStyle: true,
-						settings: {
-							objectName: 'form',
-							groupStyle: true,
-							backdrop: {
-								bounceEnable: true,
-								swipeAllowed: true,
-								showOnTop: true,
-							},
-						},
-					},
+					onReady: list => ProfileView.open({userId: this.id, isBackdrop: true}, list),
+					onError: error => console.log(error),
 				});
 			}
 			else
 			{
-				PageManager.openPage({url: `/mobile/users/?user_id=${this.id}`});
+				widget.openPage({url: `/mobile/users/?user_id=${this.id}`});
 			}
 		}
 

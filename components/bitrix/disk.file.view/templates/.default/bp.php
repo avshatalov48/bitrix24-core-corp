@@ -241,7 +241,7 @@ $showBpUri->addParams(['action' => 'showBp',]);
 				id: <?= $arResult['FILE']['ID'] ?>
 			},
 			urls: {
-				fileShowBp: '<?=$showBpUri ?>'
+				fileShowBp: '<?=\CUtil::JSUrlEscape($showBpUri) ?>'
 			}
 		});
 

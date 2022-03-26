@@ -294,4 +294,101 @@ class CCrmEntityHelper
 
 		return [];
 	}
+
+	public static function prepareOperationByOptions(
+		\Bitrix\Crm\Service\Operation $operation,
+		array $options,
+		bool $checkPermissions
+	): void
+	{
+		if (isset($options['CURRENT_USER']) && $options['CURRENT_USER'] > 0)
+		{
+			$context = new \Bitrix\Crm\Service\Context();
+			$context->setUserId((int)$options['CURRENT_USER']);
+
+			$globalScope = \Bitrix\Crm\Service\Container::getInstance()->getContext()->getScope();
+			$context->setScope($globalScope);
+		}
+		else
+		{
+			$context = \Bitrix\Crm\Service\Container::getInstance()->getContext();
+		}
+		$operation->setContext($context);
+
+		if (!$checkPermissions)
+		{
+			$operation->disableCheckAccess();
+		}
+
+		$disableUserFieldsCheck = $options['DISABLE_USER_FIELD_CHECK'] ?? false;
+		if ($disableUserFieldsCheck === true)
+		{
+			$operation->disableCheckFields();
+		}
+
+		$disableRequiredUserFieldsCheck = $options['DISABLE_REQUIRED_USER_FIELD_CHECK'] ?? false;
+		if ($disableRequiredUserFieldsCheck === true)
+		{
+			$operation->disableCheckRequiredUserFields();
+		}
+
+		$excludeFromRelationRegistration =
+			isset($options['EXCLUDE_FROM_RELATION_REGISTRATION']) && is_array($options['EXCLUDE_FROM_RELATION_REGISTRATION'])
+				? $options['EXCLUDE_FROM_RELATION_REGISTRATION']
+				: []
+		;
+		if (!empty($excludeFromRelationRegistration))
+		{
+			$operation->excludeItemsFromTimelineRelationEventsRegistration($excludeFromRelationRegistration);
+		}
+
+		$isSystemAction = $options['IS_SYSTEM_ACTION'] ?? false;
+		if ($isSystemAction === true)
+		{
+			$operation->disableCheckLimits();
+		}
+
+		$isCompareEnabled = (bool)($options['IS_COMPARE_ENABLED'] ?? true);
+		if ($isCompareEnabled === false)
+		{
+			$operation->disableSaveToHistory();
+		}
+
+		$disableTimeline = isset($options['DISABLE_TIMELINE_CREATION']) ? ($options['DISABLE_TIMELINE_CREATION'] === 'Y') : false;
+		if ($disableTimeline === true)
+		{
+			$operation->disableSaveToTimeline();
+		}
+
+		$enableDeferredMode = (bool)($options['ENABLE_DEFERRED_MODE'] ?? true);
+		if ($enableDeferredMode)
+		{
+			$operation->enableDeferredCleaning();
+		}
+		else
+		{
+			$operation->disableDeferredCleaning();
+		}
+	}
+
+	/**
+	 * @param \Bitrix\Main\Error[] $errors
+	 * @return \CAdminException[]
+	 */
+	public static function transformOperationErrorsToCheckExceptions(array $errors): array
+	{
+		$messages = [];
+		foreach ($errors as $error)
+		{
+			if ($error->getCode() === Bitrix\Crm\Field::ERROR_CODE_REQUIRED_FIELD_ATTRIBUTE)
+			{
+				$messages[] = [
+					'id' => $error->getCustomData()['fieldName'] ?? '',
+					'text' => $error->getMessage(),
+				];
+			}
+		}
+
+		return [new \CAdminException($messages)];
+	}
 }

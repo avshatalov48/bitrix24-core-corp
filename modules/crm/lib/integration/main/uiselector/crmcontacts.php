@@ -1,6 +1,7 @@
 <?
 namespace Bitrix\Crm\Integration\Main\UISelector;
 
+use Bitrix\Crm\FieldMultiTable;
 use Bitrix\Main\Localization\Loc;
 
 class CrmContacts extends CrmEntity
@@ -191,7 +192,8 @@ class CrmContacts extends CrmEntity
 		$entitiesList = [];
 
 		$filter = [
-			'CHECK_PERMISSIONS' => 'Y'
+			'CHECK_PERMISSIONS' => 'Y',
+			'@CATEGORY_ID' => 0,
 		];
 		$order = [];
 		$select = [ 'ID', 'HONORIFIC', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'COMPANY_TITLE', 'PHOTO', 'HAS_EMAIL', 'DATE_CREATE' ];
@@ -359,14 +361,21 @@ class CrmContacts extends CrmEntity
 				if (check_email($search, true))
 				{
 					$entityIdList = [];
-					$res = \CCrmFieldMulti::getList(
-						[],
-						[
-							'ENTITY_ID' => \CCrmOwnerType::ContactName,
-							'TYPE_ID' => \CCrmFieldMulti::EMAIL,
-							'VALUE' => $search
-						]
-					);
+					$query = FieldMultiTable::query()
+						->where('ENTITY_ID', \CCrmOwnerType::ContactName)
+						->where('TYPE_ID', \CCrmFieldMulti::EMAIL)
+						->setSelect(['ELEMENT_ID'])
+					;
+					if (mb_substr($search, -1) === '%')
+					{
+						$query->whereLike('VALUE', $search);
+					}
+					else
+					{
+						$query->where('VALUE', $search);
+					}
+					$res = $query->exec();
+
 					while($multiFields = $res->fetch())
 					{
 						$entityIdList[] = $multiFields['ELEMENT_ID'];
@@ -383,6 +392,7 @@ class CrmContacts extends CrmEntity
 					$filter = [
 						'SEARCH_CONTENT' => $search,
 						'%FULL_NAME' => $search,
+						'@CATEGORY_ID' => 0,
 						'__ENABLE_SEARCH_CONTENT_PHONE_DETECTION' => false
 					];
 				}
@@ -392,6 +402,7 @@ class CrmContacts extends CrmEntity
 				$filter = [
 					'SEARCH_CONTENT' => $search,
 					'__ENABLE_SEARCH_CONTENT_PHONE_DETECTION' => false,
+					'@CATEGORY_ID' => 0,
 					'LOGIC' => 'AND'
 				];
 				for($i = 0; $i < 2; $i++)

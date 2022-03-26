@@ -1,6 +1,7 @@
 <?
 namespace Bitrix\Crm\Tracking\Internals;
 
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\ORM;
 use Bitrix\Main\Type\DateTime;
 
@@ -202,6 +203,13 @@ class TraceTable extends ORM\Data\DataManager
 
 	public static function deleteUnusedTraces($limit = 200)
 	{
+		$optionCode = 'tracking_trace_del_time';
+		$ts = (int)Option::get('crm', $optionCode, 0);
+		if ($ts && (time() - $ts) < 36000)
+		{
+			return;
+		}
+
 		$channelCodes = [];
 		foreach (Channel\Factory::getCodes() as $code)
 		{
@@ -219,10 +227,15 @@ class TraceTable extends ORM\Data\DataManager
 				'=CHANNEL.CODE' => $channelCodes,
 			],
 			'limit' => $limit ?: 50,
-		]);
+		])->fetchAll();
 		foreach ($rows as $row)
 		{
 			static::delete($row['ID']);
+		}
+
+		if ($limit && $limit > count($rows))
+		{
+			Option::set('crm', $optionCode, time());
 		}
 	}
 }

@@ -21,6 +21,8 @@ if (!empty($arGadgetParams['TYPE_ID']))
 if (!empty($arGadgetParams['ONLY_MY']) && $arGadgetParams['ONLY_MY'] == 'Y')
 	$arFilter['ASSIGNED_BY_ID'] = $GLOBALS['USER']->GetID();
 
+$arFilter['@CATEGORY_ID'] = 0;
+
 /*if ($bCrm)
 {*/
 	$APPLICATION->IncludeComponent(

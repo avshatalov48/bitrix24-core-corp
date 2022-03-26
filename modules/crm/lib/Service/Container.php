@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Service;
 
+use Bitrix\Crm\Conversion;
 use Bitrix\Crm\Filter;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Integration\PullManager;
@@ -10,6 +11,7 @@ use Bitrix\Crm\Model\Dynamic\TypeTable;
 use Bitrix\Crm\Relation\RelationManager;
 use Bitrix\Crm\Service\Factory\Dynamic;
 use Bitrix\Crm\Timeline;
+use Bitrix\Crm\Reservation;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\InvalidOperationException;
@@ -91,7 +93,7 @@ class Container
 		{
 			return ServiceLocator::getInstance()->get('crm.service.factory.quote');
 		}
-		if(\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		if (\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
 		{
 			$identifier = static::getIdentifierByClassName(static::$dynamicFactoriesClassName, [$entityTypeId]);
 			if(!ServiceLocator::getInstance()->has($identifier))
@@ -99,7 +101,15 @@ class Container
 				$type = $this->getTypeByEntityTypeId($entityTypeId);
 				if($type)
 				{
-					$factory = new static::$dynamicFactoriesClassName($type);
+					if ($entityTypeId === \CCrmOwnerType::SmartInvoice)
+					{
+						$factoryClassName = Factory\SmartInvoice::class;
+					}
+					else
+					{
+						$factoryClassName = static::$dynamicFactoriesClassName;
+					}
+					$factory = new $factoryClassName($type);
 					ServiceLocator::getInstance()->addInstance(
 						$identifier,
 						$factory
@@ -169,9 +179,8 @@ class Container
 		$identifierById = static::getIdentifierByClassName(Type::class, ['id', $id]);
 		if(!ServiceLocator::getInstance()->has($identifierById))
 		{
+			$type = $this->getDynamicTypesMap()->getTypesCollection()->getByPrimary($id);
 			/** @var Type $type */
-			$type = $this->getDynamicTypeDataClass()::getById($id)
-					->fetchObject();
 			if($type)
 			{
 				ServiceLocator::getInstance()->addInstance($identifierById, $type);
@@ -196,8 +205,15 @@ class Container
 		if(!ServiceLocator::getInstance()->has($identifierByEntityTypeId))
 		{
 			/** @var Type $type */
-			$type = $this->getDynamicTypeDataClass()::getByEntityTypeId($entityTypeId)
-					->fetchObject();
+			$type = null;
+			foreach ($this->getDynamicTypesMap()->getTypesCollection() as $typeCandidate)
+			{
+				if ($typeCandidate->getEntityTypeId() === $entityTypeId)
+				{
+					$type = $typeCandidate;
+					break;
+				}
+			}
 			if($type)
 			{
 				ServiceLocator::getInstance()->addInstance($identifierByEntityTypeId, $type);
@@ -271,6 +287,26 @@ class Container
 		return ServiceLocator::getInstance()->get('crm.service.broker.user');
 	}
 
+	public function getEnumerationBroker(): Broker\Enumeration
+	{
+		return ServiceLocator::getInstance()->get('crm.service.broker.enumeration');
+	}
+
+	public function getFileBroker(): Broker\File
+	{
+		return ServiceLocator::getInstance()->get('crm.service.broker.file');
+	}
+
+	public function getIBlockElementBroker(): Broker\IBlockElement
+	{
+		return ServiceLocator::getInstance()->get('crm.service.broker.iblockelement');
+	}
+
+	public function getIBlockSectionBroker(): Broker\IBLockSection
+	{
+		return ServiceLocator::getInstance()->get('crm.service.broker.iblocksection');
+	}
+
 	public function getCompanyBroker(): Broker\Company
 	{
 		return ServiceLocator::getInstance()->get('crm.service.broker.company');
@@ -279,6 +315,26 @@ class Container
 	public function getContactBroker(): Broker\Contact
 	{
 		return ServiceLocator::getInstance()->get('crm.service.broker.contact');
+	}
+
+	public function getLeadBroker(): Broker\Lead
+	{
+		return ServiceLocator::getInstance()->get('crm.service.broker.lead');
+	}
+
+	public function getDealBroker(): Broker\Deal
+	{
+		return ServiceLocator::getInstance()->get('crm.service.broker.deal');
+	}
+
+	public function getOrderBroker(): Broker\Order
+	{
+		return ServiceLocator::getInstance()->get('crm.service.broker.order');
+	}
+
+	public function getDynamicBroker(): Broker\Dynamic
+	{
+		return ServiceLocator::getInstance()->get('crm.service.broker.dynamic');
 	}
 
 	public function getDirector(): Director
@@ -368,5 +424,10 @@ class Container
 	public function getRestEventManager(): Integration\Rest\EventManager
 	{
 		return ServiceLocator::getInstance()->get('crm.integration.rest.eventManager');
+	}
+
+	public function getConversionMapper(): Conversion\Mapper
+	{
+		return ServiceLocator::getInstance()->get('crm.conversion.mapper');
 	}
 }

@@ -220,7 +220,8 @@ class CAllCrmActivity
 				$ID,
 				array(
 					'FIELDS' => $arFields,
-					'PRESERVE_CREATION_TIME' => isset($options['PRESERVE_CREATION_TIME']) && $options['PRESERVE_CREATION_TIME'] === true
+					'PRESERVE_CREATION_TIME' => isset($options['PRESERVE_CREATION_TIME']) && $options['PRESERVE_CREATION_TIME'] === true,
+					'CURRENT_USER' => $options['CURRENT_USER'] ?? null,
 				)
 			);
 		}
@@ -739,7 +740,8 @@ class CAllCrmActivity
 			array(
 				'CURRENT_FIELDS' => $arCurEntity,
 				'CURRENT_BINDINGS' => $arBindings,
-				'PREVIOUS_FIELDS' => $arPrevEntity
+				'PREVIOUS_FIELDS' => $arPrevEntity,
+				'CURRENT_USER' => $options['CURRENT_USER'] ?? null,
 			)
 		);
 
@@ -2055,7 +2057,11 @@ class CAllCrmActivity
 		}
 
 		$userPermissions = isset($arOptions['PERMS']) ? $arOptions['PERMS'] : null;
-		$userID = ($userPermissions !== null && is_object($userPermissions)) ? $userPermissions->GetUserID() : 0;
+		$userID =
+			($userPermissions !== null && is_object($userPermissions))
+				? $userPermissions->GetUserID()
+				: Crm\Service\Container::getInstance()->getContext()->getUserId()
+		;
 		if (CCrmPerms::IsAdmin($userID))
 		{
 			return '';
@@ -2548,8 +2554,8 @@ class CAllCrmActivity
 		$events = CCalendarEvent::GetList(
 			array(
 				'arFilter' => array(
-					'UF_CRM_CAL_EVENT' => $oldSlug,
-					'DELETED' => 'N'
+					'=UF_CRM_CAL_EVENT' => $oldSlug,
+					'=DELETED' => 'N'
 				),
 				'arSelect' => array('ID'),
 				'getUserfields' => true,
@@ -4049,6 +4055,10 @@ class CAllCrmActivity
 
 			$arOwnerData = array();
 			self::TryResolveUserFieldOwners($arEventOwners, $arOwnerData, CCrmUserType::GetCalendarEventBindingField());
+			if(!$isNew)
+			{
+				self::EnrichWithNotRemovableBindings($arFields['ID'], $arOwnerData);
+			}
 			if(!empty($arOwnerData))
 			{
 				$arFields['OWNER_TYPE_ID'] = CCrmOwnerType::ResolveID($arOwnerData[0]['OWNER_TYPE_NAME']);
@@ -4194,6 +4204,10 @@ class CAllCrmActivity
 				$arEventOwners, $arOwnerData,
 				CCrmUserType::GetCalendarEventBindingField()
 			);
+			if(!$isNew)
+			{
+				self::EnrichWithNotRemovableBindings($arFields['ID'], $arOwnerData);
+			}
 
 			if (!empty($arOwnerData))
 			{
@@ -4248,7 +4262,20 @@ class CAllCrmActivity
 		$eventID = isset($arFields['ID']) ? (int)$arFields['ID'] : 0;
 		if($eventID > 0)
 		{
-			$arEventFields = CCalendarEvent::GetById($eventID, false);
+			$events = CCalendarEvent::GetList(
+				array(
+					'arFilter' => array(
+						"ID" => $eventID,
+						"DELETED" => "N"
+					),
+					'parseRecursion' => false,
+					'fetchAttendees' => false,
+					'checkPermissions' => false,
+					'setDefaultLimit' => false,
+					'userId' => $userId
+				)
+			);
+			$arEventFields = ($events && is_array($events[0])) ? $events[0] : null;
 
 			$dbEntities = self::GetList(
 				array(),
@@ -4265,7 +4292,17 @@ class CAllCrmActivity
 				// Update activity if bindings are found overwise delete unbound activity
 				if(isset($arEntity['BINDINGS']) && count($arEntity['BINDINGS']) > 0)
 				{
-					self::Update($arEntity['ID'], $arEntity, false, true, array('SKIP_CALENDAR_EVENT' => true, 'REGISTER_SONET_EVENT' => true));
+					self::Update(
+						$arEntity['ID'],
+						$arEntity,
+						false,
+						true,
+						[
+							'SKIP_CALENDAR_EVENT' => true,
+							'REGISTER_SONET_EVENT' => true,
+							'CURRENT_USER' => $userId > 0 ? $userId : null,
+						]
+					);
 				}
 				else
 				{
@@ -6696,7 +6733,7 @@ class CAllCrmActivity
 						"NOTIFY_TYPE" => IM_NOTIFY_FROM,
 						"NOTIFY_MODULE" => "crm",
 						"LOG_ID" => $eventID,
-						"NOTIFY_EVENT" => "activity_add",
+						"NOTIFY_EVENT" => "changeAssignedBy",
 						"NOTIFY_TAG" => "CRM|ACTIVITY|".$ID,
 						"NOTIFY_MESSAGE" => GetMessage("CRM_ACTIVITY_".$type."_RESPONSIBLE_IM_NOTIFY", Array("#title#" => '<a href="'.$url.'">'.htmlspecialcharsbx($arFields['SUBJECT']).'</a>')),
 						"NOTIFY_MESSAGE_OUT" => GetMessage("CRM_ACTIVITY_".$type."_RESPONSIBLE_IM_NOTIFY", Array("#title#" => htmlspecialcharsbx($arFields['SUBJECT'])))." (".$serverName.$url.")"
@@ -6809,7 +6846,8 @@ class CAllCrmActivity
 						"NOTIFY_TYPE" => IM_NOTIFY_FROM,
 						"NOTIFY_MODULE" => "crm",
 						"LOG_ID" => $slID,
-						"NOTIFY_EVENT" => "activity_add",
+						//"NOTIFY_EVENT" => "activity_add",
+						"NOTIFY_EVENT" => "changeAssignedBy",
 						"NOTIFY_TAG" => "CRM|ACTIVITY|".$activityID
 					);
 
@@ -7151,17 +7189,41 @@ class CAllCrmActivity
 			$fields['SUBJECT'] = \Bitrix\Main\Text\Emoji::decode($fields['SUBJECT']);
 		}
 	}
+
+	/**
+	 * Append existed bindings for entity types which are not stored in calendar uf
+	 *
+	 * @param $id
+	 * @param $arOwnerData
+	 */
+	protected static function EnrichWithNotRemovableBindings($id, &$arOwnerData): void
+	{
+		$existedBindings = self::GetBindings($id);
+		foreach ($existedBindings as $i => $binding)
+		{
+			if (
+				(int)$binding['OWNER_TYPE_ID'] === \CCrmOwnerType::Deal
+				|| CCrmOwnerType::IsClient($binding['OWNER_TYPE_ID'])
+			)
+			{
+				unset($existedBindings[$i]);
+				continue;
+			}
+			$existedBindings[$i]['OWNER_TYPE_NAME'] = CCrmOwnerType::ResolveName($binding['OWNER_TYPE_ID']);
+		}
+		$arOwnerData = array_merge($arOwnerData, array_values($existedBindings));
+	}
 }
 
 class CCrmActivityType
 {
-	const Undefined = 0;
-	const Meeting = 1;
-	const Call = 2;
-	const Task = 3;
-	const Email = 4;
-	const Activity = 5; // General type for import of calendar events and etc.
-	const Provider = 6; //General type for entities are controlled by various providers.
+	public const Undefined = 0;
+	public const Meeting = 1;
+	public const Call = 2;
+	public const Task = 3;
+	public const Email = 4;
+	public const Activity = 5; // General type for import of calendar events and etc.
+	public const Provider = 6; //General type for entities are controlled by various providers.
 
 	public static function IsDefined($typeID)
 	{
@@ -7182,7 +7244,7 @@ class CCrmActivityType
 				self::Task      => GetMessage('CRM_ACTIVITY_TYPE_TASK'),
 				self::Email     => GetMessage('CRM_ACTIVITY_TYPE_EMAIL'),
 				self::Activity  => GetMessage('CRM_ACTIVITY_TYPE_ACTIVITY'),
-				self::Provider  => GetMessage('CRM_ACTIVITY_TYPE_PROVIDER')
+				self::Provider  => GetMessage('CRM_ACTIVITY_TYPE_PROVIDER'),
 			);
 		}
 

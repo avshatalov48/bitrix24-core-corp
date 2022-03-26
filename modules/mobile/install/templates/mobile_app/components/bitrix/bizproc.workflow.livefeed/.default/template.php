@@ -44,7 +44,7 @@ foreach ($arResult['TASKS']['RUNNING'] as $task)
 			<span><?=GetMessage('BPATL_USER_STATUS_OK')?></span>
 		</span>
 		<span class="wf_status bp-status" style="display: none">
-			<span class="bp-status-inner"><span><?=$arResult["WORKFLOW_STATE_INFO"]['STATE_TITLE']?></span></span>
+			<span class="bp-status-inner"><span><?= htmlspecialcharsEx($arResult["WORKFLOW_STATE_INFO"]['STATE_TITLE']) ?></span></span>
 		</span>
 			<?foreach ($arResult['TASKS']['RUNNING'] as $task):?>
 				<div class="bp-btn-panel task_buttons_<?=$task['ID']?>" style="display: none">

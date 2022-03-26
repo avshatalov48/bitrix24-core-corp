@@ -350,24 +350,27 @@ $arResult['FIELDS']['tab_1'][] = array(
 	'type' =>  'checkbox'
 );
 
-if($isEditMode && $currency['IS_INVOICE_CURRENCY'])
-{
-	$arResult['FIELDS']['tab_1'][] = array(
-		'id' => 'INVOICES_DEF',
-		'name' =>  GetMessage('CRM_CURRENCY_INVOICES_DEFAULT'),
-		'value' => GetMessage('MAIN_YES'),
-		'type' =>  'label'
-	);
-}
-else
-{
-	$arResult['FIELDS']['tab_1'][] = array(
-		'id' => 'INVOICES_DEF',
-		'name' =>  GetMessage('CRM_CURRENCY_INVOICES_DEFAULT'),
-		'value' => $currency['IS_INVOICE_CURRENCY'] ? 'Y' : 'N',
-		'type' =>  'checkbox'
-	);
-}
+// if (\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
+// {
+	if($isEditMode && $currency['IS_INVOICE_CURRENCY'])
+	{
+		$arResult['FIELDS']['tab_1'][] = array(
+			'id' => 'INVOICES_DEF',
+			'name' =>  GetMessage('CRM_CURRENCY_INVOICES_DEFAULT'),
+			'value' => GetMessage('MAIN_YES'),
+			'type' =>  'label'
+		);
+	}
+	else
+	{
+		$arResult['FIELDS']['tab_1'][] = array(
+			'id' => 'INVOICES_DEF',
+			'name' =>  GetMessage('CRM_CURRENCY_INVOICES_DEFAULT'),
+			'value' => $currency['IS_INVOICE_CURRENCY'] ? 'Y' : 'N',
+			'type' =>  'checkbox'
+		);
+	}
+// }
 
 $arResult['CURRENCY_LOCALIZATIONS'] = $currencyLocs;
 foreach($langs as $k => $v)

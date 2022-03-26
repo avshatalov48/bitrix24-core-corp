@@ -3,20 +3,30 @@
 	'use strict';
 	BX.namespace('BX.Salescenter');
 
+	BX.Salescenter.Context = {
+		sms: 'sms',
+		chat: 'chat',
+	};
+
 	BX.Salescenter.Orders = {
 		gridId: 'CRM_ORDER_LIST_V12',
 		sessionId: 0,
+		context: '',
 	};
 
 	BX.Salescenter.Orders.init = function(params)
 	{
-		if(params.sessionId > 0)
+		if (params.sessionId > 0)
 		{
 			BX.Salescenter.Orders.sessionId = params.sessionId;
 		}
-		if(params.gridId)
+		if (params.gridId)
 		{
 			BX.Salescenter.Orders.gridId = params.gridId;
+		}
+		if (params.context)
+		{
+			BX.Salescenter.Orders.context = params.context;
 		}
 		this.isPaymentsLimitReached = (params.isPaymentsLimitReached === true);
 
@@ -40,7 +50,7 @@
 		{
 			BX.Salescenter.Orders.showFeaturePopup();
 		}
-		if(BX.Salescenter.Orders.sessionId <= 0)
+		if(BX.Salescenter.Orders.context === BX.Salescenter.Context.chat && BX.Salescenter.Orders.sessionId <= 0)
 		{
 			return;
 		}
@@ -59,6 +69,7 @@
 			data: {
 				orderIds: orderIds,
 				options: {
+					context: BX.Salescenter.Orders.context,
 					sessionId: BX.Salescenter.Orders.sessionId,
 				}
 			}
@@ -75,7 +86,12 @@
 						var previousSlider = BX.SidePanel.Instance.getPreviousSlider(slider);
 						if(previousSlider)
 						{
-							previousSlider.destroy();
+							if (BX.Salescenter.Orders.context === BX.Salescenter.Context.sms && response.data.orderTitle)
+							{
+								previousSlider.getData().set('action', 'sendPayment');
+								previousSlider.getData().set('order', {title: response.data.orderTitle});
+							}
+							previousSlider.close();
 						}
 						slider.destroy();
 					}

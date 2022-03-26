@@ -641,6 +641,10 @@ table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign div.empty {
 	margin-bottom: 37px;
 }
 
+.crm-dedupe-wizard-restart-btn {
+	margin-bottom: 18px;
+}
+
 .crm-dedupe-wizard-start-description {
 	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
 	color: rgba(82,92,105,.7);
@@ -671,17 +675,17 @@ table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign div.empty {
 
 .crm-dedupe-wizard-start-control-box {
 	margin-bottom: 37px;
-	height: 39px;
+	height: 112px;
 	width: 100%;
 	text-align: center;
 }
 
 .crm-dedupe-wizard-start-control-box.crm-dedupe-wizard-start-control-box-ready-to-merge-state {
-	height: 74px;
+	height: 111px;
 }
 
 .crm-dedupe-wizard-status-bar {
-	margin: 0 auto 59px auto;
+	margin: 0 auto 20px auto;
 	width: 100%;
 	max-width: 421px;
 }

@@ -1,7 +1,11 @@
-import {ajax, Event, Loc, Tag, Text, Type} from 'main.core';
+import {Event, Loc, Tag, Text, Type} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 
 import {Layout} from 'ui.sidepanel.layout';
+
+import {RequestSender} from './request.sender';
+
+import 'ui.hint';
 
 import '../css/base.css';
 import '../css/item.css';
@@ -63,12 +67,6 @@ type Response = {
 	errors: Array
 }
 
-type ErrorResponse = {
-	data: string,
-	errors: Array,
-	status: string
-}
-
 export class SprintCompletionForm extends EventEmitter
 {
 	constructor(params: Params)
@@ -82,6 +80,8 @@ export class SprintCompletionForm extends EventEmitter
 		/* eslint-enable */
 
 		this.sidePanelId = 'tasks-scrum-sprint-completion-form-side-panel';
+
+		this.requestSender = new RequestSender();
 
 		this.node = null;
 
@@ -131,15 +131,10 @@ export class SprintCompletionForm extends EventEmitter
 
 		this.completeButton.setWaiting();
 
-		ajax.runAction(
-			'bitrix:tasks.scrum.sprint.completeSprint',
-			{
-				data: {
-					groupId: this.groupId,
-					direction: direction
-				}
-			}
-		)
+		this.requestSender.completeSprint({
+			groupId: this.groupId,
+			direction: direction
+		})
 			.then((response) => {
 				if (top.BX.UI.Confetti)
 				{
@@ -163,7 +158,7 @@ export class SprintCompletionForm extends EventEmitter
 				}
 			})
 			.catch((response) => {
-				this.showErrorAlert(
+				this.requestSender.showErrorAlert(
 					response,
 					Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_ERROR_TITLE_POPUP')
 				);
@@ -188,16 +183,17 @@ export class SprintCompletionForm extends EventEmitter
 	createContent()
 	{
 		return new Promise((resolve, reject) => {
-			ajax.runAction(
-				'bitrix:tasks.scrum.sprint.getDataForSprintCompletionForm',
-				{
-					data: {
-						groupId: this.groupId
-					}
-				}
-			)
+			this.requestSender.getDataForSprintCompletionForm({
+				groupId: this.groupId
+			})
 				.then((response: Response) => {
 					resolve(this.render(response.data));
+				})
+				.catch((response) => {
+					reject();
+					this.sidePanelManager.close(false, () => {
+						this.requestSender.showErrorAlert(response);
+					});
 				})
 			;
 		});
@@ -205,8 +201,10 @@ export class SprintCompletionForm extends EventEmitter
 
 	render(sprintData: SprintData): HTMLElement
 	{
+		const storyPoints = (sprintData.storyPoints === '' ? 0 : sprintData.storyPoints);
+
 		this.node = Tag.render`
-			<div class="tasks-scrum__scope--side-panel-completion">
+			<div id="${Text.getRandom()}" class="tasks-scrum__scope--side-panel-completion">
 
 			<div class="tasks-scrum__side-panel-completion--block">
 
@@ -253,16 +251,22 @@ export class SprintCompletionForm extends EventEmitter
 									<div class="tasks-scrum__side-panel-completion--plan-block-number --percent">
 										<div 
 											class="tasks-scrum__side-panel-completion--plan-block-number-date"
-											title="${Text.encode(sprintData.storyPoints)}"
+											title="${Text.encode(storyPoints)}"
 										>
-											${Text.encode(sprintData.storyPoints)}
+											${Text.encode(storyPoints)}
 										</div>
 									</div>
 									<div class="tasks-scrum__side-panel-completion--plan-block-name">
 										<div class="tasks-scrum__side-panel-completion--plan-block-name-text">
 											${Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_PLAN_SP')}
 										</div>
-										<div class="ui-hint"><span class="ui-hint-icon"></span></div>
+										<div class="ui-hint">
+											<span
+												class="ui-hint-icon"
+												data-hint="${Loc.getMessage('TSS_START_STORY_POINTS_HINT')}"
+												data-hint-no-icon
+											></span>
+										</div>
 									</div>
 								</div>
 
@@ -272,7 +276,13 @@ export class SprintCompletionForm extends EventEmitter
 										<div class="tasks-scrum__side-panel-completion--plan-block-name-text">
 											${Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_DONE_SP')}
 										</div>
-										<div class="ui-hint"><span class="ui-hint-icon"></span></div>
+										<div class="ui-hint">
+											<span
+												class="ui-hint-icon"
+												data-hint="${Loc.getMessage('TSS_START_STORY_POINTS_HINT')}"
+												data-hint-no-icon
+											></span>
+										</div>
 									</div>
 								</div>
 
@@ -286,6 +296,8 @@ export class SprintCompletionForm extends EventEmitter
 
 			</div>
 		`;
+
+		this.initHints(this.node);
 
 		return this.node;
 	}
@@ -581,27 +593,11 @@ export class SprintCompletionForm extends EventEmitter
 		return `rgba(${r},${g},${b},${opacity})`;
 	}
 
-	showErrorAlert(response: ErrorResponse, alertTitle?: string)
+	initHints(node: HTMLElement)
 	{
-		if (Type.isUndefined(response.errors))
-		{
-			console.log(response);
-
-			return;
-		}
-
-		if (response.errors.length)
-		{
-			const firstError = response.errors.shift();
-			if (firstError)
-			{
-				const errorCode = (firstError.code ? firstError.code : '');
-
-				const message = firstError.message + ' ' + errorCode;
-				const title = (alertTitle ? alertTitle : Loc.getMessage('TASKS_SCRUM_ERROR_TITLE_POPUP'));
-
-				top.BX.UI.Dialogs.MessageBox.alert(message, title);
-			}
-		}
+		// todo wtf hint
+		top.BX.UI.Hint.popup = null;
+		top.BX.UI.Hint.id = 'ui-hint-popup-' + (+new Date());
+		top.BX.UI.Hint.init(node);
 	}
 }

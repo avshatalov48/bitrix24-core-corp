@@ -451,26 +451,31 @@ class LeftMenu extends \Bitrix\Main\Engine\Controller
 			return null;
 		}
 
-		$adminOption = Option::get('intranet', 'left_menu_items_to_all_' . SITE_ID, '', SITE_ID);
-
-		if (!empty($adminOption))
+		foreach ([
+			'left_menu_items_to_all_' . SITE_ID,
+			'left_menu_items_marketplace_' . SITE_ID
+			] as $optionName)
 		{
-			$adminOption = unserialize($adminOption, ['allowed_classes' => false]);
-			foreach ($adminOption as $key => $item)
+			if (($adminOption = Option::get('intranet', $optionName, '', SITE_ID))
+				&& !empty($adminOption)
+				&& ($adminOption = unserialize($adminOption, ['allowed_classes' => false]))
+			)
 			{
-				if ($item['ID'] == $_POST['menu_item_id'])
+				foreach ($adminOption as $key => $item)
 				{
-					unset($adminOption[$key]);
-					if (empty($adminOption))
+					if ($item['ID'] == $_POST['menu_item_id'])
 					{
-						\COption::RemoveOption('intranet', 'left_menu_items_to_all_' . SITE_ID);
+						unset($adminOption[$key]);
+						if (empty($adminOption))
+						{
+							\COption::RemoveOption('intranet', $optionName);
+						}
+						else
+						{
+							Option::set('intranet', $optionName, serialize($adminOption), SITE_ID);
+						}
+						break 2;
 					}
-					else
-					{
-						Option::set('intranet', 'left_menu_items_to_all_' . SITE_ID, serialize($adminOption), false, SITE_ID);
-					}
-
-					break;
 				}
 			}
 		}
@@ -538,19 +543,11 @@ class LeftMenu extends \Bitrix\Main\Engine\Controller
 			return null;
 		}
 
-		foreach (array('show', 'hide') as $status)
-		{
-			if (isset($_POST['items'][$status]) && is_array($_POST['items'][$status]))
-			{
-				$userOption[$status] = $_POST['items'][$status];
-			}
-			else
-			{
-				$userOption[$status] = array();
-			}
-		}
-
-		\CUserOptions::SetOption('intranet', $this->getItemsSortOptionName(), $userOption);
+		\CUserOptions::SetOption(
+			'intranet',
+			$this->getItemsSortOptionName(),
+			self::convertItemsSortFromJSToDB($_POST['items'], $_POST['version'])
+		);
 
 		if (isset($_POST['firstItemLink']))
 		{
@@ -647,6 +644,50 @@ class LeftMenu extends \Bitrix\Main\Engine\Controller
 		}
 	}
 
+	private static function convertItemsSortFromJSToDB($itemsFromPost, $version = null): array
+	{
+		$userOption = ['show' => [], 'hide' => []];
+		if ($version === null)
+		{
+			foreach ($userOption as $key => $val)
+			{
+				if (isset($itemsFromPost[$key]) && is_array($itemsFromPost[$key]))
+				{
+					$userOption[$key] = $itemsFromPost[$key];
+				}
+			}
+		}
+		else
+		{
+			$convert = function($res, &$itemsPointer) use (&$convert) {
+				foreach ($res as $item)
+				{
+					if (is_string($item))
+					{
+						$itemsPointer[] = $item;
+					}
+					else if (is_array($item) && isset($item['group_id']))
+					{
+						if (!empty($item['items']))
+						{
+							$itemsPointer[$item['group_id']] = [];
+							$convert($item['items'], $itemsPointer[$item['group_id']]);
+						}
+						else
+						{
+							$itemsPointer[] = $item;
+						}
+					}
+				}
+			};
+			$convert($itemsFromPost['show'] ?? [], $userOption['show']);
+			$convert($itemsFromPost['hide'] ?? [], $userOption['hide']);
+			unset($convert);
+			$userOption['version'] = $version;
+		}
+		return $userOption;
+	}
+
 	public function saveCustomPresetAction()
 	{
 		if (!$this->isCurrentUserAdmin())
@@ -659,10 +700,17 @@ class LeftMenu extends \Bitrix\Main\Engine\Controller
 			\CUserOptions::DeleteOptionsByName('intranet', 'left_menu_sorted_items_' . SITE_ID);
 			\CUserOptions::DeleteOptionsByName('intranet', 'left_menu_preset_' . SITE_ID);
 		}
+
 		if (isset($_POST['itemsSort']))
 		{
-			Option::set('intranet', 'left_menu_custom_preset_sort', serialize($_POST['itemsSort']), false, SITE_ID);
+			Option::set(
+				'intranet',
+				'left_menu_custom_preset_sort',
+				serialize(self::convertItemsSortFromJSToDB($_POST['itemsSort'], $_POST['version'])),
+				SITE_ID
+			);
 		}
+
 		if (isset($_POST['customItems']))
 		{
 			Option::set('intranet', 'left_menu_custom_preset_items', serialize($_POST['customItems']), false, SITE_ID);
@@ -693,7 +741,7 @@ class LeftMenu extends \Bitrix\Main\Engine\Controller
 
 	public function clearCacheAction()
 	{
-
+		//This action only for a composite cache
 	}
 
 	public function setDefaultMenuAction()
@@ -702,11 +750,28 @@ class LeftMenu extends \Bitrix\Main\Engine\Controller
 		\CUserOptions::DeleteOption('intranet', 'left_menu_self_items_' . SITE_ID);
 		\CUserOptions::DeleteOption('intranet', 'left_menu_standard_items_' . SITE_ID);
 		\CUserOptions::DeleteOption('intranet', $this->getItemsSortOptionName());
+		\CUserOptions::DeleteOption('intranet', 'left_menu_groups_' . SITE_ID);
 
 		if (Option::get('intranet', 'left_menu_preset', '', SITE_ID) === 'custom')
 		{
 			\CUserOptions::DeleteOptionsByName('intranet', 'left_menu_preset_' . SITE_ID);
 		}
+	}
+
+	public function collapseMenuGroupAction($id)
+	{
+		$groups = \CUserOptions::GetOption('intranet', 'left_menu_groups_' . SITE_ID);
+		$groups = is_array($groups) ? $groups : [];
+		$groups[$id] = 'collapsed';
+		\CUserOptions::SetOption('intranet', 'left_menu_groups_' . SITE_ID, $groups);
+	}
+
+	public function expandMenuGroupAction($id)
+	{
+		$groups = \CUserOptions::GetOption('intranet', 'left_menu_groups_' . SITE_ID);
+		$groups = is_array($groups) ? $groups : [];
+		$groups[$id] = 'expanded';
+		\CUserOptions::SetOption('intranet', 'left_menu_groups_' . SITE_ID, $groups);
 	}
 
 	public function collapseMenuAction()

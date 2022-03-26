@@ -9,6 +9,7 @@ use Bitrix\Bizproc\FieldType;
 use Bitrix\Bizproc\Activity\PropertiesDialog;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Timeline;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
@@ -91,6 +92,10 @@ class CBPCrmChangeRelationsActivity extends CBPCrmGetRelationsInfoActivity
 			foreach ($parentElements as $element)
 			{
 				$unbindResult = Container::getInstance()->getRelationManager()->unbindItems($element, $childElement);
+				if ($unbindResult->isSuccess())
+				{
+					Timeline\RelationController::getInstance()->onItemsUnbind($element, $childElement);
+				}
 				$errors = array_merge($errors, $unbindResult->getErrors());
 			}
 		}
@@ -112,6 +117,10 @@ class CBPCrmChangeRelationsActivity extends CBPCrmGetRelationsInfoActivity
 
 		$parentElement = new ItemIdentifier($this->ParentTypeId, $this->ParentId);
 		$bindingResult = Container::getInstance()->getRelationManager()->bindItems($parentElement, $childElement);
+		if ($bindingResult->isSuccess())
+		{
+			Timeline\RelationController::getInstance()->onItemsBind($parentElement, $childElement);
+		}
 
 		return $bindingResult->getErrors();
 	}

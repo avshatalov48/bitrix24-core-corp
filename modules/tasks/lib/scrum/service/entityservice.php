@@ -8,17 +8,18 @@ use Bitrix\Main\Errorable;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ORM\Query;
+use Bitrix\Main\Result;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Socialnetwork\UserToGroupTable;
+use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Scrum\Internal\EntityTable;
 use Bitrix\Tasks\Scrum\Internal\EO_Item_Collection;
-use Bitrix\Tasks\Scrum\Internal\ItemTable;
 
 class EntityService implements Errorable
 {
 	const ERROR_COULD_NOT_READ_ENTITY = 'TASKS_ES_01';
 	const ERROR_COULD_NOT_READ_ENTITY_IDS = 'TASKS_ES_02';
-	const ERROR_COULD_NOT_READ_ITEM_SOURCE_IDS = 'TASKS_ES_03';
+	const ERROR_COULD_NOT_REMOVE_ENTITY = 'TASKS_ES_03';
 	const ERROR_COULD_NOT_GET_LIST_READ_ENTITY = 'TASKS_ES_04';
 	const ERROR_COULD_NOT_GET_STORY_POINTS = 'TASKS_ES_05';
 
@@ -61,7 +62,7 @@ class EntityService implements Errorable
 	 * @return Query\Result|null
 	 */
 	public function getList(
-		PageNavigation $nav,
+		PageNavigation $nav = null,
 		$filter = [],
 		$select = [],
 		$order = []
@@ -69,7 +70,7 @@ class EntityService implements Errorable
 	{
 		try
 		{
-			if (!Loader::includeModule('socialnetwork'))
+			if ($this->userId && !Loader::includeModule('socialnetwork'))
 			{
 				$this->errorCollection->setError(
 					new Error(
@@ -97,15 +98,18 @@ class EntityService implements Errorable
 				$query->setLimit($nav->getLimit() + 1);
 			}
 
-			$query->registerRuntimeField(
-				'UG',
-				new ReferenceField(
+			if ($this->userId)
+			{
+				$query->registerRuntimeField(
 					'UG',
-					UserToGroupTable::getEntity(),
-					Join::on('this.GROUP_ID', 'ref.GROUP_ID')->where('ref.USER_ID', $this->userId),
-					['join_type' => 'inner']
-				)
-			);
+					new ReferenceField(
+						'UG',
+						UserToGroupTable::getEntity(),
+						Join::on('this.GROUP_ID', 'ref.GROUP_ID')->where('ref.USER_ID', $this->userId),
+						['join_type' => 'inner']
+					)
+				);
+			}
 
 			$queryResult = $query->exec();
 
@@ -128,16 +132,16 @@ class EntityService implements Errorable
 	 * Returns an object with entity data by entity id.
 	 *
 	 * @param int $entityId Entity id.
-	 * @return EntityTable
+	 * @return EntityForm
 	 */
-	public function getEntityById(int $entityId): EntityTable
+	public function getEntityById(int $entityId): EntityForm
 	{
 		if (array_key_exists($entityId, self::$entitiesById))
 		{
 			return self::$entitiesById[$entityId];
 		}
 
-		self::$entitiesById[$entityId] = EntityTable::createEntityObject();
+		self::$entitiesById[$entityId] = new EntityForm();
 
 		try
 		{
@@ -148,7 +152,11 @@ class EntityService implements Errorable
 			]);
 			if ($entityData = $queryObject->fetch())
 			{
-				self::$entitiesById[$entityId] = EntityTable::createEntityObject($entityData);
+				$entity = new EntityForm();
+
+				$entity->fillFromDatabase($entityData);
+
+				self::$entitiesById[$entityId] = $entity;
 			}
 		}
 		catch (\Exception $exception)
@@ -162,6 +170,42 @@ class EntityService implements Errorable
 		}
 
 		return self::$entitiesById[$entityId];
+	}
+
+	/**
+	 * Removes entity by id.
+	 *
+	 * @param int $id
+	 * @return bool
+	 */
+	public function removeEntity(int $id): bool
+	{
+		try
+		{
+			$result = EntityTable::delete($id);
+
+			if ($result->isSuccess())
+			{
+				return true;
+			}
+			else
+			{
+				$this->setErrors($result, self::ERROR_COULD_NOT_REMOVE_ENTITY);
+
+				return false;
+			}
+		}
+		catch (\Exception $exception)
+		{
+			$this->errorCollection->setError(
+				new Error(
+					$exception->getMessage(),
+					self::ERROR_COULD_NOT_REMOVE_ENTITY
+				)
+			);
+
+			return false;
+		}
 	}
 
 	public function getCounters(
@@ -195,8 +239,6 @@ class EntityService implements Errorable
 			{
 				$storyPointsMap[$data['SOURCE_ID']] = $data['STORY_POINTS'];
 			}
-
-			$taskIds = [];
 
 			$tasksInfo = [];
 
@@ -244,7 +286,10 @@ class EntityService implements Errorable
 			{
 				$countTotal++;
 
-				$storyPoints = (float) $storyPoints + (float) $storyPointsMap[$taskId];
+				if (is_numeric($storyPointsMap[$taskId]))
+				{
+					$storyPoints = (float) $storyPoints + (float) $storyPointsMap[$taskId];
+				}
 			}
 		}
 		catch (\Exception $exception)
@@ -272,5 +317,15 @@ class EntityService implements Errorable
 	public function getErrorByCode($code)
 	{
 		return $this->errorCollection->getErrorByCode($code);
+	}
+
+	private function setErrors(Result $result, string $code): void
+	{
+		$this->errorCollection->setError(
+			new Error(
+				implode('; ', $result->getErrorMessages()),
+				$code
+			)
+		);
 	}
 }

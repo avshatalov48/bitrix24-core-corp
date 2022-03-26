@@ -1,0 +1,6 @@
+<?php
+
+$MESS["MOBILE_TASKS_TABS_TAB_TASKS"] = "Задачи";
+$MESS["MOBILE_TASKS_TABS_TAB_PROJECTS"] = "Проекты";
+$MESS["MOBILE_TASKS_TABS_TAB_SCRUM"] = "Скрам";
+$MESS["MOBILE_TASKS_TABS_TAB_EFFICIENCY"] = "Эффективность";

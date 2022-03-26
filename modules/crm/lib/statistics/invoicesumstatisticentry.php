@@ -604,7 +604,7 @@ class InvoiceSumStatisticEntry
 		self::includeModuleFile();
 		return array(
 			'ID' => self::TYPE_NAME,
-			'TITLE' => GetMessage('CRM_INVOICE_SUM_STAT_ENTRY_TITLE'),
+			'TITLE' => \CCrmOwnerType::GetCategoryCaption(\CCrmOwnerType::Invoice),
 			'SLOTS' => $this->getSlotInfos(),
 			'SLOT_FIELDS' => $this->getSlotFieldInfos(LANGUAGE_ID),
 			'SLOT_BINDINGS' => $this->getSlotBindingMap()->toArray(),

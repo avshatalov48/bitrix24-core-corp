@@ -6,10 +6,15 @@ use Bitrix\Crm\Integration\DocumentGenerator\ProductLoader;
 use Bitrix\Crm\Integration\DocumentGenerator\Value\Money;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Order\PayableBasketItem;
+use Bitrix\Crm\UI\Barcode;
 use Bitrix\DocumentGenerator\DataProvider\ArrayDataProvider;
 use Bitrix\DocumentGenerator\DataProviderManager;
+use Bitrix\DocumentGenerator\Value;
 use Bitrix\Iblock\ElementTable;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Sale\Repository\PaymentRepository;
 
 abstract class ProductsDataProvider extends CrmEntityDataProvider
 {
@@ -118,32 +123,61 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 	protected function loadProductsData()
 	{
 		$result = [];
-		$crmProducts = \CAllCrmProductRow::LoadRows($this->getCrmProductOwnerType(), $this->source);
-		foreach($crmProducts as $crmProduct)
+
+		$payment = null;
+		$paymentId = (int)($this->getOptions()['VALUES'][DocumentGeneratorManager::VALUE_PAYMENT_ID] ?? 0);
+		if ($paymentId > 0)
 		{
-			if($crmProduct['TAX_INCLUDED'] !== 'Y')
+			$payment = PaymentRepository::getInstance()->getById($paymentId);
+		}
+		if ($payment)
+		{
+			$basketItems = $payment->getPayableItemCollection()->getBasketItems();
+			/** @var PayableBasketItem $basketItem */
+			foreach ($basketItems as $basketItem)
 			{
-				$crmProduct['PRICE'] = $crmProduct['PRICE_EXCLUSIVE'];
+				$productData = $basketItem->getEntityObject()->toArray();
+				$productData['QUANTITY'] = $basketItem->getQuantity();
+				DocumentGeneratorManager::getInstance()->getProductLoader()->addRow($productData);
+				$result[] = Order::getProductProviderDataByBasketItem(
+					$productData,
+					new ItemIdentifier(
+						\CCrmOwnerType::OrderPayment,
+						$payment->getId(),
+					),
+					$this->getCurrencyId()
+				);
 			}
-			$result[] = [
-				'ID' => $crmProduct['ID'],
-				'NAME' => $crmProduct['PRODUCT_NAME'],
-				'PRODUCT_ID' => $crmProduct['PRODUCT_ID'],
-				'QUANTITY' => $crmProduct['QUANTITY'],
-				'PRICE' => $crmProduct['PRICE'],
-				'DISCOUNT_RATE' => $crmProduct['DISCOUNT_RATE'],
-				'DISCOUNT_SUM' => $crmProduct['DISCOUNT_SUM'],
-				'TAX_RATE' => $crmProduct['TAX_RATE'],
-				'TAX_INCLUDED' => $crmProduct['TAX_INCLUDED'],
-				'SORT' => $crmProduct['SORT'],
-				'MEASURE_CODE' => $crmProduct['MEASURE_CODE'],
-				'MEASURE_NAME' => $crmProduct['MEASURE_NAME'],
-				'OWNER_ID' => $this->source,
-				'OWNER_TYPE' => $this->getCrmProductOwnerType(),
-				'CUSTOMIZED' => $crmProduct['CUSTOMIZED'],
-				'DISCOUNT_TYPE_ID' => $crmProduct['DISCOUNT_TYPE_ID'],
-				'CURRENCY_ID' => $this->getCurrencyId(),
-			];
+		}
+		else
+		{
+			$crmProducts = \CAllCrmProductRow::LoadRows($this->getCrmProductOwnerType(), $this->source);
+			foreach($crmProducts as $crmProduct)
+			{
+				if($crmProduct['TAX_INCLUDED'] !== 'Y')
+				{
+					$crmProduct['PRICE'] = $crmProduct['PRICE_EXCLUSIVE'];
+				}
+				$result[] = [
+					'ID' => $crmProduct['ID'],
+					'NAME' => $crmProduct['PRODUCT_NAME'],
+					'PRODUCT_ID' => $crmProduct['PRODUCT_ID'],
+					'QUANTITY' => $crmProduct['QUANTITY'],
+					'PRICE' => $crmProduct['PRICE'],
+					'DISCOUNT_RATE' => $crmProduct['DISCOUNT_RATE'],
+					'DISCOUNT_SUM' => $crmProduct['DISCOUNT_SUM'],
+					'TAX_RATE' => $crmProduct['TAX_RATE'],
+					'TAX_INCLUDED' => $crmProduct['TAX_INCLUDED'],
+					'SORT' => $crmProduct['SORT'],
+					'MEASURE_CODE' => $crmProduct['MEASURE_CODE'],
+					'MEASURE_NAME' => $crmProduct['MEASURE_NAME'],
+					'OWNER_ID' => $this->source,
+					'OWNER_TYPE' => $this->getCrmProductOwnerType(),
+					'CUSTOMIZED' => $crmProduct['CUSTOMIZED'],
+					'DISCOUNT_TYPE_ID' => $crmProduct['DISCOUNT_TYPE_ID'],
+					'CURRENCY_ID' => $this->getCurrencyId(),
+				];
+			}
 		}
 
 		return $result;
@@ -485,5 +519,19 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 		}
 
 		return null;
+	}
+
+	protected function prepareTransactionData(): Barcode\Payment\TransactionData
+	{
+		$transactionData = parent::prepareTransactionData();
+
+		$sum = $this->getRawValue('TOTAL_SUM');
+
+		if (is_numeric($sum))
+		{
+			$transactionData->setSum((float)$sum);
+		}
+
+		return $transactionData;
 	}
 }

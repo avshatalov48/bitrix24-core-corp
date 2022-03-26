@@ -43,6 +43,7 @@ $MESS["TASKS_JS_MARK"] = "Оцінка";
 $MESS["TASKS_JS_MARK_N"] = "Негативна";
 $MESS["TASKS_JS_MARK_NONE"] = "Немає оцінки";
 $MESS["TASKS_JS_MARK_P"] = "Позитивна";
+$MESS["TASKS_LIST_ACTION_COPY_LINK_NOTIFICATION"] = "Посилання на завдання скопійоване в буфер обміну";
 $MESS["TASKS_LIST_ACTION_PING_NOTIFICATION"] = "Пінг-повідомлення надіслане";
 $MESS["TASKS_LIST_ADD_TAG_FOOTER_LABEL"] = "Додати тег:";
 $MESS["TASKS_LIST_CHOOSE_ACTION"] = "Виберіть дію";

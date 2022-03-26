@@ -1,6 +1,8 @@
 <?php
 namespace Bitrix\Crm\Model;
 
+use Bitrix\Crm\Category\Entity\ItemCategory;
+use Bitrix\Crm\Category\PermissionEntityTypeHelper;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Entity\BooleanField;
 use Bitrix\Main\Localization\Loc;
@@ -32,6 +34,8 @@ use Bitrix\Main\Type\DateTime;
  */
 class ItemCategoryTable extends DataManager
 {
+	private static $categoryToEntityTypeRelations = [];
+
 	public static function getTableName(): string
 	{
 		return 'b_crm_item_category';
@@ -132,7 +136,7 @@ class ItemCategoryTable extends DataManager
 		{
 			$result->addError(new EntityError(Loc::getMessage('CRM_CATEGORY_TABLE_DELETE_ERROR_ITEMS')));
 		}
-		if (!$result->getErrors())
+		if (!$result->getErrors() && $factory->isStagesSupported())
 		{
 			$stages = $factory->getStages($category->getId());
 			foreach ($stages as $stage)
@@ -146,6 +150,10 @@ class ItemCategoryTable extends DataManager
 					}
 				}
 			}
+		}
+		if (!$result->getErrors())
+		{
+			static::$categoryToEntityTypeRelations[$id] = $data['ENTITY_TYPE_ID'];
 		}
 
 		return $result;
@@ -170,5 +178,49 @@ class ItemCategoryTable extends DataManager
 		}
 
 		return $result;
+	}
+
+	public static function onAfterDelete(Event $event): EventResult
+	{
+		$result = new EventResult();
+
+		$id = $event->getParameter('id');
+		if (is_array($id))
+		{
+			$id = $id['ID'];
+		}
+		$id = (int) $id;
+
+		$entityTypeId = static::$categoryToEntityTypeRelations[$id] ?? null;
+
+		if ($entityTypeId)
+		{
+			\CCrmRole::EraseEntityPermissons(
+				(new PermissionEntityTypeHelper($entityTypeId))->getPermissionEntityTypeForCategory($id)
+			);
+			Container::getInstance()->getFactory($entityTypeId)->clearCategoriesCache();
+			unset(static::$categoryToEntityTypeRelations[$id]);
+		}
+
+		return $result;
+	}
+
+	public static function getItemCategoriesByEntityTypeId(int $entityTypeId): array
+	{
+		$categories = [];
+
+		$list = static::query()
+			->where('ENTITY_TYPE_ID', $entityTypeId)
+			->setSelect(['*'])
+			->addOrder('SORT')
+			->exec()
+		;
+
+		while($item = $list->fetchObject())
+		{
+			$categories[] = new ItemCategory($item);
+		}
+
+		return $categories;
 	}
 }

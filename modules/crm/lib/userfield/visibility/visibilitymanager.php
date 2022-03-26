@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\UserField\Visibility;
 
 use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\UserField\Access\ActionDictionary;
@@ -22,6 +23,7 @@ class VisibilityManager
 {
 	private static $isEnabled;
 	private static $userFieldAccessCodes = [];
+	private static $isAdmin = null;
 
 	/**
 	 * @return bool
@@ -59,6 +61,16 @@ class VisibilityManager
 	 */
 	public static function getNotAccessibleFields(int $entityTypeId, ?array $userAccessCodes = null): array
 	{
+		if (static::$isAdmin === null)
+		{
+			static::$isAdmin = Container::getInstance()->getUserPermissions()->isAdmin();
+		}
+
+		if (static::$isAdmin)
+		{
+			return [];
+		}
+
 		$accessCodes = static::getUserFieldsAccessCodes($entityTypeId);
 		if ($userAccessCodes === null)
 		{

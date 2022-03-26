@@ -1,5 +1,7 @@
 <?php
 $MESS["CRM_EDITOR_ADDRESS"] = "Адреса";
+$MESS["CRM_EDITOR_ADD_BANK_DETAILS"] = "Додати банківські реквізити";
+$MESS["CRM_EDITOR_ADD_REQUISITE"] = "Додати реквізити";
 $MESS["CRM_EDITOR_CANCEL_CONFIRMATION"] = "Впевнені, що хочете скасувати зміни?";
 $MESS["CRM_EDITOR_CLOSE_CONFIRMATION"] = "Ви не зберегли зміни. Впевнені, що хочете закрити?";
 $MESS["CRM_EDITOR_CONFIRMATION"] = "Підтвердження";
@@ -12,7 +14,7 @@ $MESS["CRM_EDITOR_MANUAL_OPPORTUNITY_CHANGE_VALUE_AUTO"] = "Розраховув
 $MESS["CRM_EDITOR_MANUAL_OPPORTUNITY_CHANGE_VALUE_MANUAL"] = "Залишити збережене значення";
 $MESS["CRM_EDITOR_MANUAL_OPPORTUNITY_CONFIRMATION_TEXT"] = "Сума перестане перераховуватися автоматично. Ви впевнені, що хочете продовжити?";
 $MESS["CRM_EDITOR_MANUAL_OPPORTUNITY_CONFIRMATION_TITLE"] = "Відключення автоматичного розрахунку суми за товарами";
-$MESS["CRM_EDITOR_MANUAL_OPPORTUNITY_SET_AUTOMATIC"] = "Повернути автоматичний перерахунок суми";
+$MESS["CRM_EDITOR_MANUAL_OPPORTUNITY_SET_TO_AUTOMATIC"] = "Повернути автоматичний перерахунок суми";
 $MESS["CRM_EDITOR_PAYMENT_NOT_PAID"] = "Не оплачено";
 $MESS["CRM_EDITOR_PAYMENT_PAID"] = "Оплачено";
 $MESS["CRM_EDITOR_PHONE"] = "Телефон";
@@ -71,6 +73,7 @@ $MESS["CRM_ENTITY_ED_DISK_UPLOAD_FILE"] = "Завантажити файл";
 $MESS["CRM_ENTITY_ED_DISK_UPLOAD_FILE_LEGEND"] = "Перетягнути за допомогою Drag'n'drop";
 $MESS["CRM_ENTITY_ED_DISPLAY_COMPANY_AT_FIRST"] = "Спочатку показувати компанію";
 $MESS["CRM_ENTITY_ED_DISPLAY_CONTACT_AT_FIRST"] = "Спочатку показувати контакти";
+$MESS["CRM_ENTITY_ED_DOCUMENT_NUMBER_NUMERATOR_SETTINGS_CONTEXT_ITEM"] = "Налаштувати нумератор";
 $MESS["CRM_ENTITY_ED_DUP_CTRL_SHORT_SUMMARY_TITLE"] = "знайдено";
 $MESS["CRM_ENTITY_ED_DUP_CTRL_WARNING_ACCEPT_BTN_TITLE"] = "Ігнорувати та зберегти";
 $MESS["CRM_ENTITY_ED_DUP_CTRL_WARNING_CANCEL_BTN_TITLE"] = "Скасувати";

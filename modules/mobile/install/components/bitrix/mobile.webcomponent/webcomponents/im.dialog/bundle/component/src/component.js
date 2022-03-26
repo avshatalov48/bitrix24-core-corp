@@ -98,6 +98,8 @@ ChatDialog.init = function()
 		});
 	});
 
+
+
 	return true;
 };
 
@@ -1068,7 +1070,12 @@ ChatDialog.disk.eventRouter = function (eventName, eventData, taskId)
 	else if (eventName == ChatUploaderEvents.DISK_MESSAGE_ADD_FAIL)
 	{
 		console.error('ChatDialog.disk.eventRouter: DISK_MESSAGE_ADD_FAIL: ', eventData, taskId);
-		BXIM.disk.fileAborted(taskId, BX.message('IM_F_ERROR'));
+		let error = BX.message('IM_F_ERROR');
+		if (eventData.error.code === 'ERROR_FROM_OTHER_MODULE')
+		{
+			error = eventData.error.description;
+		}
+		BXIM.disk.fileAborted(taskId, error);
 	}
 	else if (
 		eventName == BX.MobileUploaderConst.TASK_CANCELLED

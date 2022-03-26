@@ -118,4 +118,7 @@ $MESS["CRM_LEAD_BATCH_DELETION_COUNT_FAILED"] = "Не удалось удали�
 $MESS["CRM_TIMELINE_REBUILD_SEARCH_CONTENT_DLG_TITLE"] = "Перестроение поискового индекса истории лидов, сделок, контактов, компаний и др.";
 $MESS["CRM_LEAD_ACTION_MERGE"] = "Объединить";
 $MESS["CRM_LEAD_REBUILD_SECURITY_ATTRS_DLG_TITLE"] = "Идет обновление системы прав доступа";
-?>
+$MESS["CRM_LEAD_BACKGROUND_DUPLICATE_INDEX_REBUILD_TITLE"] = "Сканирование дубликатов лидов";
+$MESS["CRM_LEAD_BACKGROUND_DUPLICATE_INDEX_REBUILD_STATE"] = "#processed#%";
+$MESS["CRM_LEAD_BACKGROUND_DUPLICATE_MERGE_TITLE"] = "Объединение дубликатов лидов";
+$MESS["CRM_LEAD_BACKGROUND_DUPLICATE_MERGE_STATE"] = "#processed#%";

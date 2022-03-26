@@ -297,6 +297,7 @@ $APPLICATION->RestartBuffer();
 				),
 				'DATA' => $arResult['TEMPLATE_DATA']['TEMPLATE']['SE_RESPONSIBLE'],
 				'READ_ONLY' => $template['TPARAM_TYPE'] == 1,
+				'CONTEXT' => 'template',
 			),
 			$helper->getComponent(),
 			array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -337,6 +338,7 @@ $APPLICATION->RestartBuffer();
 				'INPUT_PREFIX' => $inputPrefix.'[CREATED_BY]',
 				'SOLE_INPUT_IF_MAX_1' => 'Y',
 				'DATA' => $arResult['TEMPLATE_DATA']['TEMPLATE']['SE_ORIGINATOR'],
+				'CONTEXT' => 'template',
 			),
 			$helper->getComponent(),
 			array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -366,6 +368,7 @@ $APPLICATION->RestartBuffer();
 				),
 				'DATA' => $arResult['TEMPLATE_DATA']['TEMPLATE']['SE_ACCOMPLICE'],
 				'TASK_LIMIT_EXCEEDED' => $taskLimitExceeded,
+				'CONTEXT' => 'template',
 			),
 			$helper->getComponent(),
 			array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -396,6 +399,7 @@ $APPLICATION->RestartBuffer();
 				),
 				'DATA' => $arResult['TEMPLATE_DATA']['TEMPLATE']['SE_AUDITOR'],
 				'TASK_LIMIT_EXCEEDED' => $taskLimitExceeded,
+				'CONTEXT' => 'template',
 			),
 			$helper->getComponent(),
 			array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -623,7 +627,7 @@ $APPLICATION->RestartBuffer();
 		//////// DYNAMIC ///////////////////////////////////////////////
 
 		$DYNAMICBlocks = array(
-			'PROJECT', 'CRM', 'USER_FIELDS', /*'REPLICATION',*/ 'TIME_MANAGER', 'TAG', 'RELATED_TASK', 'PARENT', /*'ACCESS',*/ 'ACCESS_TEMPLATE'
+			'PROJECT', 'CRM', 'USER_FIELDS', 'TIME_MANAGER', 'TAG', 'RELATED_TASK', 'PARENT', 'ACCESS_TEMPLATE'
 		);
 
 		foreach($DYNAMICBlocks as $blockCode)
@@ -645,6 +649,7 @@ $APPLICATION->RestartBuffer();
 						),
 						'DATA' => $arResult['TEMPLATE_DATA']['TEMPLATE']['SE_PROJECT'],
 						'SOLE_INPUT_IF_MAX_1' => 'Y',
+						'CONTEXT' => 'template',
 					),
 					$helper->getComponent(),
 					array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -812,26 +817,6 @@ $APPLICATION->RestartBuffer();
 				</div>
 				<?
 			}
-			elseif($blockCode == 'ACCESS')
-			{
-				$APPLICATION->IncludeComponent(
-					'bitrix:tasks.widget.access',
-					'',
-					array(
-						'TEMPLATE_CONTROLLER_ID' => $helper->getId().'-rights',
-						'INPUT_PREFIX' => $inputPrefix.'[SE_ACCESS]',
-						'ENTITY_CODE' => 'task_template',
-						'CAN_READ' => 'Y',
-						'CAN_UPDATE' => $template->canUpdateRights(),
-						'USER_DATA' => $arResult['DATA']['USER'],
-						'DATA' => $template['SE_ACCESS'],
-						'EDIT_MODE' => $editMode,
-						'TEMPLATE_ID' => $template->getId(),
-					),
-					$helper->getComponent(),
-					array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
-				);
-			}
 			elseif($blockCode == 'ACCESS_TEMPLATE')
 			{
 				if ($editMode)
@@ -880,11 +865,7 @@ $APPLICATION->RestartBuffer();
 			);
 		}
 
-		//////////////////////////////////////////////////////////////////
-		// todo: EVENT HERE to get partners able to modify $blocks, possibly add new blocks, reorder, etc
-
 		//////// OUTPUT FRAME ////////////////////////////////////////////
-
 		$APPLICATION->IncludeComponent(
 			'bitrix:tasks.widget.frame',
 			'',

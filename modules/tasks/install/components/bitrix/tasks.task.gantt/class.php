@@ -1,18 +1,15 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 /**
  * Bitrix Framework
  * @package bitrix
- * @subpackage sale
- * @copyright 2001-2015 Bitrix
+ * @subpackage tasks
+ * @copyright 2001-2023 Bitrix
  */
 
-/** !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-/** This is alfa version of component! Don't use it! */
-/** !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! */
-
-
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Helper\Grid;
 use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Internals\Task\ParameterTable;
@@ -25,6 +22,165 @@ CBitrixComponent::includeComponentClass("bitrix:tasks.task.list");
 
 class TasksTaskGanttComponent extends TasksTaskListComponent
 {
+	public function configureActions()
+	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return [];
+		}
+
+		return [
+			'addDependence' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'deleteDependence' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'notificationThrottleRelease' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'setViewState' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			]
+		];
+	}
+
+	public function setViewStateAction($state)
+	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$stateInstance = Filter::getInstance($this->userId)->getListStateInstance();
+		if ($stateInstance)
+		{
+			$stateInstance->setState($state);
+			$stateInstance->saveState();
+		}
+
+		return [];
+	}
+
+	public function notificationThrottleReleaseAction()
+	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		\CTaskNotifications::throttleRelease();
+	}
+
+	/**
+	 * @param $taskFrom
+	 * @param $taskTo
+	 * @param $linkType
+	 * @return array|null
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public function addDependenceAction($taskFrom, $taskTo, $linkType)
+	{
+		$taskFrom = (int) $taskFrom;
+		if (!$taskFrom)
+		{
+			return null;
+		}
+
+		$taskTo = (int) $taskTo;
+		if (!$taskTo)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		if (
+			!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, $taskFrom)
+			|| !TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, $taskTo)
+		)
+		{
+			$this->addForbiddenError();
+			return [];
+		}
+
+		try
+		{
+			$task = new \CTaskItem($taskTo, $this->userId);
+			$task->addDependOn($taskFrom, $linkType);
+		}
+		catch(Exception | \CTaskAssertException $e)
+		{
+			$this->addForbiddenError();
+			return [];
+		}
+
+		return [];
+	}
+
+	/**
+	 * @param $taskFrom
+	 * @param $taskTo
+	 * @return array|null
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public function deleteDependenceAction($taskFrom, $taskTo)
+	{
+		$taskFrom = (int) $taskFrom;
+		if (!$taskFrom)
+		{
+			return null;
+		}
+
+		$taskTo = (int) $taskTo;
+		if (!$taskTo)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		if (
+			!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, $taskFrom)
+			|| !TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, $taskTo)
+		)
+		{
+			$this->addForbiddenError();
+			return [];
+		}
+
+		try
+		{
+			$task = new \CTaskItem($taskTo, $this->userId);
+			$task->deleteDependOn($taskFrom);
+		}
+		catch(Exception | \CTaskAssertException $e)
+		{
+			$this->addForbiddenError();
+			return [];
+		}
+
+		return [];
+	}
+
 	protected function loadGrid()
 	{
 		$userId = (int) $this->arParams["USER_ID"];

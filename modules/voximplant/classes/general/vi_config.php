@@ -893,25 +893,6 @@ class CVoxImplantConfig
 		return $result;
 	}
 
-	public static function isAutoPayAllowed()
-	{
-		$ViHttp = new CVoxImplantHttp();
-		$result = $ViHttp->GetAccountInfo();
-
-		if(!$result)
-		{
-			return false;
-		}
-
-		return $result->autopay_allowed;
-	}
-
-	public static function setAutoPayAllowed($allowAutoPay)
-	{
-		$ViHttp = new CVoxImplantHttp();
-		return $ViHttp->setAutoPayAllowed($allowAutoPay);
-	}
-
 	/**
 	 * Returns true if line with provided search id is served via rest application
 	 * @param string $searchId

@@ -187,24 +187,37 @@ BX.namespace('Tasks.Component');
 
             syncAll: function()
             {
-                var q = this.getQuery();
-                if(q && parseInt(this.option('taskId')))
-                {
-                    var arg = [];
-                    for(var k in this.vars.items)
-                    {
-                        arg.push(this.vars.items[k].data());
-                    }
+				var taskId = parseInt(this.option('taskId'));
+				if (!taskId)
+				{
+					return;
+				}
+				var data = [];
+				for(var k in this.vars.items)
+				{
+					data.push(this.vars.items[k].data());
+				}
 
-                    q.add('task.update', {
-                        id: parseInt(this.option('taskId')),
-                        data: {
-                            SE_REMINDER: arg
-                        }
-                    },{
-                        code: 'update_reminder'
-                    });
-                }
+				BX.ajax.runComponentAction('bitrix:tasks.task', 'setReminder', {
+					mode: 'class',
+					data: {
+						taskId: taskId,
+						data: data
+					}
+				}).then(
+					function(response)
+					{
+
+					}.bind(this)
+				).catch(
+					function(response)
+					{
+						if (response.errors)
+						{
+							BX.Tasks.alert(response.errors);
+						}
+					}.bind(this)
+				);
             }
 		}
 	});

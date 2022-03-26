@@ -17,6 +17,10 @@ if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
 $arTypes = CCrmFields::GetEntityTypes();
 foreach($arTypes as $key => $ar)
 {
+	if ($key === 'CRM_INVOICE' && !\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
+	{
+		continue;
+	}
 	$arResult['ROWS'][$ar['ID']] = $ar;
 	$arResult['ROWS'][$ar['ID']]['LINK_LIST'] = str_replace('#entity_id#', $ar['ID'], $arParams['~FIELDS_LIST_URL']);
 	$arResult['ROWS'][$ar['ID']]['LINK_ADD'] = str_replace(	array('#entity_id#', '#field_id#'),	array($ar['ID'], 0), $arParams['~FIELD_EDIT_URL']);

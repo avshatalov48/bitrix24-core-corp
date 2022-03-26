@@ -1,48 +1,87 @@
-<?
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
-IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/company/.left.menu_ext.php");
-
-$aMenuLinks = Array(
-	Array(
-		GetMessage("MENU_STRUCTURE"),
-		"/company/vis_structure.php",
-		Array("/company/structure.php"),
-		Array("menu_item_id"=>"menu_structure"),
-		""
-	),
-	Array(
-		GetMessage("MENU_EMPLOYEE"),
-		"/company/",
-		Array(),
-		Array("menu_item_id"=>"menu_employee"),
-		""
-	)
-);
-
-if (IsModuleInstalled('lists'))
+<?php
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
-	$listUrl = 'https://helpdesk.bitrix24.ru/open/5316091/';
+	die();
+}
 
-	if (CModule::IncludeModule('ui'))
-	{
-		\Bitrix\Main\UI\Extension::load('ui.info-helper');
+use Bitrix\Intranet\Site\Sections\AutomationSection;
+use Bitrix\Intranet\Site\Sections\TimemanSection;
+use Bitrix\Landing\Rights;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 
-		$listUrl = 'javascript:BX.UI.InfoHelper.show("limit_office_records_management");';
-	}
+Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/intranet/public_bitrix24/company/.left.menu_ext.php');
+Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/intranet/public_bitrix24/.superleft.menu_ext.php');
 
-	if (
-		!IsModuleInstalled('bitrix24')
-		|| CModule::IncludeModule('lists') && CLists::isFeatureEnabled('lists')
-	)
-	{
-		$listUrl = '/company/lists/';
-	}
+$GLOBALS['APPLICATION']->setPageProperty('topMenuSectionDir', '/company/');
 
-	$aMenuLinks[] = [
-		GetMessage('MENU_LISTS'),
-		$listUrl,
+$aMenuLinks = [
+	[
+		Loc::getMessage('MENU_STRUCTURE'),
+		'/company/vis_structure.php',
 		[],
-		['menu_item_id' => 'menu_lists'],
+		[
+			'menu_item_id' => 'menu_company',
+		],
+		'',
+	],
+	[
+		Loc::getMessage('MENU_EMPLOYEE'),
+		'/company/',
+		[],
+		[
+			'menu_item_id' => 'menu_employee',
+		],
+		'',
+	],
+];
+
+// OLD MENU
+if (Loader::includeModule('intranet'))
+{
+	$item = AutomationSection::getLists();
+	if ($item['available'])
+	{
+		$aMenuLinks[] = [
+			$item['title'] ?? '',
+			$item['url'] ?? '',
+			$item['extraUrls'] ?? [],
+			$item['menuData'] ?? [],
+			'',
+		];
+	}
+}
+
+/* NEW MENU
+if (Loader::includeModule('intranet') && TimemanSection::isAvailable())
+{
+	$aMenuLinks[] = TimemanSection::getRootMenuItem();
+}
+
+$landingIncluded = Loader::includeModule('landing');
+if ($landingIncluded && Rights::hasAdditionalRight(Rights::ADDITIONAL_RIGHTS['menu24'], 'knowledge'))
+{
+	$aMenuLinks[] = [
+		Loc::getMessage('MENU_KNOWLEDGE_BASE'),
+		'/kb/',
+		[],
+		[
+			'menu_item_id' => 'menu_knowledge',
+		],
 		'',
 	];
 }
+
+if (\Bitrix\Main\ModuleManager::isModuleInstalled('im'))
+{
+	$aMenuLinks[] = [
+		Loc::getMessage('MENU_CONFERENCE_SECTION'),
+		'/conference/',
+		[],
+		[
+			'menu_item_id' => 'menu_conference',
+		],
+		''
+	];
+}
+*/

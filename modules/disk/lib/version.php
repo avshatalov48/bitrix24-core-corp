@@ -4,6 +4,7 @@
 namespace Bitrix\Disk;
 
 
+use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\Internals\VersionTable;
 use Bitrix\Disk\View\VersionViewManager;
@@ -12,6 +13,8 @@ use Bitrix\Main\Type\DateTime;
 
 final class Version extends Internals\Model
 {
+	public const ERROR_COULD_NOT_CREATE_NEW_FILE = 'DISK_VERSION_22002';
+
 	/** @var int */
 	protected $objectId;
 	/** @var BaseObject */
@@ -129,9 +132,8 @@ final class Version extends Internals\Model
 		{
 			return $this->file;
 		}
-		/** @noinspection PhpUndefinedClassInspection */
 
-		$this->file = \CFile::getByID($this->fileId)->fetch();
+		$this->file = \CFile::GetFileArray($this->fileId);
 
 		if(!$this->file)
 		{
@@ -139,6 +141,36 @@ final class Version extends Internals\Model
 		}
 
 		return $this->file;
+	}
+
+	public function createNewFile(Folder $targetFolder, int $createdBy, bool $generateUniqueName = false): ?File
+	{
+		$this->errorCollection->clear();
+
+		$forkFileId = \CFile::copyFile($this->getFileId(), true);
+		if (!$forkFileId)
+		{
+			$this->errorCollection[] = new Error('Could not copy file.', self::ERROR_COULD_NOT_CREATE_NEW_FILE);
+
+			return null;
+		}
+
+		$newFile = $targetFolder->addFile([
+			'NAME' => $this->getName(),
+			'FILE_ID' => $forkFileId,
+			'SIZE' => $this->getSize(),
+			'CREATED_BY' => $createdBy,
+		], [], $generateUniqueName);
+
+		if (!$newFile)
+		{
+			\CFile::delete($forkFileId);
+			$this->errorCollection->add($targetFolder->getErrors());
+
+			return null;
+		}
+
+		return $newFile;
 	}
 
 	/**

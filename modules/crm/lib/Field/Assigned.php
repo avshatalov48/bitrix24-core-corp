@@ -2,8 +2,10 @@
 
 namespace Bitrix\Crm\Field;
 
+use Bitrix\Crm\EventRelationsTable;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Service\Operation\FieldAfterSaveResult;
@@ -45,9 +47,23 @@ class Assigned extends Field
 		return parent::processLogic($item, $context);
 	}
 
-//	public function processAfterSave(Item $itemBeforeSave, Item $item, Context $context = null): FieldAfterSaveResult
-//	{
-//		// todo reset counters if changed
-//		return parent::processAfterSave($itemBeforeSave, $item, $context);
-//	}
+	public function processAfterSave(Item $itemBeforeSave, Item $item, Context $context = null): FieldAfterSaveResult
+	{
+		$result = new FieldAfterSaveResult();
+
+		if ($itemBeforeSave->remindActual(Item::FIELD_NAME_ASSIGNED) !== $item->getAssignedById())
+		{
+			$updateResult = EventRelationsTable::setAssignedByItem(
+				ItemIdentifier::createByItem($item),
+				(int)$item->getAssignedById(),
+			);
+			if (!$updateResult->isSuccess())
+			{
+				$result->addErrors($updateResult->getErrors());
+			}
+		}
+
+		return $result;
+
+	}
 }

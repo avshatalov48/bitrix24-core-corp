@@ -16,6 +16,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Fields\Relations\OneToMany;
 use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Tasks\Internals\Task\MemberTable;
+use Bitrix\Tasks\Internals\Task\Result\ResultTable;
 use Bitrix\Tasks\Util\Entity\DateTimeField;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\UserField;
@@ -105,10 +106,14 @@ class TaskTable extends Entity\DataManager
 				'validation' => array(__CLASS__, 'validateTitle'),
 				'required' => true,
 				'title' => Loc::getMessage('TASKS_TASK_ENTITY_TITLE_FIELD'),
+				'save_data_modification' => array('\Bitrix\Main\Text\Emoji', 'getSaveModificator'),
+				'fetch_data_modification' => array('\Bitrix\Main\Text\Emoji', 'getFetchModificator'),
 			),
 			'DESCRIPTION' => array(
 				'data_type' => 'text',
 				'title' => Loc::getMessage('TASKS_TASK_ENTITY_DESCRIPTION_FIELD'),
+				'save_data_modification' => array('\Bitrix\Main\Text\Emoji', 'getSaveModificator'),
+				'fetch_data_modification' => array('\Bitrix\Main\Text\Emoji', 'getFetchModificator'),
 			),
 			'DESCRIPTION_IN_BBCODE' => array(
 				'data_type' => 'boolean',
@@ -266,6 +271,12 @@ class TaskTable extends Entity\DataManager
 					'=this.ID'=>'ref.TASK_ID'
 				)
 			),
+			'RESULTS' => [
+				'data_type' => ResultTable::class,
+				'reference' => [
+					'=this.ID'=>'ref.TASK_ID'
+				],
+			],
 
 			// socialnetwork module should be present
 			'GROUP' => array(

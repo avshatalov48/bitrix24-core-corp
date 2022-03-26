@@ -10,7 +10,7 @@ a.menu-item-link,
 	background: rgba(0,0,0,.05);
 }
 
-.menu-item-active .menu-item-link-text,
+.menu-items-view-mode .menu-item-active .menu-item-link-text,
 .menu-animation-opening-mode .menu-item-active .menu-item-link-text {
 	background-color: rgba(0, 0, 0, .35);
 	color: #fff;
@@ -38,11 +38,6 @@ a.menu-item-link,
 .menu-collapsed-mode.menu-sliding-mode .menu-item-plus:hover .menu-item-plus-icon:before,
 .menu-collapsed-mode.menu-sliding-mode .menu-item-plus:hover .menu-item-plus-icon:after {
 	opacity: 1;
-}
-
-.menu-item-index {
-	background-color: rgba(0,0,0,.1);
-	color: rgba(51,51,51,.6);
 }
 
 .menu-favorites-more-icon {

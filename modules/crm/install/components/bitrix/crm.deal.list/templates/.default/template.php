@@ -11,6 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
  * @var CBitrixComponent $component
  */
 
+use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Tracking;
 use Bitrix\Main\Localization\Loc;
 
@@ -193,6 +194,10 @@ foreach($arResult['DEAL'] as $sKey =>  $arDeal)
 			if($arResult['CONVERSION_PERMITTED'])
 			{
 				$arSchemeDescriptions = \Bitrix\Crm\Conversion\DealConversionScheme::getJavaScriptDescriptions(true);
+				if (!\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
+				{
+					unset($arSchemeDescriptions[\Bitrix\Crm\Conversion\DealConversionScheme::INVOICE_NAME]);
+				}
 				$arSchemeList = array();
 				foreach($arSchemeDescriptions as $name => $description)
 				{
@@ -226,15 +231,18 @@ foreach($arResult['DEAL'] as $sKey =>  $arDeal)
 
 		if($arDeal['EDIT'])
 		{
-			$arActions[] = $arActivityMenuItems[] = array(
-				'TITLE' => GetMessage('CRM_DEAL_EVENT_TITLE'),
-				'TEXT' => GetMessage('CRM_DEAL_EVENT'),
-				'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
-					'{$gridManagerID}',
-					BX.CrmUIGridMenuCommand.createEvent,
-					{ entityTypeName: BX.CrmEntityType.names.deal, entityId: {$arDeal['ID']} }
-				)"
-			);
+			if (RestrictionManager::isHistoryViewPermitted())
+			{
+				$arActions[] = $arActivityMenuItems[] = array(
+					'TITLE' => GetMessage('CRM_DEAL_EVENT_TITLE'),
+					'TEXT' => GetMessage('CRM_DEAL_EVENT'),
+					'ONCLICK' => "BX.CrmUIGridExtension.processMenuCommand(
+						'{$gridManagerID}',
+						BX.CrmUIGridMenuCommand.createEvent,
+						{ entityTypeName: BX.CrmEntityType.names.deal, entityId: {$arDeal['ID']} }
+					)"
+				);
+			}
 
 			if(IsModuleInstalled(CRM_MODULE_CALENDAR_ID))
 			{
@@ -1036,6 +1044,7 @@ if($arResult['ENABLE_TOOLBAR'])
 		$urlParams = isset($arResult['DEAL_ADD_URL_PARAMS']) && is_array($arResult['DEAL_ADD_URL_PARAMS'])
 			? $arResult['DEAL_ADD_URL_PARAMS'] : array();
 		$addButton['ONCLICK'] = 'BX.CrmEntityManager.createEntity(BX.CrmEntityType.names.deal, { urlParams: '.CUtil::PhpToJSObject($urlParams).' })';
+		unset($addButton['LINK']);
 	}
 
 	$APPLICATION->IncludeComponent(

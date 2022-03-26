@@ -1,7 +1,7 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 this.BX.Crm.Entity = this.BX.Crm.Entity || {};
-(function (exports,ui_hint,catalog_productCalculator,main_popup,main_core,main_core_events,currency_currencyCore,catalog_productSelector) {
+(function (exports,ui_hint,ui_notification,catalog_storeSelector,catalog_productCalculator,main_popup,main_core,main_core_events,catalog_storeUse,currency_currencyCore,catalog_productSelector,catalog_productModel) {
 	'use strict';
 
 	var _templateObject;
@@ -46,35 +46,337 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  return HintPopup;
 	}();
 
-	function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	var _templateObject$1, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6;
+
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
+
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
+
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
+	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+
+	var _model = /*#__PURE__*/new WeakMap();
+
+	var _cache = /*#__PURE__*/new WeakMap();
+
+	var _onDateInputClick = /*#__PURE__*/new WeakSet();
+
+	var _getDateNode = /*#__PURE__*/new WeakSet();
+
+	var _getReserveInputNode = /*#__PURE__*/new WeakSet();
+
+	var _layoutDateReservation = /*#__PURE__*/new WeakSet();
+
+	var ReserveControl = /*#__PURE__*/function () {
+	  function ReserveControl(options) {
+	    babelHelpers.classCallCheck(this, ReserveControl);
+
+	    _classPrivateMethodInitSpec(this, _layoutDateReservation);
+
+	    _classPrivateMethodInitSpec(this, _getReserveInputNode);
+
+	    _classPrivateMethodInitSpec(this, _getDateNode);
+
+	    _classPrivateMethodInitSpec(this, _onDateInputClick);
+
+	    _classPrivateFieldInitSpec(this, _model, {
+	      writable: true,
+	      value: null
+	    });
+
+	    _classPrivateFieldInitSpec(this, _cache, {
+	      writable: true,
+	      value: new main_core.Cache.MemoryCache()
+	    });
+
+	    babelHelpers.classPrivateFieldSet(this, _model, options.model);
+	    this.inputFieldName = options.inputName || ReserveControl.INPUT_NAME;
+	    this.dateFieldName = options.dateFieldName || ReserveControl.DATE_NAME;
+	    this.quantityFieldName = options.quantityFieldName || ReserveControl.QUANTITY_NAME;
+	    this.defaultDateReservation = options.defaultDateReservation || null;
+	    this.isInputDisabled = options.isInputDisabled || false;
+	  }
+
+	  babelHelpers.createClass(ReserveControl, [{
+	    key: "renderTo",
+	    value: function renderTo(node) {
+	      node.appendChild(main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"])), _classPrivateMethodGet(this, _getReserveInputNode, _getReserveInputNode2).call(this)));
+	      main_core.Event.bind(_classPrivateMethodGet(this, _getReserveInputNode, _getReserveInputNode2).call(this).querySelector('input'), 'input', main_core.Runtime.debounce(this.onReserveInputChange, 800, this));
+
+	      if (this.getReservedQuantity() > 0) {
+	        _classPrivateMethodGet(this, _layoutDateReservation, _layoutDateReservation2).call(this, this.getDateReservation());
+	      }
+
+	      node.appendChild(main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["", ""])), _classPrivateMethodGet(this, _getDateNode, _getDateNode2).call(this)));
+	      main_core.Event.bind(_classPrivateMethodGet(this, _getDateNode, _getDateNode2).call(this), 'click', _classPrivateMethodGet(this, _onDateInputClick, _onDateInputClick2).bind(this));
+	      main_core.Event.bind(_classPrivateMethodGet(this, _getDateNode, _getDateNode2).call(this).querySelector('input'), 'change', this.onDateChange.bind(this));
+	    }
+	  }, {
+	    key: "getReservedQuantity",
+	    value: function getReservedQuantity() {
+	      return main_core.Text.toNumber(babelHelpers.classPrivateFieldGet(this, _model).getField(this.inputFieldName));
+	    }
+	  }, {
+	    key: "getDateReservation",
+	    value: function getDateReservation() {
+	      return babelHelpers.classPrivateFieldGet(this, _model).getField(this.dateFieldName) || null;
+	    }
+	  }, {
+	    key: "getQuantity",
+	    value: function getQuantity() {
+	      return main_core.Text.toNumber(babelHelpers.classPrivateFieldGet(this, _model).getField(this.quantityFieldName));
+	    }
+	  }, {
+	    key: "onReserveInputChange",
+	    value: function onReserveInputChange(event) {
+	      var value = main_core.Text.toNumber(event.target.value);
+	      this.changeInputValue(value);
+	    }
+	  }, {
+	    key: "changeInputValue",
+	    value: function changeInputValue(value) {
+	      if (value > this.getQuantity()) {
+	        var errorNotifyId = 'reserveCountError';
+	        var notify = BX.UI.Notification.Center.getBalloonById(errorNotifyId);
+
+	        if (!notify) {
+	          var notificationOptions = {
+	            id: errorNotifyId,
+	            closeButton: true,
+	            autoHideDelay: 3000,
+	            content: main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"])), main_core.Loc.getMessage('CRM_ENTITY_PL_IS_LESS_QUANTITY_THEN_RESERVED'))
+	          };
+	          notify = BX.UI.Notification.Center.notify(notificationOptions);
+	        }
+
+	        notify.show();
+
+	        var input = _classPrivateMethodGet(this, _getReserveInputNode, _getReserveInputNode2).call(this).querySelector('input');
+
+	        value = this.getQuantity();
+	        input.value = value;
+	      }
+
+	      if (value > 0) {
+	        if (this.getDateReservation() === null) {
+	          this.changeDateReservation(this.defaultDateReservation);
+	        } else {
+	          _classPrivateMethodGet(this, _layoutDateReservation, _layoutDateReservation2).call(this, babelHelpers.classPrivateFieldGet(this, _model).getField(this.dateFieldName));
+	        }
+	      } else if (value <= 0) {
+	        this.changeDateReservation();
+	      }
+
+	      babelHelpers.classPrivateFieldGet(this, _model).setField(this.inputFieldName, value);
+	      main_core_events.EventEmitter.emit(this, 'onChange', {
+	        NAME: this.inputFieldName,
+	        VALUE: value
+	      });
+	    }
+	  }, {
+	    key: "onDateChange",
+	    value: function onDateChange(event) {
+	      var value = event.target.value;
+	      var newDate = BX.parseDate(value);
+	      var current = new Date();
+	      current.setHours(0, 0, 0, 0);
+
+	      if (newDate >= current) {
+	        this.changeDateReservation(value);
+	      } else {
+	        var errorNotifyId = 'reserveDateError';
+	        var notify = BX.UI.Notification.Center.getBalloonById(errorNotifyId);
+
+	        if (!notify) {
+	          var notificationOptions = {
+	            id: errorNotifyId,
+	            closeButton: true,
+	            autoHideDelay: 3000,
+	            content: main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"])), main_core.Loc.getMessage('CRM_ENTITY_PL_DATE_IN_PAST'))
+	          };
+	          notify = BX.UI.Notification.Center.notify(notificationOptions);
+	        }
+
+	        notify.show();
+	        this.changeDateReservation(this.defaultDateReservation);
+	      }
+	    }
+	  }, {
+	    key: "changeDateReservation",
+	    value: function changeDateReservation() {
+	      var date = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+	      main_core_events.EventEmitter.emit(this, 'onChange', {
+	        NAME: this.dateFieldName,
+	        VALUE: date
+	      });
+	      babelHelpers.classPrivateFieldGet(this, _model).setField(this.dateFieldName, date);
+
+	      _classPrivateMethodGet(this, _layoutDateReservation, _layoutDateReservation2).call(this, date);
+	    }
+	  }]);
+	  return ReserveControl;
+	}();
+
+	function _onDateInputClick2(event) {
+	  BX.calendar({
+	    node: event.target,
+	    field: event.target.parentNode.querySelector('input'),
+	    bTime: false
+	  });
+	}
+
+	function _getDateNode2() {
+	  var _this = this;
+
+	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('dateInput', function () {
+	    return main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div>\n\t\t\t\t\t<a class=\"crm-entity-product-list-reserve-date\"></a>\n\t\t\t\t\t<input \n\t\t\t\t\t\tdata-name=\"", "\" \n\t\t\t\t\t\tname=\"", "\" \n\t\t\t\t\t\ttype=\"hidden\" \n\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t>\n\t\t\t\t</div>\n\t\t\t"])), _this.dateFieldName, _this.dateFieldName, _this.getDateReservation());
+	  });
+	}
+
+	function _getReserveInputNode2() {
+	  var _this2 = this;
+
+	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('reserveInput', function () {
+	    var tag = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div>\n\t\t\t\t\t<input type=\"text\" \n\t\t\t\t\t\tdata-name=\"", "\"\n\t\t\t\t\t\tname=\"", "\"\n\t\t\t\t\t\tclass=\"ui-ctl-element ui-ctl-textbox ", "\" \n\t\t\t\t\t\tautoComplete=\"off\" \n\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\tplaceholder=\"0\" \n\t\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t\t", "\n\t\t\t\t\t/>\n\t\t\t\t</div>\n\t\t\t"])), _this2.inputFieldName, _this2.inputFieldName, _this2.isInputDisabled ? "crm-entity-product-list-locked-field" : "", _this2.getReservedQuantity(), _this2.getReservedQuantity(), _this2.isInputDisabled ? "disabled" : "");
+
+	    if (_this2.isInputDisabled) {
+	      tag.onclick = function () {
+	        return top.BX.UI.InfoHelper.show('limit_store_crm_integration');
+	      };
+	    }
+
+	    return tag;
+	  });
+	}
+
+	function _layoutDateReservation2() {
+	  var date = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
+	  var linkText = date === null ? '' : main_core.Loc.getMessage('CRM_ENTITY_PL_RESERVED_DATE', {
+	    '#FINAL_RESERVATION_DATE#': date
+	  });
+
+	  var link = _classPrivateMethodGet(this, _getDateNode, _getDateNode2).call(this).querySelector('a');
+
+	  if (link) {
+	    link.innerText = linkText;
+	  }
+
+	  var hiddenInput = _classPrivateMethodGet(this, _getDateNode, _getDateNode2).call(this).querySelector('input');
+
+	  if (hiddenInput) {
+	    hiddenInput.value = date;
+	  }
+	}
+
+	babelHelpers.defineProperty(ReserveControl, "INPUT_NAME", 'RESERVE_QUANTITY');
+	babelHelpers.defineProperty(ReserveControl, "DATE_NAME", 'DATE_RESERVE_END');
+	babelHelpers.defineProperty(ReserveControl, "QUANTITY_NAME", 'QUANTITY');
+
+	var _templateObject$2, _templateObject2$1, _templateObject3$1, _templateObject4$1, _templateObject5$1, _templateObject6$1, _templateObject7, _templateObject8;
+
+	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
 	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
-	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
+
+	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
+	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var MODE_EDIT = 'EDIT';
 	var MODE_SET = 'SET';
 
-	var _shouldShowSmallPriceHint = new WeakSet();
+	var _initActions = /*#__PURE__*/new WeakSet();
 
-	var _togglePriceHintPopup = new WeakSet();
+	var _showChangePriceNotify = /*#__PURE__*/new WeakSet();
+
+	var _isEditableCatalogPrice = /*#__PURE__*/new WeakSet();
+
+	var _isSaveableCatalogPrice = /*#__PURE__*/new WeakSet();
+
+	var _initSelector = /*#__PURE__*/new WeakSet();
+
+	var _initStoreSelector = /*#__PURE__*/new WeakSet();
+
+	var _applyStoreSelectorRestrictionTweaks = /*#__PURE__*/new WeakSet();
+
+	var _initReservedControl = /*#__PURE__*/new WeakSet();
+
+	var _onStoreFieldChange = /*#__PURE__*/new WeakSet();
+
+	var _onStoreFieldClear = /*#__PURE__*/new WeakSet();
+
+	var _showPriceNotifier = /*#__PURE__*/new WeakSet();
+
+	var _onChangeStoreData = /*#__PURE__*/new WeakSet();
+
+	var _handleProductErrorsChange = /*#__PURE__*/new WeakSet();
+
+	var _shouldShowSmallPriceHint = /*#__PURE__*/new WeakSet();
+
+	var _togglePriceHintPopup = /*#__PURE__*/new WeakSet();
 
 	var Row = /*#__PURE__*/function () {
-	  function Row(id, fields, settings, editor) {
+	  function Row(_id, fields, settings, editor) {
 	    babelHelpers.classCallCheck(this, Row);
 
-	    _togglePriceHintPopup.add(this);
+	    _classPrivateMethodInitSpec$1(this, _togglePriceHintPopup);
 
-	    _shouldShowSmallPriceHint.add(this);
+	    _classPrivateMethodInitSpec$1(this, _shouldShowSmallPriceHint);
+
+	    _classPrivateMethodInitSpec$1(this, _handleProductErrorsChange);
+
+	    _classPrivateMethodInitSpec$1(this, _onChangeStoreData);
+
+	    _classPrivateMethodInitSpec$1(this, _showPriceNotifier);
+
+	    _classPrivateMethodInitSpec$1(this, _onStoreFieldClear);
+
+	    _classPrivateMethodInitSpec$1(this, _onStoreFieldChange);
+
+	    _classPrivateMethodInitSpec$1(this, _initReservedControl);
+
+	    _classPrivateMethodInitSpec$1(this, _applyStoreSelectorRestrictionTweaks);
+
+	    _classPrivateMethodInitSpec$1(this, _initStoreSelector);
+
+	    _classPrivateMethodInitSpec$1(this, _initSelector);
+
+	    _classPrivateMethodInitSpec$1(this, _isSaveableCatalogPrice);
+
+	    _classPrivateMethodInitSpec$1(this, _isEditableCatalogPrice);
+
+	    _classPrivateMethodInitSpec$1(this, _showChangePriceNotify);
+
+	    _classPrivateMethodInitSpec$1(this, _initActions);
 
 	    babelHelpers.defineProperty(this, "fields", {});
 	    babelHelpers.defineProperty(this, "externalActions", []);
+	    babelHelpers.defineProperty(this, "onFocusUnchangeablePrice", _classPrivateMethodGet$1(this, _showChangePriceNotify, _showChangePriceNotify2).bind(this));
 	    babelHelpers.defineProperty(this, "cache", new main_core.Cache.MemoryCache());
-	    this.setId(id);
-	    this.setFields(fields);
+	    babelHelpers.defineProperty(this, "modeChanges", {
+	      EDIT: MODE_EDIT,
+	      SET: MODE_SET
+	    });
+	    this.setId(_id);
 	    this.setSettings(settings);
 	    this.setEditor(editor);
+	    this.setModel(fields, settings);
+	    this.setFields(fields);
+
+	    _classPrivateMethodGet$1(this, _initActions, _initActions2).call(this);
+
+	    _classPrivateMethodGet$1(this, _initSelector, _initSelector2).call(this);
+
+	    _classPrivateMethodGet$1(this, _initStoreSelector, _initStoreSelector2).call(this);
+
+	    _classPrivateMethodGet$1(this, _initReservedControl, _initReservedControl2).call(this);
+
+	    this.modifyBasePriceInput();
+	    this.refreshFieldsLayout();
 	    requestAnimationFrame(this.initHandlers.bind(this));
 	  }
 
@@ -88,6 +390,16 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 
 	        return _this.getEditorContainer().querySelector('[data-id="' + rowId + '"]');
 	      });
+	    }
+	  }, {
+	    key: "getSelector",
+	    value: function getSelector() {
+	      return this.mainSelector;
+	    }
+	  }, {
+	    key: "clearChanges",
+	    value: function clearChanges() {
+	      this.getModel().clearChangedList();
 	    }
 	  }, {
 	    key: "getId",
@@ -160,17 +472,50 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      });
 	    }
 	  }, {
-	    key: "initHandlersForProductSelector",
-	    value: function initHandlersForProductSelector() {
-	      var editor = this.getEditor();
-	      this.getNode().querySelectorAll('[data-name="MAIN_INFO"] input[type="text"]').forEach(function (node) {
-	        main_core.Event.bind(node, 'input', editor.changeProductFieldHandler);
-	        main_core.Event.bind(node, 'change', editor.changeProductFieldHandler); // disable drag-n-drop events for select fields
+	    key: "initHandlersForSelectors",
+	    value: function initHandlersForSelectors() {
+	      var _this2 = this;
 
-	        main_core.Event.bind(node, 'mousedown', function (event) {
-	          return event.stopPropagation();
+	      var editor = this.getEditor();
+	      var selectorNames = ['MAIN_INFO', 'STORE_INFO'];
+	      selectorNames.forEach(function (name) {
+	        _this2.getNode().querySelectorAll('[data-name="' + name + '"] input[type="text"]').forEach(function (node) {
+	          main_core.Event.bind(node, 'input', editor.changeProductFieldHandler);
+	          main_core.Event.bind(node, 'change', editor.changeProductFieldHandler); // disable drag-n-drop events for select fields
+
+	          main_core.Event.bind(node, 'mousedown', function (event) {
+	            return event.stopPropagation();
+	          });
 	        });
 	      });
+	    }
+	  }, {
+	    key: "modifyBasePriceInput",
+	    value: function modifyBasePriceInput() {
+	      var priceNode = this.getNode().querySelector('[data-name="PRICE"]');
+
+	      if (!priceNode) {
+	        return;
+	      }
+
+	      if (!_classPrivateMethodGet$1(this, _isEditableCatalogPrice, _isEditableCatalogPrice2).call(this)) {
+	        var _priceNode$querySelec;
+
+	        priceNode.setAttribute('disabled', true);
+	        main_core.Dom.addClass(priceNode, 'ui-ctl-element');
+	        (_priceNode$querySelec = priceNode.querySelector('.main-grid-editor-money-price')) === null || _priceNode$querySelec === void 0 ? void 0 : _priceNode$querySelec.setAttribute('disabled', 'true');
+
+	        if (!this.editor.getSettingValue('disableNotifyChangingPrice')) {
+	          main_core.Event.bind(priceNode, 'mouseenter', this.onFocusUnchangeablePrice);
+	        }
+	      } else {
+	        var _priceNode$querySelec2;
+
+	        priceNode.removeAttribute('disabled');
+	        main_core.Dom.removeClass(priceNode, 'ui-ctl-element');
+	        (_priceNode$querySelec2 = priceNode.querySelector('.main-grid-editor-money-price')) === null || _priceNode$querySelec2 === void 0 ? void 0 : _priceNode$querySelec2.removeAttribute('disabled');
+	        main_core.Event.unbind(priceNode, 'mouseenter', this.onFocusUnchangeablePrice);
+	      }
 	    }
 	  }, {
 	    key: "setRowNumber",
@@ -229,6 +574,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    value: function getCalculateFields() {
 	      return {
 	        'PRICE': this.getPrice(),
+	        'BASE_PRICE': this.getBasePrice(),
 	        'PRICE_EXCLUSIVE': this.getPriceExclusive(),
 	        'PRICE_NETTO': this.getPriceNetto(),
 	        'PRICE_BRUTTO': this.getPriceBrutto(),
@@ -258,7 +604,12 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "setField",
 	    value: function setField(name, value) {
+	      var changeModel = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
 	      this.fields[name] = value;
+
+	      if (changeModel) {
+	        this.getModel().setField(name, value);
+	      }
 	    }
 	  }, {
 	    key: "getUiFieldId",
@@ -268,7 +619,17 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "getBasePrice",
 	    value: function getBasePrice() {
-	      return this.isPriceNetto() ? this.getPriceNetto() : this.getPriceBrutto();
+	      return this.getField('BASE_PRICE', 0);
+	    }
+	  }, {
+	    key: "getEnteredPrice",
+	    value: function getEnteredPrice() {
+	      return this.getField('ENTERED_PRICE', this.getBasePrice());
+	    }
+	  }, {
+	    key: "getCatalogPrice",
+	    value: function getCatalogPrice() {
+	      return this.getField('CATALOG_PRICE', this.getBasePrice());
 	    }
 	  }, {
 	    key: "isPriceNetto",
@@ -412,11 +773,17 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 
 	      switch (code) {
 	        case 'ID':
+	        case 'OFFER_ID':
 	          this.changeProductId(value);
 	          break;
 
+	        case 'ENTERED_PRICE':
 	        case 'PRICE':
-	          this.changePrice(value, mode);
+	          this.changeEnteredPrice(value, mode);
+	          break;
+
+	        case 'CATALOG_PRICE':
+	          this.changeCatalogPrice(value, mode);
 	          break;
 
 	        case 'QUANTITY':
@@ -424,7 +791,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	          break;
 
 	        case 'MEASURE_CODE':
-	          this.changeMeasureCode(value);
+	          this.changeMeasureCode(value, mode);
 	          break;
 
 	        case 'DISCOUNT':
@@ -467,6 +834,34 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        case 'SORT':
 	          this.changeSort(value, mode);
 	          break;
+
+	        case 'STORE_ID':
+	          this.changeStore(value);
+	          break;
+
+	        case 'STORE_TITLE':
+	          this.changeStoreName(value);
+	          break;
+
+	        case 'RESERVE_QUANTITY':
+	          this.changeReserveQuantity(value);
+	          break;
+
+	        case 'DATE_RESERVE_END':
+	          this.changeDateReserveEnd(value);
+	          break;
+
+	        case 'BASE_PRICE':
+	          this.setBasePrice(value);
+	          break;
+
+	        case 'SKU_TREE':
+	        case 'DETAIL_URL':
+	        case 'IMAGE_INFO':
+	        case 'COMMON_STORE_RESERVED':
+	        case 'COMMON_STORE_AMOUNT':
+	          this.setField(code, value);
+	          break;
 	      }
 	    }
 	  }, {
@@ -479,17 +874,71 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      }
 	    }
 	  }, {
+	    key: "handleCopyAction",
+	    value: function handleCopyAction(event, menuItem) {
+	      var _this$getEditor;
+
+	      (_this$getEditor = this.getEditor()) === null || _this$getEditor === void 0 ? void 0 : _this$getEditor.copyRow(this);
+	      var menu = menuItem.getMenuWindow();
+
+	      if (menu) {
+	        menu.destroy();
+	      }
+	    }
+	  }, {
+	    key: "handleDeleteAction",
+	    value: function handleDeleteAction(event, menuItem) {
+	      var _this$getEditor2;
+
+	      (_this$getEditor2 = this.getEditor()) === null || _this$getEditor2 === void 0 ? void 0 : _this$getEditor2.deleteRow(this.getField('ID'));
+	      var menu = menuItem.getMenuWindow();
+
+	      if (menu) {
+	        menu.destroy();
+	      }
+	    }
+	  }, {
 	    key: "changeProductId",
 	    value: function changeProductId(value) {
 	      var preparedValue = this.parseInt(value);
 	      this.setProductId(preparedValue);
 	    }
 	  }, {
-	    key: "changePrice",
-	    value: function changePrice(value) {
+	    key: "changeEnteredPrice",
+	    value: function changeEnteredPrice(value) {
 	      var mode = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : MODE_SET;
+	      var originalPrice = value; // price can't be less than zero
+
+	      value = Math.max(value, 0);
 	      var preparedValue = this.parseFloat(value, this.getPricePrecision());
-	      this.setPrice(preparedValue, mode);
+	      this.setField('ENTERED_PRICE', preparedValue);
+
+	      if (mode === MODE_EDIT && originalPrice >= 0) {
+	        if (!_classPrivateMethodGet$1(this, _isEditableCatalogPrice, _isEditableCatalogPrice2)) {
+	          return;
+	        }
+
+	        if (this.getModel().isCatalogExisted() && _classPrivateMethodGet$1(this, _isSaveableCatalogPrice, _isSaveableCatalogPrice2).call(this)) {
+	          _classPrivateMethodGet$1(this, _showPriceNotifier, _showPriceNotifier2).call(this, preparedValue);
+	        } else {
+	          this.setBasePrice(preparedValue, mode);
+	        }
+
+	        this.addActionProductChange();
+	        this.addActionUpdateTotal();
+	        this.addActionDisableSaveButton();
+	      } else {
+	        this.refreshFieldsLayout();
+	      }
+
+	      _classPrivateMethodGet$1(this, _togglePriceHintPopup, _togglePriceHintPopup2).call(this, originalPrice < 0 && originalPrice !== value);
+	    }
+	  }, {
+	    key: "changeCatalogPrice",
+	    value: function changeCatalogPrice(value) {
+	      var preparedValue = this.parseFloat(value, this.getPricePrecision());
+	      this.setField('CATALOG_PRICE', preparedValue);
+	      this.refreshFieldsLayout();
 	    }
 	  }, {
 	    key: "changeQuantity",
@@ -501,12 +950,13 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "changeMeasureCode",
 	    value: function changeMeasureCode(value) {
-	      var _this2 = this;
+	      var _this3 = this;
 
+	      var mode = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : MODE_SET;
 	      this.getEditor().getMeasures().filter(function (item) {
 	        return item.CODE === value;
 	      }).forEach(function (item) {
-	        return _this2.setMeasure(item);
+	        return _this3.setMeasure(item, mode);
 	      });
 	    }
 	  }, {
@@ -581,6 +1031,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 
 	      if (isChangedValue) {
 	        this.setField('PRODUCT_NAME', preparedValue);
+	        this.setField('NAME', preparedValue);
 	        this.addActionProductChange();
 	      }
 	    }
@@ -601,6 +1052,65 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      }
 	    }
 	  }, {
+	    key: "changeStore",
+	    value: function changeStore(value) {
+	      if (this.isReserveBlocked()) {
+	        return;
+	      }
+
+	      var preparedValue = main_core.Text.toNumber(value);
+
+	      if (this.getField('STORE_ID') === preparedValue) {
+	        return;
+	      }
+
+	      this.setField('STORE_ID', preparedValue);
+	      this.updateUiStoreAmountData();
+	      this.addActionProductChange();
+	    }
+	  }, {
+	    key: "updateUiStoreAmountData",
+	    value: function updateUiStoreAmountData() {
+	      var _this$editor$getDefau;
+
+	      var storeId = this.getField('STORE_ID');
+	      var reserved = this.model.getStoreCollection().getStoreReserved(storeId);
+	      var available = this.model.getStoreCollection().getStoreAvailableAmount(storeId);
+	      var measureName = main_core.Type.isStringFilled(this.model.getField('MEASURE_NAME')) ? this.model.getField('MEASURE_NAME') : ((_this$editor$getDefau = this.editor.getDefaultMeasure()) === null || _this$editor$getDefau === void 0 ? void 0 : _this$editor$getDefau.SYMBOL) || '';
+	      var amountWrapper = this.getNode().querySelector('[data-name="STORE_RESERVED"]');
+
+	      if (amountWrapper) {
+	        amountWrapper.innerHTML = main_core.Text.toNumber(reserved) + ' ' + main_core.Text.encode(measureName);
+	      }
+
+	      var availableWrapper = this.getNode().querySelector('[data-name="STORE_AVAILABLE"]');
+
+	      if (availableWrapper) {
+	        availableWrapper.innerHTML = main_core.Text.toNumber(available) + ' ' + main_core.Text.encode(measureName);
+	      }
+	    }
+	  }, {
+	    key: "changeStoreName",
+	    value: function changeStoreName(value) {
+	      var preparedValue = value.toString();
+	      this.setField('STORE_TITLE', preparedValue);
+	      this.addActionProductChange();
+	    }
+	  }, {
+	    key: "changeDateReserveEnd",
+	    value: function changeDateReserveEnd(value) {
+	      var preparedValue = main_core.Type.isNil(value) ? '' : value.toString();
+	      this.setField('DATE_RESERVE_END', preparedValue);
+	      this.addActionProductChange();
+	    }
+	  }, {
+	    key: "changeReserveQuantity",
+	    value: function changeReserveQuantity(value) {
+	      var preparedValue = main_core.Text.toNumber(value);
+	      this.setField('RESERVE_QUANTITY', preparedValue);
+	      this.addActionProductChange();
+	    }
+	  }, {
 	    key: "refreshFieldsLayout",
 	    value: function refreshFieldsLayout() {
 	      var exceptFields = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
@@ -614,11 +1124,52 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "getCalculator",
 	    value: function getCalculator() {
-	      /** @var {ProductCalculator} */
-	      var calculator = this.cache.remember('calculator', function () {
-	        return new catalog_productCalculator.ProductCalculator();
-	      });
-	      return calculator.setFields(this.getCalculateFields()).setSettings(this.getEditor().getSettings());
+	      return this.getModel().getCalculator().setFields(this.getCalculateFields()).setSettings(this.getEditor().getSettings());
+	    }
+	  }, {
+	    key: "setModel",
+	    value: function setModel() {
+	      var fields = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+	      var settings = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+	      var selectorId = settings.selectorId;
+
+	      if (selectorId) {
+	        var model = catalog_productModel.ProductModel.getById(selectorId);
+
+	        if (model) {
+	          this.model = model;
+	        }
+	      }
+
+	      if (!this.model) {
+	        this.model = new catalog_productModel.ProductModel({
+	          id: selectorId,
+	          currency: this.getEditor().getCurrencyId(),
+	          iblockId: fields['IBLOCK_ID'],
+	          basePriceId: fields['BASE_PRICE_ID'],
+	          skuTree: main_core.Type.isStringFilled(fields['SKU_TREE']) ? JSON.parse(fields['SKU_TREE']) : null,
+	          fields: fields
+	        });
+	        var imageInfo = main_core.Type.isStringFilled(fields['IMAGE_INFO']) ? JSON.parse(fields['IMAGE_INFO']) : null;
+
+	        if (main_core.Type.isObject(imageInfo)) {
+	          this.model.getImageCollection().setPreview(imageInfo['preview']);
+	          this.model.getImageCollection().setEditInput(imageInfo['input']);
+	          this.model.getImageCollection().setMorePhotoValues(imageInfo['values']);
+	        }
+
+	        if (!main_core.Type.isNil(fields['DETAIL_URL'])) {
+	          this.model.setDetailPath(fields['DETAIL_URL']);
+	        }
+	      }
+
+	      main_core_events.EventEmitter.subscribe(this.model, 'onErrorsChange', main_core.Runtime.debounce(_classPrivateMethodGet$1(this, _handleProductErrorsChange, _handleProductErrorsChange2), 500, this));
+	      main_core_events.EventEmitter.subscribe(this.model, 'onChangeStoreData', _classPrivateMethodGet$1(this, _onChangeStoreData, _onChangeStoreData2).bind(this));
+	    }
+	  }, {
+	    key: "getModel",
+	    value: function getModel() {
+	      return this.model;
 	    }
 	  }, {
 	    key: "setProductId",
@@ -626,8 +1177,11 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      var isChangedValue = this.getField('PRODUCT_ID') !== value;
 
 	      if (isChangedValue) {
-	        this.setField('PRODUCT_ID', value);
-	        this.setField('OFFER_ID', value);
+	        var _this$storeSelector;
+
+	        this.setField('PRODUCT_ID', value, false);
+	        this.setField('OFFER_ID', value, false);
+	        (_this$storeSelector = this.storeSelector) === null || _this$storeSelector === void 0 ? void 0 : _this$storeSelector.setProductId(value);
 	        this.addActionProductChange();
 	        this.addActionUpdateTotal();
 	      }
@@ -635,6 +1189,22 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "setPrice",
 	    value: function setPrice(value) {
+	      var originalPrice = value; // price can't be less than zero
+
+	      value = Math.max(value, 0);
+	      var calculatedFields = this.getCalculator().setFields(this.getCalculator().calculateBasePrice(this.getBasePrice())).calculatePrice(value);
+	      delete calculatedFields['BASE_PRICE'];
+	      this.setFields(calculatedFields);
+	      this.refreshFieldsLayout(['PRICE_NETTO', 'PRICE_BRUTTO']);
+	      this.addActionProductChange();
+	      this.addActionUpdateTotal();
+	      this.executeExternalActions();
+
+	      _classPrivateMethodGet$1(this, _togglePriceHintPopup, _togglePriceHintPopup2).call(this, originalPrice < 0 && originalPrice !== value);
+	    }
+	  }, {
+	    key: "setBasePrice",
+	    value: function setBasePrice(value) {
 	      var mode = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : MODE_SET;
 	      var originalPrice = value; // price can't be less than zero
 
@@ -647,18 +1217,21 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      var isChangedValue = this.getBasePrice() !== value;
 
 	      if (isChangedValue) {
-	        var calculatedFields = this.getCalculator().calculatePrice(value);
+	        var calculatedFields = this.getCalculator().calculateBasePrice(value);
 	        this.setFields(calculatedFields);
-	        this.refreshFieldsLayout(['PRICE_NETTO', 'PRICE_BRUTTO']);
+	        var exceptFieldNames = mode === MODE_EDIT ? ['BASE_PRICE', 'PRICE', 'ENTERED_PRICE'] : [];
+	        this.refreshFieldsLayout(exceptFieldNames);
 	        this.addActionProductChange();
 	        this.addActionUpdateTotal();
 	      }
 
-	      _classPrivateMethodGet(this, _togglePriceHintPopup, _togglePriceHintPopup2).call(this, originalPrice !== value);
+	      _classPrivateMethodGet$1(this, _togglePriceHintPopup, _togglePriceHintPopup2).call(this, originalPrice < 0 && originalPrice !== value);
 	    }
 	  }, {
 	    key: "setQuantity",
 	    value: function setQuantity(value) {
+	      var _this4 = this;
+
 	      var mode = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : MODE_SET;
 
 	      if (mode === MODE_SET) {
@@ -666,8 +1239,31 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      }
 
 	      var isChangedValue = this.getField('QUANTITY') !== value;
+	      var errorNotifyId = 'quantityReservedCountError';
+	      var notify = BX.UI.Notification.Center.getBalloonById(errorNotifyId);
 
-	      if (isChangedValue) {
+	      if (value < this.getField('RESERVE_QUANTITY')) {
+	        if (!notify) {
+	          var notificationOptions = {
+	            id: errorNotifyId,
+	            closeButton: true,
+	            autoHideDelay: 3000,
+	            content: main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"])), main_core.Loc.getMessage('CRM_ENTITY_PL_IS_LESS_QUANTITY_THEN_RESERVED')),
+	            events: {
+	              onClose: function onClose() {
+	                _this4.updateUiInputField('QUANTITY', _this4.getField('QUANTITY'));
+	              }
+	            }
+	          };
+	          notify = BX.UI.Notification.Center.notify(notificationOptions);
+	        }
+
+	        notify.show();
+	      } else if (isChangedValue) {
+	        if (notify) {
+	          notify.close();
+	        }
+
 	        var calculatedFields = this.getCalculator().calculateQuantity(value);
 	        this.setFields(calculatedFields);
 	        this.refreshFieldsLayout(['QUANTITY']);
@@ -676,11 +1272,45 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      }
 	    }
 	  }, {
+	    key: "setReserveQuantity",
+	    value: function setReserveQuantity(value) {
+	      var mode = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : MODE_SET;
+
+	      if (mode === MODE_EDIT) {
+	        var node = this.getNode().querySelector('[data-name="RESERVE_INFO"]');
+	        var input = node === null || node === void 0 ? void 0 : node.querySelector('input[name="RESERVE_QUANTITY"]');
+
+	        if (main_core.Type.isElementNode(input)) {
+	          var _this$reserveControl;
+
+	          input.value = value;
+	          (_this$reserveControl = this.reserveControl) === null || _this$reserveControl === void 0 ? void 0 : _this$reserveControl.changeInputValue(value);
+	        }
+	      }
+	    }
+	  }, {
 	    key: "setMeasure",
 	    value: function setMeasure(measure) {
+	      var _this5 = this;
+
+	      var mode = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : MODE_SET;
 	      this.setField('MEASURE_CODE', measure.CODE);
 	      this.setField('MEASURE_NAME', measure.SYMBOL);
-	      this.updateUiMoneyField('MEASURE_CODE', measure.CODE, measure.SYMBOL);
+	      this.updateUiMoneyField('MEASURE_CODE', measure.CODE, main_core.Text.encode(measure.SYMBOL));
+
+	      if (this.getModel().isNew()) {
+	        this.getModel().save(['MEASURE_CODE']);
+	      } else if (mode === MODE_EDIT) {
+	        this.getModel().showSaveNotifier('measureChanger_' + this.getId(), {
+	          title: main_core.Loc.getMessage('CATALOG_PRODUCT_MODEL_SAVING_NOTIFICATION_MEASURE_CHANGED_QUERY'),
+	          events: {
+	            onSave: function onSave() {
+	              _this5.getModel().save(['MEASURE_CODE', 'MEASURE_NAME']);
+	            }
+	          }
+	        });
+	      }
+
 	      this.addActionProductChange();
 	    }
 	  }, {
@@ -692,22 +1322,19 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        return;
 	      }
 
-	      if (mode === MODE_SET) {
-	        this.updateUiInputField('DISCOUNT_PRICE', value);
-	      }
-
 	      var fieldName = this.isDiscountPercentage() ? 'DISCOUNT_RATE' : 'DISCOUNT_SUM';
 	      var isChangedValue = this.getField(fieldName) !== value;
 
 	      if (isChangedValue) {
 	        var calculatedFields = this.getCalculator().calculateDiscount(value);
 	        this.setFields(calculatedFields);
-	        this.refreshFieldsLayout(['DISCOUNT_RATE', 'DISCOUNT_SUM', 'DISCOUNT']);
+	        var exceptFieldNames = mode === MODE_EDIT ? ['DISCOUNT_RATE', 'DISCOUNT_SUM', 'DISCOUNT'] : [];
+	        this.refreshFieldsLayout(exceptFieldNames);
 	        this.addActionProductChange();
 	        this.addActionUpdateTotal();
 	      }
 
-	      _classPrivateMethodGet(this, _togglePriceHintPopup, _togglePriceHintPopup2).call(this);
+	      _classPrivateMethodGet$1(this, _togglePriceHintPopup, _togglePriceHintPopup2).call(this);
 	    }
 	  }, {
 	    key: "setDiscountType",
@@ -726,17 +1353,13 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    key: "setRowDiscount",
 	    value: function setRowDiscount(value) {
 	      var mode = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : MODE_SET;
-
-	      if (mode === MODE_SET) {
-	        this.updateUiInputField('DISCOUNT_ROW', value.toFixed(this.getPricePrecision()));
-	      }
-
 	      var isChangedValue = this.getField('DISCOUNT_ROW') !== value;
 
 	      if (isChangedValue) {
 	        var calculatedFields = this.getCalculator().calculateRowDiscount(value);
 	        this.setFields(calculatedFields);
-	        this.refreshFieldsLayout(['DISCOUNT_ROW']);
+	        var exceptFieldNames = mode === MODE_EDIT ? ['DISCOUNT_ROW'] : [];
+	        this.refreshFieldsLayout(exceptFieldNames);
 	        this.addActionProductChange();
 	        this.addActionUpdateTotal();
 	      }
@@ -786,17 +1409,13 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    key: "setRowSum",
 	    value: function setRowSum(value) {
 	      var mode = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : MODE_SET;
-
-	      if (mode === MODE_SET) {
-	        this.updateUiInputField('SUM', value.toFixed(this.getPricePrecision()));
-	      }
-
 	      var isChangedValue = this.getField('SUM') !== value;
 
 	      if (isChangedValue) {
 	        var calculatedFields = this.getCalculator().calculateRowSum(value);
 	        this.setFields(calculatedFields);
-	        this.refreshFieldsLayout(['SUM']);
+	        var exceptFieldNames = mode === MODE_EDIT ? ['SUM'] : [];
+	        this.refreshFieldsLayout(exceptFieldNames);
 	        this.addActionProductChange();
 	        this.addActionUpdateTotal();
 	      }
@@ -892,9 +1511,15 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      }
 	    }
 	  }, {
+	    key: "updateUiMeasure",
+	    value: function updateUiMeasure(code, name) {
+	      this.updateUiMoneyField('MEASURE_CODE', code, name);
+	      this.updateUiStoreAmountData();
+	    }
+	  }, {
 	    key: "updateUiHtmlField",
 	    value: function updateUiHtmlField(name, html) {
-	      var item = this.getInputByFieldName(name);
+	      var item = this.getNode().querySelector('[data-name="' + name + '"]');
 
 	      if (main_core.Type.isElementNode(item)) {
 	        item.innerHTML = html;
@@ -903,7 +1528,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "updateUiCurrencyFields",
 	    value: function updateUiCurrencyFields() {
-	      var _this3 = this;
+	      var _this6 = this;
 
 	      var currencyText = this.getEditor().getCurrencyText();
 	      var currencyId = '' + this.getEditor().getCurrencyId();
@@ -921,8 +1546,8 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	            VALUE: '' + catalog_productCalculator.DiscountType.MONETARY
 	          });
 
-	          if (_this3.getDiscountType() === catalog_productCalculator.DiscountType.MONETARY) {
-	            _this3.updateMoneyFieldUiManually(name, catalog_productCalculator.DiscountType.MONETARY, currencyText);
+	          if (_this6.getDiscountType() === catalog_productCalculator.DiscountType.MONETARY) {
+	            _this6.updateMoneyFieldUiManually(name, catalog_productCalculator.DiscountType.MONETARY, currencyText);
 	          }
 	        } else {
 	          dropdownValues.push({
@@ -930,10 +1555,10 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	            VALUE: currencyId
 	          });
 
-	          _this3.updateUiMoneyField(name, currencyId, currencyText);
+	          _this6.updateUiMoneyField(name, currencyId, currencyText);
 	        }
 
-	        main_core.Dom.attr(_this3.getInputByFieldName(name), 'data-items', dropdownValues);
+	        main_core.Dom.attr(_this6.getInputByFieldName(name), 'data-items', dropdownValues);
 	      });
 	      this.updateUiField('TAX_SUM', this.getField('TAX_SUM'));
 	    }
@@ -962,6 +1587,8 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	            value = this.parseFloat(value, this.getQuantityPrecision());
 	          } else if (field === 'DISCOUNT_RATE' || field === 'TAX_RATE') {
 	            value = this.parseFloat(value, this.getCommonPrecision());
+	          } else if (value === 0) {
+	            value = '';
 	          } else if (main_core.Type.isNumber(value)) {
 	            value = this.parseFloat(value, this.getPricePrecision()).toFixed(this.getPricePrecision());
 	          }
@@ -1006,8 +1633,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	          result = field;
 	          break;
 
-	        case 'PRICE_NETTO':
-	        case 'PRICE_BRUTTO':
+	        case 'ENTERED_PRICE':
 	          result = 'PRICE';
 	          break;
 
@@ -1025,8 +1651,8 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      var result = null;
 
 	      switch (field) {
-	        case 'PRICE_NETTO':
-	        case 'PRICE_BRUTTO':
+	        case 'PRICE':
+	        case 'ENTERED_PRICE':
 	        case 'QUANTITY':
 	        case 'TAX_RATE':
 	        case 'DISCOUNT_RATE':
@@ -1125,6 +1751,14 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      });
 	    }
 	  }, {
+	    key: "addActionDisableSaveButton",
+	    value: function addActionDisableSaveButton() {
+	      this.addExternalAction({
+	        type: this.getEditor().actions.disableSaveButton,
+	        id: this.getId()
+	      });
+	    }
+	  }, {
 	    key: "addActionUpdateFieldList",
 	    value: function addActionUpdateFieldList(field, value) {
 	      this.addExternalAction({
@@ -1171,25 +1805,328 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    value: function isEmpty() {
 	      return !main_core.Type.isStringFilled(this.getField('PRODUCT_NAME', '').trim()) && this.getField('PRODUCT_ID', 0) <= 0 && this.getPrice() <= 0;
 	    }
+	  }, {
+	    key: "isReserveBlocked",
+	    value: function isReserveBlocked() {
+	      return this.getSettingValue('isReserveBlocked', false);
+	    }
 	  }]);
 	  return Row;
 	}();
 
-	var _shouldShowSmallPriceHint2 = function _shouldShowSmallPriceHint2() {
-	  return main_core.Text.toNumber(this.getField('PRICE')) > 0 && main_core.Text.toNumber(this.getField('PRICE')) < 1 && this.isDiscountPercentage() && (main_core.Text.toNumber(this.getField('DISCOUNT_SUM')) > 0 || main_core.Text.toNumber(this.getField('DISCOUNT_RATE')) > 0 || main_core.Text.toNumber(this.getField('DISCOUNT_ROW')) > 0);
-	};
+	function _initActions2() {
+	  var _this7 = this;
 
-	var _togglePriceHintPopup2 = function _togglePriceHintPopup2() {
+	  if (this.getEditor().isReadOnly()) {
+	    return;
+	  }
+
+	  var actionCellContentContainer = this.getNode().querySelector('.main-grid-cell-action .main-grid-cell-content');
+
+	  if (main_core.Type.isDomNode(actionCellContentContainer)) {
+	    var actionsButton = main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<a\n\t\t\t\t\thref=\"#\"\n\t\t\t\t\tclass=\"main-grid-row-action-button\"\n\t\t\t\t></a>\n\t\t\t"])));
+	    main_core.Event.bind(actionsButton, 'click', function (event) {
+	      var menuItems = [{
+	        text: main_core.Loc.getMessage('CRM_ENTITY_PL_COPY'),
+	        onclick: _this7.handleCopyAction.bind(_this7)
+	      }, {
+	        text: main_core.Loc.getMessage('CRM_ENTITY_PL_DELETE'),
+	        onclick: _this7.handleDeleteAction.bind(_this7),
+	        disabled: _this7.getModel().isEmpty() && _this7.getEditor().products.length <= 1
+	      }];
+	      main_popup.PopupMenu.show({
+	        id: _this7.getId() + '_actions_popup',
+	        bindElement: actionsButton,
+	        items: menuItems,
+	        cacheable: false
+	      });
+	      event.preventDefault();
+	      event.stopPropagation();
+	    });
+	    main_core.Dom.append(actionsButton, actionCellContentContainer);
+	  }
+	}
+
+	function _showChangePriceNotify2() {
+	  var _this8 = this;
+
+	  if (this.editor.getSettingValue('disableNotifyChangingPrice')) {
+	    return;
+	  }
+
+	  var hint = main_core.Text.encode(this.editor.getSettingValue('catalogPriceEditArticleHint'));
+	  var changePriceNotifyId = 'disabled-crm-changing-price';
+	  var changePriceNotify = BX.UI.Notification.Center.getBalloonById(changePriceNotifyId);
+
+	  if (!changePriceNotify) {
+	    var content = main_core.Tag.render(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div>\n\t\t\t\t\t<div style=\"padding: 9px\">", "</div>\n\t\t\t\t</div>\n\t\t\t"])), hint);
+	    var buttonRow = main_core.Tag.render(_templateObject4$1 || (_templateObject4$1 = babelHelpers.taggedTemplateLiteral(["<div></div>"])));
+	    content.appendChild(buttonRow);
+	    var articleCode = this.editor.getSettingValue('catalogPriceEditArticleCode');
+
+	    if (articleCode) {
+	      var moreLink = main_core.Tag.render(_templateObject5$1 || (_templateObject5$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<span class=\"ui-notification-balloon-action\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\t\t\t\t\n\t\t\t\t"])), main_core.Loc.getMessage('CRM_ENTITY_MORE_LINK'));
+	      main_core.Event.bind(moreLink, 'click', function () {
+	        top.BX.Helper.show("redirect=detail&code=" + articleCode);
+	        changePriceNotify.close();
+	      });
+	      buttonRow.appendChild(moreLink);
+	    }
+
+	    var disableNotificationLink = main_core.Tag.render(_templateObject6$1 || (_templateObject6$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span class=\"ui-notification-balloon-action\">\n\t\t\t\t\t", "\n\t\t\t\t</span>\t\t\t\t\n\t\t\t"])), main_core.Loc.getMessage('CRM_ENTITY_DISABLE_NOTIFICATION'));
+	    main_core.Event.bind(disableNotificationLink, 'click', function () {
+	      changePriceNotify.close();
+
+	      _this8.editor.setSettingValue('disableNotifyChangingPrice', true);
+
+	      main_core.ajax.runComponentAction(_this8.editor.getComponentName(), 'setGridSetting', {
+	        mode: 'class',
+	        data: {
+	          signedParameters: _this8.editor.getSignedParameters(),
+	          settingId: 'DISABLE_NOTIFY_CHANGING_PRICE',
+	          selected: true
+	        }
+	      });
+	    });
+	    buttonRow.appendChild(disableNotificationLink);
+	    var notificationOptions = {
+	      id: changePriceNotifyId,
+	      closeButton: true,
+	      category: Row.CATALOG_PRICE_CHANGING_DISABLED,
+	      autoHideDelay: 10000,
+	      content: content
+	    };
+	    changePriceNotify = BX.UI.Notification.Center.notify(notificationOptions);
+	  }
+
+	  changePriceNotify.show();
+	}
+
+	function _isEditableCatalogPrice2() {
+	  return this.editor.canEditCatalogPrice() || !this.getModel().isCatalogExisted() || this.getModel().isNew();
+	}
+
+	function _isSaveableCatalogPrice2() {
+	  return this.editor.canSaveCatalogPrice() || this.getModel().isCatalogExisted() && this.getModel().isNew();
+	}
+
+	function _initSelector2() {
+	  var id = 'crm_grid_' + this.getId();
+	  this.mainSelector = catalog_productSelector.ProductSelector.getById(id);
+
+	  if (!this.mainSelector) {
+	    var selectorOptions = {
+	      iblockId: this.model.getIblockId(),
+	      basePriceId: this.model.getBasePriceId(),
+	      currency: this.model.getCurrency(),
+	      model: this.model,
+	      config: {
+	        ENABLE_SEARCH: true,
+	        IS_ALLOWED_CREATION_PRODUCT: true,
+	        ENABLE_IMAGE_INPUT: true,
+	        ROLLBACK_INPUT_AFTER_CANCEL: true,
+	        ENABLE_INPUT_DETAIL_LINK: true,
+	        ROW_ID: this.getId(),
+	        ENABLE_SKU_SELECTION: true,
+	        URL_BUILDER_CONTEXT: this.editor.getSettingValue('productUrlBuilderContext')
+	      },
+	      mode: catalog_productSelector.ProductSelector.MODE_EDIT
+	    };
+	    this.mainSelector = new catalog_productSelector.ProductSelector('crm_grid_' + this.getId(), selectorOptions);
+	  }
+
+	  var mainInfoNode = this.getNode().querySelector('[data-name="MAIN_INFO"]');
+
+	  if (mainInfoNode) {
+	    var numberSelector = mainInfoNode.querySelector('.main-grid-row-number');
+
+	    if (!main_core.Type.isDomNode(numberSelector)) {
+	      mainInfoNode.appendChild(main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["<div class=\"main-grid-row-number\"></div>"]))));
+	    }
+
+	    var selectorWrapper = mainInfoNode.querySelector('.main-grid-row-product-selector');
+
+	    if (!main_core.Type.isDomNode(selectorWrapper)) {
+	      selectorWrapper = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["<div class=\"main-grid-row-product-selector\"></div>"])));
+	      mainInfoNode.appendChild(selectorWrapper);
+	    }
+
+	    this.mainSelector.renderTo(selectorWrapper);
+	  }
+	}
+
+	function _initStoreSelector2() {
+	  this.storeSelector = new catalog_storeSelector.StoreSelector(this.getId(), {
+	    inputFieldId: 'STORE_ID',
+	    inputFieldTitle: 'STORE_TITLE',
+	    config: {
+	      ENABLE_SEARCH: true,
+	      ENABLE_INPUT_DETAIL_LINK: false,
+	      ROW_ID: this.getId()
+	    },
+	    mode: catalog_storeSelector.StoreSelector.MODE_EDIT,
+	    model: this.model
+	  });
+	  var storeWrapper = this.getNode().querySelector('[data-name="STORE_INFO"]');
+
+	  if (this.storeSelector && storeWrapper) {
+	    storeWrapper.innerHTML = '';
+	    this.storeSelector.renderTo(storeWrapper);
+
+	    if (this.isReserveBlocked()) {
+	      _classPrivateMethodGet$1(this, _applyStoreSelectorRestrictionTweaks, _applyStoreSelectorRestrictionTweaks2).call(this);
+	    }
+	  }
+
+	  main_core_events.EventEmitter.subscribe(this.storeSelector, 'onChange', main_core.Runtime.debounce(_classPrivateMethodGet$1(this, _onStoreFieldChange, _onStoreFieldChange2).bind(this), 500, this));
+	  main_core_events.EventEmitter.subscribe(this.storeSelector, 'onClear', main_core.Runtime.debounce(_classPrivateMethodGet$1(this, _onStoreFieldClear, _onStoreFieldClear2).bind(this), 500, this));
+	}
+
+	function _applyStoreSelectorRestrictionTweaks2() {
+	  var storeSearchInput = this.storeSelector.searchInput;
+
+	  if (!storeSearchInput || !storeSearchInput.getNameInput()) {
+	    return;
+	  }
+
+	  storeSearchInput.toggleIcon(this.storeSelector.searchInput.getSearchIcon(), 'none');
+	  storeSearchInput.getNameInput().disabled = true;
+	  storeSearchInput.getNameInput().classList.add('crm-entity-product-list-locked-field');
+
+	  if (this.storeSelector.getWrapper()) {
+	    this.storeSelector.getWrapper().onclick = function () {
+	      return top.BX.UI.InfoHelper.show('limit_store_crm_integration');
+	    };
+	  }
+	}
+
+	function _initReservedControl2() {
+	  var _this9 = this;
+
+	  var storeWrapper = this.getNode().querySelector('[data-name="RESERVE_INFO"]');
+
+	  if (storeWrapper) {
+	    storeWrapper.innerHTML = '';
+	    this.reserveControl = new ReserveControl({
+	      model: this.getModel(),
+	      defaultDateReservation: this.editor.getSettingValue('defaultDateReservation'),
+	      isInputDisabled: this.isReserveBlocked()
+	    });
+	    this.reserveControl.renderTo(storeWrapper);
+	    main_core_events.EventEmitter.subscribe(this.reserveControl, 'onChange', function (event) {
+	      var item = event.getData();
+
+	      _this9.updateField(item.NAME, item.VALUE);
+	    });
+	  }
+	}
+
+	function _onStoreFieldChange2(event) {
+	  var _this10 = this;
+
+	  var data = event.getData();
+	  data.fields.forEach(function (item) {
+	    _this10.updateField(item.NAME, item.VALUE);
+	  });
+	  this.initHandlersForSelectors();
+	}
+
+	function _onStoreFieldClear2(event) {
+	  this.initHandlersForSelectors();
+	}
+
+	function _showPriceNotifier2(enteredPrice) {
+	  var _this11 = this;
+
+	  var disabledPriceNotify = BX.UI.Notification.Center.getBalloonByCategory(Row.CATALOG_PRICE_CHANGING_DISABLED);
+
+	  if (disabledPriceNotify) {
+	    disabledPriceNotify.close();
+	  }
+
+	  this.getModel().showSaveNotifier('priceChanger_' + this.getId(), {
+	    title: main_core.Loc.getMessage('CATALOG_PRODUCT_MODEL_SAVING_NOTIFICATION_PRICE_CHANGED_QUERY'),
+	    events: {
+	      onCancel: function onCancel() {
+	        if (_this11.getBasePrice() > _this11.getEnteredPrice()) {
+	          _this11.setField('ENTERED_PRICE', _this11.getBasePrice());
+
+	          _this11.updateUiInputField('PRICE', _this11.getBasePrice());
+	        }
+
+	        _this11.setPrice(enteredPrice);
+
+	        if (_this11.getField('DISCOUNT_SUM') > 0) {
+	          var settingPopup = _this11.getEditor().getSettingsPopup();
+
+	          var setting = settingPopup === null || settingPopup === void 0 ? void 0 : settingPopup.getSetting('DISCOUNTS');
+
+	          if (setting && setting.checked === false) {
+	            settingPopup.requestGridSettings(setting, true);
+	          }
+	        }
+	      },
+	      onSave: function onSave() {
+	        _this11.setField('ENTERED_PRICE', enteredPrice);
+
+	        _this11.setField('PRICE', enteredPrice);
+
+	        _this11.changeCatalogPrice('CATALOG_PRICE', enteredPrice);
+
+	        _this11.setBasePrice(enteredPrice);
+
+	        _this11.getModel().save(['BASE_PRICE', 'CURRENCY']);
+
+	        _this11.refreshFieldsLayout();
+
+	        _this11.addActionUpdateTotal();
+
+	        _this11.executeExternalActions();
+	      }
+	    }
+	  });
+	}
+
+	function _onChangeStoreData2() {
+	  if (this.isReserveBlocked()) {
+	    return;
+	  }
+
+	  var storeId = this.getModel().getField('STORE_ID');
+	  var currentAmount = this.getModel().getStoreCollection().getStoreAmount(storeId);
+
+	  if (currentAmount <= 0 && this.getModel().isChanged()) {
+	    var maxStore = this.getModel().getStoreCollection().getMaxFilledStore();
+
+	    if (maxStore.AMOUNT > currentAmount && this.storeSelector) {
+	      this.storeSelector.onStoreSelect(maxStore.STORE_ID, main_core.Text.decode(maxStore.STORE_TITLE));
+	    }
+	  }
+
+	  this.updateUiStoreAmountData();
+	}
+
+	function _handleProductErrorsChange2() {
+	  this.getEditor().handleProductErrorsChange();
+	}
+
+	function _shouldShowSmallPriceHint2() {
+	  return main_core.Text.toNumber(this.getField('PRICE')) > 0 && main_core.Text.toNumber(this.getField('PRICE')) < 1 && this.isDiscountPercentage() && (main_core.Text.toNumber(this.getField('DISCOUNT_SUM')) > 0 || main_core.Text.toNumber(this.getField('DISCOUNT_RATE')) > 0 || main_core.Text.toNumber(this.getField('DISCOUNT_ROW')) > 0);
+	}
+
+	function _togglePriceHintPopup2() {
 	  var showNegative = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 
-	  if (_classPrivateMethodGet(this, _shouldShowSmallPriceHint, _shouldShowSmallPriceHint2).call(this)) {
+	  if (_classPrivateMethodGet$1(this, _shouldShowSmallPriceHint, _shouldShowSmallPriceHint2).call(this)) {
 	    this.getHintPopup().load(this.getInputByFieldName('PRICE'), main_core.Loc.getMessage('CRM_ENTITY_PL_SMALL_PRICE_NOTICE')).show();
 	  } else if (showNegative) {
 	    this.getHintPopup().load(this.getInputByFieldName('PRICE'), main_core.Loc.getMessage('CRM_ENTITY_PL_NEGATIVE_PRICE_NOTICE')).show();
 	  } else {
 	    this.getHintPopup().close();
 	  }
-	};
+	}
+
+	babelHelpers.defineProperty(Row, "CATALOG_PRICE_CHANGING_DISABLED", 'CATALOG_PRICE_CHANGING_DISABLED');
 
 	var PageEventsManager = /*#__PURE__*/function () {
 	  function PageEventsManager(settings) {
@@ -1226,29 +2163,31 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  return PageEventsManager;
 	}();
 
-	var _templateObject$1, _templateObject2, _templateObject3, _templateObject4;
+	var _templateObject$3, _templateObject2$2, _templateObject3$2, _templateObject4$2;
 
-	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
 
-	var _target = new WeakMap();
+	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
 
-	var _settings = new WeakMap();
+	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 
-	var _editor = new WeakMap();
+	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
-	var _cache = new WeakMap();
+	var _target = /*#__PURE__*/new WeakMap();
 
-	var _getSetting = new WeakSet();
+	var _settings = /*#__PURE__*/new WeakMap();
 
-	var _prepareSettingsContent = new WeakSet();
+	var _editor = /*#__PURE__*/new WeakMap();
 
-	var _getSettingItem = new WeakSet();
+	var _cache$1 = /*#__PURE__*/new WeakMap();
 
-	var _setSetting = new WeakSet();
+	var _prepareSettingsContent = /*#__PURE__*/new WeakSet();
 
-	var _requestGridSettings = new WeakSet();
+	var _getSettingItem = /*#__PURE__*/new WeakSet();
 
-	var _showNotification = new WeakSet();
+	var _setSetting = /*#__PURE__*/new WeakSet();
+
+	var _showNotification = /*#__PURE__*/new WeakSet();
 
 	var SettingsPopup = /*#__PURE__*/function () {
 	  function SettingsPopup(target) {
@@ -1256,34 +2195,30 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    var editor = arguments.length > 2 ? arguments[2] : undefined;
 	    babelHelpers.classCallCheck(this, SettingsPopup);
 
-	    _showNotification.add(this);
+	    _classPrivateMethodInitSpec$2(this, _showNotification);
 
-	    _requestGridSettings.add(this);
+	    _classPrivateMethodInitSpec$2(this, _setSetting);
 
-	    _setSetting.add(this);
+	    _classPrivateMethodInitSpec$2(this, _getSettingItem);
 
-	    _getSettingItem.add(this);
+	    _classPrivateMethodInitSpec$2(this, _prepareSettingsContent);
 
-	    _prepareSettingsContent.add(this);
-
-	    _getSetting.add(this);
-
-	    _target.set(this, {
+	    _classPrivateFieldInitSpec$1(this, _target, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _settings.set(this, {
+	    _classPrivateFieldInitSpec$1(this, _settings, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _editor.set(this, {
+	    _classPrivateFieldInitSpec$1(this, _editor, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _cache.set(this, {
+	    _classPrivateFieldInitSpec$1(this, _cache$1, {
 	      writable: true,
 	      value: new main_core.Cache.MemoryCache()
 	    });
@@ -1303,7 +2238,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    value: function getPopup() {
 	      var _this = this;
 
-	      return babelHelpers.classPrivateFieldGet(this, _cache).remember('settings-popup', function () {
+	      return babelHelpers.classPrivateFieldGet(this, _cache$1).remember('settings-popup', function () {
 	        return new main_popup.Popup(babelHelpers.classPrivateFieldGet(_this, _editor).getId() + '_' + Math.random() * 100, babelHelpers.classPrivateFieldGet(_this, _target), {
 	          autoHide: true,
 	          draggable: false,
@@ -1318,14 +2253,71 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	            forceBindPosition: true
 	          },
 	          closeByEsc: true,
-	          content: _classPrivateMethodGet$1(_this, _prepareSettingsContent, _prepareSettingsContent2).call(_this)
+	          content: _classPrivateMethodGet$2(_this, _prepareSettingsContent, _prepareSettingsContent2).call(_this)
+	        });
+	      });
+	    }
+	  }, {
+	    key: "getSetting",
+	    value: function getSetting(id) {
+	      return babelHelpers.classPrivateFieldGet(this, _settings).filter(function (item) {
+	        return item.id === id;
+	      })[0];
+	    }
+	  }, {
+	    key: "requestGridSettings",
+	    value: function requestGridSettings(setting, enabled) {
+	      var _this2 = this;
+
+	      var headers = [];
+	      var cells = babelHelpers.classPrivateFieldGet(this, _editor).getGrid().getRows().getHeadFirstChild().getCells();
+	      Array.from(cells).forEach(function (header) {
+	        if ('name' in header.dataset) {
+	          headers.push(header.dataset.name);
+	        }
+	      });
+	      main_core.ajax.runComponentAction(babelHelpers.classPrivateFieldGet(this, _editor).getComponentName(), 'setGridSetting', {
+	        mode: 'class',
+	        data: {
+	          signedParameters: babelHelpers.classPrivateFieldGet(this, _editor).getSignedParameters(),
+	          settingId: setting.id,
+	          selected: enabled,
+	          currentHeaders: headers
+	        }
+	      }).then(function () {
+	        var message;
+	        setting.checked = enabled;
+
+	        if (setting.id === 'ADD_NEW_ROW_TOP') {
+	          var panel = enabled ? 'top' : 'bottom';
+	          babelHelpers.classPrivateFieldGet(_this2, _editor).setSettingValue('newRowPosition', panel);
+	          var activePanel = babelHelpers.classPrivateFieldGet(_this2, _editor).changeActivePanelButtons(panel);
+	          var settingButton = activePanel.querySelector('[data-role="product-list-settings-button"]');
+
+	          _this2.getPopup().setBindElement(settingButton);
+
+	          message = enabled ? main_core.Loc.getMessage('CRM_ENTITY_PL_SETTING_ENABLED') : main_core.Loc.getMessage('CRM_ENTITY_PL_SETTING_DISABLED');
+	          message = message.replace('#NAME#', setting.title);
+	        } else if (setting.id === 'WAREHOUSE') {
+	          babelHelpers.classPrivateFieldGet(_this2, _editor).reloadGrid(false);
+	          message = enabled ? main_core.Loc.getMessage('CRM_ENTITY_CARD_WAREHOUSE_ENABLED') : main_core.Loc.getMessage('CRM_ENTITY_CARD_WAREHOUSE_DISABLED');
+	        } else {
+	          babelHelpers.classPrivateFieldGet(_this2, _editor).reloadGrid();
+	          message = enabled ? main_core.Loc.getMessage('CRM_ENTITY_PL_SETTING_ENABLED') : main_core.Loc.getMessage('CRM_ENTITY_PL_SETTING_DISABLED');
+	          message = message.replace('#NAME#', setting.title);
+	        }
+
+	        _this2.getPopup().close();
+
+	        _classPrivateMethodGet$2(_this2, _showNotification, _showNotification2).call(_this2, message, {
+	          category: 'popup-settings'
 	        });
 	      });
 	    }
 	  }, {
 	    key: "updateCheckboxState",
 	    value: function updateCheckboxState() {
-	      var _this2 = this;
+	      var _this3 = this;
 
 	      var popupContainer = this.getPopup().getContentContainer();
 	      babelHelpers.classPrivateFieldGet(this, _settings).filter(function (item) {
@@ -1333,7 +2325,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      }).forEach(function (item) {
 	        var allColumnsExist = true;
 	        item.columns.forEach(function (columnName) {
-	          if (!babelHelpers.classPrivateFieldGet(_this2, _editor).getGrid().getColumnHeaderCellByName(columnName)) {
+	          if (!babelHelpers.classPrivateFieldGet(_this3, _editor).getGrid().getColumnHeaderCellByName(columnName)) {
 	            allColumnsExist = false;
 	          }
 	        });
@@ -1348,87 +2340,60 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  return SettingsPopup;
 	}();
 
-	var _getSetting2 = function _getSetting2(id) {
-	  return babelHelpers.classPrivateFieldGet(this, _settings).filter(function (item) {
-	    return item.id === id;
-	  })[0];
-	};
+	function _prepareSettingsContent2() {
+	  var _this4 = this;
 
-	var _prepareSettingsContent2 = function _prepareSettingsContent2() {
-	  var _this3 = this;
-
-	  var content = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class='ui-entity-editor-popup-create-field-list'></div>\n\t\t"])));
+	  var content = main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class='ui-entity-editor-popup-create-field-list'></div>\n\t\t"])));
 	  babelHelpers.classPrivateFieldGet(this, _settings).forEach(function (item) {
-	    content.append(_classPrivateMethodGet$1(_this3, _getSettingItem, _getSettingItem2).call(_this3, item));
+	    content.append(_classPrivateMethodGet$2(_this4, _getSettingItem, _getSettingItem2).call(_this4, item));
 	  });
 	  return content;
-	};
+	}
 
-	var _getSettingItem2 = function _getSettingItem2(item) {
-	  var input = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<input type=\"checkbox\">\n\t\t"])));
+	function _getSettingItem2(item) {
+	  var _this5 = this;
+
+	  var input = main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<input type=\"checkbox\">\n\t\t"])));
 	  input.checked = item.checked;
 	  input.dataset.settingId = item.id;
-	  var descriptionNode = main_core.Type.isStringFilled(item.desc) ? main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-entity-editor-popup-create-field-item-desc\">", "</span>"])), item.desc) : '';
-	  var setting = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<label class=\"ui-ctl-block ui-entity-editor-popup-create-field-item ui-ctl-w100\">\n\t\t\t\t<div class=\"ui-ctl-w10\" style=\"text-align: center\">", "</div>\n\t\t\t\t<div class=\"ui-ctl-w75\">\n\t\t\t\t\t<span class=\"ui-entity-editor-popup-create-field-item-title\">", "</span>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</label>\n\t\t"])), input, item.title, descriptionNode);
-	  main_core.Event.bind(setting, 'change', _classPrivateMethodGet$1(this, _setSetting, _setSetting2).bind(this));
-	  return setting;
-	};
+	  var descriptionNode = main_core.Type.isStringFilled(item.desc) ? main_core.Tag.render(_templateObject3$2 || (_templateObject3$2 = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-entity-editor-popup-create-field-item-desc\">", "</span>"])), item.desc) : '';
+	  var setting = main_core.Tag.render(_templateObject4$2 || (_templateObject4$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<label class=\"ui-ctl-block ui-entity-editor-popup-create-field-item ui-ctl-w100\">\n\t\t\t\t<div class=\"ui-ctl-w10\" style=\"text-align: center\">", "</div>\n\t\t\t\t<div class=\"ui-ctl-w75\">\n\t\t\t\t\t<span class=\"ui-entity-editor-popup-create-field-item-title\">", "</span>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</label>\n\t\t"])), input, item.title, descriptionNode);
 
-	var _setSetting2 = function _setSetting2(event) {
-	  var settingItem = _classPrivateMethodGet$1(this, _getSetting, _getSetting2).call(this, event.target.dataset.settingId);
+	  if (item.id === 'WAREHOUSE') {
+	    main_core.Event.bind(setting, 'change', function (event) {
+	      new catalog_storeUse.DialogDisable().popup();
+	      main_core_events.EventEmitter.subscribe(catalog_storeUse.EventType.popup.disable, function () {
+	        return _classPrivateMethodGet$2(_this5, _setSetting, _setSetting2).call(_this5, event);
+	      });
+	      main_core_events.EventEmitter.subscribe(catalog_storeUse.EventType.popup.disableCancel, function () {
+	        return event.target.checked = true;
+	      });
+	    });
+	  } else if (item.id === 'SLIDER') {
+	    main_core.Event.bind(setting, 'change', function (event) {
+	      new catalog_storeUse.Slider().open(item.url, {}).then(function () {
+	        return babelHelpers.classPrivateFieldGet(_this5, _editor).reloadGrid(false);
+	      });
+	    });
+	  } else {
+	    main_core.Event.bind(setting, 'change', _classPrivateMethodGet$2(this, _setSetting, _setSetting2).bind(this));
+	  }
+
+	  return setting;
+	}
+
+	function _setSetting2(event) {
+	  var settingItem = this.getSetting(event.target.dataset.settingId);
 
 	  if (!settingItem) {
 	    return;
 	  }
 
 	  var settingEnabled = event.target.checked;
+	  this.requestGridSettings(settingItem, settingEnabled);
+	}
 
-	  _classPrivateMethodGet$1(this, _requestGridSettings, _requestGridSettings2).call(this, settingItem, settingEnabled);
-	};
-
-	var _requestGridSettings2 = function _requestGridSettings2(setting, enabled) {
-	  var _this4 = this;
-
-	  var headers = [];
-	  var cells = babelHelpers.classPrivateFieldGet(this, _editor).getGrid().getRows().getHeadFirstChild().getCells();
-	  Array.from(cells).forEach(function (header) {
-	    if ('name' in header.dataset) {
-	      headers.push(header.dataset.name);
-	    }
-	  });
-	  main_core.ajax.runComponentAction(babelHelpers.classPrivateFieldGet(this, _editor).getComponentName(), 'setGridSetting', {
-	    mode: 'class',
-	    data: {
-	      signedParameters: babelHelpers.classPrivateFieldGet(this, _editor).getSignedParameters(),
-	      settingId: setting.id,
-	      selected: enabled,
-	      currentHeaders: headers
-	    }
-	  }).then(function () {
-	    setting.checked = enabled;
-
-	    if (setting.id === 'ADD_NEW_ROW_TOP') {
-	      var panel = enabled ? 'top' : 'bottom';
-	      babelHelpers.classPrivateFieldGet(_this4, _editor).setSettingValue('newRowPosition', panel);
-	      var activePanel = babelHelpers.classPrivateFieldGet(_this4, _editor).changeActivePanelButtons(panel);
-	      var settingButton = activePanel.querySelector('[data-role="product-list-settings-button"]');
-
-	      _this4.getPopup().setBindElement(settingButton);
-	    } else {
-	      babelHelpers.classPrivateFieldGet(_this4, _editor).reloadGrid();
-	    }
-
-	    _this4.getPopup().close();
-
-	    var message = enabled ? main_core.Loc.getMessage('CRM_ENTITY_PL_SETTING_ENABLED') : main_core.Loc.getMessage('CRM_ENTITY_PL_SETTING_DISABLED');
-
-	    _classPrivateMethodGet$1(_this4, _showNotification, _showNotification2).call(_this4, message.replace('#NAME#', setting.title), {
-	      category: 'popup-settings'
-	    });
-	  });
-	};
-
-	var _showNotification2 = function _showNotification2(content, options) {
+	function _showNotification2(content, options) {
 	  options = options || {};
 	  BX.UI.Notification.Center.notify({
 	    content: content,
@@ -1438,24 +2403,51 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    category: options.category || null,
 	    autoHideDelay: options.autoHideDelay || 3000
 	  });
-	};
+	}
 
-	var _templateObject$2;
+	var _templateObject$4;
 
-	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
 
 	function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+
+	function _classPrivateMethodInitSpec$3(obj, privateSet) { _checkPrivateRedeclaration$3(obj, privateSet); privateSet.add(obj); }
+
+	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
+	function _classPrivateMethodGet$3(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var GRID_TEMPLATE_ROW = 'template_0';
 	var DEFAULT_PRECISION = 2;
+
+	var _initSupportCustomRowActions = /*#__PURE__*/new WeakSet();
+
+	var _getCalculatePriceFieldNames = /*#__PURE__*/new WeakSet();
+
+	var _childrenHasErrors = /*#__PURE__*/new WeakSet();
+
 	var Editor = /*#__PURE__*/function () {
 	  function Editor(id) {
 	    babelHelpers.classCallCheck(this, Editor);
+
+	    _classPrivateMethodInitSpec$3(this, _childrenHasErrors);
+
+	    _classPrivateMethodInitSpec$3(this, _getCalculatePriceFieldNames);
+
+	    _classPrivateMethodInitSpec$3(this, _initSupportCustomRowActions);
+
+	    babelHelpers.defineProperty(this, "ajaxPool", new Map());
 	    babelHelpers.defineProperty(this, "products", []);
 	    babelHelpers.defineProperty(this, "productsWasInitiated", false);
+	    babelHelpers.defineProperty(this, "isChangedGrid", false);
 	    babelHelpers.defineProperty(this, "cache", new main_core.Cache.MemoryCache());
 	    babelHelpers.defineProperty(this, "actions", {
+	      disableSaveButton: 'disableSaveButton',
 	      productChange: 'productChange',
 	      productListChanged: 'productListChanged',
 	      updateListField: 'listField',
@@ -1475,6 +2467,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    babelHelpers.defineProperty(this, "showSettingsPopupHandler", this.handleShowSettingsPopup.bind(this));
 	    babelHelpers.defineProperty(this, "onDialogSelectProductHandler", this.handleOnDialogSelectProduct.bind(this));
 	    babelHelpers.defineProperty(this, "onSaveHandler", this.handleOnSave.bind(this));
+	    babelHelpers.defineProperty(this, "onEntityUpdateHandler", this.handleOnEntityUpdate.bind(this));
 	    babelHelpers.defineProperty(this, "onEditorSubmit", this.handleEditorSubmit.bind(this));
 	    babelHelpers.defineProperty(this, "onInnerCancelHandler", this.handleOnInnerCancel.bind(this));
 	    babelHelpers.defineProperty(this, "onBeforeGridRequestHandler", this.handleOnBeforeGridRequest.bind(this));
@@ -1504,8 +2497,26 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      this.initProducts();
 	      this.initGridData();
 	      main_core_events.EventEmitter.emit(window, 'EntityProductListController', [this]);
+
+	      _classPrivateMethodGet$3(this, _initSupportCustomRowActions, _initSupportCustomRowActions2).call(this);
+
 	      this.subscribeDomEvents();
 	      this.subscribeCustomEvents();
+
+	      if (this.getSettingValue('isReserveBlocked', false)) {
+	        var headersToLock = ['STORE_INFO', 'RESERVE_INFO'];
+	        var container = this.getContainer();
+	        headersToLock.forEach(function (headerId) {
+	          var header = container === null || container === void 0 ? void 0 : container.querySelector(".main-grid-cell-head[data-name=\"".concat(headerId, "\"] .main-grid-cell-head-container"));
+	          var lock = main_core.Tag.render(_templateObject$4 || (_templateObject$4 = babelHelpers.taggedTemplateLiteral(["<span class=\"crm-entity-product-list-locked-header\"></span>"])));
+
+	          lock.onclick = function () {
+	            return top.BX.UI.InfoHelper.show('limit_store_crm_integration');
+	          };
+
+	          header === null || header === void 0 ? void 0 : header.insertBefore(lock, header.firstChild);
+	        });
+	      }
 	    }
 	  }, {
 	    key: "subscribeDomEvents",
@@ -1550,6 +2561,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    value: function subscribeCustomEvents() {
 	      main_core_events.EventEmitter.subscribe('CrmProductSearchDialog_SelectProduct', this.onDialogSelectProductHandler);
 	      main_core_events.EventEmitter.subscribe('BX.Crm.EntityEditor:onSave', this.onSaveHandler);
+	      main_core_events.EventEmitter.subscribe('onCrmEntityUpdate', this.onEntityUpdateHandler);
 	      main_core_events.EventEmitter.subscribe('BX.Crm.EntityEditorAjax:onSubmit', this.onEditorSubmit);
 	      main_core_events.EventEmitter.subscribe('EntityProductListController:onInnerCancel', this.onInnerCancelHandler);
 	      main_core_events.EventEmitter.subscribe('Grid::beforeRequest', this.onBeforeGridRequestHandler);
@@ -1565,6 +2577,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    value: function unsubscribeCustomEvents() {
 	      main_core_events.EventEmitter.unsubscribe('CrmProductSearchDialog_SelectProduct', this.onDialogSelectProductHandler);
 	      main_core_events.EventEmitter.unsubscribe('BX.Crm.EntityEditor:onSave', this.onSaveHandler);
+	      main_core_events.EventEmitter.unsubscribe('onCrmEntityUpdate', this.onEntityUpdateHandler);
 	      main_core_events.EventEmitter.unsubscribe('BX.Crm.EntityEditorAjax:onSubmit', this.onEditorSubmit);
 	      main_core_events.EventEmitter.unsubscribe('EntityProductListController:onInnerCancel', this.onInnerCancelHandler);
 	      main_core_events.EventEmitter.unsubscribe('Grid::beforeRequest', this.onBeforeGridRequestHandler);
@@ -1578,11 +2591,22 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "handleOnDialogSelectProduct",
 	    value: function handleOnDialogSelectProduct(event) {
+	      var _this$products$;
+
 	      var _event$getCompatData = event.getCompatData(),
 	          _event$getCompatData2 = babelHelpers.slicedToArray(_event$getCompatData, 1),
 	          productId = _event$getCompatData2[0];
 
-	      var id = this.addProductRow();
+	      var id;
+
+	      if (this.getProductCount() > 0 || ((_this$products$ = this.products[0]) === null || _this$products$ === void 0 ? void 0 : _this$products$.getField('ID')) <= 0) {
+	        id = this.addProductRow();
+	      } else {
+	        var _this$products$2;
+
+	        id = (_this$products$2 = this.products[0]) === null || _this$products$2 === void 0 ? void 0 : _this$products$2.getField('ID');
+	      }
+
 	      this.selectProductInRow(id, productId);
 	    }
 	  }, {
@@ -1606,12 +2630,24 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      var items = [];
 	      this.products.forEach(function (product) {
 	        var item = {
-	          fields: babelHelpers.objectSpread({}, product.fields),
+	          fields: _objectSpread({}, product.fields),
 	          rowId: product.fields.ROW_ID
 	        };
 	        items.push(item);
 	      });
 	      this.setSettingValue('items', items);
+	    }
+	  }, {
+	    key: "handleOnEntityUpdate",
+	    value: function handleOnEntityUpdate(event) {
+	      var _event$getData = event.getData(),
+	          _event$getData2 = babelHelpers.slicedToArray(_event$getData, 1),
+	          data = _event$getData2[0];
+
+	      if (this.isChanged() && data.entityId === this.getSettingValue('entityId') && data.entityTypeId === this.getSettingValue('entityTypeId')) {
+	        this.setGridChanged(false);
+	        this.reloadGrid(false);
+	      }
 	    }
 	  }, {
 	    key: "handleEditorSubmit",
@@ -1638,6 +2674,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        this.controller.rollback();
 	      }
 
+	      this.setGridChanged(false);
 	      this.reloadGrid(false);
 	    }
 	  }, {
@@ -1710,14 +2747,15 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      eventArgs.url = this.getReloadUrl();
 	      eventArgs.method = 'POST';
 	      eventArgs.sessid = BX.bitrix_sessid();
-	      eventArgs.data = babelHelpers.objectSpread({}, eventArgs.data, {
+	      eventArgs.data = _objectSpread(_objectSpread({}, eventArgs.data), {}, {
 	        signedParameters: this.getSignedParameters(),
 	        products: useProductsFromRequest ? this.getProductsFields() : null,
-	        locationId: this.getLocationId()
+	        locationId: this.getLocationId(),
+	        currencyId: this.getCurrencyId()
 	      });
 	      this.clearEditor();
 
-	      if (isNativeAction) {
+	      if (isNativeAction && this.isChanged()) {
 	        main_core_events.EventEmitter.subscribeOnce('Grid::updated', function () {
 	          return _this5.actionUpdateTotalData({
 	            isInternalChanging: false
@@ -1781,6 +2819,16 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    key: "canEdit",
 	    value: function canEdit() {
 	      return this.getSettingValue('allowEdit', false) === true;
+	    }
+	  }, {
+	    key: "canEditCatalogPrice",
+	    value: function canEditCatalogPrice() {
+	      return this.getSettingValue('allowCatalogPriceEdit', false) === true;
+	    }
+	  }, {
+	    key: "canSaveCatalogPrice",
+	    value: function canSaveCatalogPrice() {
+	      return this.getSettingValue('allowCatalogPriceSave', false) === true;
 	    }
 	  }, {
 	    key: "enableEdit",
@@ -1950,6 +2998,11 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    key: "setCurrencyId",
 	    value: function setCurrencyId(currencyId) {
 	      this.setSettingValue('currencyId', currencyId);
+	      this.products.forEach(function (product) {
+	        var _product$getModel;
+
+	        return (_product$getModel = product.getModel()) === null || _product$getModel === void 0 ? void 0 : _product$getModel.setOption('currency', currencyId);
+	      });
 	    }
 	  }, {
 	    key: "isLocationDependantTaxesEnabled",
@@ -1974,8 +3027,14 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      this.setCurrencyId(currencyId);
 	      var products = [];
 	      this.products.forEach(function (product) {
+	        var priceFields = {};
+
+	        _classPrivateMethodGet$3(_this8, _getCalculatePriceFieldNames, _getCalculatePriceFieldNames2).call(_this8).forEach(function (name) {
+	          priceFields[name] = product.getField(name);
+	        });
+
 	        products.push({
-	          fields: product.getFields(),
+	          fields: priceFields,
 	          id: product.getId()
 	        });
 	      });
@@ -2001,9 +3060,10 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    value: function onCalculatePricesResponse(products) {
 	      this.products.forEach(function (product) {
 	        if (main_core.Type.isObject(products[product.getId()])) {
-	          var newPrice = main_core.Text.toNumber(products[product.getId()]['PRICE']);
 	          product.updateUiCurrencyFields();
-	          product.updateField('PRICE', newPrice);
+	          ['BASE_PRICE', 'ENTERED_PRICE', 'DISCOUNT_ROW', 'DISCOUNT_SUM', 'CURRENCY_ID'].forEach(function (name) {
+	            product.updateField(name, main_core.Text.toNumber(products[product.getId()][name]));
+	          });
 	          product.setField('CURRENCY', products[product.getId()]['CURRENCY_ID']);
 	        }
 	      });
@@ -2398,6 +3458,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    key: "initProducts",
 	    value: function initProducts() {
 	      var list = this.getSettingValue('items', []);
+	      var isReserveBlocked = this.getSettingValue('isReserveBlocked', false);
 
 	      var _iterator = _createForOfIteratorHelper$1(list),
 	          _step;
@@ -2405,13 +3466,14 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      try {
 	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
 	          var item = _step.value;
-	          var fields = babelHelpers.objectSpread({}, item.fields);
-	          this.products.push(new Row(item.rowId, fields, {}, this));
-	          var row = this.getGrid().getRows().getById(fields.ID);
 
-	          if (row) {
-	            this.setDeleteButton(row.getNode(), fields.ID);
-	          }
+	          var fields = _objectSpread({}, item.fields);
+
+	          var settings = {
+	            selectorId: item.selectorId,
+	            isReserveBlocked: isReserveBlocked
+	          };
+	          this.products.push(new Row(item.rowId, fields, settings, this));
 	        }
 	      } catch (err) {
 	        _iterator.e(err);
@@ -2469,6 +3531,13 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      this.getGrid().arParams.EDITABLE_DATA[GRID_TEMPLATE_ROW] = data;
 	    }
 	  }, {
+	    key: "handleProductErrorsChange",
+	    value: function handleProductErrorsChange() {
+	      if (_classPrivateMethodGet$3(this, _childrenHasErrors, _childrenHasErrors2).call(this)) {
+	        this.controller.disableSaveButton();
+	      }
+	    }
+	  }, {
 	    key: "handleFieldChange",
 	    value: function handleFieldChange(event) {
 	      var row = event.target.closest('tr');
@@ -2489,10 +3558,10 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "handleDropdownChange",
 	    value: function handleDropdownChange(event) {
-	      var _event$getData = event.getData(),
-	          _event$getData2 = babelHelpers.slicedToArray(_event$getData, 5),
-	          dropdownId = _event$getData2[0],
-	          value = _event$getData2[4];
+	      var _event$getData3 = event.getData(),
+	          _event$getData4 = babelHelpers.slicedToArray(_event$getData3, 5),
+	          dropdownId = _event$getData4[0],
+	          value = _event$getData4[4];
 
 	      var regExp = new RegExp(this.getRowIdPrefix() + '([A-Za-z0-9]+)_(\\w+)_control', 'i');
 	      var matches = dropdownId.match(regExp);
@@ -2505,7 +3574,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        var product = this.getProductById(rowId);
 
 	        if (product) {
-	          product.updateField(fieldCode, value);
+	          product.updateField(fieldCode, value, product.modeChanges.EDIT);
 	        }
 	      }
 	    }
@@ -2576,9 +3645,22 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "addProductRow",
 	    value: function addProductRow() {
+	      var anchorProduct = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 	      var row = this.createGridProductRow();
 	      var newId = row.getId();
-	      this.initializeNewProductRow(newId);
+
+	      if (anchorProduct) {
+	        var _this$getGrid$getRows;
+
+	        var anchorRowNode = (_this$getGrid$getRows = this.getGrid().getRows().getById(anchorProduct.getField('ID'))) === null || _this$getGrid$getRows === void 0 ? void 0 : _this$getGrid$getRows.getNode();
+
+	        if (anchorRowNode) {
+	          anchorRowNode.parentNode.insertBefore(row.getNode(), anchorRowNode.nextSibling);
+	        }
+	      }
+
+	      this.initializeNewProductRow(newId, anchorProduct);
+	      this.getGrid().bindOnRowEvents();
 	      return newId;
 	    }
 	  }, {
@@ -2597,7 +3679,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    value: function destroySettingsPopup() {
 	      if (this.cache.has('settings-popup')) {
 	        this.cache.get('settings-popup').getPopup().destroy();
-	        this.cache.delete('settings-popup');
+	        this.cache["delete"]('settings-popup');
 	      }
 	    }
 	  }, {
@@ -2633,7 +3715,6 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      }
 
 	      var newNode = newRow.getNode();
-	      this.setDeleteButton(newNode, newId);
 
 	      if (main_core.Type.isDomNode(newNode)) {
 	        newNode.setAttribute('data-id', newId);
@@ -2651,21 +3732,6 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      return newRow;
 	    }
 	  }, {
-	    key: "setDeleteButton",
-	    value: function setDeleteButton(row, rowId) {
-	      if (this.isReadOnly()) {
-	        return;
-	      }
-
-	      var actionCellContentContainer = row.querySelector('.main-grid-cell-action .main-grid-cell-content');
-
-	      if (rowId) {
-	        // BX.Main.grid._onClickOnRow needs to be a link or input here
-	        var deleteButton = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<a \n\t\t\t\t\thref=\"#\"\n\t\t\t\t\tclass=\"main-grid-delete-button\" \n\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t></a>\n\t\t\t"])), this.handleDeleteRow.bind(this, rowId), main_core.Loc.getMessage('CRM_ENTITY_PL_DELETE'));
-	        main_core.Dom.append(deleteButton, actionCellContentContainer);
-	      }
-	    }
-	  }, {
 	    key: "handleDeleteRow",
 	    value: function handleDeleteRow(rowId, event) {
 	      event.preventDefault();
@@ -2677,7 +3743,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      var data = this.getGridEditData();
 	      var originalTemplateData = data[GRID_TEMPLATE_ROW];
 	      var customEditData = this.prepareCustomEditData(originalTemplateData, newId);
-	      this.setOriginalTemplateEditData(babelHelpers.objectSpread({}, originalTemplateData, customEditData));
+	      this.setOriginalTemplateEditData(_objectSpread(_objectSpread({}, originalTemplateData), customEditData));
 	      return originalTemplateData;
 	    }
 	  }, {
@@ -2703,17 +3769,42 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "initializeNewProductRow",
 	    value: function initializeNewProductRow(newId) {
-	      var rowId = this.getRowIdPrefix() + newId;
-	      var fields = babelHelpers.objectSpread({}, this.getSettingValue('templateItemFields', {}), {
-	        ID: newId,
-	        // hack: specially reversed field to change it after (isChangedValue need to be true)
-	        TAX_INCLUDED: this.isTaxIncludedActive() ? 'N' : 'Y',
-	        CURRENCY: this.getCurrencyId()
-	      });
-	      var product = new Row(rowId, fields, {}, this);
-	      product.updateFieldValue('TAX_INCLUDED', this.isTaxIncludedActive());
+	      var anchorProduct = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+	      var fields = anchorProduct === null || anchorProduct === void 0 ? void 0 : anchorProduct.getFields();
 
-	      if (this.getSettingValue('newRowPosition') === 'bottom') {
+	      if (main_core.Type.isNil(fields)) {
+	        fields = _objectSpread(_objectSpread({}, this.getSettingValue('templateItemFields', {})), {
+	          CURRENCY: this.getCurrencyId()
+	        });
+	        var lastItem = this.products[this.products.length - 1];
+
+	        if (lastItem) {
+	          fields.TAX_INCLUDED = lastItem.getField('TAX_INCLUDED');
+	        }
+	      }
+
+	      var rowId = this.getRowIdPrefix() + newId;
+	      fields.ID = newId;
+
+	      if (main_core.Type.isObject(fields.IMAGE_INFO)) {
+	        delete fields.IMAGE_INFO.input;
+	      }
+
+	      delete fields.RESERVE_ID;
+	      var isReserveBlocked = this.getSettingValue('isReserveBlocked', false);
+	      var product = new Row(rowId, fields, {
+	        isReserveBlocked: isReserveBlocked
+	      }, this);
+	      product.refreshFieldsLayout();
+
+	      if (anchorProduct instanceof Row) {
+	        var _product$getSelector, _product$getSelector2;
+
+	        this.products.splice(1 + this.products.indexOf(anchorProduct), 0, product);
+	        (_product$getSelector = product.getSelector()) === null || _product$getSelector === void 0 ? void 0 : _product$getSelector.reloadFileInput();
+	        (_product$getSelector2 = product.getSelector()) === null || _product$getSelector2 === void 0 ? void 0 : _product$getSelector2.layout();
+	        product.updateUiMeasure(product.getField('MEASURE_CODE'), main_core.Text.encode(product.getField('MEASURE_NAME')));
+	      } else if (this.getSettingValue('newRowPosition') === 'bottom') {
 	        this.products.push(product);
 	      } else {
 	        this.products.unshift(product);
@@ -2771,10 +3862,24 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        var promise = new Promise(function (resolve, reject) {
 	          var fields = data.fields;
 
+	          if (!main_core.Type.isNil(fields['SKU_TREE'])) {
+	            fields['SKU_TREE'] = JSON.stringify(fields['SKU_TREE']);
+	          }
+
+	          if (!main_core.Type.isNil(fields['IMAGE_INFO'])) {
+	            fields['IMAGE_INFO'] = JSON.stringify(fields['IMAGE_INFO']);
+	          }
+
 	          if (_this15.getCurrencyId() !== fields['CURRENCY_ID']) {
 	            fields['CURRENCY'] = fields['CURRENCY_ID'];
+	            var priceFields = {};
+
+	            _classPrivateMethodGet$3(_this15, _getCalculatePriceFieldNames, _getCalculatePriceFieldNames2).call(_this15).forEach(function (name) {
+	              priceFields[name] = data.fields[name];
+	            });
+
 	            var products = [{
-	              fields: data.fields,
+	              fields: priceFields,
 	              id: productRow.getId()
 	            }];
 	            main_core.ajax.runComponentAction(_this15.getComponentName(), 'calculateProductPrices', {
@@ -2802,6 +3907,29 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	          }
 	        });
 	        promise.then(function (fields) {
+	          if (_this15.products.length > 1) {
+	            var taxId = fields['VAT_ID'] || fields['TAX_ID'];
+	            var taxIncluded = fields['VAT_INCLUDED'] || fields['TAX_INCLUDED'];
+
+	            if (taxId > 0 && taxIncluded !== productRow.getTaxIncluded()) {
+	              var _this15$getTaxList;
+
+	              var taxRate = (_this15$getTaxList = _this15.getTaxList()) === null || _this15$getTaxList === void 0 ? void 0 : _this15$getTaxList.find(function (item) {
+	                return parseInt(item.ID) === taxId;
+	              });
+
+	              if ((taxRate === null || taxRate === void 0 ? void 0 : taxRate.VALUE) > 0 && taxIncluded === 'Y') {
+	                fields['BASE_PRICE'] = fields['BASE_PRICE'] / (1 + taxRate.VALUE / 100);
+	              }
+	            }
+
+	            ['TAX_INCLUDED', 'VAT_INCLUDED'].forEach(function (name) {
+	              return delete fields[name];
+	            });
+	          }
+
+	          fields['CATALOG_PRICE'] = fields['BASE_PRICE'];
+	          fields['ENTERED_PRICE'] = fields['BASE_PRICE'];
 	          Object.keys(fields).forEach(function (key) {
 	            productRow.updateFieldValue(key, fields[key]);
 	          });
@@ -2811,7 +3939,8 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	          }
 
 	          productRow.setField('IS_NEW', data.isNew ? 'Y' : 'N');
-	          productRow.initHandlersForProductSelector();
+	          productRow.initHandlersForSelectors();
+	          productRow.modifyBasePriceInput();
 	          productRow.executeExternalActions();
 
 	          _this15.getGrid().tableUnfade();
@@ -2823,14 +3952,15 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "handleOnProductClear",
 	    value: function handleOnProductClear(event) {
-	      var _event$getData3 = event.getData(),
-	          rowId = _event$getData3.rowId;
+	      var _event$getData5 = event.getData(),
+	          rowId = _event$getData5.rowId;
 
 	      var product = this.getProductByRowId(rowId);
 
 	      if (product) {
-	        product.initHandlersForProductSelector();
-	        product.changePrice(0);
+	        product.initHandlersForSelectors();
+	        product.changeEnteredPrice(0);
+	        product.modifyBasePriceInput();
 	        product.executeExternalActions();
 	      }
 	    }
@@ -2890,7 +4020,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      }
 
 	      var disableSaveButton = actions.filter(function (action) {
-	        return action.type === _this16.actions.updateTotal;
+	        return action.type === _this16.actions.updateTotal || action.type === _this16.actions.disableSaveButton;
 	      }).length > 0;
 
 	      var _iterator2 = _createForOfIteratorHelper$1(actions),
@@ -2953,6 +4083,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 
 	      if (this.controller) {
 	        this.controller.productChange(disableSaveButton);
+	        this.setGridChanged(true);
 	      }
 	    }
 	  }, {
@@ -2962,6 +4093,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 
 	      if (this.controller) {
 	        this.controller.productChange(disableSaveButton);
+	        this.setGridChanged(true);
 	      }
 	    }
 	  }, {
@@ -3045,6 +4177,16 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      return result;
 	    }
 	  }, {
+	    key: "setGridChanged",
+	    value: function setGridChanged(changed) {
+	      this.isChangedGrid = changed;
+	    }
+	  }, {
+	    key: "isChanged",
+	    value: function isChanged() {
+	      return this.isChangedGrid;
+	    }
+	  }, {
 	    key: "updateTotalDataDelayed",
 	    value: function updateTotalDataDelayed() {
 	      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
@@ -3117,6 +4259,8 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "sendTotalData",
 	    value: function sendTotalData(data, options) {
+	      var _this17 = this;
+
 	      if (this.controller) {
 	        var needMarkAsChanged = true;
 
@@ -3124,7 +4268,9 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	          needMarkAsChanged = false;
 	        }
 
-	        this.controller.changeSumTotal(data, needMarkAsChanged);
+	        setTimeout(function () {
+	          _this17.controller.changeSumTotal(data, needMarkAsChanged, !_classPrivateMethodGet$3(_this17, _childrenHasErrors, _childrenHasErrors2).call(_this17));
+	        }, 500);
 	      }
 	    }
 	    /* action tools finish */
@@ -3134,29 +4280,36 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "ajaxRequest",
 	    value: function ajaxRequest(action, data) {
-	      var _this17 = this;
+	      var _this18 = this;
+
+	      var requestKey = main_core.Text.getRandom();
+	      this.ajaxPool.set(action, requestKey);
 
 	      if (!main_core.Type.isPlainObject(data.options)) {
 	        data.options = {};
 	      }
 
 	      data.options.ACTION = action;
+	      data.options.REQUEST_KEY = requestKey;
 	      main_core.ajax.runComponentAction(this.getComponentName(), action, {
 	        mode: 'class',
 	        signedParameters: this.getSignedParameters(),
 	        data: data
 	      }).then(function (response) {
-	        return _this17.ajaxResultSuccess(response, data.options);
+	        return _this18.ajaxResultSuccess(response, data.options);
 	      }, function (response) {
-	        return _this17.ajaxResultFailure(response);
+	        return _this18.ajaxResultFailure(response);
 	      });
 	    }
 	  }, {
 	    key: "ajaxResultSuccess",
 	    value: function ajaxResultSuccess(response, requestOptions) {
-	      if (!this.ajaxResultCommonCheck(response)) {
+	      if (!this.ajaxResultCommonCheck(response) || this.ajaxPool.get(response.data.action) !== requestOptions.REQUEST_KEY) {
 	        return;
 	      }
+
+	      this.ajaxPool["delete"](response.data.action);
+	      main_core_events.EventEmitter.emit(this, 'onAjaxSuccess', response.data.action);
 
 	      switch (response.data.action) {
 	        case 'calculateTotalData':
@@ -3173,6 +4326,26 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 
 	          break;
 	      }
+	    }
+	  }, {
+	    key: "validateSubmit",
+	    value: function validateSubmit() {
+	      var _this19 = this;
+
+	      return new Promise(function (resolve, reject) {
+	        var currentBalloon = BX.UI.Notification.Center.getBalloonByCategory(catalog_productModel.ProductModel.SAVE_NOTIFICATION_CATEGORY);
+
+	        if (currentBalloon) {
+	          main_core_events.EventEmitter.subscribeOnce(currentBalloon, BX.UI.Notification.Event.getFullName('onClose'), function () {
+	            main_core_events.EventEmitter.subscribeOnce(_this19, 'onAjaxSuccess', function () {
+	              setTimeout(resolve, 100);
+	            });
+	          });
+	          currentBalloon.close();
+	        } else {
+	          resolve();
+	        }
+	      });
 	    }
 	  }, {
 	    key: "ajaxResultFailure",
@@ -3247,14 +4420,27 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      }
 	    }
 	  }, {
+	    key: "copyRow",
+	    value: function copyRow(row) {
+	      this.addProductRow(row);
+	      this.refreshSortFields();
+	      this.numerateRows();
+	      main_core_events.EventEmitter.emit('Grid::thereEditedRows', []);
+	      this.executeActions([{
+	        type: this.actions.productListChanged
+	      }, {
+	        type: this.actions.updateTotal
+	      }]);
+	    }
+	  }, {
 	    key: "cleanProductRows",
 	    value: function cleanProductRows() {
-	      var _this18 = this;
+	      var _this20 = this;
 
 	      this.products.filter(function (item) {
 	        return item.isEmpty();
 	      }).forEach(function (row) {
-	        return _this18.deleteRow(row.getField('ID'), true);
+	        return _this20.deleteRow(row.getField('ID'), true);
 	      });
 	    }
 	  }, {
@@ -3291,8 +4477,22 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  return Editor;
 	}();
 
+	function _initSupportCustomRowActions2() {
+	  this.getGrid()._clickOnRowActionsButton = function () {};
+	}
+
+	function _getCalculatePriceFieldNames2() {
+	  return ['BASE_PRICE', 'ENTERED_PRICE', 'TAX_INCLUDED', 'PRICE_NETTO', 'PRICE_BRUTTO', 'DISCOUNT_ROW', 'DISCOUNT_SUM', 'CURRENCY'];
+	}
+
+	function _childrenHasErrors2() {
+	  return this.products.filter(function (product) {
+	    return product.getModel().getErrorCollection().hasErrors();
+	  }).length > 0;
+	}
+
 	exports.Editor = Editor;
 	exports.PageEventsManager = PageEventsManager;
 
-}((this.BX.Crm.Entity.ProductList = this.BX.Crm.Entity.ProductList || {}),BX,BX.Catalog,BX.Main,BX,BX.Event,BX.Currency,BX.Catalog));
+}((this.BX.Crm.Entity.ProductList = this.BX.Crm.Entity.ProductList || {}),BX,BX,BX.Catalog,BX.Catalog,BX.Main,BX,BX.Event,BX.Catalog.StoreUse,BX.Currency,BX.Catalog,BX.Catalog));
 //# sourceMappingURL=script.js.map

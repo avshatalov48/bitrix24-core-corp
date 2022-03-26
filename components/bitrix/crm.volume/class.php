@@ -908,7 +908,7 @@ class CrmVolumeComponent extends \CBitrixComponent
 
 
 	/**
-	 * Returns true if data needed to be refresh.
+	 * Returns true if data needed to be refreshed.
 	 * @return int
 	 */
 	public function isNeedReload()
@@ -1027,10 +1027,13 @@ class CrmVolumeComponent extends \CBitrixComponent
 	 */
 	public function hasWorkerInProcess()
 	{
-		$option = Volume\Cleaner::getProgressInfo($this->getUser()->getId());
-		if (!empty($option))
+		if (Volume\Cleaner::countWorker($this->getUser()->getId()) > 0)
 		{
-			return (bool)($option['count'] > 0 && $option['steps'] < $option['count']);
+			$option = Volume\Cleaner::getProgressInfo($this->getUser()->getId());
+			if (!empty($option))
+			{
+				return (bool)($option['count'] > 0 && $option['steps'] < $option['count']);
+			}
 		}
 
 		return false;

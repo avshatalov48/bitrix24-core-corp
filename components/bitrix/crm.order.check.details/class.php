@@ -77,12 +77,12 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 		$this->arResult['PATH_TO_ORDER_PAYMENT_DETAILS'] = CrmCheckPath(
 			'PATH_TO_ORDER_PAYMENT_DETAILS',
 			$params['PATH_TO_ORDER_PAYMENT_DETAILS'],
-			$APPLICATION->GetCurPage().'?payment_id=#payment_id#&show'
+			COption::GetOptionString('crm', 'path_to_order_payment_details'),
 		);
 		$this->arResult['PATH_TO_ORDER_SHIPMENT_DETAILS'] = CrmCheckPath(
 			'PATH_TO_ORDER_SHIPMENT_DETAILS',
 			$params['PATH_TO_ORDER_SHIPMENT_DETAILS'],
-			$APPLICATION->GetCurPage().'?shipment_id=#shipment_id#&show'
+			COption::GetOptionString('crm', 'path_to_order_shipment_details')
 		);
 	}
 
@@ -112,13 +112,13 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 
 		$this->arResult['PATH_TO_ORDER_PAYMENT_DETAILS'] = CrmCheckPath(
 			'PATH_TO_ORDER_PAYMENT_DETAILS',
-			$APPLICATION->GetCurPage().'?payment_id=#payment_id#&show',
+			COption::GetOptionString('crm', 'path_to_order_payment_details'),
 			null
 		);
 
 		$this->arResult['PATH_TO_ORDER_SHIPMENT_DETAILS'] = CrmCheckPath(
 			'PATH_TO_ORDER_SHIPMENT_DETAILS',
-			$APPLICATION->GetCurPage().'?shipment_id=#shipment_id#&show',
+			COption::GetOptionString('crm', 'path_to_order_shipment_details'),
 			null
 		);
 

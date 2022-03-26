@@ -83,7 +83,8 @@ class Request extends Base
 			"FROM_USER_ID" => (int)$activityFields['AUTHOR_ID'],
 			"NOTIFY_TYPE" => IM_NOTIFY_FROM,
 			"NOTIFY_MODULE" => "crm",
-			"NOTIFY_EVENT" => "requestCreated",
+			//"NOTIFY_EVENT" => "requestCreated",
+			"NOTIFY_EVENT" => "changeAssignedBy",
 			"NOTIFY_TAG" => "CRM|CRM_REQUEST|".$activityFields['ID'],
 			"NOTIFY_MESSAGE" => Loc::getMessage('CRM_ACTIVITY_PROVIDER_REQUEST_NOTIFY', array(
 				'#title#' =>  '<a href="'.\CCrmOwnerType::GetEntityShowPath(\CCrmOwnerType::Activity, $activityFields['ID']).'">'.$activityFields['SUBJECT'].'</a>'

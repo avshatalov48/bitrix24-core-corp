@@ -59,9 +59,6 @@ BX.namespace("Tasks.Component");
 			BX.bind(element, "keypress", BX.proxy(this.catchEnterKey, this));
 		}
 
-		this.query = new BX.Tasks.Util.Query({url: "/bitrix/components/bitrix/tasks.task.list/ajax.php"});
-		this.query.bindEvent("executed", BX.proxy(this.onQueryExecuted, this));
-
 		BX.bind(this.layout.addLink, "click", BX.proxy(this.add, this));
 		BX.bind(this.layout.sendButton, "click", BX.proxy(this.send, this));
 		BX.bind(this.layout.cancelButton, "click", BX.proxy(this.cancel, this));
@@ -153,10 +150,35 @@ BX.namespace("Tasks.Component");
 			return;
 		}
 
-		this.query.deleteAll();
-		this.query.add("task.elapsedtime.delete", { id: id }, { code: "task.elapsedtime.delete" });
-		this.query.execute();
 		this.ajaxPendingResponse = true;
+
+		BX.ajax.runComponentAction('bitrix:tasks.task', 'deleteElapsedTime', {
+			mode: 'class',
+			data: {
+				taskId: this.parameters.taskId,
+				id: id
+			}
+		}).then(
+			function(response)
+			{
+				this.ajaxPendingResponse = false;
+				var record = this.getRecordById(id);
+				if (record)
+				{
+					record.row.parentNode.removeChild(record.row);
+					this.deleteRecord(record.id);
+				}
+			}.bind(this)
+		).catch(
+			function(response)
+			{
+				if (response.errors)
+				{
+					BX.Tasks.alert(response.errors);
+					this.ajaxPendingResponse = false;
+				}
+			}.bind(this)
+		);
 	};
 
 	BX.Tasks.Component.TaskElapsedTime.prototype.send = function()
@@ -182,149 +204,114 @@ BX.namespace("Tasks.Component");
 
 		this.enable(false);
 
-		this.query.deleteAll();
+		var action = 'addElapsedTime';
+		var params = {
+			data: data
+		}
 		if (id > 0)
 		{
-			this.query.add(
-				"task.elapsedtime.update",
-				{
-					id: id,
-					data: data,
-					parameters: {
-						'RETURN_ENTITY': true
-					}
-				},
-				{
-					code: "task.elapsedtime.update"
-				}
-			);
+			action = 'updateElapsedTime';
+			params.id = id;
 		}
 		else
 		{
-			data.TASK_ID = this.parameters.taskId;
-			this.query.add(
-				"task.elapsedtime.add",
-				{
-					data: data,
-					parameters: {
-						'RETURN_ENTITY': true
-					}
-				},
-				{
-					code: "task.elapsedtime.add"
-				}
-			);
+			params.taskId = this.parameters.taskId;
 		}
 
-		this.query.execute();
 		this.ajaxPendingResponse = true;
+		BX.ajax.runComponentAction('bitrix:tasks.task', action, {
+			mode: 'class',
+			data: params
+		}).then(
+			function(response)
+			{
+				this.ajaxPendingResponse = false;
+				this.onElapsedTimeUpdate(response);
+			}.bind(this)
+		).catch(
+			function(response)
+			{
+				if (response.errors)
+				{
+					this.ajaxPendingResponse = false;
+					BX.Tasks.alert(response.errors);
+				}
+			}.bind(this)
+		);
 	};
 
-	BX.Tasks.Component.TaskElapsedTime.prototype.onQueryExecuted = function(response)
+	BX.Tasks.Component.TaskElapsedTime.prototype.onElapsedTimeUpdate = function(response)
 	{
-		this.ajaxPendingResponse = false;
+		this.cancel();
+		this.enable();
 
-		if (!response.success || !response.data)
+		var data = response.data["DATA"];
+		var can = response.data["CAN"];
+
+		var rowClass = "";
+		if (can["MODIFY"])
 		{
-			return false;
+			rowClass += " task-time-table-edit";
 		}
 
-		for (var operation in response.data)
+		if (can["REMOVE"])
 		{
-			if (!response.data.hasOwnProperty(operation))
-			{
-				continue;
-			}
-
-			if (!response.data[operation].SUCCESS)
-			{
-				return false;
-			}
-
-			if (operation === "task.elapsedtime.add" || operation === "task.elapsedtime.update")
-			{
-				this.cancel();
-				this.enable();
-
-				var data = response.data[operation]["RESULT"]["DATA"];
-				var can = response.data[operation]["RESULT"]["CAN"];
-
-				var rowClass = "";
-				if (can["MODIFY"])
-				{
-					rowClass += " task-time-table-edit";
-				}
-
-				if (can["REMOVE"])
-				{
-					rowClass += " task-time-table-remove";
-				}
-
-				var source = data["SOURCE"];
-				var sourceNote = "";
-				if (source == 2)
-				{
-					sourceNote = this.messages.sourceManual;
-					rowClass += " task-time-table-manually";
-				}
-				else if (source == 1)
-				{
-					sourceNote = this.messages.sourceUndefined;
-					rowClass += " task-time-table-unknown";
-				}
-
-				var userName = BX.formatName({
-						NAME: data["USER_NAME"],
-						LAST_NAME: data["USER_LAST_NAME"],
-						SECOND_NAME: data["USER_SECOND_NAME"],
-						LOGIN: data["USER_LOGIN"]
-					},
-					this.nameTemplate,
-					"Y"
-				);
-
-				var id = data["ID"];
-				var date = BX.formatDate(BX.parseDate(data["CREATED_DATE"]), BX.message("FORMAT_DATETIME"));
-				var comment = data["COMMENT_TEXT"];
-
-				var time = data["SECONDS"];
-				time = this.getTime(time);
-				var pathToUserProfile = this.pathToUserProfile.replace("#user_id#", data["USER_ID"]);
-
-				var template = BX.Tasks.Util.Template.compile(this.template);
-				var rows = template.getNode({
-					rowId: "",
-					rowClass: rowClass,
-					sourceNote: sourceNote,
-					userName: userName,
-					date: date,
-					timeFormatted: BX.Tasks.Util.formatTimeAmount(time.time),
-					comment: comment,
-					pathToUserProfile: pathToUserProfile
-				});
-
-				var oldRecord = this.getRecordById(id);
-				var target = this.layout.addLinkRow;
-				if (oldRecord)
-				{
-					target = BX.findNextSibling(oldRecord.row);
-					BX.remove(oldRecord.row);
-				}
-
-				this.addRecord(id, rows[0], date, time.time, comment);
-				target.parentNode.insertBefore(rows[0], target);
-			}
-			else if (operation === "task.elapsedtime.delete")
-			{
-				var args = response.data[operation]["ARGUMENTS"] || {};
-				var record = this.getRecordById(args.id);
-				if (record)
-				{
-					record.row.parentNode.removeChild(record.row);
-					this.deleteRecord(record.id);
-				}
-			}
+			rowClass += " task-time-table-remove";
 		}
+
+		var source = data["SOURCE"];
+		var sourceNote = "";
+		if (source == 2)
+		{
+			sourceNote = this.messages.sourceManual;
+			rowClass += " task-time-table-manually";
+		}
+		else if (source == 1)
+		{
+			sourceNote = this.messages.sourceUndefined;
+			rowClass += " task-time-table-unknown";
+		}
+
+		var userName = BX.formatName({
+				NAME: data["USER_NAME"],
+				LAST_NAME: data["USER_LAST_NAME"],
+				SECOND_NAME: data["USER_SECOND_NAME"],
+				LOGIN: data["USER_LOGIN"]
+			},
+			this.nameTemplate,
+			"Y"
+		);
+
+		var id = data["ID"];
+		var date = BX.formatDate(BX.parseDate(data["CREATED_DATE"]), BX.message("FORMAT_DATETIME"));
+		var comment = data["COMMENT_TEXT"];
+
+		var time = data["SECONDS"];
+		time = this.getTime(time);
+		var pathToUserProfile = this.pathToUserProfile.replace("#user_id#", data["USER_ID"]);
+
+		var template = BX.Tasks.Util.Template.compile(this.template);
+		var rows = template.getNode({
+			rowId: "",
+			rowClass: rowClass,
+			sourceNote: sourceNote,
+			userName: userName,
+			date: date,
+			timeFormatted: BX.Tasks.Util.formatTimeAmount(time.time),
+			comment: comment,
+			pathToUserProfile: pathToUserProfile
+		});
+
+		var oldRecord = this.getRecordById(id);
+		var target = this.layout.addLinkRow;
+		if (oldRecord)
+		{
+			target = BX.findNextSibling(oldRecord.row);
+			BX.remove(oldRecord.row);
+		}
+
+		this.addRecord(id, rows[0], date, time.time, comment);
+		target.parentNode.insertBefore(rows[0], target);
 
 		var total = this.getSummary();
 		BX.onCustomEvent("TaskElapsedTimeUpdated", [total.hours, total.minutes, this.records, total]);

@@ -96,8 +96,9 @@ if ($isErrorOccured)
 	}
 }
 
-use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Crm\Agent\Duplicate\Background\CompanyIndexRebuild;
+use Bitrix\Crm\Agent\Duplicate\Background\CompanyMerge;
 use Bitrix\Crm\Agent\Requisite\CompanyAddressConvertAgent;
 use Bitrix\Crm\Agent\Requisite\CompanyUfAddressConvertAgent;
 use Bitrix\Crm\Format\AddressFormatter;
@@ -109,6 +110,8 @@ use Bitrix\Crm\Settings\HistorySettings;
 use Bitrix\Crm\Settings\CompanySettings;
 use Bitrix\Crm\WebForm\Manager as WebFormManager;
 use Bitrix\Crm\Settings\LayoutSettings;
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
 
 $CCrmBizProc = new CCrmBizProc('COMPANY');
 
@@ -458,11 +461,16 @@ foreach ($utmList as $utmCode => $utmName)
 	);
 }
 
-$CCrmFieldMulti->PrepareListHeaders($arResult['HEADERS']);
+$CCrmFieldMulti->PrepareListHeaders($arResult['HEADERS'], ['LINK']);
 if($isInExportMode)
 {
 	$CCrmFieldMulti->ListAddHeaders($arResult['HEADERS']);
 }
+
+Crm\Service\Container::getInstance()->getParentFieldManager()->prepareGridHeaders(
+	\CCrmOwnerType::Company,
+	$arResult['HEADERS']
+);
 
 $arResult['HEADERS'] = array_merge(
 	$arResult['HEADERS'],
@@ -522,6 +530,14 @@ $arResult['HEADERS'] = array_merge($arResult['HEADERS'], array(
 
 $CCrmUserType->ListAddHeaders($arResult['HEADERS']);
 
+$arResult['HEADERS_SECTIONS'] = [
+	[
+		'id' => 'COMPANY',
+		'name' => Loc::getMessage('CRM_COLUMN_COMPANY'),
+		'default' => true,
+		'selected' => true,
+	],
+];
 
 $arBPData = array();
 if ($isBizProcInstalled)
@@ -804,6 +820,12 @@ foreach ($arFilter as $k => $v)
 {
 	if(in_array($k, $arImmutableFilters, true))
 	{
+		continue;
+	}
+
+	if (Crm\Service\ParentFieldManager::isParentFieldName($k))
+	{
+		$arFilter[$k] = Crm\Service\ParentFieldManager::transformEncodedFilterValueIntoInteger($k, $v);
 		continue;
 	}
 
@@ -1838,6 +1860,12 @@ $enableExportEvent = $isInExportMode && HistorySettings::getCurrent()->isExportE
 $bizProcTabId = $isMyCompanyMode ? 'CRM_MYCOMPANY_SHOW_V12_active_tab' : 'CRM_COMPANY_SHOW_V12_active_tab';
 
 $now = time() + CTimeZone::GetOffset();
+
+$parentFieldValues = Crm\Service\Container::getInstance()->getParentFieldManager()->loadParentElementsByChildren(
+	\CCrmOwnerType::Company,
+	$arResult['COMPANY']
+);
+
 foreach($arResult['COMPANY'] as &$arCompany)
 {
 	$entityID =  $arCompany['ID'];
@@ -2166,6 +2194,21 @@ foreach($arResult['COMPANY'] as &$arCompany)
 		}
 	}
 
+	if (isset($parentFieldValues[$arCompany['ID']]))
+	{
+		foreach ($parentFieldValues[$arCompany['ID']] as $parentEntityTypeId => $parentEntity)
+		{
+			if ($isInExportMode)
+			{
+				$arCompany[$parentEntity['code']] = $parentEntity['title'];
+			}
+			else
+			{
+				$arCompany[$parentEntity['code']] = $parentEntity['value'];
+			}
+		}
+	}
+
 	$arResult['COMPANY'][$entityID] = $arCompany;
 	$arResult['COMPANY_UF'][$entityID] = array();
 	$arResult['COMPANY_ID'][$entityID] = $entityID;
@@ -2183,6 +2226,22 @@ $CCrmUserType->ListAddEnumFieldsValue(
 			'/bitrix/components/bitrix/crm.company.show/show_file.php?ownerId=#owner_id#&fieldName=#field_name#&fileId=#file_id#'
 	)
 );
+
+$arResult['ENABLE_TOOLBAR'] = isset($arParams['ENABLE_TOOLBAR']) ? $arParams['ENABLE_TOOLBAR'] : false;
+if($arResult['ENABLE_TOOLBAR'])
+{
+	$parentEntityTypeId = (int)($arParams['PARENT_ENTITY_TYPE_ID'] ?? 0);
+	$parentEntityId = (int)($arParams['PARENT_ENTITY_ID'] ?? 0);
+	if (\CCrmOwnerType::IsDefined($parentEntityTypeId) && $parentEntityId > 0)
+	{
+		$arResult['PATH_TO_COMPANY_ADD'] = Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl(
+			\CCrmOwnerType::Company,
+			0,
+			null,
+			new Crm\ItemIdentifier($parentEntityTypeId, $parentEntityId)
+		);
+	}
+}
 
 // adding crm multi field to result array
 if (isset($arResult['COMPANY_ID']) && !empty($arResult['COMPANY_ID']))
@@ -2302,7 +2361,7 @@ if (!$isInExportMode)
 		$arResult['NEED_FOR_BUILD_TIMELINE'] =
 		$arResult['NEED_FOR_BUILD_DUPLICATE_INDEX'] =
 		$arResult['NEED_TO_CONVERT_ADDRESSES'] =
-		$arResult['NEED_TO_CONVERT_UF_ADDRESSES'] = 
+		$arResult['NEED_TO_CONVERT_UF_ADDRESSES'] =
 		$arResult['NEED_FOR_REBUILD_SECURITY_ATTRS'] = false;
 
 	if(!$bInternal)
@@ -2382,6 +2441,36 @@ if (!$isInExportMode)
 		$arResult['NEED_TO_CONVERT_UF_ADDRESSES'] = $isAgentEnabled;
 		unset ($agent, $isAgentEnabled);
 		//endregion Transfer addresses from user fields
+
+		//region Show the process of indexing duplicates
+		$isNeedToShowDupIndexProcess = false;
+		$agent = CompanyIndexRebuild::getInstance($userID);
+		if ($agent->isActive())
+		{
+			$state = $agent->state()->getData();
+			if (isset($state['STATUS']) && $state['STATUS'] === CompanyIndexRebuild::STATUS_RUNNING)
+			{
+				$isNeedToShowDupIndexProcess = true;
+			}
+		}
+		$arResult['NEED_TO_SHOW_DUP_INDEX_PROCESS'] = $isNeedToShowDupIndexProcess;
+		unset($isNeedToShowDupIndexProcess, $agent);
+		//endregion Show the process of indexing duplicates
+
+		//region Show the process of merge duplicates
+		$isNeedToShowDupMergeProcess = false;
+		$agent = CompanyMerge::getInstance($userID);
+		if ($agent->isActive())
+		{
+			$state = $agent->state()->getData();
+			if (isset($state['STATUS']) && $state['STATUS'] === CompanyMerge::STATUS_RUNNING)
+			{
+				$isNeedToShowDupMergeProcess = true;
+			}
+		}
+		$arResult['NEED_TO_SHOW_DUP_MERGE_PROCESS'] = $isNeedToShowDupMergeProcess;
+		unset($isNeedToShowDupMergeProcess, $agent);
+		//endregion Show the process of merge duplicates
 	}
 
 	$this->IncludeComponentTemplate();

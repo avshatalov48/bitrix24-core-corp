@@ -132,6 +132,7 @@ var WebSocketConnector = function (delegate, params)
 	this.offline = false;
 
 	this.hasActiveCall = false;
+	this.hasActiveTelephonyCall = false;
 
 	Object.defineProperty(this, "socket", {
 		set : (value) =>
@@ -161,6 +162,7 @@ var WebSocketConnector = function (delegate, params)
 		BX.addCustomEvent("onAppActive", this.onAppActive.bind(this));
 		BX.addCustomEvent("onAppPaused", this.onAppPaused.bind(this));
 		BX.addCustomEvent("CallEvents::hasActiveCall", this.onActiveCallStateChange.bind(this))
+		BX.addCustomEvent("CallEvents::hasActiveTelephonyCall", this.onActiveTelephonyCallStateChange.bind(this))
 	}
 
 	BX.addCustomEvent("onPullForceBackgroundConnect", () => {
@@ -168,6 +170,14 @@ var WebSocketConnector = function (delegate, params)
 		if(Application.isBackground())
 		{
 			this.connect(true);
+		}
+		else
+		{
+			if (this.socket && this.socket.readyState === 1)
+			{
+				// already connected
+				this.sendPullStatus(PullStatus.Online);
+			}
 		}
 	});
 
@@ -247,6 +257,7 @@ WebSocketConnector.prototype = {
 	},
 	disconnect : function (code, message)
 	{
+		console.trace("disconnect", code, message)
 		/**
 		 * @var this.socket WebSocket
 		 */
@@ -343,22 +354,33 @@ WebSocketConnector.prototype = {
 	onActiveCallStateChange : function (hasActiveCall)
 	{
 		this.hasActiveCall = hasActiveCall;
-		if (!this.hasActiveCall && Application.isBackground())
+		if (!this.hasActiveCall && !this.hasActiveTelephonyCall && Application.isBackground())
+		{
+			this.disconnect(1000, "App is in background")
+		}
+	},
+	onActiveTelephonyCallStateChange : function (hasActiveTelephonyCall)
+	{
+		console.warn('onActiveTelephonyCallStateChange', hasActiveTelephonyCall);
+		this.hasActiveTelephonyCall = hasActiveTelephonyCall;
+		if (!this.hasActiveCall && !this.hasActiveTelephonyCall && Application.isBackground())
 		{
 			this.disconnect(1000, "App is in background")
 		}
 	},
 	onAppPaused : function ()
 	{
-		if (!this.hasActiveCall)
+		console.warn("onAppPaused; this.hasActiveCall: " + (this.hasActiveCall ? "true" : "false") + "; this.hasActiveTelephonyCall: " + (this.hasActiveTelephonyCall ? "true" : "false"));
+		if (!this.hasActiveCall && !this.hasActiveTelephonyCall)
 		{
 			this.disconnect(1000, "App is in background")
 		}
 	},
 	onAppActive : function ()
 	{
+		console.warn("onAppActive; this.hasActiveCall: " + (this.hasActiveCall ? "true" : "false") + "; this.hasActiveTelephonyCall: " + (this.hasActiveTelephonyCall ? "true" : "false"));
 		this.waitingConnectionAfterBackground = true;
-		this.connect(!this.hasActiveCall);
+		this.connect(!this.hasActiveCall && !this.hasActiveTelephonyCall);
 	}
 };
 

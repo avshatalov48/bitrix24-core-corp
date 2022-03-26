@@ -15,7 +15,6 @@ BX.namespace('BX.Tasks');
 
 BX.Tasks.DayPlan = BX.Tasks.Util.Base.extend({
 	options: {
-		query: false,
 		data: []
 	},
 	methods: {
@@ -84,7 +83,7 @@ BX.Tasks.DayPlan = BX.Tasks.Util.Base.extend({
 		{
 			this.onPlannerUpdate(data.PLANNER);
 		},
-		
+
 		handleSliderDestroy: function(event)
 		{
 			this.unbindWidgetEvents(window.top);
@@ -277,28 +276,35 @@ BX.Tasks.DayPlan = BX.Tasks.Util.Base.extend({
 
 			if(sync)
 			{
-				this.getQuery().add('task.dayplan.timer.start', {taskId: taskId, stopPrevious: stopPrevious || false}, {}, BX.delegate(function(errors){
-
-					var error = errors.getByCode('OTHER_TASK_ON_TIMER');
-
-					if(error)
+				BX.ajax.runComponentAction('bitrix:tasks.task', 'startTimer', {
+					mode: 'class',
+					data: {
+						taskId: taskId,
+						stopPrevious: stopPrevious || false
+					}
+				}).then(
+					function(response)
 					{
-						var data = error.data();
-						var args = [taskId, []];
-						if(data.TASK && data.TASK.TITLE && data.TASK.ID)
+						if (
+							!response.status
+							|| response.status !== 'success'
+						)
 						{
-							args[1] = {id: data.TASK.ID, title: data.TASK.TITLE};
+							this.fireEvent('other-task-on-timer', [taskId, []]);
+							return;
 						}
-
-						this.fireEvent('other-task-on-timer', args);
-
-						errors.deleteByCodeAll('OTHER_TASK_ON_TIMER');
-					}
-					else
-					{
 						this.fireEvent('task-timer-toggle', [taskId, true]);
-					}
-				}, this));
+					}.bind(this),
+					function(response)
+					{
+						var respData = [];
+						if (response.errors[0].data.TASK)
+						{
+							respData = response.errors[0].data.TASK;
+						}
+						this.fireEvent('other-task-on-timer', [taskId, respData]);
+					}.bind(this)
+				);
 			}
 			else
 			{
@@ -314,33 +320,34 @@ BX.Tasks.DayPlan = BX.Tasks.Util.Base.extend({
 
 			if(sync)
 			{
-				this.getQuery().add('task.dayplan.timer.stop', {taskId: taskId}, {}, BX.delegate(function(){
-					this.fireEvent('task-timer-toggle', [taskId, false]);
-				}, this));
+				BX.ajax.runComponentAction('bitrix:tasks.task', 'stopTimer', {
+					mode: 'class',
+					data: {
+						taskId: taskId
+					}
+				}).then(
+					function(response)
+					{
+						if (
+							!response.status
+							|| response.status !== 'success'
+						)
+						{
+							return;
+						}
+
+						this.fireEvent('task-timer-toggle', [taskId, false]);
+					}.bind(this),
+					function(response)
+					{
+
+					}.bind(this)
+				);
 			}
 			else
 			{
 				this.fireEvent('task-timer-toggle', [taskId, false]);
 			}
-		},
-
-		getQuery: function()
-		{
-			if(typeof this.query == 'undefined')
-			{
-				if(this.option('query'))
-				{
-					this.query = this.option('query');
-				}
-				else
-				{
-					this.query = new BX.Tasks.Util.Query({
-						autoExec: true
-					});
-				}
-			}
-
-			return this.query;
 		}
 	}
 });

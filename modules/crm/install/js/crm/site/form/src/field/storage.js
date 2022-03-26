@@ -25,6 +25,7 @@ function restore(): Object
 
 	storedValues = storedValues || {};
 	storedValues.type = storedValues.type || {};
+	storedValues.name = storedValues.name || {};
 
 	return storedValues;
 }
@@ -40,12 +41,17 @@ export function storeFieldValues(fields: Controller[]): Object
 
 		const storedTypes = ['name', 'second-name', 'last-name', 'email', 'phone'];
 		const stored = fields.reduce((result, field: Controller) => {
-			if (storedTypes.indexOf(field.getType()) >= 0)
+			if (storedTypes.indexOf(field.getType()) >= 0 && field.autocomplete || field.autocomplete === true)
 			{
 				const value = field.value();
 				if (value)
 				{
-					result.type[field.getType()] = value;
+					if (storedTypes.indexOf(field.getType()) >= 0 && field.autocomplete)
+					{
+						result.type[field.getType()] = value;
+					}
+
+					result.name[field.name] = value;
 				}
 			}
 
@@ -59,5 +65,16 @@ export function storeFieldValues(fields: Controller[]): Object
 
 export function getStoredFieldValue(fieldType: string): string
 {
+	const storedTypes = ['name', 'second-name', 'last-name', 'email', 'phone'];
+	if (storedTypes.indexOf(fieldType) < 0)
+	{
+		return '';
+	}
+
 	return restore()['type'][fieldType] || '';
+}
+
+export function getStoredFieldValueByFieldName(fieldName: string): string
+{
+	return restore()['name'][fieldName] || '';
 }

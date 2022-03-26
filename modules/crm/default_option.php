@@ -19,7 +19,7 @@ $crm_default_option = array(
 	'path_to_deal_calendar' => '/crm/deal/calendar/',
 	'path_to_quote_edit' => '/crm/quote/edit/#quote_id#/',
 	'path_to_quote_show' => '/crm/quote/show/#quote_id#/',
-	'path_to_quote_details' => '/crm/quote/details/#quote_id#/',
+	'path_to_quote_details' => '/crm/type/7/details/#quote_id#/',
 	'path_to_quote_list' => '/crm/quote/list/',
 	'path_to_quote_import' => '/crm/quote/import/',
 	'path_to_quote_kanban' => '/crm/quote/kanban/',
@@ -78,6 +78,9 @@ $crm_default_option = array(
 	'path_to_user_field_edit' => '/crm/configs/fields/#entity_id#/edit/#field_id#/',
 	'path_to_lead_status_list' => '/crm/type/1/categories/',
 
+	'path_to_store_document_details' => '/shop/documents/details/#document_id#/',
+	'path_to_shipment_document_details' => '/shop/documents/details/sales_order/#document_id#/',
+
 	'email_from' => '',
 	'email_template' => '',
 
@@ -92,4 +95,7 @@ $crm_default_option = array(
 	'enable_simple_time_format' => 'Y',
 	'enable_user_name_sorting' => 'N',
 	'crm_shop_enabled' => 'N',
+	'enable_order_deal_create' => 'N',
+	'enable_catalog_price_save' => 'Y',
+	'enable_full_catalog' => 'Y',
 );

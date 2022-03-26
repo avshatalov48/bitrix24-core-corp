@@ -2,6 +2,7 @@
 namespace Bitrix\Crm\Integration\BizProc\FieldType;
 
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Main,
 	Bitrix\Bizproc\FieldType,
 	Bitrix\Main\Page\Asset,
@@ -34,7 +35,7 @@ class Crm extends UserFieldBase
 	{
 		$entity = $fieldType->getOptions();
 
-		if (empty($entity))
+		if (empty($entity) || !is_array($entity))
 		{
 			$entity = static::getDefaultFieldSettings();
 		}
@@ -88,6 +89,10 @@ class Crm extends UserFieldBase
 			\CCrmOwnerType::Company,
 			\CCrmOwnerType::Deal,
 		];
+		if (InvoiceSettings::getCurrent()->isSmartInvoiceEnabled())
+		{
+			$entityTypeIds[] = \CCrmOwnerType::SmartInvoice;
+		}
 		$dynamicTypes = Container::getInstance()->getDynamicTypesMap()->load([
 			'isLoadCategories' => false,
 			'isLoadStages' => false,

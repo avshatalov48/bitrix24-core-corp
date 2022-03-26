@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Intranet;
 
+use Bitrix\Crm\WebForm;
 use Bitrix\ImOpenLines\Common;
 use Bitrix\ImOpenlines\Security\Helper;
 use Bitrix\ImOpenlines\Security\Permissions;
@@ -16,6 +17,7 @@ use Bitrix\Main\Web\Uri;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Config\Option;
 use Bitrix\Notifications\FeatureStatus;
+use Bitrix\Notifications\Limit;
 use Bitrix\Notifications\Settings;
 use Bitrix\Voximplant\Limits;
 
@@ -40,7 +42,7 @@ class ContactCenter
 	/**
 	 *
 	 */
-	public function _construct()
+	public function __construct()
 	{
 
 	}
@@ -270,14 +272,21 @@ class ContactCenter
 		$itemsList["widget"] = $this->getButtonListItem($filter);
 		$itemsList["form"] = $this->getFormListItem($filter);
 
-		if (Loader::includeModule("voximplant") && !empty(\Bitrix\Crm\WebForm\Callback::getPhoneNumbers()))
+		if (!empty(WebForm\Callback::getPhoneNumbers()))
 		{
 			$itemsList["call"] = $this->getCallFormListItem($filter);
+		}
+		if (WebForm\WhatsApp::canUse())
+		{
+			$itemsList["formWhatsapp"] = $this->getWhatsAppFormListItem($filter);
 		}
 
 		if (\Bitrix\Crm\Ads\AdsForm::canUse())
 		{
-			$itemsList = array_merge($itemsList, $this->getAdsFormListItems($filter));
+			foreach ($this->getAdsFormListItems($filter) as $key => $item)
+			{
+				$itemsList[$key] = $item;
+			}
 		}
 
 		if (isset($filter["ACTIVE"]))
@@ -432,26 +441,39 @@ class ContactCenter
 						&& class_exists(Settings::class)
 					)
 					{
-						if (!empty($itemsList[$code]["LIST"]))
+						$crmPaymentStatus = Settings::getScenarioAvailability(Settings::SCENARIO_CRM_PAYMENT);
+						if ($crmPaymentStatus === FeatureStatus::UNAVAILABLE)
 						{
-							$uri = new Uri($link);
-							$uri->addParams(["LINE" => \Bitrix\Notifications\Integration\ImConnector::getLineId()]);
-							$link = $uri->getUri();
+							unset($itemsList[$code]);
+						}
+						else
+						{
+							if (!empty($itemsList[$code]["LIST"]))
+							{
+								$uri = new Uri($link);
+								$uri->addParams(["LINE" => \Bitrix\Notifications\Integration\ImConnector::getLineId()]);
+								$link = $uri->getUri();
 
-							unset($itemsList[$code]["LIST"]);
-							$itemsList[$code]["LINK"] = \CUtil::JSEscape($link);
+								unset($itemsList[$code]["LIST"]);
+								$itemsList[$code]["LINK"] = \CUtil::JSEscape($link);
+							}
 							$itemsList[$code]["SELECTED"] = Settings::isScenarioEnabled(Settings::SCENARIO_CRM_PAYMENT);
 						}
 
-						if (Settings::getScenarioAvailability(Settings::SCENARIO_VIRTUAL_WHATSAPP) !== FeatureStatus::UNAVAILABLE)
+						$virtualWhatsAppStatus = Settings::getScenarioAvailability(Settings::SCENARIO_VIRTUAL_WHATSAPP);
+						if ($virtualWhatsAppStatus !== FeatureStatus::UNAVAILABLE)
 						{
+							$infoHelperCode = $virtualWhatsAppStatus === FeatureStatus::LIMITED
+								? Limit::getInfoHelperCodeForScenario(Settings::SCENARIO_VIRTUAL_WHATSAPP)
+								: false
+							;
 							$uri = new Uri($link);
 							$uri->addParams(["scenario" => Settings::SCENARIO_VIRTUAL_WHATSAPP]);
 							$itemsList["virtual_whatsapp"] = [
 								"NAME" => Loc::getMessage("CONTACT_CENTER_IMOPENLINES_NOTIFICATION_VIRTUAL_WA"),
 								"LINK" => \CUtil::JSEscape($uri->getUri()),
 								"SELECTED" => Settings::isScenarioEnabled(Settings::SCENARIO_VIRTUAL_WHATSAPP),
-								"CONNECTION_INFO_HELPER_LIMIT" => false,
+								"CONNECTION_INFO_HELPER_LIMIT" => $infoHelperCode,
 								"LOGO_CLASS" => "ui-icon ui-icon-service-" . $codeMap["notifications_virtual_wa"]
 							];
 						}
@@ -1005,55 +1027,21 @@ class ContactCenter
 	{
 		if ($filter["IS_LOAD_INNER_ITEMS"] !== "N")
 		{
-			$formParams = array("order" => array("ID" => "DESC"));
-			$formCollection = \Bitrix\Crm\WebForm\Internals\FormTable::getList($formParams);
-			$list = array();
-
-			while ($form = $formCollection->fetch())
-			{
-				$list[] = $form;
-			}
-
-			if (count($list) > 0)
-			{
-				$newItem = array(
-					"NAME" => Loc::getMessage("CONTACT_CENTER_FORM_ADD"),
-					"FIXED" => true,
-					"ID" => 0
-				);
-				array_unshift($list, $newItem);
-
-				foreach ($list as &$listItem)
-				{
-					$listItem["NAME"] = htmlspecialcharsbx($listItem["NAME"]);
-					$listItem["LINK"] = $this->getFormUrl($listItem["ID"]);
-				}
-			}
-
-			$selected = count($list) > 0;
+			$formCollection = \Bitrix\Crm\WebForm\Internals\FormTable::getList([
+				"select" => ["ID"]
+			]);
+			$selected = $formCollection->getSelectedRowsCount() > 0;
 		}
 		else
 		{
 			$selected = \Bitrix\Crm\WebForm\Manager::isInUse();
 		}
 
-		$result = array(
+		return array(
 			"NAME" => Loc::getMessage("CONTACT_CENTER_FORM"),
 			"SELECTED" => $selected,
 			"LOGO_CLASS" => "ui-icon ui-icon-service-webform"
 		);
-
-		if (!empty($list))
-		{
-			$result["LIST"] = $list;
-		}
-
-		if (!$selected)
-		{
-			$result["LINK"] = $this->getFormUrl(0);
-		}
-
-		return $result;
 	}
 
 	/**
@@ -1068,58 +1056,59 @@ class ContactCenter
 	 */
 	private function getCallFormListItem($filter = array())
 	{
-		$options = array("IS_CALLBACK_FORM" => "Y");
 		if ($filter["IS_LOAD_INNER_ITEMS"] !== "N")
 		{
-			$listCall = array();
-			$callbackFormParams = array("order" => array("ID" => "DESC"), "filter" => $options);
-			$callbackFormCollection = \Bitrix\Crm\WebForm\Internals\FormTable::getList($callbackFormParams);
+			$callbackFormCollection = \Bitrix\Crm\WebForm\Internals\FormTable::getList([
+				"filter" => ["IS_CALLBACK_FORM" => "Y"]
+			]);
 
-			while ($form = $callbackFormCollection->fetch())
-			{
-				$listCall[] = $form;
-			}
-
-			if (count($listCall) > 0)
-			{
-				$newItem = array(
-					"NAME" => Loc::getMessage("CONTACT_CENTER_FORM_ADD"),
-					"FIXED" => true,
-					"ID" => 0
-				);
-				array_unshift($listCall, $newItem);
-
-				foreach ($listCall as &$listItem)
-				{
-					$listItem["NAME"] = htmlspecialcharsbx($listItem["NAME"]);
-					$listItem["LINK"] = $this->getFormUrl($listItem["ID"], $options);
-				}
-			}
-
-			$selected = count($listCall) > 0;
+			$selected = $callbackFormCollection->getSelectedRowsCount() > 0;
 		}
 		else
 		{
 			$selected = \Bitrix\Crm\WebForm\Manager::isInUse("Y");
 		}
 
-		$result = array(
+		return [
 			"NAME" => Loc::getMessage("CONTACT_CENTER_CALL"),
 			"SELECTED" => $selected,
 			"LOGO_CLASS" => "ui-icon ui-icon-service-callback"
-		);
+		];
+	}
 
-		if (!empty($listCall))
+	/**
+	 * Return whatsapp-form button item with whatsapp-form list
+	 *
+	 * @param array $filter
+	 *
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	private function getWhatsAppFormListItem($filter = array()): array
+	{
+		if (WebForm\WhatsApp::isSetupCompleted())
 		{
-			$result["LIST"] = $listCall;
+			$link = WebForm\WhatsApp::getDefaultFormEditUrl();
+			$linkType = 'newWindow';
+			$selected = true;
+		}
+		else
+		{
+			$link = WebForm\WhatsApp::getSetupLink();
+			$linkType = 'slider';
+			$selected = false;
 		}
 
-		if (!$selected)
-		{
-			$result["LINK"] = $this->getFormUrl(0, $options);
-		}
-
-		return $result;
+		return [
+			"NAME" => Loc::getMessage("CONTACT_CENTER_WHATSAPP"),
+			"SELECTED" => $selected,
+			"FORM_ID" => WebForm\WhatsApp::getDefaultFormId(),
+			"LOGO_CLASS" => "ui-icon ui-icon-service-whatsapp",
+			"LINK_TYPE" => $linkType,
+			"LINK" => $link,
+		];
 	}
 
 	/**
@@ -1153,109 +1142,37 @@ class ContactCenter
 	 */
 	private function getAdsFormListItems($filter = array())
 	{
-		$formParams = array("order" => array("ID" => "DESC"), "select" => array("ID", "NAME"));
-		$formCollection = \Bitrix\Crm\WebForm\Internals\FormTable::getList($formParams);
-		$itemsList = array();
-		$list = array();
 
-		while ($form = $formCollection->fetch())
+		$formsDb = \Bitrix\Crm\WebForm\Internals\FormTable::query()
+			->setSelect(["ID"])
+			->setCacheTtl(300)
+			->exec();
+
+		if ($formsDb->getSelectedRowsCount() === 0)
 		{
-			$list[$form["ID"]] = $form;
+			return [];
 		}
 
-		if (!empty($list))
+		$codeMap = \Bitrix\Crm\Ads\AdsForm::getAdsIconMap();
+		$cisCheck = $this->cisCheck() && $filter["CHECK_REGION"] !== "N";
+
+		$itemsList = [];
+		foreach (\Bitrix\Crm\Ads\AdsForm::getServiceTypes() as $type)
 		{
-			$serviceTypes = \Bitrix\Crm\Ads\AdsForm::getServiceTypes();
-			$codeMap = \Bitrix\Crm\Ads\AdsForm::getAdsIconMap();
-			$cisOnlyItems = array(\Bitrix\Seo\LeadAds\Service::TYPE_VKONTAKTE);
-			$cisCheck = $this->cisCheck() && $filter["CHECK_REGION"] !== "N";
-
-			foreach ($serviceTypes as $type)
+			if ($cisCheck && $type === \Bitrix\Seo\LeadAds\Service::TYPE_VKONTAKTE)
 			{
-				if ($cisCheck && in_array($type, $cisOnlyItems))
-				{
-					continue;
-				}
-
-				$linkedFormsIds = \Bitrix\Crm\Ads\AdsForm::getLinkedForms($type);
-				$name = (Loc::getMessage("CONTACT_CENTER_ADS_FORM_".mb_strtoupper($type)) ? : \Bitrix\Crm\Ads\AdsForm::getServiceTypeName($type));
-
-				if ($filter["IS_LOAD_INNER_ITEMS"] !== "N")
-				{
-					$linkedItems = array();
-					$shortName = (Loc::getMessage("CONTACT_CENTER_ADS_FORM_SHORTNAME_".mb_strtoupper($type)) ? : \Bitrix\Crm\Ads\AdsForm::getServiceTypeName($type));
-					$notLinkedItems = $list;
-
-					foreach ($linkedFormsIds as $id)
-					{
-						$item = $notLinkedItems[$id];
-						$item["NAME"] = htmlspecialcharsbx($item["NAME"]);
-						$item["LIST"] = array(
-							0 => array(
-								"LINK" => $this->getFormUrl($item["ID"]),
-								"NAME" => Loc::getMessage("CONTACT_CENTER_ADS_FORM_SETTINGS_FORM")
-							),
-							1 => array(
-								"LINK" => $this->getAdsUrl($item["ID"], $type),
-								"NAME" => Loc::getMessage("CONTACT_CENTER_ADS_FORM_SETTINGS_LINK", array("#NAME#" => $shortName))
-							)
-						);
-						$linkedItems[] = $item;
-						unset($notLinkedItems[$id]);
-					}
-
-					foreach ($notLinkedItems as &$item)
-					{
-						$item["NAME"] = htmlspecialcharsbx($item["NAME"]);
-						$item["LINK"] = $this->getAdsUrl($item["ID"], $type);
-					}
-					unset($item);
-
-					$notLinkedItems = array_values($notLinkedItems);
-					$selected = !empty($linkedItems);
-					$newItem = array(
-						"ID" => 0,
-						"NAME" => Loc::getMessage("CONTACT_CENTER_FORM_CREATE"),
-						"LINK" => $this->getFormUrl(0),
-						"FIXED" => true,
-					);
-
-					if ($selected)
-					{
-						$items = $linkedItems;
-						if (!empty($notLinkedItems))
-						{
-							array_unshift($notLinkedItems, $newItem);
-							$items[] = array(
-								"ID" => 0,
-								"DELIMITER_BEFORE" => true,
-								"NAME" => Loc::getMessage("CONTACT_CENTER_FORM_LINK", array("#NAME#" => $shortName)),
-								"LIST" => $notLinkedItems
-							);
-						}
-					}
-					else
-					{
-						array_unshift($notLinkedItems, $newItem);
-						$items = $notLinkedItems;
-					}
-				}
-				else
-				{
-					$selected = count($linkedFormsIds) > 0;
-				}
-
-				$itemsList[$type . "ads"] = array(
-					"NAME" => $name,
-					"SELECTED" => $selected,
-					"LOGO_CLASS" => "ui-icon ui-icon-service-" . $codeMap[$type]
-				);
-
-				if (!empty($items))
-				{
-					$itemsList[$type . "ads"]["LIST"] = $items;
-				}
+				continue;
 			}
+
+			$linkedFormsIds = \Bitrix\Crm\Ads\AdsForm::getLinkedForms($type);
+			$selected = count($linkedFormsIds) > 0;
+			$typeCaption = Loc::getMessage("CONTACT_CENTER_ADS_FORM_".mb_strtoupper($type));
+
+			$itemsList["{$type}ads"] = [
+				"NAME" => $typeCaption?: \Bitrix\Crm\Ads\AdsForm::getServiceTypeName($type),
+				"SELECTED" => $selected,
+				"LOGO_CLASS" => "ui-icon ui-icon-service-{$codeMap[$type]}"
+			];
 		}
 
 		return $itemsList;
@@ -1419,45 +1336,6 @@ class ContactCenter
 	private function getSiteButtonUrlTemplate()
 	{
 		return Option::get("crm", "path_to_button_edit", "/crm/button/edit/#id#/");
-	}
-
-	/**
-	 * Return formatted adsform item url with params
-	 *
-	 * @param $formId
-	 * @param $adsType
-	 * @param array $options
-	 *
-	 * @return mixed
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 */
-	private function getAdsUrl($formId, $adsType, $options = array())
-	{
-		$adsLinkTemplate = $this->getAdsUrlTemplate();
-		$link = \CComponentEngine::makePathFromTemplate(
-			$adsLinkTemplate,
-			array(
-				"ads_type" => $adsType,
-				"id" => $formId
-			)
-		);
-		$uri = new Uri($link);
-		$uri->addParams($options);
-		$result = \CUtil::JSEscape($uri->getUri());
-		unset($uri);
-
-		return $result;
-	}
-
-	/**
-	 * @return string
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 */
-	private function getAdsUrlTemplate()
-	{
-		return  Option::get("crm", "path_to_ads", "/crm/webform/ads/#id#/?type=#ads_type#");
 	}
 
 	/**

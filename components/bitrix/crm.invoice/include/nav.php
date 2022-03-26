@@ -4,11 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 global $APPLICATION;
 if (!isset($arResult['INTERNAL']) || !$arResult['INTERNAL'])
 {
-	$defaultTitle = GetMessage('CRM_INVOICE_NAV_TITLE_LIST_SHORT');
-	if(empty($defaultTitle))
-	{
-		$defaultTitle = GetMessage('CRM_INVOICE_NAV_TITLE_LIST');
-	}
+	$defaultTitle = \CCrmOwnerType::GetCategoryCaption(\CCrmOwnerType::Invoice);
 
 	if(isset($arResult['CRM_CUSTOM_PAGE_TITLE']))
 		$APPLICATION->SetTitle($arResult['CRM_CUSTOM_PAGE_TITLE']);

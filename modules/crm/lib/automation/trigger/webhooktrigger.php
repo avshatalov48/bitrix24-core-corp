@@ -8,16 +8,6 @@ use Bitrix\Rest;
 
 class WebHookTrigger extends BaseTrigger
 {
-	public static function isSupported($entityTypeId)
-	{
-		if ($entityTypeId === \CCrmOwnerType::Quote)
-		{
-			return false;
-		}
-
-		return parent::isSupported($entityTypeId);
-	}
-
 	protected static function areDynamicTypesSupported(): bool
 	{
 		return false;

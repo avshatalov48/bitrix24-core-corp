@@ -45,4 +45,20 @@ export class MobileImCommandHandler
 			this.dialog.redrawHeader();
 		}
 	}
+
+	handleGeneralChatAccess()
+	{
+		app.closeController();
+	}
+
+	handleChatUserLeave(params)
+	{
+		if (
+			params.userId === this.controller.application.getUserId()
+			&& params.dialogId === this.controller.application.getDialogId()
+		)
+		{
+			app.closeController();
+		}
+	}
 }

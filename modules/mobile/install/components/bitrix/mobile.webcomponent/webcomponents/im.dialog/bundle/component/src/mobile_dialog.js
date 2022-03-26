@@ -29,6 +29,7 @@ BX.ImMobile = function(params)
 	this.bitrixIntranet = true;
 	this.bitrix24net = false;
 	this.bitrixXmpp = false;
+	this.bitrixCrm = true;
 	this.ppStatus = true;
 	this.ppServerStatus = true;
 	this.updateStateInterval = 90;
@@ -153,6 +154,7 @@ BX.ImMobile = function(params)
 
 	this.messenger.popupMessengerBody = document.body.parentNode;
 	this.messenger.popupMessengerBodyWrap = BX('im-dialog-wrap');
+
 	BX.addClass(this.messenger.popupMessengerBodyWrap, 'bx-messenger-dialog-wrap');
 	this.messenger.dialogOpen = true;
 
@@ -185,6 +187,7 @@ BX.ImMobile.prototype.initParams = function(params)
 	this.bitrixNetwork = params.bitrixNetwork || false;
 	this.bitrixNetwork2 = params.bitrixNetwork2 || false;
 	this.bitrixOpenLines = params.bitrixOpenLines || false;
+	this.bitrixCrm = params.bitrixCrm || false;
 	this.bitrix24 = params.bitrix24 || false;
 	this.bitrixIntranet = params.bitrixIntranet || false;
 	this.bitrix24net = params.bitrix24net || false;
@@ -1614,6 +1617,8 @@ BX.ImMessengerMobile.prototype.tooltip = function(bind, text, params)
 
 BX.ImMessengerMobile.prototype.newMessage = function()
 {
+	return;
+
 	var arNewMessage = [];
 	var arNewMessageText = [];
 	var flashCount = 0;
@@ -1853,6 +1858,10 @@ BX.ImMessengerMobile.prototype.drawRecentList = function()
 	}
 }
 
+BX.ImMessengerMobile.prototype.linesShowPromo = function()
+{
+	return false;
+}
 BX.ImMessengerMobile.prototype.openPhotoGallery = function(currentPhoto)
 {
 	var nodes = BX.findChildrenByClassName(this.BXIM.messenger.popupMessengerBodyWrap, "bx-messenger-file-image-src");
@@ -1965,33 +1974,37 @@ BX.ImMessengerMobile.prototype.dialogStatusRedrawDelay = function(params)
 					items.push({ icon: 'add', name: BX.message('IM_M_MENU_ADD'), action:BX.delegate(function() {  this.extendChat(this.currentTab, true); }, this)});
 					if (this.chat[chatId].owner == this.BXIM.userId)
 					{
-						items.push({ image: "/bitrix/templates/mobile_app/images/im/icon-forward.png", name: BX.message('IM_OL_INVITE_TRANSFER'), action:BX.delegate(function() {  this.linesTransfer(chatId); }, this)});
+						items.push({
+							image: "/bitrix/mobileapp/mobile/extensions/bitrix/menu/header/images/reply_v1.png",
+							name: BX.message('IM_OL_INVITE_TRANSFER'),
+							action:BX.delegate(function() {  this.linesTransfer(chatId); }, this)
+						});
 					}
 					items.push({ icon: 'glasses', name: BX.message(this.linesSilentMode[chatId]? "IM_M_OL_SILENT_OFF": "IM_M_OL_SILENT_ON"), action:BX.delegate(function() {  this.linesToggleSilentMode(); }, this)});
 				}
 				if (this.chat[chatId].owner == this.BXIM.userId)
 				{
 					items.push({ icon: 'pause', name: BX.message(session.pin == "Y"? "IM_M_OL_PAUSE_OFF": "IM_M_OL_PAUSE_ON"), action:BX.delegate(function() {  this.linesTogglePinMode(); }, this)});
-					if (session.crm != 'Y')
+					if (this.BXIM.bitrixCrm && session.crm != 'Y')
 					{
 						items.push({ name: BX.message('IM_M_OL_ADD_LEAD'), action:BX.delegate(function() {  this.linesCreateLead(); }, this)});
 					}
-					items.push({ image: "/bitrix/templates/mobile_app/images/im/important.png", name: BX.message('IM_M_OL_CLOSE'), action:BX.delegate(function() {  this.linesCloseDialog(); }, this)});
+					items.push({ image: "/bitrix/mobileapp/mobile/extensions/bitrix/menu/header/images/checked_v1.png", name: BX.message('IM_M_OL_CLOSE'), action:BX.delegate(function() {  this.linesCloseDialog(); }, this)});
 				}
 				else
 				{
 					items.push({
-						image: "/bitrix/templates/mobile_app/images/im/important.png",
+						image: "/bitrix/mobileapp/mobile/extensions/bitrix/menu/header/images/user_plus_v1.png",
 						name: BX.message('IM_M_OL_INTERCEPT'),
 						action:BX.delegate(function() {  this.linesIntercept(); }, this)
 					});
 				}
-				if (session.crmLink)
+				if (this.BXIM.bitrixCrm && session.crmLink)
 				{
 					var linkParams = BX.MobileTools.getMobileUrlParams(session.crmLink);
 					if (linkParams)
 					{
-						items.push({image: "/bitrix/templates/mobile_app/images/im/work.png", name: BX.message('IM_M_OL_GOTO_CRM'), action: function() {
+						items.push({image: "/bitrix/mobileapp/mobile/extensions/bitrix/menu/header/images/lifefeed_v1.png", name: BX.message('IM_M_OL_GOTO_CRM'), action: function() {
 							BXMobileApp.PageManager.loadPageBlank(linkParams);
 						}});
 					}
@@ -2042,7 +2055,10 @@ BX.ImMessengerMobile.prototype.dialogStatusRedrawDelay = function(params)
 			app.menuCreate({
 				useNavigationBarColor: true,
 				items: [
-					{ image: "/bitrix/templates/mobile_app/images/im/icon-call.png",  name: BX.message('IM_AUDIO_CALL'), action:BX.delegate(function() {
+					{
+						image: "/bitrix/templates/mobile_app/images/im/icon-call.png",
+						name: BX.message('IM_AUDIO_CALL'),
+						action:BX.delegate(function() {
 						this.BXIM.phoneTo(this.chat[chatId].call_number);
 					}, this)},
 					{

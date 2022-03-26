@@ -9,7 +9,9 @@ use Bitrix\Disk\Document\OnlyOffice\Models;
 use Bitrix\Disk\Document\OnlyOffice\Models\DocumentSession;
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\Internals\Engine;
+use Bitrix\Disk\Internals\Error\ErrorCollection;
 use Bitrix\Disk\User;
+use Bitrix\Im\Call\Call;
 use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Context;
@@ -26,10 +28,14 @@ use Bitrix\Main\Engine\Router;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Error;
 use Bitrix\Main\HttpResponse;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Security\Cipher;
+use Bitrix\Main\Security\SecurityException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Web\HttpClient;
+use Bitrix\Main\Web\MimeType;
 use Bitrix\Ui;
 
 final class OnlyOffice extends Engine\Controller
@@ -88,16 +94,12 @@ final class OnlyOffice extends Engine\Controller
 		];
 	}
 
-	protected function processBeforeAction(Action $action): bool
+	protected function getDefaultPreFilters()
 	{
-		if (!Document\OnlyOffice\OnlyOfficeHandler::isEnabled())
-		{
-			$this->addError(new Error('OnlyOffice handler is not configured.'));
+		$defaultPreFilters = parent::getDefaultPreFilters();
+		$defaultPreFilters[] = new Document\OnlyOffice\Filters\OnlyOfficeEnabled();
 
-			return false;
-		}
-
-		return parent::processBeforeAction($action);
+		return $defaultPreFilters;
 	}
 
 	public function configureActions()
@@ -166,6 +168,7 @@ final class OnlyOffice extends Engine\Controller
 			],
 			'handleOnlyOffice' => [
 				'prefilters' => [
+					new Document\OnlyOffice\Filters\OnlyOfficeEnabled(),
 					new ContentType([ContentType::JSON]),
 					new Document\OnlyOffice\Filters\Authorization(
 						ServiceLocator::getInstance()->get('disk.onlyofficeConfiguration')->getSecretKey()
@@ -174,6 +177,7 @@ final class OnlyOffice extends Engine\Controller
 			],
 			'download' => [
 				'prefilters' => [
+					new Document\OnlyOffice\Filters\OnlyOfficeEnabled(),
 					new Document\OnlyOffice\Filters\Authorization(
 						ServiceLocator::getInstance()->get('disk.onlyofficeConfiguration')->getSecretKey(),
 						[
@@ -291,7 +295,11 @@ final class OnlyOffice extends Engine\Controller
 			return null;
 		}
 
-		Document\OnlyOffice\OnlyOfficeHandler::renameDocument($documentSession->getExternalHash(), $newName);
+		$result = Document\OnlyOffice\OnlyOfficeHandler::renameDocument($documentSession->getExternalHash(), $newName);
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
+		}
 
 		return [
 			'file' => [
@@ -391,7 +399,8 @@ final class OnlyOffice extends Engine\Controller
 	{
 		$this->enableExtendedErrorInfo();
 
-		$status = $payload->getData()['status'];
+		$payloadData = $payload->getData();
+		$status = $payloadData['status'];
 
 		Application::getInstance()->addBackgroundJob(function () use ($status, $documentSession){
 			$this->processStatusToInfoModel($documentSession, $status);
@@ -400,15 +409,15 @@ final class OnlyOffice extends Engine\Controller
 		switch ($status)
 		{
 			case self::STATUS_IS_BEING_EDITED:
-				$this->handleDocumentIsEditing($documentSession, $payload);
+				$this->handleDocumentIsEditing($documentSession, $payloadData);
 				break;
 
 			case self::STATUS_IS_READY_FOR_SAVE:
 			case self::STATUS_ERROR_WHILE_SAVING:
-				if ($this->saveDocument($documentSession, $payload))
+				if ($this->saveDocument($documentSession, $payloadData))
 				{
 					$this->deactivateDocumentSessions($documentSession->getExternalHash());
-					$this->commentAttachedObjects($documentSession);
+					$this->commentAttachedObjectsOnBackground($documentSession);
 				}
 				break;
 
@@ -418,7 +427,7 @@ final class OnlyOffice extends Engine\Controller
 
 			case self::STATUS_FORCE_SAVE:
 			case self::STATUS_ERROR_WHILE_FORCE_SAVING:
-				$this->saveDocument($documentSession, $payload);
+				$this->saveDocument($documentSession, $payloadData);
 				break;
 		}
 
@@ -483,13 +492,12 @@ final class OnlyOffice extends Engine\Controller
 
 		if ($documentInfo->wasForceSaved())
 		{
-			$this->commentAttachedObjects($documentSession);
+			$this->commentAttachedObjectsOnBackground($documentSession);
 		}
 	}
 
-	protected function handleDocumentIsEditing(Models\DocumentSession $documentSession, JsonPayload $payload): void
+	protected function handleDocumentIsEditing(Models\DocumentSession $documentSession, array $payloadData): void
 	{
-		$payloadData = $payload->getData();
 		if ($payloadData['status'] !== self::STATUS_IS_BEING_EDITED)
 		{
 			return;
@@ -577,6 +585,13 @@ final class OnlyOffice extends Engine\Controller
 		return $this->documentSessions;
 	}
 
+	protected function commentAttachedObjectsOnBackground(Models\DocumentSession $documentSession): void
+	{
+		Application::getInstance()->addBackgroundJob(function () use ($documentSession){
+			$this->commentAttachedObjects($documentSession);
+		});
+	}
+
 	protected function commentAttachedObjects(Models\DocumentSession $documentSession): void
 	{
 		$file = $documentSession->getFile();
@@ -599,10 +614,8 @@ final class OnlyOffice extends Engine\Controller
 		Models\DocumentSessionTable::deactivateByHash($documentSessionHash);
 	}
 
-	protected function saveDocument(Models\DocumentSession $documentSession, JsonPayload $payload): bool
+	protected function saveDocument(Models\DocumentSession $documentSession, array $payloadData): bool
 	{
-		$payloadData = $payload->getData();
-
 		if (!in_array($payloadData['status'], [
 			self::STATUS_IS_READY_FOR_SAVE,
 			self::STATUS_FORCE_SAVE,
@@ -628,6 +641,11 @@ final class OnlyOffice extends Engine\Controller
 		if ($httpClient->download($downloadUri, $tmpFile) !== false)
 		{
 			$tmpFileArray = \CFile::makeFileArray($tmpFile);
+			if ($tmpFileArray['type'] === 'application/encrypted')
+			{
+				$tmpFileArray['type'] = MimeType::getByFilename($documentSession->getObject()->getName());
+			}
+
 			$payloadData['users'] = $payloadData['users'] ?? [$documentSession->getUserId()];
 			if (!is_array($payloadData['users']))
 			{
@@ -686,46 +704,29 @@ final class OnlyOffice extends Engine\Controller
 
 	public function loadCreateDocumentEditorAction(string $typeFile, \Bitrix\Disk\Folder $targetFolder = null): ?HttpResponse
 	{
-		$fileData = new BlankFileData($typeFile, Context::getCurrent()->getLanguage());
-		if (!$targetFolder)
+		$createBlankDocumentScenario = new Document\OnlyOffice\CreateBlankDocumentScenario(
+			$this->getCurrentUser()->getId(),
+			Context::getCurrent()->getLanguage()
+		);
+
+		if ($targetFolder)
 		{
-			$userStorage = Driver::getInstance()->getStorageByUserId($this->getCurrentUser()->getId());
-			if (!$userStorage)
-			{
-				$this->addError(new Error('Could not load user storage.'));
-
-				return null;
-			}
-
-			$targetFolder = $userStorage->getFolderForCreatedFiles();
+			$result = $createBlankDocumentScenario->createBlank($typeFile, $targetFolder);
+		}
+		else
+		{
+			$result = $createBlankDocumentScenario->createBlankInDefaultFolder($typeFile);
 		}
 
-		if (!$targetFolder)
+		if (!$result->isSuccess())
 		{
-			$this->addError(new Error('Could not find folder.'));
+			$this->addErrors($result->getErrors());
 
 			return null;
 		}
 
-		$storage = $targetFolder->getStorage();
-		if (!$storage || !$targetFolder->canAdd($storage->getSecurityContext($this->getCurrentUser())))
-		{
-			$this->addError(new Error('Bad rights. Could not add file to the folder.'));
-
-			return null;
-		}
-
-		$newFile = $targetFolder->uploadFile(\CFile::makeFileArray($fileData->getSrc()), [
-			'NAME' => $fileData->getName(),
-			'CREATED_BY' => $this->getCurrentUser()->getId(),
-		], [], true);
-
-		if (!$newFile)
-		{
-			$this->addErrors($targetFolder->getErrors());
-
-			return null;
-		}
+		/** @var Disk\File $newFile */
+		$newFile = $result->getData()['file'];
 
 		return $this->loadDocumentEditorAction($newFile);
 	}
@@ -780,7 +781,11 @@ final class OnlyOffice extends Engine\Controller
 		return $this->redirectTo($link);
 	}
 
-	public function loadDocumentEditorAction(Disk\File $object = null, Disk\AttachedObject $attachedObject = null): ?HttpResponse
+	public function loadDocumentEditorAction(
+		Disk\File $object = null,
+		Disk\AttachedObject $attachedObject = null,
+		int $editorMode = Document\OnlyOffice\Editor\ConfigBuilder::VISUAL_MODE_USUAL
+	): ?HttpResponse
 	{
 		$canEdit = false;
 		if ($attachedObject && !$attachedObject->canUpdate(User::resolveUserId($this->getCurrentUser())))
@@ -808,15 +813,18 @@ final class OnlyOffice extends Engine\Controller
 
 		if (!$canEdit)
 		{
-			$this->addError(new Error('Could not find file. Empty data.'));
-
-			return null;
+			return $this->showNotFoundPageAction();
 		}
 
-		return $this->loadDocumentEditor($object, null, $attachedObject, Models\DocumentSession::TYPE_EDIT);
+		return $this->loadDocumentEditor($object, null, $attachedObject, Models\DocumentSession::TYPE_EDIT, $editorMode);
 	}
 
-	public function loadDocumentViewerAction(Disk\File $object = null, Disk\Version $version = null, Disk\AttachedObject $attachedObject = null): ?HttpResponse
+	public function loadDocumentViewerAction(
+		Disk\File $object = null,
+		Disk\Version $version = null,
+		Disk\AttachedObject $attachedObject = null,
+		int $editorMode = Document\OnlyOffice\Editor\ConfigBuilder::VISUAL_MODE_USUAL
+	): ?HttpResponse
 	{
 		if ($object && $version && $object->getId() != $version->getObjectId())
 		{
@@ -854,15 +862,19 @@ final class OnlyOffice extends Engine\Controller
 
 		if (!$canRead)
 		{
-			$this->addError(new Error('Could not view file. Bad permissions.'));
-
-			return null;
+			return $this->showNotFoundPageAction();
 		}
 
-		return $this->loadDocumentEditor($object, $version, $attachedObject, Models\DocumentSession::TYPE_VIEW);
+		return $this->loadDocumentEditor($object, $version, $attachedObject, Models\DocumentSession::TYPE_VIEW, $editorMode);
 	}
 
-	protected function loadDocumentEditor(?Disk\File $object, ?Disk\Version $version, ?Disk\AttachedObject $attachedObject, int $type): ?HttpResponse
+	protected function loadDocumentEditor(
+		?Disk\File $object,
+		?Disk\Version $version,
+		?Disk\AttachedObject $attachedObject,
+		int $type,
+		int $editorMode = Document\OnlyOffice\Editor\ConfigBuilder::VISUAL_MODE_USUAL
+	): ?HttpResponse
 	{
 		if (!$object && !$attachedObject && !$version)
 		{
@@ -909,6 +921,7 @@ final class OnlyOffice extends Engine\Controller
 			->setAttachedObject($attachedObject)
 		;
 
+		$sessionManager->lock();
 		$documentSession = $sessionManager->findOrCreateSession();
 		if (!$documentSession)
 		{
@@ -916,6 +929,7 @@ final class OnlyOffice extends Engine\Controller
 
 			return null;
 		}
+		$sessionManager->unlock();
 
 		/** @see \DiskFileEditorOnlyOfficeController::getSliderContentAction */
 		$link = UrlManager::getInstance()->create('getSliderContent', [
@@ -923,6 +937,18 @@ final class OnlyOffice extends Engine\Controller
 			'mode' => Router::COMPONENT_MODE_AJAX,
 			'documentSessionId' => $documentSession->getId(),
 			'documentSessionHash' => $documentSession->getExternalHash(),
+			'editorMode' => $editorMode,
+		]);
+
+		return $this->redirectTo($link);
+	}
+
+	public function showNotFoundPageAction()
+	{
+		/** @see \DiskFileEditorOnlyOfficeController::showNotFoundAction() */
+		$link = UrlManager::getInstance()->create('showNotFound', [
+			'c' => 'bitrix:disk.file.editor-onlyoffice',
+			'mode' => Router::COMPONENT_MODE_AJAX,
 		]);
 
 		return $this->redirectTo($link);

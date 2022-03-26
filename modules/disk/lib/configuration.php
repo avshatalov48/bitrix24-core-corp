@@ -394,13 +394,22 @@ final class UserConfiguration
 				'default' => '',
 				'primary' => '',
 				'was_reset_to_onlyoffice' => '',
+				'was_reset' => '',
 			]
 		);
 
-		self::setDocumentServiceOptions('', '', $userSettings['was_reset_to_onlyoffice']);
+		$wasResetToOnlyOffice = $userSettings['was_reset_to_onlyoffice'] ?? '';
+
+		$wasReset = null;
+		if (isset($userSettings['was_reset']) && is_int($userSettings['was_reset']))
+		{
+			$wasReset = (int)$userSettings['was_reset'];
+		}
+
+		self::setDocumentServiceOptions('', '', $wasResetToOnlyOffice, $wasReset);
 	}
 
-	private static function setDocumentServiceOptions(string $default, string $primary, string $wasReset): void
+	private static function setDocumentServiceOptions(string $default, string $primary, string $wasResetToOnlyOffice = 'N', int $wasReset = null): void
 	{
 		\CUserOptions::setOption(
 			Driver::INTERNAL_MODULE_ID,
@@ -408,9 +417,15 @@ final class UserConfiguration
 			[
 				'default' => $default,
 				'primary' => $primary,
-				'was_reset_to_onlyoffice' => $wasReset,
+				'was_reset_to_onlyoffice' => $wasResetToOnlyOffice,
+				'was_reset' => $wasReset ?? '',
 			]
 		);
+	}
+
+	public static function resetDocumentServiceForAllUsers(): void
+	{
+		Option::set(Driver::INTERNAL_MODULE_ID, 'reset_user_edit_service', time());
 	}
 
 	public static function getDocumentServiceCode()
@@ -430,16 +445,24 @@ final class UserConfiguration
 				'default' => '',
 				'primary' => '',
 				'was_reset_to_onlyoffice' => '',
+				'was_reset' => '',
 			]
 		);
 
 		$defaultService = $userSettings['default'] ?? '';
 		$primaryService = $userSettings['primary'] ?? '';
 		$wasResetToOnlyOffice = $userSettings['was_reset_to_onlyoffice'] ?? '';
+		$wasReset = $userSettings['was_reset'] ?? '';
 
 		if (!$wasResetToOnlyOffice && Option::get(Driver::INTERNAL_MODULE_ID, 'reset_user_edit_service_to_onlyoffice', 'N') === 'Y')
 		{
 			self::setDocumentServiceOptions(OnlyOfficeHandler::getCode(), '', 'Y');
+		}
+
+		$timeWhenResetStart = Option::get(Driver::INTERNAL_MODULE_ID, 'reset_user_edit_service', 'N');
+		if ($timeWhenResetStart !== 'N' && $timeWhenResetStart > $wasReset)
+		{
+			self::setDocumentServiceOptions('', '', 'N', $timeWhenResetStart);
 		}
 
 		if ($primaryService === OnlyOfficeHandler::getCode() && OnlyOfficeHandler::isEnabled())

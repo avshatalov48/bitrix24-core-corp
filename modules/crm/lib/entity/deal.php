@@ -1,9 +1,9 @@
 <?php
 namespace Bitrix\Crm\Entity;
 
-use Bitrix\Main;
-
 use Bitrix\Crm;
+use Bitrix\Crm\Cleaning\Cleaner;
+use Bitrix\Main;
 
 class Deal extends EntityBase
 {
@@ -115,24 +115,28 @@ class Deal extends EntityBase
 	}
 
 	/**
+	 * @deprecated Use Cleaner instead
+	 * @see \Bitrix\Crm\Cleaning\CleaningManager::getCleaner()
+	 *
 	 * Perform deferred cleaning of the related entities.
 	 * @param int $entityID Entity ID.
 	 * @return void
 	 */
 	public function cleanup($entityID)
 	{
-		if(!is_int($entityID))
-		{
-			$entityID = (int)$entityID;
-		}
+		$entityID = (int)$entityID;
 
-		if($entityID <= 0)
+		if ($entityID <= 0)
 		{
 			return;
 		}
 
-		$eventEntity = new \CCrmEvent();
-		$eventEntity->DeleteByElement(\CCrmOwnerType::DealName, $entityID);
+		$cleaner = Crm\Cleaning\CleaningManager::getCleaner(\CCrmOwnerType::Deal, $entityID);
+
+		// method 'cleanup' is called from agent only
+		$cleaner->getOptions()->setEnvironment(Cleaner\Options::ENVIRONMENT_AGENT);
+
+		$cleaner->cleanup();
 	}
 
 	public static function getResponsibleID($entityID)

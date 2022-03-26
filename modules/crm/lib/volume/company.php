@@ -624,16 +624,18 @@ class Company
 	/**
 	 * Performs dropping entity.
 	 *
-	 * @return boolean
+	 * @return int
 	 */
 	public function clearEntity()
 	{
 		if (!$this->canClearEntity())
 		{
-			return false;
+			return -1;
 		}
 
 		$query = $this->prepareQuery();
+
+		$dropped = -1;
 
 		if ($this->prepareFilter($query))
 		{
@@ -650,14 +652,13 @@ class Company
 
 			$res = $query->exec();
 
-			$success = true;
-
 			$connection = \Bitrix\Main\Application::getConnection();
 
 			$userPermissions = \CCrmPerms::GetUserPermissions($this->getOwner());
 
 			$crmCompany = new \CCrmCompany(false);
 
+			$dropped = 0;
 			while ($company = $res->fetch())
 			{
 				$this->setProcessOffset($company['COMPANY_ID']);
@@ -671,6 +672,7 @@ class Company
 					{
 						$connection->commitTransaction();
 						$this->incrementDroppedEntityCount();
+						$dropped ++;
 					}
 					else
 					{
@@ -687,7 +689,6 @@ class Company
 							$err = 'Deletion failed with company #'.$company['COMPANY_ID'];
 						}
 						$this->collectError(new Main\Error($err, self::ERROR_DELETION_FAILED));
-
 						$this->incrementFailCount();
 					}
 				}
@@ -699,13 +700,16 @@ class Company
 
 				if ($this->hasTimeLimitReached())
 				{
-					$success = false;
 					break;
 				}
 			}
 		}
+		else
+		{
+			$this->collectError(new Main\Error('Filter error', self::ERROR_DELETION_FAILED));
+		}
 
-		return $success;
+		return $dropped;
 	}
 
 
@@ -723,13 +727,13 @@ class Company
 	/**
 	 * Performs dropping associated entity activities.
 	 *
-	 * @return boolean
+	 * @return int
 	 */
 	public function clearActivity()
 	{
 		if (!$this->canClearActivity())
 		{
-			return false;
+			return -1;
 		}
 
 		$userPermissions = \CCrmPerms::GetUserPermissions($this->getOwner());
@@ -739,7 +743,7 @@ class Company
 
 		$query = $activityVolume->prepareQuery();
 
-		$success = true;
+		$dropped = -1;
 
 		if ($activityVolume->prepareFilter($query))
 		{
@@ -759,6 +763,7 @@ class Company
 
 			$res = $query->exec();
 
+			$dropped = 0;
 			while ($activity = $res->fetch())
 			{
 				$this->setProcessOffset($activity['ID']);
@@ -773,6 +778,7 @@ class Company
 					//todo: fail count here
 
 					$this->incrementDroppedActivityCount();
+					$dropped ++;
 				}
 				else
 				{
@@ -782,13 +788,16 @@ class Company
 
 				if ($this->hasTimeLimitReached())
 				{
-					$success = false;
 					break;
 				}
 			}
 		}
+		else
+		{
+			$this->collectError(new Main\Error('Filter error', self::ERROR_DELETION_FAILED));
+		}
 
-		return $success;
+		return $dropped;
 	}
 
 
@@ -807,13 +816,13 @@ class Company
 	/**
 	 * Performs dropping associated entity events.
 	 *
-	 * @return boolean
+	 * @return int
 	 */
 	public function clearEvent()
 	{
 		if (!$this->canClearEvent())
 		{
-			return false;
+			return -1;
 		}
 
 		$eventVolume = new Volume\Event();
@@ -821,7 +830,7 @@ class Company
 
 		$query = $eventVolume->prepareRelationQuery(static::className());
 
-		$success = true;
+		$dropped = -1;
 
 		if ($eventVolume->prepareFilter($query))
 		{
@@ -838,6 +847,7 @@ class Company
 
 			$res = $query->exec();
 
+			$dropped = 0;
 			while ($event = $res->fetch())
 			{
 				$this->setProcessOffset($event['EVENT_ID']);
@@ -845,6 +855,7 @@ class Company
 				if (Volume\Event::dropEvent($event['EVENT_ID'], $this->getOwner()))
 				{
 					$this->incrementDroppedEventCount();
+					$dropped ++;
 				}
 				else
 				{
@@ -854,12 +865,15 @@ class Company
 
 				if ($this->hasTimeLimitReached())
 				{
-					$success = false;
 					break;
 				}
 			}
 		}
+		else
+		{
+			$this->collectError(new Main\Error('Filter error', self::ERROR_DELETION_FAILED));
+		}
 
-		return $success;
+		return $dropped;
 	}
 }

@@ -235,6 +235,9 @@ class Entity
 			'ACCOUNT_NUMBER', 'CURRENCY', 'DATE_BILL', 'DATE_MARKED',
 			'PAY_SYSTEM_ID', 'RESPONSIBLE_ID', 'UF_DEAL_ID', 'UF_CONTACT_ID', 'PR_LOCATION',
 
+			//DEAL
+			'CONTACT_IDS', 'LOCATION_ID', 'LEAD_ID', 'CREATED_BY_ID', 'QUOTE_ID', 'OBSERVER_IDS', 'FACE_ID', 'CATEGORY_ID',
+
 			'ADDRESS_LEGAL',
 
 			//'ADDRESS', 'REG_ADDRESS',
@@ -244,6 +247,8 @@ class Entity
 			'REG_ADDRESS_PROVINCE', 'REG_ADDRESS_COUNTRY', 'REG_ADDRESS_COUNTRY_CODE',
 
 			'ORIGIN_ID', 'ORIGINATOR_ID', 'ADDRESS_LOC_ADDR_ID', 'REG_ADDRESS_LOC_ADDR_ID',
+
+			'MOVED_BY', 'MOVED_BY_ID', 'MOVED_TIME',
 		);
 
 		$fieldCodes = array_merge($fieldCodes, UtmTable::getCodeList());
@@ -327,7 +332,9 @@ class Entity
 			self::ENUM_ENTITY_SCHEME_LEAD => array(
 				'NAME' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_LEED'),
 				'ENTITIES' => array(
-					\CCrmOwnerType::LeadName
+					\CCrmOwnerType::LeadName,
+					\CCrmOwnerType::CompanyName,
+					\CCrmOwnerType::ContactName
 				),
 				'MAIN_ENTITY' => \CCrmOwnerType::Lead,
 				'HAS_INVOICE' => false,

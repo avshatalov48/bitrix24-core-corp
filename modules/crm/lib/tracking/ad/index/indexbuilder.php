@@ -219,6 +219,7 @@ final class IndexBuilder extends Tracking\Ad\Builder
 
 	private function addChild($level, $code, $title = '--', $parentId = 0)
 	{
+		$title = $title ?: '--';
 		$row = Tracking\Internals\SourceChildTable::getRow([
 			'select' => ['ID', 'TITLE'],
 			'filter' => [
@@ -277,6 +278,11 @@ final class IndexBuilder extends Tracking\Ad\Builder
 					{
 						continue;
 					}
+				}
+
+				if (!$row['ID'])
+				{
+					continue;
 				}
 
 				$id = $this->addChild(

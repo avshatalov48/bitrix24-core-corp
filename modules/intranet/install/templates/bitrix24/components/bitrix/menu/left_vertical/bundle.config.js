@@ -4,6 +4,6 @@ module.exports = {
 		js: './script.js',
 		css: './style.css',
 	},
-	namespace: 'BX.Intranet.LeftMenu',
+	namespace: 'BX.Intranet',
 	adjustConfigPhp: false,
 };

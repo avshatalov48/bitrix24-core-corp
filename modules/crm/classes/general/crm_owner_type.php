@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Catalog\StoreDocumentTable;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Crm\Security\EntityAuthorization;
@@ -38,13 +39,16 @@ class CCrmOwnerType
 
 	public const InvoiceRecurring = 27;
 	public const Scoring = 28;
-
 	public const CheckCorrection = 29;
-
 	public const DeliveryRequest = 30;
+	public const SmartInvoice = 31;
+	public const SuspendedSmartInvoice = 32;
+
+	public const StoreDocument = 33;
+	public const ShipmentDocument = 34;
 
 	public const FirstOwnerType = 1;
-	public const LastOwnerType = 29;
+	public const LastOwnerType = 34;
 
 	public const DynamicTypeStart = 128;
 	public const DynamicTypeEnd = 192;
@@ -74,6 +78,7 @@ class CCrmOwnerType
 	public const CheckCorrectionName = 'CHECK_CORRECTION';
 	public const OrderShipmentName = 'ORDER_SHIPMENT';
 	public const OrderPaymentName = 'ORDER_PAYMENT';
+	public const SmartInvoiceName = 'SMART_INVOICE';
 	public const CommonDynamicName = 'DYNAMIC';
 
 	public const SuspendedLeadName = 'SUS_LEAD';
@@ -85,6 +90,10 @@ class CCrmOwnerType
 	public const SuspendedOrderName = 'SUS_ORDER';
 	public const SuspendedActivityName = 'SUS_ACTIVITY';
 	public const SuspendedRequisiteName = 'SUS_REQUISITE';
+	public const SuspendedSmartInvoiceName = 'SUS_SMART_INVOICE';
+
+	public const StoreDocumentName = 'STORE_DOCUMENT';
+	public const ShipmentDocumentName = 'SHIPMENT_DOCUMENT';
 
 	public const ScoringName = 'SCORING';
 
@@ -107,12 +116,12 @@ class CCrmOwnerType
 		$isStatic = $typeID === self::System
 			|| ($typeID >= self::FirstOwnerType && $typeID <= self::LastOwnerType);
 
-		if($isStatic)
+		if ($isStatic)
 		{
 			return true;
 		}
 
-		if(!static::isPossibleDynamicTypeId($typeID) && !static::isPossibleSuspendedDynamicTypeId($typeID))
+		if (!static::isPossibleDynamicTypeId($typeID) && !static::isPossibleSuspendedDynamicTypeId($typeID))
 		{
 			return false;
 		}
@@ -140,6 +149,7 @@ class CCrmOwnerType
 			|| $typeID === self::OrderCheck
 			|| $typeID === self::CheckCorrection
 			|| $typeID === self::DeliveryRequest
+			|| $typeID === self::ShipmentDocument
 		);
 
 		if($isStatic)
@@ -147,7 +157,7 @@ class CCrmOwnerType
 			return true;
 		}
 
-		if(static::isPossibleDynamicTypeId($typeID))
+		if(static::isUseDynamicTypeBasedApproach($typeID))
 		{
 			return static::IsDefined($typeID);
 		}
@@ -211,6 +221,7 @@ class CCrmOwnerType
 			case self::CompanyName:
 				return self::Company;
 
+			case CCrmOwnerTypeAbbr::Invoice:
 			case self::InvoiceName:
 				return self::Invoice;
 
@@ -254,9 +265,11 @@ class CCrmOwnerType
 			case self::CallListTypeName:
 				return self::CallList;
 
+			case CCrmOwnerTypeAbbr::SuspendedLead:
 			case self::SuspendedLeadName:
 				return self::SuspendedLead;
 
+			case CCrmOwnerTypeAbbr::SuspendedDeal:
 			case self::SuspendedDealName:
 				return self::SuspendedDeal;
 
@@ -280,6 +293,17 @@ class CCrmOwnerType
 
 			case self::ScoringName:
 				return self::Scoring;
+
+			case CCrmOwnerTypeAbbr::SmartInvoice:
+			case self::SmartInvoiceName:
+				return self::SmartInvoice;
+
+			case CCrmOwnerTypeAbbr::SuspendedSmartInvoice:
+			case self::SuspendedSmartInvoiceName:
+				return self::SuspendedSmartInvoice;
+
+			case self::StoreDocumentName:
+				return self::StoreDocument;
 
 			case CCrmOwnerTypeAbbr::System:
 			case self::SystemName:
@@ -399,6 +423,18 @@ class CCrmOwnerType
 			case self::Scoring:
 				return self::ScoringName;
 
+			case self::SmartInvoice:
+				return self::SmartInvoiceName;
+
+			case self::SuspendedSmartInvoice:
+				return self::SuspendedSmartInvoiceName;
+
+			case self::StoreDocument:
+				return self::StoreDocumentName;
+
+			case self::ShipmentDocument:
+				return self::ShipmentDocumentName;
+
 			case self::System:
 				return self::SystemName;
 
@@ -466,6 +502,10 @@ class CCrmOwnerType
 			case self::SuspendedRequisite:
 				return self::SuspendedRequisite;
 
+			case self::SmartInvoice:
+			case self::SuspendedSmartInvoice:
+				return self::SuspendedSmartInvoice;
+
 			default:
 				$isPossibleDynamicTypeId = static::isPossibleDynamicTypeId($typeID);
 				$isPossibleSuspendedDynamicTypeId = static::isPossibleSuspendedDynamicTypeId($typeID);
@@ -491,7 +531,8 @@ class CCrmOwnerType
 			self::LeadName, self::DealName,
 			self::InvoiceName, self::ActivityName,
 			self::QuoteName, self::Requisite,
-			self::DealCategoryName, self::CustomActivityTypeName
+			self::DealCategoryName, self::CustomActivityTypeName,
+			self::SmartInvoice,
 		];
 	}
 
@@ -534,13 +575,41 @@ class CCrmOwnerType
 			self::Lead, self::Deal,
 			self::Invoice, self::Activity,
 			self::Quote, self::Requisite,
-			self::DealCategory, self::CustomActivityType
+			self::DealCategory, self::CustomActivityType,
+			self::SmartInvoice,
 		];
+	}
+
+	public static function getAllSuspended(): array
+	{
+		$suspended = [
+			self::SuspendedLead,
+			self::SuspendedDeal,
+			self::SuspendedContact,
+			self::SuspendedCompany,
+			self::SuspendedQuote,
+			self::SuspendedInvoice,
+			self::SuspendedOrder,
+			self::SuspendedActivity,
+			self::SuspendedRequisite,
+			self::SuspendedSmartInvoice,
+		];
+
+		$map = Container::getInstance()->getDynamicTypesMap()->load([
+			'isLoadStages' => false,
+			'isLoadCategories' => false,
+		]);
+		foreach ($map->getTypes() as $type)
+		{
+			$suspended[] = self::getSuspendedDynamicTypeId($type->getEntityTypeId());
+		}
+
+		return array_unique($suspended);
 	}
 
 	public static function GetAllDescriptions(): array
 	{
-		if(!self::$ALL_DESCRIPTIONS[LANGUAGE_ID])
+		if (!self::$ALL_DESCRIPTIONS[LANGUAGE_ID])
 		{
 			IncludeModuleLangFile(__FILE__);
 			self::$ALL_DESCRIPTIONS[LANGUAGE_ID] = [
@@ -548,7 +617,8 @@ class CCrmOwnerType
 				self::Deal => GetMessage('CRM_OWNER_TYPE_DEAL'),
 				self::Contact => GetMessage('CRM_OWNER_TYPE_CONTACT'),
 				self::Company => GetMessage('CRM_OWNER_TYPE_COMPANY'),
-				self::Invoice => GetMessage('CRM_OWNER_TYPE_INVOICE'),
+				self::Invoice => Container::getInstance()->getLocalization()->appendOldVersionSuffix(GetMessage('CRM_OWNER_TYPE_INVOICE')),
+				self::SmartInvoice => GetMessage('CRM_OWNER_TYPE_INVOICE'),
 				self::Quote => GetMessage('CRM_OWNER_TYPE_QUOTE'),
 				self::Requisite => GetMessage('CRM_OWNER_TYPE_REQUISITE'),
 				self::DealCategory => GetMessage('CRM_OWNER_TYPE_DEAL_CATEGORY'),
@@ -558,7 +628,7 @@ class CCrmOwnerType
 				self::System => GetMessage('CRM_OWNER_TYPE_SYSTEM'),
 				self::Order => GetMessage('CRM_OWNER_TYPE_ORDER'),
 				self::OrderShipment => GetMessage('CRM_OWNER_TYPE_ORDER_SHIPMENT'),
-				self::OrderPayment => GetMessage('CRM_OWNER_TYPE_ORDER_PAYMENT')
+				self::OrderPayment => GetMessage('CRM_OWNER_TYPE_ORDER_PAYMENT'),
 			];
 
 			$dynamicTypesMap = Container::getInstance()->getDynamicTypesMap();
@@ -577,21 +647,22 @@ class CCrmOwnerType
 
 	public static function GetAllCategoryCaptions(bool $useNames = false): array
 	{
-		if(!self::$ALL_CATEGORY_CAPTION[LANGUAGE_ID])
+		if (!self::$ALL_CATEGORY_CAPTION[LANGUAGE_ID])
 		{
 			IncludeModuleLangFile(__FILE__);
-			self::$ALL_CATEGORY_CAPTION[LANGUAGE_ID] = array(
+			self::$ALL_CATEGORY_CAPTION[LANGUAGE_ID] = [
 				self::Lead => GetMessage('CRM_OWNER_TYPE_LEAD_CATEGORY'),
 				self::Deal => GetMessage('CRM_OWNER_TYPE_DEAL_CATEGORY'),
 				self::Contact => GetMessage('CRM_OWNER_TYPE_CONTACT_CATEGORY'),
 				self::Company => GetMessage('CRM_OWNER_TYPE_COMPANY_CATEGORY'),
-				self::Invoice => GetMessage('CRM_OWNER_TYPE_INVOICE_CATEGORY'),
+				self::Invoice => Container::getInstance()->getLocalization()->appendOldVersionSuffix(GetMessage('CRM_OWNER_TYPE_INVOICE_CATEGORY')),
+				self::SmartInvoice => GetMessage('CRM_OWNER_TYPE_INVOICE_CATEGORY'),
 				self::Quote => GetMessage('CRM_OWNER_TYPE_QUOTE_CATEGORY'),
 				self::Requisite => GetMessage('CRM_OWNER_TYPE_REQUISITE_CATEGORY'),
 				self::DealCategory => GetMessage('CRM_OWNER_TYPE_DEAL_CATEGORY_CATEGORY'),
 				self::CustomActivityType => GetMessage('CRM_OWNER_TYPE_CUSTOM_ACTIVITY_TYPE_CATEGORY'),
 				self::Order => GetMessage('CRM_OWNER_TYPE_ORDER_CATEGORY'),
-			);
+			];
 
 			$dynamicTypesMap = Container::getInstance()->getDynamicTypesMap();
 			$dynamicTypesMap->load([
@@ -855,6 +926,22 @@ class CCrmOwnerType
 				return self::GetDetailsUrl($typeID, $ID, $bCheckPermissions = false);
 			}
 
+			case self::StoreDocument:
+			{
+				return CComponentEngine::MakePathFromTemplate(
+					COption::GetOptionString('crm', 'path_to_store_document_details'),
+					array('document_id' => $ID)
+				);
+			}
+
+			case self::ShipmentDocument:
+			{
+				return CComponentEngine::MakePathFromTemplate(
+					COption::GetOptionString('crm', 'path_to_shipment_document_details'),
+					array('document_id' => $ID)
+				);
+			}
+
 			default:
 				return '';
 		}
@@ -1041,7 +1128,8 @@ class CCrmOwnerType
 		if ($typeID === CCrmOwnerType::Order
 			|| $typeID === CCrmOwnerType::OrderCheck
 			|| $typeID === CCrmOwnerType::OrderShipment
-			|| $typeID === CCrmOwnerType::OrderPayment)
+			|| $typeID === CCrmOwnerType::OrderPayment
+			|| $typeID === CCrmOwnerType::SmartInvoice)
 		{
 			return true;
 		}
@@ -1257,6 +1345,71 @@ class CCrmOwnerType
 				return $orderTitle;
 			}
 
+			case self::StoreDocument:
+			{
+				if (\Bitrix\Main\Loader::includeModule('catalog'))
+				{
+					$documentData = StoreDocumentTable::getList(
+						[
+							'select' => ['ID', 'DOC_TYPE', 'TITLE'],
+							'filter' => ['ID' => $ID],
+						]
+					)->fetch();
+
+					if ($documentData)
+					{
+						if (!empty($documentData['TITLE']))
+						{
+							return $documentData['TITLE'];
+						}
+
+						if (!empty($documentData['DOC_TYPE']))
+						{
+							$documentTitle = StoreDocumentTable::getTypeList(true)[$documentData['DOC_TYPE']];
+							return $documentTitle;
+						}
+					}
+					return '';
+				}
+				break;
+			}
+
+			case self::ShipmentDocument:
+			{
+				if
+				(
+					\Bitrix\Main\Loader::includeModule('catalog')
+					&& \Bitrix\Main\Loader::includeModule('sale')
+				)
+				{
+					$documentData = \Bitrix\Sale\Internals\ShipmentTable::getList(
+						[
+							'select' => ['ID', 'ORDER_ID', 'ACCOUNT_NUMBER'],
+							'filter' => ['ID' => $ID],
+						]
+					)->fetch();
+
+					if ($documentData)
+					{
+						if (!empty($documentData['ACCOUNT_NUMBER']))
+						{
+							$accountNumber = $documentData['ACCOUNT_NUMBER'];
+						}
+						else
+						{
+							$accountNumber = '';
+						}
+
+						return GetMessage('CRM_OWNER_TYPE_SHIPMENT_DOCUMENT', [
+							"#ACCOUNT_NUMBER#" => $accountNumber
+						]);
+					}
+
+					return '';
+				}
+				break;
+			}
+
 			case self::DealCategory:
 			{
 				$arRes = isset($options['FIELDS']) ? $options['FIELDS'] : null;
@@ -1295,7 +1448,7 @@ class CCrmOwnerType
 			}
 		}
 
-		if (static::isPossibleDynamicTypeId($typeID))
+		if (static::isUseDynamicTypeBasedApproach($typeID))
 		{
 			$factory = Container::getInstance()->getFactory($typeID);
 			if ($factory)
@@ -1311,7 +1464,7 @@ class CCrmOwnerType
 					self::$CAPTIONS[$key] = '';
 					return '';
 				}
-				self::$CAPTIONS[$key] = $item->getTitle();
+				self::$CAPTIONS[$key] = $item->getHeading();
 
 				return self::$CAPTIONS[$key];
 			}
@@ -1634,7 +1787,7 @@ class CCrmOwnerType
 					if ($item)
 					{
 						$info = [
-							'TITLE' => $item->getTitle(),
+							'TITLE' => $item->getHeading(),
 							'LEGEND' => '',
 							'RESPONSIBLE_ID' => $item->getAssignedById(),
 							'IMAGE_FILE_ID' => 0,
@@ -1717,7 +1870,7 @@ class CCrmOwnerType
 					array('@ID' => $IDs, 'CHECK_PERMISSIONS' => $checkPermissions ? 'Y' : 'N'),
 					false,
 					false,
-					array('ORDER_TOPIC', 'RESPONSIBLE_ID')
+					array('ID', 'ORDER_TOPIC', 'RESPONSIBLE_ID')
 				);
 				break;
 			}
@@ -1772,6 +1925,20 @@ class CCrmOwnerType
 					)
 				);
 				$dbRes = new \CDBResult($orderDB);
+				break;
+			}
+			case self::StoreDocument:
+			{
+				if (\Bitrix\Main\Loader::includeModule('catalog'))
+				{
+					$documentDB = StoreDocumentTable::getList(
+						[
+							'select' => ['ID', 'DOC_TYPE', 'TITLE', 'DATE_CREATE', 'TOTAL', 'CURRENCY'],
+							'filter' => ['ID' => $IDs],
+						]
+					);
+					$dbRes = new \CDBResult($documentDB);
+				}
 				break;
 			}
 			case self::SuspendedLead:
@@ -1838,7 +2005,9 @@ class CCrmOwnerType
 			$data = [];
 			foreach ($items as $item)
 			{
-				$data[] = $item->getCompatibleData();
+				$itemData = $item->getCompatibleData();
+				$itemData['TITLE'] = $item->getHeading();
+				$data[] = $itemData;
 			}
 			$dbRes = new \CDBResult();
 			$dbRes->InitFromArray($data);
@@ -2001,40 +2170,6 @@ class CCrmOwnerType
 	{
 		$enableSlider = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled();
 		$enableEditUrl = is_array($options) && isset($options['ENABLE_EDIT_URL']) && $options['ENABLE_EDIT_URL'] === true;
-
-		$permissionOptions =
-			isset($options['PERMISSION_OPTIONS']) && is_array($options['PERMISSION_OPTIONS'])
-				? $options['PERMISSION_OPTIONS']
-				: []
-		;
-
-		$displayNotPermittedItemsAsHidden = (bool)($permissionOptions['DISPLAY_NOT_PERMITTED_ITEMS_AS_HIDDEN'] ?? false);
-		$hideItemsFromUnauthorizedUsers = (bool)($permissionOptions['HIDE_ITEMS_FROM_UNAUTHORIZED_USERS'] ?? true);
-
-		$shouldHideItem = false;
-		$isUserAuthorized = Container::getInstance()->getContext()->getUserId() > 0;
-
-		if ($displayNotPermittedItemsAsHidden)
-		{
-			if ($isUserAuthorized)
-			{
-				$shouldHideItem = !static::checkReadPermission((int)$typeID, (int)$ID);
-			}
-			else
-			{
-				$shouldHideItem = $hideItemsFromUnauthorizedUsers;
-			}
-		}
-
-		if ($shouldHideItem)
-		{
-			Container::getInstance()->getLocalization()->loadMessages();
-
-			return [
-				'TITLE' => \Bitrix\Main\Localization\Loc::getMessage('CRM_COMMON_HIDDEN_ITEM'),
-				'ENTITY_TYPE_CAPTION' => static::GetDescription($typeID),
-			];
-		}
 
 		switch($typeID)
 		{
@@ -2352,6 +2487,8 @@ class CCrmOwnerType
 				}
 
 				$result = [
+					'ID' => $arRes['ID'],
+					'DATE_INSERT' => $arRes['DATE_INSERT'],
 					'TITLE' => isset($arRes['ACCOUNT_NUMBER']) ? $arRes['ACCOUNT_NUMBER'] : '',
 					'LEGEND' => GetMessage('CRM_OWNER_TYPE_ORDER_SHIPMENT_LEGEND_2', [
 						"#DATE_INSERT#" => $dateInsert,
@@ -2379,6 +2516,21 @@ class CCrmOwnerType
 				}
 				return $result;
 			}
+			case self::StoreDocument:
+				$culture = Bitrix\Main\Context::getCurrent()->getCulture();
+				$dateCreate = '';
+				if ($arRes['DATE_CREATE'] instanceof \Bitrix\Main\Type\Date && $culture)
+				{
+					$dateCreate = FormatDate($culture->getShortDateFormat(), $arRes['DATE_CREATE']->getTimestamp());
+				}
+				return [
+					'ID' => $arRes['ID'] ?? 0,
+					'TITLE' => $arRes['TITLE'] ?? '',
+					'DOC_TYPE' => $arRes['DOC_TYPE'] ?? '',
+					'DATE_CREATE' => $dateCreate,
+					'TOTAL' => $arRes['TOTAL'] ?? 0,
+					'CURRENCY' => $arRes['CURRENCY'] ?? CCrmCurrency::GetDefaultCurrencyID(),
+				];
 			case self::SuspendedLead:
 			case self::SuspendedContact:
 			case self::SuspendedCompany:
@@ -2392,7 +2544,7 @@ class CCrmOwnerType
 			}
 		}
 
-		if (static::isPossibleDynamicTypeId($typeID))
+		if (static::isUseDynamicTypeBasedApproach($typeID))
 		{
 			$factory = Container::getInstance()->getFactory((int)$typeID);
 
@@ -2455,6 +2607,10 @@ class CCrmOwnerType
 				$ufId = $requisite->getUfId();
 				unset($requisite);
 				return $ufId;
+			case self::SmartInvoice:
+				return \Bitrix\Crm\Service\Factory\SmartInvoice::USER_FIELD_ENTITY_ID;
+			case self::SuspendedSmartInvoice:
+				return \Bitrix\Crm\Service\Factory\SmartInvoice::SUSPENDED_USER_FIELD_ENTITY_ID;
 			case self::Undefined:
 				return '';
 			default:
@@ -2480,9 +2636,13 @@ class CCrmOwnerType
 		}
 	}
 
-	public static function ResolveIDByUFEntityID($entityTypeID)
+	/**
+	 * @param string $userFieldEntityId
+	 * @return int|string|null
+	 */
+	public static function ResolveIDByUFEntityID($userFieldEntityId)
 	{
-		if($entityTypeID === '')
+		if($userFieldEntityId === '')
 		{
 			return '';
 		}
@@ -2491,7 +2651,7 @@ class CCrmOwnerType
 		$requisiteUfId = $requisite->getUfId();
 		unset($requisite);
 
-		switch($entityTypeID)
+		switch($userFieldEntityId)
 		{
 			case CAllCrmLead::$sUFEntityID:
 				return self::Lead;
@@ -2509,9 +2669,11 @@ class CCrmOwnerType
 				return self::Requisite;
 			case \Bitrix\Crm\Order\Manager::getUfId():
 				return self::Order;
+			case \Bitrix\Crm\Service\Factory\SmartInvoice::USER_FIELD_ENTITY_ID:
+				return self::SmartInvoice;
 		}
 
-		if (preg_match('/CRM_(\d+)/', $entityTypeID, $matches))
+		if (preg_match('/CRM_(\d+)/', $userFieldEntityId, $matches))
 		{
 			$type = Container::getInstance()->getType($matches[1]);
 			if ($type)
@@ -2682,7 +2844,7 @@ class CCrmOwnerType
 			}
 		}
 
-		if ($result === 0 && static::isPossibleDynamicTypeId($entityTypeId))
+		if ($result === 0 && static::isUseDynamicTypeBasedApproach($entityTypeId))
 		{
 			$factory = Container::getInstance()->getFactory($entityTypeId);
 			if ($factory)
@@ -2776,13 +2938,13 @@ class CCrmOwnerType
 			}
 		}
 
-		if (static::isPossibleDynamicTypeId($typeID))
+		if (static::isUseFactoryBasedApproach($typeID))
 		{
 			$factory = Container::getInstance()->getFactory($typeID);
 			if ($factory)
 			{
 				$item = $factory->getItem($ID);
-				if ($item)
+				if ($item && $item->hasField(\Bitrix\Crm\Item::FIELD_NAME_OPENED))
 				{
 					return $item->getOpened();
 				}
@@ -3090,9 +3252,23 @@ class CCrmOwnerType
 				}
 				break;
 			}
+			case self::StoreDocument:
+			case self::ShipmentDocument:
+			{
+				$caption = self::GetCaption($typeID, $ID);
+				if (!empty($caption))
+				{
+					$info = [
+						'CAPTION' => $caption,
+						'IMAGE_ID' => 0,
+					];
+					return true;
+				}
+				break;
+			}
 		}
 
-		if (static::isPossibleDynamicTypeId($typeID))
+		if (static::isUseDynamicTypeBasedApproach($typeID))
 		{
 			$caption = static::GetCaption($typeID, $ID);
 			if (!empty($caption))
@@ -3124,7 +3300,7 @@ class CCrmOwnerType
 
 	public static function GetJavascriptDescriptions()
 	{
-		return array(
+		return [
 			self::LeadName => self::GetDescription(self::Lead),
 			self::ContactName => self::GetDescription(self::Contact),
 			self::CompanyName => self::GetDescription(self::Company),
@@ -3132,13 +3308,14 @@ class CCrmOwnerType
 			self::DealRecurringName => self::GetDescription(self::DealRecurring),
 			self::InvoiceName => self::GetDescription(self::Invoice),
 			self::QuoteName => self::GetDescription(self::Quote),
-			self::OrderName => self::GetDescription(self::Order)
-		);
+			self::OrderName => self::GetDescription(self::Order),
+			self::SmartInvoice => self::GetDescription(self::SmartInvoice),
+		];
 	}
 
 	public static function GetNotFoundMessages()
 	{
-		return array(
+		return [
 			self::LeadName => GetMessage('CRM_OWNER_TYPE_LEAD_NOT_FOUND'),
 			self::ContactName => GetMessage('CRM_OWNER_TYPE_CONTACT_NOT_FOUND'),
 			self::CompanyName => GetMessage('CRM_OWNER_TYPE_COMPANY_NOT_FOUND'),
@@ -3146,13 +3323,67 @@ class CCrmOwnerType
 			self::DealRecurringName => GetMessage('CRM_OWNER_TYPE_DEAL_NOT_FOUND'),
 			self::InvoiceName => GetMessage('CRM_OWNER_TYPE_INVOICE_NOT_FOUND'),
 			self::QuoteName => GetMessage('CRM_OWNER_TYPE_QUOTE_NOT_FOUND'),
-		);
+			self::SmartInvoiceName => GetMessage('CRM_OWNER_TYPE_INVOICE_NOT_FOUND'),
+			self::CommonDynamicName => GetMessage('CRM_TYPE_ITEM_NOT_FOUND'),
+		];
 	}
 
 	public static function IsClient($ownerTypeID)
 	{
 		$ownerTypeID = (int)$ownerTypeID;
 		return ($ownerTypeID === static::Lead || $ownerTypeID === static::Contact || $ownerTypeID === static::Company);
+	}
+
+	/**
+	 * Return true if $entityTypeId fully supports new factory-based API.
+	 *
+	 * @param int $entityTypeId
+	 * @return bool
+	 */
+	public static function isUseFactoryBasedApproach(int $entityTypeId): bool
+	{
+		return (
+			self::isUseDynamicTypeBasedApproach($entityTypeId)
+			|| $entityTypeId === self::Deal
+			|| $entityTypeId === self::Quote
+		);
+	}
+
+	/**
+	 * Return true if $entityTypeId refers to the type which based on dynamic types API.
+	 * Use this method if you want to use dynamic types API.
+	 *
+	 * @param int $entityTypeId
+	 * @return bool
+	 */
+	public static function isUseDynamicTypeBasedApproach(int $entityTypeId): bool
+	{
+		return (
+			self::isDynamicTypeBasedStaticEntity($entityTypeId)
+			|| self::isPossibleDynamicTypeId($entityTypeId)
+		);
+	}
+
+	/**
+	 * Return true if $entityTypeId refers to the type which fully based on dynamic types API, but not a dynamic type itself.
+	 * @internal
+	 *
+	 * @param int $entityTypeId
+	 * @return bool
+	 */
+	public static function isDynamicTypeBasedStaticEntity(int $entityTypeId): bool
+	{
+		return $entityTypeId === self::SmartInvoice;
+	}
+
+	/**
+	 * Return types identifiers that fully based on dynamic types API, but not a dynamic types themselves.
+	 *
+	 * @return int[]
+	 */
+	public static function getDynamicTypeBasedStaticEntityTypeIds(): array
+	{
+		return [self::SmartInvoice];
 	}
 }
 
@@ -3172,6 +3403,12 @@ class CCrmOwnerTypeAbbr
 	public const Order = 'O';
 	public const OrderShipment = 'OS';
 	public const OrderPayment = 'OP';
+	public const SmartInvoice = 'SI';
+
+	public const SuspendedLead = 'SL';
+	public const SuspendedDeal = 'SD';
+	public const SuspendedSmartInvoice = 'SSI';
+
 	public const DynamicTypeAbbreviationPrefix = 'T';
 	public const SuspendedDynamicTypeAbbreviationPrefix = 'S';
 
@@ -3186,8 +3423,12 @@ class CCrmOwnerTypeAbbr
 		{
 			case CCrmOwnerType::Lead:
 				return self::Lead;
+			case CCrmOwnerType::SuspendedLead:
+				return self::SuspendedLead;
 			case CCrmOwnerType::Deal:
 				return self::Deal;
+			case CCrmOwnerType::SuspendedDeal:
+				return self::SuspendedDeal;
 			case CCrmOwnerType::Order:
 				return self::Order;
 			case CCrmOwnerType::OrderShipment:
@@ -3208,6 +3449,10 @@ class CCrmOwnerTypeAbbr
 				return self::DealCategory;
 			case CCrmOwnerType::CustomActivityType:
 				return self::CustomActivityType;
+			case CCrmOwnerType::SmartInvoice:
+				return self::SmartInvoice;
+			case CCrmOwnerType::SuspendedSmartInvoice:
+				return self::SuspendedSmartInvoice;
 			case CCrmOwnerType::System:
 				return self::System;
 			default:
@@ -3251,8 +3496,12 @@ class CCrmOwnerTypeAbbr
 		{
 			case CCrmOwnerType::LeadName:
 				return self::Lead;
+			case CCrmOwnerType::SuspendedLeadName:
+				return self::SuspendedLead;
 			case CCrmOwnerType::DealName:
 				return self::Deal;
+			case CCrmOwnerType::SuspendedDealName:
+				return self::SuspendedDeal;
 			case CCrmOwnerType::ContactName:
 				return self::Contact;
 			case CCrmOwnerType::CompanyName:
@@ -3273,6 +3522,10 @@ class CCrmOwnerTypeAbbr
 				return self::DealCategory;
 			case CCrmOwnerType::CustomActivityTypeName:
 				return self::CustomActivityType;
+			case CCrmOwnerType::SmartInvoiceName:
+				return self::SmartInvoice;
+			case CCrmOwnerType::SuspendedSmartInvoiceName:
+				return self::SuspendedSmartInvoice;
 			case CCrmOwnerType::SystemName:
 				return self::System;
 			default:
@@ -3307,8 +3560,12 @@ class CCrmOwnerTypeAbbr
 		{
 			case self::Lead:
 				return CCrmOwnerType::LeadName;
+			case self::SuspendedLead:
+				return CCrmOwnerType::SuspendedLead;
 			case self::Deal:
 				return CCrmOwnerType::DealName;
+			case self::SuspendedDeal:
+				return CCrmOwnerType::SuspendedDealName;
 			case self::Contact:
 				return CCrmOwnerType::ContactName;
 			case self::Company:
@@ -3329,6 +3586,10 @@ class CCrmOwnerTypeAbbr
 				return CCrmOwnerType::DealCategoryName;
 			case self::CustomActivityType:
 				return CCrmOwnerType::CustomActivityTypeName;
+			case self::SmartInvoice:
+				return CCrmOwnerType::SmartInvoiceName;
+			case self::SuspendedSmartInvoice:
+				return CCrmOwnerType::SuspendedSmartInvoiceName;
 			case self::System:
 				return CCrmOwnerType::SystemName;
 			default:

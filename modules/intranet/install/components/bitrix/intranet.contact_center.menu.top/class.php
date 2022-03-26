@@ -37,15 +37,21 @@ class IntranetContactCenterMenuTop extends \CBitrixComponent
 		}
 	}
 
+	protected function isSliderMode(): bool
+	{
+		return $this->request->get('IFRAME') == 'Y';
+	}
+
 	/**
 	 * @return array
 	 */
 	protected function getMenuItems(): array
 	{
+		$sliderMode = $this->isSliderMode() ? '?IFRAME=Y' : '';
 		$result = [
 			[
 				'TEXT' => Loc::getMessage('MENU_CONTACT_CENTER'),
-				'URL' => $this->arParams['COMPONENT_BASE_DIR'],
+				'URL' => $this->arParams['COMPONENT_BASE_DIR'] . $sliderMode,
 				'ID' => 'menu_contact_center',
 				'IS_ACTIVE' => $this->arParams['SECTION_ACTIVE'] === 'contact_center'
 			]
@@ -58,7 +64,7 @@ class IntranetContactCenterMenuTop extends \CBitrixComponent
 		{
 			$result[] = [
 				'TEXT' => Loc::getMessage('MENU_CONTACT_CENTER_IMOL_DETAILED_STATISTICS'),
-				'URL' => $this->arParams['COMPONENT_BASE_DIR'] . 'dialog_list/',
+				'URL' => $this->arParams['COMPONENT_BASE_DIR'] . 'dialog_list/' . $sliderMode,
 				'ID' => 'menu_contact_center_detail_statistics',
 				'IS_ACTIVE' => $this->arParams['SECTION_ACTIVE'] === 'dialog_list'
 			];
@@ -67,7 +73,7 @@ class IntranetContactCenterMenuTop extends \CBitrixComponent
 			{
 				$result[] = [
 					'TEXT' => Loc::getMessage('MENU_CONTACT_CENTER_IMOL_STATISTICS'),
-					'URL' => $this->arParams['COMPONENT_BASE_DIR'] . 'dialog_statistics/',
+					'URL' => $this->arParams['COMPONENT_BASE_DIR'] . 'dialog_statistics/' . $sliderMode,
 					'ID' => 'menu_contact_center_statistics',
 					'IS_ACTIVE' => $this->arParams['SECTION_ACTIVE'] === 'dialog_statistics'
 				];

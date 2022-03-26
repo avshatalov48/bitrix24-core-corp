@@ -331,7 +331,22 @@ class EntityFieldProvider
 			self::prepareMultiFieldsInfo($fieldsInfo);
 		}
 		$fieldsInfo = self::prepareFields($fieldsInfo);
-		return self::prepareWebFormFields($entityName, $fieldsInfo);
+		$fieldsMap =  self::prepareWebFormFields($entityName, $fieldsInfo);
+		//Add delivery address to company/contact/lead fields
+		if (in_array($entityName, [\CCrmOwnerType::CompanyName, \CCrmOwnerType::ContactName], true))
+		{
+			$fieldsMap[] = [
+				'type' => 'string',
+				'entity_field_name' => "DELIVERY_ADDRESS",
+				'entity_name' => $entityName,
+				'name' => "{$entityName}_DELIVERY_ADDRESS",
+				'caption' => Loc::getMessage("CRM_WEBFORM_FIELD_PROVIDER_DELIVERY_ADDRESS_CAPTION"),
+				'multiple' => false,
+				'required' => false,
+			];
+		}
+
+		return $fieldsMap;
 	}
 
 	protected static function prepareMultiFieldsInfo(&$fieldsInfo)
@@ -665,7 +680,7 @@ class EntityFieldProvider
 				foreach ($actualItems as $itemId => $item)
 				{
 					$newItem = [
-						'ID' => $itemId,
+						'ID' => (string)$itemId,
 						'VALUE' => $item['VALUE'],
 					];
 

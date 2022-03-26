@@ -1,5 +1,7 @@
 <?php
 $MESS["CRM_EDITOR_ADDRESS"] = "Adresse";
+$MESS["CRM_EDITOR_ADD_BANK_DETAILS"] = "Bankverbindung hinzufügen";
+$MESS["CRM_EDITOR_ADD_REQUISITE"] = "Detaillierte Informationen hinzufügen";
 $MESS["CRM_EDITOR_CANCEL_CONFIRMATION"] = "Möchten Sie die Änderungen wirklich rückgängig machen?";
 $MESS["CRM_EDITOR_CLOSE_CONFIRMATION"] = "Die Änderungen wurden nicht gespeichert. Möchten Sie die Seitenleiste wirklich schließen?";
 $MESS["CRM_EDITOR_CONFIRMATION"] = "Bestätigung";
@@ -12,7 +14,7 @@ $MESS["CRM_EDITOR_MANUAL_OPPORTUNITY_CHANGE_VALUE_AUTO"] = "Automatisch kalkulie
 $MESS["CRM_EDITOR_MANUAL_OPPORTUNITY_CHANGE_VALUE_MANUAL"] = "Aktuell gespeicherten Wert nutzen";
 $MESS["CRM_EDITOR_MANUAL_OPPORTUNITY_CONFIRMATION_TEXT"] = "Der Gesamtbetrag wird nicht mehr automatisch neu kalkuliert. Möchten Sie wirklich fortfahren?";
 $MESS["CRM_EDITOR_MANUAL_OPPORTUNITY_CONFIRMATION_TITLE"] = "Die automatische Kalkulation des Gesamtbetrags der Aufträge deaktivieren";
-$MESS["CRM_EDITOR_MANUAL_OPPORTUNITY_SET_AUTOMATIC"] = "Die automatische Kalkulation des Gesamtbetrags der Aufträge aktivieren";
+$MESS["CRM_EDITOR_MANUAL_OPPORTUNITY_SET_TO_AUTOMATIC"] = "Gesamtbetrag automatisch kalkulieren";
 $MESS["CRM_EDITOR_PAYMENT_NOT_PAID"] = "Nicht bezahlt";
 $MESS["CRM_EDITOR_PAYMENT_PAID"] = "Bezahlt";
 $MESS["CRM_EDITOR_PHONE"] = "Telefon";
@@ -71,6 +73,7 @@ $MESS["CRM_ENTITY_ED_DISK_UPLOAD_FILE"] = "Datei hochladen";
 $MESS["CRM_ENTITY_ED_DISK_UPLOAD_FILE_LEGEND"] = "Per drag'n'drop verschieben";
 $MESS["CRM_ENTITY_ED_DISPLAY_COMPANY_AT_FIRST"] = "Zuerst Unternehmen anzeigen";
 $MESS["CRM_ENTITY_ED_DISPLAY_CONTACT_AT_FIRST"] = "Zuerst Kontakte anzeigen";
+$MESS["CRM_ENTITY_ED_DOCUMENT_NUMBER_NUMERATOR_SETTINGS_CONTEXT_ITEM"] = "Vorlage automatischer Nummerierung konfigurieren";
 $MESS["CRM_ENTITY_ED_DUP_CTRL_SHORT_SUMMARY_TITLE"] = "gefunden";
 $MESS["CRM_ENTITY_ED_DUP_CTRL_WARNING_ACCEPT_BTN_TITLE"] = "Ignorieren und speichern";
 $MESS["CRM_ENTITY_ED_DUP_CTRL_WARNING_CANCEL_BTN_TITLE"] = "Abbrechen";

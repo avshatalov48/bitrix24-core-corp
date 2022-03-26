@@ -2,7 +2,9 @@
 
 namespace Bitrix\Disk\Document\OnlyOffice\Models;
 
+use Bitrix\Disk\Document\OnlyOffice;
 use Bitrix\Disk\Internals\DataManager;
+use Bitrix\Main\Application;
 use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Entity\BooleanField;
 use Bitrix\Main\ORM\Data\AddResult;
@@ -38,6 +40,8 @@ final class DocumentSessionTable extends DataManager
 	public const STATUS_ACTIVE = 0;
 	public const STATUS_NON_ACTIVE = 2;
 
+	public const EXTERNAL_HASH_LENGTH = 128;
+
 	/**
 	 * Returns DB table name for entity.
 	 *
@@ -72,9 +76,9 @@ final class DocumentSessionTable extends DataManager
 				->configureDefaultValue(false),
 			(new StringField('EXTERNAL_HASH'))
 				->configureRequired()
-				->configureSize(128)
+				->configureSize(self::EXTERNAL_HASH_LENGTH)
 				->configureDefaultValue(function() {
-					return Random::getString(32, true);
+					return self::generateDocumentKey();
 				})
 			,
 			(new DatetimeField('CREATE_TIME'))
@@ -91,6 +95,21 @@ final class DocumentSessionTable extends DataManager
 			,
 			new TextField('CONTEXT'),
 		];
+	}
+
+	public static function generateDocumentKey(): string
+	{
+		$randomLength = self::EXTERNAL_HASH_LENGTH;
+		$cloudRegistrationData = (new OnlyOffice\Configuration())->getCloudRegistrationData();
+		if ($cloudRegistrationData)
+		{
+			$prefixLength = strlen($cloudRegistrationData['clientId']) + 1;
+			$randomPart = Random::getString($randomLength - $prefixLength, true);
+
+			return "{$cloudRegistrationData['clientId']}.{$randomPart}";
+		}
+
+		return Random::getString($randomLength, true);
 	}
 
 	public static function onAfterAdd(Event $event)
@@ -129,6 +148,12 @@ final class DocumentSessionTable extends DataManager
 	public static function deleteBatch(array $filter)
 	{
 		parent::deleteBatch($filter);
+	}
+
+	public static function clearTable(): void
+	{
+		$sql = "TRUNCATE TABLE " . self::getTableName();
+		Application::getConnection()->queryExecute($sql);
 	}
 
 	public static function deactivateByHash(string $hash): void

@@ -76,4 +76,3 @@ $MESS["MOBILE_GOTO_CRM_LEAD"] = "Перейти в лид";
 $MESS["MOBILE_GOTO_CRM_COMPANY"] = "Перейти в компанию";
 $MESS["MOBILE_GOTO_CRM_CONTACT"] = "Перейти в контакт";
 $MESS["MOBILE_GOTO_CRM_DEAL"] = "Перейти в сделку";
-

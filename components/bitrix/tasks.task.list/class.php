@@ -10,7 +10,6 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main;
 use Bitrix\Main\Application;
-use Bitrix\Main\Engine\Response\Converter;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Loader;
@@ -25,18 +24,23 @@ use Bitrix\Tasks\Integration\Disk\Connector\Task as ConnectorTask;
 use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Task\TagTable;
+use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Manager;
 use Bitrix\Tasks\Grid\Task;
 use Bitrix\Tasks\TourGuide;
 use Bitrix\Tasks\Ui\Controls\Column;
 use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Util\User;
+use Bitrix\Tasks\Access\Model\TaskModel;
+use Bitrix\Tasks\Access\TaskAccessController;
+use Bitrix\Tasks\Access\ActionDictionary;
 
 Loc::loadMessages(__FILE__);
 
 CBitrixComponent::includeComponentClass("bitrix:tasks.base");
 
 class TasksTaskListComponent extends TasksBaseComponent
+	implements \Bitrix\Main\Errorable, \Bitrix\Main\Engine\Contract\Controllerable
 {
 	private const STORAGE_KEY = 'TASK_LIST_PAGING';
 
@@ -58,33 +62,198 @@ class TasksTaskListComponent extends TasksBaseComponent
 	);
 	protected $listParameters = array();
 
-	// Checks
+	protected $errorCollection;
 
-	public static function getAllowedMethods()
+	public function configureActions()
 	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return [];
+		}
+
 		return [
-			'setViewState',
-			'getNearTasks',
-			'prepareGridRowsForTasks',
-			'getTotalCount',
+			'getTotalCount' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'getGridRows' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'getNearTasks' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'sortTask' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'pin' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'unpin' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
 		];
 	}
 
-	/**
-	 * @param array $state
-	 * @return array
-	 */
-	public static function setViewState(array $state): array
+	public function __construct($component = null)
 	{
-		$userId = User::getId();
-		$stateInstance = Filter::getInstance($userId)->getListStateInstance(); // todo
-		if ($stateInstance)
+		parent::__construct($component);
+		$this->init();
+	}
+
+	protected function init()
+	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
 		{
-			$stateInstance->setState($state);
-			$stateInstance->saveState();
+			return null;
 		}
 
-		return [];
+		$this->setUserId();
+		$this->errorCollection = new \Bitrix\Tasks\Util\Error\Collection();
+	}
+
+	protected function setUserId()
+	{
+		$this->userId = (int) \Bitrix\Tasks\Util\User::getId();
+	}
+
+	public function getErrorByCode($code)
+	{
+		// TODO: Implement getErrorByCode() method.
+	}
+
+	public function getErrors()
+	{
+		if (!empty($this->componentId))
+		{
+			return parent::getErrors();
+		}
+		return $this->errorCollection->toArray();
+	}
+
+	public function pinAction($taskId, $groupId = 0)
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, $taskId))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		$option = (int)$groupId ? UserOption\Option::PINNED_IN_GROUP : UserOption\Option::PINNED;
+		UserOption::add($taskId, $this->userId, $option);
+
+		return $result;
+	}
+
+	public function unpinAction($taskId, $groupId = 0)
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, $taskId))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		$option = (int)$groupId ? UserOption\Option::PINNED_IN_GROUP : UserOption\Option::PINNED;
+		UserOption::delete($taskId, $this->userId, $option);
+
+		return $result;
+	}
+
+	public function sortTaskAction($data)
+	{
+		$result = [];
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return $result;
+		}
+
+		$sourceId = isset($data["sourceId"]) ? intval($data["sourceId"]) : 0;
+		$targetId = isset($data["targetId"]) ? intval($data["targetId"]) : 0;
+		$newGroupId = isset($data["newGroupId"]) ? intval($data["newGroupId"]) : null;
+		$currentGroupId = isset($data["currentGroupId"]) ? intval($data["currentGroupId"]) : 0;
+
+		if ($sourceId === $targetId || $sourceId < 1)
+		{
+			return $result;
+		}
+
+		if (!Access\TaskAccessController::can($this->userId, Access\ActionDictionary::ACTION_TASK_READ, $sourceId))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		if ($currentGroupId && Loader::includeModule("socialnetwork"))
+		{
+			$group = \CSocNetGroup::getByID($currentGroupId);
+			$canSort = SocialNetwork\Group::can($currentGroupId, SocialNetwork\Group::ACTION_SORT_TASKS);
+			if (!$group || !$canSort)
+			{
+				$this->addForbiddenError();
+				return $result;
+			}
+		}
+
+		if ($newGroupId)
+		{
+			$task = TaskModel::createFromId($sourceId);
+
+			$newTask = clone $task;
+			$newTask->setGroupId($newGroupId);
+
+			if (!Access\TaskAccessController::can($this->userId, Access\ActionDictionary::ACTION_TASK_SAVE, $task->getId(), $newTask))
+			{
+				$this->addForbiddenError();
+				return $result;
+			}
+		}
+
+		(new \Bitrix\Tasks\Control\Grid($this->userId))->sortTask($data);
+
+		return $result;
 	}
 
 	/**
@@ -93,8 +262,13 @@ class TasksTaskListComponent extends TasksBaseComponent
 	 * @param array $arParams
 	 * @return bool[]
 	 */
-	public static function getNearTasks($taskId, array $navigation, array $arParams = []): array
+	public function getNearTasksAction($taskId, array $navigation, array $arParams = []): array
 	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return [];
+		}
+
 		/** @var Filter $filter */
 		$filter = Filter::getInstance($arParams['USER_ID'], $arParams['GROUP_ID']);
 
@@ -134,6 +308,64 @@ class TasksTaskListComponent extends TasksBaseComponent
 		];
 	}
 
+	public function getTotalCountAction($userId, $groupId, $parameters)
+	{
+		$userId = (int) $userId;
+		$groupId = (int) $groupId;
+		if (!$userId)
+		{
+			return 0;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return 0;
+		}
+
+		$filter = Filter::getInstance($userId, $groupId)->process();
+
+		$listState = \CTaskListState::getInstance($userId);
+		$groupBySubtasks = $listState->isSubmode(\CTaskListState::VIEW_SUBMODE_WITH_SUBTASKS);
+		if (!$groupBySubtasks)
+		{
+			unset($filter['ONLY_ROOT_TASKS']);
+		}
+
+		/**
+		 * Group by subtask should be ignored for fulltext search
+		 * See #134428 for more information
+		 */
+		$listStateIsModified = false;
+		if (
+			$groupBySubtasks
+			&&
+			(
+				array_key_exists('::SUBFILTER-FULL_SEARCH_INDEX', $filter)
+				|| array_key_exists('::SUBFILTER-COMMENT_SEARCH_INDEX', $filter)
+			)
+		)
+		{
+			unset($filter['ONLY_ROOT_TASKS']);
+			$listStateIsModified = true;
+			$listState->switchOffSubmode(\CTaskListState::VIEW_SUBMODE_WITH_SUBTASKS);
+		}
+
+		$parameters = \Bitrix\Main\Web\Json::decode($parameters);
+		if (!array_key_exists('TARGET_USER_ID', $parameters))
+		{
+			$parameters['TARGET_USER_ID'] = $userId;
+		}
+
+		$count = Manager\Task::getCount($filter, $parameters);
+
+		if ($listStateIsModified)
+		{
+			$listState->switchOnSubmode(\CTaskListState::VIEW_SUBMODE_WITH_SUBTASKS);
+		}
+
+		return $count;
+	}
+
 	/**
 	 * @param array $taskIds
 	 * @param array $data
@@ -144,34 +376,22 @@ class TasksTaskListComponent extends TasksBaseComponent
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 */
-	public static function prepareGridRowsForTasks(array $taskIds, array $data = [], array $arParams = []): array
+	public function getGridRowsAction(array $taskIds, array $arParams = []): array
 	{
 		static::tryParseIntegerParameter($arParams['USER_ID'], User::getId());
 
 		$arParams['CAN_SEE_COUNTERS'] = self::canSeeCounters((int)$arParams['USER_ID']);
 
-		if (empty($data))
-		{
-			$parameters = [
-				'MAKE_ACCESS_FILTER' => true,
-				'TARGET_USER_ID' => (int)$arParams['USER_ID']
-			];
-			$getListParameters = [
-				'select' => array_keys(\CTasks::getFieldsInfo()),
-				'legacyFilter' => ['ID' => $taskIds],
-			];
-			$tasks = Manager\Task::getList(User::getId(), $getListParameters, $parameters)['DATA'];
-		}
-		else
-		{
-			$converter = new Converter(
-				Converter::TO_UPPER
-				| Converter::TO_SNAKE
-				| Converter::KEYS
-				| Converter::RECURSIVE
-			);
-			$tasks = $converter->process($data);
-		}
+		$parameters = [
+			'MAKE_ACCESS_FILTER' => true,
+			'TARGET_USER_ID' => (int)$arParams['USER_ID']
+		];
+		$getListParameters = [
+			'select' => array_keys(\CTasks::getFieldsInfo()),
+			'legacyFilter' => ['ID' => $taskIds],
+		];
+		$tasks = Manager\Task::getList(User::getId(), $getListParameters, $parameters)['DATA'];
+
 		$tasks = self::setGroupData($tasks);
 		$tasks = self::setFilesCount($tasks);
 		$tasks = self::setCheckListCount($tasks);
@@ -278,55 +498,6 @@ class TasksTaskListComponent extends TasksBaseComponent
 		}
 
 		return $errors->checkNoFatals();
-	}
-
-	public static function getTotalCount($userId, $groupId, $parameters)
-	{
-		$userId = (int) $userId;
-		$groupId = (int) $groupId;
-		if (!$userId)
-		{
-			return 0;
-		}
-
-		$filter = Filter::getInstance($userId, $groupId)->process();
-
-		$listState = \CTaskListState::getInstance($userId);
-		$groupBySubtasks = $listState->isSubmode(\CTaskListState::VIEW_SUBMODE_WITH_SUBTASKS);
-		if (!$groupBySubtasks)
-		{
-			unset($filter['ONLY_ROOT_TASKS']);
-		}
-
-		/**
-		 * Group by subtask should be ignored for fulltext search
-		 * See #134428 for more information
-		 */
-		$listStateIsModified = false;
-		if (
-			array_key_exists('::SUBFILTER-FULL_SEARCH_INDEX', $filter)
-			&& $groupBySubtasks
-		)
-		{
-			unset($filter['ONLY_ROOT_TASKS']);
-			$listStateIsModified = true;
-			$listState->switchOffSubmode(\CTaskListState::VIEW_SUBMODE_WITH_SUBTASKS);
-		}
-
-		$parameters = \Bitrix\Main\Web\Json::decode($parameters);
-		if (!array_key_exists('TARGET_USER_ID', $parameters))
-		{
-			$parameters['TARGET_USER_ID'] = $userId;
-		}
-
-		$count = Manager\Task::getCount($filter, $parameters);
-
-		if ($listStateIsModified)
-		{
-			$listState->switchOnSubmode(\CTaskListState::VIEW_SUBMODE_WITH_SUBTASKS);
-		}
-
-		return $count;
 	}
 
 	protected function checkParameters()
@@ -1073,7 +1244,10 @@ class TasksTaskListComponent extends TasksBaseComponent
 		 * See #134428 for more information
 		 */
 		$listStateIsModified = false;
-		if (array_key_exists('::SUBFILTER-FULL_SEARCH_INDEX', $legacyFilter))
+		if (
+			array_key_exists('::SUBFILTER-FULL_SEARCH_INDEX', $legacyFilter)
+			|| array_key_exists('::SUBFILTER-COMMENT_SEARCH_INDEX', $legacyFilter)
+		)
 		{
 			unset($legacyFilter['ONLY_ROOT_TASKS']);
 
@@ -1374,7 +1548,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 		}
 
 		$query = new Query(\Bitrix\Socialnetwork\WorkgroupTable::getEntity());
-		$query->setSelect(['ID', 'IMAGE_ID', 'NAME']);
+		$query->setSelect(['ID', 'IMAGE_ID', 'AVATAR_TYPE', 'NAME']);
 		$query->setFilter(['ID' => $groupIds]);
 
 		$res = $query->exec();
@@ -1389,6 +1563,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 		{
 			$list[$id]['GROUP_NAME'] = (isset($groupData[$row['GROUP_ID']])) ? $groupData[$row['GROUP_ID']]['NAME'] : '';
 			$list[$id]['GROUP_IMAGE_ID'] = (isset($groupData[$row['GROUP_ID']])) ? $groupData[$row['GROUP_ID']]['IMAGE_ID'] : 0;
+			$list[$id]['GROUP_AVATAR_TYPE'] = (isset($groupData[$row['GROUP_ID']])) ? $groupData[$row['GROUP_ID']]['AVATAR_TYPE'] : '';
 		}
 
 		return $list;
@@ -1612,4 +1787,9 @@ class TasksTaskListComponent extends TasksBaseComponent
 			}
 		}
 	}
+	protected function addForbiddenError()
+	{
+		$this->errorCollection->add('ACTION_NOT_ALLOWED.RESTRICTED', Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'));
+	}
+
 }

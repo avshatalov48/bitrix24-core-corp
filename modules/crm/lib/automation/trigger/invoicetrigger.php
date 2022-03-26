@@ -1,6 +1,11 @@
 <?php
 namespace Bitrix\Crm\Automation\Trigger;
 
+use Bitrix\Crm\Item;
+use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\PhaseSemantics;
+use Bitrix\Crm\RelationIdentifier;
+use Bitrix\Crm\Service\Container;
 Use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -55,6 +60,48 @@ class InvoiceTrigger extends BaseTrigger
 					'OWNER_ID' => $dealId
 				)), array('INVOICE_ID' => $id));
 			}
+		}
+	}
+
+	public static function onSmartInvoiceStatusChanged(Item\SmartInvoice $item): void
+	{
+		$factory = Container::getInstance()->getFactory($item->getEntityTypeId());
+		if (!$factory)
+		{
+			return;
+		}
+
+		$stage = $factory->getStage($item->getStageId());
+		if (!$stage || $stage->getSemantics() !== PhaseSemantics::SUCCESS)
+		{
+			return;
+		}
+
+		$dealsRelation = Container::getInstance()->getRelationManager()->getRelation(
+			new RelationIdentifier(
+				\CCrmOwnerType::Deal,
+				$item->getEntityTypeId()
+			)
+		);
+		if (!$dealsRelation)
+		{
+			return;
+		}
+
+		$dealIdentifiers = $dealsRelation->getParentElements(ItemIdentifier::createByItem($item));
+		foreach ($dealIdentifiers as $identifier)
+		{
+			static::execute(
+				[
+					[
+						'OWNER_TYPE_ID' => $identifier->getEntityTypeId(),
+						'OWNER_ID' => $identifier->getEntityId()
+					]
+				],
+				[
+					'SMART_INVOICE_ID' => $item->getId(),
+				]
+			);
 		}
 	}
 }

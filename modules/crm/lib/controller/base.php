@@ -10,6 +10,7 @@ use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\Response\Converter;
 use Bitrix\Main\Error;
+use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
@@ -18,11 +19,6 @@ abstract class Base extends Controller
 	protected function init(): void
 	{
 		parent::init();
-
-		if ($this->getScope() === Controller::SCOPE_REST)
-		{
-			Container::getInstance()->getContext()->setScope(Context::SCOPE_REST);
-		}
 
 		Container::getInstance()->getLocalization()->loadMessages();
 	}
@@ -45,24 +41,37 @@ abstract class Base extends Controller
 	{
 		$defaultPreFilter = parent::getDefaultPreFilters();
 
-		if (Loader::includeModule('intranet'))
+		if (
+			!Container::getInstance()->getUserPermissions()->isAdmin()
+			&& Loader::includeModule('intranet')
+		)
 		{
 			$defaultPreFilter[] = new IntranetUser();
 		}
+
+		$defaultPreFilter[] = new class extends \Bitrix\Main\Engine\ActionFilter\Base {
+			public function onBeforeAction(Event $event) {
+				/** @var Controller $controller */
+				$controller = $event->getParameter('controller');
+
+				if ($controller && $controller->getScope() === Context::SCOPE_REST)
+				{
+					Container::getInstance()->getContext()->setScope(Context::SCOPE_REST);
+				}
+			}
+		};
 
 		return $defaultPreFilter;
 	}
 
 	protected function convertKeysToUpper(array $data): array
 	{
-		$converter = new Converter(
-			Converter::TO_UPPER
-			| Converter::KEYS
-			| Converter::TO_SNAKE_DIGIT
-			| Converter::RECURSIVE
-		);
+		return Container::getInstance()->getOrmObjectConverter()->convertKeysToUpperCase($data);
+	}
 
-		return $converter->process($data);
+	public function convertKeysToCamelCase($data): array
+	{
+		return Container::getInstance()->getOrmObjectConverter()->convertKeysToCamelCase($data);
 	}
 
 	protected function convertValuesToUpper(array $data): array
@@ -70,13 +79,6 @@ abstract class Base extends Controller
 		$converter = new Converter(Converter::TO_UPPER | Converter::VALUES | Converter::TO_SNAKE);
 
 		return $converter->process($data);
-	}
-
-	public function convertKeysToCamelCase($data): array
-	{
-		$converter = Container::getInstance()->getOrmObjectConverter();
-
-		return $converter->convertKeysToCamelCase($data);
 	}
 
 	protected function removeDotsFromKeys(array $data): array
@@ -143,7 +145,7 @@ abstract class Base extends Controller
 		}
 	}
 
-	protected function isCorrectFieldName($filterName, $field): bool
+	protected function isCorrectFieldName(string $filterName, string $field): bool
 	{
 		static $prefixes = [
 			'' => true, '=' => true, '%' => true, '>' => true, '<' => true, '@' => true, '!=' => true,
@@ -179,16 +181,16 @@ abstract class Base extends Controller
 		}
 		unset($fieldInfo);
 
+		$ormObjectConverter = Container::getInstance()->getOrmObjectConverter();
 		$fieldsInfo = \CCrmRestHelper::prepareFieldInfos($fieldsInfo);
-		$upperFieldNames = array_keys($fieldsInfo);
-		$convertedFieldsInfo = $this->convertKeysToCamelCase($fieldsInfo);
-		$index = 0;
-		foreach ($fieldsInfo as &$info)
+		$convertedFieldsInfo = [];
+		foreach ($fieldsInfo as $fieldName => $info)
 		{
-			$info['upperName'] = $upperFieldNames[$index];
-			$index++;
+			$convertedFieldName = $ormObjectConverter->convertFieldNameFromUpperCaseToCamelCase($fieldName);
+			$info['upperName'] = $fieldName;
+			$convertedFieldsInfo[$convertedFieldName] = $info;
 		}
 
-		return array_combine(array_keys($convertedFieldsInfo), $fieldsInfo);
+		return $convertedFieldsInfo;
 	}
 }

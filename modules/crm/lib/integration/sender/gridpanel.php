@@ -186,7 +186,7 @@ class GridPanel
 			},
 			Sender\Entity\Segment::getList([
 				'select' => ['ID', 'NAME'],
-				'filter' => ['HIDDEN' => 'N'],
+				'filter' => ['=HIDDEN' => 'N'],
 				'order' => ['ID' => 'DESC']
 			])->fetchAll()
 		);

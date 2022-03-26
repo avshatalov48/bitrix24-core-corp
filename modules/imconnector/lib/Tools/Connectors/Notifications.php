@@ -212,6 +212,19 @@ JS;
 		return "https://api.whatsapp.com/send/?phone={$phoneNumber}&text=" . rawurlencode($text);
 	}
 
+	public static function getVirtualWhatsappOnClick(string $url): string
+	{
+		if(Loader::includeModule('bitrix24') && \CBitrix24::getPortalZone() === 'ru')
+		{
+			$url=str_replace("https://api.whatsapp.com/", "whatsapp://", $url);
+			return "document.location.href='{$url}';event.preventDefault();";
+		}
+		else
+		{
+			return "";
+		}
+	}
+
 	public static function getWidgetDisclaimerUrl($langId = LANGUAGE_ID)
 	{
 		// TODO: replace with actual url when known

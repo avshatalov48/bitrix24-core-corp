@@ -130,7 +130,13 @@ class EventHandler
 	 */
 	public static function onMailEventSendNotification(Result $result) : void
 	{
-		if (!$result->isError() || !$result->isPermanentError() || !$result->isBelongTo("crm","act") || !Loader::includeModule("im"))
+		if (
+			!$result->isError()
+			|| !$result->isPermanentError()
+			|| !$result->isBelongTo("crm","act")
+			|| !$result->isBlacklistable()
+			|| !Loader::includeModule("im")
+		)
 		{
 			return ;
 		}

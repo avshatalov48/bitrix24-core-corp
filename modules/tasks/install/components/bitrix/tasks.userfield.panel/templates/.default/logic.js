@@ -85,24 +85,34 @@ BX.namespace('Tasks.Component');
 			{
 				data.ENTITY_CODE = this.option('entityCode');
 
-				this.callRemote('this.saveField', {
-					id: id,
-					data: data,
-					parameters: {
-						INPUT_PREFIX: this.option('inputPrefix'),
-						RELATED_ENTITIES: this.option('relatedEntities')
+				BX.ajax.runComponentAction('bitrix:tasks.userfield.panel', 'saveField', {
+					mode: 'class',
+					data: {
+						id: id,
+						data: data,
+						parameters: {
+							INPUT_PREFIX: this.option('inputPrefix'),
+							RELATED_ENTITIES: this.option('relatedEntities')
+						}
 					}
-				}).then(function(result){
+				}).then(
+					function(response)
+					{
+						if (
+							!response.status
+							|| response.status !== 'success'
+						)
+						{
+							return;
+						}
 
-					if(result.isSuccess())
+						p.fulfill(response.data);
+					}.bind(this),
+					function(response)
 					{
-						p.fulfill(result.getData());
-					}
-					else
-					{
-						p.reject(result.getErrors());
-					}
-				});
+						p.reject(response.errors);
+					}.bind(this)
+				);
 			},
 
 			onItemHide: function(p, id)
@@ -121,30 +131,41 @@ BX.namespace('Tasks.Component');
 				};
 
 				BX.Tasks.confirm(title, null, params).then(function(code) {
-					if(code == 'continue')
+					if(code === 'continue')
 					{
 						this.setItemStateDisplay(id, false); // hide item
 						p.fulfill('hide'); // play animation
 					}
-					else if(code == 'delete')
+					else if(code === 'delete')
 					{
-						return this.callRemote('this.deleteField', {
-							id: id,
-							parameters: {
-								RELATED_ENTITIES: this.option('relatedEntities')
+						BX.ajax.runComponentAction('bitrix:tasks.userfield.panel', 'deleteField', {
+							mode: 'class',
+							data: {
+								id: id,
+								parameters: {
+									RELATED_ENTITIES: this.option('relatedEntities')
+								}
 							}
-						}).then(function(result){
+						}).then(
+							function(response)
+							{
+								if (
+									!response.status
+									|| response.status !== 'success'
+								)
+								{
+									p.reject();
+									return;
+								}
 
-							if(!result.isSuccess())
+								p.fulfill('delete');
+							}.bind(this),
+							function(response)
 							{
-								BX.Tasks.alert(result.getErrors());
+								BX.Tasks.alert(response.errors);
 								p.reject();
-							}
-							else
-							{
-								p.fulfill('delete'); // remove item from js object, play animation, fire item-delete event
-							}
-						});
+							}.bind(this)
+						);
 					}
 				}.bind(this));
 			},
@@ -221,11 +242,23 @@ BX.namespace('Tasks.Component');
 
 			saveStateInstant: function(dropAll)
 			{
-				this.callRemote('this.setState', {
-					state: this.packState(),
-					dropAll: !!dropAll,
-					entityCode: this.option('entityCode')
-				}, {code: 'setstate'});
+				BX.ajax.runComponentAction('bitrix:tasks.userfield.panel', 'setState', {
+					mode: 'class',
+					data: {
+						state: this.packState(),
+						dropAll: !!dropAll,
+						entityCode: this.option('entityCode')
+					}
+				}).then(
+					function(response)
+					{
+
+					}.bind(this),
+					function(response)
+					{
+
+					}.bind(this)
+				);
 			},
 
 			packState: function()
@@ -356,30 +389,57 @@ BX.namespace('Tasks.Component');
 
 				if(item.data().NO_FIELD_HTML) // have to download field html first
 				{
-					this.callRemote('this.getFieldHtml', {
-						id: id,
-						entityCode: this.option('entityCode'),
-						entityId: this.option('entityId'),
-						parameters: {
-							INPUT_PREFIX: this.option('inputPrefix'),
-							RELATED_ENTITIES: this.option('relatedEntities')
+					BX.ajax.runComponentAction('bitrix:tasks.userfield.panel', 'getFieldHtml', {
+						mode: 'class',
+						data: {
+							id: id,
+							entityCode: this.option('entityCode'),
+							entityId: this.option('entityId'),
+							parameters: {
+								INPUT_PREFIX: this.option('inputPrefix'),
+								RELATED_ENTITIES: this.option('relatedEntities')
+							}
 						}
-					}).then(function(result){
-
-						var html = '';
-						if(result.isSuccess())
+					}).then(
+						function(response)
 						{
-							html = result.getData();
-						}
-						else
+							var html = '';
+							if (
+								response.status
+								&& response.status === 'success'
+							)
+							{
+								html = response.data;
+							}
+							else
+							{
+								var messages = [];
+
+								for (var i = 0; i < response.errors.length; i++)
+								{
+									messages.push(response.errors[i].message);
+								}
+
+								html = '<div class="task-message-label error">'+messages.join('<br />')+'</div>';
+							}
+
+							item.setFieldHtml(html);
+							p.fulfill(item);
+						}.bind(this),
+						function(response)
 						{
-							html = '<div class="task-message-label error">'+result.getErrors().getMessages(true).join('<br />')+'</div>';
-						}
+							var messages = [];
 
-						item.setFieldHtml(html);
+							for (var i = 0; i < response.errors.length; i++)
+							{
+								messages.push(response.errors[i].message);
+							}
 
-						p.fulfill(item);
-					});
+							var html = '<div class="task-message-label error">'+messages.join('<br />')+'</div>';
+							item.setFieldHtml(html);
+							p.fulfill(item);
+						}.bind(this)
+					);
 
 					item.data().NO_FIELD_HTML = false;
 				}
@@ -445,9 +505,16 @@ BX.namespace('Tasks.Component');
 				{
 					if (restriction.TASK_LIMIT_EXCEEDED)
 					{
-						BX.UI.InfoHelper.show('limit_tasks_custom_fields');
+						BX.UI.InfoHelper.show('limit_tasks_custom_fields', {
+							isLimit: true,
+							limitAnalyticsLabels: {
+								module: 'tasks',
+								source: 'taskEdit'
+							}
+						});
 						return false;
 					}
+
 					return true;
 				}
 
@@ -915,6 +982,20 @@ BX.namespace('Tasks.Component');
 
 			showErrors: function(errors)
 			{
+				if (Object.prototype.toString.call(errors) === '[object Array]')
+				{
+					var messages = [];
+
+					for (var i = 0; i < errors.length; i++)
+					{
+						messages.push(errors[i].message);
+					}
+
+					this.control('error').innerHTML = messages.join('<br />');
+					BX.Tasks.Util.showByClass(this.control('error'));
+					return;
+				}
+
 				this.control('error').innerHTML = errors.getMessages(true).join('<br />');
 				BX.Tasks.Util.showByClass(this.control('error'));
 			}

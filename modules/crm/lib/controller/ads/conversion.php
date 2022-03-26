@@ -36,16 +36,27 @@ class Conversion extends Controller
 
 	protected function checkPermissions() : bool
 	{
-		if (Loader::includeModule('bitrix24') && !Feature::isFeatureEnabled('crm_ad_conversion'))
+		$isCloud = Loader::includeModule("bitrix24");
+
+		if ($isCloud && !Feature::isFeatureEnabled('crm_ad_conversion'))
 		{
-			throw new SystemException('Not accessible.', 100);
+			$this->addError(
+				new Error("Not accessible.", 100)
+			);
+
+			return false;
 		}
 
 		$user = CurrentUser::get();
-		if (!(Loader::includeModule("bitrix24") && \CBitrix24::isPortalAdmin($user->getId()) || $user->isAdmin()))
+		$isUserAdmin = ($isCloud && \CBitrix24::isPortalAdmin($user->getId())) || $user->isAdmin();
+
+		if (!$isUserAdmin)
 		{
 			$this->addError(new Error("Access Denied.","permissions"));
+
+			return false;
 		}
+
 		return count($this->getErrors()) === 0;
 	}
 

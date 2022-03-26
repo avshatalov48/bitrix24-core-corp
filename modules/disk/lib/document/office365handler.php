@@ -3,9 +3,12 @@
 namespace Bitrix\Disk\Document;
 
 use Bitrix\Disk\Document\Upload\Office365ResumableUpload;
+use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\ShowSession;
 use Bitrix\Disk\TypeFile;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\HttpClient;
+use Bitrix\Main\Web\Json;
 use Bitrix\Main\Web\Uri;
 
 Loc::loadMessages(__FILE__);
@@ -48,13 +51,19 @@ class Office365Handler extends OneDriveHandler implements IViewer
 	}
 
 	/**
-	 * Returns OAuth service for working with OneDrive for Business.
+	 * Returns OAuth service for working with Office365.
 	 *
 	 * @return \CSocServOffice365OAuth|\CSocServAuth
 	 */
 	protected function getOAuthService()
 	{
-		return new \CSocServOffice365OAuth($this->userId);
+		$oauth = new \CSocServOffice365OAuth($this->userId);
+		foreach ($this->getScopes() as $scope)
+		{
+			$oauth->getEntityOAuth()->addScope($scope);
+		}
+
+		return $oauth;
 	}
 
 	protected function instantiateResumableUpload(FileData $fileData)
@@ -83,9 +92,9 @@ class Office365Handler extends OneDriveHandler implements IViewer
 	protected function getScopes()
 	{
 		return array(
-			'wl.signin',
-			'wl.offline_access',
-			'onedrive.readwrite',
+			'offline_access',
+			'Files.ReadWrite.All',
+			'User.Read',
 		);
 	}
 
@@ -98,19 +107,59 @@ class Office365Handler extends OneDriveHandler implements IViewer
 	 */
 	public function getDataForViewFile(FileData $fileData)
 	{
-		$dataForViewFile = parent::getDataForViewFile($fileData);
-		if(!$dataForViewFile)
+		$fileData = $this->createFileInternal($fileData);
+		if($fileData === null)
 		{
 			return null;
 		}
 
-		if(!empty($dataForViewFile['neededDelete']))
+		$http = new HttpClient([
+			'redirect' => false,
+			'socketTimeout' => 10,
+			'streamTimeout' => 30,
+			'version' => HttpClient::HTTP_1_1,
+		]);
+
+		$http->setHeader('Content-Type', 'application/json; charset=UTF-8');
+		$http->setHeader('Authorization', "bearer {$this->getAccessToken()}");
+
+		if ($http->post($this->getApiUrlRoot() . "/drive/items/{$fileData->getId()}/preview") === false)
 		{
-			$fileData->setLinkInService($dataForViewFile['viewUrl']);
-			ShowSession::register($this, $fileData, $this->errorCollection);
+			$errorString = implode('; ', array_keys($http->getError()));
+			$this->errorCollection[] = new Error($errorString, self::ERROR_SHARED_EMBED_LINK);
+
+			return null;
 		}
 
-		return $dataForViewFile;
+		if (!$this->checkHttpResponse($http))
+		{
+			return null;
+		}
+
+		$responseData = Json::decode($http->getResult());
+		if ($responseData === null)
+		{
+			$this->errorCollection[] = new Error('Could not decode response as json', self::ERROR_BAD_JSON);
+
+			return null;
+		}
+
+		if (empty($responseData['getUrl']))
+		{
+			$this->errorCollection[] = new Error('Could not find getUrl in response', self::ERROR_SHARED_EMBED_LINK);
+
+			return null;
+		}
+
+		$fileData->setLinkInService($responseData['getUrl']);
+		ShowSession::register($this, $fileData, $this->errorCollection);
+
+		return [
+			'id' => $fileData->getId(),
+			'viewUrl' => $responseData['getUrl'],
+			'neededDelete' => true,
+			'neededCheckView' => false,
+		];
 	}
 
 	/**
@@ -181,10 +230,30 @@ class Office365Handler extends OneDriveHandler implements IViewer
 	protected function getUploadPath(FileData $fileData)
 	{
 		$fileName = $fileData->getName();
-		$fileName = 'document.' . getFileExtension($fileName);
 		$fileName = $this->convertToUtf8($fileName);
 		$fileName = rawurlencode($fileName);
 
-		return $this->getApiUrlRoot() . "/drive/root:/'{$fileName}:/";
+		return $this->getApiUrlRoot() . "/drive/root:/{$fileName}:/";
+	}
+
+	public function checkHttpResponse(HttpClient $http)
+	{
+		$status = (int)$http->getStatus();
+		if($status === 404)
+		{
+			$result = Json::decode($http->getResult());
+			if (!empty($result['error']['code']) && $result['error']['code'] === 'itemNotFound')
+			{
+				//it's hack. Because this type of error we will get when user has lack of scopes (old version scopes).
+				$this->errorCollection[] = new Error(
+					'Insufficient scope (403)',
+					self::ERROR_CODE_INSUFFICIENT_SCOPE
+				);
+
+				return false;
+			}
+		}
+
+		return parent::checkHttpResponse($http);
 	}
 }

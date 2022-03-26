@@ -1865,7 +1865,19 @@ var Vue = exports.Vue;
         return typeof val !== 'undefined';
       },
       object: function object(val) {
-        return babelHelpers.typeof(val) === 'object';
+        if (!val || babelHelpers.typeof(val) !== 'object' || Object.prototype.toString.call(val) !== '[object Object]') {
+          return false;
+        }
+
+        var proto = Object.getPrototypeOf(val);
+
+        if (proto === null) {
+          return true;
+        }
+
+        var objectCtorString = Function.prototype.toString.call(Object);
+        var ctor = proto.hasOwnProperty('constructor') && proto.constructor;
+        return typeof ctor === 'function' && Function.prototype.toString.call(ctor) === objectCtorString;
       },
       string: function string(val) {
         return typeof val === 'string';
@@ -1994,21 +2006,31 @@ var Vue = exports.Vue;
       }
     };
 
+    function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
+
+    function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
+    var _namespace = /*#__PURE__*/new WeakMap();
+
+    var _subscribers = /*#__PURE__*/new WeakMap();
+
+    var _emittedOnce = /*#__PURE__*/new WeakMap();
+
     var Event = /*#__PURE__*/function () {
       function Event() {
         babelHelpers.classCallCheck(this, Event);
 
-        _namespace.set(this, {
+        _classPrivateFieldInitSpec(this, _namespace, {
           writable: true,
           value: []
         });
 
-        _subscribers.set(this, {
+        _classPrivateFieldInitSpec(this, _subscribers, {
           writable: true,
           value: []
         });
 
-        _emittedOnce.set(this, {
+        _classPrivateFieldInitSpec(this, _emittedOnce, {
           writable: true,
           value: []
         });
@@ -2090,12 +2112,6 @@ var Vue = exports.Vue;
       return Event;
     }();
 
-    var _namespace = new WeakMap();
-
-    var _subscribers = new WeakMap();
-
-    var _emittedOnce = new WeakMap();
-
     var Item = /*#__PURE__*/function (_Event) {
       babelHelpers.inherits(Item, _Event);
 
@@ -2129,6 +2145,11 @@ var Vue = exports.Vue;
           return value;
         }
       }, {
+        key: "getComparableValue",
+        value: function getComparableValue() {
+          return this.value;
+        }
+      }, {
         key: "selected",
         get: function get() {
           return this._selectedInternal;
@@ -2149,7 +2170,7 @@ var Vue = exports.Vue;
         }
       },
       components: {},
-      template: "\n\t\t<transition name=\"b24-form-field-a-slide\">\n\t\t\t<div class=\"b24-form-field\"\n\t\t\t\t:class=\"classes\"\n\t\t\t\tv-show=\"field.visible\"\n\t\t\t>\n\t\t\t\t<div v-if=\"field.isComponentDuplicable\">\n\t\t\t\t<transition-group name=\"b24-form-field-a-slide\" tag=\"div\">\n\t\t\t\t\t<component v-bind:is=\"field.getComponentName()\"\n\t\t\t\t\t\tv-for=\"(item, itemIndex) in field.items\"\n\t\t\t\t\t\tv-bind:key=\"field.id\"\n\t\t\t\t\t\tv-bind:field=\"field\"\n\t\t\t\t\t\tv-bind:itemIndex=\"itemIndex\"\n\t\t\t\t\t\tv-bind:item=\"item\"\n\t\t\t\t\t\t@input-blur=\"onBlur\"\n\t\t\t\t\t\t@input-focus=\"onFocus\"\n\t\t\t\t\t\t@input-key-down=\"onKeyDown\"\n\t\t\t\t\t></component>\n\t\t\t\t</transition-group>\t\n\t\t\t\t\t<a class=\"b24-form-control-add-btn\"\n\t\t\t\t\t\tv-if=\"field.multiple\"\n\t\t\t\t\t\t@click=\"addItem\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ field.messages.get('fieldAdd') }}\n\t\t\t\t\t</a>\t\n\t\t\t\t</div>\n\t\t\t\t<div v-if=\"!field.isComponentDuplicable\">\n\t\t\t\t\t<component v-bind:is=\"field.getComponentName()\"\n\t\t\t\t\t\tv-bind:key=\"field.id\"\n\t\t\t\t\t\tv-bind:field=\"field\"\n\t\t\t\t\t\t@input-blur=\"onBlur\"\n\t\t\t\t\t\t@input-focus=\"onFocus\"\n\t\t\t\t\t\t@input-key-down=\"onKeyDown\"\n\t\t\t\t\t></component>\t\t\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\n\t",
+      template: "\n\t\t<transition name=\"b24-form-field-a-slide\">\n\t\t\t<div class=\"b24-form-field\"\n\t\t\t\t:class=\"classes\"\n\t\t\t\tv-show=\"field.visible\"\n\t\t\t>\n\t\t\t\t<div v-if=\"field.isComponentDuplicable\">\n\t\t\t\t<transition-group name=\"b24-form-field-a-slide\" tag=\"div\">\n\t\t\t\t\t<component v-bind:is=\"field.getComponentName()\"\n\t\t\t\t\t\tv-for=\"(item, itemIndex) in field.items\"\n\t\t\t\t\t\tv-bind:key=\"field.id\"\n\t\t\t\t\t\tv-bind:field=\"field\"\n\t\t\t\t\t\tv-bind:itemIndex=\"itemIndex\"\n\t\t\t\t\t\tv-bind:item=\"item\"\n\t\t\t\t\t\t@input-blur=\"onBlur\"\n\t\t\t\t\t\t@input-focus=\"onFocus\"\n\t\t\t\t\t\t@input-key-down=\"onKeyDown\"\n\t\t\t\t\t></component>\n\t\t\t\t</transition-group>\n\t\t\t\t\t<a class=\"b24-form-control-add-btn\"\n\t\t\t\t\t\tv-if=\"field.multiple\"\n\t\t\t\t\t\t@click=\"addItem\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ field.messages.get('fieldAdd') }}\n\t\t\t\t\t</a>\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass=\"b24-form-control-comment\"\n\t\t\t\t\t\tv-if=\"field.hint && !field.hintOnFocus || field.hint && field.hintOnFocus && field.focused\"\n\t\t\t\t\t\t>{{field.hint}}</div>\n\t\t\t\t</div>\n\t\t\t\t<div v-if=\"!field.isComponentDuplicable\">\n\t\t\t\t\t<component v-bind:is=\"field.getComponentName()\"\n\t\t\t\t\t\tv-bind:key=\"field.id\"\n\t\t\t\t\t\tv-bind:field=\"field\"\n\t\t\t\t\t\t@input-blur=\"onBlur\"\n\t\t\t\t\t\t@input-focus=\"onFocus\"\n\t\t\t\t\t\t@input-key-down=\"onKeyDown\"\n\t\t\t\t\t></component>\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass=\"b24-form-control-comment\"\n\t\t\t\t\t\tv-if=\"field.hint && !field.hintOnFocus || field.hint && field.hintOnFocus && field.focused\"\n\t\t\t\t\t\t>{{field.hint}}</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\n\t",
       computed: {
         classes: function classes() {
           var list = ['b24-form-field-' + this.field.type, 'b24-form-control-' + this.field.getOriginalType()];
@@ -2618,6 +2639,7 @@ var Vue = exports.Vue;
 
       storedValues = storedValues || {};
       storedValues.type = storedValues.type || {};
+      storedValues.name = storedValues.name || {};
       return storedValues;
     }
 
@@ -2629,11 +2651,15 @@ var Vue = exports.Vue;
 
         var storedTypes = ['name', 'second-name', 'last-name', 'email', 'phone'];
         var stored = fields.reduce(function (result, field) {
-          if (storedTypes.indexOf(field.getType()) >= 0) {
+          if (storedTypes.indexOf(field.getType()) >= 0 && field.autocomplete || field.autocomplete === true) {
             var value = field.value();
 
             if (value) {
-              result.type[field.getType()] = value;
+              if (storedTypes.indexOf(field.getType()) >= 0 && field.autocomplete) {
+                result.type[field.getType()] = value;
+              }
+
+              result.name[field.name] = value;
             }
           }
 
@@ -2643,16 +2669,33 @@ var Vue = exports.Vue;
       } catch (e) {}
     }
     function getStoredFieldValue(fieldType) {
+      var storedTypes = ['name', 'second-name', 'last-name', 'email', 'phone'];
+
+      if (storedTypes.indexOf(fieldType) < 0) {
+        return '';
+      }
+
       return restore()['type'][fieldType] || '';
     }
+    function getStoredFieldValueByFieldName(fieldName) {
+      return restore()['name'][fieldName] || '';
+    }
 
+    function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
+
+    function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
+    function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
     var DefaultOptions = {
       type: 'string',
       label: 'Default field name',
       multiple: false,
+      autocomplete: null,
       visible: true,
       required: false
     };
+
+    var _prepareValues = /*#__PURE__*/new WeakSet();
 
     var Controller = /*#__PURE__*/function (_Event) {
       babelHelpers.inherits(Controller, _Event);
@@ -2695,6 +2738,9 @@ var Vue = exports.Vue;
         var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : DefaultOptions;
         babelHelpers.classCallCheck(this, Controller);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller).call(this, options));
+
+        _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _prepareValues);
+
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "events", {
           blur: 'blur',
           focus: 'focus',
@@ -2708,6 +2754,7 @@ var Vue = exports.Vue;
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "normalizers", []);
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "formatters", []);
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "filters", []);
+        _this.visible = !!options.visible;
 
         _this.adjust(options);
 
@@ -2715,6 +2762,12 @@ var Vue = exports.Vue;
       }
 
       babelHelpers.createClass(Controller, [{
+        key: "reset",
+        value: function reset() {
+          this.items = [];
+          this.adjust(this.options, false);
+        }
+      }, {
         key: "selectedItems",
         value: function selectedItems() {
           return this.items.filter(function (item) {
@@ -2753,6 +2806,13 @@ var Vue = exports.Vue;
         value: function values() {
           return this.selectedItems().map(function (item) {
             return item.value;
+          });
+        }
+      }, {
+        key: "getComparableValues",
+        value: function getComparableValues() {
+          return this.selectedItems().map(function (item) {
+            return item.getComparableValue();
           });
         }
       }, {
@@ -2883,19 +2943,60 @@ var Vue = exports.Vue;
         key: "removeFirstEmptyItems",
         value: function removeFirstEmptyItems() {}
       }, {
-        key: "adjust",
-        value: function adjust() {
+        key: "setValues",
+        value: function setValues(values) {
           var _this6 = this;
 
+          values = _classPrivateMethodGet(this, _prepareValues, _prepareValues2).call(this, values);
+
+          if (values.length === 0) {
+            return this;
+          }
+
+          if (!this.multiple) {
+            values = [values[0]];
+          }
+
+          if (this.isComponentDuplicable) {
+            if (this.items.length > values.length) {
+              this.items = this.items.slice(0, values.length - 1);
+            }
+
+            values.forEach(function (value, index) {
+              var item = _this6.items[index];
+
+              if (!item) {
+                item = _this6.addItem({
+                  value: value
+                });
+              }
+
+              item.value = value;
+            });
+          }
+
+          this.items.forEach(function (item) {
+            item.selected = values.indexOf(item.getComparableValue()) >= 0;
+          });
+          return this;
+        }
+      }, {
+        key: "adjust",
+        value: function adjust() {
+          var _this7 = this;
+
           var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : DefaultOptions;
+          var autocomplete = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
           this.options = Object.assign({}, this.options, options);
           this.id = this.options.id || '';
           this.name = this.options.name || '';
           this.type = this.options.type;
           this.label = this.options.label;
           this.multiple = !!this.options.multiple;
-          this.visible = !!this.options.visible;
+          this.autocomplete = !!this.options.autocomplete;
           this.required = !!this.options.required;
+          this.hint = this.options.hint || '';
+          this.hintOnFocus = !!this.options.hintOnFocus;
           this.placeholder = this.options.placeholder || '';
 
           if (options.messages || !this.messages) {
@@ -2917,13 +3018,18 @@ var Vue = exports.Vue;
           }
 
           var values = this.options.values || [];
-          var value = this.options.value || values[0] || getStoredFieldValue(this.getType());
+          var value = this.options.value || values[0];
+
+          if (autocomplete) {
+            value = value || (this.autocomplete ? getStoredFieldValueByFieldName(this.name) : null) || (this.autocomplete ? getStoredFieldValue(this.getType()) : null) || '';
+          }
+
           var items = this.options.items || [];
           var selected = !this.multiple || values.length > 0;
 
           if (values.length === 0) {
             values.push(value);
-            selected = value !== 'undefined' && value !== '';
+            selected = typeof value !== 'undefined' && value !== '';
           } // empty single
 
 
@@ -2949,12 +3055,26 @@ var Vue = exports.Vue;
           }
 
           items.forEach(function (item) {
-            return _this6.addItem(item);
+            return _this7.addItem(item);
           });
         }
       }]);
       return Controller;
     }(Event);
+
+    function _prepareValues2(values) {
+      var _this8 = this;
+
+      return values.filter(function (value) {
+        return typeof value !== 'undefined';
+      }).map(function (value) {
+        return _this8.normalize(value + '');
+      }).map(function (value) {
+        return _this8.format(value);
+      }).filter(function (value) {
+        return _this8.validate(value);
+      });
+    }
 
     var Dropdown = {
       props: ['marginTop', 'maxHeight', 'width', 'visible', 'title'],
@@ -3387,10 +3507,13 @@ var Vue = exports.Vue;
         return (value || '').replace(/[^\-,.\d]/g, '');
       },
       Integer: function Integer(value) {
-        return (value || '').replace(/[^-\d]/g, '');
+        return (value || '').replace(/[^\-\d]/g, '');
       },
       Phone: function Phone(value) {
         return (value || '').replace(/[^+\d]/g, '');
+      },
+      Money: function Money(value) {
+        return (value || '').replace(/[^,.\d]/g, '');
       }
     };
     var Normalizer = {
@@ -3403,6 +3526,9 @@ var Vue = exports.Vue;
       },
       Phone: function Phone(value) {
         return value;
+      },
+      Money: function Money(value) {
+        return Filter.Money(value).replace(/,/g, '.');
       }
     };
     var Validator = {
@@ -3426,6 +3552,9 @@ var Vue = exports.Vue;
       },
       Phone: function Phone(value) {
         return Filter.Phone(value).length > 5;
+      },
+      Money: function Money(value) {
+        return Validator.Double(value);
       }
     };
     var phoneDb = {
@@ -4177,6 +4306,10 @@ var Vue = exports.Vue;
           _this.value.changeablePrice = true;
         }
 
+        if (!options.price && !options.label && !options.value) {
+          _this.selected = false;
+        }
+
         return _this;
       }
 
@@ -4225,6 +4358,11 @@ var Vue = exports.Vue;
           return this.discount * this.value.quantity;
         }
       }, {
+        key: "getComparableValue",
+        value: function getComparableValue() {
+          return this.value.id + '';
+        }
+      }, {
         key: "price",
         get: function get() {
           return this.value.price;
@@ -4238,7 +4376,7 @@ var Vue = exports.Vue;
 
     var FieldProductSubItem = {
       props: ['field', 'item'],
-      template: "\n\t\t<div class=\"b24-form-control-product-info\">\n\t\t\t<input type=\"hidden\" \n\t\t\t\tv-model=\"item.value.quantity\"\n\t\t\t>\n\t\t\t<div class=\"b24-form-control-product-icon\">\n\t\t\t\t<svg v-if=\"!pic\" width=\"28px\" height=\"24px\" viewBox=\"0 0 28 24\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n\t\t\t\t\t<g transform=\"translate(-14, -17)\" fill=\"#333\" stroke=\"none\" stroke-width=\"1\" fill-rule=\"evenodd\" opacity=\"0.2\">\n\t\t\t\t\t\t<path d=\"M29,38.5006415 C29,39.8807379 27.8807708,41 26.4993585,41 C25.1192621,41 24,39.8807708 24,38.5006415 C24,37.1192621 25.1192292,36 26.4993585,36 C27.8807379,36 29,37.1192292 29,38.5006415 Z M39,38.5006415 C39,39.8807379 37.8807708,41 36.4993585,41 C35.1192621,41 34,39.8807708 34,38.5006415 C34,37.1192621 35.1192292,36 36.4993585,36 C37.8807379,36 39,37.1192292 39,38.5006415 Z M20.9307332,21.110867 L40.9173504,21.0753348 C41.2504348,21.0766934 41.5636721,21.2250055 41.767768,21.4753856 C41.97328,21.7271418 42.046982,22.0537176 41.9704452,22.3639694 L39.9379768,33.1985049 C39.8217601,33.6666139 39.3866458,33.9972787 38.8863297,34 L22.7805131,34 C22.280197,33.9972828 21.8450864,33.6666243 21.728866,33.1985049 L18.2096362,19.0901297 L15,19.0901297 C14.4477153,19.0901297 14,18.6424144 14,18.0901297 L14,18 C14,17.4477153 14.4477153,17 15,17 L19.0797196,17 C19.5814508,17.0027172 20.0151428,17.3333757 20.1327818,17.8014951 L20.9307332,21.110867 Z\" id=\"Icon\"></path>\n\t\t\t\t\t</g>\n\t\t\t\t</svg>\n\t\t\t\t<img v-if=\"pic\" :src=\"pic\" style=\"height: 24px;\">\n\t\t\t</div>\n\t\t\t\n\t\t\t<div class=\"b24-form-control-product-quantity\"\n\t\t\t\tv-if=\"item.selected\"\n\t\t\t>\n\t\t\t\t<div class=\"b24-form-control-product-quantity-remove\"\n\t\t\t\t\tv-if=\"item.price\"\n\t\t\t\t\t:style=\"{visibility: item.getNextDecQuantity() ? 'visible' : 'hidden'}\"\n\t\t\t\t\t@click=\"item.decQuantity()\"\n\t\t\t\t></div>\n\t\t\t\t<div class=\"b24-form-control-product-quantity-counter\">\n\t\t\t\t\t<span\n\t\t\t\t\t\tv-if=\"item.price || item.quantity.unit\"\n\t\t\t\t\t>{{ item.value.quantity }}</span>\n\t\t\t\t\t{{ item.quantity.unit }}\n\t\t\t\t</div>\n\t\t\t\t<div class=\"b24-form-control-product-quantity-add\"\n\t\t\t\t\tv-if=\"item.price\"\n\t\t\t\t\t:style=\"{visibility: item.getNextIncQuantity() ? 'visible' : 'hidden'}\"\n\t\t\t\t\t@click=\"item.incQuantity()\"\n\t\t\t\t></div>\n\t\t\t</div>\n\t\t\t<div class=\"b24-form-control-product-price\">\n\t\t\t\t<div>\n\t\t\t\t\t<div class=\"b24-form-control-product-price-old\"\n\t\t\t\t\t\tv-if=\"item.discount\"\n\t\t\t\t\t\tv-html=\"field.formatMoney(item.getSummary())\"\n\t\t\t\t\t></div>\n\t\t\t\t\t<div class=\"b24-form-control-product-price-current\"\n\t\t\t\t\t\tv-html=\"field.formatMoney(item.getTotal())\"\n\t\t\t\t\t></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t",
+      template: "\n\t\t<div class=\"b24-form-control-product-info\">\n\t\t\t<input type=\"hidden\" \n\t\t\t\tv-model=\"item.value.quantity\"\n\t\t\t>\n\t\t\t<div class=\"b24-form-control-product-icon\">\n\t\t\t\t<svg v-if=\"!pic\" width=\"28px\" height=\"24px\" viewBox=\"0 0 28 24\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n\t\t\t\t\t<g transform=\"translate(-14, -17)\" fill=\"#333\" stroke=\"none\" stroke-width=\"1\" fill-rule=\"evenodd\" opacity=\"0.2\">\n\t\t\t\t\t\t<path d=\"M29,38.5006415 C29,39.8807379 27.8807708,41 26.4993585,41 C25.1192621,41 24,39.8807708 24,38.5006415 C24,37.1192621 25.1192292,36 26.4993585,36 C27.8807379,36 29,37.1192292 29,38.5006415 Z M39,38.5006415 C39,39.8807379 37.8807708,41 36.4993585,41 C35.1192621,41 34,39.8807708 34,38.5006415 C34,37.1192621 35.1192292,36 36.4993585,36 C37.8807379,36 39,37.1192292 39,38.5006415 Z M20.9307332,21.110867 L40.9173504,21.0753348 C41.2504348,21.0766934 41.5636721,21.2250055 41.767768,21.4753856 C41.97328,21.7271418 42.046982,22.0537176 41.9704452,22.3639694 L39.9379768,33.1985049 C39.8217601,33.6666139 39.3866458,33.9972787 38.8863297,34 L22.7805131,34 C22.280197,33.9972828 21.8450864,33.6666243 21.728866,33.1985049 L18.2096362,19.0901297 L15,19.0901297 C14.4477153,19.0901297 14,18.6424144 14,18.0901297 L14,18 C14,17.4477153 14.4477153,17 15,17 L19.0797196,17 C19.5814508,17.0027172 20.0151428,17.3333757 20.1327818,17.8014951 L20.9307332,21.110867 Z\" id=\"Icon\"></path>\n\t\t\t\t\t</g>\n\t\t\t\t</svg>\n\t\t\t\t<img v-if=\"pic\" :src=\"pic\" style=\"height: 24px;\">\n\t\t\t</div>\n\t\t\t\n\t\t\t<div class=\"b24-form-control-product-quantity\"\n\t\t\t\tv-if=\"item.selected\"\n\t\t\t>\n\t\t\t\t<div class=\"b24-form-control-product-quantity-remove\"\n\t\t\t\t\t:style=\"{visibility: item.getNextDecQuantity() ? 'visible' : 'hidden'}\"\n\t\t\t\t\t@click=\"item.decQuantity()\"\n\t\t\t\t></div>\n\t\t\t\t<div class=\"b24-form-control-product-quantity-counter\">\n\t\t\t\t\t{{ item.value.quantity }}\n\t\t\t\t\t<span\n\t\t\t\t\t\tv-if=\"item.quantity.unit\"\n\t\t\t\t\t>{{ item.quantity.unit }}</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"b24-form-control-product-quantity-add\"\n\t\t\t\t\t:style=\"{visibility: item.getNextIncQuantity() ? 'visible' : 'hidden'}\"\n\t\t\t\t\t@click=\"item.incQuantity()\"\n\t\t\t\t></div>\n\t\t\t</div>\n\t\t\t<div class=\"b24-form-control-product-price\">\n\t\t\t\t<div>\n\t\t\t\t\t<div class=\"b24-form-control-product-price-old\"\n\t\t\t\t\t\tv-if=\"item.discount\"\n\t\t\t\t\t\tv-html=\"field.formatMoney(item.getSummary())\"\n\t\t\t\t\t></div>\n\t\t\t\t\t<div class=\"b24-form-control-product-price-current\"\n\t\t\t\t\t\tv-html=\"field.formatMoney(item.getTotal())\"\n\t\t\t\t\t></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t",
       computed: {
         pic: function pic() {
           return !this.field.bigPic && this.item && this.item.pics && this.item.pics.length > 0 ? this.item.pics[0] : '';
@@ -4293,8 +4431,8 @@ var Vue = exports.Vue;
         onBlur: function onBlur() {
           this.focusedItem = null;
         },
-        onInput: function onInput() {
-          var value = this.field.normalize(this.value);
+        onInput: function onInput(event) {
+          var value = this.field.normalize(event.target.value);
           value = this.field.format(value);
 
           if (this.value !== value) {
@@ -4365,10 +4503,27 @@ var Vue = exports.Vue;
 
         babelHelpers.classCallCheck(this, Controller);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller).call(this, options));
+
+        if (_this.hasChangeablePrice()) {
+          _this.multiple = false;
+        }
+
         _this.currency = options.currency;
 
         _this.validators.push(function (value) {
           return !value.changeablePrice || value.price > 0;
+        });
+
+        _this.validators.push(function (value) {
+          return !value.changeablePrice || Validator.Money(value.price);
+        });
+
+        _this.filters.push(function (value) {
+          return !value.changeablePrice || Filter.Money(value.price);
+        });
+
+        _this.normalizers.push(function (value) {
+          return !value.changeablePrice ? value : Normalizer.Money(value.price);
         });
 
         return _this;
@@ -4397,6 +4552,15 @@ var Vue = exports.Vue;
           return this.currency.format.replace('&#', '|||||').replace('&amp;#', '|-|||-|').split('#').map(function (item) {
             return item.replace('|-|||-|', '&amp;#').replace('|||||', '&#');
           });
+        }
+      }, {
+        key: "addItem",
+        value: function addItem(options) {
+          if (!options.value && !options.label && !options.price) {
+            options.selected = false;
+          }
+
+          return babelHelpers.get(babelHelpers.getPrototypeOf(Controller.prototype), "addItem", this).call(this, options);
         }
       }]);
       return Controller;
@@ -5013,7 +5177,7 @@ var Vue = exports.Vue;
           format: null
         };
       },
-      template: "\n\t\t<div>\n\t\t\t<field-string\n\t\t\t\t:field=\"field\"\n\t\t\t\t:item=\"item\"\n\t\t\t\t:itemIndex=\"itemIndex\"\n\t\t\t\t:readonly=\"true\"\n\t\t\t\t:buttonClear=\"field.messages.get('fieldListUnselect')\"\n\t\t\t\t@input-click=\"toggleDropDown()\"\n\t\t\t></field-string>\n\t\t\t<field-item-dropdown \n\t\t\t\t:marginTop=\"'-14px'\" \n\t\t\t\t:maxHeight=\"'none'\" \n\t\t\t\t:width=\"'auto'\" \n\t\t\t\t:visible=\"dropDownOpened\"\n\t\t\t\t:title=\"field.label\"\n\t\t\t\t@close=\"closeDropDown()\"\n\t\t\t>\n\t\t\t\t<date-pick \n\t\t\t\t\t:value=\"item.value\"\n\t\t\t\t\t:show=\"true\"\n\t\t\t\t\t:hasInputElement=\"false\"\n\t\t\t\t\t:pickTime=\"field.hasTime\"\n\t\t\t\t\t:startWeekOnSunday=\"field.sundayFirstly\"\n\t\t\t\t\t:format=\"field.format\"\n\t\t\t\t\t:weekdays=\"getWeekdays()\"\n\t\t\t\t\t:months=\"getMonths()\"\n\t\t\t\t\t:setTimeCaption=\"field.messages.get('fieldDateTime')\"\n\t\t\t\t\t:closeButtonCaption=\"field.messages.get('fieldDateClose')\"\n\t\t\t\t\t:selectableYearRange=\"120\"\n\t\t\t\t\t@input=\"setDate\"\n\t\t\t\t\t@close=\"closeDropDown()\"\n\t\t\t\t></date-pick>\n\t\t\t</field-item-dropdown>\n\t\t</div>\n\t",
+      template: "\n\t\t<div>\n\t\t\t<field-string\n\t\t\t\t:field=\"field\"\n\t\t\t\t:item=\"item\"\n\t\t\t\t:itemIndex=\"itemIndex\"\n\t\t\t\t:readonly=\"true\"\n\t\t\t\t:buttonClear=\"field.messages.get('fieldListUnselect')\"\n\t\t\t\t@input-click=\"toggleDropDown()\"\n\t\t\t></field-string>\n\t\t\t<field-item-dropdown \n\t\t\t\t:marginTop=\"'-14px'\" \n\t\t\t\t:maxHeight=\"'none'\" \n\t\t\t\t:width=\"'auto'\" \n\t\t\t\t:visible=\"dropDownOpened\"\n\t\t\t\t:title=\"field.label\"\n\t\t\t\t@close=\"closeDropDown()\"\n\t\t\t>\n\t\t\t\t<date-pick \n\t\t\t\t\t:value=\"item.value\"\n\t\t\t\t\t:show=\"true\"\n\t\t\t\t\t:hasInputElement=\"false\"\n\t\t\t\t\t:pickTime=\"field.hasTime\"\n\t\t\t\t\t:startWeekOnSunday=\"field.sundayFirstly\"\n\t\t\t\t\t:format=\"field.dateFormat\"\n\t\t\t\t\t:weekdays=\"getWeekdays()\"\n\t\t\t\t\t:months=\"getMonths()\"\n\t\t\t\t\t:setTimeCaption=\"field.messages.get('fieldDateTime')\"\n\t\t\t\t\t:closeButtonCaption=\"field.messages.get('fieldDateClose')\"\n\t\t\t\t\t:selectableYearRange=\"120\"\n\t\t\t\t\t@input=\"setDate\"\n\t\t\t\t\t@close=\"closeDropDown()\"\n\t\t\t\t></date-pick>\n\t\t\t</field-item-dropdown>\n\t\t</div>\n\t",
       methods: {
         setDate: function setDate(value, stopClose) {
           this.value = value;
@@ -5062,7 +5226,7 @@ var Vue = exports.Vue;
 
         babelHelpers.classCallCheck(this, Controller$$1);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).call(this, options));
-        _this.format = options.format;
+        _this.dateFormat = options.format;
         _this.sundayFirstly = !!options.sundayFirstly;
         return _this;
       }
@@ -5672,6 +5836,10 @@ var Vue = exports.Vue;
     }();
 
     var _OppositeActionTypes;
+
+    function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
+
+    function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     var ConditionEvents = {
       change: 'change'
     };
@@ -5697,21 +5865,27 @@ var Vue = exports.Vue;
     };
     var OppositeActionTypes = (_OppositeActionTypes = {}, babelHelpers.defineProperty(_OppositeActionTypes, ActionTypes.hide, ActionTypes.show), babelHelpers.defineProperty(_OppositeActionTypes, ActionTypes.show, ActionTypes.hide), _OppositeActionTypes);
 
+    var _form = /*#__PURE__*/new WeakMap();
+
+    var _list = /*#__PURE__*/new WeakMap();
+
+    var _groups = /*#__PURE__*/new WeakMap();
+
     var Manager = /*#__PURE__*/function () {
       function Manager(form) {
         babelHelpers.classCallCheck(this, Manager);
 
-        _form.set(this, {
+        _classPrivateFieldInitSpec$1(this, _form, {
           writable: true,
           value: void 0
         });
 
-        _list.set(this, {
+        _classPrivateFieldInitSpec$1(this, _list, {
           writable: true,
           value: []
         });
 
-        _groups.set(this, {
+        _classPrivateFieldInitSpec$1(this, _groups, {
           writable: true,
           value: []
         });
@@ -5753,7 +5927,8 @@ var Vue = exports.Vue;
           }).map(function (depGroup) {
             var group = {
               logic: depGroup.logic || 'or',
-              list: []
+              list: [],
+              typeId: depGroup.typeId || 0
             };
             depGroup.list.forEach(function (dep) {
               return _this.addDependence(dep, group);
@@ -5824,8 +5999,10 @@ var Vue = exports.Vue;
             return true;
           }).forEach(function (dep) {
             var list;
+            var logicAnd = true;
 
-            if (dep.group && dep.group.logic === 'and') {
+            if (dep.group && dep.group.typeId > 0) {
+              logicAnd = dep.group.logic === 'and';
               list = dep.group.list.map(function (dep) {
                 var field = babelHelpers.classPrivateFieldGet(_this2, _form).getFields().filter(function (field) {
                   return dep.condition.target === field.name;
@@ -5843,10 +6020,10 @@ var Vue = exports.Vue;
             } // 3.check value&operation
 
 
-            var isOpposite = list.some(function (_ref) {
-              var dep = _ref.dep,
-                  field = _ref.field;
-              var values = field.values();
+            var checkFunction = function checkFunction(item) {
+              var dep = item.dep;
+              var field = item.field;
+              var values = field.getComparableValues();
 
               if (values.length === 0) {
                 values.push('');
@@ -5855,7 +6032,9 @@ var Vue = exports.Vue;
               return values.filter(function (value) {
                 return _this2.compare(value, dep.condition.value, dep.condition.operation);
               }).length === 0;
-            }); // 4. run action
+            };
+
+            var isOpposite = logicAnd ? list.some(checkFunction) : list.every(checkFunction); // 4. run action
 
             _this2.getFieldsByTarget(dep.action.target).forEach(function (field) {
               var actionType = dep.action.type;
@@ -5959,12 +6138,6 @@ var Vue = exports.Vue;
       return Manager;
     }();
 
-    var _form = new WeakMap();
-
-    var _list = new WeakMap();
-
-    var _groups = new WeakMap();
-
     var ConditionOperations = [];
 
     for (var operationName in Operations) {
@@ -5975,21 +6148,31 @@ var Vue = exports.Vue;
       ConditionOperations.push(Operations[_operationName]);
     }
 
+    function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
+
+    function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
+    var _form$1 = /*#__PURE__*/new WeakMap();
+
+    var _isStartSent = /*#__PURE__*/new WeakMap();
+
+    var _filledFields = /*#__PURE__*/new WeakMap();
+
     var Analytics$1 = /*#__PURE__*/function () {
       function Analytics$$1(form) {
         babelHelpers.classCallCheck(this, Analytics$$1);
 
-        _form$1.set(this, {
+        _classPrivateFieldInitSpec$2(this, _form$1, {
           writable: true,
           value: void 0
         });
 
-        _isStartSent.set(this, {
+        _classPrivateFieldInitSpec$2(this, _isStartSent, {
           writable: true,
           value: false
         });
 
-        _filledFields.set(this, {
+        _classPrivateFieldInitSpec$2(this, _filledFields, {
           writable: true,
           value: []
         });
@@ -6010,6 +6193,7 @@ var Vue = exports.Vue;
               if (!babelHelpers.classPrivateFieldGet(this, _isStartSent)) {
                 babelHelpers.classPrivateFieldSet(this, _isStartSent, true);
                 this.send('start');
+                babelHelpers.classPrivateFieldGet(this, _form$1).analyticsHandler('start', babelHelpers.classPrivateFieldGet(this, _form$1).identification.id);
               }
 
               break;
@@ -6076,42 +6260,52 @@ var Vue = exports.Vue;
       return Analytics$$1;
     }();
 
-    var _form$1 = new WeakMap();
+    function _classPrivateFieldInitSpec$3(obj, privateMap, value) { _checkPrivateRedeclaration$4(obj, privateMap); privateMap.set(obj, value); }
 
-    var _isStartSent = new WeakMap();
+    function _checkPrivateRedeclaration$4(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 
-    var _filledFields = new WeakMap();
+    var _key = /*#__PURE__*/new WeakMap();
+
+    var _use = /*#__PURE__*/new WeakMap();
+
+    var _widgetId = /*#__PURE__*/new WeakMap();
+
+    var _response = /*#__PURE__*/new WeakMap();
+
+    var _target = /*#__PURE__*/new WeakMap();
+
+    var _callback = /*#__PURE__*/new WeakMap();
 
     var ReCaptcha$1 = /*#__PURE__*/function () {
       function ReCaptcha$$1() {
         babelHelpers.classCallCheck(this, ReCaptcha$$1);
 
-        _key.set(this, {
+        _classPrivateFieldInitSpec$3(this, _key, {
           writable: true,
           value: void 0
         });
 
-        _use.set(this, {
+        _classPrivateFieldInitSpec$3(this, _use, {
           writable: true,
           value: false
         });
 
-        _widgetId.set(this, {
+        _classPrivateFieldInitSpec$3(this, _widgetId, {
           writable: true,
           value: void 0
         });
 
-        _response.set(this, {
+        _classPrivateFieldInitSpec$3(this, _response, {
           writable: true,
           value: void 0
         });
 
-        _target.set(this, {
+        _classPrivateFieldInitSpec$3(this, _target, {
           writable: true,
           value: void 0
         });
 
-        _callback.set(this, {
+        _classPrivateFieldInitSpec$3(this, _callback, {
           writable: true,
           value: void 0
         });
@@ -6205,28 +6399,24 @@ var Vue = exports.Vue;
       return ReCaptcha$$1;
     }();
 
-    var _key = new WeakMap();
+    function _classPrivateFieldInitSpec$4(obj, privateMap, value) { _checkPrivateRedeclaration$5(obj, privateMap); privateMap.set(obj, value); }
 
-    var _use = new WeakMap();
+    function _checkPrivateRedeclaration$5(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 
-    var _widgetId = new WeakMap();
+    var _currency = /*#__PURE__*/new WeakMap();
 
-    var _response = new WeakMap();
-
-    var _target = new WeakMap();
-
-    var _callback = new WeakMap();
+    var _fields = /*#__PURE__*/new WeakMap();
 
     var Basket = /*#__PURE__*/function () {
       function Basket(fields, currency) {
         babelHelpers.classCallCheck(this, Basket);
 
-        _currency.set(this, {
+        _classPrivateFieldInitSpec$4(this, _currency, {
           writable: true,
           value: void 0
         });
 
-        _fields.set(this, {
+        _classPrivateFieldInitSpec$4(this, _fields, {
           writable: true,
           value: []
         });
@@ -6251,7 +6441,9 @@ var Vue = exports.Vue;
       }, {
         key: "items",
         value: function items() {
-          return babelHelpers.classPrivateFieldGet(this, _fields).reduce(function (accumulator, field) {
+          return babelHelpers.classPrivateFieldGet(this, _fields).filter(function (field) {
+            return field.visible;
+          }).reduce(function (accumulator, field) {
             return accumulator.concat(field.selectedItems());
           }, []).filter(function (item) {
             return item.price;
@@ -6301,10 +6493,6 @@ var Vue = exports.Vue;
       }]);
       return Basket;
     }();
-
-    var _currency = new WeakMap();
-
-    var _fields = new WeakMap();
 
     var Scrollable = {
       props: ['show', 'enabled', 'zIndex', 'text', 'topIntersected', 'bottomIntersected'],
@@ -6583,7 +6771,7 @@ var Vue = exports.Vue;
       mounted: function mounted() {
         this.isSmallHeight = this.$el.parentElement.offsetHeight >= 1000;
       },
-      template: "\n\t\t<div class=\"b24-form-state-container\" :class=\"{'b24-form-state--sticky': isSmallHeight}\">\n\t\t\t\t<transition name=\"b24-a-fade\">\n\t\t\t\t\t<div v-show=\"form.loading\" class=\"b24-form-loader\">\n\t\t\t\t\t\t<div class=\"b24-form-loader-icon\">\n\t\t\t\t\t\t\t<svg xmlns:xlink=\"http://www.w3.org/1999/xlink\" xmlns=\"http://www.w3.org/2000/svg\"  viewBox=\"0 0 263 174\">\n\t\t\t\t\t\t\t\t<defs>\n\t\t\t\t\t\t\t\t\t   <svg width=\"158px\" height=\"158px\" viewBox=\"0 0 158 158\" version=\"1.1\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">\n\t\t\t\t\t\t\t\t\t\t   <path id=\"bxSunLines\" class=\"bx-sun-lines-animate\" d=\"M79,0 C80.6568542,0 82,1.34314575 82,3 L82,22 C82,23.6568542 80.6568542,25 79,25 C77.3431458,25 76,23.6568542 76,22 L76,3 C76,1.34314575 77.3431458,0 79,0 Z M134.861,23.139 C136.032146,24.3104996 136.032146,26.2095004 134.861,27.381 L121.426,40.816 C120.248863,41.9529166 118.377746,41.9366571 117.220544,40.7794557 C116.063343,39.6222543 116.047083,37.7511367 117.184,36.574 L130.619,23.139 C131.7905,21.9678542 133.6895,21.9678542 134.861,23.139 L134.861,23.139 Z M158,79 C158,80.6568542 156.656854,82 155,82 L136,82 C134.343146,82 133,80.6568542 133,79 C133,77.3431458 134.343146,76 136,76 L155,76 C156.656854,76 158,77.3431458 158,79 Z M134.861,134.861 C133.6895,136.032146 131.7905,136.032146 130.619,134.861 L117.184,121.426 C116.40413,120.672777 116.091362,119.557366 116.365909,118.508478 C116.640455,117.45959 117.45959,116.640455 118.508478,116.365909 C119.557366,116.091362 120.672777,116.40413 121.426,117.184 L134.861,130.619 C136.032146,131.7905 136.032146,133.6895 134.861,134.861 Z M79,158 C77.3431458,158 76,156.656854 76,155 L76,136 C76,134.343146 77.3431458,133 79,133 C80.6568542,133 82,134.343146 82,136 L82,155 C82,156.656854 80.6568542,158 79,158 Z M23.139,134.861 C21.9678542,133.6895 21.9678542,131.7905 23.139,130.619 L36.574,117.184 C37.3272234,116.40413 38.4426337,116.091362 39.491522,116.365909 C40.5404103,116.640455 41.3595451,117.45959 41.6340915,118.508478 C41.9086378,119.557366 41.5958698,120.672777 40.816,121.426 L27.381,134.861 C26.2095004,136.032146 24.3104996,136.032146 23.139,134.861 Z M0,79 C0,77.3431458 1.34314575,76 3,76 L22,76 C23.6568542,76 25,77.3431458 25,79 C25,80.6568542 23.6568542,82 22,82 L3,82 C1.34314575,82 0,80.6568542 0,79 L0,79 Z M23.139,23.139 C24.3104996,21.9678542 26.2095004,21.9678542 27.381,23.139 L40.816,36.574 C41.5958698,37.3272234 41.9086378,38.4426337 41.6340915,39.491522 C41.3595451,40.5404103 40.5404103,41.3595451 39.491522,41.6340915 C38.4426337,41.9086378 37.3272234,41.5958698 36.574,40.816 L23.139,27.381 C21.9678542,26.2095004 21.9678542,24.3104996 23.139,23.139 Z\" fill=\"#FFD110\" />\n\t\t\t\t\t\t\t\t\t   </svg>\n\t\t\t\t\t\t\t   </defs>\n\t\t\t\t\t\t\t   <g fill=\"none\" fill-rule=\"evenodd\">\n\t\t\t\t\t\t\t\t   <path d=\"M65.745 160.5l.245-.005c13.047-.261 23.51-10.923 23.51-23.995 0-13.255-10.745-24-24-24-3.404 0-6.706.709-9.748 2.062l-.47.21-.196-.477A19.004 19.004 0 0 0 37.5 102.5c-10.493 0-19 8.507-19 19 0 1.154.103 2.295.306 3.413l.108.6-.609-.01A17.856 17.856 0 0 0 18 125.5C8.335 125.5.5 133.335.5 143s7.835 17.5 17.5 17.5h47.745zM166.5 85.5h69v-.316l.422-.066C251.14 82.73 262.5 69.564 262.5 54c0-17.397-14.103-31.5-31.5-31.5-.347 0-.694.006-1.04.017l-.395.013-.103-.382C226.025 9.455 214.63.5 201.5.5c-15.014 0-27.512 11.658-28.877 26.765l-.047.515-.512-.063a29.296 29.296 0 0 0-3.564-.217c-16.016 0-29 12.984-29 29 0 15.101 11.59 27.643 26.542 28.897l.458.039v.064z\" stroke-opacity=\".05\" stroke=\"#000\" fill=\"#000\"/>\n\t\t\t\t\t\t\t\t   <circle class=\"b24-form-loader-icon-sun-ring\" stroke=\"#FFD110\" stroke-width=\"6\" cx=\"131.5\" cy=\"95.5\" r=\"44.5\"/>\n\t\t\t\t\t\t\t   </g>\n\t\t\t\t\t\t\t   <use xlink:href=\"#bxSunLines\" class=\"b24-form-loader-icon-sun-line\" y=\"16.5\" x=\"52.5\" width=\"158\" height=\"158\"/>\n\t\t\t\t\t\t\t</svg>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</transition>\n\t\t\t\t\n\t\t\t\t<div v-show=\"form.sent\" class=\"b24-form-state b24-form-success\">\n\t\t\t\t\t<div class=\"b24-form-state-inner\">\n\t\t\t\t\t\t<div class=\"b24-form-state-icon b24-form-success-icon\"></div>\n\t\t\t\t\t\t<div class=\"b24-form-state-text\">\n\t\t\t\t\t\t\t<p v-if=\"!form.stateText\">{{ form.messages.get('stateSuccessTitle') }}</p>\n\t\t\t\t\t\t\t<p>{{ form.stateText }}</p>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<button class=\"b24-form-btn b24-form-btn-border b24-form-btn-tight\"\n\t\t\t\t\t\t\tv-if=\"form.stateButton.text\" \n\t\t\t\t\t\t\t@click=\"form.stateButton.handler\" \n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ form.stateButton.text }}\t\t\t\t\t\t\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"b24-form-inner-box\"></div>\n\t\t\t\t</div>\n\t\t\t\n\t\t\t\t<div v-show=\"form.error\" class=\"b24-form-state b24-form-error\">\n\t\t\t\t\t<div class=\"b24-form-state-inner\">\n\t\t\t\t\t\t<div class=\"b24-form-state-icon b24-form-error-icon\"></div>\n\t\t\t\t\t\t<div class=\"b24-form-state-text\">\n\t\t\t\t\t\t\t<p>{{ form.stateText }}</p>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\n\t\t\t\t\t\t<button class=\"b24-form-btn b24-form-btn-border b24-form-btn-tight\"\n\t\t\t\t\t\t\t@click=\"form.submit()\" \n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ form.messages.get('stateButtonResend') }}\t\t\t\t\t\t\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"b24-form-inner-box\"></div>\n\t\t\t\t</div>\n\t\t\t\t\n\t\t\t\t<div v-show=\"form.disabled\" class=\"b24-form-state b24-form-warning\">\n\t\t\t\t\t<div class=\"b24-form-state-inner\">\n\t\t\t\t\t\t<div class=\"b24-form-state-icon b24-form-warning-icon\">\n\t\t\t\t\t\t\t<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" viewBox=\"0 0 169 169\"><defs><circle id=\"a\" cx=\"84.5\" cy=\"84.5\" r=\"65.5\"/><filter x=\"-.8%\" y=\"-.8%\" width=\"101.5%\" height=\"101.5%\" filterUnits=\"objectBoundingBox\" id=\"b\"><feGaussianBlur stdDeviation=\".5\" in=\"SourceAlpha\" result=\"shadowBlurInner1\"/><feOffset dx=\"-1\" dy=\"-1\" in=\"shadowBlurInner1\" result=\"shadowOffsetInner1\"/><feComposite in=\"shadowOffsetInner1\" in2=\"SourceAlpha\" operator=\"arithmetic\" k2=\"-1\" k3=\"1\" result=\"shadowInnerInner1\"/><feColorMatrix values=\"0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.0886691434 0\" in=\"shadowInnerInner1\" result=\"shadowMatrixInner1\"/><feGaussianBlur stdDeviation=\".5\" in=\"SourceAlpha\" result=\"shadowBlurInner2\"/><feOffset dx=\"1\" dy=\"1\" in=\"shadowBlurInner2\" result=\"shadowOffsetInner2\"/><feComposite in=\"shadowOffsetInner2\" in2=\"SourceAlpha\" operator=\"arithmetic\" k2=\"-1\" k3=\"1\" result=\"shadowInnerInner2\"/><feColorMatrix values=\"0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.292285839 0\" in=\"shadowInnerInner2\" result=\"shadowMatrixInner2\"/><feMerge><feMergeNode in=\"shadowMatrixInner1\"/><feMergeNode in=\"shadowMatrixInner2\"/></feMerge></filter></defs><g fill=\"none\" fill-rule=\"evenodd\"><circle stroke-opacity=\".05\" stroke=\"#000\" fill-opacity=\".07\" fill=\"#000\" cx=\"84.5\" cy=\"84.5\" r=\"84\"/><use fill=\"#FFF\" xlink:href=\"#a\"/><use fill=\"#000\" filter=\"url(#b)\" xlink:href=\"#a\"/><path d=\"M114.29 99.648L89.214 58.376c-1.932-3.168-6.536-3.168-8.427 0L55.709 99.648c-1.974 3.25.41 7.352 4.234 7.352h50.155c3.782 0 6.166-4.103 4.193-7.352zM81.404 72.756c0-1.828 1.48-3.29 3.33-3.29h.452c1.85 0 3.33 1.462 3.33 3.29v12.309c0 1.827-1.48 3.29-3.33 3.29h-.453c-1.85 0-3.33-1.463-3.33-3.29V72.756zm7.77 23.886c0 2.274-1.892 4.143-4.194 4.143s-4.193-1.869-4.193-4.143c0-2.275 1.891-4.144 4.193-4.144 2.302 0 4.193 1.869 4.193 4.144z\" fill=\"#000\" opacity=\".4\"/></g></svg>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"b24-form-state-text\">\n\t\t\t\t\t\t\t<p>{{ form.messages.get('stateDisabled') }}</p>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"b24-form-inner-box\"></div>\n\t\t\t\t</div>\n\t\t</div>\n\t",
+      template: "\n\t\t<div class=\"b24-form-state-container\" :class=\"{'b24-form-state--sticky': isSmallHeight}\">\n\t\t\t\t<transition name=\"b24-a-fade\">\n\t\t\t\t\t<div v-show=\"form.loading\" class=\"b24-form-loader\">\n\t\t\t\t\t\t<div class=\"b24-form-loader-icon\">\n\t\t\t\t\t\t\t<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 263 174\">\n\t\t\t\t\t\t\t\t<g transform=translate(52.5,16.5)>\n\t\t\t\t\t\t\t\t\t<path class=\"bx-sun-lines-animate\" id=\"bxSunLines\" d=\"M79,0 C80.6568542,0 82,1.34314575 82,3 L82,22 C82,23.6568542 80.6568542,25 79,25 C77.3431458,25 76,23.6568542 76,22 L76,3 C76,1.34314575 77.3431458,0 79,0 Z M134.861,23.139 C136.032146,24.3104996 136.032146,26.2095004 134.861,27.381 L121.426,40.816 C120.248863,41.9529166 118.377746,41.9366571 117.220544,40.7794557 C116.063343,39.6222543 116.047083,37.7511367 117.184,36.574 L130.619,23.139 C131.7905,21.9678542 133.6895,21.9678542 134.861,23.139 L134.861,23.139 Z M158,79 C158,80.6568542 156.656854,82 155,82 L136,82 C134.343146,82 133,80.6568542 133,79 C133,77.3431458 134.343146,76 136,76 L155,76 C156.656854,76 158,77.3431458 158,79 Z M134.861,134.861 C133.6895,136.032146 131.7905,136.032146 130.619,134.861 L117.184,121.426 C116.40413,120.672777 116.091362,119.557366 116.365909,118.508478 C116.640455,117.45959 117.45959,116.640455 118.508478,116.365909 C119.557366,116.091362 120.672777,116.40413 121.426,117.184 L134.861,130.619 C136.032146,131.7905 136.032146,133.6895 134.861,134.861 Z M79,158 C77.3431458,158 76,156.656854 76,155 L76,136 C76,134.343146 77.3431458,133 79,133 C80.6568542,133 82,134.343146 82,136 L82,155 C82,156.656854 80.6568542,158 79,158 Z M23.139,134.861 C21.9678542,133.6895 21.9678542,131.7905 23.139,130.619 L36.574,117.184 C37.3272234,116.40413 38.4426337,116.091362 39.491522,116.365909 C40.5404103,116.640455 41.3595451,117.45959 41.6340915,118.508478 C41.9086378,119.557366 41.5958698,120.672777 40.816,121.426 L27.381,134.861 C26.2095004,136.032146 24.3104996,136.032146 23.139,134.861 Z M0,79 C0,77.3431458 1.34314575,76 3,76 L22,76 C23.6568542,76 25,77.3431458 25,79 C25,80.6568542 23.6568542,82 22,82 L3,82 C1.34314575,82 0,80.6568542 0,79 L0,79 Z M23.139,23.139 C24.3104996,21.9678542 26.2095004,21.9678542 27.381,23.139 L40.816,36.574 C41.5958698,37.3272234 41.9086378,38.4426337 41.6340915,39.491522 C41.3595451,40.5404103 40.5404103,41.3595451 39.491522,41.6340915 C38.4426337,41.9086378 37.3272234,41.5958698 36.574,40.816 L23.139,27.381 C21.9678542,26.2095004 21.9678542,24.3104996 23.139,23.139 Z\" fill=\"#FFD110\"></path>\n\t\t\t\t\t\t\t\t</g>\n\t\t\t\t\t\t\t\t<g fill=\"none\" fill-rule=\"evenodd\">\n\t\t\t\t\t\t\t\t\t<path d=\"M65.745 160.5l.245-.005c13.047-.261 23.51-10.923 23.51-23.995 0-13.255-10.745-24-24-24-3.404 0-6.706.709-9.748 2.062l-.47.21-.196-.477A19.004 19.004 0 0 0 37.5 102.5c-10.493 0-19 8.507-19 19 0 1.154.103 2.295.306 3.413l.108.6-.609-.01A17.856 17.856 0 0 0 18 125.5C8.335 125.5.5 133.335.5 143s7.835 17.5 17.5 17.5h47.745zM166.5 85.5h69v-.316l.422-.066C251.14 82.73 262.5 69.564 262.5 54c0-17.397-14.103-31.5-31.5-31.5-.347 0-.694.006-1.04.017l-.395.013-.103-.382C226.025 9.455 214.63.5 201.5.5c-15.014 0-27.512 11.658-28.877 26.765l-.047.515-.512-.063a29.296 29.296 0 0 0-3.564-.217c-16.016 0-29 12.984-29 29 0 15.101 11.59 27.643 26.542 28.897l.458.039v.064z\" stroke-opacity=\".05\" stroke=\"#000\" fill=\"#000\"></path>\n\t\t\t\t\t\t\t\t\t<circle stroke=\"#FFD110\" stroke-width=\"6\" cx=\"131.5\" cy=\"95.5\" r=\"44.5\" class=\"b24-form-loader-icon-sun-ring\"></circle>\n\t\t\t\t\t\t\t\t</g>\n\t\t\t\t\t\t  </svg>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</transition>\n\t\t\t\t\n\t\t\t\t<div v-show=\"form.sent\" class=\"b24-form-state b24-form-success\">\n\t\t\t\t\t<div class=\"b24-form-state-inner\">\n\t\t\t\t\t\t<div class=\"b24-form-state-icon b24-form-success-icon\"></div>\n\t\t\t\t\t\t<div class=\"b24-form-state-text\">\n\t\t\t\t\t\t\t<p v-if=\"!form.stateText\">{{ form.messages.get('stateSuccessTitle') }}</p>\n\t\t\t\t\t\t\t<p>{{ form.stateText }}</p>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<button class=\"b24-form-btn b24-form-btn-border b24-form-btn-tight\"\n\t\t\t\t\t\t\tv-if=\"form.stateButton.text\" \n\t\t\t\t\t\t\t@click=\"form.stateButton.handler\" \n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ form.stateButton.text }}\t\t\t\t\t\t\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"b24-form-inner-box\"></div>\n\t\t\t\t</div>\n\t\t\t\n\t\t\t\t<div v-show=\"form.error\" class=\"b24-form-state b24-form-error\">\n\t\t\t\t\t<div class=\"b24-form-state-inner\">\n\t\t\t\t\t\t<div class=\"b24-form-state-icon b24-form-error-icon\"></div>\n\t\t\t\t\t\t<div class=\"b24-form-state-text\">\n\t\t\t\t\t\t\t<p>{{ form.stateText }}</p>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\n\t\t\t\t\t\t<button class=\"b24-form-btn b24-form-btn-border b24-form-btn-tight\"\n\t\t\t\t\t\t\t@click=\"form.submit()\" \n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ form.messages.get('stateButtonResend') }}\t\t\t\t\t\t\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"b24-form-inner-box\"></div>\n\t\t\t\t</div>\n\t\t\t\t\n\t\t\t\t<div v-show=\"form.disabled\" class=\"b24-form-state b24-form-warning\">\n\t\t\t\t\t<div class=\"b24-form-state-inner\">\n\t\t\t\t\t\t<div class=\"b24-form-state-icon b24-form-warning-icon\">\n\t\t\t\t\t\t\t<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" viewBox=\"0 0 169 169\"><defs><circle id=\"a\" cx=\"84.5\" cy=\"84.5\" r=\"65.5\"/><filter x=\"-.8%\" y=\"-.8%\" width=\"101.5%\" height=\"101.5%\" filterUnits=\"objectBoundingBox\" id=\"b\"><feGaussianBlur stdDeviation=\".5\" in=\"SourceAlpha\" result=\"shadowBlurInner1\"/><feOffset dx=\"-1\" dy=\"-1\" in=\"shadowBlurInner1\" result=\"shadowOffsetInner1\"/><feComposite in=\"shadowOffsetInner1\" in2=\"SourceAlpha\" operator=\"arithmetic\" k2=\"-1\" k3=\"1\" result=\"shadowInnerInner1\"/><feColorMatrix values=\"0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.0886691434 0\" in=\"shadowInnerInner1\" result=\"shadowMatrixInner1\"/><feGaussianBlur stdDeviation=\".5\" in=\"SourceAlpha\" result=\"shadowBlurInner2\"/><feOffset dx=\"1\" dy=\"1\" in=\"shadowBlurInner2\" result=\"shadowOffsetInner2\"/><feComposite in=\"shadowOffsetInner2\" in2=\"SourceAlpha\" operator=\"arithmetic\" k2=\"-1\" k3=\"1\" result=\"shadowInnerInner2\"/><feColorMatrix values=\"0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.292285839 0\" in=\"shadowInnerInner2\" result=\"shadowMatrixInner2\"/><feMerge><feMergeNode in=\"shadowMatrixInner1\"/><feMergeNode in=\"shadowMatrixInner2\"/></feMerge></filter></defs><g fill=\"none\" fill-rule=\"evenodd\"><circle stroke-opacity=\".05\" stroke=\"#000\" fill-opacity=\".07\" fill=\"#000\" cx=\"84.5\" cy=\"84.5\" r=\"84\"/><use fill=\"#FFF\" xlink:href=\"#a\"/><use fill=\"#000\" filter=\"url(#b)\" xlink:href=\"#a\"/><path d=\"M114.29 99.648L89.214 58.376c-1.932-3.168-6.536-3.168-8.427 0L55.709 99.648c-1.974 3.25.41 7.352 4.234 7.352h50.155c3.782 0 6.166-4.103 4.193-7.352zM81.404 72.756c0-1.828 1.48-3.29 3.33-3.29h.452c1.85 0 3.33 1.462 3.33 3.29v12.309c0 1.827-1.48 3.29-3.33 3.29h-.453c-1.85 0-3.33-1.463-3.33-3.29V72.756zm7.77 23.886c0 2.274-1.892 4.143-4.194 4.143s-4.193-1.869-4.193-4.143c0-2.275 1.891-4.144 4.193-4.144 2.302 0 4.193 1.869 4.193 4.144z\" fill=\"#000\" opacity=\".4\"/></g></svg>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"b24-form-state-text\">\n\t\t\t\t\t\t\t<p>{{ form.messages.get('stateDisabled') }}</p>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"b24-form-inner-box\"></div>\n\t\t\t\t</div>\n\t\t</div>\n\t",
       computed: {},
       methods: {}
     };
@@ -6918,9 +7106,24 @@ var Vue = exports.Vue;
       'b24-form-widget': Widget$1
     };
 
+    function _classPrivateFieldInitSpec$5(obj, privateMap, value) { _checkPrivateRedeclaration$6(obj, privateMap); privateMap.set(obj, value); }
+
+    function _checkPrivateRedeclaration$6(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     var DefaultOptions$4 = {
       view: 'inline'
     };
+
+    var _id = /*#__PURE__*/new WeakMap();
+
+    var _fields$1 = /*#__PURE__*/new WeakMap();
+
+    var _dependence = /*#__PURE__*/new WeakMap();
+
+    var _properties = /*#__PURE__*/new WeakMap();
+
+    var _personalisation = /*#__PURE__*/new WeakMap();
+
+    var _vue = /*#__PURE__*/new WeakMap();
 
     var Controller$o = /*#__PURE__*/function (_Event) {
       babelHelpers.inherits(Controller$$1, _Event);
@@ -6932,7 +7135,7 @@ var Vue = exports.Vue;
         babelHelpers.classCallCheck(this, Controller$$1);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).call(this, options));
 
-        _id.set(babelHelpers.assertThisInitialized(_this), {
+        _classPrivateFieldInitSpec$5(babelHelpers.assertThisInitialized(_this), _id, {
           writable: true,
           value: void 0
         });
@@ -6942,20 +7145,21 @@ var Vue = exports.Vue;
           type: 'inline'
         });
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "provider", {});
+        babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "analyticsHandler", {});
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "languages", []);
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "language", 'en');
 
-        _fields$1.set(babelHelpers.assertThisInitialized(_this), {
+        _classPrivateFieldInitSpec$5(babelHelpers.assertThisInitialized(_this), _fields$1, {
           writable: true,
           value: []
         });
 
-        _dependence.set(babelHelpers.assertThisInitialized(_this), {
+        _classPrivateFieldInitSpec$5(babelHelpers.assertThisInitialized(_this), _dependence, {
           writable: true,
           value: void 0
         });
 
-        _properties.set(babelHelpers.assertThisInitialized(_this), {
+        _classPrivateFieldInitSpec$5(babelHelpers.assertThisInitialized(_this), _properties, {
           writable: true,
           value: {}
         });
@@ -6973,7 +7177,7 @@ var Vue = exports.Vue;
           format: '$#'
         });
 
-        _personalisation.set(babelHelpers.assertThisInitialized(_this), {
+        _classPrivateFieldInitSpec$5(babelHelpers.assertThisInitialized(_this), _personalisation, {
           writable: true,
           value: {
             title: '',
@@ -6993,7 +7197,7 @@ var Vue = exports.Vue;
           handler: null
         });
 
-        _vue.set(babelHelpers.assertThisInitialized(_this), {
+        _classPrivateFieldInitSpec$5(babelHelpers.assertThisInitialized(_this), _vue, {
           writable: true,
           value: void 0
         });
@@ -7011,6 +7215,7 @@ var Vue = exports.Vue;
         options = _this.adjust(options);
         babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _id, options.id || Math.random().toString().split('.')[1] + Math.random().toString().split('.')[1]);
         _this.provider = options.provider || {};
+        _this.analyticsHandler = options.analyticsHandler || {};
 
         if (_this.provider.form) {
           _this.loading = true;
@@ -7063,6 +7268,19 @@ var Vue = exports.Vue;
           }
         }
       }, {
+        key: "reset",
+        value: function reset() {
+          var _this2 = this;
+
+          babelHelpers.classPrivateFieldGet(this, _fields$1).forEach(function (field) {
+            field.reset();
+
+            if (babelHelpers.classPrivateFieldGet(_this2, _dependence)) {
+              babelHelpers.classPrivateFieldGet(_this2, _dependence).trigger(field, 'change');
+            }
+          });
+        }
+      }, {
         key: "show",
         value: function show() {
           this.visible = true;
@@ -7078,7 +7296,7 @@ var Vue = exports.Vue;
       }, {
         key: "submit",
         value: function submit() {
-          var _this2 = this;
+          var _this3 = this;
 
           this.error = false;
           this.sent = false;
@@ -7091,7 +7309,7 @@ var Vue = exports.Vue;
 
           if (!this.recaptcha.isVerified()) {
             this.recaptcha.verify(function () {
-              return _this2.submit();
+              return _this3.submit();
             });
             return false;
           }
@@ -7118,10 +7336,11 @@ var Vue = exports.Vue;
           formData.set('properties', JSON.stringify(babelHelpers.classPrivateFieldGet(this, _properties)));
           formData.set('consents', JSON.stringify(consents));
           formData.set('recaptcha', this.recaptcha.getResponse());
+          formData.set('timeZoneOffset', new Date().getTimezoneOffset());
 
           if (typeof this.provider.submit === 'string') {
             promise = promise.then(function () {
-              return window.fetch(_this2.provider.submit, {
+              return window.fetch(_this3.provider.submit, {
                 method: 'POST',
                 mode: 'cors',
                 cache: 'no-cache',
@@ -7133,17 +7352,22 @@ var Vue = exports.Vue;
             });
           } else if (typeof this.provider.submit === 'function') {
             promise = promise.then(function () {
-              formData.set('properties', JSON.stringify(babelHelpers.classPrivateFieldGet(_this2, _properties)));
-              return _this2.provider.submit(_this2, formData);
+              formData.set('properties', JSON.stringify(babelHelpers.classPrivateFieldGet(_this3, _properties)));
+              return _this3.provider.submit(_this3, formData);
             });
           }
 
           promise.then(function (data) {
-            _this2.sent = true;
-            _this2.loading = false;
-            _this2.stateText = data.message || _this2.messages.get('stateSuccess');
+            _this3.sent = true;
+            _this3.loading = false;
+            _this3.stateText = data.message || _this3.messages.get('stateSuccess');
 
-            _this2.emit(EventTypes.sendSuccess, data);
+            if (!data.resultId) {
+              _this3.error = true;
+              return;
+            }
+
+            _this3.emit(EventTypes.sendSuccess, data);
 
             var redirect = data.redirect || {};
 
@@ -7157,18 +7381,26 @@ var Vue = exports.Vue;
               };
 
               if (data.pay) {
-                _this2.stateButton.text = _this2.messages.get('stateButtonPay');
-                _this2.stateButton.handler = handler;
+                _this3.stateButton.text = _this3.messages.get('stateButtonPay');
+                _this3.stateButton.handler = handler;
               }
 
               setTimeout(handler, (redirect.delay || 0) * 1000);
+            } else if (data.refill.active) {
+              _this3.stateButton.text = data.refill.caption;
+
+              _this3.stateButton.handler = function () {
+                _this3.sent = false;
+
+                _this3.reset();
+              };
             }
           }).catch(function (e) {
-            _this2.error = true;
-            _this2.loading = false;
-            _this2.stateText = _this2.messages.get('stateError');
+            _this3.error = true;
+            _this3.loading = false;
+            _this3.stateText = _this3.messages.get('stateError');
 
-            _this2.emit(EventTypes.sendError, e);
+            _this3.emit(EventTypes.sendError, e);
           });
           return false;
         }
@@ -7188,19 +7420,19 @@ var Vue = exports.Vue;
           }
 
           babelHelpers.classPrivateFieldGet(this, _fields$1).forEach(function (field) {
-            if (!values[field.type] || !field.item()) {
+            var value = values[field.type] || values[field.name];
+
+            if (typeof value === 'undefined' || !field.item()) {
               return;
             }
 
-            var value = field.format(values[field.type]);
-            field.item().value = value;
-            field.item().selected = value !== 'undefined' && value !== '';
+            field.setValues(Array.isArray(value) ? value : [value]);
           });
         }
       }, {
         key: "adjust",
         value: function adjust() {
-          var _this3 = this;
+          var _this4 = this;
 
           var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : DefaultOptions$4;
           options = Object.assign({}, DefaultOptions$4, options);
@@ -7225,13 +7457,13 @@ var Vue = exports.Vue;
 
           if (options.handlers && babelHelpers.typeof(options.handlers) === 'object') {
             Object.keys(options.handlers).forEach(function (key) {
-              return _this3.subscribe(key, options.handlers[key]);
+              return _this4.subscribe(key, options.handlers[key]);
             });
           }
 
           if (options.properties && babelHelpers.typeof(options.properties) === 'object') {
             Object.keys(options.properties).forEach(function (key) {
-              return _this3.setProperty(key, options.properties[key]);
+              return _this4.setProperty(key, options.properties[key]);
             });
           }
 
@@ -7264,10 +7496,10 @@ var Vue = exports.Vue;
           if (Array.isArray(options.agreements)) {
             this.agreements = [];
             options.agreements.forEach(function (fieldOptions) {
-              fieldOptions.messages = _this3.messages;
-              fieldOptions.design = _this3.design;
+              fieldOptions.messages = _this4.messages;
+              fieldOptions.design = _this4.design;
 
-              _this3.agreements.push(new Controller$h(fieldOptions));
+              _this4.agreements.push(new Controller$h(fieldOptions));
             });
           }
 
@@ -7373,7 +7605,7 @@ var Vue = exports.Vue;
       }, {
         key: "setFields",
         value: function setFields(fieldOptionsList) {
-          var _this4 = this;
+          var _this5 = this;
 
           babelHelpers.classPrivateFieldSet(this, _fields$1, []);
           var page = new Page(this.title);
@@ -7382,20 +7614,20 @@ var Vue = exports.Vue;
           fieldOptionsList.forEach(function (options) {
             switch (options.type) {
               case 'page':
-                page = new Page(options.label || _this4.title);
+                page = new Page(options.label || _this5.title);
 
-                _this4.pager.add(page);
+                _this5.pager.add(page);
 
                 return;
 
               case 'date':
               case 'datetime':
-                options.format = options.type === 'date' ? _this4.date.dateFormat : _this4.date.dateTimeFormat;
-                options.sundayFirstly = _this4.date.sundayFirstly;
+                options.format = options.type === 'date' ? _this5.date.dateFormat : _this5.date.dateTimeFormat;
+                options.sundayFirstly = _this5.date.sundayFirstly;
                 break;
 
               case 'product':
-                options.currency = _this4.currency;
+                options.currency = _this5.currency;
                 break;
             }
 
@@ -7405,18 +7637,18 @@ var Vue = exports.Vue;
               });
             }
 
-            options.messages = _this4.messages;
-            options.design = _this4.design;
+            options.messages = _this5.messages;
+            options.design = _this5.design;
             var field = Factory.create(options);
             field.subscribeAll(function (data, obj, type) {
-              _this4.emit('field:' + type, {
+              _this5.emit('field:' + type, {
                 data: data,
                 type: type,
                 field: obj
               });
             });
             page.fields.push(field);
-            babelHelpers.classPrivateFieldGet(_this4, _fields$1).push(field);
+            babelHelpers.classPrivateFieldGet(_this5, _fields$1).push(field);
           });
           this.pager.removeEmpty();
           this.basket = new Basket(babelHelpers.classPrivateFieldGet(this, _fields$1), this.currency);
@@ -7512,18 +7744,6 @@ var Vue = exports.Vue;
       }]);
       return Controller$$1;
     }(Event);
-
-    var _id = new WeakMap();
-
-    var _fields$1 = new WeakMap();
-
-    var _dependence = new WeakMap();
-
-    var _properties = new WeakMap();
-
-    var _personalisation = new WeakMap();
-
-    var _vue = new WeakMap();
 
     function performEventOfWidgetFormInit(b24options, options) {
       var compatibleData = createEventData(b24options, options);
@@ -7636,16 +7856,24 @@ var Vue = exports.Vue;
         applyOldenLoaderData: applyOldenLoaderData
     });
 
+    function _classPrivateFieldInitSpec$6(obj, privateMap, value) { _checkPrivateRedeclaration$7(obj, privateMap); privateMap.set(obj, value); }
+
+    function _checkPrivateRedeclaration$7(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
+    var _forms = /*#__PURE__*/new WeakMap();
+
+    var _userProviderPromise = /*#__PURE__*/new WeakMap();
+
     var Application = /*#__PURE__*/function () {
       function Application() {
         babelHelpers.classCallCheck(this, Application);
 
-        _forms.set(this, {
+        _classPrivateFieldInitSpec$6(this, _forms, {
           writable: true,
           value: []
         });
 
-        _userProviderPromise.set(this, {
+        _classPrivateFieldInitSpec$6(this, _userProviderPromise, {
           writable: true,
           value: void 0
         });
@@ -7714,6 +7942,7 @@ var Vue = exports.Vue;
           }
 
           options.provider.submit = this.getSubmitProvider24(b24options);
+          options.analyticsHandler = this.getAnalyticsSender(b24options);
 
           if (b24options.lang) {
             options.language = b24options.lang;
@@ -7944,13 +8173,41 @@ var Vue = exports.Vue;
             }
           });
         }
+      }, {
+        key: "getAnalyticsSender",
+        value: function getAnalyticsSender(b24options) {
+          var _this5 = this;
+
+          return function (counter, formId) {
+            if (window.sessionStorage) {
+              var key = "b24-analytics-counter-".concat(formId, "-").concat(counter);
+
+              if (sessionStorage.getItem(key) === 'y') {
+                return Promise.resolve([]);
+              }
+
+              sessionStorage.setItem(key, 'y');
+            }
+
+            var formData = new FormData();
+            formData.append('counter', counter);
+            formData.append('formId', formId);
+            return _this5.post(b24options.address + '/bitrix/services/main/ajax.php?action=crm.site.form.handleAnalytics', formData).then(function (response) {
+              return response.json();
+            }).then(function (data) {
+              if (data.error) {
+                throw new Error(data.error_description || data.error);
+              }
+
+              return new Promise(function (resolve) {
+                resolve(data);
+              });
+            });
+          };
+        }
       }]);
       return Application;
     }();
-
-    var _forms = new WeakMap();
-
-    var _userProviderPromise = new WeakMap();
 
     var App = new Application();
 

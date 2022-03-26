@@ -32,6 +32,11 @@ class ChecklistEditRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return true;
 		}
 
+		if ($task instanceOf TemplateModel)
+		{
+			return $this->controller->check(ActionDictionary::ACTION_TEMPLATE_EDIT, $task, $params);
+		}
+
 		if (
 			$task->isMember($this->user->getUserId(), RoleDictionary::ROLE_DIRECTOR)
 			|| array_intersect($task->getMembers(RoleDictionary::ROLE_DIRECTOR), $this->user->getAllSubordinates())
@@ -74,22 +79,6 @@ class ChecklistEditRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			$task->getGroupId()
 			&& Loader::includeModule("socialnetwork")
 			&& \CSocNetFeaturesPerms::CanPerformOperation($this->user->getUserId(), SONET_ENTITY_GROUP, $task->getGroupId(), "tasks", "edit_tasks")
-		)
-		{
-			return true;
-		}
-
-//		if (
-//			$task instanceOf TaskModel
-//			&& $this->controller->check(ActionDictionary::ACTION_TASK_EDIT, $task)
-//		)
-//		{
-//			return true;
-//		}
-
-		if (
-			$task instanceOf TemplateModel
-			&& $this->controller->check(ActionDictionary::ACTION_TEMPLATE_EDIT, $task)
 		)
 		{
 			return true;

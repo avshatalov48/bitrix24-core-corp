@@ -714,11 +714,11 @@ class EventHandler
 
 			if (IsModuleInstalled("bitrix24"))
 			{
-				$openlinesExternalLink->setExternalUrl('/contact_center/openlines');
+				$openlinesExternalLink->setExternalUrl('/contact_center/dialog_statistics');
 			}
 			else
 			{
-				$openlinesExternalLink->setExternalUrl('/services/contact_center/openlines');
+				$openlinesExternalLink->setExternalUrl('/services/contact_center/dialog_statistics');
 			}
 
 			$openlinesExternalLink->setSliderSupport(false);
@@ -801,6 +801,9 @@ class EventHandler
 	 */
 	public static function onReportCategoriesCollect()
 	{
+
+		return [];
+		/*
 		$categories = [];
 		$crmCategory = new Category();
 		$crmCategory->setKey('crm');
@@ -809,6 +812,7 @@ class EventHandler
 		$categories[] = $crmCategory;
 
 		return $categories;
+		*/
 	}
 
 	/**

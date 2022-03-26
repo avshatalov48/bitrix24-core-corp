@@ -34,7 +34,7 @@ final class Counters extends \Bitrix\Tasks\Dispatcher\PublicAction
 		$result = new Result();
 
 		$type = ($type ?: 'view_all');
-		$counterInstance = Internals\Counter::getInstance($userId);
+		$counterInstance = Internals\Counter::getInstance((int) $userId);
 		$result->setData($counterInstance->getCounters($type, (int) $groupId));
 
 		return $result;

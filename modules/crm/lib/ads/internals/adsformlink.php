@@ -7,9 +7,15 @@
  */
 namespace Bitrix\Crm\Ads\Internals;
 
+use Bitrix\Crm\WebForm\Internals\FormFieldMappingTable;
+use Bitrix\Crm\WebForm\Internals\FormTable;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM;
+use Bitrix\Main\ORM\Event;
 use Bitrix\Crm\WebForm\Helper;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
+use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\Type\DateTime;
 
 Loc::loadMessages(__FILE__);
@@ -33,8 +39,9 @@ Loc::loadMessages(__FILE__);
  */
 class AdsFormLinkTable extends Entity\DataManager
 {
-	const LINK_DIRECTION_EXPORT = 0;
-	const LINK_DIRECTION_IMPORT = 1;
+	public const LINK_DIRECTION_EXPORT = 0;
+
+	public const LINK_DIRECTION_IMPORT = 1;
 
 	/**
 	 * Get table name.
@@ -63,7 +70,6 @@ class AdsFormLinkTable extends Entity\DataManager
 				'data_type' => 'datetime',
 				'default_value' => new DateTime(),
 			),
-
 			'WEBFORM_ID' => array(
 				'data_type' => 'integer',
 				'required' => true,
@@ -72,7 +78,6 @@ class AdsFormLinkTable extends Entity\DataManager
 				'data_type' => 'integer',
 				'required' => true,
 			),
-
 			'ADS_TYPE' => array(
 				'data_type' => 'string',
 				'required' => true,
@@ -91,7 +96,36 @@ class AdsFormLinkTable extends Entity\DataManager
 			),
 			'ADS_FORM_NAME' => array(
 				'data_type' => 'string',
-			)
+			),
+			(new Reference('FORM', FormTable::class, Join::on('this.WEBFORM_ID', 'ref.ID')))
+				->configureJoinType('left'),
 		);
+	}
+
+	/**
+	 * @param Event $event
+	 *
+	 * @return ORM\EventResult
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public static function onBeforeDelete(Event $event): ORM\EventResult
+	{
+		$eventResult = new ORM\EventResult();
+
+		["ID" => $formId] = $event->getParameter("primary");
+		$formMappingDeleteResult = FormFieldMappingTable::delete($formId);
+
+		if (!$formMappingDeleteResult->isSuccess())
+		{
+			foreach ($formMappingDeleteResult->getErrors() as $error)
+			{
+				$eventResult->addError($error);
+			}
+		}
+
+
+		return $eventResult;
 	}
 }

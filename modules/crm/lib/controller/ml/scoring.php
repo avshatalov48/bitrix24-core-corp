@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Controller\Ml;
 
 use Bitrix\Crm\Ml\ViewHelper;
 use Bitrix\Main\Engine\Controller;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 
@@ -18,6 +19,13 @@ class Scoring extends Controller
 	 */
 	public function tryCreateFirstPredictionAction($entityType, $entityId)
 	{
+		$userPermissions = \CCrmPerms::GetCurrentUserPermissions();
+		if (!\CCrmAuthorizationHelper::CheckReadPermission($entityType, $entityId, $userPermissions))
+		{
+			$this->addError(new Error("Access denied"));
+			return null;
+		}
+
 		$entityTypeId = \CCrmOwnerType::ResolveID($entityType);
 
 		if(!Loader::includeModule("ml"))
@@ -54,8 +62,9 @@ class Scoring extends Controller
 		];
 	}
 
-	public function getModelsAction()
+	public function getModelsAction(CurrentUser $currentUser)
 	{
+		$currentUserId = $currentUser->getId();
 		$modelNames = [];
 
 		$modelClasses = \Bitrix\Crm\Ml\Scoring::getModelClasses();
@@ -66,6 +75,14 @@ class Scoring extends Controller
 				$modelNames = array_merge($modelNames, $modelClass::getModelNames());
 			}
 		}
+
+		$modelNames = array_filter(
+			$modelNames,
+			function($modelName) use ($currentUserId)
+			{
+				return \Bitrix\Crm\Ml\Scoring::hasAccess($modelName, $currentUserId);
+			}
+		);
 
 		return [
 			'modelNames' => $modelNames
@@ -78,6 +95,11 @@ class Scoring extends Controller
 		if (!$model)
 		{
 			$this->addError(new Error("Model is not found", "NOT_FOUND"));
+			return null;
+		}
+		if (!$model->hasAccess())
+		{
+			$this->addError(new Error("Access denied", "ACCESS_DENIED"));
 			return null;
 		}
 

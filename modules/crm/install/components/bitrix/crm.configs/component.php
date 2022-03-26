@@ -65,11 +65,24 @@ if($crmPerms->IsAccessEnabled())
 
 $arResult['RAND_STRING'] = $this->randString();
 
-$arResult['NUMERATOR_INVOICE_ID'] = '';
-$numeratorInvoice = \Bitrix\Main\Numerator\Numerator::getOneByType(REGISTRY_TYPE_CRM_INVOICE);
-if ($numeratorInvoice)
+$invoiceSettings = \Bitrix\Crm\Settings\InvoiceSettings::getCurrent();
+if ($invoiceSettings->isOldInvoicesEnabled())
 {
-	$arResult['NUMERATOR_INVOICE_ID'] = $numeratorInvoice['id'];
+	$arResult['NUMERATOR_INVOICE_ID'] = '';
+	$numeratorInvoice = \Bitrix\Main\Numerator\Numerator::getOneByType(REGISTRY_TYPE_CRM_INVOICE);
+	if ($numeratorInvoice)
+	{
+		$arResult['NUMERATOR_INVOICE_ID'] = $numeratorInvoice['id'];
+	}
+}
+if ($invoiceSettings->isSmartInvoiceEnabled())
+{
+	$arResult['NUMERATOR_SMART_INVOICE_ID'] = '';
+	$numeratorSmartInvoice = \Bitrix\Main\Numerator\Numerator::getOneByType(\Bitrix\Crm\Service\Factory\SmartInvoice::NUMERATOR_TYPE);
+	if ($numeratorSmartInvoice)
+	{
+		$arResult['NUMERATOR_SMART_INVOICE_ID'] = $numeratorSmartInvoice['id'];
+	}
 }
 $arResult['NUMERATOR_QUOTE_ID'] = '';
 $numeratorQuote = \Bitrix\Main\Numerator\Numerator::getOneByType(REGISTRY_TYPE_CRM_QUOTE);

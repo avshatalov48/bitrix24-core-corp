@@ -437,8 +437,6 @@ BX.Tasks.CheckList.OptionManager = (function()
 
 		this.stableTreeStructure = null;
 		this.slider = BX.SidePanel.Instance.getTopSlider();
-
-		this.query = new BX.Tasks.Util.Query({url: '/bitrix/components/bitrix/tasks.widget.checklist.new/ajax.php'});
 	};
 
 	OptionManager.prototype.getUserPath = function()
@@ -507,12 +505,6 @@ BX.Tasks.CheckList.OptionManager = (function()
 		return this.defaultMemberSelectorType;
 	};
 
-	OptionManager.prototype.setDefaultMemberSelectorType = function(defaultMemberSelectorType)
-	{
-		this.defaultMemberSelectorType = defaultMemberSelectorType;
-		this.updateTaskOption('default_member_selector_type', defaultMemberSelectorType);
-	};
-
 	OptionManager.prototype.getStableTreeStructure = function()
 	{
 		return this.stableTreeStructure;
@@ -525,15 +517,24 @@ BX.Tasks.CheckList.OptionManager = (function()
 
 	OptionManager.prototype.updateTaskOption = function(option, value)
 	{
-		var args = {
-			option: option,
-			value: value,
-			userId: this.userId,
-			entityType: this.entityType
-		};
+		BX.ajax.runComponentAction('bitrix:tasks.widget.checklist.new', 'updateTaskOption', {
+			mode: 'class',
+			data: {
+				option: option,
+				value: value,
+				userId: this.userId,
+				entityType: this.entityType
+			}
+		}).then(
+			function(response)
+			{
 
-		this.query.run('TasksWidgetCheckListNewComponent.updateTaskOption', args);
-		this.query.execute();
+			}.bind(this),
+			function(response)
+			{
+
+			}.bind(this)
+		);
 	};
 
 	return OptionManager;
@@ -966,23 +967,11 @@ BX.Tasks.CheckList.DragManager = (function()
 			construct: function()
 			{
 				this.callConstruct(BX.Tasks.Component);
-
-				// create sub-instances through this.subInstance(), do some initialization, etc
-
-				// do ajax call, like
-				// this.callRemote('this.sampleCreateTask', {data: {TITLE: 'Sample Task'}}).then(function(result){ ... });
-				// dont care about CSRF, SITE_ID and LANGUAGE_ID: it will be sent and checked automatically
 			},
 
 			bindEvents: function()
 			{
-				// do some permanent event bindings here, like i.e.
-				/*
-				this.bindControlPassCtx('some-div', 'click', this.showAddPopup);
-				this.bindControlPassCtx('some-div', 'click', this.showActionPopup);
-				this.bindControlPassCtx('some-div', 'click', this.showUnHideFieldPopup);
-				this.bindDelegateControl('some-div', 'keypress', this.jamEnter, this.control('new-item-place'));
-				*/
+
 			}
 
 			// add more methods, then call them like this.methodName()

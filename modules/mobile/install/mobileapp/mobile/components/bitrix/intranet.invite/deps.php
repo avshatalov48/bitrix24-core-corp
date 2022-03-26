@@ -1,4 +1,6 @@
 <?
 return [
-	"intranet/invite"
+	'extensions' => [
+		'intranet/invite',
+	],
 ];

@@ -418,7 +418,7 @@ if(isset($_REQUEST['getSample']) && $_REQUEST['getSample'] == 'csv')
 									case 'C':
 										$res = CCrmContact::GetListEx(
 											array('ID' => 'DESC'),
-											array(),
+											array('@CATEGORY_ID' => 0),
 											false,
 											array('nTopCount' => 10),
 											array('ID', 'HONORIFIC', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'COMPANY_TITLE', 'PHOTO')
@@ -436,7 +436,7 @@ if(isset($_REQUEST['getSample']) && $_REQUEST['getSample'] == 'csv')
 									case 'CO':
 										$res = CCrmCompany::GetListEx(
 											array('ID' => 'DESC'),
-											array(),
+											array('@CATEGORY_ID' => 0),
 											false,
 											array('nTopCount' => 10),
 											array('ID', 'TITLE')

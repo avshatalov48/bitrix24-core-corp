@@ -5,6 +5,7 @@ $MESS['TASKS_LIST_HEADER_TASKS'] = 'Задачи';
 $MESS['TASKS_LIST_HEADER_DEADLINES'] = 'Сроки';
 
 $MESS['TASKS_LIST_HEADER_ROLE_ALL'] = 'Задачи#DEADLINES#';
+$MESS['TASKS_LIST_HEADER_ROLE_ALL_V2'] = 'Задачи и Проекты#DEADLINES#';
 $MESS['TASKS_LIST_HEADER_ROLE_RESPONSIBLE'] = 'Делаю#DEADLINES#';
 $MESS['TASKS_LIST_HEADER_ROLE_ACCOMPLICE'] = 'Помогаю#DEADLINES#';
 $MESS['TASKS_LIST_HEADER_ROLE_ORIGINATOR'] = 'Поручил#DEADLINES#';
@@ -105,3 +106,8 @@ $MESS['MOBILE_TASKS_VIEW_TAB_COMMENT'] = "Комментарии";
 $MESS['MOBILE_TASKS_VIEW_TAB_CHECKLIST'] = "Чек-лист";
 $MESS['MOBILE_TASKS_VIEW_TAB_FILES'] = "Файлы";
 $MESS['MOBILE_TASKS_VIEW_TAB_TASK'] = "Задача";
+
+$MESS["MOBILE_TASKS_LIST_WELCOME_SCREEN_EMPTY_TITLE"] = "Создайте задачу";
+$MESS["MOBILE_TASKS_LIST_WELCOME_SCREEN_EMPTY_SUBTITLE"] = "Здесь будет список задач, которые вы выполняете или поручаете сотрудникам";
+$MESS["MOBILE_TASKS_LIST_WELCOME_SCREEN_PRIVATE_PROJECT_TITLE"] = "Это приватный проект";
+$MESS["MOBILE_TASKS_LIST_WELCOME_SCREEN_PRIVATE_PROJECT_SUBTITLE"] = "Вы не можете видеть материалы этого проекта, отправьте запрос на вступление владельцу";

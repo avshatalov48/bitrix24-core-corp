@@ -177,6 +177,7 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 			'MEETING' => $entry['MEETING'],
 			'DATE_FROM' => $entry['DATE_FROM'],
 			'DT_SKIP_TIME' => $entry['DT_SKIP_TIME'],
+			'RECURRENCE_ID' => $entry['RECURRENCE_ID'],
 			'USER_IDS' => [],
 			'LINK' => $pathToEvent,
 			'URL' => $pathToEvent,
@@ -205,13 +206,21 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 		$chatId = '';
 
 		global $USER;
+		$userId = $USER->GetID();
 
-		if (!Loader::includeModule('tasks') || !Loader::includeModule('im'))
+		if (
+			!Loader::includeModule('tasks')
+			|| !Loader::includeModule('im')
+			|| !\Bitrix\Tasks\Access\TaskAccessController::can(
+				$userId,
+				\Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_READ,
+				$entityId
+			)
+		)
 		{
 			return $chatId;
 		}
 
-		$userId = $USER->GetID();
 		$taskData = $this->getTaskData($entityId);
 
 		$res = \Bitrix\Im\Model\ChatTable::getList(array(
@@ -253,7 +262,7 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 
 		$chatId = '';
 
-		if (!Loader::includeModule('calendar') || !Loader::includeModule('im'))
+		if (!Loader::includeModule('calendar') || !Loader::includeModule(	'im'))
 		{
 			return $chatId;
 		}
@@ -276,8 +285,14 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 				);
 				return null;
 			}
+			
+			$parentCalendarData = [];
+			if ($calendarData['RECURRENCE_ID'])
+			{
+				$parentCalendarData = $this->getCalendarData($calendarData['RECURRENCE_ID']);
+			}
 
-			$chatId = Intranet\ControlButton::createCalendarChat($calendarData, $userId);
+			$chatId = Intranet\ControlButton::createCalendarChat($calendarData, $userId, $parentCalendarData);
 
 			Application::getConnection()->unlock($lockName);
 		}

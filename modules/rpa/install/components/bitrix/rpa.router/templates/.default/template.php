@@ -37,11 +37,19 @@ endif;
 					},
 					{
 						condition: [
-							"/rpa/automation",
+							"/rpa/automation/(\\d+)/editrobot/"
 						],
 						options: {
 							cacheable: false,
 							allowChangeHistory: false
+						}
+					},
+					{
+						condition: [
+							"/rpa/automation",
+						],
+						options: {
+							cacheable: false
 						}
 					},
 					{
@@ -147,21 +155,30 @@ endif;
 				}
 			});
 
-            BX.PULL.extendWatch(taskCountersPullTag);
+			BX.PULL.extendWatch(taskCountersPullTag);
 		}
 	});
 </script>
 <?php
 global $APPLICATION;
+
+$wrapperParameters = [
+	'POPUP_COMPONENT_NAME' => $arResult['componentName'],
+	'POPUP_COMPONENT_TEMPLATE_NAME' => $arResult['templateName'],
+	'POPUP_COMPONENT_PARAMS' => $arResult['componentParameters'],
+	"USE_PADDING" => false,
+];
+
+if ($arResult['componentName'] === 'bitrix:rpa.automation')
+{
+	$wrapperParameters['USE_BACKGROUND_CONTENT'] = false;
+	$wrapperParameters['POPUP_COMPONENT_USE_BITRIX24_THEME'] = 'Y';
+	$wrapperParameters['DEFAULT_THEME_ID'] = 'light:robots';
+}
+
 $APPLICATION->IncludeComponent(
 	'bitrix:ui.sidepanel.wrapper',
 	'',
-	[
-		'POPUP_COMPONENT_NAME' => $arResult['componentName'],
-		'POPUP_COMPONENT_TEMPLATE_NAME' => $arResult['templateName'],
-		'POPUP_COMPONENT_PARAMS' => $arResult['componentParameters'],
-		"USE_PADDING" => false,
-		"USE_UI_TOOLBAR" => "Y",
-	],
+	$wrapperParameters,
 	$this->getComponent()
 );?>

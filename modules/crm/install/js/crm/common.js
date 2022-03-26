@@ -3416,7 +3416,10 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		order: 14,
 		ordershipment: 16,
 		orderpayment: 17,
-		document: 12
+		smartinvoice: 31,
+		document: 12,
+		storeDocument: 33,
+		shipmentDocument: 34,
 	};
 	BX.CrmEntityType.names =
 	{
@@ -3433,7 +3436,9 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		order: "ORDER",
 		ordershipment: "ORDER_SHIPMENT",
 		orderpayment: "ORDER_PAYMENT",
-		ordercheck: "ORDER_CHECK"
+		ordercheck: "ORDER_CHECK",
+		smartinvoice: "SMART_INVOICE",
+		dynamic: "DYNAMIC"
 	};
 	BX.CrmEntityType.abbreviations =
 	{
@@ -3446,7 +3451,8 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		quote: "Q",
 		order: "O",
 		ordershipment: "OS",
-		orderpayment: "OP"
+		orderpayment: "OP",
+		smartinvoice: "SI"
 	};
 	BX.CrmEntityType.isDefined = function(typeId)
 	{
@@ -3459,7 +3465,8 @@ if(typeof(BX.CrmEntityType) === "undefined")
 			}
 		}
 
-		var isStaticType = (typeId >= 0 && typeId <= 7) || typeId === 14;
+		var entityTypeIds = Object.values(this.enumeration);
+		var isStaticType = (entityTypeIds.indexOf(typeId) !== -1) && (typeId !== this.enumeration.undefined);
 		var isDynamicType = this.isDynamicTypeByTypeId(typeId);
 
 		return isStaticType || isDynamicType;
@@ -3523,6 +3530,10 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		{
 			return BX.CrmEntityType.names.orderpayment;
 		}
+		else if(typeId === BX.CrmEntityType.enumeration.smartinvoice)
+		{
+			return BX.CrmEntityType.names.smartinvoice;
+		}
 		else if (BX.CrmEntityType.isDynamicTypeByTypeId(typeId))
 		{
 			return BX.CrmEntityType.getDynamicTypeName(typeId);
@@ -3583,6 +3594,10 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		{
 			return this.enumeration.wait;
 		}
+		else if(name === BX.CrmEntityType.names.smartinvoice)
+		{
+			return this.enumeration.smartinvoice;
+		}
 		else if (BX.CrmEntityType.isDynamicTypeByName(name))
 		{
 			return this.getTypeIdFromDynamicTypeName(name);
@@ -3627,6 +3642,10 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		{
 			return this.abbreviations.orderpayment;
 		}
+		else if (name === BX.CrmEntityType.names.smartinvoice)
+		{
+			return this.abbreviations.smartinvoice;
+		}
 		else if (BX.CrmEntityType.isDynamicTypeByName(name))
 		{
 			var typeId = this.getTypeIdFromDynamicTypeName(name);
@@ -3644,7 +3663,22 @@ if(typeof(BX.CrmEntityType) === "undefined")
 	 */
 	BX.CrmEntityType.isDynamicTypeByTypeId = function(typeId)
 	{
-		return (typeId >= this.dynamicTypeStart && typeId < this.dynamicTypeEnd);
+		typeId = Number(typeId);
+
+		return (
+			typeId >= this.dynamicTypeStart && typeId < this.dynamicTypeEnd
+		)
+	};
+
+	BX.CrmEntityType.isUseFactoryBasedApproach = function(typeId)
+	{
+		typeId = Number(typeId);
+
+		return (
+			typeId === this.enumeration.quote
+			|| typeId === this.enumeration.smartinvoice
+			|| this.isDynamicTypeByTypeId(typeId)
+		);
 	};
 
 	/**
@@ -3659,6 +3693,38 @@ if(typeof(BX.CrmEntityType) === "undefined")
 
 		return (prefixMatches && typeIdIsValid);
 	};
+
+	BX.CrmEntityType.isUseDynamicTypeBasedApproach = function(typeId)
+	{
+		typeId = Number(typeId);
+
+		return (
+			typeId === BX.CrmEntityType.enumeration.smartinvoice
+			|| BX.CrmEntityType.isDynamicTypeByTypeId(typeId)
+		);
+	}
+
+	BX.CrmEntityType.isUseDynamicTypeBasedApproachByName = function(name)
+	{
+		name = String(name);
+		if (name === BX.CrmEntityType.names.smartinvoice)
+		{
+			return true;
+		}
+
+		return BX.CrmEntityType.isDynamicTypeByName(name);
+	}
+
+	BX.CrmEntityType.isUseFactoryBasedApproachByName = function(name)
+	{
+		name = String(name);
+		if (name === BX.CrmEntityType.names.quote)
+		{
+			return true;
+		}
+
+		return BX.CrmEntityType.isUseDynamicTypeBasedApproachByName(name);
+	}
 
 	/**
 	 * @param {number} typeId
@@ -3750,7 +3816,22 @@ if(typeof(BX.CrmEntityType) === "undefined")
 	BX.CrmEntityType.getNotFoundMessage = function(typeId)
 	{
 		var name = this.resolveName(typeId);
-		return (this.notFoundMessages.hasOwnProperty(name) ? this.notFoundMessages[name] : name);
+
+		var message = null;
+		if (this.notFoundMessages.hasOwnProperty(name))
+		{
+			message = this.notFoundMessages[name];
+		}
+		if (!message && this.notFoundMessages.hasOwnProperty(BX.CrmEntityType.names.dynamic))
+		{
+			message = this.notFoundMessages[BX.CrmEntityType.names.dynamic];
+		}
+		if (!message)
+		{
+			message = name;
+		}
+
+		return message;
 	};
 
 	BX.CrmEntityType.getNotFoundMessageByName = function(name)
@@ -10195,10 +10276,12 @@ if(typeof(BX.CrmEntityFieldSynchronizationEditor) === "undefined")
 				var checkbox = BX.create("INPUT", { props: { id: inputId, type: "checkbox", checked: true } });
 				this._checkBoxes[entityTypeName] = checkbox;
 
+				var entityTitle = entityConfig.title || BX.CrmEntityType.getCaptionByName(entityTypeName);
+
 				var label = BX.create("LABEL",
 					{
 						props: { htmlFor: inputId },
-						text: BX.CrmEntityType.getCaptionByName(entityTypeName)
+						text: entityTitle
 					}
 				);
 
@@ -12831,7 +12914,8 @@ BX.Crm.Page =
 		lead: { condition: new RegExp("/crm/lead/details/[0-9]+/", "i") },
 		leadMerge: { condition: new RegExp("/crm/lead/merge/", "i"), options: { customLeftBoundary: 0 } },
 		leadDedupeList: { condition: new RegExp("/crm/lead/dedupelist/", "i"), stopParameters: ["page", "IFRAME"] },
-		leadAutomation: { condition: new RegExp("/crm/lead/automation/[0-9]+/", "i") },
+		leadAutomation: { condition: new RegExp("/crm/lead/automation/[0-9]+/", "i"), stopParameters: ['id'], options: { customLeftBoundary: 0 }},
+		leadElementAutomation: { condition: new RegExp("/crm/lead/automation/[0-9]+/", "i")},
 		contact: { condition: new RegExp("/crm/contact/details/[0-9]+/", "i") },
 		contactMerge: { condition: new RegExp("/crm/contact/merge/", "i"), options: { customLeftBoundary: 0 } },
 		contactDedupeList: { condition: new RegExp("/crm/contact/dedupelist/", "i"), stopParameters: ["page", "IFRAME"] },
@@ -12840,15 +12924,18 @@ BX.Crm.Page =
 		companyDedupeList: { condition: new RegExp("/crm/company/dedupelist/", "i"), stopParameters: ["page", "IFRAME"] },
 		deal: { condition: new RegExp("/crm/deal/details/[0-9]+/", "i") },
 		dealMerge: { condition: new RegExp("/crm/deal/merge/", "i"), options: { customLeftBoundary: 0 } },
-		dealAutomation: { condition: new RegExp("/crm/deal/automation/[0-9]+/", "i") },
-		quote: { condition: new RegExp("/crm/quote/details/[0-9]+/", "i") },
+		dealAutomation: { condition: new RegExp("/crm/deal/automation/[0-9]+/", "i"), stopParameters: ['id'], options: { customLeftBoundary: 0 } },
+		dealElementAutomation: { condition: new RegExp("/crm/deal/automation/[0-9]+/", "i") },
+		quote: { condition: new RegExp("/crm/type/7/details/[0-9]+/", "i") },
 		order: { condition: new RegExp("/shop/orders/details/[0-9]+/", "i") },
 		orderSalescenter: { condition: new RegExp("/saleshub/orders/order/", "i") }, //
 		orderShipment: { condition: new RegExp("/shop/orders/shipment/details/[0-9]+/", "i") },
 		orderPayment: { condition: new RegExp("/shop/orders/payment/details/[0-9]+/", "i") },
-		orderAutomation: { condition: new RegExp("/shop/orders/automation/[0-9]+/", "i") },
+		orderAutomation: { condition: new RegExp("/shop/orders/automation/[0-9]+/", "i"), stopParameters: ['id'], options: { customLeftBoundary: 0 } },
+		orderElementAutomation: { condition: new RegExp("/shop/orders/automation/[0-9]+/", "i")},
 		factoryBased: { condition: new RegExp("/type/[0-9]+/details/[0-9]+/", "i") },
-		dynamicAutomation: { condition: new RegExp("/crm/type/[0-9]+/automation/[0-9]+/", "i") }
+		dynamicAutomation: { condition: new RegExp("/crm/type/[0-9]+/automation/[0-9]+/", "i"), stopParameters: ['id'], options: { customLeftBoundary: 0 } },
+		dynamicElementAutomation: { condition: new RegExp("/crm/type/[0-9]+/automation/[0-9]+/", "i")}
 	},
 	items: [],
 	initialized: false,

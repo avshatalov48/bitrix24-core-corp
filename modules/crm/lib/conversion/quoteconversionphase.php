@@ -1,5 +1,10 @@
 <?php
+
 namespace Bitrix\Crm\Conversion;
+
+/**
+ * @deprecated
+ */
 class QuoteConversionPhase
 {
 	const INTERMEDIATE = 0;

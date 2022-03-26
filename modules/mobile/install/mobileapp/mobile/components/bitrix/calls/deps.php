@@ -1,5 +1,8 @@
 <?php
 return [
-	'reload/listeners',
-	'calls/engine',
+	'extensions' => [
+		'reload/listeners',
+		'calls/engine',
+	],
+	'components' => [],
 ];

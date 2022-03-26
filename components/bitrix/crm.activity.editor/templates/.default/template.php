@@ -460,7 +460,8 @@ endif;
 					{
 						"CRM_TASK_CREATION_PATH": "<?=CUtil::JSEscape(\Bitrix\Main\Config\Option::get('socialnetwork', 'user_page', SITE_DIR.'company/personal/').'user/#user_id#/tasks/task/edit/0/')?>",
 						"CRM_TASK_EDIT_PATH": "<?=CUtil::JSEscape(\Bitrix\Main\Config\Option::get('socialnetwork', 'user_page', SITE_DIR.'company/personal/').'user/#user_id#/tasks/task/edit/#task_id#/')?>",
-						"CRM_TASK_VIEW_PATH": "<?=CUtil::JSEscape(\Bitrix\Main\Config\Option::get('socialnetwork', 'user_page', SITE_DIR.'company/personal/').'user/#user_id#/tasks/task/view/#task_id#/')?>"
+						"CRM_TASK_VIEW_PATH": "<?=CUtil::JSEscape(\Bitrix\Main\Config\Option::get('socialnetwork', 'user_page', SITE_DIR.'company/personal/').'user/#user_id#/tasks/task/view/#task_id#/')?>",
+						"CMR_DEAL_DETAILS_PATH": "<?=CUtil::JSEscape(\Bitrix\Main\Config\Option::get('crm', 'path_to_deal_details'))?>"
 					}
 				);
 

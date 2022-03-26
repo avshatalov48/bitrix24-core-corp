@@ -108,6 +108,12 @@ class TasksAutomationComponent extends \CBitrixComponent
 		);
 		$this->prepareGroupSelector($projectId);
 
+		if ($this->arParams['SET_TITLE'] === 'Y')
+		{
+			global $APPLICATION;
+			$APPLICATION->SetTitle(Loc::getMessage('TASKS_AUTOMATION_TITLE'));
+		}
+
 		$this->includeComponentTemplate();
 	}
 

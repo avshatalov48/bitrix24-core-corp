@@ -285,6 +285,9 @@ export class Epic extends EventEmitter
 
 				return true;
 			})
+			.catch((response) => {
+				this.requestSender.showErrorAlert(response);
+			})
 		;
 	}
 
@@ -298,12 +301,6 @@ export class Epic extends EventEmitter
 		;
 		top.BX.Event.EventEmitter.subscribe(
 			this.getEventNamespace() + ':' + 'afterEdit',
-			() => {
-				this.reloadSidePanel(sidePanelId);
-			})
-		;
-		EventEmitter.subscribe(
-			this.getEventNamespace() + ':' + 'afterRemove',
 			() => {
 				this.reloadSidePanel(sidePanelId);
 			})
@@ -357,6 +354,9 @@ export class Epic extends EventEmitter
 					this.formData = response.data;
 					resolve(this.renderAddForm());
 				})
+				.catch((response) => {
+					this.requestSender.showErrorAlert(response);
+				})
 			;
 		});
 	}
@@ -377,6 +377,9 @@ export class Epic extends EventEmitter
 					this.listData = response.data;
 					resolve(this.renderList());
 				})
+				.catch((response) => {
+					this.requestSender.showErrorAlert(response);
+				})
 			;
 		});
 	}
@@ -396,6 +399,9 @@ export class Epic extends EventEmitter
 				.then((response) => {
 					this.epicFiles = Type.isUndefined(response.data.html) ? '' : response.data.html;
 					resolve(this.renderViewForm(epic));
+				})
+				.catch((response) => {
+					this.requestSender.showErrorAlert(response);
 				})
 			;
 		});
@@ -421,6 +427,9 @@ export class Epic extends EventEmitter
 						this.currentEpic = epic;
 						this.formData = response.data;
 						resolve(this.renderEditForm(epic));
+					})
+					.catch((response) => {
+						this.requestSender.showErrorAlert(response);
 					})
 				;
 			});
@@ -671,7 +680,7 @@ export class Epic extends EventEmitter
 	{
 		return Tag.render`
 			<div class="tasks-scrum-epic-form-body">
-				<div class="tasks-scrum-epic-form-description"></div>
+				<div class="tasks-scrum-epic-form-description --editing"></div>
 			</div>
 		`;
 	}
@@ -686,6 +695,8 @@ export class Epic extends EventEmitter
 						this.editorHandler = window.top.LHEPostForm.getHandler(this.id);
 
 						EventEmitter.emit(this.editorHandler.eventNode, 'OnShowLHE', [true]);
+
+						const descriptionContainer = this.form.querySelector('.tasks-scrum-epic-form-description');
 					}
 					this.focusToName();
 				})

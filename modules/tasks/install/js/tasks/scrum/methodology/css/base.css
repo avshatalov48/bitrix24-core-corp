@@ -1,5 +1,6 @@
 .tasks-scrum__widget-methodology--scope {
 	--tasks_scrum_meetings-black_alpha_09: rgba(0,0,0,.09);
+	--tasks_scrum_meetings-black_alpha_15: rgba(0,0,0,.15);
 
 	--tasks_scrum_meetings-white: rgba(255,255,255,1);
 	--tasks_scrum_meetings-white_alpha_85: rgba(255,255,255,.85);
@@ -7,12 +8,21 @@
 	--tasks_scrum_meetings-grey: rgba(82,92,105,1);
 	--tasks_scrum_meetings-grey_alpha_66: rgba(82,92,105,.66);
 	--tasks_scrum_meetings-grey_alpha_87: rgba(82,92,105,.87);
+
+	--tasks_scrum_meetings-green: rgba(85,208,224,1);
+
+	--tasks_scrum_meetings-blue: rgba(47,198,246,1);
 }
 
 .tasks-scrum__widget-methodology {
 	padding: 13px 10px 9px;
 	min-width: 156px;
 	box-sizing: border-box;
+	border-radius: 12px;
+}
+
+.tasks-scrum__widget-methodology.--active {
+	background: var(--tasks_scrum_meetings-white);
 }
 
 .tasks-scrum__widget-methodology--conteiner {
@@ -47,6 +57,7 @@
 
 .tasks-scrum__widget-methodology--btn-box {
 	margin-top: 6px;
+	width: 100%;
 }
 
 .tasks-scrum__widget-methodology--btn-box .ui-qr-popupcomponentmaker__btn {
@@ -57,6 +68,7 @@
 	font: 11px/15px OpenSans-Regular, "Helvetica Neue", Helvetica, Arial, sans-serif;
 	color: var(--tasks_scrum_meetings-grey_alpha_66);
 	margin-bottom: 4px;
+	width: 100%;
 }
 
 .tasks-scrum__widget-methodology--btn-box-center {
@@ -75,17 +87,71 @@
 	cursor: pointer;
 }
 
+.tasks-scrum__widget-methodology--image-diagram {
+	height: 118px;
+	width: 304px;
+	margin: 5px 0 6px;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-image: url(/bitrix/js/tasks/scrum/methodology/images/tasks-scrum-methodology--team-speed-diagram.svg);
+	pointer-events: all;
+	cursor: pointer;
+}
+
+.tasks-scrum__widget-methodology--image-diagram.--disabled,
 .tasks-scrum__widget-methodology--image.--disabled {
 	opacity: 0.15;
 	pointer-events: none;
 }
 
-/*.tasks-scrum__widget-methodology--bg {*/
-/*	border-radius: 12px;*/
-/*	background: var(--tasks_scrum_meetings-white_alpha_85);*/
-/*	box-shadow: 0 1px 3px 0 var(--tasks_scrum_meetings-black_alpha_09);*/
-/*}*/
+.tasks-scrum__widget-methodology--label {
+	font: 9px/11px "OpenSans-SemiBold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	color: var(--tasks_scrum_meetings-white);
+	position: absolute;
+	right: 15px;
+	top: -5px;
+	background: var(--tasks_scrum_meetings-blue);
+	border-radius: 14px;
+	box-shadow: 0 1px 1px var(--tasks_scrum_meetings-black_alpha_15);
+	padding: 1px 8px;
+}
 
-/*.tasks-scrum__widget-methodology--bg.--active {*/
-/*	background: var(--tasks_scrum_meetings-white);*/
-/*}*/
+.tasks-scrum__widget-methodology--label.--hidden {
+	display: none;
+}
+
+.tasks-scrum__widget-methodology--training.--active {
+	cursor: pointer;
+}
+
+.tasks-scrum__widget-methodology--migration {
+	padding: 11px 10px 9px;
+	cursor: pointer;
+}
+
+.tasks-scrum__widget-methodology--migration::before {
+	content: '';
+	display: block;
+	width: 100%;
+	height: 100%;
+	box-sizing: border-box;
+	position: absolute;
+	left: 0;
+	top: 0;
+	border: 1px solid var(--tasks_scrum_meetings-green);
+	border-radius: 12px;
+	pointer-events: none;
+}
+
+.ui-icon.tasks-scrum__widget-methodology--migration-btn > i {
+	background-image: url("data:image/svg+xml,%3Csvg width='39' height='39' viewBox='0 0 39 39' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M27.8619 17.9659C27.8612 17.9857 27.8605 18.0056 27.8605 18.0254C29.827 18.6172 31.1636 20.4402 31.1365 22.4936C31.1877 24.9869 29.2175 27.0543 26.7246 27.1231H14.6613V27.1179C14.6451 27.1184 14.6289 27.119 14.6127 27.1196C14.5643 27.1214 14.516 27.1231 14.4672 27.1231C11.2463 27.1231 8.63576 24.4 8.63576 21.0414C8.60756 18.5124 10.1496 16.2306 12.5066 15.3136C12.5045 15.2837 12.5045 15.2542 12.5045 15.2243C12.5045 12.4784 14.637 10.251 17.2701 10.251C19.237 10.2731 20.9888 11.4997 21.6824 13.3404C22.1757 13.1589 22.6972 13.0661 23.2229 13.0662C25.7853 13.0662 27.8633 15.2345 27.8633 17.9063C27.8633 17.9261 27.8626 17.946 27.8619 17.9659ZM17.6761 13.6225L14.5747 16.9376L17.6761 20.2527C17.862 20.4515 18.1952 20.3199 18.1952 20.0478V17.9698L23.2537 17.9698V16.074H18.1952V13.8275C18.1952 13.5554 17.862 13.4238 17.6761 13.6225ZM21.2582 25.384L24.6354 22.0169L21.2582 18.6499C21.0691 18.4614 20.7464 18.5953 20.7464 18.8624V21.0763L14.4504 21.0763V22.9722H20.7464V25.1715C20.7464 25.4386 21.0691 25.5725 21.2582 25.384Z' fill='white'/%3E%3C/svg%3E%0A");
+}
+
+.tasks-scrum__widget-methodology--content {
+	display: flex;
+	flex-wrap: wrap;
+}
+
+.tasks-scrum__widget-methodology--label.--migration {
+	background: var(--tasks_scrum_meetings-green);
+}

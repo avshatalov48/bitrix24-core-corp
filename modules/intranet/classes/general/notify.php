@@ -1,33 +1,33 @@
 <?php
 
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
+use Bitrix\Main\ModuleManager;
 
 IncludeModuleLangFile(__FILE__);
 
 class CIntranetNotify
 {
-	public static function NewUserMessage($USER_ID)
+	public static function NewUserMessage($USER_ID): void
 	{
 		static $uniqueIdCache = [];
 
-		global $DB;
-
 		if (!CModule::IncludeModule('socialnetwork'))
 		{
-			return false;
+			return;
 		}
 
-		$USER_ID = intval($USER_ID);
+		$USER_ID = (int)$USER_ID;
 		if ($USER_ID <= 0)
 		{
-			return false;
+			return;
 		}
 
 		$arRights = self::GetRights($USER_ID);
 		if (!$arRights)
 		{
-			return false;
+			return;
 		}
 
 		$blockNewUserLF = COption::GetOptionString("intranet", "BLOCK_NEW_USER_LF_SITE", false);
@@ -36,106 +36,134 @@ class CIntranetNotify
 			$blockNewUserLF = COption::GetOptionString("intranet", "BLOCK_NEW_USER_LF", "N");
 		}
 
-		if ($blockNewUserLF != "Y")
+		if ($blockNewUserLF === 'Y')
 		{
-			$dbRes = CUser::GetList("ID", "asc", array("ID_EQUAL_EXACT" => $USER_ID), array("FIELDS" => array("EXTERNAL_AUTH_ID"), "SELECT" => array("UF_DEPARTMENT")));
+			return;
+		}
+
+		$dbRes = CUser::GetList(
+			"ID",
+			"asc",
+			[ 'ID_EQUAL_EXACT' => $USER_ID ],
+			[
+				'FIELDS' => [ 'EXTERNAL_AUTH_ID' ],
+				'SELECT' => [ 'UF_DEPARTMENT' ],
+			]
+		);
+		if (
+			!($arUser = $dbRes->fetch())
+			|| (in_array($arUser["EXTERNAL_AUTH_ID"], [ 'bot', 'imconnector' ], true))
+		)
+		{
+			return;
+		}
+
+		$bExtranetUser = false;
+
+		if (
+			!isset($arUser['UF_DEPARTMENT'])
+			|| !is_array($arUser['UF_DEPARTMENT'])
+			|| empty($arUser['UF_DEPARTMENT'])
+		)
+		{
+			if (!Loader::includeModule('extranet'))
+			{
+				return;
+			}
+
+			$extranetGroupId = CExtranet::getExtranetUserGroupId();
 			if (
-				($arUser = $dbRes->Fetch())
-				&& (!in_array($arUser["EXTERNAL_AUTH_ID"], Array('bot', 'imconnector')))
+				!$extranetGroupId
+				|| !in_array($extranetGroupId, CUser::GetUserGroup($USER_ID))
 			)
 			{
-				$bExtranetUser = (
-					IsModuleInstalled("extranet")
-					&& (
-						!isset($arUser['UF_DEPARTMENT'])
-						|| !is_array($arUser['UF_DEPARTMENT'])
-						|| empty($arUser['UF_DEPARTMENT'])
-					)
-				);
+				return;
+			}
 
-				$uniqueId = round((microtime(true) - mktime(0,0,0,1,1,2017))*10);
-				while (in_array($uniqueId, $uniqueIdCache))
-				{
-					$uniqueId += 10000000;
-				}
-				$uniqueIdCache[] = $uniqueId;
+			$bExtranetUser = true;
+		}
 
-				$arSoFields = array(
-					"ENTITY_TYPE" => SONET_INTRANET_NEW_USER_ENTITY,
-					"EVENT_ID" => SONET_INTRANET_NEW_USER_EVENT_ID,
-					"ENTITY_ID" => $USER_ID,
-					"SOURCE_ID" => $USER_ID,
-					"USER_ID" => $USER_ID,
-					"=LOG_DATE" => $DB->CurrentTimeFunction(),
-					"MODULE_ID" => "intranet",
-					"TITLE_TEMPLATE" => "#TITLE#",
-					"TITLE" => Loc::getMessage($bExtranetUser ? 'I_NEW_USER_EXTERNAL_TITLE' : 'I_NEW_USER_TITLE'),
-					"MESSAGE" => '',
-					"TEXT_MESSAGE" => '',
-					"CALLBACK_FUNC" => false,
-					"SITE_ID" => SITE_ID,
-					"ENABLE_COMMENTS" => "Y", //!!!
-					"RATING_TYPE_ID" => "INTRANET_NEW_USER",
-					"RATING_ENTITY_ID" => $uniqueId,
-				);
+		$uniqueId = round((microtime(true) - mktime(0,0,0,1,1,2017))*10);
+		while (in_array($uniqueId, $uniqueIdCache))
+		{
+			$uniqueId += 10000000;
+		}
+		$uniqueIdCache[] = $uniqueId;
 
-				// check earlier messages for this user
-				$res = CSocNetLog::getList(
-					array(),
-					array(
-						'ENTITY_TYPE' => $arSoFields['ENTITY_TYPE'],
-						'ENTITY_ID' => $arSoFields['ENTITY_ID'],
-						'EVENT_ID' => $arSoFields['EVENT_ID'],
-						'SOURCE_ID' => $arSoFields['SOURCE_ID'],
-					),
-					false,
-					false,
-					array('ID')
-				);
-				while($logEntry = $res->fetch())
-				{
-					CSocNetLog::delete($logEntry['ID']);
-				}
+		$arSoFields = array(
+			"ENTITY_TYPE" => SONET_INTRANET_NEW_USER_ENTITY,
+			"EVENT_ID" => SONET_INTRANET_NEW_USER_EVENT_ID,
+			"ENTITY_ID" => $USER_ID,
+			"SOURCE_ID" => $USER_ID,
+			"USER_ID" => $USER_ID,
+			"=LOG_DATE" => CDatabase::CurrentTimeFunction(),
+			"MODULE_ID" => "intranet",
+			"TITLE_TEMPLATE" => "#TITLE#",
+			"TITLE" => Loc::getMessage($bExtranetUser ? 'I_NEW_USER_EXTERNAL_TITLE' : 'I_NEW_USER_TITLE'),
+			"MESSAGE" => '',
+			"TEXT_MESSAGE" => '',
+			"CALLBACK_FUNC" => false,
+			"SITE_ID" => SITE_ID,
+			"ENABLE_COMMENTS" => "Y", //!!!
+			"RATING_TYPE_ID" => "INTRANET_NEW_USER",
+			"RATING_ENTITY_ID" => $uniqueId,
+		);
 
-				$logID = CSocNetLog::add($arSoFields, false);
+		// check earlier messages for this user
+		$res = CSocNetLog::getList(
+			array(),
+			array(
+				'ENTITY_TYPE' => $arSoFields['ENTITY_TYPE'],
+				'ENTITY_ID' => $arSoFields['ENTITY_ID'],
+				'EVENT_ID' => $arSoFields['EVENT_ID'],
+				'SOURCE_ID' => $arSoFields['SOURCE_ID'],
+			),
+			false,
+			false,
+			array('ID')
+		);
+		while($logEntry = $res->fetch())
+		{
+			CSocNetLog::delete($logEntry['ID']);
+		}
 
-				if (intval($logID) > 0)
-				{
-					$arFields = array(
-						"TMP_ID" => $logID
-					);
+		$logID = CSocNetLog::add($arSoFields, false);
 
-					if (
-						$bExtranetUser
-						&& Loader::includeModule("extranet")
-					)
-					{
-						$arFields["SITE_ID"] = CExtranet::getSitesByLogDestinations($arRights);
-					}
-					elseif (defined("ADMIN_SECTION") && ADMIN_SECTION === true)
-					{
-						$site = CSocNetLogComponent::getSiteByDepartmentId($arUser["UF_DEPARTMENT"]);
-						if ($site)
-						{
-							$arFields["SITE_ID"] = array($site['LID']);
-						}
-					}
+		if ((int)$logID <= 0)
+		{
+			return;
+		}
 
-					CSocNetLog::Update($logID, $arFields);
-					CSocNetLogRights::Add($logID, $arRights);
-					CSocNetLog::SendEvent($logID, "SONET_NEW_EVENT", $logID);
-				}
+		$arFields = array(
+			"TMP_ID" => $logID
+		);
+
+		if (
+			$bExtranetUser
+			&& Loader::includeModule("extranet")
+		)
+		{
+			$arFields["SITE_ID"] = CExtranet::getSitesByLogDestinations($arRights);
+		}
+		elseif (defined("ADMIN_SECTION") && ADMIN_SECTION === true)
+		{
+			$site = CSocNetLogComponent::getSiteByDepartmentId($arUser["UF_DEPARTMENT"]);
+			if ($site)
+			{
+				$arFields["SITE_ID"] = array($site['LID']);
 			}
 		}
 
-		return false;
+		CSocNetLog::Update($logID, $arFields);
+		CSocNetLogRights::Add($logID, $arRights);
+		CSocNetLog::SendEvent($logID, "SONET_NEW_EVENT", $logID);
 	}
 
 	public static function OnAfterSocNetLogCommentAdd($ID, $arFields)
 	{
 		if (
-			$arFields['ENTITY_TYPE'] == SONET_INTRANET_NEW_USER_ENTITY
-			&& $arFields['EVENT_ID'] == SONET_INTRANET_NEW_USER_COMMENT_EVENT_ID
+			$arFields['ENTITY_TYPE'] === SONET_INTRANET_NEW_USER_ENTITY
+			&& $arFields['EVENT_ID'] === SONET_INTRANET_NEW_USER_COMMENT_EVENT_ID
 		)
 		{
 			$arUpdateFields = array(
@@ -192,7 +220,7 @@ class CIntranetNotify
 
 	public static function GetByID($ID)
 	{
-		$ID = intval($ID);
+		$ID = (int)$ID;
 		$dbUser = CUser::GetByID($ID);
 		if ($arUser = $dbUser->GetNext())
 		{
@@ -200,8 +228,8 @@ class CIntranetNotify
 			$arUser["~NAME_FORMATTED"] = htmlspecialcharsback($arUser["NAME_FORMATTED"]);
 			return $arUser;
 		}
-		else
-			return false;
+
+		return false;
 	}
 
 	public static function GetForShow($arDesc)
@@ -226,11 +254,11 @@ class CIntranetNotify
 		if (
 			$arUser
 			&& (
-				IsModuleInstalled("extranet")
+				ModuleManager::isModuleInstalled('extranet')
 				|| (
 					!empty($arUser['UF_DEPARTMENT'])
 					&& is_array($arUser['UF_DEPARTMENT'])
-					&& intval($arUser['UF_DEPARTMENT'][0]) > 0
+					&& (int)$arUser['UF_DEPARTMENT'][0] > 0
 				) // for uninstalled extranet module / b24
 			)
 		)
@@ -239,7 +267,7 @@ class CIntranetNotify
 			{
 				if(defined("BX_COMP_MANAGED_CACHE"))
 				{
-					$CACHE_MANAGER->RegisterTag("USER_NAME_".intval($arUser["ID"]));
+					$CACHE_MANAGER->RegisterTag("USER_NAME_" . (int)$arUser["ID"]);
 				}
 
 				$bExtranetUser = (
@@ -258,8 +286,7 @@ class CIntranetNotify
 					'AVATAR_SRC' => CSocNetLog::FormatEvent_CreateAvatar($arFields, $arParams, 'CREATED_BY'),
 					'USER_URL' => $user_url,
 				), null, array('HIDE_ICONS' => 'Y'));
-				$html_message = ob_get_contents();
-				ob_end_clean();
+				$html_message = ob_get_clean();
 
 				$arResult = array(
 					'EVENT' => $arFields,
@@ -304,7 +331,7 @@ class CIntranetNotify
 				if (Loader::includeModule('bitrix24'))
 				{
 					$arResult['CREATED_BY']['FORMATTED'] = (
-						$arParams["MOBILE"] == "Y"
+						$arParams["MOBILE"] === "Y"
 							? htmlspecialcharsEx(self::GetSiteName())
 							: '<a href="'.BITRIX24_PATH_COMPANY_STRUCTURE_VISUAL.'">'.htmlspecialcharsEx(self::GetSiteName()).'</a>'
 					);
@@ -314,7 +341,7 @@ class CIntranetNotify
 					$arResult['CREATED_BY']['FORMATTED'] = '';
 					if (is_array($arUser['UF_DEPARTMENT']) && count($arUser['UF_DEPARTMENT']) > 0)
 					{
-						if ($arParams["MOBILE"] == "Y")
+						if ($arParams["MOBILE"] === "Y")
 						{
 							$url = "";
 						}
@@ -348,8 +375,8 @@ class CIntranetNotify
 				$arResult['ENTITY']['FORMATTED']["URL"] = $user_url;
 
 				if (
-					$arParams["MOBILE"] != "Y"
-					&& $arParams["NEW_TEMPLATE"] != "Y"
+					$arParams["MOBILE"] !== "Y"
+					&& $arParams["NEW_TEMPLATE"] !== "Y"
 				)
 				{
 					$arResult['EVENT_FORMATTED']['IS_MESSAGE_SHORT'] = CSocNetLogTools::FormatEvent_IsMessageShort($arFields['MESSAGE']);
@@ -379,11 +406,7 @@ class CIntranetNotify
 		);
 
 		$arResult["ENTITY"]["TYPE_MAIL"] = GetMessage('I_NEW_USER_TITLE');
-		if ($bMail)
-		{
-
-		}
-		else
+		if (!$bMail)
 		{
 			static $parserLog = false;
 			if (CModule::IncludeModule("forum"))
@@ -403,12 +426,12 @@ class CIntranetNotify
 					"NL2BR" => "Y", "VIDEO" => "Y",
 					"LOG_VIDEO" => "N", "SHORT_ANCHOR" => "Y",
 					"USERFIELDS" => $arFields["UF"],
-					"USER" => ($arParams["IM"] == "Y" ? "N" : "Y")
+					"USER" => ($arParams["IM"] === "Y" ? "N" : "Y")
 				);
 
 				$parserLog->pathToUser = $parserLog->userPath = $arParams["PATH_TO_USER"];
 				$parserLog->arUserfields = $arFields["UF"];
-				$parserLog->bMobile = ($arParams["MOBILE"] == "Y");
+				$parserLog->bMobile = ($arParams["MOBILE"] === "Y");
 				$arResult["EVENT_FORMATTED"]["MESSAGE"] = htmlspecialcharsbx($parserLog->convert(htmlspecialcharsback($arResult["EVENT_FORMATTED"]["MESSAGE"]), $arAllow));
 				$arResult["EVENT_FORMATTED"]["MESSAGE"] = preg_replace("/\[user\s*=\s*([^\]]*)\](.+?)\[\/user\]/is".BX_UTF_PCRE_MODIFIER, "\\2", $arResult["EVENT_FORMATTED"]["MESSAGE"]);
 			}
@@ -436,20 +459,24 @@ class CIntranetNotify
 			}
 
 			if (
-				$arParams["MOBILE"] != "Y"
-				&& $arParams["NEW_TEMPLATE"] != "Y"
+				$arParams["MOBILE"] !== "Y"
+				&& $arParams["NEW_TEMPLATE"] !== "Y"
 			)
 			{
 				if (CModule::IncludeModule("forum"))
+				{
 					$arResult["EVENT_FORMATTED"]["SHORT_MESSAGE"] = $parserLog->html_cut(
 						$parserLog->convert(htmlspecialcharsback($arResult["EVENT_FORMATTED"]["MESSAGE"]), $arAllow),
 						500
 					);
+				}
 				else
+				{
 					$arResult["EVENT_FORMATTED"]["SHORT_MESSAGE"] = $parserLog->html_cut(
 						$parserLog->convert(htmlspecialcharsback($arResult["EVENT_FORMATTED"]["MESSAGE"]), array(), $arAllow),
 						500
 					);
+				}
 
 				$arResult["EVENT_FORMATTED"]["IS_MESSAGE_SHORT"] = CSocNetLogTools::FormatEvent_IsMessageShort($arResult["EVENT_FORMATTED"]["MESSAGE"], $arResult["EVENT_FORMATTED"]["SHORT_MESSAGE"]);
 			}
@@ -458,18 +485,18 @@ class CIntranetNotify
 		return $arResult;
 	}
 
-	protected static function GetRights($USER_ID)
+	protected static function GetRights($USER_ID): array
 	{
 		$bExtranetUser = false;
-		if (IsModuleInstalled("extranet"))
+		if (ModuleManager::isModuleInstalled('extranet'))
 		{
 			$rsUser = CUser::GetByID($USER_ID);
-			if ($arUser = $rsUser->Fetch())
+			if (
+				($arUser = $rsUser->fetch())
+				&& (int)$arUser["UF_DEPARTMENT"][0] <= 0
+			)
 			{
-				if (intval($arUser["UF_DEPARTMENT"][0]) <= 0)
-				{
-					$bExtranetUser = true;
-				}
+				$bExtranetUser = true;
 			}
 		}
 
@@ -486,31 +513,30 @@ class CIntranetNotify
 			$arResult = array();
 			while ($arSocNetUserToGroup = $rsSocNetUserToGroup->Fetch())
 			{
+				$arResult[] = "SG".$arSocNetUserToGroup["GROUP_ID"];
 				$arResult[] = "SG".$arSocNetUserToGroup["GROUP_ID"]."_".SONET_ROLES_USER;
 				$arResult[] = "SG".$arSocNetUserToGroup["GROUP_ID"]."_".SONET_ROLES_MODERATOR;
 				$arResult[] = "SG".$arSocNetUserToGroup["GROUP_ID"]."_".SONET_ROLES_OWNER;
 			}
 			return $arResult;
 		}
-		else
-		{
-			return array("G2");
-		}
+
+		return array("G2");
 	}
 
 	protected static function GetSiteName()
 	{
-		return COption::GetOptionString("main", "site_name", "");
+		return Option::get("main", "site_name");
 	}
 
 	public static function OnSendMentionGetEntityFields($arCommentFields)
 	{
-		if ($arCommentFields["EVENT_ID"] != SONET_INTRANET_NEW_USER_COMMENT_EVENT_ID)
+		if ($arCommentFields["EVENT_ID"] !== SONET_INTRANET_NEW_USER_COMMENT_EVENT_ID)
 		{
 			return false;
 		}
 
-		if (!CModule::IncludeModule("socialnetwork"))
+		if (!Loader::includeModule('socialnetwork'))
 		{
 			return true;
 		}
@@ -528,18 +554,21 @@ class CIntranetNotify
 
 		if (
 			($arLog = $dbLog->Fetch())
-			&& (intval($arLog["USER_ID"]) > 0)
+			&& ((int)$arLog["USER_ID"] > 0)
 		)
 		{
 			$genderSuffix = "";
-			$dbUsers = CUser::GetList("ID", "desc", array("ID" => $arCommentFields["USER_ID"].' | '.$arLog["USER_ID"]), array("PERSONAL_GENDER", "LOGIN", "NAME", "LAST_NAME", "SECOND_NAME"));
+			$dbUsers = CUser::GetList("ID", "desc",
+				array("ID" => $arCommentFields["USER_ID"].' | '.$arLog["USER_ID"]),
+				array("PERSONAL_GENDER", "LOGIN", "NAME", "LAST_NAME", "SECOND_NAME")
+			);
 			while ($arUser = $dbUsers->Fetch())
 			{
-				if ($arUser["ID"] == $arCommentFields["USER_ID"])
+				if ((int)$arUser["ID"] === (int)$arCommentFields["USER_ID"])
 				{
 					$genderSuffix = $arUser["PERSONAL_GENDER"];
 				}
-				if ($arUser["ID"] == $arLog["USER_ID"])
+				if ((int)$arUser["ID"] === (int)$arLog["USER_ID"])
 				{
 					$nameFormatted = CUser::FormatName(CSite::GetNameFormat(), $arUser);
 				}
@@ -552,15 +581,13 @@ class CIntranetNotify
 				"URL" => $strPathToLogEntryComment,
 				"NOTIFY_MODULE" => "intranet",
 				"NOTIFY_TAG" => "INTRANET_NEW_USER|COMMENT_MENTION|".$arCommentFields["ID"],
-				"NOTIFY_MESSAGE" => GetMessage("I_NEW_USER_MENTION".($genderSuffix <> '' ? "_".$genderSuffix : ""), Array("#title#" => "<a href=\"#url#\" class=\"bx-notifier-item-action\">".$nameFormatted."</a>")),
-				"NOTIFY_MESSAGE_OUT" => GetMessage("I_NEW_USER_MENTION".($genderSuffix <> '' ? "_".$genderSuffix : ""), Array("#title#" => $nameFormatted))." ("."#server_name##url#)"
+				"NOTIFY_MESSAGE" => Loc::getMessage("I_NEW_USER_MENTION".($genderSuffix !== '' ? "_" . $genderSuffix : ""), Array("#title#" => "<a href=\"#url#\" class=\"bx-notifier-item-action\">".$nameFormatted."</a>")),
+				"NOTIFY_MESSAGE_OUT" => Loc::getMessage("I_NEW_USER_MENTION".($genderSuffix !== '' ? "_" . $genderSuffix : ""), Array("#title#" => $nameFormatted))." ("."#server_name##url#)"
 			);
 
 			return $arReturn;
 		}
-		else
-		{
-			return false;
-		}
+
+		return false;
 	}
 }

@@ -249,6 +249,7 @@ final class DocumentService extends Engine\Controller
 
 		if ($documentHandler instanceof OnlyOfficeHandler)
 		{
+			/** @see OnlyOffice::loadCreateDocumentEditorAction() */
 			return $this->forward(OnlyOffice::class, 'loadCreateDocumentEditor', [
 				'typeFile' => $typeFile,
 				'targetFolderId' => $targetFolderId,

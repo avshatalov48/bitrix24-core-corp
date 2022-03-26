@@ -33,7 +33,11 @@ class TypesMap
 			}
 		}
 
-		foreach ($this->typeDataClass::getList()->fetchCollection() as $dynamicType)
+		$types = Container::getInstance()->getDynamicTypesMap()->load([
+			'isLoadStages' => false,
+			'isLoadCategoies' => false,
+		])->getTypes();
+		foreach ($types as $dynamicType)
 		{
 			$this->factories[] = Container::getInstance()->getDynamicFactoryByType($dynamicType);
 		}

@@ -20,15 +20,11 @@ use Bitrix\Main\Type\Date;
  * @method Item setContent(string $content)
  * @method string|null getTerms()
  * @method Item setTerms(string $terms)
- * @method string|null getComments()
- * @method Item setComments(string $comments)
  * @method string|null getQuoteNumber()
  * @method Item setQuoteNumber(string $number)
  * @method int|null getDealId()
  * @method Item setDealId(int $dealId)
- * @method int|null getLeadId()
  * @method EO_Deal|null getDeal()
- * @method Item setLeadId(int $leadId)
  * @method EO_Lead|null getLead()
  * @method int|null getStorageTypeId()
  * @method Item setStorageTypeId(int $storageTypeId)
@@ -36,8 +32,6 @@ use Bitrix\Main\Type\Date;
  * @method Item setStorageElementIds(array $storageElementIds)
  * @method int|null getPersonTypeId()
  * @method Item setPersonTypeId(int $personTypeId)
- * @method int|null getLocationId()
- * @method Item setLocationId(int $locationId)
  */
 class Quote extends Item
 {

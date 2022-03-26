@@ -864,6 +864,7 @@ export class Item extends EventEmitter
 					<input type="checkbox" class="tasks-scrum__item--group-mode-input">
 				</div>
 				<div class="tasks-scrum__item--substrate"></div>
+				<div class="tasks-scrum__item--dragstrate"></div>
 			</div>
 		`;
 
@@ -916,6 +917,7 @@ export class Item extends EventEmitter
 					<input type="checkbox" class="tasks-scrum__item--group-mode-input">
 				</div>
 				<div class="tasks-scrum__item--substrate"></div>
+				<div class="tasks-scrum__item--dragstrate"></div>
 			</div>
 		`;
 

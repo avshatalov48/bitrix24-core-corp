@@ -58,24 +58,25 @@ export default {
 				showTaxBlock: this.$root.$app.options.showProductTaxes,
 				totalResultLabel: this.$root.$app.options.mode === 'delivery' ? Loc.getMessage('SALESCENTER_SHIPMENT_PRODUCT_BLOCK_TOTAL') : null,
 				urlBuilderContext: this.$root.$app.options.urlProductBuilderContext,
+				isCatalogPriceEditEnabled: this.$root.$app.options.isCatalogPriceEditEnabled,
+				fieldHints: this.$root.$app.options.fieldHints,
 				hideUnselectedProperties: (this.$root.$app.options.templateMode === 'view'),
 				showCompilationModeSwitcher: (this.$root.$app.options.showCompilationModeSwitcher === 'Y'),
 			}
 		);
 
-		if (this.isNeedDisableSubmit())
-		{
-			this.$store.commit('orderCreation/disableSubmit');
-		}
-		else
-		{
-			this.$store.commit('orderCreation/enableSubmit')
-		}
+		this.checkProductErrors();
 
 		EventEmitter.subscribe(
 			this.productForm,
 			'ProductForm:onBasketChange',
 			Runtime.debounce(this.onBasketChange, 500, this)
+		);
+
+		EventEmitter.subscribe(
+			this.productForm,
+			'ProductForm:onErrorsChange',
+			Runtime.debounce(this.checkProductErrors, 500, this)
 		);
 	},
 	methods: {
@@ -168,6 +169,17 @@ export default {
 					});
 				});
 		},
+		checkProductErrors()
+		{
+			if (this.isNeedDisableSubmit())
+			{
+				this.$store.commit('orderCreation/disableSubmit');
+			}
+			else
+			{
+				this.$store.commit('orderCreation/enableSubmit')
+			}
+		},
 		isNeedDisableSubmit()
 		{
 			const basket = this.$store.getters['orderCreation/getBasket']();
@@ -193,7 +205,7 @@ export default {
 			<div class="salescenter-app-page-content">
 				<div class="salescenter-app-form-wrapper"></div>
 				<slot name="footer"></slot>
-			</div>		
+			</div>
 		</div>
 	`,
 }

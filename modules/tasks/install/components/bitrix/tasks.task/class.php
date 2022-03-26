@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
@@ -13,16 +13,24 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks;
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\Role\RoleDictionary;
+use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\CheckList\Internals\CheckList;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListConverterHelper;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListConverterHelper;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
+use Bitrix\Tasks\Comments\Task\CommentPoster;
 use Bitrix\Tasks\Integration;
+use Bitrix\Tasks\Integration\Forum\Task\Comment;
 use Bitrix\Tasks\Integration\Forum\Task\Topic;
 use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
+use Bitrix\Tasks\Internals\Registry\TaskRegistry;
+use Bitrix\Tasks\Internals\Task\Result\ResultManager;
 use Bitrix\Tasks\Internals\Task\ViewedTable;
+use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Kanban\StagesTable;
 use Bitrix\Tasks\Manager;
 use Bitrix\Tasks\Manager\Task;
@@ -32,23 +40,23 @@ use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\Type;
-use Bitrix\Tasks\Util\Type\Structure;
-use Bitrix\Tasks\Util\Type\StructureChecker;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Socialnetwork\Helper\ServiceComment;
-use Bitrix\Socialnetwork\CommentAux;
 
 Loc::loadMessages(__FILE__);
 
-require_once(dirname(__FILE__).'/class/formstate.php');
+require_once(dirname(__FILE__).'/class/taskstaskformstate.php');
+require_once(dirname(__FILE__).'/class/taskstaskhitstatestructure.php');
 
 CBitrixComponent::includeComponentClass("bitrix:tasks.base");
 
-class TasksTaskComponent extends TasksBaseComponent
-{
-	const ERROR_TYPE_TASK_SAVE_ERROR = 'TASK_SAVE_ERROR';
+use Bitrix\Tasks\Component\Task\TasksTaskHitStateStructure;
+use Bitrix\Tasks\Component\Task\TasksTaskFormState;
 
+class TasksTaskComponent extends TasksBaseComponent
+	implements \Bitrix\Main\Errorable, \Bitrix\Main\Engine\Contract\Controllerable
+{
 	const DATA_SOURCE_TEMPLATE = 	'TEMPLATE';
 	const DATA_SOURCE_TASK = 		'TASK';
 
@@ -65,6 +73,1787 @@ class TasksTaskComponent extends TasksBaseComponent
 	private $eventOptions =     array();
 
 	protected $hitState =          null;
+
+	protected $errorCollection;
+
+	public function configureActions()
+	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return [];
+		}
+
+		return [
+			'checkCanRead' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'setMark' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'setGroup' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'setReminder' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'setDeadline' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'addElapsedTime' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'updateElapsedTime' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'deleteElapsedTime' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'get' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'start' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'complete' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'delegate' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'defer' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'delete' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'renew' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'pause' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'addFavorite' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'deleteFavorite' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'setPriority' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'getFileCount' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'getFiles' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'mute' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'unmute' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'ping' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'approve' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'disapprove' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'setTags' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'legacyUpdate' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'legacyAdd' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'startTimer' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'stopTimer' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'canMoveStage' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'getStages' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'moveStage' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'setState' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'uiEdit' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+		];
+	}
+
+	public function __construct($component = null)
+	{
+		parent::__construct($component);
+		$this->init();
+	}
+
+	protected function init()
+	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$this->setUserId();
+		$this->errorCollection = new \Bitrix\Tasks\Util\Error\Collection();
+	}
+
+	protected function setUserId()
+	{
+		$this->userId = (int) \Bitrix\Tasks\Util\User::getId();
+	}
+
+	public function getErrorByCode($code)
+	{
+		// TODO: Implement getErrorByCode() method.
+	}
+
+	public function getErrors()
+	{
+		if (!empty($this->componentId))
+		{
+			return parent::getErrors();
+		}
+		return $this->errorCollection->toArray();
+	}
+
+	public function uiEditAction($taskId = 0, array $parameters = [])
+	{
+		global $APPLICATION;
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$taskId = (int)$taskId;
+
+		if ($taskId && !TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_EDIT, $taskId))
+		{
+			$this->addForbiddenError();
+			return [];
+		}
+
+		$componentParameters = array();
+		if(is_array($parameters['COMPONENT_PARAMETERS']))
+		{
+			$componentParameters = $parameters['COMPONENT_PARAMETERS'];
+		}
+		$componentParameters = array_merge(array_intersect_key($componentParameters, array_flip(array(
+			// component parameter white-list place here
+			'GROUP_ID',
+			'PATH_TO_USER_TASKS',
+			'PATH_TO_USER_TASKS_TASK',
+			'PATH_TO_GROUP_TASKS',
+			'PATH_TO_GROUP_TASKS_TASK',
+			'PATH_TO_USER_PROFILE',
+			'PATH_TO_GROUP',
+			'PATH_TO_USER_TASKS_PROJECTS_OVERVIEW',
+			'PATH_TO_USER_TASKS_TEMPLATES',
+			'PATH_TO_USER_TEMPLATES_TEMPLATE',
+			'ENABLE_FOOTER',
+			'ENABLE_FORM',
+
+			'TEMPLATE_CONTROLLER_ID',
+			'BACKURL',
+		))), array(
+			// component force-to parameters place here
+			'ID' => $taskId,
+			'SET_NAVCHAIN' => 'N',
+			'SET_TITLE' => 'N',
+			'SUB_ENTITY_SELECT' => array(
+				'TAG',
+				'CHECKLIST',
+				'REMINDER',
+				'PROJECTDEPENDENCE',
+				'TEMPLATE',
+				'RELATEDTASK'
+			),
+			'AUX_DATA_SELECT' => array(
+				'COMPANY_WORKTIME',
+				'USER_FIELDS',
+			),
+			'ENABLE_FOOTER_UNPIN' => 'N',
+			'ENABLE_MENU_TOOLBAR' => 'N',
+			//'REDIRECT_ON_SUCCESS' => 'N',
+			'CANCEL_ACTION_IS_EVENT' => true,
+		));
+
+		$componentParameters["ACTION"] = "edit";
+
+		Tasks\Dispatcher::globalDisable();
+
+		ob_start();
+		$APPLICATION->IncludeComponent(
+			"bitrix:tasks.task",
+			"",
+			$componentParameters,
+			null,
+			array("HIDE_ICONS" => "Y")
+		);
+
+		$html = ob_get_clean();
+
+		Tasks\Dispatcher::globalEnable();
+
+		$assetHtml = array_values(static::getApplicationResources());
+
+		return [
+			"html" => $html,
+			"asset" => $assetHtml,
+		];
+	}
+
+	public function setStateAction(array $state = [])
+	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		TasksTaskFormState::set($state);
+	}
+
+	public function moveStageAction($taskId, $stageId, $before = 0, $after = 0)
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		$stageId = (int) $stageId;
+		if (!$stageId)
+		{
+			return null;
+		}
+
+		if (
+			!\Bitrix\Main\Loader::includeModule('tasks')
+			|| !\Bitrix\Main\Loader::includeModule('socialnetwork')
+		)
+		{
+			return null;
+		}
+
+		$result = [];
+
+		// check stage
+		if (!($stage = StagesTable::getById($stageId)->fetch()))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		// check access to task
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, $taskId))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		$task = TaskRegistry::getInstance()->get($taskId);
+		if (!$task)
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		$group = \Bitrix\Socialnetwork\Item\Workgroup::getById($task['GROUP_ID']);
+		$isScrumTask = ($group && $group->isScrumProject());
+		if ($isScrumTask)
+		{
+			return (new KanbanService())->moveTask($taskId, $task['GROUP_ID'], $stage);
+		}
+
+		if (
+			$stage['ENTITY_TYPE'] === StagesTable::WORK_MODE_GROUP
+			&& !SocialNetwork\Group::can($stage['ENTITY_ID'], SocialNetwork\Group::ACTION_SORT_TASKS)
+		)
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		if (
+			$stage['ENTITY_TYPE'] !== StagesTable::WORK_MODE_GROUP
+			&& ((int)$stage['ENTITY_ID']) !== $this->userId
+		)
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		// check if new and old stages in different Kanbans
+		if (
+			$stage['ENTITY_TYPE'] == StagesTable::WORK_MODE_GROUP
+			&& $task['GROUP_ID'] != $stage['ENTITY_ID']
+		)
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		// no errors - move task
+		if ($stage['ENTITY_TYPE'] == StagesTable::WORK_MODE_GROUP)
+		{
+			$taskObj = new \CTasks;
+			$taskObj->update($task['ID'], array(
+				'STAGE_ID' => $stageId
+			));
+		}
+		else
+		{
+			$resStg = Tasks\Kanban\TaskStageTable::getList(array(
+				'filter' => array(
+					'TASK_ID' => $taskId,
+					'=STAGE.ENTITY_TYPE' => StagesTable::WORK_MODE_USER,
+					'STAGE.ENTITY_ID' => $stage['ENTITY_ID']
+				)
+			));
+			while ($rowStg = $resStg->fetch())
+			{
+				Tasks\Kanban\TaskStageTable::update($rowStg['ID'], array(
+					'STAGE_ID' => $stageId
+				));
+
+				if ($stageId !== (int)$rowStg['STAGE_ID'])
+				{
+					Integration\Bizproc\Listener::onPlanTaskStageUpdate(
+						$stage['ENTITY_ID'],
+						$rowStg['TASK_ID'],
+						$stageId
+					);
+				}
+			}
+		}
+
+		// and set sorting
+		$sortingGroup = $stage['ENTITY_TYPE'] == StagesTable::WORK_MODE_GROUP
+			? $task['GROUP_ID']
+			: 0;
+		// pin in new stage
+		if ($before == 0 && $after == 0)
+		{
+			StagesTable::pinInTheStage($taskId, $stageId);
+		}
+		elseif ($before > 0)
+		{
+			Tasks\Internals\Task\SortingTable::setSorting(
+				Util\User::getId(),
+				$sortingGroup,
+				$taskId,
+				$before,
+				true
+			);
+		}
+		elseif ($after > 0)
+		{
+			Tasks\Internals\Task\SortingTable::setSorting(
+				Util\User::getId(),
+				$sortingGroup,
+				$taskId,
+				$after,
+				false
+			);
+		}
+
+		return true;
+	}
+
+	public function canMoveStageAction($entityId, $entityType)
+	{
+		$entityId = (int) $entityId;
+		if (!$entityId)
+		{
+			return null;
+		}
+
+		if (
+			!\Bitrix\Main\Loader::includeModule('tasks')
+			|| !\Bitrix\Main\Loader::includeModule('socialnetwork')
+		)
+		{
+			return null;
+		}
+
+		if (
+			$entityType === StagesTable::WORK_MODE_GROUP
+			&& !SocialNetwork\Group::can($entityId, SocialNetwork\Group::ACTION_SORT_TASKS)
+		)
+		{
+			return false;
+		}
+
+		if (
+			$entityType !== StagesTable::WORK_MODE_GROUP
+			&& $entityId !== $this->userId
+		)
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	public function getStagesAction($entityId, $isNumeric = false)
+	{
+		$entityId = (int) $entityId;
+		if ($entityId < 0)
+		{
+			$entityId = 0;
+		}
+
+		$isNumeric = (bool)$isNumeric;
+
+		if (
+			!\Bitrix\Main\Loader::includeModule('tasks')
+			|| !\Bitrix\Main\Loader::includeModule('socialnetwork')
+		)
+		{
+			return null;
+		}
+
+		$result = [];
+
+		if (
+			$entityId > 0
+			&& !SocialNetwork\Group::can($entityId, SocialNetwork\Group::ACTION_VIEW_OWN_TASKS)
+			&& !SocialNetwork\Group::can($entityId, SocialNetwork\Group::ACTION_VIEW_ALL_TASKS)
+		)
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		if ($entityId == 0)
+		{
+			StagesTable::setWorkMode(StagesTable::WORK_MODE_USER);
+			$entityId = $this->userId;
+		}
+
+		$result = StagesTable::getStages($entityId);
+		if ($isNumeric)
+		{
+			$result = array_values($result);
+		}
+
+		return $result;
+	}
+
+	public function startTimerAction($taskId, $stopPrevious = false)
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_TIME_TRACKING, $taskId))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		$timer = \CTaskTimerManager::getInstance($this->userId);
+		$lastTimer = $timer->getLastTimer();
+		if (
+			!$stopPrevious
+			&& $lastTimer['TASK_ID']
+			&& $lastTimer['TIMER_STARTED_AT'] > 0
+			&& intval($lastTimer['TASK_ID'])
+			&& $lastTimer['TASK_ID'] != $taskId
+		)
+		{
+			$additional = [];
+
+			// use direct query here, avoiding cached CTaskItem::getData(), because $lastTimer['TASK_ID'] unlikely will be in cache
+			list($tasks, $res) = \CTaskItem::fetchList($this->userId, [], ['ID' => (int)$lastTimer['TASK_ID']], [], ['ID', 'TITLE']);
+			if(is_array($tasks))
+			{
+				$task = array_shift($tasks);
+				if($task)
+				{
+					$data = $task->getData(false);
+					if(intval($data['ID']))
+					{
+						$additional['TASK'] = array(
+							'id' => $data['ID'],
+							'title' => $data['TITLE']
+						);
+					}
+				}
+			}
+
+			$this->errorCollection->add('ACTION_FAILED.OTHER_TASK_ON_TIMER', Loc::getMessage('TASKS_TT_NOT_FOUND_OR_NOT_ACCESSIBLE'), false, $additional);
+		}
+		else
+		{
+			if($timer->start($taskId) === false)
+			{
+				$this->errorCollection->add('ACTION_FAILED', Loc::getMessage('TASKS_TT_NOT_FOUND_OR_NOT_ACCESSIBLE'));
+			}
+		}
+
+		return $result;
+	}
+
+	public function stopTimerAction($taskId)
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_TIME_TRACKING, $taskId))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		$timer = \CTaskTimerManager::getInstance(User::getId());
+		if($timer->stop($taskId) === false)
+		{
+			$this->errorCollection->add('ACTION_FAILED', Loc::getMessage('TASKS_TT_NOT_FOUND_OR_NOT_ACCESSIBLE'));
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param $taskId
+	 * @param array $data
+	 * @param array $parameters
+	 * @throws Main\LoaderException
+	 *
+	 * @deprecated since tasks 22.400.0
+	 */
+	public function legacyUpdateAction($taskId, array $data, array $parameters = [])
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$result = [];
+
+		$oldTask = TaskModel::createFromId($taskId);
+		$newTask = clone $oldTask;
+
+		if (
+			isset($parameters['PLATFORM'])
+			&& $parameters['PLATFORM'] === 'mobile'
+		)
+		{
+			$data = $this->prepareMobileData($data, $taskId);
+		}
+
+		if (
+			count($data) < 3
+			&& count(array_intersect(array_keys($data), ['DEADLINE', 'END_DATE_PLAN', 'START_DATE_PLAN'])) === count($data)
+		)
+		{
+			$isAccess = TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_DEADLINE, $taskId);
+		}
+		elseif (
+			count($data) === 1
+			&& array_key_exists('SE_RESPONSIBLE', $data)
+		)
+		{
+			$members = $newTask->getMembers();
+			$members[RoleDictionary::ROLE_RESPONSIBLE] = [];
+			if (
+				!empty($data['SE_RESPONSIBLE'])
+				&& is_array($data['SE_RESPONSIBLE'])
+			)
+			{
+				foreach ($data['SE_RESPONSIBLE'] as $responsible)
+				{
+					$members[RoleDictionary::ROLE_RESPONSIBLE][] = (int)$responsible['ID'];
+				}
+			}
+			$newTask->setMembers($members);
+
+			$isAccess = (new TaskAccessController($this->userId))->check(ActionDictionary::ACTION_TASK_CHANGE_RESPONSIBLE, $oldTask, $newTask);
+		}
+		elseif (
+			count($data) === 1
+			&& array_key_exists('SE_ACCOMPLICE', $data)
+		)
+		{
+			$members = $newTask->getMembers();
+			$members[RoleDictionary::ROLE_ACCOMPLICE] = [];
+			if (
+				!empty($data['SE_ACCOMPLICE'])
+				&& is_array($data['SE_ACCOMPLICE'])
+			)
+			{
+				foreach ($data['SE_ACCOMPLICE'] as $accomplice)
+				{
+					$members[RoleDictionary::ROLE_ACCOMPLICE][] = (int)$accomplice['ID'];
+				}
+			}
+			$newTask->setMembers($members);
+
+			$isAccess = (new TaskAccessController($this->userId))->check(ActionDictionary::ACTION_TASK_CHANGE_ACCOMPLICES, $oldTask, $newTask);
+		}
+		elseif (
+			count($data) === 1
+			&& array_key_exists('SE_REMINDER', $data)
+		)
+		{
+			$isAccess = (new TaskAccessController($this->userId))->check(ActionDictionary::ACTION_TASK_REMINDER, $oldTask, $data['SE_REMINDER']);
+		}
+		else
+		{
+			$newTask = TaskModel::createFromRequest($data);
+			$isAccess = (new TaskAccessController($this->userId))->check(ActionDictionary::ACTION_TASK_SAVE, $oldTask, $newTask);
+		}
+
+		if (!$isAccess)
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		if (!empty($data))
+		{
+			// todo: move to \Bitrix\Tasks\Item\Task
+			$mgrResult = Manager\Task::update(Util\User::getId(), $taskId, $data, array(
+				'PUBLIC_MODE' => true,
+				'ERRORS' => $this->errorCollection,
+				'THROTTLE_MESSAGES' => $parameters[ 'THROTTLE_MESSAGES' ],
+
+				// there also could be RETURN_CAN or RETURN_DATA, or both as RETURN_ENTITY
+				'RETURN_ENTITY' => $parameters[ 'RETURN_ENTITY' ],
+			));
+
+			$result['ID'] = $taskId;
+			$result['DATA'] = $mgrResult['DATA'];
+			$result['CAN'] = $mgrResult['CAN'];
+
+			if ($this->errorCollection->checkNoFatals())
+			{
+				if ($parameters[ 'RETURN_OPERATION_RESULT_DATA' ])
+				{
+					$task = $mgrResult[ 'TASK' ];
+					$result['OPERATION_RESULT' ] = $task->getLastOperationResultData('UPDATE');
+				}
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param array $data
+	 * @param array $parameters
+	 * @return array|null
+	 * @throws Main\LoaderException
+	 *
+	 * @deprecated since tasks 22.400.0
+	 */
+	public function legacyAddAction(array $data, array $parameters = ['RETURN_DATA' => false])
+	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$result = [];
+
+		$newTask = TaskModel::createFromRequest($data);
+		$oldTask = TaskModel::createNew($newTask->getGroupId());
+
+		if (!(new TaskAccessController($this->userId))->check(ActionDictionary::ACTION_TASK_SAVE, $oldTask, $newTask))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		// todo: move to \Bitrix\Tasks\Item\Task
+		$mgrResult = Manager\Task::add($this->userId, $data, [
+			'PUBLIC_MODE' => true,
+			'ERRORS' => $this->errorCollection,
+			'RETURN_ENTITY' => $parameters['RETURN_ENTITY']
+		]);
+
+		return [
+			'ID' => $mgrResult[ 'DATA' ][ 'ID' ],
+			'DATA' => $mgrResult[ 'DATA' ],
+			'CAN' => $mgrResult[ 'CAN' ],
+		];
+	}
+
+	public function checkCanReadAction($taskId)
+	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		return [
+			'READ' => TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, (int)$taskId)
+		];
+	}
+
+	public function setTagsAction($taskId, array $tags = [])
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_EDIT, $taskId))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		$this->updateTask(
+			$taskId,
+			[
+				'TAGS' => $tags,
+			]
+		);
+
+		if ($this->errorCollection->checkNoFatals())
+		{
+			return null;
+		}
+
+		return $result;
+	}
+
+	public function setGroupAction($taskId, $groupId)
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$result = [];
+
+		$oldTask = TaskModel::createFromId($taskId);
+		$newTask = clone $oldTask;
+		$newTask->setGroupId($groupId);
+
+		if (!(new TaskAccessController($this->userId))->check(ActionDictionary::ACTION_TASK_SAVE, $oldTask, $newTask))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		$this->updateTask(
+			$taskId,
+			[
+				'GROUP_ID' => $groupId,
+			]
+		);
+
+		if ($this->errorCollection->checkNoFatals())
+		{
+			return null;
+		}
+
+		return [];
+	}
+
+	public function approveAction($taskId)
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_APPROVE, $taskId))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		$task = \CTaskItem::getInstance($taskId, $this->userId);
+		$task->approve();
+
+		return $result;
+	}
+
+	public function disapproveAction($taskId)
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_APPROVE, $taskId))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		$task = \CTaskItem::getInstance($taskId, $this->userId);
+		$task->disapprove();
+
+		return $result;
+	}
+
+	public function pingAction($taskId)
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, $taskId))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		$task = \CTaskItem::getInstance($taskId, $this->userId);
+		$taskData = $task->getData(false);
+
+		if ($taskData)
+		{
+			$commentPoster = CommentPoster::getInstance($taskId, $this->userId);
+			$commentPoster && $commentPoster->postCommentsOnTaskStatusPinged($taskData);
+
+			\CTaskNotifications::sendPingStatusMessage($taskData, $this->userId);
+		}
+
+		return $result;
+	}
+
+	public function muteAction($taskId)
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, $taskId))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		UserOption::add($taskId, $this->userId, UserOption\Option::MUTED);
+		return $result;
+	}
+
+	public function unmuteAction($taskId)
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, $taskId))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		UserOption::delete($taskId, $this->userId, UserOption\Option::MUTED);
+		return $result;
+	}
+
+	public function getFilesAction($taskId)
+	{
+		global $APPLICATION;
+
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (
+			!\Bitrix\Main\Loader::includeModule('tasks')
+			|| !\Bitrix\Main\Loader::includeModule('forum')
+			|| !\Bitrix\Main\Loader::includeModule('disk')
+		)
+		{
+			return null;
+		}
+
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, $taskId))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		$task = Tasks\Internals\Registry\TaskRegistry::getInstance()->getObject($taskId);
+		if (!$task)
+		{
+			return 0;
+		}
+
+		$topicId = $task->getForumTopicId();
+		$forumId = Comment::getForumId();
+
+		ob_start();
+		$APPLICATION->IncludeComponent(
+			"bitrix:disk.uf.comments.attached.objects",
+			".default",
+			[
+				"MAIN_ENTITY" => [
+					"ID" => $taskId
+				],
+				"COMMENTS_MODE" => "forum",
+				"ENABLE_AUTO_BINDING_VIEWER" => false, // Viewer cannot work in the iframe (see logic.js)
+				"DISABLE_LOCAL_EDIT" => 0,
+				"COMMENTS_DATA" => [
+					"TOPIC_ID" => $topicId,
+					"FORUM_ID" => $forumId,
+					"XML_ID" => "TASK_".$taskId
+				],
+				"PUBLIC_MODE" => 0
+			],
+			false,
+			["HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y"]
+		);
+		$html = ob_get_contents();
+		ob_end_clean();
+
+		$assetHtml = array_values(static::getApplicationResources());
+
+		return [
+			"html" => $html,
+			"asset" => $assetHtml,
+		];
+	}
+
+	public function getFileCountAction($taskId)
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (
+			!\Bitrix\Main\Loader::includeModule('tasks')
+			|| !\Bitrix\Main\Loader::includeModule('forum')
+		)
+		{
+			return null;
+		}
+
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, $taskId))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		$fileCount = Topic::getFileCount($taskId);
+
+		return ["fileCount" => $fileCount];
+	}
+
+	public function setPriorityAction($taskId, $priority)
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		$priority = (int) $priority;
+		if (!$priority)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_EDIT, $taskId))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		$this->updateTask(
+			$taskId,
+			[
+				'PRIORITY' => $priority,
+			]
+		);
+
+		if ($this->errorCollection->checkNoFatals())
+		{
+			return null;
+		}
+
+		return $result;
+	}
+
+	public function addFavoriteAction($taskId)
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, $taskId))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		$task = new \CTaskItem($taskId, $this->userId);
+		$task->addToFavorite();
+
+		return $result;
+	}
+
+	public function deleteFavoriteAction($taskId)
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, $taskId))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		$task = new \CTaskItem($taskId, $this->userId);
+		$task->deleteFromFavorite();
+
+		return $result;
+	}
+
+	public function pauseAction($taskId, $parameters = [])
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_PAUSE, $taskId))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		$task = \CTaskItem::getInstance($taskId, $this->userId);
+		$task->pauseExecution();
+
+		return $result;
+	}
+
+	public function renewAction($taskId, $parameters = [])
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_RENEW, $taskId))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		// todo: move to \Bitrix\Tasks\Item\Task
+		$task = \CTaskItem::getInstance($taskId, $this->userId);
+		$task->renew();
+
+		return $result;
+	}
+
+	public function startAction($taskId, $parameters = [])
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_START, $taskId))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		// todo: move to \Bitrix\Tasks\Item\Task
+		$task = \CTaskItem::getInstance($taskId, $this->userId);
+		$task->startExecution();
+
+		return $result;
+	}
+
+	public function completeAction($taskId, $parameters = [])
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$result = [];
+
+		$task = TaskModel::createFromId($taskId);
+		if ($task->isClosed())
+		{
+			return $result;
+		}
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_COMPLETE, $taskId))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		if (
+			ResultManager::requireResult($taskId)
+			&& !ResultManager::hasResult($taskId)
+		)
+		{
+			$this->errorCollection->add('RESULT_REQUIRED', Loc::getMessage('TASKS_ACTION_RESULT_REQUIRED'), false, ['ui' => 'notification']);
+			return $result;
+		}
+
+		$task = \CTaskItem::getInstance($taskId, $this->userId);
+		$task->complete();
+
+		return $result;
+	}
+
+	public function delegateAction($taskId, $parameters = [])
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (
+			!array_key_exists('userId', $parameters)
+			|| !(int) $parameters['userId']
+		)
+		{
+			return null;
+		}
+		$userId = (int) $parameters['userId'];
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$result = [];
+
+		$oldTask = TaskModel::createFromId($taskId);
+		$newTask = clone $oldTask;
+		$members = $newTask->getMembers();
+		$members[RoleDictionary::ROLE_RESPONSIBLE] = [
+			$userId
+		];
+		$newTask->setMembers($members);
+
+		if (!(new TaskAccessController($this->userId))->check(ActionDictionary::ACTION_TASK_DELEGATE, $oldTask, $newTask))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		try
+		{
+			$task = \CTaskItem::getInstance($taskId, $this->userId);
+			$task->delegate($userId);
+		}
+		catch (\TasksException $exception)
+		{
+			$this->errorCollection->add('ACTION_ERROR.UNEXPECTED_ERROR', $exception->getMessageOrigin());
+		}
+
+		return $result;
+	}
+
+	public function deferAction($taskId, $parameters = [])
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_DEFER, $taskId))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		// todo: move to \Bitrix\Tasks\Item\Task
+		$task = \CTaskItem::getInstance($taskId, Util\User::getId());
+		$task->defer();
+
+		return $result;
+	}
+
+	public function deleteAction($taskId, $parameters = [])
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_REMOVE, $taskId))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		$task = \CTaskItem::getInstance($taskId, $this->userId);
+		$task->delete();
+
+		$result['id'] = $taskId;
+
+		return $result;
+	}
+
+	public function getAction($taskId, $parameters = [])
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$result = [];
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, $taskId))
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		$mgrResult = Manager\Task::get($this->userId, $taskId, [
+			'ENTITY_SELECT' => $parameters['ENTITY_SELECT'] ?? null,
+			'PUBLIC_MODE' => true,
+			'ERRORS' => $this->errors
+		]);
+
+		if ($this->errorCollection->checkNoFatals())
+		{
+			$result = [
+				'ID' => $taskId,
+				'DATA' => $mgrResult[ 'DATA' ],
+				'CAN' => $mgrResult[ 'CAN' ]
+			];
+		}
+
+		return $result;
+	}
+
+	public function addElapsedTimeAction($taskId, $data)
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_ELAPSED_TIME, $taskId))
+		{
+			$this->addForbiddenError();
+			return [];
+		}
+
+		$data['TASK_ID'] = $taskId;
+		$result = Manager\Task\ElapsedTime::add($this->userId, $data, [
+			'PUBLIC_MODE' => true,
+			'ERRORS' => $this->errors,
+			'RETURN_ENTITY' => true,
+		]);
+
+		return [
+			'DATA' => $result['DATA'],
+			'CAN' => $result['CAN'],
+		];
+	}
+
+	public function updateElapsedTimeAction($id, $data)
+	{
+		$id = (int) $id;
+		if (!$id)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$res = Tasks\Internals\Task\ElapsedTimeTable::getList([
+			'select' => ['TASK_ID'],
+			'filter' => [
+				'=ID' => $id,
+			],
+			'limit' => 1,
+		])->fetchRaw();
+
+		if (!$res)
+		{
+			$this->addForbiddenError();
+			return [];
+		}
+
+		$taskId = (int) $res['TASK_ID'];
+
+		if (
+			!$taskId
+			|| !TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_ELAPSED_TIME, $taskId)
+		)
+		{
+			$this->addForbiddenError();
+			return [];
+		}
+
+		$result = Manager\Task\ElapsedTime::update($this->userId, $id, $data, [
+			'PUBLIC_MODE' => true,
+			'ERRORS' => $this->errors,
+			'RETURN_ENTITY' => true,
+		]);
+
+		return [
+			'DATA' => $result['DATA'],
+			'CAN' => $result['CAN'],
+		];
+	}
+
+	public function deleteElapsedTimeAction($taskId, $id)
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		$id = (int) $id;
+		if (!$id)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$result = [];
+
+		$isAccess = TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_ELAPSED_TIME, $taskId);
+		if (!$isAccess)
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		$task = \CTaskItem::getInstanceFromPool($taskId, $this->userId);
+		$item = new \CTaskElapsedItem($task, $id);
+		$item->delete();
+
+		return $result;
+	}
+
+	public function setDeadlineAction($taskId, $date = null)
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$result = [];
+
+		$isAccess = TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_DEADLINE, $taskId);
+
+		if (!$isAccess)
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		$this->updateTask(
+			$taskId,
+			[
+				'DEADLINE' => $date,
+			]
+		);
+
+		if ($this->errorCollection->checkNoFatals())
+		{
+			return null;
+		}
+
+		return [];
+	}
+
+	public function setReminderAction($taskId, $data = null)
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$result = [];
+
+		$oldTask = TaskModel::createFromId($taskId);
+		$isAccess = (new TaskAccessController($this->userId))->check(ActionDictionary::ACTION_TASK_REMINDER, $oldTask, $data);
+
+		if (!$isAccess)
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		$this->updateTask(
+			$taskId,
+			[
+				'SE_REMINDER' => $data,
+			]
+		);
+
+		if ($this->errorCollection->checkNoFatals())
+		{
+			return null;
+		}
+
+		return [];
+	}
+
+	public function setMarkAction($taskId, $mark)
+	{
+		$taskId = (int) $taskId;
+		if (!$taskId)
+		{
+			return null;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$result = [];
+
+		$oldTask = TaskModel::createFromId($taskId);
+		$newTask = TaskModel::createFromRequest(['MARK' => $mark]);
+
+		$isAccess = (new TaskAccessController($this->userId))->check(ActionDictionary::ACTION_TASK_SAVE, $oldTask, $newTask);
+
+		if (!$isAccess)
+		{
+			$this->addForbiddenError();
+			return $result;
+		}
+
+		$this->updateTask(
+			$taskId,
+			[
+				'MARK' => $mark,
+			]
+		);
+
+		if ($this->errorCollection->checkNoFatals())
+		{
+			return null;
+		}
+
+		return [];
+	}
 
 	protected function processExecutionStart()
 	{
@@ -170,15 +1959,6 @@ class TasksTaskComponent extends TasksBaseComponent
 			}
 			$error->setCode('ERROR_TASK_CREATE_ACCESS_DENIED');
 			$error->setMessage(Loc::getMessage('TASKS_TASK_CREATE_ACCESS_DENIED'));
-		}
-		else if (
-			$request
-			&& $request['ACTION'][0]['OPERATION'] === 'TasksTaskComponent.saveCheckList'
-		)
-		{
-			$action = Tasks\Access\ActionDictionary::ACTION_CHECKLIST_SAVE;
-			$accessCheckParams = isset($request['ACTION'][0]['ARGUMENTS']['items']) ? $request['ACTION'][0]['ARGUMENTS']['items'] : [];
-			$error->setMessage(Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'));
 		}
 		else if ($arParams['ACTION'] === "edit" && $taskId)
 		{
@@ -345,6 +2125,11 @@ class TasksTaskComponent extends TasksBaseComponent
 			$this->setEventType(($actionResult['OPERATION'] === 'task.add' ? 'ADD' : 'UPDATE'));
 			$this->setEventTaskId($actionTaskId);
 			$this->setEventOption('STAY_AT_PAGE', (bool)$this->request['STAY_AT_PAGE']);
+			$this->setEventOption('SCOPE', $this->request['SCOPE']);
+			$this->setEventOption(
+				'FIRST_GRID_TASK_CREATION_TOUR_GUIDE',
+				($this->request['FIRST_GRID_TASK_CREATION_TOUR_GUIDE'] === 'Y')
+			);
 
 			foreach ($actionResult['ERRORS'] as $error)
 			{
@@ -359,7 +2144,7 @@ class TasksTaskComponent extends TasksBaseComponent
 
 			if (!$this->errors->find(['CODE' => 'SAVE_AS_TEMPLATE_ERROR'])->isEmpty())
 			{
-				$this->setEventOption('STAY_AT_PAGE', 'Y');
+				$this->setEventOption('STAY_AT_PAGE', true);
 			}
 			elseif ($this->arParams['REDIRECT_ON_SUCCESS'])
 			{
@@ -512,13 +2297,6 @@ class TasksTaskComponent extends TasksBaseComponent
 		{
 			$firstGridTaskCreationTour = Bitrix\Tasks\TourGuide\FirstGridTaskCreation::getInstance($this->userId);
 			$firstGridTaskCreationTour->finish();
-
-			\Bitrix\Tasks\AnalyticLogger::logToFile(
-				'finish',
-				'firstGridTaskCreation',
-				'',
-				'tourGuide'
-			);
 		}
 	}
 
@@ -529,20 +2307,20 @@ class TasksTaskComponent extends TasksBaseComponent
 
 	private function makeRedirectUrl(array $operation)
 	{
-		$actionAdd = $operation['OPERATION'] == 'task.add';
+		$isActionAdd = ($operation['OPERATION'] === 'task.add');
 		$resultTaskId = static::getOperationTaskId($operation);
 
 		$backUrl = $this->getBackUrl();
-		$url = $backUrl != '' ? Util::secureBackUrl($backUrl) : $GLOBALS["APPLICATION"]->GetCurPageParam('');
+		$url = ($backUrl != '' ? Util::secureBackUrl($backUrl) : $GLOBALS['APPLICATION']->GetCurPageParam(''));
 
 		$action = 'view'; // having default backurl after success edit we go to view ...
 
 		// .. but there are some exceptions
 		$taskId = 0;
-		if($actionAdd)
+		if ($isActionAdd)
 		{
 			$taskId = $resultTaskId;
-			if($this->request['STAY_AT_PAGE'])
+			if ($this->request['STAY_AT_PAGE'])
 			{
 				$taskId = 0;
 				$action = 'edit';
@@ -551,15 +2329,22 @@ class TasksTaskComponent extends TasksBaseComponent
 
 		$url = UI\Task::makeActionUrl($url, $taskId, $action);
 		$url = UI\Task::cleanFireEventUrl($url);
-		$url = UI\Task::makeFireEventUrl($url, $this->getEventTaskId(), $this->getEventType(), array(
-			'STAY_AT_PAGE' => $this->getEventOption('STAY_AT_PAGE')
-		));
+		$url = UI\Task::makeFireEventUrl(
+			$url,
+			$this->getEventTaskId(),
+			$this->getEventType(),
+			[
+				'STAY_AT_PAGE' => $this->getEventOption('STAY_AT_PAGE'),
+				'SCOPE' => $this->getEventOption('SCOPE'),
+				'FIRST_GRID_TASK_CREATION_TOUR_GUIDE' => $this->getEventOption('FIRST_GRID_TASK_CREATION_TOUR_GUIDE'),
+			]
+		);
 
-		if($actionAdd && $this->request['STAY_AT_PAGE']) // reopen form with the same parameters as the previous one
+		if ($isActionAdd && $this->request['STAY_AT_PAGE']) // reopen form with the same parameters as the previous one
 		{
 			$initial = $this->hitState->exportFlat('INITIAL_TASK_DATA', '.');
 			// todo: a little spike for tags, refactor that later
-			if(array_key_exists('TAGS.0', $initial))
+			if (array_key_exists('TAGS.0', $initial))
 			{
 				$initial['TAGS[0]'] = $initial['TAGS.0'];
 				unset($initial['TAGS.0']);
@@ -698,8 +2483,8 @@ class TasksTaskComponent extends TasksBaseComponent
 					foreach ($checkListItems as $id => $item)
 					{
 						$checkListItems[$id]['ID'] = ($item['ID'] === 'null' ? null : (int)$item['ID']);
-						$checkListItems[$id]['IS_COMPLETE'] = ($item['IS_COMPLETE'] === 'true');
-						$checkListItems[$id]['IS_IMPORTANT'] = ($item['IS_IMPORTANT'] === 'true');
+						$checkListItems[$id]['IS_COMPLETE'] = ($item['IS_COMPLETE'] === 'true' || $item['IS_COMPLETE'] === true);
+						$checkListItems[$id]['IS_IMPORTANT'] = ($item['IS_IMPORTANT'] === 'true' || $item['IS_IMPORTANT'] === true);
 					}
 				}
 
@@ -833,18 +2618,20 @@ class TasksTaskComponent extends TasksBaseComponent
 			'FORUM_ID' => 			CTasksTools::getForumIdForIntranet(), // obsolete
 			'REPLICATE' => 			'N',
 
-			'ALLOW_CHANGE_DEADLINE' =>  $stateFlags['ALLOW_CHANGE_DEADLINE'] ? 'Y' : 'N',
-			'ALLOW_TIME_TRACKING' => 	$stateFlags['ALLOW_TIME_TRACKING'] ? 'Y' : 'N',
-			'TASK_CONTROL' => 			$stateFlags['TASK_CONTROL'] ? 'Y' : 'N',
-			'MATCH_WORK_TIME' => 		$stateFlags['MATCH_WORK_TIME'] ? 'Y' : 'N',
+			'REQUIRE_RESULT' => $stateFlags['REQUIRE_RESULT'] ? 'Y' : 'N',
+			'TASK_PARAM_3' => $stateFlags['TASK_PARAM_3'] ? 'Y' : 'N',
+			'ALLOW_CHANGE_DEADLINE' => $stateFlags['ALLOW_CHANGE_DEADLINE'] ? 'Y' : 'N',
+			'ALLOW_TIME_TRACKING' => $stateFlags['ALLOW_TIME_TRACKING'] ? 'Y' : 'N',
+			'TASK_CONTROL' => $stateFlags['TASK_CONTROL'] ? 'Y' : 'N',
+			'MATCH_WORK_TIME' => $stateFlags['MATCH_WORK_TIME'] ? 'Y' : 'N',
 
 			'DESCRIPTION_IN_BBCODE' => 'Y', // new tasks should be always in bbcode
-			'DURATION_TYPE' => 		CTasks::TIME_UNIT_TYPE_DAY,
-			'DURATION_TYPE_ALL' =>  CTasks::TIME_UNIT_TYPE_DAY,
+			'DURATION_TYPE' => CTasks::TIME_UNIT_TYPE_DAY,
+			'DURATION_TYPE_ALL' => CTasks::TIME_UNIT_TYPE_DAY,
 
-			'SE_PARAMETER' => array(
+			'SE_PARAMETER' => [
 				array('NAME' => 'PROJECT_PLAN_FROM_SUBTASKS', 'VALUE' => 'Y')
-			),
+			],
 
 			Manager::ACT_KEY => $rights
 		);
@@ -1306,7 +3093,7 @@ class TasksTaskComponent extends TasksBaseComponent
 				$dateDate->stripTime();
 
 				$diff = $createdDate->getDiff($dateDate);
-				$daysDiff = $diff->format('%d');
+				$daysDiff = $diff->days;
 				$daysDiff = ($diff->invert ? -$daysDiff : +$daysDiff);
 
 				($now = new Type\DateTime())->addDay($daysDiff);
@@ -1553,7 +3340,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			$this->userId,
 			$this->users2Get
 		);
-		$this->arResult['DATA']['GROUP'] = Group::getData($this->groups2Get, ['IMAGE_ID']);
+		$this->arResult['DATA']['GROUP'] = Group::getData($this->groups2Get, ['IMAGE_ID', 'AVATAR_TYPE']);
 		$this->arResult['DATA']['USER'] = User::getData($this->users2Get);
 
 		$this->getCurrentUserData();
@@ -1674,56 +3461,52 @@ class TasksTaskComponent extends TasksBaseComponent
 	// this method should be called "addEventData" :(
 	protected function getEventData()
 	{
-		if($this->getEventTaskId() && ($this->formData === false || $this->success))
+		// form had not been submitted at the current hit, or submitted successfully
+		if (($this->formData !== false && !$this->success) || !$this->getEventTaskId())
 		{
-			/*
-			form had not been submitted at the current hit, or submitted successfully
-			*/
+			return;
+		}
 
-			$eventTaskData = false;
-			if($this->task != null && $this->task->getId() == $this->getEventTaskId())
+		$eventTaskData = false;
+		if ($this->task != null && $this->task->getId() == $this->getEventTaskId())
+		{
+			$eventTaskData = $this->dropSubEntitiesData($this->arResult['DATA']['TASK']);
+		}
+		else // have to get data manually
+		{
+			try
 			{
-				$eventTaskData = static::dropSubEntitiesData($this->arResult['DATA']['TASK']);
-			}
-			else // have to get data manually
-			{
-				try
+				$eventTask = Task::get($this->userId, $this->getEventTaskId());
+				if ($eventTask['ERRORS']->checkNoFatals())
 				{
-					$eventTask = Task::get($this->userId, $this->getEventTaskId());
-					if($eventTask['ERRORS']->checkNoFatals())
-					{
-						$eventTaskData = $eventTask['DATA'];
-					}
-				}
-				catch(Tasks\Exception $e) // smth went wrong - no access or smth else. just skip, what else to do?
-				{
+					$eventTaskData = $eventTask['DATA'];
 				}
 			}
-
-			// happy end
-			if(Type::isIterable($eventTaskData) && !empty($eventTaskData))
+			catch (Tasks\Exception $e)
 			{
-				$eventTaskData['CHILDREN_COUNT'] = 0;
-				$childrenCount = CTasks::GetChildrenCount(array(), $eventTaskData['ID'])->fetch();
-				if ($childrenCount)
-				{
-					$eventTaskData['CHILDREN_COUNT'] = $childrenCount['CNT'];
-				}
-
-				$this->arResult['DATA']['EVENT_TASK'] = $eventTaskData;
-				$this->arResult['COMPONENT_DATA']['EVENT_TYPE'] = $this->getEventType();
-
-				$sap = $this->getEventOption('STAY_AT_PAGE');
-				//TODO !!!
-				if ($this->getEventType() == 'UPDATE')
-				{
-					$sap = true;
-				}
-
-				$this->arResult['COMPONENT_DATA']['EVENT_OPTIONS'] = array(
-					'STAY_AT_PAGE' => $sap
-				);
+				// something went wrong - no access or something else. Just skip, what else to do?
 			}
+		}
+
+		// happy end
+		if (!empty($eventTaskData) && Type::isIterable($eventTaskData))
+		{
+			$eventTaskData['CHILDREN_COUNT'] = 0;
+			$childrenCount = CTasks::GetChildrenCount([], $eventTaskData['ID'])->fetch();
+			if ($childrenCount)
+			{
+				$eventTaskData['CHILDREN_COUNT'] = $childrenCount['CNT'];
+			}
+
+			$eventType = $this->getEventType();
+
+			$this->arResult['DATA']['EVENT_TASK'] = $eventTaskData;
+			$this->arResult['COMPONENT_DATA']['EVENT_TYPE'] = $eventType;
+			$this->arResult['COMPONENT_DATA']['EVENT_OPTIONS'] = [
+				'STAY_AT_PAGE' => ($eventType === 'UPDATE' ? true : $this->getEventOption('STAY_AT_PAGE')),
+				'SCOPE' => $this->getEventOption('SCOPE'),
+				'FIRST_GRID_TASK_CREATION_TOUR_GUIDE' => $this->getEventOption('FIRST_GRID_TASK_CREATION_TOUR_GUIDE'),
+			];
 		}
 	}
 
@@ -1747,7 +3530,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			{
 				$select = array("ID", "TITLE", "STATUS", "START_DATE_PLAN", "END_DATE_PLAN", "DEADLINE", "RESPONSIBLE_ID");
 
-				list($list, $res) = CTaskItem::fetchList(
+				[$list, $res] = CTaskItem::fetchList(
 					$userId,
 					array("ID" => "ASC"),
 					array("ID" => $parsed),
@@ -1829,9 +3612,10 @@ class TasksTaskComponent extends TasksBaseComponent
 
 	private function getEventOption($name)
 	{
-		if(Type::isIterable($this->request['EVENT_OPTIONS']) && isset($this->request['EVENT_OPTIONS'][$name]))
+		if (Type::isIterable($this->request['EVENT_OPTIONS']) && isset($this->request['EVENT_OPTIONS'][$name]))
 		{
-			$this->eventOptions[$name] = !!$this->request['EVENT_OPTIONS'][$name];
+			// does not make sense to (bool) options
+			$this->eventOptions[$name] = $this->request['EVENT_OPTIONS'][$name];
 		}
 
 		return $this->eventOptions[$name];
@@ -1943,26 +3727,9 @@ class TasksTaskComponent extends TasksBaseComponent
 		}
 	}
 
-	// for dispatcher below
-
-	public static function getAllowedMethods()
-	{
-		return array(
-			'setState',
-			'getFiles',
-			'getFileCount',
-			'saveCheckList',
-		);
-	}
-
 	public function getHitState()
 	{
 		return $this->hitState;
-	}
-
-	public static function setState(array $state = array())
-	{
-		TasksTaskFormState::set($state);
 	}
 
 	public static function getState()
@@ -1970,187 +3737,97 @@ class TasksTaskComponent extends TasksBaseComponent
 		return TasksTaskFormState::get();
 	}
 
-	public static function getFiles($params)
-	{
-		global $APPLICATION;
-
-		ob_start();
-		$APPLICATION->IncludeComponent(
-			"bitrix:disk.uf.comments.attached.objects",
-			".default",
-			array(
-				"MAIN_ENTITY" => array(
-					"ID" => $params["TASK_ID"]
-				),
-				"COMMENTS_MODE" => "forum",
-				"ENABLE_AUTO_BINDING_VIEWER" => false, // Viewer cannot work in the iframe (see logic.js)
-				"DISABLE_LOCAL_EDIT" => $params["PUBLIC_MODE"],
-				"COMMENTS_DATA" => array(
-					"TOPIC_ID" => $params["FORUM_TOPIC_ID"],
-					"FORUM_ID" => $params["FORUM_ID"],
-					"XML_ID" => "TASK_".$params["TASK_ID"]
-				),
-				"PUBLIC_MODE" => $params["PUBLIC_MODE"]
-			),
-			false,
-			array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
-		);
-		$html = ob_get_contents();
-		ob_end_clean();
-
-		return array("html" => $html);
-	}
-
-	public static function getFileCount($params)
-	{
-		$fileCount = 0;
-		if ($params["FORUM_ID"] > 0 && $params["FORUM_TOPIC_ID"] > 0)
-		{
-			$fileCount = Topic::getFileCount($params["FORUM_TOPIC_ID"], $params["FORUM_ID"]);
-		}
-		return array("fileCount" => $fileCount);
-	}
-
 	/**
-	 * @param $items
-	 * @param $taskId
-	 * @param $params
-	 * @return array|Util\Result
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\NotImplementedException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\SystemException
+	 * @param int $taskId
+	 * @param array $data
 	 */
-	public static function saveCheckList($items, $taskId, $params)
+	private function updateTask(int $taskId, array $data)
 	{
-		$result = new Util\Result();
-		$userId = User::getId();
-
-		if (isset($params['openTime']) && $params['openTime'])
+		try
 		{
-			$openTime = $params['openTime'];
-			$lastUpdateTime = Tasks\Internals\Task\LogTable::getList([
-				'select' => ['CREATED_DATE'],
-				'filter' => [
-					'TASK_ID' => $taskId,
-					'!USER_ID' => $userId,
-					'%FIELD' => 'CHECKLIST',
-				],
-				'order' => ['CREATED_DATE' => 'DESC'],
-				'limit' => 1,
-			])->fetch();
-
-			if ($lastUpdateTime)
+			\Bitrix\Tasks\Manager\Task::update(
+				$this->userId,
+				$taskId,
+				$data,
+				[
+					'PUBLIC_MODE' => true,
+					'ERRORS' => $this->errorCollection,
+				]
+			);
+		}
+		catch (TasksException $e)
+		{
+			$messages = @unserialize($e->getMessage(), ['allowed_classes' => false]);
+			if (is_array($messages))
 			{
-				$lastUpdateTime = $lastUpdateTime['CREATED_DATE']->getTimestamp();
-				if ($lastUpdateTime > $openTime)
+				foreach ($messages as $message)
 				{
-					$result->setData(['PREVENT_CHECKLIST_SAVE' => 'It looks like someone has already changed checklist.']);
-					return $result;
+					$this->errorCollection->add('TASK_EXCEPTION', $message['text'], false, ['ui' => 'notification']);
 				}
 			}
 		}
-
-		if (!is_array($items))
+		catch (\Exception $e)
 		{
-			$items = [];
+			$this->errorCollection->add('UNKNOWN_EXCEPTION', Loc::getMessage('TASKS_TT_NOT_FOUND_OR_NOT_ACCESSIBLE'), false, ['ui' => 'notification']);
 		}
-
-		foreach ($items as $id => $item)
-		{
-			$item['ID'] = ((int)$item['ID'] === 0? null : (int)$item['ID']);
-			$item['IS_COMPLETE'] = (int)$item['IS_COMPLETE'] > 0;
-			$item['IS_IMPORTANT'] = (int)$item['IS_IMPORTANT'] > 0;
-
-			if (is_array($item['MEMBERS']))
-			{
-				$members = [];
-
-				foreach ($item['MEMBERS'] as $member)
-				{
-					$members[key($member)] = current($member);
-				}
-
-				$item['MEMBERS'] = $members;
-			}
-
-			$items[$item['NODE_ID']] = $item;
-			unset($items[$id]);
-		}
-
-		$result = TaskCheckListFacade::merge($taskId, $userId, $items, $params);
-		$result->setData(array_merge(($result->getData() ?? []), ['OPEN_TIME' => (new DateTime())->getTimestamp()]));
-
-		return $result;
 	}
-}
 
-if(CModule::IncludeModule('tasks'))
-{
-	final class TasksTaskHitStateStructure extends Structure
+	private function addForbiddenError()
 	{
-		public function __construct($request)
+		$this->errorCollection->add('ACTION_NOT_ALLOWED.RESTRICTED', Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'));
+	}
+
+	private function prepareMobileData(array $data, int $taskId): array
+	{
+		$task = TaskRegistry::getInstance()->get($taskId, true);
+
+		if (
+			array_key_exists('DEADLINE', $data)
+			&& (
+				(empty($data['DEADLINE']) && is_null($task['DEADLINE']))
+				|| ($task['DEADLINE'] && $data['DEADLINE'] === $task['DEADLINE']->toString())
+			)
+		)
 		{
-			$hitState = array();
-			if(array_key_exists('HIT_STATE', $request))
+			unset($data['DEADLINE']);
+		}
+
+		if (array_key_exists('SE_RESPONSIBLE', $data))
+		{
+			$members = $task['MEMBER_LIST'];
+			$responsibles = [];
+			foreach ($members as $member)
 			{
-				$hitState = $request['HIT_STATE'];
+				if ($member['TYPE'] !== Tasks\Internals\Task\MemberTable::MEMBER_TYPE_RESPONSIBLE)
+				{
+					continue;
+				}
+				$responsibles[] = (int) $member['USER_ID'];
 			}
 
-			// todo: also add BACKURL, CANCELURL, DATA_SOURCE here for compatibility, to keep this data inside hit state
+			$dataResponsibles = [];
+			foreach ($data['SE_RESPONSIBLE'] as $responsible)
+			{
+				$dataResponsibles[] = (int) $responsible['ID'];
+			}
 
-			parent::__construct($hitState);
+			if (empty(array_diff($responsibles, $dataResponsibles)))
+			{
+				unset($data['SE_RESPONSIBLE']);
+			}
 		}
+		return $data;
+	}
 
-		public function getRules()
-		{
-			return [
-				'INITIAL_TASK_DATA' => [
-					'VALUE' => [
-						'PARENT_ID' => ['VALUE' => StructureChecker::TYPE_INT_POSITIVE],
-						'RESPONSIBLE_ID' => ['VALUE' => StructureChecker::TYPE_INT_POSITIVE],
-						'AUDITORS' => [
-							'VALUE' => StructureChecker::TYPE_ARRAY_OF_STRING,
-							'CAST' => function($value) {
-								return (
-									is_array($value)
-										? $value
-										: array_map('trim', explode(',', $value))
-								);
-							},
-						],
-						'GROUP_ID' => ['VALUE' => StructureChecker::TYPE_INT_POSITIVE],
-						'TITLE' => ['VALUE' => StructureChecker::TYPE_STRING],
-						'DESCRIPTION' => ['VALUE' => StructureChecker::TYPE_STRING],
-						Integration\CRM\UserField::getMainSysUFCode() => ['VALUE' => StructureChecker::TYPE_STRING],
-						Integration\Mail\UserField::getMainSysUFCode() => ['VALUE' => StructureChecker::TYPE_INT_POSITIVE],
-						Integration\Disk\UserField::getMainSysUFCode() => ['VALUE' => StructureChecker::TYPE_ARRAY_OF_STRING],
-						'TAGS' => [
-							'VALUE' => StructureChecker::TYPE_ARRAY_OF_STRING,
-							'CAST' => function($value) {
-								return (
-									is_array($value)
-										? $value
-										: array_map('trim', explode(',', $value))
-								);
-							},
-						],
-						'DEADLINE' => ['VALUE' => StructureChecker::TYPE_STRING],
-						'START_DATE_PLAN' => ['VALUE' => StructureChecker::TYPE_STRING],
-						'END_DATE_PLAN' => ['VALUE' => StructureChecker::TYPE_STRING],
-					],
-					'DEFAULT' => [],
-				],
-				'BACKURL' => ['VALUE' => StructureChecker::TYPE_STRING],
-				'CANCELURL' => ['VALUE' => StructureChecker::TYPE_STRING],
-				'DATA_SOURCE' => [
-					'VALUE' => [
-						'TYPE' => ['VALUE' => StructureChecker::TYPE_STRING],
-						'ID' => ['VALUE' => StructureChecker::TYPE_INT_POSITIVE],
-					],
-					'DEFAULT' => [],
-				],
-			];
-		}
+	public static function getAllowedMethods()
+	{
+		return array(
+			'setState',
+		);
+	}
+
+	public static function setState(array $state = array())
+	{
+		TasksTaskFormState::set($state);
 	}
 }

@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_CF_FIELD_ADD"] = "Added the field \"#FIELD_NAME#\"";
 $MESS["CRM_CF_FIELD_DELETE"] = "Deleted the field \"#FIELD_NAME#\"";
 $MESS["CRM_CF_FIELD_MODIFY_TYPE"] = "Changed the field type \"#FIELD_NAME#\"";
@@ -44,6 +44,10 @@ $MESS["CRM_FM_ENTITY_IM_VIBER_SHORT"] = "Viber";
 $MESS["CRM_FM_ENTITY_IM_VK"] = "VK account";
 $MESS["CRM_FM_ENTITY_IM_VK_SHORT"] = "VK";
 $MESS["CRM_FM_ENTITY_IM_WIDGET"] = "Live Chat";
+$MESS["CRM_FM_ENTITY_LINK"] = "Internal link";
+$MESS["CRM_FM_ENTITY_LINK_USER"] = "Linked user";
+$MESS["CRM_FM_ENTITY_LINK_USER_ABBR"] = "User";
+$MESS["CRM_FM_ENTITY_LINK_USER_SHORT"] = "User";
 $MESS["CRM_FM_ENTITY_PHONE"] = "Phone";
 $MESS["CRM_FM_ENTITY_PHONE_FAX"] = "Fax";
 $MESS["CRM_FM_ENTITY_PHONE_FAX_ABBR"] = "Fax";
@@ -89,4 +93,3 @@ $MESS["CRM_MF_ERR_TYPE_ID"] = "The field \"#FIELD_NAME#\" requires an entity.";
 $MESS["CRM_MF_ERR_VALUE"] = "The field \"#FIELD_NAME#\" must not be empty.";
 $MESS["CRM_MF_ERR_VALUE_STRLEN"] = "The field \"#FIELD_NAME#\" must not exceed 250 characters.";
 $MESS["CRM_MF_ERR_VALUE_TYPE"] = "The field \"#FIELD_NAME#\" requires a type.";
-?>

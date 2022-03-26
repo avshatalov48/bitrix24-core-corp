@@ -58,13 +58,10 @@ if($arResult['IS_PERMITTED'])
 				$arResult['ERROR_MESSAGE'] = $arFields['RESULT_MESSAGE'];
 		}
 
-		if (IsModuleInstalled("bitrix24"))
-		{
-			CCrmSaleHelper::updateShopAccess();
+		CCrmSaleHelper::updateShopAccess();
 
-			$cache = new \CPHPCache;
-			$cache->CleanDir("/crm/list_crm_roles/");
-		}
+		$cache = new \CPHPCache;
+		$cache->CleanDir("/crm/list_crm_roles/");
 
 		if (empty($arResult['ERROR_MESSAGE']))
 		{
@@ -119,14 +116,56 @@ if ($arParams['ROLE_ID'] > 0 && !$bVarsFromForm)
 if (!$bVarsFromForm)
 	$arResult['ROLE_PERMS'] = $arResult['~ROLE_PERMS'];
 
+$permissionSet = [
+	BX_CRM_PERM_NONE => GetMessage('CRM_PERMS_TYPE_'.BX_CRM_PERM_NONE),
+	BX_CRM_PERM_SELF => GetMessage('CRM_PERMS_TYPE_'.BX_CRM_PERM_SELF),
+	BX_CRM_PERM_DEPARTMENT => GetMessage('CRM_PERMS_TYPE_'.BX_CRM_PERM_DEPARTMENT),
+	BX_CRM_PERM_SUBDEPARTMENT => GetMessage('CRM_PERMS_TYPE_'.BX_CRM_PERM_SUBDEPARTMENT),
+	BX_CRM_PERM_OPEN => GetMessage('CRM_PERMS_TYPE_'.BX_CRM_PERM_OPEN),
+	BX_CRM_PERM_ALL => GetMessage('CRM_PERMS_TYPE_'.BX_CRM_PERM_ALL)
+];
+$operations = ['READ', 'ADD', 'WRITE', 'DELETE'];
+$operationsWithImport = $operations;
+$operationsWithImport[] = 'EXPORT';
+$operationsWithImport[] = 'IMPORT';
+$operationsWithAutomation = $operationsWithImport;
+$operationsWithAutomation[] = 'AUTOMATION';
+
+$arResult['ENTITY'] = [];
+
+$arResult['ENTITY']['CONTACT'] = GetMessage('CRM_ENTITY_TYPE_CONTACT');
+$factory = Service\Container::getInstance()->getFactory(CCrmOwnerType::Contact);
+foreach ($factory->getCategories() as $category)
+{
+	if ($category->getIsDefault())
+	{
+		continue;
+	}
+	$entityName = htmlspecialcharsbx(Service\UserPermissions::getPermissionEntityType($factory->getEntityTypeId(), $category->getId()));
+	$entityTitle = $category->getName();
+	$arResult['ENTITY'][$entityName] =  htmlspecialcharsbx($entityTitle);
+	$arResult['ROLE_PERM'][$entityName] = $permissionSet;
+	$entityOperationsMap[$entityName] = $operationsWithImport;
+}
+
+$arResult['ENTITY']['COMPANY'] = GetMessage('CRM_ENTITY_TYPE_COMPANY');
+$factory = Service\Container::getInstance()->getFactory(CCrmOwnerType::Company);
+foreach ($factory->getCategories() as $category)
+{
+	if ($category->getIsDefault())
+	{
+		continue;
+	}
+	$entityName = htmlspecialcharsbx(Service\UserPermissions::getPermissionEntityType($factory->getEntityTypeId(), $category->getId()));
+	$entityTitle = $category->getName();
+	$arResult['ENTITY'][$entityName] = htmlspecialcharsbx($entityTitle);
+	$arResult['ROLE_PERM'][$entityName] = $permissionSet;
+	$entityOperationsMap[$entityName] = $operations;
+}
+
+$arResult['ENTITY']['DEAL'] = GetMessage('CRM_ENTITY_TYPE_DEAL');
+
 $dealCategoryConfigs = Bitrix\Crm\Category\DealCategory::getPermissionRoleConfigurations();
-
-$arResult['ENTITY'] = array(
-	'CONTACT' => GetMessage('CRM_ENTITY_TYPE_CONTACT'),
-	'COMPANY' => GetMessage('CRM_ENTITY_TYPE_COMPANY'),
-	'DEAL' => GetMessage('CRM_ENTITY_TYPE_DEAL')
-);
-
 foreach($dealCategoryConfigs as $typeName => $config)
 {
 	$arResult['ENTITY'][$typeName] = isset($config['NAME']) ? htmlspecialcharsbx($config['NAME']) : $typeName;
@@ -134,24 +173,19 @@ foreach($dealCategoryConfigs as $typeName => $config)
 
 $arResult['ENTITY'] = array_merge(
 	$arResult['ENTITY'],
-	array(
+	[
 		'LEAD' => GetMessage('CRM_ENTITY_TYPE_LEAD'),
 		'QUOTE' => GetMessage('CRM_ENTITY_TYPE_QUOTE'),
-		'INVOICE' => GetMessage('CRM_ENTITY_TYPE_INVOICE'),
-		'ORDER' => GetMessage('CRM_ENTITY_TYPE_ORDER'),
-		'WEBFORM' => GetMessage('CRM_ENTITY_TYPE_WEBFORM'),
-		'BUTTON' => GetMessage('CRM_ENTITY_TYPE_BUTTON'),
-		'SALETARGET' => GetMessage('CRM_ENTITY_TYPE_SALETARGET'),
-		'EXCLUSION' => GetMessage('CRM_ENTITY_TYPE_EXCLUSION'),
-	)
+	]
 );
 
-$operations = ['READ', 'ADD', 'WRITE', 'DELETE'];
-$operationsWithImport = $operations;
-$operationsWithImport[] = 'EXPORT';
-$operationsWithImport[] = 'IMPORT';
-$operationsWithAutomation = $operationsWithImport;
-$operationsWithAutomation[] = 'AUTOMATION';
+$typesMap = Service\Container::getInstance()->getDynamicTypesMap()->load();
+
+if (\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
+{
+	$arResult['ENTITY'][\CCrmOwnerType::InvoiceName] = \CCrmOwnerType::GetDescription(\CCrmOwnerType::Invoice);
+}
+
 $entityOperationsMap = [
 	'LEAD' => $operationsWithAutomation,
 	'QUOTE' => $operationsWithImport,
@@ -170,13 +204,40 @@ $arResult['ENTITY_FIELDS'] = array(
 	'LEAD' => array('STATUS_ID' => CCrmStatus::GetStatusListEx('STATUS'))
 );
 
-$permissionSet = 	array(
-	BX_CRM_PERM_NONE => GetMessage('CRM_PERMS_TYPE_'.BX_CRM_PERM_NONE),
-	BX_CRM_PERM_SELF => GetMessage('CRM_PERMS_TYPE_'.BX_CRM_PERM_SELF),
-	BX_CRM_PERM_DEPARTMENT => GetMessage('CRM_PERMS_TYPE_'.BX_CRM_PERM_DEPARTMENT),
-	BX_CRM_PERM_SUBDEPARTMENT => GetMessage('CRM_PERMS_TYPE_'.BX_CRM_PERM_SUBDEPARTMENT),
-	BX_CRM_PERM_OPEN => GetMessage('CRM_PERMS_TYPE_'.BX_CRM_PERM_OPEN),
-	BX_CRM_PERM_ALL => GetMessage('CRM_PERMS_TYPE_'.BX_CRM_PERM_ALL)
+if (\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isSmartInvoiceEnabled())
+{
+	$smartInvoiceFactory = Service\Container::getInstance()->getFactory(\CCrmOwnerType::SmartInvoice);
+	if ($smartInvoiceFactory)
+	{
+		$isAutomationEnabled = $smartInvoiceFactory->isAutomationEnabled();
+		foreach ($smartInvoiceFactory->getCategories() as $category)
+		{
+			$entityName = htmlspecialcharsbx(Service\UserPermissions::getPermissionEntityType(\CCrmOwnerType::SmartInvoice, $category->getId()));
+			$entityTitle = \CCrmOwnerType::GetDescription(\CCrmOwnerType::SmartInvoice);
+			if ($smartInvoiceFactory->isCategoriesEnabled())
+			{
+				$entityTitle .= ' ' . $category->getName();
+			}
+			$arResult['ENTITY'][$entityName] = $entityTitle;
+			foreach ($smartInvoiceFactory->getStages($category->getId()) as $stage)
+			{
+				$arResult['ENTITY_FIELDS'][$entityName][\Bitrix\Crm\Item::FIELD_NAME_STAGE_ID][htmlspecialcharsbx($stage->getStatusId())] = htmlspecialcharsbx($stage->getName());
+			}
+			$arResult['ROLE_PERM'][$entityName] = $permissionSet;
+			$entityOperationsMap[$entityName] = $isAutomationEnabled ? $operationsWithAutomation : $operationsWithImport;
+		}
+	}
+}
+
+$arResult['ENTITY'] = array_merge(
+	$arResult['ENTITY'],
+	[
+		'ORDER' => GetMessage('CRM_ENTITY_TYPE_ORDER'),
+		'WEBFORM' => GetMessage('CRM_ENTITY_TYPE_WEBFORM'),
+		'BUTTON' => GetMessage('CRM_ENTITY_TYPE_BUTTON'),
+		'SALETARGET' => GetMessage('CRM_ENTITY_TYPE_SALETARGET'),
+		'EXCLUSION' => GetMessage('CRM_ENTITY_TYPE_EXCLUSION'),
+	]
 );
 
 $arResult['ROLE_PERM']['LEAD'] = $arResult['ROLE_PERM']['DEAL'] =
@@ -219,7 +280,6 @@ foreach($dealCategoryConfigs as $typeName => $config)
 	$arResult['ROLE_PERM'][$typeName] = $permissionSet;
 }
 
-$typesMap = Service\Container::getInstance()->getDynamicTypesMap()->load();
 foreach ($typesMap->getTypes() as $type)
 {
 	$isAutomationEnabled = $typesMap->isAutomationEnabled($type->getEntityTypeId());
@@ -263,7 +323,7 @@ foreach ($operationsWithAutomation as $operation)
 		{
 			$arResult['ENTITY_PERMS'][$entityType][] = $operation;
 		}
-		
+
 		if (isset($arResult['ENTITY_FIELDS'][$entityType]))
 		{
 			foreach ($arResult['ENTITY_FIELDS'][$entityType] as $fieldID => $arFieldValue)
@@ -283,5 +343,3 @@ $this->IncludeComponentTemplate();
 $APPLICATION->SetTitle(GetMessage('CRM_PERMS_ROLE_EDIT'));
 $APPLICATION->AddChainItem(GetMessage('CRM_PERMS_ENTITY_LIST'), $arParams['PATH_TO_ENTITY_LIST']);
 $APPLICATION->AddChainItem(GetMessage('CRM_PERMS_ROLE_EDIT'), $arResult['PATH_TO_ROLE_EDIT']);
-
-?>

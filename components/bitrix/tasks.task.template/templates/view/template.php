@@ -183,6 +183,7 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 										'READ_ONLY' => !$canUpdate,
 										'ENTITY_ID' => $template->getId(),
 										'ENTITY_ROUTE' => 'task.template',
+										'CONTEXT' => 'template',
 									),
 									$helper->getComponent(),
 									array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -469,6 +470,7 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 					'MAX' => 1,
 					'TITLE' => Loc::getMessage('TASKS_TTDP_TEMPLATE_USER_VIEW_ORIGINATOR'),
 					'HIDE_IF_EMPTY' => 'N',
+					'CONTEXT' => 'template',
 				),
 				$helper->getComponent(),
 				array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -487,6 +489,7 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 					'ENTITY_ROUTE' => 'task.template',
 					'TITLE' => Loc::getMessage('TASKS_TTDP_TEMPLATE_USER_VIEW_RESPONSIBLE'),
 					'HIDE_IF_EMPTY' => 'N',
+					'CONTEXT' => 'template',
 				),
 				$helper->getComponent(),
 				array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -505,6 +508,7 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 					'TITLE' => Loc::getMessage('TASKS_TTDP_TEMPLATE_USER_VIEW_ACCOMPLICES'),
 					'HIDE_IF_EMPTY' => !$canUpdate,
 					'TASK_LIMIT_EXCEEDED' => $taskLimitExceeded,
+					'CONTEXT' => 'template',
 				),
 				$helper->getComponent(),
 				array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -524,6 +528,7 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 					'USER' => $arResult['DATA']['USER'][User::getId()],
 					'HIDE_IF_EMPTY' => !$canUpdate,
 					'TASK_LIMIT_EXCEEDED' => $taskLimitExceeded,
+					'CONTEXT' => 'template',
 				),
 				$helper->getComponent(),
 				array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
@@ -574,11 +579,12 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 							<?php
 							$APPLICATION->IncludeComponent(
 								'bitrix:tasks.tags.selector',
-								'.default',
+								'selector',
 								[
 									'NAME' => 'TAGS',
-									'VALUE' => $tagString,
+									'VALUE' => htmlspecialcharsback($tagString),
 									'CAN_EDIT' => $canUpdate,
+									'TEMPLATE_ID' => $template->getId(),
 								],
 								null,
 								['HIDE_ICONS' => 'Y']

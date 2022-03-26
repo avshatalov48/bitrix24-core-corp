@@ -17,6 +17,7 @@ use Bitrix\Crm\ProductRowTable;
 use Bitrix\Crm\Recycling\DynamicController;
 use Bitrix\Crm\Relation\EntityRelationTable;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Factory\SmartInvoice;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\Main\Application;
@@ -96,7 +97,7 @@ class TypeTable extends UserField\Internal\TypeDataManager
 			->configureTitle(Loc::getMessage('CRM_TYPE_ENTITY_TYPE_ID_TITLE'))
 			->configureRequired()
 			->configureUnique()
-			->addValidator(new ORM\Fields\Validators\RangeValidator(\CCrmOwnerType::DynamicTypeStart, \CCrmOwnerType::DynamicTypeEnd))
+			->addValidator([static::class, 'validateEntityTypeId'])
 			->configureDefaultValue(static function()
 			{
 				$nextId = static::getNextAvailableEntityTypeId();
@@ -182,6 +183,11 @@ class TypeTable extends UserField\Internal\TypeDataManager
 			->configureDefaultValue('Y')
 			->configureRequired()
 			->configureTitle(Loc::getMessage('CRM_TYPE_TYPE_IS_SET_OPEN_PERMISSIONS_TITLE'));
+		$fieldsMap[] = (new ORM\Fields\BooleanField('IS_PAYMENTS_ENABLED'))
+			->configureStorageValues('N', 'Y')
+			->configureDefaultValue('N')
+			->configureRequired()
+			->configureTitle(Loc::getMessage('CRM_TYPE_TYPE_IS_PAYMENTS_ENABLED_TITLE'));
 
 		return $fieldsMap;
 	}
@@ -286,6 +292,8 @@ class TypeTable extends UserField\Internal\TypeDataManager
 
 	public static function onAfterAdd(Event $event): ORM\EventResult
 	{
+		Container::getInstance()->getDynamicTypesMap()->invalidateTypesCollectionCache();
+
 		$result = parent::onAfterAdd($event);
 
 		if (!$result->getErrors())
@@ -307,6 +315,8 @@ class TypeTable extends UserField\Internal\TypeDataManager
 
 	public static function onAfterDelete(Event $event): ORM\EventResult
 	{
+		Container::getInstance()->getDynamicTypesMap()->invalidateTypesCollectionCache();
+
 		$result = new ORM\EventResult();
 		$primary = $event->getParameter('primary');
 		$typeData = static::getTemporaryStorage()->getData($primary);
@@ -525,6 +535,8 @@ class TypeTable extends UserField\Internal\TypeDataManager
 
 	public static function onAfterUpdate(Event $event): EventResult
 	{
+		Container::getInstance()->getDynamicTypesMap()->invalidateTypesCollectionCache();
+
 		$id = static::getTemporaryStorage()->getIdByPrimary($event->getParameter('primary'));
 		$data = $event->getParameter('fields');
 		$oldData = static::getTemporaryStorage()->getData($id);
@@ -625,6 +637,16 @@ class TypeTable extends UserField\Internal\TypeDataManager
 			/** @noinspection SqlResolve */
 			$DB->Query('ALTER TABLE '.$connection->getSqlHelper()->forSql($type['TABLE_NAME']).' ADD INDEX ix_crm_type_item_'.$type['ID'].'_category(CATEGORY_ID)', true);
 		}
+		if(!$DB->IndexExists($type['TABLE_NAME'], ['CONTACT_ID'], true))
+		{
+			/** @noinspection SqlResolve */
+			$DB->Query('ALTER TABLE '.$connection->getSqlHelper()->quote($type['TABLE_NAME']).' ADD INDEX ix_crm_type_item_'.$type['ID'].'_contact(CONTACT_ID)', true);
+		}
+		if(!$DB->IndexExists($type['TABLE_NAME'], ['COMPANY_ID'], true))
+		{
+			/** @noinspection SqlResolve */
+			$DB->Query('ALTER TABLE '.$connection->getSqlHelper()->forSql($type['TABLE_NAME']).' ADD INDEX ix_crm_type_item_'.$type['ID'].'_company(COMPANY_ID)', true);
+		}
 	}
 
 	public static function onBeforeDelete(Event $event): EventResult
@@ -682,6 +704,20 @@ class TypeTable extends UserField\Internal\TypeDataManager
 			}
 
 			static::addReferencesToEntity($entity, $factory);
+
+			if ($factory instanceof SmartInvoice)
+			{
+				$entity->addField((new ORM\Fields\TextField(\Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_COMMENTS))
+					->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_COMMENTS'))
+				);
+				$entity->addField((new ORM\Fields\StringField(\Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_ACCOUNT_NUMBER))
+					->configureTitle(Loc::getMessage('CRM_TYPE_SMART_INVOICE_FIELD_ACCOUNT_NUMBER'))
+				);
+				$entity->addField((new StringField('LOCATION_ID'))
+					->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_LOCATION'))
+					->configureSize(100)
+				);
+			}
 		}
 
 		return $entity;
@@ -868,5 +904,16 @@ class TypeTable extends UserField\Internal\TypeDataManager
 				'TITLE' => Loc::getMessage('CRM_TYPE_TYPE_IS_SET_OPEN_PERMISSIONS_TITLE'),
 			],
 		];
+	}
+
+	public static function validateEntityTypeId($value, $primary, array $row, \Bitrix\Main\ORM\Fields\Field $field)
+	{
+		$value = (int)$value;
+		if (\CCrmOwnerType::isUseDynamicTypeBasedApproach($value))
+		{
+			return true;
+		}
+
+		return 'EntityTypeId should be more or equal than 128 and less than 192';
 	}
 }

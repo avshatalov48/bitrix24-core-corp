@@ -940,6 +940,15 @@ class NewDiskStorage extends DiskStorage
 		return array_merge($subLinks, $this->buildTreeRecursiveFromLinks($subLinks));
 	}
 
+	private function getStorageIdByRealObjectId(int $realObjectId): int
+	{
+		$storageId = $this->connection->queryScalar("
+			SELECT STORAGE_ID FROM b_disk_object WHERE ID = {$realObjectId}
+		");
+
+		return (int)$storageId;
+	}
+
 	private function buildTreeFromLink(TreeNode $link)
 	{
 		if ($this->isRealObjectExists($link))
@@ -953,6 +962,7 @@ class NewDiskStorage extends DiskStorage
 		$typeFolder = ObjectTable::TYPE_FOLDER;
 		$securityContext = $this->storage->getSecurityContext($this->userId);
 		$rightExists = $securityContext->getSqlExpressionForList('object.ID', 'object.CREATED_BY');
+		$storageId = $this->getStorageIdByRealObjectId($link->realObjectId);
 
 		$sqlQuery = "
 			SELECT object.ID, object.NAME, object.REAL_OBJECT_ID, object.PARENT_ID, object.CREATE_TIME
@@ -960,6 +970,7 @@ class NewDiskStorage extends DiskStorage
 			INNER JOIN b_disk_object_path path ON path.OBJECT_ID = object.ID
 			WHERE 
 				path.PARENT_ID = {$link->realObjectId} AND 
+				object.STORAGE_ID = {$storageId} AND 
 				object.DELETED_TYPE = {$deletedTypeNone} AND 
 				object.TYPE = {$typeFolder} AND ({$rightExists})
 		";

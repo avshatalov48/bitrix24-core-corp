@@ -1969,28 +1969,28 @@ class Config
 
 		$cache->setUserId($userId);
 
-		if ($cache->initCacheCountLinesOperator())
+		if ($cache->initCacheIsOperator())
 		{
-			$count = $cache->getVarsCountLinesOperator();
+			$result = $cache->getVarsIsOperator();
 		}
 		else
 		{
-			$cache->startCacheCountLinesOperator();
+			$cache->startCacheIsOperator();
 
-			$raw = Model\QueueTable::getList([
-				'select' => [new ExpressionField('CNT', 'COUNT(*)')],
+			$row = Model\QueueTable::getList([
+				'select' => ['ID'],
 				'filter' => ['USER_ID' => $userId],
-			])->fetch();
+				'limit' => 1
+			]);
 
-			$count = $raw['CNT'];
+			if ($row->fetch())
+			{
+				$result = true;
+			}
 
-			$cache->endCacheCountLinesOperator($count);
+			$cache->endCacheIsOperator($result);
 		}
 
-		if($count > 0)
-		{
-			$result = true;
-		}
 
 		return $result;
 	}

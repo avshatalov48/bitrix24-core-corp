@@ -2,11 +2,11 @@
 
 namespace Bitrix\Crm\Restriction;
 
+use Bitrix\Crm\Binding\OrderEntityTable;
 use Bitrix\Crm\Integration\Bitrix24Manager;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Order;
 use Bitrix\Main\Loader;
-use Bitrix\Sale\OrderTable;
 
 class OrderRestriction extends Bitrix24AccessRestriction
 {
@@ -30,7 +30,7 @@ class OrderRestriction extends Bitrix24AccessRestriction
 	{
 		$orderLimit = static::getOrderLimit();
 
-		$validIdBound = OrderTable::getList([
+		$validIdBound = Order\Order::getList([
 			'select' => ['ID'],
 			'order' => ['ID' => 'ASC'],
 			'limit' => 1,
@@ -58,6 +58,11 @@ class OrderRestriction extends Bitrix24AccessRestriction
 		if (Loader::includeModule('bitrix24'))
 		{
 			$limit = static::getOrderLimit();
+			if ($limit <= 0)
+			{
+				return false;
+			}
+
 			$count = Order\Order::getList([
 				'select' => ['CNT'],
 				'runtime' => [
@@ -65,7 +70,8 @@ class OrderRestriction extends Bitrix24AccessRestriction
 				],
 				'cache' => ['ttl' => 600]
 			])->fetch()['CNT'];
-			return ($limit > 0) && ((int)$count >= $limit);
+
+			return (int)$count >= $limit;
 		}
 
 		return false;
@@ -85,10 +91,12 @@ class OrderRestriction extends Bitrix24AccessRestriction
 		{
 			return $this->isOrderAboveLimit($entityId);
 		}
-
-		if ($entityTypeId === \CCrmOwnerType::Deal)
+		elseif (
+			$entityTypeId === \CCrmOwnerType::Deal
+			|| \CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId)
+		)
 		{
-			$boundOrders = \Bitrix\Crm\Binding\OrderDealTable::getDealOrders($entityId);
+			$boundOrders = OrderEntityTable::getOrderIdsByOwner($entityId, $entityTypeId);
 			foreach ($boundOrders as $orderId)
 			{
 				if ($this->isOrderAboveLimit((int)$orderId))

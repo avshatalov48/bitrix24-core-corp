@@ -25,6 +25,7 @@ Extension::load([
 $this->addExternalCss($this->GetFolder() . '/utm.css');
 
 $name = htmlspecialcharsbx($arResult['ROW']['NAME']);
+$code = htmlspecialcharsbx($arResult['ROW']['CODE']);
 
 $containerId = 'crm-analytics-source-ads-editor';
 ?>
@@ -140,19 +141,40 @@ $containerId = 'crm-analytics-source-ads-editor';
 						<span class="crm-analytics-source-desc-text">
 							<?=Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_AUTH_DESC', ['%name%' => $name])?>
 						</span>
-						<div class="crm-analytics-source-connect-btn">
-							<span class="crm-analytics-source-connect-btn-icon <?=htmlspecialcharsbx($arResult['ROW']['ICON_CLASS'])?>">
-								<i></i>
-							</span>
 
-							<a  data-role="crm/tracking/connect/btn" type="button"
-								href="<?=htmlspecialcharsbx($arResult['PROVIDER']['AUTH_URL'])?>"
-								onclick="BX.Seo.Ads.LoginFactory.getLoginObject(<?=
-									htmlspecialcharsbx(Json::encode($arResult['PROVIDER']))
-								?>).login(); return false;"
-								class="ui-btn ui-btn-light-border"
-							><?=Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_CONNECT')?></a>
-						</div>
+							<?php if($code === 'google'):?>
+								<style>
+									@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap');
+								</style>
+								<div class="crm-analytics-source-connect-btn-goo">
+									<a
+										data-role="crm/tracking/connect/btn"
+										href="<?=htmlspecialcharsbx($arResult['PROVIDER']['AUTH_URL'])?>"
+										onclick="BX.Seo.Ads.LoginFactory.getLoginObject(<?=
+											htmlspecialcharsbx(Json::encode($arResult['PROVIDER']))
+										?>).login(); return false;"
+										class="crm-ads-goo-btn"
+									>
+										<div class="crm-ads-goo-btn-icon"></div>
+										<div class="crm-ads-goo-btn-text"><?php echo Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_CONNECT_GOOGLE')?></div>
+									</a>
+								</div>
+							<?php else:?>
+								<div class="crm-analytics-source-connect-btn">
+										<span class="crm-analytics-source-connect-btn-icon <?=htmlspecialcharsbx($arResult['ROW']['ICON_CLASS'])?>">
+											<i></i>
+										</span>
+
+										<a  data-role="crm/tracking/connect/btn" type="button"
+											href="<?=htmlspecialcharsbx($arResult['PROVIDER']['AUTH_URL'])?>"
+											onclick="BX.Seo.Ads.LoginFactory.getLoginObject(<?=
+												htmlspecialcharsbx(Json::encode($arResult['PROVIDER']))
+											?>).login(); return false;"
+											class="ui-btn ui-btn-light-border"
+										><?=Loc::getMessage('CRM_TRACKING_SOURCE_EDIT_CONNECT')?></a>
+								</div>
+							<?php endif;?>
+
 					</div>
 				</div>
 

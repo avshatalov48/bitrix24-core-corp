@@ -1,4 +1,10 @@
-import {Tag, Type, Dom, Event} from 'main.core';
+import {
+	Tag,
+	Type,
+	Dom,
+	Event,
+	Loc
+} from 'main.core';
 import {
 	Address,
 	Format,
@@ -175,6 +181,12 @@ export default class MapPopup extends EventEmitter
 			gallery = this.#gallery.render();
 		}
 
+		const thirdPartyWarningNode = Tag.render`
+			<div class="location-map-address-third-party-warning">
+				${Loc.getMessage('LOCATION_WIDGET_THIRD_PARTY_WARNING')}
+			</div>
+		`;
+
 		this.#contentWrapper = Tag.render`
 			<div class="location-map-wrapper">
 				<div class="location-map-container">
@@ -182,6 +194,7 @@ export default class MapPopup extends EventEmitter
 					${gallery}
 				</div>
 				${this.#mode === ControlMode.edit ? this.#addressString.render({address: this.#address}) : ''}
+				${thirdPartyWarningNode}
 				${this.#mode === ControlMode.edit ? this.#addressApplier.$el : ''}
 			</div>`;
 

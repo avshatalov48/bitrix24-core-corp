@@ -106,11 +106,16 @@ type SubmitResponseRedirect = {
 	url: ?string;
 	delay: ?number;
 };
+type RefillResponse = {
+	active: ?boolean;
+	caption: ?string;
+};
 type SubmitResponse = {
-	resultId: number;
+	resultId: ?number;
 	pay: ?boolean;
 	message: ?string;
 	redirect: ?SubmitResponseRedirect;
+	refill: ?RefillResponse;
 };
 
 type Options = {
@@ -135,6 +140,7 @@ type Options = {
 	currency: ?Currency;
 	analytics: ?Analytics;
 	recaptcha: ?ReCaptcha;
+	analyticsHandler: ?Function;
 	dependencies: ?Array<DependenceGroup>;
 	handlers: ?Object;
 };

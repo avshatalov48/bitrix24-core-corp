@@ -591,9 +591,11 @@
 						{
 							if(item.id == "files")
 							{
-								PageManager.openWidget(
+								let opener = Application.getApiVersion() >= 41 ? this.form: PageManager
+								opener.openWidget(
 									"list",
 									{
+										useSearch: true,
 										onReady: list =>
 										{
 

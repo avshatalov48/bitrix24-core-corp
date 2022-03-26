@@ -10,16 +10,7 @@ class BulkStrategy extends BaseStrategy
 {
 	/** @var Options */
 	protected $displayOptions;
-
-	public function setUserFields(array $userFields)
-	{
-		$this->userFields = $userFields;
-	}
-
-	protected function getUserFields(): array
-	{
-		return $this->userFields;
-	}
+	protected $context;
 
 	public function setDisplayOptions(Options $options): BulkStrategy
 	{
@@ -31,13 +22,35 @@ class BulkStrategy extends BaseStrategy
 	public function processValues(array $items): array
 	{
 		$fields = [];
+		$context = $this->getContext();
 		foreach($this->getUserFields() as $fieldId => $userFieldData)
 		{
-			$fields[$fieldId] = Field::createFromUserField($fieldId, $userFieldData);
+			$fields[$fieldId] = (
+				Field::createFromUserField($fieldId, $userFieldData)
+					->setContext($context)
+			);
 		}
 		$display = new Display($this->entityTypeId, $fields, $this->displayOptions);
 		$display->setItems($items);
 
 		return $display->getAllValues();
+	}
+
+	/**
+	 * @return string|null
+	 */
+	public function getContext(): ?string
+	{
+		return $this->context;
+	}
+
+	/**
+	 * @param string $context
+	 * @return $this
+	 */
+	public function setContext(string $context): BaseStrategy
+	{
+		$this->context = $context;
+		return $this;
 	}
 }

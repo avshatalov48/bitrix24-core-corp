@@ -16,3 +16,4 @@ $MESS["TASKS_SCRUM_SPRINT_COMPLETION_FORM_SELECTOR_BACKLOG"] = "Бэклог";
 $MESS["TASKS_SCRUM_SPRINT_COMPLETION_FORM_SELECTOR_SPRINT"] = "Новый спринт";
 $MESS["TASKS_SCRUM_SPRINT_COMPLETION_ERROR_TITLE_POPUP"] = "Невозможно завершить спринт";
 $MESS["TASKS_SCRUM_ERROR_TITLE_POPUP"] = "Произошла ошибка";
+$MESS["TSS_START_STORY_POINTS_HINT"] = "Здесь вы видите, сколько Стори Поинтов планировалось выполнить в рамках спринта и сколько команда успела. Количество Стори Поинтов показывает, насколько одна задача сложнее другой. Такая оценка необходима, чтобы понимать, сколько Стори Поинтов успевает выполнить команда за спринт, и планировать сроки достижения главной цели команды.";

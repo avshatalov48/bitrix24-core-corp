@@ -8,7 +8,7 @@ $APPLICATION->IncludeComponent(
 	'',
 	array(
 		'ID' => 'PERMS_EDIT',
-		'ACTIVE_ITEM_ID' => '',
+		'ACTIVE_ITEM_ID' => 'PERMISSIONS',
 		'PATH_TO_COMPANY_LIST' => isset($arResult['PATH_TO_COMPANY_LIST']) ? $arResult['PATH_TO_COMPANY_LIST'] : '',
 		'PATH_TO_COMPANY_EDIT' => isset($arResult['PATH_TO_COMPANY_EDIT']) ? $arResult['PATH_TO_COMPANY_EDIT'] : '',
 		'PATH_TO_CONTACT_LIST' => isset($arResult['PATH_TO_CONTACT_LIST']) ? $arResult['PATH_TO_CONTACT_LIST'] : '',

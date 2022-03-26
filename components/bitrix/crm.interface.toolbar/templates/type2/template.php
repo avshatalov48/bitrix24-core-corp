@@ -168,6 +168,9 @@ foreach($arParams['BUTTONS'] as $k => $item):
 	{
 		$params = isset($item['PARAMS']) ? $item['PARAMS'] : array();
 
+		$containerID = $params['CONTAINER_ID'] ?? null;
+		$labelID = $params['LABEL_ID'] ?? null;
+		$buttonID = $params['BUTTON_ID'] ?? null;
 		$typeID = isset($params['TYPE_ID']) ? (int)$params['TYPE_ID'] : 0;
 		$schemeName = isset($params['SCHEME_NAME']) ? $params['SCHEME_NAME'] : null;
 		$schemeDescr = isset($params['SCHEME_DESCRIPTION']) ? $params['SCHEME_DESCRIPTION'] : null;
@@ -190,9 +193,9 @@ foreach($arParams['BUTTONS'] as $k => $item):
 		$iconBtnClassName = $isPermitted ? 'crm-btn-convert' : 'crm-btn-convert crm-btn-convert-blocked';
 		$originUrl = $APPLICATION->GetCurPage();
 
-		$containerID = "{$prefix}{$code}";
-		$labelID = "{$prefix}{$code}_label";
-		$buttonID = "{$prefix}{$code}_button";
+		$containerID = empty($containerID) ? "{$prefix}{$code}" : $containerID;
+		$labelID = empty($labelID) ? "{$prefix}{$code}_label" : $labelID;
+		$buttonID = empty($buttonID) ? "{$prefix}{$code}_button" : $buttonID;
 
 		if($isPermitted && $entityTypeID === CCrmOwnerType::Lead)
 		{
@@ -240,6 +243,7 @@ foreach($arParams['BUTTONS'] as $k => $item):
 									}
 								);
 							<?elseif($entityTypeID === CCrmOwnerType::Deal):?>
+								<?php //this card is used in old card (not detail), so we do not change here anything ?>
 								BX.CrmDealConversionSchemeSelector.create(
 									"<?=$selectorID?>",
 									{

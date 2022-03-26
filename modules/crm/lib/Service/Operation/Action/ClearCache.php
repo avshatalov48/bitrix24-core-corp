@@ -62,7 +62,7 @@ class ClearCache extends Action
 			return $this->cacheManager;
 		}
 
-		if (BX_COMP_MANAGED_CACHE)
+		if (defined('BX_COMP_MANAGED_CACHE') && BX_COMP_MANAGED_CACHE)
 		{
 			return $GLOBALS['CACHE_MANAGER'] ?? null;
 		}
@@ -79,17 +79,19 @@ class ClearCache extends Action
 
 		return $this->tagPrefix . $item->getId();
 	}
-	
+
 	protected function isDependantFieldsChanged(Item $item): bool
 	{
-		if (empty($this->dependantFields))
+		$itemBeforeSave = $this->getItemBeforeSave();
+
+		if (empty($this->dependantFields) || !$itemBeforeSave)
 		{
 			return true;
 		}
 
 		foreach($this->dependantFields as $fieldName)
 		{
-			if($item->isChanged($fieldName))
+			if($itemBeforeSave->remindActual($fieldName) !== $item->get($fieldName))
 			{
 				return true;
 			}

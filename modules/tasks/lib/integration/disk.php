@@ -1,8 +1,8 @@
-<?
+<?php
 /**
  * This class is for internal use only, not a part of public API.
  * It can be changed at any time without notification.
- * 
+ *
  * @access private
  * @internal
  */
@@ -237,7 +237,6 @@ abstract class Disk extends \Bitrix\Tasks\Integration
 	 * @param array $attachments
 	 * @param $userId
 	 * @return array
-	 * @deprecated
 	 */
 	public static function cloneFileAttachment(array $attachments = array(), $userId = 0)
 	{
@@ -417,6 +416,11 @@ abstract class Disk extends \Bitrix\Tasks\Integration
 				'ENTITY_TYPE' => 'tasks_scrum_item',
 				'MODULE_ID' => 'tasks',
 				'CLASS' => Disk\Connector\ScrumItem::className(),
+			],
+			'TASKS_TASK_RESULT' => [
+				'ENTITY_TYPE' => 'tasks_task_result',
+				'MODULE_ID' => 'tasks',
+				'CLASS' => Disk\Connector\Task\Result::className(),
 			],
 		]);
 	}

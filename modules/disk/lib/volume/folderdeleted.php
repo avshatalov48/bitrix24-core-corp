@@ -10,7 +10,7 @@ use Bitrix\Disk\Volume;
  * Disk storage volume measurement class.
  * @package Bitrix\Disk\Volume
  */
-class FolderDeleted extends Volume\Folder
+class FolderDeleted extends Volume\FolderTree
 {
 	/**
 	 * Runs measure test to get volumes of selecting objects.
@@ -19,7 +19,7 @@ class FolderDeleted extends Volume\Folder
 	 * @throws Main\ArgumentException
 	 * @throws Main\SystemException
 	 */
-	public function measure($collectData = array(self::DISK_FILE, self::PREVIEW_FILE, self::UNNECESSARY_VERSION))
+	public function measure($collectData = [self::DISK_FILE, self::UNNECESSARY_VERSION])
 	{
 		$this->addFilter('!DELETED_TYPE', ObjectTable::DELETED_TYPE_NONE);
 

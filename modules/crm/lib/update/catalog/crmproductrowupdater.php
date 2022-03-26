@@ -18,6 +18,8 @@ final class CrmProductRowUpdater extends Main\Update\Stepper
 
 	public function execute(array &$option): bool
 	{
+		return self::FINISH_EXECUTION;
+
 		if (
 			!ModuleManager::isModuleInstalled('bitrix24')
 			|| !Loader::includeModule('iblock')

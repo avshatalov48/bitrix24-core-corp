@@ -1,5 +1,17 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
-<?
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+/** @var CBitrixComponentTemplate $this */
+/** @var array $arParams */
+/** @var array $arResult */
+/** @global CDatabase $DB */
+/** @global CUser $USER */
+/** @global CMain $APPLICATION */
+
 use Bitrix\Main\Localization\Loc;
 
 \Bitrix\Main\UI\Extension::load(["ui.forms", "ui.buttons", "ui.buttons.icons", "ui.alerts",
@@ -39,7 +51,10 @@ if ($arResult["IS_CLOUD"])
 	$APPLICATION->AddViewContent("left-panel", '');
 }
 
-if ($arResult["IS_CLOUD"])
+if (
+	$arResult["IS_CLOUD"]
+	&& $arResult['canCurrentUserInvite']
+)
 {
 	$isMaxUsersUnlimited = ($arResult["USER_MAX_COUNT"] == 0);
 
@@ -70,11 +85,12 @@ if ($arResult["IS_CLOUD"])
 	</div>
 
 	<div class="popup-window-tabs-content popup-window-tabs-content-invite">
-		<?//fast registration
+		<?php
+		//fast registration
 		if ($arResult["IS_CLOUD"])
 		{
 			$isSelfRegisterEnable = $arResult["REGISTER_SETTINGS"]["REGISTER"] === "Y";
-		?>
+			?>
 			<div class="invite-wrap js-intranet-invitation-block" data-role="self-block">
 				<div class="invite-title-container">
 					<div class="invite-title-icon invite-title-icon-link"></div>
@@ -92,7 +108,7 @@ if ($arResult["IS_CLOUD"])
 							data-role="selfToggleSettingsButton"
 							id="allow_register"
 							value="Y"
-							<?if ($isSelfRegisterEnable) echo "checked"?>
+							<?= ($isSelfRegisterEnable ? 'checked' : '') ?>
 							style="display: none;"
 						/>
 						<div class="invite-dialog-fast-reg-control-switcher" data-role="self-switcher">
@@ -108,7 +124,7 @@ if ($arResult["IS_CLOUD"])
 
 					<div class="invite-content-container">
 						<div class="invite-form-container">
-							<div style="border-top: none; <?if (!$isSelfRegisterEnable):?>display: none;<?endif?>" data-role="selfSettingsBlock" id="intranet-dialog-tab-content-self-block" class="invite-dialog-inv-link-block">
+							<div style="border-top: none; <?= (!$isSelfRegisterEnable ? 'display: none;' : '') ?>" data-role="selfSettingsBlock" id="intranet-dialog-tab-content-self-block" class="invite-dialog-inv-link-block">
 								<div>
 									<div class="invite-form-container-reg-row" style="margin-bottom: 10px;">
 										<div class="invite-form-container-reg-col">
@@ -147,24 +163,23 @@ if ($arResult["IS_CLOUD"])
 												name="allow_register_confirm"
 												id="allow_register_confirm"
 												data-role="allowRegisterConfirm"
-												<?if ($arResult["REGISTER_SETTINGS"]["REGISTER_CONFIRM"] == "Y") echo "checked"?>
-												<?if (!$arResult["IS_CURRENT_USER_ADMIN"]) echo "disabled";?>
+												<?= ($arResult["REGISTER_SETTINGS"]["REGISTER_CONFIRM"] === "Y" ? 'checked' : '') ?>
+												<?= (!$arResult["IS_CURRENT_USER_ADMIN"] ? 'disabled' : '') ?>
 											/>
 											<div class="ui-ctl-label-text"><?=Loc::getMessage("INTRANET_INVITE_DIALOG_FAST_REG_TYPE")?></div>
 										</label>
 									</div>
-
-									<div id="intranet-dialog-tab-content-self-whitelist"
-										 data-role="selfWhiteList"
-										 <?if ($arResult["REGISTER_SETTINGS"]["REGISTER_CONFIRM"] == "N"):?>style="display: none" <?endif?>
-									>
+									<?php
+									$style = ($arResult["REGISTER_SETTINGS"]["REGISTER_CONFIRM"] === "N" ? 'style="display: none"' : '');
+									?>
+									<div id="intranet-dialog-tab-content-self-whitelist" data-role="selfWhiteList" <?= $style ?>>
 										<span class="invite-form-ctl-title">
 											<?=Loc::getMessage("INTRANET_INVITE_DIALOG_FAST_REG_DOMAINS")?>
 										</span>
 										<label class="ui-ctl ui-ctl-w75 ui-ctl-textbox">
 											<input
 												type="text"
-												<?if (!$arResult["IS_CURRENT_USER_ADMIN"]) echo "disabled";?>
+												<?= (!$arResult["IS_CURRENT_USER_ADMIN"] ? 'disabled' : '') ?>
 												class="ui-ctl-element"
 												name="allow_register_whitelist"
 												value="<?= $arResult["REGISTER_SETTINGS"]["REGISTER_WHITELIST"]?>"
@@ -185,7 +200,7 @@ if ($arResult["IS_CLOUD"])
 					</div>
 				</form>
 			</div>
-		<?
+			<?php
 		}
 		?>
 
@@ -224,13 +239,18 @@ if ($arResult["IS_CLOUD"])
 			<div class="invite-title-container">
 				<div class="invite-title-icon invite-title-icon-mass"></div>
 				<div class="invite-title-text"><?=Loc::getMessage("INTRANET_INVITE_DIALOG_MASS_TITLE")?></div>
-				<?if ($arResult["IS_SMS_INVITATION_AVAILABLE"]):?>
-				<div class="invite-title-helper"
-					 data-hint="<?=Loc::getMessage("INTRANET_INVITE_DIALOG_MASS_INVITE_HINT")?>"
-					 data-hint-no-icon
-				>
-				</div>
-				<?endif?>
+				<?php
+				if ($arResult["IS_SMS_INVITATION_AVAILABLE"])
+				{
+					?>
+					<div class="invite-title-helper"
+						 data-hint="<?=Loc::getMessage("INTRANET_INVITE_DIALOG_MASS_INVITE_HINT")?>"
+						 data-hint-no-icon
+					>
+					</div>
+					<?php
+				}
+				?>
 			</div>
 			<div class="invite-content-container">
 				<div class="invite-form-container">
@@ -296,7 +316,7 @@ if ($arResult["IS_CLOUD"])
 
 						<div class="invite-form-row">
 							<div class="invite-form-col">
-								<div class="invite-dialog-inv-form-checkbox-wrap"><?
+								<div class="invite-dialog-inv-form-checkbox-wrap"><?php
 									?>
 									<input
 										type="checkbox"
@@ -304,15 +324,15 @@ if ($arResult["IS_CLOUD"])
 										id="ADD_SEND_PASSWORD"
 										value="Y"
 										class="invite-dialog-inv-form-checkbox"
-										<?=($_POST["ADD_SEND_PASSWORD"] == "Y" ? " checked" : "")?>
+										<?= ($_POST["ADD_SEND_PASSWORD"] === "Y" ? " checked" : "") ?>
 									>
 									<label class="invite-dialog-inv-form-checkbox-label" for="ADD_SEND_PASSWORD">
 										<?=Loc::getMessage($arResult["IS_CLOUD"] ? "BX24_INVITE_DIALOG_ADD_WO_CONFIRMATION_TITLE" : "BX24_INVITE_DIALOG_ADD_SEND_PASSWORD_TITLE")?><?
 										if (!$arResult["IS_CLOUD"])
 										{
-											?><span id="ADD_SEND_PASSWORD_EMAIL"></span><?
+											?><span id="ADD_SEND_PASSWORD_EMAIL"></span><?php
 										}
-										?></label><?
+										?></label><?php
 									?></div>
 							</div>
 						</div>
@@ -322,7 +342,7 @@ if ($arResult["IS_CLOUD"])
 		</div>
 
 		<!-- extranet -->
-		<?
+		<?php
 		if ($arResult["IS_EXTRANET_INSTALLED"])
 		{
 		?>
@@ -349,11 +369,12 @@ if ($arResult["IS_CLOUD"])
 				</form>
 			</div>
 		</div>
-		<?
+		<?php
 		}
 		?>
 
-		<? // integrator
+		<?php
+		// integrator
 		if ($arResult["IS_CLOUD"])
 		{
 		?>
@@ -371,7 +392,7 @@ if ($arResult["IS_CLOUD"])
 					</div>
 				</form>
 			</div>
-		<?
+		<?php
 		}
 		?>
 
@@ -418,7 +439,7 @@ if ($arResult["IS_CLOUD"])
 	</div>
 </div>
 
-<?
+<?php
 $APPLICATION->IncludeComponent("bitrix:ui.button.panel", "", array(
 	"BUTTONS" => [
 		[
@@ -436,7 +457,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.button.panel", "", array(
 ));
 ?>
 
-<?$this->SetViewTarget("below_page", 10);?>
+<?php $this->SetViewTarget("below_page", 10); ?>
 <div class="invite-wrap-decal-arrow">
 	<svg width="79" height="74" xmlns="http://www.w3.org/2000/svg">
 		<g stroke="#2FC6F6" stroke-width="2" fill="none" fill-rule="evenodd" opacity=".73" stroke-linecap="round" stroke-linejoin="round">
@@ -447,7 +468,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.button.panel", "", array(
 <div class="invite-wrap-decal" id="invite-wrap-decal">
 	<div class="invite-wrap-decal-image"><?=Loc::getMessage("INTRANET_INVITE_DIALOG_PICTURE_TITLE")?></div>
 </div>
-<?$this->EndViewTarget();?>
+<?php $this->EndViewTarget(); ?>
 
 <script type="text/javascript">
 	BX.message(<?=CUtil::phpToJsObject(Loc::loadLanguageFile(__FILE__))?>);

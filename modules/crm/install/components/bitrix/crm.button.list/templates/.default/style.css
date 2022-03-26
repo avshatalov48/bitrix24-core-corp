@@ -503,6 +503,9 @@ div.intranet-button-list-widget-content {
 .intranet-button-list-call {
 	background-position: 0 -327px;
 }
+.intranet-button-list-whatsapp {
+	background-position: 0 -573px;
+}
 
 .intranet-button-list-widget-active .intranet-button-list-openlines {
 	background-position: 0 -80px;
@@ -512,6 +515,9 @@ div.intranet-button-list-widget-content {
 }
 .intranet-button-list-widget-active .intranet-button-list-call {
 	background-position: 0 -409px;
+}
+.intranet-button-list-widget-active .intranet-button-list-whatsapp {
+	background-position: 0 -491px;
 }
 
 .intranet-button-list-widget-content-inner-item-text {

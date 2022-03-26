@@ -18,6 +18,7 @@ use Bitrix\Main\Loader;
 
 use Bitrix\Disk\Driver;
 use Bitrix\Disk\Internals\AttachedObjectTable;
+use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Item\Task;
 
 final class Topic extends \Bitrix\Tasks\Integration\Forum
@@ -83,7 +84,7 @@ final class Topic extends \Bitrix\Tasks\Integration\Forum
 
 	/**
 	 * Updates forum topic title to match task's title
-	 * 
+	 *
 	 * @param $topicId
 	 * @param $title
 	 * @return bool
@@ -117,25 +118,27 @@ final class Topic extends \Bitrix\Tasks\Integration\Forum
 	/**
 	 * Get file count for a topic
 	 *
-	 * @param $topicId
-	 * @param int $forumId
+	 * @param int $taskId
 	 * @return int
 	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public static function getFileCount($topicId, $forumId = 0)
+	public static function getFileCount(int $taskId)
 	{
 		$count = 0;
-		$topicId = intval($topicId);
-		$forumId = intval($forumId);
-		if(!$forumId)
+
+		$task = TaskRegistry::getInstance()->getObject($taskId);
+		if (!$task)
 		{
-			$forumId = static::getForumId();
+			return 0;
 		}
+
+		$topicId = $task->getForumTopicId();
+		$forumId = Comment::getForumId();
 
 		if($forumId && $topicId && static::includeModule() && Loader::includeModule("disk"))
 		{
 			$userFieldManager = Driver::getInstance()->getUserFieldManager();
-			list($connectorClass, $moduleId) = $userFieldManager->getConnectorDataByEntityType("forum_message");
+			[$connectorClass, $moduleId] = $userFieldManager->getConnectorDataByEntityType("forum_message");
 
 			$countQuery = new Query(AttachedObjectTable::getEntity());
 			$totalCnt = $countQuery

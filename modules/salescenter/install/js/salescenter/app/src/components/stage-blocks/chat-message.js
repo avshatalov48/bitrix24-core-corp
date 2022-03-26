@@ -10,7 +10,7 @@ const ChatMessage = {
 			required: true
 		},
 		counter: {
-			type: String,
+			type: Number,
 			required: true
 		},
 		manager: {

@@ -26,8 +26,6 @@ define('SONET_INTRANET_NEW_USER_ENTITY', 'IN');
 define('SONET_INTRANET_NEW_USER_EVENT_ID', 'intranet_new_user');
 define('SONET_INTRANET_NEW_USER_COMMENT_EVENT_ID', 'intranet_new_user_comment');
 
-global $DBType;
-
 CModule::AddAutoloadClasses(
 	"intranet",
 	array(
@@ -41,12 +39,12 @@ CModule::AddAutoloadClasses(
 		"CIntranetContactsWS" => "classes/general/ws_contacts.php",
 		"CIntranetRestService" => "classes/general/rest.php",
 		"CIntranetToolbar" => "classes/general/toolbar.php",
-		"CIntranetSharepoint" => "classes/".$DBType."/sharepoint.php",
-		"CIntranetSharepointQueue" => "classes/".$DBType."/sharepoint_queue.php",
-		"CIntranetSharepointLog" => "classes/".$DBType."/sharepoint_log.php",
+		"CIntranetSharepoint" => "classes/mysql/sharepoint.php",
+		"CIntranetSharepointQueue" => "classes/mysql/sharepoint_queue.php",
+		"CIntranetSharepointLog" => "classes/mysql/sharepoint_log.php",
 		"CIntranetAuthProvider" => "classes/general/authproviders.php",
 		"CRatingRulesIntranet" => "classes/general/rating_rules.php",
-		"CRatingsComponentsIntranet" => "classes/".$DBType."/ratings_components.php",
+		"CRatingsComponentsIntranet" => "classes/mysql/ratings_components.php",
 		"CIntranetPlanner" => "classes/general/planner.php",
 		"CIntranetInviteDialog" => "classes/general/invite_dialog.php",
 		"CIntranetEventHandlers" => "classes/general/handlers.php",

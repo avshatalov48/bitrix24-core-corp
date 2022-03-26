@@ -41,6 +41,16 @@ export class RequestSender
 		return this.sendRequest('sprint', 'getTeamSpeedInfo', data);
 	}
 
+	getTutorInfo(data: RequestParams): Promise
+	{
+		return this.sendRequest('info', 'getTutorInfo', data);
+	}
+
+	getBurnDownInfo(data: RequestParams): Promise
+	{
+		return this.sendRequest('sprint', 'getBurnDownInfo', data);
+	}
+
 	showErrorAlert(response: ErrorResponse, alertTitle?: string)
 	{
 		if (Type.isUndefined(response.errors))

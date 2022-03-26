@@ -5,6 +5,8 @@ namespace Bitrix\SalesCenter\Integration;
 use Bitrix\Crm\Tracking\Channel\Imol;
 use Bitrix\ImOpenLines\Im,
 	Bitrix\ImOpenLines\SalesCenter as ImOlSalesCenter;
+use Bitrix\ImOpenLines\Chat;
+use Bitrix\ImOpenLines\Session;
 use Bitrix\ImOpenLines\Model\SessionTable;
 use Bitrix\ImOpenLines\Widget\FormHandler;
 use Bitrix\Main;
@@ -72,13 +74,19 @@ class ImOpenLinesManager extends Base
 	{
 		if($this->isEnabled() && $this->sessionId > 0)
 		{
-			$activityId = $this->getActivityId();
-			if($activityId)
+			$session = new Session();
+			$isSessionLoaded = $session->load([
+				'USER_CODE' => $this->getSessionUserCode(),
+				'SKIP_CREATE' => 'Y',
+			]);
+
+			if ($isSessionLoaded)
 			{
-				$result = \Bitrix\ImOpenLines\Crm\Common::getActivityBindings($activityId);
-				if($result->isSuccess())
+				$chat = $session->getChat();
+				if ($chat)
 				{
-					return $result->getData();
+					$crmInfo = $chat->getFieldData(Chat::FIELD_CRM);
+					return $crmInfo;
 				}
 			}
 		}
@@ -100,7 +108,8 @@ class ImOpenLinesManager extends Base
 			{
 				if($crmInfo['DEAL'] > 0)
 				{
-					$clientInfo['DEAL_ID'] = (int) $crmInfo['DEAL'];
+					$clientInfo['OWNER_ID'] = (int) $crmInfo['DEAL'];
+					$clientInfo['OWNER_TYPE_ID'] = \CCrmOwnerType::Deal;
 				}
 
 				if ((int)$crmInfo['COMPANY'] > 0)
@@ -731,11 +740,12 @@ class ImOpenLinesManager extends Base
 					]
 				];
 
-				if ($order->getDealBinding())
+				$binding = $order->getEntityBinding();
+				if ($binding)
 				{
 					$bindings[] = [
-						'ENTITY_TYPE_ID' => \CCrmOwnerType::Deal,
-						'ENTITY_ID' => $order->getDealBinding()->getDealId()
+						'ENTITY_TYPE_ID' => $binding->getOwnerId(),
+						'ENTITY_ID' => $binding->getOwnerTypeId()
 					];
 				}
 
@@ -964,7 +974,7 @@ class ImOpenLinesManager extends Base
 	 */
 	protected function createImSystemAttachByDeal(int $dealId)
 	{
-		$dealData = \CCrmDeal::GetByID($dealId);
+		$dealData = \CCrmDeal::GetByID($dealId, false);
 
 		$attach = new \CIMMessageParamAttach();
 		$attach->AddLink([

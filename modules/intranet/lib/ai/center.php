@@ -4,6 +4,7 @@ namespace Bitrix\Intranet\AI;
 use Bitrix\Bitrix24\Feature;
 use Bitrix\Bitrix24\Integration\AssistantApp;
 use Bitrix\Crm\Ml\Scoring;
+use Bitrix\Faceid\AgreementTable;
 use Bitrix\FaceId\FaceId;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
@@ -162,6 +163,29 @@ class Center
 				"selected" => isset($appSettings["facecard"]) && $appSettings["facecard"] === "Y" ? true : false,
 				"data" => array(
 					"url" => SITE_DIR."onec/facecard/"
+				)
+			]
+		];
+	}
+
+	public static function getFaceTracker()
+	{
+		if (!Loader::includeModule('faceId') || !FaceId::isAvailable())
+		{
+			return [];
+		}
+
+		$selected = AgreementTable::checkUser($GLOBALS['USER']->getId());
+
+		return [
+			[
+				'id' => 'face-tracker',
+				'name' => Loc::getMessage('INTRANET_AI_FACE_TRACKER'),
+				'iconClass' => 'intranet-ai-center-icon intranet-ai-center-icon-face-tracker',
+				'iconColor' => '#1876d1',
+				'selected' => $selected,
+				'data' => array(
+					'url' => SITE_DIR.'crm/face-tracker/'
 				)
 			]
 		];

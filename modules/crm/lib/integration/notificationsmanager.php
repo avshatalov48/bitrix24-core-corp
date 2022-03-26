@@ -11,6 +11,7 @@ use Bitrix\Main\PhoneNumber\Formatter;
 use Bitrix\Main\PhoneNumber\Parser;
 use Bitrix\Notifications\Account;
 use Bitrix\Notifications\Billing;
+use Bitrix\Notifications\FeatureStatus;
 use Bitrix\Notifications\Limit;
 use Bitrix\Notifications\Model\ErrorCode;
 use Bitrix\Notifications\Model\Message;
@@ -22,6 +23,8 @@ use Bitrix\Notifications\ProviderEnum;
 use Bitrix\Notifications\Integration\Pull;
 use Bitrix\ImConnector;
 use Bitrix\ImOpenLines\Common;
+use Bitrix\Notifications\Settings;
+
 //use Bitrix\Main\DI\ServiceLocator;
 
 Loc::loadMessages(__FILE__);
@@ -69,13 +72,7 @@ class NotificationsManager implements ICanSendMessage
 			return false;
 		}
 
-		//@TODO temporarily getting rid of imconnector dependency in crm 21.600.0
-//		/** @var \Bitrix\ImConnector\Tools\Connectors\Notifications $toolsNotifications */
-//		$toolsNotifications = ServiceLocator::getInstance()->get('ImConnector.toolsNotifications');
-//
-//		return $toolsNotifications->isEnabled();
-
-		return static::isEnabledTmp();
+		return static::isEnabled();
 	}
 
 	/**
@@ -86,7 +83,7 @@ class NotificationsManager implements ICanSendMessage
 		return (
 			static::canUse()
 			&& (
-				Account::isConnected()
+				Settings::isScenarioEnabled(Settings::SCENARIO_CRM_PAYMENT)
 				|| NotificationsPromoManager::isPromoSession()
 			)
 		);
@@ -110,18 +107,16 @@ class NotificationsManager implements ICanSendMessage
 //			return null;
 //		}
 
-		if (!static::isEnabledTmp())
+		if (!static::isEnabled())
 		{
 			return null;
 		}
 
-		//@TODO temporarily getting rid of imconnector dependency in crm 21.600.0
-//		if ($toolsNotifications->canUse())
 		if (static::canUseTmp())
 		{
 			if (
 				Loader::includeModule('imopenlines')
-				&& Account::isServiceAvailable()
+				&& Settings::getScenarioAvailability(Settings::SCENARIO_CRM_PAYMENT) === FeatureStatus::AVAILABLE
 			)
 			{
 				return Common::getAddConnectorUrl(
@@ -245,7 +240,7 @@ class NotificationsManager implements ICanSendMessage
 			NotificationsPromoManager::isPromoSession()
 			&& static::canUse()
 			&& static::isAvailable()
-			&& !Account::isConnected()
+			&& !Settings::isScenarioEnabled(Settings::SCENARIO_CRM_PAYMENT)
 		)
 		{
 			$result['IS_TEST'] = true;
@@ -448,30 +443,31 @@ class NotificationsManager implements ICanSendMessage
 	}
 
 	/**
-	 * Temp method for getting rid of imconnector dependency in crm 21.600.0
 	 *
 	 * @return bool
 	 * @throws \Bitrix\Main\LoaderException
 	 * @see \Bitrix\ImConnector\Tools\Connectors\Notifications::isEnabled
 	 */
-	private static function isEnabledTmp(): bool
+	private static function isEnabled(): bool
 	{
 		if (!Loader::includeModule('notifications'))
 		{
 			return false;
 		}
 
-		return !Loader::includeModule('bitrix24') || \CBitrix24::getPortalZone() === 'ru';
+		return Settings::getScenarioAvailability(Settings::SCENARIO_CRM_PAYMENT) !== FeatureStatus::UNAVAILABLE;
 	}
 
 	/**
-	 * Temp method for getting rid of imconnector dependency in crm 21.600.0
 	 *
 	 * @return bool
 	 * @see \Bitrix\ImConnector\Tools\Connectors\Notifications::canUse
 	 */
 	private static function canUseTmp(): bool
 	{
-		return Loader::includeModule('notifications') && Limit::isAvailable();
+		return
+			Loader::includeModule('notifications')
+			&&  Settings::getScenarioAvailability(Settings::SCENARIO_CRM_PAYMENT) === FeatureStatus::AVAILABLE
+		;
 	}
 }

@@ -9,12 +9,10 @@ namespace Bitrix\Crm;
 
 use Bitrix\Crm\Binding\QuoteContactTable;
 use Bitrix\Crm\Integration\StorageType;
-use Bitrix\Crm\Kanban\SortTable;
 use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Settings\QuoteSettings;
-use Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Data\DataManager;
@@ -24,7 +22,6 @@ use Bitrix\Main\ORM\Fields\ArrayField;
 use Bitrix\Main\ORM\Fields\BooleanField;
 use Bitrix\Main\ORM\Fields\DateField;
 use Bitrix\Main\ORM\Fields\DatetimeField;
-use Bitrix\Main\ORM\Fields\DecimalField;
 use Bitrix\Main\ORM\Fields\EnumField;
 use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Main\ORM\Fields\FloatField;
@@ -207,8 +204,7 @@ class QuoteTable extends DataManager
 				->configureDefaultValue('N')
 				->configureTitle(Loc::getMessage('CRM_QUOTE_CLOSED_TITLE')),
 
-			(new DecimalField('OPPORTUNITY'))
-				->configurePrecision(18)
+			(new FloatField('OPPORTUNITY'))
 				->configureScale(2)
 				->configureDefaultValue(0.00)
 				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_OPPORTUNITY')),
@@ -218,8 +214,7 @@ class QuoteTable extends DataManager
 				->configureDefaultValue('N')
 				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_IS_MANUAL_OPPORTUNITY')),
 
-			(new DecimalField('TAX_VALUE'))
-				->configurePrecision(18)
+			(new FloatField('TAX_VALUE'))
 				->configureScale(2)
 				->configureDefaultValue(0.00)
 				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_TAX_VALUE')),
@@ -229,14 +224,12 @@ class QuoteTable extends DataManager
 				->configureDefaultValue(Currency::getBaseCurrencyId())
 				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_CURRENCY_ID')),
 
-			(new DecimalField('OPPORTUNITY_ACCOUNT'))
-				->configurePrecision(18)
+			(new FloatField('OPPORTUNITY_ACCOUNT'))
 				->configureScale(2)
 				->configureDefaultValue(0.00)
 				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_OPPORTUNITY_ACCOUNT')),
 
-			(new DecimalField('TAX_VALUE_ACCOUNT'))
-				->configurePrecision(18)
+			(new FloatField('TAX_VALUE_ACCOUNT'))
 				->configureScale(2)
 				->configureDefaultValue(0.00)
 				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_TAX_VALUE_ACCOUNT')),
@@ -405,32 +398,6 @@ class QuoteTable extends DataManager
 		ProductRowTable::handleOwnerUpdate($item, $result);
 
 		return $result;
-	}
-
-	public static function onAfterDelete(Event $event)
-	{
-		$id = $event->getParameter('primary');
-		if (is_array($id))
-		{
-			$id = $id['ID'];
-		}
-
-		QuoteContactTable::unbindAllContacts($id);
-		ProductRowTable::deleteByItem(static::getEntityTypeId(), $id);
-		QuoteElementTable::deleteByQuoteId($id);
-		SortTable::clearEntity($id, \CCrmOwnerType::QuoteName);
-		EntityPermsTable::clearByEntity(\CCrmOwnerType::QuoteName, $id);
-		TimelineEntry::deleteByOwner(static::getEntityTypeId(), $id);
-
-		$crmEvent = new \CCrmEvent();
-		$crmEvent->DeleteByElement(\CCrmOwnerType::QuoteName, $id);
-
-		\CCrmActivity::DeleteByOwner(\CCrmOwnerType::Quote, $id);
-		EntityLink::unregister(\CCrmOwnerType::Quote, $id);
-
-		// delete utm fields
-		UtmTable::deleteEntityUtm(\CCrmOwnerType::Quote, $id);
-		Tracking\Entity::deleteTrace(\CCrmOwnerType::Quote, $id);
 	}
 
 	/**

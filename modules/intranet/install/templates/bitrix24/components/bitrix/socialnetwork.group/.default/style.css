@@ -257,6 +257,7 @@ a.socialnetwork-group-title-link:hover {
 .socialnetwork-group-sidebar-block {
 	background: #fff;
 	margin-bottom: 17px;
+	border-radius: var(--socialnetwork-group-sidebar-block, var(--ui-theme-radius-md, 0));
 }
 
 .socialnetwork-group-users-list {

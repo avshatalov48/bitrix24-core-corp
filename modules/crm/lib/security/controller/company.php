@@ -2,21 +2,21 @@
 
 namespace Bitrix\Crm\Security\Controller;
 
-use Bitrix\Crm;
-
 class Company extends Base
 {
-	/** @var string */
-	protected static $permissionEntityType = 'COMPANY';
-
 	public function getEntityTypeId(): int
 	{
 		return \CCrmOwnerType::Company;
 	}
 
-	public function isPermissionEntityTypeSupported($entityType): bool
+	public function hasCategories(): bool
 	{
-		return $entityType === self::$permissionEntityType;
+		return true;
+	}
+
+	protected function extractCategoryFromFields(array $fields): int
+	{
+		return (isset($fields['CATEGORY_ID']) ? (int)$fields['CATEGORY_ID'] : 0);
 	}
 
 	protected function getSelectFields(): array
@@ -26,6 +26,7 @@ class Company extends Base
 			'ASSIGNED_BY_ID',
 			'OPENED',
 			'IS_MY_COMPANY',
+			'CATEGORY_ID',
 		];
 	}
 

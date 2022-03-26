@@ -1,6 +1,9 @@
 <?
 return [
-	"utils",
-	"rest",
-	"notify"
+	'extensions' => [
+		'utils',
+		'rest',
+		'notify',
+	],
+	'components' => ['intranet.invite'],
 ];

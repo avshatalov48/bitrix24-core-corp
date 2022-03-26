@@ -1,2 +1,12 @@
-<?
-return ["files", "task", "disk"];
+<?php
+
+return [
+	'extensions' => [
+		'files',
+		'task',
+		'disk',
+	],
+	'components' => [
+		'user.profile',
+	],
+];

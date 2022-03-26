@@ -21,6 +21,9 @@ class ContactCompanyCollection extends Sale\Internals\EntityCollection
 {
 	protected $order = null;
 
+	/** @var bool $autoCreationMode */
+	private $autoCreationMode = true;
+
 	/**
 	 * @return Sale\Internals\Entity
 	 */
@@ -455,5 +458,61 @@ class ContactCompanyCollection extends Sale\Internals\EntityCollection
 		$this->addItem($company);
 
 		return $company;
+	}
+
+	/**
+	 * @return Company|Contact|null
+	 */
+	public function getEntityCommunication()
+	{
+		$contact = $this->getPrimaryContact();
+		if ($contact)
+		{
+			return $contact;
+		}
+
+		$company = $this->getPrimaryCompany();
+		if ($company)
+		{
+			return $company;
+		}
+
+		return null;
+	}
+
+	/**
+	 * @return string|null
+	 */
+	public function getEntityCommunicationPhone(): ?string
+	{
+		$entityCommunication = $this->getEntityCommunication();
+		if (!$entityCommunication)
+		{
+			return null;
+		}
+
+		$phone = \CCrmFieldMulti::GetEntityFirstPhone(
+			$entityCommunication::getEntityTypeName(),
+			$entityCommunication->getField('ENTITY_ID'),
+			true,
+			false
+		);
+
+		if (!$phone)
+		{
+			return null;
+		}
+
+		return (string)$phone->format();
+	}
+
+	public function disableAutoCreationMode(): void
+	{
+		$this->autoCreationMode = false;
+	}
+
+	public function isAutoCreationModeEnabled(): bool
+	{
+		return $this->autoCreationMode;
 	}
 }

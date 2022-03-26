@@ -34,7 +34,7 @@ class CVoxImplantComponentDocuments extends CBitrixComponent
 				$this->arResult['DOCUMENTS'][$key]['COUNTRY_CODE'] = $this->arResult['DOCUMENTS'][$key]['REGION'];
 				$this->arResult['DOCUMENTS'][$key]['COUNTRY'] = $this->arResult['DOCUMENTS'][$key]['REGION_NAME'];
 				$this->arResult['DOCUMENTS'][$key]['ADDRESS'] = $this->arResult['DOCUMENTS'][$key]['COUNTRY'];
-				$this->arResult['DOCUMENTS'][$key]['UPLOAD_IFRAME_URL'] = $documents->GetUploadUrl($this->arResult['DOCUMENTS'][$key]['REGION']);
+				$this->arResult['DOCUMENTS'][$key]['UPLOAD_URL'] = $documents->GetUploadUrl($this->arResult['DOCUMENTS'][$key]['REGION']);
 				unset($this->arResult['DOCUMENTS'][$key]['REGION']);
 				unset($this->arResult['DOCUMENTS'][$key]['REGION_NAME']);
 			}

@@ -150,6 +150,7 @@ class Router
 	{
 		return [
 			'bitrix:crm.quote.details' => 'type/' . \CCrmOwnerType::Quote . '/details/#ENTITY_ID#/',
+			'bitrix:crm.invoice.details' => 'type/' . \CCrmOwnerType::SmartInvoice . '/details/#ENTITY_ID#/',
 			'bitrix:crm.item.details' => 'type/#ENTITY_TYPE_ID#/details/#ENTITY_ID#/',
 			'bitrix:crm.item.kanban' => 'type/#entityTypeId#/kanban/category/#categoryId#/',
 			'bitrix:crm.type.detail' => 'type/detail/#entityTypeId#/',
@@ -473,10 +474,19 @@ class Router
 	{
 		if ($this->isNewRoutingForDetailEnabled($entityTypeId))
 		{
-			return $this->getItemDetailUrlWithNewRouting($entityTypeId, $id, $categoryId, $parentItemIdentifier);
+			$url = $this->getItemDetailUrlWithNewRouting($entityTypeId, $id, $categoryId);
+		}
+		else
+		{
+			$url = $this->getItemDetailUrlWithOldRouting($entityTypeId, $id, $categoryId);
 		}
 
-		return $this->getItemDetailUrlWithOldRouting($entityTypeId, $id, $categoryId);
+		if ($url && $parentItemIdentifier)
+		{
+			ParentFieldManager::addParentItemToUrl($entityTypeId, $parentItemIdentifier, $url);
+		}
+
+		return $url;
 	}
 
 	/**
@@ -488,6 +498,10 @@ class Router
 	 */
 	public function isNewRoutingForListEnabled(int $entityTypeId): bool
 	{
+		if ($entityTypeId === \CCrmOwnerType::SmartInvoice)
+		{
+			return true;
+		}
 		$factory = Container::getInstance()->getFactory($entityTypeId);
 		if (!$factory)
 		{
@@ -506,6 +520,10 @@ class Router
 	 */
 	public function isNewRoutingForDetailEnabled(int $entityTypeId): bool
 	{
+		if ($entityTypeId === \CCrmOwnerType::SmartInvoice)
+		{
+			return true;
+		}
 		$factory = Container::getInstance()->getFactory($entityTypeId);
 		if (!$factory)
 		{
@@ -517,6 +535,10 @@ class Router
 
 	public function isNewRoutingForAutomationEnabled(int $entityTypeId): bool
 	{
+		if ($entityTypeId === \CCrmOwnerType::SmartInvoice)
+		{
+			return true;
+		}
 		$factory = Container::getInstance()->getFactory($entityTypeId);
 		if (!$factory)
 		{
@@ -537,12 +559,13 @@ class Router
 	protected function getItemDetailUrlWithNewRouting(
 		int $entityTypeId,
 		int $id = 0,
-		int $categoryId = null,
-		?ItemIdentifier $parentItemIdentifier = null
+		int $categoryId = null
 	): ?Uri
 	{
+		$componentName = $this->getItemDetailComponentName($entityTypeId) ?? 'bitrix:crm.item.details';
+
 		$url = $this->getUrlForTemplate(
-			'bitrix:crm.item.details',
+			$componentName,
 			[
 				'ENTITY_TYPE_ID' => $entityTypeId,
 				'ENTITY_ID' => $id,
@@ -556,19 +579,16 @@ class Router
 					'categoryId' => $categoryId,
 				]);
 			}
-			if ($parentItemIdentifier)
-			{
-				$url->addParams([
-					'parentTypeId' => $parentItemIdentifier->getEntityTypeId(),
-					'parentId' => $parentItemIdentifier->getEntityId(),
-				]);
-			}
 		}
 
 		return $url;
 	}
 
-	protected function getItemDetailUrlWithOldRouting(int $entityTypeId, int $id = 0, int $categoryId = null): ?Uri
+	protected function getItemDetailUrlWithOldRouting(
+		int $entityTypeId,
+		int $id = 0,
+		int $categoryId = null
+	): ?Uri
 	{
 		$isEdit = ($id <= 0);
 		$template = $this->getCompatibleItemDetailsTemplate($entityTypeId, $isEdit);
@@ -630,6 +650,29 @@ class Router
 		return $paramName;
 	}
 
+	public function getMobileItemDetailUrl(int $entityTypeId, int $id = 0): ?Uri
+	{
+		$entityTypeName = mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId));
+
+		$uri = new Uri("/mobile/crm/{$entityTypeName}/");
+
+		if ($id > 0)
+		{
+			$uri->addParams([
+				'page' => 'view',
+				"{$entityTypeName}_id" => $id,
+			]);
+		}
+		else
+		{
+			$uri->addParams([
+				'page' => 'edit',
+			]);
+		}
+
+		return $uri;
+	}
+
 	public function getItemCopyUrl(int $entityTypeId, int $id = 0, int $categoryId = null): ?Uri
 	{
 		$url = $this->getItemDetailUrl($entityTypeId, $id, $categoryId);
@@ -682,11 +725,11 @@ class Router
 
 	public function getProductDetailUrlTemplate(): string
 	{
-		if (Loader::includeModule('catalog') && \Bitrix\Catalog\Config\State::isProductCardSliderEnabled())
+		if (Loader::includeModule('catalog') && \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isFullCatalogEnabled())
 		{
 			$catalogId = \CCrmCatalog::ensureDefaultExists();
 
-			return "/shop/catalog/{$catalogId}/product/#product_id#/";
+			return "/crm/catalog/{$catalogId}/product/#product_id#/";
 		}
 
 		$pathFromOption = Option::get(static::MODULE_ID, static::OPTION_CATALOG_PRODUCT_SHOW);
@@ -890,6 +933,18 @@ class Router
 		return null;
 	}
 
+	public function getFileUrlTemplate(int $entityTypeId): string
+	{
+		$url = \Bitrix\Main\Engine\UrlManager::getInstance()->create('crm.controller.item.getFile', [
+			'entityTypeId' => $entityTypeId,
+		]);
+		// we have to use concatenation because object encodes the # symbol.
+		$locator = $url->getLocator();
+		$locator .= '&id=#owner_id#&fieldName=#field_name#&fileId=#file_id#';
+
+		return $locator;
+	}
+
 	public function getFileUrl(int $entityTypeId, int $id, string $fieldName, int $fileId): Uri
 	{
 		return new ContentUri(\Bitrix\Main\Engine\UrlManager::getInstance()->create('crm.controller.item.getFile', [
@@ -995,22 +1050,26 @@ class Router
 
 	public function getChildrenItemsListUrl(int $entityTypeId, int $parentEntityTypeId, int $parentEntityId): ?Uri
 	{
-		// only dynamic types for now
-		if (!\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+		if (!$factory)
 		{
 			return null;
 		}
 
-		$componentName = 'bitrix:crm.item.list';
+		$componentName = $this->getItemListComponentName($entityTypeId);
+		if (!$componentName)
+		{
+			return null;
+		}
 		$componentPath = \CComponentEngine::makeComponentPath($componentName);
 		$componentPath = getLocalPath('components'.$componentPath.'/lazyload.ajax.php');
-
 		$url = new Uri($componentPath);
 		$url->addParams([
 			'entityTypeId' => $entityTypeId,
 			'parentEntityTypeId' => $parentEntityTypeId,
 			'parentEntityId' => $parentEntityId,
 			'sessid' => bitrix_sessid(),
+			'site' => SITE_ID,
 		]);
 
 		return $url;
@@ -1024,15 +1083,65 @@ class Router
 	 */
 	public function getItemDetailComponentName(int $entityTypeId): ?string
 	{
-		if ($entityTypeId === \CCrmOwnerType::Quote)
+		$map = $this->getItemDetailComponentNamesMap();
+		if (isset($map[$entityTypeId]))
 		{
-			return 'bitrix:crm.quote.details';
+			return $map[$entityTypeId];
 		}
 		if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
 		{
-			return 'bitrix:crm.item.details';
+			return $map[\CCrmOwnerType::CommonDynamicName] ?? null;
 		}
 
 		return null;
+	}
+
+	public function getItemDetailComponentNamesMap(): array
+	{
+		return [
+			\CCrmOwnerType::Quote => 'bitrix:crm.quote.details',
+			\CCrmOwnerType::SmartInvoice => 'bitrix:crm.invoice.details',
+			\CCrmOwnerType::CommonDynamicName => 'bitrix:crm.item.details',
+		];
+	}
+
+	/**
+	 * Return name of list component by $entityTypeId.
+	 *
+	 * @param int $entityTypeId
+	 * @return string|null
+	 */
+	public function getItemListComponentName(int $entityTypeId): ?string
+	{
+		if (\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
+		{
+			return 'bitrix:crm.item.list';
+		}
+
+		$entityName = mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId));
+		if ($entityName)
+		{
+			return 'bitrix:crm.' . $entityName . '.list';
+		}
+
+		return null;
+	}
+
+	public function getNumeratorSettingsUrl(int $numeratorId, string $numeratorType): ?Uri
+	{
+		$componentPath = \CComponentEngine::makeComponentPath('bitrix:main.numerator.edit');
+		$componentPath = getLocalPath('components'.$componentPath.'/slider.php');
+		if (!$componentPath)
+		{
+			return null;
+		}
+
+		$url = new Uri($componentPath);
+		$url->addParams([
+			'ID' => $numeratorId,
+			'NUMERATOR_TYPE' => $numeratorType,
+		]);
+
+		return $url;
 	}
 }

@@ -2,10 +2,7 @@
 
 namespace Bitrix\SalesCenter\Delivery\Handlers;
 
-use Bitrix\Main\Localization\Loc;
 use Sale\Handlers\Delivery\YandexTaxi\ServiceContainer;
-
-Loc::loadMessages(__FILE__);
 
 /**
  * Class YandexTaxi
@@ -26,15 +23,7 @@ class YandexTaxi extends Base
 	 */
 	public function getName()
 	{
-		return Loc::getMessage('SALESCENTER_DELIVERY_HANDLERS_YANDEX_TAXI_TITLE');
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function getShortDescription()
-	{
-		return Loc::getMessage('SALESCENTER_DELIVERY_HANDLERS_YANDEX_TAXI_SHORT_DESCRIPTION');
+		return \Sale\Handlers\Delivery\YandextaxiHandler::getClassTitle();
 	}
 
 	/**

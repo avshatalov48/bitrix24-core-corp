@@ -2,8 +2,11 @@
 namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Timeline\HistoryDataModel\Presenter;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Sale\Cashbox\CheckManager;
 
 class EntityController extends Controller
 {

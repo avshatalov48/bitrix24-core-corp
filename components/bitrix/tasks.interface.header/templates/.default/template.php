@@ -40,6 +40,7 @@ if (!isset($arParams['MENU_GROUP_ID']))
 
 		'PATH_TO_CONPANY_DEPARTMENT' => $arParams[ 'PATH_TO_CONPANY_DEPARTMENT' ],
 		'DEFAULT_ROLEID' => $arParams[ 'DEFAULT_ROLEID' ],
+		'SCOPE' => $arParams['SCOPE'],
 	),
 	$component,
 	array('HIDE_ICONS' => true)
@@ -85,7 +86,8 @@ if ($arParams['SHOW_FILTER'] == 'Y')
 			'SORT_FIELD'=>$arParams['SORT_FIELD'],
 			'SORT_FIELD_DIR'=>$arParams['SORT_FIELD_DIR'],
 
-			'PROJECT_VIEW' => $arParams['PROJECT_VIEW']
+			'PROJECT_VIEW' => $arParams['PROJECT_VIEW'],
+			'SCOPE' => $arParams['SCOPE'],
 		),
 		$component,
 		array('HIDE_ICONS' => true)
@@ -113,6 +115,7 @@ if ($arParams['SHOW_FILTER'] == 'Y')
 		'SHOW_TOOLBAR'=>$arParams['MARK_SPECIAL_PRESET']=='Y' || $arParams['MARK_SECTION_ALL']=='Y' ? 'N' : 'Y',
 		'PROJECT_VIEW' => $arParams['PROJECT_VIEW'],
 		'VIEW_MODE_LIST' => $arParams['PROJECT_VIEW'] == 'Y' ? ['VIEW_MODE_KANBAN', 'VIEW_MODE_LIST', 'VIEW_MODE_TIMELINE', 'VIEW_MODE_CALENDAR', 'VIEW_MODE_GANTT'] : [],
+		'SCOPE' => $arParams['SCOPE'],
 	),
 	$component,
 	array('HIDE_ICONS' => true)
@@ -132,7 +135,6 @@ if ($arParams['SHOW_QUICK_FORM'] == 'Y')
 
 			'GET_LIST_PARAMS' => $arParams[ 'GET_LIST_PARAMS' ],
 			'COMPANY_WORKTIME' => $arParams[ 'COMPANY_WORKTIME' ],
-			'GANTT_MODE' => isset($arParams[ 'GANTT_MODE' ]) ? $arParams[ 'GANTT_MODE' ] : "",
 			'NAME_TEMPLATE' => $arParams[ 'NAME_TEMPLATE' ],
 			'USE_GROUP_BY_GROUPS' => $arParams['USE_GROUP_BY_GROUPS'],
 			'GROUP_BY_PROJECT' => $arParams['GROUP_BY_PROJECT'],
@@ -145,6 +147,7 @@ if ($arParams['SHOW_QUICK_FORM'] == 'Y')
 			'PATH_TO_USER_TASKS_TASK' => $arParams[ 'PATH_TO_USER_TASKS_TASK' ],
 			'PATH_TO_GROUP_TASKS_TASK' => $arParams[ 'PATH_TO_GROUP_TASKS_TASK' ],
 
+			'SCOPE' => $arParams['SCOPE'],
 		),
 		$component,
 		array('HIDE_ICONS' => true)

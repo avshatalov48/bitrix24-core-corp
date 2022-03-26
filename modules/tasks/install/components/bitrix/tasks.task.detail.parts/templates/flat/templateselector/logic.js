@@ -57,63 +57,67 @@ BX.namespace('Tasks.Component');
 				}
 				else
 				{
-					BX.Tasks.Util.Query.runOnce('task.template.find', {
-						parameters: {select: ['ID', 'TITLE'], order: {ID: 'desc'}, filter: {ZOMBIE: 'N'}}
-					}).then(
-						function(result){
-							p.fulfill(this.makeItemsFromResult(result));
-						}.bind(this),
-						function(){
-							p.reject();
+					BX.ajax.runComponentAction('bitrix:tasks.templates.list', 'getList', {
+						mode: 'class',
+						data: {
+							select: ['ID', 'TITLE'],
+							order: {ID: 'DESC'},
+							filter: {ZOMBIE: 'N'}
 						}
-					)
+					}).then(
+						function(response)
+						{
+							p.fulfill(this.makeItemsFromResult(response));
+						}.bind(this),
+						function(response)
+						{
+							p.reject();
+						}.bind(this)
+					);
 				}
 
 				return p;
 			},
 
-			makeItemsFromResult: function(result)
+			makeItemsFromResult: function(response)
 			{
 				var items = [];
 				var commonUrl = this.option('commonUrl');
 
-				if(result.isSuccess())
+				var data = response.data;
+				if(data && data.length)
 				{
-					var data = result.getData();
-					if(data.DATA)
-					{
-						var url = commonUrl+(commonUrl.indexOf('?') < 0 ? "?" : "&");
-						var href = window.location.href;
-						var path = window.location.pathname;
-						var _query = href.split(path)[1];
-						var query = _query.substr(1, _query.length - 1);
-						var params = query.split('&');
+					var url = commonUrl+(commonUrl.indexOf('?') < 0 ? "?" : "&");
+					var href = window.location.href;
+					var path = window.location.pathname;
+					var _query = href.split(path)[1];
+					var query = _query.substr(1, _query.length - 1);
+					var params = query.split('&');
 
-						Object.keys(params).forEach(function(i) {
-							if (params[i].indexOf('IFRAME') === 0 ||
-								params[i].indexOf('TEMPLATE') === 0)
-							{
-								delete params[i];
-							}
-						});
-
-						params = params.filter(function(value){
-							return value !== undefined;
-						});
-
-						if ( params.length )
+					Object.keys(params).forEach(function(i) {
+						if (params[i].indexOf('IFRAME') === 0 ||
+							params[i].indexOf('TEMPLATE') === 0)
 						{
-							url += params.join('&')+'&';
+							delete params[i];
 						}
+					});
 
-						BX.Tasks.each(data.DATA, function(item){
-							items.push({
-								ID: parseInt(item.ID),
-								TITLE: item.TITLE,
-								URL: url + "TEMPLATE="+parseInt(item.ID)
-							});
-						});
+					params = params.filter(function(value){
+						return value !== undefined;
+					});
+
+					if ( params.length )
+					{
+						url += params.join('&')+'&';
 					}
+
+					BX.Tasks.each(data, function(item){
+						items.push({
+							ID: parseInt(item.ID),
+							TITLE: item.TITLE,
+							URL: url + "TEMPLATE="+parseInt(item.ID)
+						});
+					});
 				}
 
 				return items;

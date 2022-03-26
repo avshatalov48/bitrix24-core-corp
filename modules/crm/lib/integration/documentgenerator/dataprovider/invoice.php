@@ -53,7 +53,7 @@ class Invoice extends ProductsDataProvider
 	 */
 	public static function getLangName()
 	{
-		return GetMessage('CRM_DOCGEN_DATAPROVIDER_INVOICE_TITLE');
+		return \CCrmOwnerType::GetDescription(\CCrmOwnerType::Invoice);
 	}
 
 	/**

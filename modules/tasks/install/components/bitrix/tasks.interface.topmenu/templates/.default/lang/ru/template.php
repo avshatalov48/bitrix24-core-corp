@@ -17,4 +17,4 @@ $MESS["TASKS_PANEL_TAB_TASKS"] = "Задачи";
 
 $MESS["TASKS_PANEL_TEXT_EFFECTIVE"] = "<strong>Эффективность</strong> – инструмент для учета количества текущих задач, а также контроля сроков их выполнения.";
 
-?>
+$MESS["TASKS_PANEL_TAB_SCRUM"] = "Скрам";

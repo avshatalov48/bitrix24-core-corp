@@ -35,7 +35,7 @@ class EpicTable extends Entity\DataManager
 		$modifiedBy = new Fields\IntegerField('MODIFIED_BY');
 
 		$color = new Fields\StringField('COLOR');
-		$color->addValidator(new Fields\Validators\LengthValidator(1, 18));
+		$color->addValidator(new Fields\Validators\LengthValidator(0, 18));
 
 		return [
 			$id,

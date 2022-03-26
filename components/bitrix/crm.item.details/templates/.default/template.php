@@ -13,7 +13,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 ]);
 
 if ($this->getComponent()->getErrors()):?>
-	<div class="ui-alert ui-alert-danger">
+	<div class="ui-alert ui-alert-danger" style="margin-bottom: 0px;">
 		<?php foreach($this->getComponent()->getErrors() as $error):?>
 			<span class="ui-alert-message"><?= htmlspecialcharsbx($error->getMessage()) ?></span>
 		<?php endforeach;?>
@@ -41,6 +41,7 @@ $this->getComponent()->addJsRouter($this);
 \Bitrix\Main\UI\Extension::load([
 	'crm.item-details-component',
 	'bp_starter',
+	'bizproc.script',
 ]);
 
 $APPLICATION->IncludeComponent(

@@ -26,6 +26,7 @@ BX.CRM.Kanban.Item = function(options)
 	this.useAnimation = false;
 	this.isAnimationInProgress = false;
 	this.changedInPullRequest = false;
+	this.notChangeTotal = false;
 };
 
 BX.CRM.Kanban.Item.prototype = {
@@ -1653,17 +1654,26 @@ BX.CRM.Kanban.Item.prototype = {
 			return;
 		}
 
-		success = this.getGrid().moveItem(draggableItem, this.getColumn(), this);
-		if (success)
-		{
-			BX.onCustomEvent(this.getGrid(), "Kanban.Grid:onItemMoved", [draggableItem, this.getColumn(), this]);
-		}
+		this.getGrid().moveItem(draggableItem, this.getColumn(), this, true).then(function(result){
+			if (result && result.status)
+			{
+				BX.onCustomEvent(
+					this.getGrid(),
+					'Kanban.Grid:onItemMoved',
+					[
+						draggableItem,
+						this.getColumn(),
+						this,
+					]
+				);
+			}
 
-		if (draggableItem.getColumn().getId() === this.getColumn().getId())
-		{
-			this.getGrid().resetMultiSelectMode();
-			this.getGrid().cleanSelectedItems();
-		}
+			if (draggableItem.getColumn().getId() === this.getColumn().getId())
+			{
+				this.getGrid().resetMultiSelectMode();
+				this.getGrid().cleanSelectedItems();
+			}
+		}.bind(this));
 	},
 
 	onDragStart: function()

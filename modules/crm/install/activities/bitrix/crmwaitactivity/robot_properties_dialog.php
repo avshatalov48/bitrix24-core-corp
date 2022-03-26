@@ -1,6 +1,12 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 /** @var \Bitrix\Bizproc\Activity\PropertiesDialog $dialog */
+
+use Bitrix\Main\Localization\Loc;
 
 $map = $dialog->getMap();
 $waitType = $map['WaitType'];
@@ -24,6 +30,15 @@ $runtimeData = $dialog->getRuntimeData();
 <input type="hidden" data-role="wait-target" name="<?=htmlspecialcharsbx($waitTarget['FieldName'])?>" value="<?=htmlspecialcharsbx($dialog->getCurrentValue($waitTarget['FieldName'], ''))?>">
 
 <script>
+
+	BX.message({
+		CRM_WAIT_ACTIVITY_WEEK_PLURAL_0: '<?= CUtil::JSEscape(Loc::getMessage('CRM_WAIT_ACTIVITY_WEEK_PLURAL_0')) ?>',
+		CRM_WAIT_ACTIVITY_WEEK_PLURAL_1: '<?= CUtil::JSEscape(Loc::getMessage('CRM_WAIT_ACTIVITY_WEEK_PLURAL_1')) ?>',
+		CRM_WAIT_ACTIVITY_WEEK_PLURAL_2: '<?= CUtil::JSEscape(Loc::getMessage('CRM_WAIT_ACTIVITY_WEEK_PLURAL_2')) ?>',
+		CRM_WAIT_ACTIVITY_DAY_PLURAL_0: '<?= CUtil::JSEscape(Loc::getMessage('CRM_WAIT_ACTIVITY_DAY_PLURAL_0')) ?>',
+		CRM_WAIT_ACTIVITY_DAY_PLURAL_1: '<?= CUtil::JSEscape(Loc::getMessage('CRM_WAIT_ACTIVITY_DAY_PLURAL_1')) ?>',
+		CRM_WAIT_ACTIVITY_DAY_PLURAL_2: '<?= CUtil::JSEscape(Loc::getMessage('CRM_WAIT_ACTIVITY_DAY_PLURAL_2')) ?>',
+	});
 
 	BX.ready(function ()
 	{
@@ -60,38 +75,17 @@ $runtimeData = $dialog->getRuntimeData();
 
 		var getDurationText = function(duration, enableNumber)
 		{
-			var getNumberDeclension = function(value, nominative, genitiveSingular, genitivePlural)
-			{
-				value = parseInt(value);
-				if (value > 20)
-					value = (value % 10);
-
-				if (value === 1)
-					return nominative;
-				else if (value > 1 && value < 5)
-					return genitiveSingular;
-				else
-					return genitivePlural;
-			};
+			duration = parseInt(duration);
+			var result = '';
 
 			if (enableNumber && (duration % 7) === 0)
 			{
 				duration = duration / 7;
-				result = getNumberDeclension(
-					duration,
-					'<?=GetMessageJS('CRM_WAIT_ACTIVITY_WEEK_NOMINATIVE')?>',
-					'<?=GetMessageJS('CRM_WAIT_ACTIVITY_WEEK_GENITIVE_SINGULAR')?>',
-					'<?=GetMessageJS('CRM_WAIT_ACTIVITY_WEEK_GENITIVE_PLURAL')?>'
-				);
+				result = BX.Loc.getMessagePlural('CRM_WAIT_ACTIVITY_WEEK', duration);
 			}
 			else
 			{
-				result = getNumberDeclension(
-					duration,
-					'<?=GetMessageJS('CRM_WAIT_ACTIVITY_DAY_NOMINATIVE')?>',
-					'<?=GetMessageJS('CRM_WAIT_ACTIVITY_DAY_GENITIVE_SINGULAR')?>',
-					'<?=GetMessageJS('CRM_WAIT_ACTIVITY_DAY_GENITIVE_PLURAL')?>'
-				);
+				result = BX.Loc.getMessagePlural('CRM_WAIT_ACTIVITY_DAY', duration);
 			}
 
 			if (enableNumber)

@@ -293,8 +293,18 @@ this.BX.Location = this.BX.Location || {};
 	  return true;
 	};
 
+	function _templateObject3() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"location-map-wrapper\">\n\t\t\t\t<div class=\"location-map-container\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>"]);
+
+	  _templateObject3 = function _templateObject3() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
 	function _templateObject2$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"location-map-wrapper\">\n\t\t\t\t<div class=\"location-map-container\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"location-map-address-third-party-warning\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"]);
 
 	  _templateObject2$1 = function _templateObject2() {
 	    return data;
@@ -715,9 +725,10 @@ this.BX.Location = this.BX.Location || {};
 	    gallery = babelHelpers.classPrivateFieldGet(this, _gallery).render();
 	  }
 
-	  babelHelpers.classPrivateFieldSet(this, _contentWrapper, main_core.Tag.render(_templateObject2$1(), mapInnerContainer, gallery, babelHelpers.classPrivateFieldGet(this, _mode) === location_core.ControlMode.edit ? babelHelpers.classPrivateFieldGet(this, _addressString).render({
+	  var thirdPartyWarningNode = main_core.Tag.render(_templateObject2$1(), main_core.Loc.getMessage('LOCATION_WIDGET_THIRD_PARTY_WARNING'));
+	  babelHelpers.classPrivateFieldSet(this, _contentWrapper, main_core.Tag.render(_templateObject3(), mapInnerContainer, gallery, babelHelpers.classPrivateFieldGet(this, _mode) === location_core.ControlMode.edit ? babelHelpers.classPrivateFieldGet(this, _addressString).render({
 	    address: babelHelpers.classPrivateFieldGet(this, _address$1)
-	  }) : '', babelHelpers.classPrivateFieldGet(this, _mode) === location_core.ControlMode.edit ? babelHelpers.classPrivateFieldGet(this, _addressApplier).$el : ''));
+	  }) : '', thirdPartyWarningNode, babelHelpers.classPrivateFieldGet(this, _mode) === location_core.ControlMode.edit ? babelHelpers.classPrivateFieldGet(this, _addressApplier).$el : ''));
 	  main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _contentWrapper), 'click', function (e) {
 	    return e.stopPropagation();
 	  });
@@ -1413,10 +1424,10 @@ this.BX.Location = this.BX.Location || {};
 	  babelHelpers.classPrivateFieldGet(this, _features).splice(0, babelHelpers.classPrivateFieldGet(this, _features).length);
 	};
 
-	function _templateObject3() {
+	function _templateObject3$1() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t<span class=\"location-map-popup-item--info\"> \t\t\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</span>\t\t\t\n\t\t\t</div>\n\t\t"]);
 
-	  _templateObject3 = function _templateObject3() {
+	  _templateObject3$1 = function _templateObject3() {
 	    return data;
 	  };
 
@@ -1483,7 +1494,7 @@ this.BX.Location = this.BX.Location || {};
 	    value: function render() {
 	      babelHelpers.classPrivateFieldSet(this, _leftItemNodeContainer, main_core.Tag.render(_templateObject$2()));
 	      babelHelpers.classPrivateFieldSet(this, _rightItemNodeContainer, main_core.Tag.render(_templateObject2$2()));
-	      babelHelpers.classPrivateFieldSet(this, _node, main_core.Tag.render(_templateObject3(), babelHelpers.classPrivateFieldGet(this, _leftItemNodeContainer), babelHelpers.classPrivateFieldGet(this, _rightItemNodeContainer)));
+	      babelHelpers.classPrivateFieldSet(this, _node, main_core.Tag.render(_templateObject3$1(), babelHelpers.classPrivateFieldGet(this, _leftItemNodeContainer), babelHelpers.classPrivateFieldGet(this, _rightItemNodeContainer)));
 	      return babelHelpers.classPrivateFieldGet(this, _node);
 	    }
 	  }, {
@@ -3479,10 +3490,10 @@ this.BX.Location = this.BX.Location || {};
 	  return data;
 	}
 
-	function _templateObject3$1() {
+	function _templateObject3$2() {
 	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-entity-editor-content-block\">\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-textbox ui-ctl-w100\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>"]);
 
-	  _templateObject3$1 = function _templateObject3() {
+	  _templateObject3$2 = function _templateObject3() {
 	    return data;
 	  };
 
@@ -3722,7 +3733,7 @@ this.BX.Location = this.BX.Location || {};
 	      value: _this2
 	    });
 	  });
-	  container.appendChild(main_core.Tag.render(_templateObject3$1(), babelHelpers.classPrivateFieldGet(this, _input$1)));
+	  container.appendChild(main_core.Tag.render(_templateObject3$2(), babelHelpers.classPrivateFieldGet(this, _input$1)));
 	};
 
 	var _renderViewMode2 = function _renderViewMode2(container) {
@@ -5012,10 +5023,10 @@ this.BX.Location = this.BX.Location || {};
 	  return data;
 	}
 
-	function _templateObject3$2() {
+	function _templateObject3$3() {
 	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-ctl ui-ctl-w100 ui-ctl-after-icon\">", "", "", "</div>"]);
 
-	  _templateObject3$2 = function _templateObject3() {
+	  _templateObject3$3 = function _templateObject3() {
 	    return data;
 	  };
 
@@ -5271,7 +5282,7 @@ this.BX.Location = this.BX.Location || {};
 	          type: _classStaticPrivateMethodGet$1(UIAddress, UIAddress, _chooseInputIconTypeByAddress).call(UIAddress, _classPrivateMethodGet$d(this, _getAddress, _getAddress2).call(this))
 	        });
 
-	        this._inputContainer = main_core.Tag.render(_templateObject3$2(), inputIconNode, this._input, this._hiddenInput);
+	        this._inputContainer = main_core.Tag.render(_templateObject3$3(), inputIconNode, this._input, this._hiddenInput);
 
 	        this._titleWrapper.appendChild(main_core.Tag.render(_templateObject4$1(), this._fieldsSwitch.render(this._mode)));
 

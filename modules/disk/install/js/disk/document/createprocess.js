@@ -20,6 +20,7 @@
 		this.typeFile = parameters.typeFile;
 		this.targetFolderId = parameters.targetFolderId;
 		this.serviceCode = parameters.serviceCode;
+		this.additionalQueryParameters = parameters.additionalQueryParameters || {};
 		this.service = null;
 		this.popupConfirm = null;
 	};
@@ -31,12 +32,12 @@
 
 		getSliderQueryParameters: function()
 		{
-			return {
+			return Object.assign({
 				action: 'disk.api.documentService.goToCreate',
 				serviceCode: this.serviceCode,
 				typeFile: this.typeFile,
 				targetFolderId: this.targetFolderId
-			}
+			}, this.additionalQueryParameters)
 		},
 
 		getSliderData: function ()

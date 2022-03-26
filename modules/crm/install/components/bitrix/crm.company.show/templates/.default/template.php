@@ -2,6 +2,7 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use \Bitrix\Crm\Integration\StorageType;
+use Bitrix\Crm\Restriction\RestrictionManager;
 
 global $APPLICATION;
 $APPLICATION->AddHeadScript('/bitrix/js/crm/instant_editor.js');
@@ -143,13 +144,19 @@ if (!empty($arResult['FIELDS']['tab_tree']))
 }
 if (!empty($arResult['FIELDS']['tab_event']))
 {
-	$arTabs[] = array(
+	$tabEventParams = [
 		'id' => 'tab_event',
 		'name' => GetMessage('CRM_TAB_HISTORY'),
 		'title' => GetMessage('CRM_TAB_HISTORY_TITLE'),
 		'icon' => '',
 		'fields' => $arResult['FIELDS']['tab_event']
-	);
+	];
+	if (isset($arResult['TAB_EVENT_TARIFF_LOCK']) && $arResult['TAB_EVENT_TARIFF_LOCK'] === 'Y')
+	{
+		$tabEventParams['tariffLock'] = RestrictionManager::getHistoryViewRestriction()->prepareInfoHelperScript();
+	}
+	$arTabs[] = $tabEventParams;
+	unset($tabEventParams);
 }
 if(!empty($arResult['LISTS']))
 {

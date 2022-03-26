@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Crm\Service\Container;
+
 define('NO_KEEP_STATISTIC', 'Y');
 define('NO_AGENT_STATISTIC','Y');
 define('NO_AGENT_CHECK', true);
@@ -87,7 +90,21 @@ elseif($dealID > 0)
 {
 	$isPermitted = CCrmDeal::CheckReadPermission($dealID, $userPermissions);
 }
-
+elseif (isset(
+	$filter['ASSOCIATED_ENTITY_TYPE_ID'],
+	$filter['ASSOCIATED_ENTITY_ID']
+))
+{
+	$parentEntityTypeId = (int)$filter['ASSOCIATED_ENTITY_TYPE_ID'];
+	$parentEntityId = (int)$filter['ASSOCIATED_ENTITY_ID'];
+	if ($parentEntityTypeId && $parentEntityId)
+	{
+		$isPermitted = Container::getInstance()->getUserPermissions()->checkReadPermissions(
+			$parentEntityTypeId,
+			$parentEntityId
+		);
+	}
+}
 if(!$isPermitted)
 {
 	die();

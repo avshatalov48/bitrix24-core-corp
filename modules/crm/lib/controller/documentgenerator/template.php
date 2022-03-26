@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Controller\DocumentGenerator;
 
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\DocumentGenerator\Model\FileTable;
 use Bitrix\Main\Application;
 use Bitrix\Main\Engine\Response\DataType\ContentUri;
@@ -278,5 +279,16 @@ class Template extends Base
 		}
 
 		return $data;
+	}
+
+	public function listForItemAction(int $entityTypeId, int $entityId): ?array
+	{
+		$documentGeneratorManager = DocumentGeneratorManager::getInstance();
+
+		return [
+			'templates' => $documentGeneratorManager->getTemplatesByIdentifier(
+				new ItemIdentifier($entityTypeId, $entityId)
+			),
+		];
 	}
 }

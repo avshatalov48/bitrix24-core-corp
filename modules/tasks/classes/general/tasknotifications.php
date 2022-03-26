@@ -527,7 +527,7 @@ class CTaskNotifications
 								{
 									if($arTaskFrom = $rsTaskFrom->GetNext())
 									{
-										$tmpStr .= $arTaskFrom["TITLE"]." -> ";
+										$tmpStr .= \Bitrix\Main\Text\Emoji::decode($arTaskFrom["TITLE"])." -> ";
 									}
 								}
 							}
@@ -537,7 +537,7 @@ class CTaskNotifications
 								{
 									if($arTaskTo = $rsTaskTo->GetNext())
 									{
-										$tmpStr .= $arTaskTo["TITLE"];
+										$tmpStr .= \Bitrix\Main\Text\Emoji::decode($arTaskTo["TITLE"]);
 									}
 								}
 							}
@@ -554,7 +554,7 @@ class CTaskNotifications
 								$rsTasksFrom = CTasks::GetList(array(), array("ID" => explode(",", $value["FROM_VALUE"])), array('ID', 'TITLE'));
 								while($arTaskFrom = $rsTasksFrom->GetNext())
 								{
-									$arTasksFromStr[] = $arTaskFrom["TITLE"];
+									$arTasksFromStr[] = \Bitrix\Main\Text\Emoji::decode($arTaskFrom["TITLE"]);
 								}
 							}
 							$arTasksToStr = array();
@@ -563,7 +563,7 @@ class CTaskNotifications
 								$rsTasksTo = CTasks::GetList(array(), array("ID" => explode(",", $value["TO_VALUE"])), array('ID', 'TITLE'));
 								while($arTaskTo = $rsTasksTo->GetNext())
 								{
-									$arTasksToStr[] = $arTaskTo["TITLE"];
+									$arTasksToStr[] = \Bitrix\Main\Text\Emoji::decode($arTaskTo["TITLE"]);
 								}
 							}
 							$tmpStr .= ($arTasksFromStr? implode(", ", $arTasksFromStr)." -> " : "").($arTasksToStr? implode(", ", $arTasksToStr) : GetMessage("TASKS_MESSAGE_NO_VALUE"));
@@ -1404,9 +1404,24 @@ class CTaskNotifications
 	{
 		$resultUsers = [];
 
+		$emailUsers = array_column(
+			\Bitrix\Main\UserTable::getList([
+				'select' => ['ID'],
+				'filter' => [
+					'ID' => $users,
+					'EXTERNAL_AUTH_ID' => 'email',
+				],
+			])->fetchAll(),
+			'ID'
+		);
+		$emailUsers = array_map('intval', $emailUsers);
+
 		foreach ($users as $userId)
 		{
-			if (!UserOption::isOptionSet($taskId, $userId, UserOption\Option::MUTED))
+			if (
+				in_array((int)$userId, $emailUsers, true)
+				|| !UserOption::isOptionSet($taskId, $userId, UserOption\Option::MUTED)
+			)
 			{
 				$resultUsers[] = $userId;
 			}
@@ -2762,32 +2777,32 @@ class CTaskNotifications
 
 		if ($minutes < 60)
 		{
-			$duration = $minutes . ' ' . CTasksTools::getMessagePlural(
-					$minutes,
-					'TASKS_TASK_DURATION_MINUTES'
+			$duration = $minutes . ' ' . Loc::getMessagePlural(
+					'TASKS_TASK_DURATION_MINUTES',
+					(int)$minutes
 				);
 		}
 		elseif ($minutesInResid = $minutes % 60)
 		{
 			$duration = $hours
 				. ' '
-				. CTasksTools::getMessagePlural(
-					$hours,
-					'TASKS_TASK_DURATION_HOURS'
+				. Loc::getMessagePlural(
+					'TASKS_TASK_DURATION_HOURS',
+					(int)$hours
 				)
 				. ' '
 				. (int) $minutesInResid
 				. ' '
-				. CTasksTools::getMessagePlural(
-					(int) $minutesInResid,
-					'TASKS_TASK_DURATION_MINUTES'
+				. Loc::getMessagePlural(
+					'TASKS_TASK_DURATION_MINUTES',
+					(int)$minutesInResid
 				);
 		}
 		else
 		{
-			$duration = $hours . ' ' . CTasksTools::getMessagePlural(
-					$hours,
-					'TASKS_TASK_DURATION_HOURS'
+			$duration = $hours . ' ' . Loc::getMessagePlural(
+					'TASKS_TASK_DURATION_HOURS',
+					(int)$hours
 				);
 		}
 
@@ -2797,9 +2812,9 @@ class CTaskNotifications
 			{
 				$duration .= ' ' . (int) $secondsInResid
 					. ' '
-					. CTasksTools::getMessagePlural(
-						(int) $secondsInResid,
-						'TASKS_TASK_DURATION_SECONDS'
+					. Loc::getMessagePlural(
+						'TASKS_TASK_DURATION_SECONDS',
+						(int)$secondsInResid
 					);
 			}
 		}

@@ -24,7 +24,6 @@ $MESS['OL_COMPONENT_LE_MENU_AUTOMATIC_ACTIONS'] = 'Автоматические 
 $MESS['OL_COMPONENT_LE_MENU_QUALITY_MARK'] = 'Оценка качества';
 $MESS['OL_COMPONENT_LE_MENU_BOTS'] = 'Чат-боты';
 $MESS['OL_COMPONENT_LE_MENU_KPI'] = 'KPI';
-$MESS['OL_COMPONENT_LE_MENU_FORMS'] = 'CRM-формы';
 $MESS['OL_COMPONENT_LE_MENU_OTHERS'] = 'Прочее';
 $MESS['OL_COMPONENT_LE_ERROR_PERMISSION'] = 'Нет доступа к данному действию с открытой линией';
 $MESS['OL_COMPONENT_ERROR_SAVE_CONFIG'] = 'Ошибка сохранения конфигурации открытой линии.';

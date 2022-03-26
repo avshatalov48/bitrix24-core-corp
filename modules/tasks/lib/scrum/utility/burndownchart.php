@@ -14,7 +14,8 @@ class BurnDownChart
 			]
 		];
 
-		$averagePointsPerDay = ($sumStoryPoints / count($sprintRanges->getWeekdays()));
+		$weekDayCount = count($sprintRanges->getWeekdays());
+		$averagePointsPerDay = $weekDayCount > 0 ? ($sumStoryPoints / $weekDayCount) : 0;
 
 		$value = 0;
 		foreach ($sprintRanges->getWeekdays() as $dayNumber => $dayTime)

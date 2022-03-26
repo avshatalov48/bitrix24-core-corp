@@ -7,6 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Bizproc\FieldType;
 use Bitrix\Crm;
+use Bitrix\Crm\Automation;
 use Bitrix\Main\Localization\Loc;
 
 class CBPCrmDeleteDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
@@ -32,11 +33,11 @@ class CBPCrmDeleteDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		$errors = parent::checkProperties();
 
 		$factory = Crm\Service\Container::getInstance()->getFactory($this->EntityTypeId);
-		if (!CCrmOwnerType::isPossibleDynamicTypeId($this->EntityTypeId) || is_null($factory))
+		if (is_null($factory) || !Automation\Factory::isSupported($factory->getEntityTypeId()))
 		{
 			$errors->setError(new \Bitrix\Main\Error(Loc::getMessage('CRM_DDA_TYPE_ID_ERROR')));
 		}
-		if (is_null($factory->getItem($this->EntityId)))
+		elseif (is_null($factory->getItem($this->EntityId)))
 		{
 			$errors->setError(new \Bitrix\Main\Error(Loc::getMessage('CRM_DDA_ENTITY_ERROR')));
 		}
@@ -50,9 +51,10 @@ class CBPCrmDeleteDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 
 		$documentId = CCrmBizProcHelper::ResolveDocumentId($this->EntityTypeId, $this->EntityId);
 
-		if (!Crm\Integration\BizProc\Document\Dynamic::DeleteDocument($documentId[2]))
+		$deletionResult = static::getDocumentService()->DeleteDocument($documentId);
+		if (is_bool($deletionResult) && !$deletionResult)
 		{
-			$errorCollection->setError(new \Bitrix\Main\Error('CRM_DDA_DELETE_ERROR'));
+			$errorCollection->setError(new \Bitrix\Main\Error(Loc::getMessage('CRM_DDA_DELETE_ERROR')));
 		}
 
 		[$currentEntityTypeId, $currentEntityId] = CCrmBizProcHelper::resolveEntityId($this->GetDocumentId());
@@ -72,28 +74,30 @@ class CBPCrmDeleteDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 
 	public static function getPropertiesDialogMap(?\Bitrix\Bizproc\Activity\PropertiesDialog $dialog = null): array
 	{
-		$typesMap = Crm\Service\Container::getInstance()->getDynamicTypesMap();
-		$typesMap->load([
-			'isLoadStages' => false,
-			'isLoadCategories' => false,
-		]);
+		$typesMap = Crm\Service\Container::getInstance()->getTypesMap();
 
 		$typeNames = [];
-		foreach ($typesMap->getTypes() as $typeId => $type)
+		foreach ($typesMap->getFactories() as $factory)
 		{
-			$typeNames[$typeId] = $type->getTitle();
+			$entityTypeId = $factory->getEntityTypeId();
+			$documentType = CCrmBizProcHelper::ResolveDocumentType($entityTypeId);
+
+			if (isset($documentType) && Automation\Factory::isSupported($entityTypeId))
+			{
+				$typeNames[$entityTypeId] = static::getDocumentService()->getDocumentTypeName($documentType);
+			}
 		}
 
 		return [
 			'EntityTypeId' => [
-				'Name' => Loc::getMessage('CRM_DDA_DYNAMIC_TYPE'),
+				'Name' => Loc::getMessage('CRM_DDA_ELEMENT_TYPE'),
 				'FieldName' => 'entity_type_id',
 				'Type' => FieldType::SELECT,
 				'Options' => $typeNames,
 				'Required' => true,
 			],
 			'EntityId' => [
-				'Name' => Loc::getMessage('CRM_DDA_DYNAMIC_ID'),
+				'Name' => Loc::getMessage('CRM_DDA_ELEMENT_ID'),
 				'FieldName' => 'entity_id',
 				'Type' => FieldType::INT,
 				'Required' => true,

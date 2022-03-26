@@ -5,6 +5,12 @@ class CCrmProductRow extends CAllCrmProductRow
 	const CONFIG_TABLE_NAME = 'b_crm_product_row_cfg';
 	const DB_TYPE = 'MYSQL';
 
+	/** @var bool */
+	static $perRowInsert = false;
+
+	/** @var array */
+	static $originalRows = [];
+
 	// Contract -->
 	public static function DeleteByOwner($ownerType, $ownerID)
 	{
@@ -23,6 +29,8 @@ class CCrmProductRow extends CAllCrmProductRow
 	{
 		global $DB;
 
+		static::$originalRows = $arRows;
+
 		if(!is_int($ownerID))
 		{
 			$ownerID = (int)$ownerID;
@@ -31,7 +39,7 @@ class CCrmProductRow extends CAllCrmProductRow
 		$insertRows = array();
 		$updateRows = array();
 		$deleteRows = array();
-		foreach($arRows as $row)
+		foreach($arRows as $index => $row)
 		{
 			if(isset($row['ID']) && $row['ID'] > 0)
 			{
@@ -39,6 +47,7 @@ class CCrmProductRow extends CAllCrmProductRow
 			}
 			else
 			{
+				$row['ORIGINAL_INDEX'] = $index;
 				$insertRows[] = $row;
 			}
 		}
@@ -82,36 +91,59 @@ class CCrmProductRow extends CAllCrmProductRow
 		}
 		if(!empty($insertRows))
 		{
-			$scriptColumns = '';
-			$scriptValues = '';
-			foreach($insertRows as $row)
+			if (self::$perRowInsert)
 			{
-				unset($row['ID']);
-
-				$row['OWNER_TYPE'] = $ownerType;
-				$row['OWNER_ID'] = $ownerID;
-				$data = $DB->PrepareInsert($tableName, $row);
-
-				if($scriptColumns === '')
+				foreach($insertRows as $row)
 				{
-					$scriptColumns = $data[0];
-				}
+					unset($row['ID']);
 
-				if($scriptValues !== '')
-				{
-					$scriptValues .= ",({$data[1]})";
-				}
-				else
-				{
-					$scriptValues = "({$data[1]})";
+					$row['OWNER_TYPE'] = $ownerType;
+					$row['OWNER_ID'] = $ownerID;
+					$data = $DB->PrepareInsert($tableName, $row);
+
+					$DB->Query(
+						"INSERT INTO {$tableName}({$data[0]}) VALUES ({$data[1]})",
+						false,
+						'File: '.__FILE__.'<br/>Line: '.__LINE__
+					);
+
+					static::$originalRows[$row['ORIGINAL_INDEX']]['ID'] = (int)$DB->LastID();
 				}
 			}
+			else
+			{
+				$scriptColumns = '';
+				$scriptValues = '';
+				foreach($insertRows as $row)
+				{
+					unset($row['ID']);
 
-			$DB->Query(
-				"INSERT INTO {$tableName}({$scriptColumns}) VALUES {$scriptValues}",
-				false,
-				'File: '.__FILE__.'<br/>Line: '.__LINE__
-			);
+					$row['OWNER_TYPE'] = $ownerType;
+					$row['OWNER_ID'] = $ownerID;
+					$data = $DB->PrepareInsert($tableName, $row);
+
+					if($scriptColumns === '')
+					{
+						$scriptColumns = $data[0];
+					}
+
+					if($scriptValues !== '')
+					{
+						$scriptValues .= ",({$data[1]})";
+					}
+					else
+					{
+						$scriptValues = "({$data[1]})";
+					}
+				}
+
+				$DB->Query(
+					"INSERT INTO {$tableName}({$scriptColumns}) VALUES {$scriptValues}",
+					false,
+					'File: '.__FILE__.'<br/>Line: '.__LINE__
+				);
+			}
+
 		}
 
 		return true;
@@ -151,5 +183,22 @@ class CCrmProductRow extends CAllCrmProductRow
 
 		$DB->Query($sql, false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
 	}
+
+	/**
+	 * @param bool $perRowInsert
+	 */
+	public static function setPerRowInsert(bool $perRowInsert): void
+	{
+		self::$perRowInsert = $perRowInsert;
+	}
+
+	/**
+	 * @return array
+	 */
+	public static function getOriginalRows(): array
+	{
+		return self::$originalRows;
+	}
+
 	// <-- Contract
 }

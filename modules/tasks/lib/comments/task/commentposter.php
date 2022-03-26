@@ -671,25 +671,25 @@ class CommentPoster
 
 		if ($minutes < 60)
 		{
-			$minutesMessage = \CTasksTools::getMessagePlural($minutes, 'TASKS_TASK_DURATION_MINUTES');
+			$minutesMessage = Loc::getMessagePlural('TASKS_TASK_DURATION_MINUTES', $minutes);
 			$duration = "{$minutes} {$minutesMessage}";
 		}
 		elseif ($minutesInRemainder = $minutes % 60)
 		{
-			$hoursMessage = \CTasksTools::getMessagePlural($hours, 'TASKS_TASK_DURATION_HOURS');
-			$minutesMessage = \CTasksTools::getMessagePlural($minutesInRemainder, 'TASKS_TASK_DURATION_MINUTES');
+			$hoursMessage = Loc::getMessagePlural('TASKS_TASK_DURATION_HOURS', $hours);
+			$minutesMessage = Loc::getMessagePlural('TASKS_TASK_DURATION_MINUTES', $minutesInRemainder);
 
 			$duration = "{$hours} {$hoursMessage} {$minutesInRemainder} {$minutesMessage}";
 		}
 		else
 		{
-			$hoursMessage = \CTasksTools::getMessagePlural($hours, 'TASKS_TASK_DURATION_HOURS');
+			$hoursMessage = Loc::getMessagePlural('TASKS_TASK_DURATION_HOURS', $hours);
 			$duration = "{$hours} {$hoursMessage}";
 		}
 
 		if ($seconds < 3600 && ($secondsInRemainder = $seconds % 60))
 		{
-			$secondsMessage = \CTasksTools::getMessagePlural($secondsInRemainder, 'TASKS_TASK_DURATION_SECONDS');
+			$secondsMessage = Loc::getMessagePlural('TASKS_TASK_DURATION_SECONDS', $secondsInRemainder);
 			$duration .= " {$secondsInRemainder} {$secondsMessage}";
 		}
 

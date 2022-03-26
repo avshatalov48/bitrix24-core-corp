@@ -83,14 +83,14 @@ class CrmClientPortraitComponent extends \CBitrixComponent
 			case CCrmOwnerType::Company:
 				$iterator = CCrmCompany::GetListEx(
 					array(),
-					array('ID' => $elementId)
+					array('ID' => $elementId, '@CATEGORY_ID' => 0,)
 				);
 				break;
 				
 			case CCrmOwnerType::Contact:
 				$iterator = CCrmContact::GetListEx(
 					array(),
-					array('ID' => $elementId)
+					array('ID' => $elementId, '@CATEGORY_ID' => 0,)
 				);
 				break;
 		}

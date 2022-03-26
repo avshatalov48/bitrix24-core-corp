@@ -70,7 +70,7 @@ $fieldName = HtmlFilter::encode($arResult['userField']['FIELD_NAME']);
 				{
 					// @todo remove after support dynamic entity in mobile
 					$typeId = \CCrmOwnerType::ResolveID($entityType);
-					if(!\CCrmOwnerType::isPossibleDynamicTypeId($typeId))
+					if(!\CCrmOwnerType::isUseDynamicTypeBasedApproach($typeId))
 					{
 					?>
 					<a

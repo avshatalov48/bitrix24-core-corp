@@ -1,5 +1,9 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
 
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
@@ -54,6 +58,7 @@ class CCrmEntityEditorComponent extends UIFormComponent
 				'ENTITY_TYPE_ID' => CCrmOwnerType::Undefined,
 				'DUPLICATE_CONTROL' => [],
 				'USER_FIELD_PREFIX' => 'CRM',
+				'ENTITY_TYPE_TITLE' => '',
 			]
 		);
 	}
@@ -87,6 +92,11 @@ class CCrmEntityEditorComponent extends UIFormComponent
 			if($typeName === 'html')
 			{
 				$htmlFieldNames[] = $name;
+			}
+
+			if ($name === 'LINK' && $typeName === 'multifield')
+			{
+				continue;
 			}
 
 			if (
@@ -396,6 +406,13 @@ class CCrmEntityEditorComponent extends UIFormComponent
 		$this->entityTypeName = CCrmOwnerType::ResolveName($this->entityTypeID);
 		$this->arResult['ENTITY_TYPE_NAME'] = $this->entityTypeName;
 
+		if (empty($this->arResult['ENTITY_TYPE_TITLE']))
+		{
+			$this->arResult['ENTITY_TYPE_TITLE'] = Main\Text\HtmlFilter::encode(
+				CCrmOwnerType::GetDescription($this->entityTypeID)
+			);
+		}
+
 		$this->prepareConfig();
 
 		$this->arResult['ENABLE_SETTINGS_FOR_ALL'] = CCrmAuthorizationHelper::CanEditOtherSettings();
@@ -568,12 +585,21 @@ class CCrmEntityEditorComponent extends UIFormComponent
 		$this->arResult['EDITOR_OPTIONS'] = array('show_always' => 'Y');
 		$this->arResult['ENTITY_CONFIG_CATEGORY_NAME'] = $this->getConfigurationCategoryName();
 
-		//region Spotlight
-		$this->arResult['INLINE_EDIT_SPOTLIGHT_ID'] = "crm-entity-editor-inline-edit-hint";
-		$spotlight = new Spotlight($this->arResult['INLINE_EDIT_SPOTLIGHT_ID']);
-		$spotlight->setUserType(Spotlight::USER_TYPE_OLD);
-		$this->arResult['ENABLE_INLINE_EDIT_SPOTLIGHT'] = $spotlight->isAvailable();
-		//endregion
+		if ($this->arResult['READ_ONLY'])
+		{
+			//region Spotlight
+			$this->arResult['ENABLE_INLINE_EDIT_SPOTLIGHT'] = false;
+			//endregion
+		}
+		else
+		{
+			//region Spotlight
+			$this->arResult['INLINE_EDIT_SPOTLIGHT_ID'] = "crm-entity-editor-inline-edit-hint";
+			$spotlight = new Spotlight($this->arResult['INLINE_EDIT_SPOTLIGHT_ID']);
+			$spotlight->setUserType(Spotlight::USER_TYPE_OLD);
+			$this->arResult['ENABLE_INLINE_EDIT_SPOTLIGHT'] = $spotlight->isAvailable();
+			//endregion
+		}
 
 		if (\Bitrix\Crm\Integration\Calendar::isResourceBookingAvailableForEntity($this->arParams['USER_FIELD_ENTITY_ID']))
 		{

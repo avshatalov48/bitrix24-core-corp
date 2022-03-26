@@ -11,6 +11,7 @@ return array(
 				'\\Bitrix\\Crm\\Controller\\Requisite' => 'requisite',
 				'\\Bitrix\\Crm\\Controller\\Status' => 'status',
 				'\\Bitrix\\Crm\\Controller\\Ads' => 'ads',
+				'\\Bitrix\\Crm\\Controller\\Mobile' => 'mobile',
 			],
 			'restIntegration' => [
 				'enabled' => true,
@@ -58,8 +59,20 @@ return array(
 			'crm.service.factory.company' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Factory\\Company',
 			],
+			'crm.service.factory.smartInvoice' => [
+				'className' => '\\Bitrix\\Crm\\Service\\Factory\\SmartInvoice',
+			],
 			'crm.type.factory' => [
 				'className' => '\\Bitrix\\Crm\\Model\\Dynamic\\Factory',
+			],
+			'crm.service.webform.scenario' => [
+				'className' => '\\Bitrix\\Crm\\Service\\WebForm\\WebFormScenarioService',
+				'constructorParams' => static function () : array {
+					return [
+						\Bitrix\Main\Engine\CurrentUser::get(),
+						\Bitrix\Main\Context::getCurrent()->getCulture()
+					];
+				}
 			],
 			'crm.service.converter.ormObject' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Converter\\OrmObject',
@@ -82,11 +95,35 @@ return array(
 			'crm.service.broker.user' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Broker\\User',
 			],
+			'crm.service.broker.enumeration' => [
+				'className' => '\\Bitrix\\Crm\\Service\\Broker\\Enumeration',
+			],
+			'crm.service.broker.file' => [
+				'className' => '\\Bitrix\\Crm\\Service\\Broker\\File',
+			],
+			'crm.service.broker.iblockelement' => [
+				'className' => '\\Bitrix\\Crm\\Service\\Broker\\IBlockElement',
+			],
+			'crm.service.broker.iblocksection' => [
+				'className' => '\\Bitrix\\Crm\\Service\\Broker\\IBlockSection',
+			],
 			'crm.service.broker.company' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Broker\\Company',
 			],
 			'crm.service.broker.contact' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Broker\\Contact',
+			],
+			'crm.service.broker.lead' => [
+				'className' => '\\Bitrix\\Crm\\Service\\Broker\\Lead',
+			],
+			'crm.service.broker.deal' => [
+				'className' => '\\Bitrix\\Crm\\Service\\Broker\\Deal',
+			],
+			'crm.service.broker.order' => [
+				'className' => '\\Bitrix\\Crm\\Service\\Broker\\Order',
+			],
+			'crm.service.broker.dynamic' => [
+				'className' => '\\Bitrix\\Crm\\Service\\Broker\\Dynamic',
 			],
 			'crm.service.director' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Director',
@@ -133,6 +170,36 @@ return array(
 			'crm.kanban.entity.dynamic' => [
 				'className' => '\\Bitrix\\Crm\\Kanban\\Entity\\Dynamic',
 			],
+			'crm.kanban.entity.smartInvoice' => [
+				'className' => '\\Bitrix\\Crm\\Kanban\\Entity\\SmartInvoice',
+			],
+			'crm.listEntity.entity.lead' => [
+				'className' => '\\Bitrix\\Crm\\listEntity\\Entity\\Lead',
+			],
+			'crm.listEntity.entity.deal' => [
+				'className' => '\\Bitrix\\Crm\\ListEntity\\Entity\\Deal',
+			],
+			'crm.listEntity.entity.invoice' => [
+				'className' => '\\Bitrix\\Crm\\listEntity\\Entity\\Invoice',
+			],
+			'crm.listEntity.entity.quote' => [
+				'className' => '\\Bitrix\\Crm\\listEntity\\Entity\\Quote',
+			],
+			'crm.listEntity.entity.order' => [
+				'className' => '\\Bitrix\\Crm\\listEntity\\Entity\\Order',
+			],
+			'crm.listEntity.entity.contact' => [
+				'className' => '\\Bitrix\\Crm\\listEntity\\Entity\\Contact',
+			],
+			'crm.listEntity.entity.company' => [
+				'className' => '\\Bitrix\\Crm\\listEntity\\Entity\\Company',
+			],
+			'crm.listEntity.entity.dynamic' => [
+				'className' => '\\Bitrix\\Crm\\listEntity\\Entity\\Dynamic',
+			],
+			'crm.listEntity.entity.smartInvoice' => [
+				'className' => '\\Bitrix\\Crm\\listEntity\\Entity\\SmartInvoice',
+			],
 			'crm.integration.documentgeneratormanager' => [
 				'className' => '\\Bitrix\\Crm\\Integration\\DocumentGeneratorManager',
 			],
@@ -153,20 +220,21 @@ return array(
 			],
 			'crm.service.ads.conversion.facebook' => [
 				'className' => '\\Bitrix\\Crm\\Ads\\Pixel\\ConversionWrapper',
-				'constructorParams' => function () {
+				'constructorParams' => static function () {
 					$locator = \Bitrix\Main\DI\ServiceLocator::getInstance();
 					if (\Bitrix\Main\Loader::includeModule('seo') && $locator->has('seo.business.conversion'))
 					{
 						return [$locator->get('seo.business.conversion')];
 					}
-					return null;
+
+					return [null];
 				}
 			],
 			'crm.service.ads.conversion.configurator' => [
 				'className' => '\\Bitrix\\Crm\\Ads\\Pixel\\Configuration\\Configurator'
 			],
-			'crm.deal.paymentDocumentsRepository' => [
-				'className' => '\\Bitrix\\Crm\\Deal\\PaymentDocumentsRepository',
+			'crm.entity.paymentDocumentsRepository' => [
+				'className' => '\\Bitrix\\Crm\\Entity\\PaymentDocumentsRepository',
 			],
 			'crm.filter.factory' => [
 				'className' => '\\Bitrix\\Crm\\Filter\\Factory',
@@ -179,6 +247,9 @@ return array(
 			],
 			'crm.timeline.historyDataModel.maker' => [
 				'className' => '\\Bitrix\\Crm\\Timeline\\HistoryDataModel\\Maker',
+			],
+			'crm.conversion.mapper' => [
+				'className' => '\\Bitrix\\Crm\\Conversion\\Mapper',
 			],
 		],
 		'readonly' => true,
@@ -226,6 +297,13 @@ return array(
 					'provider' => [
 						'moduleId' => 'crm',
 						'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\DynamicProvider'
+					],
+				],
+				[
+					'entityId' => 'smart_invoice',
+					'provider' => [
+						'moduleId' => 'crm',
+						'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\SmartInvoice'
 					],
 				],
 			],

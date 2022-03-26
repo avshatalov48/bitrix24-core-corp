@@ -1,5 +1,7 @@
 (() =>
 {
+	const imagePath = '/bitrix/mobileapp/mobile/extensions/bitrix/selector/providers/chat/images/';
+
 	const defaultOptions = {
 		entities: {
 			'user': {
@@ -46,6 +48,11 @@
 						subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_SUPPORT24_NOTIFIER_SUBTITLE'),
 						textColor: '#0165af',
 					},
+					SUPPORT24_QUESTION: {
+						subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_SUPPORT24_QUESTION_SUBTITLE'),
+						textColor: '#0165af',
+						imageUrl: imagePath + 'avatar_24_question_x3.png',
+					},
 					LINES: {
 						subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_LINES_SUBTITLE'),
 						textColor:'#0a962f',
@@ -59,7 +66,6 @@
 			'im-bot': {
 				itemOptions: {
 					default: {
-						subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_BOT_SUBTITLE'),
 						textColor: '#725acc',
 					},
 					network: {
@@ -115,11 +121,6 @@
 				'im-bot': 70,
 			}
 			this.cache = new InstantPickerCache(this.cacheId());
-		}
-
-		static imagePath()
-		{
-			return '/bitrix/mobileapp/mobile/extensions/bitrix/selector/providers/chat/images/';
 		}
 
 		static title()
@@ -185,7 +186,7 @@
 			try
 			{
 				query = query.toLowerCase();
-				let queryWords = query.split(" ");
+				let queryWords = this.splitQueryByWords(query);
 				let shouldMatch = queryWords.length;
 
 				return items.map(item => {
@@ -198,50 +199,31 @@
 						let reverse = this.searchFields.slice(0);
 						reverse.reverse().forEach(name => {
 
-						if (excludeFields.includes(name))
-						{
-							return;
-						}
+							if (excludeFields.includes(name))
+							{
+								return;
+							}
 
 							let field = item[name];
 
 							if (field)
 							{
-								let fieldWords = field.toLowerCase().split(" ");
-								let findHandler = (word) => {
-									let items = queryWords.filter(queryWord =>
-									{
-										word = word.replace('(', '')
-											.replace('(', '')
-											.replace(')', '')
-											.replace('{', '')
-											.replace('}', '')
-											.replace('[', '')
-											.replace(']', '')
-											.replace('#', '')
-											.replace('$', '')
-											.replace('%', '')
-											.replace('&', '')
-											.replace('*', '')
-											.replace('+', '')
-											.replace('`', '')
-											.replace('\'', '')
-											.replace('\"', '')
-											.trim();
+								let fieldWords = this.splitQueryByWords(field);
 
+								let result = fieldWords.filter(word => {
+									let items = queryWords.filter(queryWord => {
 										let match = word.indexOf(queryWord) === 0 && !matchedWords.includes(queryWord);
-										if (match) {
-											matchedWords.push(queryWord)
+										if (match)
+										{
+											matchedWords.push(queryWord);
 										}
 
 										return match;
 									})
 
 									return items.length > 0;
+								});
 
-								}
-
-								let result = fieldWords.filter(findHandler);
 								if (result.length > 0)
 								{
 									sort += this.searchFields.indexOf(name) + 1;
@@ -304,7 +286,7 @@
 				return;
 			}
 
-			let queryWords = query.split(' ');
+			let queryWords = this.splitQueryByWords(query);
 
 			BX.ajax.runAction('ui.entityselector.doSearch', {
 				json: {
@@ -548,7 +530,7 @@
 				},
 				useLetterImage: true,
 				id: `${entity.entityId}/${entity.id}`,
-				imageUrl: entity.avatar,
+				imageUrl: entity.avatar ? entity.avatar : this.getEntityOption(entity, 'imageUrl', ''),
 				params: {
 					entityId: entity.entityId,
 					entityType: entity.entityType,
@@ -557,7 +539,7 @@
 					customData: entity.customData ? entity.customData : {},
 					type: entity.entityId,
 				}
-			}
+			};
 
 			if (entity.entityId === 'user')
 			{
@@ -572,7 +554,7 @@
 
 				if(entity.entityType === 'extranet')
 				{
-					item.styles.title.font = {color:this.getEntityOption(entity, 'textColor', colorGray)};
+					item.styles.title.font.color = this.getEntityOption(entity, 'textColor', colorGray);
 					item.subtitle = this.getEntityOption(entity, 'subtitle', '');
 				}
 				else
@@ -600,7 +582,7 @@
 			}
 			else if (entity.entityId === 'im-bot')
 			{
-				item.subtitle = this.getEntityOption(entity, 'subtitle', '');
+				item.subtitle = entity.customData['imUser'].WORK_POSITION;
 				item.shortTitle = entity.title;
 				item.styles.title.font.color = this.getEntityOption(entity, 'textColor', colorGray);
 				item.color = entity.avatar.indexOf('upload') !== -1 ? colorWhite : entity.customData['imUser'].COLOR;
@@ -663,6 +645,32 @@
 				unselectable: true,
 				sectionCode: 'common',
 			}
+		}
+
+		splitQueryByWords(query)
+		{
+			let clearedQuery =
+				query
+					.replace('(', ' ')
+					.replace(')', ' ')
+					.replace('[', ' ')
+					.replace(']', ' ')
+					.replace('{', ' ')
+					.replace('}', ' ')
+					.replace('<', ' ')
+					.replace('>', ' ')
+					.replace('-', ' ')
+					.replace('#', ' ')
+					.replace('"', ' ')
+					.replace('\'', ' ')
+					.replace('/\s\s+/', ' ')
+			;
+
+			return clearedQuery
+				.toLowerCase()
+				.split(' ')
+				.filter(word => word !== '')
+			;
 		}
 	}
 

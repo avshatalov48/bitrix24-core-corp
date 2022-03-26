@@ -380,6 +380,15 @@ if(typeof BX.Crm.PartialEditorDialog === "undefined")
 					}
 				}
 			}
+			else if (eventParams.error && (typeof eventParams.error === 'string' || eventParams.error instanceof String))
+			{
+				BX.addClass(
+					this._notAvailableFieldsErrorTextWrapper,
+					'crm-entity-widget-content-error-text'
+				);
+
+				this._notAvailableFieldsErrorTextWrapper.innerText = eventParams.error;
+			}
 
 			if(this._entityTypeId === BX.prop.getInteger(eventParams, "entityTypeId", 0)
 				&& this._entityId === BX.prop.getInteger(eventParams, "entityId", 0)
@@ -465,7 +474,9 @@ if(typeof BX.Crm.PartialEditorDialog === "undefined")
 						{
 							if(BX.Type.isArray(this._fieldNames) && this._fieldNames.indexOf(presetFieldName) === -1)
 							{
-								this.addHiddenInputToForm(presetFieldName, this._presetValues[presetFieldName])
+								this._presetValues[presetFieldName].forEach(function(value){
+									this.addHiddenInputToForm(presetFieldName, value);
+								}.bind(this));
 							}
 						}
 					}
@@ -555,7 +566,7 @@ if(typeof BX.Crm.PartialEditorDialog === "undefined")
 			}
 
 			var formInput = editor._ajaxForm._elementNode.querySelector('input[name="' + inputName + '"]');
-			if (!formInput)
+			if (!formInput || formInput.type === 'hidden')
 			{
 				formInput = document.createElement('INPUT');
 				formInput.type = 'hidden';

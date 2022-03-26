@@ -95,7 +95,7 @@ class Filter extends \Bitrix\Main\Filter\Filter
 	{
 		$module = $event->getParameter('module');
 		$entityTypeId = $event->getParameter('entityTypeId');
-		if ($module === 'crm' && \CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		if ($module === 'crm' && \CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
 		{
 			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($entityTypeId);
 			if ($factory)

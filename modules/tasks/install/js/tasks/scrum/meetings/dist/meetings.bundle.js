@@ -23,9 +23,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        return '';
 	      }
 
+	      event.color = event.color === '' ? '#86b100' : event.color;
 	      var colorBorder = this.convertHexToRGBA(event.color, 0.5);
 	      var colorBackground = this.convertHexToRGBA(event.color, 0.15);
-	      this.node = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div\n\t\t\t\tclass=\"tasks-scrum__widget-meetings--timetable-content\"\n\t\t\t\tstyle=\"background: ", "; border-color: ", ";\"\n\t\t\t>\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--timetable-navigation\">\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--timetable-time\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--timetable-name\">", "</div>\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), colorBackground, colorBorder, this.getFormattedTime(event.from, event.to), this.renderVideoCallButton(), main_core.Text.encode(event.name), this.renderRepetition());
+	      this.node = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div\n\t\t\t\tclass=\"tasks-scrum__widget-meetings--timetable-content\"\n\t\t\t\tstyle=\"background: ", "; border-color: ", ";\"\n\t\t\t>\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--timetable-navigation\">\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--timetable-time\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--timetable-name\">", "</div>\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), colorBackground, colorBorder, this.getFormattedTime(event.from, event.to), this.renderVideoCallButton(), main_core.Text.encode(event.name), event.repeatable ? this.renderRepetition() : '');
 	      main_core.Event.bind(this.node, 'click', this.openViewCalendarSidePanel.bind(this, event));
 	      return this.node;
 	    }
@@ -47,8 +48,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "renderRepetition",
 	    value: function renderRepetition() {
-	      return '';
-	      return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__widget-meetings--timetable-repetition\">\n\t\t\t\t<i class=\"tasks-scrum__widget-meetings--timetable-repetition-icon\"></i>\n\t\t\t\t<span></span>\n\t\t\t</div>\n\t\t"])));
+	      return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__widget-meetings--timetable-repetition\">\n\t\t\t\t<i class=\"tasks-scrum__widget-meetings--timetable-repetition-icon\"></i>\n\t\t\t\t<span>", "</span>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TSM_REPETITION_TITLE'));
 	    }
 	  }, {
 	    key: "convertHexToRGBA",
@@ -329,8 +329,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var _this = this;
 
 	      return response.then(function (response) {
-	        _this.meetingsNode = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings tasks-scrum__widget-meetings--scope\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>"])), _this.renderMeetingsHeader(), _this.renderEventTemplates(response), _this.renderScheduledMeetings(response));
+	        _this.meetingsNode = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings tasks-scrum__widget-meetings--scope\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>"])), _this.renderMeetingsHeader(response), _this.renderEventTemplates(response), _this.renderScheduledMeetings(response));
 	        return _this.meetingsNode;
+	      }).catch(function (response) {
+	        _this.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
@@ -342,6 +344,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        var chats = response.data.chats;
 	        var node = main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings tasks-scrum__widget-meetings--scope\">\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--header\">\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tclass=\"ui-icon ui-icon-service-livechat tasks-scrum__widget-meetings--icon-chats\"\n\t\t\t\t\t\t\t><i></i></div>\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--header-title\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t\n\t\t\t\t\t</div>\n\t\t\t\t"])), main_core.Loc.getMessage('TSM_CHATS_HEADER_TITLE'), _this2.renderChatsList(chats), _this2.renderChatsEmpty(chats));
 	        return node;
+	      }).catch(function (response) {
+	        _this2.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
@@ -379,6 +383,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	          _this4.menu.close();
 	        }
+	      }).catch(function (response) {
+	        _this4.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
@@ -399,12 +405,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    }
 	  }, {
 	    key: "renderMeetingsHeader",
-	    value: function renderMeetingsHeader() {
+	    value: function renderMeetingsHeader(response) {
+	      var calendarSettings = response.data.calendarSettings;
 	      var node = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__widget-meetings--header\">\n\n\t\t\t\t<div class=\"ui-icon ui-icon-service-calendar tasks-scrum__widget-meetings--icon-calendar\"><i></i></div>\n\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--header-title\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"ui-btn-split ui-btn-light-border ui-btn-xs ui-btn-light ui-btn-no-caps ui-btn-round tasks-scrum__widget-meetings--btn-create\">\n\t\t\t\t\t<button class=\"ui-btn-main\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</button>\n\t\t\t\t\t<div class=\"ui-btn-menu\"></div>\n\t\t\t\t</div>\n\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TSM_MEETINGS_HEADER_TITLE'), main_core.Loc.getMessage('TSM_MEETINGS_CREATE_BUTTON'));
 	      var button = node.querySelector('button');
 	      var menu = node.querySelector('.ui-btn-menu');
 	      main_core.Event.bind(button, 'click', this.showEventSidePanel.bind(this));
-	      main_core.Event.bind(menu, 'click', this.showMenuWithEventTemplates.bind(this, button));
+	      main_core.Event.bind(menu, 'click', this.showMenuWithEventTemplates.bind(this, button, calendarSettings));
 	      return node;
 	    }
 	  }, {
@@ -415,10 +422,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var mapCreatedEvents = response.data.mapCreatedEvents;
 	      var listEvents = response.data.listEvents;
 	      var isTemplatesClosed = response.data.isTemplatesClosed;
+	      var calendarSettings = response.data.calendarSettings;
 	      var templateVisibility = isTemplatesClosed || this.isAllEventsCreated(mapCreatedEvents) ? '' : '--visible';
 	      var emptyVisibility = isTemplatesClosed && listEvents.length === 0 ? '--visible' : '';
 	      var contentVisibilityClass = emptyVisibility === '' && templateVisibility === '' ? '--content-hidden' : '';
-	      var node = main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__widget-meetings--content ", "\">\n\t\t\t\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--creation-block ", "\">\n\t\t\t\t\t<span class=\"tasks-scrum__widget-meetings--creation-close-btn\"></span>\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--create-element-info\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--empty-meetings ", "\">\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--empty-name\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--empty-text\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<button class=\"tasks-scrum__widget-meetings--one-click-btn ui-qr-popupcomponentmaker__btn\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</button>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), contentVisibilityClass, templateVisibility, main_core.Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATES_INFO'), babelHelpers.toConsumableArray(this.getEventTemplates().values()).map(function (eventTemplate) {
+	      var node = main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__widget-meetings--content ", "\">\n\t\t\t\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--creation-block ", "\">\n\t\t\t\t\t<span class=\"tasks-scrum__widget-meetings--creation-close-btn\"></span>\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--create-element-info\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--empty-meetings ", "\">\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--empty-name\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--empty-text\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<button class=\"tasks-scrum__widget-meetings--one-click-btn ui-qr-popupcomponentmaker__btn\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</button>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), contentVisibilityClass, templateVisibility, main_core.Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATES_INFO'), babelHelpers.toConsumableArray(this.getEventTemplates(calendarSettings).values()).map(function (eventTemplate) {
 	        if (main_core.Type.isArray(mapCreatedEvents) || main_core.Type.isUndefined(mapCreatedEvents[eventTemplate.id])) {
 	          return _this5.renderEventTemplate(eventTemplate);
 	        } else {
@@ -439,6 +447,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	        _this5.requestSender.closeTemplates({
 	          groupId: _this5.groupId
+	        }).catch(function (response) {
+	          _this5.requestSender.showErrorAlert(response);
 	        });
 	      });
 	      main_core.Event.bind(oneClickButton, 'click', function () {
@@ -460,9 +470,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "renderEventTemplate",
 	    value: function renderEventTemplate(eventTemplate) {
-	      var node = main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__widget-meetings--create-element ", "\">\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--create-element-title\">\n\t\t\t\t\t<span class=\"tasks-scrum__widget-meetings--create-element-name\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t\t<span class=\"ui-hint\"><i class=\"ui-hint-icon\"></i></span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--create-btn\">\n\t\t\t\t\t<button class=\"ui-qr-popupcomponentmaker__btn\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</button>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(eventTemplate.uiClass), main_core.Text.encode(eventTemplate.name), main_core.Loc.getMessage('TSM_MEETINGS_CREATE_BUTTON'));
+	      var node = main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__widget-meetings--create-element ", "\">\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--create-element-title\">\n\t\t\t\t\t<span class=\"tasks-scrum__widget-meetings--create-element-name\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t\t<span class=\"ui-hint\">\n\t\t\t\t\t\t<i\n\t\t\t\t\t\t\tclass=\"ui-hint-icon\"\n\t\t\t\t\t\t\tdata-hint=\"", "\"\n\t\t\t\t\t\t\tdata-hint-no-icon\n\t\t\t\t\t\t\tdata-hint-html\n\t\t\t\t\t\t></i>\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--create-btn\">\n\t\t\t\t\t<button class=\"ui-qr-popupcomponentmaker__btn\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</button>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(eventTemplate.uiClass), main_core.Text.encode(eventTemplate.name), eventTemplate.hint, main_core.Loc.getMessage('TSM_MEETINGS_CREATE_BUTTON'));
 	      var createButton = node.querySelector('.tasks-scrum__widget-meetings--create-btn');
 	      main_core.Event.bind(createButton, 'click', this.openCalendarSidePanel.bind(this, eventTemplate));
+	      this.initHints(node);
 	      return node;
 	    }
 	  }, {
@@ -477,7 +488,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    }
 	  }, {
 	    key: "showMenuWithEventTemplates",
-	    value: function showMenuWithEventTemplates(targetNode) {
+	    value: function showMenuWithEventTemplates(targetNode, calendarSettings) {
 	      var _this6 = this;
 
 	      if (this.eventTemplatesMenu) {
@@ -496,7 +507,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        text: main_core.Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_BLANK'),
 	        delimiter: true
 	      });
-	      this.getEventTemplates().forEach(function (eventTemplate) {
+	      this.getEventTemplates(calendarSettings).forEach(function (eventTemplate) {
 	        _this6.eventTemplatesMenu.addMenuItem({
 	          text: eventTemplate.name,
 	          onclick: function onclick(event, menuItem) {
@@ -557,6 +568,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	              templateId: eventTemplate.id,
 	              eventId: data.responseData.entryId
 	            }).then(function () {// todo maybe update widget or repeat request if error
+	            }).catch(function (response) {
+	              _this7.requestSender.showErrorAlert(response);
 	            });
 	          }
 	        });
@@ -566,25 +579,30 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    }
 	  }, {
 	    key: "getEventTemplates",
-	    value: function getEventTemplates() {
+	    value: function getEventTemplates(calendarSettings) {
 	      var eventTemplates = new Set();
+	      var daysNumberMap = {
+	        MO: 1,
+	        TU: 2,
+	        WE: 3,
+	        TH: 4,
+	        FR: 5,
+	        SA: 6,
+	        SU: 7
+	      };
+	      var weekStartDay = calendarSettings.weekStart[Object.keys(calendarSettings.weekStart)[0]];
+	      var weekStartDayNumber = daysNumberMap[weekStartDay];
 	      eventTemplates.add({
 	        id: 'daily',
 	        entityId: 'project-roles',
 	        name: main_core.Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_NAME_DAILY'),
 	        desc: '',
-	        from: new Date(new Date().setHours(9, 0, 0)),
-	        to: new Date(new Date().setHours(9, 15, 0)),
+	        from: new Date(new Date().setHours(calendarSettings.workTimeStart, 0, 0)),
+	        to: new Date(new Date().setHours(calendarSettings.workTimeStart, 15, 0)),
 	        rrule: {
 	          FREQ: 'WEEKLY',
 	          INTERVAL: 1,
-	          BYDAY: {
-	            MO: 'MO',
-	            TU: 'TU',
-	            WE: 'WE',
-	            TH: 'TH',
-	            FR: 'FR'
-	          }
+	          BYDAY: calendarSettings.weekDays
 	        },
 	        roles: [{
 	          id: this.groupId + '_M',
@@ -594,21 +612,20 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          entityId: 'project-roles'
 	        }],
 	        uiClass: 'widget-meetings__sprint-daily',
-	        color: '#2FC6F6'
+	        color: '#2FC6F6',
+	        hint: main_core.Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_HINT_DAILY')
 	      });
 	      eventTemplates.add({
 	        id: 'planning',
 	        entityId: 'project-roles',
 	        name: main_core.Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_NAME_PLANNING'),
 	        desc: '',
-	        from: new Date(this.getTargetDate(1).setHours(9, 0, 0)),
-	        to: new Date(this.getTargetDate(1).setHours(10, 0, 0)),
+	        from: new Date(this.getNextWeekStartDate(weekStartDayNumber).setHours(calendarSettings.workTimeStart, 0, 0)),
+	        to: new Date(this.getNextWeekStartDate(weekStartDayNumber).setHours(calendarSettings.workTimeStart + 1, 0, 0)),
 	        rrule: {
 	          FREQ: 'WEEKLY',
-	          INTERVAL: 1,
-	          BYDAY: {
-	            MO: 'MO'
-	          }
+	          INTERVAL: calendarSettings.interval,
+	          BYDAY: calendarSettings.weekStart
 	        },
 	        roles: [{
 	          id: this.groupId + '_A',
@@ -621,21 +638,20 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          entityId: 'project-roles'
 	        }],
 	        uiClass: 'widget-meetings__sprint-planning',
-	        color: '#DA51D4'
+	        color: '#DA51D4',
+	        hint: main_core.Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_HINT_PLANNING')
 	      });
 	      eventTemplates.add({
 	        id: 'review',
 	        entityId: 'project-roles',
 	        name: main_core.Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_NAME_REVIEW'),
 	        desc: '',
-	        from: new Date(this.getTargetDate(1).setHours(9, 0, 0)),
-	        to: new Date(this.getTargetDate(1).setHours(10, 0, 0)),
+	        from: new Date(this.getNextWeekStartDate(weekStartDayNumber).setHours(calendarSettings.workTimeStart, 0, 0)),
+	        to: new Date(this.getNextWeekStartDate(weekStartDayNumber).setHours(calendarSettings.workTimeStart + 1, 0, 0)),
 	        rrule: {
 	          FREQ: 'WEEKLY',
-	          INTERVAL: 1,
-	          BYDAY: {
-	            MO: 'MO'
-	          }
+	          INTERVAL: calendarSettings.interval,
+	          BYDAY: calendarSettings.weekStart
 	        },
 	        roles: [{
 	          id: this.groupId + '_A',
@@ -648,21 +664,20 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          entityId: 'project-roles'
 	        }],
 	        uiClass: 'widget-meetings__sprint-review',
-	        color: '#FF5752'
+	        color: '#FF5752',
+	        hint: main_core.Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_HINT_REVIEW')
 	      });
 	      eventTemplates.add({
 	        id: 'retrospective',
 	        entityId: 'project-roles',
 	        name: main_core.Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_NAME_RETROSPECTIVE'),
 	        desc: '',
-	        from: new Date(this.getTargetDate(1).setHours(9, 0, 0)),
-	        to: new Date(this.getTargetDate(1).setHours(10, 0, 0)),
+	        from: new Date(this.getNextWeekStartDate(weekStartDayNumber).setHours(calendarSettings.workTimeStart, 0, 0)),
+	        to: new Date(this.getNextWeekStartDate(weekStartDayNumber).setHours(calendarSettings.workTimeStart + 1, 0, 0)),
 	        rrule: {
 	          FREQ: 'WEEKLY',
-	          INTERVAL: 1,
-	          BYDAY: {
-	            MO: 'MO'
-	          }
+	          INTERVAL: calendarSettings.interval,
+	          BYDAY: calendarSettings.weekStart
 	        },
 	        roles: [{
 	          id: this.groupId + '_M',
@@ -672,7 +687,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          entityId: 'project-roles'
 	        }],
 	        uiClass: 'widget-meetings__sprint-retrospective',
-	        color: '#FF5752'
+	        color: '#FF5752',
+	        hint: main_core.Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATE_HINT_RETROSPECTIVE')
 	      });
 	      return eventTemplates;
 	    }
@@ -686,11 +702,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      return main_core.Type.isInteger(mapCreatedEvents.daily) && main_core.Type.isInteger(mapCreatedEvents.planning) && main_core.Type.isInteger(mapCreatedEvents.review) && main_core.Type.isInteger(mapCreatedEvents.retrospective);
 	    }
 	  }, {
-	    key: "getTargetDate",
-	    value: function getTargetDate(targetDay) {
+	    key: "getNextWeekStartDate",
+	    value: function getNextWeekStartDate(weekStartDayNumber) {
 	      var date = new Date();
 	      var targetDate = new Date();
-	      var delta = targetDay - date.getDay();
+	      var delta = weekStartDayNumber - date.getDay();
 
 	      if (delta >= 0) {
 	        targetDate.setDate(date.getDate() + delta);
@@ -699,6 +715,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }
 
 	      return targetDate;
+	    }
+	  }, {
+	    key: "initHints",
+	    value: function initHints(node) {
+	      BX.UI.Hint.init(node);
 	    }
 	  }]);
 	  return Meetings;

@@ -40,7 +40,8 @@ class DealController extends BaseController
 			'COMMENTS', 'BEGINDATE', 'CLOSEDATE',
 			'LOCATION_ID', 'WEBFORM_ID', 'SOURCE_ID', 'SOURCE_DESCRIPTION',
 			'ORIGINATOR_ID', 'ORIGIN_ID',
-			'ADDITIONAL_INFO'
+			'ADDITIONAL_INFO',
+			'MOVED_BY_ID', 'MOVED_TIME',
 		);
 	}
 
@@ -79,7 +80,7 @@ class DealController extends BaseController
 	 */
 	public function getProductRowOwnerType()
 	{
-		return 'D';
+		return \CCrmOwnerTypeAbbr::Deal;
 	}
 
 	/**
@@ -88,7 +89,7 @@ class DealController extends BaseController
 	 */
 	public function getProductRowSuspendedOwnerType()
 	{
-		return 'SD';
+		return \CCrmOwnerTypeAbbr::SuspendedDeal;
 	}
 	//endregion
 

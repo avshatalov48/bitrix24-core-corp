@@ -1,0 +1,11 @@
+
+.system-auth-form__item [data-role="empty-info"],
+.system-auth-form__item.--without-stat [data-role="my-position"],
+.system-auth-form__item.--without-stat [data-role="user-list"] {
+	display: none;
+}
+
+.system-auth-form__item.--without-stat [data-role="empty-info"] {
+	display: block;
+}
+

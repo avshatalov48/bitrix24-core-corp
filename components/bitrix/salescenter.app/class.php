@@ -29,10 +29,11 @@ use Bitrix\Rest;
 use Bitrix\SalesCenter;
 use Bitrix\SalesCenter\Integration\LocationManager;
 use Bitrix\Catalog\v2\Integration\JS\ProductForm;
+use Bitrix\Catalog;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
-define('SALESCENTER_RECEIVE_PAYMENT_APP_AREA', true);
+const SALESCENTER_RECEIVE_PAYMENT_APP_AREA = true;
 
 Main\Loader::includeModule('sale');
 
@@ -46,6 +47,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	private const TEMPLATE_VIEW_MODE = 'view';
 	private const TEMPLATE_CREATE_MODE = 'create';
 	private const PAYMENT_DELIVERY_MODE = 'payment_delivery';
+	private const PAYMENT_MODE = 'payment';
 	private const DELIVERY_MODE = 'delivery';
 
 	private const CONTEXT_DEAL = 'deal';
@@ -61,8 +63,8 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	/** @var Crm\Order\Shipment $order */
 	private $shipment;
 
-	/** @var array|null */
-	private $deal;
+	/** @var Crm\Item|null */
+	private $item;
 
 	/**
 	 * @inheritDoc
@@ -101,10 +103,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			$arParams['disableSendButton'] = (bool)$arParams['disableSendButton'];
 		}
 
-		if (!isset($arParams['context']))
-		{
-			$arParams['context'] = $this->request->get('context');
-		}
+		$arParams['context'] = $this->getContextFromParams($arParams);
 
 		if (!isset($arParams['paymentId']))
 		{
@@ -136,6 +135,11 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			$arParams['ownerTypeId'] = $this->request->get('ownerTypeId');
 		}
 
+		if (!isset($arParams['ownerTypeId']))
+		{
+			$arParams['ownerTypeId'] = CCrmOwnerType::Deal;
+		}
+
 		if (!isset($arParams['templateMode']))
 		{
 			$arParams['templateMode'] = $this->request->get('templateMode');
@@ -148,9 +152,9 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 
 		$arParams['orderId'] = $this->getOrderIdFromParams($arParams);
 
-		if ($this->needOrderFromDeal($arParams))
+		if ($this->needOrderFromEntity($arParams))
 		{
-			$orderIdList = $this->getOrderIdListByDealId($arParams['ownerId']);
+			$orderIdList = $this->getOrderIdListByEntityId($arParams['ownerId'], $arParams['ownerTypeId']);
 			if ($orderIdList)
 			{
 				$arParams['orderId'] = current($orderIdList);
@@ -159,6 +163,10 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 
 		if ($arParams['context'] === self::CONTEXT_CHAT)
 		{
+			if (CrmManager::getInstance()->isOwnerEntityInFinalStage($arParams['ownerId'], CCrmOwnerType::Deal))
+			{
+				$arParams['ownerId'] = 0;
+			}
 			$arParams['ownerTypeId'] = CCrmOwnerType::Deal;
 		}
 
@@ -189,8 +197,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 
 		if (
 			$this->arParams['context'] === self::CONTEXT_DEAL
-			&& (int)$this->arParams['ownerTypeId'] === CCrmOwnerType::Deal
-			&& !$this->deal
+			&& !$this->item
 		)
 		{
 			ShowError(Loc::getMessage('SALESCENTER_ERROR_DEAL_NO_FOUND'));
@@ -215,7 +222,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		return $arParams['orderId'] ? (int)$arParams['orderId'] : (int)$this->request->get('orderId');
 	}
 
-	private function needOrderFromDeal(array $arParams): bool
+	private function needOrderFromEntity(array $arParams): bool
 	{
 		if (!empty($arParams['orderId']) && (int)$arParams['orderId'] > 0)
 		{
@@ -223,6 +230,25 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		}
 
 		if (\CCrmSaleHelper::isWithOrdersMode())
+		{
+			return false;
+		}
+
+		if (
+			$arParams['context'] === self::CONTEXT_CHAT
+			&& CrmManager::getInstance()->isOwnerEntityInFinalStage($arParams['ownerId'], $arParams['ownerTypeId'])
+		)
+		{
+			return false;
+		}
+
+		if (
+			$arParams['context'] === self::CONTEXT_SMS
+			&& (
+				(int)$arParams['ownerTypeId'] === CCrmOwnerType::Contact
+				|| (int)$arParams['ownerTypeId'] === CCrmOwnerType::Company
+			)
+		)
 		{
 			return false;
 		}
@@ -235,12 +261,16 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 
 		$isSms = (
 			$arParams['context'] === self::CONTEXT_SMS
-			&& !empty($arParams['ownerTypeId'])
-			&& (int)$arParams['ownerTypeId'] === CCrmOwnerType::Deal
 			&& !empty($arParams['ownerId'])
+			&& !empty($arParams['ownerTypeId'])
 		);
 
 		return $isChat || $isSms;
+	}
+
+	private function getContextFromParams(array $arParams): ?string
+	{
+		return $arParams['context'] ?? $this->request->get('context');
 	}
 
 	private function fillComponentResult(): void
@@ -248,12 +278,58 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		PullManager::getInstance()->subscribeOnConnect();
 		$this->arResult = Driver::getInstance()->getManagerParams();
 
+		$ownerId = (int)($this->arParams['ownerId'] ?? 0);
+		$ownerTypeId = (int)($this->arParams['ownerTypeId'] ?? 0);
+
+		$factory = Crm\Service\Container::getInstance()->getFactory($ownerTypeId);
+		if ($factory && $factory->isPaymentsEnabled())
+		{
+			$this->item = $factory->getItem($ownerId);
+		}
+		else
+		{
+			$this->item = null;
+		}
+
+		if ($this->item)
+		{
+			$assignedById = $this->item->getAssignedById();
+			$this->arResult['currencyCode'] = $this->item->getCurrencyId();
+			$this->arResult['assignedById'] = $assignedById;
+			$this->arResult['entityResponsible'] = $this->getManagerInfo($assignedById);
+			$this->arResult['contactPhone'] = CrmManager::getInstance()->getItemContactPhoneFormatted($this->item);
+		}
+		else
+		{
+			$responsibleId = Crm\Settings\OrderSettings::getCurrent()->getDefaultResponsibleId() ?: Main\Engine\CurrentUser::get()->getId();
+			$this->arResult['entityResponsible'] = $this->getManagerInfo($responsibleId);
+			$this->arResult['assignedById'] = $responsibleId;
+		}
+
+		if (Crm\Automation\Factory::isAutomationAvailable($ownerTypeId))
+		{
+			$this->arResult['stageOnOrderPaid']	= CrmManager::getInstance()->getStageWithOrderPaidTrigger(
+				$ownerId,
+				$ownerTypeId
+			);
+			$this->arResult['stageOnDeliveryFinished'] = CrmManager::getInstance()->getStageWithDeliveryFinishedTrigger(
+				$ownerId,
+				$ownerTypeId
+			);
+		}
+
+		$this->arResult['emptyDeliveryServiceId'] = Sale\Delivery\Services\EmptyDeliveryService::getEmptyDeliveryServiceId();
+
 		$this->arResult['templateMode'] = $this->arParams['templateMode'];
 		$this->arResult['paymentId'] = (int)$this->arParams['paymentId'];
 		$this->arResult['shipmentId'] = (int)$this->arParams['shipmentId'];
-		$this->arResult['mode'] = ($this->arParams['mode'] === self::DELIVERY_MODE)
-			? self::DELIVERY_MODE
-			: self::PAYMENT_DELIVERY_MODE;
+		$mode = self::PAYMENT_DELIVERY_MODE;
+		$allowedModes = [static::PAYMENT_MODE, static::DELIVERY_MODE];
+		if (in_array($this->arParams['mode'], $allowedModes, true))
+		{
+			$mode = $this->arParams['mode'];
+		}
+		$this->arResult['mode'] = $mode;
 		$this->arResult['initialMode'] = $this->arParams['initialMode'] ?? $this->arResult['mode'];
 
 		if ($this->arParams['orderId'] > 0)
@@ -266,7 +342,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			if ($this->arResult['paymentId'])
 			{
 				$this->payment = $this->order->getPaymentCollection()->getItemById($this->arResult['paymentId']);
-				if ($this->arResult['shipmentId'] === 0)
+				if ($this->payment && $this->arResult['shipmentId'] === 0)
 				{
 					/** @var Sale\PayableShipmentItem $payableItem */
 					foreach ($this->payment->getPayableItemCollection()->getShipments() as $payableItem)
@@ -275,13 +351,12 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 					}
 				}
 			}
-			if ($this->arResult['shipmentId'])
+			if ($this->order && $this->arResult['shipmentId'])
 			{
 				$this->shipment = $this->order->getShipmentCollection()->getItemById($this->arResult['shipmentId']);
 			}
 
 			$this->arResult['orderId'] = ($this->order ? $this->order->getId() : 0);
-
 			$this->arResult['paymentId'] = ($this->payment ? $this->payment->getId() : 0);
 			if ($this->payment)
 			{
@@ -299,7 +374,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		$this->arResult['isCatalogAvailable'] = (\Bitrix\Main\Config\Option::get('salescenter', 'is_catalog_enabled', 'N') === 'Y');
 		$this->arResult['dialogId'] = $this->arParams['dialogId'];
 		$this->arResult['sessionId'] = $this->arParams['sessionId'];
-		$this->arResult['context'] = $this->arParams['context'];
+		$this->arResult['context'] = $this->getContextFromParams($this->arParams);
 		$this->arResult['orderAddPullTag'] = PullManager::getInstance()->subscribeOnOrderAdd();
 		$this->arResult['landingUnPublicationPullTag'] = PullManager::getInstance()->subscribeOnLandingUnPublication();
 		$this->arResult['landingPublicationPullTag'] = PullManager::getInstance()->subscribeOnLandingPublication();
@@ -307,8 +382,8 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		$this->arResult['isOrderPublicUrlAvailable'] = (LandingManager::getInstance()->isOrderPublicUrlAvailable());
 		$this->arResult['orderPublicUrl'] = Main\Engine\UrlManager::getInstance()->getHostUrl().'/';
 		$this->arResult['disableSendButton'] = $this->arParams['disableSendButton'];
-		$this->arResult['ownerTypeId'] = $this->arParams['ownerTypeId'];
-		$this->arResult['ownerId'] = $this->arParams['ownerId'];
+		$this->arResult['ownerTypeId'] = $ownerTypeId;
+		$this->arResult['ownerId'] = $ownerId;
 		$this->arResult['isBitrix24'] = Bitrix24Manager::getInstance()->isEnabled();
 		$this->arResult['isPaymentsLimitReached'] = Bitrix24Manager::getInstance()->isPaymentsLimitReached();
 		$this->arResult['urlSettingsCompanyContacts'] = $this->getComponentSliderPath('bitrix:salescenter.company.contacts');
@@ -320,90 +395,98 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		$this->arResult['showCompilationModeSwitcher'] = \Bitrix\Main\Config\Option::get('catalog', 'product_form_enable_compilation', 'N');
 		$this->arResult['showProductDiscounts'] = \CUserOptions::GetOption('catalog.product-form', 'showDiscountBlock', 'Y');
 		$this->arResult['showProductTaxes'] = \CUserOptions::GetOption('catalog.product-form', 'showTaxBlock', 'Y');
-		$collapseOptions = CUserOptions::GetOption(
-			'salescenter',
-			($this->arResult['mode'] === self::PAYMENT_DELIVERY_MODE) ? 'add_payment_collapse_options' : 'add_shipment_collapse_options',
-			[]
-		);
+		$collapseOptions = $this->getCollapseOptions();
 		$this->arResult['isPaySystemCollapsed'] = $collapseOptions['pay_system'] ?? null;
 		$this->arResult['isCashboxCollapsed'] = $collapseOptions['cashbox'] ?? null;
 		$this->arResult['isDeliveryCollapsed'] = $collapseOptions['delivery'] ?? null;
 		$this->arResult['isAutomationCollapsed'] = $collapseOptions['automation'] ?? null;
-		$this->arResult['urlProductBuilderContext'] = Crm\Product\Url\ShopBuilder::TYPE_ID;
+		$this->arResult['urlProductBuilderContext'] = Main\Loader::includeModule('catalog') ? Catalog\Url\ShopBuilder::TYPE_ID : '';
+		$this->arResult['isCatalogPriceEditEnabled'] = Crm\Settings\LayoutSettings::getCurrent()->isCatalogPriceEditEnabled();
+		$this->arResult['fieldHints'] = [];
+		if (!$this->arResult['isCatalogPriceEditEnabled'])
+		{
+			$this->arResult['fieldHints']['price'] = Crm\Config\State::getProductPriceChangingNotification();
+		}
 
 		$this->arResult['isIntegrationButtonVisible'] = Bitrix24Manager::getInstance()->isIntegrationRequestPossible();
 
-		$baseCurrency = SiteCurrencyTable::getSiteCurrency(SITE_ID);
-		if (empty($baseCurrency))
+		if (empty($this->arResult['currencyCode']))
 		{
-			$baseCurrency = CurrencyManager::getBaseCurrency();
+			$baseCurrency = SiteCurrencyTable::getSiteCurrency(SITE_ID);
+			if (empty($baseCurrency))
+			{
+				$baseCurrency = CurrencyManager::getBaseCurrency();
+			}
+			$this->arResult['currencyCode'] = $baseCurrency;
 		}
-		$this->arResult['currencyCode'] = $baseCurrency;
 
 		//@TODO get rid of it
 		$clientInfo = (new SalesCenter\Controller\Order())->getClientInfo([
 			'sessionId' => $this->arResult['sessionId'],
-			'ownerTypeId' => $this->arResult['ownerTypeId'],
-			'ownerId' => $this->arResult['ownerId'],
+			'ownerTypeId' => $ownerTypeId,
+			'ownerId' => $ownerId,
 		]);
 
 		$this->arResult['personTypeId'] = (!empty($clientInfo['COMPANY_ID']))
 			? (int)Crm\Order\PersonType::getCompanyPersonTypeId()
-			: (int)Crm\Order\PersonType::getContactPersonTypeId();
+			: (int)Crm\Order\PersonType::getContactPersonTypeId()
+		;
 
 		if ($this->arResult['personTypeId'] <= 0)
 		{
 			$this->arResult['personTypeId'] = (int)Sale\Helpers\Admin\Blocks\OrderBuyer::getDefaultPersonType(SITE_ID);
 		}
 
-		if (
-			!\CCrmSaleHelper::isWithOrdersMode()
-			&& isset($this->arParams['ownerId'])
-			&& (int)$this->arParams['ownerId'] > 0
-			&& (int)$this->arParams['ownerTypeId'] === CCrmOwnerType::Deal
-		)
+		// region shipment presets
+		$deliveryFromList = $this->getDeliveryFromList();
+		$fromPropIds = $this->getDeliveryFromPropIds($this->arResult['personTypeId']);
+		foreach ($fromPropIds as $fromPropId)
 		{
-			$this->arResult['orderList'] = $this->getOrderIdListByDealId((int)$this->arParams['ownerId']);
+			$this->arResult['deliveryOrderPropOptions'][$fromPropId] = [
+				'defaultItems' => $deliveryFromList,
+			];
 		}
+
+		$contactId = 0;
+		if ($this->item && $this->item->getPrimaryContact())
+		{
+			$contactId = $this->item->getPrimaryContact()->getId();
+		}
+		if ($contactId > 0)
+		{
+			$deliveryToList = $this->getDeliveryToList($contactId);
+			$toPropIds = $this->getDeliveryToPropIds($this->arResult['personTypeId']);
+			foreach ($toPropIds as $toPropId)
+			{
+				$this->arResult['deliveryOrderPropOptions'][$toPropId] = [
+					'defaultItems' => $deliveryToList,
+				];
+			}
+
+			$this->arResult['shipmentData'] = $this->getShipmentData($contactId, $this->arResult['personTypeId']);
+		}
+		// endregion
 
 		if (
-			(int)$this->arParams['ownerTypeId'] === CCrmOwnerType::Deal
-			&& $this->deal = CCrmDeal::GetByID($this->arParams['ownerId'])
+			$ownerId > 0
+			&& $ownerTypeId > 0
+			&& !\CCrmSaleHelper::isWithOrdersMode()
 		)
 		{
-			$this->arResult['currencyCode'] = $this->deal['CURRENCY_ID'];
-
-			$this->arResult['stageOnOrderPaid'] = CrmManager::getInstance()->getStageWithOrderPaidTrigger(
-				$this->arParams['ownerId']
-			);
-			$this->arResult['stageOnDeliveryFinished'] = CrmManager::getInstance()->getStageWithDeliveryFinishedTrigger(
-				$this->arParams['ownerId']
-			);
-			$this->arResult['dealResponsible'] = $this->getManagerInfo($this->deal['ASSIGNED_BY']);
-			$this->arResult['contactPhone'] = CrmManager::getInstance()->getDealContactPhoneFormat($this->deal['ID']);
-			$this->arResult['shipmentData'] = $this->getShipmentData();
-			$this->arResult['assignedById'] = $this->deal['ASSIGNED_BY_ID'];
-		}
-		else
-		{
-			$responsibleId = Crm\Settings\OrderSettings::getCurrent()->getDefaultResponsibleId() ?: Main\Engine\CurrentUser::get()->getId();
-			$this->arResult['stageOnOrderPaid'] = CrmManager::getInstance()->getStageWithOrderPaidTrigger(0);
-			$this->arResult['stageOnDeliveryFinished'] = CrmManager::getInstance()->getStageWithDeliveryFinishedTrigger(0);
-			$this->arResult['dealResponsible'] = $this->getManagerInfo($responsibleId);
-			$this->arResult['assignedById'] = $responsibleId;
+			$this->arResult['orderList'] = $this->getOrderIdListByEntityId($ownerId, $ownerTypeId);
 		}
 
-		if ($this->arParams['context'] === self::CONTEXT_DEAL)
+		$this->arResult['sendingMethod'] = '';
+		if ($this->arResult['context'] === self::CONTEXT_DEAL)
 		{
 			$this->arResult['sendingMethod'] = 'sms';
 		}
-		elseif ($this->arParams['context'] === self::CONTEXT_CHAT)
+		elseif ($this->arResult['context'] === self::CONTEXT_CHAT)
 		{
 			$this->arResult['sendingMethod'] = 'chat';
 		}
 
-		$this->arResult['timeline'] = $this->getTimeLine();
-		if (!$this->arResult['sendingMethod'] && $this->arParams['context'] === self::CONTEXT_SMS)
+		if (!$this->arResult['sendingMethod'] && $this->arResult['context'] === self::CONTEXT_SMS)
 		{
 			$this->arResult['sendingMethodDesc'] = $this->getSendingMethodDescByType('sms');
 		}
@@ -411,37 +494,18 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		{
 			$this->arResult['sendingMethodDesc'] = $this->getSendingMethodDescByType($this->arResult['sendingMethod']);
 		}
-		$this->arResult['dealStageList'] = $this->getDealStageList();
-		$this->arResult['orderPropertyValues'] = [];
 
-		$this->arResult['emptyDeliveryServiceId'] = Sale\Delivery\Services\EmptyDeliveryService::getEmptyDeliveryServiceId();
+		$this->arResult['isAutomationAvailable'] = Crm\Automation\Factory::isAutomationAvailable($ownerTypeId);
+		$this->arResult['entityStageList'] = $this->getEntityStageList($ownerId, $ownerTypeId);
 
-		// region shipment presets
-		$deliveryFromList = $this->getDeliveryFromList();
-		$fromPropIds = $this->getDeliveryFromPropIds();
-		foreach ($fromPropIds as $fromPropId)
-		{
-			$this->arResult['deliveryOrderPropOptions'][$fromPropId] = [
-				'defaultItems' => $deliveryFromList,
-				'isFromAddress' => true,
-			];
-		}
-
-		if ($this->deal)
-		{
-			$deliveryToList = $this->getDeliveryToList();
-			$toPropIds = $this->getDeliveryToPropIds();
-			foreach ($toPropIds as $toPropId)
-			{
-				$this->arResult['deliveryOrderPropOptions'][$toPropId] = [
-					'defaultItems' => $deliveryToList,
-				];
-			}
-		}
-		// endregion
-
+		$this->arResult['timeline'] = $this->getTimeLine();
 		$this->arResult['paySystemList'] = $this->getPaySystemList();
-		$this->arResult['deliveryList'] = $this->getDeliveryList();
+
+		$ownerTypesForDelivery = [CCrmOwnerType::Deal, CCrmOwnerType::Contact, CCrmOwnerType::Company];
+		if (in_array((int)$this->arResult['ownerTypeId'], $ownerTypesForDelivery, true))
+		{
+			$this->arResult['deliveryList'] = $this->getDeliveryList();
+		}
 
 		$this->arResult['cashboxList'] = [];
 		if (Driver::getInstance()->isCashboxEnabled())
@@ -449,21 +513,20 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			$this->arResult['cashboxList'] = $this->getCashboxList();
 		}
 
-		$this->arResult['isAutomationAvailable'] = Crm\Automation\Factory::isAutomationAvailable(\CCrmOwnerType::Deal);
 		$this->arResult['urlProductBuilderContext'] = Crm\Product\Url\ProductBuilder::TYPE_ID;
 
 		if (
-			(int)$this->arParams['ownerTypeId'] === CCrmOwnerType::Deal
+			$this->item
 			&&
 			(
 				!\CCrmSaleHelper::isWithOrdersMode()
-				||
-				$this->arParams['templateMode'] === self::TEMPLATE_VIEW_MODE
-				||
-				(
-					(int)$this->arParams['ownerId'] > 0
-					&& count($this->getOrderIdListByDealId((int)$this->arParams['ownerId'])) === 0
-				)
+				|| $this->arParams['templateMode'] === self::TEMPLATE_VIEW_MODE
+				|| count($this->getOrderIdListByEntityId($ownerId, $ownerTypeId)) === 0
+			)
+			&&
+			!(
+				$this->arParams['context'] === self::CONTEXT_CHAT
+				&& CrmManager::getInstance()->isOwnerEntityInFinalStage($ownerId, $ownerTypeId)
 			)
 		)
 		{
@@ -537,6 +600,8 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 
 		$this->arResult['title'] = $this->makeTitle();
 		$this->arResult['isWithOrdersMode'] = \CCrmSaleHelper::isWithOrdersMode();
+
+		$this->arResult['documentSelector'] = $this->getDocumentSelectorParameters();
 	}
 
 	/**
@@ -548,7 +613,13 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		{
 			if ($this->arResult['templateMode'] === self::TEMPLATE_VIEW_MODE)
 			{
-				if ($this->arResult['mode'] === self::PAYMENT_DELIVERY_MODE && $this->payment)
+				if (
+					$this->payment
+					&& (
+						$this->arResult['mode'] === self::PAYMENT_DELIVERY_MODE
+						|| $this->arResult['mode'] === self::PAYMENT_MODE
+					)
+				)
 				{
 					/** @var \Bitrix\Main\Type\DateTime $dateBill */
 					$dateBill = $this->payment->getField('DATE_BILL');
@@ -588,9 +659,21 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			}
 			else
 			{
-				return ($this->arResult['mode'] === self::PAYMENT_DELIVERY_MODE)
-					? Loc::getMessage('SALESCENTER_APP_PAYMENT_AND_DELIVERY_TITLE')
-					: Loc::getMessage('SALESCENTER_APP_DELIVERY_TITLE');
+				if ($this->arResult['mode'] === static::PAYMENT_MODE)
+				{
+					$title = Loc::getMessage('SALESCENTER_APP_PAYMENT_TITLE');
+
+				}
+				elseif ($this->arResult['mode'] == static::DELIVERY_MODE)
+				{
+					$title = Loc::getMessage('SALESCENTER_APP_DELIVERY_TITLE');
+				}
+				else
+				{
+					$title = Loc::getMessage('SALESCENTER_APP_PAYMENT_AND_DELIVERY_TITLE');
+				}
+
+				return $title;
 			}
 		}
 		else
@@ -765,14 +848,14 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		return [];
 	}
 
-	private function getShipmentData()
+	private function getShipmentData(int $contactId, int $personTypeId)
 	{
 		if ($this->arParams['templateMode'] === self::TEMPLATE_CREATE_MODE)
 		{
 			$propValues = [];
 
-			$toPropIds = $this->getDeliveryToPropIds();
-			$toList = $this->getDeliveryToList();
+			$toPropIds = $this->getDeliveryToPropIds($personTypeId);
+			$toList = $this->getDeliveryToList($contactId);
 			if ($toList)
 			{
 				foreach ($toPropIds as $toPropId)
@@ -781,7 +864,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				}
 			}
 
-			$fromPropIds = $this->getDeliveryFromPropIds();
+			$fromPropIds = $this->getDeliveryFromPropIds($personTypeId);
 			$fromList = $this->getDeliveryFromList();
 			if ($fromList)
 			{
@@ -804,31 +887,31 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	/**
 	 * @return int[]
 	 */
-	private function getDeliveryFromPropIds(): array
+	private function getDeliveryFromPropIds(int $personTypeId): array
 	{
-		return $this->getDeliveryAddressPropIdsByCode('IS_ADDRESS_FROM');
+		return $this->getDeliveryAddressPropIdsByCode($personTypeId, 'IS_ADDRESS_FROM');
 	}
 
 	/**
 	 * @return int[]
 	 */
-	private function getDeliveryToPropIds(): array
+	private function getDeliveryToPropIds(int $personTypeId): array
 	{
-		return $this->getDeliveryAddressPropIdsByCode('IS_ADDRESS_TO');
+		return $this->getDeliveryAddressPropIdsByCode($personTypeId, 'IS_ADDRESS_TO');
 	}
 
 	/**
 	 * @param string $attribute
 	 * @return int[]
 	 */
-	private function getDeliveryAddressPropIdsByCode(string $attribute): array
+	private function getDeliveryAddressPropIdsByCode(int $personTypeId, string $attribute): array
 	{
 		$result = [];
 
 		$propsList = Sale\ShipmentProperty::getList(
 			[
 				'filter' => [
-					'=PERSON_TYPE_ID' => $this->arResult['personTypeId'],
+					'=PERSON_TYPE_ID' => $personTypeId,
 					'=ACTIVE' => 'Y',
 					'=TYPE' => 'ADDRESS',
 					'=' . $attribute => 'Y',
@@ -865,11 +948,11 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	/**
 	 * @return array
 	 */
-	private function getDeliveryToList(): array
+	private function getDeliveryToList(int $contactId): array
 	{
 		return array_values(
 			LocationManager::getInstance()->getFormattedLocations(
-				CrmManager::getInstance()->getDealClientAddressList($this->deal['ID'])
+				CrmManager::getInstance()->getClientAddressList($contactId)
 			)
 		);
 	}
@@ -879,7 +962,10 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	 */
 	private function getTimeline(): array
 	{
-		if ($this->arResult['mode'] !== self::PAYMENT_DELIVERY_MODE)
+		if (
+			$this->arResult['mode'] !== self::PAYMENT_DELIVERY_MODE
+			&& $this->arResult['mode'] !== self::PAYMENT_MODE
+		)
 		{
 			return [];
 		}
@@ -932,7 +1018,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	 * @param $stageId
 	 * @return array
 	 */
-	private function getDealStageList() : array
+	private function getEntityStageList(int $entityId, int $entityTypeId) : array
 	{
 		$result = [
 			[
@@ -941,16 +1027,20 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			],
 		];
 
-		$dealStageList = CCrmViewHelper::GetDealStageInfos($this->deal['CATEGORY_ID'] ?? 0);
-		foreach ($dealStageList as $stage)
+		$stageList = CrmManager::getInstance()->getStageList($entityId, $entityTypeId);
+
+		if ($stageList)
 		{
-			$result[] = [
-				'id' => $stage['STATUS_ID'],
-				'type' => 'stage',
-				'name' => $stage['NAME'],
-				'color' => $stage['COLOR'],
-				'colorText' => $this->getStageColorText($stage['COLOR']),
-			];
+			foreach ($stageList as $stage)
+			{
+				$result[] = [
+					'id' => $stage['STATUS_ID'],
+					'type' => 'stage',
+					'name' => $stage['NAME'],
+					'color' => $stage['COLOR'],
+					'colorText' => $this->getStageColorText($stage['COLOR']),
+				];
+			}
 		}
 
 		return $result;
@@ -1025,7 +1115,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	private function getProducts() : array
 	{
 		$formBuilder = new ProductForm\BasketBuilder();
-		$productManager = new Crm\Order\ProductManager($this->arResult['ownerId']);
+		$productManager = new Crm\Order\ProductManager($this->arResult['ownerTypeId'], $this->arResult['ownerId']);
 
 		if ($this->order)
 		{
@@ -2227,28 +2317,37 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		return $marketplaceInstalledApps;
 	}
 
-	private function getOrderIdListByDealId(int $dealId): array
+	private function getOrderIdListByEntityId(int $ownerId, int $ownerTypeId): array
 	{
 		static $result = [];
 
-		if (!empty($result[$dealId]))
+		if (!empty($result[$ownerTypeId][$ownerId]))
 		{
-			return $result[$dealId];
+			return $result[$ownerTypeId][$ownerId];
 		}
 
-		$dealBindingIterator = Crm\Order\DealBinding::getList([
-			'select' => ['ORDER_ID'],
-			'filter' => [
-				'=DEAL_ID' => $dealId,
-			],
-			'order' => ['ORDER_ID' => 'DESC'],
-		]);
-		while ($dealBindingData = $dealBindingIterator->fetch())
+		$result[$ownerTypeId][$ownerId] = [];
+
+		$relationManager = Crm\Service\Container::getInstance()->getRelationManager();
+		$relation = $relationManager->getRelation(
+			new Crm\RelationIdentifier(
+				$ownerTypeId,
+				\CCrmOwnerType::Order
+			)
+		);
+		if ($relation)
 		{
-			$result[$dealId][] = $dealBindingData['ORDER_ID'];
+			$orderIdentifiers = $relation->getChildElements(new Crm\ItemIdentifier(
+				$ownerTypeId,
+				$ownerId
+			));
+			foreach ($orderIdentifiers as $identifier)
+			{
+				$result[$ownerTypeId][$ownerId][] = $identifier->getEntityId();
+			}
 		}
 
-		return $result[$dealId] ?? [];
+		return $result[$ownerTypeId][$ownerId] ?? [];
 	}
 
 	/**
@@ -2358,4 +2457,83 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	}
 
 	// endregion
+
+	protected function getDocumentSelectorParameters(): ?array
+	{
+		if (!$this->item)
+		{
+			return null;
+		}
+		$documentGeneratorManager = Crm\Integration\DocumentGeneratorManager::getInstance();
+		$isEnabled = $documentGeneratorManager->isEnabled();
+		if (!$isEnabled)
+		{
+			return null;
+		}
+
+		$documentsUserPermissions = \Bitrix\DocumentGenerator\Driver::getInstance()->getUserPermissions();
+		if (!$documentsUserPermissions->canViewDocuments())
+		{
+			return null;
+		}
+
+		$entityTypeId = $this->item->getEntityTypeId();
+		if (!$documentGeneratorManager->isEntitySupportsPaymentDocumentBinding($entityTypeId))
+		{
+			return null;
+		}
+		$parameters = [];
+		$itemIdentifier = Crm\ItemIdentifier::createByItem($this->item);
+		if ($this->payment)
+		{
+			$paymentId = $this->payment->getId();
+			$parameters['boundDocumentId'] = $documentGeneratorManager->getPaymentBoundDocumentId($paymentId);
+			$documents = $documentGeneratorManager->getDocumentsByIdentifier($itemIdentifier, $paymentId);
+			foreach ($documents as $document)
+			{
+				$parameters['documents'][] = $document->jsonSerialize();
+			}
+		}
+		if ($documentsUserPermissions->canModifyTemplates())
+		{
+			$parameters['templateAddUrl'] = $documentGeneratorManager->getAddTemplateUrl();
+			$parameters['entityTypeId'] = $entityTypeId;
+			$parameters['entityId'] = $this->item->getId();
+		}
+
+		$selectedTemplateId = $documentGeneratorManager->getLastBoundPaymentDocumentTemplateId();
+		$templates = $documentGeneratorManager->getTemplatesByIdentifier($itemIdentifier);
+		foreach ($templates as $template)
+		{
+			if ($documentsUserPermissions->canCreateDocumentOnTemplate($template->getId()))
+			{
+				$parameters['templates'][] = $template->jsonSerialize();
+				if ($selectedTemplateId > 0 && $template->getId() === $selectedTemplateId)
+				{
+					$parameters['selectedTemplateId'] = $selectedTemplateId;
+				}
+			}
+		}
+
+		return $parameters;
+	}
+
+	private function getCollapseOptions(): array
+	{
+		$optionsName = 'add_shipment_collapse_options';
+		if ($this->arResult['mode'] === self::PAYMENT_DELIVERY_MODE)
+		{
+			$optionsName = 'add_payment_collapse_options';
+		}
+		elseif ($this->arResult['mode'] === self::PAYMENT_MODE)
+		{
+			$optionsName = 'add_payment_collapse_options';
+		}
+
+		return (array)CUserOptions::GetOption(
+			'salescenter',
+			$optionsName,
+			[]
+		);
+	}
 }

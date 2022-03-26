@@ -751,10 +751,19 @@
 						{
 							let taskId = 'postTask_' + parseInt(Math.random() * 100000);
 
+							let filename = fileData.name;
+							const extension = Utils.getExtension({
+								uri: fileData.name,
+							});
+							if (extension === 'heic')
+							{
+								filename = filename.substring(0, filename.length - (extension.length)) + 'jpg';
+							}
+
 							uploadTasks.push({
 								taskId: taskId,
 								type: fileData.type,
-								name: fileData.name,
+								name: filename,
 								mimeType: Utils.getFileMimeType(fileData.type),
 								folderId: parseInt(BX.componentParameters.get('USER_FOLDER_FOR_SAVED_FILES', 0)),
 								params: {
@@ -813,7 +822,7 @@
 					if (uploadTasks.length > 0)
 					{
 						BX.postComponentEvent('onFileUploadTaskReceived', [{
-							files: uploadTasks
+							files: uploadTasks,
 						}], 'background');
 					}
 					resolve(postData);

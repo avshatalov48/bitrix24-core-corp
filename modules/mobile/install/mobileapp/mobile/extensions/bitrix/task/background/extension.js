@@ -35,7 +35,7 @@
 		{
 			console.info('TaskBackgroundAction.executeAction', data);
 
-			const currentTaskId = taskId || data.taskId;
+			const currentTaskId = (taskId || data.taskId);
 			if (currentTaskId)
 			{
 				TaskBackgroundAction.openTask(currentTaskId, data, params);
@@ -85,17 +85,23 @@
 		{
 			console.log('openTaskListComponentByGroupId');
 
-			const {siteDir, siteId, languageId} = env;
+			const {siteId, siteDir, languageId, userId} = env;
+
+			data.ownerId = (data.ownerId || userId);
+			data.getProjectData = (data.getProjectData || true);
+
 			const componentData = {
 				path: availableComponents['tasks.list'].publicUrl,
+				title: (data.groupName || ''),
 				canOpenInDefault: true,
 				params: {
 					COMPONENT_CODE: 'tasks.list',
 					GROUP_ID: groupId,
+					USER_ID: data.ownerId,
 					DATA: data,
 					SITE_ID: siteId,
-					LANGUAGE_ID: languageId,
 					SITE_DIR: siteDir,
+					LANGUAGE_ID: languageId,
 					PATH_TO_TASK_ADD: `${siteDir}mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#`,
 				},
 			};
@@ -125,40 +131,35 @@
 			TaskBackgroundAction.openTaskListComponent(componentData);
 		}
 
-		static openTaskListComponent(data)
+		static getInputPanelParams(userId)
 		{
-			const settings = {
-				objectName: 'list',
-				useSearch: true,
-				useLargeTitleMode: true,
-			};
-
 			if (Application.getApiVersion() >= 40)
 			{
-				settings.inputPanel = {
-					action: 0,
+				return {
+					inputPanel: {
+						action: 0,
 						callback: 0,
 						useImageButton: true,
 						useAudioMessages: true,
 						smileButton: [],
 						message: {
-						placeholder: BX.message('MOBILE_TASKS_BACKGROUND_INPUT_PANEL_PLACEHOLDER'),
-					},
-					attachButton: {
-						items: [
-							{
-								id: 'disk',
-								name: BX.message('MOBILE_TASKS_BACKGROUND_INPUT_PANEL_B24_DISK'),
-								dataSource: {
-									multiple: true,
-									url: `/mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId=${data.params.DATA.ownerId}`,
+							placeholder: BX.message('MOBILE_TASKS_BACKGROUND_INPUT_PANEL_PLACEHOLDER'),
+						},
+						attachButton: {
+							items: [
+								{
+									id: 'disk',
+									name: BX.message('MOBILE_TASKS_BACKGROUND_INPUT_PANEL_B24_DISK'),
+									dataSource: {
+										multiple: true,
+										url: `/mobile/?mobile_action=disk_folder_list&type=user&path=%2F&entityId=${userId}`,
+									},
 								},
-							},
-						],
-					},
-					attachFileSettings: {
-						resize: {
-							targetWidth: -1,
+							],
+						},
+						attachFileSettings: {
+							resize: {
+								targetWidth: -1,
 								targetHeight: -1,
 								sourceType: 1,
 								encodingType: 0,
@@ -166,18 +167,34 @@
 								allowsEdit: false,
 								saveToPhotoAlbum: true,
 								cameraDirection: 0,
+							},
+							maxAttachedFilesCount: 100,
 						},
-						maxAttachedFilesCount: 100,
 					},
 				};
 			}
 
+			return {};
+		}
+
+		static openTaskListComponent(data)
+		{
+			const settings = {
+				...{
+					objectName: 'list',
+					useSearch: true,
+					useLargeTitleMode: true,
+					emptyListMode: true,
+				},
+				...TaskBackgroundAction.getInputPanelParams(data.params.DATA.ownerId),
+			};
+
 			PageManager.openComponent('JSStackComponent', {
-				canOpenInDefault: data.canOpenInDefault || false,
+				canOpenInDefault: (data.canOpenInDefault || false),
 				scriptPath: data.path,
 				componentCode: 'tasks.list',
 				params: data.params,
-				title: data.title || '',
+				title: (data.title || ''),
 				rootWidget: {
 					settings,
 					name: 'tasks.list',

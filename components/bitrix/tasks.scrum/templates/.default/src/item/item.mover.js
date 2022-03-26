@@ -50,6 +50,10 @@ export class ItemMover extends EventEmitter
 			entityStorage: this.entityStorage
 		});
 
+		this.dragItems = new Set();
+
+		this.lastOutContainer = null;
+
 		this.bindHandlers();
 	}
 
@@ -93,7 +97,7 @@ export class ItemMover extends EventEmitter
 			draggable: '.tasks-scrum__item--drag',
 			dragElement: '.tasks-scrum__item',
 			type: Draggable.DROP_PREVIEW,
-			delay: 300
+			delay: 260
 		});
 
 		this.draggableItems.subscribe('beforeStart', this.onBeforeDragStart.bind(this));
@@ -101,6 +105,8 @@ export class ItemMover extends EventEmitter
 		this.draggableItems.subscribe('end', this.onDragEnd.bind(this));
 
 		this.draggableItems.subscribe('drop', this.onDropEnd.bind(this));
+		this.draggableItems.subscribe('dropzone:enter', this.onDropZoneEnter.bind(this));
+		this.draggableItems.subscribe('dropzone:out', this.onDropZoneOut.bind(this));
 
 		this.draggableItems.subscribe('container:enter', this.onDragContainerEnter.bind(this));
 		this.draggableItems.subscribe('container:out', this.onDragContainerOut.bind(this));
@@ -131,6 +137,33 @@ export class ItemMover extends EventEmitter
 				item.hideSubTasks();
 			}
 
+			const sourceContainer = dragBeforeStartEvent.sourceContainer;
+			const sourceEntityId = parseInt(sourceContainer.dataset.entityId, 10);
+			const sourceEntity = this.entityStorage.findEntityByEntityId(sourceEntityId);
+			if (!sourceEntity)
+			{
+				baseEvent.preventDefault();
+
+				return;
+			}
+
+			this.dragItems.clear();
+
+			sourceEntity.getGroupModeItems()
+				.forEach((selectedItem: Item) => {
+					if (selectedItem.getId() !== item.getId())
+					{
+						this.dragItems.add(selectedItem);
+					}
+				})
+			;
+
+			const isMultipleDrag = (this.dragItems.size > 0);
+			if (isMultipleDrag)
+			{
+				this.addMultipleMode(item, this.dragItems);
+			}
+
 			this.entityStorage.getAllEntities()
 				.forEach((entity: Entity) => {
 					entity.deactivateGroupMode();
@@ -142,10 +175,6 @@ export class ItemMover extends EventEmitter
 							}
 						})
 					;
-					// todo add group mode
-					// entity.getItems().forEach((item: Item) => {
-					// 	entity.removeItemFromGroupMode(item);
-					// });
 				})
 			;
 
@@ -177,14 +206,46 @@ export class ItemMover extends EventEmitter
 
 	onDragEnd(baseEvent: BaseEvent)
 	{
-		this.planBuilder.unblockScrumContainerSelect();
-
 		const dragEndEvent = baseEvent.getData();
 
+		const itemNode = dragEndEvent.source;
+		const itemId = parseInt(itemNode.dataset.id, 10);
+
+		const item = this.entityStorage.findItemByItemId(itemId);
+
+		if (!item)
+		{
+			return;
+		}
+
+		const isMultipleDrag = (this.dragItems.size > 0);
+		if (isMultipleDrag)
+		{
+			this.removeMultipleMode(item, this.dragItems);
+		}
+
+		this.planBuilder.unblockScrumContainerSelect();
+
 		const sourceContainer = dragEndEvent.sourceContainer;
-		const endContainer = dragEndEvent.endContainer;
+		let endContainer = dragEndEvent.endContainer;
 		if (!endContainer)
 		{
+			if (this.isDropToZone)
+			{
+				this.isDropToZone = false;
+			}
+			else
+			{
+				endContainer = this.lastOutContainer;
+			}
+		}
+
+		this.lastOutContainer = null;
+
+		if (!endContainer)
+		{
+			baseEvent.preventDefault();
+
 			return;
 		}
 
@@ -196,20 +257,21 @@ export class ItemMover extends EventEmitter
 
 		if (sourceEntity && endEntity)
 		{
-			const itemNode = dragEndEvent.source;
-			const itemId = parseInt(itemNode.dataset.id, 10);
-
-			const item = this.entityStorage.findItemByItemId(itemId);
-			if (item)
-			{
-				this.onItemMove(item, sourceEntity, endEntity);
-			}
+			this.onItemMove(item, sourceEntity, endEntity)
+				.then(() => {
+					const isMultipleDrag = (this.dragItems.size > 0);
+					if (isMultipleDrag)
+					{
+						this.dragGroupItems(item, this.dragItems, sourceEntity, endEntity);
+					}
+				})
+			;
 
 			sourceEntity.adjustListItemsWidth();
 			endEntity.adjustListItemsWidth();
 		}
 
-		if (!sourceEntity.isBacklog())
+		if (sourceEntity && !sourceEntity.isBacklog())
 		{
 			const backlog = this.entityStorage.getBacklog();
 			if (backlog.isEmpty())
@@ -246,6 +308,11 @@ export class ItemMover extends EventEmitter
 				.then((sprint: Sprint) => {
 					this.addSprintContainers(sprint);
 					this.moveTo(sourceEntity, sprint, item);
+					const isMultipleDrag = (this.dragItems.size > 0);
+					if (isMultipleDrag)
+					{
+						this.dragGroupItems(item, this.dragItems, sourceEntity, sprint);
+					}
 				})
 			;
 		}
@@ -259,14 +326,22 @@ export class ItemMover extends EventEmitter
 				const item = this.entityStorage.findItemByItemId(itemId);
 				if (item)
 				{
-					this.onItemMove(item, sourceEntity, endEntity, true);
+					this.onItemMove(item, sourceEntity, endEntity, true)
+						.then(() => {
+							const isMultipleDrag = (this.dragItems.size > 0);
+							if (isMultipleDrag)
+							{
+								this.dragGroupItems(item, this.dragItems, sourceEntity, endEntity);
+							}
+
+							sourceEntity.adjustListItemsWidth();
+							endEntity.adjustListItemsWidth();
+
+							this.planBuilder.adjustSprintListWidth();
+						})
+					;
 				}
-
-				sourceEntity.adjustListItemsWidth();
-				endEntity.adjustListItemsWidth();
 			}
-
-			this.planBuilder.adjustSprintListWidth();
 		}
 
 		if (!sourceEntity.isBacklog())
@@ -279,13 +354,14 @@ export class ItemMover extends EventEmitter
 		}
 	}
 
-	addSprintContainers(sprint: Sprint)
+	onDropZoneEnter()
 	{
-		if (!sprint.isDisabled())
-		{
-			this.draggableItems.addContainer(sprint.getListItemsNode());
-			this.draggableItems.addDropzone(sprint.getDropzone());
-		}
+		this.isDropToZone = true;
+	}
+
+	onDropZoneOut()
+	{
+		this.isDropToZone = false;
 	}
 
 	onDragContainerEnter(baseEvent: BaseEvent)
@@ -312,11 +388,7 @@ export class ItemMover extends EventEmitter
 	{
 		const dragOutContainerEvent = baseEvent.getData();
 
-		const dropPreview = this.draggableItems.getDropPreview();
-
-		Dom.style(dropPreview, {
-			width: dragOutContainerEvent.out.clientWidth + `px`
-		});
+		this.lastOutContainer = dragOutContainerEvent.out;
 	}
 
 	onDragOut(baseEvent: BaseEvent)
@@ -337,28 +409,29 @@ export class ItemMover extends EventEmitter
 		});
 	}
 
-	onItemMove(item: Item, sourceEntity: Entity, endEntity: Entity, insertDom: false)
+	onItemMove(item: Item, sourceEntity: Entity, endEntity: Entity, insertDom: false): Promise
 	{
 		if (sourceEntity.getId() === endEntity.getId())
 		{
-			this.moveInCurrentContainer(item, sourceEntity);
+			return this.moveInCurrentContainer(new Set([item.getId()]), sourceEntity);
 		}
 		else
 		{
 			const message = Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_MOVE_TASK_FROM_ACTIVE');
 
-			this.onMoveConfirm(sourceEntity, message)
+			return this.onMoveConfirm(sourceEntity, message)
 				.then(() => {
 					if (insertDom)
 					{
 						Dom.insertBefore(item.getNode(), endEntity.getLoaderNode());
 					}
-					this.moveInAnotherContainer(item, sourceEntity, endEntity);
+					this.moveItemFromEntityToEntity(item, sourceEntity, endEntity);
+					this.moveInAnotherContainer(new Set([item.getId()]), sourceEntity, endEntity);
 				})
 				.catch(() => {
 					Dom.insertBefore(
 						item.getNode(),
-						sourceEntity.getListItemsNode().children[item.getSort()]
+						sourceEntity.getListItemsNode().children[item.getSort() - 1]
 					);
 				})
 			;
@@ -367,12 +440,9 @@ export class ItemMover extends EventEmitter
 
 	onMoveItemUpdate(entityFrom: Entity, entityTo: Entity, item: Item)
 	{
-		this.requestSender.updateItem({
-			itemId: item.getId(),
+		this.requestSender.updateItemSort({
 			entityId: entityTo.getId(),
-			sourceEntityId: entityFrom.getId(),
-			fromActiveSprint: ((entityFrom.getEntityType() === 'sprint' && entityFrom.isActive()) ? 'Y' : 'N'),
-			toActiveSprint: ((entityTo.getEntityType() === 'sprint' && entityTo.isActive()) ? 'Y' : 'N'),
+			itemIds: [item.getId()],
 			sortInfo: {
 				...this.calculateSort(entityTo.getListItemsNode(), new Set([item.getId()]), true),
 				...this.calculateSort(entityFrom.getListItemsNode(), new Set(), true)
@@ -383,7 +453,8 @@ export class ItemMover extends EventEmitter
 			})
 			.catch((response) => {
 				this.requestSender.showErrorAlert(response);
-			});
+			})
+		;
 	}
 
 	onMoveConfirm(entity: Entity, message: string): Promise
@@ -409,6 +480,73 @@ export class ItemMover extends EventEmitter
 				resolve();
 			}
 		});
+	}
+
+	dragGroupItems(dragItem: Item, dragItems: Set<Item>, entityFrom: Entity, entityTo: Entity)
+	{
+		const isMoveInCurrentContainer = (entityFrom.getId() === entityTo.getId());
+
+		const sortedDragItems = [...dragItems.values()]
+			.sort((first: Item, second: Item) => {
+				if (first.getSort() < second.getSort()) return 1;
+				if (first.getSort() > second.getSort()) return -1;
+			})
+		;
+
+		const dragItemIds = new Set();
+		sortedDragItems
+			.forEach((groupedItem: Item) => {
+				dragItemIds.add(groupedItem.getId());
+				entityTo.appendNodeAfterItem(groupedItem.getNode(), dragItem.getNode());
+				if (!isMoveInCurrentContainer)
+				{
+					this.moveItemFromEntityToEntity(groupedItem, entityFrom, entityTo);
+				}
+			})
+		;
+
+		if (isMoveInCurrentContainer)
+		{
+			this.moveInCurrentContainer(dragItemIds, entityFrom);
+		}
+		else
+		{
+			this.moveInAnotherContainer(dragItemIds, entityFrom, entityTo);
+		}
+	}
+
+	addMultipleMode(item: Item, dragItems: Set<Item>)
+	{
+
+		Dom.addClass(item.getNode(), (dragItems.size > 1 ? '--multiple-drag-many' : '--multiple-drag'));
+
+		dragItems
+			.forEach((dragItem: Item) => {
+				Dom.addClass(dragItem.getNode(), '--multiple-drag-shadow');
+			})
+		;
+	}
+
+	removeMultipleMode(item: Item, dragItems: Set<Item>)
+	{
+
+		Dom.removeClass(item.getNode(), '--multiple-drag');
+		Dom.removeClass(item.getNode(), '--multiple-drag-many');
+
+		dragItems
+			.forEach((dragItem: Item) => {
+				Dom.removeClass(dragItem.getNode(), '--multiple-drag-shadow');
+			})
+		;
+	}
+
+	addSprintContainers(sprint: Sprint)
+	{
+		if (!sprint.isDisabled())
+		{
+			this.draggableItems.addContainer(sprint.getListItemsNode());
+			this.draggableItems.addDropzone(sprint.getDropzone());
+		}
 	}
 
 	moveItem(item: Item, button)
@@ -517,8 +655,8 @@ export class ItemMover extends EventEmitter
 
 	updateItemsSort(item: Item, listItemsNode: HTMLElement)
 	{
-		this.requestSender.updateItem({
-			itemId: item.getId(),
+		this.requestSender.updateItemSort({
+			itemIds: [item.getId()],
 			sortInfo: {
 				...this.calculateSort(listItemsNode, new Set([item.getId()]))
 			}
@@ -527,40 +665,21 @@ export class ItemMover extends EventEmitter
 		});
 	}
 
-	moveInCurrentContainer(item: Item, entity: Entity)
+	moveInCurrentContainer(itemIds: Set<Item>, entity: Entity)
 	{
-		this.requestSender.updateItemSort({
-			sortInfo: this.calculateSort(
-				entity.getListItemsNode(),
-				new Set([item.getId()])
-			)
+		return this.requestSender.updateItemSort({
+			sortInfo: this.calculateSort(entity.getListItemsNode(), itemIds)
 		}).catch((response) => {
 			this.requestSender.showErrorAlert(response);
 		});
 	}
 
-	moveInAnotherContainer(item: Item, sourceEntity: Entity, endEntity: Entity)
+	moveInAnotherContainer(itemIds: Set<Item>, sourceEntity: Entity, endEntity: Entity)
 	{
-		this.moveItemFromEntityToEntity(item, sourceEntity, endEntity);
-
 		this.requestSender.updateItemSort({
 			entityId: endEntity.getId(),
-			itemId: item.getId(),
-			sourceEntityId: sourceEntity.getId(),
-			fromActiveSprint: (
-				(sourceEntity.getEntityType() === 'sprint' && sourceEntity.isActive())
-					? 'Y'
-					: 'N'
-			),
-			toActiveSprint: (
-				(endEntity.getEntityType() === 'sprint' && endEntity.isActive())
-					? 'Y'
-					: 'N'
-			),
-			sortInfo: this.calculateSort(
-				endEntity.getListItemsNode(),
-				new Set([item.getId()]), true
-			)
+			itemIds: Array.from(itemIds),
+			sortInfo: this.calculateSort(endEntity.getListItemsNode(), itemIds, true)
 		})
 			.then(() => this.updateEntityCounters(sourceEntity, endEntity))
 			.catch((response) => this.requestSender.showErrorAlert(response))
@@ -616,6 +735,22 @@ export class ItemMover extends EventEmitter
 		this.emit('calculateSort', listSortInfo);
 
 		return listSortInfo;
+	}
+
+	resortItems(entity: Entity)
+	{
+		let sort = 1;
+		[...entity.getListItemsNode().querySelectorAll('[data-sort]')]
+			.forEach((itemNode: HTMLElement) => {
+				const itemId = parseInt(itemNode.dataset.id, 10);
+				const item = this.entityStorage.findItemByItemId(itemId);
+				if (item && !item.isSubTask())
+				{
+					item.setSort(sort);
+					sort++;
+				}
+			})
+		;
 	}
 
 	moveToAnotherEntity(entityFrom: Entity, item: Item, targetEntity: ?Entity, bindButton?: HTMLElement)
@@ -681,26 +816,19 @@ export class ItemMover extends EventEmitter
 			}
 		});
 
-		const items = [];
 		const sortedItemsIds = new Set();
 
 		sortedItems.forEach((groupModeItem: Item) => {
 			this.moveTo(entityFrom, entityTo, groupModeItem, after, update);
 			sortedItemsIds.add(groupModeItem.getId());
-			items.push({
-				itemId: groupModeItem.getId(),
-				entityId: entityTo.getId(),
-				sourceEntityId: entityFrom.getId(),
-				fromActiveSprint: ((entityFrom.getEntityType() === 'sprint' && entityFrom.isActive()) ? 'Y' : 'N'),
-				toActiveSprint: ((entityTo.getEntityType() === 'sprint' && entityTo.isActive()) ? 'Y' : 'N')
-			});
 			groupModeItem.activateBlinking();
 		});
 
 		this.scroller.scrollToItem(sortedItems.values().next().value);
 
-		this.requestSender.updateItems({
-			items: items,
+		this.requestSender.updateItemSort({
+			entityId: entityTo.getId(),
+			itemIds: Array.from(sortedItemsIds),
 			sortInfo: {
 				...this.calculateSort(entityTo.getListItemsNode(), sortedItemsIds, true),
 				...this.calculateSort(entityFrom.getListItemsNode(), new Set(), true)
@@ -760,6 +888,12 @@ export class ItemMover extends EventEmitter
 		{
 			const bindItemSort = parseInt(bindItemNode.dataset.sort, 10);
 
+			const bindItem = this.entityStorage.findItemByItemId(parseInt(bindItemNode.dataset.id, 10));
+			if (bindItem.isParentTask() && bindItem.isShownSubTasks())
+			{
+				bindItem.hideSubTasks();
+			}
+
 			if (itemPreviousSortSort > 0 && bindItemSort >= itemPreviousSortSort)
 			{
 				if (isMoveFromAnotherEntity)
@@ -798,6 +932,12 @@ export class ItemMover extends EventEmitter
 		this.moveItemFromEntityToEntity(item, entityFrom, entityTo);
 
 		this.updateEntityCounters(entityFrom, entityTo);
+
+		if (isMoveFromAnotherEntity)
+		{
+			this.resortItems(entityFrom);
+		}
+		this.resortItems(entityTo);
 	}
 
 	moveItemFromEntityToEntity(item: Item, entityFrom: Entity, entityTo: Entity)

@@ -34,6 +34,16 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      return this.sendRequest('sprint', 'getTeamSpeedInfo', data);
 	    }
 	  }, {
+	    key: "getTutorInfo",
+	    value: function getTutorInfo(data) {
+	      return this.sendRequest('info', 'getTutorInfo', data);
+	    }
+	  }, {
+	    key: "getBurnDownInfo",
+	    value: function getBurnDownInfo(data) {
+	      return this.sendRequest('sprint', 'getBurnDownInfo', data);
+	    }
+	  }, {
 	    key: "showErrorAlert",
 	    value: function showErrorAlert(response, alertTitle) {
 	      if (main_core.Type.isUndefined(response.errors)) {
@@ -105,11 +115,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return SidePanel;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject, _templateObject2, _templateObject3, _templateObject4;
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7;
 	var Methodology = /*#__PURE__*/function () {
 	  function Methodology(params) {
 	    babelHelpers.classCallCheck(this, Methodology);
 	    this.groupId = parseInt(params.groupId, 10);
+	    this.teamSpeedPath = params.teamSpeedPath ? params.teamSpeedPath : '';
+	    this.burnDownPath = params.burnDownPath ? params.burnDownPath : '';
 	    this.requestSender = new RequestSender();
 	    this.sidePanel = new SidePanel();
 	    this.menu = null;
@@ -141,8 +153,16 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          }]
 	        }, {
 	          html: [{
+	            html: this.renderBurnDown()
+	          }]
+	        }, {
+	          html: [{
 	            html: this.renderTutor(),
 	            backgroundColor: '#fafafa'
+	          }]
+	        }, {
+	          html: [{
+	            html: this.renderMigration()
 	          }]
 	        }]
 	      });
@@ -173,6 +193,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          }
 	        });
 	        return node;
+	      }).catch(function (response) {
+	        _this.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
@@ -194,6 +216,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	        main_core.Event.bind(node.querySelector('button'), 'click', _this2.showDodSettings.bind(_this2));
 	        return node;
+	      }).catch(function (response) {
+	        _this2.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
@@ -214,13 +238,99 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        }
 
 	        return node;
+	      }).catch(function (response) {
+	        _this3.requestSender.showErrorAlert(response);
+	      });
+	    }
+	  }, {
+	    key: "renderBurnDown",
+	    value: function renderBurnDown() {
+	      var _this4 = this;
+
+	      return this.requestSender.getBurnDownInfo({
+	        groupId: this.groupId
+	      }).then(function (response) {
+	        var existsChart = response.data.sprint !== null;
+	        var btnUiClasses = 'ui-qr-popupcomponentmaker__btn --border';
+	        var disableClass = existsChart ? '' : '--disabled';
+	        var node = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology tasks-scrum__widget-methodology--scope\">\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--btn-box-center\">\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--image-diagram ", "\">\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<button class=\"", " ", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), disableClass, btnUiClasses, disableClass, main_core.Loc.getMessage('TSF_TEAM_SPEED_DIAGRAM'));
+
+	        if (existsChart) {
+	          main_core.Event.bind(node, 'click', _this4.showBurnDownChart.bind(_this4, response.data.sprint.id));
+	        }
+
+	        return node;
+	      }).catch(function (response) {
+	        _this4.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
 	    key: "renderTutor",
 	    value: function renderTutor() {
-	      var node = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__widget-methodology tasks-scrum__widget-methodology--scope tasks-scrum__widget-methodology--bg\"\n\t\t\t\t<div class=\"tasks-scrum__widget-methodology--conteiner\">\n\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--conteiner\">\n\t\t\t\t\t\t<div class=\"ui-icon ui-icon-service-light-tutorial tasks-scrum__widget-methodology--icon\"><i></i></div>\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--content\">\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--name\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--description\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TSF_TUTORIAL_TITLE'), main_core.Loc.getMessage('TSF_TUTORIAL_TEXT'));
+	      var _this5 = this;
+
+	      return this.requestSender.getTutorInfo({
+	        groupId: this.groupId
+	      }).then(function (response) {
+	        var baseClasses = 'tasks-scrum__widget-methodology tasks-scrum__widget-methodology--scope';
+	        var tutorClasses = 'tasks-scrum__widget-methodology--training tasks-scrum__widget-methodology--bg';
+	        var url = response.data.url;
+	        var existsTutor = url !== '';
+	        var iconClass = existsTutor ? 'ui-icon-service-tutorial' : 'ui-icon-service-light-tutorial';
+	        var blockClass = existsTutor ? '--active' : '';
+	        var labelClass = existsTutor ? '--hidden' : '';
+	        var node = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"", " ", " ", "\"\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--conteiner\">\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--conteiner\">\n\t\t\t\t\t\t\t\t<div class=\"ui-icon ", " tasks-scrum__widget-methodology--icon\">\n\t\t\t\t\t\t\t\t\t<i></i>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--content\">\n\t\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--name\">\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--description\">\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--label ", "\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), baseClasses, tutorClasses, blockClass, iconClass, main_core.Loc.getMessage('TSF_TUTORIAL_TITLE'), main_core.Loc.getMessage('TSF_TUTORIAL_TEXT'), labelClass, main_core.Loc.getMessage('TSF_TEAM_SPEED_LABEL'));
+	        main_core.Event.bind(node, 'click', function () {
+	          if (existsTutor) {
+	            main_core.ajax.runAction('bitrix:tasks.scrum.info.openTutor', {
+	              data: {
+	                groupId: _this5.groupId
+	              },
+	              analyticsLabel: {
+	                scrum: 'Y',
+	                action: 'guide_open'
+	              }
+	            }).then(function () {
+	              _this5.sidePanel.openSidePanel(url, {
+	                width: 1000,
+	                contentCallback: function contentCallback() {
+	                  return _this5.createTutorFrame(url);
+	                }
+	              });
+	            });
+	          }
+	        });
+	        return node;
+	      }).catch(function (response) {
+	        _this5.requestSender.showErrorAlert(response);
+	      });
+	    }
+	  }, {
+	    key: "renderMigration",
+	    value: function renderMigration() {
+	      var _this6 = this;
+
+	      var baseClasses = 'tasks-scrum__widget-methodology tasks-scrum__widget-methodology--scope';
+	      var migrationClasses = 'tasks-scrum__widget-methodology--migration tasks-scrum__widget-methodology--bg';
+	      var iconClass = 'ui-icon-service-tutorial tasks-scrum__widget-methodology--migration-btn';
+	      var node = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"", " ", "\"\n\t\t\t\t<div class=\"tasks-scrum__widget-methodology--conteiner\">\n\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--conteiner\">\n\t\t\t\t\t\t<div class=\"ui-icon ", " tasks-scrum__widget-methodology--icon\">\n\t\t\t\t\t\t\t<i></i>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--content\">\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--name\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--label --migration\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), baseClasses, migrationClasses, iconClass, main_core.Loc.getMessage('TSF_MIGRATION_TITLE'), main_core.Loc.getMessage('TSF_MIGRATION_LABEL'));
+	      main_core.Event.bind(node, 'click', function () {
+	        var uri = new main_core.Uri('/marketplace/');
+	        uri.setQueryParam('tag', ['migrator', 'tasks']);
+
+	        _this6.sidePanel.openSidePanelByUrl(uri.toString());
+
+	        _this6.menu.close();
+	      });
 	      return node;
+	    }
+	  }, {
+	    key: "createTutorFrame",
+	    value: function createTutorFrame(url) {
+	      var frameStyles = 'position: absolute; left: 0; top: 0; padding: 0;' + ' border: none; margin: 0; width: 100%; height: 100%;';
+	      return new Promise(function (resolve) {
+	        return resolve(main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["<iframe style=\"", "\" src=\"", "\"></iframe>"])), frameStyles, url));
+	      });
 	    }
 	  }, {
 	    key: "showEpics",
@@ -252,9 +362,23 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "showTeamSpeedChart",
 	    value: function showTeamSpeedChart() {
-	      this.sidePanel.showByExtension('Team-Speed-Chart', {
-	        groupId: this.groupId
-	      });
+	      if (this.teamSpeedPath) {
+	        this.sidePanel.openSidePanel(this.teamSpeedPath);
+	      } else {
+	        throw new Error('Could not find a page to display the chart.');
+	      }
+
+	      this.menu.close();
+	    }
+	  }, {
+	    key: "showBurnDownChart",
+	    value: function showBurnDownChart(sprintId) {
+	      if (this.burnDownPath) {
+	        this.sidePanel.openSidePanel(this.burnDownPath.replace('#sprint_id#', sprintId));
+	      } else {
+	        throw new Error('Could not find a page to display the chart.');
+	      }
+
 	      this.menu.close();
 	    }
 	  }, {

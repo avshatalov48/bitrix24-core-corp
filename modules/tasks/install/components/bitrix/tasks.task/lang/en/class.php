@@ -1,4 +1,5 @@
 <?php
+$MESS["TASKS_ACTION_RESULT_REQUIRED"] = "Task creator requires that you provide a task report.<br> Leave a comment to the task and mark it as a task status summary.";
 $MESS["TASKS_REST_BUTTON_TITLE_2"] = "Bitrix24.Market";
 $MESS["TASKS_TEMPLATE_CREATE_FORBIDDEN"] = "Cannot create template because access was denied";
 $MESS["TASKS_TT_AUTO_CHANGE_ORIGINATOR"] = "Task creator has been automatically changed to current user";

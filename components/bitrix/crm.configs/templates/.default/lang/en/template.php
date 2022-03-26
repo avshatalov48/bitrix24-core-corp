@@ -23,7 +23,6 @@ $MESS["CRM_CONFIGS_DESCRIPTION_OTHER"] = "Open this page to set other CRM prefer
 $MESS["CRM_CONFIGS_DESCRIPTION_PRINTED_FORMS_OF_DOCUMENTS"] = "Use the Payment Methods page to specify your company's details, logo, stamp and signature.";
 $MESS["CRM_CONFIGS_DESCRIPTION_RIGHTS"] = "Before you start: make sure all managers who work with clients have access rights properly configured in order to access client records.";
 $MESS["CRM_CONFIGS_DESCRIPTION_SETTINGS_FORMS_AND_REPORTS"] = "Create your custom fields for any CRM entity. Select the fields to include in analytical reports.";
-$MESS["CRM_CONFIGS_DESCRIPTION_WHERE_TO_BEGIN"] = "Providing initial configuration will help prepare your CRM to fit your business. Create your dictionaries; units of measurement for products; taxes; currencies and set other preferences.";
 $MESS["CRM_CONFIGS_DESCRIPTION_WORK_WITH_MAIL"] = "To process e-mails, connect your company's e-mail inbox to CRM. All the inbound messages will be distributed to respective contacts, companies and leads; tasks will be auto created and assigned to the sales representatives.";
 $MESS["CRM_CONFIGS_EXCH1C"] = "1C:Enterprise Integration";
 $MESS["CRM_CONFIGS_EXCLUSION"] = "Exceptions";

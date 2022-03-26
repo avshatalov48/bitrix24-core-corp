@@ -1,6 +1,8 @@
 <?php
 namespace Bitrix\Crm\Filter;
 
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
@@ -37,10 +39,24 @@ class QuoteDataProvider extends Main\Filter\EntityDataProvider
 	 */
 	protected function getFieldName($fieldID)
 	{
-		$name = Loc::getMessage("CRM_QUOTE_FILTER_{$fieldID}");
+		$phrase = "CRM_QUOTE_FILTER_{$fieldID}";
+		if ($phrase === 'CRM_QUOTE_FILTER_MYCOMPANY_ID')
+		{
+			$name = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Quote)->getFieldCaption(Crm\Item::FIELD_NAME_MYCOMPANY_ID);
+		}
+		else
+		{
+			$name = Loc::getMessage($phrase);
+		}
 		if (empty($name))
 		{
 			$name = \CCrmQuote::GetFieldCaption($fieldID);
+		}
+
+		if (empty($name) && ParentFieldManager::isParentFieldName($fieldID))
+		{
+			$parentEntityTypeId = ParentFieldManager::getEntityTypeIdFromFieldName($fieldID);
+			$name = \CCrmOwnerType::GetDescription($parentEntityTypeId);
 		}
 
 		if (empty($name))
@@ -203,17 +219,6 @@ class QuoteDataProvider extends Main\Filter\EntityDataProvider
 				'MYCOMPANY_ID',
 				array('type' => 'dest_selector', 'partial' => true)
 			),
-			'MYCOMPANY_TITLE' => $this->createField(
-				'MYCOMPANY_TITLE',
-				[
-					'data' => [
-						'additionalFilter' => [
-							'isEmpty',
-							'hasAnyValue',
-						],
-					],
-				]
-			),
 			'COMMENTS' => $this->createField(
 				'COMMENTS',
 				[
@@ -286,6 +291,14 @@ class QuoteDataProvider extends Main\Filter\EntityDataProvider
 		}
 		//endregion
 
+		$parentFields = Container::getInstance()->getParentFieldManager()->getParentFieldsOptionsForFilterProvider(
+			\CCrmOwnerType::Quote
+		);
+		foreach ($parentFields as $code => $parentField)
+		{
+			$result[$code] = $this->createField($code, $parentField);
+		}
+
 		return $result;
 	}
 
@@ -296,7 +309,6 @@ class QuoteDataProvider extends Main\Filter\EntityDataProvider
 	 */
 	public function prepareFieldData($fieldID)
 	{
-
 		if($fieldID === 'CURRENCY_ID')
 		{
 			return array(
@@ -491,6 +503,13 @@ class QuoteDataProvider extends Main\Filter\EntityDataProvider
 			return array(
 				'params' => array('multiple' => 'N'),
 				'items' => Crm\WebForm\Manager::getListNames()
+			);
+		}
+		elseif (ParentFieldManager::isParentFieldName($fieldID))
+		{
+			return Container::getInstance()->getParentFieldManager()->prepareParentFieldDataForFilterProvider(
+				\CCrmOwnerType::Quote,
+				$fieldID
 			);
 		}
 		return null;

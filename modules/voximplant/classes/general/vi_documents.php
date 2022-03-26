@@ -48,7 +48,7 @@ class CVoxImplantDocuments
 		if($country_code == 'RU')
 		{
 			$params = $this->GetUploadData();
-			return 'https://verify.voximplant.com/?account_id='.$params['ACCOUNT_ID'].'&admin_user_name='.$params['ADMIN_NAME'].'&verification_name='.$country_code.'&session_id='.$params['SESSION_ID'].'&vendor=bitrix';
+			return 'https://verify.voximplant.com/verification_ru?account_id='.$params['ACCOUNT_ID'].'&admin_user_name='.$params['ADMIN_NAME'].'&verification_name='.$country_code.'&session_id='.$params['SESSION_ID'].'&vendor=bitrix';
 		}
 		else
 		{

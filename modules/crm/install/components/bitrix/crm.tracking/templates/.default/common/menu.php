@@ -11,15 +11,25 @@ global $APPLICATION;
 
 Loc::loadMessages(__FILE__);
 
-if ($_REQUEST['IFRAME'] !== 'Y'):
-	$currentMenuItem = isset($currentMenuItem) ? $currentMenuItem : 'main';
 
+$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
+$sliderMode = $request->get('IFRAME') === 'Y';
+$currentMenuItem = $currentMenuItem ?? '';
+$shouldDisplayMenu = !$sliderMode || $currentMenuItem === 'list';
+
+if (SITE_TEMPLATE_ID === "bitrix24")
+{
+	$this->SetViewTarget('above_pagetitle', 100);
+}
+
+if ($shouldDisplayMenu)
+{
 	$menuItems = [];
 	$menuItems[] = [
 		"TEXT" => Loc::getMessage('CRM_TRACKING_COMMON_MENU_MAIN'),
 		"URL" => "/crm/tracking/list/",
 		"ID" => "crm-tracking-menu-list",
-		"IS_ACTIVE" => $currentMenuItem === 'main',
+		"IS_ACTIVE" => $currentMenuItem === 'list',
 		'IS_DISABLED'=> false
 	];
 	$menuItems[] = [
@@ -52,11 +62,6 @@ if ($_REQUEST['IFRAME'] !== 'Y'):
 	];
 	*/
 
-	if(SITE_TEMPLATE_ID === "bitrix24")
-	{
-		$this->SetViewTarget('above_pagetitle', 100);
-	}
-
 	$APPLICATION->IncludeComponent(
 		"bitrix:main.interface.buttons",
 		"",
@@ -65,12 +70,7 @@ if ($_REQUEST['IFRAME'] !== 'Y'):
 			"ITEMS" => $menuItems,
 		)
 	);
-
-	if(SITE_TEMPLATE_ID === "bitrix24")
-	{
-		$this->EndViewTarget();
-	}
-endif;
+}
 
 ?>
 <script>
@@ -99,3 +99,9 @@ endif;
 			]
 	});
 </script>
+
+<?
+if (SITE_TEMPLATE_ID === "bitrix24")
+{
+	$this->EndViewTarget();
+}

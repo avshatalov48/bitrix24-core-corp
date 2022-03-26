@@ -1,6 +1,6 @@
 <?php
 $MESS["CRM_APR_ADD_ERROR"] = "Cannot add product";
-$MESS["CRM_APR_DOCUMENT_ERROR"] = "Action is not available for current entity";
+$MESS["CRM_APR_DOCUMENT_ERROR_1"] = "Activity is not available for current entity";
 $MESS["CRM_APR_GET_PRODUCT_ERROR"] = "Cannot get product information";
 $MESS["CRM_APR_PRODUCT_ID"] = "Product ID";
 $MESS["CRM_APR_ROW_DISCOUNT_RATE"] = "Discount, %";

@@ -123,6 +123,10 @@ $APPLICATION->setPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."n
 			<div class="voximplant-title-light"><?= Loc::getMessage("VOX_START_TELEPHONY_SETTINGS") ?></div>
 			<div id="voximplant-grid-settings-block" class="voximplant-grid"></div>
 		<? endif ?>
+		<?php if(!empty($arResult['MENU']['CRM']) && is_array($arResult['MENU']['CRM'])): ?>
+			<div class="voximplant-title-light"><?= Loc::getMessage("VOX_START_TELEPHONY_CRM_INTEGRATION") ?></div>
+			<div id="voximplant-grid-crm-block" class="voximplant-grid"></div>
+		<?php endif;?>
 		<? if(!empty($arResult['MENU']['PARTNERS']) && is_array($arResult['MENU']['PARTNERS'])): ?>
 			<div class="voximplant-title-light"><?= Loc::getMessage("VOX_START_PARTNERS") ?></div>
 			<div id="marketplace-grid-block" class="voximplant-grid"></div>
@@ -153,12 +157,18 @@ $APPLICATION->setPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."n
 			"VOX_START_RENT_OR_LINK_NUMBER": '<?=GetMessageJS("VOX_START_RENT_OR_LINK_NUMBER")?>',
 			"VOX_START_SET_UP": '<?=GetMessageJS("VOX_START_SET_UP")?>',
 			"VOX_START_AUTO_PROLONG": '<?=GetMessageJS("VOX_START_AUTO_PROLONG")?>',
+			"VOX_START_CRM_INTEGRATION_FORM_CREATE": '<?=GetMessageJS("VOX_START_CRM_INTEGRATION_FORM_CREATE")?>',
+			"VOX_START_CRM_INTEGRATION_FORM_LIST": '<?=GetMessageJS("VOX_START_CRM_INTEGRATION_FORM_LIST")?>',
+			"VOX_START_CRM_INTEGRATION_FORM_HELP": '<?=GetMessageJS("VOX_START_CRM_INTEGRATION_FORM_HELP")?>',
 		});
 		BX.Voximplant.Start.init({
 			lines: <?= CUtil::PhpToJSObject($arResult['NUMBERS_LIST'])?>,
 			mainMenuItems: <?= CUtil::PhpToJSObject($arResult['MENU']['MAIN'])?>,
 			settingsMenuItems: <?= CUtil::PhpToJSObject($arResult['MENU']['SETTINGS'])?>,
 			partnersMenuItems: <?= CUtil::PhpToJSObject($arResult['MENU']['PARTNERS'])?>,
+			crmIntegrationMenuItems: <?= CUtil::PhpToJSObject($arResult['MENU']['CRM'])?>,
+			crmFormListUrl: '<?= CUtil::JSEscape($arResult['CRM_CALLBACK_FORM_LIST_URL']) ?>',
+			crmFormCreateUrl: '<?= CUtil::JSEscape($arResult['CRM_CALLBACK_FORM_CREATE_URL']) ?>',
 			applicationUrlTemplate: '<?= CUtil::JSEscape($arResult['MARKETPLACE_DETAIL_URL_TPL']) ?>',
 			tariffsUrl: '<?= CUtil::JSEscape($arResult['LINK_TO_TARIFFS']) ?>',
 			linkToBuySip: '<?= CUtil::JSEscape($arResult["LINK_TO_BUY_SIP"]) ?>',

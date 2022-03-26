@@ -1,16 +1,20 @@
 <?php
 
 use Bitrix\Disk\Configuration;
+use Bitrix\Disk\Document\OnlyOffice;
 use Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Disk\ZipNginx;
+use Bitrix\Main\ModuleManager;
 
 if(!$USER->IsAdmin())
 	return;
 
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/options.php");
 IncludeModuleLangFile(__FILE__);
+
+\Bitrix\Main\UI\Extension::load(["popup", "loader", "disk.b24-documents-client-registration"]);
 
 include_once($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/disk/default_option.php');
 $arDefaultValues['default'] = $disk_default_option;
@@ -39,6 +43,34 @@ if(\Bitrix\Main\Loader::includeModule('disk'))
 	$arDefaultValues['default']['default_viewer_service'] = Configuration::getDefaultViewerServiceCode();
 	$noticeBlock['default_viewer_service'] = Loc::getMessage("DISK_TRANSFORM_FILES_EXTERNAL_SERVICES_NOTICE");
 
+	if (!OnlyOfficeHandler::isEnabled())
+	{
+		$labelButton = Loc::getMessage('DISK_SETTINGS_B24_DOCS_REGISTER_BUTTON', ['#NAME#' => OnlyOfficeHandler::getName()]);
+		$notices['default_viewer_service'] = '<input type="button" id="registerBitrix24Docs" name="registerBitrix24Docs" value="' . $labelButton . '" class="adm-btn-save">';
+	}
+	else
+	{
+		$limitValue = null;
+		$cloudConfiguration = new OnlyOffice\Configuration();
+		$cloudRegistrationData = $cloudConfiguration->getCloudRegistrationData();
+
+		if ($cloudRegistrationData)
+		{
+			$labelButton = Loc::getMessage('DISK_SETTINGS_B24_DOCS_UNREGISTER_BUTTON', ['#NAME#' => OnlyOfficeHandler::getName()]);
+			$notices['default_viewer_service'] = '<input type="button" id="unregisterBitrix24Docs" name="unregisterBitrix24Docs" value="' . $labelButton . '" class="adm-btn">';
+			$limitValueResult = (new OnlyOffice\Cloud\LimitInfo($cloudRegistrationData['serverHost']))->getClientLimit();
+			if ($limitValueResult->isSuccess())
+			{
+				$limitValue = $limitValueResult->getData()['limit'] ?? null;
+			}
+		}
+
+		if ($limitValue)
+		{
+			$noticeBlock['default_viewer_service'] = Loc::getMessage('DISK_SETTINGS_B24_DOCS_LIMIT_INFO', ['#limit#' => $limitValue]) . "<br> " . $noticeBlock['default_viewer_service'];
+		}
+	}
+
 	if(ZipNginx\Configuration::isEnabled() && !ZipNginx\Configuration::isModInstalled())
 	{
 		$notices['disk_nginx_mod_zip_enabled'] = Loc::getMessage('DISK_ENABLE_NGINX_MOD_ZIP_SUPPORT_NOTICE', array(
@@ -61,6 +93,8 @@ if(\Bitrix\Main\Loader::includeModule('disk'))
 	}
 }
 
+$onlyOfficeEnabledOnBitrix24 = Configuration::isEnabledDocuments() && ModuleManager::isModuleInstalled('bitrix24');
+
 $arAllOptions = array_filter(array(
 	array("disk_allow_create_file_by_cloud", GetMessage("DISK_ALLOW_CREATE_FILE_BY_CLOUD"), "Y", array("checkbox", "Y")),
 	array("disk_allow_autoconnect_shared_objects", GetMessage("DISK_ALLOW_AUTOCONNECT_SHARED_OBJECTS"), "N", array("checkbox", "Y")),
@@ -78,10 +112,10 @@ $arAllOptions = array_filter(array(
 	//    Configuration::isEnabledObjectLock()? array("disk_auto_lock_on_object_edit", GetMessage("DISK_SETTINGS_AUTO_LOCK_ON_OBJECT_EDIT"), 'N', array("checkbox", "Y")) : null,
 	//    Configuration::isEnabledObjectLock()? array("disk_auto_release_lock_on_save", GetMessage("DISK_SETTINGS_AUTO_RELEASE_LOCK_ON_SAVE"), 'N', array("checkbox", "Y")) : null,
 	//    Configuration::isEnabledObjectLock()? array("disk_time_auto_release_object_lock", GetMessage("DISK_SETTINGS_TIME_AUTO_RELEASE_OBJECT_LOCK"), 0, Array("text", "20")) : null,
-	Configuration::isEnabledDocuments() ? array("section" => GetMessage("DISK_SETTINGS_ONLYOFFICE_HEAD")) : null,
-	Configuration::isEnabledDocuments() ? array("disk_onlyoffice_server", GetMessage("DISK_SETTINGS_ONLYOFFICE_SERVER"), '', Array("text", "32")) : null,
-	Configuration::isEnabledDocuments() ? array("disk_onlyoffice_secret_key", GetMessage("DISK_SETTINGS_ONLYOFFICE_SECRET_KEY"), '', Array("text", "32")) : null,
-	Configuration::isEnabledDocuments() ? array("disk_onlyoffice_max_filesize", GetMessage("DISK_SETTINGS_ONLYOFFICE_MAX_FILESIZE"), '', Array("text", "32")) : null,
+	$onlyOfficeEnabledOnBitrix24 ? array("section" => GetMessage("DISK_SETTINGS_ONLYOFFICE_HEAD")) : null,
+	$onlyOfficeEnabledOnBitrix24 ? array("disk_onlyoffice_server", GetMessage("DISK_SETTINGS_ONLYOFFICE_SERVER"), '', Array("text", "32")) : null,
+	$onlyOfficeEnabledOnBitrix24 ? array("disk_onlyoffice_secret_key", GetMessage("DISK_SETTINGS_ONLYOFFICE_SECRET_KEY"), '', Array("text", "32")) : null,
+	$onlyOfficeEnabledOnBitrix24 ? array("disk_onlyoffice_max_filesize", GetMessage("DISK_SETTINGS_ONLYOFFICE_MAX_FILESIZE"), '', Array("text", "32")) : null,
 ));
 $aTabs = array(
 	array("DIV" => "edit1", "TAB" => GetMessage("MAIN_TAB_SET"), "ICON" => "ib_settings", "TITLE" => GetMessage("MAIN_TAB_TITLE_SET")),
@@ -202,3 +236,17 @@ HTML;
 	<?=bitrix_sessid_post();?>
 <?$tabControl->End();?>
 </form>
+<script>
+	BX.ready(function(){
+		BX.bind(BX('registerBitrix24Docs'), 'click', function(e){
+			e.preventDefault();
+
+			(new BX.Disk.B24Documents.ClientRegistration()).start();
+		});
+		BX.bind(BX('unregisterBitrix24Docs'), 'click', function(e){
+			e.preventDefault();
+
+			(new BX.Disk.B24Documents.ClientUnRegistration()).start();
+		});
+	});
+</script>

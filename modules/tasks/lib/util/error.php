@@ -11,6 +11,11 @@ final class Error extends \Bitrix\Main\Error
 	protected $type = 'FATAL';
 	protected $data = null;
 
+	public static function makeFromArray(array $error)
+	{
+		return new static($error['MESSAGE'], $error['CODE'], $error['TYPE'], $error['DATA']);
+	}
+
 	/**
 	 * Creates a new Error.
 	 * @param string $message
@@ -53,9 +58,21 @@ final class Error extends \Bitrix\Main\Error
 		);
 	}
 
-	public static function makeFromArray(array $error)
+	/**
+	 * Specify data which should be serialized to JSON
+	 * @link http://php.net/manual/en/jsonserializable.jsonserialize.php
+	 * @return mixed data which can be serialized by <b>json_encode</b>,
+	 * which is a value of any type other than a resource.
+	 * @since 5.4.0
+	 */
+	public function jsonSerialize()
 	{
-		return new static($error['MESSAGE'], $error['CODE'], $error['TYPE'], $error['DATA']);
+		return [
+			'message' => $this->getMessage(),
+			'code' => $this->getCode(),
+			'customData' => $this->getCustomData(),
+			'data' => $this->getData(),
+		];
 	}
 
 	public function setCode($code)

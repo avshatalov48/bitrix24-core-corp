@@ -1557,4 +1557,46 @@ class Connector
 
 		return false;
 	}
+
+	/**
+	 * Returns true if the connector is restricted in RU.
+	 *
+	 * @param string $connector Connector code.
+	 *
+	 * @return bool
+	 */
+	public static function needRestrictionNote(string $connector, string $zone, string $lang): bool
+	{
+		if (mb_strtolower($lang) !== 'ru')
+		{
+			return false;
+		}
+
+		if (mb_strtolower($zone) !== 'ru')
+		{
+			return false;
+		}
+
+		if (!in_array($connector, Library::RU_RESTRICTED_META_CONNECTORS, true))
+		{
+			return false;
+		}
+
+		return true;
+	}
+
+	public static function getPortalZone(): string
+	{
+		$zone = '';
+		if (Loader::includeModule('bitrix24'))
+		{
+			$zone = \CBitrix24::getPortalZone();
+		}
+		elseif (Loader::includeModule('intranet'))
+		{
+			$zone = \CIntranetUtils::getPortalZone();
+		}
+
+		return $zone;
+	}
 }

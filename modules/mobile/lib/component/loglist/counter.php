@@ -97,12 +97,12 @@ class Counter
 				|| $emptyCounter
 			)
 			{
-				\CUserCounter::clearByUser(
+				\CUserCounter::clear(
 					$result['currentUserId'],
-					[ SITE_ID, \CUserCounter::ALL_SITES ],
 					$result['COUNTER_TYPE'],
-					true,
-					false
+					[ SITE_ID, \CUserCounter::ALL_SITES ],
+					false, // sendPull
+					true // bMultiple
 				);
 
 				$result['COUNTER_TO_CLEAR'] = $result['COUNTER_TYPE'];
@@ -113,17 +113,18 @@ class Counter
 					executeModuleEventEx($event, [ $result['COUNTER_TYPE'], (int)$result['LAST_LOG_TS']]);
 				}
 			}
-			elseif ($result['COUNTER_TYPE'] == \CUserCounter::LIVEFEED_CODE)
+			elseif ($result['COUNTER_TYPE'] === \CUserCounter::LIVEFEED_CODE)
 			{
 				$pool = \Bitrix\Main\Application::getInstance()->getConnectionPool();
 				$pool->useMasterOnly(true);
 
-				\CUserCounter::clearByUser(
+				\CUserCounter::clear(
 					$result['currentUserId'],
-					[ SITE_ID, \CUserCounter::ALL_SITES ],
 					$result['COUNTER_TYPE'],
-					false,
-					false
+					[ SITE_ID, \CUserCounter::ALL_SITES ],
+					false, // sendPull
+					false, // bMultiple,
+					false // cleanCache
 				);
 
 				$pool->useMasterOnly(false);
@@ -132,7 +133,7 @@ class Counter
 			}
 
 			if (
-				$result['COUNTER_TYPE'] == \CUserCounter::LIVEFEED_CODE
+				$result['COUNTER_TYPE'] === \CUserCounter::LIVEFEED_CODE
 				&& Loader::includeModule('pull')
 			)
 			{
@@ -143,7 +144,7 @@ class Counter
 					'params' => [
 						SITE_ID => [
 							\CUserCounter::LIVEFEED_CODE => 0
-						]
+						],
 					],
 				]);
 

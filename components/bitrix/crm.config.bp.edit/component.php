@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Crm\Settings\InvoiceSettings;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -63,12 +65,6 @@ $arTypes = [
 		'DOCUMENT' => \Bitrix\Crm\Integration\BizProc\Document\Order::class,
 		'TYPE' => 'ORDER'
 	],
-	'CRM_INVOICE' => [
-		'ID' => 'CRM_INVOICE',
-		'NAME' => GetMessage('CRM_BP_INVOICE'),
-		'DOCUMENT' => \Bitrix\Crm\Integration\BizProc\Document\Invoice::class,
-		'TYPE' => 'INVOICE'
-	],
 	'CRM_QUOTE' => [
 		'ID' => 'CRM_QUOTE',
 		'NAME' => \Bitrix\Main\Localization\Loc::getMessage('CRM_COMMON_QUOTE'),
@@ -76,6 +72,16 @@ $arTypes = [
 		'TYPE' => 'QUOTE',
 	],
 ];
+
+if (InvoiceSettings::getCurrent()->isSmartInvoiceEnabled())
+{
+	$arTypes['CRM_SMART_INVOICE'] = [
+		'ID' => 'CRM_SMART_INVOICE',
+		'NAME' => \CCrmOwnerType::GetCategoryCaption(\CCrmOwnerType::SmartInvoice),
+		'DOCUMENT' => \Bitrix\Crm\Integration\BizProc\Document\SmartInvoice::class,
+		'TYPE' => 'SMART_INVOICE',
+	];
+}
 
 $dynamicTypesMap = \Bitrix\Crm\Service\Container::getInstance()->getDynamicTypesMap();
 $dynamicTypesMap->load([

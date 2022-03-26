@@ -1,6 +1,7 @@
 <?php
 $MESS["CRM_WEBFORM_PRESET_ITEM_CB_RESULT_SUCCESS_TEXT"] = "В ближайшие несколько секунд с вами свяжется менеджер.";
 $MESS["CRM_WEBFORM_PRESET_ITEM_CB_NAME"] = "Обратный звонок с номера \"#call_from#\"";
+$MESS["CRM_WEBFORM_PRESET_ITEM_WA_NAME"] = "Обратный WhatsApp";
 $MESS["CRM_WEBFORM_PRESET_ITEM_CB_CAPTION"] = "Не нашли, что искали?";
 $MESS["CRM_WEBFORM_PRESET_ITEM_CB_DESCRIPTION"] = "Остались вопросы? Мы перезвоним вам и поможем!";
 $MESS["CRM_WEBFORM_PRESET_ITEM_CB_BUTTON_CAPTION"] = "Жду звонка";
@@ -20,5 +21,7 @@ $MESS["CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_EMAIL"] = "E-mail";
 $MESS["CRM_WEBFORM_PRESET_ITEM_DEF_FIELD_COMMENTS"] = "Комментарий";
 $MESS["CRM_WEBFORM_PRESET_ITEM_IMOL_REG_NAME"] = "Форма контактных данных для открытых линий";
 $MESS["CRM_WEBFORM_PRESET_ITEM_IMOL_REG_DESCRIPTION"] = "Представьтесь, пожалуйста";
+$MESS["CRM_WEBFORM_PRESET_ITEM_WA_CAPTION"] = "Обратный WhatsApp";
+$MESS["CRM_WEBFORM_PRESET_ITEM_WA_DESCRIPTION"] = "Оставьте свой номер телефона, и наш менеджер напишет вам в WhatsApp";
 
 ?>

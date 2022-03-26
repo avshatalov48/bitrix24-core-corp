@@ -224,9 +224,6 @@ BX.namespace("BX.Tasks");
 			this.disable();
 		}
 
-		this.query = new BX.Tasks.Util.Query({url: "/bitrix/components/bitrix/tasks.task.list/ajax.php"});
-		this.query.bindEvent("executed", BX.proxy(this.onQueryExecuted, this));
-
 		this.operation = "taskQuickAdd";
 		this.errorPopup = null;
 
@@ -273,48 +270,41 @@ BX.namespace("BX.Tasks");
 			data.userLastName = this.userSelector.getUserLastName();
 		}
 
-		this.disable();
-
-		this.query.deleteAll();
-		this.query.add(
-			"ui.listcontrols.add",
-			{
-				data: data,
-				parameters: { }
-			},
-			{
-				code: this.operation
+		BX.ajax.runComponentAction('bitrix:tasks.interface.quick.form', 'addTask', {
+			mode: 'class',
+			data: {
+				data: data
 			}
+		}).then(
+			function(response)
+			{
+				this.onQueryExecuted(response);
+			}.bind(this),
+			function(response)
+			{
+				return this.showError("Could not process this operation.");
+			}.bind(this)
 		);
-
-
-		this.query.execute();
 	};
 
-	BX.Tasks.QuickForm.prototype.onQueryExecuted = function(result)
+	BX.Tasks.QuickForm.prototype.onQueryExecuted = function(response)
 	{
-		//console.log(result);
-
-		if (!result.success)
-		{
-			return this.showError(result.clientProcessErrors, result.serverProcessErrors);
-		}
-		else if (!result.data[this.operation])
+		if (
+			response.errors
+			&& response.errors.length
+		)
 		{
 			return this.showError("Could not process this operation.");
 		}
-		else if (!result.data[this.operation].SUCCESS)
-		{
-			return this.showError(result.data[this.operation].ERRORS);
-		}
 
-		var data = result.data[this.operation].RESULT;
+		var data = response.data;
 		var taskId = data["taskId"];
 		var found = data.position && data.position.found === true;
 		if (found)
 		{
 			if (data.task)
 			{
+				var result = null;
 				var task = null;
 				try
 				{

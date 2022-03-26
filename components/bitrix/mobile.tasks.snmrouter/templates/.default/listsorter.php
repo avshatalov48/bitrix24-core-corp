@@ -111,21 +111,22 @@ switch ($arResult['VIEW_STATE']['SECTION_SELECTED']['ID'])
 }
 
 // order
-if (($sortInOptions = CUserOptions::GetOption(
+$sortInOptions = CUserOptions::GetOption(
 	'tasks:list:sort',
-	'sort' . '_' . $columnsContextId,
+	"sort_{$columnsContextId}",
 	'none',
 	$loggedInUserId
-)) === "none")
+);
+if ($sortInOptions === 'none')
 {
-	$sortInOptions = array("SORTING" => "ASC");
+	$sortInOptions = ['SORTING' => 'ASC'];
 }
 else
 {
-	$sortInOptions = unserialize($sortInOptions);
+	$sortInOptions = unserialize($sortInOptions, ['allowed_classes' => false]);
 }
 
-$gridId = "mobile_tasks_list_".$columnsContextId;
+$gridId = "mobile_tasks_list_{$columnsContextId}";
 
 if (is_array($sortInOptions))
 {

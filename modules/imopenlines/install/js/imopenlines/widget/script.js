@@ -13241,6 +13241,142 @@
 	        message(id);
 	      }
 	    }
+	    /**
+	     * Gets plural message by id and number
+	     * @param {string} messageId
+	     * @param {number} value
+	     * @param {object} [replacements]
+	     * @return {?string}
+	     */
+
+	  }, {
+	    key: "getMessagePlural",
+	    value: function getMessagePlural(messageId, value) {
+	      var replacements = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+	      var result = '';
+
+	      if (Type.isNumber(value)) {
+	        if (this.hasMessage("".concat(messageId, "_PLURAL_").concat(this.getPluralForm(value)))) {
+	          result = this.getMessage("".concat(messageId, "_PLURAL_").concat(this.getPluralForm(value)), replacements);
+	        } else {
+	          result = this.getMessage("".concat(messageId, "_PLURAL_1"), replacements);
+	        }
+	      } else {
+	        result = this.getMessage(messageId, replacements);
+	      }
+
+	      return result;
+	    }
+	    /**
+	     * Gets language plural form id by number
+	     * see http://docs.translatehouse.org/projects/localization-guide/en/latest/l10n/pluralforms.html
+	     * @param {number} value
+	     * @param {string} [languageId]
+	     * @return {?number}
+	     */
+
+	  }, {
+	    key: "getPluralForm",
+	    value: function getPluralForm(value, languageId) {
+	      var pluralForm;
+
+	      if (!Type.isStringFilled(languageId)) {
+	        languageId = message('LANGUAGE_ID');
+	      }
+
+	      if (value < 0) {
+	        value = -1 * value;
+	      }
+
+	      switch (languageId) {
+	        case 'ar':
+	          pluralForm = value !== 1 ? 1 : 0;
+	          /*
+	          				if (value === 0)
+	          				{
+	          					pluralForm = 0;
+	          				}
+	          				else if (value === 1)
+	          				{
+	          					pluralForm = 1;
+	          				}
+	          				else if (value === 2)
+	          				{
+	          					pluralForm = 2;
+	          				}
+	          				else if (
+	          					value % 100 >= 3
+	          					&& value % 100 <= 10
+	          				)
+	          				{
+	          					pluralForm = 3;
+	          				}
+	          				else if (value % 100 >= 11)
+	          				{
+	          					pluralForm = 4;
+	          				}
+	          				else
+	          				{
+	          					pluralForm = 5;
+	          				}
+	           */
+
+	          break;
+
+	        case 'br':
+	        case 'fr':
+	        case 'tr':
+	          pluralForm = value > 1 ? 1 : 0;
+	          break;
+
+	        case 'de':
+	        case 'en':
+	        case 'hi':
+	        case 'it':
+	        case 'la':
+	          pluralForm = value !== 1 ? 1 : 0;
+	          break;
+
+	        case 'ru':
+	        case 'ua':
+	          if (value % 10 === 1 && value % 100 !== 11) {
+	            pluralForm = 0;
+	          } else if (value % 10 >= 2 && value % 10 <= 4 && (value % 100 < 10 || value % 100 >= 20)) {
+	            pluralForm = 1;
+	          } else {
+	            pluralForm = 2;
+	          }
+
+	          break;
+
+	        case 'pl':
+	          if (value === 1) {
+	            pluralForm = 0;
+	          } else if (value % 10 >= 2 && value % 10 <= 4 && (value % 100 < 10 || value % 100 >= 20)) {
+	            pluralForm = 1;
+	          } else {
+	            pluralForm = 2;
+	          }
+
+	          break;
+
+	        case 'id':
+	        case 'ja':
+	        case 'ms':
+	        case 'sc':
+	        case 'tc':
+	        case 'th':
+	        case 'vn':
+	          pluralForm = 0;
+	          break;
+
+	        default:
+	          pluralForm = 1;
+	          break;
+	      }
+
+	      return pluralForm;
+	    }
 	  }]);
 	  return Loc;
 	}();
@@ -52004,6 +52140,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var key;
 
 	      return typeof key === "undefined" || hasProp.call(item, key);
+	    },
+	    isUuidV4: function isUuidV4(uuid) {
+	      if (!this.isString(uuid)) {
+	        return false;
+	      }
+
+	      var uuidV4pattern = new RegExp(/^[0-9A-F]{8}-[0-9A-F]{4}-4[0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i);
+	      return uuid.search(uuidV4pattern) === 0;
 	    }
 	  },
 	  dialog: {
@@ -53428,13 +53572,15 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          result.params = Object.assign({}, _this2.getElementState().params, result.params);
 
 	          if (payload.id) {
-	            var countMessages = store.state.collection[payload.chatId].length - 1;
+	            if (store.state.collection[payload.chatId]) {
+	              var countMessages = store.state.collection[payload.chatId].length - 1;
 
-	            for (var index = countMessages; index >= 0; index--) {
-	              var message = store.state.collection[payload.chatId][index];
+	              for (var index = countMessages; index >= 0; index--) {
+	                var message = store.state.collection[payload.chatId][index];
 
-	              if (message.templateId === payload.id) {
-	                return;
+	                if (message.templateId === payload.id) {
+	                  return;
+	                }
 	              }
 	            }
 
@@ -53815,6 +53961,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          var chats = [];
 	          var chatsSave = [];
 	          var isPush = false;
+	          payload.data = MessagesModel.getPayloadWithTempMessages(state, payload);
 	          var initialType = payload.insertType;
 
 	          if (payload.insertType === im_const.MutationType.set) {
@@ -53902,12 +54049,15 @@ this.BX.Messenger = this.BX.Messenger || {};
 	                chatId: element.chatId
 	              });
 
-	              var index = state.collection[element.chatId].findIndex(function (el) {
-	                return el.id === element.id;
+	              var index = state.collection[element.chatId].findIndex(function (localMessage) {
+	                if (MessagesModel.isTemporaryMessage(localMessage)) {
+	                  return localMessage.templateId === element.templateId;
+	                }
+
+	                return localMessage.id === element.id;
 	              });
 
 	              if (index > -1) {
-	                delete element.templateId;
 	                state.collection[element.chatId][index] = Object.assign(state.collection[element.chatId][index], element);
 	              } else if (payload.insertType === im_const.MutationType.setBefore) {
 	                state.collection[element.chatId].unshift(element);
@@ -53919,14 +54069,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	              if (_this3.store.getters['dialogues/canSaveChat'] && _this3.store.getters['dialogues/canSaveChat'](element.chatId)) {
 	                chatsSave.push(element.chatId);
-	              } // If it is our mobile app, we delete all the temporary messages (with uuid in ID field) in set mutation,
-	              // because after Set we get data from server and restore temp messages from background tasks.
-
-
-	              if (im_lib_utils.Utils.platform.isBitrixMobile()) {
-	                state.collection[element.chatId] = state.collection[element.chatId].filter(function (message) {
-	                  return message.id.toString().length !== 36;
-	                });
 	              }
 	            };
 
@@ -53989,7 +54131,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	          if (index >= 0) {
 	            var isSaveState = state.saveMessageList[payload.chatId].includes(state.collection[payload.chatId][index].id) || payload.fields.id && !payload.fields.id.toString().startsWith('temporary') && state.collection[payload.chatId][index].id.toString().startsWith('temporary');
-	            delete payload.fields.templateId;
 	            state.collection[payload.chatId][index] = Object.assign(state.collection[payload.chatId][index], payload.fields);
 
 	            if (isSaveState) {
@@ -54139,7 +54280,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 	      var result = this.validate(Object.assign({}, message), options);
 	      result.params = Object.assign({}, this.getElementState().params, result.params);
-	      result.templateId = result.id;
+
+	      if (!result.templateId) {
+	        result.templateId = result.id;
+	      }
+
 	      return Object.assign({}, this.getElementState(), result);
 	    }
 	  }, {
@@ -54327,17 +54472,19 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (typeof fields.id === "number") {
 	        result.id = fields.id;
 	      } else if (typeof fields.id === "string") {
-	        if (fields.id.startsWith('temporary') || fields.id.startsWith('placeholder')) {
+	        if (fields.id.startsWith('temporary') || fields.id.startsWith('placeholder') || im_lib_utils.Utils.types.isUuidV4(fields.id)) {
 	          result.id = fields.id;
 	        } else {
 	          result.id = parseInt(fields.id);
 	        }
 	      }
 
-	      if (typeof fields.templateId === "number") {
+	      if (typeof fields.uuid === "string") {
+	        result.templateId = fields.uuid;
+	      } else if (typeof fields.templateId === "number") {
 	        result.templateId = fields.templateId;
 	      } else if (typeof fields.templateId === "string") {
-	        if (fields.templateId.startsWith('temporary')) {
+	        if (fields.templateId.startsWith('temporary') || im_lib_utils.Utils.types.isUuidV4(fields.templateId)) {
 	          result.templateId = fields.templateId;
 	        } else {
 	          result.templateId = parseInt(fields.templateId);
@@ -54474,6 +54621,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          } else if (field === 'NAME') {
 	            if (params[field]) {
 	              result[field] = params[field];
+	            }
+	          } else if (field === 'LINK_ACTIVE') {
+	            if (params[field]) {
+	              result[field] = params[field].map(function (userId) {
+	                return parseInt(userId);
+	              });
 	            }
 	          } else if (field === 'ATTACH') {
 	            result[field] = this.decodeAttach(params[field]);
@@ -54855,6 +55008,69 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	      return true;
 	    }
+	  }, {
+	    key: "isTemporaryMessage",
+	    value: function isTemporaryMessage(element) {
+	      return element.id && (im_lib_utils.Utils.types.isUuidV4(element.id) || element.id.toString().startsWith('temporary'));
+	    }
+	  }, {
+	    key: "getPayloadWithTempMessages",
+	    value: function getPayloadWithTempMessages(state, payload) {
+	      var payloadData = babelHelpers.toConsumableArray(payload.data);
+
+	      if (!im_lib_utils.Utils.platform.isBitrixMobile()) {
+	        return payloadData;
+	      }
+
+	      if (!payload.data || payload.data.length <= 0) {
+	        return payloadData;
+	      } // consider that in the payload we have messages only for one chat, so we get the value from the first message.
+
+
+	      var payloadChatId = payload.data[0].chatId;
+
+	      if (!state.collection[payloadChatId]) {
+	        return payloadData;
+	      }
+
+	      state.collection[payloadChatId].forEach(function (message) {
+	        if (MessagesModel.isTemporaryMessage(message) && !MessagesModel.existsInPayload(payload, message.templateId) && MessagesModel.doesTaskExist(message)) {
+	          payloadData.push(message);
+	        }
+	      });
+	      return payloadData;
+	    }
+	  }, {
+	    key: "existsInPayload",
+	    value: function existsInPayload(payload, templateId) {
+	      return payload.data.find(function (payloadMessage) {
+	        return payloadMessage.templateId === templateId;
+	      });
+	    }
+	  }, {
+	    key: "doesTaskExist",
+	    value: function doesTaskExist(message) {
+	      if (Array.isArray(message.params.FILE_ID)) {
+	        var foundUploadTasks = false;
+	        message.params.FILE_ID.forEach(function (fileId) {
+	          if (!foundUploadTasks) {
+	            foundUploadTasks = window.imDialogUploadTasks.find(function (task) {
+	              return task.taskId.split('|')[1] === fileId;
+	            });
+	          }
+	        });
+	        return !!foundUploadTasks;
+	      }
+
+	      if (message.templateId) {
+	        var foundMessageTask = window.imDialogMessagesTasks.find(function (task) {
+	          return task.taskId.split('|')[1] === message.templateId;
+	        });
+	        return !!foundMessageTask;
+	      }
+
+	      return false;
+	    }
 	  }]);
 	  return MessagesModel;
 	}(ui_vue_vuex.WidgetVuexBuilderModel);
@@ -54938,7 +55154,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          extend: true,
 	          leave: true,
 	          leaveOwner: true,
-	          rename: true
+	          rename: true,
+	          send: true
 	        },
 	        public: {
 	          code: '',
@@ -55643,24 +55860,28 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (babelHelpers.typeof(fields.restrictions) === 'object' && fields.restrictions) {
 	        result.restrictions = {};
 
-	        if (typeof fields.restrictions.AVATAR === 'boolean') {
-	          result.restrictions.avatar = fields.restrictions.AVATAR;
+	        if (typeof fields.restrictions.avatar === 'boolean') {
+	          result.restrictions.avatar = fields.restrictions.avatar;
 	        }
 
-	        if (typeof fields.restrictions.EXTEND === 'boolean') {
-	          result.restrictions.extend = fields.restrictions.EXTEND;
+	        if (typeof fields.restrictions.extend === 'boolean') {
+	          result.restrictions.extend = fields.restrictions.extend;
 	        }
 
-	        if (typeof fields.restrictions.LEAVE === 'boolean') {
-	          result.restrictions.leave = fields.restrictions.LEAVE;
+	        if (typeof fields.restrictions.leave === 'boolean') {
+	          result.restrictions.leave = fields.restrictions.leave;
 	        }
 
-	        if (typeof fields.restrictions.LEAVE_OWNER === 'boolean') {
-	          result.restrictions.leaveOwner = fields.restrictions.LEAVE_OWNER;
+	        if (typeof fields.restrictions.leave_owner === 'boolean') {
+	          result.restrictions.leaveOwner = fields.restrictions.leave_owner;
 	        }
 
-	        if (typeof fields.restrictions.RENAME === 'boolean') {
-	          result.restrictions.rename = fields.restrictions.RENAME;
+	        if (typeof fields.restrictions.rename === 'boolean') {
+	          result.restrictions.rename = fields.restrictions.rename;
+	        }
+
+	        if (typeof fields.restrictions.send === 'boolean') {
+	          result.restrictions.send = fields.restrictions.send;
 	        }
 	      }
 
@@ -60750,6 +60971,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }
 
 	      var message = this.message.textConverted;
+	      var messageParams = this.message.params;
 	      var replacement = [];
 	      message = message.replace(/<!--IM_COMMAND_START-->([\0-\uFFFF]+?)<!--IM_COMMAND_END-->/ig, function (whole, text) {
 	        var id = replacement.length;
@@ -60768,6 +60990,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      replacement.forEach(function (value, index) {
 	        message = message.replace('####REPLACEMENT_' + index + '####', value);
 	      });
+
+	      if (typeof messageParams.LINK_ACTIVE !== 'undefined' && messageParams.LINK_ACTIVE.length > 0 && !messageParams.LINK_ACTIVE.includes(this.userId)) {
+	        message = message.replace(/<a.*?href="([^"]*)".*?>(.*?)<\/a>/ig, '$2');
+	      }
+
 	      return message;
 	    },
 	    messageAttach: function messageAttach() {
@@ -67215,6 +67442,7 @@ this.BX.Ui.Vue.Components = this.BX.Ui.Vue.Components || {};
           _this.obj.instance = window.b24form.App.createForm24(_this.obj.config, _this.obj.config.data);
 
           _this.obj.instance.subscribeAll(function (data, instance, type) {
+            data = data || {};
             data.form = instance;
 
             _this.$emit('form:' + type, data);
@@ -68022,6 +68250,10 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	  }, {
 	    key: "handleChatUserAdd",
 	    value: function handleChatUserAdd(params) {
+	      if (params.dialogId !== this.store.state.application.dialog.dialogId) {
+	        return false;
+	      }
+
 	      var users = Object.values(params.users).map(function (user) {
 	        return babelHelpers.objectSpread({}, user, {
 	          lastActivityDate: new Date()
@@ -68040,7 +68272,11 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	  }, {
 	    key: "handleChatUserLeave",
 	    value: function handleChatUserLeave(params) {
-	      if (params.userId === this.controller.getUserId() && params.dialogId === this.store.state.application.dialog.dialogId) {
+	      if (params.dialogId !== this.store.state.application.dialog.dialogId) {
+	        return false;
+	      }
+
+	      if (params.userId === this.controller.getUserId()) {
 	        this.application.kickFromCall();
 	      }
 

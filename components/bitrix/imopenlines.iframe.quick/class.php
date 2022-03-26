@@ -8,6 +8,9 @@ use Bitrix\Main\Localization\Loc;
 
 class BotcontrollerIframeQuick extends CBitrixComponent
 {
+	/** @var array */
+	private $sections = [];
+
 	public function executeComponent()
 	{
 		/** @global \CMain $APPLICATION */
@@ -34,25 +37,42 @@ class BotcontrollerIframeQuick extends CBitrixComponent
 		QuickAnswer::setDataManager($listDataManager);
 
 		$this->arResult['ALL_URL'] = QuickAnswer::getUrlToList();
+		$this->arResult['ALL_COUNT'] = QuickAnswer::getCount();
+
+		$this->sections = array_merge(
+			[[
+				'NAME' => Loc::getMessage('IMOL_QUICK_ANSWERS_EDIT_ALL'),
+				'ID' => 0,
+				'CODE' => 'ALL',
+				'SELECTED' => true,
+			]],
+			QuickAnswer::getSectionList()
+		);
 
 		$this->arResult['SECTIONS'] = $this->getSectionList();
 		$this->arResult['BUTTONS'] = $this->prepareSectionsForInterfaceButtons();
-		$this->arResult['ALL_COUNT'] = QuickAnswer::getCount();
 		$this->arResult['DARK_MODE'] = ($this->arParams['DARK_MODE'] ?? 'N') === 'Y';
+
 		$this->includeComponentTemplate();
 	}
 
 	protected function getSectionList()
 	{
-		$allSection = array(
-			'NAME' => Loc::getMessage('IMOL_QUICK_ANSWERS_EDIT_ALL'),
-			'ID' => 0,
-			'CODE' => 'ALL',
-			'SELECTED' => true,
-		);
-		$sections[0] = $allSection;
-		$sections += QuickAnswer::getSectionList();
-		return $sections;
+		$result = [];
+
+		$converter = \Bitrix\Main\Text\Converter::getHtmlConverter();
+
+		foreach($this->sections as $section)
+		{
+			$result[(int)$section['ID']] = [
+				'NAME' =>  $converter->encode($section['NAME']),
+				'ID' => (int)$section['ID'],
+				'CODE' =>  $converter->encode($section['CODE']),
+				'SELECTED' => false,
+			];
+		}
+
+		return $result;
 	}
 
 	protected function markSelectedSection($sectionId = 0)
@@ -71,8 +91,8 @@ class BotcontrollerIframeQuick extends CBitrixComponent
 		{
 			$uri->addParams(array('search' => $this->arResult['SEARCH']));
 		}
-		$buttons = array();
-		foreach($this->arResult['SECTIONS'] as $section)
+		$buttons = [];
+		foreach($this->sections as $section)
 		{
 			$uri->deleteParams(array('sectionId'));
 			$uri->addParams(array('sectionId' => $section['ID']));
@@ -80,13 +100,12 @@ class BotcontrollerIframeQuick extends CBitrixComponent
 				'TEXT' => $section['NAME'],
 				'IS_ACTIVE' => $section['SELECTED'],
 				'CLASS' => 'imopenlines-iframe-quick-menu-item',
-				'ID' => $section['ID'],
+				'ID' => (int)$section['ID'],
 				'URL' => 'javascript:void(0);',
-				'ON_CLICK' => '
-					BX.delegate(window.quickAnswersManagerInstance.setSearchSection('.$section['ID'].', true), window.quickAnswersManagerInstance);
-				'
+				'ON_CLICK' => 'BX.delegate(window.quickAnswersManagerInstance.setSearchSection('.(int)$section['ID'].', true), window.quickAnswersManagerInstance);'
 			);
 		}
+
 		return $buttons;
 	}
-};
+}

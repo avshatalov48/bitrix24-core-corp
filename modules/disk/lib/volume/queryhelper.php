@@ -171,7 +171,7 @@ class QueryHelper
 		$whereSql = '';
 		if (count($where))
 		{
-			$whereSql = ' AND '. implode(" $logic ", $where);
+			$whereSql = ' '.implode(" $logic ", $where);
 		}
 
 		return $whereSql;
@@ -305,7 +305,6 @@ class QueryHelper
 			))
 			->addSelect('OBJECT_ID')
 			->addFilter('=folder.TYPE', ObjectTable::TYPE_FOLDER)// type folder
-			//->addFilter('=folder.DELETED_TYPE', ObjectTable::DELETED_TYPE_NONE)// not deleted
 			->addFilter('=folder.ID', new \Bitrix\Main\DB\SqlExpression('disk_internals_object_path_folder.REAL_OBJECT_ID'))// not link
 			->addFilter('=PARENT_ID', $parentId)
 		;

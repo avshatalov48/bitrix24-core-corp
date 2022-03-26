@@ -13,3 +13,5 @@ $MESS["IMBOT_BOT_POSTFIX_UA"] = "Украина";
 $MESS["IMBOT_SUPPORT_BOT_NAME"] = "Поддержка Битрикс24 в коробке";
 $MESS["IMBOT_SUPPORT_BOX_ACTIVATION_ERROR_UNKNOWN"] = "В ходе подключения открытой линии поддержки возникла ошибка.";
 $MESS["IMBOT_SUPPORT_BOX_ACTIVATION_ERROR"] = "В ходе подключения открытой линии поддержки возникла ошибка: #ERROR#";
+$MESS["IMBOT_ENABLE_GIPHY_BOT"] = "Активировать Giphy";
+$MESS["IMBOT_ENABLE_SUPPORT_BOT"] = "Активировать канал Поддержки Битрикс24";

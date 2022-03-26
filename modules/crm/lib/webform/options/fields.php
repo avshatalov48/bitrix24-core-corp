@@ -196,15 +196,26 @@ final class Fields
 				$contentTypes = $field['SETTINGS_DATA']['CONTENT_TYPES'] ?? null;
 			}
 
+			$enableAutocomplete = in_array($type, [
+				'name',
+				'second-name',
+				'last-name',
+				'email',
+				'phone',
+			]);
 
 			$this->cachedResult[] = $options + [
 				'type' => $type,
 				'placeholder' => $field['PLACEHOLDER'],
 				'value' => $field['VALUE'],
 				'items' => $this->getFieldItems($field, $data),
-				'bigPic' => !empty($field['SETTINGS_DATA']['BIG_PIC'])
-					? $field['SETTINGS_DATA']['BIG_PIC'] === 'Y'
-					: false,
+				'hint' => $field['SETTINGS_DATA']['HINT'],
+				'hintOnFocus' => !empty($field['SETTINGS_DATA']['HINT_ON_FOCUS'])
+					&& $field['SETTINGS_DATA']['HINT_ON_FOCUS'] === 'Y',
+				'autocomplete' => !empty($field['SETTINGS_DATA']['AUTOCOMPLETE'])
+					&& $field['SETTINGS_DATA']['AUTOCOMPLETE'] === 'Y'
+					|| $enableAutocomplete && empty($field['SETTINGS_DATA']['AUTOCOMPLETE']),
+				'bigPic' => ($field['SETTINGS_DATA']['BIG_PIC'] ?? 'N') === 'Y',
 				'contentTypes' => $contentTypes,
 			];
 		}
@@ -262,28 +273,25 @@ final class Fields
 						}
 
 						$product = \CCrmProduct::getByID($item['ID']);
-						if (!$product)
+						if ($product)
 						{
-							return $data;
-						}
-
-						if (!empty($product['MEASURE']))
-						{
-							static $measures;
-							if (!is_array($measures))
+							if (!empty($product['MEASURE']))
 							{
-								$measures = Crm\Measure::getMeasures();
-								$measures = array_combine(
-									array_column($measures, 'ID'),
-									array_column($measures, 'SYMBOL')
-								);
-							}
-							if (isset($measures[$product['MEASURE']]))
-							{
-								$data['quantity']['unit'] = $measures[$product['MEASURE']];
+								static $measures;
+								if (!is_array($measures))
+								{
+									$measures = Crm\Measure::getMeasures();
+									$measures = array_combine(
+										array_column($measures, 'ID'),
+										array_column($measures, 'SYMBOL')
+									);
+								}
+								if (isset($measures[$product['MEASURE']]))
+								{
+									$data['quantity']['unit'] = $measures[$product['MEASURE']];
+								}
 							}
 						}
-
 
 						$pics = [];
 						if (Main\Loader::includeModule('catalog'))
@@ -369,12 +377,12 @@ final class Fields
 				}
 
 				$result = array_map(
-					function ($item)
+					function ($item) use ($field)
 					{
 						$result = [
 							'label' => $item['VALUE'],
 							'value' => $item['ID'],
-							'selected' => ($item['SELECTED'] ?? 'N') === 'Y',
+							'selected' => ($item['SELECTED'] ?? 'N') === 'Y' || $field['VALUE'] === $item['ID'],
 							//'discount' => isset($item['discount']) ? $item['discount'] : 0,
 							//'pics' => [],
 							//quantity: {min: 2, max: 50, step: 2, unit: 'unt.'},
@@ -455,6 +463,14 @@ final class Fields
 			);
 		}
 
+		$supportAutocomplete = !in_array($field['TYPE'], [
+			WebForm\Internals\FieldTable::TYPE_ENUM_RESOURCEBOOKING,
+			WebForm\Internals\FieldTable::TYPE_ENUM_FILE,
+			WebForm\Internals\FieldTable::TYPE_ENUM_PRODUCT,
+			WebForm\Internals\FieldTable::TYPE_ENUM_SECTION,
+			WebForm\Internals\FieldTable::TYPE_ENUM_PAGE,
+		]);
+
 		$defaultValueType = array_filter(
 			$valueTypes,
 			function (array $item)
@@ -471,6 +487,8 @@ final class Fields
 			'name' => $data['ENTITY_FIELD_NAME'] ?? null,
 			'types' => $types,
 			'hasLabel' => $hasLabel,
+			'hasHint' => $isValuableType,
+			'supportHintOnFocus' => $isCommonStringType,
 			'hasPlaceholder' => $isCommonStringType,
 			'hasStringDefaultValue' => $isCommonStringType,
 			'valueTypes' => $valueTypes,
@@ -478,6 +496,7 @@ final class Fields
 			'canBeRequired' => $isValuableType,
 			'supportContentTypes' => $field['TYPE'] === 'file' && !self::isFieldFileImage($data['CODE']),
 			'supportListableItems' => $hasListableItems,
+			'supportAutocomplete' => $supportAutocomplete,
 			'supportCustomItems' => $field['TYPE'] === 'product',
 			'catalog' => $field['TYPE'] === 'product' ? $catalog : null,
 			'items' => $items,
@@ -546,14 +565,19 @@ final class Fields
 		)]);
 	}
 
-	public static function filterFieldOptions(array $options)
+	public static function filterFieldOptions(array &$options)
 	{
-		if (empty($options['name']))
+		if (empty($options['name']) || $options['inPreparing'])
 		{
 			return null;
 		}
 
 		$field = self::getFieldByName($options['name']);
+
+		if (!$options['type'])
+		{
+			$options['type'] = $field['TYPE'];
+		}
 
 		return $options;
 	}
@@ -637,6 +661,21 @@ final class Fields
 				? $options['contentTypes']
 				: []
 			;
+		}
+
+		if (isset($options['autocomplete']))
+		{
+			$data['SETTINGS_DATA']['AUTOCOMPLETE'] =  ($options['autocomplete'] ?? false) ? 'Y' : 'N';
+		}
+
+		if (isset($options['hint']))
+		{
+			$data['SETTINGS_DATA']['HINT'] = $options['hint'];
+		}
+
+		if (isset($options['hintOnFocus']))
+		{
+			$data['SETTINGS_DATA']['HINT_ON_FOCUS'] = ($options['hintOnFocus'] ?? false) ? 'Y' : 'N';
 		}
 
 		$data['REQUIRED'] = $options['required'] ? 'Y' : 'N';

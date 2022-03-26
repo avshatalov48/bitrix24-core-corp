@@ -30,7 +30,7 @@ $entityTypeId = (int)Application::getInstance()->getContext()->getRequest()->get
 $parentEntityTypeId = (int)Application::getInstance()->getContext()->getRequest()->get('parentEntityTypeId');
 $parentEntityId = (int)Application::getInstance()->getContext()->getRequest()->get('parentEntityId');
 
-if (!\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId) || $parentEntityTypeId <= 0 || $parentEntityId <= 0)
+if (!\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId) || $parentEntityTypeId <= 0 || $parentEntityId <= 0)
 {
 	die();
 }

@@ -5,14 +5,28 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Main\IO\Path;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Web\Json;
 
-\Bitrix\Main\Page\Asset::getInstance()->addJs(getLocalPath('activities/bitrix/crmupdatedynamicactivity/script.js'));
+\Bitrix\Main\UI\Extension::load(
+	['ui.buttons', 'ui.hint', 'ui.notification', 'ui.alerts', 'ui.dialogs.messagebox', 'ui.entity-selector']
+);
+
+$messages = Loc::loadLanguageFile(
+	\Bitrix\Main\Application::getDocumentRoot()
+	. Path::normalize('/bitrix/components/bitrix/bizproc.automation/templates/.default/template.php')
+);
+Asset::getInstance()->addJs(Path::normalize('/bitrix/activities/bitrix/crmupdatedynamicactivity/script.js'));
+Asset::getInstance()->addJs(
+	Path::normalize('/bitrix/components/bitrix/bizproc.automation/templates/.default/script.js')
+);
 /** @var \Bitrix\Bizproc\Activity\PropertiesDialog $dialog */
+$map = $dialog->getMap();
 ?>
-<?php foreach ($dialog->getMap() as $field): ?>
-	<?php if (array_key_exists('Name', $field)): ?>
+<?php foreach ($map as $field): ?>
+	<?php if (isset($field['Name'], $field['Type'])): ?>
 		<tr>
 			<td align="right" width="40%"><?=htmlspecialcharsbx($field['Name'])?>:</td>
 			<td width="60%">
@@ -32,7 +46,14 @@ use Bitrix\Main\Web\Json;
 	<?php endif; ?>
 <?php endforeach; ?>
 
-<tr>
+<tr data-role="bca-cuda-entity-type-id-dependent">
+	<td align="right" width="40%"><?=$map['DynamicFilterFields']['Name']?>:</td>
+	<td width="60%">
+		<div data-role="bca-cuda-filter-fields-container"></div>
+	</td>
+</tr>
+
+<tr data-role="bca-cuda-entity-type-id-dependent">
 	<td colspan="2">
 		<table width="100%" border="0" cellpadding="2" cellspacing="2" data-role="bca-cuda-fields-container">
 		</table>
@@ -44,13 +65,20 @@ use Bitrix\Main\Web\Json;
 <script>
 	BX.ready(function()
 	{
-		BX.message(<?= Json::encode(Loc::loadLanguageFile($dialog->getActivityFile())) ?>);
+		BX.message(<?=Json::encode($messages)?>);
+		BX.message(<?=Json::encode(Loc::loadLanguageFile($dialog->getActivityFile())) ?>);
 
 		var script = new BX.Crm.Activity.CrmUpdateDynamicActivity({
 			documentType: <?= Json::encode($dialog->getDocumentType()) ?>,
+			documentName: '<?= CUtil::JSEscape($dialog->getRuntimeData()['DocumentName']) ?>',
 			isRobot: false,
 			formName: '<?=CUtil::JSEscape($dialog->getFormName())?>',
 			fieldsMap: <?= Json::encode($dialog->getMap()['DynamicEntitiesFields']['Map']) ?>,
+
+			filteringFieldsPrefix: '<?=CUtil::JSEscape($map['DynamicFilterFields']['FieldName'])?>_',
+			filterFieldsMap: <?=Json::encode($map['DynamicFilterFields']['Map'])?>,
+			conditions: <?=Json::encode($dialog->getCurrentValue('dynamic_filter_fields'))?>,
+
 			currentValues: <?= Json::encode($dialog->getCurrentValue('dynamic_entities_fields')) ?>,
 		});
 		script.init();

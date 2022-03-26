@@ -508,7 +508,7 @@ endif;
 	$arCompanyIndustryList = CCrmStatus::GetStatusListEx('INDUSTRY');
 	$obRes = CCrmCompany::GetListEx(
 		array('ID' => 'DESC'),
-		array(),
+		array('@CATEGORY_ID' => 0),
 		false,
 		array('nTopCount' => 50),
 		array('ID', 'TITLE', 'COMPANY_TYPE', 'INDUSTRY',  'LOGO')
@@ -550,7 +550,7 @@ endif;
 	//CrmContact
 	$obRes = CCrmContact::GetListEx(
 		array('LAST_NAME' => 'ASC', 'NAME' => 'ASC'),
-		array(),
+		array('@CATEGORY_ID' => 0),
 		false,
 		array('nTopCount' => 50),
 		array('ID', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'COMPANY_TITLE', 'PHOTO')

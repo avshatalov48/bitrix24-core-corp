@@ -97,4 +97,7 @@ $MESS["CRM_CONTACT_CONVERT_ADDRESSES_DLG_TITLE"] = "Перенос старых 
 $MESS["CRM_CONTACT_CONVERT_ADDRESSES_STATE"] = "#processed# из #total#";
 $MESS["CRM_CONTACT_CONVERT_UF_ADDRESSES_DLG_TITLE"] = "Перенос адресов из пользовательского поля в реквизиты контактов";
 $MESS["CRM_CONTACT_CONVERT_UF_ADDRESSES_STATE"] = "#processed# из #total#";
-?>
+$MESS["CRM_CONTACT_BACKGROUND_DUPLICATE_INDEX_REBUILD_TITLE"] = "Сканирование дубликатов контактов";
+$MESS["CRM_CONTACT_BACKGROUND_DUPLICATE_INDEX_REBUILD_STATE"] = "#processed#%";
+$MESS["CRM_CONTACT_BACKGROUND_DUPLICATE_MERGE_TITLE"] = "Объединение дубликатов контактов";
+$MESS["CRM_CONTACT_BACKGROUND_DUPLICATE_MERGE_STATE"] = "#processed#%";

@@ -74,6 +74,8 @@ class ScenarioSelection extends CBitrixComponent implements Bitrix\Main\Engine\C
 				'\Bitrix\Crm\Order\EventsHandler\Shipment',
 				'OnSaleShipmentEntitySaved'
 			);
+
+			Crm\Automation\Demo\Wizard::installOrderPresets();
 		}
 		elseif ($selectedScenario === self::SCENARIO_DEAL)
 		{

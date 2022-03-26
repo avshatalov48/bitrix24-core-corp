@@ -130,6 +130,14 @@ class EntityHandler
 					$entityTypeNames[] = 'PRODUCT';
 				}
 
+				if (
+					isset($params['enableCrmSmartInvoices'])
+					&& $params['enableCrmSmartInvoices'] === 'Y'
+				)
+				{
+					$entityTypeNames[] = \CCrmOwnerType::SmartInvoiceName;
+				}
+
 				if(isset($params['enableCrmDynamics']) && is_array($params['enableCrmDynamics']))
 				{
 					foreach($params['enableCrmDynamics'] as $entityTypeId => $active)

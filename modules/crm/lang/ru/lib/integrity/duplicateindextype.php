@@ -10,4 +10,5 @@ $MESS["CRM_DUP_INDEX_TYPE_COMM_SKYPE"] = "Skype";
 $MESS["CRM_DUP_INDEX_TYPE_COMM_BITRIX24"] = "Битрикс24.Network";
 $MESS["CRM_DUP_INDEX_TYPE_COMM_OPENLINE"] = "Открытая линия";
 $MESS["CRM_DUP_INDEX_TYPE_COMM_VIBER"] = "Viber";
+$MESS["CRM_DUP_INDEX_TYPE_COMM_SLUSER"] = "Связанный пользователь";
 ?>

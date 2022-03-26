@@ -51,6 +51,11 @@ class UserPermissions
 		return $this->userId;
 	}
 
+	public function canViewAtLeastOneType(): bool
+	{
+		return static::canViewAnyType();
+	}
+
 	public function canViewType(int $typeId): bool
 	{
 		if ($this->isAccessDeniedToEverything())

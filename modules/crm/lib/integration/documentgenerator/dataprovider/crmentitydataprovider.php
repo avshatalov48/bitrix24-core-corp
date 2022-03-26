@@ -13,9 +13,11 @@ use Bitrix\Crm\Format\PersonNameFormatter;
 use Bitrix\Crm\Integration\DocumentGenerator\Value\Money;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\Crm\Timeline\DocumentController;
 use Bitrix\Crm\Timeline\DocumentEntry;
 use Bitrix\Crm\Timeline\TimelineType;
+use Bitrix\Crm\UI\Barcode;
 use Bitrix\DocumentGenerator\CreationMethod;
 use Bitrix\DocumentGenerator\DataProvider;
 use Bitrix\DocumentGenerator\DataProvider\EntityDataProvider;
@@ -30,7 +32,6 @@ use Bitrix\Main\IO\Path;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Numerator\Hashable;
-use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\Main\Type\DateTime;
 
 abstract class CrmEntityDataProvider extends EntityDataProvider implements Hashable, DocumentNumerable, Nameable
@@ -38,9 +39,14 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 	protected $multiFields;
 	protected $linkData;
 	protected $requisiteIds;
+	protected $requisites;
 	protected $bankDetailIds;
+	protected $bankDetail;
 	protected $myCompanyRequisiteIds;
+	protected $myCompanyRequisites;
 	protected $myCompanyBankDetailIds;
+	protected $myCompanyBankDetail;
+	protected $paymentQrCodePath;
 	protected $crmUserTypeManager;
 	protected $userFieldDescriptions = [];
 
@@ -304,6 +310,11 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 			'PROVIDER' => BankDetail::class,
 			'VALUE' => [$this, 'getBankDetailId'],
 			'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_BANK_DETAIL_TITLE'),
+		];
+		$fields['PAYMENT_QR_CODE'] = [
+			'TYPE' => static::FIELD_TYPE_IMAGE,
+			'VALUE' => [$this, 'getPaymentQrCode'],
+			'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_PAYMENT_QR_CODE_TITLE'),
 		];
 
 		$fields['COMPANY'] = [
@@ -994,27 +1005,10 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 		{
 			if($this->isLoaded())
 			{
-				$this->myCompanyRequisiteIds = '';
-				if(!empty($this->getOptions()['VALUES']['MY_COMPANY.REQUISITE']))
-				{
-					$this->myCompanyRequisiteIds = $this->getOptions()['VALUES']['MY_COMPANY.REQUISITE'];
-				}
-				else
-				{
-					$linkData = $this->getLinkData();
-					if($linkData['MC_REQUISITE_ID'] > 0)
-					{
-						$this->myCompanyRequisiteIds = $linkData['MC_REQUISITE_ID'];
-					}
-					else
-					{
-						$requisiteLink = EntityLink::getDefaultMyCompanyRequisiteLink();
-						if(isset($requisiteLink['MC_REQUISITE_ID']) && $requisiteLink['MC_REQUISITE_ID'] > 0)
-						{
-							$this->myCompanyRequisiteIds = $requisiteLink['MC_REQUISITE_ID'];
-						}
-					}
-				}
+				$this->myCompanyRequisiteIds = $this->loadMyCompanyRequisiteData(
+					'MY_COMPANY.REQUISITE',
+					'MC_REQUISITE_ID',
+				);
 			}
 		}
 
@@ -1028,22 +1022,43 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 	{
 		if($this->myCompanyBankDetailIds === null)
 		{
-			$this->myCompanyBankDetailIds = '';
 			if($this->isLoaded())
 			{
-				if(!empty($this->getOptions()['VALUES']['MY_COMPANY.BANK_DETAIL']))
-				{
-					$this->myCompanyBankDetailIds = $this->getOptions()['VALUES']['MY_COMPANY.BANK_DETAIL'];
-				}
-				else
-				{
-					$linkData = $this->getLinkData();
-					$this->myCompanyBankDetailIds = $linkData['MC_BANK_DETAIL_ID'];
-				}
+				$this->myCompanyBankDetailIds = $this->loadMyCompanyRequisiteData(
+					'MY_COMPANY.BANK_DETAIL',
+					'MC_BANK_DETAIL_ID',
+				);
 			}
 		}
 
 		return $this->myCompanyBankDetailIds;
+	}
+
+	/**
+	 * @param string $optionValuePlaceholder
+	 * @param string $entityLinkPlaceholder
+	 * @return int|string
+	 */
+	private function loadMyCompanyRequisiteData(string $optionValuePlaceholder, string $entityLinkPlaceholder)
+	{
+		if (!empty($this->getOptions()['VALUES'][$optionValuePlaceholder]))
+		{
+			return (int)$this->getOptions()['VALUES'][$optionValuePlaceholder];
+		}
+
+		$linkData = $this->getLinkData();
+		if (is_array($linkData) && isset($linkData[$entityLinkPlaceholder]) && $linkData[$entityLinkPlaceholder] > 0)
+		{
+			return (int)$linkData[$entityLinkPlaceholder];
+		}
+
+		$requisiteLink = EntityLink::getDefaultMyCompanyRequisiteLink();
+		if (isset($requisiteLink[$entityLinkPlaceholder]) && $requisiteLink[$entityLinkPlaceholder] > 0)
+		{
+			return (int)$requisiteLink[$entityLinkPlaceholder];
+		}
+
+		return '';
 	}
 
 	/**
@@ -1202,6 +1217,52 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 		}
 
 		return $this->bankDetailIds;
+	}
+
+	public function getPaymentQrCode(): ?string
+	{
+		if (!is_null($this->paymentQrCodePath))
+		{
+			return $this->paymentQrCodePath;
+		}
+
+		$transactionData = $this->prepareTransactionData();
+
+		$paymentQr = new Barcode\Payment($transactionData);
+
+		if (!$paymentQr->validate()->isSuccess())
+		{
+			return null;
+		}
+
+		$this->paymentQrCodePath = $paymentQr->saveToTemporaryFile();
+
+		return $this->paymentQrCodePath;
+	}
+
+	protected function prepareTransactionData(): Barcode\Payment\TransactionData
+	{
+		$myCompanyRequisiteId = $this->getMyCompanyRequisiteId();
+		$myCompanyBankDetailId = $this->getMyCompanyBankDetailId();
+
+		$clientRequisiteId = $this->getRequisiteId();
+		if (is_array($clientRequisiteId))
+		{
+			$clientRequisiteId = DataProviderManager::getInstance()->getValueFromList($clientRequisiteId);
+		}
+
+		$clientBankDetailId = $this->getBankDetailId();
+		if (is_array($clientBankDetailId))
+		{
+			$clientBankDetailId = DataProviderManager::getInstance()->getValueFromList($clientBankDetailId);
+		}
+
+		return Barcode\Payment\DataAssembler::createTransactionDataByRequisites(
+			(int)$myCompanyRequisiteId,
+			(int)$myCompanyBankDetailId,
+			(int)$clientRequisiteId,
+			(int)$clientBankDetailId,
+		);
 	}
 
 	/**
@@ -1555,25 +1616,42 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 	protected function getAddressFromRequisite(array $requisiteFieldDescription, $placeholder)
 	{
 		$address = '';
-		$requisites = $this->getValue('REQUISITE');
-		if(!$requisites instanceof Requisite)
+
+		$data = $this->getComplexFieldData('REQUISITE', $requisiteFieldDescription, Requisite::class);
+
+		if(
+			isset($data[$placeholder])
+			&& is_array($data[$placeholder])
+		)
 		{
-			$requisites = DataProviderManager::getInstance()->getValueFromList($requisites);
-			$requisites = DataProviderManager::getInstance()->createDataProvider($requisiteFieldDescription, $requisites, $this, 'REQUISITE');
-		}
-		if($requisites instanceof Requisite)
-		{
-			$data = DataProviderManager::getInstance()->getArray($requisites);
-			if(
-				isset($data[$placeholder])
-				&& is_array($data[$placeholder])
-			)
-			{
-				$address = $data[$placeholder];
-			}
+			$address = $data[$placeholder];
 		}
 
 		return $address;
+	}
+
+	private function getComplexFieldData(string $fieldName, array $fieldDescription, string $dataProviderClass): array
+	{
+		if (!is_a($dataProviderClass, DataProvider::class, true))
+		{
+			return [];
+		}
+
+		$data = [];
+
+		$value = $this->getValue($fieldName);
+		if (!is_a($value, $dataProviderClass) && !empty($value))
+		{
+			$value = DataProviderManager::getInstance()->getValueFromList($value);
+			$value = DataProviderManager::getInstance()->createDataProvider($fieldDescription, $value, $this, $fieldName);
+		}
+
+		if (is_a($value, $dataProviderClass))
+		{
+			$data = DataProviderManager::getInstance()->getArray($value);
+		}
+
+		return $data;
 	}
 
 	/**

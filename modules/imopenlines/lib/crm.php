@@ -1,57 +1,55 @@
 <?php
 namespace Bitrix\ImOpenLines;
 
-use \Bitrix\Main,
-	\Bitrix\Main\Loader,
-	\Bitrix\Main\ModuleManager,
-	\Bitrix\Main\Localization\Loc;
+use Bitrix\Main;
+use Bitrix\Main\Loader;
+use Bitrix\Main\ModuleManager;
+use Bitrix\Main\Localization\Loc;
 
-use \Bitrix\Crm\Tracking,
-	\Bitrix\Crm\EntityManageFacility,
-	\Bitrix\Crm\Settings\LeadSettings,
-	\Bitrix\Crm\Automation\Trigger\OpenLineTrigger,
-	\Bitrix\Crm\Integration\Channel\IMOpenLineTracker,
-	\Bitrix\Crm\Automation\Trigger\OpenLineMessageTrigger,
-	\Bitrix\Crm\Automation\Trigger\OpenLineAnswerTrigger,
-	\Bitrix\Crm\Automation\Trigger\OpenLineAnswerControlTrigger;
+use Bitrix\Crm\Tracking;
+use Bitrix\Crm\Communication\Type;
+use Bitrix\Crm\EntityManageFacility;
+use Bitrix\Crm\Settings\LeadSettings;
+use Bitrix\Crm\Automation\Trigger\OpenLineTrigger;
+use Bitrix\Crm\Integration\Channel\IMOpenLineTracker;
+use Bitrix\Crm\Automation\Trigger\OpenLineAnswerTrigger;
+use Bitrix\Crm\Automation\Trigger\OpenLineMessageTrigger;
+use Bitrix\Crm\Automation\Trigger\OpenLineAnswerControlTrigger;
 
-use \Bitrix\Im\User as ImUser;
+use Bitrix\Im;
 
-use \Bitrix\ImOpenLines\Queue,
-	\Bitrix\Imopenlines\Widget,
-	\Bitrix\ImOpenLines\Crm\Fields,
-	\Bitrix\ImOpenLines\Im\Messages,
-	\Bitrix\ImOpenLines\Crm\Activity,
-	\Bitrix\ImOpenLines\ConfigStatistic,
-	\Bitrix\ImOpenLines\Crm\Common as CrmCommon;
+use Bitrix\ImOpenLines\Crm\Fields;
+use Bitrix\ImOpenLines\Im\Messages;
+use Bitrix\ImOpenLines\Crm\Activity;
+use Bitrix\ImOpenLines\Crm\Common as CrmCommon;
 
 Loc::loadMessages(__FILE__);
 
 class Crm
 {
-	const FIND_BY_CODE = 'IMOL';
-	const FIND_BY_NAME = 'NAME';
-	const FIND_BY_EMAIL = 'EMAIL';
-	const FIND_BY_PHONE = 'PHONE';
+	public const FIND_BY_CODE = 'IMOL';
+	public const FIND_BY_NAME = 'NAME';
+	public const FIND_BY_EMAIL = 'EMAIL';
+	public const FIND_BY_PHONE = 'PHONE';
 
-	const ENTITY_NONE = 'NONE';
-	const ENTITY_LEAD = 'LEAD';
-	const ENTITY_COMPANY = 'COMPANY';
-	const ENTITY_CONTACT = 'CONTACT';
-	const ENTITY_DEAL = 'DEAL';
-	const ENTITY_ACTIVITY = 'ACTIVITY';
+	public const ENTITY_NONE = 'NONE';
+	public const ENTITY_LEAD = 'LEAD';
+	public const ENTITY_COMPANY = 'COMPANY';
+	public const ENTITY_CONTACT = 'CONTACT';
+	public const ENTITY_DEAL = 'DEAL';
+	public const ENTITY_ACTIVITY = 'ACTIVITY';
 
-	const FIELDS_COMPANY = 'COMPANY_ID';
-	const FIELDS_CONTACT = 'CONTACT_IDS';
+	public const FIELDS_COMPANY = 'COMPANY_ID';
+	public const FIELDS_CONTACT = 'CONTACT_IDS';
 
-	const ERROR_IMOL_NO_SESSION = 'ERROR IMOPENLINES NO SESSION';
-	const ERROR_IMOL_CREATING_CRM_ENTITY = 'ERROR IMOPENLINES CREATING CRM ENTITY';
-	const ERROR_IMOL_NOT_LOAD_CRM = 'ERROR IMOPENLINES NOT LOAD CRM';
-	const ERROR_IMOL_NOT_LOAD_IM = 'ERROR IMOPENLINES NOT LOAD IM';
-	const ERROR_IMOL_NO_CRM_BINDINGS = 'ERROR IMOPENLINES NO CRM BINDINGS';
-	const ERROR_IMOL_CRM_ACTIVITY = 'ERROR IMOPENLINES CRM ACTIVITY';
-	const ERROR_IMOL_CRM_NO_ID_ACTIVITY = 'ERROR IMOPENLINES CRM NO ID ACTIVITY';
-	const ERROR_IMOL_CRM_NO_REQUIRED_PARAMETERS = 'ERROR IMOPENLINES CRM NO REQUIRED PARAMETERS';
+	public const ERROR_IMOL_NO_SESSION = 'ERROR IMOPENLINES NO SESSION';
+	public const ERROR_IMOL_CREATING_CRM_ENTITY = 'ERROR IMOPENLINES CREATING CRM ENTITY';
+	public const ERROR_IMOL_NOT_LOAD_CRM = 'ERROR IMOPENLINES NOT LOAD CRM';
+	public const ERROR_IMOL_NOT_LOAD_IM = 'ERROR IMOPENLINES NOT LOAD IM';
+	public const ERROR_IMOL_NO_CRM_BINDINGS = 'ERROR IMOPENLINES NO CRM BINDINGS';
+	public const ERROR_IMOL_CRM_ACTIVITY = 'ERROR IMOPENLINES CRM ACTIVITY';
+	public const ERROR_IMOL_CRM_NO_ID_ACTIVITY = 'ERROR IMOPENLINES CRM NO ID ACTIVITY';
+	public const ERROR_IMOL_CRM_NO_REQUIRED_PARAMETERS = 'ERROR IMOPENLINES CRM NO REQUIRED PARAMETERS';
 
 	/** @var EntityManageFacility */
 	protected $facility;
@@ -68,6 +66,7 @@ class Crm
 	protected $skipSearch = false;
 	protected $skipTrigger = false;
 	protected $ignoreSearchCode = false;
+	protected $ignoreSearchUserId = false;
 	protected $ignoreSearchEmails = false;
 	protected $ignoreSearchPhones = false;
 	protected $ignoreSearchPerson = false;
@@ -98,7 +97,10 @@ class Crm
 
 		try
 		{
-			if(ModuleManager::isModuleInstalled("crm") && Loader::includeModule("crm"))
+			if(
+				ModuleManager::isModuleInstalled('crm')
+				&& Loader::includeModule('crm')
+			)
 			{
 				$result = true;
 			}
@@ -127,7 +129,7 @@ class Crm
 	/**
 	 * @return bool
 	 */
-	public function setSkipCreate()
+	public function setSkipCreate(): bool
 	{
 		$this->skipCreate = true;
 
@@ -162,7 +164,7 @@ class Crm
 	/**
 	 * @return bool
 	 */
-	public function setSkipSearch()
+	public function setSkipSearch(): bool
 	{
 		$this->skipSearch = true;
 
@@ -180,7 +182,7 @@ class Crm
 	/**
 	 * @return bool
 	 */
-	public function setSkipAutomationTrigger()
+	public function setSkipAutomationTrigger(): bool
 	{
 		$this->skipTrigger = true;
 
@@ -198,7 +200,7 @@ class Crm
 	/**
 	 * @return bool
 	 */
-	public function setIgnoreSearchCode()
+	public function setIgnoreSearchCode(): bool
 	{
 		$this->ignoreSearchCode = true;
 
@@ -216,7 +218,25 @@ class Crm
 	/**
 	 * @return bool
 	 */
-	public function setIgnoreSearchEmails()
+	public function setIgnoreSearchUserId(): bool
+	{
+		$this->ignoreSearchUserId = true;
+
+		return true;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function isIgnoreSearchUserId()
+	{
+		return $this->ignoreSearchUserId;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function setIgnoreSearchEmails(): bool
 	{
 		$this->ignoreSearchEmails = true;
 
@@ -234,7 +254,7 @@ class Crm
 	/**
 	 * @return bool
 	 */
-	public function setIgnoreSearchPhones()
+	public function setIgnoreSearchPhones(): bool
 	{
 		$this->ignoreSearchPhones = true;
 
@@ -252,7 +272,7 @@ class Crm
 	/**
 	 * @return bool
 	 */
-	public function setIgnoreSearchPerson()
+	public function setIgnoreSearchPerson(): bool
 	{
 		$this->ignoreSearchPerson = true;
 
@@ -277,13 +297,37 @@ class Crm
 		$fields = $this->getFields();
 		$session = $fields->getSession();
 
-		if(!empty($fields->getCode()))
+		if (!empty($fields->getCode()))
 		{
 			$result = $fields->getCode();
 		}
-		elseif(!empty($session) && $session->getData('USER_CODE'))
+		elseif (
+			!empty($session)
+			&& $session->getData('USER_CODE')
+		)
 		{
 			$result = $session->getData('USER_CODE');
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getUserId(): int
+	{
+		$result = 0;
+
+		$fields = $this->getFields();
+
+		if (!empty($fields->getUserId()))
+		{
+			$result = $fields->getUserId();
+		}
+		elseif (!empty($this->getCode()))
+		{
+			$result = Chat::parseLinesChatEntityId($this->getCode())['connectorUserId'];
 		}
 
 		return $result;
@@ -319,11 +363,20 @@ class Crm
 		$facility = $this->getEntityManageFacility();
 		$selector = $facility->getSelector();
 
-		if(!$this->isIgnoreSearchCode())
+		if (!$this->isIgnoreSearchCode())
 		{
 			if (($code = $this->getCode()) && ($codeImol = $this->getCodeImol()))
 			{
 				$selector->appendCommunicationCriterion(CrmCommon::getCommunicationType($code), $codeImol);
+				$filter = true;
+			}
+		}
+
+		if (!$this->isIgnoreSearchUserId())
+		{
+			if ($userId = $this->getUserId())
+			{
+				$selector->appendCommunicationCriterion(Type::SLUSER_NAME, (string)$userId);
 				$filter = true;
 			}
 		}
@@ -692,7 +745,6 @@ class Crm
 
 	/**
 	 * @return Result
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	protected function getFieldsAddLead(): Result
 	{
@@ -789,6 +841,11 @@ class Crm
 				$fieldsFmAdd['IM'][CrmCommon::getCommunicationType($userCode)][] = $userCodeImol;
 			}
 
+			if ($userId = $this->getUserId())
+			{
+				$fieldsFmAdd['LINK']['USER'][] = $userId;
+			}
+
 			if(!empty($fieldsFmAdd))
 			{
 				$fieldsAdd['FM'] = CrmCommon::formatMultifieldFields($fieldsFmAdd);
@@ -809,7 +866,6 @@ class Crm
 
 	/**
 	 * @return Result
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	protected function getFieldsAddDeal(): Result
 	{
@@ -862,7 +918,6 @@ class Crm
 
 	/**
 	 * @return Result
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	protected function getFieldsAddContact(): Result
 	{
@@ -957,6 +1012,11 @@ class Crm
 				$fieldsFmAdd['IM'][CrmCommon::getCommunicationType($userCode)][] = $userCodeImol;
 			}
 
+			if ($userId = $this->getUserId())
+			{
+				$fieldsFmAdd['LINK']['USER'][] = $userId;
+			}
+
 			if(!empty($fieldsFmAdd))
 			{
 				$fieldsAdd['FM'] = CrmCommon::formatMultifieldFields($fieldsFmAdd);
@@ -977,9 +1037,8 @@ class Crm
 
 	/**
 	 * @return Result
-	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public function sendCrmImMessages()
+	public function sendCrmImMessages(): Result
 	{
 		$result = new Result;
 		$fields = $this->getFields();
@@ -1025,11 +1084,6 @@ class Crm
 
 	/**
 	 * @return Result
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function registerActivity(): Result
 	{
@@ -1221,9 +1275,8 @@ class Crm
 	 * @param $type
 	 * @param $id
 	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public function updateEntity($type, $id)
+	public function updateEntity($type, $id): bool
 	{
 		$result = false;
 
@@ -1241,92 +1294,152 @@ class Crm
 
 			$code = $this->getCode();
 			$codeImol = $this->getCodeImol();
+			$userId = $this->getUserId();
 
 			$personName = $fields->getPersonName();
 			$personLastName = $fields->getPersonLastName();
 			$personSecondName = $fields->getPersonSecondName();
-			if(!empty($fields->getPersonEmail()) && !Tools\Email::isInArray($emails, $fields->getPersonEmail()))
+			if (
+				!empty($fields->getPersonEmail())
+				&& !Tools\Email::isInArray($emails, $fields->getPersonEmail())
+			)
 			{
 				$emails[] = $fields->getPersonEmail();
 			}
-			if(!empty($fields->getPersonPhone()) && !Tools\Phone::isInArray($phones, $fields->getPersonPhone()))
+			if (
+				!empty($fields->getPersonPhone())
+				&& !Tools\Phone::isInArray($phones, $fields->getPersonPhone())
+			)
 			{
 				$phones[] = $fields->getPersonPhone();
 			}
 			$personWebsite = $fields->getPersonWebsite();
 
-			if ($type != Crm::ENTITY_DEAL && !empty($code) && !empty($codeImol))
+			if (
+				$type !== self::ENTITY_DEAL
+				&& !empty($code)
+				&& !empty($codeImol)
+			)
 			{
 				$communicationType = CrmCommon::getCommunicationType($code);
-				if(empty($entity['FM']['IM'][$communicationType]) || !in_array($codeImol, $entity['FM']['IM'][$communicationType]))
+				if (
+					empty($entity['FM']['IM'][$communicationType])
+					|| !in_array($codeImol, $entity['FM']['IM'][$communicationType])
+				)
 				{
 					$updateFm['IM'][$communicationType][] = $codeImol;
 				}
-
 			}
 
-			if(!empty($phones) && $type != Crm::ENTITY_DEAL)
+			if (
+				!empty($userId)
+				&& $type !== self::ENTITY_DEAL
+			)
+			{
+				if (
+					empty($entity['FM']['LINK']['USER'])
+					|| !in_array($userId, $entity['FM']['LINK']['USER'], true)
+				)
+				{
+					$updateFm['LINK']['USER'][] = $userId;
+				}
+			}
+
+			if (
+				!empty($phones)
+				&& $type !== self::ENTITY_DEAL
+			)
 			{
 				foreach ($phones as $phone)
 				{
-					if(empty($entity['FM']['PHONE']['WORK']) || !Tools\Phone::isInArray($entity['FM']['PHONE']['WORK'], $phone))
+					if (empty($entity['FM']['PHONE']['WORK']) || !Tools\Phone::isInArray($entity['FM']['PHONE']['WORK'], $phone))
 					{
 						$updateFm['PHONE']['WORK'][] = $phone;
 					}
 				}
 			}
 
-			if(!empty($emails) && $type != Crm::ENTITY_DEAL)
+			if (
+				!empty($emails)
+				&& $type !== self::ENTITY_DEAL
+			)
 			{
 				foreach ($emails as $email)
 				{
-					if(empty($entity['FM']['EMAIL']['WORK']) || !Tools\Email::isInArray($entity['FM']['EMAIL']['WORK'], $email))
+					if (empty($entity['FM']['EMAIL']['WORK']) || !Tools\Email::isInArray($entity['FM']['EMAIL']['WORK'], $email))
 					{
 						$updateFm['EMAIL']['WORK'][] = $email;
 					}
 				}
 			}
 
-			if(!empty($personName))
+			if (!empty($personName))
 			{
-				if($type != Crm::ENTITY_DEAL && $type != Crm::ENTITY_COMPANY)
+				if (
+					$type !== self::ENTITY_DEAL
+					&& $type !== self::ENTITY_COMPANY
+				)
 				{
-					if(empty($entity['NAME']) && LiveChat::getDefaultGuestName() != $personName)
+					if (
+						(
+							empty($entity['NAME'])
+							|| $entity['NAME'] === LiveChat::getDefaultGuestName()
+						)
+						&& LiveChat::getDefaultGuestName() !== $personName
+					)
 					{
 						$updateFields['NAME'] = $personName;
 					}
 				}
 			}
 
-			if(!empty($personLastName))
+			if (!empty($personLastName))
 			{
-				if($type != Crm::ENTITY_DEAL && $type != Crm::ENTITY_COMPANY)
+				if (
+					$type !== self::ENTITY_DEAL
+					&& $type !== self::ENTITY_COMPANY
+				)
 				{
-					if(empty($entity['LAST_NAME']) && LiveChat::getDefaultGuestName() != $personLastName)
+					if (
+						(
+							empty($entity['LAST_NAME'])
+							|| $entity['LAST_NAME'] === LiveChat::getDefaultGuestName()
+						)
+						&& LiveChat::getDefaultGuestName() !== $personLastName
+					)
 					{
 						$updateFields['LAST_NAME'] = $personLastName;
 					}
 				}
 			}
 
-			if(!empty($personSecondName))
+			if (!empty($personSecondName))
 			{
-				if($type != Crm::ENTITY_DEAL && $type != Crm::ENTITY_COMPANY)
+				if (
+					$type !== self::ENTITY_DEAL
+					&& $type !== self::ENTITY_COMPANY
+				)
 				{
-					if(empty($entity['SECOND_NAME']) && LiveChat::getDefaultGuestName() != $personSecondName)
+					if (
+						(
+							empty($entity['SECOND_NAME'])
+							|| $entity['SECOND_NAME'] === LiveChat::getDefaultGuestName()
+						)
+						&& LiveChat::getDefaultGuestName() !== $personSecondName
+					)
 					{
 						$updateFields['SECOND_NAME'] = $personSecondName;
 					}
 				}
 			}
 
-			if(!empty($personWebsite))
+			if (!empty($personWebsite))
 			{
-				if (mb_strlen($personWebsite) > 250 || $type == Crm::ENTITY_DEAL)
+				if (mb_strlen($personWebsite) > 250 || $type === self::ENTITY_DEAL)
 				{
-					if($type != Crm::ENTITY_COMPANY)
+					if ($type !== self::ENTITY_COMPANY)
 					{
-						if(empty($entity['SOURCE_DESCRIPTION']))
+						if (empty($entity['SOURCE_DESCRIPTION']))
 						{
 							$updateFields['SOURCE_DESCRIPTION'] = $personWebsite;
 						}
@@ -1334,33 +1447,39 @@ class Crm
 				}
 				else
 				{
-					if(empty($entity['FM']['WEB']['HOME']) || !in_array($personWebsite, $entity['FM']['WEB']['HOME']))
+					if (
+						empty($entity['FM']['WEB']['HOME'])
+						|| !in_array($personWebsite, $entity['FM']['WEB']['HOME'])
+					)
 					{
 						$updateFm['WEB']['HOME'][] = $personWebsite;
 					}
 				}
 			}
 
-			if(!empty($updateFm))
+			if (!empty($updateFm))
 			{
 				$updateFields['FM'] = CrmCommon::formatMultifieldFields($updateFm);
 			}
 
-			if($type == Crm::ENTITY_LEAD && LeadSettings::getCurrent()->isAutoGenRcEnabled())
+			if (
+				$type === self::ENTITY_LEAD
+				&& LeadSettings::getCurrent()->isAutoGenRcEnabled()
+			)
 			{
 				$facility = $this->getEntityManageFacility();
 
-				if(!empty($facility->getSelector()->getCompanyId()))
+				if (!empty($facility->getSelector()->getCompanyId()))
 				{
 					$updateFields['COMPANY_ID'] = $facility->getSelector()->getCompanyId();
 				}
-				if(!empty($facility->getSelector()->getContactId()))
+				if (!empty($facility->getSelector()->getContactId()))
 				{
 					$updateFields['CONTACT_ID'] = $facility->getSelector()->getContactId();
 				}
 			}
 
-			if(!empty($updateFields))
+			if (!empty($updateFields))
 			{
 				$result = CrmCommon::update($type, $id, $updateFields);
 			}
@@ -1371,7 +1490,6 @@ class Crm
 
 	/**
 	 * @return Result
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public function updateUserConnector()
 	{
@@ -1384,10 +1502,12 @@ class Crm
 		{
 			$entitys = array_merge($this->registeredEntites, $this->updateEntites);
 
-			if($session->getData('SOURCE') == Connector::TYPE_LIVECHAT &&
-				ImUser::getInstance($session->getData('USER_ID'))->isConnector() &&
-				ImUser::getInstance($session->getData('USER_ID'))->getName() == '' &&
-				!empty($entitys))
+			if(
+				$session->getData('SOURCE') == Connector::TYPE_LIVECHAT
+				&& Im\User::getInstance($session->getData('USER_ID'))->isConnector()
+				&& Im\User::getInstance($session->getData('USER_ID'))->getName() == ''
+				&& !empty($entitys)
+			)
 			{
 				$entityID = 0;
 				$entityType = null;
@@ -1421,7 +1541,7 @@ class Crm
 							'module_id' => 'im',
 							'command' => 'userUpdate',
 							'params' => Array(
-								'user' => ImUser::getInstance($session->getData('USER_ID'))->getFields()
+								'user' => Im\User::getInstance($session->getData('USER_ID'))->getFields()
 							),
 							'extra' => \Bitrix\Im\Common::getPullExtra()
 						));
@@ -1538,7 +1658,7 @@ class Crm
 
 				while($queueUser = $res->fetch())
 				{
-					if(ImUser::getInstance($queueUser['USER_ID'])->isActive())
+					if(Im\User::getInstance($queueUser['USER_ID'])->isActive())
 					{
 						$queueUserList[] = $queueUser['USER_ID'];
 					}

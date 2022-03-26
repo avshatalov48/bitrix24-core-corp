@@ -14,8 +14,11 @@ class Office365ResumableUpload extends OneDriveResumableUpload
 
 	protected function getPostFieldsForUpload(FileData $fileData)
 	{
-		return array(
-			'item' => array('@microsoft.graph.conflictBehavior' => 'rename')
-		);
+		return [
+			'item' => [
+				'@microsoft.graph.conflictBehavior' => 'rename',
+				'name' => $fileData->getName(),
+			],
+		];
 	}
 }

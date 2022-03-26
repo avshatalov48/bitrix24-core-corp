@@ -8,6 +8,7 @@
 	    var _this = this;
 
 	    babelHelpers.classCallCheck(this, ItemListComponent);
+	    this.exportPopups = {};
 
 	    if (main_core.Type.isPlainObject(params)) {
 	      this.entityTypeId = main_core.Text.toInteger(params.entityTypeId);
@@ -27,7 +28,15 @@
 	              return;
 	            }
 
-	            requestParams.url = params.backendUrl;
+	            var currentUrl = new main_core.Uri(requestParams.url);
+	            var backendUrl = new main_core.Uri(params.backendUrl);
+
+	            if (currentUrl.getPath() !== backendUrl.getPath()) {
+	              currentUrl.setPath(backendUrl.getPath());
+	              currentUrl.setQueryParams(babelHelpers.objectSpread({}, currentUrl.getQueryParams(), backendUrl.getQueryParams()));
+	            }
+
+	            requestParams.url = currentUrl.toString();
 	          });
 	        }
 	      }
@@ -51,6 +60,12 @@
 	      var _this2 = this;
 
 	      main_core_events.EventEmitter.subscribe('BX.Crm.ItemListComponent:onClickDelete', this.handleItemDelete.bind(this));
+	      main_core_events.EventEmitter.subscribe('BX.Crm.ItemListComponent:onStartExportCsv', function (event) {
+	        _this2.handleStartExport(event, 'csv');
+	      });
+	      main_core_events.EventEmitter.subscribe('BX.Crm.ItemListComponent:onStartExportExcel', function (event) {
+	        _this2.handleStartExport(event, 'excel');
+	      });
 	      var toolbarComponent = main_core.Reflection.getClass('BX.Crm.ToolbarComponent') ? main_core.Reflection.getClass('BX.Crm.ToolbarComponent').Instance : null;
 
 	      if (toolbarComponent) {
@@ -98,6 +113,20 @@
 
 	        _this2.reloadGridAfterTimeout();
 	      });
+	      var addItemButton = document.querySelector('[data-role="add-new-item-button-' + this.gridId + '"]');
+
+	      if (addItemButton) {
+	        var detailUrl = addItemButton.href;
+	        addItemButton.href = "javascript: void(0);";
+	        main_core.Event.bind(addItemButton, 'click', function (event) {
+	          event.preventDefault();
+	          event.stopPropagation();
+	          main_core_events.EventEmitter.emit("BX.Crm.ItemListComponent:onAddNewItemButtonClick", {
+	            detailUrl: detailUrl,
+	            entityTypeId: _this2.entityTypeId
+	          });
+	        });
+	      }
 	    }
 	  }, {
 	    key: "reloadGridAfterTimeout",
@@ -183,13 +212,63 @@
 	              id: id
 	            }
 	          }).then(function () {
+	            BX.UI.Notification.Center.notify({
+	              content: main_core.Loc.getMessage('CRM_TYPE_ITEM_DELETE_NOTIFICATION')
+	            });
+
 	            _this4.reloadGridAfterTimeout();
 	          }).catch(_this4.showErrorsFromResponse.bind(_this4));
 	          messageBox.close();
 	        }
 	      });
+	    }
+	  }, {
+	    key: "handleStartExport",
+	    value: function handleStartExport(event, exportType) {
+	      this.getExportPopup(exportType).then(function (process) {
+	        return process.showDialog();
+	      });
 	    } //endregion
 
+	  }, {
+	    key: "getExportPopup",
+	    value: function getExportPopup(exportType) {
+	      var _this5 = this;
+
+	      if (this.exportPopups[exportType]) {
+	        return Promise.resolve(this.exportPopups[exportType]);
+	      }
+
+	      return main_core.Runtime.loadExtension('ui.stepprocessing').then(function (exports) {
+	        _this5.exportPopups[exportType] = exports.ProcessManager.create({
+	          id: 'crm.item.list.export.' + exportType,
+	          controller: 'bitrix:crm.api.itemExport',
+	          queue: [{
+	            action: 'dispatcher'
+	          }],
+	          params: {
+	            SITE_ID: main_core.Loc.getMessage('SITE_ID'),
+	            entityTypeId: _this5.entityTypeId,
+	            categoryId: _this5.categoryId,
+	            EXPORT_TYPE: exportType,
+	            COMPONENT_NAME: 'bitrix:crm.item.list'
+	          },
+	          messages: {
+	            DialogTitle: main_core.Loc.getMessage('CRM_ITEM_EXPORT_' + exportType.toUpperCase() + '_TITLE'),
+	            DialogSummary: main_core.Loc.getMessage('CRM_ITEM_EXPORT_' + exportType.toUpperCase() + '_SUMMARY')
+	          },
+	          dialogMaxWidth: '650'
+	        });
+
+	        _this5.exportPopups[exportType].setHandler(BX.UI.StepProcessing.ProcessCallback.StepCompleted, function (formatInner) {
+	          return function () {
+	            delete _this5.exportPopups[formatInner];
+	          };
+	        }(exportType));
+
+	        return _this5.exportPopups[exportType];
+	      });
+	    }
 	  }]);
 	  return ItemListComponent;
 	}();

@@ -8,12 +8,16 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
+use Bitrix\Tasks\UI\ScopeDictionary;
 
 Loc::loadMessages(__FILE__);
 
-CJSCore::Init("sidepanel");
-CJSCore::Init("CJSTask");
-CJSCore::Init("tasks_integration_socialnetwork");
+CJSCore::Init([
+	'clipboard',
+	'sidepanel',
+	'tasks_integration_socialnetwork',
+	'CJSTask',
+]);
 
 global $APPLICATION;
 
@@ -27,17 +31,6 @@ Extension::load([
 	'ui.label',
 	'ui.tour',
 ]);
-
-if (\Bitrix\Tasks\Util\DisposableAction::needConvertTemplateFiles())
-{
-	$APPLICATION->IncludeComponent(
-		"bitrix:tasks.util.process",
-		'',
-		array(),
-		false,
-		array("HIDE_ICONS" => "Y")
-	);
-}
 
 $APPLICATION->IncludeComponent(
 	"bitrix:tasks.iframe.popup",
@@ -56,20 +49,19 @@ $APPLICATION->SetPageProperty(
 $APPLICATION->IncludeComponent(
 	'bitrix:tasks.interface.header',
 	'',
-	array(
-		'FILTER_ID' => $arParams["FILTER_ID"],
-		'GRID_ID'   => $arParams["GRID_ID"],
+	[
+		'FILTER_ID' => $arParams['FILTER_ID'],
+		'GRID_ID' => $arParams['GRID_ID'],
+		'FILTER' => $arResult['FILTER'],
+		'PRESETS' => $arResult['PRESETS'],
 
-		'FILTER'    => $arResult['FILTER'],
-		'PRESETS'   => $arResult['PRESETS'],
-
-		'SHOW_QUICK_FORM'  => 'Y',
-		'GET_LIST_PARAMS'  => $arResult['GET_LIST_PARAMS'],
+		'SHOW_QUICK_FORM' => 'Y',
+		'GET_LIST_PARAMS' => $arResult['GET_LIST_PARAMS'],
 		'COMPANY_WORKTIME' => $arResult['COMPANY_WORKTIME'],
-		'NAME_TEMPLATE'    => $arParams['NAME_TEMPLATE'],
-		'PROJECT_VIEW'     => $arParams['PROJECT_VIEW'],
+		'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
+		'PROJECT_VIEW' => $arParams['PROJECT_VIEW'],
 
-		'USER_ID'  => $arParams['USER_ID'],
+		'USER_ID' => $arParams['USER_ID'],
 		'GROUP_ID' => $arParams['GROUP_ID'],
 
 		'MARK_ACTIVE_ROLE' => $arParams['MARK_ACTIVE_ROLE'],
@@ -77,39 +69,40 @@ $APPLICATION->IncludeComponent(
 		'MARK_SECTION_PROJECTS' => $arParams['MARK_SECTION_PROJECTS'],
 		'MARK_SPECIAL_PRESET' => $arParams['MARK_SPECIAL_PRESET'],
 
-		'PATH_TO_USER_TASKS'                   => $arParams['PATH_TO_USER_TASKS'],
-		'PATH_TO_USER_TASKS_TASK'              => $arParams['PATH_TO_USER_TASKS_TASK'],
-		'PATH_TO_USER_TASKS_VIEW'              => $arParams['PATH_TO_USER_TASKS_VIEW'],
-		'PATH_TO_USER_TASKS_REPORT'            => $arParams['PATH_TO_USER_TASKS_REPORT'],
-		'PATH_TO_USER_TASKS_TEMPLATES'         => $arParams['PATH_TO_USER_TASKS_TEMPLATES'],
+		'PATH_TO_USER_TASKS' => $arParams['PATH_TO_USER_TASKS'],
+		'PATH_TO_USER_TASKS_TASK' => $arParams['PATH_TO_USER_TASKS_TASK'],
+		'PATH_TO_USER_TASKS_VIEW' => $arParams['PATH_TO_USER_TASKS_VIEW'],
+		'PATH_TO_USER_TASKS_REPORT' => $arParams['PATH_TO_USER_TASKS_REPORT'],
+		'PATH_TO_USER_TASKS_TEMPLATES' => $arParams['PATH_TO_USER_TASKS_TEMPLATES'],
 		'PATH_TO_USER_TASKS_PROJECTS_OVERVIEW' => $arParams['PATH_TO_USER_TASKS_PROJECTS_OVERVIEW'],
-
-		'PATH_TO_GROUP'              => $arParams['PATH_TO_GROUP'],
-		'PATH_TO_GROUP_TASKS'        => $arParams['PATH_TO_GROUP_TASKS'],
-		'PATH_TO_GROUP_TASKS_TASK'   => $arParams['PATH_TO_GROUP_TASKS_TASK'],
-		'PATH_TO_GROUP_TASKS_VIEW'   => $arParams['PATH_TO_GROUP_TASKS_VIEW'],
+		'PATH_TO_GROUP' => $arParams['PATH_TO_GROUP'],
+		'PATH_TO_GROUP_TASKS' => $arParams['PATH_TO_GROUP_TASKS'],
+		'PATH_TO_GROUP_TASKS_TASK' => $arParams['PATH_TO_GROUP_TASKS_TASK'],
+		'PATH_TO_GROUP_TASKS_VIEW' => $arParams['PATH_TO_GROUP_TASKS_VIEW'],
 		'PATH_TO_GROUP_TASKS_REPORT' => $arParams['PATH_TO_GROUP_TASKS_REPORT'],
-
-		'PATH_TO_USER_PROFILE'       => $arParams['PATH_TO_USER_PROFILE'],
-		'PATH_TO_MESSAGES_CHAT'      => $arParams['PATH_TO_MESSAGES_CHAT'],
-		'PATH_TO_VIDEO_CALL'         => $arParams['PATH_TO_VIDEO_CALL'],
+		'PATH_TO_USER_PROFILE' => $arParams['PATH_TO_USER_PROFILE'],
+		'PATH_TO_MESSAGES_CHAT' => $arParams['PATH_TO_MESSAGES_CHAT'],
+		'PATH_TO_VIDEO_CALL' => $arParams['PATH_TO_VIDEO_CALL'],
 		'PATH_TO_CONPANY_DEPARTMENT' => $arParams['PATH_TO_CONPANY_DEPARTMENT'],
 
-		'USE_EXPORT'             => 'Y',
+		'USE_EXPORT' => 'Y',
 		// export on role pages and all
-		'USE_AJAX_ROLE_FILTER'  => 'Y',
-		'USE_GROUP_BY_SUBTASKS'  => 'Y',
-		'USE_GROUP_BY_GROUPS'    => $arParams['NEED_GROUP_BY_GROUPS'] === 'Y' ? 'Y' : 'N',
-		'GROUP_BY_PROJECT'       => $arResult['GROUP_BY_PROJECT'],
-		'SHOW_USER_SORT'         => 'Y',
-		'SORT_FIELD'             => $arParams['SORT_FIELD'],
-		'SORT_FIELD_DIR'         => $arParams['SORT_FIELD_DIR'],
-		'SHOW_SECTION_TEMPLATES' => $arParams['GROUP_ID'] > 0 ? 'N' : 'Y',
-		'DEFAULT_ROLEID'		 =>	$arParams['DEFAULT_ROLEID']
-	),
+		'USE_AJAX_ROLE_FILTER' => 'Y',
+		'USE_GROUP_BY_SUBTASKS' => 'Y',
+		'USE_GROUP_BY_GROUPS' => ($arParams['NEED_GROUP_BY_GROUPS'] === 'Y' ? 'Y' : 'N'),
+		'GROUP_BY_PROJECT' => $arResult['GROUP_BY_PROJECT'],
+		'SHOW_USER_SORT' => 'Y',
+		'SORT_FIELD' => $arParams['SORT_FIELD'],
+		'SORT_FIELD_DIR' => $arParams['SORT_FIELD_DIR'],
+		'SHOW_SECTION_TEMPLATES' => ($arParams['GROUP_ID'] > 0 ? 'N' : 'Y'),
+		'DEFAULT_ROLEID' =>	$arParams['DEFAULT_ROLEID'],
+
+		'SCOPE' => ScopeDictionary::SCOPE_TASKS_GRID,
+	],
 	$component,
-	array('HIDE_ICONS' => true)
-); ?>
+	['HIDE_ICONS' => true]
+);
+?>
 
 <?php
 if (is_array($arResult['ERROR']['FATAL']) && !empty($arResult['ERROR']['FATAL'])):
@@ -240,19 +233,16 @@ $APPLICATION->IncludeComponent(
 			BX.message({
 				TASKS_CONFIRM_GROUP_ACTION: '<?=GetMessageJS('TASKS_CONFIRM_GROUP_ACTION')?>',
 				TASKS_DELETE_SUCCESS: '<?=GetMessageJS('TASKS_DELETE_SUCCESS')?>',
-
 				TASKS_LIST_ACTION_PING_NOTIFICATION: '<?= GetMessageJS('TASKS_LIST_ACTION_PING_NOTIFICATION') ?>',
 				TASKS_LIST_GROUP_ACTION_PING_NOTIFICATION: '<?= GetMessageJS('TASKS_LIST_GROUP_ACTION_PING_NOTIFICATION') ?>',
-
+				TASKS_LIST_ACTION_COPY_LINK_NOTIFICATION: '<?= GetMessageJS('TASKS_LIST_ACTION_COPY_LINK_NOTIFICATION') ?>',
 				TASKS_MARK: '<?=GetMessageJS('TASKS_JS_MARK')?>',
 				TASKS_MARK_NONE: '<?=GetMessageJS('TASKS_JS_MARK_NONE')?>',
 				TASKS_MARK_N: '<?=GetMessageJS('TASKS_JS_MARK_N')?>',
 				TASKS_MARK_P: '<?=GetMessageJS('TASKS_JS_MARK_P')?>',
-
 				TASKS_TASK_CONFIRM_START_TIMER_TITLE: '<?=GetMessageJS('TASKS_TASK_CONFIRM_START_TIMER_TITLE')?>',
 				TASKS_TASK_CONFIRM_START_TIMER: '<?=GetMessageJS('TASKS_TASK_CONFIRM_START_TIMER')?>',
 				TASKS_CLOSE_PAGE_CONFIRM: '<?=GetMessageJS('TASKS_CLOSE_PAGE_CONFIRM')?>',
-
 				TASKS_LIST_ADD_TAG_FOOTER_LABEL: '<?= GetMessageJS('TASKS_LIST_ADD_TAG_FOOTER_LABEL') ?>'
 			});
 

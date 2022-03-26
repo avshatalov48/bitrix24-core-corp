@@ -10,8 +10,9 @@ namespace Bitrix\Tasks\Rest\Controllers\Scrum;
 
 use Bitrix\Main\Error;
 use Bitrix\Tasks\Rest\Controllers\Base;
-use Bitrix\Tasks\Scrum\Internal\ItemTable;
+use Bitrix\Tasks\Scrum\Form\ItemForm;
 use Bitrix\Tasks\Scrum\Service\EntityService;
+use Bitrix\Tasks\Scrum\Service\EpicService;
 use Bitrix\Tasks\Scrum\Service\ItemService;
 
 class Task extends Base
@@ -21,7 +22,9 @@ class Task extends Base
 	private $itemService;
 
 	/**
-	 * @return \string[][][]
+	 * Returns available fields.
+	 *
+	 * @return array
 	 */
 	public function getFieldsAction(): array
 	{
@@ -50,33 +53,89 @@ class Task extends Base
 	}
 
 	/**
-	 * @param $id
-	 * @param $fields
-	 * @return bool|null
+	 * Returns item data.
+	 *
+	 * @param int $id Task id.
+	 * @return null
 	 */
-	public function updateAction($id, $fields)
+	public function getAction(int $id)
 	{
-		$id = (int) $id;
-		if (!$id)
+		$taskId = (int) $id;
+		if (!$taskId)
 		{
-			$this->errorCollection->add([new Error('Item not found')]);
+			$this->errorCollection->add([new Error('Task id not found')]);
+
 			return null;
 		}
 
-		if(array_key_exists('entityId', $fields))
+		$scrumTask = $this->getItemService()->getItemBySourceId($taskId);
+
+		if (!$scrumTask->getId())
 		{
-			$newEntity = (new EntityService())->getEntityById((int)$fields['entityId']);
+			$this->errorCollection->add([new Error('Task not found')]);
+
+			return null;
+		}
+
+		$entity = (new EntityService())->getEntityById($scrumTask->getEntityId());
+		if (!$entity->getId() || !$this->checkAccess($entity->getGroupId()))
+		{
+			$this->errorCollection->add([new Error('Access denied')]);
+
+			return null;
+		}
+
+		return [
+			'entityId' => $scrumTask->getEntityId(),
+			'storyPoints' => $scrumTask->getStoryPoints(),
+			'epicId' => $scrumTask->getEpicId(),
+			'sort' => $scrumTask->getSort(),
+			'createdBy' => $scrumTask->getCreatedBy(),
+			'modifiedBy' => $scrumTask->getModifiedBy(),
+		];
+	}
+
+	/**
+	 * Updates item fields.
+	 *
+	 * @param int $id Task id.
+	 * @param array $fields Item fields.
+	 * @return bool|null
+	 */
+	public function updateAction(int $id, array $fields)
+	{
+		$taskId = (int) $id;
+		if (!$taskId)
+		{
+			$this->errorCollection->add([new Error('Task id not found')]);
+
+			return null;
+		}
+
+		$inputEntityId = (array_key_exists('entityId', $fields) ? (int) $fields['entityId'] : 0);
+
+		if ($inputEntityId)
+		{
+			$newEntity = (new EntityService())->getEntityById($inputEntityId);
 			if (!$newEntity->getId() || !$this->checkAccess($newEntity->getGroupId()))
 			{
 				$this->errorCollection->add([new Error('Access denied')]);
+
 				return null;
 			}
 		}
 
-		$scrumTask = $this->getItemService()->getItemBySourceId($id);
-		if (!$scrumTask)
+		$scrumTask = $this->getItemService()->getItemBySourceId($taskId);
+		if (!$scrumTask->getId())
 		{
-			$scrumTask = $this->createScrumTask($id, $fields);
+			if (!$inputEntityId)
+			{
+				$this->errorCollection->add([new Error('Entity id not found')]);
+
+				return null;
+			}
+
+			$scrumTask = $this->createScrumTask($taskId, $fields);
 		}
 		else
 		{
@@ -84,19 +143,21 @@ class Task extends Base
 			if (!$entity->getId() || !$this->checkAccess($entity->getGroupId()))
 			{
 				$this->errorCollection->add([new Error('Access denied')]);
+
 				return null;
 			}
 		}
 
-		if (!$scrumTask)
+		if (!$scrumTask->getId())
 		{
-			$this->errorCollection->add([new Error('Item not found')]);
+			$this->errorCollection->add([new Error('Item not created')]);
+
 			return null;
 		}
 
-		if(array_key_exists('entityId', $fields))
+		if ($inputEntityId)
 		{
-			$scrumTask->setEntityId((int) $fields['entityId']);
+			$scrumTask->setEntityId($inputEntityId);
 		}
 
 		if (array_key_exists('storyPoints', $fields) && is_string($fields['storyPoints']))
@@ -106,38 +167,73 @@ class Task extends Base
 
 		if (array_key_exists('epicId', $fields) && is_numeric($fields['epicId']))
 		{
-			$scrumTask->setEpicId((int) $fields['epicId']);
+			$epicService = new EpicService($this->getUserId());
+			$epic = $epicService->getEpic((int) $fields['epicId']);
+			if ($epic->getId())
+			{
+				$this->errorCollection->add([new Error('Epic not found')]);
+
+				return null;
+			}
+
+			$scrumTask->setEpicId($epic->getId());
 		}
 
 		if (array_key_exists('sort', $fields) && is_numeric($fields['sort']))
 		{
-			$scrumTask->setSort((int)$fields['sort']);
+			$scrumTask->setSort((int) $fields['sort']);
 		}
 
 		if (array_key_exists('createdBy', $fields) && is_numeric($fields['createdBy']))
 		{
-			$scrumTask->setCreatedBy((int)$fields['createdBy']);
+			$createdBy = (int) $fields['createdBy'];
+			if (!$this->existsUser($createdBy))
+			{
+				$this->errorCollection->add([new Error('createdBy user not found')]);
+
+				return null;
+			}
+
+			$scrumTask->setCreatedBy($createdBy);
 		}
 
 		if (array_key_exists('modifiedBy', $fields) && is_numeric($fields['modifiedBy']))
 		{
-			$scrumTask->setModifiedBy((int)$fields['modifiedBy']);
+			$modifiedBy = (int) $fields['modifiedBy'];
+			if (!$this->existsUser($modifiedBy))
+			{
+				$this->errorCollection->add([new Error('modifiedBy user not found')]);
+
+				return null;
+			}
+
+			$scrumTask->setModifiedBy($modifiedBy);
 		}
 
-		return $this->getItemService()->changeItem($scrumTask);
+		$result = $this->getItemService()->changeItem($scrumTask);
+		if (!$result)
+		{
+			$this->errorCollection->add([new Error('Unable to update task')]);
+
+			return null;
+		}
+
+		return true;
 	}
 
 	/**
 	 * @param int $id
 	 * @param array $fields
-	 * @return ItemTable|null
+	 * @return ItemForm
 	 */
-	private function createScrumTask(int $id, array $fields): ?ItemTable
+	private function createScrumTask(int $id, array $fields): ItemForm
 	{
+		$scrumItem = new ItemForm();
+
 		$entityId = array_key_exists('entityId', $fields) ? (int)$fields['entityId'] : 0;
 		if (!$entityId)
 		{
-			return null;
+			return $scrumItem;
 		}
 
 		$entity = (new EntityService($this->getUserId()))->getEntityById($entityId);
@@ -145,13 +241,13 @@ class Task extends Base
 		{
 			$this->errorCollection->add([new Error('Entity not found.')]);
 
-			return null;
+			return $scrumItem;
 		}
 		if (!$this->checkAccess($entity->getGroupId()))
 		{
 			$this->errorCollection->add([new Error('Access denied')]);
 
-			return null;
+			return $scrumItem;
 		}
 
 		$task = null;
@@ -168,31 +264,41 @@ class Task extends Base
 		{
 			$this->errorCollection->add([new Error('Task not found.')]);
 
-			return null;
+			return $scrumItem;
 		}
 
 		if (
-			!$this->checkAccess((int)$task['GROUP_ID'])
-			|| (int)$task['GROUP_ID'] !== (int)$entity->getGroupId()
+			!$this->checkAccess((int) $task['GROUP_ID'])
+			|| (int) $task['GROUP_ID'] !== $entity->getGroupId()
 		)
 		{
 			$this->errorCollection->add([new Error('Access denied')]);
 
-			return null;
+			return $scrumItem;
 		}
 
-		$scrumItem = ItemTable::createItemObject();
-		$createdBy = $fields['createdBy'] ? (int)$fields['createdBy'] : $this->getUserId();
-		$scrumItem->setCreatedBy($createdBy);
-		$scrumItem->setEntityId($entityId);
-		$scrumItem->setSourceId((int)$task['ID']);
-		$scrumItem->setSort(1);
-
-		$epicId = $fields['epicId'] ? (int)$fields['epicId'] : 0;
-		if ($epicId)
+		$createdBy = 0;
+		if (array_key_exists('createdBy', $fields) && is_numeric($fields['createdBy']))
 		{
-			$scrumItem->setEpicId($epicId);
+			$createdBy = (int) $fields['createdBy'];
+			if (!$this->existsUser($createdBy))
+			{
+				$this->errorCollection->add([new Error('createdBy user not found')]);
+
+				return $scrumItem;
+			}
 		}
+		$scrumItem->setCreatedBy($createdBy ?? $this->getUserId());
+
+		$scrumItem->setEntityId($entityId);
+		$scrumItem->setSourceId((int) $task['ID']);
+
+		$sort = 1;
+		if (array_key_exists('sort', $fields) && is_numeric($fields['sort']))
+		{
+			$sort = (int) $fields['sort'];
+		}
+		$scrumItem->setSort($sort);
 
 		return $this->getItemService()->createTaskItem($scrumItem);
 	}

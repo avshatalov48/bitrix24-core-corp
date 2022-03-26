@@ -11,6 +11,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Socialnetwork\UserToGroupTable;
+use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\Project\Filter\GridFilter;
 use Bitrix\Tasks\Internals\Project\Order;
@@ -97,6 +98,20 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 				->getUri()
 		;
 		$this->arResult['GRID_ID'] = $this->arParams['GRID_ID'];
+
+		$this->arResult['isScrumList'] = $this->arParams['SCRUM'] === 'Y';
+
+		$this->arParams['MARK_SECTION_PROJECTS_LIST'] =
+			$this->arParams['MARK_SECTION_PROJECTS_LIST'] === 'Y'
+				? 'Y'
+				: 'N'
+		;
+
+		$this->arParams['MARK_SECTION_SCRUM_LIST'] =
+			$this->arParams['MARK_SECTION_SCRUM_LIST'] === 'Y'
+				? 'Y'
+				: 'N'
+		;
 	}
 
 	private function init(): void
@@ -106,8 +121,15 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 			$this->arParams['GRID_ID'],
 			['NAME_TEMPLATE' => $this->arParams['NAME_TEMPLATE']]
 		);
+		if ($this->arResult['isScrumList'] || $this->arParams['SCRUM'] === 'Y')
+		{
+			$this->filter->setIsScrum(true);
+		}
 		$this->order = new Order($this->arParams['GRID_ID']);
-		$this->provider = new Provider();
+		$this->provider = new Provider(
+			User::getId(),
+			($this->arResult['isScrumList'] || $this->arParams['SCRUM'] === 'Y')
+		);
 	}
 
 	private function doPreAction(): void
@@ -125,10 +147,21 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 		$this->arResult['FILTERS'] = $this->filter->getFilterFields();
 		$this->arResult['PRESETS'] = $this->filter->getPresets();
 
-		$this->arResult['SORT'] = $this->order->getGridSorting();
+		$this->arParams['FILTER_DATA'] = $this->filter->getFilterData();
 
+		$this->arResult['SORT'] = $this->order->getGridSorting();
 		$this->arResult['GROUPS'] = $this->getGroups();
-		$this->arResult['GRID'] = new Bitrix\Tasks\Grid\Project\Grid($this->arResult['GROUPS'], $this->arParams);
+
+		if ($this->arResult['isScrumList'])
+		{
+			$grid = new Bitrix\Tasks\Grid\Scrum\Grid($this->arResult['GROUPS'], $this->arParams);
+		}
+		else
+		{
+			$grid = new Bitrix\Tasks\Grid\Project\Grid($this->arResult['GROUPS'], $this->arParams);
+		}
+
+		$this->arResult['GRID'] = $grid;
 		$this->arResult['HEADERS'] = $this->arResult['GRID']->prepareHeaders();
 		$this->arResult['STUB'] = $this->getStub();
 
@@ -154,6 +187,17 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 			return [
 				'title' => Loc::getMessage('TASKS_PROJECTS_GRID_STUB_NO_DATA_TITLE'),
 				'description' => Loc::getMessage('TASKS_PROJECTS_GRID_STUB_NO_DATA_DESCRIPTION'),
+			];
+		}
+
+		if ($this->arResult['isScrumList'])
+		{
+			return [
+				'title' => Loc::getMessage('TASKS_SCRUM_GRID_STUB_TITLE'),
+				'description' => Loc::getMessage('TASKS_SCRUM_GRID_STUB_DESCRIPTION'),
+				'migrationTitle' => Loc::getMessage('TASKS_SCRUM_GRID_STUB_MIGRATION_TITLE'),
+				'migrationButton' => Loc::getMessage('TASKS_SCRUM_GRID_STUB_MIGRATION_BUTTON'),
+				'migrationOther' => Loc::getMessage('TASKS_SCRUM_GRID_STUB_MIGRATION_OTHER'),
 			];
 		}
 
@@ -238,6 +282,14 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 				$this->arParams['PATH_TO_GROUP_TASKS'],
 				['group_id' => $groupId]
 			);
+
+			if ($this->arResult['isScrumList'])
+			{
+				$group['PATH'] = (new Uri($group['PATH']))->addParams([
+					'scrum' => 'Y'
+				])->getUri();
+			}
+
 			$groups[$groupId] = $group;
 		}
 
@@ -279,24 +331,46 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 			}
 			else
 			{
-				/** @var TourGuide\FirstProjectCreation $firstProjectCreationTour */
-				$firstProjectCreationTour = TourGuide\FirstProjectCreation::getInstance($this->arParams['USER_ID']);
-				$popupData = $firstProjectCreationTour->getCurrentStepPopupData();
-				$showTour = $firstProjectCreationTour->proceed();
+				if ($this->arResult['isScrumList'])
+				{
+					/** @var TourGuide\FirstScrumCreation $firstScrumCreationTour */
+					$firstScrumCreationTour = TourGuide\FirstScrumCreation::getInstance($this->arParams['USER_ID']);
+					$popupData = $firstScrumCreationTour->getCurrentStepPopupData();
+					$showTour = $firstScrumCreationTour->proceed();
+				}
+				else
+				{
+					/** @var TourGuide\FirstProjectCreation $firstProjectCreationTour */
+					$firstProjectCreationTour = TourGuide\FirstProjectCreation::getInstance($this->arParams['USER_ID']);
+					$popupData = $firstProjectCreationTour->getCurrentStepPopupData();
+					$showTour = $firstProjectCreationTour->proceed();
+				}
 			}
 
-			$this->arResult['TOURS'] = [
-				'firstProjectCreation' => [
-					'popupData' => $popupData,
-					'show' => $showTour,
-				],
-			];
+			if ($this->arResult['isScrumList'])
+			{
+				$this->arResult['TOURS'] = [
+					'firstScrumCreation' => [
+						'popupData' => $popupData,
+						'show' => $showTour,
+					],
+				];
+			}
+			else
+			{
+				$this->arResult['TOURS'] = [
+					'firstProjectCreation' => [
+						'popupData' => $popupData,
+						'show' => $showTour,
+					],
+				];
+			}
 
 			if ($showTour)
 			{
 				\Bitrix\Tasks\AnalyticLogger::logToFile(
 					'markShowedStep',
-					'firstProjectCreation',
+					($this->arResult['isScrumList'] ? 'firstScrumCreation' : 'firstProjectCreation'),
 					'0',
 					'tourGuide'
 				);
@@ -363,6 +437,7 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 			'PATH_TO_TASKS_REPORT_VIEW',
 			'PATH_TO_REPORTS',
 			'NAME_TEMPLATE',
+			'SCRUM',
 		];
 	}
 
@@ -448,9 +523,22 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 		$members = [];
 
 		$rolesMap = [
-			'all' => [UserToGroupTable::ROLE_OWNER, UserToGroupTable::ROLE_MODERATOR, UserToGroupTable::ROLE_USER],
-			'heads' => [UserToGroupTable::ROLE_OWNER, UserToGroupTable::ROLE_MODERATOR],
-			'members' => [UserToGroupTable::ROLE_USER],
+			'all' => [
+				UserToGroupTable::ROLE_OWNER,
+				UserToGroupTable::ROLE_MODERATOR,
+				UserToGroupTable::ROLE_USER,
+			],
+			'heads' => [
+				UserToGroupTable::ROLE_OWNER,
+				UserToGroupTable::ROLE_MODERATOR,
+			],
+			'members' => [
+				UserToGroupTable::ROLE_USER,
+			],
+			'scrumTeam' => [
+				UserToGroupTable::ROLE_OWNER,
+				UserToGroupTable::ROLE_MODERATOR,
+			],
 		];
 		$limit = 10;
 
@@ -460,6 +548,12 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 			->setLimit($limit)
 			->setOffset(($page - 1) * $limit)
 		;
+
+		$isScrumMembers = ($type === 'scrumTeam');
+		if ($isScrumMembers)
+		{
+			$query->addSelect('GROUP.SCRUM_MASTER_ID', 'SCRUM_MASTER_ID');
+		}
 
 		$imageIds = [];
 		$resultMembers = [];
@@ -487,7 +581,28 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 				'PHOTO' => $avatars[$imageIds[$id]],
 				'HREF' => CComponentEngine::MakePathFromTemplate($this->arParams['PATH_TO_USER'], ['user_id' => $id]),
 				'FORMATTED_NAME' => CUser::FormatName($this->arParams['NAME_TEMPLATE'], $member, true),
+				'ROLE' => $isScrumMembers ? $this->getScrumRole($member) : $member['ROLE'],
 			];
+
+			if ($isScrumMembers)
+			{
+				if (
+					$member['USER_ID'] === $member['SCRUM_MASTER_ID']
+					&& $member['ROLE'] === UserToGroupTable::ROLE_OWNER
+				)
+				{
+					$members[] = [
+						'ID' => $id,
+						'PHOTO' => $avatars[$imageIds[$id]],
+						'HREF' => CComponentEngine::makePathFromTemplate(
+							$this->arParams['PATH_TO_USER'],
+							['user_id' => $id]
+						),
+						'FORMATTED_NAME' => CUser::formatName($this->arParams['NAME_TEMPLATE'], $member, true),
+						'ROLE' => 'M',
+					];
+				}
+			}
 		}
 
 		return $members;
@@ -545,6 +660,12 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 
 	private function getGroupsData(array $groupIds, array $select): array
 	{
+		$groupIds = array_filter($groupIds, [__CLASS__, 'checkGroupId']);
+		if (empty($groupIds))
+		{
+			return [];
+		}
+
 		$groups = array_fill_keys($groupIds, false);
 
 		$querySelect = $this->provider->prepareQuerySelect($select);
@@ -556,12 +677,11 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 		$result = $query->exec();
 		while ($group = $result->fetch())
 		{
-			$groupId = $group['ID'];
 			$group['PATH'] = CComponentEngine::MakePathFromTemplate(
 				$this->arParams['PATH_TO_GROUP_TASKS'],
-				['group_id' => $groupId]
+				['group_id' => $group['ID']]
 			);
-			$groups[$groupId] = $group;
+			$groups[$group['ID']] = $group;
 		}
 
 		return $groups;
@@ -570,6 +690,11 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 	public function findProjectPlaceAction(int $groupId, int $currentPage): ?array
 	{
 		if (!$this->checkRequirementsForAjaxCalls())
+		{
+			return null;
+		}
+
+		if (!$this->checkGroupId($groupId))
 		{
 			return null;
 		}
@@ -612,5 +737,33 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 			'projectBefore' => ($index === 0 ? 0 : $projects[$index - 1]),
 			'projectAfter' => ($index === count($projects) - 1 ? 0 : $projects[$index + 1]),
 		];
+	}
+
+	private function checkGroupId(int $groupId): bool
+	{
+		$isScrumList = ($this->arParams['SCRUM'] === 'Y');
+
+		$group = Workgroup::getById($groupId);
+		$isScrumProject = $group && $group->isScrumProject();
+
+		return (
+			($isScrumList && $isScrumProject)
+			|| (!$isScrumList && !$isScrumProject)
+		);
+	}
+
+	private function getScrumRole(array $member): string
+	{
+		if (
+			$member['USER_ID'] === $member['SCRUM_MASTER_ID']
+			&& $member['ROLE'] !== UserToGroupTable::ROLE_OWNER
+		)
+		{
+			return 'M';
+		}
+		else
+		{
+			return $member['ROLE'];
+		}
 	}
 }

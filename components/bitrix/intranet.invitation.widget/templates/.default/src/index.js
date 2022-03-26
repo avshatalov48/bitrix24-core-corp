@@ -2,6 +2,7 @@ import {Reflection, Event} from 'main.core';
 import {Vue} from 'ui.vue';
 import {Popup} from "main.popup";
 import {PopupWrapperComponent} from "./components/popup-wrapper";
+import { EventEmitter } from 'main.core.events';
 
 const namespace = Reflection.namespace('BX.Intranet');
 
@@ -13,29 +14,8 @@ class InvitationWidget
 	{
 		this.node = params.wrapper;
 		this.isCrurrentUserAdmin = params.isCrurrentUserAdmin === "Y";
-		this.enterTimeout = null;
-		this.leaveTimeout = null;
-		this.popupLeaveTimeout = null;
-		this.stopMouseLeave = false;
 
 		this.renderButton();
-
-		Event.EventEmitter.subscribe('BX.Intranet.InvitationWidget:showInvitationSlider', (event) => {
-			this.closePopup();
-		});
-
-		Event.EventEmitter.subscribe('BX.Intranet.InvitationWidget:stopPopupMouseOut', (event) => {
-			this.stopMouseLeave = true;
-		});
-
-		Event.EventEmitter.subscribe('BX.Intranet.InvitationWidget:showPopupMenu', () => {
-			this.popup.setAutoHide(false);
-		});
-
-		Event.EventEmitter.subscribe('BX.Intranet.InvitationWidget:closePopupMenu', () => {
-			this.popup.setAutoHide(true);
-			this.stopMouseLeave = false;
-		});
 	}
 
 	renderButton()
@@ -56,54 +36,18 @@ class InvitationWidget
 				}
 			},
 			methods: {
-				onMouseOver (e)
-				{
-					clearTimeout(InvitationWidgetInstance.enterTimeout);
-					InvitationWidgetInstance.enterTimeout = setTimeout(() =>
-						{
-							InvitationWidgetInstance.enterTimeout = null;
-							InvitationWidgetInstance.initPopup(e.target);
-						}, 750
-					);
-				},
-				onMouseOut()
-				{
-					if (InvitationWidgetInstance.enterTimeout !== null)
-					{
-						clearTimeout(InvitationWidgetInstance.enterTimeout);
-						InvitationWidgetInstance.enterTimeout = null;
-						return;
-					}
-
-					InvitationWidgetInstance.leaveTimeout = setTimeout(() =>
-						{
-							if (!InvitationWidgetInstance.stopMouseLeave)
-							{
-								InvitationWidgetInstance.closePopup();
-							}
-						}, 500
-					);
-				},
 				togglePopup(e)
 				{
-					if (InvitationWidgetInstance.popup)
+					if (InvitationWidgetInstance.popup && InvitationWidgetInstance.popup.isShown())
 					{
-						if (InvitationWidgetInstance.popup.isShown())
-						{
-							InvitationWidgetInstance.closePopup();
-						}
-						else
-						{
-							InvitationWidgetInstance.initPopup(e.target);
-						}
+						return InvitationWidgetInstance.closePopup();
 					}
+					InvitationWidgetInstance.initPopup(e.target);
 				},
 			},
 			template: `
 				<button 
 					class="ui-btn ui-btn-round license-btn license-btn-primary" 
-					@mouseover="onMouseOver"
-					@mouseout="onMouseOut"
 					@click="togglePopup"
 				>{{ localize.INTRANET_INVITATION_WIDGET_INVITE }}</button>
 			`,
@@ -135,36 +79,20 @@ class InvitationWidget
 			angle: { position: 'top', offset: 235 },
 			bindElement: bindElement,
 			content: this.renderPopupContent(),
+			cachable: false,
 			events: {
-				onPopupClose: () => {
-					this.popup.destroy();
-				}
+				onFirstShow: (event) => {
+					EventEmitter.subscribe('BX.Main.InterfaceButtons:onMenuShow', () => {
+						if (this.popup)
+						{
+							this.popup.close();
+						}
+					});
+				},
 			},
 		});
 
-		this.initEvents();
 		this.popup.show();
-	}
-
-	initEvents()
-	{
-		this.popup.getPopupContainer().addEventListener('mouseenter', () =>
-		{
-			clearTimeout(this.enterTimeout);
-			clearTimeout(this.leaveTimeout);
-			clearTimeout(this.popupLeaveTimeout);
-		});
-
-		this.popup.getPopupContainer().addEventListener('mouseleave', (event) =>
-		{
-			this.popupLeaveTimeout = setTimeout(() => {
-				if (!this.stopMouseLeave)
-				{
-					this.closePopup();
-				}
-			}, 500);
-
-		});
 	}
 
 	renderPopupContent()

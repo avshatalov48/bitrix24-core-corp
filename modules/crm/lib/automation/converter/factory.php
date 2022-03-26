@@ -1,8 +1,7 @@
 <?php
 namespace Bitrix\Crm\Automation\Converter;
 
-use Bitrix\Crm\Conversion\DealConversionConfig;
-use Bitrix\Crm\Conversion\DealConversionWizard;
+use Bitrix\Crm\Conversion\ConversionManager;
 use Bitrix\Crm\Conversion\LeadConversionConfig;
 use Bitrix\Crm\Conversion\LeadConversionWizard;
 use Bitrix\Main\NotSupportedException;
@@ -21,8 +20,14 @@ class Factory
 		}
 		elseif ($entityTypeId === \CCrmOwnerType::Deal)
 		{
-			$config = new DealConversionConfig();
-			$wizard = new DealConversionWizard($entityId, $config);
+			$config = ConversionManager::getConfig(\CCrmOwnerType::Deal);
+			foreach ($config->getActiveItems() as $activeItem)
+			{
+				//default settings are not needed here, only configured items will be enabled later
+				$activeItem->setActive(false);
+				$activeItem->enableSynchronization(false);
+			}
+			$wizard = ConversionManager::getWizard(\CCrmOwnerType::Deal, $entityId, $config);
 		}
 		else
 		{

@@ -17,7 +17,7 @@ class Currency
 	/**
 	 * Returns a flat array of all currencyId
 	 *
-	 * @return array
+	 * @return string[]
 	 */
 	public static function getCurrencyIds(): array
 	{
@@ -27,7 +27,7 @@ class Currency
 	/**
 	 * Returns a flat array of currencies, where key is currency id and value is currency name.
 	 *
-	 * @return string[]
+	 * @return Array<string, string>
 	 */
 	public static function getCurrencyList(): array
 	{

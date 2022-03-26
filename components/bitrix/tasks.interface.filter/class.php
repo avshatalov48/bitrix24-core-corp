@@ -16,7 +16,131 @@ Loc::loadMessages(__FILE__);
 CBitrixComponent::includeComponentClass("bitrix:tasks.base");
 
 class TasksInterfaceFilterComponent extends TasksBaseComponent
+	implements \Bitrix\Main\Errorable, \Bitrix\Main\Engine\Contract\Controllerable
 {
+	protected $errorCollection;
+
+	public function configureActions()
+	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return [];
+		}
+
+		return [
+			'toggleGroupByTasks' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+			'toggleGroupByGroups' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+		];
+	}
+
+	public function __construct($component = null)
+	{
+		parent::__construct($component);
+		$this->init();
+	}
+
+	protected function init()
+	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$this->setUserId();
+		$this->errorCollection = new \Bitrix\Tasks\Util\Error\Collection();
+	}
+
+	protected function setUserId()
+	{
+		$this->userId = (int) \Bitrix\Tasks\Util\User::getId();
+	}
+
+	public function getErrorByCode($code)
+	{
+		// TODO: Implement getErrorByCode() method.
+	}
+
+	public function getErrors()
+	{
+		if (!empty($this->componentId))
+		{
+			return parent::getErrors();
+		}
+		return $this->errorCollection->toArray();
+	}
+
+	public function toggleGroupByTasksAction($userId = null)
+	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		if (is_null($userId))
+		{
+			$userId = $this->userId;
+		}
+		$userId = (int) $userId;
+
+		$instance = \CTaskListState::getInstance($userId);
+		$state = $instance->getState();
+		$submodes = $state['SUBMODES'];
+		$groupBySubTasks = $submodes['VIEW_SUBMODE_WITH_SUBTASKS']['SELECTED'] == 'Y';
+
+		if ($groupBySubTasks)
+		{
+			$instance->switchOffSubmode(\CTaskListState::VIEW_SUBMODE_WITH_SUBTASKS);
+		}
+		else
+		{
+			$instance->switchOnSubmode(\CTaskListState::VIEW_SUBMODE_WITH_SUBTASKS);
+		}
+		$instance->saveState();
+
+		return [];
+	}
+
+	public function toggleGroupByGroupsAction($userId = null)
+	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		if (is_null($userId))
+		{
+			$userId = $this->userId;
+		}
+		$userId = (int) $userId;
+
+		$instance = \CTaskListState::getInstance($userId);
+		$state = $instance->getState();
+		$submodes = $state['SUBMODES'];
+		$groupByGroups = $submodes['VIEW_SUBMODE_WITH_GROUPS']['SELECTED'] == 'Y';
+
+		if ($groupByGroups)
+		{
+			$instance->switchOffSubmode(\CTaskListState::VIEW_SUBMODE_WITH_GROUPS);
+		}
+		else
+		{
+			$instance->switchOnSubmode(\CTaskListState::VIEW_SUBMODE_WITH_GROUPS);
+		}
+		$instance->saveState();
+
+		return [];
+	}
+
 	/**
 	 * Gets sprints of current groups.
 	 * @return array
@@ -54,8 +178,12 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 
 	protected function checkParameters()
 	{
-		$groupId = (isset($this->arParams['MENU_GROUP_ID'])? $this->arParams['MENU_GROUP_ID'] : $this->arParams['GROUP_ID']);
+		$groupId = ($this->arParams['MENU_GROUP_ID'] ?? $this->arParams['GROUP_ID']);
 
+		static::tryParseStringParameter(
+			$this->arParams['SHOW_CREATE_TASK_BUTTON'],
+			($this->canCreateGroupTasks($groupId) ? 'Y' : 'N')
+		);
 		static::tryParseStringParameter(
 			$this->arParams['PATH_TO_USER_TASKS_TEMPLATES'],
 			'/company/personal/user/#user_id#/tasks/templates/'
@@ -72,14 +200,11 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 		static::tryParseStringParameter($this->arParams['SHOW_USER_SORT'], 'N');
 		static::tryParseStringParameter($this->arParams['USE_GROUP_SELECTOR'], 'N');
 		static::tryParseStringParameter($this->arParams['PROJECT_VIEW'], 'N');
+		static::tryParseStringParameter($this->arParams['SCOPE'], '');
 		static::tryParseIntegerParameter($this->arParams['GROUP_SELECTOR_LIMIT'], 5);
 		static::tryParseIntegerParameter($this->arParams['GROUP_ID'], 0);
 		static::tryParseIntegerParameter($this->arParams['SPRINT_ID'], 0);
 		static::tryParseArrayParameter($this->arParams['POPUP_MENU_ITEMS']);
-		static::tryParseStringParameter(
-			$this->arParams['SHOW_CREATE_TASK_BUTTON'],
-			($this->canCreateGroupTasks($groupId)? 'Y' : 'N')
-		);
 
 		$isLimitExceeded = FilterLimit::isLimitExceeded();
 		if ($isLimitExceeded)
@@ -94,7 +219,6 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 
 		$group = Bitrix\Socialnetwork\Item\Workgroup::getById($this->arParams['GROUP_ID']);
 		$this->arResult['IS_SCRUM_PROJECT'] = ($group && $group->isScrumProject());
-
 		$this->arResult['SPRINTS'] = $this->getSprints();
 	}
 
@@ -315,5 +439,10 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 		}
 
 		return true;
+	}
+
+	private function addForbiddenError()
+	{
+		$this->errorCollection->add('ACTION_NOT_ALLOWED.RESTRICTED', Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'));
 	}
 }

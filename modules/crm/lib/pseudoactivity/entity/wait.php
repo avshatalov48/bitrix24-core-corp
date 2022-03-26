@@ -48,7 +48,10 @@ class WaitTable  extends Entity\DataManager
 	}
 	public static function deleteByOwner($ownerTypeID, $ownerID)
 	{
-		if(\CCrmOwnerType::IsDefined($ownerTypeID) && $ownerID > 0)
+		$ownerTypeID = (int)$ownerTypeID;
+		$ownerID = (int)$ownerID;
+
+		if ($ownerTypeID > 0 && $ownerID > 0)
 		{
 			Main\Application::getConnection()->queryExecute(
 				"DELETE FROM b_crm_wait WHERE OWNER_TYPE_ID = {$ownerTypeID} AND OWNER_ID = {$ownerID}"

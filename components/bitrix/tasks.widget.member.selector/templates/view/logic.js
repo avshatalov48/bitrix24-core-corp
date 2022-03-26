@@ -64,8 +64,12 @@ BX.namespace('Tasks.Component');
 						function(data)
 						{
 							self.getManager().onSelectorItemDeselected(data.data);
-
-							if (self.option('role') === 'AUDITORS' || self.option('role') === 'ACCOMPLICES')
+console.log(data.data);
+							if (
+								self.option('context') === 'template'
+								|| self.option('role') === 'AUDITORS'
+								|| self.option('role') === 'ACCOMPLICES'
+							)
 							{
 								self.onChangeByUser();
 							}
@@ -85,7 +89,6 @@ BX.namespace('Tasks.Component');
 					var mgr = new this.constructor.Manager({
 						scope: this.scope(),
 						data: this.option('data'),
-						query: this.getQuery(),
 						nameTemplate: this.option('nameTemplate'),
 
 						min: this.option('min'),
@@ -136,42 +139,91 @@ BX.namespace('Tasks.Component');
 					});
 
 					var mngr = this.getManager();
-					this.getQuery().add('integration.intranet.absence', {userIds: userIds}, {}, BX.delegate(function(errors, data)
-					{
-						if (!errors.checkHasErrors())
-						{
-							if(data.RESULT.length > 0)
-							{
-								var text = data.RESULT.reduce(function(sum, current)
-								{
-									return sum + '<br />' + current;
-								});
 
-								var popup = BX.PopupWindowManager.create(
-									"popupMenuOptions",
-									BX(mngr.scope()),
-									{
-										content: text,
-										darkMode: true,
-										autoHide: true,
-										width: 200
-									}
-								);
-
-								popup.show();
-							}
+					BX.ajax.runComponentAction('bitrix:tasks.widget.member.selector', 'isAbsence', {
+						mode: 'class',
+						data: {
+							userIds: userIds
 						}
+					}).then(
+						function(response)
+						{
+							if (
+								!response.status
+								|| response.status !== 'success'
+							)
+							{
+								return;
+							}
+							if (!response.data.length)
+							{
+								return;
+							}
+							var text = response.data.reduce(function(sum, current)
+							{
+								return sum + '<br />' + current;
+							});
 
-					}, this));
+							var popup = BX.PopupWindowManager.create(
+								"popupMenuOptions",
+								BX(mngr.scope()),
+								{
+									content: text,
+									darkMode: true,
+									autoHide: true,
+									width: 200
+								}
+							);
+
+							popup.show();
+						}.bind(this),
+						function(response)
+						{
+
+						}.bind(this)
+					);
 
 					args.data[fieldName] = data;
 
-					this.callRemote(route+'.update', args).then(function(){
-						BX.Tasks.Util.fireGlobalTaskEvent('UPDATE', {ID: id}, {STAY_AT_PAGE: true}, {id: id});
-					});
+					this.sendSetMembersRequest(data);
 
 					this.switchDeleteButtonShow();
 				}
+			},
+
+			sendSetMembersRequest: function(data)
+			{
+				var actionMap = {
+					'AUDITORS': 'setAuditors',
+					'ACCOMPLICES': 'setAccomplices',
+					'RESPONSIBLE': 'setResponsible',
+					'RESPONSIBLES': 'setResponsible'
+				};
+
+				var taskId = this.option('entityId');
+				var action = actionMap[this.option('role')];
+
+				BX.ajax.runComponentAction('bitrix:tasks.widget.member.selector', action, {
+					mode: 'class',
+					data: {
+						taskId: taskId,
+						context: this.option('context') ?? '',
+						data: data
+					}
+				}).then(
+					function(response)
+					{
+						BX.Tasks.Util.fireGlobalTaskEvent('UPDATE', {ID: taskId}, {STAY_AT_PAGE: true}, {id: taskId});
+					}.bind(this)
+				).catch(
+					function(response)
+					{
+						if (response.errors)
+						{
+							BX.Tasks.alert(response.errors);
+						}
+					}.bind(this)
+				);
 			},
 
 			addItem: function(data)
@@ -332,9 +384,14 @@ BX.namespace('Tasks.Component');
 					return;
 				}
 
+				var value = null;
 				for (var i in data)
 				{
-					items.push(this.prepareItemData(data[i]));
+					value = this.prepareItemData(data[i]);
+					if (value)
+					{
+						items.push(value);
+					}
 				}
 
 				return items;
@@ -345,9 +402,14 @@ BX.namespace('Tasks.Component');
 				var data = this.option('data');
 				var items = [];
 
+				var value = null;
 				for (var i in data)
 				{
-					items.push(this.prepareItemData(data[i]));
+					value = this.prepareItemData(data[i]);
+					if (value)
+					{
+						items.push(value);
+					}
 				}
 
 				return items;
@@ -364,6 +426,11 @@ BX.namespace('Tasks.Component');
 				else if (data.id)
 				{
 					id = data.id;
+				}
+
+				if (id <= 0)
+				{
+					return null;
 				}
 
 				var mode = this.option('mode');
@@ -519,7 +586,14 @@ BX.namespace('Tasks.Component');
 					return;
 				}
 
-				this.getDialog().getItem(this.prepareItemData(value.data())).deselect();
+				value = this.prepareItemData(value.data());
+				if (!value)
+				{
+					return;
+				}
+
+				var dialogItem = this.getDialog().getItem(value);
+				dialogItem && dialogItem.deselect();
 			}
 		}
 	});

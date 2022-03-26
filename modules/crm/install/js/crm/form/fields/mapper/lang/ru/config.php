@@ -1,0 +1,3 @@
+<?php
+$MESS['CRM_FORM_FIELDS_MAPPER_NOT_SELECTED'] = 'Не выбрано поле в CRM';
+$MESS['CRM_FORM_FIELDS_MAPPER_CHOOSE_FIELD'] = 'Выбрать поле';

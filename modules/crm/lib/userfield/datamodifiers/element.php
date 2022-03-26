@@ -565,40 +565,26 @@ class Element
 			$hasNameFormatter = method_exists('CCrmContact', 'PrepareFormattedName');
 			$result['ENTITY_TYPE'][] = 'contact';
 
-			if(method_exists('CCrmContact', 'GetTopIDs'))
-			{
-				$topIdList = CCrmContact::GetTopIDs(
-					self::ELEMENTS_LIMIT,
-					'DESC',
-					$userPermissions
-				);
+			$topIdList = CCrmContact::GetTopIDsInCategory(
+				0,
+				self::ELEMENTS_LIMIT,
+				'DESC',
+				$userPermissions
+			);
 
-				if(empty($topIdList))
-				{
-					$contacts = new CDBResult();
-					$contacts->InitFromArray([]);
-				}
-				else
-				{
-					$contacts = CCrmContact::GetListEx(
-						['ID' => 'DESC'],
-						['@ID' => $topIdList, 'CHECK_PERMISSIONS' => 'N'],
-						false,
-						false,
-						['ID', 'HONORIFIC', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'FULL_NAME', 'COMPANY_TITLE', 'PHOTO']
-					);
-				}
+			if(empty($topIdList))
+			{
+				$contacts = new CDBResult();
+				$contacts->InitFromArray([]);
 			}
 			else
 			{
 				$contacts = CCrmContact::GetListEx(
 					['ID' => 'DESC'],
-					[],
+					['@ID' => $topIdList, 'CHECK_PERMISSIONS' => 'N'],
 					false,
-					['nTopCount' => self::ELEMENTS_LIMIT],
-					$hasNameFormatter
-						? ['ID', 'HONORIFIC', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'COMPANY_TITLE', 'PHOTO']
-						: ['ID', 'FULL_NAME', 'COMPANY_TITLE', 'PHOTO']
+					false,
+					['ID', 'HONORIFIC', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'FULL_NAME', 'COMPANY_TITLE', 'PHOTO']
 				);
 			}
 
@@ -661,37 +647,25 @@ class Element
 		{
 			$result['ENTITY_TYPE'][] = 'company';
 
-			if(method_exists('CCrmCompany', 'GetTopIDs'))
-			{
-				$topIdList = CCrmCompany::GetTopIDs(
-					self::ELEMENTS_LIMIT,
-					'DESC',
-					$userPermissions
-				);
+			$topIdList = CCrmCompany::GetTopIDsInCategory(
+				0,
+				self::ELEMENTS_LIMIT,
+				'DESC',
+				$userPermissions
+			);
 
-				if(empty($topIdList))
-				{
-					$companies = new CDBResult();
-					$companies->InitFromArray([]);
-				}
-				else
-				{
-					$companies = CCrmCompany::GetListEx(
-						['ID' => 'DESC'],
-						['@ID' => $topIdList, 'CHECK_PERMISSIONS' => 'N'],
-						false,
-						false,
-						['ID', 'TITLE', 'COMPANY_TYPE', 'INDUSTRY', 'LOGO']
-					);
-				}
+			if(empty($topIdList))
+			{
+				$companies = new CDBResult();
+				$companies->InitFromArray([]);
 			}
 			else
 			{
 				$companies = CCrmCompany::GetListEx(
 					['ID' => 'DESC'],
-					[],
+					['@ID' => $topIdList, 'CHECK_PERMISSIONS' => 'N'],
 					false,
-					['nTopCount' => self::ELEMENTS_LIMIT],
+					false,
 					['ID', 'TITLE', 'COMPANY_TYPE', 'INDUSTRY', 'LOGO']
 				);
 			}

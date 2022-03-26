@@ -1,4 +1,4 @@
-import {Dom, Type} from 'main.core';
+import {Dom} from 'main.core';
 import {BaseEvent, EventEmitter} from 'main.core.events';
 
 import {SidePanel} from '../service/side.panel';
@@ -70,7 +70,6 @@ export class ActiveSprint extends View
 
 		const activeSprintActionButton = new ActiveSprintActionButton();
 		activeSprintActionButton.subscribe('completeSprint', this.onCompleteSprint.bind(this));
-		activeSprintActionButton.subscribe('showBurnDownChart', this.onShowSprintBurnDownChart.bind(this));
 
 		Dom.addClass(container, '--without-bg');
 
@@ -159,15 +158,5 @@ export class ActiveSprint extends View
 	{
 		// todo update stats
 		//this.stats.setSprintData(this.sprint);
-	}
-
-	onShowSprintBurnDownChart(baseEvent: BaseEvent)
-	{
-		const sprintSidePanel = new SprintSidePanel({
-			groupId: this.groupId,
-			sidePanel: this.sidePanel,
-			views: this.views
-		});
-		sprintSidePanel.showBurnDownChart(this.sprint);
 	}
 }

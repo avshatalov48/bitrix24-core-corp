@@ -9,6 +9,7 @@ import {MenuManager} from 'main.popup';
 import 'ui.notification';
 import {ApplicationModel} from './models/application';
 import {OrderCreationModel} from './models/ordercreation';
+import {DocumentSelectorModel} from './models/document-selector';
 import Chat from './chat';
 import Deal from './deal';
 import './css/component.css';
@@ -27,6 +28,7 @@ export class App
 		isCatalogAvailable: false,
 		isOrderPublicUrlExists: false,
 		isWithOrdersMode: true,
+		documentSelector: DocumentSelectorParams|null,
 	})
 	{
 		this.slider = BX.SidePanel.Instance.getTopSlider();
@@ -54,6 +56,7 @@ export class App
 		this.orderPublicUrl = '';
 		this.fileControl = options.fileControl;
 		this.currencyCode = options.currencyCode;
+		this.assignedById = options.assignedById;
 
 		if(Type.isString(options.stageOnOrderPaid))
 		{
@@ -162,6 +165,12 @@ export class App
 		);
 		this.connector = Type.isString(options.connector) ? options.connector : '';
 
+		if (Type.isPlainObject(options.documentSelector))
+		{
+			this.documentSelector = options.documentSelector;
+			this.documentSelector.paymentId = this.options.paymentId;
+		}
+
 		Event.ready(() =>
 		{
 			this.pull = BX.PULL;
@@ -181,6 +190,7 @@ export class App
 
 		return builder.addModel(ApplicationModel.create())
 			.addModel(OrderCreationModel.create())
+			.addModel(DocumentSelectorModel.create())
 			.useNamespace(true)
 			.build();
 	}
@@ -260,7 +270,7 @@ export class App
 					'deal': Deal,
 				},
 				template:
-					this.context === 'deal'
+					this.isPaymentMode()
 						? `<deal :key="componentKey" @on-reload="reload"/>`
 						: `<chat :key="componentKey" @on-reload="reload"/>`
 					,
@@ -276,6 +286,10 @@ export class App
 						orderSelector: document.getElementById('salescenter-app-order-selector'),
 					};
 					this.initOrderSelector();
+					if (context.documentSelector)
+					{
+						this.$store.commit('documentSelector/fillState', context.documentSelector);
+					}
 				},
 				mounted()
 				{
@@ -686,7 +700,14 @@ export class App
 			connector: this.connector,
 			context: this.context,
 			currency: this.currencyCode,
+			assignedById: this.assignedById,
 		};
+
+		if (this.documentSelector)
+		{
+			data.boundDocumentId = this.store.getters['documentSelector/getBoundDocumentId'];
+			data.selectedTemplateId = this.store.getters['documentSelector/getSelectedTemplateId'];
+		}
 
 		if (this.stageOnOrderPaid !== null)
 		{
@@ -731,6 +752,7 @@ export class App
 					orderId: result.data.order.id,
 					ownerId: this.ownerId,
 					ownerTypeId: this.ownerTypeId,
+					context: this.context,
 				});
 			}
 			else
@@ -742,6 +764,12 @@ export class App
 				{
 					this.slider.data.set('deal', result.data.deal);
 				}
+
+				if (result.data.entity)
+				{
+					this.slider.data.set('entity', result.data.entity);
+				}
+
 				this.closeApplication();
 			}
 			this.emitGlobalEvent('salescenter.app:onpaymentcreated');
@@ -770,16 +798,24 @@ export class App
 
 		this.startProgress(buttonEvent);
 
+		const options = {
+			sendingMethod: this.sendingMethod,
+			sendingMethodDesc: this.sendingMethodDesc,
+			stageOnOrderPaid: this.stageOnOrderPaid,
+			ownerTypeId: this.ownerTypeId,
+			ownerId: this.ownerId,
+		};
+		if (this.documentSelector)
+		{
+			options.boundDocumentId = this.store.getters['documentSelector/getBoundDocumentId'];
+			options.selectedTemplateId = this.store.getters['documentSelector/getSelectedTemplateId'];
+		}
 		BX.ajax.runAction('salescenter.order.resendPayment', {
 			data: {
 				orderId: this.orderId,
 				paymentId: this.options.paymentId,
 				shipmentId: this.options.shipmentId,
-				options: {
-					sendingMethod: this.sendingMethod,
-					sendingMethodDesc: this.sendingMethodDesc,
-					stageOnOrderPaid: this.stageOnOrderPaid
-				},
+				options,
 			},
 			getParameters: {
 				context: this.context,
@@ -850,4 +886,33 @@ export class App
 		EventEmitter.emit(eventName, data);
 		BX.SidePanel.Instance.postMessage(this.slider, eventName, data);
 	}
+
+	isPaymentMode(): boolean
+	{
+		return this.context === 'deal';
+	}
+}
+
+declare type DocumentSelectorParams = {
+	boundDocumentId: ?number,
+	selectedTemplateId: ?number,
+	documents: ?Document[],
+	templates: ?Template[],
+	templateAddUrl: ?string,
+	provider: ?string,
+	value: ?number,
+};
+
+export type Document = {
+	id: number,
+	title: string,
+	detailUrl: string,
+	isWithStamps: boolean,
+}
+
+export type Template = {
+	id: number,
+	title: string,
+	documentCreationUrl: string,
+	isWithStamps: boolean,
 }

@@ -192,6 +192,36 @@ class EntityMatchManager
 		return $entities;
 	}
 
+	public function matchEntityRequisites(Order $order, $entityTypeId, $entityId)
+	{
+		$entityProperties = $this->getEntityProperties($order);
+		$assignedById = $this->getAssignedById($order);
+		$duplicateMode = $this->getDuplicateMode($order);
+		$matcher = null;
+
+		if ((int)$entityTypeId === \CCrmOwnerType::Company)
+		{
+			$matcher = new CompanyMatcher();
+		}
+		elseif ((int)$entityTypeId === \CCrmOwnerType::Contact)
+		{
+			$matcher = new ContactMatcher();
+		}
+
+		if (!$matcher || empty($entityProperties[(int)$entityTypeId]))
+		{
+			return [];
+		}
+
+		$matcher->setProperties($entityProperties[(int)$entityTypeId]);
+		$matcher->setAssignedById($assignedById);
+		$matcher->setDuplicateControlMode($duplicateMode);
+
+		$requisites = $matcher->matchRequisites($entityId);
+
+		return $requisites;
+	}
+
 	public function match(Order $order)
 	{
 		$entities = [];

@@ -7,6 +7,7 @@ $MESS["CRM_ACTIVITY_EMAIL_CREATION_CANCELED"] = "Операція створен
 $MESS["CRM_ACTIVITY_EMAIL_EMPTY_FROM_FIELD"] = "Будь ласка, вкажіть відправника в поле «Від кого».";
 $MESS["CRM_ACTIVITY_EMAIL_EMPTY_TO_FIELD"] = "Будь ласка, вкажіть одержувача в полі «Кому».";
 $MESS["CRM_ACTIVITY_EMAIL_MAX_SIZE_EXCEED"] = "Перевищено максимальний розмір вкладень (#SIZE#)";
+$MESS["CRM_ACTIVITY_EMAIL_MESSAGE_TO_MANY_RECIPIENTS"] = "Одержувачів не може бути більше 10";
 $MESS["CRM_ACTIVITY_INVALID_EMAIL"] = "#VALUE#' не є правильною e-mail адресою.";
 $MESS["CRM_ACTIVITY_RESPONSIBLE_NOT_FOUND"] = "Не вдалося знайти відповідального за дію користувача.";
 $MESS["CRM_CALL_ACTION_DEFAULT_SUBJECT"] = "Новий дзвінок (#DATE#)";

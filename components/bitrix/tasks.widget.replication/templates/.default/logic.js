@@ -323,7 +323,7 @@ BX.namespace('Tasks.Component');
 					var timesInMonth = params.DAILY_MONTH_INTERVAL;
 					if(timesInMonth > 0)
 					{
-						condition += BX.message('TASKS_TTDP_REPLICATION_HINT_DAILY_MONTH_INTERVAL').replace('#TIMES#', timesInMonth).replace('#TIMES_PLURAL#', BX.Tasks.Util.getMessagePlural(timesInMonth, 'TASKS_TTDP_REPLICATION_HINT_DAILY_MONTH_INTERVAL'));
+						condition += BX.message('TASKS_TTDP_REPLICATION_HINT_DAILY_MONTH_INTERVAL').replace('#TIMES#', timesInMonth).replace('#TIMES_PLURAL#', BX.Loc.getMessagePlural('TASKS_TTDP_REPLICATION_HINT_DAILY_MONTH_INTERVAL', timesInMonth));
 					}
 				}
 				else if(params.PERIOD == this.PERIOD_WEEKLY)
@@ -418,7 +418,7 @@ BX.namespace('Tasks.Component');
 				}
 				else if (repeatTimes > 0 && till == this.REPEAT_TILL_TIMES)
 				{
-					constraint += BX.message('TASKS_TTDP_REPLICATION_HINT_END_CONSTRAINT_TIMES').replace('#TIMES#', repeatTimes).replace('#TIMES_PLURAL#', BX.Tasks.Util.getMessagePlural(repeatTimes, 'TASKS_TTDP_REPLICATION_HINT_END_CONSTRAINT_TIMES'));
+					constraint += BX.message('TASKS_TTDP_REPLICATION_HINT_END_CONSTRAINT_TIMES').replace('#TIMES#', repeatTimes).replace('#TIMES_PLURAL#', BX.Loc.getMessagePlural('TASKS_TTDP_REPLICATION_HINT_END_CONSTRAINT_TIMES', repeatTimes));
 					endless = false;
 				}
 

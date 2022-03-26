@@ -3,26 +3,28 @@
 namespace Bitrix\Crm\Service\Operation\Action;
 
 use Bitrix\Crm\Item;
-use Bitrix\Crm\Recycling\DynamicController;
+use Bitrix\Crm\Recycling\ControllerManager;
 use Bitrix\Crm\Service\Operation\Action;
+use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 
 class MoveToBin extends Action
 {
-	protected
-		$item;
-
-	public function __construct(Item $item)
-	{
-		$this->item = $item;
-		parent::__construct();
-	}
-
 	public function process(Item $item): Result
 	{
 		$result = new Result();
 
-		DynamicController::getInstance($item->getEntityTypeId())->moveToBin(
+		$recyclingController = ControllerManager::resolveController($item->getEntityTypeId());
+		if (!$recyclingController)
+		{
+			$result->addError(
+				new Error('Recycling controller for entityTypeId ' . $item->getEntityTypeId() . ' was not found'),
+			);
+
+			return $result;
+		}
+
+		$recyclingController->moveToBin(
 			$item->getId(),
 			['FIELDS' => $item->getCompatibleData()]
 		);

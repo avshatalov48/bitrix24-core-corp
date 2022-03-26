@@ -93,7 +93,7 @@
 .order-item-type,
 .order-item-quantity {
 	color: #acacb4;
-	font: 12px/14px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;if;
+	font: 12px/14px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 .bx-dark .order-item-type,
@@ -316,7 +316,7 @@
 .alert.alert-danger {
 	background: rgba(255,87,82,.2);
 	border-color: transparent;
-	color: #CF2823;
+	color: #cf2823;
 }
 
 .alert {
@@ -401,4 +401,66 @@
 	font: 500 11px/15px "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	/*tmp hack*/
 	font-family: "Roboto", Arial, sans-serif;
+}
+
+.page-section.order-document-container
+{
+	margin-bottom: 15px;
+}
+.order-document-container .page-section-title
+{
+	margin-bottom: 4px;
+}
+
+.order-document {
+	display: flex;
+	align-items: center;
+	margin-bottom: 22px;
+}
+
+.order-document-file-icon {
+	padding: 10px 16px 10px;
+}
+
+.order-document-title {
+	font: 16px/19px "SF UI Display", "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	/*tmp hack*/
+	font-family: "Roboto", Arial, sans-serif;
+	color: #333;
+	opacity: 0.8;
+}
+
+.bx-dark .order-document-title {
+	color: #acacb4;
+}
+
+.order-document-actions {
+	display: flex;
+	justify-content: flex-start;
+	padding-bottom: 18px;
+	gap: 16px;
+}
+
+.order-document-actions-action a {
+	display: block;
+	cursor: pointer;
+	box-sizing: border-box;
+	min-height: 36px;
+	padding: 8px 15px;
+	color: #333;
+	font: 500 16px/19px "SF UI Display", "SF Pro Text", "SF UI Text", "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	/*tmp hack*/
+	font-family: "Roboto", Arial, sans-serif;
+	border: 1px solid rgba(0, 174, 52, 0.5);
+	border-radius: 18px;
+}
+
+.bx-dark .order-document-actions-action a {
+	color: #fff;
+	border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+
+.order-document-actions-action a:hover {
+	text-decoration: none;
 }

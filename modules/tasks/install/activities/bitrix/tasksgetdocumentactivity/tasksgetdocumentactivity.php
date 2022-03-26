@@ -40,13 +40,25 @@ class CBPTasksGetDocumentActivity extends CBPActivity
 		}
 
 		$taskId = $this->TaskId;
+		if (!is_numeric($taskId))
+		{
+			$this->WriteToTrackingService(
+				GetMessage('TASKS_GLDA_ERROR_EMPTY_DOCUMENT_1'),
+				0,
+				CBPTrackingType::Error
+			);
+
+			return CBPActivityExecutionStatus::Closed;
+		}
+
+		$taskId = (int)$taskId;
 		$map = $this->FieldsMap;
 		$document = \Bitrix\Tasks\Integration\Bizproc\Document\Task::getDocument($taskId);
 
 		if (!$document || !is_array($map))
 		{
 			$this->WriteToTrackingService(
-				GetMessage('TASKS_GLDA_ERROR_EMPTY_DOCUMENT'),
+				GetMessage('TASKS_GLDA_ERROR_EMPTY_DOCUMENT_1'),
 				0,
 				CBPTrackingType::Error
 			);
@@ -192,7 +204,7 @@ class CBPTasksGetDocumentActivity extends CBPActivity
 			$errors[] = [
 				"code" => "AccessDenied",
 				"parameter" => "Admin",
-				"message" => GetMessage("TASKS_GLDA_ACCESS_DENIED"),
+				"message" => GetMessage("TASKS_GLDA_ACCESS_DENIED_1"),
 			];
 
 			return array_merge($errors, parent::ValidateProperties($arTestProperties, $user));
@@ -212,7 +224,7 @@ class CBPTasksGetDocumentActivity extends CBPActivity
 			$errors[] = [
 				"code" => "NotExist",
 				"parameter" => "Fields",
-				"message" => GetMessage("TASKS_GLDA_ERROR_FIELDS"),
+				"message" => GetMessage("TASKS_GLDA_ERROR_FIELDS_1"),
 			];
 		}
 

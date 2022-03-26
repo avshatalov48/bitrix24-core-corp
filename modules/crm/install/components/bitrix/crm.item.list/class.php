@@ -1,15 +1,19 @@
 <?php
 
-use Bitrix\Crm\Filter\ItemDataProvider;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Restriction\ItemsMutator;
+use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Display;
 use Bitrix\Crm\Service\Router;
+use Bitrix\Crm\Settings\HistorySettings;
+use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Main\UI\PageNavigation;
+use Bitrix\UI\Buttons;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
@@ -29,6 +33,8 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 	protected $parentEntityId;
 	protected $parents = [];
 	protected $webForms = [];
+	protected $exportType;
+	protected $notAccessibleFields;
 
 	protected function init(): void
 	{
@@ -39,14 +45,30 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 			return;
 		}
 
-		if (isset($this->arParams['parentEntityTypeId']))
+		if (
+			isset(
+				$this->arParams['EXPORT_TYPE'],
+				$this->arParams['STEXPORT_MODE'],
+				$this->arParams['STEXPORT_PAGE_SIZE'],
+				$this->arParams['PAGE_NUMBER'],
+			)
+			&& $this->arParams['STEXPORT_MODE'] === 'Y'
+		)
 		{
-			$this->parentEntityTypeId = (int) $this->arParams['parentEntityTypeId'];
+			$this->exportType = $this->arParams['EXPORT_TYPE'];
 		}
 
-		if (isset($this->arParams['parentEntityId']))
+		if (!$this->isExportMode())
 		{
-			$this->parentEntityId = (int) $this->arParams['parentEntityId'];
+			if (isset($this->arParams['parentEntityTypeId']))
+			{
+				$this->parentEntityTypeId = (int) $this->arParams['parentEntityTypeId'];
+			}
+
+			if (isset($this->arParams['parentEntityId']))
+			{
+				$this->parentEntityId = (int) $this->arParams['parentEntityId'];
+			}
 		}
 
 		$this->gridOptions = new Bitrix\Main\Grid\Options($this->getGridId());
@@ -62,9 +84,29 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 			return;
 		}
 
+		$restriction = RestrictionManager::getItemListRestriction($this->entityTypeId);
+		if (!$restriction->hasPermission())
+		{
+			$this->arResult['restriction'] = $restriction;
+			$this->arResult['entityName'] = \CCrmOwnerType::ResolveName($this->entityTypeId);
+			$this->includeComponentTemplate('restrictions');
+			return;
+		}
+
+		if ($this->isExportMode())
+		{
+			return $this->processExport();
+		}
+
+		$this->processGridActions();
+
 		$this->getApplication()->SetTitle(htmlspecialcharsbx($this->getTitle()));
 
-		$this->arResult['grid'] = $this->prepareGrid();
+		$listFilter = $this->getListFilter();
+		$navParams = $this->gridOptions->getNavParams(['nPageSize' => static::DEFAULT_PAGE_SIZE]);
+		$pageSize = (int)$navParams['nPageSize'];
+		$pageNavigation = $this->getPageNavigation($pageSize);
+		$this->arResult['grid'] = $this->prepareGrid($listFilter, $pageNavigation);
 		$this->arResult['interfaceToolbar'] = $this->prepareInterfaceToolbar();
 		$this->arResult['jsParams'] = [
 			'entityTypeId' => $this->entityTypeId,
@@ -75,6 +117,48 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		];
 
 		$this->includeComponentTemplate();
+	}
+
+	protected function processGridActions(): void
+	{
+		$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
+		if (
+			$request->getRequestMethod() !== 'POST'
+			|| !check_bitrix_sessid()
+		)
+		{
+			return;
+		}
+		$removeActionButtonParamName = 'action_button_' . $this->getGridId();
+		if ($request->getPost($removeActionButtonParamName) === 'delete')
+		{
+			$ids = $request->getPost('ID');
+			if (!is_array($ids))
+			{
+				return;
+			}
+			\Bitrix\Main\Type\Collection::normalizeArrayValuesByInt($ids);
+			if (empty($ids))
+			{
+				return;
+			}
+			$items = $this->factory->getItemsFilteredByPermissions(
+				[
+					'filter' => [
+						'@ID' => $ids,
+					]
+				],
+				null,
+				\Bitrix\Crm\Service\UserPermissions::OPERATION_DELETE
+			);
+			foreach ($items as $item)
+			{
+				$operation = $this->factory->getDeleteOperation($item);
+				// permissions have been checked above
+				$operation->disableCheckAccess();
+				$operation->launch();
+			}
+		}
 	}
 
 	protected function getGridId(): string
@@ -89,17 +173,31 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		return $gridId;
 	}
 
-	protected function prepareGrid(): array
+	protected function getNotAccessibleFieldNames(): array
+	{
+		if ($this->notAccessibleFields === null)
+		{
+			$this->notAccessibleFields = array_flip(VisibilityManager::getNotAccessibleFields($this->entityTypeId));
+		}
+
+		return $this->notAccessibleFields;
+	}
+
+	protected function prepareGrid(array $listFilter, PageNavigation $pageNavigation): array
 	{
 		$grid = [];
 		$grid['GRID_ID'] = $this->getGridId();
 		$grid['COLUMNS'] = array_merge($this->provider->getGridColumns(), $this->ufProvider->getGridColumns());
+		$notAccessibleFields = $this->getNotAccessibleFieldNames();
+		foreach ($grid['COLUMNS'] as $key => $column)
+		{
+			if (isset($column['id'], $notAccessibleFields[$column['id']]))
+			{
+				unset($grid['COLUMNS'][$key]);
+			}
+		}
 
-		$navParams = $this->gridOptions->getNavParams(['nPageSize' => static::DEFAULT_PAGE_SIZE]);
-		$pageSize = (int)$navParams['nPageSize'];
 		$gridSort = $this->gridOptions->getSorting(['sort' => $this->defaultGridSort]);
-		$pageNavigation = $this->getPageNavigation($pageSize);
-		$listFilter = $this->getListFilter();
 
 		if (isset($listFilter['@ID']) && empty($listFilter['@ID']))
 		{
@@ -109,13 +207,19 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		else
 		{
 			$order = $this->validateOrder($gridSort['sort']);
-			$list = $this->factory->getItemsFilteredByPermissions([
-				'select' => $this->getSelect(),
-				'order' => $order,
-				'offset' => $pageNavigation->getOffset(),
-				'limit' => $pageNavigation->getLimit(),
-				'filter' => $listFilter,
-			]);
+			$list = $this->factory->getItemsFilteredByPermissions(
+				[
+					'select' => $this->getSelect(),
+					'order' => $order,
+					'offset' => $pageNavigation->getOffset(),
+					'limit' => $pageNavigation->getLimit(),
+					'filter' => $listFilter,
+				],
+				$this->userPermissions->getUserId(),
+				$this->isExportMode()
+					? \Bitrix\Crm\Service\UserPermissions::OPERATION_EXPORT
+					: \Bitrix\Crm\Service\UserPermissions::OPERATION_READ
+			);
 			$rows = $this->prepareGridRows($list);
 			$totalCount = $this->factory->getItemsCountFilteredByPermissions($listFilter);
 		}
@@ -132,17 +236,35 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		$grid['AJAX_OPTION_STYLE'] = "N";
 		$grid['AJAX_OPTION_HISTORY'] = "N";
 		$grid['SHOW_PAGESIZE'] = true;
-		$grid['PAGE_SIZES'] = [['NAME' => 10, 'VALUE' => 10], ['NAME' => 20, 'VALUE' => 20], ['NAME' => 50, 'VALUE' => 50]];
-		$grid['SHOW_ROW_CHECKBOXES'] = false;
-		$grid['SHOW_CHECK_ALL_CHECKBOXES'] = false;
-		$grid['SHOW_ACTION_PANEL'] = false;
+		$grid['DEFAULT_PAGE_SIZE'] = static::DEFAULT_PAGE_SIZE;
+		$grid['PAGE_SIZES'] = [['NAME' => '10', 'VALUE' => '10'], ['NAME' => '20', 'VALUE' => '20'], ['NAME' => '50', 'VALUE' => '50']];
 		$grid['SHOW_PAGINATION'] = true;
 		$grid['ALLOW_CONTEXT_MENU'] = false;
 		$grid['SHOW_SELECTED_COUNTER'] = false;
-		$grid['SHOW_CHECK_ALL_CHECKBOXES'] = false;
-		$grid['SHOW_ROW_CHECKBOXES'] = false;
 		$grid['SHOW_ROW_ACTIONS_MENU'] = true;
 		$grid['ENABLE_FIELDS_SEARCH'] = 'Y';
+		$grid['HEADERS_SECTIONS'] = $this->getHeaderSections();
+		$canDelete = Container::getInstance()->getUserPermissions()->checkDeletePermissions(
+			$this->factory->getEntityTypeId(),
+			0,
+			(int)$this->getCategoryId()
+		);
+		$grid['SHOW_ROW_CHECKBOXES'] = $canDelete;
+		$grid['SHOW_CHECK_ALL_CHECKBOXES'] = $canDelete;
+		$grid['SHOW_ACTION_PANEL'] = $canDelete;
+		if ($canDelete)
+		{
+			$snippet = new \Bitrix\Main\Grid\Panel\Snippet();
+			$grid['ACTION_PANEL'] = [
+				'GROUPS' => [
+					[
+						'ITEMS' => [
+							$snippet->getRemoveButton(),
+						],
+					],
+				]
+			];
+		}
 
 		return $grid;
 	}
@@ -150,7 +272,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 	protected function prepareInterfaceToolbar(): array
 	{
 		$toolbar = [];
-		if($this->parentEntityTypeId > 0)
+		if ($this->parentEntityTypeId > 0)
 		{
 			$entityTypeDescription = $this->factory->getEntityDescription();
 
@@ -176,6 +298,17 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 				'LINK' => $url,
 				'ICON' => 'btn-new',
 			];
+
+			$relation = Container::getInstance()->getRelationManager()->getRelation(new \Bitrix\Crm\RelationIdentifier(
+				$this->parentEntityTypeId,
+				$this->entityTypeId
+			));
+			if ($relation && $relation->getSettings()->isConversion())
+			{
+				$addButton['ATTRIBUTES'] = [
+					'data-role' => 'add-new-item-button-' . $this->getGridId(),
+				];
+			}
 			$toolbar['buttons'] = [$addButton];
 		}
 
@@ -217,7 +350,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 	{
 		if ($this->parentEntityId && $this->parentEntityTypeId)
 		{
-			$relationManager = \Bitrix\Crm\Service\Container::getInstance()->getRelationManager();
+			$relationManager = Container::getInstance()->getRelationManager();
 			$parentItemIdentifier = $this->getParentItemIdentifier();
 			$childElements = array_unique($relationManager->getChildElements($parentItemIdentifier));
 
@@ -243,12 +376,97 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		return new ItemIdentifier($this->parentEntityTypeId, $this->parentEntityId);
 	}
 
+	protected function isExportMode(): bool
+	{
+		return $this->exportType !== null;
+	}
+
+	protected function processExport(): array
+	{
+		if ($this->getErrors())
+		{
+			return ['ERROR' => implode("", $this->getErrorMessages())];
+		}
+
+		$listFilter = $this->getListFilter();
+		if (!isset($this->arParams['STEXPORT_TOTAL_ITEMS']) || $this->arParams['STEXPORT_TOTAL_ITEMS'] <= 0)
+		{
+			$totalCount = $this->factory->getItemsCountFilteredByPermissions(
+				$listFilter,
+				$this->userPermissions->getUserId(),
+				$this->userPermissions::OPERATION_EXPORT
+			);
+			$lastExportedId = $this->getMaxItemId();
+		}
+		else
+		{
+			$totalCount = $this->arParams['STEXPORT_TOTAL_ITEMS'];
+			$lastExportedId = $this->arParams['STEXPORT_LAST_EXPORTED_ID'];
+			$listFilter['<=ID'] = $lastExportedId;
+		}
+
+		$pageNavigation = new PageNavigation($this->navParamName);
+		$pageNavigation
+			->allowAllRecords(false)
+			->setPageSize($this->arParams['STEXPORT_PAGE_SIZE'])
+			->setCurrentPage($this->arParams['PAGE_NUMBER']);
+
+		$this->setTemplateName($this->exportType);
+		$grid = $this->prepareGrid($listFilter, $pageNavigation);
+
+		$visibleColumns = array_flip($this->getVisibleColumns());
+		foreach ($grid['COLUMNS'] as $column)
+		{
+			if (isset($visibleColumns[$column['id']]))
+			{
+				$this->arResult['HEADERS'][] = $column;
+			}
+		}
+		$items = array_column($grid['ROWS'], 'columns');
+		$this->arResult['ITEMS'] = $items;
+
+		$pageNumber = $pageNavigation->getCurrentPage();
+		$lastPageNumber = ceil((int) $totalCount / (int)$pageNavigation->getPageSize());
+
+		$this->arResult['FIRST_EXPORT_PAGE'] = $pageNumber <= 1;
+		$this->arResult['LAST_EXPORT_PAGE'] = $pageNumber >= $lastPageNumber;
+		$this->includeComponentTemplate();
+
+		$returnValues = [
+			'PROCESSED_ITEMS' => count($items),
+			'LAST_EXPORTED_ID' => $lastExportedId ?? 0,
+			'TOTAL_ITEMS' => $totalCount,
+		];
+
+		return $returnValues;
+	}
+
+	protected function getMaxItemId(array $listFilter = [])
+	{
+		if ($result = $this->factory->getItemsFilteredByPermissions(
+			[
+				'select' => ['ID'],
+				'order' => ['ID' => 'DESC'],
+				'limit' => 1,
+				'filter' => $listFilter,
+			],
+			$this->userPermissions->getUserId(),
+			$this->userPermissions::OPERATION_EXPORT
+		))
+		{
+			$item = reset($result);
+			return $item->get('ID');
+		}
+
+		return 0;
+	}
+
 	protected function getSelect(): array
 	{
 		// Some columns use references to compile their display data
 		$referenceToDependantColumnsMap = [
 			Item::FIELD_NAME_COMPANY => [Item::FIELD_NAME_CONTACT_ID, Item::FIELD_NAME_COMPANY_ID, 'CLIENT_INFO'],
-			Item::FIELD_NAME_CONTACTS => [Item::FIELD_NAME_CONTACT_ID, 'CLIENT_INFO'],
+			// Item::FIELD_NAME_CONTACTS => [Item::FIELD_NAME_CONTACT_ID, 'CLIENT_INFO'],
 			Item::FIELD_NAME_MYCOMPANY => [Item::FIELD_NAME_MYCOMPANY_ID],
 			Item::FIELD_NAME_PRODUCTS => [Item::FIELD_NAME_PRODUCTS.'.PRODUCT_ID'],
 		];
@@ -274,18 +492,22 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 
 	protected function getVisibleColumns(): array
 	{
-		if($this->visibleColumns === null)
+		if ($this->visibleColumns === null)
 		{
 			$this->visibleColumns = $this->gridOptions->getVisibleColumns();
-			if(empty($this->visibleColumns))
+			if (empty($this->visibleColumns))
 			{
-				$this->visibleColumns = array_column(
+				$this->visibleColumns = array_filter(
 					array_merge(
 						$this->provider->getGridColumns(),
 						$this->ufProvider->getGridColumns()
 					),
-					'id'
+					static function($column) {
+						return isset($column['default']) && $column['default'] === true;
+					}
 				);
+
+				$this->visibleColumns = array_column($this->visibleColumns, 'id');
 			}
 		}
 
@@ -302,42 +524,36 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		$result = [];
 		if(count($list) > 0)
 		{
-			$userIds = [];
-			$itemIds = [];
-			foreach($list as $item)
-			{
-				foreach ($this->provider->getFieldNamesByType(ItemDataProvider::TYPE_USER, ItemDataProvider::DISPLAY_IN_GRID) as $columnName)
-				{
-					/** @var int|null $userId */
-					if ($item->hasField($columnName))
-					{
-						$userId = $item->get($columnName);
-						$userIds[$userId] = $userId;
-					}
-				}
-				$itemIds[] = $item->getId();
-			}
-			$this->users = Container::getInstance()->getUserBroker()->getBunchByIds($userIds);
 			$this->webForms = Bitrix\Crm\WebForm\Manager::getListNamesEncoded();
 
-			$this->parents = Container::getInstance()->getParentFieldManager()->getParentFields(
-				$itemIds,
-				$this->getVisibleColumns(),
-				$this->entityTypeId
-			);
-
+			$isExportEventEnabled = HistorySettings::getCurrent()->isExportEventEnabled();
+			$notAccessibleFields = $this->getNotAccessibleFieldNames();
 			$itemsData = [];
-			$itemsColumns = [];
 			foreach($list as $item)
 			{
-				$itemData = $this->getItemData($item);
+				$itemData = $item->getData();
+				$itemData = array_diff_key($itemData, $notAccessibleFields);
 				$itemsData[$itemData['ID']] = $itemData;
-				$itemsColumns[$itemData['ID']] = array_merge($itemData, $this->getItemColumn($item));
+
+				if ($isExportEventEnabled && $this->isExportMode())
+				{
+					$trackedObject = $this->factory->getTrackedObject($item);
+					Container::getInstance()->getEventHistory()->registerExport($trackedObject);
+				}
 			}
-			$restriction = \Bitrix\Crm\Restriction\RestrictionManager::getWebFormResultsRestriction();
+
+			$displayOptions =
+				(new Display\Options())
+					->setMultipleFieldsDelimiter($this->isExportMode() ? ', ' : '<br />')
+					->setGridId($this->getGridId())
+			;
+			$restrictedItemIds = [];
+			$itemIds = array_column($itemsData, 'ID');
+			$itemsMutator = null;
+			$restriction = RestrictionManager::getWebFormResultsRestriction();
 			if (!$restriction->hasPermission())
 			{
-				$itemIds = array_column($itemsData, 'ID');
+				$restriction->prepareDisplayOptions($this->entityTypeId, $itemIds, $displayOptions);
 				$restrictedItemIds = $restriction->filterRestrictedItemIds(
 					$this->entityTypeId,
 					$itemIds
@@ -345,31 +561,65 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 				$restrictedItemIds = array_flip($restrictedItemIds);
 				if (!empty($restrictedItemIds))
 				{
-					$mutator = new ItemsMutator($restriction->getFieldsToShow());
-					foreach ($itemsData as &$item)
+					$itemsMutator = new ItemsMutator(array_merge(
+						$displayOptions->getRestrictedFieldsToShow(),
+						[]
+					));
+				}
+			}
+			$this->parents = Container::getInstance()->getParentFieldManager()->getParentFields(
+				$itemIds,
+				$this->getVisibleColumns(),
+				$this->entityTypeId
+			);
+			$displayFields = $this->getDisplayFields();
+			$displayValues =
+				(new Display($this->entityTypeId, $displayFields, $displayOptions))
+					->setItems($itemsData)
+					->getAllValues()
+			;
+			$itemColumns = $itemsData;
+			foreach ($displayValues as $itemId => $itemDisplayValues)
+			{
+				foreach ($itemDisplayValues as $fieldId => $fieldValue)
+				{
+					if (isset($displayFields[$fieldId]) && $displayFields[$fieldId]->isUserField())
 					{
-						if (isset($restrictedItemIds[$item['ID']]))
-						{
-							$item = $mutator->processItem($item, '<img onclick="if(BX && BX.onCustomEvent){BX.onCustomEvent(window, \'onCrmRestrictedValueClick\')}" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyIiB2aWV3Qm94PSIwIDAgMTI4IDEyIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHg9IjQyIiB3aWR0aD0iMjIiIGhlaWdodD0iMTIiIGZpbGw9IiNFREVFRUYiLz48cmVjdCB4PSI2NCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjEyIiBmaWxsPSIjRTdFOEVBIi8+PHJlY3QgeD0iODQiIHdpZHRoPSIyMiIgaGVpZ2h0PSIxMiIgZmlsbD0iI0VCRUNFRSIvPjxyZWN0IHg9IjEwNiIgd2lkdGg9IjIyIiBoZWlnaHQ9IjEyIiBmaWxsPSIjRjdGN0Y4Ii8+PHJlY3Qgd2lkdGg9IjQ0IiBoZWlnaHQ9IjEyIiBmaWxsPSIjRUFFQkVEIi8+PHJlY3Qgd2lkdGg9IjQ0IiBoZWlnaHQ9IjEyIiBmaWxsPSIjRUFFQkVEIi8+PC9zdmc+Cg=="/>');
-						}
+						$itemColumns[$itemId][$fieldId] = $fieldValue;
 					}
-					foreach ($itemsColumns as &$item)
+					else
 					{
-						if (isset($restrictedItemIds[$item['ID']]))
-						{
-							$item = $mutator->processItem($item, '<img onclick="if(BX && BX.onCustomEvent){BX.onCustomEvent(window, \'onCrmRestrictedValueClick\')}" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyIiB2aWV3Qm94PSIwIDAgMTI4IDEyIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHg9IjQyIiB3aWR0aD0iMjIiIGhlaWdodD0iMTIiIGZpbGw9IiNFREVFRUYiLz48cmVjdCB4PSI2NCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjEyIiBmaWxsPSIjRTdFOEVBIi8+PHJlY3QgeD0iODQiIHdpZHRoPSIyMiIgaGVpZ2h0PSIxMiIgZmlsbD0iI0VCRUNFRSIvPjxyZWN0IHg9IjEwNiIgd2lkdGg9IjIyIiBoZWlnaHQ9IjEyIiBmaWxsPSIjRjdGN0Y4Ii8+PHJlY3Qgd2lkdGg9IjQ0IiBoZWlnaHQ9IjEyIiBmaWxsPSIjRUFFQkVEIi8+PHJlY3Qgd2lkdGg9IjQ0IiBoZWlnaHQ9IjEyIiBmaWxsPSIjRUFFQkVEIi8+PC9zdmc+Cg=="/>');
-						}
+						$itemColumns[$itemId][$fieldId] = $displayFields[$fieldId]->wasRenderedAsHtml()
+							? $fieldValue
+							: htmlspecialcharsbx($fieldValue)
+						;
 					}
-					unset($item);
-					$this->arResult['RESTRICTED_VALUE_CLICK_CALLBACK'] = $restriction->prepareInfoHelperScript();
 				}
 			}
 			foreach($list as $item)
 			{
+				$itemId = $item->getId();
+				$itemData = $itemsData[$itemId];
+				$itemColumn = $itemColumns[$itemId];
+				if (isset($restrictedItemIds[$itemId]))
+				{
+					$valueReplacer = $this->isExportMode()
+						? $displayOptions->getRestrictedValueTextReplacer()
+						: $displayOptions->getRestrictedValueHtmlReplacer()
+					;
+					$itemData = $itemsMutator->processItem($itemData, $valueReplacer);
+					$itemColumn = $itemsMutator->processItem($itemColumn, $valueReplacer);
+				}
+				else
+				{
+					$this->appendParentColumns($item, $itemColumn);
+					$this->appendOptionalColumns($item, $itemColumn);
+				}
+
 				$result[] = [
-					'id' => $item->getId(),
-					'data' => $itemsData[$item->getId()],
-					'columns' => $itemsColumns[$item->getId()],
+					'id' => $itemId,
+					'data' => $itemData,
+					'columns' => $itemColumn,
 					'actions' => $this->getContextActions($item),
 				];
 			}
@@ -382,90 +632,93 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 	{
 		$jsEventData = CUtil::PhpToJSObject(['entityTypeId' => $this->entityTypeId, 'id' => $item->getId()]);
 
+		$userPermissions = Container::getInstance()->getUserPermissions();
+
+		$itemDetailUrl = Container::getInstance()->getRouter()->getItemDetailUrl($this->entityTypeId, $item->getId());
 		$actions = [
 			[
-				'TEXT' => Loc::getMessage('CRM_COMMON_ACTION_EDIT'),
-				'HREF' => Container::getInstance()->getRouter()->getItemDetailUrl($this->entityTypeId, $item->getId()),
-			],
-			[
-				'TEXT' => Loc::getMessage('CRM_COMMON_ACTION_DELETE'),
-				'ONCLICK' => "BX.Event.EventEmitter.emit('BX.Crm.ItemListComponent:onClickDelete', {$jsEventData})",
+				'TEXT' => Loc::getMessage('CRM_COMMON_ACTION_SHOW'),
+				'HREF' => $itemDetailUrl,
 			],
 		];
+		if ($userPermissions->canUpdateItem($item) && $itemDetailUrl)
+		{
+			$editUrl = clone $itemDetailUrl;
+			$editUrl->addParams([
+				'init_mode' => 'edit',
+			]);
+			$actions[] = [
+				'TEXT' => Loc::getMessage('CRM_COMMON_ACTION_EDIT'),
+				'HREF' => $editUrl,
+			];
+		}
+		if ($userPermissions->canAddItem($item))
+		{
+			$copyUrl = clone $itemDetailUrl;
+			$copyUrl->addParams([
+				'copy' => '1',
+			]);
+			$actions[] = [
+				'TEXT' => Loc::getMessage('CRM_COMMON_ACTION_COPY'),
+				'HREF' => $copyUrl,
+			];
+		}
+		if ($userPermissions->canDeleteItem($item))
+		{
+			$actions[] = [
+				'TEXT' => Loc::getMessage('CRM_COMMON_ACTION_DELETE'),
+				'ONCLICK' => "BX.Event.EventEmitter.emit('BX.Crm.ItemListComponent:onClickDelete', {$jsEventData})",
+			];
+		}
 
 		return array_merge($actions, Integration\Intranet\BindingMenu::getGridContextActions($this->entityTypeId));
 	}
 
-	protected function getItemData(Item $item): array
-	{
-		$itemData = $item->getData();
-
-		$this->display->addValues($item->getId(), $itemData);
-		$preparedUfData = $this->display->getValues($item->getId());
-		if ($preparedUfData)
-		{
-			$itemData = array_merge($itemData, $preparedUfData);
-		}
-
-		return $itemData;
-	}
-
 	/**
-	 * Prepare data to be displayed in a grid row
-	 *
-	 * @param Item $item
-	 *
-	 * @return array
+	 * @return Display\Field[]
 	 */
-	protected function getItemColumn(Item $item): array
+	protected function getDisplayFields(): array
 	{
-		$result = [];
-		foreach ($this->provider->getFieldNamesByType(ItemDataProvider::TYPE_USER, ItemDataProvider::DISPLAY_IN_GRID) as $columnName)
+		$displayFields = [];
+
+		$fieldsCollection = $this->factory->getFieldsCollection();
+
+		$visibleColumns = $this->getVisibleColumns();
+		if (in_array('CLIENT_INFO', $visibleColumns, true))
 		{
-			$userId = null;
-			if ($item->hasField($columnName))
+			$visibleColumns[] = Item::FIELD_NAME_CONTACT_ID;
+			$visibleColumns[] = Item::FIELD_NAME_COMPANY_ID;
+		}
+
+		$context = ($this->isExportMode() ? Display\Field::EXPORT_CONTEXT : Display\Field::GRID_CONTEXT);
+		foreach ($visibleColumns as $fieldName)
+		{
+			$baseField = $fieldsCollection->getField($fieldName);
+			if ($baseField)
 			{
-				$userId = $item->get($columnName);
-			}
-			if ($userId && isset($this->users[$userId]))
-			{
-				$result[$columnName] = $this->prepareUserDataForGrid($this->users[$userId]);
-			}
-			else
-			{
-				$result[$columnName] = '';
+				if ($baseField->isUserField())
+				{
+					$displayField = Display\Field::createFromUserField($baseField->getName(), $baseField->getUserField());
+				}
+				else
+				{
+					$displayField = Display\Field::createFromBaseField($baseField->getName(), $baseField->toArray());
+				}
+
+				$displayField->setContext($context);
+
+				$displayFields[$baseField->getName()] = $displayField;
 			}
 		}
 
-		foreach ($this->provider->getFieldNamesByType(ItemDataProvider::TYPE_BOOLEAN, ItemDataProvider::DISPLAY_IN_GRID) as $columnName)
-		{
-			if ($item->get($columnName))
-			{
-				$result[$columnName] = Loc::getMessage('CRM_COMMON_GRID_YES');
-			}
-			else
-			{
-				$result[$columnName] = Loc::getMessage('CRM_COMMON_GRID_NO');
-			}
-		}
-
-		$result[Item::FIELD_NAME_WEBFORM_ID] = $this->webForms[$item->getWebformId()] ?? '';
-
-		$detailUrl = htmlspecialcharsbx(Container::getInstance()->getRouter()->getItemDetailUrl($this->entityTypeId, $item->getId()));
-		$result['TITLE'] = '<a href="'.$detailUrl.'">'.htmlspecialcharsbx($item->getTitle()).'</a>';
-
-		$this->appendOptionalColumns($item, $result);
-		$this->appendParentColumns($item, $result);
-
-		return $result;
+		return $displayFields;
 	}
 
+	//todo move rendering of all fields to Display (even these fields that don't exist in reality)
 	protected function appendOptionalColumns(Item $item, array &$columns): void
 	{
 		if ($this->factory->isClientEnabled())
 		{
-			$columns[Item::FIELD_NAME_COMPANY_ID] = $this->getCompanyItemColumn($item->getCompany());
-			$columns[Item::FIELD_NAME_CONTACT_ID] = $this->getContactItemColumn($item);
 			if (!empty($columns[Item::FIELD_NAME_CONTACT_ID]))
 			{
 				$columns['CLIENT_INFO'] = $columns[Item::FIELD_NAME_CONTACT_ID];
@@ -487,61 +740,52 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 			$columns[Item::FIELD_NAME_CURRENCY_ID] = htmlspecialcharsbx(\Bitrix\Crm\Currency::getCurrencyCaption($item->getCurrencyId()));
 		}
 
-		if ($this->factory->isCrmTrackingEnabled())
-		{
-			if ($this->isColumnVisible(\Bitrix\Crm\Tracking\UI\Grid::COLUMN_TRACKING_PATH))
-			{
-				\Bitrix\Crm\Tracking\UI\Grid::appendRows($this->factory->getEntityTypeId(), $item->getId(), $columns);
-			}
-
-			$utmColumns = \Bitrix\Crm\UtmTable::getCodeList();
-			if (array_intersect($this->getVisibleColumns(), $utmColumns))
-			{
-				/** @noinspection AdditionOperationOnArraysInspection */
-				$columns += $item->getUtm();
-			}
-		}
-
-		if ($this->factory->isMyCompanyEnabled() && $this->isColumnVisible(Item::FIELD_NAME_MYCOMPANY_ID))
-		{
-			$columns[Item::FIELD_NAME_MYCOMPANY_ID] = $this->getCompanyItemColumn($item->getMycompany());
-		}
+		// if ($this->factory->isCrmTrackingEnabled())
+		// {
+		// 	if ($this->isColumnVisible(\Bitrix\Crm\Tracking\UI\Grid::COLUMN_TRACKING_PATH))
+		// 	{
+		// 		\Bitrix\Crm\Tracking\UI\Grid::appendRows($this->factory->getEntityTypeId(), $item->getId(), $columns);
+		// 	}
+		//
+		// 	$utmColumns = UtmTable::getCodeList();
+		// 	if (array_intersect($this->getVisibleColumns(), $utmColumns))
+		// 	{
+		// 		/** @noinspection AdditionOperationOnArraysInspection */
+		// 		$columns += $item->getUtm();
+		// 	}
+		// }
 
 		if ($this->factory->isStagesEnabled())
 		{
+			$userPermissions = Container::getInstance()->getUserPermissions();
+			$isReadOnly = !$userPermissions->canUpdateItem($item);
 			if ($this->isColumnVisible(Item::FIELD_NAME_STAGE_ID))
 			{
-				$stageRender = CCrmViewHelper::RenderItemStageControl(
-					[
-						'ENTITY_ID' => $item->getId(),
-						'ENTITY_TYPE_ID' => $item->getEntityTypeId(),
-						'CATEGORY_ID' => $item->getCategoryId(),
-						'CURRENT_ID' => $item->getStageId(),
-						'SERVICE_URL' => 'crm.controller.item.update',
-					]
-				);
+				if ($this->isExportMode())
+				{
+					$stage = $this->factory->getStage($item->get(Item::FIELD_NAME_STAGE_ID));
+					$columns[Item::FIELD_NAME_STAGE_ID] = $stage ? htmlspecialcharsbx($stage->getName()) : null;
+				}
+				else
+				{
+					$stageRender = CCrmViewHelper::RenderItemStageControl(
+						[
+							'ENTITY_ID' => $item->getId(),
+							'ENTITY_TYPE_ID' => $item->getEntityTypeId(),
+							'CATEGORY_ID' => $item->getCategoryId(),
+							'CURRENT_ID' => $item->getStageId(),
+							'SERVICE_URL' => 'crm.controller.item.update',
+							'READ_ONLY' => $isReadOnly,
+						]
+					);
 
-				$columns[Item::FIELD_NAME_STAGE_ID] = $stageRender;
+					$columns[Item::FIELD_NAME_STAGE_ID] = $stageRender;
+				}
 			}
 			if ($this->isColumnVisible(Item::FIELD_NAME_PREVIOUS_STAGE_ID))
 			{
 				$stage = $this->factory->getStage($item->get(Item::FIELD_NAME_PREVIOUS_STAGE_ID));
 				$columns[Item::FIELD_NAME_PREVIOUS_STAGE_ID] = $stage ? htmlspecialcharsbx($stage->getName()) : null;
-			}
-		}
-
-		if ($this->factory->isSourceEnabled())
-		{
-			if ($this->isColumnVisible(Item::FIELD_NAME_SOURCE_ID))
-			{
-				$columns[Item::FIELD_NAME_SOURCE_ID] = htmlspecialcharsbx(
-					$this->factory->getFieldValueCaption(Item::FIELD_NAME_SOURCE_ID, $item->getSourceId())
-					);
-			}
-
-			if ($this->isColumnVisible(Item::FIELD_NAME_SOURCE_DESCRIPTION))
-			{
-				$columns[Item::FIELD_NAME_SOURCE_DESCRIPTION] = \Bitrix\Crm\Format\TextHelper::sanitizeHtml($item->getSourceDescription());
 			}
 		}
 
@@ -554,15 +798,25 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 				);
 			}
 		}
+
+		if ($this->isColumnVisible(Item::FIELD_NAME_TITLE) && !$this->isExportMode())
+		{
+			$detailUrl = htmlspecialcharsbx(Container::getInstance()->getRouter()->getItemDetailUrl($this->entityTypeId, $item->getId()));
+			$columns[Item::FIELD_NAME_TITLE] = '<a href="'.$detailUrl.'">'.htmlspecialcharsbx($item->getHeading()).'</a>';
+		}
 	}
 
 	protected function appendParentColumns(Item $item, array &$columns): void
 	{
+		$isExport = $this->isExportMode();
+
 		if (isset($this->parents[$item->getId()]))
 		{
 			foreach ($this->parents[$item->getId()] as $parentEntityTypeId => $parent)
 			{
-				$columns[$parent['code']] = $parent['value'];
+				$columns[$parent['code']] = $isExport
+					? $parent['title']
+					: $parent['value'];
 			}
 		}
 	}
@@ -576,45 +830,6 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		}
 
 		return implode(', ', $productNames);
-	}
-
-	protected function getCompanyItemColumn(?\Bitrix\Crm\EO_Company $company): string
-	{
-		return $this->prepareClientInfo(
-			CCrmOwnerType::Company,
-			$company ? $company->getId() : 0,
-			$company ? $company->getTitle() : ''
-		);
-	}
-
-	protected function getContactItemColumn(Item $item): string
-	{
-		if ($item->getContactId() <= 0 || !$item->getContacts())
-		{
-			return '';
-		}
-
-		$contact = $item->getPrimaryContact();
-
-		/** @noinspection NullPointerExceptionInspection */
-		return $this->prepareClientInfo(
-			CCrmOwnerType::Contact,
-			$contact->getId(),
-			$contact->getFormattedName()
-		);
-	}
-
-	protected function prepareClientInfo(int $entityTypeId, int $id, string $title, string $description = ''): string
-	{
-		$canReadItem = \Bitrix\Crm\Security\EntityAuthorization::checkReadPermission($entityTypeId, $id);
-		return CCrmViewHelper::PrepareClientInfo([
-			'ENTITY_TYPE_ID' => $entityTypeId,
-			'ENTITY_ID' => $id,
-			'IS_HIDDEN' => !$canReadItem,
-			'TITLE' => $title,
-			'PREFIX' => $this->factory->getEntityName().'_'.$id,
-			'DESCRIPTION' => $description,
-		]);
 	}
 
 	protected function getTitle(): string
@@ -662,5 +877,30 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 	protected function getListViewType(): string
 	{
 		return Router::LIST_VIEW_LIST;
+	}
+
+	protected function getToolbarSettingsItems(): array
+	{
+		$settingsItems = parent::getToolbarSettingsItems();
+		if (Container::getInstance()->getUserPermissions()->canExportType(
+			$this->entityTypeId,
+			(int)$this->getCategoryId())
+		)
+		{
+			$settingsItems[] = ['delimiter' => true];
+			$settingsItems[] = [
+				'text' => Loc::getMessage('CRM_TYPE_ITEM_EXPORT_CSV'),
+				'href' => '',
+				'onclick' => new Buttons\JsCode("BX.Crm.Router.Instance.closeSettingsMenu();BX.Event.EventEmitter.emit('BX.Crm.ItemListComponent:onStartExportCsv');"),
+			];
+			$settingsItems[] = [
+				'text' => Loc::getMessage('CRM_TYPE_ITEM_EXPORT_EXCEL'),
+				'href' => '',
+				'onclick' => new Buttons\JsCode("BX.Crm.Router.Instance.closeSettingsMenu();BX.Event.EventEmitter.emit('BX.Crm.ItemListComponent:onStartExportExcel');",
+				),
+			];
+		}
+
+		return $settingsItems;
 	}
 }

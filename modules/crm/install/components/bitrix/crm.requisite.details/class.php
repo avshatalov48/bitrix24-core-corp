@@ -58,6 +58,8 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 	protected $presetId = 0;
 	/** @var int */
 	protected $prevPresetId = 0;
+	/** @var int @var string */
+	protected $prevPresetName = '';
 	/** @var int */
 	protected $presetCountryId = 0;
 	/** @var int */
@@ -626,6 +628,14 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 				$this->errors[] = new Error(Loc::getMessage('CRM_REQUISITE_DETAILS_ERR_PREV_PRESET_NOT_FOUND'));
 				return false;
 			}
+			if (
+				isset($prevPresetData['NAME'])
+				&& is_string($prevPresetData['NAME'])
+				&& $prevPresetData['NAME'] !== ''
+			)
+			{
+				$this->prevPresetName = $prevPresetData['NAME'];
+			}
 			if (isset($prevPresetData['COUNTRY_ID']))
 			{
 				$this->prevPresetCountryId = (int)$prevPresetData['COUNTRY_ID'];
@@ -825,7 +835,18 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 
 		if (isset($this->formData['NAME']))
 		{
-			$this->rawRequisiteData['NAME'] = trim(strval($this->formData['NAME']));
+			$requisiteName = trim(strval($this->formData['NAME']));
+			if (
+				$this->isPresetChange
+				&& isset($this->rawRequisiteData['NAME'])
+				&& is_string($this->rawRequisiteData['NAME'])
+				&& $this->rawRequisiteData['NAME'] !== ''
+				&& $requisiteName === $this->prevPresetName
+			)
+			{
+				$requisiteName = $this->rawPresetData['NAME'];
+			}
+			$this->rawRequisiteData['NAME'] = $requisiteName;
 		}
 
 		if (isset($this->formData['PRESET_ID']))
@@ -1225,7 +1246,8 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 			$fields[] = array(
 				'name' => $fieldName,
 				'title' => $fieldInfo['title'],
-				'type' => $fieldInfo['formType']
+				'type' => $fieldInfo['formType'],
+				'required' => $fieldInfo['required']
 			);
 		}
 

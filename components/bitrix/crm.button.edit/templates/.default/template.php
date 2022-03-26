@@ -1,6 +1,7 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Crm\WebForm\WhatsApp;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 use \Bitrix\Main\UI\Extension;
@@ -85,6 +86,7 @@ $getFormattedScript = function ($script)
 			'isFrame' => $arParams['IFRAME'],
 			'isSaved' => $arParams['IS_SAVED'],
 			'reloadList' => true,
+			'setupWhatsAppLink' => WhatsApp::getSetupLink(),
 			'defaultWorkTime' => $arResult['DEFAULT_WORK_TIME'],
 			'dictionaryTypes' => $arResult['BUTTON_WIDGET_TYPES'],
 			'dictionaryPathEdit' => $arResult['BUTTON_ITEMS_DICTIONARY_PATH_EDIT'],
@@ -280,26 +282,46 @@ $showItemInterface = function ($item) use($arResult, $showItemWorkTimeInterface)
 
 		</div><!--crm-button-edit-channel-lines-title-container-->
 		<div class="crm-button-edit-channel-lines-inner-wrapper">
-			<?if(count($item['LIST']) == 0):?>
+			<?if(count($item['LIST']) == 0 || ($item['TYPE'] === 'whatsapp' && !WhatsApp::isSetupCompleted())):?>
 				<div class="crm-button-edit-channel-make-line">
-					<div class="crm-button-edit-channel-make-line-description">
-						<span class="crm-button-edit-channel-make-line-description">
-							<?=Loc::getMessage('CRM_WEBFORM_EDIT_CHANNEL_ADD_DESC')?>
-						</span>
-					</div>
-					<div class="crm-button-edit-channel-make-line-button">
-						<a href="<?=htmlspecialcharsbx($item['PATH_LIST'])?>"
-							class="crm-button-edit-channel-make-line-button webform-small-button webform-small-button-blue"
-							data-bx-crm-button-item-channel-setup="<?=($type === 'openline' ? 'sidepanel' : '')?>"
-						>
-							<?=Loc::getMessage('CRM_WEBFORM_EDIT_CHANNEL_SETUP')?>
+					<?if ($item['TYPE'] === 'whatsapp'):?>
+						<div class="crm-button-edit-channel-make-line-description">
+							<span class="crm-button-edit-channel-make-line-description">
+								<?=Loc::getMessage('CRM_WEBFORM_EDIT_CHANNEL_ADD_DESC')?>
+							</span>
+						</div>
+						<div class="crm-button-edit-channel-make-line-button">
+							<a
+								class="crm-button-edit-channel-make-line-button webform-small-button webform-small-button-blue"
+								data-bx-crm-button-item-channel-setup-whatsapp=""
+							>
+								<?=Loc::getMessage('CRM_WEBFORM_EDIT_CHANNEL_SETUP')?>
+							</a>
+						</div>
+						<a class="crm-button-edit-channel-lines-display-options-settings-button--whatsapp" href="">
+							<?=Loc::getMessage('CRM_WEBFORM_EDIT_CHANNEL_SETUP_APPROVE')?>
 						</a>
-					</div>
+
+					<?else:?>
+						<div class="crm-button-edit-channel-make-line-description">
+							<span class="crm-button-edit-channel-make-line-description">
+								<?=Loc::getMessage('CRM_WEBFORM_EDIT_CHANNEL_ADD_DESC')?>
+							</span>
+						</div>
+						<div class="crm-button-edit-channel-make-line-button">
+							<a href="<?=htmlspecialcharsbx($item['PATH_LIST'])?>"
+							   class="crm-button-edit-channel-make-line-button webform-small-button webform-small-button-blue"
+							   data-bx-crm-button-item-channel-setup="<?=($type === 'openline' ? 'sidepanel' : '')?>"
+							>
+								<?=Loc::getMessage('CRM_WEBFORM_EDIT_CHANNEL_SETUP')?>
+							</a>
+						</div>
+					<?endif;?>
 				</div><!--crm-button-edit-channel-make-line-->
 			<?else:?>
 			<div class="crm-button-edit-channel-lines-inner-container">
 
-				<?if ($type != 'openline'):?>
+				<?if ($type != 'openline' && $type !== 'whatsapp'):?>
 				<div class="crm-button-edit-channel-lines-inner-create-container">
 					<div class="crm-button-edit-channel-lines-inner-create-select-container">
 						<select data-bx-crm-button-widget-select="<?=$type?>" id="ITEMS_<?=$type?>" name="ITEMS[<?=$type?>][EXTERNAL_ID]" class="crm-button-edit-channel-lines-inner-create-select-item">
@@ -315,6 +337,26 @@ $showItemInterface = function ($item) use($arResult, $showItemWorkTimeInterface)
 						<?if($item['PATH_ADD']):?>
 							<a data-bx-slider-href=""  href="<?=htmlspecialcharsbx($item['PATH_ADD'])?>" class="crm-button-edit-channel-lines-inner-create-button-item"><?=Loc::getMessage('CRM_WEBFORM_EDIT_CHANNEL_ADD')?></a>
 						<?endif;?>
+					</div>
+				</div>
+				<?endif;?>
+
+				<?if ($type === 'whatsapp'):?>
+				<div class="crm-button-edit-channel-lines-inner-create-container">
+					<div class="crm-button-edit-channel-lines-inner-create-select-container">
+						<select data-bx-crm-button-widget-select="<?=$type?>" id="ITEMS_<?=$type?>" name="ITEMS[<?=$type?>][EXTERNAL_ID]" class="crm-button-edit-channel-lines-inner-create-select-item">
+							<?foreach($item['LIST'] as $external):?>
+								<option value="<?=htmlspecialcharsbx($external['ID'])?>" <?=($external['SELECTED'] ? 'selected' : '')?>>
+									<?=htmlspecialcharsbx($external['NAME'])?>
+								</option>
+							<?endforeach;?>
+						</select>
+					</div>
+					<div class="crm-button-edit-channel-lines-inner-create-button-container">
+						<a data-bx-slider-href="" data-bx-crm-button-widget-btn-edit="<?=$type?>" href="" class="crm-button-edit-channel-lines-inner-create-button-item"><?=Loc::getMessage('CRM_WEBFORM_EDIT_CHANNEL_EDIT_FORM')?></a>
+
+						<a data-bx-slider-href="" data-bx-crm-button-item-channel-setup-whatsapp="" class="crm-button-edit-channel-lines-inner-create-button-item"><?=Loc::getMessage('CRM_WEBFORM_EDIT_CHANNEL_EDIT_WHATSAPP')?></a>
+
 					</div>
 				</div>
 				<?endif;?>
@@ -437,6 +479,17 @@ $showItemInterface = function ($item) use($arResult, $showItemWorkTimeInterface)
 						<span id="<?=$type?>_phone_number" class="crm-button-edit-channel-lines-phone-number"></span>
 					</div>
 				<?endif?>
+
+
+				<?if ($type == 'whatsapp'):?>
+					<div class="crm-button-edit-channel-lines-phone-container">
+						<span class="crm-button-edit-channel-lines-phone-description">
+							<?=Loc::getMessage('CRM_BUTTON_EDIT_DETAIL_CALLBACK_PHONE_NUMBER')?>:
+						</span>
+						<span id="<?=$type?>_phone_number" class="crm-button-edit-channel-lines-phone-number"></span>
+					</div>
+				<?endif?>
+
 				<?if ($type == 'crmform'):?>
 					<div class="crm-button-edit-channel-lines-phone-container">
 						<span class="crm-button-edit-channel-lines-phone-description">
@@ -805,6 +858,10 @@ function ShowIntranetButtonItemPageInterface($type, $list, $mode, $target = 'ITE
 						$showItemInterface($arResult['BUTTON_ITEM_OPEN_LINE'], $this);
 						$showItemInterface($arResult['BUTTON_ITEM_CRM_FORM'], $this);
 						$showItemInterface($arResult['BUTTON_ITEM_CALLBACK'], $this);
+						if ($arResult['SUPPORTING']['whatsapp'])
+						{
+							$showItemInterface($arResult['BUTTON_ITEM_WHATSAPP'], $this);
+						}
 						?>
 					</div>
 				</div><!--crm-button-edit-channel-content-->

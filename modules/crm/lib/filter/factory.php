@@ -40,7 +40,7 @@ class Factory
 		{
 			return new OrderSettings($parameters);
 		}
-		if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		if (\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
 		{
 			$type = $parameters['type'] ?? null;
 			if (!$type)

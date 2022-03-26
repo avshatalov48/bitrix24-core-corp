@@ -25,6 +25,11 @@ abstract class Provider
 		$this->limit = $limit;
 	}
 
+	public function getLimit(): int
+	{
+		return $this->limit;
+	}
+
 	public function setUserId(int $userId)
 	{
 		$this->userId = $userId;

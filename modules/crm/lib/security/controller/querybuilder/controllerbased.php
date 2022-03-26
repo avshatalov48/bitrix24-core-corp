@@ -14,7 +14,6 @@ class ControllerBased extends QueryBuilder
 	protected static $userRegex = '/^U(\d+)$/i';
 	/** @var string */
 	protected static $departmentRegex = '/^D(\d+)$/i';
-	protected $userDepartmentIDs;
 	protected $controller;
 
 	public function __construct(\Bitrix\Crm\Security\Controller\Base $controller)
@@ -58,21 +57,23 @@ class ControllerBased extends QueryBuilder
 			{
 				$progressSqlCondition = $this->getProgressSqlCondition($restriction['PROGRESS_STEPS'] ?? [], $prefix);
 			}
+			$categoryIdSqlConditionWithAnd = $categoryIdSqlCondition === '' ? '' : "{$categoryIdSqlCondition} AND ";
 
 			$isOpened = isset($restriction['OPENED']) && $restriction['OPENED'];
 			$userIDs = isset($restriction['USER_IDS']) ? $restriction['USER_IDS'] : [];
 
+			$hasOnlyCategoryCondition = false;
 			if (!$isOpened && empty($userIDs) && $progressSqlCondition === '')
 			{
 				if ($categoryIdSqlCondition !== '')
 				{
 					$finalSqlConditions[] = $categoryIdSqlCondition;
+					$hasOnlyCategoryCondition = true;
 				}
 				$unRestrictedEntityTypes = array_merge($unRestrictedEntityTypes, $entityTypes);
 			}
 			else
 			{
-				$categoryIdSqlConditionWithAnd = $categoryIdSqlCondition === '' ? '' : "{$categoryIdSqlCondition} AND ";
 				$isProcessed = false;
 
 				if ($isOpened)
@@ -124,9 +125,9 @@ class ControllerBased extends QueryBuilder
 			return '';
 		}
 
-		if ($options->isReadAllAllowed())
+		if ($options->isReadAllAllowed() && !$hasOnlyCategoryCondition)
 		{
-			$finalSqlConditions[] = "({$prefix}P.IS_ALWAYS_READABLE = 'Y')";
+			$finalSqlConditions[] = "({$categoryIdSqlConditionWithAnd}{$prefix}P.IS_ALWAYS_READABLE = 'Y')";
 		}
 
 		$querySqlCondition = implode(' OR ', $finalSqlConditions);
@@ -457,9 +458,11 @@ class ControllerBased extends QueryBuilder
 
 	protected function getUserDepartmentIDs(int $userId): array
 	{
-		if ($this->userDepartmentIDs !== null)
+		static $userDepartmentIDs = [];
+
+		if (isset($userDepartmentIDs[$userId]))
 		{
-			return $this->userDepartmentIDs;
+			return $userDepartmentIDs[$userId];
 		}
 
 		$allUserAttrs = \Bitrix\Crm\Service\Container::getInstance()
@@ -468,7 +471,7 @@ class ControllerBased extends QueryBuilder
 			->getUserAttributes()
 		;
 
-		$this->userDepartmentIDs = [];
+		$userDepartmentIDs[$userId] = [];
 
 		$intranetAttrs = array_merge(
 			isset($allUserAttrs['INTRANET']) ? $allUserAttrs['INTRANET'] : [],
@@ -479,16 +482,22 @@ class ControllerBased extends QueryBuilder
 		{
 			if ($this->tryParseDepartment($attr, $value) && $value > 0)
 			{
-				$this->userDepartmentIDs[] = (int)$value;
+				$userDepartmentIDs[$userId][] = (int)$value;
 			}
 		}
 
-		return $this->userDepartmentIDs;
+		return $userDepartmentIDs[$userId];
 	}
 
 	protected function getDepartmentsUsers(array $departmentIds): array
 	{
 		static $users = [];
+
+		if (empty($departmentIds))
+		{
+			return [];
+		}
+
 		$cacheKey = md5(implode(',', $departmentIds));
 
 		if (!isset($users[$cacheKey]))
@@ -508,6 +517,27 @@ class ControllerBased extends QueryBuilder
 			{
 				$userIds[] = (int)$userFields['ID'];
 			}
+			$departments = \CIBlockSection::GetList(
+				[],
+				[
+					'IBLOCK_ID' => \Bitrix\Main\Config\Option::get('intranet', 'iblock_structure', 0),
+					'ID' => $departmentIds,
+					'CHECK_PERMISSIONS' => 'N',
+				],
+				false,
+				[
+					'ID',
+					'UF_HEAD',
+				]
+			);
+			while ($departmentFields = $departments->fetch())
+			{
+				if ($departmentFields['UF_HEAD'])
+				{
+					$userIds[] = (int)$departmentFields['UF_HEAD'];
+				}
+			}
+
 			$users[$cacheKey] = array_unique($userIds);
 		}
 

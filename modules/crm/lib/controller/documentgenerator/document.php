@@ -367,4 +367,9 @@ class Document extends Base
 
 		return $data;
 	}
+
+	public function bindToPaymentAction(\Bitrix\DocumentGenerator\Document $document, int $paymentId)
+	{
+		DocumentGeneratorManager::getInstance()->bindDocumentToPayment($document->ID, $paymentId);
+	}
 }

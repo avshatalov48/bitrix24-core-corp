@@ -296,17 +296,20 @@ export class Zoom extends Timeline.Editor
 
 	refreshStartTimeView()
 	{
-		let dt = new Date();
-		const minutes = dt.getMinutes();
-		const mod = minutes % 5;
+		const currentDateTime = new Date();
+		const minutes = currentDateTime.getMinutes();
+		const divisionRemainder = minutes % 5;
+		const gap = 5;
 
-		if (mod > 0)
+		if (divisionRemainder > 0)
 		{
-			dt.setMinutes(minutes - mod + (mod > 2 ? 5 : 0));
+			// We add 5 minutes gap to always show future time in the input.
+			// Example: current time is 14:51. Then 51 - 1 + 5 => 14:55
+			currentDateTime.setMinutes(minutes - divisionRemainder + gap);
 		}
 
-		this.getDateInputField().value = BX.formatDate(dt, BX.message('FORMAT_DATE'));
-		this.getTimeInputField().innerHTML = this.formatTime(dt);
+		this.getDateInputField().value = BX.formatDate(currentDateTime, BX.message('FORMAT_DATE'));
+		this.getTimeInputField().innerHTML = this.formatTime(currentDateTime);
 	}
 
 	renderCancelButton(): Element

@@ -32,7 +32,8 @@ class ProviderManager
 				Request::getId()         => Request::className(),
 				RestApp::getId()         => RestApp::className(),
 				Delivery::getId()        => Delivery::className(),
-				CallTracker::getId()    => CallTracker::class
+				CallTracker::getId()    => CallTracker::class,
+				StoreDocument::getId()   => StoreDocument::className(),
 			);
 
 			if(Visit::isAvailable())

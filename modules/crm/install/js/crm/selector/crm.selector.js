@@ -152,6 +152,19 @@ BX.CrmUISelector = {
 			};
 		}
 
+		if (selectorInstance.getOption('enableCrmSmartInvoices') === 'Y')
+		{
+			selectorInstance.entityTypes.SMART_INVOICES = {
+				options: {
+					enableSearch: 'Y',
+					searchById: 'Y',
+					addTab: (selectorInstance.getOption('addTabCrmSmartInvoices') === 'Y' ? 'Y' : 'N'),
+					prefixType: (BX.type.isNotEmptyString(selectorInstance.getOption('crmPrefixType')) ? selectorInstance.getOption('crmPrefixType') : 'FULL'),
+					returnItemUrl: (selectorInstance.getOption('returnItemUrl') === 'N' ? 'N' : 'Y')
+				}
+			};
+		}
+
 	},
 
 	onSearchRequestCallbackSussess: function(params)
@@ -261,6 +274,12 @@ BX.CrmUISelector = {
 			{
 				value = {
 					'DEAL': [ parseInt(split[1]) ]
+				};
+			}
+			else if (split = params.value.match(/CRMSMART_INVOICE(\d+)/))
+			{
+				value = {
+					'SMART_INVOICE': [ parseInt(split[1]) ]
 				};
 			}
 			else if (split = params.value.match(/CRMDYNAMIC-(\d+)_(\d+)/))

@@ -50,128 +50,163 @@ class Rest
 			? $query['properties']
 			: null;
 		$trace = empty($query['trace']) ? null : $query['trace'];
+		$consents = $query['consents'] ?? '';
+		$consents = $consents ? Main\Web\Json::decode(
+			Main\Text\Encoding::convertEncoding(
+				$consents,
+				SITE_CHARSET,
+				'UTF-8'
+			)
+		) : [];
+		$consents = is_array($consents) ? $consents : [];
 		$recaptchaResponse = empty($query['recaptcha']) ? null : $query['recaptcha'];
 		$signString = empty($query['security_sign']) ? null : $query['security_sign'];
 		//$entities = empty($query['entities']) ? null : $query['entities'];
 
-
-		if (!WebForm\Manager::isEmbeddingAvailable())
+		$timeZoneOffset = isset($query['timeZoneOffset']) ? (int)$query['timeZoneOffset'] : null;
+		if (!\CTimeZone::GetCookieValue() && $timeZoneOffset)
 		{
-			self::printErrors(["Form embedding feature disabled."]);
+			\CTimeZone::SetCookieValue($timeZoneOffset);
 		}
 
-		if (!$formId)
-		{
-			self::printErrors(["Parameter `id` required."]);
-		}
-		if (!$securityCode)
-		{
-			self::printErrors(["Parameter `sec` required."]);
-		}
+		$form = null;
 
-		$form = new WebForm\Form($formId);
-		if (!$form->checkSecurityCode($securityCode))
+		try
 		{
-			self::printErrors(["Parameter `security_sign` is invalid."]);
-		}
-
-		if (!$form->isActive())
-		{
-			self::printErrors(["Form with id=`$formId` is disabled."]);
-		}
-
-		if ($form->isUsedCaptcha())
-		{
-			$recaptchaSecret = WebForm\ReCaptcha::getSecret(2) ?: WebForm\ReCaptcha::getDefaultSecret(2);
-			$recaptchaKey = WebForm\ReCaptcha::getKey(2) ?: WebForm\ReCaptcha::getDefaultKey(2);
-			if ($recaptchaSecret && $recaptchaKey)
+			if (!WebForm\Manager::isEmbeddingAvailable())
 			{
-				if (!$recaptchaResponse)
-				{
-					self::printErrors(["Parameter `recaptcha` is invalid."]);
-				}
-
-				$recaptcha = new WebForm\ReCaptcha($recaptchaSecret);
-				if (!$recaptcha->verify($recaptchaResponse))
-				{
-					self::printErrors([$recaptcha->getError()]);
-				}
+				self::printErrors(["Form embedding feature disabled."]);
 			}
-		}
 
-		$fill = $form->fill();
-
-		///////////////////
-		$values = $values ? Main\Web\Json::decode(
-			Main\Text\Encoding::convertEncoding(
-				$values,
-				SITE_CHARSET,
-				'UTF-8'
-			)
-		) : [];
-
-		$properties = $properties ? Main\Web\Json::decode(
-			Main\Text\Encoding::convertEncoding(
-				$properties,
-				SITE_CHARSET,
-				'UTF-8'
-			)
-		) : [];
-
-		$fill
-			->setTrace($trace)
-			->setValues($values)
-			->setProperties($properties);
-
-		$signString = $signString ? Main\Text\Encoding::convertEncoding(
-			$signString,
-			SITE_CHARSET,
-			'UTF-8'
-		): null;
-
-		if ($signString)
-		{
-			$sign = new Sign();
-			if ($sign->unpack($signString))
+			if (!$formId)
 			{
-				$fill->setEntities($sign->getEntities());
+				self::printErrors(["Parameter `id` required."]);
 			}
-		}
+			if (!$securityCode)
+			{
+				self::printErrors(["Parameter `sec` required."]);
+			}
 
-		$result = $fill->save();
-		if (!$result->getId())
-		{
-			self::printErrors($result->getErrors());
-		}
+			$form = new WebForm\Form($formId);
+			if (!$form->checkSecurityCode($securityCode))
+			{
+				self::printErrors(["Parameter `security_sign` is invalid."]);
+			}
 
+			if (!$form->isActive())
+			{
+				self::printErrors(["Form with id=`$formId` is disabled."]);
+			}
 
-		$gid = $result->getResultEntity()->getTrace()->getGid();
-		if (!$gid)
-		{
-			$gid = Guest::register([
-				'ENTITIES' => array_map(
-					function (array $item)
+			if ($form->isUsedCaptcha())
+			{
+				$recaptchaSecret = WebForm\ReCaptcha::getSecret(2) ?: WebForm\ReCaptcha::getDefaultSecret(2);
+				$recaptchaKey = WebForm\ReCaptcha::getKey(2) ?: WebForm\ReCaptcha::getDefaultKey(2);
+				if ($recaptchaSecret && $recaptchaKey)
+				{
+					if (!$recaptchaResponse)
 					{
-						return [
-							'ENTITY_TYPE_ID' => \CCrmOwnerType::resolveID($item['ENTITY_TYPE']),
-							'ENTITY_ID' => $item['ENTITY_ID'],
-						];
-					},
-					$result->getResultEntity()->getResultEntities()
-				)
-			]);
-		}
+						self::printErrors(["Parameter `recaptcha` is invalid."]);
+					}
 
-		return [
-			'resultId' => $result->getId(),
-			'pay' => $form->isPayable(),
-			'message' => $form->getSuccessText(),
-			'gid' => $gid,
-			'redirect' => [
-				'url' => $result->getUrl(),
-				'delay' => $form->getRedirectDelay(),
-			]
-		];
+					$recaptcha = new WebForm\ReCaptcha($recaptchaSecret);
+					if (!$recaptcha->verify($recaptchaResponse))
+					{
+						self::printErrors([$recaptcha->getError()]);
+					}
+				}
+			}
+
+			$fill = $form->fill();
+
+			///////////////////
+			$values = $values ? Main\Web\Json::decode(
+				Main\Text\Encoding::convertEncoding(
+					$values,
+					SITE_CHARSET,
+					'UTF-8'
+				)
+			) : [];
+
+			$properties = $properties ? Main\Web\Json::decode(
+				Main\Text\Encoding::convertEncoding(
+					$properties,
+					SITE_CHARSET,
+					'UTF-8'
+				)
+			) : [];
+
+			$fill
+				->setTrace($trace)
+				->setValues($values)
+				->setConsents($consents)
+				->setProperties($properties);
+
+			$signString = $signString ? Main\Text\Encoding::convertEncoding(
+				$signString,
+				SITE_CHARSET,
+				'UTF-8'
+			): null;
+
+			if ($signString)
+			{
+				$sign = new Sign();
+				if ($sign->unpack($signString))
+				{
+					$fill->setEntities($sign->getEntities());
+				}
+			}
+
+			$result = $fill->save();
+			if (!$result->getId())
+			{
+				self::printErrors($result->getErrors());
+			}
+
+
+			$gid = $result->getResultEntity()->getTrace()->getGid();
+			if (!$gid)
+			{
+				$gid = Guest::register([
+					'ENTITIES' => array_map(
+						function (array $item)
+						{
+							return [
+								'ENTITY_TYPE_ID' => \CCrmOwnerType::resolveID($item['ENTITY_TYPE']),
+								'ENTITY_ID' => $item['ENTITY_ID'],
+							];
+						},
+						$result->getResultEntity()->getResultEntities()
+					)
+				]);
+			}
+
+			return [
+				'resultId' => $result->getId(),
+				'pay' => $form->isPayable(),
+				'message' => $form->getSuccessText(),
+				'gid' => $gid,
+				'redirect' => [
+					'url' => $result->getUrl(),
+					'delay' => $form->getRedirectDelay(),
+				],
+				'refill' => [
+					'active' => $form->getRefill()['ACTIVE'] === 'Y',
+					'caption' => $form->getRefill()['CAPTION'],
+				]
+			];
+		}
+		catch (RestException $restException)
+		{
+			return [
+				'resultId' => null,
+				'pay' => false,
+				'message' => $form ? $form->getFailureText() : $restException->getMessage(),
+				'gid' => null,
+				'redirect' => [],
+				'refill' => []
+			];
+		}
 	}
 
 	/**
@@ -201,34 +236,59 @@ class Rest
 			self::printErrors(["Parameter `sec` required."]);
 		}
 
-		$form = new WebForm\Form($formId);
-		if (!$form->checkSecurityCode($securityCode))
+		$cacheKey = 'WebForm:'.$formId.':'.($securityCode ? substr(md5($securityCode),-6) : '').':'.($loaderOnly ? '1' : '0');
+		$cachePath = '/crm/webform/rest_get_form/'.$formId.'/';
+		$ttl = 1800; // 30 min
+		$cache = \Bitrix\Main\Application::getInstance()->getCache();
+
+		if ($cache->initCache($ttl, $cacheKey, $cachePath))
 		{
-			self::printErrors(["Parameter `security_sign` is invalid."]);
+			$response = $cache->getVars();
+		}
+		else
+		{
+			$cache->startDataCache();
+			$cacheTag = WebForm\Form::getCacheTag($formId);
+
+			$taggedCache = \Bitrix\Main\Application::getInstance()->getTaggedCache();
+			$taggedCache->startTagCache($cachePath);
+			$taggedCache->registerTag($cacheTag);
+			$taggedCache->endTagCache();
+
+			$form = new WebForm\Form($formId);
+
+			if (!$form->checkSecurityCode($securityCode))
+			{
+				self::printErrors(["Parameter `security_sign` is invalid."]);
+			}
+
+			if (!$form->isActive())
+			{
+				self::printErrors(["Form with id=`$formId` is disabled."]);
+			}
+
+			$appPack = Webpack\Form\App::instance();
+			$scripts = WebForm\Script::getListContext($form->get(), []);
+
+			$response = [
+				'config' => $loaderOnly ? null : (new Config($form))->toArray(),
+				'loader' => [
+					'form' => [
+						'inline' => $scripts['INLINE']['text'],
+						'click' => $scripts['CLICK']['text'],
+						'auto' => $scripts['AUTO']['text'],
+					],
+					'app' => [
+						'link' => $appPack->getEmbeddedFileUrl(),
+						'script' => $appPack->getEmbeddedBody(),
+					],
+				],
+			];
+
+			$cache->endDataCache($response);
 		}
 
-		if (!$form->isActive())
-		{
-			self::printErrors(["Form with id=`$formId` is disabled."]);
-		}
-
-		$appPack = Webpack\Form\App::instance();
-		$scripts = WebForm\Script::getListContext($form->get(), []);
-
-		return [
-			'config' => $loaderOnly ? null : (new Config($form))->toArray(),
-			'loader' => [
-				'form' => [
-					'inline' => $scripts['INLINE']['text'],
-					'click' => $scripts['CLICK']['text'],
-					'auto' => $scripts['AUTO']['text'],
-				],
-				'app' => [
-					'link' => $appPack->getEmbeddedFileUrl(),
-					'script' => $appPack->getEmbeddedBody(),
-				],
-			],
-		];
+		return $response;
 	}
 
 	/**

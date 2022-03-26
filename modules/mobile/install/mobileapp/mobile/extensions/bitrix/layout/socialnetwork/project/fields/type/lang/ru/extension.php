@@ -1,0 +1,10 @@
+<?php
+
+$MESS["MOBILE_LAYOUT_PROJECT_FIELDS_TYPE_TITLE"] = "ТИП ПРОЕКТА";
+$MESS["MOBILE_LAYOUT_PROJECT_FIELDS_TYPE_MENU_TITLE"] = "Тип проекта";
+$MESS["MOBILE_LAYOUT_PROJECT_FIELDS_TYPE_PUBLIC_TITLE"] = "Публичный проект";
+$MESS["MOBILE_LAYOUT_PROJECT_FIELDS_TYPE_PUBLIC_SUBTITLE"] = "Все пользователи видят и могут участвовать";
+$MESS["MOBILE_LAYOUT_PROJECT_FIELDS_TYPE_PRIVATE_TITLE"] = "Приватный проект";
+$MESS["MOBILE_LAYOUT_PROJECT_FIELDS_TYPE_PRIVATE_SUBTITLE"] = "Все видят, вступают только приглашённые";
+$MESS["MOBILE_LAYOUT_PROJECT_FIELDS_TYPE_SECRET_TITLE"] = "Секретный проект";
+$MESS["MOBILE_LAYOUT_PROJECT_FIELDS_TYPE_SECRET_SUBTITLE"] = "Только приглашённые видят и участвуют";

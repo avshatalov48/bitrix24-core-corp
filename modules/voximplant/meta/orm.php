@@ -1,6 +1,6 @@
 <?php
 
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\BlacklistTable:voximplant/lib/blacklist.php:2944f9580c344b460c5d7c767f11d50f */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\BlacklistTable:voximplant\lib\blacklist.php:c1e6cbb42ddef3152c26defb3bbe424c */
 namespace Bitrix\Voximplant {
 	/**
 	 * EO_Blacklist
@@ -164,7 +164,7 @@ namespace Bitrix\Voximplant {
 	 */
 	class EO_Blacklist_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\ConfigTable:voximplant/lib/config.php:1876163efc4e5c1d0124cd91a5b7b9a9 */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\ConfigTable:voximplant\lib\config.php:4758ce434e7f3ba46a43a38d06631ef4 */
 namespace Bitrix\Voximplant {
 	/**
 	 * EO_Config
@@ -1065,7 +1065,7 @@ namespace Bitrix\Voximplant {
 	 */
 	class EO_Config_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\CallTable:voximplant/lib/model/call.php:593a92dffd6a31176467ff6f05a6e8e0 */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\CallTable:voximplant\lib\model\call.php:115634cb398a41beb6292b151199763e */
 namespace Bitrix\Voximplant\Model {
 	/**
 	 * EO_Call
@@ -1580,7 +1580,7 @@ namespace Bitrix\Voximplant\Model {
 	 */
 	class EO_Call_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\CallCrmEntityTable:voximplant/lib/model/callcrmentity.php:089482aeeba527daf77bae8b42982392 */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\CallCrmEntityTable:voximplant\lib\model\callcrmentity.php:8210837b4213920b0ef6202aa0e5729c */
 namespace Bitrix\Voximplant\Model {
 	/**
 	 * EO_CallCrmEntity
@@ -1745,7 +1745,7 @@ namespace Bitrix\Voximplant\Model {
 	 */
 	class EO_CallCrmEntity_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\CallerIdTable:voximplant/lib/model/callerid.php:0b777c805ea918fcf80b8404105e17d8 */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\CallerIdTable:voximplant\lib\model\callerid.php:6b2c099146885e3f3cca01f804f9fa4c */
 namespace Bitrix\Voximplant\Model {
 	/**
 	 * EO_CallerId
@@ -1921,7 +1921,7 @@ namespace Bitrix\Voximplant\Model {
 	 */
 	class EO_CallerId_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\CallUserTable:voximplant/lib/model/calluser.php:94196dac5ac48f2aa8a0c2a99eb6cb9f */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\CallUserTable:voximplant\lib\model\calluser.php:051049f7ded27784bf4b35072f4901a3 */
 namespace Bitrix\Voximplant\Model {
 	/**
 	 * EO_CallUser
@@ -2091,7 +2091,7 @@ namespace Bitrix\Voximplant\Model {
 	 */
 	class EO_CallUser_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\ExternalLineTable:voximplant/lib/model/externalline.php:24d93cf67da3aa95cae9a452408abf45 */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\ExternalLineTable:voximplant\lib\model\externalline.php:3908ee82901a6172ba6b0e78fb12cfd4 */
 namespace Bitrix\Voximplant\Model {
 	/**
 	 * EO_ExternalLine
@@ -2316,7 +2316,7 @@ namespace Bitrix\Voximplant\Model {
 	 */
 	class EO_ExternalLine_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\IvrTable:voximplant/lib/model/ivr.php:1290e36e1a59074519c3175be97704ef */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\IvrTable:voximplant\lib\model\ivr.php:f82dbdcd97e4a080f0898b1089261773 */
 namespace Bitrix\Voximplant\Model {
 	/**
 	 * EO_Ivr
@@ -2456,7 +2456,7 @@ namespace Bitrix\Voximplant\Model {
 	 */
 	class EO_Ivr_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\IvrActionTable:voximplant/lib/model/ivraction.php:3ed0ce38bd320ea141721fa8cd561578 */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\IvrActionTable:voximplant\lib\model\ivraction.php:d5acf17507d7b8c321b78ef256020a2d */
 namespace Bitrix\Voximplant\Model {
 	/**
 	 * EO_IvrAction
@@ -2645,7 +2645,7 @@ namespace Bitrix\Voximplant\Model {
 	 */
 	class EO_IvrAction_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\IvrItemTable:voximplant/lib/model/ivritem.php:0a9268578a82b9ae1e63540da4ec8a43 */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\IvrItemTable:voximplant\lib\model\ivritem.php:f4de50b860a0f9db8b1095070ed2d6f6 */
 namespace Bitrix\Voximplant\Model {
 	/**
 	 * EO_IvrItem
@@ -2918,7 +2918,7 @@ namespace Bitrix\Voximplant\Model {
 	 */
 	class EO_IvrItem_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\LineAccessTable:voximplant/lib/model/lineaccess.php:5de8ae8860134851d3c1fd1c5190dabd */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\LineAccessTable:voximplant\lib\model\lineaccess.php:52cc06d9decb1716a4067ee031cabf30 */
 namespace Bitrix\Voximplant\Model {
 	/**
 	 * EO_LineAccess
@@ -3071,7 +3071,7 @@ namespace Bitrix\Voximplant\Model {
 	 */
 	class EO_LineAccess_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\NumberTable:voximplant/lib/model/number.php:f1a0dc735185096d86c2a71cb85f5492 */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\NumberTable:voximplant\lib\model\number.php:656dbcf75d7e2be59540a16ba5fc0ced */
 namespace Bitrix\Voximplant\Model {
 	/**
 	 * EO_Number
@@ -3304,7 +3304,7 @@ namespace Bitrix\Voximplant\Model {
 	 */
 	class EO_Number_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\QueueTable:voximplant/lib/model/queue.php:7bfb0d793f466c6e0db0aefe473589c1 */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\QueueTable:voximplant\lib\model\queue.php:ecedb303c2f43b7047cb96751e99dc98 */
 namespace Bitrix\Voximplant\Model {
 	/**
 	 * EO_Queue
@@ -3525,7 +3525,7 @@ namespace Bitrix\Voximplant\Model {
 	 */
 	class EO_Queue_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\QueueUserTable:voximplant/lib/model/queueuser.php:403e571235bd6f2952c1ddf1e3b6480e */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\QueueUserTable:voximplant\lib\model\queueuser.php:9ffb487268d8f3700f98c2ccdc23178e */
 namespace Bitrix\Voximplant\Model {
 	/**
 	 * EO_QueueUser
@@ -3724,7 +3724,7 @@ namespace Bitrix\Voximplant\Model {
 	 */
 	class EO_QueueUser_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\RoleTable:voximplant/lib/model/role.php:26cbe0ca5a97b02265cfc92b29fe8f2d */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\RoleTable:voximplant\lib\model\role.php:a7f36d45e80214d64f68130097d3f3bf */
 namespace Bitrix\Voximplant\Model {
 	/**
 	 * EO_Role
@@ -3852,7 +3852,7 @@ namespace Bitrix\Voximplant\Model {
 	 */
 	class EO_Role_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\RoleAccessTable:voximplant/lib/model/roleaccess.php:3a2b3685e7a7f5a3d0adabc6af351eeb */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\RoleAccessTable:voximplant\lib\model\roleaccess.php:31a47153a2b79f9fb3ba183a1aa42be9 */
 namespace Bitrix\Voximplant\Model {
 	/**
 	 * EO_RoleAccess
@@ -4005,7 +4005,7 @@ namespace Bitrix\Voximplant\Model {
 	 */
 	class EO_RoleAccess_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\RolePermissionTable:voximplant/lib/model/rolepermission.php:ed30d3fd08d6cafa547609b4e7caf243 */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\RolePermissionTable:voximplant\lib\model\rolepermission.php:51213339c3b047105d1321f65bbdadfa */
 namespace Bitrix\Voximplant\Model {
 	/**
 	 * EO_RolePermission
@@ -4195,7 +4195,7 @@ namespace Bitrix\Voximplant\Model {
 	 */
 	class EO_RolePermission_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\StatisticIndexTable:voximplant/lib/model/statisticindex.php:8a2df567b1b97cdda918b7b206e226fe */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\StatisticIndexTable:voximplant\lib\model\statisticindex.php:e4b3fd52ade6297bbd67c0418f3e31b9 */
 namespace Bitrix\Voximplant\Model {
 	/**
 	 * EO_StatisticIndex
@@ -4323,7 +4323,7 @@ namespace Bitrix\Voximplant\Model {
 	 */
 	class EO_StatisticIndex_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\StatisticMissedTable:voximplant/lib/model/statisticmissed.php:30b26d1f1a4861ecd10e3d110d008be2 */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\StatisticMissedTable:voximplant\lib\model\statisticmissed.php:107526b4342e768d10ea1a6d1388b6ff */
 namespace Bitrix\Voximplant\Model {
 	/**
 	 * EO_StatisticMissed
@@ -4499,7 +4499,7 @@ namespace Bitrix\Voximplant\Model {
 	 */
 	class EO_StatisticMissed_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\TranscriptTable:voximplant/lib/model/transcript.php:c0c6bd4b35c10b4bc555e78b97f67f97 */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\TranscriptTable:voximplant\lib\model\transcript.php:bba45bb012c47e0762cecff00f6272a2 */
 namespace Bitrix\Voximplant\Model {
 	/**
 	 * EO_Transcript
@@ -4687,7 +4687,7 @@ namespace Bitrix\Voximplant\Model {
 	 */
 	class EO_Transcript_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\TranscriptLineTable:voximplant/lib/model/transcriptline.php:f2056f993c8b50a3fcdbc6c94dae22f8 */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\TranscriptLineTable:voximplant\lib\model\transcriptline.php:ffd3bde790e50d3e843c410fc84c2cf1 */
 namespace Bitrix\Voximplant\Model {
 	/**
 	 * EO_TranscriptLine
@@ -4876,7 +4876,7 @@ namespace Bitrix\Voximplant\Model {
 	 */
 	class EO_TranscriptLine_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\UserTable:voximplant/lib/model/user.php:12dc6784ce9d3da3844bf7cdbaaea9e2 */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\Model\UserTable:voximplant\lib\model\user.php:d656f801f5f209e2816f5cbfa8ce7b34 */
 namespace Bitrix\Voximplant\Model {
 	/**
 	 * EO_User
@@ -5485,16 +5485,6 @@ namespace Bitrix\Voximplant\Model {
 	 * @method bool isIndexFilled()
 	 * @method bool isIndexChanged()
 	 * @method \Bitrix\Main\EO_UserIndex fillIndex()
-	 * @method \Bitrix\Main\EO_UserIndexSelector getIndexSelector()
-	 * @method \Bitrix\Main\EO_UserIndexSelector remindActualIndexSelector()
-	 * @method \Bitrix\Main\EO_UserIndexSelector requireIndexSelector()
-	 * @method \Bitrix\Voximplant\Model\EO_User setIndexSelector(\Bitrix\Main\EO_UserIndexSelector $object)
-	 * @method \Bitrix\Voximplant\Model\EO_User resetIndexSelector()
-	 * @method \Bitrix\Voximplant\Model\EO_User unsetIndexSelector()
-	 * @method bool hasIndexSelector()
-	 * @method bool isIndexSelectorFilled()
-	 * @method bool isIndexSelectorChanged()
-	 * @method \Bitrix\Main\EO_UserIndexSelector fillIndexSelector()
 	 * @method \Bitrix\Main\EO_UserCounter getCounter()
 	 * @method \Bitrix\Main\EO_UserCounter remindActualCounter()
 	 * @method \Bitrix\Main\EO_UserCounter requireCounter()
@@ -5700,9 +5690,6 @@ namespace Bitrix\Voximplant\Model {
 	 * @method \Bitrix\Main\EO_UserIndex[] getIndexList()
 	 * @method \Bitrix\Voximplant\Model\EO_User_Collection getIndexCollection()
 	 * @method \Bitrix\Main\EO_UserIndex_Collection fillIndex()
-	 * @method \Bitrix\Main\EO_UserIndexSelector[] getIndexSelectorList()
-	 * @method \Bitrix\Voximplant\Model\EO_User_Collection getIndexSelectorCollection()
-	 * @method \Bitrix\Main\EO_UserIndexSelector_Collection fillIndexSelector()
 	 * @method \Bitrix\Main\EO_UserCounter[] getCounterList()
 	 * @method \Bitrix\Voximplant\Model\EO_User_Collection getCounterCollection()
 	 * @method \Bitrix\Main\EO_UserCounter_Collection fillCounter()
@@ -5772,7 +5759,7 @@ namespace Bitrix\Voximplant\Model {
 	 */
 	class EO_User_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\PhoneTable:voximplant/lib/phone.php:ed3dd1ae0f932466f629f1c667e31c8b */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\PhoneTable:voximplant\lib\phone.php:59c52cc831025e5203131106f09aa8c7 */
 namespace Bitrix\Voximplant {
 	/**
 	 * EO_Phone
@@ -5937,7 +5924,7 @@ namespace Bitrix\Voximplant {
 	 */
 	class EO_Phone_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\SipTable:voximplant/lib/sip.php:e0e2ff3d045ccf0c33dbf81528cf2a29 */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\SipTable:voximplant\lib\sip.php:9fd6e4ace3ac17a1c8e8dcdacbb559d6 */
 namespace Bitrix\Voximplant {
 	/**
 	 * EO_Sip
@@ -6108,6 +6095,26 @@ namespace Bitrix\Voximplant {
 	 * @method bool isConfigFilled()
 	 * @method bool isConfigChanged()
 	 * @method \Bitrix\Voximplant\EO_Config fillConfig()
+	 * @method \int getRegistrationStatusCode()
+	 * @method \Bitrix\Voximplant\EO_Sip setRegistrationStatusCode(\int|\Bitrix\Main\DB\SqlExpression $registrationStatusCode)
+	 * @method bool hasRegistrationStatusCode()
+	 * @method bool isRegistrationStatusCodeFilled()
+	 * @method bool isRegistrationStatusCodeChanged()
+	 * @method \int remindActualRegistrationStatusCode()
+	 * @method \int requireRegistrationStatusCode()
+	 * @method \Bitrix\Voximplant\EO_Sip resetRegistrationStatusCode()
+	 * @method \Bitrix\Voximplant\EO_Sip unsetRegistrationStatusCode()
+	 * @method \int fillRegistrationStatusCode()
+	 * @method \string getRegistrationErrorMessage()
+	 * @method \Bitrix\Voximplant\EO_Sip setRegistrationErrorMessage(\string|\Bitrix\Main\DB\SqlExpression $registrationErrorMessage)
+	 * @method bool hasRegistrationErrorMessage()
+	 * @method bool isRegistrationErrorMessageFilled()
+	 * @method bool isRegistrationErrorMessageChanged()
+	 * @method \string remindActualRegistrationErrorMessage()
+	 * @method \string requireRegistrationErrorMessage()
+	 * @method \Bitrix\Voximplant\EO_Sip resetRegistrationErrorMessage()
+	 * @method \Bitrix\Voximplant\EO_Sip unsetRegistrationErrorMessage()
+	 * @method \string fillRegistrationErrorMessage()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -6185,6 +6192,10 @@ namespace Bitrix\Voximplant {
 	 * @method \Bitrix\Voximplant\EO_Config[] getConfigList()
 	 * @method \Bitrix\Voximplant\EO_Sip_Collection getConfigCollection()
 	 * @method \Bitrix\Voximplant\EO_Config_Collection fillConfig()
+	 * @method \int[] getRegistrationStatusCodeList()
+	 * @method \int[] fillRegistrationStatusCode()
+	 * @method \string[] getRegistrationErrorMessageList()
+	 * @method \string[] fillRegistrationErrorMessage()
 	 *
 	 * Common methods:
 	 * ---------------
@@ -6243,7 +6254,7 @@ namespace Bitrix\Voximplant {
 	 */
 	class EO_Sip_Entity extends \Bitrix\Main\ORM\Entity {}
 }
-/* ORMENTITYANNOTATION:Bitrix\Voximplant\StatisticTable:voximplant/lib/statistic.php:8ccea84a8309d831810b20bfb8600e4b */
+/* ORMENTITYANNOTATION:Bitrix\Voximplant\StatisticTable:voximplant\lib\statistic.php:8858bfd7d5bd6ba373ded1017db389cc */
 namespace Bitrix\Voximplant {
 	/**
 	 * EO_Statistic

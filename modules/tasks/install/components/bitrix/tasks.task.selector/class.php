@@ -109,6 +109,14 @@ class TasksTaskSelectorComponent extends TasksBaseComponent
 		$tasksDdRes = CTasks::GetList($order, $filter, $select, $params);
 		while ($task = $tasksDdRes->Fetch())
 		{
+			if (array_key_exists('TITLE', $task))
+			{
+				$task['TITLE'] = \Bitrix\Main\Text\Emoji::decode($task['TITLE']);
+			}
+			if (array_key_exists('DESCRIPTION', $task) && $task['DESCRIPTION'] !== '')
+			{
+				$task['DESCRIPTION'] = \Bitrix\Main\Text\Emoji::decode($task['DESCRIPTION']);
+			}
 			$lastTasks[] = $task;
 		}
 
@@ -130,7 +138,7 @@ class TasksTaskSelectorComponent extends TasksBaseComponent
 		$tasksDdRes = CTasks::GetList($order, $filter, $select);
 		while ($task = $tasksDdRes->Fetch())
 		{
-			$task['TITLE'] = $task['TITLE'] . ' [' . $task['ID'] . ']';
+			$task['TITLE'] = \Bitrix\Main\Text\Emoji::decode($task['TITLE']) . ' [' . $task['ID'] . ']';
 			$currentTasks[] = $task;
 		}
 

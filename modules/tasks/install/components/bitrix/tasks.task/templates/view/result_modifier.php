@@ -172,9 +172,9 @@ if ($arParams["SET_NAVCHAIN"])
 	if ($taskType == "user" && $user)
 	{
 		$APPLICATION->AddChainItem(
-			CUser::FormatName($arParams["NAME_TEMPLATE"], $user), 
+			CUser::FormatName($arParams["NAME_TEMPLATE"], $user),
 			CComponentEngine::makePathFromTemplate(
-				$arParams["~PATH_TO_USER_PROFILE"], 
+				$arParams["~PATH_TO_USER_PROFILE"],
 				array("user_id" => $arParams["USER_ID"])
 			)
 		);
@@ -183,9 +183,9 @@ if ($arParams["SET_NAVCHAIN"])
 	elseif ($group)
 	{
 		$APPLICATION->AddChainItem(
-			$group["NAME"], 
+			$group["NAME"],
 			CComponentEngine::makePathFromTemplate(
-				$arParams["~PATH_TO_GROUP"], 
+				$arParams["~PATH_TO_GROUP"],
 				array("group_id" => $arParams["GROUP_ID"])
 			)
 		);
@@ -347,6 +347,15 @@ if (!empty($prevTaskIds))
 			"LOGIN" => $item["RESPONSIBLE_LOGIN"]
 		), true, false);
 
+		if (array_key_exists('TITLE', $item))
+		{
+			$item['TITLE'] = \Bitrix\Main\Text\Emoji::decode($item['TITLE']);
+		}
+		if (array_key_exists('DESCRIPTION', $item) && $item['DESCRIPTION'] !== '')
+		{
+			$item['DESCRIPTION'] = \Bitrix\Main\Text\Emoji::decode($item['DESCRIPTION']);
+		}
+
 		$arResult["TEMPLATE_DATA"]["PREV_TASKS"][] = $item;
 	}
 }
@@ -368,11 +377,7 @@ $arResult["TEMPLATE_DATA"]["ELAPSED"] = array(
 $arResult["TEMPLATE_DATA"]["TIMER_IS_RUNNING_FOR_CURRENT_USER"] = $taskData['TIMER_IS_RUNNING'] ? "Y" : "N";
 
 //Files in Comments
-$arResult["TEMPLATE_DATA"]["FILES_IN_COMMENTS"] = 0;
-if ($taskData["FORUM_ID"] > 0 && $taskData["FORUM_TOPIC_ID"] > 0)
-{
-	$arResult["TEMPLATE_DATA"]["FILES_IN_COMMENTS"] = \Bitrix\Tasks\Integration\Forum\Task\Topic::getFileCount($taskData["FORUM_TOPIC_ID"], $taskData["FORUM_ID"]);
-}
+$arResult["TEMPLATE_DATA"]["FILES_IN_COMMENTS"] = \Bitrix\Tasks\Integration\Forum\Task\Topic::getFileCount((int)$taskData["ID"]);
 
 //Description
 // todo: remove this when you got array access in $arResult['DATA']['TASK']

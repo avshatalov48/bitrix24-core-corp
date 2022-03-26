@@ -1,7 +1,7 @@
 <?if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 global $APPLICATION;
 
-if (!isset($arParams['HIDE_CRM_MENU']) || $arParams['HIDE_CRM_MENU'] != 'Y'):
+if ((!isset($arParams['HIDE_CRM_MENU']) || $arParams['HIDE_CRM_MENU'] != 'Y') && $_REQUEST['IFRAME'] <> 'Y'):
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.control_panel',
 	'',
@@ -32,14 +32,18 @@ $APPLICATION->IncludeComponent(
 endif;
 
 $APPLICATION->IncludeComponent(
-	'bitrix:crm.button.list',
+	'bitrix:ui.sidepanel.wrapper',
 	'',
-	array(
-		'IFRAME' => $arParams['IFRAME'],
-		'PATH_TO_BUTTON_LIST' => $arResult['PATH_TO_BUTTON_LIST'],
-		'PATH_TO_BUTTON_EDIT' => $arResult['PATH_TO_BUTTON_EDIT'],
-		'PATH_TO_BUTTON_FILL' => $arResult['PATH_TO_BUTTON_FILL'],
-		'PATH_TO_USER_PROFILE' => $arResult['PATH_TO_USER_PROFILE']
-	)
+	[
+		'POPUP_COMPONENT_NAME' => 'bitrix:crm.button.list',
+		'POPUP_COMPONENT_TEMPLATE_NAME' => '',
+		'POPUP_COMPONENT_PARAMS' => [
+			'IFRAME' => $arParams['IFRAME'],
+			'PATH_TO_BUTTON_LIST' => $arResult['PATH_TO_BUTTON_LIST'],
+			'PATH_TO_BUTTON_EDIT' => $arResult['PATH_TO_BUTTON_EDIT'],
+			'PATH_TO_BUTTON_FILL' => $arResult['PATH_TO_BUTTON_FILL'],
+			'PATH_TO_USER_PROFILE' => $arResult['PATH_TO_USER_PROFILE']
+		]
+	]
 );
 ?>

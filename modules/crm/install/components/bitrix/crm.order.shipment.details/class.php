@@ -2,6 +2,7 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Crm;
+use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Main;
 use Bitrix\Crm\Order;
 use Bitrix\Sale\Delivery;
@@ -370,36 +371,11 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 					)
 				)
 			);
-			$this->arResult['TABS'][] = array(
-				'id' => 'tab_event',
-				'name' => Loc::getMessage('CRM_ORDER_SHIPMENT_TAB_EVENT'),
-				'loader' => array(
-					'serviceUrl' => '/bitrix/components/bitrix/crm.event.view/lazyload.ajax.php?&site'.SITE_ID.'&'.bitrix_sessid_get(),
-					'componentData' => array(
-						'template' => '',
-						'contextId' => "ORDER_SHIPMENT_{$this->entityID}_EVENT",
-						'params' => array(
-							'AJAX_OPTION_ADDITIONAL' => "ORDER_SHIPMENT_{$this->entityID}_EVENT",
-							'ENTITY_TYPE' => 'ORDER_SHIPMENT',
-							'ENTITY_ID' => $this->entityID,
-							'PATH_TO_USER_PROFILE' => $this->arResult['PATH_TO_USER_PROFILE'],
-							'TAB_ID' => 'tab_event',
-							'INTERNAL' => 'Y',
-							'SHOW_INTERNAL_FILTER' => 'Y',
-							'PRESERVE_HISTORY' => true,
-							'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE']
-						)
-					)
-				)
-			);
+			$this->arResult['TABS'][] = $this->getEventTabParams();
 		}
 		else
 		{
-			$this->arResult['TABS'][] = array(
-				'id' => 'tab_event',
-				'name' => Loc::getMessage('CRM_ORDER_SHIPMENT_TAB_EVENT'),
-				'enabled' => false
-			);
+			$this->arResult['TABS'][] = $this->getEventTabParams();
 		}
 		//endregion
 
@@ -1266,6 +1242,16 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 		$this->entityData['PATH_TO_'.$entityPrefix.'_USER'] = CComponentEngine::MakePathFromTemplate(
 			$this->arResult['PATH_TO_USER_PROFILE'],
 			array('user_id' => $userId)
+		);
+	}
+
+	protected function getEventTabParams(): array
+	{
+		return CCrmComponentHelper::getEventTabParams(
+			$this->entityID,
+			Loc::getMessage('CRM_ORDER_SHIPMENT_TAB_EVENT'),
+			CCrmOwnerType::OrderShipmentName,
+			$this->arResult
 		);
 	}
 }

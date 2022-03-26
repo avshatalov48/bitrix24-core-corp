@@ -54,30 +54,43 @@ class EventRelationsTable extends DataManager
 
 	public static function deleteByEntityType(string $entityType): Result
 	{
+		return static::deleteRecordsByEventRelationFilter([
+			'=ENTITY_TYPE' => $entityType,
+		]);
+	}
+
+	public static function deleteByItem(int $entityTypeId, int $id): Result
+	{
+		return static::deleteRecordsByEventRelationFilter([
+			'=ENTITY_TYPE' => \CCrmOwnerType::ResolveName($entityTypeId),
+			'=ENTITY_ID' => $id,
+		]);
+	}
+
+	private static function deleteRecordsByEventRelationFilter(array $filter): Result
+	{
 		$result = new Result();
 
 		$eventIds = [];
 
 		$list = static::getList([
 			'select' => ['ID', 'EVENT_ID'],
-			'filter' => [
-				'=ENTITY_TYPE' => $entityType,
-			],
+			'filter' => $filter,
 		]);
-		while($item = $list->fetch())
+		while ($item = $list->fetch())
 		{
 			$deleteResult = static::delete($item['ID']);
-			if(!$deleteResult->isSuccess())
-			{
-				$result->addErrors($deleteResult->getErrors());
-			}
-			else
+			if ($deleteResult->isSuccess())
 			{
 				$eventIds[] = $item['EVENT_ID'];
 			}
+			else
+			{
+				$result->addErrors($deleteResult->getErrors());
+			}
 		}
 
-		if(!empty($eventIds))
+		if (!empty($eventIds))
 		{
 			$list = EventTable::getList([
 				'select' => ['ID'],
@@ -85,13 +98,39 @@ class EventRelationsTable extends DataManager
 					'@ID' => $eventIds,
 				],
 			]);
-			while($item = $list->fetch())
+			while ($item = $list->fetch())
 			{
 				$deleteResult = EventTable::delete($item['ID']);
-				if(!$deleteResult->isSuccess())
+				if (!$deleteResult->isSuccess())
 				{
 					$result->addErrors($deleteResult->getErrors());
 				}
+			}
+		}
+
+		return $result;
+	}
+
+	public static function setAssignedByItem(ItemIdentifier $itemIdentifier, int $assignedById): Result
+	{
+		$collection = static::getList([
+			'select' => ['ID', 'ASSIGNED_BY_ID'],
+			'filter' => [
+				'=ENTITY_TYPE' => \CCrmOwnerType::ResolveName($itemIdentifier->getEntityTypeId()),
+				'=ENTITY_ID' => $itemIdentifier->getEntityId(),
+			],
+		])->fetchCollection();
+
+		$result = new Result();
+
+		foreach ($collection as $record)
+		{
+			$record->setAssignedById($assignedById);
+
+			$saveResult = $record->save();
+			if (!$saveResult->isSuccess())
+			{
+				$result->addErrors($saveResult->getErrors());
 			}
 		}
 

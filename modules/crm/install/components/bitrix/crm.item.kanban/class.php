@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Crm\Category\Entity\Category;
+use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Router;
 use Bitrix\Main\Localization\Loc;
@@ -33,8 +34,18 @@ class CrmItemKanbanComponent extends Bitrix\Crm\Component\ItemList
 			return;
 		}
 
+		$restriction = RestrictionManager::getItemListRestriction($this->entityTypeId);
+		if (!$restriction->hasPermission())
+		{
+			$this->arResult['restriction'] = $restriction;
+			$this->arResult['entityName'] = \CCrmOwnerType::ResolveName($this->entityTypeId);
+			$this->includeComponentTemplate('restrictions');
+			return;
+		}
+
 		$this->arResult['entityTypeName'] = CCrmOwnerType::ResolveName($this->entityTypeId);
 		$this->arResult['categoryId'] = $this->category->getId();
+		$this->arResult['entityTypeDescription'] = $this->factory->getEntityDescription();
 
 		if (!$this->factory->isStagesEnabled())
 		{

@@ -978,7 +978,7 @@
 		this.buttons = {
 			picture: this.getNode('faceid-button-picture'),
 			settings: this.getNode('faceid-button-settings'),
-			seachSocial: this.getNode('faceid-button-search-social'),
+			// seachSocial: this.getNode('faceid-button-search-social'),
 			savePhoto: this.getNode('faceid-button-save-photo')
 		};
 
@@ -1039,7 +1039,7 @@
 	{
 		this.buttons.picture.addEventListener('click', this.__onSearchButtonClick.bind(this));
 		this.buttons.settings.addEventListener('click', this.__onSettingsButtonClick.bind(this));
-		this.buttons.seachSocial.addEventListener('click', this.__onSearchSocialButtonClick.bind(this));
+		// this.buttons.seachSocial.addEventListener('click', this.__onSearchSocialButtonClick.bind(this));
 		this.buttons.savePhoto.addEventListener('click', this.__onSavePhotoButtonClick.bind(this));
 	};
 
@@ -1176,8 +1176,8 @@
 			BX.addClass(pictureContainer, 'crm-activity-visit-hidden');
 			BX.addClass(self.elements.social, 'crm-activity-visit-block-disable');
 
-			BX.removeClass(self.getNode('faceid-button-search-social'), 'crm-activity-visit-hidden');
-			BX.addClass(self.getNode('faceid-vk-profile'), 'crm-activity-visit-hidden');
+			// BX.removeClass(self.getNode('faceid-button-search-social'), 'crm-activity-visit-hidden');
+			// BX.addClass(self.getNode('faceid-vk-profile'), 'crm-activity-visit-hidden');
 
 			self.__getMediaStream();
 			self.callbacks.onReset();

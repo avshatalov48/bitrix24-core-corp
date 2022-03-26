@@ -1,4 +1,4 @@
-<?
+<?php
 global $APPLICATION;
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_before.php');
 
@@ -6,8 +6,8 @@ IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/intranet/publ
 require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_after.php');
 
 $APPLICATION->SetTitle(\Bitrix\Main\Localization\Loc::getMessage('OL_PAGE_STATISTICS_DETAIL_TITLE_NEW'));
-?>
-<?$APPLICATION->IncludeComponent(
+
+$APPLICATION->IncludeComponent(
 	'bitrix:intranet.contact_center.menu.top',
 	'',
 	[
@@ -15,10 +15,17 @@ $APPLICATION->SetTitle(\Bitrix\Main\Localization\Loc::getMessage('OL_PAGE_STATIS
 		'SECTION_ACTIVE' => 'dialog_list'
 	],
 	false
-);?>
-<?$APPLICATION->IncludeComponent(
-	'bitrix:imopenlines.statistics.detail',
+);
+
+$APPLICATION->IncludeComponent(
+	'bitrix:ui.sidepanel.wrapper',
 	'',
-	['LIMIT' => '30']
-);?>
-<?require($_SERVER['DOCUMENT_ROOT'].'/bitrix/footer.php');?>
+	[
+		'POPUP_COMPONENT_NAME' => 'bitrix:imopenlines.statistics.detail',
+		'POPUP_COMPONENT_PARAMS' => [
+			'LIMIT' => '30'
+		],
+	]
+);
+
+require($_SERVER['DOCUMENT_ROOT'].'/bitrix/footer.php');

@@ -11,6 +11,11 @@ class CrmUpdateDynamicActivity
 	fieldsListSelect: HTMLSelectElement;
 	entitiesFieldsContainers: HTMLDivElement | HTMLTableElement;
 
+	filterFieldsContainer: HTMLDivElement | null;
+	filteringFieldsPrefix: string;
+	filterFieldsMap: Map<string, object>;
+	conditionGroup: BX.Bizproc.Automation.ConditionGroup | undefined;
+
 	currentEntityTypeId: number;
 	fieldsMap: Map<string, object>;
 	currentValues: Map<string, object>;
@@ -27,6 +32,9 @@ class CrmUpdateDynamicActivity
 			{
 				this.entityTypeIdSelect = form.dynamic_type_id;
 				this.currentEntityTypeId = this.entityTypeIdSelect.value;
+				this.entityTypeDependentElements = document.querySelectorAll(
+					'[data-role="bca-cuda-entity-type-id-dependent"]',
+				);
 			}
 
 			if (this.isRobot)
@@ -42,6 +50,18 @@ class CrmUpdateDynamicActivity
 
 			this.fieldsMap = new Map(Object.entries(options.fieldsMap));
 
+			this.filterFieldsContainer = document.querySelector('[data-role="bca-cuda-filter-fields-container"]');
+			this.filteringFieldsPrefix = options.filteringFieldsPrefix;
+			this.filterFieldsMap = new Map(Object.entries(options.filterFieldsMap));
+			if (!Type.isNil(options.documentName))
+			{
+				BX.Bizproc.Automation.API.documentName = options.documentName;
+			}
+			if (BX.Bizproc.Automation && BX.Bizproc.Automation.ConditionGroup)
+			{
+				this.conditionGroup = new BX.Bizproc.Automation.ConditionGroup(options.conditions);
+			}
+
 			this.currentValues = new Map();
 			Array
 				.from(this.fieldsMap.keys())
@@ -50,8 +70,8 @@ class CrmUpdateDynamicActivity
 			if (!Type.isNil(this.currentEntityTypeId) && Type.isObject(options.currentValues))
 			{
 				this.currentValues.set(this.currentEntityTypeId, options.currentValues);
-				this.renderEntityFields();
 			}
+			this.render();
 		}
 	}
 
@@ -79,20 +99,55 @@ class CrmUpdateDynamicActivity
 	onEntityTypeIdChange(): void
 	{
 		this.currentEntityTypeId = this.entityTypeIdSelect.value;
+
+		Dom.clean(this.filterFieldsContainer);
+		if (BX.Bizproc.Automation && BX.Bizproc.Automation.ConditionGroup)
+		{
+			this.conditionGroup = new BX.Bizproc.Automation.ConditionGroup();
+		}
+
 		Array
 			.from(this.entitiesFieldsContainers.children)
 			.forEach((elem) => Dom.remove(elem));
-		this.renderEntityFields();
+
+		this.render();
+	}
+
+	render(): void
+	{
+		if (Type.isNil(this.currentEntityTypeId) || this.currentEntityTypeId === '')
+		{
+			this.entityTypeDependentElements.forEach((element) => Dom.hide(element));
+		}
+		else
+		{
+			this.entityTypeDependentElements.forEach((element) => Dom.show(element));
+			this.renderFilterFields();
+			this.renderEntityFields();
+		}
+	}
+
+	renderFilterFields(): void
+	{
+		if (
+			!Type.isNil(this.conditionGroup)
+			&& !Type.isNil(this.currentEntityTypeId)
+		)
+		{
+			const selector = new BX.Bizproc.Automation.ConditionGroupSelector(this.conditionGroup, {
+				fields: Object.values(this.filterFieldsMap.get(this.currentEntityTypeId)),
+				fieldPrefix: this.filteringFieldsPrefix,
+			});
+
+			this.filterFieldsContainer.appendChild(selector.createNode());
+		}
 	}
 
 	renderEntityFields(): void
 	{
-		if (!Type.isNil(this.currentEntityTypeId) && this.currentEntityTypeId !== '')
-		{
-			Object
-				.keys(this.currentValues.get(this.currentEntityTypeId))
-				.forEach((fieldId) => this.addCondition(fieldId));
-		}
+		Object
+			.keys(this.currentValues.get(this.currentEntityTypeId))
+			.forEach((fieldId) => this.addCondition(fieldId));
 	}
 
 	onFieldsListSelectClick(event)
@@ -138,10 +193,12 @@ class CrmUpdateDynamicActivity
 		return event.preventDefault();
 	}
 
-	onAddConditionButtonClick(): void
+	onAddConditionButtonClick(event): void
 	{
 		const defaultFieldId = Object.keys(this.fieldsMap.get(this.currentEntityTypeId))[0];
 		this.addCondition(defaultFieldId);
+
+		return event.preventDefault();
 	}
 
 	addCondition(fieldId: string): void
@@ -271,6 +328,7 @@ class CrmUpdateDynamicActivity
 			this.fieldsMap.get(this.currentEntityTypeId)[fieldId],
 			fieldId,
 			value,
+			this.isRobot ? 'public' : 'designer',
 		);
 	}
 }

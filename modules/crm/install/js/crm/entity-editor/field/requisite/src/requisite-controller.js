@@ -21,6 +21,7 @@ export class EntityEditorRequisiteController extends BX.Crm.EntityEditorControll
 		this._isLoading = false;
 
 		this._formInputsWrapper = null;
+		this._enableRequisiteSelection = false;
 	}
 
 	doInitialize()
@@ -50,6 +51,8 @@ export class EntityEditorRequisiteController extends BX.Crm.EntityEditorControll
 				);
 			}
 		}
+
+		this._enableRequisiteSelection = BX.prop.getString(this._config, 'enableRequisiteSelection', false);
 	}
 
 	initRequisiteList()
@@ -77,6 +80,8 @@ export class EntityEditorRequisiteController extends BX.Crm.EntityEditorControll
 		if (this._requisiteField)
 		{
 			this._requisiteField.setRequisites(this._requisiteList);
+
+			this._requisiteField.setSelectModeEnabled(this._enableRequisiteSelection);
 		}
 	}
 
@@ -104,6 +109,18 @@ export class EntityEditorRequisiteController extends BX.Crm.EntityEditorControll
 			}
 			this._addressField.setCountryId(countryId);
 			this._addressField.setAddressList(addressList);
+		}
+	}
+
+	setSelectModeEnabled(enableRequisiteSelection: boolean): void
+	{
+		if (this._enableRequisiteSelection !== enableRequisiteSelection)
+		{
+			this._enableRequisiteSelection = enableRequisiteSelection;
+			if (this._requisiteField)
+			{
+				this._requisiteField.setSelectModeEnabled(this._enableRequisiteSelection);
+			}
 		}
 	}
 
@@ -195,10 +212,10 @@ export class EntityEditorRequisiteController extends BX.Crm.EntityEditorControll
 					entityTypeId: this._editor.getEntityTypeId(),
 					entityId: entityId,
 					requisiteId: newSelectedRequisite.getRequisiteId(),
-					bankDetailId: selectedBankDetailId
+					bankDetailId: selectedBankDetailId,
 				}
 			}
-		).then((response) =>
+		).then(() =>
 		{
 			this.stopLoading();
 		}, () =>
@@ -352,10 +369,22 @@ export class EntityEditorRequisiteController extends BX.Crm.EntityEditorControll
 		let requisite = this._requisiteList.getById(eventData.id);
 		if (!requisite)
 		{
-			let extraFields = {
+			const extraFields = {
 				selected: this._requisiteList.isEmpty(),
-				presetId: eventData.defaultPresetId
+				presetId: eventData.defaultPresetId,
 			};
+
+			if (Type.isPlainObject(eventData.data))
+			{
+				if (eventData.data.title)
+				{
+					extraFields.title = eventData.data.title;
+				}
+				if (eventData.data.subtitle)
+				{
+					extraFields.subtitle = eventData.data.subtitle;
+				}
+			}
 
 			if (eventData.hasOwnProperty('autocompleteState'))
 			{
@@ -364,7 +393,7 @@ export class EntityEditorRequisiteController extends BX.Crm.EntityEditorControll
 
 			requisite = RequisiteListItem.create(null, {
 				'newRequisiteId': this._requisiteList.getNewRequisiteId(),
-				'newRequisiteExtraFields': extraFields
+				'newRequisiteExtraFields': extraFields,
 			});
 		}
 		else
@@ -372,6 +401,17 @@ export class EntityEditorRequisiteController extends BX.Crm.EntityEditorControll
 			if (eventData.hasOwnProperty('autocompleteState'))
 			{
 				requisite.setAutocompleteState(eventData.autocompleteState);
+			}
+			if (Type.isPlainObject(eventData.data))
+			{
+				if (eventData.data.title)
+				{
+					requisite._data.title = eventData.data.title;
+				}
+				if (eventData.data.subtitle)
+				{
+					requisite._data.subtitle = eventData.data.subtitle;
+				}
 			}
 		}
 		return requisite;
@@ -496,9 +536,9 @@ export class EntityEditorRequisiteController extends BX.Crm.EntityEditorControll
 
 	onFinishRequisiteAutocomplete(event)
 	{
-		let eventData = event.getData();
-		let requisite = this.prepareRequisiteByEventData(eventData);
-		let formData = BX.prop.getObject(BX.prop.getObject(eventData, 'data', {}), 'fields', {});
+		const eventData = event.getData();
+		const requisite = this.prepareRequisiteByEventData(eventData);
+		const formData = BX.prop.getObject(BX.prop.getObject(eventData, 'data', {}), 'fields', {});
 		if (formData.hasOwnProperty('RQ_ADDR'))
 		{
 			if (Type.isPlainObject(formData.RQ_ADDR))
@@ -506,7 +546,7 @@ export class EntityEditorRequisiteController extends BX.Crm.EntityEditorControll
 				let oldAddr = requisite.getAddressList();
 				oldAddr = Type.isPlainObject(oldAddr) ? oldAddr : {};
 
-				let addr = {...oldAddr, ...formData.RQ_ADDR};
+				const addr = {...oldAddr, ...formData.RQ_ADDR};
 				requisite.setAddressData(addr);
 				requisite.setAddressList(addr);
 			}
@@ -515,12 +555,12 @@ export class EntityEditorRequisiteController extends BX.Crm.EntityEditorControll
 		requisite.setFormData(formData);
 		requisite.setChanged(true);
 		requisite.setDeleted(false);
-		let presetId = BX.prop.getInteger(formData, 'PRESET_ID', 0);
+		const presetId = BX.prop.getInteger(formData, 'PRESET_ID', 0);
 		if (presetId > 0)
 		{
 			requisite.setPresetId(presetId);
 		}
-		let presetCountryId = BX.prop.getInteger(formData, 'PRESET_COUNTRY_ID', 0);
+		const presetCountryId = BX.prop.getInteger(formData, 'PRESET_COUNTRY_ID', 0);
 		if (presetCountryId > 0)
 		{
 			requisite.setPresetCountryId(presetCountryId);
@@ -541,9 +581,9 @@ export class EntityEditorRequisiteController extends BX.Crm.EntityEditorControll
 
 	onSetDefaultRequisite(event)
 	{
-		let eventData = event.getData();
-		let id = eventData.id;
-		let bankDetailId = eventData.bankDetailId;
+		const eventData = event.getData();
+		const id = eventData.id;
+		const bankDetailId = eventData.bankDetailId;
 
 		if (this._addressField && this._addressField.isChanged())
 		{
@@ -669,6 +709,25 @@ export class EntityEditorRequisiteController extends BX.Crm.EntityEditorControll
 			}
 			data['REQUISITES'][requisite.getRequisiteId()] = requisiteData;
 		}
+
+		if (this._enableRequisiteSelection)
+		{
+			const selectedRequisite = this._requisiteList.getSelected();
+			let selectedRequisiteId = null;
+			let selectedBankDetailId = null;
+			if (selectedRequisite)
+			{
+				selectedRequisiteId = selectedRequisite.getRequisiteId();
+				const selectedBankDetail = selectedRequisite.getBankDetailById(selectedRequisite.getSelectedBankDetailId());
+				selectedBankDetailId = Type.isNull(selectedBankDetail) ? null : selectedBankDetail.id;
+			}
+
+			data['REQUISITES']['BINDING'] = {
+				requisiteId: selectedRequisiteId,
+				bankDetailId: selectedBankDetailId,
+			};
+		}
+
 		return data;
 	}
 

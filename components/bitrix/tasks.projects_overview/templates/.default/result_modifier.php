@@ -1,8 +1,11 @@
-<?
+<?php
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
+
+use Bitrix\Main\Localization\Loc;
 
 \Bitrix\Main\UI\Extension::load("ui.icons");
 
@@ -135,9 +138,9 @@ if (!function_exists('prepareProjectRowTitle'))
 
 		if (($countMembers = count($members)) > 0)
 		{
-			$countMembersText = CTasksTools::getMessagePlural(
-				$countMembers,
+			$countMembersText = Loc::getMessagePlural(
 				'TASKS_PROJECT_OVERVIEW_MEMBERS_COUNT',
+				$countMembers,
 				[
 					'#ID#' => 'tasks-project-overviews-'.$row['GROUP_ID'],
 					'#COUNT#' => $countMembers,

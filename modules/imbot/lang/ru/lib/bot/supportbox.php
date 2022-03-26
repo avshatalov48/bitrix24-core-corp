@@ -16,5 +16,3 @@ $MESS["SUPPORT_BOX_CHANGE_LINE_USER"] = "Здравствуйте, #USER_NAME#!
 Ваш уровень поддержки был изменен. Внимание: если вы писали нам вопрос ранее, пожалуйста, повторите его в этом чате, тогда мы его увидим.";
 $MESS["SUPPORT_BOX_START_DIALOG_M"] = "Диалог открыл #USER_FULL_NAME#";
 $MESS["SUPPORT_BOX_START_DIALOG_F"] = "Диалог открыла #USER_FULL_NAME#";
-$MESS["SUPPORT_BOX_QUEUE_NUMBER"] = "Ваш номер в очереди — #QUEUE_NUMBER#";
-$MESS["SUPPORT_BOX_QUEUE_NUMBER_REFRESH"] = "Обновить";

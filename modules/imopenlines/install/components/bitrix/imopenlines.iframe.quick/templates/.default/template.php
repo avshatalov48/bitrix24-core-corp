@@ -54,6 +54,7 @@ Extension::load([
 				"ID" => "search_category_list",
 				"DISABLE_SETTINGS" => true,
 				"ITEMS" => $arResult['BUTTONS'],
+				"THEME" => "small",
 			),
 			$component,
 			['HIDE_ICONS' => true]
@@ -62,7 +63,7 @@ Extension::load([
 	</div>
 	<div class="imopenlines-iframe-quick-control-block">
 		<div class="imopenlines-iframe-quick-search" id="quick-search">
-			<input type="text" placeholder="<?=Loc::getMessage('IMOL_QA_IFRAME_SEARCH')?>" class="imopenlines-iframe-quick-search-input" id="quick-search-input" value="<?=$arResult['SEARCH'];?>">
+			<input type="text" placeholder="<?=Loc::getMessage('IMOL_QA_IFRAME_SEARCH')?>" class="imopenlines-iframe-quick-search-input" id="quick-search-input" value="<?= htmlspecialcharsbx($arResult['SEARCH']) ?>">
 		</div>
 		<div class="imopenlines-iframe-quick-search-button imopenlines-iframe-quick-search-add" id="quick-create-message"></div>
 		<div class="imopenlines-iframe-quick-search-button imopenlines-iframe-quick-search-settings" id="quick-all-url"></div>

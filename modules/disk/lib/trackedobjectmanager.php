@@ -11,15 +11,15 @@ final class TrackedObjectManager
 {
 	/** @var  ErrorCollection */
 	protected $errorCollection;
+	/** @var array */
 	protected $dataToInsert = [];
-
 
 	/**
 	 * Constructor RecentlyUsedManager.
 	 */
 	public function __construct()
 	{
-		$this->errorCollection = new ErrorCollection;
+		$this->errorCollection = new ErrorCollection();
 		Application::getInstance()->addBackgroundJob([$this, 'finalize']);
 	}
 
@@ -45,24 +45,6 @@ final class TrackedObjectManager
 				$this->processPush($userId, $object, $attachedObject);
 			}
 		}
-	}
-
-	/**
-	 * @param int|Disk\Internals\Model $object Object id.
-	 * @return null|Disk\Internals\Model
-	 */
-	private static function resolveObject($object)
-	{
-		if ($object instanceof Disk\Internals\Model)
-		{
-			return $object;
-		}
-		$object = (int)$object;
-		if ($object > 0)
-		{
-			return Disk\Internals\Model::getById($object);
-		}
-		return null;
 	}
 
 	/**
@@ -103,75 +85,48 @@ final class TrackedObjectManager
 		];
 	}
 
-	protected function processPush($user, $object, AttachedObject $attachedObject = null): bool
+	protected function processPush($user, File $object, AttachedObject $attachedObject = null): bool
 	{
-		if (
-			!($object = self::resolveObject($object))
-			||
-			!Disk\Document\DocumentHandler::isEditable(
-				mb_substr(
-					$object->getName(),
-					mb_strrpos($object->getName(), '.')
-				)
-			)
-			||
-			!($userId = User::resolveUserId($user))
-		)
+		$userId = User::resolveUserId($user);
+		if (!$userId)
 		{
 			return false;
 		}
 
-		$objectId = $object->getId();
-		$realObjectId = $objectId;
-		if ($object instanceof Disk\FileLink &&
-			method_exists($object, 'getRealObjectId'))
+		if (!Disk\Document\DocumentHandler::isEditable($object->getExtension()))
 		{
-			$realObjectId = $object->getRealObjectId();
+			return false;
 		}
 
-		$fields = [
-			'USER_ID' => $userId,
-			'OBJECT_ID' => $objectId,
-		];
+		$alreadyExists = Disk\Internals\TrackedObjectTable::query()
+			->setSelect(['ID'])
+			->where('USER_ID', $userId)
+			->where('REAL_OBJECT_ID', $object->getRealObjectId())
+			->fetch()
+		;
 
-		if (Disk\Internals\TrackedObjectTable::getList([
-				'select' => ['ID'],
-				'filter' => $fields,
-			])->fetch()
-		)
+		if (!empty($alreadyExists['ID']))
 		{
-			Disk\Internals\TrackedObjectTable::updateBatch(
-				['UPDATE_TIME' => new DateTime()],
-				$fields
-			);
+			$this->refresh($object);
 		}
 		else
 		{
-			Disk\Internals\TrackedObjectTable::add(
-				$fields + [
-					'REAL_OBJECT_ID' => $realObjectId,
+			Disk\Internals\TrackedObjectTable::add([
+					'USER_ID' => $userId,
+					'OBJECT_ID' => $object->getId(),
+					'REAL_OBJECT_ID' => $object->getRealObjectId(),
 					'ATTACHED_OBJECT_ID' => $attachedObject? $attachedObject->getId() : null,
-				]
-			);
+			]);
 		}
 
 		return true;
 	}
 
-	public function refresh(Disk\Internals\Model $object): void
+	public function refresh(BaseObject $object): void
 	{
-		if ($object = self::resolveObject($object))
-		{
-			$realObjectId = $object->getId();
-			if ($object instanceof Disk\FileLink &&
-				method_exists($object, 'getRealObjectId'))
-			{
-				$realObjectId = $object->getRealObjectId();
-			}
-			Disk\Internals\TrackedObjectTable::updateBatch(
-				['UPDATE_TIME' => new DateTime()],
-				['REAL_OBJECT_ID' => $realObjectId]
-			);
-		}
+		Disk\Internals\TrackedObjectTable::updateBatch(
+			['UPDATE_TIME' => new DateTime()],
+			['REAL_OBJECT_ID' => $object->getRealObjectId()]
+		);
 	}
 }

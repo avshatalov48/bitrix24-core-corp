@@ -37,7 +37,7 @@ if (typeof(BX.FilterEntitySelector) === "undefined")
 					scope: field,
 					id: this.getId() + "-selector",
 					mode: this.getSetting("mode"),
-					query: query ? query : false,
+					query: false,
 					useSearch: true,
 					useAdd: false,
 					parent: this,
@@ -150,7 +150,13 @@ if (typeof(BX.FilterEntitySelector) === "undefined")
 			{
 				if (this.option('taskLimitExceeded'))
 				{
-					BX.UI.InfoHelper.show('limit_tasks_supervisor_view');
+					BX.UI.InfoHelper.show('limit_tasks_supervisor_view', {
+						isLimit: true,
+						limitAnalyticsLabels: {
+							module: 'tasks',
+							source: 'filter'
+						}
+					});
 				}
 			},
 

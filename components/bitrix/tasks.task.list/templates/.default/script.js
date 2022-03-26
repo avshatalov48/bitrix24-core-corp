@@ -66,7 +66,7 @@ BX.Tasks.GridActions = {
 			var tags = dialog.getSelectedItems().map(function(item) {
 				return item.getId();
 			});
-			BX.Tasks.GridActions.action('update', taskId, {data: {TAGS: tags}});
+			BX.Tasks.GridActions.action('setTags', taskId, {tags: tags});
 		};
 		var eventData = event.getData();
 		var dialog = new BX.UI.EntitySelector.Dialog({
@@ -144,7 +144,7 @@ BX.Tasks.GridActions = {
 			events: {
 				'Item:onSelect': function(event) {
 					var item = event.getData().item;
-					BX.Tasks.GridActions.action('setgroup', taskId, {groupId: item.getId()});
+					BX.Tasks.GridActions.action('setGroup', taskId, {groupId: item.getId()});
 					event.getTarget().hide();
 				}
 			}
@@ -225,7 +225,6 @@ BX.Tasks.GridActions = {
 	{
 		var eventData = event.getData();
 		var button = eventData.button;
-		var row = eventData.row;
 
 		if (BX.Dom.hasClass(button, BX.Grid.CellActionState.ACTIVE))
 		{
@@ -256,21 +255,42 @@ BX.Tasks.GridActions = {
 				window.top.BX.addTaskToPlanner(taskId);
 			}
 		}
+		else if (code === 'copyLink')
+		{
+			if (BX.clipboard.copy(args.copyLink))
+			{
+				BX.UI.Notification.Center.notify({content: BX.message('TASKS_LIST_ACTION_COPY_LINK_NOTIFICATION')});
+			}
+		}
 		else
 		{
 			this.doAction(code, taskId, args);
 		}
     },
 
-	doAction: function(code, taskId, args)
+	doAction: function(action, taskId, args)
 	{
 		args = args || {};
-		args['id'] = taskId;
+		args['taskId'] = taskId;
 
-		this.getQuery(code).add('task.' + code.toLowerCase(), args, {}, BX.delegate(function (errors, data) {
-			if (!errors.checkHasErrors())
+		var component = 'bitrix:tasks.task';
+		if (action === 'pin' || action === 'unpin')
+		{
+			component = 'bitrix:tasks.task.list';
+		}
+
+		if (action === 'ping')
+		{
+			BX.UI.Notification.Center.notify({content: BX.message('TASKS_LIST_ACTION_PING_NOTIFICATION')});
+		}
+
+		BX.ajax.runComponentAction(component, action, {
+			mode: 'class',
+			data: args
+		}).then(
+			function(response)
 			{
-				if (data.OPERATION == 'task.delete')
+				if (action === 'delete')
 				{
 					BX.Tasks.Util.fireGlobalTaskEvent('DELETE', {ID: taskId});
 					BX.UI.Notification.Center.notify({content: BX.message('TASKS_DELETE_SUCCESS')});
@@ -284,21 +304,17 @@ BX.Tasks.GridActions = {
 				{
 					this.reloadRow(taskId);
 				}
-			}
-		}, this));
-	},
-
-	getQuery: function(code)
-	{
-		var viewType = BX.message('_VIEW_TYPE');
-		var url = '/bitrix/components/bitrix/tasks.base/ajax.php?_CODE=' + (code || '') + '&viewType=' + viewType;
-
-		if (!this.query)
-		{
-			this.query = new BX.Tasks.Util.Query({url: url, autoExec: true});
-		}
-
-		return this.query;
+			}.bind(this)
+		).catch(
+			function(response)
+			{
+				if (response.errors)
+				{
+					var content = response.errors[0].message || response.errors[0].MESSAGE;
+					BX.UI.Notification.Center.notify({content: content});
+				}
+			}.bind(this)
+		);
 	},
 
 	getTotalCount: function(prefix, userId, groupId, parameters)
@@ -312,31 +328,39 @@ BX.Tasks.GridActions = {
 		var container = document.getElementById(prefix+'_row_count_wrapper');
 		this.showCountLoader(container);
 
-		var query = new BX.Tasks.Util.Query({url: '/bitrix/components/bitrix/tasks.task.list/ajax.php'});
-		query
-			.run(
-				'this.getTotalCount',
-				{
-					userId: userId,
-					groupId: groupId,
-					parameters: JSON.stringify(parameters)
-				}
-			)
-			.then(function(result) {
+		BX.ajax.runComponentAction('bitrix:tasks.task.list', 'getTotalCount', {
+			mode: 'class',
+			data: {
+				userId: userId,
+				groupId: groupId,
+				parameters: JSON.stringify(parameters)
+			}
+		}).then(
+			function(response)
+			{
 				this.hideCountLoader(container);
-				if (result.data)
+				if (response.data)
 				{
-					result.data = (typeof result.data == "number") ? result.data : 0;
+					response.data = (typeof response.data == "number") ? response.data : 0;
 					var button = container.querySelector('a');
 					if (button)
 					{
 						button.remove();
 					}
-					container.append(result.data);
+					container.append(response.data);
 				}
 				this.getTotalCountProceed = false;
-			}.bind(this))
-		query.execute();
+			}.bind(this)
+		).catch(
+			function(response)
+			{
+				if (response.errors)
+				{
+					BX.Tasks.alert(response.errors);
+				}
+				this.getTotalCountProceed = false;
+			}.bind(this)
+		);
 	},
 
 	showCountLoader: function(container)
@@ -502,7 +526,7 @@ BX.Tasks.GridActions = {
 			+ (this.report ? " task-in-report" : "");
         this.bindElement.title = BX.message("TASKS_MARK") + ": " + this.listItem.name;
 
-        BX.Tasks.GridActions.action('update', this.id, {data: {
+        BX.Tasks.GridActions.action('legacyUpdate', this.id, {data: {
         	MARK: (this.listValue === "NULL" ? "" : this.listValue)
         }});
     },
@@ -792,7 +816,6 @@ BX(function() {
 		this.taskList = new Map();
 		this.comments = new Map();
 
-		this.query = new BX.Tasks.Util.Query({url: '/bitrix/components/bitrix/tasks.task.list/ajax.php'});
 		this.actions = {
 			taskAdd: 'taskAdd',
 			taskUpdate: 'taskUpdate',
@@ -941,29 +964,24 @@ BX(function() {
 
 		updateActivityDateCellForTasks: function(taskIds, rowData, parameters)
 		{
-			rowData = rowData || {};
 			parameters = parameters || {};
 
 			var params = {
 				taskIds: taskIds,
-				data: {},
 				arParams: this.arParams
 			};
-			if (rowData)
-			{
-				Object.keys(rowData).forEach(function(rowId) {
-					params.data[rowId] = rowData[rowId];
-				});
-			}
 
-			this.query.run('this.prepareGridRowsForTasks', params).then(function(result) {
-				if (result.data)
+			BX.ajax.runComponentAction('bitrix:tasks.task.list', 'getGridRows', {
+				mode: 'class',
+				data: params
+			}).then(
+				function(response)
 				{
-					Object.keys(result.data).forEach(function(taskId) {
+					Object.keys(response.data).forEach(function(taskId) {
 						if (this.isRowExist(taskId))
 						{
 							var row = this.getRowById(taskId);
-							var rowData = result.data[taskId];
+							var rowData = response.data[taskId];
 
 							if (row.getCellById('ACTIVITY_DATE'))
 							{
@@ -978,9 +996,16 @@ BX(function() {
 							}
 						}
 					}.bind(this));
-				}
-			}.bind(this));
-			this.query.execute();
+				}.bind(this)
+			).catch(
+				function(response)
+				{
+					if (response.errors)
+					{
+						BX.Tasks.alert(response.errors);
+					}
+				}.bind(this)
+			);
 		},
 
 		onPullCommentAdd: function(data)
@@ -1075,30 +1100,43 @@ BX(function() {
 				arParams: this.arParams
 			};
 
-			this.query.run('this.getNearTasks', queryParams).then(function(result) {
-				if (result.data)
+			BX.ajax.runComponentAction('bitrix:tasks.task.list', 'getNearTasks', {
+				mode: 'class',
+				data: queryParams
+			}).then(
+				function(response)
 				{
-					var before = result.data.before;
-					var after = result.data.after;
+					if (response.data)
+					{
+						var before = response.data.before;
+						var after = response.data.after;
 
-					if ((before && this.isRowExist(before)) || (after && this.isRowExist(after)))
-					{
-						var params = {
-							before: before,
-							after: after
-						};
-						Object.keys(parameters).forEach(function(key) {
-							params[key] = parameters[key];
-						});
-						this.updateItem(taskId, taskData, params);
+						if ((before && this.isRowExist(before)) || (after && this.isRowExist(after)))
+						{
+							var params = {
+								before: before,
+								after: after
+							};
+							Object.keys(parameters).forEach(function(key) {
+								params[key] = parameters[key];
+							});
+							this.updateItem(taskId, taskData, params);
+						}
+						else
+						{
+							this.removeItem(taskId);
+						}
 					}
-					else
+				}.bind(this)
+			).catch(
+				function(response)
+				{
+					if (response.errors)
 					{
-						this.removeItem(taskId);
+						BX.Tasks.alert(response.errors);
 					}
-				}
-			}.bind(this));
-			this.query.execute();
+				}.bind(this)
+			);
 		},
 
 		checkComment: function(data)
@@ -1235,55 +1273,63 @@ BX(function() {
 		{
 			var params = {
 				taskIds: [rowId],
-				data: {},
 				arParams: this.arParams
 			};
-			if (rowData)
-			{
-				params.data[rowId] = rowData;
-			}
 
-			this.query.run('this.prepareGridRowsForTasks', params).then(function(result) {
-				if (result.data && result.data[rowId])
+			BX.ajax.runComponentAction('bitrix:tasks.task.list', 'getGridRows', {
+				mode: 'class',
+				data: params
+			}).then(
+				function(response)
 				{
-					var rowData = result.data[rowId];
-					var options = {
-						id: rowId,
-						columns: rowData.content,
-						actions: rowData.actions,
-						cellActions: rowData.cellActions,
-						counters: rowData.counters
-					};
-					var moveRows = this.getGridMoveRows(rowId, parameters);
-
-					if (moveRows.rowAfter)
+					if (response.data && response.data[rowId])
 					{
-						options.insertAfter = moveRows.rowAfter;
-					}
-					else if (moveRows.rowBefore)
-					{
-						options.insertBefore = moveRows.rowBefore;
-					}
-					else
-					{
-						options.append = true;
-					}
+						var rowData = response.data[rowId];
+						var options = {
+							id: rowId,
+							columns: rowData.content,
+							actions: rowData.actions,
+							cellActions: rowData.cellActions,
+							counters: rowData.counters
+						};
+						var moveRows = this.getGridMoveRows(rowId, parameters);
 
-					if (this.taskList.size > this.getPageNumber() * this.getPageSize())
-					{
-						var lastRowId = this.getLastRowId();
+						if (moveRows.rowAfter)
+						{
+							options.insertAfter = moveRows.rowAfter;
+						}
+						else if (moveRows.rowBefore)
+						{
+							options.insertBefore = moveRows.rowBefore;
+						}
+						else
+						{
+							options.append = true;
+						}
 
-						this.removeTaskListItem(lastRowId);
-						BX.remove(this.getRowNodeById(lastRowId));
-						this.showMoreButton();
+						if (this.taskList.size > this.getPageNumber() * this.getPageSize())
+						{
+							var lastRowId = this.getLastRowId();
+
+							this.removeTaskListItem(lastRowId);
+							BX.remove(this.getRowNodeById(lastRowId));
+							this.showMoreButton();
+						}
+
+						this.hideStub();
+						this.getRealtime().addRow(options);
+						this.colorPinnedRows();
 					}
-
-					this.hideStub();
-					this.getRealtime().addRow(options);
-					this.colorPinnedRows();
-				}
-			}.bind(this));
-			this.query.execute();
+				}.bind(this)
+			).catch(
+				function(response)
+				{
+					if (response.errors)
+					{
+						BX.Tasks.alert(response.errors);
+					}
+				}.bind(this)
+			);
 		},
 
 		updateGridRow: function(rowId, rowData, parameters)
@@ -1295,41 +1341,49 @@ BX(function() {
 
 			var params = {
 				taskIds: [rowId],
-				data: {},
 				arParams: Object.assign(this.arParams, parameters.arParams || {})
 			};
-			if (rowData)
-			{
-				params.data[rowId] = rowData;
-			}
 
-			this.query.run('this.prepareGridRowsForTasks', params).then(function(result) {
-				if (result.data && result.data[rowId])
+			BX.ajax.runComponentAction('bitrix:tasks.task.list', 'getGridRows', {
+				mode: 'class',
+				data: params
+			}).then(
+				function(response)
 				{
-					var rowData = result.data[rowId];
-					var row = this.getRowById(rowId);
-					row.setCellsContent(rowData.content);
-					row.setActions(rowData.actions);
-					row.setCellActions(rowData.cellActions);
-					row.setCounters(rowData.counters);
-
-					if (parameters.canMoveRow !== false)
+					if (response.data && response.data[rowId])
 					{
-						this.getGrid().getRows().reset();
+						var rowData = response.data[rowId];
+						var row = this.getRowById(rowId);
+						row.setCellsContent(rowData.content);
+						row.setActions(rowData.actions);
+						row.setCellActions(rowData.cellActions);
+						row.setCounters(rowData.counters);
 
-						var moveRows = this.getGridMoveRows(rowId, parameters);
-						this.moveRow(rowId, moveRows.rowAfter, moveRows.rowBefore);
+						if (parameters.canMoveRow !== false)
+						{
+							this.getGrid().getRows().reset();
+
+							var moveRows = this.getGridMoveRows(rowId, parameters);
+							this.moveRow(rowId, moveRows.rowAfter, moveRows.rowBefore);
+						}
+						this.highlightGridRow(rowId).then(function() {
+							this.colorPinnedRows();
+						}.bind(this));
+
+						this.getGrid().bindOnRowEvents();
+
+						BX.onCustomEvent('Tasks.Tasks.Grid:RowUpdate', {id: rowId});
 					}
-					this.highlightGridRow(rowId).then(function() {
-						this.colorPinnedRows();
-					}.bind(this));
-
-					this.getGrid().bindOnRowEvents();
-
-					BX.onCustomEvent('Tasks.Tasks.Grid:RowUpdate', {id: rowId});
-				}
-			}.bind(this));
-			this.query.execute();
+				}.bind(this)
+			).catch(
+				function(response)
+				{
+					if (response.errors)
+					{
+						BX.Tasks.alert(response.errors);
+					}
+				}.bind(this)
+			);
 		},
 
 		removeItem: function(id)
@@ -1778,8 +1832,9 @@ BX(function() {
 				this.error = true;
 			}
 			else if (
-				this.newGroup &&
-				(
+				this.newGroup
+				&& this.newGroup.id > 0
+				&& (
 					this.getRowProp(this.dragRow, "canEdit") === "false" ||
 					!this.newGroup.canCreateTasks
 				)
@@ -1821,7 +1876,7 @@ BX(function() {
 			var data = {
 				sourceId: sourceId,
 				targetId: targetId,
-				before: this.before,
+				before: this.before ? 1 : 0,
 				currentGroupId : this.currentGroupId
 			};
 
@@ -1836,24 +1891,25 @@ BX(function() {
 				data.newParentId = this.newParentId;
 			}
 
-			var query = new BX.Tasks.Util.Query();
-			query.run("task.sorting.move", { data: data }).then(function(/*BX.Tasks.Util.Query.Result*/ result)
-			{
-				if (!result.getErrors().isEmpty())
-				{
-					BX.Tasks.confirm(
-						result.getErrors().getMessages().join(" "),
-						function() {
-							BX.reload()
-						},
-						{
-							buttonSet: []
-						}
-					);
+			BX.ajax.runComponentAction('bitrix:tasks.task.list', 'sortTask', {
+				mode: 'class',
+				data: {
+					data: data
 				}
-			});
+			}).then(
+				function(response)
+				{
 
-			query.execute();
+				}.bind(this)
+			).catch(
+				function(response)
+				{
+					if (response.errors)
+					{
+						BX.Tasks.alert(response.errors);
+					}
+				}.bind(this)
+			);
 		},
 
 		getParentRow: function(row)

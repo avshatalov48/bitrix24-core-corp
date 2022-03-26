@@ -1,5 +1,9 @@
-<?
+<?php
+
 return [
-	'recipient',
-	'layout/postform'
+	'extensions' => [
+		'recipient',
+		'layout/postform',
+	],
+	'components' => [],
 ];

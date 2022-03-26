@@ -7,6 +7,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Catalog\Product\Price;
 use Bitrix\Crm\Product\Url;
 use Bitrix\Iblock\Url\AdminPage\BuilderManager;
+use Bitrix\Catalog;
 
 Loc::loadMessages(__FILE__);
 
@@ -117,11 +118,11 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 			$this->arParams['BUILDER_CONTEXT'] = '';
 		}
 		if (
-			$this->arParams['BUILDER_CONTEXT'] != Url\ShopBuilder::TYPE_ID
-			&& $this->arParams['BUILDER_CONTEXT'] != Url\ProductBuilder::TYPE_ID
+			$this->arParams['BUILDER_CONTEXT'] !== Catalog\Url\ShopBuilder::TYPE_ID
+			&& $this->arParams['BUILDER_CONTEXT'] !== Url\ProductBuilder::TYPE_ID
 		)
 		{
-			$this->arParams['BUILDER_CONTEXT'] = Url\ShopBuilder::TYPE_ID;
+			$this->arParams['BUILDER_CONTEXT'] = Catalog\Url\ShopBuilder::TYPE_ID;
 		}
 
 		$manager = BuilderManager::getInstance();

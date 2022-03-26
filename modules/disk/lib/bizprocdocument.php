@@ -84,7 +84,10 @@ class BizProcDocument
 		{
 			return '';
 		}
-		return Driver::getInstance()->getUrlManager()->getPathFileDetail($file);
+
+		$urlManager = Driver::getInstance()->getUrlManager();
+
+		return $urlManager->encodeUrn($urlManager->getPathFileDetail($file));
 	}
 
 	protected static function getFieldNameForUfField(array $userFieldData)

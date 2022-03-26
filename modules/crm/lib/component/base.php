@@ -13,6 +13,8 @@ use Bitrix\Main\Web\Uri;
 
 abstract class Base extends \CBitrixComponent implements Errorable
 {
+	public const TOOLBAR_SETTINGS_BUTTON_ID = 'crm-toolbar-settings-button';
+
 	/** @var ErrorCollection */
 	protected $errorCollection;
 	/** @var \Bitrix\Crm\Service\UserPermissions */
@@ -69,7 +71,7 @@ abstract class Base extends \CBitrixComponent implements Errorable
 		return ($this->request->get('IFRAME') === 'Y');
 	}
 
-	protected function getApplication(): \CAllMain
+	protected function getApplication(): \CMain
 	{
 		global $APPLICATION;
 		return $APPLICATION;
@@ -168,6 +170,7 @@ abstract class Base extends \CBitrixComponent implements Errorable
 			'filter' => [], //filter options
 			'views' => [],
 			'isWithFavoriteStar' => false,
+			'spotlight' => null,
 		];
 	}
 

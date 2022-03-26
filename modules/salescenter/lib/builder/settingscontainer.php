@@ -7,6 +7,7 @@ class SettingsContainer extends Order\Builder\SettingsContainer
 {
 	public const BUILDER_SCENARIO_SHIPMENT = 'shipment';
 	public const BUILDER_SCENARIO_PAYMENT = 'payment';
+	public const BUILDER_SCENARIO_RESERVATION = 'reservation';
 
 	protected function getDefaultSettings(): array
 	{

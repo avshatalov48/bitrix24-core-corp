@@ -7,6 +7,7 @@ class BlogPost
 {
 	static delete(params)
 	{
+		const context = (Type.isStringFilled(params.context) ? params.context : 'list');
 		const postId = (!Type.isUndefined(params.postId) ? parseInt(params.postId) : 0);
 		if (postId <= 0)
 		{
@@ -59,9 +60,12 @@ class BlogPost
 						}
 
 						BXMobileApp.onCustomEvent('onBlogPostDelete', {}, true, true);
-						app.closeController({
-							drop: true,
-						});
+						if (context === 'detail')
+						{
+							app.closeController({
+								drop: true,
+							});
+						}
 					},
 					callback_failure: () => {
 						app.hidePopupLoader();

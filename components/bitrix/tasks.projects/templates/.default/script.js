@@ -597,6 +597,102 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return MembersPopup;
 	}();
 
+	var _templateObject$1, _templateObject2$1, _templateObject3$1, _templateObject4$1, _templateObject5$1, _templateObject6$1, _templateObject7$1, _templateObject8$1, _templateObject9$1, _templateObject10$1, _templateObject11;
+	var ScrumMembersPopup = /*#__PURE__*/function (_MembersPopup) {
+	  babelHelpers.inherits(ScrumMembersPopup, _MembersPopup);
+
+	  function ScrumMembersPopup() {
+	    babelHelpers.classCallCheck(this, ScrumMembersPopup);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ScrumMembersPopup).apply(this, arguments));
+	  }
+
+	  babelHelpers.createClass(ScrumMembersPopup, [{
+	    key: "renderContainer",
+	    value: function renderContainer() {
+	      return main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span class=\"tasks-projects-members-popup-container\">\n\t\t\t\t<span class=\"tasks-projects-members-popup-head\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</span>\n\t\t\t\t<span class=\"tasks-projects-members-popup-body\">\n\t\t\t\t\t<div class=\"tasks-projects-members-popup-content\">\n\t\t\t\t\t\t<div class=\"tasks-projects-members-popup-content-box\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</span>\n\t\t\t</span>\n\t\t"])), this.popupData.all.tab, this.popupData.scrumTeam.tab, this.popupData.members.tab, this.getCurrentPopupData().innerContainer);
+	    }
+	  }, {
+	    key: "resetPopupData",
+	    value: function resetPopupData() {
+	      this.popupData = {
+	        all: {
+	          currentPage: 1,
+	          renderedUsers: [],
+	          tab: main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<span\n\t\t\t\t\t\tclass=\"tasks-projects-members-popup-head-item\"\n\t\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<span class=\"tasks-projects-members-popup-head-text\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</span>\n\t\t\t\t"])), this.changeType.bind(this, 'all'), main_core.Loc.getMessage('TASKS_PROJECTS_MEMBERS_POPUP_TITLE_ALL')),
+	          innerContainer: main_core.Tag.render(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-projects-members-popup-inner\"></div>"])))
+	        },
+	        scrumTeam: {
+	          currentPage: 1,
+	          renderedUsers: [],
+	          tab: main_core.Tag.render(_templateObject4$1 || (_templateObject4$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<span\n\t\t\t\t\t\tclass=\"tasks-projects-members-popup-head-item\"\n\t\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<span class=\"tasks-projects-members-popup-head-text\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</span>\n\t\t\t\t"])), this.changeType.bind(this, 'scrumTeam'), main_core.Loc.getMessage('TASKS_PROJECTS_MEMBERS_POPUP_TITLE_SCRUM_TEAM')),
+	          innerContainer: main_core.Tag.render(_templateObject5$1 || (_templateObject5$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-projects-members-popup-inner\"></div>"])))
+	        },
+	        members: {
+	          currentPage: 1,
+	          renderedUsers: [],
+	          tab: main_core.Tag.render(_templateObject6$1 || (_templateObject6$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<span\n\t\t\t\t\t\tclass=\"tasks-projects-members-popup-head-item\"\n\t\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<span class=\"tasks-projects-members-popup-head-text\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</span>\n\t\t\t\t"])), this.changeType.bind(this, 'members'), main_core.Loc.getMessage('TASKS_PROJECTS_MEMBERS_POPUP_TITLE_SCRUM_MEMBERS')),
+	          innerContainer: main_core.Tag.render(_templateObject7$1 || (_templateObject7$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-projects-members-popup-inner\"></div>"])))
+	        }
+	      };
+	    }
+	  }, {
+	    key: "renderUsers",
+	    value: function renderUsers(users) {
+	      var _this = this;
+
+	      if (this.currentType === 'scrumTeam') {
+	        this.renderLabels(users);
+	        Object.values(users).forEach(function (user) {
+	          if (_this.getCurrentPopupData().renderedUsers.indexOf(user.ID) >= 0 && user.ROLE !== 'M') {
+	            return;
+	          }
+
+	          _this.getCurrentPopupData().renderedUsers.push(user.ID);
+
+	          var containersMap = new Map();
+	          containersMap.set('A', 'tasks-scrum-members-popup-owner-container');
+	          containersMap.set('M', 'tasks-scrum-members-popup-master-container');
+	          containersMap.set('E', 'tasks-scrum-members-popup-team-container');
+
+	          if (main_core.Type.isUndefined(containersMap.get(user.ROLE))) {
+	            return;
+	          }
+
+	          _this.getCurrentPopupData().innerContainer.querySelector('.' + containersMap.get(user.ROLE)).appendChild(main_core.Tag.render(_templateObject8$1 || (_templateObject8$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<a class=\"tasks-projects-members-popup-item\" href=\"", "\" target=\"_blank\">\n\t\t\t\t\t\t\t\t<span class=\"tasks-projects-members-popup-avatar-new\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t<span class=\"tasks-projects-members-popup-avatar-status-icon\"></span>\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t<span class=\"tasks-projects-members-popup-name\">", "</span>\n\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t"])), user['HREF'], _this.getAvatar(user), user['FORMATTED_NAME']));
+	        });
+	      } else {
+	        babelHelpers.get(babelHelpers.getPrototypeOf(ScrumMembersPopup.prototype), "renderUsers", this).call(this, users);
+	      }
+	    }
+	  }, {
+	    key: "renderLabels",
+	    value: function renderLabels(users) {
+	      var hasOwner = users.find(function (user) {
+	        return user.ROLE === 'A';
+	      });
+	      var hasMaster = users.find(function (user) {
+	        return user.ROLE === 'M';
+	      });
+	      var hasTeam = users.find(function (user) {
+	        return user.ROLE === 'E';
+	      });
+
+	      if (hasOwner) {
+	        this.getCurrentPopupData().innerContainer.appendChild(main_core.Tag.render(_templateObject9$1 || (_templateObject9$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"tasks-scrum-members-popup-owner-container\">\n\t\t\t\t\t\t<span class=\"tasks-scrum-members-popup-label\">\n\t\t\t\t\t\t\t<span class=\"tasks-scrum-members-popup-label-text\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t"])), main_core.Loc.getMessage('TASKS_PROJECTS_MEMBERS_POPUP_LABEL_SCRUM_OWNER')));
+	      }
+
+	      if (hasMaster) {
+	        this.getCurrentPopupData().innerContainer.appendChild(main_core.Tag.render(_templateObject10$1 || (_templateObject10$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"tasks-scrum-members-popup-master-container\">\n\t\t\t\t\t\t<span class=\"tasks-scrum-members-popup-label\">\n\t\t\t\t\t\t\t<span class=\"tasks-scrum-members-popup-label-text\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t"])), main_core.Loc.getMessage('TASKS_PROJECTS_MEMBERS_POPUP_LABEL_SCRUM_MASTER')));
+	      }
+
+	      if (hasTeam) {
+	        this.getCurrentPopupData().innerContainer.appendChild(main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"tasks-scrum-members-popup-team-container\">\n\t\t\t\t\t\t<span class=\"tasks-scrum-members-popup-label\">\n\t\t\t\t\t\t\t<span class=\"tasks-scrum-members-popup-label-text\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t"])), main_core.Loc.getMessage('TASKS_PROJECTS_MEMBERS_POPUP_LABEL_SCRUM_TEAM')));
+	      }
+	    }
+	  }]);
+	  return ScrumMembersPopup;
+	}(MembersPopup);
+
 	var Grid = /*#__PURE__*/function () {
 	  babelHelpers.createClass(Grid, null, [{
 	    key: "classes",
@@ -977,7 +1073,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        project_user_option_changed: this.onProjectUserOptionChanged.bind(this),
 	        project_counter: this.onProjectCounter.bind(this),
 	        project_read_all: this.onProjectCommentsReadAll.bind(this),
-	        comment_read_all: this.onProjectCommentsReadAll.bind(this)
+	        comment_read_all: this.onProjectCommentsReadAll.bind(this),
+	        scrum_read_all: this.onProjectCommentsReadAll.bind(this)
 	      };
 	    }
 	  }, {
@@ -1168,6 +1265,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onCheckExistenceSuccess",
 	    value: function onCheckExistenceSuccess(response, groupId, params) {
+	      if (main_core.Type.isUndefined(response.data[groupId])) {
+	        return;
+	      }
+
 	      if (response.data[groupId] === false) {
 	        this.removeRow(groupId);
 	        return;
@@ -1210,7 +1311,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        },
 	        signedParameters: this.signedParameters
 	      }).then(function (response) {
-	        return _this9.grid.addRow(rowId, response.data[rowId], params);
+	        if (!main_core.Type.isUndefined(response.data[rowId])) {
+	          _this9.grid.addRow(rowId, response.data[rowId], params);
+	        }
 	      });
 	    }
 	  }, {
@@ -1230,7 +1333,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        },
 	        signedParameters: this.signedParameters
 	      }).then(function (response) {
-	        return _this10.grid.updateRow(rowId, response.data[rowId], params);
+	        if (!main_core.Type.isUndefined(response.data[rowId])) {
+	          _this10.grid.updateRow(rowId, response.data[rowId], params);
+	        }
 	      });
 	    }
 	  }, {
@@ -1253,6 +1358,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        },
 	        signedParameters: this.signedParameters
 	      }).then(function (response) {
+	        if (response.data === null) {
+	          return;
+	        }
+
 	        var _response$data = response.data,
 	            projectBefore = _response$data.projectBefore,
 	            projectAfter = _response$data.projectAfter;
@@ -1420,6 +1529,123 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return FirstProjectCreationTourGuide;
 	}();
 
+	var FirstScrumCreationTourGuide = /*#__PURE__*/function () {
+	  function FirstScrumCreationTourGuide(options) {
+	    babelHelpers.classCallCheck(this, FirstScrumCreationTourGuide);
+	    this.grid = new Grid(options);
+	    this.signedParameters = options.signedParameters;
+	    this.popupData = options.tours.firstScrumCreation.popupData;
+	    this.projectAddButton = BX('projectAddButton');
+	    this.guide = new ui_tour.Guide({
+	      steps: [{
+	        target: this.projectAddButton,
+	        title: this.popupData[0].title,
+	        text: this.popupData[0].text,
+	        article: null
+	      }],
+	      onEvents: true
+	    });
+	    this.bindEvents();
+	  }
+
+	  babelHelpers.createClass(FirstScrumCreationTourGuide, [{
+	    key: "bindEvents",
+	    value: function bindEvents() {
+	      main_core_events.EventEmitter.subscribe('UI.Tour.Guide:onFinish', this.onGuideFinish.bind(this));
+	      main_core_events.EventEmitter.subscribe('SidePanel.Slider:onMessage', this.onProjectSliderMessage.bind(this));
+	    }
+	  }, {
+	    key: "onGuideFinish",
+	    value: function onGuideFinish(event) {
+	      var _event$getData = event.getData(),
+	          guide = _event$getData.guide;
+
+	      if (guide === this.guide) {
+	        this.projectAddButton.href = main_core.Uri.removeParam(this.projectAddButton.href, ['PROJECT_OPTIONS']);
+	      }
+	    }
+	  }, {
+	    key: "onProjectSliderMessage",
+	    value: function onProjectSliderMessage(event) {
+	      var _event$getData2 = event.getData(),
+	          _event$getData3 = babelHelpers.slicedToArray(_event$getData2, 1),
+	          sliderEvent = _event$getData3[0];
+
+	      if (sliderEvent.getEventId() !== 'sonetGroupEvent') {
+	        return;
+	      }
+
+	      var sliderEventData = sliderEvent.getData();
+
+	      if (sliderEventData.code !== 'afterCreate' || sliderEventData.data.projectOptions.tourId !== this.guide.getId()) {
+	        return;
+	      }
+
+	      var projectId = sliderEventData.data.group.ID;
+
+	      if (this.grid.isRowExist(projectId)) {
+	        this.showFinalStep(projectId);
+	      } else {
+	        main_core_events.EventEmitter.subscribe('Tasks.Projects.Grid:RowAdd', this.onProjectRowAdded.bind(this, projectId));
+	      }
+	    }
+	  }, {
+	    key: "onProjectRowAdded",
+	    value: function onProjectRowAdded(projectId, event) {
+	      var _event$getData4 = event.getData(),
+	          id = _event$getData4.id;
+
+	      if (Number(id) === Number(projectId)) {
+	        this.showFinalStep(projectId);
+	      }
+	    }
+	  }, {
+	    key: "showFinalStep",
+	    value: function showFinalStep(projectId) {
+	      var _this = this;
+
+	      var target = this.grid.getRowNodeById(projectId).querySelector('.tasks-projects-text');
+	      this.guide.steps.push(new ui_tour.Step({
+	        target: target,
+	        cursorMode: true,
+	        targetEvent: function targetEvent() {
+	          BX.SidePanel.Instance.open(target.href);
+	          setTimeout(function () {
+	            return _this.guide.close();
+	          }, 1000);
+	        }
+	      }));
+	      this.finish();
+	      this.showNextStep();
+	    }
+	  }, {
+	    key: "start",
+	    value: function start() {
+	      this.projectAddButton.href = main_core.Uri.addParam(this.projectAddButton.href, {
+	        PROJECT_OPTIONS: {
+	          tourId: this.guide.getId()
+	        }
+	      });
+	      this.showNextStep();
+	    }
+	  }, {
+	    key: "finish",
+	    value: function finish() {
+	      BX.ajax.runAction('tasks.tourguide.firstscrumcreation.finish');
+	    }
+	  }, {
+	    key: "showNextStep",
+	    value: function showNextStep() {
+	      var _this2 = this;
+
+	      setTimeout(function () {
+	        return _this2.guide.showNextStep();
+	      }, 1000);
+	    }
+	  }]);
+	  return FirstScrumCreationTourGuide;
+	}();
+
 	var TourGuideController = /*#__PURE__*/function () {
 	  function TourGuideController(options) {
 	    babelHelpers.classCallCheck(this, TourGuideController);
@@ -1430,9 +1656,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  babelHelpers.createClass(TourGuideController, [{
 	    key: "initGuides",
 	    value: function initGuides(options) {
-	      if (this.tours.firstProjectCreation.show) {
+	      if (this.tours.firstProjectCreation && this.tours.firstProjectCreation.show) {
 	        this.firstProjectCreationTourGuide = new FirstProjectCreationTourGuide(options);
 	        this.firstProjectCreationTourGuide.start();
+	      }
+
+	      if (this.tours.firstScrumCreation && this.tours.firstScrumCreation.show) {
+	        this.firstScrumCreationTourGuide = new FirstScrumCreationTourGuide(options);
+	        this.firstScrumCreationTourGuide.start();
 	      }
 	    }
 	  }]);
@@ -1443,6 +1674,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  function Controller(options) {
 	    babelHelpers.classCallCheck(this, Controller);
 	    this.membersPopup = new MembersPopup(options);
+	    this.scrumMembersPopup = new ScrumMembersPopup(options);
 	    this.filter = new Filter(options);
 	    this.tourGuideController = new TourGuideController(options);
 	    options.filter = this.filter;
@@ -1461,6 +1693,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "getMembersPopup",
 	    value: function getMembersPopup() {
 	      return this.membersPopup;
+	    }
+	  }, {
+	    key: "getScrumMembersPopup",
+	    value: function getScrumMembersPopup() {
+	      return this.scrumMembersPopup;
 	    }
 	  }, {
 	    key: "getFilter",

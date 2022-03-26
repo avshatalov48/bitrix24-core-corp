@@ -1012,6 +1012,9 @@ BX.namespace('Tasks.Component');
 		{
 			if(this.query === null)
 			{
+				/**
+				 * Deprecated since tasks 22.500.0
+				 */
 				this.query = new BX.Tasks.Util.Query();
 			}
 

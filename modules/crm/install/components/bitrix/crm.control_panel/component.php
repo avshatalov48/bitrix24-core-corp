@@ -13,9 +13,11 @@ use Bitrix\Crm\Settings\LeadSettings;
 use Bitrix\Crm\Settings\OrderSettings;
 use Bitrix\Crm\Settings\QuoteSettings;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\SalesCenter\Driver;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -70,16 +72,17 @@ $arParams['PATH_TO_QUOTE_KANBAN'] = (isset($arParams['PATH_TO_QUOTE_KANBAN']) &&
 $arParams['PATH_TO_QUOTE_DETAILS'] = CrmCheckPath('PATH_TO_QUOTE_DETAILS', $arParams['PATH_TO_QUOTE_DETAILS'], '#SITE_DIR#crm/quote/details/#quote_id#/');
 
 $arParams['PATH_TO_INVOICE_LIST'] = CrmCheckPath('PATH_TO_INVOICE_LIST', isset($arParams['PATH_TO_INVOICE_LIST']) ? $arParams['PATH_TO_INVOICE_LIST'] : '', '#SITE_DIR#crm/invoice/list/');
-$arParams['PATH_TO_INVOICE_RECUR'] = CrmCheckPath('PATH_TO_INVOICE_RECUR', isset($arParams['PATH_TO_INVOICE_RECUR']) ? $arParams['PATH_TO_INVOICE_RECUR'] : '', '#SITE_DIR#crm/invoice/recur/');
 $arParams['PATH_TO_INVOICE_EDIT'] = (isset($arParams['PATH_TO_INVOICE_EDIT']) && $arParams['PATH_TO_INVOICE_EDIT'] !== '') ? $arParams['PATH_TO_INVOICE_EDIT'] : '#SITE_DIR#crm/invoice/edit/#invoice_id#/';
 $arParams['PATH_TO_INVOICE_KANBAN'] = (isset($arParams['PATH_TO_INVOICE_KANBAN']) && $arParams['PATH_TO_INVOICE_KANBAN'] !== '') ? $arParams['PATH_TO_INVOICE_KANBAN'] : '#SITE_DIR#crm/invoice/kanban/';
 $arParams['PATH_TO_REPORT_LIST'] = (isset($arParams['PATH_TO_REPORT_LIST']) && $arParams['PATH_TO_REPORT_LIST'] !== '') ? $arParams['PATH_TO_REPORT_LIST'] : '#SITE_DIR#crm/reports/report/';
 $arParams['PATH_TO_DEAL_FUNNEL'] = (isset($arParams['PATH_TO_DEAL_FUNNEL']) && $arParams['PATH_TO_DEAL_FUNNEL'] !== '') ? $arParams['PATH_TO_DEAL_FUNNEL'] : '#SITE_DIR#crm/reports/';
 $arParams['PATH_TO_EVENT_LIST'] = (isset($arParams['PATH_TO_EVENT_LIST']) && $arParams['PATH_TO_EVENT_LIST'] !== '') ? $arParams['PATH_TO_EVENT_LIST'] : '#SITE_DIR#crm/events/';
 $arParams['PATH_TO_PRODUCT_LIST'] = (isset($arParams['PATH_TO_PRODUCT_LIST']) && $arParams['PATH_TO_PRODUCT_LIST'] !== '') ? $arParams['PATH_TO_PRODUCT_LIST'] : '#SITE_DIR#crm/product/index.php';
-$arParams['PATH_TO_PRODUCT_DETAILS'] = (isset($arParams['PATH_TO_PRODUCT_DETAILS']) && $arParams['PATH_TO_PRODUCT_DETAILS'] !== '') ? $arParams['PATH_TO_PRODUCT_DETAILS'] : '#SITE_DIR#shop/catalog/#catalog_id#/product/#product_id#/';
+$arParams['PATH_TO_PRODUCT_DETAILS'] = (isset($arParams['PATH_TO_PRODUCT_DETAILS']) && $arParams['PATH_TO_PRODUCT_DETAILS'] !== '') ? $arParams['PATH_TO_PRODUCT_DETAILS'] : '#SITE_DIR#crm/catalog/#catalog_id#/product/#product_id#/';
 $arParams['PATH_TO_CATALOG'] = (isset($arParams['PATH_TO_CATALOG']) && $arParams['PATH_TO_CATALOG'] !== '') ? $arParams['PATH_TO_CATALOG'] : '#SITE_DIR#crm/catalog/';
 $arParams['PATH_TO_SETTINGS'] = (isset($arParams['PATH_TO_SETTINGS']) && $arParams['PATH_TO_SETTINGS'] !== '') ? $arParams['PATH_TO_SETTINGS'] : '#SITE_DIR#crm/configs/';
+$arParams['PATH_TO_PERMISSIONS'] = (isset($arParams['PATH_TO_PERMISSIONS']) && $arParams['PATH_TO_PERMISSIONS'] !== '') ? $arParams['PATH_TO_PERMISSIONS'] : '#SITE_DIR#crm/configs/perms/';
+$arParams['PATH_TO_MY_COMPANY'] = (isset($arParams['PATH_TO_MY_COMPANY']) && $arParams['PATH_TO_MY_COMPANY'] !== '') ? $arParams['PATH_TO_MY_COMPANY'] : '#SITE_DIR#crm/configs/mycompany/';
 $arParams['PATH_TO_SEARCH_PAGE'] = (isset($arParams['PATH_TO_SEARCH_PAGE']) && $arParams['PATH_TO_SEARCH_PAGE'] !== '') ? $arParams['PATH_TO_SEARCH_PAGE'] : '#SITE_DIR#search/index.php?where=crm';
 $arParams['PATH_TO_PRODUCT_MARKETPLACE'] = (isset($arParams['PATH_TO_PRODUCT_MARKETPLACE']) && $arParams['PATH_TO_PRODUCT_MARKETPLACE'] !== '') ? $arParams['PATH_TO_PRODUCT_MARKETPLACE'] : '#SITE_DIR#marketplace/category/crm/';
 $arParams['PATH_TO_WEBFORM'] = (isset($arParams['PATH_TO_WEBFORM']) && $arParams['PATH_TO_WEBFORM'] !== '') ? $arParams['PATH_TO_WEBFORM'] : '#SITE_DIR#crm/webform/';
@@ -243,9 +246,8 @@ if($isAdmin || CCrmLead::CheckReadPermission(0, $userPermissions))
 	);
 	if (!RestrictionManager::getLeadsRestriction()->hasPermission())
 	{
-		$leadItem['CLASS'] = 'crm-tariff-lock';
-		$leadItem['CLASS_SUBMENU_ITEM'] = 'crm-tariff-lock';
 		unset($leadItem['URL'], $leadItem['COUNTER'], $leadItem['COUNTER_ID']);
+		$leadItem['IS_LOCKED'] = true;
 		$leadItem['ON_CLICK'] = RestrictionManager::getLeadsRestriction()->prepareInfoHelperScript();
 	}
 }
@@ -398,8 +400,49 @@ if($isAdmin || CCrmCompany::CheckReadPermission(0, $userPermissions))
 	);
 }
 
+$invoiceEntityTypeId = \CCrmOwnerType::SmartInvoice;
+if (InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
+{
+	$invoiceEntityTypeId = \CCrmOwnerType::Invoice;
+}
 
-if (\Bitrix\Main\Loader::includeModule('report') && \Bitrix\Report\VisualConstructor\Helper\Analytic::isEnable())
+if (
+	$isAdmin
+	|| Crm\Service\Container::getInstance()->getUserPermissions()->canReadType($invoiceEntityTypeId)
+)
+{
+	$router = Crm\Service\Container::getInstance()->getRouter();
+
+	$actions = [];
+	if (Crm\Security\EntityAuthorization::checkCreatePermission($invoiceEntityTypeId))
+	{
+		$actions[] = [
+			'ID' => 'CREATE',
+			'URL' =>  $router->getItemDetailUrl($invoiceEntityTypeId),
+		];
+	}
+
+	$entityName = \CCrmOwnerType::ResolveName($invoiceEntityTypeId);
+	$invoiceItem = [
+		'ID' => $entityName,
+		'MENU_ID' => 'menu_crm_' . mb_strtolower($entityName),
+		'NAME' => \CCrmOwnerType::GetCategoryCaption($invoiceEntityTypeId),
+		'URL' => $router->getItemListUrlInCurrentView($invoiceEntityTypeId),
+		'ICON' => 'invoice',
+		// if we pass an empty array create button still will be displayed
+		'ACTIONS' => empty($actions) ? null : $actions,
+	];
+	if (!RestrictionManager::getInvoicesRestriction()->hasPermission())
+	{
+		unset($invoiceItem['URL']);
+		$invoiceItem['IS_LOCKED'] = true;
+		$invoiceItem['ON_CLICK'] = RestrictionManager::getInvoicesRestriction()->prepareInfoHelperScript();
+	}
+
+	$stdItems[\CCrmOwnerType::ResolveName($invoiceEntityTypeId)] = $invoiceItem;
+}
+
+if (Loader::includeModule('report') && \Bitrix\Report\VisualConstructor\Helper\Analytic::isEnable())
 {
 	$stdItems['ANALYTICS'] = [
 		'ID' => 'ANALYTICS',
@@ -412,7 +455,7 @@ if (\Bitrix\Main\Loader::includeModule('report') && \Bitrix\Report\VisualConstru
 
 if ($isAdmin || $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ'))
 {
-	if (\Bitrix\Main\Loader::includeModule('catalog') && \Bitrix\Catalog\Config\State::isProductCardSliderEnabled())
+	if (Loader::includeModule('catalog') && \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isFullCatalogEnabled())
 	{
 		$actions = [];
 
@@ -447,7 +490,7 @@ if ($isAdmin || $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ')
 			'ID' => 'CATALOG',
 			'MENU_ID' => 'menu_crm_catalog',
 			'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CATALOGUE_2'),
-			'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_CATALOGUE_2'),
+			/* NEW MENU 'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CATALOGUE_GOODS'),*/
 			'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CATALOG']),
 			'ICON' => 'catalog',
 		);
@@ -496,46 +539,52 @@ if (
 	);
 }
 
+if (
+	\Bitrix\Main\Loader::includeModule('catalog')
+	&& \Bitrix\Main\Engine\CurrentUser::get()->canDoOperation('catalog_read')
+)
+{
+	\Bitrix\Main\UI\Extension::load([
+		'admin_interface',
+		'sidepanel'
+	]);
+	$stdItems['STORE_DOCUMENTS'] = [
+		'ID' => 'STORE_DOCUMENTS',
+		'MENU_ID' => 'menu_crm_store_docs',
+		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_STORE_DOCS'),
+		'TITLE' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_STORE_DOCS'),
+		'URL' => SITE_DIR."shop/documents/",
+		'ON_CLICK' => 'event.preventDefault();BX.SidePanel.Instance.open("/shop/documents/?inventoryManagementSource=crm", {cacheable: false, customLeftBoundary: 0,});',
+	];
+}
+
 $stdItems['SETTINGS'] = array(
 	'ID' => 'SETTINGS',
 	'MENU_ID' => 'menu_crm_configs',
 	'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_SETTINGS'),
 	'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_SETTINGS'), //title
+	/* NEW MENU
+	'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_CONFIGS'),
+	'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_CONFIGS'), //title*/
 	'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_SETTINGS']),
 	'ICON' => 'settings'
 );
 
-if($isAdmin || !$userPermissions->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'READ'))
+/* NEW MENU
+if ($isAdmin || $userPermissions->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
 {
-	$stdItems['INVOICE'] = array(
-		'ID' => 'INVOICE',
-		'MENU_ID' => 'menu_crm_invoice',
-		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_INVOICE'),
-		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_INVOICE_TITLE'),
-		'URL' => CComponentEngine::MakePathFromTemplate(
-			isset($arParams['PATH_TO_INVOICE_INDEX']) && $arParams['PATH_TO_INVOICE_INDEX'] !== ''
-				? $arParams['PATH_TO_INVOICE_INDEX'] : $arParams['PATH_TO_INVOICE_LIST']
-		),
-		'ICON' => 'invoice',
-		'ACTIONS' => array(
-			array(
-				'ID' => 'CREATE',
-				'URL' =>  CComponentEngine::MakePathFromTemplate(
-					$arParams['PATH_TO_INVOICE_EDIT'],
-					array('invoice_id' => 0)
-				)
-			)
-		),
-		'IS_DISABLED' => true
-	);
-	if (!RestrictionManager::getInvoicesRestriction()->hasPermission())
-	{
-		$stdItems['INVOICE']['CLASS'] = 'crm-tariff-lock';
-		$stdItems['INVOICE']['CLASS_SUBMENU_ITEM'] = 'crm-tariff-lock';
-		unset($stdItems['INVOICE']['URL']);
-		$stdItems['INVOICE']['ON_CLICK'] = RestrictionManager::getInvoicesRestriction()->prepareInfoHelperScript();
-	}
-}
+	$stdItems['MY_COMPANY'] = [
+		'ID' => 'MY_COMPANY',
+		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_MY_COMPANY'),
+		'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_MY_COMPANY']),
+	];
+
+	$stdItems['PERMISSIONS'] = [
+		'ID' => 'PERMISSIONS',
+		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_PERMISSIONS'),
+		'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_PERMISSIONS']),
+	];
+}*/
 
 if($isAdmin || CCrmQuote::CheckReadPermission(0, $userPermissions))
 {
@@ -575,9 +624,8 @@ if($isAdmin || CCrmQuote::CheckReadPermission(0, $userPermissions))
 	);
 	if (!RestrictionManager::getQuotesRestriction()->hasPermission())
 	{
-		$stdItems['QUOTE']['CLASS'] = 'crm-tariff-lock';
-		$stdItems['QUOTE']['CLASS_SUBMENU_ITEM'] = 'crm-tariff-lock';
 		unset($stdItems['QUOTE']['URL']);
+		$stdItems['QUOTE']['IS_LOCKED'] = true;
 		$stdItems['QUOTE']['ON_CLICK'] = RestrictionManager::getQuotesRestriction()->prepareInfoHelperScript();
 	}
 }
@@ -619,14 +667,13 @@ if(IsModuleInstalled('report'))
 	);
 	if (!RestrictionManager::getReportRestriction()->hasPermission())
 	{
-		$stdItems['REPORT']['CLASS'] = 'crm-tariff-lock';
-		$stdItems['REPORT']['CLASS_SUBMENU_ITEM'] = 'crm-tariff-lock';
 		unset($stdItems['REPORT']['URL']);
+		$stdItems['REPORT']['IS_LOCKED'] = true;
 		$stdItems['REPORT']['ON_CLICK'] = RestrictionManager::getReportRestriction()->prepareInfoHelperScript();
 	}
 }
 
-$stdItems['EVENT'] = array(
+$eventItem = array(
 	'ID' => 'EVENT',
 	'MENU_ID' => 'menu_crm_event',
 	'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_EVENT_2'),
@@ -635,6 +682,15 @@ $stdItems['EVENT'] = array(
 	'ICON' => 'event',
 	'IS_DISABLED' => true
 );
+if (!RestrictionManager::isHistoryViewPermitted())
+{
+	unset($eventItem['URL']);
+	$eventItem['IS_LOCKED'] = true;
+	$eventItem['ON_CLICK'] = RestrictionManager::getHistoryViewRestriction()->prepareInfoHelperScript();
+}
+
+$stdItems['EVENT'] = $eventItem;
+unset($eventItem);
 
 if($isAdmin || !$userPermissions->HavePerm('WEBFORM', BX_CRM_PERM_NONE, 'READ'))
 {
@@ -707,11 +763,32 @@ if(ModuleManager::isModuleInstalled('bitrix24'))
 		'ID' => 'MARKETPLACE',
 		'MENU_ID' => 'menu_crm_marketplace',
 		'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_MARKETPLACE_2'),
-		'TITLE' => GetMessage('CRM_CTRL_PANEL_ITEM_MARKETPLACE_2'),
+		/* NEW MENU 'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_MARKETPLACE'),*/
 		'URL' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_PRODUCT_MARKETPLACE']),
 		'ICON' => 'apps',
 		'IS_DISABLED' => true
 	);
+
+	/* NEW MENU
+	if (Loader::includeModule('rest'))
+	{
+		$stdItems['MARKETPLACE_CRM_MIGRATION'] = array(
+			'ID' => 'MARKETPLACE_CRM_MIGRATION',
+			'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_MARKETPLACE_CRM_MIGRATION'),
+			'URL' => \Bitrix\Rest\Marketplace\Url::getCategoryUrl('migration'),
+			'IS_DISABLED' => true,
+			'SLIDER_ONLY' => true,
+		);
+
+		$stdItems['MARKETPLACE_CRM_SOLUTIONS'] = array(
+			'ID' => 'MARKETPLACE_CRM_SOLUTIONS',
+			'NAME' => GetMessage('CRM_CTRL_PANEL_ITEM_MARKETPLACE_CRM_SOLUTIONS'),
+			'URL' => \Bitrix\Rest\Marketplace\Url::getConfigurationSectionUrl('vertical_crm'),
+			'IS_DISABLED' => true,
+			'SLIDER_ONLY' => true,
+		);
+	}
+	*/
 }
 
 $userPermissions = Crm\Service\Container::getInstance()->getUserPermissions();
@@ -722,8 +799,158 @@ if ($isAdmin || $userPermissions->canWriteConfig())
 		'MENU_ID' => 'dynamic_menu',
 		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_DYNAMIC_LIST'),
 		'URL' => Crm\Service\Container::getInstance()->getRouter()->getTypeListUrl(),
+		'SUB_ITEMS' => [],
 	];
 }
+
+/* NEW MENU
+if (Loader::includeModule('salescenter') && Driver::getInstance()->isEnabled())
+{
+	$stdItems['SALES_CENTER'] = [
+		'ID' => 'SALES_CENTER',
+		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_SALES_CENTER'),
+		'URL' => '/saleshub/',
+		'MENU_ID' => 'menu-sale-center',
+	];
+
+	$paymentPath = \CComponentEngine::makeComponentPath('bitrix:salescenter.crmstore');
+	$paymentPath = getLocalPath('components'.$paymentPath.'/slider.php');
+	$stdItems['SALES_CENTER_PAYMENT'] = [
+		'ID' => 'SALES_CENTER_PAYMENT',
+		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_SALES_CENTER_PAYMENT'),
+		'URL' => $paymentPath,
+		'SLIDER_ONLY' => true,
+	];
+
+	$deliveryPath = \CComponentEngine::makeComponentPath('bitrix:salescenter.delivery.panel');
+	$deliveryPath = getLocalPath('components'.$deliveryPath.'/slider.php');
+	$deliveryPath = new \Bitrix\Main\Web\Uri($deliveryPath);
+	$deliveryPath->addParams([
+		'analyticsLabel' => 'salescenterClickDeliveryTile',
+		'type' => 'main',
+		'mode' => 'main'
+	]);
+	$stdItems['SALES_CENTER_DELIVERY'] = [
+		'ID' => 'SALES_CENTER_DELIVERY',
+		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_SALES_CENTER_DELIVERY'),
+		'URL' => $deliveryPath,
+		'SLIDER_ONLY' => true,
+	];
+}
+
+if (Loader::includeModule('voximplant') && \Bitrix\Voximplant\Security\Helper::isMainMenuEnabled())
+{
+	$stdItems['TELEPHONY'] = [
+		'ID' => 'TELEPHONY',
+		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_TELEPHONY'),
+		'URL' => '/telephony/',
+		'MENU_ID' => 'menu_telephony',
+	];
+}
+
+$stdItems['CONTACT_CENTER'] = [
+	'ID' => 'CONTACT_CENTER',
+	'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_CONTACT_CENTER'),
+	'URL' => ModuleManager::isModuleInstalled('bitrix24') ? '/contact_center/' : SITE_DIR . 'services/contact_center/',
+	'MENU_ID' => 'menu_contact_center',
+];
+
+if (ModuleManager::isModuleInstalled('rest'))
+{
+	$stdItems['DEVOPS'] = [
+		'ID' => 'DEVOPS',
+		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_DEVOPS'),
+		'URL' => '/devops/',
+		'MENU_ID' => 'menu_devops',
+	];
+}
+
+if (\Bitrix\Crm\Tracking\Manager::isAccessible())
+{
+	$stdItems['CRM_TRACKING'] = [
+		'ID' => 'CRM_TRACKING',
+		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_CRM_TRACKING'),
+		'URL' => '/crm/tracking/',
+		'MENU_ID' => 'menu_crm_tracking',
+	];
+}
+
+if (Loader::includeModule('report') && \Bitrix\Report\VisualConstructor\Helper\Analytic::isEnable())
+{
+	\Bitrix\Main\UI\Extension::load('report.js.analytics');
+
+	if (ModuleManager::isModuleInstalled('sale'))
+	{
+		$stdItems['ANALYTICS_SALES_FUNNEL'] = [
+			'ID' => 'ANALYTICS_SALES_FUNNEL',
+			'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_ANALYTICS_SALES_FUNNEL'),
+			'URL' => '/report/analytics/?analyticBoardKey=crm_sales_funnel',
+		];
+	}
+
+	$stdItems['ANALYTICS_MANAGERS'] = [
+		'ID' => 'ANALYTICS_MANAGERS',
+		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_ANALYTICS_MANAGERS'),
+		'URL' => '/report/analytics/?analyticBoardKey=crm_managers_rating',
+	];
+
+	if (ModuleManager::isModuleInstalled('voximplant'))
+	{
+		$stdItems['ANALYTICS_CALLS'] = [
+			'ID' => 'ANALYTICS_CALLS',
+			'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_ANALYTICS_CALLS'),
+			'URL' => '/report/telephony/?analyticBoardKey=telephony_calls_dynamics',
+		];
+	}
+
+	if (ModuleManager::isModuleInstalled('imopenlines'))
+	{
+		$stdItems['ANALYTICS_DIALOGS'] = [
+			'ID' => 'ANALYTICS_DIALOGS',
+			'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_ANALYTICS_DIALOGS'),
+			'URL' =>
+				ModuleManager::isModuleInstalled('bitrix24')
+					? '/contact_center/dialog_statistics/'
+					: SITE_DIR . 'services/contact_center/dialog_statistics/'
+			,
+		];
+	}
+}
+
+if (Loader::includeModule('intranet') && CIntranetUtils::IsExternalMailAvailable())
+{
+	$stdItems['MAIL'] = [
+		'ID' => 'MAIL',
+		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_MAIL'),
+		'URL' => '/mail/',
+	];
+}
+
+$stdItems['MESSENGERS'] = [
+	'ID' => 'MESSENGERS',
+	'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_MESSENGERS'),
+	'URL' => ModuleManager::isModuleInstalled('bitrix24') ? '/contact_center/' : SITE_DIR . 'services/contact_center/',
+];
+
+
+$allowedLangs = ['ru', 'kz', 'by', 'ua'];
+$show1cSection = Loader::includeModule('bitrix24') && in_array(CBitrix24::getLicensePrefix(), $allowedLangs);
+if (!$show1cSection && !ModuleManager::isModuleInstalled('bitrix24'))
+{
+	$show1cSection =
+		file_exists($_SERVER['DOCUMENT_ROOT'] . SITE_DIR . 'onec/') && in_array(LANGUAGE_ID, $allowedLangs)
+	;
+}
+
+if ($show1cSection)
+{
+	$stdItems['ONEC'] = [
+		'ID' => 'ONEC',
+		'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_ONEC'),
+		'URL' => '/onec/',
+	];
+}
+*/
 
 $dynamicTypesMap = Crm\Service\Container::getInstance()->getDynamicTypesMap();
 try
@@ -782,7 +1009,24 @@ foreach($dynamicTypesMap->getTypes() as $type)
 			'URL' => Crm\Service\Container::getInstance()->getRouter()->getItemListUrlInCurrentView($type->getEntityTypeId()),
 			'ACTIONS' => !empty($actions) ? $actions : null,
 		];
+
+		/* NEW MENU
+		if (isset($stdItems['DYNAMIC_ADD']))
+		{
+			if (empty($stdItems['DYNAMIC_ADD']['SUB_ITEMS']))
+			{
+				$stdItems['DYNAMIC_ADD']['SUB_ITEMS'][] = array_merge($stdItems['DYNAMIC_ADD'], [
+					'ID' => 'DYNAMIC_LIST',
+					'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_SMART_ENTITY_LIST'),
+					'SUB_ITEMS' => [],
+				]);
+			}
+
+			$stdItems['DYNAMIC_ADD']['SUB_ITEMS'][] = ['ID' => $id];
+		}*/
 	}
+
+
 }
 
 // <-- Prepere standard items
@@ -792,6 +1036,7 @@ $itemInfos = isset($arParams['ITEMS']) && is_array($arParams['ITEMS']) ? $arPara
 if(empty($itemInfos))
 {
 	$items = array_values($stdItems);
+	/* NEW MENU $items = $this->createMenuTree($stdItems); */
 }
 else
 {
@@ -842,17 +1087,7 @@ $arResult['IS_FIXED'] = isset($options['fixed']) && $options['fixed'] === 'Y';
 
 if (isset($arParams["MENU_MODE"]) && $arParams["MENU_MODE"] === "Y")
 {
-	$arResult['ITEMS'] = array();
-	foreach ($items as $key => $item)
-	{
-
-		$arResult['ITEMS'][] = array(
-			$item["NAME"],
-			$item["URL"],
-			array(),
-			$options
-		);
-	}
+	$arResult['ITEMS'] = $this->createFileMenuItems($items);
 
 	return $arResult;
 }

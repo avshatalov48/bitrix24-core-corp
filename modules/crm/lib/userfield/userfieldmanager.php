@@ -7,7 +7,8 @@ use Bitrix\Main;
 class UserFieldManager
 {
 	/** @var \CCrmFields[]|null */
-	private static $userFieldEntities = null;
+	private static $userFieldEntities;
+	protected static $linkedUserFields;
 
 	public static function resolveUserFieldEntityID($entityTypeID)
 	{
@@ -172,6 +173,11 @@ class UserFieldManager
 	 */
 	public static function getLinkedUserFields(array $descriptions): array
 	{
+		if (static::$linkedUserFields !== null)
+		{
+			return static::$linkedUserFields;
+		}
+
 		$descriptions = array_filter(
 			$descriptions,
 			static function($description) {
@@ -204,9 +210,11 @@ class UserFieldManager
 			return [];
 		}
 
-		return Main\UserFieldTable::getList([
+		static::$linkedUserFields = Main\UserFieldTable::getList([
 			'filter' => $filter,
 		])->fetchAll();
+
+		return static::$linkedUserFields;
 	}
 
 	/**

@@ -1,5 +1,5 @@
 <?php
 
 return [
-	'chat/notifications',
+	'extensions'=> ['chat/notifications']
 ];

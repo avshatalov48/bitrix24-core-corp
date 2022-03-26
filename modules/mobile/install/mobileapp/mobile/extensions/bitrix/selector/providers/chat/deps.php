@@ -2,5 +2,5 @@
 return [
 	'selector/providers/base',
 	'user/utils',
-	'utils'
+	'utils',
 ];

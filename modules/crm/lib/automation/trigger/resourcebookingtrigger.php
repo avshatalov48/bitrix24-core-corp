@@ -10,7 +10,12 @@ class ResourceBookingTrigger extends BaseTrigger
 {
 	public static function isSupported($entityTypeId)
 	{
-		return $entityTypeId !== \CCrmOwnerType::Quote ? parent::isSupported($entityTypeId) : false;
+		if ($entityTypeId === \CCrmOwnerType::Quote || $entityTypeId === \CCrmOwnerType::SmartInvoice)
+		{
+			return false;
+		}
+
+		return parent::isSupported($entityTypeId);
 	}
 
 	protected static function areDynamicTypesSupported(): bool

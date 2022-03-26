@@ -2,45 +2,44 @@
 
 namespace Bitrix\Crm\Field;
 
+use Bitrix\Crm\Currency;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
+use Bitrix\Crm\Service\Operation\FieldAfterSaveResult;
 use Bitrix\Main\Error;
-use Bitrix\Main\Result;
 
 class TaxValue extends Field
 {
-	protected function processLogic(Item $item, Context $context = null): Result
+	public function processAfterSave(Item $itemBeforeSave, Item $item, Context $context = null): FieldAfterSaveResult
 	{
-		$parentResult = parent::processLogic($item, $context);
+		$result = new FieldAfterSaveResult();
 
-		$products = $item->getProductRows();
-		$productsAreNotFetched = is_null($products) && !$item->isNew();
+		$products = $itemBeforeSave->getProductRows();
+		$productsAreNotFetched = is_null($products) && !$itemBeforeSave->isNew();
 		if ($productsAreNotFetched)
 		{
-			if ($item->isChanged($this->getName()))
+			if ($itemBeforeSave->isChanged($this->getName()))
 			{
-				$parentResult->addError(new Error(
+				$result->addError(new Error(
 					"Products are not fetched. Can't sync tax value",
 					static::ERROR_CODE_PRODUCTS_NOT_FETCHED
 				));
 			}
 
-			return $parentResult;
+			return $result;
 		}
 
-		if (!is_null($products) && count($products) > 0)
+		$taxValue = Container::getInstance()->getAccounting()->calculateByItem($item)->getTaxValue();
+
+		$result->setNewValue($this->getName(), $taxValue);
+		if ($item->hasField(Item::FIELD_NAME_TAX_VALUE_ACCOUNT))
 		{
-			$item->set($this->getName(), Container::getInstance()->getAccounting()->calculateByItem($item)->getTaxValue());
+			$taxValueAccount = Currency\Conversion::toAccountCurrency($taxValue, $item->getCurrencyId());
+			$result->setNewValue(Item::FIELD_NAME_TAX_VALUE_ACCOUNT, $taxValueAccount);
 		}
 
-		$productsWereDeleted = !$item->isNew() && (count($products) <= 0) && $item->isChanged(Item::FIELD_NAME_PRODUCTS);
-		if ($productsWereDeleted)
-		{
-			$item->set($this->getName(), $item->getDefaultValue($this->getName()));
-		}
-
-		return $parentResult;
+		return $result;
 	}
 }

@@ -7,7 +7,8 @@ class CommunicationDedupeDataSource extends MatchHashDedupeDataSource
 	public function __construct($typeID, DedupeParams $params)
 	{
 		if($typeID !== DuplicateIndexType::COMMUNICATION_PHONE
-			&& $typeID !== DuplicateIndexType::COMMUNICATION_EMAIL)
+			&& $typeID !== DuplicateIndexType::COMMUNICATION_EMAIL
+			&& $typeID !== DuplicateIndexType::COMMUNICATION_SLUSER)
 		{
 			throw new Main\NotSupportedException("Type(s): '".DuplicateIndexType::resolveName($typeID)."' is not supported in current context");
 		}
@@ -16,7 +17,22 @@ class CommunicationDedupeDataSource extends MatchHashDedupeDataSource
 	}
 	protected function getCommunicationType()
 	{
-		return $this->typeID === DuplicateIndexType::COMMUNICATION_EMAIL ? 'EMAIL' : 'PHONE';
+		$result = 'PHONE';
+
+		if ($this->typeID === DuplicateIndexType::COMMUNICATION_EMAIL)
+		{
+			$result = 'EMAIL';
+		}
+		elseif ($this->typeID === DuplicateIndexType::COMMUNICATION_PHONE)
+		{
+			$result = 'PHONE';
+		}
+		elseif ($this->typeID === DuplicateIndexType::COMMUNICATION_SLUSER)
+		{
+			$result = 'SLUSER';
+		}
+
+		return $result;
 	}
 	/**
 	* @return Array

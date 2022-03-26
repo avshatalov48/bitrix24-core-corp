@@ -29,3 +29,6 @@ $MESS["DISK_SETTINGS_ONLYOFFICE_HEAD"] = "Интеграция с OnlyOffice";
 $MESS["DISK_SETTINGS_ONLYOFFICE_SERVER"] = "Адрес сервера (с http://, https://)";
 $MESS["DISK_SETTINGS_ONLYOFFICE_SECRET_KEY"] = "Секретный код для интеграции";
 $MESS["DISK_SETTINGS_ONLYOFFICE_MAX_FILESIZE"] = "Максимальный размер файла для просмотра";
+$MESS["DISK_SETTINGS_B24_DOCS_REGISTER_BUTTON"] = "Подключить #NAME#";
+$MESS["DISK_SETTINGS_B24_DOCS_UNREGISTER_BUTTON"] = "Отключить #NAME#";
+$MESS["DISK_SETTINGS_B24_DOCS_LIMIT_INFO"] = "Ограничение на количество одновременно редактируемых документов: #limit#.";

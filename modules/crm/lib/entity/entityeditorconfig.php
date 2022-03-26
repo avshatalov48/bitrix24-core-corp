@@ -122,8 +122,7 @@ class EntityEditorConfig
 			|| $entityTypeID === \CCrmOwnerType::Deal
 			|| $entityTypeID === \CCrmOwnerType::Contact
 			|| $entityTypeID === \CCrmOwnerType::Company
-			|| $entityTypeID === \CCrmOwnerType::Quote
-			|| \CCrmOwnerType::isPossibleDynamicTypeId($entityTypeID);
+			|| \CCrmOwnerType::isUseFactoryBasedApproach($entityTypeID);
 	}
 
 	protected function getConfigId(): string
@@ -184,7 +183,7 @@ class EntityEditorConfig
 			}
 		}
 
-		if (empty($optionName) && \CCrmOwnerType::isPossibleDynamicTypeId($this->entityTypeID))
+		if (empty($optionName) && \CCrmOwnerType::isUseDynamicTypeBasedApproach($this->entityTypeID))
 		{
 			$componentName = Crm\Service\Container::getInstance()->getRouter()->getItemDetailComponentName($this->entityTypeID);
 			if ($componentName)
@@ -518,11 +517,14 @@ class EntityEditorConfig
 		{
 			$data[$cacheKey] = [];
 			$config = $this->get();
-			foreach ($config as $section)
+			if (is_array($config))
 			{
-				foreach ($section['elements'] as $element)
+				foreach ($config as $section)
 				{
-					$data[$cacheKey][] = $element['name'];
+					foreach ($section['elements'] as $element)
+					{
+						$data[$cacheKey][] = $element['name'];
+					}
 				}
 			}
 		}

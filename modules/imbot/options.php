@@ -6,7 +6,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc,
-	Bitrix\Main;
+	Bitrix\Main\Loader,
+	Bitrix\Main\Config\Option,
+	Bitrix\ImBot;
 
 /**
  * @global \CMain $APPLICATION
@@ -14,11 +16,11 @@ use Bitrix\Main\Localization\Loc,
  * @global string $mid
  */
 
-if (!$USER->IsAdmin())
+if (!$USER->isAdmin())
 {
 	return;
 }
-if (!Main\Loader::includeModule('imbot'))
+if (!Loader::includeModule('imbot'))
 {
 	return;
 }
@@ -27,9 +29,7 @@ Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/modules/main/options.php')
 Loc::loadMessages(__FILE__);
 
 
-$errorMessage = '';
-
-$aTabs = array(
+$tabs = array(
 	array(
 		"DIV" => "edit1",
 		"TAB" => Loc::getMessage("IMBOT_TAB_SETTINGS"),
@@ -37,185 +37,229 @@ $aTabs = array(
 		"TITLE" => Loc::getMessage("IMBOT_TAB_TITLE_SETTINGS_2"),
 	),
 );
-$tabControl = new CAdminTabControl("tabControl", $aTabs);
+$tabControl = new \CAdminTabControl("tabControl", $tabs);
 
-if($_POST['Update'] <> '' && check_bitrix_sessid())
+$publicUrl = '';
+
+if ($_POST['Update'] <> '' && \check_bitrix_sessid())
 {
-	if ($_POST['PUBLIC_URL'] <> '' && mb_strlen($_POST['PUBLIC_URL']) < 12)
+	if (!defined('BOT_CLIENT_URL'))
 	{
-		$errorMessage = Loc::getMessage('IMBOT_ACCOUNT_ERROR_PUBLIC');
-	}
-	else if($_POST['Update'] <> '')
-	{
-		if (!defined('BOT_CLIENT_URL'))
+		$publicUrl = trim($_POST['PUBLIC_URL'] ?? '');
+		$isPublicUrlValid = false;
+
+		if (
+			!empty($publicUrl)
+			&& ImBot\Bot\Network::checkPublicUrl($publicUrl)
+		)
 		{
-			if (\Bitrix\ImBot\Bot\Network::checkPublicUrl() !== true)
+			Option::set('imbot', 'portal_url', $publicUrl);
+			$isPublicUrlValid = true;
+		}
+		elseif (isset($_POST['PUBLIC_URL']) && $publicUrl === '')
+		{
+			// gonna use domain value from 'main:server_name' option
+			Option::delete('imbot', ['name' => 'portal_url']);
+			$isPublicUrlValid = ImBot\Bot\Network::checkPublicUrl();
+		}
+
+		if (!$isPublicUrlValid)
+		{
+			$error = ImBot\Bot\Network::getError();
+			if ($error->error)
 			{
-				$error = \Bitrix\ImBot\Bot\Base::getError();
+				$message = Loc::getMessage('IMBOT_ACCOUNT_ERROR_PUBLIC_CHECK', ['#ERROR#' => $error->msg]);
+			}
+			else
+			{
+				$message = Loc::getMessage('IMBOT_ACCOUNT_ERROR_PUBLIC');
+			}
+			$APPLICATION->throwException($message);
+		}
+	}
+
+	Option::set("imbot", "debug", isset($_POST['DEBUG_MODE']));
+	if (isset($_POST['DEBUG_MODE']))
+	{
+		Option::set("imbot", "wait_response", isset($_POST['WAIT_RESPONSE']));
+	}
+	if (isset($_POST['BOT_GIPHY']))
+	{
+		if (!ImBot\Bot\Giphy::getBotId())
+		{
+			ImBot\Bot\Giphy::register();
+		}
+	}
+	else
+	{
+		if (ImBot\Bot\Giphy::getBotId())
+		{
+			ImBot\Bot\Giphy::unRegister();
+		}
+	}
+	if (isset($_POST['BOT_PROPERTIES']))
+	{
+		if (!ImBot\Bot\Properties::getBotId())
+		{
+			ImBot\Bot\Properties::register();
+		}
+	}
+	else
+	{
+		if (ImBot\Bot\Properties::getBotId())
+		{
+			ImBot\Bot\Properties::unRegister();
+		}
+	}
+	if (isset($_POST['BOT_PROPERTIESUA']))
+	{
+		if (!ImBot\Bot\PropertiesUa::getBotId())
+		{
+			ImBot\Bot\PropertiesUa::register();
+		}
+	}
+	else
+	{
+		if (ImBot\Bot\PropertiesUa::getBotId())
+		{
+			ImBot\Bot\PropertiesUa::unRegister();
+		}
+	}
+
+	if (!Loader::includeModule('bitrix24'))
+	{
+		if (isset($_POST['BOT_SUPPORT']))
+		{
+			if (!ImBot\Bot\SupportBox::register())
+			{
+				$error = ImBot\Bot\SupportBox::getError();
 				if ($error->error)
 				{
-					$message = Loc::getMessage('IMBOT_ACCOUNT_ERROR_PUBLIC_CHECK', ['#ERROR#' => $error->msg]);
+					$message = Loc::getMessage('IMBOT_SUPPORT_BOX_ACTIVATION_ERROR', ['#ERROR#' => $error->msg]);
 				}
 				else
 				{
-					$message = Loc::getMessage('IMBOT_ACCOUNT_ERROR_PUBLIC');
+					$message = Loc::getMessage('IMBOT_SUPPORT_BOX_ACTIVATION_ERROR_UNKNOWN');
 				}
-				$APPLICATION->ThrowException($message);
-			}
-			else
-			{
-				Main\Config\Option::set("imbot", "portal_url", $_POST['PUBLIC_URL']);
-			}
-		}
+				$APPLICATION->throwException($message);
 
-		Main\Config\Option::set("imbot", "debug", isset($_POST['DEBUG_MODE']));
-		if (isset($_POST['DEBUG_MODE']))
-		{
-			Main\Config\Option::set("imbot", "wait_response", isset($_POST['WAIT_RESPONSE']));
-		}
-		if (isset($_POST['BOT_GIPHY']))
-		{
-			if (!\Bitrix\ImBot\Bot\Giphy::getBotId())
-			{
-				\Bitrix\ImBot\Bot\Giphy::register();
+				ImBot\Bot\SupportBox::unRegister();
 			}
 		}
 		else
 		{
-			if (\Bitrix\ImBot\Bot\Giphy::getBotId())
+			if (ImBot\Bot\SupportBox::getBotId())
 			{
-				\Bitrix\ImBot\Bot\Giphy::unRegister();
+				ImBot\Bot\SupportBox::unRegister();
 			}
-		}
-		if (isset($_POST['BOT_PROPERTIES']))
-		{
-			if (!\Bitrix\ImBot\Bot\Properties::getBotId())
-			{
-				\Bitrix\ImBot\Bot\Properties::register();
-			}
-		}
-		else
-		{
-			if (\Bitrix\ImBot\Bot\Properties::getBotId())
-			{
-				\Bitrix\ImBot\Bot\Properties::unRegister();
-			}
-		}
-		if (isset($_POST['BOT_PROPERTIESUA']))
-		{
-			if (!\Bitrix\ImBot\Bot\PropertiesUa::getBotId())
-			{
-				\Bitrix\ImBot\Bot\PropertiesUa::register();
-			}
-		}
-		else
-		{
-			if (\Bitrix\ImBot\Bot\PropertiesUa::getBotId())
-			{
-				\Bitrix\ImBot\Bot\PropertiesUa::unRegister();
-			}
-		}
-
-		if (!Main\Loader::includeModule('bitrix24'))
-		{
-			if (isset($_POST['BOT_SUPPORT']))
-			{
-				if (!\Bitrix\ImBot\Bot\SupportBox::register())
-				{
-					$error = \Bitrix\ImBot\Bot\SupportBox::getError();
-					if ($error->error)
-					{
-						$message = Loc::getMessage('IMBOT_SUPPORT_BOX_ACTIVATION_ERROR', ['#ERROR#' => $error->msg]);
-					}
-					else
-					{
-						$message = Loc::getMessage('IMBOT_SUPPORT_BOX_ACTIVATION_ERROR_UNKNOWN');
-					}
-					$APPLICATION->ThrowException($message);
-
-					\Bitrix\ImBot\Bot\SupportBox::unRegister();
-				}
-			}
-			else
-			{
-				if (\Bitrix\ImBot\Bot\SupportBox::getBotId())
-				{
-					\Bitrix\ImBot\Bot\SupportBox::unRegister();
-				}
-			}
-		}
-
-		if ($e = $APPLICATION->getException())
-		{
-			\CAdminMessage::ShowMessage(array(
-				"DETAILS" => $e->getString(),
-				"TYPE" => "ERROR",
-				"HTML" => true
-			));
-		}
-		elseif($_REQUEST["back_url_settings"] <> '')
-		{
-			LocalRedirect($_REQUEST["back_url_settings"]);
-		}
-		else
-		{
-			LocalRedirect($APPLICATION->GetCurPage()."?mid=".urlencode($mid)."&lang=".urlencode(LANGUAGE_ID)."&back_url_settings=".urlencode($_REQUEST["back_url_settings"])."&".$tabControl->ActiveTabParam());
 		}
 	}
+
+	if ($exception = $APPLICATION->getException())
+	{
+		\CAdminMessage::showMessage([
+			'DETAILS' => $exception->getString(),
+			'TYPE' => 'ERROR',
+			'HTML' => true
+		]);
+	}
+	elseif($_REQUEST['back_url_settings'] <> '')
+	{
+		\LocalRedirect($_REQUEST['back_url_settings']);
+	}
+	else
+	{
+		\LocalRedirect(
+			$APPLICATION->getCurPage()
+				. '?mid='. urlencode($mid)
+				. '&mid_menu=1'
+				. '&lang='. urlencode(\LANGUAGE_ID)
+				. '&'. $tabControl->activeTabParam()
+		);
+	}
 }
+
+$portalPrefix = (static function () {
+	$portalZone = '';
+
+	if (Loader::includeModule('bitrix24'))
+	{
+		$licensePrefix = \CBitrix24::getLicensePrefix();
+		if ($licensePrefix !== false)
+		{
+			$portalZone = (string)$licensePrefix;
+		}
+	}
+	elseif (Loader::includeModule('intranet'))
+	{
+		$portalZone = \CIntranetUtils::getPortalZone();
+	}
+	return $portalZone;
+})();
+
 ?>
-<form method="post" action="<?= $APPLICATION->GetCurPage()?>?mid=<?=htmlspecialcharsbx($mid)?>&lang=<?= LANG?>">
-<?php echo bitrix_sessid_post()?>
+<form method="post" action="<?= $APPLICATION->getCurPage()?>?mid=<?=htmlspecialcharsbx($mid)?>&lang=<?= LANG?>">
+<?= \bitrix_sessid_post() ?>
 <?php
-$tabControl->Begin();
-$tabControl->BeginNextTab();
-if ($errorMessage):?>
-<tr>
-	<td colspan="2" align="center"><b style="color:red"><?=$errorMessage?></b></td>
-</tr>
-<?endif;?>
+$tabControl->begin();
+$tabControl->beginNextTab();
+?>
 <tr>
 	<td width="40%"><?=Loc::getMessage("IMBOT_ACCOUNT_URL")?>:</td>
-	<td width="60%"><input type="text" name="PUBLIC_URL" value="<?= htmlspecialcharsbx(\Bitrix\ImBot\Http::getServerAddress()) ?>" /></td>
-</tr>
-<?if ((int)Main\Config\Option::get("imbot", "debug")):?>
-<tr>
-	<td width="40%" valign="top"><?=Loc::getMessage("IMBOT_WAIT_RESPONSE")?>:</td>
 	<td width="60%">
-		<input type="checkbox" name="WAIT_RESPONSE" value="Y" <?=((int)Main\Config\Option::get("imbot", "wait_response")? 'checked':'')?> /><br>
+		<input type="text"
+			name="PUBLIC_URL"
+			value="<?= htmlspecialcharsbx(Option::get('imbot', 'portal_url', $publicUrl)) ?>"
+			placeholder="<?= htmlspecialcharsbx(defined('BOT_CLIENT_URL') ? \BOT_CLIENT_URL : ImBot\Http::getServerAddress()) ?>" /></td>
+</tr>
+<?if ((int)Option::get("imbot", "debug")):?>
+<tr>
+	<td valign="top"><?=Loc::getMessage("IMBOT_WAIT_RESPONSE")?>:</td>
+	<td>
+		<input type="checkbox" name="WAIT_RESPONSE" value="Y" <?=((int)Option::get("imbot", "wait_response")? 'checked':'')?> /><br>
 		<?=Loc::getMessage("IMBOT_WAIT_RESPONSE_DESC")?>
 	</td>
 </tr>
 <?endif;?>
 <tr>
-	<td width="40%"><?=Loc::getMessage("IMBOT_ACCOUNT_DEBUG")?>:</td>
-	<td width="60%"><input type="checkbox" name="DEBUG_MODE" value="Y" <?=((int)Main\Config\Option::get("imbot", "debug")? 'checked':'')?> /></td>
+	<td><?=Loc::getMessage("IMBOT_ACCOUNT_DEBUG")?>:</td>
+	<td><input type="checkbox" name="DEBUG_MODE" value="Y" <?=((int)Option::get("imbot", "debug")? 'checked':'')?> /></td>
 </tr>
 <tr class="heading">
 	<td colspan="2"><b><?=Loc::getMessage('IMBOT_HEADER_BOTS')?></b></td>
 </tr>
 <tr>
-	<td width="40%"><?=\Bitrix\ImBot\Bot\Giphy::getLangMessage('IMBOT_GIPHY_BOT_NAME')?>:</td>
-	<td width="60%"><input type="checkbox" name="BOT_GIPHY" value="Y" <?=(\Bitrix\ImBot\Bot\Giphy::getBotId()? 'checked':'')?> /></td>
+	<td><?= (Loc::getMessage('IMBOT_ENABLE_GIPHY_BOT') ?? ImBot\Bot\Giphy::getLangMessage('IMBOT_GIPHY_BOT_NAME'))?>:</td>
+	<td><input type="checkbox" name="BOT_GIPHY" value="Y" <?=(ImBot\Bot\Giphy::getBotId()? 'checked':'')?> /></td>
 </tr>
+<? if ($portalPrefix === 'ru' || $portalPrefix === ''): ?>
 <tr>
-	<td width="40%"><?=\Bitrix\ImBot\Bot\Properties::getLangMessage('IMBOT_PROPERTIES_BOT_NAME')?>:</td>
-	<td width="60%"><input type="checkbox" name="BOT_PROPERTIES" value="Y" <?=(\Bitrix\ImBot\Bot\Properties::getBotId()? 'checked':'')?> /></td>
-</tr>
-<tr>
-	<td width="40%"><?=\Bitrix\ImBot\Bot\PropertiesUa::getLangMessage('IMBOT_PROPERTIESUA_BOT_NAME').' ('.\Bitrix\Main\Localization\Loc::getMessage('IMBOT_BOT_POSTFIX_UA').')'?>:</td>
-	<td width="60%"><input type="checkbox" name="BOT_PROPERTIESUA" value="Y" <?=(\Bitrix\ImBot\Bot\PropertiesUa::getBotId()? 'checked':'')?> /></td>
-</tr>
-<? if (!Main\Loader::includeModule('bitrix24')): ?>
-<tr>
-	<td width="40%"><?= Loc::getMessage('IMBOT_SUPPORT_BOT_NAME') ?>:</td>
-	<td width="60%"><input type="checkbox" name="BOT_SUPPORT" value="Y" <?=(\Bitrix\ImBot\Bot\SupportBox::getBotId()? 'checked':'')?> /></td>
+	<td><?= (Loc::getMessage('IMBOT_ENABLE_PROPERTIES_BOT') ?? ImBot\Bot\Properties::getLangMessage('IMBOT_PROPERTIES_BOT_NAME'))?>:</td>
+	<td><input type="checkbox" name="BOT_PROPERTIES" value="Y" <?=(ImBot\Bot\Properties::getBotId()? 'checked':'')?> /></td>
 </tr>
 <?endif;?>
-<?$tabControl->Buttons();?>
+<? if ($portalPrefix === 'ua' || $portalPrefix === ''): ?>
+<tr>
+	<td><?= (Loc::getMessage('IMBOT_ENABLE_PROPERTIESUA_BOT')
+			?? ImBot\Bot\PropertiesUa::getLangMessage('IMBOT_PROPERTIESUA_BOT_NAME').' ('.Loc::getMessage('IMBOT_BOT_POSTFIX_UA').')') ?>:</td>
+	<td><input type="checkbox" name="BOT_PROPERTIESUA" value="Y" <?=(ImBot\Bot\PropertiesUa::getBotId()? 'checked':'')?> /></td>
+</tr>
+<?endif;?>
+<? if (Loader::includeModule('bitrix24')): ?>
+<tr>
+	<td><?= Loc::getMessage('IMBOT_ENABLE_SUPPORT_BOT') ?>:</td>
+	<td><input type="checkbox" disabled="disabled" <?=(ImBot\Bot\Support24::isEnabled() ? 'checked':'')?> /></td>
+</tr>
+<?else:?>
+<tr>
+	<td><?= Loc::getMessage('IMBOT_ENABLE_SUPPORT_BOT') ?>:</td>
+	<td><input type="checkbox" name="BOT_SUPPORT" value="Y" <?=(ImBot\Bot\SupportBox::getBotId() ? 'checked':'')?> /></td>
+</tr>
+<?endif;?>
+<? $tabControl->buttons() ?>
 <input type="submit" name="Update" value="<?= Loc::getMessage('MAIN_SAVE')?>">
 <input type="reset" name="reset" value="<?= Loc::getMessage('MAIN_RESET')?>">
-<?$tabControl->End();?>
+<? $tabControl->end() ?>
 </form>
 <div class="adm-info-message-wrap">
 	<div class="adm-info-message">

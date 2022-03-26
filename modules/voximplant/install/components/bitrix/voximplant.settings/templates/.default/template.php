@@ -113,27 +113,6 @@ foreach($arResult['INTERFACE_CHAT_OPTIONS'] as $action)
 		</div>
 	<? endif ?>
 
-	<? if ($arResult['SHOW_AUTOPAY']): ?>
-		<div class="ui-slider-section">
-			<div class="ui-slider-heading-4">
-				<?=GetMessage('VI_AUTOPAY_TITLE')?>
-			</div>
-			<div class="tel-set-item bx-vi-options">
-				<div class="tel-set-item-desc"><?=GetMessage("VI_AUTOPAY_LABEL_2")?></div>
-				<div class="tel-set-item-select-wrap">
-					<select name="AUTOPAY_ALLOWED" class="tel-set-item-select">
-						<option value="Y" <?= ($arResult['AUTOPAY_ALLOWED'] == "Y" ? "selected" : "")?>>
-							<?=GetMessage("VI_AUTOPAY_ON")?>
-						</option>
-						<option value="N" <?= ($arResult['AUTOPAY_ALLOWED'] == "N" ? "selected" : "")?>>
-							<?=GetMessage("VI_AUTOPAY_OFF")?>
-						</option>
-					</select>
-				</div>
-			</div>
-		</div>
-	<? endif ?>
-
 	<?$APPLICATION->IncludeComponent('bitrix:ui.button.panel', '', [
 		'BUTTONS' => [
 			'save',

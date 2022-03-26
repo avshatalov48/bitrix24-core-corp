@@ -2,9 +2,12 @@
 
 namespace Bitrix\Tasks\Scrum\Controllers;
 
+use Bitrix\Main\Engine\Action;
 use Bitrix\Main\Engine\Controller;
+use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Request;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Scrum\Checklist\ItemChecklistFacade;
@@ -17,6 +20,10 @@ use Bitrix\Tasks\Util\User;
 
 class Type extends Controller
 {
+	const ERROR_COULD_NOT_LOAD_MODULE = 'TASKS_STC_01';
+	const ERROR_ACCESS_DENIED = 'TASKS_STC_02';
+	const ERROR_COULD_NOT_CREATE_TYPE = 'TASKS_STC_03';
+
 	public function __construct(Request $request = null)
 	{
 		parent::__construct($request);
@@ -24,161 +31,146 @@ class Type extends Controller
 		$this->errorCollection = new ErrorCollection;
 	}
 
-	public function createTypeAction()
+	protected function processBeforeAction(Action $action)
 	{
-		try
+		if (!Loader::includeModule('tasks') || !Loader::includeModule('socialnetwork'))
 		{
-			if (!Loader::includeModule('tasks') || !Loader::includeModule('socialnetwork'))
-			{
-				return null;
-			}
+			$this->errorCollection->setError(
+				new Error(
+					Loc::getMessage('TASKS_STC_ERROR_INCLUDE_MODULE_ERROR'),
+					self::ERROR_COULD_NOT_LOAD_MODULE
+				)
+			);
 
-			$post = $this->request->getPostList()->toArray();
-
-			$userId = User::getId();
-
-			$groupId = (is_numeric($post['groupId']) ? (int) $post['groupId'] : 0);
-
-			if (!$this->canReadGroupTasks($userId, $groupId))
-			{
-				return null;
-			}
-
-			$name = (is_string($post['name']) ? $post['name'] : '');
-			$sort = (is_numeric($post['sort']) ? (int) $post['sort'] : 0);
-
-			$typeService = new TypeService();
-			$backlogService = new BacklogService();
-
-			$backlog = $backlogService->getBacklogByGroupId($groupId);
-
-			$type = $typeService->getTypeObject();
-			$type->setEntityId($backlog->getId());
-			$type->setName($name);
-			$type->setSort($sort);
-
-			$createdType = $typeService->createType($type);
-
-			if ($typeService->getErrors())
-			{
-				$this->errorCollection->add($typeService->getErrors());
-
-				return null;
-			}
-
-			return $typeService->getTypeData($createdType);
+			return false;
 		}
-		catch (\Exception $exception)
+
+		$post = $this->request->getPostList()->toArray();
+
+		$groupId = (is_numeric($post['groupId']) ? (int) $post['groupId'] : 0);
+		$userId = User::getId();
+
+		if (!Group::canReadGroupTasks($userId, $groupId))
 		{
-			return null;
+			$this->errorCollection->setError(
+				new Error(
+					Loc::getMessage('TASKS_STC_ERROR_ACCESS_DENIED'),
+					self::ERROR_ACCESS_DENIED
+				)
+			);
+
+			return false;
 		}
+
+		return parent::processBeforeAction($action);
 	}
 
-	public function changeTypeNameAction()
+	public function createTypeAction(int $groupId, string $name, int $sort)
 	{
-		try
+		$typeService = new TypeService();
+		$backlogService = new BacklogService();
+
+		$backlog = $backlogService->getBacklogByGroupId($groupId);
+
+		if ($backlog->isEmpty())
 		{
-			if (!Loader::includeModule('tasks') || !Loader::includeModule('socialnetwork'))
-			{
-				return null;
-			}
+			$this->errorCollection->setError(
+				new Error(
+					Loc::getMessage('TASKS_STC_ERROR_COULD_NOT_CREATE_TYPE'),
+					self::ERROR_COULD_NOT_CREATE_TYPE
+				)
+			);
 
-			$post = $this->request->getPostList()->toArray();
-
-			$userId = User::getId();
-
-			$groupId = (is_numeric($post['groupId']) ? (int) $post['groupId'] : 0);
-
-			if (!$this->canReadGroupTasks($userId, $groupId))
-			{
-				return null;
-			}
-
-			$id = (is_numeric($post['id']) ? (int) $post['id'] : 0);
-			$name = (is_string($post['name']) ? $post['name'] : '');
-
-			$typeService = new TypeService();
-
-			$type = $typeService->getTypeObject();
-			$type->setId($id);
-			$type->setName($name);
-
-			$typeService->changeType($type);
-
-			if ($typeService->getErrors())
-			{
-				$this->errorCollection->add($typeService->getErrors());
-
-				return null;
-			}
-
-			return '';
-		}
-		catch (\Exception $exception)
-		{
 			return null;
 		}
-	}
-
-	public function removeTypeAction()
-	{
-		try
+		if ($backlogService->getErrors())
 		{
-			if (!Loader::includeModule('tasks') || !Loader::includeModule('socialnetwork'))
-			{
-				return null;
-			}
+			$this->errorCollection->add($backlogService->getErrors());
 
-			$post = $this->request->getPostList()->toArray();
-
-			$userId = User::getId();
-
-			$groupId = (is_numeric($post['groupId']) ? (int) $post['groupId'] : 0);
-
-			if (!$this->canReadGroupTasks($userId, $groupId))
-			{
-				return null;
-			}
-
-			$id = (is_numeric($post['id']) ? (int) $post['id'] : 0);
-
-			$typeService = new TypeService();
-			$definitionOfDoneService = new DefinitionOfDoneService($userId);
-			$itemService = new ItemService();
-
-			$type = $typeService->getTypeObject();
-			$type->setId($id);
-
-			$typeService->removeType($type);
-
-			if ($typeService->getErrors())
-			{
-				$this->errorCollection->add($typeService->getErrors());
-
-				return null;
-			}
-
-			$definitionOfDoneService->removeList(TypeChecklistFacade::class, $type->getId());
-
-			$itemIds = $itemService->getItemIdsByTypeId($type->getId());
-
-			foreach ($itemIds as $itemId)
-			{
-				$definitionOfDoneService->removeList(ItemChecklistFacade::class, $itemId);
-			}
-
-			$itemService->cleanTypeIdToItems($itemIds);
-
-			return '';
-		}
-		catch (\Exception $exception)
-		{
 			return null;
 		}
+
+		$type = $typeService->getTypeObject();
+		$type->setEntityId($backlog->getId());
+		$type->setName($name);
+		$type->setSort($sort);
+
+		$createdType = $typeService->createType($type);
+
+		if ($typeService->getErrors())
+		{
+			$this->errorCollection->add($typeService->getErrors());
+
+			return null;
+		}
+
+		return $typeService->getTypeData($createdType);
 	}
 
-	private function canReadGroupTasks(int $userId, int $groupId): bool
+	public function changeTypeNameAction(int $id, string $name)
 	{
-		return Group::canReadGroupTasks($userId, $groupId);
+		$typeService = new TypeService();
+
+		$type = $typeService->getTypeObject();
+		$type->setId($id);
+		$type->setName($name);
+
+		$typeService->changeType($type);
+
+		if ($typeService->getErrors())
+		{
+			$this->errorCollection->add($typeService->getErrors());
+
+			return null;
+		}
+
+		return '';
+	}
+
+	public function removeTypeAction(int $id)
+	{
+		$userId = User::getId();
+
+		$typeService = new TypeService();
+		$definitionOfDoneService = new DefinitionOfDoneService($userId);
+		$itemService = new ItemService();
+
+		$type = $typeService->getTypeObject();
+		$type->setId($id);
+
+		$typeService->removeType($type);
+
+		if ($typeService->getErrors())
+		{
+			$this->errorCollection->add($typeService->getErrors());
+
+			return null;
+		}
+
+		$definitionOfDoneService->removeList(TypeChecklistFacade::class, $type->getId());
+		if ($definitionOfDoneService->getErrors())
+		{
+			$this->errorCollection->add($definitionOfDoneService->getErrors());
+
+			return null;
+		}
+
+		$itemIds = $itemService->getItemIdsByTypeId($type->getId());
+
+		foreach ($itemIds as $itemId)
+		{
+			$definitionOfDoneService->removeList(ItemChecklistFacade::class, $itemId);
+		}
+
+		if ($definitionOfDoneService->getErrors())
+		{
+			$this->errorCollection->add($definitionOfDoneService->getErrors());
+
+			return null;
+		}
+
+		$itemService->cleanTypeIdToItems($itemIds);
+
+		return '';
 	}
 }

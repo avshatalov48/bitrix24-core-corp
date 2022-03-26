@@ -149,11 +149,7 @@ foreach($ufFields as $fieldCode => $field)
 
 $arResult['TEMPLATE_DATA']['BLOCKS'] = [
 	'SE_CHECKLIST' => [
-		'FILLED' =>
-			$template->get('SE_CHECKLIST')
-			&& is_object($template['SE_CHECKLIST'])
-			&& !$template['SE_CHECKLIST']->isEmpty()
-		,
+		'FILLED' => false, // we will get it below
 	],
 	'SE_RESPONSIBLE' => [
 		'FILLED' => true, // responsible always filled and thus visible
@@ -325,6 +321,7 @@ else
 	$checkListItems = TemplateCheckListFacade::getItemsForEntity($template->getId(), $template->getUserId());
 }
 $arResult['TEMPLATE_DATA']['SE_CHECKLIST'] = $checkListItems;
+$arResult['TEMPLATE_DATA']['BLOCKS']['SE_CHECKLIST']['FILLED'] = !empty($checkListItems);
 
 $matchWorkTime = $template['MATCH_WORK_TIME'] == 'Y';
 $arResult['JS_DATA']['deadline'] = $helper->detectUnitType($matchWorkTime, $template['DEADLINE_AFTER']);

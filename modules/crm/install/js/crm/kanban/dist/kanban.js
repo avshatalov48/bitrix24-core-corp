@@ -3,6 +3,10 @@ this.BX.Crm = this.BX.Crm || {};
 (function (exports,main_core_events,ui_notification,main_popup,main_core) {
 	'use strict';
 
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
+
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
 	var _queue = /*#__PURE__*/new WeakMap();
 
 	var _grid = /*#__PURE__*/new WeakMap();
@@ -15,22 +19,22 @@ this.BX.Crm = this.BX.Crm || {};
 	  function PullQueue(grid) {
 	    babelHelpers.classCallCheck(this, PullQueue);
 
-	    _queue.set(this, {
+	    _classPrivateFieldInitSpec(this, _queue, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _grid.set(this, {
+	    _classPrivateFieldInitSpec(this, _grid, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _isProgress.set(this, {
+	    _classPrivateFieldInitSpec(this, _isProgress, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _isFreeze.set(this, {
+	    _classPrivateFieldInitSpec(this, _isFreeze, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -220,7 +224,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      if (item) {
 	        var oldPrice = parseFloat(item.data.price);
-	        var oldColumnId = item.data.columnId;
+	        var oldColumnId = item.columnId;
 
 	        for (var key in paramsItem.data) {
 	          if (key in item.data) {
@@ -234,15 +238,20 @@ this.BX.Crm = this.BX.Crm || {};
 	        item.setChangedInPullRequest();
 	        this.grid.resetMultiSelectMode();
 	        this.grid.insertItem(item);
-	        var newColumn = this.grid.getColumn(paramsItem.data.columnId);
+	        var newColumnId = paramsItem.data.columnId;
+	        var newColumn = this.grid.getColumn(newColumnId);
 	        var newPrice = parseFloat(paramsItem.data.price);
+	        item.columnId = newColumnId;
 
-	        if (oldColumnId !== paramsItem.data.columnId) {
+	        if (oldColumnId !== newColumnId) {
 	          var oldColumn = this.grid.getColumn(oldColumnId);
 	          oldColumn.decPrice(oldPrice);
 	          oldColumn.renderSubTitle();
-	          newColumn.incPrice(newPrice);
-	          newColumn.renderSubTitle();
+
+	          if (newColumn) {
+	            newColumn.incPrice(newPrice);
+	            newColumn.renderSubTitle();
+	          }
 	        } else {
 	          if (oldPrice < newPrice) {
 	            newColumn.incPrice(newPrice - oldPrice);
@@ -253,7 +262,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          }
 	        }
 
-	        item.columnId = paramsItem.data.columnId;
 	        this.queue.push(item.id);
 	        return true;
 	      }
@@ -381,18 +389,26 @@ this.BX.Crm = this.BX.Crm || {};
 	  return PullManager;
 	}();
 
-	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5;
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10;
 	var TYPE_VIEW = 'view';
 	var TYPE_EDIT = 'edit';
 
 	var FieldsSelector = /*#__PURE__*/function () {
 	  function FieldsSelector(options) {
+	    var _this$options$headers, _this$options$default;
+
 	    babelHelpers.classCallCheck(this, FieldsSelector);
 	    this.popup = null;
 	    this.fields = null;
+	    this.fieldsPopupItems = null;
 	    this.options = options;
 	    this.type = this.options.hasOwnProperty('type') ? this.options.type : TYPE_VIEW;
 	    this.selectedFields = this.options.hasOwnProperty('selectedFields') ? this.options.selectedFields.slice(0) : [];
+	    this.enableHeadersSections = Boolean(this.options.headersSections);
+	    this.headersSections = (_this$options$headers = this.options.headersSections) !== null && _this$options$headers !== void 0 ? _this$options$headers : {};
+	    this.defaultHeaderSectionId = (_this$options$default = this.options.defaultHeaderSectionId) !== null && _this$options$default !== void 0 ? _this$options$default : null;
+	    this.fieldVisibleClass = 'crm-kanban-popup-field-search-list-item-visible';
+	    this.fieldHiddenClass = 'crm-kanban-popup-field-search-list-item-hidden';
 	  }
 
 	  babelHelpers.createClass(FieldsSelector, [{
@@ -497,12 +513,20 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      var sectionsWithFields = this.distributeFieldsBySections(this.fields);
 	      var container = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-kanban-popup-field\"></div>"])));
-	      this.getSections().forEach(function (section) {
+	      var headerWrapper = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-kanban-popup-field-search-header-wrapper\">\n\t\t\t\t<div class=\"ui-form-row-inline\"></div>\n\t\t\t</div>\n\t\t"])));
+	      container.prepend(headerWrapper);
+	      this.preparePopupContentHeaderSections(headerWrapper);
+	      this.preparePopupContentHeaderSearch(headerWrapper);
+	      this.getSections().map(function (section) {
+	        var sectionWrapperId = _this3.getSectionWrapperNameBySectionName(section.name);
+
+	        var sectionWrapper = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div \n\t\t\t\t\tclass=\"crm-kanban-popup-field-search-section\" \n\t\t\t\t\tdata-crm-kanban-popup-field-search-section=\"", "\">\n\t\t\t\t</div>\n\t\t\t"])), sectionWrapperId);
+	        main_core.Dom.append(sectionWrapper, container);
 	        var sectionName = section.name;
 
 	        if (sectionsWithFields.hasOwnProperty(sectionName) && sectionsWithFields[sectionName].length) {
-	          main_core.Dom.append(main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-kanban-popup-field-title\">", "</div>"])), main_core.Text.encode(section.title)), container);
-	          main_core.Dom.append(main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-kanban-popup-field-wrapper\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>"])), sectionsWithFields[sectionName].map(function (field) {
+	          main_core.Dom.append(main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-kanban-popup-field-title\">", "</div>"])), main_core.Text.encode(section.title)), sectionWrapper);
+	          main_core.Dom.append(main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-kanban-popup-field-wrapper\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>"])), sectionsWithFields[sectionName].map(function (field) {
 	            var label = field.LABEL;
 
 	            if (!label.length && section['elements'] && section['elements'][field.NAME] && section['elements'][field.NAME]['title'] && section['elements'][field.NAME]['title'].length) {
@@ -510,11 +534,145 @@ this.BX.Crm = this.BX.Crm || {};
 	            }
 
 	            var encodedLabel = main_core.Text.encode(label);
-	            return main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t\t<div class=\"crm-kanban-popup-field-item\" title=\"", "\">\n\t\t\t\t\t\t\t\t\t<input \n\t\t\t\t\t\t\t\t\t\tid=\"cf_", "\" \n\t\t\t\t\t\t\t\t\t\ttype=\"checkbox\" \n\t\t\t\t\t\t\t\t\t\tname=\"", "\"\n\t\t\t\t\t\t\t\t\t\tclass=\"crm-kanban-popup-field-item-input\"\n\t\t\t\t\t\t\t\t\t\tdata-label=\"", "\"\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t\t<label for=\"cf_", "\" class=\"crm-kanban-popup-field-item-label\">\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</label>\n\t\t\t\t\t\t\t\t</div>"])), encodedLabel, main_core.Text.encode(field.ID), main_core.Text.encode(field.NAME), encodedLabel, _this3.selectedFields.indexOf(field.NAME) >= 0 ? 'checked' : '', _this3.onFieldClick.bind(_this3), main_core.Text.encode(field.ID), encodedLabel);
-	          })), container);
+	            return main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t\t<div class=\"crm-kanban-popup-field-item\" title=\"", "\">\n\t\t\t\t\t\t\t\t\t<input \n\t\t\t\t\t\t\t\t\t\tid=\"cf_", "\" \n\t\t\t\t\t\t\t\t\t\ttype=\"checkbox\" \n\t\t\t\t\t\t\t\t\t\tname=\"", "\"\n\t\t\t\t\t\t\t\t\t\tclass=\"crm-kanban-popup-field-item-input\"\n\t\t\t\t\t\t\t\t\t\tdata-label=\"", "\"\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t\t\t<label for=\"cf_", "\" class=\"crm-kanban-popup-field-item-label\">\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</label>\n\t\t\t\t\t\t\t\t</div>"])), encodedLabel, main_core.Text.encode(field.ID), main_core.Text.encode(field.NAME), encodedLabel, _this3.selectedFields.indexOf(field.NAME) >= 0 ? 'checked' : '', _this3.onFieldClick.bind(_this3), main_core.Text.encode(field.ID), encodedLabel);
+	          })), sectionWrapper);
 	        }
 	      });
 	      return container;
+	    }
+	  }, {
+	    key: "preparePopupContentHeaderSections",
+	    value: function preparePopupContentHeaderSections(headerWrapper) {
+	      if (!this.enableHeadersSections) {
+	        return;
+	      }
+
+	      var headerSectionsWrapper = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t<div class=\"ui-form-content crm-kanban-popup-field-search-section-wrapper\"></div>\n\t\t\t</div>\n\t\t"])));
+	      headerWrapper.firstElementChild.appendChild(headerSectionsWrapper);
+	      var headersSections = this.getHeadersSections();
+
+	      for (var key in headersSections) {
+	        var itemClass = 'crm-kanban-popup-field-search-section-item-icon' + (headersSections[key].selected ? " crm-kanban-popup-field-search-section-item-icon-active" : '');
+	        var headerSectionItem = main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-kanban-popup-field-search-section-item\" data-kanban-popup-filter-section-button=\"", "\">\n\t\t\t\t\t<div class=\"", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), key, itemClass, main_core.Text.encode(headersSections[key].name));
+	        headerSectionsWrapper.firstElementChild.appendChild(headerSectionItem);
+
+	        if (this.type !== TYPE_VIEW) {
+	          break;
+	        }
+
+	        main_core.Event.bind(headerSectionItem, 'click', this.onFilterSectionClick.bind(this, headerSectionItem));
+	      }
+	    }
+	  }, {
+	    key: "onFilterSectionClick",
+	    value: function onFilterSectionClick(item) {
+	      var activeClass = 'crm-kanban-popup-field-search-section-item-icon-active';
+	      var sectionId = item.dataset.kanbanPopupFilterSectionButton;
+	      var sections = document.querySelectorAll("[data-crm-kanban-popup-field-search-section=\"".concat(sectionId, "\"]"));
+
+	      if (main_core.Dom.hasClass(item.firstElementChild, activeClass)) {
+	        main_core.Dom.removeClass(item.firstElementChild, activeClass);
+	        this.filterSectionsToggle(sections, 'hide');
+	      } else {
+	        main_core.Dom.addClass(item.firstElementChild, activeClass);
+	        this.filterSectionsToggle(sections, 'show');
+	      }
+	    }
+	  }, {
+	    key: "filterSectionsToggle",
+	    value: function filterSectionsToggle(sections, action) {
+	      Array.from(sections).map(function (section) {
+	        action === 'show' ? main_core.Dom.show(section) : main_core.Dom.hide(section);
+	      });
+	    }
+	  }, {
+	    key: "preparePopupContentHeaderSearch",
+	    value: function preparePopupContentHeaderSearch(headerWrapper) {
+	      var searchForm = main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t<div class=\"ui-form-content crm-kanban-popup-field-search-input-wrapper\">\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-textbox ui-ctl-before-icon ui-ctl-after-icon\">\n\t\t\t\t\t\t<div class=\"ui-ctl-before ui-ctl-icon-search\"></div>\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\"></button>\n\t\t\t\t\t\t<input type=\"text\" class=\"ui-ctl-element crm-kanban-popup-field-search-section-input\">\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])));
+	      headerWrapper.firstElementChild.appendChild(searchForm);
+	      var inputs = searchForm.getElementsByClassName('crm-kanban-popup-field-search-section-input');
+
+	      if (inputs.length) {
+	        var input = inputs[0];
+	        main_core.Event.bind(input, 'input', this.onFilterSectionSearchInput.bind(this, input));
+	        main_core.Event.bind(input.previousElementSibling, 'click', this.onFilterSectionSearchInputClear.bind(this, input));
+	      }
+	    }
+	  }, {
+	    key: "onFilterSectionSearchInput",
+	    value: function onFilterSectionSearchInput(input) {
+	      var _this4 = this;
+
+	      var search = input.value;
+
+	      if (search.length) {
+	        search = search.toLowerCase();
+	      }
+
+	      this.getFieldsPopupItems().map(function (item) {
+	        var title = item.innerText.toLowerCase();
+
+	        if (search.length && title.indexOf(search) === -1) {
+	          main_core.Dom.removeClass(item, _this4.fieldVisibleClass);
+	          main_core.Dom.addClass(item, _this4.fieldHiddenClass);
+	        } else {
+	          main_core.Dom.removeClass(item, _this4.fieldHiddenClass);
+	          main_core.Dom.addClass(item, _this4.fieldVisibleClass);
+	          item.style.display = 'block';
+	        }
+	      });
+	    }
+	  }, {
+	    key: "getFieldsPopupItems",
+	    value: function getFieldsPopupItems() {
+	      if (!main_core.Type.isArray(this.fieldsPopupItems)) {
+	        this.fieldsPopupItems = Array.from(this.popup.getPopupContainer().querySelectorAll('.crm-kanban-popup-field-item'));
+	        this.prepareAnimation();
+	      }
+
+	      return this.fieldsPopupItems;
+	    }
+	  }, {
+	    key: "prepareAnimation",
+	    value: function prepareAnimation() {
+	      var _this5 = this;
+
+	      this.fieldsPopupItems.map(function (item) {
+	        main_core.Event.bind(item, 'animationend', _this5.onAnimationEnd.bind(_this5, item));
+	      });
+	    }
+	  }, {
+	    key: "onAnimationEnd",
+	    value: function onAnimationEnd(item) {
+	      item.style.display = main_core.Dom.hasClass(item, this.fieldHiddenClass) ? 'none' : 'block';
+	    }
+	  }, {
+	    key: "onFilterSectionSearchInputClear",
+	    value: function onFilterSectionSearchInputClear(input) {
+	      if (input.value.length) {
+	        input.value = '';
+	        this.onFilterSectionSearchInput(input);
+	      }
+	    }
+	  }, {
+	    key: "getSectionWrapperNameBySectionName",
+	    value: function getSectionWrapperNameBySectionName(name) {
+	      var headerSections = this.getHeadersSections();
+
+	      for (var id in headerSections) {
+	        if (this.headersSections[id].sections && this.headersSections[id].sections.includes(name)) {
+	          return this.headersSections[id].id;
+	        }
+	      }
+
+	      return this.headersSections[this.defaultHeaderSectionId] && this.defaultHeaderSectionId ? this.headersSections[this.defaultHeaderSectionId].id : null;
+	    }
+	  }, {
+	    key: "getHeadersSections",
+	    value: function getHeadersSections() {
+	      var _this$headersSections;
+
+	      return (_this$headersSections = this.headersSections) !== null && _this$headersSections !== void 0 ? _this$headersSections : {};
 	    }
 	  }, {
 	    key: "distributeFieldsBySections",

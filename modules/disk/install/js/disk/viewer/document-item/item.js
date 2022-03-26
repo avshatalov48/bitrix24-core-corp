@@ -183,11 +183,6 @@
 			}
 			else
 			{
-				if (this.service === 'office365')
-				{
-					return this.renderStubForOfiice365();
-				}
-
 				this.iframeNode = BX.create('iframe', {
 					props: {
 						src: this.viewUrl

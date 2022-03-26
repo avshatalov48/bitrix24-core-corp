@@ -1,4 +1,4 @@
-<?
+<?php
 // statuses
 $MESS["TASKS_TASK_STATUS_1"] = "Новая";
 $MESS["TASKS_TASK_STATUS_2"] = "Ждет выполнения";
@@ -50,15 +50,15 @@ $MESS["TASKS_COMMON_EDIT"] = "Редактировать";
 
 $MESS["TASKS_COMMON_NEW_USER"] = "Новый пользователь";
 
-$MESS["TASKS_COMMON_HOUR_F0"] = "час";
-$MESS["TASKS_COMMON_HOUR_F1"] = "часа";
-$MESS["TASKS_COMMON_HOUR_F2"] = "часов";
-$MESS["TASKS_COMMON_MINUTE_F0"] = "минута";
-$MESS["TASKS_COMMON_MINUTE_F1"] = "минуты";
-$MESS["TASKS_COMMON_MINUTE_F2"] = "минут";
-$MESS["TASKS_COMMON_DAY_F0"] = "день";
-$MESS["TASKS_COMMON_DAY_F1"] = "дня";
-$MESS["TASKS_COMMON_DAY_F2"] = "дней";
+$MESS["TASKS_COMMON_HOUR_PLURAL_0"] = "час";
+$MESS["TASKS_COMMON_HOUR_PLURAL_1"] = "часа";
+$MESS["TASKS_COMMON_HOUR_PLURAL_2"] = "часов";
+$MESS["TASKS_COMMON_MINUTE_PLURAL_0"] = "минута";
+$MESS["TASKS_COMMON_MINUTE_PLURAL_1"] = "минуты";
+$MESS["TASKS_COMMON_MINUTE_PLURAL_2"] = "минут";
+$MESS["TASKS_COMMON_DAY_PLURAL_0"] = "день";
+$MESS["TASKS_COMMON_DAY_PLURAL_1"] = "дня";
+$MESS["TASKS_COMMON_DAY_PLURAL_2"] = "дней";
 
 $MESS["TASKS_COMMON_OP_CREATE"] = "создание";
 $MESS["TASKS_COMMON_OP_READ"] = "чтение";

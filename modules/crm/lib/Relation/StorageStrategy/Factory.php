@@ -97,7 +97,7 @@ class Factory extends \Bitrix\Crm\Relation\StorageStrategy
 	 */
 	protected function createBinding(ItemIdentifier $parent, ItemIdentifier $child): Result
 	{
-		return $this->editBinding($child, $parent->getEntityId());
+		return $this->editBinding($child, $parent->getEntityTypeId(), $parent->getEntityId());
 	}
 
 	/**
@@ -105,10 +105,10 @@ class Factory extends \Bitrix\Crm\Relation\StorageStrategy
 	 */
 	protected function deleteBinding(ItemIdentifier $parent, ItemIdentifier $child): Result
 	{
-		return $this->editBinding($child, 0);
+		return $this->editBinding($child, $parent->getEntityTypeId(), 0);
 	}
 
-	protected function editBinding(ItemIdentifier $child, int $value): Result
+	protected function editBinding(ItemIdentifier $child, int $parentEntityTypeId, int $value): Result
 	{
 		$item = $this->childFactory->getItem($child->getEntityId());
 		if (!$item)
@@ -116,12 +116,49 @@ class Factory extends \Bitrix\Crm\Relation\StorageStrategy
 			return (new Result())->addError(new Error('The child item does not exist: ' . $child));
 		}
 
+		$previousParentId = $item->get($this->parentIdFieldName);
+
 		$item->set($this->parentIdFieldName, $value);
 
 		$operation = $this->childFactory->getUpdateOperation($item);
 
 		$operation->disableCheckAccess();
 
+		$toExcludeFromTimeline = [];
+		if ($previousParentId > 0)
+		{
+			$toExcludeFromTimeline[] = new ItemIdentifier($parentEntityTypeId, $previousParentId);
+		}
+		if ($value > 0)
+		{
+			$toExcludeFromTimeline[] = new ItemIdentifier($parentEntityTypeId, $value);
+		}
+		$operation->excludeItemsFromTimelineRelationEventsRegistration($toExcludeFromTimeline);
+
 		return $operation->launch();
+	}
+
+	protected function replaceBindings(ItemIdentifier $fromItem, ItemIdentifier $toItem): Result
+	{
+		$childItems = $this->childFactory->getItems([
+			'select' => [Item::FIELD_NAME_ID],
+			'filter' => [
+				'=' . $this->parentIdFieldName => $fromItem->getEntityId(),
+			],
+		]);
+
+		$result = new Result();
+
+		foreach ($childItems as $childItem)
+		{
+			$childItem->set($this->parentIdFieldName, $toItem->getEntityId());
+			$saveResult = $childItem->save(false);
+			if (!$saveResult->isSuccess())
+			{
+				$result->addErrors($saveResult->getErrors());
+			}
+		}
+
+		return $result;
 	}
 }

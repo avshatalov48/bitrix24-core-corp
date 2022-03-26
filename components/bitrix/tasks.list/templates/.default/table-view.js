@@ -1151,9 +1151,9 @@ var tasksListNS = {
 
 		for (i = 0; i < selector.options.length; ++i)
 		{
-			selector.options[i].innerHTML = BX.CJSTask.getMessagePlural(
-				value,
-				'TASKS_LIST_GROUP_ACTION_' + selector.options[i].value.toUpperCase()
+			selector.options[i].innerHTML = BX.Loc.getMessagePlural(
+				'TASKS_LIST_GROUP_ACTION_' + selector.options[i].value.toUpperCase(),
+				value
 			);
 		}
 

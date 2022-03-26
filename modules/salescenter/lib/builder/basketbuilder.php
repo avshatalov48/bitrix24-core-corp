@@ -27,7 +27,10 @@ class BasketBuilder extends Helpers\Order\Builder\BasketBuilder
 		$result = [];
 		$maxIndex = $this->getMaxNewIndex($this->formData['PRODUCT']);
 
-		foreach ($this->formData['PRODUCT'] as $index => $product)
+		$products = $this->formData['PRODUCT'];
+		krsort($products);
+
+		foreach ($products as $index => $product)
 		{
 			if (!static::isBasketItemNew($index))
 			{
@@ -101,7 +104,10 @@ class BasketBuilder extends Helpers\Order\Builder\BasketBuilder
 			else
 			{
 				$basketItem = $this->getExistsItem($product['MODULE'], $product['PRODUCT_ID']);
-				if ($basketItem)
+				if (
+					$basketItem
+					&& !isset($result[$basketItem->getId()])
+				)
 				{
 					$index = $basketItem->getId();
 
@@ -120,7 +126,12 @@ class BasketBuilder extends Helpers\Order\Builder\BasketBuilder
 					}
 
 					$product['QUANTITY'] = $newQuantity;
+
+					$basketCodeMap[$product['BASKET_CODE']] = $index;
+
 					$product['ID'] = $index;
+					$product['BASKET_CODE'] = $index;
+					$product['BASKET_ID'] = $index;
 				}
 			}
 
@@ -128,6 +139,32 @@ class BasketBuilder extends Helpers\Order\Builder\BasketBuilder
 		}
 
 		$this->formData['PRODUCT'] = $result;
+
+		// prepare shipment product
+		if (isset($basketCodeMap) && !empty($this->formData['SHIPMENT']))
+		{
+			foreach ($this->formData['SHIPMENT'] as $index => $shipment)
+			{
+				$shipmentProducts = $shipment['PRODUCT'] ?? null;
+				if ($shipmentProducts)
+				{
+					$preparedShipmentProducts = [];
+					foreach ($shipmentProducts as $code => $shipmentProduct)
+					{
+						if (isset($basketCodeMap[$code]))
+						{
+							$code = $basketCodeMap[$code];
+							$shipmentProduct['BASKET_ID'] = $code;
+							$shipmentProduct['BASKET_CODE'] = $code;
+						}
+
+						$preparedShipmentProducts[$code] = $shipmentProduct;
+					}
+
+					$this->formData['SHIPMENT'][$index]['PRODUCT'] = $preparedShipmentProducts;
+				}
+			}
+		}
 
 		return $this;
 	}
@@ -161,7 +198,23 @@ class BasketBuilder extends Helpers\Order\Builder\BasketBuilder
 		if ($this->getSettingsContainer()->getItemValue('builderScenario') === SettingsContainer::BUILDER_SCENARIO_SHIPMENT)
 		{
 			$systemShipment = $order->getShipmentCollection()->getSystemShipment();
-			return $systemShipment->getBasketItemQuantity($basketItem);
+			$quantity = $systemShipment->getBasketItemQuantity($basketItem);
+
+			if (isset($this->formData['SHIPMENT']))
+			{
+				foreach ($this->formData['SHIPMENT'] as $shipmentArray)
+				{
+					if (empty($shipmentArray['ID']))
+					{
+						continue;
+					}
+
+					$shipment = $order->getShipmentCollection()->getItemById($shipmentArray['ID']);
+					$quantity += $shipment->getBasketItemQuantity($basketItem);
+				}
+			}
+
+			return $quantity;
 		}
 
 		$distributedQuantity = 0;

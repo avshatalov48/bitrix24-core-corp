@@ -14,6 +14,8 @@ class LeadConversionConfig extends EntityConversionConfig
 	{
 		parent::__construct($options);
 
+		$this->srcEntityTypeID = \CCrmOwnerType::Lead;
+
 		$this->typeID = isset($options['TYPE_ID']) ? (int)$options['TYPE_ID'] : LeadConversionType::UNDEFINED;
 		if($this->typeID === LeadConversionType::UNDEFINED)
 		{
@@ -78,7 +80,7 @@ class LeadConversionConfig extends EntityConversionConfig
 		}
 
 		$optionValue = Option::get('crm', static::resolveOptionName($typeID), '', '');
-		return static::constructFromOption($optionValue, $options);
+		return static::constructFromOption($optionValue, static::getEntityTypeId(), $options);
 	}
 
 	public static function resolveCurrentSchemeID(array $options = null)
@@ -190,6 +192,11 @@ class LeadConversionConfig extends EntityConversionConfig
 
 	protected static function resolveOptionName($typeID)
 	{
-		return $typeID === LeadConversionType::RETURNING_CUSTOMER ? 'crm_lead_rc_conversion' : static::getOptionName();
+		if ($typeID === LeadConversionType::RETURNING_CUSTOMER)
+		{
+			return 'crm_lead_rc_conversion';
+		}
+
+		return static::getOptionName(static::getEntityTypeId());
 	}
 }

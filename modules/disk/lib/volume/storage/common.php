@@ -33,7 +33,7 @@ class Common extends Volume\Storage\Storage
 	 * @param array $collectData List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION.
 	 * @return $this
 	 */
-	public function measure($collectData = array(self::DISK_FILE, self::PREVIEW_FILE, self::UNNECESSARY_VERSION))
+	public function measure($collectData = [self::DISK_FILE, self::UNNECESSARY_VERSION])
 	{
 		$this->addFilter('@ENTITY_TYPE', self::getEntityType());
 

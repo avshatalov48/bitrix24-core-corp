@@ -36,6 +36,7 @@ $MESS['CRM_KANBAN_PLUS_TITLE_LEAD'] = 'Быстрый лид';
 $MESS['CRM_KANBAN_PLUS_TITLE_DEAL'] = 'Быстрая сделка';
 $MESS['CRM_KANBAN_PLUS_TITLE_QUOTE'] = 'Быстрое предложение';
 $MESS['CRM_KANBAN_PLUS_TITLE_DYNAMIC'] = 'Быстрый элемент';
+$MESS['CRM_KANBAN_PLUS_TITLE_SMART_INVOICE'] = 'Быстрый счёт';
 $MESS['CRM_KANBAN_EMPTY_CARD_IMPORT'] = 'Импорт данных из <a href="#" class="crm-kanban-sidepanel" data-url="marketplace">другой CRM</a> или <a href="#" class="crm-kanban-sidepanel" data-url="importexcel" data-skipslider="1">таблицы Excel</a>';
 $MESS['CRM_KANBAN_EMPTY_CARD_CT_TITLE'] = 'Контакт-центр';
 $MESS['CRM_KANBAN_EMPTY_CARD_CT_TEXT'] = 'Автоматическое добавление сделок';

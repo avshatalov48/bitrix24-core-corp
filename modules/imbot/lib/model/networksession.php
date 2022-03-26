@@ -3,6 +3,7 @@
 namespace Bitrix\ImBot\Model;
 
 use Bitrix\Main;
+use Bitrix\Main\Type\DateTime;
 
 /**
  * Tablet class NetworkSessionTable
@@ -77,6 +78,28 @@ class NetworkSessionTable extends Main\Entity\DataManager
 			'MENU_STATE' => [
 				'data_type' => 'string',
 			],
+			'DATE_CREATE' => [
+				'data_type' => 'datetime',
+				'required' => false,
+				'default_value' => [__CLASS__, 'getCurrentDate'],
+			],
+			'DATE_FINISH' => [
+				'data_type' => 'datetime',
+				'required' => false,
+			],
+			'DATE_LAST_ACTIVITY' => [
+				'data_type' => 'datetime',
+				'required' => false,
+				'default_value' => [__CLASS__, 'getCurrentDate'],
+			],
 		];
+	}
+
+	/**
+	 * @return DateTime
+	 */
+	public static function getCurrentDate(): DateTime
+	{
+		return new DateTime;
 	}
 }

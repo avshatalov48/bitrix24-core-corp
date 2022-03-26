@@ -12,7 +12,7 @@ use Bitrix\Crm\Kanban;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\UserField\Display;
+use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\UI\Buttons;
@@ -27,8 +27,6 @@ abstract class ItemList extends Base
 	protected $ufProvider;
 	/** @var Filter */
 	protected $filter;
-	/** @var Display */
-	protected $display;
 	protected $users;
 	/** @var Category */
 	protected $category;
@@ -48,7 +46,14 @@ abstract class ItemList extends Base
 			return;
 		}
 
-		$type = Service\Container::getInstance()->getTypeByEntityTypeId((int)$this->arParams['entityTypeId']);
+		$entityTypeId = (int)$this->arParams['entityTypeId'];
+		$type = Service\Container::getInstance()->getTypeByEntityTypeId($entityTypeId);
+		if (!$type && $entityTypeId === \CCrmOwnerType::SmartInvoice)
+		{
+			// force creating type
+			Service\Factory\SmartInvoice::createTypeIfNotExists();
+			$type = Service\Container::getInstance()->getTypeByEntityTypeId($entityTypeId);
+		}
 		if (!$type)
 		{
 			$this->errorCollection[] = new Error(Loc::getMessage('CRM_TYPE_TYPE_NOT_FOUND'));
@@ -96,7 +101,7 @@ abstract class ItemList extends Base
 					}
 				}
 			}
-			$this->errorCollection[] = new Error(Loc::getMessage('CRM_TYPE_TYPE_ACCESS_DENIED'));
+			$this->errorCollection[] = new Error(Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED'));
 			return;
 		}
 
@@ -112,8 +117,6 @@ abstract class ItemList extends Base
 		$this->provider = $filterFactory->getDataProvider($settings);
 		$this->ufProvider = $filterFactory->getUserFieldDataProvider($settings);
 		$this->filter = $filterFactory->createFilter($settings->getID(), $this->provider, [$this->ufProvider]);
-
-		$this->display = new Display($this->factory);
 	}
 
 	protected function getGridId(): string
@@ -157,6 +160,7 @@ abstract class ItemList extends Base
 	protected function getToolbarParameters(): array
 	{
 		$buttons = [];
+		$spotlight = null;
 
 		$container = Service\Container::getInstance();
 		$dynamicTypesLimit = RestrictionManager::getDynamicTypesLimitRestriction();
@@ -212,14 +216,43 @@ abstract class ItemList extends Base
 		}
 
 		$settingsItems = $this->getToolbarSettingsItems();
+		// a bit of hardcode to avoid components copying
+		if (
+			$this->entityTypeId === \CCrmOwnerType::SmartInvoice
+			&& !InvoiceSettings::getCurrent()->isOldInvoicesEnabled()
+			&& Container::getInstance()->getUserPermissions()->canReadType(\CCrmOwnerType::Invoice)
+		)
+		{
+			$settingsItems[] = [
+				'text' => \CCrmOwnerType::GetCategoryCaption(\CCrmOwnerType::Invoice),
+				'href' => Container::getInstance()->getRouter()->getItemListUrlInCurrentView(\CCrmOwnerType::Invoice),
+				'onclick' => new Buttons\JsHandler('BX.Crm.Router.Instance.closeSettingsMenu'),
+			];
+
+			if (InvoiceSettings::getCurrent()->isShowInvoiceTransitionNotice())
+			{
+				$spotlight = [
+					'ID' => 'crm-old-invoices-transition',
+					'JS_OPTIONS' => [
+						'targetElement' => static::TOOLBAR_SETTINGS_BUTTON_ID,
+						'content' => Loc::getMessage('CRM_COMPONENT_ITEM_LIST_OLD_INVOICES_TRANSITION_SPOTLIGHT'),
+						'targetVertex' => "middle-center",
+						'autoSave' => true,
+					],
+				];
+			}
+		}
+
 		if (count($settingsItems) > 0)
 		{
-			$buttons[Toolbar\ButtonLocation::RIGHT][] = new Buttons\SettingsButton([
+			$settingsButton = new Buttons\SettingsButton([
 				'menu' => [
 					'id' => 'crm-toolbar-settings-menu',
 					'items' => $settingsItems,
 				],
 			]);
+			$settingsButton->addAttribute('id', static::TOOLBAR_SETTINGS_BUTTON_ID);
+			$buttons[Toolbar\ButtonLocation::RIGHT][] = $settingsButton;
 		}
 
 		$parameters = [
@@ -227,6 +260,7 @@ abstract class ItemList extends Base
 			'filter' => $this->prepareFilter(),
 			'views' => $this->getToolbarViews(),
 			'isWithFavoriteStar' => true,
+			'spotlight' => $spotlight,
 		];
 
 		return array_merge(parent::getToolbarParameters(), $parameters);
@@ -236,13 +270,17 @@ abstract class ItemList extends Base
 	{
 		$settingsItems = [];
 		$router = Service\Container::getInstance()->getRouter();
-		if (Container::getInstance()->getUserPermissions()->canWriteConfig())
+		$userPermissions = Container::getInstance()->getUserPermissions();
+		if ($userPermissions->canWriteConfig())
 		{
-			$settingsItems[] = [
-				'text' => Loc::getMessage('CRM_TYPE_TYPE_SETTINGS'),
-				'href' => $router->getTypeDetailUrl($this->entityTypeId),
-				'onclick' => new Buttons\JsHandler('BX.Crm.Router.Instance.closeSettingsMenu'),
-			];
+			if ($userPermissions->canUpdateType($this->entityTypeId))
+			{
+				$settingsItems[] = [
+					'text' => Loc::getMessage('CRM_TYPE_TYPE_SETTINGS'),
+					'href' => $router->getTypeDetailUrl($this->entityTypeId),
+					'onclick' => new Buttons\JsHandler('BX.Crm.Router.Instance.closeSettingsMenu'),
+				];
+			}
 			$dynamicTypesLimit = RestrictionManager::getDynamicTypesLimitRestriction();
 			$isTypeSettingsRestricted = $dynamicTypesLimit->isTypeSettingsRestricted($this->entityTypeId);
 			if ($isTypeSettingsRestricted)
@@ -288,6 +326,7 @@ abstract class ItemList extends Base
 			'LIMITS' => $limits,
 			'ENABLE_ADDITIONAL_FILTERS' => true,
 			'ENABLE_FIELDS_SEARCH' => 'Y',
+			'HEADERS_SECTIONS' => $this->getHeaderSections(),
 			'CONFIG' => [
 				'popupColumnsCount' => 4,
 				'popupWidth' => 800,
@@ -304,6 +343,18 @@ abstract class ItemList extends Base
 	protected function getDefaultFilterPresets(): array
 	{
 		return $this->kanbanEntity->getFilterPresets();
+	}
+
+	protected function getHeaderSections(): array
+	{
+		return [
+			[
+				'id' => $this->factory->getEntityName(),
+				'name' => $this->factory->getEntityDescription(),
+				'default' => true,
+				'selected' => true,
+			],
+		];
 	}
 
 	protected function getToolbarViews(): array
@@ -380,6 +431,7 @@ abstract class ItemList extends Base
 		{
 			ob_start();
 
+			\Bitrix\Main\UI\Extension::load('bizproc.script');
 			$this->getApplication()->IncludeComponent(
 				'bitrix:intranet.binding.menu',
 				'',

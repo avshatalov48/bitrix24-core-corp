@@ -121,7 +121,7 @@ final class CatalogJSProductForm
 	 * @param int $productId
 	 * @return string[]
 	 */
-	private static function getAllowedBasketProperties(int $productId): array
+	public static function getAllowedBasketProperties(int $productId): array
 	{
 		if (!Main\Loader::includeModule('catalog') || !Main\Loader::includeModule('iblock'))
 		{

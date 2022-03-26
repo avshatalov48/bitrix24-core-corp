@@ -148,11 +148,9 @@ class WebForm extends Base
 		if (isset($activity['PROVIDER_PARAMS']['VISITED_PAGES']) && is_array($activity['PROVIDER_PARAMS']['VISITED_PAGES']))
 		{
 			$maxPageCount = 5;
-			$pageDate = new \DateTime();
-			$pageDateOffset = $pageDate->getOffset();
 			foreach ($activity['PROVIDER_PARAMS']['VISITED_PAGES'] as $visitedPage)
 			{
-				$pageDate = DateTime::createFromTimestamp($visitedPage['DATE'] + $pageDateOffset);
+				$pageDate = DateTime::createFromTimestamp($visitedPage['DATE']);
 				$pageLink = '<a href="' . HtmlFilter::encode($visitedPage['HREF']) . '" target="_blank">' . HtmlFilter::encode($visitedPage['TITLE']) . '</a>';
 				$visitedPagesString .= '
 					<label class="crm-task-list-form-container" for="">

@@ -61,7 +61,10 @@ $MESS['MOBILE_TASKS_VIEW_TAB_CHECKLIST'] = "Чек-лист";
 $MESS['MOBILE_TASKS_VIEW_TAB_FILES'] = "Файлы";
 $MESS['MOBILE_TASKS_VIEW_TAB_TASK'] = "Задача";
 $MESS['MOBILE_LOG_MENU_KNOWLEDGE'] = "База знаний";
-$MESS['MOBILE_LOG_REFRESH_NEEDED'] = "Пожалуйста, обновите ленту новостей";
 $MESS['MOBILE_LOG_PINNED_COLLAPSED_COUNTER_POSTS'] = "Закрепленных постов:";
 $MESS['MOBILE_LOG_PINNED_COLLAPSED_COUNTER_COMMENTS'] = "Новых комментариев:";
 $MESS['MOBILE_LOG_PINNED_COLLAPSED_COUNTER_BUTTON'] = "развернуть";
+$MESS['MOBILE_LOG_REFRESH_NEEDED_TITLE2'] = "Лента новостей могла измениться";
+$MESS['MOBILE_LOG_REFRESH_NEEDED_BUTTON'] = "Обновить";
+$MESS['MOBILE_LOG_REFRESH_NEEDED_SUBTITLE'] = "Нажмите, чтобы обновить";
+

@@ -1,8 +1,10 @@
 <?
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Crm\WebForm\Callback;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Voximplant\Security\Permissions;
 
 Loc::loadMessages(__FILE__);
@@ -42,6 +44,8 @@ class VoximplantStartComponent extends \CBitrixComponent
 		$result['BALANCE_TYPE'] = $userOptions["balance_type"] === "sip" ? "sip" : "balance";
 		$result['RECORD_LIMIT'] = \CVoxImplantAccount::GetRecordLimit();
 		$result['TELEPHONY_AVAILABLE'] = \Bitrix\Voximplant\Limits::canManageTelephony();
+		$result['CRM_CALLBACK_FORM_CREATE_URL'] = $this->getCrmFormCreateUri();
+		$result['CRM_CALLBACK_FORM_LIST_URL'] = $this->getCrmFormListUri();
 
 		if(!$this->isRestOnly())
 		{
@@ -162,7 +166,8 @@ class VoximplantStartComponent extends \CBitrixComponent
 		$result['MENU'] = [
 			'MAIN' => $this->getMenuItems(),
 			'SETTINGS' => $this->getSettingsItems(count($result['NUMBERS_LIST']) > 0),
-			'PARTNERS' => $this->getPartnerItems()
+			'PARTNERS' => $this->getPartnerItems(),
+			'CRM' => $this->getCrmMenuItems(),
 		];
 
 		return $result;
@@ -377,6 +382,56 @@ class VoximplantStartComponent extends \CBitrixComponent
 		}
 
 		return $result;
+	}
+
+	public function getCrmMenuItems(): array
+	{
+		$result = [];
+		if (Loader::includeModule('crm') && Callback::hasPhoneNumbers())
+		{
+			$result[] = [
+				'id' => 'crmFormCallback',
+				'title' => Loc::getMessage("VOX_START_CRM_CALLBACK"),
+				'className' => 'voximplant-start-icon-service-callback',
+				'onclick' => "BX.Voximplant.Start.onCrmCallbackFormClick();"
+			];
+		}
+
+		return $result;
+	}
+
+	public function getCrmFormCreateUri(): ?string
+	{
+		if (!Loader::includeModule('crm'))
+		{
+			return null;
+		}
+
+		global $USER;
+		$CrmPerms = new CCrmPerms($USER->GetID());
+		if ($CrmPerms->HavePerm('WEBFORM', BX_CRM_PERM_NONE, 'WRITE'))
+		{
+			return \CUtil::JSEscape(
+				\Bitrix\Crm\WebForm\Manager::getCallbackListUrl([
+					'show_permission_error' => 'Y'
+				])
+			);
+		}
+
+		return \CUtil::JSEscape(
+			\Bitrix\Crm\WebForm\Manager::getCallbackNewFormEditUrl()
+		);
+	}
+
+	public function getCrmFormListUri(): ?string
+	{
+		if (!Loader::includeModule('crm'))
+		{
+			return null;
+		}
+		return \CUtil::JSEscape(
+			\Bitrix\Crm\WebForm\Manager::getCallbackListUrl()
+		);
 	}
 
 	public function areContractorDocumentsAvailable()

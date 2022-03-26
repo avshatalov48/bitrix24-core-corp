@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Order\EventsHandler;
 
+use Bitrix\Crm\Order\Order;
 use Bitrix\Main\Event;
 use Bitrix\Crm\ContactTable;
 use Bitrix\Crm\DealTable;
@@ -26,14 +27,16 @@ class Delivery
 		/** @var \Bitrix\Crm\Order\Shipment $order */
 		$shipment = $event->getParameter('SHIPMENT');
 
+		/** @var Order $order */
 		$order = $shipment->getOrder();
 
 		$contactId = null;
 
-		$dealBinding = $order->getDealBinding();
+		$binding = $order->getEntityBinding();
 		if (
-			$dealBinding
-			&& ($dealId = $dealBinding->getDealId())
+			$binding
+			&& $binding->getOwnerTypeId() === \CCrmOwnerType::Deal
+			&& ($dealId = $binding->getOwnerId())
 			&& ($deal = DealTable::getById($dealId)->fetch())
 		)
 		{

@@ -8,8 +8,15 @@ use Bitrix\Crm\Item;
 use Bitrix\Crm\LeadTable;
 use Bitrix\Main\Localization\Loc;
 
+/**
+ * @method string|null getCompanyTitle()
+ * @method Item setCompanyTitle(string $companyTitle)
+ */
 class Lead extends Item
 {
+	public const FIELD_NAME_COMPANY_TITLE = 'COMPANY_TITLE';
+
+	//lead entity field names for common fields
 	public const FIELD_NAME_STATUS_ID = 'STATUS_ID';
 	public const FIELD_NAME_STATUS_DESCRIPTION = 'STATUS_DESCRIPTION';
 	public const FIELD_NAME_CREATED_BY_ID = 'CREATED_BY_ID';
@@ -48,7 +55,9 @@ class Lead extends Item
 
 	public function getTitlePlaceholder(): ?string
 	{
-		return Loc::getMessage('CRM_LEAD_DEFAULT_TITLE_TEMPLATE', array('%NUMBER%' => $this->getId()));
+		$number = ($this->getId() > 0) ? $this->getId() : '';
+
+		return Loc::getMessage('CRM_LEAD_DEFAULT_TITLE_TEMPLATE', ['%NUMBER%' => $number]);
 	}
 
 	protected function getExternalizableFieldNames(): array
@@ -56,7 +65,7 @@ class Lead extends Item
 		return array_merge(
 			parent::getExternalizableFieldNames(),
 			[
-				Item::FIELD_NAME_OBSERVERS,
+				$this->getEntityFieldNameByMap(Item::FIELD_NAME_OBSERVERS),
 			],
 		);
 	}

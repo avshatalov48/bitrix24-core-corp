@@ -67,8 +67,10 @@ $isStExportAllFields = (isset($arParams['STEXPORT_INITIAL_OPTIONS']['EXPORT_ALL_
 						&& $arParams['STEXPORT_INITIAL_OPTIONS']['EXPORT_ALL_FIELDS'] === 'Y');
 $arResult['STEXPORT_EXPORT_ALL_FIELDS'] = ($isStExport && $isStExportAllFields) ? 'Y' : 'N';
 
-$isStExportRequisiteMultiline = (isset($arParams['STEXPORT_INITIAL_OPTIONS']['REQUISITE_MULTILINE'])
-								 && $arParams['STEXPORT_INITIAL_OPTIONS']['REQUISITE_MULTILINE'] === 'Y');
+$isStExportRequisiteMultiline = (
+	isset($arParams['STEXPORT_INITIAL_OPTIONS']['REQUISITE_MULTILINE'])
+	&& $arParams['STEXPORT_INITIAL_OPTIONS']['REQUISITE_MULTILINE'] === 'Y'
+);
 $arResult['STEXPORT_REQUISITE_MULTILINE'] = ($isStExport && $isStExportRequisiteMultiline) ? 'Y' : 'N';
 
 $arResult['STEXPORT_MODE'] = $isStExport ? 'Y' : 'N';
@@ -105,12 +107,12 @@ if ($isErrorOccured)
 	}
 }
 
-use Bitrix\Crm\Format\AddressFormatter;
-use Bitrix\Main;
-use Bitrix\Main\Grid\Editor;
 use Bitrix\Crm;
+use Bitrix\Crm\Agent\Duplicate\Background\ContactIndexRebuild;
+use Bitrix\Crm\Agent\Duplicate\Background\ContactMerge;
 use Bitrix\Crm\Agent\Requisite\ContactAddressConvertAgent;
 use Bitrix\Crm\Agent\Requisite\ContactUfAddressConvertAgent;
+use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
@@ -119,6 +121,8 @@ use Bitrix\Crm\Settings\HistorySettings;
 use Bitrix\Crm\Settings\ContactSettings;
 use Bitrix\Crm\WebForm\Manager as WebFormManager;
 use Bitrix\Crm\Settings\LayoutSettings;
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
 
 $CCrmBizProc = new CCrmBizProc('CONTACT');
 
@@ -454,11 +458,16 @@ $arResult['HEADERS'] = array_merge(
 	)
 );
 
-$CCrmFieldMulti->PrepareListHeaders($arResult['HEADERS']);
+$CCrmFieldMulti->PrepareListHeaders($arResult['HEADERS'], ['LINK']);
 if($isInExportMode)
 {
 	$CCrmFieldMulti->ListAddHeaders($arResult['HEADERS']);
 }
+
+Crm\Service\Container::getInstance()->getParentFieldManager()->prepareGridHeaders(
+	\CCrmOwnerType::Contact,
+	$arResult['HEADERS']
+);
 
 if($enableOutmodedFields)
 {
@@ -505,6 +514,15 @@ foreach ($utmList as $utmCode => $utmName)
 }
 
 $CCrmUserType->ListAddHeaders($arResult['HEADERS']);
+
+$arResult['HEADERS_SECTIONS'] = [
+	[
+		'id' => 'CONTACT',
+		'name' => Loc::getMessage('CRM_COLUMN_CONTACT'),
+		'default' => true,
+		'selected' => true,
+	],
+];
 
 $arBPData = array();
 if ($isBizProcInstalled)
@@ -862,6 +880,12 @@ foreach ($arFilter as $k => $v)
 	//Check if first key character is aplpha and key is not immutable
 	if(preg_match('/^[a-zA-Z]/', $k) !== 1 || in_array($k, $arImmutableFilters, true))
 	{
+		continue;
+	}
+
+	if (Crm\Service\ParentFieldManager::isParentFieldName($k))
+	{
+		$arFilter[$k] = Crm\Service\ParentFieldManager::transformEncodedFilterValueIntoInteger($k, $v);
 		continue;
 	}
 
@@ -2027,6 +2051,10 @@ if ($arResult['ENABLE_BIZPROC'] && !empty($arResult['CONTACT']))
 	}
 }
 
+$parentFieldValues = Crm\Service\Container::getInstance()->getParentFieldManager()->loadParentElementsByChildren(
+	\CCrmOwnerType::Contact,
+	$arResult['CONTACT']
+);
 
 foreach($arResult['CONTACT'] as &$arContact)
 {
@@ -2360,6 +2388,21 @@ foreach($arResult['CONTACT'] as &$arContact)
 		}
 	}
 
+	if (isset($parentFieldValues[$arContact['ID']]))
+	{
+		foreach ($parentFieldValues[$arContact['ID']] as $parentEntityTypeId => $parentEntity)
+		{
+			if ($isInExportMode)
+			{
+				$arContact[$parentEntity['code']] = $parentEntity['title'];
+			}
+			else
+			{
+				$arContact[$parentEntity['code']] = $parentEntity['value'];
+			}
+		}
+	}
+
 	$arResult['CONTACT'][$entityID] = $arContact;
 	$arResult['CONTACT_UF'][$entityID] = array();
 	$arResult['CONTACT_ID'][$entityID] = $entityID;
@@ -2394,6 +2437,20 @@ if($arResult['ENABLE_TOOLBAR'])
 		if(isset($internalContext['COMPANY_ID']))
 		{
 			$addParams['company_id'] = $internalContext['COMPANY_ID'];
+		}
+	}
+	else
+	{
+		$parentEntityTypeId = (int)($arParams['PARENT_ENTITY_TYPE_ID'] ?? 0);
+		$parentEntityId = (int)($arParams['PARENT_ENTITY_ID'] ?? 0);
+		if (\CCrmOwnerType::IsDefined($parentEntityTypeId) && $parentEntityId > 0)
+		{
+			$arResult['PATH_TO_CONTACT_ADD'] = Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl(
+				\CCrmOwnerType::Contact,
+				0,
+				null,
+				new Crm\ItemIdentifier($parentEntityTypeId, $parentEntityId)
+			);
 		}
 	}
 
@@ -2609,6 +2666,36 @@ if (!$isInExportMode)
 		$arResult['NEED_TO_CONVERT_UF_ADDRESSES'] = $isAgentEnabled;
 		unset ($agent, $isAgentEnabled);
 		//endregion Transfer addresses from user fields
+
+		//region Show the process of indexing duplicates
+		$agent = ContactIndexRebuild::getInstance($userID);
+		$isNeedToShowDupIndexProcess = false;
+		if ($agent->isActive())
+		{
+			$state = $agent->state()->getData();
+			if (isset($state['STATUS']) && $state['STATUS'] === ContactIndexRebuild::STATUS_RUNNING)
+			{
+				$isNeedToShowDupIndexProcess = true;
+			}
+		}
+		$arResult['NEED_TO_SHOW_DUP_INDEX_PROCESS'] = $isNeedToShowDupIndexProcess;
+		unset($isNeedToShowDupIndexProcess, $agent);
+		//endregion Show the process of indexing duplicates
+
+		//region Show the process of merge duplicates
+		$isNeedToShowDupMergeProcess = false;
+		$agent = ContactMerge::getInstance($userID);
+		if ($agent->isActive())
+		{
+			$state = $agent->state()->getData();
+			if (isset($state['STATUS']) && $state['STATUS'] === ContactMerge::STATUS_RUNNING)
+			{
+				$isNeedToShowDupMergeProcess = true;
+			}
+		}
+		$arResult['NEED_TO_SHOW_DUP_MERGE_PROCESS'] = $isNeedToShowDupMergeProcess;
+		unset($isNeedToShowDupMergeProcess, $agent);
+		//endregion Show the process of merge duplicates
 	}
 
 	$this->IncludeComponentTemplate();

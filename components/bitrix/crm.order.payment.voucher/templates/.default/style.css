@@ -3,3 +3,15 @@
 	width:100%;
 	max-width: 500px;
 }
+
+body {
+	margin-top: 0;
+}
+
+.pagetitle {
+	font: 26px "OpenSans-Light", Helvetica, Arial, sans-serif;
+	margin: 0;
+	padding: 21px 0 21px 5px;
+	display: block;
+	word-wrap: break-word;
+}

@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Conversion;
 
+use Bitrix\Crm\ItemIdentifier;
+
 class DealConversionWizard extends EntityConversionWizard
 {
 	public const QUERY_PARAM_SRC_ID = 'conv_deal_id';
@@ -10,12 +12,12 @@ class DealConversionWizard extends EntityConversionWizard
 	 * @param int $entityID Entity ID.
 	 * @param DealConversionConfig|null $config Configuration parameters.
 	 */
-	public function __construct($entityID = 0, DealConversionConfig $config = null)
+	public function __construct($entityID = 0, EntityConversionConfig $config = null)
 	{
 		$converter = new DealConverter($config);
 		$converter->setEntityID($entityID);
-		parent::__construct($converter);
 
+		parent::__construct($converter);
 	}
 	/**
 	 * Execute wizard.
@@ -24,6 +26,11 @@ class DealConversionWizard extends EntityConversionWizard
 	 */
 	public function execute(array $contextData = null)
 	{
+		if ($this->isNewApi())
+		{
+			return parent::execute($contextData);
+		}
+
 		/** @var DealConverter $converter */
 		$converter = $this->converter;
 
@@ -196,19 +203,6 @@ class DealConversionWizard extends EntityConversionWizard
 			}
 		}
 	}
-	/**
-	 * Save wizard settings in session.
-	 * @return void
-	 */
-	public function save()
-	{
-		if(!isset($_SESSION['DEAL_CONVERTER']))
-		{
-			$_SESSION['DEAL_CONVERTER'] = array();
-		}
-
-		$_SESSION['DEAL_CONVERTER'][$this->getEntityID()] = $this->externalize();
-	}
 
 	/**
 	 * Load wizard related to entity from session.
@@ -226,16 +220,15 @@ class DealConversionWizard extends EntityConversionWizard
 		$item->internalize($_SESSION['DEAL_CONVERTER'][$entityID]);
 		return $item;
 	}
+
 	/**
-	 * Remove wizard related to entity from session.
-	 * @param int $entityID Entity ID.
-	 * @return void
+	 * @inheritDoc
 	 */
 	public static function remove($entityID)
 	{
-		if(isset($_SESSION['DEAL_CONVERTER']) && $_SESSION['DEAL_CONVERTER'][$entityID])
+		if ($entityID > 0)
 		{
-			unset($_SESSION['DEAL_CONVERTER'][$entityID]);
+			static::removeByIdentifier(new ItemIdentifier(\CCrmOwnerType::Deal, (int)$entityID));
 		}
 	}
 }

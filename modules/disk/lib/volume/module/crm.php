@@ -392,11 +392,11 @@ class Crm
 					}
 					if (count($folderIds) > 0)
 					{
-						$agr = new Volume\Folder();
+						$agr = new Volume\FolderTree;
 						$agr
 							->setOwner($this->getOwner())
 							->addFilter('STORAGE_ID', $storageId)
-							->addFilter('@PARENT_ID', $folderIds)
+							->addFilter('@FOLDER_ID', $folderIds)
 							->purify()
 							->measure(array(self::DISK_FILE));
 
@@ -497,7 +497,7 @@ class Crm
 				);
 				$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$querySql}");
 
-				VolumeTable::dropTemporally();
+				VolumeTable::clearTemporally();
 
 				$this->setStage(null);
 			}
@@ -679,7 +679,7 @@ class Crm
 					$folderIds[] = $folder->getId();
 				}
 
-				$agr = new Volume\Folder();
+				$agr = new Volume\FolderTree();
 				$agr
 					->setOwner($this->getOwner())
 					->addFilter('=STORAGE_ID', $storage->getId())
@@ -718,7 +718,7 @@ class Crm
 	 */
 	public static function getFragment(array $filter)
 	{
-		if($filter['INDICATOR_TYPE'] == Volume\Folder::className())
+		if ($filter['INDICATOR_TYPE'] == Volume\Folder::className() || $filter['INDICATOR_TYPE'] == Volume\FolderTree::className())
 		{
 			return new Volume\Fragment($filter);
 		}
@@ -732,7 +732,7 @@ class Crm
 	 */
 	public static function getTitle(Volume\Fragment $fragment)
 	{
-		if($fragment->getIndicatorType() == Volume\Folder::className())
+		if ($fragment->getIndicatorType() == Volume\Folder::className() || $fragment->getIndicatorType() == Volume\FolderTree::className())
 		{
 			$folder = $fragment->getFolder();
 			if (!$folder instanceof \Bitrix\Disk\Folder)
@@ -755,7 +755,7 @@ class Crm
 	public static function getUpdateTime(Volume\Fragment $fragment)
 	{
 		$timestampUpdate = null;
-		if($fragment->getIndicatorType() == Volume\Folder::className())
+		if ($fragment->getIndicatorType() == Volume\Folder::className() || $fragment->getIndicatorType() == Volume\FolderTree::className())
 		{
 			$folder = $fragment->getFolder();
 			if (!$folder instanceof \Bitrix\Disk\Folder)
@@ -777,7 +777,7 @@ class Crm
 	public static function getUrl(Volume\Fragment $fragment)
 	{
 		$url = '';
-		if($fragment->getIndicatorType() == Volume\Folder::className())
+		if ($fragment->getIndicatorType() == Volume\Folder::className() || $fragment->getIndicatorType() == Volume\FolderTree::className())
 		{
 			$folder = $fragment->getFolder();
 			if (!$folder instanceof \Bitrix\Disk\Folder)

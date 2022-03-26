@@ -262,6 +262,9 @@ foreach($items as $item)
 	{
 		$params = isset($item['PARAMS']) ? $item['PARAMS'] : array();
 
+		$containerID = $params['CONTAINER_ID'] ?? null; //not used now, but can be useful later
+		$labelID = $params['LABEL_ID'] ?? null;
+		$buttonID = $params['BUTTON_ID'] ?? null;
 		$typeID = isset($params['TYPE_ID']) ? (int)$params['TYPE_ID'] : 0;
 		$schemeName = isset($params['SCHEME_NAME']) ? $params['SCHEME_NAME'] : null;
 		$schemeDescr = isset($params['SCHEME_DESCRIPTION']) ? $params['SCHEME_DESCRIPTION'] : null;
@@ -284,8 +287,8 @@ foreach($items as $item)
 		$iconBtnClassName = $isPermitted ? 'crm-btn-convert' : 'crm-btn-convert crm-btn-convert-blocked';
 		$originUrl = $APPLICATION->GetCurPage();
 
-		$labelID = "{$prefix}{$code}_label";
-		$buttonID = "{$prefix}{$code}_button";
+		$labelID = empty($labelID) ? "{$prefix}{$code}_label" : $labelID;
+		$buttonID = empty($buttonID) ? "{$prefix}{$code}_button" : $buttonID;
 
 		if($isPermitted && $entityTypeID === CCrmOwnerType::Lead)
 		{
@@ -320,42 +323,7 @@ foreach($items as $item)
 								}
 							);
 						<?elseif($entityTypeID === CCrmOwnerType::Deal):?>
-							BX.CrmDealConversionSchemeSelector.create(
-								"<?=$selectorID?>",
-								{
-									entityId: <?=$entityID?>,
-									scheme: "<?=$schemeName?>",
-									containerId: "<?=$labelID?>",
-									labelId: "<?=$labelID?>",
-									buttonId: "<?=$buttonID?>",
-									originUrl: "<?=$originUrl?>",
-									enableHint: <?=CUtil::PhpToJSObject($enableHint)?>,
-									hintMessages: <?=CUtil::PhpToJSObject($hint)?>
-								}
-							);
-
-							BX.addCustomEvent(window,
-								"CrmCreateQuoteFromDeal",
-								function()
-								{
-									BX.CrmDealConverter.getCurrent().convert(
-										<?=$entityID?>,
-										BX.CrmDealConversionScheme.createConfig(BX.CrmDealConversionScheme.quote),
-										"<?=$originUrl?>"
-									);
-								}
-							);
-							BX.addCustomEvent(window,
-								"CrmCreateInvoiceFromDeal",
-								function()
-								{
-									BX.CrmDealConverter.getCurrent().convert(
-										<?=$entityID?>,
-										BX.CrmDealConversionScheme.createConfig(BX.CrmDealConversionScheme.invoice),
-										"<?=$originUrl?>"
-									);
-								}
-							);
+							<?php //everything now is initialized in crm.deal.details ?>
 						<?elseif($entityTypeID === CCrmOwnerType::Quote):?>
 							BX.CrmQuoteConversionSchemeSelector.create(
 								"<?=$selectorID?>",
@@ -402,8 +370,7 @@ foreach($items as $item)
 						};
 						BX.bind(BX("<?=$labelID?>"), "click", showLockInfo );
 						<?if($entityTypeID === CCrmOwnerType::Deal):?>
-							BX.addCustomEvent(window, "CrmCreateQuoteFromDeal", showLockInfo);
-							BX.addCustomEvent(window, "CrmCreateInvoiceFromDeal", showLockInfo);
+							<?php //everything now is initialized in crm.deal.details ?>
 						<?elseif($entityTypeID === CCrmOwnerType::Quote):?>
 							BX.addCustomEvent(window, "CrmCreateDealFromQuote", showLockInfo);
 							BX.addCustomEvent(window, "CrmCreateInvoiceFromQuote", showLockInfo);

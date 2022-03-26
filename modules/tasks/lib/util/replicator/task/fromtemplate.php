@@ -1,4 +1,5 @@
-<?
+<?php
+
 /**
  * Bitrix Framework
  * @package bitrix
@@ -9,7 +10,6 @@
 namespace Bitrix\Tasks\Util\Replicator\Task;
 
 use Bitrix\Main\Localization\Loc;
-
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
 use Bitrix\Tasks\Item;
@@ -516,7 +516,7 @@ final class FromTemplate extends Util\Replicator\Task
 						Loc::getMessage('TASKS_REPLICATOR_NEXT_TIME', array(
 							'#TIME#' => $nextTimeFormatted.' ('.UI::formatTimezoneOffsetUTC($timeZoneFromGmtInSeconds).')',
 							'#PERIOD#' => $pPERIOD,
-							'#SECONDS#' => Loc::getMessage('TASKS_REPLICATOR_SECOND_'.UI::getPluralForm($pPERIOD)),
+							'#SECONDS#' => Loc::getMessagePlural('TASKS_REPLICATOR_SECOND', $pPERIOD),
 						))
 					);
 

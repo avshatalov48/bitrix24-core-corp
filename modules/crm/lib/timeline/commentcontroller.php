@@ -322,7 +322,12 @@ class CommentController extends EntityController
 			\CCrmOwnerType::TryGetInfo($data['ENTITY_TYPE_ID'], $data['ENTITY_ID'], $info);
 			$info['LINK'] = \CCrmOwnerType::GetEntityShowPath($data['ENTITY_TYPE_ID'], $data['ENTITY_ID']);
 			$nameLink = "<a href=\"" . $info['LINK'] . "\" class=\"bx-notifier-item-action\">" . htmlspecialcharsbx($info['CAPTION']) . "</a>";
-			$entityTitle = Loc::getMessage("CRM_ENTITY_TITLE_" . $entityName, array("#ENTITY_NAME#" => $nameLink));
+			$phrase = "CRM_ENTITY_TITLE_" . $entityName;
+			if ($entityName === \CCrmOwnerType::SmartInvoiceName)
+			{
+				$phrase = "CRM_ENTITY_TITLE_" . \CCrmOwnerType::InvoiceName;
+			}
+			$entityTitle = Loc::getMessage($phrase, array("#ENTITY_NAME#" => $nameLink));
 			$message = Loc::getMessage("CRM_COMMENT_IM_MENTION_POST" . $genderSuffix, array(
 				"#COMMENT#" => $cuttedComment,
 				"#ENTITY_TITLE#" => $entityTitle

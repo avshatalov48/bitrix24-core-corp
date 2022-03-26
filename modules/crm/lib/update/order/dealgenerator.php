@@ -97,8 +97,9 @@ final class DealGenerator extends Main\Update\Stepper
 
 	protected function bindDealToOrder($dealId, Crm\Order\Order $order)
 	{
-		$binding = $order->createDealBinding();
-		$binding->setField('DEAL_ID', $dealId);
+		$binding = $order->createEntityBinding();
+		$binding->setField('OWNER_ID', $dealId);
+		$binding->setField('OWNER_TYPE_ID', \CCrmOwnerType::Deal);
 	}
 
 	protected function extractDealFields(Crm\Order\Order $order) : array
@@ -144,8 +145,8 @@ final class DealGenerator extends Main\Update\Stepper
 
 		$query->registerRuntimeField('',
 			new Main\Entity\ReferenceField(
-				'DEAL_BINDING',
-				Crm\Binding\OrderDealTable::getEntity(),
+				'ENTITY_BINDING',
+				Crm\Binding\OrderEntityTable::getEntity(),
 				[
 					'=ref.ORDER_ID' => 'this.ID',
 				],
@@ -164,7 +165,7 @@ final class DealGenerator extends Main\Update\Stepper
 					Crm\Order\OrderStatus::getFinalUnsuccessfulStatus()
 				]
 			)
-			->whereNull('DEAL_BINDING.ORDER_ID')
+			->whereNull('ENTITY_BINDING.ORDER_ID')
 		;
 
 		$data = $query->fetch();
@@ -181,8 +182,8 @@ final class DealGenerator extends Main\Update\Stepper
 		$query = new Main\Entity\Query(Sale\Internals\OrderTable::getEntity());
 		$query->registerRuntimeField('',
 			new Main\Entity\ReferenceField(
-				'DEAL_BINDING',
-				Crm\Binding\OrderDealTable::getEntity(),
+				'ENTITY_BINDING',
+				Crm\Binding\OrderEntityTable::getEntity(),
 				[
 					'=ref.ORDER_ID' => 'this.ID',
 				],
@@ -200,7 +201,7 @@ final class DealGenerator extends Main\Update\Stepper
 					Crm\Order\OrderStatus::getFinalUnsuccessfulStatus()
 				]
 			)
-			->whereNull('DEAL_BINDING.ORDER_ID')
+			->whereNull('ENTITY_BINDING.ORDER_ID')
 			->setLimit(self::MAX_ORDERS_FOR_STEP)
 		;
 

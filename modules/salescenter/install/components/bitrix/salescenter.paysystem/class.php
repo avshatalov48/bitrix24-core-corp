@@ -85,7 +85,7 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 			return;
 		}
 
-		if(!SaleManager::getInstance()->isFullAccess())
+		if(!SaleManager::getInstance()->isFullAccess(true))
 		{
 			$this->showError(Loc::getMessage("SP_SALESCENTER_SALE_ACCESS_DENIED"));
 			return;

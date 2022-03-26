@@ -16,11 +16,6 @@ class Lead extends Base
 		return \CCrmOwnerType::Lead;
 	}
 
-	public function isPermissionEntityTypeSupported($entityType): bool
-	{
-		return $entityType === self::$permissionEntityType;
-	}
-
 	protected function getSelectFields(): array
 	{
 		return 	[

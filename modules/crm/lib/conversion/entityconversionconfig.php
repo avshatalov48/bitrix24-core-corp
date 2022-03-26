@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Conversion;
 
+use Bitrix\Crm\Service\Context;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectNotFoundException;
@@ -9,15 +10,68 @@ use Bitrix\Main\Web\Uri;
 
 class EntityConversionConfig
 {
+	/** @var int */
+	//todo remove in the future and let only converter now what the destination type is?
+	//we can simply change storage approach and move the save out of config and config will
+	// have no need in srcEntityTypeId to save itself
+	protected $srcEntityTypeID;
 	/** @var EntityConversionConfigItem[] */
 	protected $items = [];
 	/** @var bool */
 	protected $enablePermissionCheck = true;
 	/** @var Uri|null */
 	protected $originUrl;
+	/** @var Scheme */
+	protected $scheme;
+	/** @var Context|null */
+	protected $context;
 
 	public function __construct(array $options = null)
 	{
+	}
+
+	public static function create(int $srcEntityTypeID, array $options = null): self
+	{
+		$config = new static($options);
+
+		$config->srcEntityTypeID = $srcEntityTypeID;
+
+		return $config;
+	}
+
+	public static function createFromExternalized(array $externalizedParams): ?self
+	{
+		$config = new self();
+		$config->internalize($externalizedParams);
+
+		return static::checkInstanceIntegrity($config) ? $config : null;
+	}
+
+	/**
+	 * Check if an instance of config was constructed completely
+	 *
+	 * @param EntityConversionConfig $config
+	 *
+	 * @return bool
+	 */
+	private static function checkInstanceIntegrity(self $config): bool
+	{
+		return (
+			is_int($config->srcEntityTypeID)
+			&& ($config->srcEntityTypeID > 0)
+		);
+	}
+
+	public function getContext(): ?Context
+	{
+		return $this->context;
+	}
+
+	public function setContext(Context $context): self
+	{
+		$this->context = $context;
+
+		return $this;
 	}
 
 	/**
@@ -30,23 +84,34 @@ class EntityConversionConfig
 		throw new NotImplementedException(__METHOD__.' should be overridden in '.static::class);
 	}
 
-	protected static function getOptionName(): string
+	protected static function getOptionName(int $entityTypeId): string
 	{
-		$entityName = mb_strtolower(\CCrmOwnerType::ResolveName(static::getEntityTypeId()));
+		$entityName = mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId));
 		return "crm_{$entityName}_conversion";
 	}
 
 	/**
 	 * @return static|null
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
 	public static function load()
 	{
-		return static::constructFromOption(Option::get('crm', static::getOptionName(), '', ''));
+		$optionValue = Option::get('crm', static::getOptionName(static::getEntityTypeId()), '', '');
+
+		return static::constructFromOption($optionValue, static::getEntityTypeId());
 	}
 
-	protected static function constructFromOption(string $optionValue, array $options = null): ?EntityConversionConfig
+	public static function loadByEntityTypeId(int $srcEntityTypeId): ?self
+	{
+		$optionValue = Option::get('crm', static::getOptionName($srcEntityTypeId), '', '');
+
+		return static::constructFromOption($optionValue, $srcEntityTypeId);
+	}
+
+	protected static function constructFromOption(
+		string $optionValue,
+		int $srcEntityTypeId,
+		array $options = null
+	): ?EntityConversionConfig
 	{
 		$params = $optionValue !== '' ? unserialize($optionValue, ['allowed_classes' => false]) : null;
 		if(!is_array($params))
@@ -54,27 +119,35 @@ class EntityConversionConfig
 			return null;
 		}
 
-		$item = new static($options);
+		//todo use static::createFromExternalized here (have to pass $options into a serialized array)
+		$item = static::create($srcEntityTypeId, $options);
 		$item->internalize($params);
 		return $item;
 	}
 
 	public function save()
 	{
-		Option::set('crm', static::getOptionName(), serialize($this->externalize()), '');
+		Option::set('crm', static::getOptionName($this->srcEntityTypeID), serialize($this->externalize()), '');
+	}
+
+	public static function removeByEntityTypeId(int $srcEntityTypeId): void
+	{
+		Option::delete(
+			'crm',
+			[
+				'name' => static::getOptionName($srcEntityTypeId)
+			],
+		);
 	}
 
 	/**
+	 * @deprecated
+	 *
 	 * @return static
-	 * @throws NotImplementedException
 	 */
 	public static function getDefault()
 	{
-		$config = new static();
-		$item = $config->getItem(static::getDefaultDestinationEntityTypeId());
-		$item->setActive(true);
-		$item->enableSynchronization(true);
-		return $config;
+		return ConversionManager::getDefaultConfig(static::getEntityTypeId());
 	}
 
 	/**
@@ -88,13 +161,11 @@ class EntityConversionConfig
 	}
 
 	/**
-	 * @abstract
 	 * @return int
-	 * @throws NotImplementedException
 	 */
 	public function getSchemeID()
 	{
-		throw new NotImplementedException(__METHOD__.' should be overridden in '.static::class);
+		return $this->getScheme()->getCurrentItem()->getId();
 	}
 
 	/**
@@ -144,11 +215,7 @@ class EntityConversionConfig
 		return $this->items[$entityTypeID] ?? null;
 	}
 
-	/**
-	 * Add configuration item.
-	 * @param EntityConversionConfigItem $item Configuration item.
-	 */
-	protected function addItem(EntityConversionConfigItem $item)
+	public function addItem(EntityConversionConfigItem $item)
 	{
 		$this->items[$item->getEntityTypeID()] = $item;
 	}
@@ -215,23 +282,37 @@ class EntityConversionConfig
 	public function toJavaScript()
 	{
 		$results = [];
-		foreach($this->items as $k => $v)
+
+		foreach($this->items as $entityTypeId => $configItem)
 		{
-			$results[mb_strtolower(\CCrmOwnerType::ResolveName($k))] = $v->toJavaScript();
+			$results[mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId))] = $configItem->toJavaScript();
 		}
+
+		return $results;
+	}
+
+	public function toJson(): array
+	{
+		$results = [];
+
+		foreach($this->items as $configItem)
+		{
+			$results[] = $configItem->toJavaScript();
+		}
+
 		return $results;
 	}
 
 	public function fromJavaScript(array $params)
 	{
 		$this->items = [];
-		foreach($params as $k => $v)
+		foreach($params as $entityTypeName => $itemParams)
 		{
-			$entityTypeID = \CCrmOwnerType::ResolveID($k);
+			$entityTypeID = \CCrmOwnerType::ResolveID($entityTypeName);
 			if($entityTypeID !== \CCrmOwnerType::Undefined)
 			{
 				$item = new EntityConversionConfigItem($entityTypeID);
-				$item->fromJavaScript($v);
+				$item->fromJavaScript($itemParams);
 				$this->addItem($item);
 			}
 		}
@@ -239,26 +320,40 @@ class EntityConversionConfig
 
 	public function externalize()
 	{
-		$results = [];
-		foreach($this->items as $k => $v)
+		$result = [
+			'srcEntityTypeId' => $this->srcEntityTypeID,
+		];
+
+		foreach($this->items as $entityTypeId => $item)
 		{
-			$results[\CCrmOwnerType::ResolveName($k)] = $v->externalize();
+			$result[\CCrmOwnerType::ResolveName($entityTypeId)] = $item->externalize();
 		}
-		return $results;
+
+		return $result;
 	}
 
 	public function internalize(array $params)
 	{
-		$this->items = [];
-		foreach($params as $k => $v)
+		foreach ($params as $entityTypeName => $itemParams)
 		{
-			$entityTypeID = \CCrmOwnerType::ResolveID($k);
-			if($entityTypeID !== \CCrmOwnerType::Undefined)
+			$entityTypeId = \CCrmOwnerType::ResolveID($entityTypeName);
+
+			if (is_array($itemParams) && \CCrmOwnerType::IsDefined($entityTypeId))
 			{
-				$item = new EntityConversionConfigItem($entityTypeID);
-				$item->internalize($v);
-				$this->addItem($item);
+				$item = $this->getItem($entityTypeId);
+				if (!$item)
+				{
+					$item = new EntityConversionConfigItem($entityTypeId);
+					$this->addItem($item);
+				}
+
+				$item->internalize($itemParams);
 			}
+		}
+
+		if (isset($params['srcEntityTypeId']))
+		{
+			$this->srcEntityTypeID = (int)$params['srcEntityTypeId'];
 		}
 	}
 
@@ -275,5 +370,63 @@ class EntityConversionConfig
 	public function getOriginUrl(): ?Uri
 	{
 		return $this->originUrl;
+	}
+
+	public function getScheme(): Scheme
+	{
+		if ($this->scheme === null)
+		{
+			$oldScheme = ConversionManager::getSchemeClass($this->srcEntityTypeID);
+			$activeEntityTypeIds = [];
+			$currentSchemeId = null;
+			$activeItems = $this->getActiveItems();
+			foreach ($activeItems as $activeItem)
+			{
+				$activeEntityTypeIds[] = $activeItem->getEntityTypeID();
+			}
+			sort($activeEntityTypeIds);
+
+			$items = [];
+			foreach ($oldScheme::getAllDescriptions() as $schemeId => $phrase)
+			{
+				$entityTypeIds = $oldScheme::getEntityTypeIds($schemeId);
+				$item =
+					(new SchemeItem($entityTypeIds, $phrase))
+						->setId($schemeId)
+				;
+
+				$items[] = $item;
+
+				if ($entityTypeIds === $activeEntityTypeIds)
+				{
+					$currentSchemeId = $item->getId();
+				}
+			}
+
+			foreach ($this->items as $item)
+			{
+				$typeId = $item->getEntityTypeID();
+				if (\CCrmOwnerType::isUseDynamicTypeBasedApproach($typeId))
+				{
+					$entityTypeIds = [$typeId];
+					$item = (new SchemeItem($entityTypeIds, \CCrmOwnerType::GetDescription($typeId)));
+
+					$items[] = $item;
+
+					if ($entityTypeIds === $activeEntityTypeIds)
+					{
+						$currentSchemeId = $item->getId();
+					}
+				}
+			}
+
+			$this->scheme = new Scheme($items);
+			if ($currentSchemeId)
+			{
+				$this->scheme->setCurrentItemId($currentSchemeId);
+			}
+		}
+
+		return $this->scheme;
 	}
 }

@@ -1,12 +1,14 @@
 <?
 return [
-	'db',
-	'chat/tables',
-	'chat/utils',
-	'chat/restrequest',
-	'chat/messengercommon',
-	'chat/dataconverter',
-	'chat/timer',
-	'chat/searchscopes',
-	'intranet/invite',
+	'extensions' => [
+		'db',
+		'chat/tables',
+		'chat/utils',
+		'chat/restrequest',
+		'chat/messengercommon',
+		'chat/dataconverter',
+		'chat/timer',
+		'chat/searchscopes',
+		'intranet/invite',
+	],
 ];

@@ -31,7 +31,7 @@ var TaskListFilterPopup = {
 				}
 			}
 		});
-		
+
 		BX.bind(BX("task-list-filter"), "click", BX.delegate(this.onFilterSwitch, this));
 	},
 
@@ -63,7 +63,7 @@ var TaskListFilterPopup = {
 					};
 				})(bindElement, this),
 				100
-			);				
+			);
 		}
 	},
 
@@ -84,12 +84,12 @@ var TaskListFilterPopup = {
 	{
 		this.popup.close();
 		BX.removeClass(this.bindElement, "task-title-button-filter-pressed");
-		BX.removeClass(this.bindElement, "webform-small-button-active");			
+		BX.removeClass(this.bindElement, "webform-small-button-active");
 		this.adjustListHeight();
 		BX.unbind(document, 'click', BX.proxy(this.onDocumentClick, this));
 		BX.unbind(BX('task-list-filter'), 'click', BX.proxy(this.onFilterClick, this));
 	},
-	
+
 	adjustListHeight : function()
 	{
 		var ganttContainer = BX("task-list-container", true);
@@ -104,12 +104,12 @@ var TaskListFilterPopup = {
 			BX("task-list-container", true).style.paddingBottom = filterHeight - ganttHeight + "px";
 		else
 			BX("task-list-container", true).style.paddingBottom = "0px";
-			
+
 	},
-	
+
 	onFilterSwitch : function(event)
 	{
-		event = event || window.event;	
+		event = event || window.event;
 		var target = event.target || event.srcElement;
 		if (BX.hasClass(target, "task-filter-mode-selected"))
 			this.adjustListHeight();
@@ -426,11 +426,20 @@ function SetServerStatus(taskId, status, params)
 		onsuccess   : (function(taskId){
 			return function(reply)
 			{
+				if (
+					reply.status === 'failure'
+					&& reply.message
+				)
+				{
+					BX.UI.Notification.Center.notify({content: reply.message});
+					return;
+				}
+
 				if (reply.status != 'success')
 					return;
 
 				var taskInfo = BX.parseJSON(reply.tasksRenderJSON);
-				
+
 				// replace menu items here
 				quickInfoData[taskId].menuItems = taskInfo.menuItems;
 				quickInfoData[taskId].realStatus = taskInfo.realStatus;
@@ -453,7 +462,7 @@ function SetServerStatus(taskId, status, params)
 				if (window.BX.TasksIFrameInst)
 					window.BX.TasksIFrameInst.onTaskChanged(taskInfo, null, null, null, taskInfo.html);
 			};
-		})(taskId)
+		})(taskId),
 	});
 
 	__InvalidateMenus([taskId, "c" + taskId]);

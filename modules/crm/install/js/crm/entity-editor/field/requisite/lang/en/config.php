@@ -1,5 +1,6 @@
-<?
+<?php
 $MESS["CLIENT_REQUISITES_ADDRESS_SHOW_ADDRESS"] = "Show address";
+$MESS["REQUISITE_LABEL_DETAILS_SELECT"] = "select from list";
 $MESS["REQUISITE_LABEL_DETAILS_TEXT"] = "details";
 $MESS["REQUISITE_LIST_EMPTY_PRESET_LIST"] = "No details template was found";
 $MESS["REQUISITE_LIST_ITEM_DELETE_CONFIRMATION_CONTENT"] = "Are sure you want to delete the details and all associated addresses?";
@@ -13,4 +14,3 @@ $MESS["REQUISITE_TOOLTIP_BANK_DETAILS_TITLE"] = "Banking details";
 $MESS["REQUISITE_TOOLTIP_DELETE"] = "delete";
 $MESS["REQUISITE_TOOLTIP_EDIT"] = "change";
 $MESS["REQUISITE_TOOLTIP_SHOW_DETAILS"] = "details";
-?>

@@ -107,6 +107,11 @@ final class TraceSplitter
 				}
 			}
 
+			if (!$code)
+			{
+				continue;
+			}
+
 			$childId = $children[$levelId][$code] ?? 0;
 			if (!$traceSourceId)
 			{
@@ -164,6 +169,7 @@ final class TraceSplitter
 			'adid' => Type::Keyword,
 			'ad_id' => Type::Keyword,
 			'kwid' => Type::Keyword,
+			'kwd' => Type::Keyword,
 			'aid' => Type::Keyword,
 			'gid' => Type::Adgroup,
 			'cid' => Type::Campaign,
@@ -203,7 +209,7 @@ final class TraceSplitter
 		}
 
 		$mapKeys = implode("|", array_keys($map));
-		foreach($tags as $tagName => $tagValue)
+		foreach($tags as $tagValue)
 		{
 			if (!$tagValue || !trim($tagValue))
 			{
@@ -211,7 +217,7 @@ final class TraceSplitter
 			}
 
 			$matches = [];
-			$matchResult = preg_match_all("/($mapKeys)[|_-]?([\d]{6,})/", $tagValue, $matches);
+			$matchResult = preg_match_all("/($mapKeys)[|_-]?([a-z\-\d]{6,})/", $tagValue, $matches);
 			if (!$matchResult || empty($matches[1]))
 			{
 				continue;
@@ -219,7 +225,13 @@ final class TraceSplitter
 
 			foreach ($matches[1] as $matchIndex => $key)
 			{
-				$levels[$map[$key]] = $matches[2][$matchIndex];
+				$value = $matches[2][$matchIndex];
+				$value = preg_replace("/[^\d]/", "", $value);
+				if (!$value)
+				{
+					continue;
+				}
+				$levels[$map[$key]] = $value;
 			}
 		}
 

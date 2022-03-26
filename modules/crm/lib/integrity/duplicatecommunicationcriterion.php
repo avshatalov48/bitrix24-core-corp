@@ -54,6 +54,10 @@ class DuplicateCommunicationCriterion extends DuplicateCriterion
 		{
 			return self::extractMultifieldsValues($multifields, \CCrmFieldMulti::PHONE);
 		}
+		elseif($communicationType === CommunicationType::SLUSER_NAME)
+		{
+			return self::extractMultifieldsValues($multifields, \CCrmFieldMulti::LINK, 'USER');
+		}
 		elseif($communicationType === CommunicationType::FACEBOOK_NAME)
 		{
 			return self::extractMultifieldsValues($multifields, \CCrmFieldMulti::IM, 'FACEBOOK');
@@ -260,7 +264,7 @@ class DuplicateCommunicationCriterion extends DuplicateCriterion
 				}
 			}
 		}
-		else
+		else    // EMAIL_NAME || SLUSER_NAME
 		{
 			foreach($values as $value)
 			{
@@ -329,7 +333,8 @@ class DuplicateCommunicationCriterion extends DuplicateCriterion
 		DuplicateCommunicationMatchCodeTable::replaceValues($entityTypeID, $entityID, $type, $values);
 
 		$typeID = DuplicateIndexType::convertFromCommunicationType(CommunicationType::resolveID($type));
-		if(in_array($typeID, self::getSupportedDedupeTypes(), true))
+		$supportedTypes = array_merge(self::getSupportedDedupeTypes(), self::getHiddenSupportedDedupeTypes());
+		if(in_array($typeID, $supportedTypes, true))
 		{
 			DuplicateEntityMatchHash::unregisterEntity($entityTypeID, $entityID, $typeID);
 			foreach($values as $value)
@@ -375,7 +380,7 @@ class DuplicateCommunicationCriterion extends DuplicateCriterion
 
 		DuplicateCommunicationMatchCodeTable::bulkReplaceValues($entityTypeID, $entityID, $effectiveData);
 
-		$supportedTypes = self::getSupportedDedupeTypes();
+		$supportedTypes = array_merge(self::getSupportedDedupeTypes(), self::getHiddenSupportedDedupeTypes());
 		foreach($supportedTypes as $typeID)
 		{
 			DuplicateEntityMatchHash::unregisterEntity($entityTypeID, $entityID, $typeID);
@@ -440,16 +445,45 @@ class DuplicateCommunicationCriterion extends DuplicateCriterion
 
 		if($type === CommunicationType::PHONE_NAME)
 		{
-			DuplicateEntityMatchHash::unregisterEntity($entityTypeID, $entityID, DuplicateIndexType::COMMUNICATION_PHONE);
+			DuplicateEntityMatchHash::unregisterEntity(
+				$entityTypeID,
+				$entityID,
+				DuplicateIndexType::COMMUNICATION_PHONE
+			);
 		}
 		elseif($type === CommunicationType::EMAIL_NAME)
 		{
-			DuplicateEntityMatchHash::unregisterEntity($entityTypeID, $entityID, DuplicateIndexType::COMMUNICATION_EMAIL);
+			DuplicateEntityMatchHash::unregisterEntity(
+				$entityTypeID,
+				$entityID,
+				DuplicateIndexType::COMMUNICATION_EMAIL
+			);
+		}
+		elseif($type === CommunicationType::SLUSER_NAME)
+		{
+			DuplicateEntityMatchHash::unregisterEntity(
+				$entityTypeID,
+				$entityID,
+				DuplicateIndexType::COMMUNICATION_SLUSER
+			);
 		}
 		elseif($type === '')
 		{
-			DuplicateEntityMatchHash::unregisterEntity($entityTypeID, $entityID, DuplicateIndexType::COMMUNICATION_PHONE);
-			DuplicateEntityMatchHash::unregisterEntity($entityTypeID, $entityID, DuplicateIndexType::COMMUNICATION_EMAIL);
+			DuplicateEntityMatchHash::unregisterEntity(
+				$entityTypeID,
+				$entityID,
+				DuplicateIndexType::COMMUNICATION_PHONE
+			);
+			DuplicateEntityMatchHash::unregisterEntity(
+				$entityTypeID,
+				$entityID,
+				DuplicateIndexType::COMMUNICATION_EMAIL
+			);
+			DuplicateEntityMatchHash::unregisterEntity(
+				$entityTypeID,
+				$entityID,
+				DuplicateIndexType::COMMUNICATION_SLUSER
+			);
 		}
 	}
 	public static function getRegisteredEntityMatches($entityTypeID, $entityID, $type = '')
@@ -560,8 +594,11 @@ class DuplicateCommunicationCriterion extends DuplicateCriterion
 		}
 
 		$typeID = isset($params['TYPE_ID']) ? intval($params['TYPE_ID']) : DuplicateIndexType::UNDEFINED;
-		if($typeID !== DuplicateIndexType::COMMUNICATION_PHONE
-			&& $typeID !== DuplicateIndexType::COMMUNICATION_EMAIL)
+		if(
+			$typeID !== DuplicateIndexType::COMMUNICATION_PHONE
+			&& $typeID !== DuplicateIndexType::COMMUNICATION_EMAIL
+			&& $typeID !== DuplicateIndexType::COMMUNICATION_SLUSER
+		)
 		{
 			throw new Main\NotSupportedException("Criterion type(s): '".DuplicateIndexType::resolveName($typeID)."' is not supported in current context");
 		}
@@ -809,6 +846,10 @@ class DuplicateCommunicationCriterion extends DuplicateCriterion
 		{
 			return DuplicateIndexType::COMMUNICATION_EMAIL;
 		}
+		elseif($this->communicationType === CommunicationType::SLUSER_NAME)
+		{
+			return DuplicateIndexType::COMMUNICATION_SLUSER;
+		}
 		elseif($this->communicationType === CommunicationType::FACEBOOK_NAME)
 		{
 			return DuplicateIndexType::COMMUNICATION_FACEBOOK;
@@ -848,6 +889,10 @@ class DuplicateCommunicationCriterion extends DuplicateCriterion
 		{
 			return CommunicationType::EMAIL_NAME;
 		}
+		elseif($indexTypeID === DuplicateIndexType::COMMUNICATION_SLUSER)
+		{
+			return CommunicationType::SLUSER_NAME;
+		}
 		elseif($indexTypeID === DuplicateIndexType::COMMUNICATION_FACEBOOK)
 		{
 			return CommunicationType::FACEBOOK_NAME;
@@ -872,10 +917,11 @@ class DuplicateCommunicationCriterion extends DuplicateCriterion
 		{
 			return CommunicationType::OPENLINE_NAME;
 		}
-		elseif($indexTypeID === DuplicateIndexType::COMMUNICATION_OPENLINE)
+		elseif($indexTypeID === DuplicateIndexType::COMMUNICATION_VIBER)
 		{
-			return CommunicationType::OPENLINE_NAME;
+			return CommunicationType::VIBER_NAME;
 		}
+
 		return '';
 	}
 	public function getTypeName()
@@ -1098,8 +1144,19 @@ class DuplicateCommunicationCriterion extends DuplicateCriterion
 	 */
 	public static function getSupportedDedupeTypes()
 	{
-		//TODO: Please add DuplicateIndexType::COMMUNICATION_FACEBOOK, DuplicateIndexType::COMMUNICATION_SKYPE and etc. if required
-		return array(DuplicateIndexType::COMMUNICATION_PHONE, DuplicateIndexType::COMMUNICATION_EMAIL);
+		//TODO: Please add
+		//TODO: DuplicateIndexType::COMMUNICATION_FACEBOOK, DuplicateIndexType::COMMUNICATION_SKYPE
+		//TODO: and etc. if required
+		return [
+			DuplicateIndexType::COMMUNICATION_PHONE,
+			DuplicateIndexType::COMMUNICATION_EMAIL,
+		];
+	}
+	public static function getHiddenSupportedDedupeTypes()
+	{
+		return [
+			DuplicateIndexType::COMMUNICATION_SLUSER,
+		];
 	}
 	private static function includeLangFile()
 	{

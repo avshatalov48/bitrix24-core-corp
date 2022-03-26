@@ -47,128 +47,130 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 
 		// Scan specific folder list in a storage
 		$storageList = $this->getStorageList();
-		foreach ($storageList as $storage)
+		if (count($storageList) > 0)
 		{
-			$storageId = $storage->getId();
-			$parentId = $storage->getRootObjectId();
-			$folderIds = array();
-
-			$folderList = $this->getFolderList($storage);
-			if (count($folderList) > 0)
+			foreach ($storageList as $storage)
 			{
-				foreach ($folderList as $folder)
+				$storageId = $storage->getId();
+				$parentId = $storage->getRootObjectId();
+				$folderIds = [];
+
+				$folderList = $this->getFolderList($storage);
+				if (count($folderList) > 0)
 				{
-					$folderIds[] = $folder->getId();
+					foreach ($folderList as $folder)
+					{
+						$folderIds[] = $folder->getId();
+					}
+				}
+				if (count($folderIds) > 0)
+				{
+					$agr = new Volume\FolderTree;
+					$agr
+						->setOwner($this->getOwner())
+						->addFilter('STORAGE_ID', $storageId)
+						->addFilter('@FOLDER_ID', $folderIds)
+						->purify()
+						->measure([self::DISK_FILE]);
+
+					$indicatorTypeFolder = $connection->getSqlHelper()->forSql(Volume\Folder::className());
+
+					$folderIdSql = implode(',', $folderIds);
+
+					$querySql = "
+						INSERT INTO {$temporallyTableName} 
+						(
+							INDICATOR_TYPE,
+							OWNER_ID,
+							CREATE_TIME,
+							FILE_SIZE,
+							FILE_COUNT,
+							DISK_SIZE,
+							DISK_COUNT,
+							VERSION_COUNT,
+							ATTACHED_COUNT,
+							LINK_COUNT,
+							SHARING_COUNT,
+							UNNECESSARY_VERSION_SIZE,
+							UNNECESSARY_VERSION_COUNT
+						)
+						SELECT 
+							'{$indicatorType}',
+							{$ownerId},
+							" . $connection->getSqlHelper()->getCurrentDateTimeFunction() . ",
+							SUM(FILE_SIZE),
+							SUM(FILE_COUNT),
+							SUM(DISK_SIZE),
+							SUM(DISK_COUNT),
+							SUM(VERSION_COUNT),
+							SUM(ATTACHED_COUNT),
+							SUM(LINK_COUNT),
+							SUM(SHARING_COUNT),
+							SUM(UNNECESSARY_VERSION_SIZE),
+							SUM(UNNECESSARY_VERSION_COUNT)
+						FROM 
+							b_disk_volume
+						WHERE 
+							INDICATOR_TYPE = '{$indicatorTypeFolder}'
+							and OWNER_ID = {$ownerId} 
+							and STORAGE_ID = '{$storageId}'
+							and FOLDER_ID IN( {$folderIdSql} ) 
+							and PARENT_ID = '{$parentId}'
+					";
+
+					$connection->queryExecute($querySql);
 				}
 			}
-			if (count($folderIds) > 0)
-			{
-				$agr = new Volume\Folder();
-				$agr
-					->setOwner($this->getOwner())
-					->addFilter('STORAGE_ID', $storageId)
-					->addFilter('@PARENT_ID', $folderIds)
-					->purify()
-					->measure(array(self::DISK_FILE));
 
-				$indicatorTypeFolder = $connection->getSqlHelper()->forSql(Volume\Folder::className());
+			$querySql = "
+				SELECT 
+					INDICATOR_TYPE,
+					OWNER_ID,
+					" . $connection->getSqlHelper()->getCurrentDateTimeFunction() . ",
+					SUM(FILE_SIZE),
+					SUM(FILE_COUNT),
+					SUM(DISK_SIZE),
+					SUM(DISK_COUNT),
+					SUM(VERSION_COUNT),
+					SUM(ATTACHED_COUNT),
+					SUM(LINK_COUNT),
+					SUM(SHARING_COUNT),
+					SUM(UNNECESSARY_VERSION_SIZE),
+					SUM(UNNECESSARY_VERSION_COUNT)
+				FROM 
+					{$temporallyTableName}
+				WHERE 
+					INDICATOR_TYPE = '{$indicatorType}'
+				GROUP BY
+					INDICATOR_TYPE
+				ORDER BY NULL
+			";
 
-				$folderIdSql = implode(',', $folderIds);
+			$columnList = Volume\QueryHelper::prepareInsert(
+				[
+					'INDICATOR_TYPE',
+					'OWNER_ID',
+					'CREATE_TIME',
+					'FILE_SIZE',
+					'FILE_COUNT',
+					'DISK_SIZE',
+					'DISK_COUNT',
+					'VERSION_COUNT',
+					'ATTACHED_COUNT',
+					'LINK_COUNT',
+					'SHARING_COUNT',
+					'UNNECESSARY_VERSION_SIZE',
+					'UNNECESSARY_VERSION_COUNT',
+				],
+				$this->getSelect()
+			);
 
-				$querySql = "
-					INSERT INTO {$temporallyTableName} 
-					(
-						INDICATOR_TYPE,
-						OWNER_ID,
-						CREATE_TIME,
-						FILE_SIZE,
-						FILE_COUNT,
-						DISK_SIZE,
-						DISK_COUNT,
-						VERSION_COUNT,
-						ATTACHED_COUNT,
-						LINK_COUNT,
-						SHARING_COUNT,
-						UNNECESSARY_VERSION_SIZE,
-						UNNECESSARY_VERSION_COUNT
-					)
-					SELECT 
-						'{$indicatorType}',
-						{$ownerId},
-						". $connection->getSqlHelper()->getCurrentDateTimeFunction(). ",
-						SUM(FILE_SIZE),
-						SUM(FILE_COUNT),
-						SUM(DISK_SIZE),
-						SUM(DISK_COUNT),
-						SUM(VERSION_COUNT),
-						SUM(ATTACHED_COUNT),
-						SUM(LINK_COUNT),
-						SUM(SHARING_COUNT),
-						SUM(UNNECESSARY_VERSION_SIZE),
-						SUM(UNNECESSARY_VERSION_COUNT)
-					FROM 
-						b_disk_volume
-					WHERE 
-						INDICATOR_TYPE = '{$indicatorTypeFolder}'
-						and OWNER_ID = {$ownerId} 
-						and STORAGE_ID = '{$storageId}'
-						and FOLDER_ID IN( {$folderIdSql} ) 
-						and PARENT_ID = '{$parentId}'
-				";
+			$tableName = VolumeTable::getTableName();
 
-				$connection->queryExecute($querySql);
-			}
+			$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$querySql}");
+
+			VolumeTable::clearTemporally();
 		}
-
-
-		$querySql = "
-			SELECT 
-				INDICATOR_TYPE,
-				OWNER_ID,
-				". $connection->getSqlHelper()->getCurrentDateTimeFunction(). ",
-				SUM(FILE_SIZE),
-				SUM(FILE_COUNT),
-				SUM(DISK_SIZE),
-				SUM(DISK_COUNT),
-				SUM(VERSION_COUNT),
-				SUM(ATTACHED_COUNT),
-				SUM(LINK_COUNT),
-				SUM(SHARING_COUNT),
-				SUM(UNNECESSARY_VERSION_SIZE),
-				SUM(UNNECESSARY_VERSION_COUNT)
-			FROM 
-				{$temporallyTableName}
-			WHERE 
-				INDICATOR_TYPE = '{$indicatorType}'
-			GROUP BY
-				INDICATOR_TYPE
-			ORDER BY NULL
-		";
-
-		$columnList = Volume\QueryHelper::prepareInsert(
-			array(
-				'INDICATOR_TYPE',
-				'OWNER_ID',
-				'CREATE_TIME',
-				'FILE_SIZE',
-				'FILE_COUNT',
-				'DISK_SIZE',
-				'DISK_COUNT',
-				'VERSION_COUNT',
-				'ATTACHED_COUNT',
-				'LINK_COUNT',
-				'SHARING_COUNT',
-				'UNNECESSARY_VERSION_SIZE',
-				'UNNECESSARY_VERSION_COUNT',
-			),
-			$this->getSelect()
-		);
-
-		$tableName = VolumeTable::getTableName();
-
-		$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$querySql}");
-
-		VolumeTable::dropTemporally();
 
 		return $this;
 	}
@@ -189,14 +191,14 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 					\Bitrix\Disk\Volume\Cleaner::isCronRun()
 				)
 				{
-					$sites = \CSite::GetList('sort', 'desc', array('DEF' => 'Y'));
-					if ($site = $sites->Fetch())
+					$sites = \CSite::getList('sort', 'desc', array('DEF' => 'Y'));
+					if ($site = $sites->fetch())
 					{
 						$siteID = $site['LID'];
 					}
 				}
 
-				$storage = \CVoxImplantDiskHelper::GetStorageModel($siteID);
+				$storage = \CVoxImplantDiskHelper::getStorageModel($siteID);
 				if ($storage instanceof \Bitrix\Disk\Storage)
 				{
 					$this->storageList[] = $storage;
@@ -323,7 +325,7 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 				$folderIds[] = $folder->getId();
 			}
 
-			$agr = new Volume\Folder();
+			$agr = new Volume\FolderTree();
 			$agr
 				->setOwner($this->getOwner())
 				->addFilter('STORAGE_ID', $storage->getId())
@@ -361,7 +363,7 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 	 */
 	public static function getFragment(array $filter)
 	{
-		if($filter['INDICATOR_TYPE'] == Volume\Folder::className())
+		if ($filter['INDICATOR_TYPE'] == Volume\Folder::className() || $filter['INDICATOR_TYPE'] == Volume\FolderTree::className())
 		{
 			// Chat specific
 			$chatList = \Bitrix\Im\Model\ChatTable::getList(array(
@@ -400,7 +402,7 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 	 */
 	public static function getTitle(Volume\Fragment $fragment)
 	{
-		if($fragment->getIndicatorType() == Volume\Folder::className())
+		if ($fragment->getIndicatorType() == Volume\Folder::className() || $fragment->getIndicatorType() == Volume\FolderTree::className())
 		{
 			$folder = $fragment->getFolder();
 			if (!$folder instanceof \Bitrix\Disk\Folder)
@@ -423,7 +425,7 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 	public static function getUpdateTime(Volume\Fragment $fragment)
 	{
 		$timestampUpdate = null;
-		if($fragment->getIndicatorType() == Volume\Folder::className())
+		if ($fragment->getIndicatorType() == Volume\Folder::className() || $fragment->getIndicatorType() == Volume\FolderTree::className())
 		{
 			$folder = $fragment->getFolder();
 			if (!$folder instanceof \Bitrix\Disk\Folder)
@@ -445,7 +447,7 @@ class Voximplant extends Volume\Module\Module implements Volume\IVolumeIndicator
 	public static function getUrl(Volume\Fragment $fragment)
 	{
 		$url = '';
-		if($fragment->getIndicatorType() == Volume\Folder::className())
+		if ($fragment->getIndicatorType() == Volume\Folder::className() || $fragment->getIndicatorType() == Volume\FolderTree::className())
 		{
 			$folder = $fragment->getFolder();
 			if (!$folder instanceof \Bitrix\Disk\Folder)

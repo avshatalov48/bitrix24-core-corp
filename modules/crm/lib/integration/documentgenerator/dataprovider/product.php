@@ -423,7 +423,12 @@ class Product extends HashDataProvider
 				Loc::setCurrentLang($originalLanguageId);
 
 				$tableData = MeasureTable::getList([
-					'select' => ['SYMBOL_INTL', 'SYMBOL_LETTER_INTL'],
+					'select' => [
+						'SYMBOL_INTL',
+						'SYMBOL_LETTER_INTL',
+						'MEASURE_TITLE',
+						'SYMBOL',
+					],
 					'filter' => [
 						'=CODE' => $code,
 					],
@@ -437,6 +442,14 @@ class Product extends HashDataProvider
 					if(!empty($tableData['SYMBOL_LETTER_INTL']))
 					{
 						static::$measureInfo[$languageId][$code]['SYMBOL_LETTER_INTL'] = $tableData['SYMBOL_LETTER_INTL'];
+					}
+					if(!empty($tableData['MEASURE_TITLE']))
+					{
+						static::$measureInfo[$languageId][$code]['MEASURE_TITLE'] = $tableData['MEASURE_TITLE'];
+					}
+					if(!empty($tableData['SYMBOL']))
+					{
+						static::$measureInfo[$languageId][$code]['SYMBOL'] = $tableData['SYMBOL'];
 					}
 				}
 			}
@@ -467,7 +480,7 @@ class Product extends HashDataProvider
 		$info = $this->loadMeasureInfo();
 		if($info)
 		{
-			return $info['SYMBOL_RUS'];
+			return $info['SYMBOL_RUS'] ?? $info['SYMBOL'];
 		}
 
 		return null;

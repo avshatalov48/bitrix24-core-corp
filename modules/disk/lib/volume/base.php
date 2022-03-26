@@ -115,21 +115,15 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 	/** @var int Table lock timeout */
 	protected static $lockTimeout = 15;
 
+	public const ERROR_LOCK_TIMEOUT = 'LOCK_TIMEOUT';
+
 	/**
 	 * Runs measure test to get volumes of selecting objects.
 	 * @param array $collectData List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK,
 	 *     UNNECESSARY_VERSION or PREVIEW_FILE.
 	 * @return $this
-	 * @throws Main\NotImplementedException
 	 */
-	public function measure($collectData = array(self::DISK_FILE, self::PREVIEW_FILE))
-	{
-		// method must declared as abstract, but in some php 5.3 it throws Fatal error: Can't inherit abstract function .. previously declared abstract
-		// https://bugs.php.net/bug.php?id=66818
-		// therefore it throws exception
-		throw new Main\NotImplementedException();
-		return $this;
-	}
+	abstract public function measure($collectData = [self::DISK_FILE]);
 
 	/**
 	 * Returns measure process stages list.
@@ -500,7 +494,7 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 			$parameter = array(
 				'select' => $restoringFields,
 				'filter' => array(
-					'=INDICATOR_TYPE' => static::className(),
+					//'=INDICATOR_TYPE' => static::className(),
 					'=OWNER_ID' => $this->getOwner(),
 					'=ID' => $this->getFilterId(),
 				),
@@ -905,11 +899,11 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 			);
 			$where = Query::buildFilterSql(VolumeTable::getEntity(), $filter);
 
-			//$sql = 'UPDATE '.$tableName.' SET PERCENT = ROUND(FILE_SIZE * 100 / '.$total.', 4) WHERE '.$where;
 			$sql = 'UPDATE '.$tableName.' SET PERCENT = ROUND((FILE_SIZE + PREVIEW_SIZE) * 100 / '.$total.', 4) WHERE '.$where;
 
 			$connection->queryExecute($sql);
 		}
+
 		return $this;
 	}
 
@@ -1064,6 +1058,10 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 				'VERSION_ID' => 'ver.ID',
 			)
 		);
+		if ($whereSql != '')
+		{
+			$whereSql = " AND {$whereSql} ";
+		}
 
 		$limitSql = '';
 		if ($this->getLimit() > 0)

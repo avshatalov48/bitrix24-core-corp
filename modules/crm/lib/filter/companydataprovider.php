@@ -1,6 +1,8 @@
 <?php
 namespace Bitrix\Crm\Filter;
 
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
@@ -40,6 +42,11 @@ class CompanyDataProvider extends Main\Filter\EntityDataProvider
 		if($name === null)
 		{
 			$name = \CCrmCompany::GetFieldCaption($fieldID);
+		}
+		if (!$name && ParentFieldManager::isParentFieldName($fieldID))
+		{
+			$parentEntityTypeId = ParentFieldManager::getEntityTypeIdFromFieldName($fieldID);
+			$name = \CCrmOwnerType::GetDescription($parentEntityTypeId);
 		}
 
 		return $name;
@@ -269,6 +276,15 @@ class CompanyDataProvider extends Main\Filter\EntityDataProvider
 			);
 		}
 		//endregion
+
+		$parentFields = Container::getInstance()->getParentFieldManager()->getParentFieldsOptionsForFilterProvider(
+			\CCrmOwnerType::Company
+		);
+		foreach ($parentFields as $code => $parentField)
+		{
+			$result[$code] = $this->createField($code, $parentField);
+		}
+
 		return $result;
 	}
 
@@ -352,6 +368,14 @@ class CompanyDataProvider extends Main\Filter\EntityDataProvider
 					+ \CCrmExternalSaleHelper::PrepareListItems()
 			);
 		}
+		elseif (ParentFieldManager::isParentFieldName($fieldID))
+		{
+			return Container::getInstance()->getParentFieldManager()->prepareParentFieldDataForFilterProvider(
+				\CCrmOwnerType::Company,
+				$fieldID
+			);
+		}
+
 		return null;
 	}
 

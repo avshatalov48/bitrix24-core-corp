@@ -67,6 +67,10 @@ a:hover {color: #2067b0;text-decoration: none;}
 	-webkit-tap-highlight-color: transparent;
 	border-radius: 5px / 3px;
 }
+.bx-messenger-content-item-vote-block-like,
+.bx-messenger-content-item-vote-block-dislike {
+	background-image: url("bundle://component/images/im-sprite-v37.png")
+}
 .bx-messenger-ajax { border-bottom: 1px dashed #2067B0; cursor: pointer; color: #2067B0;}
 .bx-messenger-cl-item-active {border-left-color: #a6c131;}
 .bx-messenger-cl-user { vertical-align:top; display:block; font: 15px/32px "Helvetica Neue", Helvetica, Arial, sans-serif; color:#181818;overflow:hidden;text-overflow: ellipsis;white-space:nowrap;  }

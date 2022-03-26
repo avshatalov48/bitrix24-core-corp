@@ -1,7 +1,9 @@
 <?
-use Bitrix\Main\Localization\Loc;
+use \Bitrix\Main\Localization\Loc;
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+
+Loc::loadLanguageFile(__FILE__);
 
 /** @var \Bitrix\SalesCenter\Delivery\Handlers\Base $handler */
 $handler = $arResult['handler'];
@@ -21,7 +23,7 @@ elseif ($currentRegion === 'by')
 }
 else
 {
-	$signUpLink = 'https://dostavka.yandex.ru/express-delivery?ya_source=businessdelivery&ya_medium=module&ya_campaign=bitrix24#form';
+	$signUpLink = 'https://dostavka.yandex.ru/reg/?ya_medium=module&amp;ya_campaign=bitrix24';
 }
 ?>
 
@@ -30,14 +32,14 @@ else
 		<div class="salescenter-delivery-install-logo"></div>
 	</div>
 	<div class="salescenter-delivery-install-content-block">
-		<h2><?=Loc::getMessage('DELIVERY_SERVICE_YANDEX_TAXI_TITLE')?></h2>
+		<h2><?=$handler->getName()?></h2>
 		<p><?=Loc::getMessage('DELIVERY_SERVICE_YANDEX_TAXI_CONNECT_TEXT')?></p>
 		<a href="https://helpdesk.bitrix24.ru/open/11604358" class="ui-link ui-link-dashed">
-			<?=Loc::getMessage('DELIVERY_SERVICE_YANDEX_TAXI_CONNECT_TEXT_MORE')?>
+			<?=Loc::getMessage('DELIVERY_SERVICE_CONNECT_TEXT_MORE', ['#SERVICE_NAME#' => $handler->getName()])?>
 		</a>
 		<div class="salescenter-delivery-install-btn-container">
 			<button onclick="window.open('<?=$signUpLink?>','_blank');return false;" class="ui-btn ui-btn-primary">
-				<?=Loc::getMessage('DELIVERY_SERVICE_YANDEX_TAXI_SIGN_UP')?>
+				<?=Loc::getMessage('DELIVERY_SERVICE_YANDEX_TAXI_SIGN_UP', ['#SERVICE_NAME#' => $handler->getName()])?>
 			</button>
 		</div>
 	</div>

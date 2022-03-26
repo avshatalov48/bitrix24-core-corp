@@ -8,10 +8,9 @@ use Bitrix\Crm\RequisiteAddress;
 use	Bitrix\Sale\BusinessValue;
 use Bitrix\Sale\Internals\BusinessValuePersonDomainTable;
 /**
- * @global $APPLICATION CMain
  * @global $DB CDatabase
  */
-global $DB, $DBType;
+global $DB;
 
 Loc::loadMessages(__FILE__);
 
@@ -2195,73 +2194,36 @@ if (!empty($arCatalogId) && !$bError)
 				{
 					// update iblock element xml_id
 					$local_err = 0;
-					$strSql = '';
-					switch(mb_strtoupper($DBType))
-					{
-						case 'MYSQL':
-							$strSql = PHP_EOL.
-								'UPDATE b_iblock_element IB'.PHP_EOL.
-								"\t".'INNER JOIN b_crm_product CP ON IB.ID = CP.ID'.PHP_EOL.
-								'SET IB.XML_ID = CONCAT(IFNULL(CP.ORIGINATOR_ID, \'\'), \'#\', IFNULL(CP.ORIGIN_ID, \'\'))'.PHP_EOL;
-							break;
-						case 'ORACLE':
-							$strSql = PHP_EOL.
-								'UPDATE b_iblock_element UPD'.PHP_EOL.
-								'SET UPD.XML_ID ='.PHP_EOL.
-								"\t".'('.PHP_EOL.
-								"\t\t".'SELECT NVL(CP.ORIGINATOR_ID, \'\')||\'#\'||NVL(CP.ORIGIN_ID, \'\')'.PHP_EOL.
-								"\t\t".'FROM b_crm_product CP'.PHP_EOL.
-								"\t\t".'WHERE CP.ID = UPD.ID'.PHP_EOL.
-								"\t".')'.PHP_EOL.
-								'WHERE UPD.ID IN (SELECT CPI.ID FROM b_crm_product CPI)'.PHP_EOL;
-							break;
-						case 'MSSQL':
-							$strSql = PHP_EOL.
-								'UPDATE IB'.PHP_EOL.
-								"\t".'SET IB.XML_ID = ISNULL(CP.ORIGINATOR_ID, \'\') + \'#\' + ISNULL(CP.ORIGIN_ID, \'\')'.PHP_EOL.
-								"\t".'FROM b_iblock_element IB'.PHP_EOL.
-								"\t\t".'INNER JOIN b_crm_product CP ON IB.ID = CP.ID'.PHP_EOL;
-							break;
-					}
 
-					if (!$strSql || !$DB->Query($strSql, true))
+					$strSql = PHP_EOL.
+						'UPDATE b_iblock_element IB'.PHP_EOL.
+						"\t".'INNER JOIN b_crm_product CP ON IB.ID = CP.ID'.PHP_EOL.
+						'SET IB.XML_ID = CONCAT(IFNULL(CP.ORIGINATOR_ID, \'\'), \'#\', IFNULL(CP.ORIGIN_ID, \'\'))'.PHP_EOL;
+
+					if (!$DB->Query($strSql, true))
 						$local_err = 1;
 
 					if (!$local_err)
 					{
 						// insert catalog products
-						$strSql = '';
-						switch(mb_strtoupper($DBType))
-						{
-							case 'MYSQL':
-							case 'ORACLE':
-							case 'MSSQL':
-								$strSql = PHP_EOL.
-									'INSERT INTO b_catalog_product (ID, QUANTITY, QUANTITY_TRACE, RECUR_SCHEME_LENGTH, RECUR_SCHEME_TYPE, VAT_ID, VAT_INCLUDED, CAN_BUY_ZERO)'.PHP_EOL.
-									"\t".'SELECT CP.ID, 0, \'D\', 0, \'D\', '.intval($defCatVatId).', \'N\', \'D\' FROM b_crm_product CP'.PHP_EOL.
-									"\t".'WHERE ID NOT IN (SELECT CTP.ID FROM b_catalog_product CTP)'.PHP_EOL;
-								break;
-						}
-						if (!$strSql || !$DB->Query($strSql, true))
+						$strSql = PHP_EOL.
+							'INSERT INTO b_catalog_product (ID, QUANTITY, QUANTITY_TRACE, RECUR_SCHEME_LENGTH, RECUR_SCHEME_TYPE, VAT_ID, VAT_INCLUDED, CAN_BUY_ZERO)'.PHP_EOL.
+							"\t".'SELECT CP.ID, 0, \'D\', 0, \'D\', '.intval($defCatVatId).', \'N\', \'D\' FROM b_crm_product CP'.PHP_EOL.
+							"\t".'WHERE ID NOT IN (SELECT CTP.ID FROM b_catalog_product CTP)'.PHP_EOL;
+
+						if (!$DB->Query($strSql, true))
 							$local_err = 2;
 					}
 
 					if (!$local_err)
 					{
 						//set base prices
-						$strSql = '';
-						switch(mb_strtoupper($DBType))
-						{
-							case 'MYSQL':
-							case 'ORACLE':
-							case 'MSSQL':
-								$strSql = PHP_EOL.
-									'INSERT INTO b_catalog_price (PRODUCT_ID, CATALOG_GROUP_ID, PRICE, CURRENCY)'.PHP_EOL.
-									"\t".'SELECT CP.ID, '.$basePriceId.', CP.PRICE, CP.CURRENCY_ID FROM b_crm_product CP'.PHP_EOL.
-									"\t".'WHERE ID NOT IN (SELECT CPR.PRODUCT_ID FROM b_catalog_price CPR WHERE CPR.CATALOG_GROUP_ID = '.$basePriceId.')'.PHP_EOL;
-								break;
-						}
-						if (!$strSql || !$DB->Query($strSql, true))
+						$strSql = PHP_EOL.
+							'INSERT INTO b_catalog_price (PRODUCT_ID, CATALOG_GROUP_ID, PRICE, CURRENCY)'.PHP_EOL.
+							"\t".'SELECT CP.ID, '.$basePriceId.', CP.PRICE, CP.CURRENCY_ID FROM b_crm_product CP'.PHP_EOL.
+							"\t".'WHERE ID NOT IN (SELECT CPR.PRODUCT_ID FROM b_catalog_price CPR WHERE CPR.CATALOG_GROUP_ID = '.$basePriceId.')'.PHP_EOL;
+
+						if (!$DB->Query($strSql, true))
 							$local_err = 3;
 					}
 

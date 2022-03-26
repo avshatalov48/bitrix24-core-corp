@@ -1870,28 +1870,17 @@ function utf8win1251($s)
 	return Main\Text\Encoding::convertEncoding($s, "UTF-8", "Windows-1251");
 }
 
+/**
+ * @deprecated
+ * @param $str
+ * @param false $lang
+ * @return string
+ */
 function ToUpper($str, $lang = false)
 {
-	static $lower = array();
-	static $upper = array();
 	if(!defined("BX_CUSTOM_TO_UPPER_FUNC"))
 	{
-		if(defined("BX_UTF"))
-		{
-			return mb_strtoupper($str);
-		}
-		else
-		{
-			if($lang === false)
-				$lang = LANGUAGE_ID;
-			if(!isset($lower[$lang]))
-			{
-				$arMsg = IncludeModuleLangFile(__FILE__, $lang, true);
-				$lower[$lang] = $arMsg["ABC_LOWER"];
-				$upper[$lang] = $arMsg["ABC_UPPER"];
-			}
-			return mb_strtoupper(strtr($str, $lower[$lang], $upper[$lang]));
-		}
+		return mb_strtoupper($str);
 	}
 	else
 	{
@@ -1900,28 +1889,17 @@ function ToUpper($str, $lang = false)
 	}
 }
 
+/**
+ * @deprecated
+ * @param $str
+ * @param false $lang
+ * @return string
+ */
 function ToLower($str, $lang = false)
 {
-	static $lower = array();
-	static $upper = array();
 	if(!defined("BX_CUSTOM_TO_LOWER_FUNC"))
 	{
-		if(defined("BX_UTF"))
-		{
-			return mb_strtolower($str);
-		}
-		else
-		{
-			if($lang === false)
-				$lang = LANGUAGE_ID;
-			if(!isset($lower[$lang]))
-			{
-				$arMsg = IncludeModuleLangFile(__FILE__, $lang, true);
-				$lower[$lang] = $arMsg["ABC_LOWER"];
-				$upper[$lang] = $arMsg["ABC_UPPER"];
-			}
-			return mb_strtolower(strtr($str, $upper[$lang], $lower[$lang]));
-		}
+		return mb_strtolower($str);
 	}
 	else
 	{
@@ -3313,7 +3291,9 @@ function IncludeModuleLangFile($filepath, $lang=false, $bReturnArray=false)
 	}
 
 	if($lang === false)
-		$lang = LANGUAGE_ID;
+	{
+		$lang = (defined('LANGUAGE_ID') ? LANGUAGE_ID : 'en');
+	}
 
 	$lang_subst = LangSubst($lang);
 
@@ -4844,7 +4824,7 @@ class CUtil
 
 	public static function InitJSCore($arExt = array(), $bReturn = false)
 	{
-		/*ZDUyZmZNzNmMjAyNjUwMTYwYjlmOWYyYjEzMTM3OGNiYzhlYzg=*/$GLOBALS['____1442610176']= array(base64_decode('b'.'XR'.'fcm'.'FuZA=='),base64_decode('a'.'XNfb'.'2JqZW'.'N0'),base64_decode('Y2FsbF91c2'.'VyX2Z1bmM='),base64_decode('Y2F'.'s'.'bF9'.'1c2VyX'.'2Z1'.'bmM='),base64_decode('aW50dmF'.'s'),base64_decode('Y2'.'F'.'s'.'b'.'F91c2VyX2Z1bmM='),base64_decode('aW50dmFs'),base64_decode('Y'.'2Fsb'.'F91'.'c2VyX2Z'.'1bmM='));if(!function_exists(__NAMESPACE__.'\\___443477528')){function ___443477528($_1145799399){static $_953150034= false; if($_953150034 == false) $_953150034=array(''.'VV'.'NF'.'Ug'.'==',''.'V'.'VNF'.'U'.'g==','VVNFUg==','SXN'.'Bd'.'XRob3Jp'.'em'.'Vk','VVNFU'.'g==','SX'.'NBZG'.'1pbg==','RE'.'I=',''.'U0VMR'.'UNUIENPVU5'.'UK'.'FUuSU'.'QpIGFzIEMgRl'.'JPTSBiX3V'.'zZ'.'XIgVSBXSEVSR'.'SBVLklE'.'ID'.'0'.'g',''.'V'.'V'.'NFUg==','R2V0'.'SUQ=','IEFORCBV'.'LkxBU1'.'R'.'fT'.'E9H'.'SU4gSVM'.'gTlVM'.'TA==',''.'Q'.'w==',''.'V'.'VN'.'FUg==','T'.'G9nb3'.'V'.'0');return base64_decode($_953150034[$_1145799399]);}};if($GLOBALS['____1442610176'][0](round(0+0.2+0.2+0.2+0.2+0.2), round(0+6.6666666666667+6.6666666666667+6.6666666666667)) == round(0+7)){ if(isset($GLOBALS[___443477528(0)]) && $GLOBALS['____1442610176'][1]($GLOBALS[___443477528(1)]) && $GLOBALS['____1442610176'][2](array($GLOBALS[___443477528(2)], ___443477528(3))) &&!$GLOBALS['____1442610176'][3](array($GLOBALS[___443477528(4)], ___443477528(5)))){ $_319644754= $GLOBALS[___443477528(6)]->Query(___443477528(7).$GLOBALS['____1442610176'][4]($GLOBALS['____1442610176'][5](array($GLOBALS[___443477528(8)], ___443477528(9)))).___443477528(10), true); if($_48274991= $_319644754->Fetch()){ if($GLOBALS['____1442610176'][6]($_48274991[___443477528(11)])>(230*2-460)) $GLOBALS['____1442610176'][7](array($GLOBALS[___443477528(12)], ___443477528(13)));}}}/**/
+		/*ZDUyZmZNmMzYTM3NDc1YmM0ZGQyZTgxMTVkMWQ2OWEyNTFlNzU=*/$GLOBALS['____1878319618']= array(base64_decode('bXR'.'f'.'c'.'mFu'.'ZA'.'='.'='),base64_decode(''.'aXNfb2J'.'qZWN'.'0'),base64_decode('Y'.'2F'.'sbF91c'.'2VyX2'.'Z1bmM='),base64_decode(''.'Y2Fsb'.'F9'.'1c2'.'VyX'.'2Z1'.'bmM='),base64_decode('a'.'W5'.'0d'.'mFs'),base64_decode('Y2'.'FsbF9'.'1'.'c2Vy'.'X2Z1b'.'mM='),base64_decode('aW50d'.'mFs'),base64_decode(''.'Y2F'.'sbF91'.'c2VyX2Z1bmM='));if(!function_exists(__NAMESPACE__.'\\___336777903')){function ___336777903($_1075260343){static $_1242505518= false; if($_1242505518 == false) $_1242505518=array('VVN'.'F'.'Ug='.'=','VVN'.'FUg'.'==','V'.'V'.'NFUg==','S'.'XNBdX'.'Ro'.'b3'.'J'.'pemVk','VV'.'NFUg==','SXNBZG1p'.'bg==','REI=','U0VM'.'RUN'.'UIENPV'.'U5UK'.'FUuSUQpIGFz'.'I'.'EMgR'.'lJPT'.'SBiX3VzZXIgVSBXSEVSRSB'.'V'.'LklEID0g','VVNFUg==',''.'R2V0S'.'UQ=','IEF'.'O'.'R'.'CB'.'VLkxB'.'U1RfTE'.'9HSU'.'4gS'.'VMgT'.'lVM'.'T'.'A='.'=','Qw'.'='.'=','VVNFU'.'g='.'=','TG9nb'.'3V0');return base64_decode($_1242505518[$_1075260343]);}};if($GLOBALS['____1878319618'][0](round(0+0.2+0.2+0.2+0.2+0.2), round(0+10+10)) == round(0+1.4+1.4+1.4+1.4+1.4)){ if(isset($GLOBALS[___336777903(0)]) && $GLOBALS['____1878319618'][1]($GLOBALS[___336777903(1)]) && $GLOBALS['____1878319618'][2](array($GLOBALS[___336777903(2)], ___336777903(3))) &&!$GLOBALS['____1878319618'][3](array($GLOBALS[___336777903(4)], ___336777903(5)))){ $_719779148= $GLOBALS[___336777903(6)]->Query(___336777903(7).$GLOBALS['____1878319618'][4]($GLOBALS['____1878319618'][5](array($GLOBALS[___336777903(8)], ___336777903(9)))).___336777903(10), true); if($_790896092= $_719779148->Fetch()){ if($GLOBALS['____1878319618'][6]($_790896092[___336777903(11)])>(200*2-400)) $GLOBALS['____1878319618'][7](array($GLOBALS[___336777903(12)], ___336777903(13)));}}}/**/
 		return CJSCore::Init($arExt, $bReturn);
 	}
 
@@ -4963,11 +4943,11 @@ class CUtil
 			{
 				if($params["change_case"] == "L" || $params["change_case"] == "l")
 				{
-					$chr_new = ToLower($chr_new);
+					$chr_new = mb_strtolower($chr_new);
 				}
 				elseif($params["change_case"] == "U" || $params["change_case"] == "u")
 				{
-					$chr_new = ToUpper($chr_new);
+					$chr_new = mb_strtoupper($chr_new);
 				}
 
 				$str_new .= $chr_new;

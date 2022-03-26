@@ -8,6 +8,8 @@ use Bitrix\Crm\Integration\Bitrix24Manager;
 class ClientFieldsRestriction extends Bitrix24QuantityRestriction
 {
 	protected $entityTypeId;
+	private const CACHE_DIR = '/crm/entity_count/';
+	private const CACHE_TTL = 60*60; // 1 hour
 
 	public function __construct(int $entityTypeId)
 	{
@@ -36,9 +38,19 @@ class ClientFieldsRestriction extends Bitrix24QuantityRestriction
 
 	public function getCount(int $entityTypeId): int
 	{
+		$cache = Main\Application::getInstance()->getCache();
+		$cacheId = 'crm_client_fields_restriction_count_' . $entityTypeId;
+		if ($cache->initCache(self::CACHE_TTL, $cacheId, self::CACHE_DIR))
+		{
+			return (int)$cache->getVars()['count'];
+		}
 		if ($entityTypeId === \CCrmOwnerType::Deal)
 		{
-			return \CCrmDeal::GetTotalCount();
+			$cache->startDataCache();
+			$count = \CCrmDeal::GetTotalCount();
+			$cache->endDataCache(['count' => $count]);
+
+			return $count;
 		}
 
 		throw new Main\NotSupportedException('Entity type ' . $entityTypeId . ' is not supported');

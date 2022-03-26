@@ -209,7 +209,8 @@ class CrmCompanies extends CrmEntity
 		$entitiesList = [];
 
 		$filter = [
-			'CHECK_PERMISSIONS' => 'Y'
+			'CHECK_PERMISSIONS' => 'Y',
+			'@CATEGORY_ID' => 0,
 		];
 		$order = [];
 		$select = [ 'ID', 'TITLE', 'COMPANY_TYPE', 'INDUSTRY', 'LOGO', 'HAS_EMAIL', 'DATE_CREATE' ];
@@ -225,6 +226,14 @@ class CrmCompanies extends CrmEntity
 				'ID' => 'DESC'
 			];
 			$navParams = [ 'nTopCount' => 10 ];
+		}
+
+		if (
+			isset($entityOptions['onlyMy'])
+			&& $entityOptions['onlyMy'] === 'Y'
+		)
+		{
+			$filter['=IS_MY_COMPANY'] = 'Y';
 		}
 
 		if (
@@ -398,6 +407,7 @@ class CrmCompanies extends CrmEntity
 				$filter = [
 					'SEARCH_CONTENT' => $search,
 					'%TITLE' => $search,
+					'@CATEGORY_ID' => 0,
 					'__ENABLE_SEARCH_CONTENT_PHONE_DETECTION' => false
 				];
 			}
@@ -409,7 +419,7 @@ class CrmCompanies extends CrmEntity
 
 			if (
 				isset($entityOptions['onlyMy'])
-				&& $entityOptions['onlyMy'] == 'Y'
+				&& $entityOptions['onlyMy'] === 'Y'
 			)
 			{
 				$filter['=IS_MY_COMPANY'] = 'Y';

@@ -30,7 +30,7 @@ interface ChatBot
 	 *
 	 * @return int
 	 */
-	public static function getBotId();
+	public static function getBotId(): int;
 
 	/**
 	 * Event handler when bot join to chat.
@@ -60,8 +60,8 @@ interface ChatBot
 	 * @see \Bitrix\Im\Bot::onMessageAdd
 	 * Method registers at bot field `b_im_bot.METHOD_MESSAGE_ADD`
 	 *
-	 * @param int $messageId
-	 * @param array $messageFields
+	 * @param int $messageId Outgoing message Id.
+	 * @param array $messageFields Message fields array.
 	 *
 	 * @return bool
 	 */
@@ -83,23 +83,32 @@ interface ChatBot
 	 * @see \Bitrix\Im\Command::onCommandAdd
 	 * Method registers at bot field `b_im_command.METHOD_COMMAND_ADD`
 	 *
-	 * @param int $messageId
-	 * @param array $messageFields
+	 * @param int $messageId Incomming message Id.
+	 * @param array $messageFields Message fields array.
 	 *
 	 * @return bool
 	 */
 	public static function onCommandAdd($messageId, $messageFields);
 
+	/**
+	 * @return \Bitrix\ImBot\Error
+	 */
+	public static function getError();
 
 	/**
-	 * todo:
+	 * todo: Add method `onMessageUpdate` signature into interface.
 	 * @see \Bitrix\Im\Bot::onMessageUpdate
 	 * Method registers at bot field `b_im_bot.METHOD_MESSAGE_UPDATE`
 	 */
 
 	/**
-	 * todo:
+	 * todo: Add method `onMessageDelete` signature into interface.
 	 * @see \Bitrix\Im\Bot::onMessageDelete
 	 * Method registers at bot field `b_im_bot.METHOD_MESSAGE_DELETE`
+	 */
+
+	/**
+	 * todo: Add method `onStartWriting` signature into interface.
+	 * @see \Bitrix\ImBot\Event::onStartWriting
 	 */
 }

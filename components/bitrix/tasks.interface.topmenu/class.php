@@ -41,6 +41,7 @@ class TasksTopmenuComponent extends TasksBaseComponent
 
 		static::tryParseStringParameter($arParams['MARK_SECTION_PROJECTS'], 'N');
 		static::tryParseStringParameter($arParams['MARK_SECTION_PROJECTS_LIST'], 'N');
+		static::tryParseStringParameter($arParams['MARK_SECTION_SCRUM_LIST'], 'N');
 		static::tryParseStringParameter($arParams['MARK_ACTIVE_ROLE'], 'N');
 		static::tryParseStringParameter($arParams['MARK_SECTION_MANAGE'], 'N');
 		static::tryParseStringParameter($arParams['MARK_SECTION_REPORTS'], 'N');
@@ -54,7 +55,12 @@ class TasksTopmenuComponent extends TasksBaseComponent
 			$arParams['TASKS_GROUP_CREATE_URL_TEMPLATE'],
 			'/company/personal/user/#user_id#/groups/create/?firstRow=project'
 		);
+		static::tryParseStringParameter(
+			$arParams['TASKS_SCRUM_CREATE_URL_TEMPLATE'],
+			'/company/personal/user/#user_id#/groups/create/?firstRow=project'
+		);
 		static::tryParseStringParameter($arParams['PARENT_COMPONENT'], '');
+		static::tryParseBooleanParameter($arParams['MENU_MODE'], false);
 
 		return parent::checkParameters();
 	}
@@ -129,6 +135,7 @@ class TasksTopmenuComponent extends TasksBaseComponent
 		$this->arResult['ROLES'] = [];
 		$this->arResult['TOTAL'] = 0;
 		$this->arResult['PROJECTS_COUNTER'] = 0;
+		$this->arResult['SCRUM_COUNTER'] = 0;
 
 		if (
 			$this->arParams['PARENT_COMPONENT'] !== 'tasks.task'
@@ -142,9 +149,49 @@ class TasksTopmenuComponent extends TasksBaseComponent
 			$this->arResult['TOTAL'] = $counter->get(Counter\CounterDictionary::COUNTER_MEMBER_TOTAL);
 			$this->arResult['PROJECTS_COUNTER'] = $counter->get(Counter\CounterDictionary::COUNTER_SONET_TOTAL_EXPIRED)
 				+ $counter->get(Counter\CounterDictionary::COUNTER_SONET_TOTAL_COMMENTS);
+			$this->arResult['SCRUM_COUNTER'] = $counter->get(Counter\CounterDictionary::COUNTER_SCRUM_TOTAL_COMMENTS);
 		}
 
 		return true;
+	}
+
+	protected function display()
+	{
+		parent::display();
+
+		if (isset($this->arResult['ITEMS']) && is_array($this->arResult['ITEMS']))
+		{
+			$this->returnData = array(
+				'ITEMS' => $this->createFileMenuItems($this->arResult['ITEMS']),
+			);
+		}
+	}
+
+	protected function createFileMenuItems($items, $depthLevel = 1): array
+	{
+		$result = [];
+		foreach ($items as $item)
+		{
+			$hasChildren = isset($item['ITEMS']) && is_array($item['ITEMS']) && !empty($item['ITEMS']);
+
+			$result[] = [
+				$item['NAME'] ?? $item['TEXT'],
+				$item['URL'],
+				[],
+				[
+					'DEPTH_LEVEL' => $depthLevel,
+					'FROM_IBLOCK' => true,
+					'IS_PARENT' => $hasChildren,
+				]
+			];
+
+			if ($hasChildren)
+			{
+				$result = array_merge($result, $this->createFileMenuItems($item['ITEMS'], $depthLevel + 1));
+			}
+		}
+
+		return $result;
 	}
 
 	private function getRoles()

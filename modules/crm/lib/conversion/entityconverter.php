@@ -3,69 +3,464 @@
 namespace Bitrix\Crm\Conversion;
 
 use Bitrix\Crm;
+use Bitrix\Crm\Conversion\Exception\AutocreationDisabledException;
+use Bitrix\Crm\Conversion\Exception\CreationFailedException;
+use Bitrix\Crm\Conversion\Exception\DestinationHasWorkflowsException;
+use Bitrix\Crm\Conversion\Exception\DestinationItemNotFoundException;
+use Bitrix\Crm\Conversion\Exception\SourceHasParentException;
+use Bitrix\Crm\Conversion\Exception\SourceItemNotFoundException;
 use Bitrix\Crm\Integration\Channel\DealChannelBinding;
+use Bitrix\Crm\Item;
+use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Requisite;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Factory;
+use Bitrix\Crm\Service\Operation;
+use Bitrix\Crm\Settings\ConversionSettings;
 use Bitrix\Crm\Tracking;
 use Bitrix\Main;
 
-abstract class EntityConverter
+class EntityConverter
 {
-	/** @var EntityConversionConfig */
-	protected $config = null;
-	/** @var int */
-	protected $entityID = 0;
+	protected const PHASE_NEW_API = 100;
+
 	/** @var int */
 	protected $currentPhase = 0;
 	/** @var array */
-	protected $contextData = array();
+	protected $contextData = [];
 	/** @var array */
-	protected $resultData = array();
+	protected $resultData = [];
 	/** @var \CCrmPerms|null  */
 	protected $userPermissions = null;
 	/** @var bool */
 	private $enableUserFieldCheck = true;
 	/** @var bool */
 	private $enableBizProcCheck = true;
-
 	/** @var bool */
 	private $skipBizProcAutoStart = false;
 
-	/**
-	 * @param EntityConversionConfig $config
-	 */
-	public function __construct(EntityConversionConfig $config)
+	/** @var EntityConversionConfig */
+	protected $config;
+
+	/** @var Factory */
+	private $sourceFactory;
+
+	/** @var Item */
+	private $sourceItem;
+	/** @var int */
+	protected $entityID = 0;
+
+	/** @var bool */
+	private $isFinished = false;
+	private $isInitialized = false;
+
+	protected function __construct(EntityConversionConfig $config)
 	{
 		$this->config = $config;
 	}
+
+	public static function create(
+		Factory $srcFactory,
+		int $entityID,
+		EntityConversionConfig $config
+	): self
+	{
+		$converter = new self($config);
+
+		$converter->sourceFactory = $srcFactory;
+		$converter->entityID = $entityID;
+
+		return $converter;
+	}
+
+	public static function createFromExternalized(array $externalizedParams): ?self
+	{
+		$config = EntityConversionConfig::createFromExternalized((array)($externalizedParams['config'] ?? null));
+		if (!$config)
+		{
+			return null;
+		}
+
+		$converter = new self($config);
+		$converter->internalize($externalizedParams);
+
+		return self::checkInstanceIntegrity($converter) ? $converter : null;
+	}
+
 	/**
-	 * Initialize converter.
-	 * @return void
+	 * Check if an instance of converter was constructed completely
+	 *
+	 * @param EntityConverter $converter
+	 * @return bool
 	 */
+	private static function checkInstanceIntegrity(self $converter): bool
+	{
+		return (
+			($converter->sourceFactory instanceof Factory)
+			&& is_int($converter->entityID)
+			&& ($converter->config instanceof EntityConversionConfig)
+		);
+	}
+
 	public function initialize()
 	{
+		$this->initializeInner();
 	}
+
+	/**
+	 * @todo move code to initialize after refactoring
+	 *
+	 * @throws SourceItemNotFoundException
+	 */
+	private function initializeInner(): void
+	{
+		if ($this->isInitialized)
+		{
+			return;
+		}
+
+		$this->sourceItem = $this->sourceFactory->getItem($this->entityID);
+		if (!$this->sourceItem)
+		{
+			throw new SourceItemNotFoundException($this->sourceFactory->getEntityTypeId(), $this->entityID);
+		}
+
+		$this->isInitialized = true;
+
+		//user permissions check is performed in operation, if needed
+	}
+
+	final public function convert(): void
+	{
+		foreach ($this->config->getActiveItems() as $configItem)
+		{
+			$this->convertByConfigItem($configItem);
+		}
+
+		$this->onFinalizationPhase();
+
+		$this->isFinished = true;
+	}
+
+	private function convertByConfigItem(EntityConversionConfigItem $configItem): void
+	{
+		$this->initializeInner();
+
+		$destinationFactory = Container::getInstance()->getFactory($configItem->getEntityTypeID());
+		if (!$destinationFactory)
+		{
+			throw new Main\ObjectNotFoundException(
+				'Could not find factory for destination type with ID = ' . $configItem->getEntityTypeID()
+			);
+		}
+
+		$destinationId = (int)($this->contextData[$destinationFactory->getEntityName()] ?? 0);
+
+		if ($destinationId > 0)
+		{
+			$destinationItem = $destinationFactory->getItem($destinationId);
+			if (!$destinationItem)
+			{
+				throw new DestinationItemNotFoundException($destinationFactory->getEntityTypeId(), $destinationId);
+			}
+		}
+		else
+		{
+			$destinationItem = $this->createDestinationItem($destinationFactory);
+		}
+
+		Container::getInstance()->getRelationManager()->bindItems(
+			ItemIdentifier::createByItem($this->sourceItem),
+			ItemIdentifier::createByItem($destinationItem),
+		);
+
+		$this->resultData[$destinationFactory->getEntityName()] = $destinationItem->getId();
+	}
+
+	private function createDestinationItem(Factory $destinationFactory): Item
+	{
+		if (!ConversionSettings::getCurrent()->isAutocreationEnabled())
+		{
+			throw new AutocreationDisabledException($destinationFactory->getEntityTypeId());
+		}
+
+		if (
+			$this->isBizProcCheckEnabled()
+			&& \CCrmBizProcHelper::HasParameterizedAutoWorkflows(
+				$destinationFactory->getEntityTypeId(),
+				\CCrmBizProcEventType::Create,
+			)
+		)
+		{
+			throw new DestinationHasWorkflowsException($destinationFactory->getEntityTypeId());
+		}
+
+		$relationManager = Container::getInstance()->getRelationManager();
+		$sourceParents = $relationManager->getParentElements(ItemIdentifier::createByItem($this->sourceItem));
+		foreach ($sourceParents as $sourceParent)
+		{
+			if ($sourceParent->getEntityTypeId() === $destinationFactory->getEntityTypeId())
+			{
+				throw new SourceHasParentException(
+					$this->sourceFactory->getEntityTypeId(),
+					$destinationFactory->getEntityTypeId(),
+				);
+			}
+		}
+
+		$destinationItem = $destinationFactory->createItem();
+
+		$this->fillDestinationItemWithDataFromSourceItem($destinationItem);
+
+		$result = $this->getConfiguredAddOperation($destinationFactory, $destinationItem)->launch();
+		if (!$result->isSuccess())
+		{
+			throw new CreationFailedException(
+				$destinationFactory->getEntityTypeId(),
+				implode(PHP_EOL, $result->getErrorMessages()),
+			);
+		}
+
+		if ($destinationFactory->isClientEnabled() || $destinationFactory->isMyCompanyEnabled())
+		{
+			Requisite\EntityLink::copyRequisiteLink($this->sourceItem, $destinationItem);
+		}
+
+		return $destinationItem;
+	}
+
+	public function fillDestinationItemWithDataFromSourceItem(Item $destinationItem): void
+	{
+		$this->initialize();
+
+		$configItem = $this->config->getItem($destinationItem->getEntityTypeId());
+		if (!$configItem || !$configItem->isActive())
+		{
+			return;
+		}
+
+		$map = Container::getInstance()->getConversionMapper()->getMap(
+			new Crm\RelationIdentifier($this->sourceFactory->getEntityTypeId(), $destinationItem->getEntityTypeId()),
+		);
+
+		$destinationFactory = Container::getInstance()->getFactory($destinationItem->getEntityTypeId());
+		if (!$destinationFactory)
+		{
+			return;
+		}
+
+		foreach ($map->getItems() as $mapItem)
+		{
+			$sourceField = $this->sourceFactory->getFieldsCollection()->getField($mapItem->getSourceField());
+			$dstField = $destinationFactory->getFieldsCollection()->getField($mapItem->getDestinationField());
+
+			$sourceValue = $this->sourceItem->get($mapItem->getSourceField());
+
+			//todo move this code to mapper/merger
+			if ($sourceField && $sourceField->isUserField() && $dstField && $dstField->isUserField())
+			{
+				$srcValues = [$sourceField->getName() => $sourceValue];
+				$dstValues = [];
+
+				EntityConversionMapper::mapUserField(
+					$this->sourceFactory->getEntityTypeId(),
+					$sourceField->getName(),
+					$srcValues,
+					$destinationFactory->getEntityTypeId(),
+					$dstField->getName(),
+					$dstValues,
+					['ENABLE_FILES' => false],
+				);
+
+				$sourceValue = $dstValues[$dstField->getName()] ?? $sourceValue;
+			}
+			//todo new hierarchy of migrators that will polymorphicaly transform field values from source to dst?
+			elseif ($sourceValue instanceof Crm\ProductRowCollection)
+			{
+				$sourceValue = $this->convertProductRows($sourceValue, $destinationFactory);
+			}
+
+			//todo ensure that all fields work with unnamed set
+			$destinationItem->set($mapItem->getDestinationField(), $sourceValue);
+		}
+
+		if ($destinationItem->hasField(Item::FIELD_NAME_PRODUCTS))
+		{
+			$srcHasProducts = false;
+			if ($this->sourceItem->hasField(Item::FIELD_NAME_PRODUCTS))
+			{
+				$srcHasProducts = $this->sourceItem->getProductRows() && (count($this->sourceItem->getProductRows()) > 0);
+			}
+			$dstHasProducts = $destinationItem->getProductRows() && count($destinationItem->getProductRows()) > 0;
+
+			//todo for some interdependent fields real current values of fields affect which ones we have to transfer
+			// to dst and which we have to skip
+			// Do i still need to map fields in some mapper and return fully prepared dst values?
+			if ($srcHasProducts && !$dstHasProducts && !$destinationItem->getIsManualOpportunity() && $destinationItem->getOpportunity() > 0)
+			{
+				//force opportunity recalculation. Current value is set based on source product rows,
+				// but no rows were transferred to dst
+				$destinationItem->setOpportunity($destinationItem->getDefaultValue(Item::FIELD_NAME_OPPORTUNITY));
+			}
+		}
+
+		$categoryId = $configItem->getInitData()['categoryId'] ?? null;
+
+		if (!is_null($categoryId) && $destinationItem->isCategoriesSupported())
+		{
+			$destinationItem->setCategoryId($categoryId);
+		}
+
+		if (isset($this->contextData['RESPONSIBLE_ID']) && $destinationItem->hasField(Item::FIELD_NAME_ASSIGNED))
+		{
+			$destinationItem->setAssignedById($this->contextData['RESPONSIBLE_ID']);
+		}
+	}
+
+	/**
+	 * @param Crm\ProductRowCollection $srcProductRows
+	 * @param Factory $destinationFactory
+	 * @return Crm\ProductRow[]
+	 */
+	private function convertProductRows(Crm\ProductRowCollection $srcProductRows, Factory $destinationFactory): array
+	{
+		$sourceItemIdentifier = ItemIdentifier::createByItem($this->sourceItem);
+		$currentDirection = new Crm\RelationIdentifier(
+			$this->sourceItem->getEntityTypeId(),
+			$destinationFactory->getEntityTypeId(),
+		);
+		$relation = Container::getInstance()->getRelationManager()->getRelation($currentDirection);
+		if (!$relation)
+		{
+			throw new Main\InvalidOperationException('Relation for conversion direction not found: ' . $currentDirection);
+		}
+
+		$previousDstItemIds = [];
+		foreach ($relation->getChildElements($sourceItemIdentifier) as $sourceChild)
+		{
+			if ($sourceChild->getEntityTypeId() === $destinationFactory->getEntityTypeId())
+			{
+				$previousDstItemIds[] = $sourceChild->getEntityId();
+			}
+		}
+
+		/** @var array[][] $alreadyConvertedProductRows */
+		$alreadyConvertedProductRows = [];
+		if (!empty($previousDstItemIds))
+		{
+			$previousDstItems = $destinationFactory->getItems([
+				'select' => [Item::FIELD_NAME_PRODUCTS],
+				'filter' => [
+					'@' . Item::FIELD_NAME_ID => $previousDstItemIds,
+				],
+			]);
+
+			foreach ($previousDstItems as $previousDstItem)
+			{
+				if ($previousDstItem->getProductRows())
+				{
+					$alreadyConvertedProductRows[] = $previousDstItem->getProductRows()->toArray();
+				}
+			}
+		}
+
+		$notConvertedProductRowsArrays = \CCrmProductRow::GetDiff([$srcProductRows->toArray()], $alreadyConvertedProductRows);
+
+		$notConvertedProductRows = [];
+		foreach ($notConvertedProductRowsArrays as $notConvertedProductRowsArray)
+		{
+			$notConvertedProductRows[] = Crm\ProductRow::createFromArray($notConvertedProductRowsArray);
+		}
+
+		return $notConvertedProductRows;
+	}
+
+	private function getConfiguredAddOperation(Factory $destinationFactory, Item $destinationItem): Operation\Add
+	{
+		$context = $this->config->getContext();
+		if (!$context)
+		{
+			//for compatibility
+			$userId = $this->contextData['USER_ID'] ?? null;
+			if (is_numeric($userId))
+			{
+				$context = new Crm\Service\Context();
+				$context->setUserId((int)$userId);
+			}
+			else
+			{
+				$context = Container::getInstance()->getContext();
+			}
+		}
+
+		$operation = $destinationFactory->getAddOperation($destinationItem, $context);
+
+		if (!$this->config->isPermissionCheckEnabled())
+		{
+			$operation->disableCheckAccess();
+		}
+
+		if (!$this->isUserFieldCheckEnabled())
+		{
+			$operation->disableCheckFields();
+		}
+
+		if ($this->shouldSkipBizProcAutoStart())
+		{
+			$operation->disableBizProc();
+		}
+
+		return $operation;
+	}
+
+	//region Deprecated
+	//todo mark all methods as deprecated and give them default implementation for compatibility
+	//todo move all really used methods out of this region, only truly deprecated should remain here
+
+	/**
+	 * @deprecated Used only for maintaining backwards compatibility
+	 * @param Factory $sourceFactory
+	 * @return $this
+	 */
+	protected function setSourceFactory(Factory $sourceFactory): self
+	{
+		$this->sourceFactory = $sourceFactory;
+
+		return $this;
+	}
+
 	//region Access to member fields
 	/**
-	 * Get converter entity type ID.
+	 * Get source entity type ID
+	 *
 	 * @return int
 	 */
-	abstract public function getEntityTypeID();
+	public function getEntityTypeID()
+	{
+		return $this->sourceFactory->getEntityTypeId();
+	}
+
 	/**
-	 * Get converter entity ID.
+	 * Get source entity ID
+	 *
 	 * @return int
 	 */
 	public function getEntityID()
 	{
 		return $this->entityID;
 	}
+
 	/**
-	 * Set converter entity ID.
-	 * @param int $entityID Entity ID.
+	 * Set source entity ID.
+	 *
+	 * @param int $entityID
 	 * @return void
 	 */
 	public function setEntityID($entityID)
 	{
-		$this->entityID = $entityID;
+		$this->entityID = (int)$entityID;
 	}
+
 	/**
 	 * Get current converter phase.
 	 * @return int
@@ -80,7 +475,7 @@ abstract class EntityConverter
 	 */
 	public function isFinished()
 	{
-		return false;
+		return $this->isFinished;
 	}
 	/**
 	 * Get conversion configuration by entity type ID.
@@ -204,14 +599,101 @@ abstract class EntityConverter
 	 * Try to execute current conversion phase.
 	 * @return bool
 	 */
-	abstract public function executePhase();
+	public function executePhase()
+	{
+		if ($this->currentPhase === static::PHASE_NEW_API)
+		{
+			foreach ($this->config->getActiveItems() as $item)
+			{
+				if ($this->isUseNewApi($item))
+				{
+					$this->convertByConfigItem($item);
+				}
+			}
+
+			return true;
+		}
+
+		return false;
+	}
+
+	protected function isUseNewApi(EntityConversionConfigItem $configItem): bool
+	{
+		return \CCrmOwnerType::isUseDynamicTypeBasedApproach($configItem->getEntityTypeID());
+	}
+
+	/**
+	 * @todo make so it simply returns false after complete refactoring
+	 */
+	public function moveToNextPhase()
+	{
+		if ($this->currentPhase === static::PHASE_NEW_API)
+		{
+			$this->currentPhase = 0;
+		}
+	}
+
+	/**
+	 * @deprecated
+	 * @todo remove after refactoring
+	 */
+	protected function determineStartingPhase(): void
+	{
+		foreach ($this->config->getActiveItems() as $item)
+		{
+			if ($this->isUseNewApi($item))
+			{
+				$this->currentPhase = static::PHASE_NEW_API;
+
+				return;
+			}
+		}
+
+		$isIntermediate = ($this->currentPhase === 0);
+		if ($isIntermediate)
+		{
+			$this->currentPhase = 1;
+		}
+	}
+
 	/**
 	 * Map entity fields to specified type.
 	 * @param int $entityTypeID Entity type ID.
 	 * @param array|null $options Mapping options.
 	 * @return array
 	 */
-	abstract public function mapEntityFields($entityTypeID, array $options = null);
+	public function mapEntityFields($entityTypeID, array $options = null)
+	{
+		$map = Container::getInstance()->getConversionMapper()->getMap(
+			new Crm\RelationIdentifier($this->sourceFactory->getEntityTypeId(), (int)$entityTypeID),
+		);
+
+		//todo call it in constructor?
+		try
+		{
+			$this->initialize();
+		}
+		catch (SourceItemNotFoundException $exception)
+		{
+			return [];
+		}
+
+		$fields = [];
+		foreach ($map->getItems() as $mapItem)
+		{
+			$fields[$mapItem->getDestinationField()] = $this->sourceItem->get($mapItem->getSourceField());
+
+			if ($mapItem->getSourceField() === Item::FIELD_NAME_PRODUCTS)
+			{
+				//todo old api expects to find array of arrays in this case. Mark "special" fields in a map somehow?
+				$fields[$mapItem->getDestinationField()] =
+					$this->sourceItem->getProductRows() ? $this->sourceItem->getProductRows()->toArray() : []
+				;
+			}
+		}
+
+		return $fields;
+	}
 	//region Externalization/Internalization
 	/**
 	 * Externalize converter settings
@@ -219,12 +701,13 @@ abstract class EntityConverter
 	 */
 	public function externalize()
 	{
-		$params = array(
+		$params = [
 			'config' => $this->config->externalize(),
+			'srcEntityTypeId' => $this->sourceFactory->getEntityTypeId(),
 			'entityId' => $this->entityID,
 			'currentPhase' => $this->currentPhase,
-			'resultData' => $this->resultData
-		);
+			'resultData' => $this->resultData,
+		];
 		$this->doExternalize($params);
 		return $params;
 	}
@@ -243,6 +726,11 @@ abstract class EntityConverter
 		if(isset($params['config']) && is_array($params['config']))
 		{
 			$this->config->internalize($params['config']);
+		}
+
+		if (isset($params['srcEntityTypeId']) && \CCrmOwnerType::IsDefined($params['srcEntityTypeId']))
+		{
+			$this->sourceFactory = Container::getInstance()->getFactory((int)$params['srcEntityTypeId']);
 		}
 
 		if(isset($params['entityId']))
@@ -274,7 +762,14 @@ abstract class EntityConverter
 	 */
 	public function getSupportedDestinationTypeIDs()
 	{
-		return array();
+		$entityTypeIds = [];
+
+		foreach ($this->config->getItems() as $item)
+		{
+			$entityTypeIds[] = $item->getEntityTypeID();
+		}
+
+		return $entityTypeIds;
 	}
 	/**
 	 * Get deal category IDs are allowed to use in converter
@@ -664,4 +1159,6 @@ abstract class EntityConverter
 			],
 		];
 	}
+
+	//endregion
 }

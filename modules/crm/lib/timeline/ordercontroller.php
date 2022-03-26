@@ -724,12 +724,15 @@ class OrderController extends EntityController
 
 		$order = Order\Order::load($ownerId);
 
-		/** @var Order\DealBinding $dealBinding */
-		$dealBinding = $order->getDealBinding();
-		if ($dealBinding)
+		/** @var Order\EntityBinding $binding */
+		$binding = $order->getEntityBinding();
+		if (
+			$binding
+			&& $binding->getOwnerTypeId() === \CCrmOwnerType::Deal
+		)
 		{
 			$this->changeOrderStageDealOnSentNoViewed(
-				$dealBinding->getDealId()
+				$binding->getOwnerId()
 			);
 		}
 	}

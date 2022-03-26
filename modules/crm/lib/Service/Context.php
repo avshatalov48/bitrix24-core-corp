@@ -62,7 +62,7 @@ class Context
 	protected function getCurrentUserId(): int
 	{
 		global $USER;
-		if(is_object($USER) && $USER instanceof \CAllUser)
+		if(is_object($USER) && $USER instanceof \CUser)
 		{
 			return (int) CurrentUser::get()->getId();
 		}

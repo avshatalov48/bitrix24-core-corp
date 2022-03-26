@@ -151,12 +151,13 @@ foreach($arResult['PRODUCTS'] as $product)
 		$storeBarcodeTmpl = '';
 		$storeBarcodeInfo[$product['BASKET_CODE']] = $product['STORE_BARCODE_INFO'];
 
+
 		$storeTmpl =
 			'<div class="crm-order-product-store-container" data-ps-basketcode="#BASKET_CODE#" data-ps-store-id="#STORE_ID#" style="min-height: 39px; margin-top: 25px; margin-bottom: -29px;  padding-bottom: 10px;">'.
 				'<span class="crm-order-product-store-name">
 					<a href="/shop/settings/cat_store_edit/?ID=#STORE_ID#&lang='.LANGUAGE_ID.'&publicSidePanel=Y">#STORE_NAME#</a>
 				</span>'.
-				'<span class="crm-order-product-store-del-container">';
+				'<span class="crm-order-product-store-del-container" id="product-store-del-#STORE_ID#" style="display: #DEL_DISPLAY_TYPE#">';
 		if(count($product['STORES']) > 1 && !$isReadOnly)
 		{
 			$storeTmpl .= '<div class="crm-order-product-store-del" onclick="'.$jsObjName.'.onStoreDeleteClick(\'#BASKET_CODE#\', \'#STORE_ID#\'); return false;" title="'.Loc::getMessage('CRM_ORDER_SPLT_DELETE_STORE').'"></div>';
@@ -171,6 +172,8 @@ foreach($arResult['PRODUCTS'] as $product)
 				'</span>'.
 				$storeInnerHtml.
 			'</div>';
+
+		$editableStoreTmpl = str_replace('#DEL_DISPLAY_TYPE#', 'inline-block', $storeTmpl);
 
 		$storeQuantityInnerHtml = '';
 		if (!$isReadOnly)
@@ -276,16 +279,28 @@ foreach($arResult['PRODUCTS'] as $product)
 			$usedStoresCount++;
 		}
 
+		if ($usedStoresCount <= 1)
+		{
+			$store = str_replace('#DEL_DISPLAY_TYPE#', 'none', $store);
+		}
+		else
+		{
+			$store = str_replace('#DEL_DISPLAY_TYPE#', 'inline-block', $store);
+		}
+
 		if(count($product['STORES']) > 1)
 		{
 			$class = "crm-order-product-store-add-item";
 
 			if($usedStoresCount >= count($product['STORES']))
 			{
-				$class .= ' crm-order-product-store-row-hidden';
+				$class .= ' crm-order-product-store-storeadder-hidden';
 			}
 
-			$store .= '<a id="crm-shipment-product-storeadd-'.$product['BASKET_CODE'].'" class="'.$class.'" href="#" onclick="'.$jsObjName.'.onAddStoreClick(\''.$product['BASKET_CODE'].'\', this); return false;">'.Loc::getMessage('CRM_ORDER_SPLT_ADD_STORE').'</a>';
+			if (!$isReadOnly)
+			{
+				$store .= '<a id="crm-shipment-product-storeadd-'.$product['BASKET_CODE'].'" class="'.$class.'" href="#" onclick="'.$jsObjName.'.onAddStoreClick(\''.$product['BASKET_CODE'].'\', this); return false;">'.Loc::getMessage('CRM_ORDER_SPLT_ADD_STORE').'</a>';
+			}
 		}
 
 		$columns['STORE_ID'] = '<div id="crm-shipment-product-store-'.$product['BASKET_CODE'].'">'.$store.'</div>';
@@ -429,7 +444,7 @@ $APPLICATION->IncludeComponent(
 					languageId: '<?=LANGUAGE_ID?>',
 
 					<?if(!empty($storeBarcodeInfo)):?>
-						storeTmpl: '<?=CUtil::JSEscape($storeTmpl)?>',
+						storeTmpl: '<?=CUtil::JSEscape($editableStoreTmpl)?>',
 						storeQuantityTmpl: '<?=CUtil::JSEscape($storeQuantityTmpl)?>',
 						storeBarcodeTmplI: '<?=CUtil::JSEscape($storeBarcodeTmplI)?>',
 						storeBarcodeTmplB: '<?=CUtil::JSEscape($storeBarcodeTmplB)?>',

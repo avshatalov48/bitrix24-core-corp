@@ -17,7 +17,7 @@ class DiskTrashcan extends Volume\Module\Disk
 	 * @param array $collectData List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION.
 	 * @return $this
 	 */
-	public function measure($collectData = array(self::DISK_FILE, self::PREVIEW_FILE))
+	public function measure($collectData = [self::DISK_FILE])
 	{
 		$this->addFilter('!DELETED_TYPE', ObjectTable::DELETED_TYPE_NONE);
 

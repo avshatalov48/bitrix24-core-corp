@@ -10,6 +10,11 @@ use Bitrix\Crm\Kanban\Entity;
 
 class Invoice extends Entity
 {
+	public function getTitle(): string
+	{
+		return \CCrmOwnerType::GetCategoryCaption($this->getTypeId());
+	}
+
 	public function getTypeName(): string
 	{
 		return \CCrmOwnerType::InvoiceName;
@@ -252,6 +257,20 @@ class Invoice extends Entity
 				'showPersonalSetStatusNotCompletedText' => true,
 				'kanbanItemClassName' => 'crm-kanban-item crm-kanban-item-invoice',
 			]
+		);
+	}
+
+	public function canAddItemToStage(string $stageId, \CCrmPerms $userPermissions): bool
+	{
+		return ($this->getAddItemToStagePermissionType($stageId, $userPermissions) !== BX_CRM_PERM_NONE);
+	}
+
+	protected function getAddItemToStagePermissionType(string $stageId, \CCrmPerms $userPermissions): ?string
+	{
+		return $userPermissions->GetPermType(
+			$this->getTypeName(),
+			'ADD',
+			["STATUS_ID{$stageId}"]
 		);
 	}
 }

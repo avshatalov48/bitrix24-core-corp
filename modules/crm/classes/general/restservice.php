@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Main;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Rest\AccessException;
@@ -464,6 +465,7 @@ final class CCrmRestService extends IRestService
 
 			Tracking\Rest::register($bindings);
 			WebForm\Embed\Rest::register($bindings);
+			\Bitrix\Crm\Controller\CallList::register($bindings);
 
 			self::$DESCRIPTION = array('crm' => $bindings);
 		}
@@ -1035,15 +1037,26 @@ class CCrmRestEventDispatcher
 	{
 		if (self::$entityIds === null)
 		{
-			self::$entityIds = array(
+			self::$entityIds = [
 				CCrmOwnerType::Lead => CCrmLead::$sUFEntityID,
 				CCrmOwnerType::Company => CCrmCompany::$sUFEntityID,
 				CCrmOwnerType::Contact => CCrmContact::$sUFEntityID,
 				CCrmOwnerType::Requisite => Bitrix\Crm\EntityRequisite::$sUFEntityID,
 				CCrmOwnerType::Deal => CCrmDeal::$sUFEntityID,
 				CCrmOwnerType::Quote => CCrmQuote::$sUFEntityID,
-				CCrmOwnerType::Invoice => CCrmInvoice::$sUFEntityID
-			);
+				CCrmOwnerType::Invoice => CCrmInvoice::$sUFEntityID,
+				CCrmOwnerType::SmartInvoice => Service\Factory\SmartInvoice::USER_FIELD_ENTITY_ID,
+			];
+
+			$dynamicTypesMap = Service\Container::getInstance()->getDynamicTypesMap()->load([
+				'isLoadStages' => false,
+				'isLoadCategories' => false,
+			]);
+			$typeFactory = ServiceLocator::getInstance()->get('crm.type.factory');
+			foreach ($dynamicTypesMap->getTypes() as $type)
+			{
+				self::$entityIds[$type->getEntityTypeId()] = $typeFactory->getUserFieldEntityId($type->getId());
+			}
 		}
 	}
 
@@ -1067,6 +1080,15 @@ class CCrmRestEventDispatcher
 		}
 
 		return $result;
+	}
+
+	protected static function getOwnerTypeIdByEntityId(string $entityId): ?int
+	{
+		$result = '';
+
+		static::ensureEntityIdsDefined();
+
+		return array_search($entityId, self::$entityIds, true);
 	}
 
 	public static function onUserFieldAdd($fields)
@@ -1101,8 +1123,14 @@ class CCrmRestEventDispatcher
 
 				self::sendEvent(
 					'Update',
-					array('id' => $id, 'entityId' => $entityId, 'fieldName' => $fieldName),
-					array('UF_ENTITY_ID' => $entityId)
+					[
+						'id' => $id,
+						'entityId' => $entityId,
+						'fieldName' => $fieldName
+					],
+					[
+						'UF_ENTITY_ID' => $entityId,
+					],
 				);
 			}
 		}
@@ -1155,10 +1183,20 @@ class CCrmRestEventDispatcher
 			$ufEntityId = $options['UF_ENTITY_ID'];
 			if (is_string($ufEntityId) && $ufEntityId !== '')
 			{
-				$entityName = ucfirst(mb_strtolower(static::getOwnerTypeNameByEntityId($ufEntityId)));
+				$entityTypeId = static::getOwnerTypeIdByEntityId($ufEntityId);
+				if (\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
+				{
+					$eventName = 'onCrmTypeUserField' . $action;
+				}
+				else
+				{
+					$entityName = static::getOwnerTypeNameByEntityId($ufEntityId);
+					$entityName = ucfirst(mb_strtolower($entityName));
+					$eventName = 'OnAfterCrmRest' . $entityName . 'UserField' . $action;
+				}
 				$event = new Main\Event(
 					'crm',
-					'OnAfterCrmRest'.$entityName.'UserField'.$action,
+					$eventName,
 					$params
 				);
 				$event->send();
@@ -3483,6 +3521,16 @@ class CCrmEnumerationRestProxy extends CCrmRestProxyBase
 					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly),
 					'CAPTION' => Loc::getMessage('CRM_REST_FIELD_NAME')
 				),
+				'SYMBOL_CODE' => [
+					'TYPE' => 'string',
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly],
+					'CAPTION' => Loc::getMessage('CRM_REST_ENUM_FIELD_SYMBOL_CODE')
+				],
+				'SYMBOL_CODE_SHORT' => [
+					'TYPE' => 'string',
+					'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly],
+					'CAPTION' => Loc::getMessage('CRM_REST_ENUM_FIELD_SYMBOL_CODE_SHORT')
+				],
 			);
 		}
 		return $this->FIELDS_INFO;
@@ -3490,6 +3538,7 @@ class CCrmEnumerationRestProxy extends CCrmRestProxyBase
 	public function processMethodRequest($name, $nameDetails, $arParams, $nav, $server)
 	{
 		$descriptions = null;
+		$codes = [];
 
 		$name = mb_strtoupper($name);
 		$nameSuffix = mb_strtoupper(!empty($nameDetails)? implode('_', $nameDetails) : '');
@@ -3512,12 +3561,20 @@ class CCrmEnumerationRestProxy extends CCrmRestProxyBase
 				CCrmOwnerType::Invoice => CCrmOwnerType::Invoice,
 				CCrmOwnerType::Requisite => CCrmOwnerType::Requisite,
 			];
-			foreach ($allDescriptions as $typeId => $description)
+			foreach ($allDescriptions as $entityTypeId => $description)
 			{
-				if (isset($types[$typeId]) || \CCrmOwnerType::isPossibleDynamicTypeId($typeId))
+				if (isset($types[$entityTypeId]) || \CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
 				{
-					$descriptions[$typeId] = $description;
+					$descriptions[$entityTypeId] = $description;
 				}
+			}
+
+			foreach ((array)$descriptions as $entityTypeId => $description)
+			{
+				$codes[$entityTypeId] = [
+					'SYMBOL_CODE' => \CCrmOwnerType::ResolveName($entityTypeId),
+					'SYMBOL_CODE_SHORT' => \CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId),
+				];
 			}
 		}
 		elseif($name === 'ADDRESSTYPE')
@@ -3562,9 +3619,14 @@ class CCrmEnumerationRestProxy extends CCrmRestProxyBase
 		}
 
 		$result = array();
-		foreach($descriptions as $k => &$v)
+		foreach($descriptions as $k => $v)
 		{
-			$result[] = array('ID' => $k, 'NAME' => $v);
+			$result[] = [
+				'ID' => $k,
+				'NAME' => $v,
+				'SYMBOL_CODE' => $codes[$k]['SYMBOL_CODE'] ?? null,
+				'SYMBOL_CODE_SHORT' => $codes[$k]['SYMBOL_CODE_SHORT'] ?? null,
+			];
 		}
 		unset($v);
 		return $result;
@@ -7447,7 +7509,7 @@ class CCrmCompanyRestProxy extends CCrmRestProxyBase
 
 		$dbRes = CCrmCompany::GetListEx(
 			array(),
-			array('=ID' => $ID),
+			array('=ID' => $ID, '@CATEGORY_ID' => 0,),
 			false,
 			false,
 			array(),
@@ -7502,6 +7564,7 @@ class CCrmCompanyRestProxy extends CCrmRestProxyBase
 			$errors[] = 'Access denied.';
 			return false;
 		}
+		$filter['@CATEGORY_ID'] = 0;
 
 		return CCrmCompany::GetListEx(
 			$order,
@@ -7754,7 +7817,7 @@ class CCrmContactRestProxy extends CCrmRestProxyBase
 
 		$dbRes = CCrmContact::GetListEx(
 			array(),
-			array('=ID' => $ID),
+			array('=ID' => $ID, '@CATEGORY_ID' => 0,),
 			false,
 			false,
 			array(),
@@ -7804,6 +7867,7 @@ class CCrmContactRestProxy extends CCrmRestProxyBase
 			$errors[] = 'Access denied.';
 			return false;
 		}
+		$filter['@CATEGORY_ID'] = 0;
 
 		return CCrmContact::GetListEx(
 			$order,

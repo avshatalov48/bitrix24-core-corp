@@ -93,6 +93,7 @@ class Event
 			case EventDictionary::EVENT_AFTER_TASK_VIEW:
 			case EventDictionary::EVENT_AFTER_COMMENTS_READ_ALL:
 			case EventDictionary::EVENT_AFTER_PROJECT_READ_ALL:
+			case EventDictionary::EVENT_AFTER_SCRUM_READ_ALL:
 			case EventDictionary::EVENT_PROJECT_USER_ADD:
 			case EventDictionary::EVENT_PROJECT_USER_UPDATE:
 			case EventDictionary::EVENT_PROJECT_USER_DELETE:
@@ -144,6 +145,7 @@ class Event
 		{
 			case EventDictionary::EVENT_AFTER_COMMENTS_READ_ALL:
 			case EventDictionary::EVENT_AFTER_PROJECT_READ_ALL:
+			case EventDictionary::EVENT_AFTER_SCRUM_READ_ALL:
 			case EventDictionary::EVENT_PROJECT_DELETE:
 			case EventDictionary::EVENT_PROJECT_USER_ADD:
 			case EventDictionary::EVENT_PROJECT_USER_UPDATE:

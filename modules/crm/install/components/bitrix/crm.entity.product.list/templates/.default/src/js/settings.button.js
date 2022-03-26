@@ -1,7 +1,8 @@
 import {Popup} from 'main.popup';
 import {ajax, Cache, Event, Loc, Tag, Type} from 'main.core';
-import {BaseEvent} from 'main.core.events';
+import {BaseEvent, EventEmitter} from 'main.core.events';
 import {Editor} from './product.list.editor';
+import {DialogDisable, Slider, EventType} from 'catalog.store-use'
 
 export default class SettingsPopup
 {
@@ -43,7 +44,7 @@ export default class SettingsPopup
 		});
 	}
 
-	#getSetting(id: string)
+	getSetting(id: string)
 	{
 		return this.#settings.filter(item => {
 			return item.id === id;
@@ -87,24 +88,45 @@ export default class SettingsPopup
 			</label>
 		`;
 
-		Event.bind(setting, 'change', this.#setSetting.bind(this));
+		if(item.id === 'WAREHOUSE')
+		{
+			Event.bind(setting, 'change', (event) =>
+			{
+				new DialogDisable().popup()
+
+				EventEmitter.subscribe(EventType.popup.disable, () => this.#setSetting(event))
+				EventEmitter.subscribe(EventType.popup.disableCancel, () => event.target.checked = true)
+			});
+		}
+		else if(item.id === 'SLIDER')
+		{
+			Event.bind(setting, 'change', (event) =>
+			{
+				new Slider().open(item.url, {})
+					.then(() => this.#editor.reloadGrid(false));
+			})
+		}
+		else
+		{
+			Event.bind(setting, 'change', this.#setSetting.bind(this));
+		}
 
 		return setting;
 	}
 
 	#setSetting(event: BaseEvent): void
 	{
-		const settingItem = this.#getSetting(event.target.dataset.settingId);
+		const settingItem = this.getSetting(event.target.dataset.settingId);
 		if (!settingItem)
 		{
 			return;
 		}
 
 		const settingEnabled = event.target.checked;
-		this.#requestGridSettings(settingItem, settingEnabled);
+		this.requestGridSettings(settingItem, settingEnabled);
 	}
 
-	#requestGridSettings(setting, enabled)
+	requestGridSettings(setting, enabled)
 	{
 		const headers = [];
 		const cells = this.#editor.getGrid().getRows().getHeadFirstChild().getCells();
@@ -129,6 +151,7 @@ export default class SettingsPopup
 				}
 			}
 		).then(() => {
+			let message;
 			setting.checked = enabled;
 			if (setting.id === 'ADD_NEW_ROW_TOP')
 			{
@@ -137,18 +160,31 @@ export default class SettingsPopup
 				const activePanel = this.#editor.changeActivePanelButtons(panel);
 				const settingButton = activePanel.querySelector('[data-role="product-list-settings-button"]');
 				this.getPopup().setBindElement(settingButton);
+
+				message = enabled
+					? Loc.getMessage('CRM_ENTITY_PL_SETTING_ENABLED')
+					: Loc.getMessage('CRM_ENTITY_PL_SETTING_DISABLED');
+				message = message.replace('#NAME#', setting.title);
+			}
+			else if(setting.id === 'WAREHOUSE')
+			{
+				this.#editor.reloadGrid(false);
+				message = enabled
+					? Loc.getMessage('CRM_ENTITY_CARD_WAREHOUSE_ENABLED')
+					: Loc.getMessage('CRM_ENTITY_CARD_WAREHOUSE_DISABLED');
 			}
 			else
 			{
 				this.#editor.reloadGrid();
+
+				message = enabled
+					? Loc.getMessage('CRM_ENTITY_PL_SETTING_ENABLED')
+					: Loc.getMessage('CRM_ENTITY_PL_SETTING_DISABLED');
+				message = message.replace('#NAME#', setting.title)
 			}
 			this.getPopup().close();
 
-			const message = enabled
-				? Loc.getMessage('CRM_ENTITY_PL_SETTING_ENABLED')
-				: Loc.getMessage('CRM_ENTITY_PL_SETTING_DISABLED');
-
-			this.#showNotification(message.replace('#NAME#', setting.title), {
+			this.#showNotification(message, {
 				category: 'popup-settings'
 			});
 		});

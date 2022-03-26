@@ -6,6 +6,7 @@ use Bitrix\Crm\Order\Payment;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Registry;
+use Bitrix\Sale\Cashbox;
 
 Loc::loadMessages(__FILE__);
 
@@ -130,7 +131,6 @@ class OrderPaymentController extends EntityController
 	/**
 	 * @param $ownerId
 	 * @param array $params
-	 * @throws Main\ArgumentException
 	 */
 	public function onPaid($ownerId, array $params)
 	{
@@ -142,13 +142,19 @@ class OrderPaymentController extends EntityController
 			$payment = $params['ENTITY'];
 
 			$isWithOrdersMode = \CCrmSaleHelper::isWithOrdersMode();
-			$canPrintCheck = $payment->getPaySystem()->canPrintCheck();
-			if ($isWithOrdersMode && $canPrintCheck)
+
+			$paySystem = $payment->getPaySystem();
+			if (!$paySystem)
 			{
-				$documents = \Bitrix\Sale\Cashbox\CheckManager::collateDocuments([$payment]);
+				return;
+			}
+
+			if ($isWithOrdersMode && $paySystem->canPrintCheck())
+			{
+				$documents = Cashbox\CheckManager::collateDocuments([$payment]);
 				if (empty($documents))
 				{
-					$cashboxList = \Bitrix\Sale\Cashbox\Manager::getListFromCache();
+					$cashboxList = Cashbox\Manager::getListFromCache();
 					if ($cashboxList)
 					{
 						$this->notifyOrderPaymentEntry(
@@ -376,12 +382,15 @@ class OrderPaymentController extends EntityController
 			$order = Order\Order::load($orderData['ORDER_ID']);
 			if ($order)
 			{
-				/** @var Order\DealBinding $dealBinding */
-				$dealBinding = $order->getDealBinding();
-				if ($dealBinding)
+				/** @var Order\EntityBinding $binding */
+				$binding = $order->getEntityBinding();
+				if (
+					$binding
+					&& $binding->getOwnerTypeId() === \CCrmOwnerType::Deal
+				)
 				{
 					$this->changeOrderStageDealOnSentNoViewed(
-						$dealBinding->getDealId()
+						$binding->getOwnerId()
 					);
 				}
 			}

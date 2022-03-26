@@ -890,6 +890,7 @@ if(!BX.Disk.pathToUser)
 
 			saveDocumentService: function (serviceCode)
 			{
+				var changed = serviceCode !== BX.Disk.getDocumentService();
 				if (BX.Disk.isAvailableOnlyOffice())
 				{
 					BX.userOptions.save('disk', 'doc_service', 'primary', serviceCode);
@@ -900,7 +901,11 @@ if(!BX.Disk.pathToUser)
 				}
 
 				BX.message({disk_document_service: serviceCode});
-				BX.onCustomEvent('Disk:onChangeDocumentService', [BX.message('disk_document_service')]);
+
+				if (changed)
+				{
+					BX.onCustomEvent('Disk:onChangeDocumentService', [BX.message('disk_document_service')]);
+				}
 
 				BX.userOptions.send(null);
 			},

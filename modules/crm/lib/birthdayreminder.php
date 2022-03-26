@@ -117,6 +117,7 @@ class BirthdayReminder
 				{
 					$filter['=ASSIGNED_BY_ID'] = $responsibleID;
 				}
+				$filter['@CATEGORY_ID'] = 0;
 
 				$dbResult = \CCrmContact::GetListEx(
 					array(),

@@ -6,6 +6,7 @@ use Bitrix\Tasks\Integration\Bitrix24;
 use Bitrix\Tasks\Manager;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Type;
+use Bitrix\Tasks\Component\Task\TasksTaskFormState;
 
 Loc::loadMessages(__FILE__);
 
@@ -447,22 +448,6 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 											'VALUE' => $taskData['ALLOW_CHANGE_DEADLINE'],
 											'TEXT' => Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_ALLOW_CHANGE_DEADLINE'),
 											'HELP_TEXT' => Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_HINT_ALLOW_CHANGE_DEADLINE'),
-//												'FIELDS' => [
-//													[
-//														'TYPE' => 'DROPDOWN',
-//                                                        'CODE' => 'ALLOW_CHANGE_DEADLINE_COUNT_VALUE',
-//                                                        'VALUE'=> !$taskData['ALLOW_CHANGE_DEADLINE_COUNT_VALUE'] ? '*' : $taskData['ALLOW_CHANGE_DEADLINE_COUNT_VALUE'],
-//														'ITEMS' => \Bitrix\Tasks\UI\Controls\Fields\Deadline::getCountTimesItems()
-//
-//													],
-//													[
-//														'TYPE' => 'DROPDOWN',
-//														'CODE' => 'ALLOW_CHANGE_DEADLINE_MAXTIME_VALUE',
-//                                                        'VALUE'=> !$taskData['ALLOW_CHANGE_DEADLINE_MAXTIME_VALUE'] ? '*': $taskData['ALLOW_CHANGE_DEADLINE_MAXTIME_VALUE'],
-//														'ITEMS' =>  \Bitrix\Tasks\UI\Controls\Fields\Deadline::getTimesItems()
-//
-//													]
-//												]
 										],
 										[
 											'CODE' => 'MATCH_WORK_TIME',
@@ -521,7 +506,8 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 									<?php // todo: add the following to tasks.widget.optionbar?>
 									<?php foreach($arResult['TEMPLATE_DATA']['PARAMS'] as $param):?>
 										<?php $paramCode = $param['CODE'];?>
-										<?php $checked = $param['VALUE'] == 'Y';?>
+										<?php $checked = $param['VALUE'] === 'Y';?>
+										<?php if($paramCode === \Bitrix\Tasks\Internals\Task\ParameterTable::PARAM_RESULT_REQUIRED) {continue;} ?>
 										<div class="task-options-field">
 											<div class="task-options-field-inner">
 												<label class="task-field-label"><span class="js-id-hint-help task-options-help tasks-icon-help tasks-help-cursor"><?=$param['HINT']?></span><input data-bx-id="task-edit-flag" data-target="task-param-<?=$paramCode?>" data-flag-name="TASK_PARAM_<?=$paramCode?>" class="task-field-checkbox" type="checkbox" <?=($checked? 'checked' : '')?>><?=$param['TITLE']?></label>
@@ -566,7 +552,21 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 						<span data-bx-id="task-edit-chooser" data-target="<?=$blockNameJs?>-block" class="task-option-fixedbtn" title="<?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_PINNER_HINT')?>"></span>
 						<span class="task-options-item-param"><?=Loc::getMessage('TASKS_TASK_COMPONENT_TEMPLATE_BLOCK_TITLE_'.$blockName)?></span>
 
-						<?php if($blockName == Manager\Task::SE_PREFIX.'PROJECT'):?>
+						<?php if($blockName == Manager\Task::SE_PREFIX.'REQUIRE_RESULT' && isset($arResult['TEMPLATE_DATA']['PARAMS'][\Bitrix\Tasks\Internals\Task\ParameterTable::PARAM_RESULT_REQUIRED])):?>
+							<?php $param = $arResult['TEMPLATE_DATA']['PARAMS'][\Bitrix\Tasks\Internals\Task\ParameterTable::PARAM_RESULT_REQUIRED]; ?>
+							<?php $paramCode = $param['CODE'];?>
+							<?php $checked = $param['VALUE'] === 'Y';?>
+							<div class="task-options-item-open-inner">
+								<div class="tasks">
+									<label class="task-field-label task-field-label-tm">
+										<input class="task-options-checkbox" data-bx-id="task-edit-flag" data-target="task-param-<?=$paramCode?>" data-flag-name="TASK_PARAM_<?=$paramCode?>" type="checkbox" <?=($checked? 'checked' : '')?>><?=$param['HINT']?>
+										<input data-bx-id="task-edit-task-param-<?=$paramCode?>" type="hidden" name="<?=htmlspecialcharsbx($inputPrefix)?>[SE_PARAMETER][<?=intval($paramCode)?>][VALUE]" value="<?=($checked ? 'Y' : 'N')?>" />
+										<input type="hidden" name="<?=htmlspecialcharsbx($inputPrefix)?>[SE_PARAMETER][<?=intval($paramCode)?>][ID]" value="<?=intval($param['ID'])?>" />
+										<input type="hidden" name="<?=htmlspecialcharsbx($inputPrefix)?>[SE_PARAMETER][<?=intval($paramCode)?>][CODE]" value="<?=intval($paramCode)?>" />
+									</label>
+								</div>
+							</div>
+						<?php elseif($blockName == Manager\Task::SE_PREFIX.'PROJECT'):?>
 
 							<div class="task-options-item-open-inner">
 

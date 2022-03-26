@@ -1,2 +1,6 @@
 <?php
-return ['rest', 'list/*'];
+return [
+	'extensions' => [
+		'rest', 'list/*'
+	]
+];

@@ -2983,7 +2983,7 @@ class CAllCrmInvoice
 	*/
 	public static function installExternalEntities()
 	{
-		global $DB, $DBType;
+		global $DB;
 		$errMsg = array();
 		$bError = false;
 
@@ -3482,72 +3482,21 @@ class CAllCrmInvoice
 					unset($tmpCatalogId, $dbRes);
 					if ($catalogId > 0)
 					{
-						$databaseType = mb_strtoupper($DBType);
-						$strSql = '';
-						switch ($databaseType)
-						{
-							case 'MYSQL';
-								$strSql =
-									"UPDATE b_crm_invoice_basket B".PHP_EOL.
-									"  INNER JOIN b_crm_invoice O ON B.ORDER_ID = O.ID".PHP_EOL.
-									"  INNER JOIN b_iblock_element IE ON B.PRODUCT_ID = IE.ID".PHP_EOL.
-									"  INNER JOIN b_iblock I ON IE.IBLOCK_ID = I.ID".PHP_EOL.
-									"SET".PHP_EOL.
-									"  B.CATALOG_XML_ID = I.XML_ID,".PHP_EOL.
-									"  B.PRODUCT_XML_ID = IE.XML_ID".PHP_EOL.
-									"WHERE".PHP_EOL.
-									"  IE.IBLOCK_ID = $catalogId".PHP_EOL.
-									"  AND (".PHP_EOL.
-									"    B.PRODUCT_XML_ID IS NULL OR B.PRODUCT_XML_ID = ''".PHP_EOL.
-									"    OR B.CATALOG_XML_ID IS NULL OR B.CATALOG_XML_ID = ''".PHP_EOL.
-									"  )".PHP_EOL.
-									"  AND O.RESPONSIBLE_ID IS NOT NULL";
-								break;
-							case 'MSSQL';
-								$strSql =
-									"UPDATE B".PHP_EOL.
-									"SET".PHP_EOL.
-									"  B.CATALOG_XML_ID = I.XML_ID,".PHP_EOL.
-									"  B.PRODUCT_XML_ID = IE.XML_ID".PHP_EOL.
-									"FROM B_CRM_INVOICE_BASKET B".PHP_EOL.
-									"  INNER JOIN B_CRM_INVOICE O ON B.ORDER_ID = O.ID".PHP_EOL.
-									"  INNER JOIN B_IBLOCK_ELEMENT IE ON B.PRODUCT_ID = IE.ID".PHP_EOL.
-									"  INNER JOIN B_IBLOCK I ON IE.IBLOCK_ID = I.ID".PHP_EOL.
-									"WHERE".PHP_EOL.
-									"  IE.IBLOCK_ID = $catalogId".PHP_EOL.
-									"  AND (".PHP_EOL.
-									"    B.PRODUCT_XML_ID IS NULL OR B.PRODUCT_XML_ID = ''".PHP_EOL.
-									"    OR B.CATALOG_XML_ID IS NULL OR B.CATALOG_XML_ID = ''".PHP_EOL.
-									"  )".PHP_EOL.
-									"  AND O.RESPONSIBLE_ID IS NOT NULL";
-								break;
-							case 'ORACLE';
-								$strSql =
-									"UPDATE (".PHP_EOL.
-									"  SELECT".PHP_EOL.
-									"    B.ID,".PHP_EOL.
-									"    B.CATALOG_XML_ID,".PHP_EOL.
-									"    B.PRODUCT_XML_ID,".PHP_EOL.
-									"    I.XML_ID AS C_XML_ID,".PHP_EOL.
-									"    IE.XML_ID AS P_XML_ID".PHP_EOL.
-									"  FROM B_CRM_INVOICE_BASKET B".PHP_EOL.
-									"    INNER JOIN B_CRM_INVOICE O ON B.ORDER_ID = O.ID".PHP_EOL.
-									"    INNER JOIN B_IBLOCK_ELEMENT IE ON B.PRODUCT_ID = IE.ID".PHP_EOL.
-									"    INNER JOIN B_IBLOCK I ON IE.IBLOCK_ID = I.ID".PHP_EOL.
-									"  WHERE".PHP_EOL.
-									"    IE.IBLOCK_ID = $catalogId".PHP_EOL.
-									"    AND (".PHP_EOL.
-									"      B.PRODUCT_XML_ID IS NULL OR B.PRODUCT_XML_ID = ''".PHP_EOL.
-									"      OR B.CATALOG_XML_ID IS NULL OR B.CATALOG_XML_ID = ''".PHP_EOL.
-									"    )".PHP_EOL.
-									"    AND O.RESPONSIBLE_ID IS NOT NULL".PHP_EOL.
-									") U".PHP_EOL.
-									"SET".PHP_EOL.
-									"  U.CATALOG_XML_ID = U.C_XML_ID,".PHP_EOL.
-									"  U.PRODUCT_XML_ID = U.P_XML_ID";
-								break;
-						}
-						unset($databaseType);
+						$strSql =
+							"UPDATE b_crm_invoice_basket B".PHP_EOL.
+							"  INNER JOIN b_crm_invoice O ON B.ORDER_ID = O.ID".PHP_EOL.
+							"  INNER JOIN b_iblock_element IE ON B.PRODUCT_ID = IE.ID".PHP_EOL.
+							"  INNER JOIN b_iblock I ON IE.IBLOCK_ID = I.ID".PHP_EOL.
+							"SET".PHP_EOL.
+							"  B.CATALOG_XML_ID = I.XML_ID,".PHP_EOL.
+							"  B.PRODUCT_XML_ID = IE.XML_ID".PHP_EOL.
+							"WHERE".PHP_EOL.
+							"  IE.IBLOCK_ID = $catalogId".PHP_EOL.
+							"  AND (".PHP_EOL.
+							"    B.PRODUCT_XML_ID IS NULL OR B.PRODUCT_XML_ID = ''".PHP_EOL.
+							"    OR B.CATALOG_XML_ID IS NULL OR B.CATALOG_XML_ID = ''".PHP_EOL.
+							"  )".PHP_EOL.
+							"  AND O.RESPONSIBLE_ID IS NOT NULL";
 						$DB->Query($strSql, false, "File: ".__FILE__."<br>Line: ".__LINE__);
 						unset($strSql);
 					}
@@ -4347,7 +4296,8 @@ class CAllCrmInvoice
 					'NOTIFY_TYPE' => IM_NOTIFY_FROM,
 					'NOTIFY_MODULE' => 'crm',
 					'LOG_ID' => $eventID,
-					'NOTIFY_EVENT' => 'invoice_responsible_changed',
+					//'NOTIFY_EVENT' => 'invoice_responsible_changed',
+					'NOTIFY_EVENT' => 'changeAssignedBy',
 					'NOTIFY_TAG' => "CRM|INVOICE|{$invoiceID}",
 					'TO_USER_ID' => $responsibleID,
 					'NOTIFY_MESSAGE' => GetMessage('CRM_INVOICE_RESPONSIBLE_IM_NOTIFY', array('#title#' => '<a href="'.htmlspecialcharsbx($eventUrl).'">'.htmlspecialcharsbx($topic).'</a>')),
@@ -4445,7 +4395,8 @@ class CAllCrmInvoice
 					'NOTIFY_TYPE' => IM_NOTIFY_FROM,
 					'NOTIFY_MODULE' => 'crm',
 					'LOG_ID' => $slID,
-					'NOTIFY_EVENT' => 'invoice_responsible_changed',
+					//'NOTIFY_EVENT' => 'invoice_responsible_changed',
+					'NOTIFY_EVENT' => 'changeAssignedBy',
 					'NOTIFY_TAG' => "CRM|INVOICE|{$invoiceID}"
 				);
 

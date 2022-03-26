@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\ImOpenLines\Session;
 
+use Bitrix\ImOpenLines\Crm;
 use Bitrix\ImOpenLines\Chat;
 use Bitrix\ImOpenLines\Mail;
 use Bitrix\ImOpenLines\Queue;
@@ -19,8 +20,6 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\ORM\Fields\ExpressionField;
-
-use Bitrix\ImConnector;
 
 use Bitrix\Pull;
 
@@ -552,6 +551,8 @@ class Agent
 						$newUserCode[$userCode] = self::convertUserCode($userCode, $replaceId);
 					}
 
+					Crm\Agent::addUniqueReplacementUserCodeAgent($userCode, $newUserCode[$userCode]);
+
 					$relation = UserRelationTable::getByPrimary($userCode);
 
 					if ($resultUserRelation = $relation->fetch())
@@ -579,18 +580,15 @@ class Agent
 			}
 		}
 
-		if (Loader::includeModule('imconnector'))
-		{
-			$userRaw = Main\UserTable::getList([
-				'filter' => ['ID' => $searchId],
-				'select' => ['XML_ID'],
-			]);
+		$userRaw = Main\UserTable::getList([
+			'filter' => ['ID' => $searchId],
+			'select' => ['XML_ID'],
+		]);
 
-			if ($xmlId = $userRaw->fetch()['XML_ID'])
-			{
-				$cUser = new \CUser;
-				$cUser->Update($searchId, ['XML_ID' => 'bad' . time() . $xmlId]);
-			}
+		if ($xmlId = $userRaw->fetch()['XML_ID'])
+		{
+			$cUser = new \CUser;
+			$cUser->Update($searchId, ['XML_ID' => 'bad' . time() . $xmlId]);
 		}
 
 		return '';

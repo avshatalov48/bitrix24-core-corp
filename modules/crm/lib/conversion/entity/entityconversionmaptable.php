@@ -1,10 +1,9 @@
 <?php
 namespace Bitrix\Crm\Conversion\Entity;
 
-use Bitrix\Crm\Conversion\ConversionManager;
+use Bitrix\Crm\Conversion\EntityConversionConfig;
 use Bitrix\Crm\Relation\RelationType;
 use Bitrix\Main;
-use Bitrix\Main\Application;
 use Bitrix\Main\Entity\DatetimeField;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Event;
@@ -28,6 +27,9 @@ use Bitrix\Main\Type\DateTime;
  */
 class EntityConversionMapTable extends DataManager
 {
+	/** @var EO_EntityConversionMap|null */
+	private static $lastDeleted;
+
 	/**
 	* @return string
 	*/
@@ -47,7 +49,7 @@ class EntityConversionMapTable extends DataManager
 				->configurePrimary(),
 			(new Main\ORM\Fields\EnumField('RELATION_TYPE'))
 				->configureRequired()
-				->configureValues([RelationType::BINDING, RelationType::CONVERSION])
+				->configureValues(RelationType::getAll())
 				->configureDefaultValue(RelationType::CONVERSION),
 			(new Main\ORM\Fields\BooleanField('IS_CHILDREN_LIST_ENABLED'))
 				->configureRequired()
@@ -143,30 +145,67 @@ class EntityConversionMapTable extends DataManager
 
 	public static function deleteByEntityTypeId(int $entityTypeId): void
 	{
-		$connection = Application::getConnection();
-		$helper = $connection->getSqlHelper();
+		$listToDelete = static::getList([
+			'filter' => [
+				'=SRC_TYPE_ID' => $entityTypeId,
+				'LOGIC' => 'OR',
+				'=DST_TYPE_ID' => $entityTypeId,
+			],
+		]);
 
-		/** @noinspection SqlResolve */
-		$connection->query(sprintf(
-			'DELETE FROM %s WHERE SRC_TYPE_ID = %d OR DST_TYPE_ID = %d',
-			$helper->quote(static::getTableName()),
-			$helper->convertToDbInteger($entityTypeId),
-			$helper->convertToDbInteger($entityTypeId)
-		));
+		while ($entityObject = $listToDelete->fetchObject())
+		{
+			$entityObject->delete();
+		}
 	}
 
 	public static function onAfterAdd(Event $event)
 	{
-		ConversionManager::clearTypesCache();
+		$entityObject = $event->getParameter('object');
+		if (!($entityObject instanceof EO_EntityConversionMap))
+		{
+			return;
+		}
+
+		if ($entityObject->getRelationType() === RelationType::CONVERSION)
+		{
+			static::removeConversionConfig($entityObject->getSrcTypeId());
+		}
 	}
 
 	public static function onAfterUpdate(Event $event)
 	{
-		ConversionManager::clearTypesCache();
+		$entityObject = $event->getParameter('object');
+		if (!($entityObject instanceof EO_EntityConversionMap))
+		{
+			return;
+		}
+
+		if ($entityObject->isRelationTypeChanged() && $entityObject->getRelationType() === RelationType::CONVERSION)
+		{
+			static::removeConversionConfig($entityObject->getSrcTypeId());
+		}
+	}
+
+	public static function onBeforeDelete(Event $event)
+	{
+		$primary = $event->getParameter('primary');
+
+		static::$lastDeleted = static::getByPrimary($primary)->fetchObject();
 	}
 
 	public static function onAfterDelete(Event $event)
 	{
-		ConversionManager::clearTypesCache();
+		if (static::$lastDeleted && static::$lastDeleted->getRelationType() === RelationType::CONVERSION)
+		{
+			static::removeConversionConfig(static::$lastDeleted->getSrcTypeId());
+		}
+
+		static::$lastDeleted = null;
+	}
+
+	private static function removeConversionConfig(int $srcEntityTypeId): void
+	{
+		EntityConversionConfig::removeByEntityTypeId($srcEntityTypeId);
 	}
 }

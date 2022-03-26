@@ -47,7 +47,7 @@ final class Template extends \Bitrix\Tasks\Item\Access
 
 		$provider = new TemplateProvider($DB, $USER_FIELD_MANAGER);
 		$res = $provider->getList(
-			['ID' => SORT_DESC],
+			['ID' => 'DESC'],
 			[
 				'BASE_TEMPLATE_ID' => 0
 			],

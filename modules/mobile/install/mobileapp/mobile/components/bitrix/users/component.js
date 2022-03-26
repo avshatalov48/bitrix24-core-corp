@@ -124,6 +124,7 @@
 		BX.onViewLoaded(()=>{
 			if (Application.getPlatform() === "ios")
 			{
+				list.setRightButtons([{type:"search", callback:()=> list.showSearchBar()}])
 				//button in navigation bar for iOS
 				if(Application.getApiVersion()>=33)
 					list.setFloatingButton(addUserButton);

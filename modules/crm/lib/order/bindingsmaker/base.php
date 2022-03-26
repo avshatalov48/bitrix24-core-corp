@@ -27,9 +27,12 @@ abstract class Base
 			static::makeBinding(\CCrmOwnerType::Order, $order->getId())
 		];
 
-		if ($withDeal === true && $order->getDealBinding())
+		if (
+			$withDeal
+			&& $order->getEntityBinding()
+		)
 		{
-			$result[] = static::makeBinding(\CCrmOwnerType::Deal, $order->getDealBinding()->getDealId());
+			$result[] = static::makeBinding($order->getEntityBinding()->getOwnerTypeId(), $order->getEntityBinding()->getOwnerId());
 		}
 
 		static::addExtraBindings($result, $extraBindings);
@@ -102,7 +105,7 @@ abstract class Base
 	 */
 	private static function getExtraBindings(array $options): array
 	{
-		return isset($options['extraBindings']) ? $options['extraBindings'] : [];
+		return $options['extraBindings'] ?? [];
 	}
 
 	/**
@@ -111,7 +114,7 @@ abstract class Base
 	 */
 	private static function getWithDeal(array $options): bool
 	{
-		return isset($options['withDeal']) ? (bool)$options['withDeal'] : true;
+		return !isset($options['withDeal']) || (bool)$options['withDeal'];
 	}
 
 	/**

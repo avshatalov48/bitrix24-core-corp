@@ -20,7 +20,7 @@ class Callback
 	 *
 	 * @return bool
 	 */
-	public static function canUse()
+	public static function canUse(): bool
 	{
 		return Loader::includeModule('voximplant');
 	}
@@ -30,7 +30,7 @@ class Callback
 	 *
 	 * @return bool
 	 */
-	public static function hasPhoneNumbers()
+	public static function hasPhoneNumbers(): bool
 	{
 		return count(self::getPhoneNumbers()) > 0;
 	}
@@ -38,10 +38,10 @@ class Callback
 	/**
 	 * Send call event.
 	 *
-	 * @param array $eventParameters Event parameters
+	 * @param array $eventParameters Event parameters.
 	 * @return bool
 	 */
-	public static function sendCallEvent($eventParameters)
+	public static function sendCallEvent(array $eventParameters): bool
 	{
 		if (!self::hasPhoneNumbers())
 		{
@@ -63,7 +63,7 @@ class Callback
 	 *
 	 * @return array
 	 */
-	public static function getPhoneNumbers()
+	public static function getPhoneNumbers(): array
 	{
 		if(!self::canUse())
 		{
@@ -83,7 +83,7 @@ class Callback
 
 				$list[] = array(
 					'CODE' => $numberCode,
-					'NAME' => $numberName ? $numberName : $numberCode,
+					'NAME' => $numberName ?: $numberCode,
 				);
 			}
 

@@ -455,7 +455,9 @@ class CDiskVolumeComponent extends BaseComponent
 			Volume\File::getIndicatorId(),
 			Volume\FileDeleted::getIndicatorId(),
 			Volume\Folder::getIndicatorId(),
+			Volume\FolderTree::getIndicatorId(),
 			Volume\FolderDeleted::getIndicatorId(),
+			'Duplicate',// indicator has been removed
 		);
 
 		foreach ($indicatorIdList as $indicatorId => $indicatorIdClass)
@@ -1610,6 +1612,7 @@ class CDiskVolumeComponent extends BaseComponent
 		$this->arResult['GRID_ID'] = 'diskVolumeStorageGrid';
 		$this->arResult['FILTER_ID'] = 'diskVolumeStorageFilter';
 		$this->arResult['DATA_COLLECTED'] = false;
+		$this->arResult['BREAD_CRUMB'] = [];
 
 		// Default indicator type
 		if (empty($this->indicatorId))
@@ -1707,6 +1710,24 @@ class CDiskVolumeComponent extends BaseComponent
 					true
 				);
 
+				$this->purify(
+					Volume\Folder::getIndicatorId(),
+					array(
+						'=STORAGE_ID' => $this->storageId,
+						'=PARENT_ID' => null,
+						'=FOLDER_ID' => $this->folderId,
+					)
+				);
+				$this->measure(
+					Volume\Folder::getIndicatorId(),
+					array(
+						'=STORAGE_ID' => $this->storageId,
+						'=FOLDER_ID' => $this->folderId,
+					),
+					-1,
+					true
+				);
+
 				$this->reload(Volume\FileType::getIndicatorId(), array(
 					'=STORAGE_ID' => $this->storageId,
 				));
@@ -1761,7 +1782,7 @@ class CDiskVolumeComponent extends BaseComponent
 		$filter = $this->getFilter($this->getAction());
 
 		$filter['=STORAGE_ID'] = $this->storageId;// only one storage
-		$filter['!PARENT_ID'] = null;// exclude root folder
+		//$filter['!PARENT_ID'] = null;// exclude root folder
 
 		// Sorting order
 		$sorting = $gridOptions->GetSorting(array('sort' => array('FILE_SIZE' => 'desc')));
@@ -1878,6 +1899,7 @@ class CDiskVolumeComponent extends BaseComponent
 		$this->arResult['GRID_ID'] = 'diskVolumeFilesGrid';
 		$this->arResult['FILTER_ID'] = 'diskVolumeFilesFilter';
 		$this->arResult['DATA_COLLECTED'] = false;
+		$this->arResult['BREAD_CRUMB'] = [];
 
 		// Default indicator type
 		$this->indicatorId = Volume\File::getIndicatorId();
@@ -2332,7 +2354,18 @@ class CDiskVolumeComponent extends BaseComponent
 				$indicator->setStage($this->getQueueStepParam('subTask'));
 			}
 
-			$indicator->measure();
+			try
+			{
+				$indicator->measure();
+			}
+			catch (Main\SystemException $exception)
+			{
+				if ($exception->getCode() === $indicator::ERROR_LOCK_TIMEOUT)
+				{
+					return self::STATUS_TIMEOUT;
+				}
+				throw $exception;
+			}
 
 			// go next
 			$this->setQueueStepParam('subTask', $indicator->getStage());

@@ -15,6 +15,36 @@ Loc::loadMessages(__FILE__);
 
 class FieldSynchronizer
 {
+	private const TYPE_ALIASES = [
+		'NAME' => ['ORDER_TOPIC'],
+		'TITLE' => ['NAME', 'ORDER_TOPIC',],
+		'ORDER_TOPIC' => ['NAME', 'TITLE'],
+	];
+
+	private const HARDCODED_TYPE_ALIASES = [
+		\CCrmOwnerType::LeadName => [
+			\CCrmOwnerType::CompanyName => [
+				'COMPANY_TITLE' => 'TITLE',
+			],
+		],
+	];
+
+	private const CLIENT_CONTACT_FIELDS_FIELDS = [
+		'NAME',
+		'COMPANY_TITLE',
+		'HONORIFIC',
+		'SECOND_NAME',
+		'LAST_NAME',
+		'BIRTHDATE',
+		'POST',
+		'ADDRESS',
+		'PHOTO',
+		'PHONE',
+		'EMAIL',
+		'IM',
+		'WEB',
+	];
+
 	protected $isCreateMode = false;
 
 	public function getSynchronizeFields($schemeId, $fieldNames)
@@ -53,14 +83,20 @@ class FieldSynchronizer
 
 		$form = $options->getForm();
 		$fields = $form->getFields();
-		$dependencies = $form->get()['DEPENDENCIES'];
-		$schemeId = $form->get()['ENTITY_SCHEME'];
+		['DEPENDENCIES' => $dependencies, 'ENTITY_SCHEME' => $schemeId, 'INTEGRATION' => $integration] = $form->get();
+		$integration = $integration ?? [];
 		$srcFieldCodes = array_column($fields, 'CODE');
 		$fields = array_combine(
 			$srcFieldCodes,
 			$fields
 		);
-
+		foreach ($integration as $key => $integrationOption)
+		{
+			$integration[$key]['FIELDS_MAPPING'] =  array_combine(
+				array_column($integrationOption['FIELDS_MAPPING'],'CRM_FIELD_KEY'),
+				$integrationOption['FIELDS_MAPPING']
+			);
+		}
 		$srcFieldMap = $this->getFieldMap($schemeId, $srcFieldCodes);
 		foreach($srcFieldMap as $entityTypeName => $entityFields)
 		{
@@ -75,10 +111,13 @@ class FieldSynchronizer
 				}
 
 				// replace field
-				self::replaceField($fields, $entityField);
+				$this->replaceField($fields, $entityField);
 
 				// replace dependencies
-				self::replaceFieldDependencies($dependencies, $entityField);
+				$this->replaceFieldDependencies($dependencies, $entityField);
+
+				// replace field mapping
+				$this->replaceIntegrationFields($integration,$entityField);
 
 				unset($fields[$entityField['OLD_FIELD_CODE']]);
 			}
@@ -87,6 +126,13 @@ class FieldSynchronizer
 		$form->merge([
 			'FIELDS' => array_values($fields),
 			'DEPENDENCIES' => $dependencies,
+			'INTEGRATION' => array_map(
+				static function($integrationOption)
+				{
+					$integrationOption['FIELDS_MAPPING'] = array_values($integrationOption['FIELDS_MAPPING']);
+					return $integrationOption;
+				},$integration
+			)
 		]);
 
 		Options\Fields::clearCache();
@@ -112,10 +158,10 @@ class FieldSynchronizer
 				}
 
 				// replace field
-				self::replaceField($fields, $entityField);
+				$this->replaceField($fields, $entityField);
 
 				// replace dependencies
-				self::replaceFieldDependencies($dependencies, $entityField);
+				$this->replaceFieldDependencies($dependencies, $entityField);
 
 				unset($fields[$entityField['OLD_FIELD_CODE']]);
 			}
@@ -130,8 +176,8 @@ class FieldSynchronizer
 		{
 			foreach($entityTypeNames as $entityTypeName)
 			{
-				$prefix = $entityTypeName . '_';
-				if(mb_substr($srcFieldCodeTmp, 0, mb_strlen($prefix)) != $prefix)
+				$prefix = "{$entityTypeName}_";
+				if(mb_strpos($srcFieldCodeTmp, $prefix) !== 0)
 				{
 					continue;
 				}
@@ -143,7 +189,7 @@ class FieldSynchronizer
 				$srcFieldMap[$entityTypeName][$fieldName] = array(
 					'FIELD_NAME' => $fieldName,
 					'OLD_FIELD_CODE' => $srcFieldCodeTmp,
-					'OLD_FIELD' => self::findField($fieldName, $srcEntityFields),
+					'OLD_FIELD' => $this->findField($fieldName, $srcEntityFields),
 					'NEW_FIELD_CODE' => '',
 					'NEW_FIELD' => null
 				);
@@ -163,10 +209,22 @@ class FieldSynchronizer
 				continue;
 			}
 
+			$specificLeadInvoiceSchema =
+				Entity::ENUM_ENTITY_SCHEME_LEAD_INVOICE === (int)$schemeId
+				&& $entityTypeName === \CCrmOwnerType::LeadName
+			;
+
+			$specificLeadWithContactSchema =
+				Entity::ENUM_ENTITY_SCHEME_LEAD === (int)$schemeId
+				&& $entityTypeName === \CCrmOwnerType::LeadName
+				&& ($srcFieldMap[\CCrmOwnerType::ContactName] || $srcFieldMap[\CCrmOwnerType::CompanyName])
+			;
+
 			$synchronizedFields = $this->getReplacedSchemeFields(
 				$entityTypeName,
 				$schemeId,
-				$fieldNames
+				$fieldNames,
+				$specificLeadInvoiceSchema || $specificLeadWithContactSchema
 			);
 
 			foreach($synchronizedFields as $dstEntityTypeName => $syncFields)
@@ -183,7 +241,7 @@ class FieldSynchronizer
 					}
 
 					$srcFieldMap[$entityTypeName][$syncFieldOld]['NEW_FIELD_CODE'] = $prefix . $syncFieldNew;
-					$srcFieldMap[$entityTypeName][$syncFieldOld]['NEW_FIELD'] = self::findField($syncFieldNew, $dstEntityFields);
+					$srcFieldMap[$entityTypeName][$syncFieldOld]['NEW_FIELD'] = $this->findField($syncFieldNew, $dstEntityFields);
 				}
 
 				if ($this->isCreateMode && is_callable($dstEntity['CLEAR_FIELDS_CACHE_CALL'] ?? null))
@@ -242,7 +300,7 @@ class FieldSynchronizer
 			return;
 		}
 
-		self::replaceFieldItems(
+		$this->replaceFieldItems(
 			$fields[$newFieldCode],
 			$entityField['OLD_FIELD']['items'],
 			$entityField['NEW_FIELD']['items']
@@ -251,7 +309,7 @@ class FieldSynchronizer
 
 	protected function replaceFieldItems(&$field, $oldItems, $newItems)
 	{
-		$itemIdMap = self::getFieldItemMap($oldItems, $newItems);
+		$itemIdMap = $this->getFieldItemMap($oldItems, $newItems);
 		foreach($field['ITEMS'] as $keyId => $oldItem)
 		{
 			foreach($itemIdMap as $oldItemId => $newItemId)
@@ -263,6 +321,37 @@ class FieldSynchronizer
 
 				$field['ITEMS'][$keyId]['ID'] = $newItemId;
 			}
+		}
+	}
+
+	protected function replaceIntegrationFields(&$integration, $entityField): void
+	{
+		['OLD_FIELD_CODE' => $oldFieldCode, 'NEW_FIELD_CODE' => $newFieldCode] = $entityField;
+
+		if(!$newFieldCode)
+		{
+			return;
+		}
+
+		foreach ($integration as &$integrationOption)
+		{
+			if (!$integrationOption['FIELDS_MAPPING'])
+			{
+				continue;
+			}
+
+			$integrationMap = array_combine(
+				array_column($integrationOption['FIELDS_MAPPING'],'CRM_FIELD_KEY'),
+				$integrationOption['FIELDS_MAPPING']
+			);
+
+			if(!$map = $integrationMap[$oldFieldCode])
+			{
+				continue;
+			}
+			$map['CRM_FIELD_KEY'] = $newFieldCode;
+			$integrationMap[$oldFieldCode] = $map;
+			$integrationOption['FIELDS_MAPPING'] = array_values($integrationMap);
 		}
 	}
 
@@ -283,7 +372,7 @@ class FieldSynchronizer
 				$dependency['IF_FIELD_CODE'] = $newFieldCode;
 				if($dependency['IF_VALUE'] && $entityField['OLD_FIELD']['items'] && $entityField['NEW_FIELD']['items'])
 				{
-					$itemIdMap = self::getFieldItemMap(
+					$itemIdMap = $this->getFieldItemMap(
 						$entityField['OLD_FIELD']['items'],
 						$entityField['NEW_FIELD']['items']
 					);
@@ -316,9 +405,9 @@ class FieldSynchronizer
 		return null;
 	}
 
-	protected function getXmlIdUserFieldBySystemField($entityTypeName, $fieldName)
+	protected function getXmlIdUserFieldBySystemField($entityTypeName, $fieldName): string
 	{
-		return 'CRM_WEBFORM_' . $entityTypeName . '_' . $fieldName;
+		return "CRM_WEBFORM_{$entityTypeName}_{$fieldName}";
 	}
 
 	protected function getSystemFieldByUserField($dstEntityTypeName, $srcEntityTypeName, $srcFieldName)
@@ -371,7 +460,7 @@ class FieldSynchronizer
 
 		$srcEntity = Entity::getMap($srcEntityTypeName);
 		$srcEntityFields = EntityFieldProvider::getFieldsInternal($srcEntityTypeName, $srcEntity);
-		$srcField = self::findField($srcFieldName, $srcEntityFields);
+		$srcField = $this->findField($srcFieldName, $srcEntityFields);
 
 		if(!$srcField)
 		{
@@ -487,184 +576,27 @@ class FieldSynchronizer
 		return $dstFieldName;
 	}
 
-	protected function getSynchronizedSystemField($srcEntityTypeName, $srcFieldName, $dstEntityTypeName, $dstEntityFieldNames)
-	{
-		$interChangeableFields = array(
-			array('NAME', 'TITLE', 'ORDER_TOPIC')
-		);
-
-		if(in_array($srcFieldName, $dstEntityFieldNames))
-		{
-			return $srcFieldName;
-		}
-
-		$dstFieldName = null;
-		foreach($interChangeableFields as $icGroup)
-		{
-			// src field not in group
-			if(!in_array($srcFieldName, $icGroup))
-			{
-				continue;
-			}
-
-			foreach($icGroup as $icFieldName)
-			{
-				// field does not existed in dst entity
-				if(!in_array($icFieldName, $dstEntityFieldNames))
-				{
-					continue;
-				}
-
-				$dstFieldName = $icFieldName;
-				break;
-			}
-		}
-
-		// add userfield as a entity field
-		if(!$dstFieldName)
-		{
-			$dstFieldName = $this->createUserFieldBySystemField($dstEntityTypeName, $srcEntityTypeName, $srcFieldName);
-		}
-
-		return $dstFieldName;
-	}
-
-	protected function getSynchronizedUserFields($srcEntityTypeId, $dstEntityTypeId, $userFieldNames)
-	{
-		if(!$this->isCreateMode)
-		{
-			$synchronizedFieldNameMap = array();
-			$newFields = UserFieldSynchronizer::getSynchronizationFields($srcEntityTypeId, $dstEntityTypeId, null, true);
-			foreach($newFields as $newDstFieldName)
-			{
-				if(!in_array($newDstFieldName, $userFieldNames))
-				{
-					continue;
-				}
-
-				$synchronizedFieldNameMap[$newDstFieldName] = '';
-			}
-			foreach(UserFieldSynchronizer::$existedFieldNameMap as $existedSrcFieldName => $existedDstFieldName)
-			{
-				if(!in_array($existedSrcFieldName, $userFieldNames))
-				{
-					continue;
-				}
-
-				$synchronizedFieldNameMap[$existedSrcFieldName] = $existedDstFieldName;
-			}
-
-			return $synchronizedFieldNameMap;
-		}
-		else
-		{
-			return UserFieldSynchronizer::synchronize(
-				$srcEntityTypeId,
-				$dstEntityTypeId,
-				Context::getCurrent()->getLanguage(),
-				array('FIELD_NAME' => $userFieldNames)
-			);
-		}
-	}
-
-	/**
-	 * Synchronize source type fields with destination type fields.
-	 * Matches are searched by comparing field labels.
-	 * If a source field is not found in the destination type, it will be created there.
-
-	 * @param int $srcEntityTypeName Source Entity Type Name
-	 * @param int $dstEntityTypeName Destination Entity Type Name
-	 * @param array $srcFieldNames Field names for synchronizing
-	 * @return array $synchronizedFieldMap
-	 */
-	protected function synchronizeFields($srcEntityTypeName, $dstEntityTypeName, $srcFieldNames)
-	{
-		$synchronizedFieldMap = array();
-		$entityFieldNames = array();
-		$userFieldNames = array();
-
-		$dstEntityFieldNames = array();
-		$dstEntity = Entity::getMap($dstEntityTypeName);
-
-		//TODO: speed, refactor to fields without userfields
-		$dstEntityFields = EntityFieldProvider::getFieldsInternal($dstEntityTypeName, $dstEntity);
-		foreach($dstEntityFields as $dstEntityField)
-		{
-			$dstEntityFieldNames[] = $dstEntityField['entity_field_name'];
-		}
-
-		$srcEntityTypeId = \CCrmOwnerType::ResolveID($srcEntityTypeName);
-		$dstEntityTypeId = \CCrmOwnerType::ResolveID($dstEntityTypeName);
-
-		if(!$srcEntityTypeId)
-		{
-			return array();
-		}
-
-		if(!$dstEntityTypeId)
-		{
-			return array();
-		}
-
-		foreach($srcFieldNames as $fieldName)
-		{
-			if(mb_substr($fieldName, 0, 3) == 'UF_')
-			{
-				$userFieldNames[] = $fieldName;
-			}
-			else
-			{
-				$dstFieldName = $this->getSynchronizedSystemField($srcEntityTypeName, $fieldName, $dstEntityTypeName, $dstEntityFieldNames);
-				if(!$dstFieldName && $this->isCreateMode)
-				{
-					continue;
-				}
-
-				$entityFieldNames[$fieldName] = $dstFieldName;
-			}
-		}
-
-		if(count($entityFieldNames) > 0)
-		{
-			$synchronizedFieldMap = array_merge($synchronizedFieldMap, $entityFieldNames);
-		}
-
-		if(count($userFieldNames) > 0)
-		{
-			$existedUserFieldToSystemFieldNameMap = array();
-			foreach($userFieldNames as $srcFieldKey => $srcFieldName)
-			{
-				$dstFieldName = $this->getSystemFieldByUserField($dstEntityTypeName, $srcEntityTypeName, $srcFieldName);
-				if($dstFieldName)
-				{
-					$existedUserFieldToSystemFieldNameMap[$srcFieldName] = $dstFieldName;
-					unset($userFieldNames[$srcFieldKey]);
-				}
-			}
-
-			$synchronizedUserFieldNameMap = $this->getSynchronizedUserFields($srcEntityTypeId, $dstEntityTypeId, $userFieldNames);
-			$synchronizedFieldMap = array_merge($synchronizedFieldMap, $existedUserFieldToSystemFieldNameMap, $synchronizedUserFieldNameMap);
-		}
-
-		return $synchronizedFieldMap;
-	}
-
 	/**
 	 * Synchronize source type fields with destination type fields.
 	 * Matches are searched by comparing field labels.
 	 * If a source field is not found in the destination type, it will be created there.
 	 *
-	 * @param int $srcEntityTypeName Source Entity Type Name
-	 * @param int $dstSchemeId Destination Scheme ID
-	 * @param array $fieldNames Field names for synchronizing
-	 * @return array $synchronizedFieldMap
+	 * @param string $srcEntityTypeName Source Entity Type Name
+	 * @param string $dstSchemeId Destination Scheme ID
+	 * @param string[] $fieldNames Field names for synchronizing
+	 * @return array<string,string[]> $synchronizedFieldMap
 	 */
-	protected function getReplacedSchemeFields($srcEntityTypeName, $dstSchemeId, $fieldNames)
+	protected function getReplacedSchemeFields(
+		string $srcEntityTypeName,
+		string $dstSchemeId,
+		array $fieldNames,
+		bool $specificSchema
+	): array
 	{
-		$synchronizedFieldMap = array();
+		$synchronizedFieldMap = [];
 		$scheme = Entity::getSchemes($dstSchemeId);
 
-		if(in_array($srcEntityTypeName, $scheme['ENTITIES']))
+		if (!$specificSchema && in_array($srcEntityTypeName, $scheme['ENTITIES'], true))
 		{
 			foreach($fieldNames as $fieldName)
 			{
@@ -674,24 +606,284 @@ class FieldSynchronizer
 			return $synchronizedFieldMap;
 		}
 
-		foreach($scheme['ENTITIES'] as $dstEntityTypeName)
-		{
+		$mainEntity = $this->getSchemaMainEntity($scheme);
+		$unresolvedFields = [];
 
-			if($dstEntityTypeName == \CCrmOwnerType::InvoiceName)
+		if ($specificSchema)
+		{
+			if (!empty($contactFields = array_intersect($this::CLIENT_CONTACT_FIELDS_FIELDS, $fieldNames)))
+			{
+				$unresolvedFields = $contactFields;
+				$fieldNames = array_diff($fieldNames,$contactFields);
+			}
+		}
+
+		$synchronizedFieldMap[$mainEntity] = $this->findSyncFields(
+			$srcEntityTypeName,
+			$mainEntity,
+			$fieldNames
+		);
+
+
+		foreach ($synchronizedFieldMap[$mainEntity] as $name => $item)
+		{
+			if (!$item)
+			{
+				$unresolvedFields[] = $name;
+			}
+		}
+
+		if (empty($unresolvedFields))
+		{
+			return $synchronizedFieldMap;
+		}
+
+		foreach($this->orderSchemaEntities($scheme) as $dstTypeName)
+		{
+			if (in_array($dstTypeName,[\CCrmOwnerType::InvoiceName, $mainEntity],true))
 			{
 				continue;
 			}
 
-			$synchronizedFieldMap[$dstEntityTypeName] = $this->synchronizeFields(
+			$synchronizedFieldMap[$dstTypeName] = $this->findSyncFields(
 				$srcEntityTypeName,
-				$dstEntityTypeName,
-				$fieldNames
+				$dstTypeName,
+				$unresolvedFields
 			);
 
-			//TODO: remove for creating fields in all entities
-			break;
+			foreach ($unresolvedFields as $key => $name)
+			{
+				if ($synchronizedFieldMap[$dstTypeName][$name])
+				{
+					unset($unresolvedFields[$key], $synchronizedFieldMap[$mainEntity][$name]);
+					continue;
+				}
+
+				unset($synchronizedFieldMap[$dstTypeName][$name]);
+			}
+
+			if (empty($synchronizedFieldMap[$dstTypeName]))
+			{
+				unset($synchronizedFieldMap[$dstTypeName]);
+			}
+		}
+
+		if ($this->isCreateMode)
+		{
+			$this->createSyncEntityField($synchronizedFieldMap,$srcEntityTypeName);
 		}
 
 		return $synchronizedFieldMap;
+	}
+
+	private function getSchemaMainEntity(array $schema) : string
+	{
+		if (!$mainEntity = \CCrmOwnerType::ResolveName($schema['MAIN_ENTITY']))
+		{
+			foreach ($this->orderSchemaEntities($schema) as $entityType)
+			{
+				if ($entityType !== \CCrmOwnerType::InvoiceName)
+				{
+					$mainEntity = $entityType;
+					break;
+				}
+			}
+		}
+
+		return $mainEntity;
+	}
+
+	private function getUserFieldSyncMap(string $srcEntityTypeName, string $dstEntityTypeName) : array
+	{
+		static $prevSyncType;
+		if ($prevSyncType !== $origin = "{$srcEntityTypeName}/{$dstEntityTypeName}")
+		{
+			if (!$srcEntityTypeId = \CCrmOwnerType::ResolveID($srcEntityTypeName))
+			{
+				return [];
+			}
+
+			if (!$dstEntityTypeId = \CCrmOwnerType::ResolveID($dstEntityTypeName))
+			{
+				return [];
+			}
+			UserFieldSynchronizer::getSynchronizationFields($srcEntityTypeId, $dstEntityTypeId, null, true);
+
+			$prevSyncType = $origin;
+		}
+
+		return UserFieldSynchronizer::$existedFieldNameMap;
+
+	}
+
+	private function findSyncField(
+		string $srcEntityTypeName,
+		string $srcFieldName,
+		string $dstEntityTypeName,
+		array $dstEntityFieldNames
+	) : ?string
+	{
+		if ($dstEntityTypeName === $srcEntityTypeName)
+		{
+			return $srcFieldName;
+		}
+
+		if ($this->isUserField($srcFieldName))
+		{
+			if ($dstFieldName = $this->getSystemFieldByUserField($dstEntityTypeName, $srcEntityTypeName, $srcFieldName))
+			{
+				return $dstFieldName;
+			}
+
+			if ($dstFieldName = $this->getUserFieldSyncMap($srcEntityTypeName,$dstEntityTypeName)[$srcFieldName])
+			{
+				return $dstFieldName;
+			}
+
+			return null;
+		}
+
+		if (in_array($srcFieldName, $dstEntityFieldNames, true))
+		{
+			return $srcFieldName;
+		}
+
+		if ($aliases = $this::TYPE_ALIASES[$srcFieldName])
+		{
+			foreach ($aliases as $alias)
+			{
+				if (in_array($alias,$dstEntityFieldNames,true))
+				{
+					return $alias;
+				}
+			}
+		}
+
+		$hardcodeType = @$this::HARDCODED_TYPE_ALIASES[$srcEntityTypeName][$dstEntityTypeName][$srcFieldName];
+		if ($hardcodeType && in_array($hardcodeType,$dstEntityFieldNames,true))
+		{
+			return $hardcodeType;
+		}
+
+		if ($dstFieldName = $this->getUserFieldBySystemField($dstEntityTypeName, $srcEntityTypeName, $srcFieldName))
+		{
+			return $dstFieldName;
+		}
+
+		return null;
+	}
+
+	private function findSyncFields(
+		string $srcEntityTypeName,
+		string $dstEntityTypeName,
+		array $srcFieldNames
+	) : array
+	{
+		$synchronizedFieldMap = [];
+		$dstEntity = Entity::getMap($dstEntityTypeName);
+		$dstEntityFields = EntityFieldProvider::getFieldsInternal($dstEntityTypeName, $dstEntity);
+
+		$dstEntityFieldNames = array_column($dstEntityFields, 'entity_field_name');
+
+		foreach($srcFieldNames as $fieldName)
+		{
+			$synchronizedFieldMap[$fieldName] = $this->findSyncField(
+				$srcEntityTypeName,
+				$fieldName,
+				$dstEntityTypeName,
+				$dstEntityFieldNames
+			);
+		}
+
+		return $synchronizedFieldMap;
+	}
+
+	private function isUserField(string $field) : bool
+	{
+		return mb_strpos($field, 'UF_') === 0;
+	}
+
+	private function createSyncEntityField(
+		array& $synchronizedFieldMap,
+		string $srcEntityTypeName
+	) : void
+	{
+		if (!$srcEntityTypeId = \CCrmOwnerType::ResolveID($srcEntityTypeName))
+		{
+			return;
+		}
+
+		foreach ($synchronizedFieldMap as $entity => &$fields)
+		{
+			$unresolvedUserFields = [];
+
+			if (!$dstEntityTypeId = \CCrmOwnerType::ResolveID($entity))
+			{
+				continue;
+			}
+
+			foreach ($fields as $from => $to)
+			{
+				if ($to)
+				{
+					continue;
+				}
+
+				if (!$this->isUserField($from))
+				{
+					$synchronizedFieldMap[$entity][$from] = $this->createUserFieldBySystemField(
+						$entity,
+						$srcEntityTypeName,
+						$from
+					);
+				}
+				else
+				{
+					$unresolvedUserFields[] = $from;
+				}
+			}
+
+			$newUserFields = $this->syncUserFields($srcEntityTypeId,$dstEntityTypeId,$unresolvedUserFields);
+			foreach ($newUserFields as $from => $to)
+			{
+				$synchronizedFieldMap[$entity][$from] = $to;
+			}
+		}
+
+	}
+
+	private function orderSchemaEntities($schema) : \Generator
+	{
+		$priorityQueue = new \SplPriorityQueue();
+
+		foreach ($schema['ENTITIES'] as $entity)
+		{
+			if (in_array($entity, [\CCrmOwnerType::ContactName, \CCrmOwnerType::CompanyName], true))
+			{
+				$priority = $entity === \CCrmOwnerType::ContactName? 200 : 100;
+			}
+			$priority = $priority ?? 300;
+			$priorityQueue->insert($entity, $priority);
+		}
+
+		for (;$priorityQueue->valid();$priorityQueue->next())
+		{
+			yield $priorityQueue->current();
+		}
+
+	}
+
+	private function syncUserFields(
+		int $srcEntityTypeId,
+		int $dstEntityTypeId,
+		array $userFieldNames
+	): array
+	{
+		return UserFieldSynchronizer::synchronize(
+			$srcEntityTypeId,
+			$dstEntityTypeId,
+			Context::getCurrent()->getLanguage(),
+			['FIELD_NAME' => $userFieldNames]
+		);
 	}
 }

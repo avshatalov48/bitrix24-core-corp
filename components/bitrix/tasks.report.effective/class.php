@@ -1,4 +1,4 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -22,9 +22,93 @@ CBitrixComponent::includeComponentClass("bitrix:tasks.base");
  * Class TasksReportEffectiveComponent
  */
 class TasksReportEffectiveComponent extends TasksBaseComponent
+	implements \Bitrix\Main\Errorable, \Bitrix\Main\Engine\Contract\Controllerable
 {
 	protected $userId;
 	protected $groupId;
+
+	protected $errorCollection;
+
+	public function configureActions()
+	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return [];
+		}
+
+		return [
+			'getEfficiencyData' => [
+				'prefilters' => [
+					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
+				],
+			],
+		];
+	}
+
+	public function __construct($component = null)
+	{
+		parent::__construct($component);
+		$this->init();
+	}
+
+	protected function init()
+	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$this->setUserId();
+		$this->errorCollection = new \Bitrix\Tasks\Util\Error\Collection();
+	}
+
+	protected function setUserId()
+	{
+		$this->userId = (int) \Bitrix\Tasks\Util\User::getId();
+	}
+
+	public function getErrorByCode($code)
+	{
+		// TODO: Implement getErrorByCode() method.
+	}
+
+	public function getErrors()
+	{
+		if (!empty($this->componentId))
+		{
+			return parent::getErrors();
+		}
+		return $this->errorCollection->toArray();
+	}
+
+	public function getEfficiencyDataAction($userId)
+	{
+		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		{
+			return null;
+		}
+
+		$userId = (int) $userId;
+
+		$isAccessible =
+			$this->userId === $userId
+			|| User::isSuper($this->userId)
+			|| User::isBossRecursively($this->userId, $userId);
+
+		if (!$isAccessible)
+		{
+			$this->addForbiddenError();
+			return null;
+		}
+
+		return $this->getEfficiencyData($userId);
+	}
+
+	private function addForbiddenError()
+	{
+		$this->errorCollection->add('ACTION_NOT_ALLOWED.RESTRICTED', Loc::getMessage('TASKS_COMMON_ACCESS_DENIED'));
+	}
 
 	protected static function checkPermissions(array &$arParams, array &$arResult, Collection $errors, array $auxParams = [])
 	{
@@ -46,13 +130,6 @@ class TasksReportEffectiveComponent extends TasksBaseComponent
 		}
 
 		return $errors->checkNoFatals();
-	}
-
-	public static function getAllowedMethods()
-	{
-		return [
-			'getEfficiencyData',
-		];
 	}
 
 	protected function checkParameters()
@@ -97,7 +174,7 @@ class TasksReportEffectiveComponent extends TasksBaseComponent
 			$efficiencyData = (
 				$this->arParams['PLATFORM'] === 'mobile'
 					? $this->getEfficiencyDataForMobile($this->userId, $this->groupId)
-					: static::getEfficiencyData($this->userId)
+					: $this->getEfficiencyData($this->userId)
 			);
 		}
 
@@ -279,7 +356,7 @@ class TasksReportEffectiveComponent extends TasksBaseComponent
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function getEfficiencyData($userId): array
+	private function getEfficiencyData($userId): array
 	{
 		$filter = static::processFilter();
 

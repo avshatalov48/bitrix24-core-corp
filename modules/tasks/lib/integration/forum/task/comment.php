@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Class implements all further interactions with "forum" module considering "task comment" entity
  *
@@ -21,6 +21,7 @@ use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\SearchIndex;
+use Bitrix\Tasks\Internals\Task\Result\ResultManager;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Internals\Task\ProjectLastActivityTable;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
@@ -306,6 +307,65 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 
 	// event handling below...
 
+
+	public static function onCommentSave($entityType, $taskId, $commentId, &$data)
+	{
+		if ($entityType !== 'TK' || !$taskId)
+		{
+			return;
+		}
+
+		self::processResultData(parseInt($commentId));
+	}
+
+	private static function processResultData($commentId = 0): void
+	{
+		$isTaskResult = false;
+
+		if (!\Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getPost('IS_TASK_RESULT_FORM'))
+		{
+			return;
+		}
+
+		if (\Bitrix\Main\Application::getInstance()->getContext()->getRequest()->getPost('IS_TASK_RESULT') === 'Y')
+		{
+			$isTaskResult = true;
+		}
+
+		if ($commentId > 0)
+		{
+			$handlerId = AddEventHandler('forum', 'onBeforeMessageUpdate', static function($id, &$fields) use ($handlerId, $isTaskResult)
+			{
+				if (
+					!array_key_exists('SERVICE_TYPE', $fields)
+					|| !$fields['SERVICE_TYPE']
+				)
+				{
+					$fields['SERVICE_DATA'] = $isTaskResult ? ResultManager::COMMENT_SERVICE_DATA : null;
+				}
+				RemoveEventHandler('forum', 'onBeforeMessageUpdate', $handlerId);
+			});
+		}
+		else
+		{
+			$handlerId = AddEventHandler('forum', 'onBeforeMessageAdd', static function(&$fields) use ($handlerId, $isTaskResult)
+			{
+				if (
+					$isTaskResult
+					&&
+					(
+						!array_key_exists('SERVICE_TYPE', $fields)
+						|| !$fields['SERVICE_TYPE']
+					)
+				)
+				{
+					$fields['SERVICE_DATA'] = ResultManager::COMMENT_SERVICE_DATA;
+				}
+				RemoveEventHandler('forum', 'onBeforeMessageAdd', $handlerId);
+			});
+		}
+	}
+
 	public static function onBeforeAdd($entityType, $taskId, $data): void
 	{
 		if ($entityType !== 'TK' || !$taskId)
@@ -314,6 +374,24 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 		}
 
 		Counter\CounterService::getInstance()->collectData($taskId);
+
+		self::processResultData();
+	}
+
+	public static function onBeforeUpdate($entityType, $taskId, $data): void
+	{
+		$commentId = (int)$data['MESSAGE_ID'];
+
+		if (
+			$entityType !== 'TK'
+			|| !$taskId
+			|| !$commentId
+		)
+		{
+			return;
+		}
+
+		self::processResultData($commentId);
 	}
 
 	/**
@@ -356,6 +434,8 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 				'MESSAGE_ID' => (int) $messageId
 			]
 		);
+
+		(new ResultManager(User::getId()))->deleteByComment((int) $messageId);
 
 		if (!Loader::includeModule('pull'))
 		{
@@ -471,6 +551,14 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 
 		$occurAsUserId = static::getOccurAsId($messageAuthorId);
 		$messageEditDateTimeStamp = MakeTimeStamp($messageEditDate, CSite::GetDateFormat()) - \CTimeZone::getOffset();
+
+		if (
+			isset($arData['MESSAGE']['SERVICE_DATA'])
+			&& $arData['MESSAGE']['SERVICE_DATA'] === ResultManager::COMMENT_SERVICE_DATA
+		)
+		{
+			(new ResultManager(User::getId()))->createFromComment((int)$messageId);
+		}
 
 		TaskTable::update($taskId, ['ACTIVITY_DATE' => DateTime::createFromTimestamp($messageEditDateTimeStamp)]);
 
@@ -710,14 +798,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 							false,
 							false,
 							"LC",
-							$bHasAccessAll,
-							(
 							$bHasAccessAll
-							|| empty($arUserIdToPush)
-							|| count($arUserIdToPush) > 20
-								? array()
-								: $arUserIdToPush
-							)
 						);
 					}
 				}
@@ -891,6 +972,11 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 		if (empty($arData["MESSAGE_ID"]))
 		{
 			return;
+		}
+
+		if ($arData['ACTION'] === 'EDIT')
+		{
+			(new ResultManager(User::getId()))->updateFromComment((int) $taskID, (int) $arData["MESSAGE_ID"]);
 		}
 
 		$arMessage = false;
@@ -1098,6 +1184,8 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 					}
 					break;
 				case "EDIT":
+					$occurAsUserId = (int) static::getOccurAsId($arData['MESSAGE']['AUTHOR_ID']);
+
 					$arMessage = \CForumMessage::GetByID(intval($arData["MESSAGE_ID"]));
 					if ($arMessage)
 					{
@@ -1748,16 +1836,5 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 				}
 			}
 		}
-	}
-
-	/**
-	 * @param $topicId
-	 * @param int $forumId
-	 * @return int
-	 * @deprecated
-	 */
-	public static function getFileCount($topicId, $forumId = 0)
-	{
-		return \Bitrix\Tasks\Integration\Forum\Task\Topic::getFileCount($topicId, $forumId);
 	}
 }

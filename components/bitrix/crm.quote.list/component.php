@@ -87,6 +87,7 @@ use Bitrix\Crm;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\WebForm\Manager as WebFormManager;
 use Bitrix\Crm\Settings\LayoutSettings;
+use Bitrix\Main\Localization\Loc;
 
 $CCrmQuote = new CCrmQuote(false);
 
@@ -337,6 +338,20 @@ foreach ($utmList as $utmCode => $utmName)
 
 $CCrmUserType->ListAddHeaders($arResult['HEADERS']);
 
+$arResult['HEADERS_SECTIONS'] = [
+	[
+		'id' => 'QUOTE',
+		'name' => Loc::getMessage('CRM_COLUMN_QUOTE'),
+		'default' => true,
+		'selected' => true,
+	],
+];
+
+Crm\Service\Container::getInstance()->getParentFieldManager()->prepareGridHeaders(
+	\CCrmOwnerType::Quote,
+	$arResult['HEADERS']
+);
+
 // list all filds for export
 $exportAllFieldsList = array();
 if ($isInExportMode && $isStExportAllFields)
@@ -542,6 +557,12 @@ foreach ($arFilter as $k => $v)
 {
 	if(in_array($k, $arImmutableFilters, true))
 	{
+		continue;
+	}
+
+	if (Crm\Service\ParentFieldManager::isParentFieldName($k))
+	{
+		$arFilter[$k] = Crm\Service\ParentFieldManager::transformEncodedFilterValueIntoInteger($k, $v);
 		continue;
 	}
 
@@ -1595,7 +1616,13 @@ while($arQuote = $obRes->GetNext())
 	$myCompanyID = isset($arQuote['~MYCOMPANY_ID']) ? (int)$arQuote['~MYCOMPANY_ID'] : 0;
 	$arQuote['PATH_TO_MYCOMPANY_SHOW'] = $myCompanyID <= 0 ? ''
 		: CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_MYCOMPANY_SHOW'], array('company_id' => $myCompanyID));
-	if($myCompanyID > 0)
+	if(
+		$myCompanyID > 0
+		&& Crm\Service\Container::getInstance()->getUserPermissions()->checkReadPermissions(
+			\CCrmOwnerType::Company,
+			$myCompanyID
+		)
+	)
 	{
 		$arQuote['MY_COMPANY_INFO'] = array(
 			'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
@@ -1733,6 +1760,30 @@ while($arQuote = $obRes->GetNext())
 	$arResult['QUOTE_ID'][$entityID] = $entityID;
 }
 
+$parentFieldValues = Crm\Service\Container::getInstance()->getParentFieldManager()->loadParentElementsByChildren(
+	\CCrmOwnerType::Quote,
+	$arResult['QUOTE']
+);
+
+foreach ($arResult['QUOTE'] as &$quote)
+{
+	if (isset($parentFieldValues[$quote['ID']]))
+	{
+		foreach ($parentFieldValues[$quote['ID']] as $parentEntityTypeId => $parentEntity)
+		{
+			if ($isInExportMode)
+			{
+				$quote[$parentEntity['code']] = $parentEntity['title'];
+			}
+			else
+			{
+				$quote[$parentEntity['code']] = $parentEntity['value'];
+			}
+		}
+	}
+}
+unset($quote);
+
 $arResult['STEXPORT_IS_FIRST_PAGE'] = $pageNum === 1 ? 'Y' : 'N';
 $arResult['STEXPORT_IS_LAST_PAGE'] = $enableNextPage ? 'N' : 'Y';
 
@@ -1799,7 +1850,7 @@ if($arResult['ENABLE_TOOLBAR'])
 		{
 			$parentEntityTypeId = (int)$arParams['PARENT_ENTITY_TYPE_ID'];
 			$parentEntityId = (int)$arParams['PARENT_ENTITY_ID'];
-			if ($parentEntityTypeId > 0 && $parentEntityId > 0)
+			if (\CCrmOwnerType::IsDefined($parentEntityTypeId) && $parentEntityId > 0)
 			{
 				$arResult['PATH_TO_QUOTE_ADD'] = Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl(
 					\CCrmOwnerType::Quote,

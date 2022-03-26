@@ -224,30 +224,29 @@ abstract class AdsService
 	{
 		if (!static::canUse())
 		{
-			return array();
+			return [];
 		}
-
-		$result = array();
 
 		$account = static::getService()->getAccount($type);
-		$accountsResult = $account->getList();
-		if ($accountsResult->isSuccess())
+		$accountsResponse = $account->getList();
+
+		if (!$accountsResponse->isSuccess())
 		{
-			while ($accountData = $accountsResult->fetch())
-			{
-				$accountData = $account->normalizeListRow($accountData);
-				if ($accountData['ID'])
-				{
-					$result[] = array(
-						'id' => $accountData['ID'],
-						'name' => $accountData['NAME'] ? $accountData['NAME'] : $accountData['ID']
-					);
-				}
-			}
+			self::$errors = $accountsResponse->getErrorMessages();
+
+			return [];
 		}
-		else
+
+		for($result = [];$accountData = $accountsResponse->fetch();)
 		{
-			self::$errors = $accountsResult->getErrorMessages();
+			$accountData = $account::normalizeListRow($accountData);
+			if ($accountData['ID'])
+			{
+				$result[] = array(
+					'id' => $accountData['ID'],
+					'name' => $accountData['NAME'] ? : $accountData['ID']
+				);
+			}
 		}
 
 		return $result;

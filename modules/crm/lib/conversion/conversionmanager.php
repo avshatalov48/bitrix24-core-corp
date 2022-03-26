@@ -2,58 +2,25 @@
 namespace Bitrix\Crm\Conversion;
 
 use Bitrix\Crm\Conversion\Entity\EntityConversionMapTable;
-use Bitrix\Crm\Conversion\Entity\EO_EntityConversionMap;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Main\ArgumentException;
+use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Main\ModuleManager;
-use Bitrix\Main\Result;
+use Bitrix\Main\Request;
 
 class ConversionManager
 {
-	/** @var array */
-	protected static $entityTypeConversionMap = [
-		\CCrmOwnerType::Lead => [
-			\CCrmOwnerType::Deal, \CCrmOwnerType::Contact, \CCrmOwnerType::Company
-		],
-		\CCrmOwnerType::Deal => [
-			\CCrmOwnerType::Quote, \CCrmOwnerType::Invoice
-		],
-		\CCrmOwnerType::Quote => [
-			\CCrmOwnerType::Deal, \CCrmOwnerType::Invoice
-		]
-	];
-
 	/** @var string[] */
 	protected static $entityTypeToModuleDependencyMap = [
 		\CCrmOwnerType::Invoice => 'sale',
 	];
 
-	/** @var int[] */
-	protected static $sourcesCandidatesForDynamic = [
-		\CCrmOwnerType::Deal, \CCrmOwnerType::Lead, \CCrmOwnerType::Quote,
-	];
-
-	/** @var int[] */
-	protected static $destinationCandidatesForDynamic = [
-		\CCrmOwnerType::Deal, \CCrmOwnerType::Quote,
-	];
-
-	/**
-	 * dstEntityTypeId => array of sources
-	 * @var int[][]
-	 */
-	protected static $sourceTypesCache = [];
-
-	/**
-	 * srcEntityTypeId => array of destinations
-	 * @var int[][]
-	 */
-	protected static $destinationsTypesCache = [];
-
 	/** @var EntityConversionMapTable */
 	protected static $conversionMapTable = EntityConversionMapTable::class;
+
+	protected static $configs = [];
 
 	public static function getConcernedFields($srcEntityTypeID, $srcFieldName)
 	{
@@ -156,245 +123,74 @@ class ConversionManager
 		return $resultField;
 	}
 
+	/**
+	 * @param $dstEntityTypeID
+	 * @return int[]
+	 */
 	public static function getSourceEntityTypeIDs($dstEntityTypeID)
 	{
-		if(!is_int($dstEntityTypeID))
-		{
-			$dstEntityTypeID = (int)$dstEntityTypeID;
-		}
+		$dstEntityTypeID = (int)$dstEntityTypeID;
+
+		$invoiceSettings = InvoiceSettings::getCurrent();
 
 		$sourceTypes = [];
-		foreach(static::$entityTypeConversionMap as $srcEntityTypeID => $dstEntityTypeIDs)
+		$relations = Container::getInstance()->getRelationManager()->getParentRelations($dstEntityTypeID);
+		foreach ($relations as $relation)
 		{
-			if(in_array($dstEntityTypeID, $dstEntityTypeIDs, true))
+			if ($relation->getParentEntityTypeId() === \CCrmOwnerType::Invoice && !$invoiceSettings->isOldInvoicesEnabled())
 			{
-				$sourceTypes[] = $srcEntityTypeID;
+				continue;
 			}
-		}
-
-		$sourceTypes = array_unique(
-			array_merge($sourceTypes, static::getSourceEntityTypeIDsFromTable($dstEntityTypeID))
-		);
-
-		return $sourceTypes;
-	}
-
-	public static function getDestinationEntityTypeIDs($srcEntityTypeID)
-	{
-		if(!is_int($srcEntityTypeID))
-		{
-			$srcEntityTypeID = (int)$srcEntityTypeID;
-		}
-
-		$destinationTypes = static::$entityTypeConversionMap[$srcEntityTypeID] ?? [];
-
-		$destinationTypes = array_unique(
-			array_merge($destinationTypes, static::getDestinationEntityTypeIDsFromTable($srcEntityTypeID))
-		);
-
-		return $destinationTypes;
-	}
-
-	protected static function getSourceEntityTypeIDsFromTable(int $dstEntityTypeID): array
-	{
-		if (!isset(static::$sourceTypesCache[$dstEntityTypeID]))
-		{
-			$collection = static::$conversionMapTable::getList([
-				'select' => ['SRC_TYPE_ID'],
-				'filter' => ['=DST_TYPE_ID' => $dstEntityTypeID],
-			])->fetchCollection();
-
-			static::$sourceTypesCache[$dstEntityTypeID] = $collection->getSrcTypeIdList();
-		}
-
-		return static::$sourceTypesCache[$dstEntityTypeID];
-	}
-
-	protected static function getDestinationEntityTypeIDsFromTable(int $srcEntityTypeID): array
-	{
-		if (!isset(static::$destinationsTypesCache[$srcEntityTypeID]))
-		{
-			$collection = static::$conversionMapTable::getList([
-				'select' => ['DST_TYPE_ID'],
-				'filter' => ['=SRC_TYPE_ID' => $srcEntityTypeID],
-			])->fetchCollection();
-
-			static::$destinationsTypesCache[$srcEntityTypeID] = $collection->getDstTypeIdList();
-		}
-
-		return static::$destinationsTypesCache[$srcEntityTypeID];
-	}
-
-	public static function clearTypesCache(): void
-	{
-		static::$sourceTypesCache = [];
-		static::$destinationsTypesCache = [];
-	}
-
-	/**
-	 * Returns an array of entityTypeId's of entities that could act as sources for the specified dynamic entity
-	 *
-	 * @param int $dynamicEntityTypeId
-	 *
-	 * @return int[]
-	 */
-	public static function getSourceCandidates(int $dynamicEntityTypeId): array
-	{
-		return array_merge(static::$sourcesCandidatesForDynamic, static::getDynamicCandidates($dynamicEntityTypeId));
-	}
-
-	/**
-	 * Returns an array of entityTypeId's of entities that could act as destinations for the specified dynamic entity
-	 *
-	 * @param int $dynamicEntityTypeId
-	 *
-	 * @return int[]
-	 */
-	public static function getDestinationCandidates(int $dynamicEntityTypeId): array
-	{
-		return array_merge(static::$destinationCandidatesForDynamic, static::getDynamicCandidates($dynamicEntityTypeId));
-	}
-
-	protected static function getDynamicCandidates(int $dynamicEntityTypeId): array
-	{
-		$typesMap = Container::getInstance()->getDynamicTypesMap();
-		$typesMap->load([
-			'isLoadStages' => false,
-			'isLoadCategories' => false,
-		]);
-
-		$dynamicTypes = [];
-		foreach ($typesMap->getTypes() as $type)
-		{
-			if ($type->getEntityTypeId() === $dynamicEntityTypeId)
+			if (
+				$relation->getParentEntityTypeId() === \CCrmOwnerType::SmartInvoice
+				&& !$invoiceSettings->isSmartInvoiceEnabled()
+			)
 			{
 				continue;
 			}
 
-			$dynamicTypes[] = $type->getEntityTypeId();
-		}
-
-		return $dynamicTypes;
-	}
-
-	public static function setSourceTypes(int $dynamicEntityTypeId, array $sourceTypes): void
-	{
-		static::validateEntityTypeId($dynamicEntityTypeId);
-
-		$deletedSources = array_diff(static::getSourceEntityTypeIDs($dynamicEntityTypeId), $sourceTypes);
-		foreach ($deletedSources as $deletedSourceType)
-		{
-			static::deleteMapItem($deletedSourceType, $dynamicEntityTypeId);
-		}
-
-		foreach ($sourceTypes as $sourceType)
-		{
-			static::validateEntityTypeId($sourceType);
-
-			if (
-				!static::isSourceExists($dynamicEntityTypeId, $sourceType)
-				&& in_array($sourceType, static::getSourceCandidates($dynamicEntityTypeId), true)
-			)
+			if ($relation->getSettings()->isConversion())
 			{
-				static::createMapItem($sourceType, $dynamicEntityTypeId);
+				$sourceTypes[] = $relation->getParentEntityTypeId();
 			}
 		}
+
+		return $sourceTypes;
 	}
 
-	public static function setDestinationTypes(int $dynamicEntityTypeId, array $destinationTypes): void
+	/**
+	 * @param $srcEntityTypeID
+	 * @return int[]
+	 */
+	public static function getDestinationEntityTypeIDs($srcEntityTypeID)
 	{
-		static::validateEntityTypeId($dynamicEntityTypeId);
+		$srcEntityTypeID = (int)$srcEntityTypeID;
 
-		$deletedDestinations = array_diff(static::getDestinationEntityTypeIDs($dynamicEntityTypeId), $destinationTypes);
-		foreach ($deletedDestinations as $deletedDestinationType)
+		$invoiceSettings = InvoiceSettings::getCurrent();
+
+		$destinationTypes = [];
+		$relations = Container::getInstance()->getRelationManager()->getChildRelations($srcEntityTypeID);
+		foreach ($relations as $relation)
 		{
-			static::deleteMapItem($dynamicEntityTypeId, $deletedDestinationType);
-		}
-
-		foreach ($destinationTypes as $destinationType)
-		{
-			static::validateEntityTypeId($destinationType);
-
-			if (
-				!static::isDestinationExists($dynamicEntityTypeId, $destinationType)
-				&& in_array($destinationType, static::getDestinationCandidates($dynamicEntityTypeId), true)
-			)
+			if ($relation->getSettings()->isConversion())
 			{
-				static::createMapItem($dynamicEntityTypeId, $destinationType);
+				if ($relation->getChildEntityTypeId() === \CCrmOwnerType::Invoice && !$invoiceSettings->isOldInvoicesEnabled())
+				{
+					continue;
+				}
+				if (
+					$relation->getChildEntityTypeId() === \CCrmOwnerType::SmartInvoice
+					&& !$invoiceSettings->isSmartInvoiceEnabled()
+				)
+				{
+					continue;
+				}
+
+				$destinationTypes[] = $relation->getChildEntityTypeId();
 			}
 		}
-	}
 
-	protected static function validateEntityTypeId($entityTypeId): void
-	{
-		if (!is_int($entityTypeId) || !\CCrmOwnerType::IsDefined($entityTypeId))
-		{
-			throw new ArgumentException('The provided entity type id is invalid');
-		}
-	}
-
-	/**
-	 * Checks if the entity with the provided $entityTypeId has source entity with $srcEntityTypeId
-	 *
-	 * @param int $entityTypeId
-	 * @param int $srcEntityTypeId
-	 *
-	 * @return bool
-	 */
-	public static function isSourceExists(int $entityTypeId, int $srcEntityTypeId): bool
-	{
-		return in_array($srcEntityTypeId, static::getSourceEntityTypeIDs($entityTypeId), true);
-	}
-
-	/**
-	 * Checks if the entity with the provided $entityTypeId has destination entity with $dstEntityTypeId
-	 *
-	 * @param int $entityTypeId
-	 * @param int $dstEntityTypeId
-	 *
-	 * @return bool
-	 */
-	public static function isDestinationExists(int $entityTypeId, int $dstEntityTypeId): bool
-	{
-		return in_array($dstEntityTypeId, static::getDestinationEntityTypeIDs($entityTypeId), true);
-	}
-
-	protected static function createMapItem(int $srcEntityTypeId, int $dstEntityTypeId): Result
-	{
-		$mapItem = static::$conversionMapTable::createObject();
-		$mapItem->setSrcTypeId($srcEntityTypeId);
-		$mapItem->setDstTypeId($dstEntityTypeId);
-
-		return static::saveMapItem($mapItem);
-	}
-
-	/**
-	 * Isolated in a separate method for testing purposes
-	 *
-	 * @param EO_EntityConversionMap $mapItem
-	 *
-	 * @return Result
-	 */
-	protected static function saveMapItem(EO_EntityConversionMap $mapItem): Result
-	{
-		return $mapItem->save();
-	}
-
-	/**
-	 * Isolated in a separate method for testing purposes
-	 *
-	 * @param int $srcEntityTypeId
-	 * @param int $dstEntityTypeId
-	 *
-	 * @return Result
-	 * @throws \Exception
-	 */
-	protected static function deleteMapItem(int $srcEntityTypeId, int $dstEntityTypeId): Result
-	{
-		return static::$conversionMapTable::delete([
-			'SRC_TYPE_ID' => $srcEntityTypeId,
-			'DST_TYPE_ID' => $dstEntityTypeId,
-		]);
+		return $destinationTypes;
 	}
 
 	/**
@@ -446,16 +242,35 @@ class ConversionManager
 
 	public static function getConfig(int $entityTypeId): ?EntityConversionConfig
 	{
-		$configClassName = static::getConfigClass($entityTypeId);
-		if (is_null($configClassName))
+		if (!isset(static::$configs[$entityTypeId]))
 		{
-			return null;
+			$config = EntityConversionConfig::loadByEntityTypeId($entityTypeId) ?? static::getDefaultConfig($entityTypeId);
+
+			static::$configs[$entityTypeId] = $config;
 		}
 
-		$config = $configClassName::load();
-		if (is_null($config))
+		return static::$configs[$entityTypeId];
+	}
+
+	public static function getDefaultConfig(int $srcEntityTypeId): EntityConversionConfig
+	{
+		$config = EntityConversionConfig::create($srcEntityTypeId);
+
+		$wasDefaultDestinationSet = false;
+		foreach (static::getDestinationEntityTypeIDs($srcEntityTypeId) as $dstEntityTypeId)
 		{
-			$config = $configClassName::getDefault();
+			$configItem = new EntityConversionConfigItem($dstEntityTypeId);
+
+			if (!$wasDefaultDestinationSet)
+			{
+				//todo maybe remove default destination and allow client code decide fully on its own?
+				$configItem->setActive(true);
+				$configItem->enableSynchronization(true);
+
+				$wasDefaultDestinationSet = true;
+			}
+
+			$config->addItem($configItem);
 		}
 
 		return $config;
@@ -476,7 +291,11 @@ class ConversionManager
 		return $config;
 	}
 
-	public static function getWizard(int $entityTypeId, int $entityId, EntityConversionConfig $config): ?EntityConversionWizard
+	public static function getWizard(
+		int $entityTypeId,
+		int $entityId,
+		EntityConversionConfig $config
+	): ?EntityConversionWizard
 	{
 		$wizardClass = static::getWizardClass($entityTypeId);
 		if (is_null($wizardClass))
@@ -499,6 +318,30 @@ class ConversionManager
 		}
 
 		return $wizard;
+	}
+
+	public static function loadWizard(ItemIdentifier $source): ?EntityConversionWizard
+	{
+		return EntityConversionWizard::loadByIdentifier($source);
+	}
+
+	/**
+	 * Extracts relevant data from request and tries to load a wizard by it
+	 *
+	 * @param Request $request
+	 * @return EntityConversionWizard|null
+	 */
+	public static function loadWizardByRequest(Request $request): ?EntityConversionWizard
+	{
+		$srcEntityTypeId = (int)$request->get(EntityConversionWizard::QUERY_PARAM_SOURCE_TYPE_ID);
+		$entityId = (int)$request->get(EntityConversionWizard::QUERY_PARAM_SOURCE_ID);
+
+		if ($entityId > 0 && \CCrmOwnerType::IsDefined($srcEntityTypeId))
+		{
+			return static::loadWizard(new ItemIdentifier($srcEntityTypeId, $entityId));
+		}
+
+		return null;
 	}
 
 	public static function getCurrentSchemeId(int $srcEntityTypeId): ?int

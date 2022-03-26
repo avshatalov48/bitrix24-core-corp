@@ -781,14 +781,10 @@ class Form
 		}
 
 		$editFields = \Bitrix\Main\Config\Option::get("intranet", "user_profile_edit_fields", false, SITE_ID);
-		if ($editFields === false)
-		{
-			$editFields = $arParams["EDITABLE_FIELDS"];
-		}
-		else
-		{
-			$editFields = explode(",", $editFields);
-		}
+		$editFields = is_string($editFields) ? explode(",", $editFields) : (
+			is_array($arParams["EDITABLE_FIELDS"]) ? $arParams["EDITABLE_FIELDS"] : []
+		);
+
 		$arResult["SettingsFieldsEdit"] = [];
 
 		$viewFields = \Bitrix\Main\Config\Option::get("intranet", "user_profile_view_fields", false, SITE_ID);

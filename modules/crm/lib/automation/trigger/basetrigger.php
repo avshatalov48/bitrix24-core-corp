@@ -29,6 +29,7 @@ class BaseTrigger extends \Bitrix\Bizproc\Automation\Trigger\BaseTrigger
 			\CCrmOwnerType::Order,
 			\CCrmOwnerType::Invoice,
 			\CCrmOwnerType::Quote,
+			\CCrmOwnerType::SmartInvoice,
 		];
 
 		if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))

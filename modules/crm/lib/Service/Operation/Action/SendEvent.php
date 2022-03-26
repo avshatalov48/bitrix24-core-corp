@@ -20,9 +20,17 @@ class SendEvent extends Action
 
 	public function process(Item $item): Result
 	{
-		$event = new Event('crm', $this->eventName, [
+		$params = [
 			'item' => $item,
-		]);
+		];
+		$id = $item->getId();
+		$beforeSaveItem = $this->getItemBeforeSave();
+		if (!$id && $beforeSaveItem)
+		{
+			$id = $beforeSaveItem->getId();
+		}
+		$params['id'] = $id;
+		$event = new Event('crm', $this->eventName, $params);
 
 		$event->send();
 

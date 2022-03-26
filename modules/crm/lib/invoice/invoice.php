@@ -218,6 +218,8 @@ class Invoice extends Sale\Order
 				Sale\Registry::ENTITY_BASKET_ITEM => '\Bitrix\Crm\Invoice\BasketItem',
 				Sale\Registry::ENTITY_BASKET_PROPERTIES_COLLECTION => '\Bitrix\Crm\Invoice\BasketPropertiesCollection',
 				Sale\Registry::ENTITY_BASKET_PROPERTY_ITEM => '\Bitrix\Crm\Invoice\BasketPropertyItem',
+				Sale\Registry::ENTITY_BASKET_RESERVE_COLLECTION => '\Bitrix\Crm\Invoice\ReserveQuantityCollection',
+				Sale\Registry::ENTITY_BASKET_RESERVE_COLLECTION_ITEM => '\Bitrix\Crm\Invoice\ReserveQuantity',
 				Sale\Registry::ENTITY_PAYMENT => '\Bitrix\Crm\Invoice\Payment',
 				Sale\Registry::ENTITY_PAYMENT_COLLECTION => '\Bitrix\Crm\Invoice\PaymentCollection',
 				Sale\Registry::ENTITY_PAYABLE_ITEM_COLLECTION => '\Bitrix\Crm\Invoice\PayableItemCollection',

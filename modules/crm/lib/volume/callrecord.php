@@ -290,19 +290,18 @@ class Callrecord
 	/**
 	 * Performs dropping entity.
 	 *
-	 * @return boolean
+	 * @return int
 	 */
 	public function clearEntity()
 	{
 		if (!$this->canClearEntity())
 		{
-			return false;
+			return -1;
 		}
 
 		$query = $this->prepareQuery();
 
-		$success = true;
-
+		$dropped = -1;
 		if ($this->prepareFilter($query))
 		{
 			$userPermissions = \CCrmPerms::GetUserPermissions($this->getOwner());
@@ -321,6 +320,7 @@ class Callrecord
 
 			$res = $query->exec();
 
+			$dropped = 0;
 			while ($activity = $res->fetch())
 			{
 				$this->setProcessOffset($activity['ID']);
@@ -357,6 +357,7 @@ class Callrecord
 						if (\CCrmActivity::Delete($activity['ID'], false, false))
 						{
 							$this->incrementDroppedEntityCount();
+							$dropped ++;
 						}
 						else
 						{
@@ -383,13 +384,16 @@ class Callrecord
 
 				if ($this->hasTimeLimitReached())
 				{
-					$success = false;
 					break;
 				}
 			}
 		}
+		else
+		{
+			$this->collectError(new Main\Error('Filter error', self::ERROR_DELETION_FAILED));
+		}
 
-		return $success;
+		return $dropped;
 	}
 
 	/**
@@ -456,18 +460,18 @@ class Callrecord
 	/**
 	 * Performs dropping entity attachments.
 	 *
-	 * @return boolean
+	 * @return int
 	 */
 	public function clearFiles()
 	{
 		if (!$this->canClearEntity())
 		{
-			return false;
+			return -1;
 		}
 
 		$query = $this->prepareQuery();
 
-		$success = true;
+		$dropped = -1;
 
 		if ($this->prepareFilter($query))
 		{
@@ -487,6 +491,7 @@ class Callrecord
 
 			$res = $query->exec();
 
+			$dropped = 0;
 			while ($activity = $res->fetch())
 			{
 				$this->setProcessOffset($activity['ID']);
@@ -518,6 +523,7 @@ class Callrecord
 									}
 								}
 								$this->incrementDroppedFileCount();
+								$dropped ++;
 							}
 						}
 					}
@@ -540,13 +546,16 @@ class Callrecord
 
 				if ($this->hasTimeLimitReached())
 				{
-					$success = false;
 					break;
 				}
 			}
 		}
+		else
+		{
+			$this->collectError(new Main\Error('Filter error', self::ERROR_DELETION_FAILED));
+		}
 
-		return $success;
+		return $dropped;
 	}
 
 	/**

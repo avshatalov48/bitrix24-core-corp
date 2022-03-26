@@ -66,20 +66,23 @@ if (empty($arParams['DISABLE_TOP_MENU']) || $arParams['DISABLE_TOP_MENU'] != 'Y'
 	</div><!--crm-config-automation-desc-main-->
 </div><!--crm-config-automation-desc-container-->
 <?endif;?>
-<?if ($arResult['CATEGORIES'] && count($arResult['CATEGORIES']) > 1):?>
-	<div class="crm-config-automation-button-container">
-		<div class="ui-btn ui-btn-dropdown ui-btn-themes ui-btn-light-border" data-role="category-selector" data-categories="<?=htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode($arResult['CATEGORIES']))?>">
-			<?=htmlspecialcharsbx($arResult['CATEGORY_NAME'])?>
-		</div>
-	</div><!--pagetitle-container-->
-<?endif?>
 <?$APPLICATION->IncludeComponent(
 	'bitrix:crm.automation',
 	'',
 	array(
-		'ENTITY_TYPE_ID'     => $arResult['ENTITY_TYPE_ID'],
+		'ENTITY_TYPE_ID' => $arResult['ENTITY_TYPE_ID'],
+		'ENTITY_ID' => $arParams['ENTITY_ID'] ?? null,
 		'ENTITY_CATEGORY_ID' => $arResult['ENTITY_CATEGORY'],
-		'back_url'           => '/crm/configs/automation/'.$arResult['ENTITY_TYPE_NAME'].'/'.$arResult['ENTITY_CATEGORY'].'/',
+		'back_url' => $arParams['~back_url'] ?? sprintf(
+			'/crm/%s/automation/%d/',
+			strtolower($arResult['ENTITY_TYPE_NAME']),
+			$arResult['ENTITY_CATEGORY']
+		),
+		'CATEGORY_SELECTOR' => (
+			$arResult['CATEGORY_NAME']
+				? ['TEXT' => $arResult['CATEGORY_NAME']]
+				: null
+		),
 	),
 	$component
 );
@@ -90,7 +93,7 @@ if (empty($arParams['DISABLE_TOP_MENU']) || $arParams['DISABLE_TOP_MENU'] != 'Y'
 		var categorySelector = document.querySelector('[data-role="category-selector"]');
 		if (categorySelector)
 		{
-			var menuItems = [], i, categories = BX.parseJSON(categorySelector.getAttribute('data-categories'));
+			var menuItems = [], i, categories = <?= \Bitrix\Main\Web\Json::encode($arResult['CATEGORIES']) ?>;
 
 			if (!BX.type.isArray(categories))
 				return false;

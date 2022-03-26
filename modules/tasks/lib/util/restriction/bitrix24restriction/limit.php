@@ -1,9 +1,11 @@
 <?php
 namespace Bitrix\Tasks\Util\Restriction\Bitrix24Restriction;
 
+use Bitrix\Main\Loader;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction;
+use Bitrix\Main\Config\Option;
 
 /**
  * Class Limit
@@ -12,6 +14,9 @@ use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction;
  */
 class Limit extends Bitrix24Restriction
 {
+	public const DEFAULT_LIMIT = 100;
+	public const OPTION_LIMIT_KEY = '_tasks_restrict_limit_b';
+
 	/**
 	 * Checks if limit exceeded
 	 *
@@ -23,6 +28,13 @@ class Limit extends Bitrix24Restriction
 	public static function isLimitExceeded(int $limit = 0): bool
 	{
 		$limit = ($limit > 0 ? $limit : static::getLimit());
+
+		$optionLimit = static::getOptionLimit();
+		if (!is_null($optionLimit))
+		{
+			$limit = $optionLimit;
+			return ($limit === 0) || static::getCurrentValue() > $limit;
+		}
 
 		return (static::isLimitExist($limit) && static::getCurrentValue() > $limit);
 	}
@@ -58,5 +70,27 @@ class Limit extends Bitrix24Restriction
 	protected static function getLimit(): int
 	{
 		return max((int)static::getVariable(), 0);
+	}
+
+	/**
+	 * @return int|null
+	 * @throws \Bitrix\Main\ArgumentNullException
+	 */
+	protected static function getOptionLimit(): ?int
+	{
+		if (!Loader::includeModule('bitrix24'))
+		{
+			return null;
+		}
+
+		$key = \CBitrix24::getLicenseType().static::OPTION_LIMIT_KEY;
+
+		$value = Option::getRealValue('tasks', $key, '');
+		if (!is_null($value))
+		{
+			$value = (int) $value;
+		}
+
+		return $value;
 	}
 }

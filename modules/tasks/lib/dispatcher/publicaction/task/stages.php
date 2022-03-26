@@ -14,9 +14,9 @@ namespace Bitrix\Tasks\Dispatcher\PublicAction\Task;
 use \Bitrix\Main\Loader;
 use \Bitrix\Main\Localization\Loc;
 use Bitrix\Socialnetwork\Item\Workgroup;
+use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Scrum\Service\EntityService;
 use Bitrix\Tasks\Scrum\Service\ItemService;
-use Bitrix\Tasks\Scrum\Internal\EntityTable;
 use \Bitrix\Tasks\Util;
 use \Bitrix\Tasks\Kanban\StagesTable;
 use \Bitrix\Tasks\Kanban\TaskStageTable;
@@ -615,7 +615,7 @@ final class Stages extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 			return false;
 		}
 
-		if ($entity->getEntityType() === EntityTable::BACKLOG_TYPE)
+		if ($entity->getEntityType() === EntityForm::BACKLOG_TYPE)
 		{
 			return false;
 		}

@@ -225,6 +225,7 @@ class CounterService
 				EventDictionary::EVENT_AFTER_TASK_DELETE,
 				EventDictionary::EVENT_AFTER_COMMENTS_READ_ALL,
 				EventDictionary::EVENT_AFTER_PROJECT_READ_ALL,
+				EventDictionary::EVENT_AFTER_SCRUM_READ_ALL,
 				EventDictionary::EVENT_PROJECT_DELETE,
 				EventDictionary::EVENT_PROJECT_PERM_UPDATE,
 				EventDictionary::EVENT_PROJECT_USER_ADD,

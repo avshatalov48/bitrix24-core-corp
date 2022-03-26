@@ -105,7 +105,15 @@ if (is_array($arResult['TASK']['PARAMETERS']['DOCUMENT_ID'])
 	{
 		list($entityType, $entityId) = explode('_', $arResult['TASK']['PARAMETERS']['DOCUMENT_ID'][2]);
 		$entityType = mb_strtolower($entityType);
-		$url .= 'mobile/crm/'.$entityType.'/?page=view&'.$entityType.'_id='.$entityId;
+
+		if (in_array($entityType, ['company', 'contact', 'lead', 'deal', 'quote']))
+		{
+			$url .= 'mobile/crm/'.$entityType.'/?page=view&'.$entityType.'_id='.$entityId;
+		}
+		else
+		{
+			$url = null;
+		}
 	}
 	else
 	{

@@ -251,6 +251,7 @@
 	cursor: pointer;
 	opacity: 0;
 	font-size: 1.6em;
+	-webkit-appearance: none;
 }
 
 .vdpTable {

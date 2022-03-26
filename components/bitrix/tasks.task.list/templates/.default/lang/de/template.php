@@ -43,6 +43,7 @@ $MESS["TASKS_JS_MARK"] = "Bewertung";
 $MESS["TASKS_JS_MARK_N"] = "Negative";
 $MESS["TASKS_JS_MARK_NONE"] = "Keine";
 $MESS["TASKS_JS_MARK_P"] = "Positive";
+$MESS["TASKS_LIST_ACTION_COPY_LINK_NOTIFICATION"] = "Aufgabenlink wurde in den Zwischenspeicher kopiert";
 $MESS["TASKS_LIST_ACTION_PING_NOTIFICATION"] = "Ping-Benachrichtigung gesendet";
 $MESS["TASKS_LIST_ADD_TAG_FOOTER_LABEL"] = "Tag hinzufügen:";
 $MESS["TASKS_LIST_CHOOSE_ACTION"] = "Aktion auswählen";

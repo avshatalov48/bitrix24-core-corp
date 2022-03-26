@@ -124,4 +124,18 @@ class OrderConversionScheme
 		}
 		return $result;
 	}
+
+	public static function getEntityTypeIds(int $schemeId): array
+	{
+		if ($schemeId === static::INVOICE)
+		{
+			return [\CCrmOwnerType::Invoice];
+		}
+		if ($schemeId === static::DEAL)
+		{
+			return [\CCrmOwnerType::Deal];
+		}
+
+		return [];
+	}
 }

@@ -1,0 +1,27 @@
+<?php
+$MESS["CRM_DOCUMENT_LIST_ACTION_CANCEL_TEXT"] = "Verarbeitung abbrechen";
+$MESS["CRM_DOCUMENT_LIST_ACTION_CANCEL_TITLE"] = "Verarbeitung abbrechen";
+$MESS["CRM_DOCUMENT_LIST_ACTION_CONDUCT_TEXT"] = "Verarbeiten";
+$MESS["CRM_DOCUMENT_LIST_ACTION_CONDUCT_TITLE"] = "Verarbeiten";
+$MESS["CRM_DOCUMENT_LIST_ACTION_DELETE_TEXT"] = "Löschen";
+$MESS["CRM_DOCUMENT_LIST_ACTION_DELETE_TITLE"] = "Löschen";
+$MESS["CRM_DOCUMENT_LIST_ACTION_OPEN_TEXT"] = "Öffnen";
+$MESS["CRM_DOCUMENT_LIST_ACTION_OPEN_TITLE"] = "Öffnen";
+$MESS["CRM_DOCUMENT_LIST_ADD_DOCUMENT_BUTTON"] = "Hinzufügen";
+$MESS["CRM_DOCUMENT_LIST_CANCEL_GROUP_ACTION"] = "Verarbeitung abbrechen";
+$MESS["CRM_DOCUMENT_LIST_CONDUCT_GROUP_ACTION"] = "Verarbeiten";
+$MESS["CRM_DOCUMENT_LIST_DOC_TYPE_W"] = "Vertrieb";
+$MESS["CRM_DOCUMENT_LIST_EMPTY_STORE_TITLE"] = "Ohne Namen";
+$MESS["CRM_DOCUMENT_LIST_NO_VIEW_RIGHTS_ERROR"] = "Sie haben nicht genügend Rechte, um die Elementliste anzuzeigen.";
+$MESS["CRM_DOCUMENT_LIST_SELECT_GROUP_ACTION"] = "Aktion auswählen";
+$MESS["CRM_DOCUMENT_LIST_STATUS_CANCELLED"] = "Abgebrochen";
+$MESS["CRM_DOCUMENT_LIST_STATUS_N"] = "Entwurf";
+$MESS["CRM_DOCUMENT_LIST_STATUS_Y"] = "Verarbeitet";
+$MESS["CRM_DOCUMENT_LIST_STUB_DESCRIPTION_SHIPMENT"] = "Haben Sie ein Produkt verkauft? Fügen Sie einen Eintrag zur Lagerverwaltung hinzu. Ordentliche Bestandserfassung wird Ihren Kollegen helfen, Bestellungen schneller zu verarbeiten.";
+$MESS["CRM_DOCUMENT_LIST_STUB_LINK_LOSSES"] = "Wie kann ich Verluste verfolgen?";
+$MESS["CRM_DOCUMENT_LIST_STUB_LINK_SHIPMENT"] = "Wie kann ich Verkäufe registrieren?";
+$MESS["CRM_DOCUMENT_LIST_STUB_NO_DATA_DESCRIPTION"] = "Versuchen Sie den Filter zurückzusetzen oder die Suchphrase zu ändern.";
+$MESS["CRM_DOCUMENT_LIST_STUB_NO_DATA_TITLE"] = "Ihre Suchanfrage brachte keine Ergebnisse.";
+$MESS["CRM_DOCUMENT_LIST_STUB_TITLE_SHIPMENT"] = "Fügen Sie Ihren ersten Verkauf hinzu";
+$MESS["CRM_DOCUMENT_LIST_TITLE"] = "Vertrieb ##DOCUMENT_ID#";
+$MESS["CRM_DOCUMENT_LIST_TITLE_DOCUMENT_DATE"] = "vom #DATE#";

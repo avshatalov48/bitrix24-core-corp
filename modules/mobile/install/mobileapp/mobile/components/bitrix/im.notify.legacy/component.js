@@ -7,10 +7,32 @@
 		constructor()
 		{
 			console.log('Notify legacy is loaded.');
-			this.initTopMenu();
+
+			let configMessages = BX.componentParameters.get("MESSAGES", {});
+			for (let messageId in configMessages)
+			{
+				if (configMessages.hasOwnProperty(messageId))
+				{
+					BX.message[messageId] = configMessages[messageId];
+				}
+			}
+
+			BX.addCustomEvent("onChangeTitleProgress", (progress) => this.updateTitle(progress));
+
+			this.updateTitle();
+			this.setTopMenu();
 		}
 
-		initTopMenu()
+		updateTitle(progress = false)
+		{
+			widget.setTitle({
+				text: BX.message('COMPONENT_TITLE'),
+				useProgress: progress,
+				largeMode: true,
+			});
+		}
+
+		setTopMenu()
 		{
 			let topMenuInstance = dialogs.createPopupMenu();
 			topMenuInstance.setData(
@@ -34,6 +56,7 @@
 			BX.rest.callMethod('im.notify.read.all')
 				.then(result => {
 					console.log('im.notify.read.all result:', result);
+					BX.postWebEvent("onBeforeNotificationsReload", {});
 				})
 				.catch(error => {
 					console.log('im.notify.read.all error:', error);

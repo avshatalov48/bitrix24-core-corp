@@ -79,4 +79,5 @@ $arResult['JS_DATA'] = array(
 	),
 	'taskLimitExceeded' => $arResult['TASK_LIMIT_EXCEEDED'],
 	'networkEnabled' => \Bitrix\Tasks\Integration\Network\MemberSelector::isNetworkEnabled(),
+	'context' => $arParams['CONTEXT'],
 );

@@ -1,11 +1,11 @@
 <?php
 
 use Bitrix\Main;
+use Bitrix\Main\Engine\ActionFilter\Csrf;
 use Bitrix\Main\Localization;
 use Bitrix\Crm\Order;
 use Bitrix\Sale;
 use Bitrix\Catalog;
-use Bitrix\Catalog\v2\Helpers;
 use Bitrix\Iblock;
 use Bitrix\Crm\CompanyTable;
 use Bitrix\Main\Loader;
@@ -14,10 +14,12 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 Main\Loader::includeModule('sale');
 
-class SalesCenterOrderDetails extends CBitrixComponent
+class SalesCenterOrderDetails extends CBitrixComponent implements Main\Engine\Contract\Controllerable, Main\Errorable
 {
 	/** @var Order\Order $order */
 	protected $order;
+	/**  @var Main\ErrorCollection */
+	protected $errorCollection;
 
 	public function onPrepareComponentParams($params)
 	{
@@ -137,6 +139,7 @@ class SalesCenterOrderDetails extends CBitrixComponent
 		$this->obtainShipment();
 		$this->obtainPrice();
 		$this->obtainPayment();
+		$this->obtainDocument();
 	}
 
 	protected function obtainPayment()
@@ -449,5 +452,203 @@ class SalesCenterOrderDetails extends CBitrixComponent
 				Localization\Loc::getMessage("SPOD_SALE_MODULE_NOT_INSTALL")
 			);
 		}
+	}
+
+	protected function obtainDocument(): void
+	{
+		if (!Loader::includeModule('crm'))
+		{
+			return;
+		}
+
+		$documentGeneratorManager = \Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance();
+		if (!$documentGeneratorManager->isEnabled())
+		{
+			return;
+		}
+
+		$paymentId = (int)($this->arResult['PAYMENT']['ID'] ?? 0);
+		if (!$paymentId)
+		{
+			return;
+		}
+
+		$documentId = $documentGeneratorManager->getPaymentBoundDocumentId($paymentId);
+		if (!$documentId)
+		{
+			return;
+		}
+
+		$document = \Bitrix\DocumentGenerator\Document::loadById($documentId);
+		if (!$document)
+		{
+			return;
+		}
+
+		$downloadUrl = Main\Engine\UrlManager::getInstance()->createByBitrixComponent(
+			$this,
+			'downloadDocument',
+			[
+				'orderId' => $this->order->getId(),
+				'paymentId' => $paymentId,
+				'hash' => $this->order->getHash(),
+			],
+			true
+		);
+
+		$this->arResult['DOCUMENT'] = [
+			'docx' => [
+				'id' => $document->FILE_ID,
+				'fileName' => $document->getFileName(),
+				'url' => $downloadUrl->getLocator(),
+			],
+			'pdf' => [
+				'id' => $document->PDF_ID,
+				'fileName' => $document->getFileName('pdf'),
+				'url' => $downloadUrl->addParams(['extension' => 'pdf'])->getLocator(),
+			],
+			'title' => $document->getTitle(),
+			'showUrl' => Main\Engine\UrlManager::getInstance()->createByBitrixComponent(
+				$this,
+				'showPdf',
+				[
+					'orderId' => $this->order->getId(),
+					'paymentId' => $paymentId,
+					'hash' => $this->order->getHash(),
+				],
+				true
+			),
+		];
+	}
+
+	public function configureActions(): array
+	{
+		$configureActions = [];
+
+		$documentActionConfiguration = [
+			'-prefilters' => [
+				Main\Engine\ActionFilter\Authentication::class,
+				Csrf::class,
+			],
+		];
+
+		$configureActions['downloadDocument'] = $documentActionConfiguration;
+		$configureActions['showPdf'] = $documentActionConfiguration;
+
+		return $configureActions;
+	}
+
+	protected function initBeforeDocumentAction(int $orderId, int $paymentId, string $hash): void
+	{
+		$this->errorCollection = new Main\ErrorCollection();
+
+		$this->checkRequiredModules();
+		$this->loadOrder(urldecode($orderId));
+		$this->checkOrder();
+		if ($this->order->getHash() !== $hash)
+		{
+			throw new Main\SystemException(
+				Localization\Loc::getMessage("SPOD_ACCESS_DENIED")
+			);
+		}
+
+		$payment = $this->order->getPaymentCollection()->getItemById($paymentId);
+		if (!$payment)
+		{
+			throw new Main\SystemException(
+				Localization\Loc::getMessage("SPOD_NO_ORDER")
+			);
+		}
+
+		$this->arParams['PAYMENT_ID'] = $paymentId;
+
+		$this->obtainPayment();
+		$this->obtainDocument();
+
+		if (empty($this->arResult['DOCUMENT']))
+		{
+			throw new Main\SystemException('Document not found');
+		}
+	}
+
+	public function downloadDocumentAction(int $orderId, int $paymentId, string $hash, string $extension = 'docx'): ?Main\Engine\Response\BFile
+	{
+		try
+		{
+			$this->initBeforeDocumentAction($orderId, $paymentId, $hash);
+
+			$fileId = $this->arResult['DOCUMENT'][$extension]['id'] ?? 0;
+			$bFileId = \Bitrix\DocumentGenerator\Model\FileTable::getBFileId((int)$fileId);
+			$fileName = $this->arResult['DOCUMENT'][$extension]['fileName'];
+
+			if ($bFileId > 0)
+			{
+				return Main\Engine\Response\BFile::createByFileId($bFileId, $fileName);
+			}
+
+			throw new Main\SystemException('Document file not found');
+		}
+		catch(Main\SystemException $e)
+		{
+			$this->errorCollection[] = new Bitrix\Main\Error($e->getMessage(), $e->getCode());
+		}
+
+		return null;
+	}
+
+	public function showPdfAction(int $orderId, int $paymentId, string $hash): ?Main\Response
+	{
+		try
+		{
+			$this->initBeforeDocumentAction($orderId, $paymentId, $hash);
+
+			$path = null;
+			$fileId = $this->arResult['DOCUMENT']['pdf']['id'] ?? null;
+			if ($fileId > 0)
+			{
+				$path = $this->arResult['DOCUMENT']['pdf']['url'];
+			}
+
+			if ($path)
+			{
+				$response = new Main\HttpResponse();
+				global $APPLICATION;
+				ob_start();
+				$APPLICATION->IncludeComponent(
+					'bitrix:pdf.viewer',
+					'',
+					[
+						'PATH' => $path,
+						'IFRAME' => 'Y',
+						'PRINT' => 'N',
+						'TITLE' => $this->arResult['DOCUMENT']['title'],
+						'WIDTH' => 900,
+						'HEIGHT' => 700,
+					]
+				);
+				$response->setContent(ob_get_contents());
+				ob_end_clean();
+
+				return $response;
+			}
+
+			throw new Main\SystemException('Document file not found');
+		}
+		catch(Main\SystemException $e)
+		{
+			$this->errorCollection[] = new Main\Error($e->getMessage(), $e->getCode());
+		}
+
+		return null;
+	}
+
+	public function getErrors()
+	{
+		return $this->errorCollection ? $this->errorCollection->getValues() : [];
+	}
+
+	public function getErrorByCode($code)
+	{
+		return $this->errorCollection ? $this->errorCollection->getErrorByCode($code) : null;
 	}
 }

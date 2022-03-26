@@ -250,7 +250,10 @@ class CCrmContactWS extends IWebService
 
 		$listName = ToUpper(self::makeGUID($listName_original));
 
-		$arFilter = array('EXPORT' => 'Y');
+		$arFilter = [
+			'EXPORT' => 'Y',
+			'@CATEGORY_ID' => 0,
+		];
 
 		$page = 1;
 		$bUpdateFields = false;

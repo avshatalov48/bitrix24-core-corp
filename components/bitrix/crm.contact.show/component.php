@@ -12,6 +12,7 @@ CModule::IncludeModule('fileman');
 
 use Bitrix\Crm\ContactAddress;
 use Bitrix\Crm\Format\AddressFormatter;
+use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Settings\ContactSettings;
 
 /**
@@ -938,6 +939,8 @@ $arResult['FIELDS']['tab_tree'] = array(array(
 	'type' => 'custom',
 	'value' => '<div id="'.htmlspecialcharsbx($arResult['TREE_CONTAINER_ID']).'"></div>'
 ));
+
+$arResult['TAB_EVENT_TARIFF_LOCK'] = (!RestrictionManager::isHistoryViewPermitted()) ? 'Y' : 'N';
 
 $arResult['FIELDS']['tab_event'][] = array(
 	'id' => 'section_event_contact',

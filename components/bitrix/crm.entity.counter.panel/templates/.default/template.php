@@ -73,10 +73,11 @@ else
 		</div>
 	</div>
 
-	<script type="text/javascript">
+	<script>
 		BX.ready(
 			function()
 			{
+				BX.message(<?= CUtil::PhpToJSObject($arResult['ENTITY_PLURALS']) ?>);
 				BX.CrmEntityCounterPanel.create(
 					"<?=CUtil::JSEscape($guid)?>",
 					{
@@ -85,7 +86,6 @@ else
 						codes: <?=CUtil::PhpToJSObject($arResult['CODES'])?>,
 						extras: <?=CUtil::PhpToJSObject($arResult['EXTRAS'])?>,
 						entityTypeId: "<?=CUtil::JSEscape($arResult['ENTITY_TYPE_ID'])?>",
-						entityNumberDeclensions: <?=CUtil::PhpToJSObject($arResult['ENTITY_NUMBER_DECLENSIONS'])?>,
 						containerId: "<?=CUtil::JSEscape($containerID)?>",
 						valueContainerId: "<?=CUtil::JSEscape($valueContainerID)?>",
 						stubContainerId: "<?=CUtil::JSEscape($stubContainerID)?>",

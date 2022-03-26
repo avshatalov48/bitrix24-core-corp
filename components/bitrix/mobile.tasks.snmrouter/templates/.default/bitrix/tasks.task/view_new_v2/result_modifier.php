@@ -128,15 +128,26 @@ if (array_key_exists('GROUP', $arResult['DATA']) && is_array($arResult['DATA']['
 	$groups = $arResult['DATA']['GROUP'];
 	foreach ($groups as $id => $data)
 	{
-		$arFileTmp = CFile::ResizeImageGet(
-			$data['IMAGE_ID'],
-			[
-				'width'  => $arParams['AVATAR_SIZE'],
-				'height' => $arParams['AVATAR_SIZE'],
-			],
-			BX_RESIZE_IMAGE_EXACT
-		);
-		$groups[$id]['AVATAR'] = $arFileTmp['src'];
+		$avatar = null;
+
+		if ($data['IMAGE_ID'])
+		{
+			$arFileTmp = CFile::ResizeImageGet(
+				$data['IMAGE_ID'],
+				[
+					'width' => $arParams['AVATAR_SIZE'],
+					'height' => $arParams['AVATAR_SIZE'],
+				],
+				BX_RESIZE_IMAGE_EXACT
+			);
+			$avatar = $arFileTmp['src'];
+		}
+		else if ($data['AVATAR_TYPE'])
+		{
+			$avatarTypes = \Bitrix\Socialnetwork\Helper\Workgroup::getAvatarTypes();
+			$avatar = $avatarTypes[$data['AVATAR_TYPE']]['mobileUrl'];
+		}
+		$groups[$id]['AVATAR'] = $avatar;
 	}
 	$arResult['DATA']['GROUP'] = $groups;
 }
@@ -452,3 +463,5 @@ elseif (!empty($templateData['LOG_ID']))
 
 $arResult['TEMPLATE_DATA'] = $templateData;
 $arResult['DATA']['TASK'] = $taskData;
+
+$arResult['CAN']['TASK']['ACTION']['EDIT.RESPONSIBLE'] = \Bitrix\Tasks\Access\TaskAccessController::can((int)$USER->getID(), \Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_CHANGE_RESPONSIBLE, (int)$taskData['ID']);

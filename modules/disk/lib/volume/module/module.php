@@ -39,7 +39,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 	 * @param array $collectData List types data to collect: ATTACHED_OBJECT, SHARING_OBJECT, EXTERNAL_LINK, UNNECESSARY_VERSION.
 	 * @return $this
 	 */
-	public function measure($collectData = array(self::DISK_FILE, self::PREVIEW_FILE))
+	public function measure($collectData = [self::DISK_FILE])
 	{
 		if (!$this->isMeasureAvailable())
 		{
@@ -303,12 +303,10 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 							SUM(ver.SIZE) AS SIZE,
 							COUNT(ver.ID) AS CNT,
 							storage.MODULE_ID as MODULE_ID
-							
 						FROM 
 							b_disk_version ver
 							INNER JOIN b_disk_object files ON ver.OBJECT_ID = files.ID and ver.FILE_ID != files.FILE_ID
 							INNER JOIN b_disk_storage storage ON files.STORAGE_ID = storage.ID
-  
 							/* head */
 							INNER JOIN (
 								SELECT  object_id, max(id) as id
@@ -316,25 +314,21 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 								GROUP BY object_id
 								ORDER BY NULL
 							) head ON head.OBJECT_ID = files.ID
-	
 							LEFT JOIN b_disk_attached_object  attached
 								ON attached.OBJECT_ID  = ver.OBJECT_ID
 								AND attached.VERSION_ID = ver.ID
 								AND attached.VERSION_ID != head.ID
-	
 							LEFT JOIN b_disk_external_link link
 								ON link.OBJECT_ID  = ver.OBJECT_ID
 								AND link.VERSION_ID = ver.ID
 								AND link.VERSION_ID != head.ID
 								AND ifnull(link.TYPE,-1) != ". \Bitrix\Disk\Internals\ExternalLinkTable::TYPE_AUTO. "
-
 						WHERE 
 							files.TYPE = ". ObjectTable::TYPE_FILE. "
 							AND files.ID = files.REAL_OBJECT_ID
 							AND attached.VERSION_ID is null /* no attach */
 							AND link.VERSION_ID is null /*no link */
 							{$subWhereSql}
-							
 						GROUP BY 
 							files.ID,
 							storage.MODULE_ID
@@ -359,6 +353,10 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 				'ENTITY_TYPE' => 'storage.ENTITY_TYPE',
 			)
 		);
+		if ($subWhereSql != '')
+		{
+			$subWhereSql = " AND {$subWhereSql} ";
+		}
 		$selectSql = '';
 		$fromSql = '';
 		$whereSql = '';
@@ -425,8 +423,8 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 			$columnList = Volume\QueryHelper::prepareUpdateOnSelect($columns, $this->getSelect(), 'destinationTbl', 'sourceQuery');
 			$connection->queryExecute("
 				UPDATE 
-				    {$tableName} destinationTbl, 
-				    ({$temporallyDataSource}) sourceQuery 
+					{$tableName} destinationTbl, 
+					({$temporallyDataSource}) sourceQuery 
 				SET {$columnList} 
 				WHERE destinationTbl.ID = {$filterId}
 			");
@@ -436,7 +434,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 			$connection->queryExecute("INSERT INTO {$tableName} ({$columnList}) {$temporallyDataSource}");
 		}
 
-		VolumeTable::dropTemporally();
+		VolumeTable::clearTemporally();
 
 		return $this;
 	}
@@ -548,7 +546,7 @@ abstract class Module extends Volume\Base implements Volume\IVolumeIndicatorModu
 		static $title = array();
 		if (empty($title[$fragment->getModuleId()]))
 		{
-			if ($info = \CModule::CreateModuleObject($fragment->getModuleId()))
+			if ($info = \CModule::createModuleObject($fragment->getModuleId()))
 			{
 				$title[$fragment->getModuleId()] = $info->MODULE_NAME;
 			}

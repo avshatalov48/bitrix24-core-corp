@@ -50,6 +50,7 @@ class CBPCrmGetDataEntityActivity extends CBPActivity
 		}
 
 		$this->SetProperties($listFields);
+		// $this->setPropertiesTypes($this->EntityFields);
 
 		$this->fieldsMap = array_keys($listFields);
 
@@ -380,7 +381,7 @@ class CBPCrmGetDataEntityActivity extends CBPActivity
 			$errors[] = [
 				'code'      => 'NotExist',
 				'parameter' => 'DocumentType',
-				'message'   => GetMessage('CRM_ACTIVITY_ERROR_DT')
+				'message'   => GetMessage('CRM_ACTIVITY_ERROR_DT_1')
 			];
 		}
 
@@ -482,6 +483,8 @@ class CBPCrmGetDataEntityActivity extends CBPActivity
 			}
 			$properties['EntityFields'][$fieldId]['Name'] = $entityFields[$fieldId]['Name'];
 			$properties['EntityFields'][$fieldId]['Type'] = $entityFields[$fieldId]['Type'];
+			$properties['EntityFields'][$fieldId]['Settings'] = $entityFields[$fieldId]['Settings'];
+			$properties['EntityFields'][$fieldId]['Options'] = $entityFields[$fieldId]['Options'];
 		}
 
 		if (!empty($errors))
@@ -756,9 +759,12 @@ class CBPCrmGetDataEntityActivity extends CBPActivity
 							{
 								$ufField['VALUE'] = array_search($realListValue[$ufField['VALUE']], $fieldTypeData['Options']);
 							}
-							break;
 						}
+						break;
 					}
+				case 'boolean':
+					$ufField['VALUE'] = CBPHelper::getBool($ufField['VALUE']) ? 'Y' : 'N';
+					break;
 			}
 
 			if ($printableVersion)

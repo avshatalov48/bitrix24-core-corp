@@ -94,7 +94,6 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 				var stepContainerText = stepContainer.querySelector(".crm-entity-section-status-step-item-text");
 				if (stepContainerText.scrollWidth > (stepContainerText.clientWidth))
 				{
-					console.log(stepId)
 					BX.addClass(stepContainer, "crm-entity-section-status-step-hover");
 					stepContainer.style.maxWidth = stepContainerText.scrollWidth + 23 + "px"
 				}

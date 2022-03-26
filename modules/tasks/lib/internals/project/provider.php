@@ -12,6 +12,7 @@ use Bitrix\Socialnetwork\WorkgroupTable;
 use Bitrix\Socialnetwork\WorkgroupTagTable;
 use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Internals\Counter\Template\ProjectCounter;
+use Bitrix\Tasks\Internals\Counter\Template\ScrumCounter;
 use Bitrix\Tasks\Internals\Effective;
 use Bitrix\Tasks\Internals\Project\UserOption\UserOptionController;
 use Bitrix\Tasks\Internals\Project\UserOption\UserOptionTypeDictionary;
@@ -23,10 +24,12 @@ use Bitrix\Tasks\Util\User;
 class Provider
 {
 	private $userId;
+	private $isScrum;
 
-	public function __construct(int $userId = 0)
+	public function __construct(int $userId = 0, bool $isScrum = false)
 	{
 		$this->userId = ($userId ?: User::getId());
+		$this->isScrum = $isScrum;
 	}
 
 	public function prepareQuerySelect(array $select): array
@@ -42,6 +45,7 @@ class Provider
 			'NUMBER_OF_MEMBERS',
 			'OPENED',
 			'CLOSED',
+			'VISIBLE',
 			'USER_GROUP_ID',
 			'ACTIVITY_DATE',
 			'IS_PINNED',
@@ -96,10 +100,19 @@ class Provider
 			->where((new Filter())->getProjectVisibilityCondition())
 		;
 
+		if ($this->isScrum)
+		{
+			$query->whereNotNull('SCRUM_MASTER_ID');
+		}
+		else
+		{
+			$query->whereNull('SCRUM_MASTER_ID');
+		}
+
 		return $query;
 	}
 
-	public function fillAvatars(array $projects): array
+	public function fillAvatars(array $projects, $mode = 'web'): array
 	{
 		foreach (array_keys($projects) as $id)
 		{
@@ -126,6 +139,7 @@ class Provider
 		{
 			if (
 				$project['IMAGE_ID'] === null
+				&& $mode === 'mobile'
 				&& array_key_exists($project['AVATAR_TYPE'], $avatarTypes)
 			)
 			{
@@ -179,7 +193,7 @@ class Provider
 
 	public function fillCounters(array $projects): array
 	{
-		$projectCounter = new ProjectCounter($this->userId);
+		$projectCounter = $this->isScrum ? new ScrumCounter($this->userId) : new ProjectCounter($this->userId);
 
 		foreach (array_keys($projects) as $projectId)
 		{

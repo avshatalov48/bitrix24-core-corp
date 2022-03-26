@@ -13,3 +13,5 @@ $MESS["IMBOT_TAB_SETTINGS"] = "Settings";
 $MESS["IMBOT_TAB_TITLE_SETTINGS_2"] = "Connection parameters";
 $MESS["IMBOT_WAIT_RESPONSE"] = "Allow longer wait time";
 $MESS["IMBOT_WAIT_RESPONSE_DESC"] = "Enable this option if you don't get response from chat bot server due to environmental restrictions.";
+$MESS["IMBOT_ENABLE_GIPHY_BOT"] = "Enable Giphy";
+$MESS["IMBOT_ENABLE_SUPPORT_BOT"] = "Enable Bitrix24 Support channel";

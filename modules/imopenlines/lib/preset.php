@@ -94,19 +94,21 @@ class Preset
 		{
 			return false;
 		}
+		$configManager = new \Bitrix\ImOpenLines\Config();
+		$lineCreated = false;
 		$lineId = static::findActiveLineId();
 		if (!$lineId)
 		{
-			$configManager = new \Bitrix\ImOpenLines\Config();
 			$lineId = $configManager->create();
 			if (!$lineId)
 			{
 				return false;
 			}
+			$lineCreated = true;
 		}
 
 		$result = ImConnector\Connector::add($lineId, 'livechat');
-		if (!$result->isSuccess())
+		if (!$result->isSuccess() && $lineCreated)
 		{
 			$configManager->delete($lineId);
 			return false;

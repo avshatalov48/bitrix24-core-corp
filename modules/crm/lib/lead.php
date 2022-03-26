@@ -10,11 +10,14 @@ namespace Bitrix\Crm;
 use Bitrix\Crm\History\Entity\LeadStatusHistoryTable;
 use Bitrix\Crm\History\Entity\LeadStatusHistoryWithSupposedTable;
 use Bitrix\Crm\Observer\Entity\ObserverTable;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
+use Bitrix\Main\Entity\IntegerField;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Event;
 use Bitrix\Main\ORM\EventResult;
+use Bitrix\Main\ORM\Fields\DatetimeField;
 use Bitrix\Main\ORM\Fields\Relations\CascadePolicy;
 use Bitrix\Main\ORM\Fields\Relations\OneToMany;
 
@@ -55,7 +58,9 @@ class LeadTable extends Main\ORM\Data\DataManager
 
 	public static function getMap()
 	{
-		global $DB, $DBType;
+		Container::getInstance()->getLocalization()->loadMessages();
+
+		global $DB;
 
 		$map = array(
 			'ID' => array(
@@ -245,15 +250,6 @@ class LeadTable extends Main\ORM\Data\DataManager
 			'PHONE_MOBILE' => array(
 				'data_type' => 'string',
 				'expression' => array(
-					(ToLower($DBType) === 'oracle') ?
-					'(SELECT FM.VALUE '.
-						'FROM (SELECT ID, ENTITY_ID, ELEMENT_ID, TYPE_ID, VALUE_TYPE, VALUE '.
-						'FROM b_crm_field_multi ORDER BY ID) FM '.
-						'WHERE FM.ENTITY_ID = \'LEAD\' '.
-						'AND FM.ELEMENT_ID = %s '.
-						'AND FM.TYPE_ID = \'PHONE\' '.
-						'AND FM.VALUE_TYPE = \'MOBILE\' '.
-						'AND ROWNUM <= 1)' :
 					'('.$DB->TopSql(
 						'SELECT FM.VALUE '.
 						'FROM b_crm_field_multi FM '.
@@ -269,15 +265,6 @@ class LeadTable extends Main\ORM\Data\DataManager
 			'PHONE_WORK' => array(
 				'data_type' => 'string',
 				'expression' => array(
-					(ToLower($DBType) === 'oracle') ?
-					'(SELECT FM.VALUE '.
-					'FROM (SELECT ID, ENTITY_ID, ELEMENT_ID, TYPE_ID, VALUE_TYPE, VALUE '.
-					'FROM b_crm_field_multi ORDER BY ID) FM '.
-					'WHERE FM.ENTITY_ID = \'LEAD\' '.
-					'AND FM.ELEMENT_ID = %s '.
-					'AND FM.TYPE_ID = \'PHONE\' '.
-					'AND FM.VALUE_TYPE = \'WORK\' '.
-					'AND ROWNUM <= 1)' :
 					'('.$DB->TopSql(
 						'SELECT FM.VALUE '.
 						'FROM b_crm_field_multi FM '.
@@ -293,15 +280,6 @@ class LeadTable extends Main\ORM\Data\DataManager
 			'PHONE_MAILING' => array(
 				'data_type' => 'string',
 				'expression' => array(
-					(ToLower($DBType) === 'oracle') ?
-					'(SELECT FM.VALUE '.
-					'FROM (SELECT ID, ENTITY_ID, ELEMENT_ID, TYPE_ID, VALUE_TYPE, VALUE '.
-					'FROM b_crm_field_multi ORDER BY ID) FM '.
-					'WHERE FM.ENTITY_ID = \'LEAD\' '.
-					'AND FM.ELEMENT_ID = %s '.
-					'AND FM.TYPE_ID = \'PHONE\' '.
-					'AND FM.VALUE_TYPE = \'MAILING\' '.
-					'AND ROWNUM <= 1)' :
 					'('.$DB->TopSql(
 						'SELECT FM.VALUE '.
 						'FROM b_crm_field_multi FM '.
@@ -317,15 +295,6 @@ class LeadTable extends Main\ORM\Data\DataManager
 			'EMAIL_HOME' => array(
 				'data_type' => 'string',
 				'expression' => array(
-					(ToLower($DBType) === 'oracle') ?
-					'(SELECT FM.VALUE '.
-					'FROM (SELECT ID, ENTITY_ID, ELEMENT_ID, TYPE_ID, VALUE_TYPE, VALUE '.
-					'FROM b_crm_field_multi ORDER BY ID) FM '.
-					'WHERE FM.ENTITY_ID = \'LEAD\' '.
-					'AND FM.ELEMENT_ID = %s '.
-					'AND FM.TYPE_ID = \'EMAIL\' '.
-					'AND FM.VALUE_TYPE = \'HOME\' '.
-					'AND ROWNUM <= 1)' :
 					'('.$DB->TopSql(
 						'SELECT FM.VALUE '.
 						'FROM b_crm_field_multi FM '.
@@ -341,15 +310,6 @@ class LeadTable extends Main\ORM\Data\DataManager
 			'EMAIL_WORK' => array(
 				'data_type' => 'string',
 				'expression' => array(
-					(ToLower($DBType) === 'oracle') ?
-					'(SELECT FM.VALUE '.
-					'FROM (SELECT ID, ENTITY_ID, ELEMENT_ID, TYPE_ID, VALUE_TYPE, VALUE '.
-					'FROM b_crm_field_multi ORDER BY ID) FM '.
-					'WHERE FM.ENTITY_ID = \'LEAD\' '.
-					'AND FM.ELEMENT_ID = %s '.
-					'AND FM.TYPE_ID = \'EMAIL\' '.
-					'AND FM.VALUE_TYPE = \'WORK\' '.
-					'AND ROWNUM <= 1)' :
 					'('.$DB->TopSql(
 						'SELECT FM.VALUE '.
 						'FROM b_crm_field_multi FM '.
@@ -365,15 +325,6 @@ class LeadTable extends Main\ORM\Data\DataManager
 			'EMAIL_MAILING' => array(
 				'data_type' => 'string',
 				'expression' => array(
-					(ToLower($DBType) === 'oracle') ?
-					'(SELECT FM.VALUE '.
-					'FROM (SELECT ID, ENTITY_ID, ELEMENT_ID, TYPE_ID, VALUE_TYPE, VALUE '.
-					'FROM b_crm_field_multi ORDER BY ID) FM '.
-					'WHERE FM.ENTITY_ID = \'LEAD\' '.
-					'AND FM.ELEMENT_ID = %s '.
-					'AND FM.TYPE_ID = \'EMAIL\' '.
-					'AND FM.VALUE_TYPE = \'MAILING\' '.
-					'AND ROWNUM <= 1)' :
 					'('.$DB->TopSql(
 						'SELECT FM.VALUE '.
 						'FROM b_crm_field_multi FM '.
@@ -389,15 +340,6 @@ class LeadTable extends Main\ORM\Data\DataManager
 			'SKYPE' => array(
 				'data_type' => 'string',
 				'expression' => array(
-					(ToLower($DBType) === 'oracle') ?
-					'(SELECT FM.VALUE '.
-					'FROM (SELECT ID, ENTITY_ID, ELEMENT_ID, TYPE_ID, VALUE_TYPE, VALUE '.
-					'FROM b_crm_field_multi ORDER BY ID) FM '.
-					'WHERE FM.ENTITY_ID = \'LEAD\' '.
-					'AND FM.ELEMENT_ID = %s '.
-					'AND FM.TYPE_ID = \'IM\' '.
-					'AND FM.VALUE_TYPE = \'SKYPE\' '.
-					'AND ROWNUM <= 1)' :
 					'('.$DB->TopSql(
 						'SELECT FM.VALUE '.
 						'FROM b_crm_field_multi FM '.
@@ -413,15 +355,6 @@ class LeadTable extends Main\ORM\Data\DataManager
 			'ICQ' => array(
 				'data_type' => 'string',
 				'expression' => array(
-					(ToLower($DBType) === 'oracle') ?
-					'(SELECT FM.VALUE '.
-					'FROM (SELECT ID, ENTITY_ID, ELEMENT_ID, TYPE_ID, VALUE_TYPE, VALUE '.
-					'FROM b_crm_field_multi ORDER BY ID) FM '.
-					'WHERE FM.ENTITY_ID = \'LEAD\' '.
-					'AND FM.ELEMENT_ID = %s '.
-					'AND FM.TYPE_ID = \'IM\' '.
-					'AND FM.VALUE_TYPE = \'ICQ\' '.
-					'AND ROWNUM <= 1)' :
 					'('.$DB->TopSql(
 						'SELECT FM.VALUE '.
 						'FROM b_crm_field_multi FM '.
@@ -481,6 +414,19 @@ class LeadTable extends Main\ORM\Data\DataManager
 				'data_type' => 'string'
 			),
 			new Main\Entity\IntegerField('FACE_ID'),
+
+			(new IntegerField('MOVED_BY_ID'))
+				->configureDefaultValue(static function () {
+					return Container::getInstance()->getContext()->getUserId();
+				})
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_MOVED_BY'))
+			,
+
+			(new DatetimeField('MOVED_TIME'))
+				->configureNullable()
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_MOVED_TIME'))
+			,
+
 			new Main\Entity\ReferenceField('ADDRESS_ENTITY', AddressTable::getEntity(), array(
 				'=this.ID' => 'ref.ENTITY_ID',
 				'=ref.TYPE_ID' => new Main\DB\SqlExpression('?', EntityAddressType::Primary),
@@ -512,7 +458,7 @@ class LeadTable extends Main\ORM\Data\DataManager
 			(new OneToMany('PRODUCT_ROWS', ProductRowTable::class, 'LEAD_OWNER'))
 				// products will be deleted in onAfterDelete, if it's needed
 				->configureCascadeDeletePolicy(CascadePolicy::NO_ACTION),
-			(new OneToMany('OBSERVERS', ObserverTable::class, 'LEAD'))
+			(new OneToMany('OBSERVER_IDS', ObserverTable::class, 'LEAD'))
 				->configureCascadeDeletePolicy(CascadePolicy::FOLLOW),
 		);
 

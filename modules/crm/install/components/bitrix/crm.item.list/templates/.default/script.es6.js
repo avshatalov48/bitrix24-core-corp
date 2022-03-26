@@ -1,7 +1,8 @@
-import { ajax as Ajax, Loc, Reflection, Text, Type } from "main.core";
+import { ajax as Ajax, Loc, Reflection, Text, Type, Event, Uri, Runtime } from "main.core";
 import { BaseEvent, EventEmitter } from 'main.core.events';
 import { MessageBox, MessageBoxButtons } from "ui.dialogs.messagebox";
 import { Router } from "crm.router";
+import 'ui.notification';
 
 const namespace = Reflection.namespace('BX.Crm');
 
@@ -14,9 +15,11 @@ class ItemListComponent
 	errorTextContainer: Element;
 	entityTypeName: string;
 	reloadGridTimeoutId: number;
+	exportPopups: Object;
 
 	constructor(params): void
 	{
+		this.exportPopups = {};
 		if(Type.isPlainObject(params))
 		{
 			this.entityTypeId = Text.toInteger(params.entityTypeId);
@@ -37,7 +40,17 @@ class ItemListComponent
 						{
 							return;
 						}
-						requestParams.url = params.backendUrl;
+
+						const currentUrl = new Uri(requestParams.url);
+						const backendUrl = new Uri(params.backendUrl);
+
+						if (currentUrl.getPath() !== backendUrl.getPath())
+						{
+							currentUrl.setPath(backendUrl.getPath());
+							currentUrl.setQueryParams({...currentUrl.getQueryParams(), ...backendUrl.getQueryParams()});
+						}
+
+						requestParams.url = currentUrl.toString();
 					});
 				}
 			}
@@ -58,6 +71,13 @@ class ItemListComponent
 	bindEvents(): void
 	{
 		EventEmitter.subscribe('BX.Crm.ItemListComponent:onClickDelete', this.handleItemDelete.bind(this));
+
+		EventEmitter.subscribe('BX.Crm.ItemListComponent:onStartExportCsv', (event) => {
+			this.handleStartExport(event, 'csv');
+		});
+		EventEmitter.subscribe('BX.Crm.ItemListComponent:onStartExportExcel', (event) => {
+			this.handleStartExport(event, 'excel');
+		});
 
 		const toolbarComponent = Reflection.getClass('BX.Crm.ToolbarComponent')
 			? Reflection.getClass('BX.Crm.ToolbarComponent').Instance
@@ -108,6 +128,22 @@ class ItemListComponent
 
 			this.reloadGridAfterTimeout();
 		});
+
+		const addItemButton = document.querySelector('[data-role="add-new-item-button-' + this.gridId + '"]');
+		if (addItemButton)
+		{
+			const detailUrl = addItemButton.href;
+			addItemButton.href = "javascript: void(0);";
+			Event.bind(addItemButton, 'click', (event) => {
+				event.preventDefault();
+				event.stopPropagation();
+
+				EventEmitter.emit("BX.Crm.ItemListComponent:onAddNewItemButtonClick", {
+					detailUrl,
+					entityTypeId: this.entityTypeId,
+				});
+			});
+		}
 	}
 
 	reloadGridAfterTimeout()
@@ -193,6 +229,10 @@ class ItemListComponent
 								id,
 							}
 				}).then(() => {
+					BX.UI.Notification.Center.notify({
+						content: Loc.getMessage('CRM_TYPE_ITEM_DELETE_NOTIFICATION')
+					});
+
 					this.reloadGridAfterTimeout();
 				}).catch(this.showErrorsFromResponse.bind(this));
 
@@ -200,7 +240,48 @@ class ItemListComponent
 			}
 		});
 	}
+
+	handleStartExport(event: BaseEvent, exportType: string): void
+	{
+		this.getExportPopup(exportType).then((process) => process.showDialog());
+	}
 	//endregion
+
+	getExportPopup(exportType: string): Promise
+	{
+		if (this.exportPopups[exportType])
+		{
+			return Promise.resolve(this.exportPopups[exportType]);
+		}
+
+		return Runtime.loadExtension('ui.stepprocessing').then((exports) => {
+			this.exportPopups[exportType] = exports.ProcessManager.create({
+				id: 'crm.item.list.export.' + exportType,
+				controller: 'bitrix:crm.api.itemExport',
+				queue: [{action: 'dispatcher'}],
+				params: {
+					SITE_ID: Loc.getMessage('SITE_ID'),
+					entityTypeId: this.entityTypeId,
+					categoryId: this.categoryId,
+					EXPORT_TYPE: exportType,
+					COMPONENT_NAME: 'bitrix:crm.item.list',
+				},
+				messages: {
+					DialogTitle: Loc.getMessage('CRM_ITEM_EXPORT_' + exportType.toUpperCase() + '_TITLE'),
+					DialogSummary: Loc.getMessage('CRM_ITEM_EXPORT_' + exportType.toUpperCase() + '_SUMMARY'),
+				},
+				dialogMaxWidth: '650',
+			});
+			this.exportPopups[exportType].setHandler(BX.UI.StepProcessing.ProcessCallback.StepCompleted, ((formatInner) => {
+				return () => {
+					delete this.exportPopups[formatInner];
+				}
+			})(exportType));
+
+			return this.exportPopups[exportType];
+		});
+
+	}
 }
 
 namespace.ItemListComponent = ItemListComponent;

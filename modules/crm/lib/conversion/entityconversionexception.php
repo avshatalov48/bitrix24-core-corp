@@ -1,32 +1,42 @@
 <?php
 namespace Bitrix\Crm\Conversion;
 use Bitrix\Main;
+
 class EntityConversionException extends Main\SystemException
 {
-	const TARG_UNDEFINED = 0;
-	const TARG_SRC = 1;
-	const TARG_DST = 2;
+	public const TARG_UNDEFINED = 0;
+	public const TARG_SRC = 1;
+	public const TARG_DST = 2;
 
-	const GENERAL = 10;
-	const NOT_FOUND = 20;
-	const NOT_SYNCHRONIZED = 30;
-	const INVALID_OPERATION = 40;
-	const AUTOCREATION_DISABLED = 50;
-	const HAS_WORKFLOWS = 60;
-	const EMPTY_FIELDS = 70;
-	const INVALID_FIELDS = 80;
-	const READ_DENIED = 90;
-	const CREATE_DENIED = 100;
-	const CREATE_FAILED = 110;
-	const UPDATE_DENIED = 120;
-	const NOT_SUPPORTED = 130;
+	public const GENERAL = 10;
+	public const NOT_FOUND = 20;
+	public const NOT_SYNCHRONIZED = 30;
+	public const INVALID_OPERATION = 40;
+	public const AUTOCREATION_DISABLED = 50;
+	public const HAS_WORKFLOWS = 60;
+	public const EMPTY_FIELDS = 70;
+	public const INVALID_FIELDS = 80;
+	public const READ_DENIED = 90;
+	public const CREATE_DENIED = 100;
+	public const CREATE_FAILED = 110;
+	public const UPDATE_DENIED = 120;
+	public const NOT_SUPPORTED = 130;
 
 	protected $srcEntityTypeID = \CCrmOwnerType::Undefined;
 	protected $dstEntityTypeID = \CCrmOwnerType::Undefined;
 	protected $targ = 0;
 	protected $extMessage = '';
 
-	public function __construct($srcEntityTypeID = 0, $dstEntityTypeID = 0, $targ = 0, $code = 0, $extMessage = '', $file = '', $line = 0, \Exception $previous = null)
+	public function __construct(
+		$srcEntityTypeID = 0,
+		$dstEntityTypeID = 0,
+		$targ = 0,
+		$code = 0,
+		$extMessage = '',
+		$file = '',
+		$line = 0,
+		\Exception $previous = null
+	)
 	{
 		$this->srcEntityTypeID = $srcEntityTypeID;
 		$this->dstEntityTypeID = $dstEntityTypeID;

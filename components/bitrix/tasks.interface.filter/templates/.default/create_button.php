@@ -1,40 +1,39 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
+use Bitrix\Main\Web\Uri;
+
 $taskUrlTemplate = ($arParams['MENU_GROUP_ID'] > 0 ? $arParams['PATH_TO_GROUP_TASKS_TASK'] : $arParams['PATH_TO_USER_TASKS_TASK']);
 $taskTemplateUrlTemplate = $arParams['PATH_TO_USER_TASKS_TEMPLATES'];
 $taskTemplateUrlTemplateAction = $arParams['PATH_TO_USER_TASKS_TEMPLATES_ACTION'];
 
-$isScrumProject = $arResult['IS_SCRUM_PROJECT'];
+$createButtonClass = 'ui-btn-split tasks-interface-filter-btn-add';
+$createButtonClass .= ($arResult['IS_SCRUM_PROJECT'] ? ' ui-btn-light-border ui-btn-themes' : ' ui-btn-success');
+$createButtonUri = new Uri(
+	CComponentEngine::makePathFromTemplate(
+		$taskUrlTemplate,
+		[
+			'action' => 'edit',
+			'task_id' => 0,
+			'user_id' => $arParams['USER_ID'],
+			'group_id' => $arParams['MENU_GROUP_ID'],
+		]
+	)
+);
+if (isset($arParams['SCOPE']) && $arParams['SCOPE'] !== '')
+{
+	$createButtonUri->addParams(['SCOPE' => $arParams['SCOPE']]);
+}
 ?>
 
-<?php if ($isScrumProject): ?>
-	<div class="ui-btn-split ui-btn-light-border ui-btn-themes tasks-interface-filter-btn-add">
-		<a id="tasks-buttonAdd" class="ui-btn-main" href="<?=
-		CComponentEngine::makePathFromTemplate($taskUrlTemplate, [
-			'action' => 'edit',
-			'task_id' => 0,
-			'user_id' => $arParams['USER_ID'],
-			'group_id' => $arParams['MENU_GROUP_ID']
-		])?>"><?=GetMessage('TASKS_BTN_ADD_TASK')?></a>
-		<div id="tasks-popupMenuAdd" class="ui-btn-menu"></div>
-	</div>
-<?php else: ?>
-	<div class="ui-btn-split ui-btn-success tasks-interface-filter-btn-add">
-		<a class="ui-btn-main" id="tasks-buttonAdd" href="<?=
-		CComponentEngine::makePathFromTemplate($taskUrlTemplate, [
-			'action' => 'edit',
-			'task_id' => 0,
-			'user_id' => $arParams['USER_ID'],
-			'group_id' => $arParams['MENU_GROUP_ID']
-		])?>"
-		><?=GetMessage('TASKS_BTN_ADD_TASK')?></a>
-		<span id="tasks-popupMenuAdd" class="ui-btn-extra"></span>
-	</div>
-<?php endif; ?>
+<div class="<?= $createButtonClass ?>">
+	<a class="ui-btn-main" id="tasks-buttonAdd" href="<?= $createButtonUri->getUri() ?>"><?= GetMessage('TASKS_BTN_ADD_TASK') ?></a>
+	<span id="tasks-popupMenuAdd" class="ui-btn-extra"></span>
+</div>
 
 <script type="text/javascript">
 	(function()
@@ -69,66 +68,59 @@ $isScrumProject = $arResult['IS_SCRUM_PROJECT'];
 						return;
 					}
 
-					var query = new BX.Tasks.Util.Query({
-						autoExec: true
-					});
-
 					var submenu = this.getSubMenu();
 					submenu.removeMenuItem("loading");
 
-					query.add(
-						'task.template.find',
-						{
-							parameters: {
-								select: ['ID', 'TITLE'],
-								order: {ID: 'DESC'},
-								filter: {ZOMBIE: 'N'}
-							}
-						},
-						{},
-						BX.delegate(function(errors, data)
+					BX.ajax.runComponentAction('bitrix:tasks.templates.list', 'getList', {
+						mode: 'class',
+						data: {
+							select: ['ID', 'TITLE'],
+							order: {ID: 'DESC'},
+							filter: {ZOMBIE: 'N'}
+						}
+					}).then(
+						function(response)
 						{
 							this.subMenuLoaded = true;
 
-							if (!errors.checkHasErrors())
-							{
-								var tasksTemplateUrlTemplate = '<?=CComponentEngine::makePathFromTemplate(
-									$taskUrlTemplate,
-									array(
-										'action' => 'edit',
-										'task_id' => 0,
-										'user_id' => $arResult['USER_ID'],
-										'group_id' => $arParams['MENU_GROUP_ID']
-									)
-								)?>';
+							var tasksTemplateUrlTemplate = '<?=CComponentEngine::makePathFromTemplate(
+								$taskUrlTemplate,
+								array(
+									'action' => 'edit',
+									'task_id' => 0,
+									'user_id' => $arResult['USER_ID'],
+									'group_id' => $arParams['MENU_GROUP_ID']
+								)
+							)?>';
 
-								var subMenu = [];
-								if (data.RESULT.DATA.length > 0)
+							var subMenu = [];
+							if (response.data.length > 0)
+							{
+								BX.Tasks.each(response.data, function(item, k)
 								{
-									BX.Tasks.each(data.RESULT.DATA, function(item, k)
-									{
-										subMenu.push({
-											text: BX.util.htmlspecialchars(item.TITLE),
-											href: tasksTemplateUrlTemplate + '?TEMPLATE=' + item.ID
-										});
-									}.bind(this));
-								}
-								else
-								{
-									subMenu.push({text: '<?=GetMessageJS('TASKS_AJAX_EMPTY_TEMPLATES')?>'});
-								}
-								this.addSubMenu(subMenu);
-								this.showSubMenu();
+									subMenu.push({
+										text: BX.util.htmlspecialchars(item.TITLE),
+										href: tasksTemplateUrlTemplate + '?TEMPLATE=' + item.ID
+									});
+								}.bind(this));
 							}
 							else
 							{
-								this.addSubMenu([
-									{text: '<?=GetMessageJS('TASKS_AJAX_ERROR_LOAD_TEMPLATES')?>'},
-								]);
-
-								this.showSubMenu();
+								subMenu.push({text: '<?=GetMessageJS('TASKS_AJAX_EMPTY_TEMPLATES')?>'});
 							}
-						}, this)
+							this.addSubMenu(subMenu);
+							this.showSubMenu();
+						}.bind(this),
+						function(response)
+						{
+							this.subMenuLoaded = true;
+
+							this.addSubMenu([
+								{text: '<?=GetMessageJS('TASKS_AJAX_ERROR_LOAD_TEMPLATES')?>'},
+							]);
+
+							this.showSubMenu();
+						}.bind(this)
 					);
 				}
 			},

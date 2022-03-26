@@ -209,6 +209,8 @@ abstract class Base implements \JsonSerializable
 	 */
 	abstract public function getTitle();
 
+	abstract public function hasAccess(int $userId = 0);
+
 	/**
 	 * Returns current training fields
 	 */

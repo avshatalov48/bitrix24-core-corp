@@ -335,7 +335,8 @@
 			this.documentType,
 			this.fieldsMap[fieldId],
 			fieldId,
-			this.currentValues[fieldId]
+			this.currentValues[fieldId],
+			this.isRobot ? 'public' : 'designer'
 		);
 	}
 

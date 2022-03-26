@@ -1,3 +1,5 @@
-<?
+<?php
+$MESS["CONTACT_CENTER_CRM_FORMS_CREATE"] = "Create form";
+$MESS["CONTACT_CENTER_CRM_FORMS_HELP"] = "How does it work?";
+$MESS["CONTACT_CENTER_CRM_FORMS_VIEW_ALL"] = "Forms";
 $MESS["ICCL_MARKETPLACE_APPLICATION_NOT_FOUND_ERROR"] = "Application was not found.";
-?>

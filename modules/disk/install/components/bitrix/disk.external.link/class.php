@@ -162,7 +162,7 @@ class CDiskExternalLinkComponent extends DiskComponent
 
 	private function isViewableDocument(string $ext): bool
 	{
-		return DocumentHandler::isEditable($ext) || $ext === 'pdf';
+		return DocumentHandler::isEditable($ext) || (mb_strtolower($ext) === 'pdf');
 	}
 
 	private function storeDownloadToken($token)

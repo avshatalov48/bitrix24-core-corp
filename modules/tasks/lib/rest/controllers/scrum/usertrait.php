@@ -9,6 +9,7 @@
 namespace Bitrix\Tasks\Rest\Controllers\Scrum;
 
 use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\UserTable;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 
 trait UserTrait
@@ -28,5 +29,15 @@ trait UserTrait
 	private function checkAccess(int $groupId): bool
 	{
 		return Group::canReadGroupTasks($this->getUserId(), $groupId);
+	}
+
+	private function existsUser(int $userId): bool
+	{
+		$queryObject = UserTable::getList([
+			'select' => ['ID'],
+			'filter' => ['ID' => $userId]
+		]);
+
+		return (bool) $queryObject->fetch();
 	}
 }

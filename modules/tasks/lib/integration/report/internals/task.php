@@ -45,9 +45,8 @@ class TaskTable extends \Bitrix\Tasks\Internals\TaskTable
 	{
 		/**
 		 * @global CDatabase $DB
-		 * @global string $DBType
 		 */
-		global $DB, $DBType;
+		global $DB;
 
 		// this is required only for getting STATUS_PSEUDO
 		// avoid using this field :(
@@ -57,7 +56,7 @@ class TaskTable extends \Bitrix\Tasks\Internals\TaskTable
 			'DESCRIPTION_TR' => array(
 				'data_type' => 'string',
 				'expression' => array(
-					self::getDbTruncTextFunction($DBType, '%s'),
+					self::getDbTruncTextFunction('mysql', '%s'),
 					'DESCRIPTION'
 				)
 			),

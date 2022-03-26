@@ -4,6 +4,7 @@ namespace Bitrix\Disk\Volume;
 
 use Bitrix\Main;
 use Bitrix\Main\Entity;
+use Bitrix\Disk;
 use Bitrix\Disk\Volume;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\Error\ErrorCollection;
@@ -118,7 +119,7 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 	 * Determines if a script is loaded via cron/command line.
 	 * @return bool
 	 */
-	public static function isCronRun()
+	public static function isCronRun(): bool
 	{
 		$isCronRun = false;
 		if (
@@ -134,20 +135,38 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 
 
 	/**
+	 * Checks if allow run task.
+	 * @param int $filterId Id of saved indicator result from b_disk_volume.
+	 * @return bool
+	 */
+	public static function isAllowRun($filterId): bool
+	{
+		// only one interaction per hit
+		if (self::isCronRun() !== true)
+		{
+			if (defined(__NAMESPACE__ . '\\CLEANER_RUN_WORKER_LOCK'))
+			{
+				// do nothing, repeat
+				return false;
+			}
+		}
+
+		// allow only one running task
+		return Volume\Task::isAllowRun($filterId);
+	}
+
+
+	/**
 	 * Runs clean process.
 	 * @param int $filterId Id of saved indicator result from b_disk_volume.
 	 * @return string
 	 */
 	public static function runWorker($filterId)
 	{
-		// only one interaction per hit
-		if (self::isCronRun() === false)
+		if (!self::isAllowRun($filterId))
 		{
-			if (defined(__NAMESPACE__ . '\\CLEANER_RUN_WORKER_LOCK'))
-			{
-				// do nothing, repeat
-				return static::agentName($filterId);
-			}
+			// do nothing, repeat
+			return static::agentName($filterId);
 		}
 
 		$cleaner = new static();
@@ -158,7 +177,7 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 
 		if (Volume\Task::isRunningMode($cleaner->instanceTask()->getStatus()) === false)
 		{
-			return '';// non running state
+			return '';// non-running state
 		}
 
 		$cleaner->startTimer();
@@ -403,20 +422,20 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 		$nextExecutionTime = '';
 		if (!empty($params['delay']) && (int)$params['delay'] > 0)
 		{
-			$nextExecutionTime = \ConvertTimeStamp(time()+\CTimeZone::GetOffset() + (int)$params['delay'], "FULL");
+			$nextExecutionTime = \ConvertTimeStamp(\time() + \CTimeZone::getOffset() + (int)$params['delay'], "FULL");
 		}
 
 		$agentAdded = false;
 		if ($agentParamsAdded && $filterId > 0)
 		{
 			$agentAdded = true;
-			$agents = \CAgent::GetList(
+			$agents = \CAgent::getList(
 				array('ID' => 'DESC'),
 				array('=NAME' => static::agentName($filterId))
 			);
-			if (!$agents->Fetch())
+			if (!$agents->fetch())
 			{
-				$agentAdded = (bool)(\CAgent::AddAgent(
+				$agentAdded = (bool)(\CAgent::addAgent(
 										static::agentName($filterId),
 										'disk',
 										(self::canAgentUseCrontab() ? 'N' : 'Y'),
@@ -1222,7 +1241,7 @@ class Cleaner implements IErrorable, Volume\IVolumeTimeLimit
 
 			$object = \Bitrix\Disk\BaseObject::buildFromArray($row);
 
-			/** @var Folder|File $object */
+			/** @var Disk\Folder|Disk\File $object */
 			if ($object instanceof \Bitrix\Disk\Folder)
 			{
 				if ($isRootFolder)

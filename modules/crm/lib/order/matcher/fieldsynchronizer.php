@@ -1464,6 +1464,14 @@ class FieldSynchronizer
 
 					foreach ($variants as $item)
 					{
+						foreach ($item as $key => $value)
+						{
+							if (is_string($key) && $key[0] === '~')
+							{
+								unset($item[$key]);
+							}
+						}
+
 						if (in_array($item['ID'], $existingItems))
 						{
 							\CSaleOrderPropsVariant::Update($item['ID'], array_diff_key($item, ['ID' => 0]));

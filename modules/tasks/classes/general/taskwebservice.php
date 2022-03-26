@@ -661,6 +661,8 @@ class CTasksWebService extends IWebService
 			while ($arFiles = $rsFiles->fetch())
 				$arRes["FILES"][] = $arFiles["FILE_ID"];
 
+			$arRes['TITLE'] = \Bitrix\Main\Text\Emoji::decode($arRes['TITLE']);
+
 			$obData->addChild($this->__getRow($arRes, $listName, $last_change));
 			$counter++;
 		}
@@ -1015,6 +1017,7 @@ class CTasksWebService extends IWebService
 					{
 						$arRes["FILES"][] = $arFiles["FILE_ID"];
 					}
+					$arRes['TITLE'] = \Bitrix\Main\Text\Emoji::decode($arRes['TITLE']);
 					$obRow = $this->__getRow($arRes, $listName, $last_change = 0);
 
 					if ($arReplicationIDs[$arRes['ID']])

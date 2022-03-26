@@ -5,6 +5,7 @@ if (!\Bitrix\Main\Loader::includeModule("socialnetwork"))
 	return;
 }
 
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Security\Sign\Signer;
 use Bitrix\Tasks\Internals\Counter;
 
@@ -339,12 +340,12 @@ if (
 		}
 
 		// Set plural forms
-		$arResult['VIEW_COUNTERS']['TOTAL']['PLURAL'] = CTasksTools::getPluralForm($arResult['VIEW_COUNTERS']['TOTAL']['COUNTER']);
+		$arResult['VIEW_COUNTERS']['TOTAL']['PLURAL'] = Loc::getPluralForm((int)$arResult['VIEW_COUNTERS']['TOTAL']['COUNTER']);
 		foreach ($arResult['VIEW_COUNTERS']['ROLES'] as $roleId => $arData)
 		{
 			foreach ($arData as $counterId => $arCounter)
 			{
-				$arResult['VIEW_COUNTERS']['ROLES'][$roleId][$counterId]['PLURAL'] = CTasksTools::getPluralForm($arCounter['COUNTER']);
+				$arResult['VIEW_COUNTERS']['ROLES'][$roleId][$counterId]['PLURAL'] = Loc::getPluralForm((int)$arCounter['COUNTER']);
 			}
 		}
 	}
@@ -397,7 +398,7 @@ if (isset($arResult['VIEW_COUNTERS'], $arResult['VIEW_STATE']))
 			'VALUE'  => $arResult['VIEW_COUNTERS']['ROLES'][$selectedRoleCodename]['TOTAL']['COUNTER']
 		);
 
-		$arResult['SELECTED_ROLE_COUNTER']['PLURAL'] = CTasksTools::getPluralForm($arResult['SELECTED_ROLE_COUNTER']['VALUE']);
+		$arResult['SELECTED_ROLE_COUNTER']['PLURAL'] = Loc::getPluralForm((int)$arResult['SELECTED_ROLE_COUNTER']['VALUE']);
 
 		$arResult['TASKS_NEW_COUNTER'] = 				null;
 		$arResult['TASKS_EXPIRED_COUNTER']= 			null;
@@ -410,7 +411,7 @@ if (isset($arResult['VIEW_COUNTERS'], $arResult['VIEW_STATE']))
 				'VALUE'  => $arResult['VIEW_COUNTERS']['ROLES'][$selectedRoleCodename]['VIEW_TASK_CATEGORY_NEW']['COUNTER']
 			);
 
-			$arResult['TASKS_NEW_COUNTER']['PLURAL'] = CTasksTools::getPluralForm($arResult['TASKS_NEW_COUNTER']['VALUE']);
+			$arResult['TASKS_NEW_COUNTER']['PLURAL'] = Loc::getPluralForm((int)$arResult['TASKS_NEW_COUNTER']['VALUE']);
 		}
 
 		if (isset($arResult['VIEW_COUNTERS']['ROLES'][$selectedRoleCodename]['VIEW_TASK_CATEGORY_EXPIRED']['COUNTER']))
@@ -419,7 +420,7 @@ if (isset($arResult['VIEW_COUNTERS'], $arResult['VIEW_STATE']))
 				'VALUE'  => $arResult['VIEW_COUNTERS']['ROLES'][$selectedRoleCodename]['VIEW_TASK_CATEGORY_EXPIRED']['COUNTER']
 			);
 
-			$arResult['TASKS_EXPIRED_COUNTER']['PLURAL'] = CTasksTools::getPluralForm($arResult['TASKS_EXPIRED_COUNTER']['VALUE']);
+			$arResult['TASKS_EXPIRED_COUNTER']['PLURAL'] = Loc::getPluralForm((int)$arResult['TASKS_EXPIRED_COUNTER']['VALUE']);
 		}
 
 		if (isset($arResult['VIEW_COUNTERS']['ROLES'][$selectedRoleCodename]['VIEW_TASK_CATEGORY_EXPIRED_CANDIDATES']['COUNTER']))
@@ -428,7 +429,7 @@ if (isset($arResult['VIEW_COUNTERS'], $arResult['VIEW_STATE']))
 				'VALUE'  => $arResult['VIEW_COUNTERS']['ROLES'][$selectedRoleCodename]['VIEW_TASK_CATEGORY_EXPIRED_CANDIDATES']['COUNTER']
 			);
 
-			$arResult['TASKS_EXPIRED_CANDIDATES_COUNTER']['PLURAL'] = CTasksTools::getPluralForm($arResult['TASKS_EXPIRED_CANDIDATES_COUNTER']['VALUE']);
+			$arResult['TASKS_EXPIRED_CANDIDATES_COUNTER']['PLURAL'] = Loc::getPluralForm((int)$arResult['TASKS_EXPIRED_CANDIDATES_COUNTER']['VALUE']);
 		}
 
 		if (isset($arResult['VIEW_COUNTERS']['ROLES'][$selectedRoleCodename]['VIEW_TASK_CATEGORY_WAIT_CTRL']['COUNTER']))
@@ -437,7 +438,7 @@ if (isset($arResult['VIEW_COUNTERS'], $arResult['VIEW_STATE']))
 				'VALUE'  => $arResult['VIEW_COUNTERS']['ROLES'][$selectedRoleCodename]['VIEW_TASK_CATEGORY_WAIT_CTRL']['COUNTER']
 			);
 
-			$arResult['TASKS_WAIT_CTRL_COUNTER']['PLURAL'] = CTasksTools::getPluralForm($arResult['TASKS_WAIT_CTRL_COUNTER']['VALUE']);
+			$arResult['TASKS_WAIT_CTRL_COUNTER']['PLURAL'] = Loc::getPluralForm((int)$arResult['TASKS_WAIT_CTRL_COUNTER']['VALUE']);
 		}
 
 		if (isset($arResult['VIEW_COUNTERS']['ROLES'][$selectedRoleCodename]['VIEW_TASK_CATEGORY_WO_DEADLINE']['COUNTER']))
@@ -446,7 +447,7 @@ if (isset($arResult['VIEW_COUNTERS'], $arResult['VIEW_STATE']))
 				'VALUE'  => $arResult['VIEW_COUNTERS']['ROLES'][$selectedRoleCodename]['VIEW_TASK_CATEGORY_WO_DEADLINE']['COUNTER']
 			);
 
-			$arResult['TASKS_WO_DEADLINE_COUNTER']['PLURAL'] = CTasksTools::getPluralForm($arResult['TASKS_WO_DEADLINE_COUNTER']['VALUE']);
+			$arResult['TASKS_WO_DEADLINE_COUNTER']['PLURAL'] = Loc::getPluralForm((int)$arResult['TASKS_WO_DEADLINE_COUNTER']['VALUE']);
 		}
 	}
 }

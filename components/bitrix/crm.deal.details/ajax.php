@@ -6,6 +6,7 @@ define('DisableEventsCheck', true);
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
+use Bitrix\Crm\Binding\OrderEntityTable;
 use Bitrix\Main;
 use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\Synchronization\UserFieldSynchronizer;
@@ -233,6 +234,7 @@ elseif($action === 'SAVE')
 
 	$initialData = isset($_POST['INITIAL_DATA']) && is_array($_POST['INITIAL_DATA'])
 		? $_POST['INITIAL_DATA'] : array();
+	Crm\Service\EditorAdapter::fillParentFieldFromContextEnrichedData($_POST);
 	foreach(array_keys($fieldsInfo) as $fieldName)
 	{
 		if(isset($_POST[$fieldName]))
@@ -743,6 +745,7 @@ elseif($action === 'SAVE')
 	if($conversionWizard !== null)
 	{
 		$conversionWizard->setSliderEnabled(true);
+		$conversionWizard->setSkipMultipleUserFields(true);
 		$conversionWizard->prepareDataForSave(CCrmOwnerType::Deal, $fields);
 	}
 
@@ -795,6 +798,11 @@ elseif($action === 'SAVE')
 				$saveOptions['EXCLUDE_FROM_RELATION_REGISTRATION'] = [
 					new Crm\ItemIdentifier($conversionWizard->getEntityTypeID(), $conversionWizard->getEntityID()),
 				];
+			}
+
+			if ($enableProductRows)
+			{
+				$fields[\Bitrix\Crm\Item::FIELD_NAME_PRODUCTS] = $productRows;
 			}
 
 			if($isNew)
@@ -937,11 +945,43 @@ elseif($action === 'SAVE')
 			__CrmDealDetailsEndJsonResonse($responseData);
 		}
 
-		if(!$isExternal && $enableProductRows && (!$isNew || !empty($productRows)))
+		Crm\Reservation\DealProductsHitDataSupplement::getInstance()->setProductRows((int)$ID, $productRows);
+		$productRowsSaveTookPlace = false;
+		if (!$isExternal && $enableProductRows && (!$isNew || !empty($productRows)))
 		{
-			if(!\CCrmDeal::SaveProductRows($ID, $productRows, true, true, false))
+			CCrmProductRow::setPerRowInsert(true);
+			$saveProductRowsResult = \CCrmDeal::SaveProductRows($ID, $productRows, true, true, false);
+			$productRowsSaveTookPlace = true;
+			CCrmProductRow::setPerRowInsert(false);
+			Crm\Reservation\DealProductsHitDataSupplement::getInstance()->readDealSaveData((int)$ID);
+			if(!$saveProductRowsResult)
 			{
 				__CrmDealDetailsEndJsonResonse(array('ERROR' => GetMessage('CRM_DEAL_PRODUCT_ROWS_SAVING_ERROR')));
+			}
+		}
+
+		if (
+			(
+				$productRowsSaveTookPlace
+				|| !empty($productRows)
+			)
+			&& Bitrix\Main\Loader::includeModule('catalog')
+			&& Bitrix\Main\Loader::includeModule('salescenter')
+			&& Bitrix\Catalog\Component\UseStore::isUsed()
+			&& !\CCrmSaleHelper::isWithOrdersMode()
+			&& Crm\Restriction\RestrictionManager::getInventoryControlIntegrationRestriction()->hasPermission()
+		)
+		{
+			$enrichedProductRows = Crm\Reservation\DealProductsHitDataSupplement::getInstance()->getSupplementedProductRows((int)$ID);
+			$orderIds = OrderEntityTable::getOrderIdsByOwner($ID, \CCrmOwnerType::Deal);
+			$orderId = $orderIds ? (int)$orderIds[0] : 0;
+			if ($orderId || !empty($enrichedProductRows))
+			{
+				(new Crm\Reservation\OrderSynchronizer(
+					(int)$ID,
+					$enrichedProductRows,
+					$orderId
+				))->synchronize();
 			}
 		}
 
@@ -1232,9 +1272,10 @@ elseif($action === 'CONVERT')
 		}
 	}
 
+	$config->setOriginUrl(new Main\Web\Uri(isset($_POST['ORIGIN_URL']) ? $_POST['ORIGIN_URL'] : ''));
+
 	DealConversionWizard::remove($entityID);
-	$wizard = new DealConversionWizard($entityID, $config);
-	$wizard->setOriginUrl(isset($_POST['ORIGIN_URL']) ? $_POST['ORIGIN_URL'] : '');
+	$wizard = Crm\Conversion\ConversionManager::getWizard(\CCrmOwnerType::Deal, $entityID, $config);
 
 	$wizard->setSliderEnabled(true);
 

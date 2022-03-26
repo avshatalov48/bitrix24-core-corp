@@ -117,7 +117,7 @@ $totalContainer = '
 						[
 							"ID" => "download_records",
 							"TYPE" => \Bitrix\Main\Grid\Panel\Types::BUTTON,
-							"TEXT" => Loc::getMessage("TEL_STAT_ACTION_VOX_DOWNLOAD"),
+							"TEXT" => Loc::getMessage("TEL_STAT_ACTION_VOX_DOWNLOAD_2"),
 							"VALUE" => "create_download_records_list",
 							"ONCHANGE" => [
 								[

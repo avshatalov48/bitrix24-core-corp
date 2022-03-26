@@ -1,8 +1,8 @@
 <?php
 namespace Bitrix\Crm\Integrity;
+use Bitrix\Crm\Communication\Type;
 use Bitrix\Main;
 use Bitrix\Crm\CommunicationType;
-use Bitrix\Crm\Integrity\DuplicateIndexType;
 
 class DuplicateManager
 {
@@ -16,22 +16,36 @@ class DuplicateManager
 			$typeID = (int)$typeID;
 		}
 
-		if($typeID === DuplicateIndexType::PERSON)
+		if ($typeID === DuplicateIndexType::PERSON)
 		{
 			return DuplicatePersonCriterion::createFromMatches($matches);
 		}
-		elseif($typeID === DuplicateIndexType::ORGANIZATION)
+		elseif ($typeID === DuplicateIndexType::ORGANIZATION)
 		{
 			return DuplicateOrganizationCriterion::createFromMatches($matches);
 		}
-		elseif($typeID === DuplicateIndexType::COMMUNICATION_PHONE
+		elseif (
+			$typeID === DuplicateIndexType::COMMUNICATION_PHONE
 			|| $typeID === DuplicateIndexType::COMMUNICATION_EMAIL
+			|| $typeID === DuplicateIndexType::COMMUNICATION_SLUSER
 		)
 		{
-			if(!isset($matches['TYPE']))
+			if (!isset($matches['TYPE']))
 			{
-				$matches['TYPE'] = $typeID === DuplicateIndexType::COMMUNICATION_PHONE
-					? CommunicationType::PHONE_NAME : CommunicationType::EMAIL_NAME;
+				$matches['TYPE'] = Type::PHONE_NAME;
+
+				if ($typeID === DuplicateIndexType::COMMUNICATION_PHONE)
+				{
+					$matches['TYPE'] = Type::PHONE_NAME;
+				}
+				elseif ($typeID === DuplicateIndexType::COMMUNICATION_EMAIL)
+				{
+					$matches['TYPE'] = Type::EMAIL_NAME;
+				}
+				elseif ($typeID === DuplicateIndexType::COMMUNICATION_SLUSER)
+				{
+					$matches['TYPE'] = Type::SLUSER_NAME;
+				}
 			}
 
 			return DuplicateCommunicationCriterion::createFromMatches($matches);
@@ -175,7 +189,8 @@ class DuplicateManager
 			return DuplicateOrganizationCriterion::prepareMatchHash($matches);
 		}
 		elseif($typeID === DuplicateIndexType::COMMUNICATION_EMAIL
-			|| $typeID === DuplicateIndexType::COMMUNICATION_PHONE)
+			|| $typeID === DuplicateIndexType::COMMUNICATION_PHONE
+			|| $typeID === DuplicateIndexType::COMMUNICATION_SLUSER)
 		{
 			return DuplicateCommunicationCriterion::prepareMatchHash($matches);
 		}

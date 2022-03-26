@@ -8,6 +8,9 @@ Loc::loadMessages(__FILE__);
 
 class MessageHelper
 {
+	/**
+	 * @deprecated
+	 */
 	public static function getNumberDeclension($number, $nominative, $genitiveSingular, $genitivePlural)
 	{
 		$number = intval($number);
@@ -33,6 +36,9 @@ class MessageHelper
 			? $genitiveSingular : $genitivePlural;
 	}
 
+	/**
+	 * @deprecated
+	 */
 	public static function getEntityNumberDeclensionMessages($entityTypeID)
 	{
 		$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
@@ -45,6 +51,21 @@ class MessageHelper
 		);
 	}
 
+	public static function getEntityPluralMessages($entityTypeID)
+	{
+		$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
+		IncludeModuleLangFile(__FILE__);
+
+		return [
+			"CRM_{$entityTypeName}_PLURAL_0" => Loc::getMessage("CRM_{$entityTypeName}_PLURAL_0"),
+			"CRM_{$entityTypeName}_PLURAL_1" => Loc::getMessage("CRM_{$entityTypeName}_PLURAL_1"),
+			"CRM_{$entityTypeName}_PLURAL_2" => Loc::getMessage("CRM_{$entityTypeName}_PLURAL_2"),
+		];
+	}
+
+	/**
+	 * @deprecated
+	 */
 	public static function prepareEntityNumberDeclension($entityTypeID, $number)
 	{
 		$number = (int)$number;
@@ -61,11 +82,6 @@ class MessageHelper
 		$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeID);
 
 		IncludeModuleLangFile(__FILE__);
-		return self::getNumberDeclension(
-			$number,
-			Loc::getMessage("CRM_{$entityTypeName}_COUNT_0"),
-			Loc::getMessage("CRM_{$entityTypeName}_COUNT_1"),
-			Loc::getMessage("CRM_{$entityTypeName}_COUNT_2")
-		);
+		return Loc::getMessagePlural("CRM_{$entityTypeName}", $number);
 	}
 }

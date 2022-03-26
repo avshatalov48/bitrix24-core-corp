@@ -9,6 +9,7 @@ use Bitrix\Bitrix24\Integrator;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Event;
+use Bitrix\Main\Engine\Response\Component;
 
 class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Controller
 {
@@ -17,6 +18,11 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 	protected function processBeforeAction(\Bitrix\Main\Engine\Action $action)
 	{
 		parent::processBeforeAction($action);
+
+		if ($action->getName() === 'showWidget')
+		{
+			return true;
+		}
 
 		if (!$this->getRequest()->isPost() || !$this->getRequest()->getPost('signedParameters'))
 		{
@@ -485,5 +491,21 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		}
 
 		return true;
+	}
+
+	public function showWidgetAction(string $targetId, string $siteTemplateId, array $urls): Component
+	{
+		return new Component(
+			'bitrix:intranet.user.profile',
+			'widget',
+			[
+				'ID' => CurrentUser::get()->getId(),
+				'TARGET_ID' => $targetId,
+				'SITE_TEMPLATE_ID' => $siteTemplateId,
+				'PATH_TO_USER_PROFILE' => $urls['PATH_TO_USER_PROFILE'] ?? '',
+				'PATH_TO_USER_STRESSLEVEL' => $urls['PATH_TO_USER_STRESSLEVEL'] ?? '',
+				'PATH_TO_USER_COMMON_SECURITY' => $urls['PATH_TO_USER_COMMON_SECURITY'] ?? '',
+			]
+		);
 	}
 }

@@ -96,12 +96,7 @@ class Duplicate
 	{
 		self::includeLangFile();
 		$count = intval($count);
-		return $count.' '.\Bitrix\Crm\MessageHelper::getNumberDeclension(
-			$count,
-			GetMessage('CRM_DUP_ENTITY_COUNT_NOMINATIVE'),
-			GetMessage('CRM_DUP_ENTITY_COUNT_GENITIVE_SINGULAR'),
-			GetMessage('CRM_DUP_ENTITY_COUNT_GENITIVE_PLURAL')
-		);
+		return $count . ' ' . Main\Localization\Loc::getMessagePlural('CRM_DUP_ENTITY_COUNT', $count);
 	}
 	public function getEntityArray()
 	{

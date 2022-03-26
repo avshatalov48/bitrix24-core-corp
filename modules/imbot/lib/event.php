@@ -1,8 +1,19 @@
 <?php
 namespace Bitrix\ImBot;
 
+/**
+ * Bot event dispatcher.
+ * @package \Bitrix\ImBot
+ */
 class Event
 {
+	/**
+	 * Handler for "im:OnAfterUserRead" event.
+	 * @see \CIMMessage::SetReadMessage
+	 *
+	 * @param array $params
+	 * @return bool
+	 */
 	public static function onUserRead($params)
 	{
 		$botData = \Bitrix\Im\Bot::getCache($params['DIALOG_ID']);
@@ -19,9 +30,16 @@ class Event
 		return true;
 	}
 
+	/**
+	 * Handler for "im:OnAfterMessagesLike" event.
+	 * @see \CIMMessenger::Like
+	 *
+	 * @param array $params
+	 * @return bool
+	 */
 	public static function onMessageLike($params)
 	{
-		if ($params['CHAT']['TYPE'] == IM_MESSAGE_PRIVATE)
+		if ($params['CHAT']['TYPE'] == \IM_MESSAGE_PRIVATE)
 		{
 			$botId = $params['DIALOG_ID'];
 		}
@@ -45,62 +63,105 @@ class Event
 		
 		return true;
 	}
-	
+
+	/**
+	 * Handler for "im:OnStartWriting" event.
+	 * @see \CIMMessenger::StartWriting
+	 *
+	 * @param array $params
+	 * @return bool
+	 */
 	public static function onStartWriting($params)
 	{
+		$botList = [];
 		if (empty($params['CHAT']))
 		{
-			$botId = $params['DIALOG_ID'];
+			$botList[] = (int)$params['DIALOG_ID'];
 		}
-		else
+		elseif (!empty($params['RELATION']))
 		{
-			return true;
+			foreach ($params['RELATION'] as $relation)
+			{
+				if ($relation['EXTERNAL_AUTH_ID'] === \Bitrix\Im\Bot::EXTERNAL_AUTH_ID)
+				{
+					$botList[(int)$relation['USER_ID']] = (int)$relation['USER_ID'];
+				}
+			}
 		}
-		
-		$botData = \Bitrix\Im\Bot::getCache($botId);
-		if (!$botData)
+
+		$result = true;
+		foreach ($botList as $botId)
 		{
-			return true;
+			$botData = \Bitrix\Im\Bot::getCache($botId);
+			if (!$botData)
+			{
+				continue;
+			}
+
+			if (
+				class_exists($botData['CLASS'], true)
+				&& method_exists($botData['CLASS'], 'onStartWriting')
+			)
+			{
+				$params['BOT_ID'] = $botId;
+
+				Log::write($params, 'START WRITING');
+
+				$result = call_user_func([$botData['CLASS'], 'onStartWriting'], $params);
+			}
 		}
-		
-		$params['BOT_ID'] = $botId;
-		
-		Log::write($params, 'START WRITING');
-		
-		if (class_exists($botData['CLASS']) && method_exists($botData['CLASS'], 'onStartWriting'))
-		{
-			return call_user_func_array(array($botData['CLASS'], 'onStartWriting'), Array($params));
-		}
-		
-		return true;
+
+		return $result;
 	}
-	
+
+	/**
+	 * Handler for "im:OnSessionVote" event.
+	 * @see \CIMMessenger::LinesSessionVote
+	 * @see \Bitrix\Imbot\Bot\NetworkBot::onSessionVote
+	 *
+	 * @param array $params
+	 * @return bool
+	 */
 	public static function onSessionVote($params)
 	{
+		$botList = [];
 		if (empty($params['CHAT']))
 		{
-			$botId = $params['DIALOG_ID'];
+			$botList[] = (int)$params['DIALOG_ID'];
 		}
-		else
+		elseif (!empty($params['RELATION']))
 		{
-			return true;
+			foreach ($params['RELATION'] as $relation)
+			{
+				if ($relation['EXTERNAL_AUTH_ID'] === \Bitrix\Im\Bot::EXTERNAL_AUTH_ID)
+				{
+					$botList[(int)$relation['USER_ID']] = (int)$relation['USER_ID'];
+				}
+			}
 		}
-		
-		$botData = \Bitrix\Im\Bot::getCache($botId);
-		if (!$botData)
+
+		$result = true;
+		foreach ($botList as $botId)
 		{
-			return true;
+			$botData = \Bitrix\Im\Bot::getCache($botId);
+			if (!$botData)
+			{
+				continue;
+			}
+
+			if (
+				class_exists($botData['CLASS'])
+				&& method_exists($botData['CLASS'], 'onSessionVote')
+			)
+			{
+				$params['BOT_ID'] = $botId;
+
+				Log::write($params, 'SESSION VOTE');
+
+				$result = call_user_func([$botData['CLASS'], 'onSessionVote'], $params);
+			}
 		}
-		
-		$params['BOT_ID'] = $botId;
-		
-		Log::write($params, 'SESSION VOTE');
-		
-		if (class_exists($botData['CLASS']) && method_exists($botData['CLASS'], 'onSessionVote'))
-		{
-			return call_user_func_array(array($botData['CLASS'], 'onSessionVote'), Array($params));
-		}
-		
-		return true;
+
+		return $result;
 	}
 }

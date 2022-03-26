@@ -1,8 +1,14 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
-
+<?php
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+/**
+ * @var $this \CBitrixComponentTemplate
+ */
 global $APPLICATION;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
+use Bitrix\Main;
+
+Main\UI\Extension::load('ui.textcrop');
 
 $this->setFrameMode(true);
 
@@ -22,12 +28,7 @@ if(Loader::includeModule('rest'))
 
 if (Loader::includeModule('imopenlines'))
 {
-	if (Loader::includeModule('bitrix24'))
-	{
-		$APPLICATION->IncludeComponent('bitrix:ui.info.helper', '', []);
-	}
-
-	\Bitrix\Main\UI\Extension::load(["imopenlines.create-line"]);
+	\Bitrix\Main\UI\Extension::load(['imopenlines.create-line', 'ui.info-helper']);
 }
 
 if(!empty($arResult["ADDITIONAL_STYLES"]))
@@ -52,6 +53,7 @@ if(!empty($arResult["ADDITIONAL_STYLES"]))
 			{
 				foreach($module as $code => $item)
 				{
+				$cropTextID = \Bitrix\Main\Security\Random::getString(5);
 				?>
 					<div class="intranet-contact-center-item-block">
 						<div class="intranet-contact-item<?=($item["SELECTED"] ? " intranet-contact-item-selected "  . $item["COLOR_CLASS"] : "")?>"
@@ -65,7 +67,7 @@ if(!empty($arResult["ADDITIONAL_STYLES"]))
 								<span class="intranet-contact-logo <?=$item["LOGO_CLASS"]?>"><i></i></span>
 							</div>
 							<div class="intranet-contact-name">
-								<span class="intranet-contact-name-text"><?=$item["NAME"]?></span>
+								<div class="intranet-contact-name-text" data-crop="crop_<?=$cropTextID?>"><?=$item["NAME"]?></div>
 							</div>
 							<?php if (isset($item["IS_NEW"]) && $item["IS_NEW"] === true):
 								$phrase = $item["NEW_PHRASE"] ?? 'CONTACT_CENTER_NEW_LABEL';
@@ -82,6 +84,30 @@ if(!empty($arResult["ADDITIONAL_STYLES"]))
 							<?php endif;?>
 						</div>
 					</div>
+					<script>
+						BX.ready(function ()
+						{
+							let text = new BX.UI.TextCrop({
+								rows: 2,
+								target: document.querySelector('[data-crop="crop_<?=$cropTextID?>"] '),
+							});
+							text.init();
+							<?php
+							// It is an advertisement from bitrix24 preset.
+							if ($code === 'virtual_whatsapp'
+								&& Main\Context::getCurrent()->getRequest()->getQuery('infoHelperId') === 'vwhatsapp')
+							{
+								echo <<<JS
+									setTimeout(function() {
+										BX.loadExt('ui.info-helper').then(function() {
+											BX.UI.InfoHelper.show('info_imopenlines_virtual_whatsapp'); 
+										});
+									}, 0);
+JS;
+							}
+							?>
+						});
+					</script>
 				<?
 				}
 			}

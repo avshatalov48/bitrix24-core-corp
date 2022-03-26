@@ -340,13 +340,13 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 				}
 				elseif ($currentKey == 'COMPANY_ID')
 				{
-					$obRes = CCrmCompany::GetListEx(array(), array('TITLE' => $data), false, false, array('ID'));
+					$obRes = CCrmCompany::GetListEx(array(), array('TITLE' => $data, '@CATEGORY_ID' => 0), false, false, array('ID'));
 					if (($arRow = $obRes->Fetch()) !== false)
 						$arDeal[$currentKey] = $arRow['ID'];
 				}
 				elseif ($currentKey == 'CONTACT_ID')
 				{
-					$obRes = CCrmContact::GetListEx(array(), array('FULL_NAME' => $data), false, false, array('ID'));
+					$obRes = CCrmContact::GetListEx(array(), array('FULL_NAME' => $data, '@CATEGORY_ID' => 0), false, false, array('ID'));
 					if (($arRow = $obRes->Fetch()) !== false)
 						$arDeal[$currentKey] = $arRow['ID'];
 				}

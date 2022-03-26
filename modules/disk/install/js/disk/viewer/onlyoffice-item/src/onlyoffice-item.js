@@ -18,6 +18,11 @@ export default class OnlyOfficeItem extends BX.UI.Viewer.Item
 		this.controller.preload = 0;
 	}
 
+	enableEditInsteadPreview()
+	{
+		this.openEditInsteadPreview = true;
+	}
+
 	setPropertiesByNode (node: HTMLElement)
 	{
 		super.setPropertiesByNode(node);

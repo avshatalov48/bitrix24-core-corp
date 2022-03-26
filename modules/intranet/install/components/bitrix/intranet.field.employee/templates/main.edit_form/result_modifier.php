@@ -21,6 +21,10 @@ if(!is_object($adminSidePanelHelper))
 
 if($adminSidePanelHelper->isPublicSidePanel())
 {
+	\Bitrix\Main\UI\Extension::load([
+		'admin_interface',
+		'sidepanel'
+	]);
 	$titleUserId = $USER->GetID();
 }
 else

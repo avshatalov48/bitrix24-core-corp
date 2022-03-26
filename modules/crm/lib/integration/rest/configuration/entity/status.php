@@ -219,6 +219,16 @@ class Status
 		{
 			$result['NEXT'] = $step;
 			$entityID = $entityList[$step]['ID'];
+
+			// skip dynamic type based statuses
+			if (
+				isset($entityList[$step]['ENTITY_TYPE_ID'])
+				&& \CCrmOwnerType::isUseDynamicTypeBasedApproach((int)$entityList[$step]['ENTITY_TYPE_ID'])
+			)
+			{
+				return $result;
+			}
+
 			$entity = new CCrmStatus($entityList[$step]['ID']);
 
 			if($clearFull || in_array($entityID, static::$isEntityTypeFunnel))
@@ -476,6 +486,7 @@ class Status
 			return $result;
 		}
 		$itemList = $import['CONTENT']['DATA'];
+		$entityTypes = CCrmStatus::GetEntityTypes();
 
 		if(!empty($itemList['ENTITY']['ID']) && !empty($itemList['ITEMS']))
 		{
@@ -483,11 +494,20 @@ class Status
 			$entityID = $itemList['ENTITY']['ID'];
 			if(mb_strpos($entityID, static::$customDealStagePrefix) === false)
 			{
-				$entityList = array_column(CCrmStatus::GetEntityTypes(),'ID');
+				$entityList = array_column($entityTypes,'ID');
 				if(!in_array($entityID,$entityList))
 				{
 					$entityID = '';
 				}
+			}
+
+			// skip dynamic type based statuses
+			if (
+				isset($entityTypes[$entityID]['ENTITY_TYPE_ID'])
+				&& \CCrmOwnerType::isUseDynamicTypeBasedApproach((int)$entityTypes[$entityID]['ENTITY_TYPE_ID'])
+			)
+			{
+				$entityID = '';
 			}
 
 			if($entityID != '')

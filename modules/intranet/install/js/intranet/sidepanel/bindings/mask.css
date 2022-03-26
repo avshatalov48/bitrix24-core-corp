@@ -471,3 +471,10 @@
 	-ms-animation: none;
 	animation: none;
 }
+
+.mail-loader-modifier {
+	background-color: #fff;
+	background-image: url("/bitrix/images/mail/mail-loader.svg");
+	background-position: 50% 40%;
+	background-repeat: no-repeat;
+}

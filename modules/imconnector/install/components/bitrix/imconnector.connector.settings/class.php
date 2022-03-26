@@ -8,7 +8,6 @@ use \Bitrix\Main\Loader,
 	\Bitrix\Main\Web\Uri,
 	\Bitrix\Main\Context,
 	\Bitrix\Main\Web\Json,
-	\Bitrix\Main\LoaderException,
 	\Bitrix\Main\Localization\Loc;
 use \Bitrix\UI\EntitySelector;
 use \Bitrix\ImConnector\Status,

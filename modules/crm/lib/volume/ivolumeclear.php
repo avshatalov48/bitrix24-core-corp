@@ -12,7 +12,7 @@ interface IVolumeClear
 
 	/**
 	 * Performs dropping entity.
-	 * @return boolean
+	 * @return int
 	 */
 	public function clearEntity();
 

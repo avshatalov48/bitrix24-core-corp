@@ -12,11 +12,15 @@
 
 namespace Bitrix\Tasks\Dispatcher\PublicAction;
 
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Comments\Task\CommentPoster;
+use Bitrix\Tasks\Internals\Registry\TaskRegistry;
+use Bitrix\Tasks\Internals\Task\MemberTable;
+use Bitrix\Tasks\Internals\Task\Result\ResultManager;
 use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Item;
 use Bitrix\Tasks\Manager;
@@ -135,7 +139,6 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	{
 		$result = [];
 
-
 		$newTask = TaskModel::createFromRequest($data);
 		$oldTask = TaskModel::createNew($newTask->getGroupId());
 
@@ -164,17 +167,26 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	 */
 	public function update($id, array $data, array $parameters = array())
 	{
+		$id = (int) $id;
 		$result = [];
 
-		$oldTask = TaskModel::createFromId((int)$id);
+		$oldTask = TaskModel::createFromId($id);
 		$newTask = clone $oldTask;
 
 		if (
-			count($data) === 1
-			&& array_key_exists('DEADLINE', $data)
+			isset($parameters['PLATFORM'])
+			&& $parameters['PLATFORM'] === 'mobile'
 		)
 		{
-			$isAccess = TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_DEADLINE, (int)$id);
+			$data = $this->prepareMobileData($data, $id);
+		}
+
+		if (
+			count($data) < 3
+			&& count(array_intersect(array_keys($data), ['DEADLINE', 'END_DATE_PLAN', 'START_DATE_PLAN'])) === count($data)
+		)
+		{
+			$isAccess = TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_DEADLINE, $id);
 		}
 		elseif (
 			count($data) === 1
@@ -223,7 +235,6 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 			&& array_key_exists('SE_REMINDER', $data)
 		)
 		{
-			$newTask = TaskModel::createFromRequest($data);
 			$isAccess = (new TaskAccessController($this->userId))->check(ActionDictionary::ACTION_TASK_REMINDER, $oldTask, $data['SE_REMINDER']);
 		}
 		else
@@ -240,7 +251,7 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 
 		if ($id = $this->checkTaskId($id))
 		{
-			if (!empty($data)) // simply nothing to do, not a error
+			if (!empty($data))
 			{
 				// todo: move to \Bitrix\Tasks\Item\Task
 				$mgrResult = Manager\Task::update(Util\User::getId(), $id, $data, array(
@@ -252,9 +263,9 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 					'RETURN_ENTITY' => $parameters[ 'RETURN_ENTITY' ],
 				));
 
-				$result['ID' ] = $id;
-				$result['DATA' ] = $mgrResult[ 'DATA' ];
-				$result['CAN' ] = $mgrResult[ 'CAN' ];
+				$result['ID'] = $id;
+				$result['DATA'] = $mgrResult['DATA'];
+				$result['CAN'] = $mgrResult['CAN'];
 
 				if ($this->errors->checkNoFatals())
 				{
@@ -268,6 +279,53 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @param array $data
+	 * @param int $taskId
+	 * @return array
+	 */
+	private function prepareMobileData(array $data, int $taskId): array
+	{
+		$task = TaskRegistry::getInstance()->get($taskId, true);
+
+		if (
+			array_key_exists('DEADLINE', $data)
+			&& (
+				(empty($data['DEADLINE']) && is_null($task['DEADLINE']))
+				|| ($task['DEADLINE'] && $data['DEADLINE'] === $task['DEADLINE']->toString())
+			)
+		)
+		{
+			unset($data['DEADLINE']);
+		}
+
+		if (array_key_exists('SE_RESPONSIBLE', $data))
+		{
+			$members = $task['MEMBER_LIST'];
+			$responsibles = [];
+			foreach ($members as $member)
+			{
+				if ($member['TYPE'] !== MemberTable::MEMBER_TYPE_RESPONSIBLE)
+				{
+					continue;
+				}
+				$responsibles[] = (int) $member['USER_ID'];
+			}
+
+			$dataResponsibles = [];
+			foreach ($data['SE_RESPONSIBLE'] as $responsible)
+			{
+				$dataResponsibles[] = (int) $responsible['ID'];
+			}
+
+			if (empty(array_diff($responsibles, $dataResponsibles)))
+			{
+				unset($data['SE_RESPONSIBLE']);
+			}
+		}
+		return $data;
 	}
 
 	/**
@@ -561,6 +619,7 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	 */
 	public function complete($id)
 	{
+		$id = (int)$id;
 		$result = [];
 
 		$task = TaskModel::createFromId((int)$id);
@@ -569,9 +628,18 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 			return $result;
 		}
 
-		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_COMPLETE, (int)$id))
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_COMPLETE, $id))
 		{
 			$this->addForbiddenError();
+			return $result;
+		}
+
+		if (
+			ResultManager::requireResult($id)
+			&& !ResultManager::hasResult($id)
+		)
+		{
+			$this->errors->add('RESULT_REQUIRED', Loc::getMessage('TASKS_ACTION_RESULT_REQUIRED'), false, ['ui' => 'notification']);
 			return $result;
 		}
 

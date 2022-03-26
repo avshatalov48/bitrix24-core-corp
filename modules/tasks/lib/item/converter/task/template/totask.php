@@ -46,6 +46,7 @@ final class ToTask extends Converter
 			'XML_ID' => true,
 			'CREATED_BY' => true,
 			'RESPONSIBLE_ID' => true,
+			'REQUIRE_RESULT' => true,
 			'ALLOW_CHANGE_DEADLINE' => true,
 			'ALLOW_TIME_TRACKING' => true,
 			'TASK_CONTROL' => true,

@@ -281,6 +281,7 @@ class Company extends CrmEntityDataProvider
 			'HAS_PHONE',
 			'HAS_IMOL',
 			'LEAD_ID',
+			'BANKING_DETAILS',
 		]);
 
 		if(!$this->isMyCompany())

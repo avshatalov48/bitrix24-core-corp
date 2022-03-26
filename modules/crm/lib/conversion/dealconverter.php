@@ -5,6 +5,7 @@ namespace Bitrix\Crm\Conversion;
 use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\Requisite\EntityLink;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\ConversionSettings;
 use Bitrix\Crm\Synchronization\UserFieldSynchronizer;
 use Bitrix\Main;
@@ -16,13 +17,15 @@ class DealConverter extends EntityConverter
 	/** @var DealConversionMapper|null  */
 	private $mapper = null;
 
-	public function __construct(DealConversionConfig $config = null)
+	public function __construct(EntityConversionConfig $config = null)
 	{
 		if($config === null)
 		{
 			$config = new DealConversionConfig();
 		}
 		parent::__construct($config);
+
+		$this->setSourceFactory(Container::getInstance()->getFactory(\CCrmOwnerType::Deal));
 	}
 	/**
 	 * Initialize converter.
@@ -32,10 +35,7 @@ class DealConverter extends EntityConverter
 	 */
 	public function initialize()
 	{
-		if($this->currentPhase === DealConversionPhase::INTERMEDIATE)
-		{
-			$this->currentPhase = DealConversionPhase::INVOICE_CREATION;
-		}
+		$this->determineStartingPhase();
 
 		if(!\CCrmDeal::Exists($this->entityID))
 		{
@@ -124,6 +124,7 @@ class DealConverter extends EntityConverter
 	{
 		switch($this->currentPhase)
 		{
+			case static::PHASE_NEW_API:
 			case DealConversionPhase::INTERMEDIATE:
 				$this->currentPhase = DealConversionPhase::INVOICE_CREATION;
 				return true;
@@ -153,6 +154,11 @@ class DealConverter extends EntityConverter
 	 */
 	public function executePhase()
 	{
+		if (parent::executePhase())
+		{
+			return true;
+		}
+
 		if($this->currentPhase === DealConversionPhase::INVOICE_CREATION
 			|| $this->currentPhase === DealConversionPhase::QUOTE_CREATION)
 		{
@@ -171,7 +177,7 @@ class DealConverter extends EntityConverter
 			$config = $this->config->getItem($entityTypeID);
 
 
-			if(!$config->isActive())
+			if(!$config || !$config->isActive())
 			{
 				return false;
 			}

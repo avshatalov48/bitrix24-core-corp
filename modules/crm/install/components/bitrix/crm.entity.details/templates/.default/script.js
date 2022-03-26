@@ -1099,7 +1099,7 @@ if(typeof BX.Crm.EntityDetailTab === "undefined")
 		{
 			BX.addClass(this._container, "crm-entity-section-tab-content-show");
 			BX.removeClass(this._container, "crm-entity-section-tab-content-hide");
-			BX.addClass(this._menuContainer, "crm-entity-section-tab-active");
+			BX.addClass(this._menuContainer, "main-buttons-item-active");
 
 			this._container.style.display = "";
 			this._container.style.position = "absolute";
@@ -1139,7 +1139,7 @@ if(typeof BX.Crm.EntityDetailTab === "undefined")
 		{
 			BX.addClass(this._container, "crm-entity-section-tab-content-hide");
 			BX.removeClass(this._container, "crm-entity-section-tab-content-show");
-			BX.removeClass(this._menuContainer, "crm-entity-section-tab-active");
+			BX.removeClass(this._menuContainer, "main-buttons-item-active");
 
 			var hideTab = new BX.easing({
 				duration : 350,

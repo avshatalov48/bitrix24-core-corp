@@ -41,7 +41,7 @@ if (typeof(BX.FilterEntitySelector) === "undefined")
 					scope: field,
 					id: this.getId() + "-selector",
 					mode: this.getSetting("mode"),
-					query: query ? query : false,
+					query: false,
 					useSearch: true,
 					useAdd: false,
 					parent: this,
@@ -367,6 +367,7 @@ if (typeof BX.Tasks.SprintSelector === 'undefined')
 			recentTabOptions: {
 				itemOrder: null
 			},
+			selectedItems: [sprintItems[0]],
 			items: sprintItems,
 			events: {
 				'Item:onSelect': function(event) {

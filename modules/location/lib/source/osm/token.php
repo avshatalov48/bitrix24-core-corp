@@ -59,16 +59,14 @@ final class Token
 	 */
 	public static function makeFromArray(array $token): ?Token
 	{
-		$result = null;
-
 		if(empty($token['token']) || empty($token['expire']))
 		{
-			$result = new Token(
-				$token['token'],
-				$token['expire']
-			);
+			return null;
 		}
 
-		return $result;
+		return new Token(
+			$token['token'],
+			$token['expire']
+		);
 	}
 }

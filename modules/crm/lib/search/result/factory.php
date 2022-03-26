@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Search\Result;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\NotImplementedException;
 
 class Factory
@@ -20,9 +21,13 @@ class Factory
 				return new \Bitrix\Crm\Search\Result\Provider\IndexSupported\CompanyProvider();
 			case \CCrmOwnerType::Invoice:
 				return new \Bitrix\Crm\Search\Result\Provider\InvoiceProvider();
-			case \CCrmOwnerType::Quote:
-				return new \Bitrix\Crm\Search\Result\Provider\QuoteProvider();
 			default:
+				$factory = Container::getInstance()->getFactory($entityTypeId);
+				if ($factory)
+				{
+					return new \Bitrix\Crm\Search\Result\Provider\FactoryBased($factory);
+				}
+
 				throw new NotImplementedException(
 					\CCrmOwnerType::ResolveName($entityTypeId) . ' search result provider is not implemented'
 				);
@@ -46,6 +51,19 @@ class Factory
 			case \CCrmOwnerType::Quote:
 				return new \Bitrix\Crm\Search\Result\Adapter\QuoteAdapter();
 			default:
+				$factory = Container::getInstance()->getFactory($entityTypeId);
+				if ($factory)
+				{
+					if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+					{
+						return new \Bitrix\Crm\Search\Result\Adapter\DynamicAdapter($factory);
+					}
+					if ($entityTypeId === \CCrmOwnerType::SmartInvoice)
+					{
+						return new \Bitrix\Crm\Search\Result\Adapter\SmartInvoiceAdapter($factory);
+					}
+				}
+
 				throw new NotImplementedException(
 					\CCrmOwnerType::ResolveName($entityTypeId) . ' search result provider is not implemented'
 				);
@@ -54,13 +72,26 @@ class Factory
 
 	public static function getSupportedEntityTypeIds()
 	{
-		return [
+		$supportedTypes = [
 			\CCrmOwnerType::Lead,
 			\CCrmOwnerType::Deal,
 			\CCrmOwnerType::Contact,
 			\CCrmOwnerType::Company,
 			\CCrmOwnerType::Invoice,
 			\CCrmOwnerType::Quote,
+			\CCrmOwnerType::SmartInvoice,
 		];
+
+		$dynamicTypesMap = Container::getInstance()->getDynamicTypesMap()->load([
+			'isLoadStages' => false,
+			'isLoadCategories' => false,
+		]);
+
+		foreach ($dynamicTypesMap->getTypes() as $type)
+		{
+			$supportedTypes[] = $type->getEntityTypeId();
+		}
+
+		return $supportedTypes;
 	}
 }

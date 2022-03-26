@@ -488,7 +488,7 @@ class Bitrix24Manager
 			return 0;
 		}
 
-		return ((int)Option::get('crm', 'crm_deal_category_limit', 1));
+		return self::getVariable('crm_deal_category_limit');
 	}
 	//endregion
 

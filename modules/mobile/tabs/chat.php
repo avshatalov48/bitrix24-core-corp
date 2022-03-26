@@ -48,7 +48,6 @@ class Chat implements Tabable
 	{
 		return [
 			"name" => "JSComponentChatRecent",
-			"title" => Loc::getMessage("TAB_NAME_IM_RECENT"),
 			"componentCode" => "im.recent",
 			"scriptPath" => \Bitrix\MobileApp\Janative\Manager::getComponentPath("im.recent"),
 			"params" => array_merge(
@@ -64,7 +63,10 @@ class Chat implements Tabable
 			"settings" => [
 				"useSearch" => true,
 				"preload" => true,
-				"useLargeTitleMode" => true
+				"titleParams" => [
+					"useLargeTitleMode" => true,
+					"text" => Loc::getMessage("TAB_NAME_IM_RECENT_FULL")
+				],
 			],
 		];
 	}
@@ -96,11 +98,15 @@ class Chat implements Tabable
 							[
 								"TAB_CODE" => "openlines",
 								"COMPONENT_CODE" => "im.openlines.recent",
+								"MESSAGES" => [
+									"COMPONENT_TITLE" => Loc::getMessage("TAB_NAME_IM_RECENT_FULL"),
+								]
 							]
 						),
 						"settings" => array_merge(
 							$chatComponent["settings"],
 							[
+								"preload" => false,
 								"useSearch" => false,
 							]
 						),
@@ -114,47 +120,34 @@ class Chat implements Tabable
 		}
 
 		// notify
-		if ($this->isNextNotifications())
-		{
-			$notifications = [
-				"id" => "notifications",
-				"title" => Loc::getMessage("TAB_NAME_NOTIFY"),
-				"component" => [
-					"name" => "JSStackComponent",
-					"componentCode" => "im.notify",
-					"scriptPath" => \Bitrix\MobileApp\Janative\Manager::getComponentPath("im.notify"),
-					"rootWidget" => [
-						"name" => "layout",
-						"settings" => [
-							"objectName" => "layoutWidget",
-							"useLargeTitleMode" => true
-						]
-					],
+		$notifications = [
+			"id" => "notifications",
+			"title" => Loc::getMessage("TAB_NAME_NOTIFY"),
+			"component" => [
+				"name" => "JSStackComponent",
+				"componentCode" => "im.notify.legacy",
+				"scriptPath" => \Bitrix\MobileApp\Janative\Manager::getComponentPath("im.notify.legacy"),
+				"params" => [
+					"MESSAGES" => [
+						"COMPONENT_TITLE" => Loc::getMessage("TAB_NAME_IM_RECENT_FULL")
+					]
 				],
-			];
-		}
-		else
-		{
-			$notifications = [
-				"id" => "notifications",
-				"title" => Loc::getMessage("TAB_NAME_NOTIFY"),
-				"component" => [
-					"name" => "JSStackComponent",
-					"componentCode" => "im.notify.legacy",
-					"scriptPath" => \Bitrix\MobileApp\Janative\Manager::getComponentPath("im.notify.legacy"),
-					"rootWidget" => [
-						"name" => "web",
-						"settings" => [
-							"page" => [
-								"url" => $this->context->siteDir . "mobile/im/notify.php",
-								"preload" => false,
-							],
-							"objectName" => "widget",
+				"rootWidget" => [
+					"name" => "web",
+					"settings" => [
+						"page" => [
+							"url" => $this->context->siteDir . "mobile/im/notify.php?navigation",
+							"preload" => false,
+						],
+						"objectName" => "widget",
+						"titleParams" => [
+							"useLargeTitleMode" => true,
+							"text" => Loc::getMessage("TAB_NAME_IM_RECENT_FULL"),
 						],
 					],
 				],
-			];
-		}
+			],
+		];
 
 		if ($openlines)
 		{
@@ -185,7 +178,6 @@ class Chat implements Tabable
 						"text" => Loc::getMessage("TAB_NAME_IM_RECENT_FULL"),
 						"useLargeTitleMode"=>true
 					],
-					"grabTitle" => false,
 					"tabs" => [
 						"items" => $items
 					]
@@ -255,7 +247,6 @@ class Chat implements Tabable
 			"WIDGET_BACKDROP_MENU_VERSION" => \Bitrix\MobileApp\Janative\Manager::getComponentVersion('backdrop.menu'),
 			"COMPONENT_CHAT_DIALOG_VERSION" => WebComponentManager::getWebComponentVersion('im.dialog'),
 			"COMPONENT_CHAT_DIALOG_VUE_VERSION" => WebComponentManager::getWebComponentVersion('im.dialog.vue'),
-			"COMPONENT_NOTIFY_VERSION" => \Bitrix\MobileApp\Janative\Manager::getComponentVersion('im.notify'),
 
 			"MESSAGES" => [
 				"IMOL_CHAT_ANSWER_M" => \Bitrix\Im\Integration\Imopenlines\Localize::get(\Bitrix\Im\Integration\Imopenlines\Localize::FILE_LIB_CHAT, "IMOL_CHAT_ANSWER_M"),

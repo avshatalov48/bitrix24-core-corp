@@ -53,3 +53,4 @@ $MESS["CRM_ORDER_TAB_SHIPMENT"] = "Auslieferungen";
 $MESS["CRM_ORDER_TAB_TREE"] = "Verknüpfte Elemente";
 $MESS["CRM_ORDER_TITLE"] = "Bestell-ID (#ID#), ##ACCOUNT_NUMBER#";
 $MESS["CRM_ORDER_TITLE2"] = "Bestellung ##ACCOUNT_NUMBER#";
+$MESS["CATALOG_MODULE_NOT_INSTALLED"] = "Das Modul Kommerzieller Katalog ist nicht installiert.";

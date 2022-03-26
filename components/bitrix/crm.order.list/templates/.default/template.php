@@ -351,7 +351,7 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 				.'</div>'
 				.'<div>'
 					.Loc::getMessage('CRM_ORDER_LIST_SHIPMENT_PRICE').': '
-					.'<strong>'.htmlspecialcharsbx($item['PRICE_DELIVERY']).'</strong>'
+					.'<strong>'.$item['PRICE_DELIVERY'].'</strong>'
 				.'</div>'
 				.'<div>'.Loc::getMessage('CRM_ORDER_LIST_STATUS').': '.htmlspecialcharsbx($item['STATUS']).'</div>'
 				.'<div>'

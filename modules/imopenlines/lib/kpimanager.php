@@ -513,10 +513,6 @@ class KpiManager
 
 	/**
 	 * @param $sessionId
-	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function setSessionLastKpiMessageAnswered($sessionId)
 	{
