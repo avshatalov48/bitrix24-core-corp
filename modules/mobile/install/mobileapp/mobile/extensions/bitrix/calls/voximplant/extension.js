@@ -1204,50 +1204,50 @@
 		}
 	}
 
-	class VIClientWrapper
+	const VIClientWrapper =
 	{
-		static #accessToken;
-		static #accessTokenTtl;
+		accessToken: null,
+		accessTokenTtl: null,
 
-		static get token()
+		get token()
 		{
-			if (this.#accessToken && this.#accessTokenTtl && Date.now() < this.#accessTokenTtl)
+			if (this.accessToken && this.accessTokenTtl && Date.now() < this.accessTokenTtl)
 			{
-				return this.#accessToken;
+				return this.accessToken;
 			}
 			else
 			{
 				return null;
 			}
-		}
+		},
 
-		static setAccessToken(accessToken, accessExpire)
+		setAccessToken(accessToken, accessExpire)
 		{
-			this.#accessToken = accessToken;
-			this.#accessTokenTtl = Date.now() + (accessExpire * 1000)
-		}
+			this.accessToken = accessToken;
+			this.accessTokenTtl = Date.now() + (accessExpire * 1000)
+		},
 
-		static get server()
+		get server()
 		{
 			return BX.componentParameters.get('voximplantServer', '');
-		}
+		},
 
-		static set server(value)
+		set server(value)
 		{
 			BX.componentParameters.set('voximplantServer', value);
-		}
+		},
 
-		static get login()
+		get login()
 		{
 			return BX.componentParameters.get('voximplantLogin', '');
-		}
+		},
 
-		static set login(value)
+		set login(value)
 		{
 			BX.componentParameters.set('voximplantLogin', value);
-		}
+		},
 
-		static getAuthorization()
+		getAuthorization()
 		{
 			return new Promise((resolve, reject) =>
 			{
@@ -1272,9 +1272,9 @@
 					});
 				}
 			})
-		}
+		},
 
-		static tryLoginWithToken(client)
+		tryLoginWithToken(client)
 		{
 			return new Promise((resolve, reject) =>
 			{
@@ -1318,9 +1318,9 @@
 					return reject();
 				}
 			});
-		}
+		},
 
-		static tryLoginWithOneTimeKey(client)
+		tryLoginWithOneTimeKey(client)
 		{
 			return new Promise((resolve, reject) =>
 			{
@@ -1361,10 +1361,10 @@
 					});
 				})
 			});
-		}
+		},
 
 		// return connected and authenticated client
-		static getClient()
+		getClient()
 		{
 			return new Promise((resolve, reject) =>
 			{

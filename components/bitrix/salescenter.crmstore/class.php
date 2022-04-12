@@ -24,7 +24,7 @@ class SalesCenterCrmStore extends CBitrixComponent implements Controllerable
 
 	private function prepareResult()
 	{
-		if(in_array($this->getZone(), ['ru','by','kz','ua']))
+		if(in_array($this->getZone(), ['ru','by','kz']))
 		{
 			$this->arResult['URL'] = 'https://www.youtube.com/embed/NoNRcCsWmjw?feature=oembed';
 		}
@@ -36,21 +36,7 @@ class SalesCenterCrmStore extends CBitrixComponent implements Controllerable
 
 	private function getZone()
 	{
-		if (Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24'))
-		{
-			$zone = \CBitrix24::getPortalZone();
-		}
-		else
-		{
-			$iterator = Bitrix\Main\Localization\LanguageTable::getList([
-				'select' => ['ID'],
-				'filter' => ['=DEF' => 'Y', '=ACTIVE' => 'Y']
-			]);
-			$row = $iterator->fetch();
-			$zone = $row['ID'];
-		}
-
-		return $zone;
+		return \Bitrix\Main\Application::getInstance()->getLicense()->getRegion();
 	}
 
 	/**

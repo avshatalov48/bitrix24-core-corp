@@ -1,5 +1,9 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 $arActivityDescription = array(
 	'NAME' => GetMessage('CRM_CREATE_ADS_NAME'),
@@ -22,3 +26,10 @@ $arActivityDescription = array(
 		'CATEGORY' => 'ads'
 	),
 );
+
+$region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion();
+
+if ($region === null || $region === 'ru')
+{
+	$arActivityDescription['EXCLUDED'] = true;
+}

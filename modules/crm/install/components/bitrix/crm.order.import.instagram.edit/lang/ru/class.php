@@ -15,6 +15,7 @@ $MESS['CRM_OIIE_MODULE_NOT_INSTALLED_IMCONNECTOR'] = 'Модуль коннек�
 $MESS['CRM_OIIE_MODULE_NOT_INSTALLED_CRM'] = 'Модуль "CRM" не установлен';
 $MESS['CRM_OIIE_MODULE_NOT_INSTALLED_CATALOG'] = 'Модуль "Торговый каталог" не установлен';
 $MESS["CRM_OIIE_TITLE"] = "Подключение Instagram к вашему магазину";
+$MESS["CRM_OIIE_TITLE_WITH_ASTERISK"] = "Подключение Instagram* к вашему магазину";
 $MESS["CRM_OIIE_GO_TO_IMPORT"] = "Вы успешно подключили страницу - <a href=\"#LINK#\">перейти к импорту товаров</a>";
 $MESS["CRM_OIIE_IMPORT_CONNECTED"] = "Импорт товаров успешно подключен";
 $MESS["CRM_OIIE_IMPORT_DISCONNECTED"] = "Импорт товаров успешно отключен";

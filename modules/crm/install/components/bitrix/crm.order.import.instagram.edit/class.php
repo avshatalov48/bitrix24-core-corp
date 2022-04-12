@@ -13,6 +13,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
+use Bitrix\Main\Application;
 
 class CrmOrderConnectorInstagramEdit extends CBitrixComponent
 	implements \Bitrix\Main\Engine\Contract\Controllerable, \Bitrix\Main\Errorable
@@ -349,7 +350,9 @@ class CrmOrderConnectorInstagramEdit extends CBitrixComponent
 	{
 		global $APPLICATION;
 
-		$APPLICATION->SetTitle(Loc::getMessage('CRM_OIIE_TITLE'));
+		$this->arResult['NEED_RESTRICTION_NOTE'] = $this->needAsteriskForCompanyName();
+
+		$APPLICATION->SetTitle($this->getLocalizationMessage('CRM_OIIE_TITLE'));
 
 		Loc::loadMessages(__FILE__);
 
@@ -408,5 +411,38 @@ class CrmOrderConnectorInstagramEdit extends CBitrixComponent
 		}
 
 		$this->showErrors();
+	}
+
+	private function needAsteriskForCompanyName(): bool
+	{
+		static $result = null;
+		if ($result)
+		{
+			return $result;
+		}
+
+		if (LANGUAGE_ID !== 'ru')
+		{
+			$result = false;
+			return $result;
+		}
+
+		$region = Application::getInstance()->getLicense()->getRegion();
+		$result = ($region === null || $region === 'ru');
+
+		return $result;
+	}
+
+	public function getLocalizationMessage(string $code, array $replace = null): ?string
+	{
+		$result = '';
+		$asteriskPostfix = '_WITH_ASTERISK';
+
+		if ($this->needAsteriskForCompanyName())
+		{
+			$result = Loc::getMessage($code . $asteriskPostfix, $replace);
+		}
+
+		return $result ?: Loc::getMessage($code, $replace);
 	}
 }

@@ -19,6 +19,17 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'n
 
 Loc::loadMessages(__FILE__);
 
+$jsMessages = [];
+foreach (array_keys(Loc::loadLanguageFile(__FILE__)) as $code)
+{
+	if (mb_strpos($code, '_WITH_ASTERISK') !== false)
+	{
+		continue;
+	}
+
+	$jsMessages[$code] = $component->getLocalizationMessage($code);
+}
+
 $this->addExternalCss($templateFolder.'/style_settings.css');
 
 \Bitrix\Main\UI\Extension::load([
@@ -38,7 +49,7 @@ if (!$arResult['ACTIVE_STATUS'] || !$arResult['STATUS'])
 	<div class="pagetitle-container pagetitle-align-right-container">
 		<a class="ui-btn ui-btn-md ui-btn-light-border"
 				href="<?=htmlspecialcharsbx($arParams['PATH_TO_CONNECTOR_INSTAGRAM_FEEDBACK'])?>">
-			<?=Loc::getMessage('CRM_OIIE_IMPORT_FEEDBACK');?>
+			<?=$component->getLocalizationMessage('CRM_OIIE_IMPORT_FEEDBACK');?>
 		</a>
 	</div>
 	<?
@@ -101,7 +112,7 @@ if (!empty($arResult['SHOW_ACTUAL_PAGE']) && $arParams['IFRAME'])
 					<span class="crm-order-instagram-edit-header-logo"></span>
 					<div class="crm-order-instagram-edit-content-inner">
 						<div class="crm-order-instagram-edit-title">
-							<?=Loc::getMessage('CRM_OIIE_FACEBOOK_CONNECTED')?>
+							<?=$component->getLocalizationMessage('CRM_OIIE_FACEBOOK_CONNECTED')?>
 						</div>
 						<div class="crm-order-instagram-edit-disconnect">
 							<? if (empty($arResult['FORM']['USER']['INFO']['URL'])): ?>
@@ -120,7 +131,7 @@ if (!empty($arResult['SHOW_ACTUAL_PAGE']) && $arParams['IFRAME'])
 							<? endif; ?>
 							<button class="ui-btn ui-btn-sm ui-btn-light-border"
 									onclick="popupShowDisconnectImport(<?=CUtil::PhpToJSObject($arResult["CONNECTOR"])?>)">
-								<?=Loc::getMessage('CRM_OIIE_SETTINGS_DISABLE')?>
+								<?=$component->getLocalizationMessage('CRM_OIIE_SETTINGS_DISABLE')?>
 							</button>
 						</div>
 					</div>
@@ -135,11 +146,11 @@ if (!empty($arResult['SHOW_ACTUAL_PAGE']) && $arParams['IFRAME'])
 				<div class="crm-order-instagram-edit-block">
 					<div class="crm-order-instagram-edit-content-inner">
 						<div class="crm-order-instagram-edit-section">
-							<?=Loc::getMessage('CRM_OIIE_INSTAGRAM_CONNECTION_TITLE')?>
+							<?=$component->getLocalizationMessage('CRM_OIIE_INSTAGRAM_CONNECTION_TITLE')?>
 						</div>
 						<div class="crm-order-instagram-edit-desc">
 							<span class="crm-order-instagram-edit-decs-text">
-								<?=Loc::getMessage('CRM_OIIE_THERE_IS_NO_PAGE_WHERE_THE_ADMINISTRATOR')?>
+								<?=$component->getLocalizationMessage('CRM_OIIE_THERE_IS_NO_PAGE_WHERE_THE_ADMINISTRATOR')?>
 							</span>
 						</div>
 					</div>
@@ -147,12 +158,12 @@ if (!empty($arResult['SHOW_ACTUAL_PAGE']) && $arParams['IFRAME'])
 						<a href="https://www.facebook.com/pages/create/"
 								class="ui-btn ui-btn-primary"
 								target="_blank">
-							<?=Loc::getMessage('CRM_OIIE_TO_CREATE_A_PAGE')?>
+							<?=$component->getLocalizationMessage('CRM_OIIE_TO_CREATE_A_PAGE')?>
 						</a>
 						<button class="ui-btn ui-btn-light-border show-preloader-button"
 								data-entity="create-store-link"
 								style="display: none;">
-							<?=Loc::getMessage('CRM_OIIE_CREATE_WITHOUT_CONNECTION')?>
+							<?=$component->getLocalizationMessage('CRM_OIIE_CREATE_WITHOUT_CONNECTION')?>
 						</button>
 					</div>
 				</div>
@@ -176,7 +187,7 @@ if (!empty($arResult['SHOW_ACTUAL_PAGE']) && $arParams['IFRAME'])
 	<script>
 		BX.ready(function()
 		{
-			BX.message(<?=CUtil::PhpToJSObject(Loc::loadLanguageFile(__FILE__))?>);
+			BX.message(<?=CUtil::PhpToJSObject($jsMessages)?>);
 
 			window.top.BX.UI.Notification.Center.setStackDefaults(
 				window.top.BX.UI.Notification.Position.TOP_RIGHT,
@@ -206,3 +217,9 @@ if (!empty($arResult['SHOW_ACTUAL_PAGE']) && $arParams['IFRAME'])
 		});
 	</script>
 </div>
+
+<?php if ($arResult['NEED_RESTRICTION_NOTE']): ?>
+	<div class="crm-order-instagram-edit-restriction">
+		<?=$component->getLocalizationMessage("CRM_OUIE_META_RESTRICTION")?>
+	</div>
+<?php endif ?>

@@ -10,4 +10,5 @@ $MESS["FACEID_TRACKERWD_CMP_ERROR_TIMEMAN_DISABLED"] = "Для сотрудни�
 $MESS["FACEID_TRACKERWD_CMP_ERROR_USER_NOT_FOUND_LOCAL"] = "Пользователь не найден в базе данных";
 $MESS["FACEID_TRACKERWD_CMP_ERROR_NO_FACE_LOCAL"] = "Лицо не найдено в базе данных";
 $MESS["FACEID_TRACKERWD_CMP_ERROR_INDEX_DISABLED"] = "Вам необходимо включить индексацию фотографий сотрудников на своем портале в разделе \"Время и отчеты\" - \"Bitrix24.Time\"";
+$MESS["FACEID_TRACKERWD_CMP_ERROR_CLOSED"] = "Сервис Bitrix24.Time прекратил свою работу";
 ?>

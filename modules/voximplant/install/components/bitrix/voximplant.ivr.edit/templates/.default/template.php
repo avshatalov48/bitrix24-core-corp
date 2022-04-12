@@ -4,7 +4,13 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
  * @global array $arResult
  */
 
-CJSCore::Init(array('voximplant.common', 'socnetlogdest', 'phone_number', 'sidepanel'));
+CJSCore::Init([
+	'voximplant.common',
+	'socnetlogdest',
+	'phone_number',
+	'sidepanel',
+	'ui.alerts',
+]);
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/components/bitrix/player/mediaplayer/jwplayer.js');
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/voximplant.config.edit/templates/.default/style.css');
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/css/main/font-awesome.css');
@@ -84,7 +90,8 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 		ivrEditor = new BX.IvrEditor({
 			node: BX('vox-ivr-editor'),
 			isNew: <?= ($arResult['NEW'] ? 'true' : 'false')?>,
-			ivrData: <?= CUtil::PhpToJSObject($arResult['IVR'])?>
+			ivrData: <?= CUtil::PhpToJSObject($arResult['IVR'])?>,
+			ttsDisclaimer: '<?= CUtil::JSEscape($arResult['TTS_DISCLAIMER']) ?>',
 		});
 
 		ivrEditor.init();

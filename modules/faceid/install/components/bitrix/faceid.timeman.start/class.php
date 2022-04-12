@@ -11,7 +11,13 @@ class FaceidTimemanStartComponent extends CBitrixComponent
 	public function executeComponent()
 	{
 		// disabled for some portals
-		if (!\Bitrix\FaceId\FaceId::isAvailable())
+		if (Bitrix\Faceid\FaceId::isClosed())
+		{
+			// continue with current template
+			$this->includeComponentTemplate();
+			return;
+		}
+		elseif (!\Bitrix\FaceId\FaceId::isAvailable())
 		{
 			die;
 		}

@@ -1,8 +1,8 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
 	die();
-
-use \Bitrix\Main\Localization\Loc;
+}
 
 /**
  *  @var array $arParams
@@ -17,7 +17,7 @@ use \Bitrix\Main\Localization\Loc;
 <div class="crm-order-instagram-edit-block">
 	<div class="crm-order-instagram-edit-content-inner">
 		<div class="crm-order-instagram-edit-section">
-			<?=Loc::getMessage('CRM_OIIE_SELECT_THE_PAGE')?>
+			<?=$component->getLocalizationMessage('CRM_OIIE_SELECT_THE_PAGE')?>
 		</div>
 		<?
 		foreach ($arResult['FORM']['PAGES'] as $page)
@@ -54,8 +54,8 @@ use \Bitrix\Main\Localization\Loc;
 						<button type="submit"
 								name="<?=$arResult["CONNECTOR"]?>_authorization_page"
 								class="ui-btn ui-btn-sm ui-btn-primary"
-								value="<?=Loc::getMessage('CRM_OIIE_SETTINGS_TO_CONNECT')?>">
-							<?=Loc::getMessage('CRM_OIIE_SETTINGS_TO_CONNECT')?>
+								value="<?=$component->getLocalizationMessage('CRM_OIIE_SETTINGS_TO_CONNECT')?>">
+							<?=$component->getLocalizationMessage('CRM_OIIE_SETTINGS_TO_CONNECT')?>
 						</button>
 					</form>
 				</div>

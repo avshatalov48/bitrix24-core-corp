@@ -224,7 +224,7 @@ class WebFormScenarioService
 				ScenarioMenuItem::ACTIONS['id'],
 				ScenarioMenuItem::DEFAULT_VALUES['id'],
 				ScenarioMenuItem::ANALYTICS['id'],
-				ScenarioMenuItem::FACEBOOK['id'],
+				$this->isRegionRussian(true) ? null : ScenarioMenuItem::FACEBOOK['id'],
 				$this->isRegionRussian() ? ScenarioMenuItem::VK['id'] : null,
 				ScenarioMenuItem::CALLBACK['id'],
 				ScenarioMenuItem::DESIGN['id'],
@@ -391,14 +391,17 @@ class WebFormScenarioService
 				Loc::getMessage('CRM_SERVICE_FORM_SCENARIO_FEEDBACK_SUCCESS_TEXT'),
 				Loc::getMessage('CRM_SERVICE_FORM_SCENARIO_FEEDBACK_FAILURE_TEXT'),
 			)
-			->addDocumentScheme(Entity::ENUM_ENTITY_SCHEME_DEAL)
-		;
+			->addDocumentScheme(Entity::ENUM_ENTITY_SCHEME_DEAL);
 
 		$this->prepareDealAndResponsibilitiesConfiguration($optionBuilder, false);
 
+		$canUse = ($serviceMenuItem !== ScenarioMenuItem::VK['id'] || $this->isRegionRussian())
+			&& ($serviceMenuItem !== ScenarioMenuItem::FACEBOOK['id'] || !$this->isRegionRussian(true))
+		;
+
 		return $baseScenario->setCategory(ScenarioCategory::SOCIAL)
 			->setCreateDateInTitle(true)
-			->setCanUse($serviceMenuItem !== ScenarioMenuItem::VK['id'] || $this->isRegionRussian())
+			->setCanUse($canUse)
 			->setMenuItems([
 				ScenarioMenuItem::CRM['id'],
 				$serviceMenuItem,
@@ -700,9 +703,9 @@ class WebFormScenarioService
 		;
 	}
 
-	private function isRegionRussian(): bool
+	private function isRegionRussian(bool $onlyRu = false): bool
 	{
-		return Product::isRegionRussian();
+		return Product::isRegionRussian($onlyRu);
 	}
 
 	private function prepareDependencyScenario(BaseScenario $baseScenario, array $fields, array $dependencies = []): BaseScenario

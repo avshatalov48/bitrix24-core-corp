@@ -1,6 +1,8 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
 	die();
+}
 
 use \Bitrix\Main\Localization\Loc;
 
@@ -22,7 +24,7 @@ $logo = !empty($arResult['FORM']['PAGE']['INSTAGRAM']['PROFILE_PICTURE_URL'])
 <div class="crm-order-instagram-edit-block">
 	<div class="crm-order-instagram-edit-content-inner">
 		<div class="crm-order-instagram-edit-section">
-			<?=Loc::getMessage('CRM_OIIE_INSTAGRAM_CONNECTED_ACCOUNT')?>
+			<?=$component->getLocalizationMessage('CRM_OIIE_INSTAGRAM_CONNECTED_ACCOUNT')?>
 		</div>
 		<div class="crm-order-instagram-edit-connect">
 			<? if (empty($arResult['FORM']['PAGE']['INSTAGRAM']['USERNAME'])): ?>
@@ -48,12 +50,12 @@ $logo = !empty($arResult['FORM']['PAGE']['INSTAGRAM']['PROFILE_PICTURE_URL'])
 				<input type="hidden" name="page_id" value="<?=$arResult["FORM"]["PAGE"]["ID"]?>">
 				<input type="hidden"
 						name="<?=$arResult["CONNECTOR"]?>_del_page"
-						value="<?=Loc::getMessage('CRM_OIIE_DEL_REFERENCE')?>">
+						value="<?=$component->getLocalizationMessage('CRM_OIIE_DEL_REFERENCE')?>">
 				<?=bitrix_sessid_post();?>
 			</form>
 			<button class="ui-btn ui-btn-sm ui-btn-light-border"
 					onclick="popupShowDisconnectPage(<?=CUtil::PhpToJSObject($arResult["CONNECTOR"])?>)">
-				<?=Loc::getMessage('CRM_OIIE_DEL_REFERENCE')?>
+				<?=$component->getLocalizationMessage('CRM_OIIE_DEL_REFERENCE')?>
 			</button>
 		</div>
 	</div>
@@ -63,7 +65,7 @@ $logo = !empty($arResult['FORM']['PAGE']['INSTAGRAM']['PROFILE_PICTURE_URL'])
 		?>
 		<div class="crm-order-instagram-edit-content-inner">
 			<div class="crm-order-instagram-edit-dropdown-button" id="toggle-list">
-				<?=Loc::getMessage('CRM_OIIE_INSTAGRAM_OTHER_ACCOUNTS')?>
+				<?=$component->getLocalizationMessage('CRM_OIIE_INSTAGRAM_OTHER_ACCOUNTS')?>
 			</div>
 			<div class="crm-order-instagram-edit-box-hidden" id="hidden-list" style="display: none;">
 				<?
@@ -100,12 +102,12 @@ $logo = !empty($arResult['FORM']['PAGE']['INSTAGRAM']['PROFILE_PICTURE_URL'])
 								<input type="hidden" name="page_id"
 										value="<?=$page["INFO"]["ID"]?>">
 								<input type="hidden" name="<?=$arResult["CONNECTOR"]?>_authorization_page"
-										value="<?=Loc::getMessage('CRM_OIIE_SETTINGS_TO_CONNECT')?>">
+										value="<?=$component->getLocalizationMessage('CRM_OIIE_SETTINGS_TO_CONNECT')?>">
 								<?=bitrix_sessid_post();?>
 							</form>
 							<button class="ui-btn ui-btn-sm ui-btn-light-border"
 									onclick="popupShowChangePage(<?=CUtil::PhpToJSObject($arResult["CONNECTOR"])?>)">
-								<?=Loc::getMessage('CRM_OIIE_SETTINGS_TO_CONNECT')?>
+								<?=$component->getLocalizationMessage('CRM_OIIE_SETTINGS_TO_CONNECT')?>
 							</button>
 						</div>
 						<?

@@ -5,6 +5,7 @@ export const PopupWrapperComponent = {
 	components: {LoaderComponent, ContentComponent},
 	props: [
 		"licenseType",
+		"isExperimentalTemplate",
 	],
 	data()
 	{
@@ -57,6 +58,7 @@ export const PopupWrapperComponent = {
 				:isAdmin="isAdmin"
 				:isCloud="isCloud"
 				:partner="partner"
+				:isExperimentalTemplate="isExperimentalTemplate"
 			>
 			</ContentComponent>
 		</div>

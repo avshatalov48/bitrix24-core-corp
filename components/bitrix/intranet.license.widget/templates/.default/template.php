@@ -6,6 +6,11 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
+$isExperimentalTrialTemplate = !in_array(\CBitrix24::getPortalZone(), ['ru', 'kz', 'by']);
+if ($isExperimentalTrialTemplate)
+{
+	$arResult['buttonName'] = Loc::getMessage('INTRANET_LICENSE_WIDGET_START_FREE_TRIAL');
+}
 
 \Bitrix\Main\UI\Extension::load(['ui.button', 'ui.vue', 'ui.feedback.form']);
 
@@ -31,6 +36,7 @@ $frame = $this->createFrame()->begin();
 			isLicenseAlmostExpired: '<?=$arResult['isLicenseAlmostExpired'] ? 'Y' : 'N'?>',
 			isLicenseExpired: '<?=$arResult['isLicenseExpired'] ? 'Y' : 'N'?>',
 			isAlmostLocked: '<?=$arResult['isAlmostLocked'] ? 'Y' : 'N'?>',
+			isExperimentalTemplate: '<?=$isExperimentalTrialTemplate ? 'Y': 'N'?>',
 		});
 	});
 </script>

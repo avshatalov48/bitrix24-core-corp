@@ -18,6 +18,7 @@ class LicenseWidget
 		this.isLicenseAlmostExpired = params.isLicenseAlmostExpired === "Y";
 		this.isLicenseExpired = params.isLicenseExpired === "Y";
 		this.isAlmostLocked = params.isAlmostLocked === "Y";
+		this.isExperimentalTemplate = params.isExperimentalTemplate === "Y";
 		this.licenseType = params.licenseType;
 		this.node = params.wrapper;
 
@@ -39,6 +40,7 @@ class LicenseWidget
 					isLicenseAlmostExpired: LicenceWidgetInstance.isLicenseAlmostExpired,
 					isLicenseExpired: LicenceWidgetInstance.isLicenseExpired,
 					isAlmostLocked: LicenceWidgetInstance.isAlmostLocked,
+					isExperimentalTemplate: LicenceWidgetInstance.isExperimentalTemplate,
 				};
 			},
 			computed:
@@ -95,7 +97,9 @@ class LicenseWidget
 
 						if (this.isFreeLicense)
 						{
-							buttonName = BX.message("INTRANET_LICENSE_WIDGET_BUY_TARIFF");
+							buttonName = (this.isExperimentalTemplate ?
+								BX.message("INTRANET_LICENSE_WIDGET_START_FREE_TRIAL") :
+								BX.message("INTRANET_LICENSE_WIDGET_BUY_TARIFF"));
 						}
 						else if (this.isDemoLicense)
 						{
@@ -189,6 +193,7 @@ class LicenseWidget
 			{
 				return {
 					licenseType: LicenceWidgetInstance.licenseType,
+					isExperimentalTemplate: LicenceWidgetInstance.isExperimentalTemplate,
 				};
 			},
 			computed: {
@@ -200,6 +205,7 @@ class LicenseWidget
 			template: `
 				<PopupWrapperComponent
 					:licenseType="licenseType"
+					:isExperimentalTemplate="isExperimentalTemplate"
 				/>`,
 		});
 

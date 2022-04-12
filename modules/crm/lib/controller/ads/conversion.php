@@ -9,12 +9,12 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Engine\Controller;
+use Bitrix\Crm\Integration;
 use Bitrix\Crm\WebForm\Internals;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Ads\Pixel\Configuration\Configuration;
 use Bitrix\Main\NotSupportedException;
 use Bitrix\Bitrix24\Feature;
-use Bitrix\Main\SystemException;
 
 class Conversion extends Controller
 {
@@ -44,6 +44,11 @@ class Conversion extends Controller
 				new Error("Not accessible.", 100)
 			);
 
+			return false;
+		}
+
+		if (Integration\Bitrix24\Product::isRegionRussian(true))
+		{
 			return false;
 		}
 
@@ -86,7 +91,7 @@ class Conversion extends Controller
 		return
 			$locator->has('seo.business.service') &&
 			$locator->has('crm.service.ads.conversion.configurator')
-			;
+		;
 	}
 
 	protected function processBeforeAction(Action $action) : bool

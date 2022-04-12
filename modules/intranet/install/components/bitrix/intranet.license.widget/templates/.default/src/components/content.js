@@ -12,6 +12,7 @@ export const ContentComponent = {
 		"isAdmin",
 		"isCloud",
 		"partner",
+		"isExperimentalTemplate",
 	],
 	computed: {
 		localize(state)
@@ -228,7 +229,16 @@ export const ContentComponent = {
 							: localize.INTRANET_LICENSE_WIDGET_PROLONG
 						}}
 					</span>
-					<a v-else key="licenseButton" :href="license.allPath" target="_blank" class="license-widget-item-btn">
+					<a v-else-if="isExperimentalTemplate && (license.isFreeTariff && !license.isDemo)" key="licenseButton"
+						:href="license.demoPath" target="_blank" 
+						class="license-widget-item-btn license-widget-item-btn--orange">
+						{{
+							localize.INTRANET_LICENSE_WIDGET_START_FREE_TRIAL_TITLE
+						}}
+					</a>
+					<a v-else key="licenseButton" :href="license.allPath" target="_blank" 
+						class="license-widget-item-btn"
+						>
 						{{
 							license.isFreeTariff || license.isDemo
 							? localize.INTRANET_LICENSE_WIDGET_BUY
@@ -297,7 +307,6 @@ export const ContentComponent = {
 									v-html="telephony.balanceFormatted"
 								>
 								</div>
-
 								<a
 									v-if="!telephony.isConnected"
 									:href="telephony.buyPath"
@@ -311,10 +320,20 @@ export const ContentComponent = {
 						</div>
 					</div>
 				</div>
-
 				<div class="license-widget-item" :class="{ 'license-widget-item--active' : license.isDemo }">
 					<div class="license-widget-inner">
-						<div class="license-widget-content">
+						<div v-if="isExperimentalTemplate && !license.isDemo && license.isDemoAvailable" class="license-widget-content" >
+							<div class="license-widget-item-icon license-widget-item-icon--demo"></div>
+							<div class="license-widget-item-content">
+								<div class="license-widget-item-name">
+									<span>{{ localize.INTRANET_LICENSE_WIDGET_BUY_HEADER }}</span>
+								</div>
+								<a :href="license.allPath" class="license-widget-item-btn" target="_blank">
+									{{ localize.INTRANET_LICENSE_WIDGET_BUY }}
+								</a>
+							</div>
+						</div>
+						<div v-else class="license-widget-content">
 							<div
 								class="license-widget-item-icon"
 								:class="[

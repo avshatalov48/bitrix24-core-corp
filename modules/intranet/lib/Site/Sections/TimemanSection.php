@@ -73,8 +73,8 @@ class TimemanSection
 	{
 		$available =
 			static::isBitrix24()
-				? static::isTimemanAvailable() && Loader::includeModule('faceid') && FaceId::isAvailable()
-				: Loader::includeModule('faceid') && FaceId::isAvailable()
+				? static::isTimemanAvailable() && static::isBitrix24TimeAvailable()
+				: static::isBitrix24TimeAvailable()
 		;
 
 		return [
@@ -86,6 +86,27 @@ class TimemanSection
 				'menu_item_id' => 'menu_bitrix24time',
 			],
 		];
+	}
+
+	public static function isBitrix24TimeAvailable()
+	{
+		//return Loader::includeModule('faceid') && FaceId::isClosed();
+
+		if (Loader::includeModule('faceid'))
+		{
+			$last = \Bitrix\Faceid\TrackingWorkdayTable::query()
+				->addSelect('DATE')
+				->addOrder('ID', 'DESC')
+				->setLimit(1)
+				->fetch();
+
+			if (!empty($last['DATE']) && (time() - $last['DATE']->getTimestamp()) < 3600*24*120)
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	public static function getMonitorReport(): array

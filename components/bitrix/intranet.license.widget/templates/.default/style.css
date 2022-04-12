@@ -306,7 +306,6 @@
 	white-space: nowrap;
 	text-overflow: ellipsis;
 }
-
 .license-widget-inner-addon .license-widget-item-btn {
 	height: 21px;
 	line-height: 19px;
@@ -359,6 +358,21 @@
 }
 
 .license-widget-item--wide .license-widget-item-btn { margin-top: 0; }
+
+.license-widget-item .license-widget-item-btn.license-widget-item-btn--orange {
+	background: rgba(255,169,0,.4);
+	color: #525c69;
+	border: none;
+	box-shadow: none;
+}
+
+.license-widget-item:hover .license-widget-item-btn.license-widget-item-btn--orange {
+	background: rgba(255,169,0,.5);
+}
+
+.license-widget-item .license-widget-inner .license-widget-item-btn.license-widget-item-btn--orange:hover {
+	background: rgba(255,169,0,.6);
+}
 
 .license-widget-item--main .license-widget-item-btn--free {
 	background: #c9ed4c;

@@ -33,6 +33,7 @@
 	{
 		this.node = params.node;
 		this.isNew = params.isNew;
+		this.ttsDisclaimer = params.ttsDisclaimer;
 		if(this.isNew)
 		{
 			this.ivrData = {
@@ -214,7 +215,8 @@
 			textInputContainer: null,
 			additionalTtsBlock: null,
 			ivrExitHint: null,
-			textInput: null
+			textInput: null,
+			ttsDisclaimer: null
 		};
 
 		var result = BX.create("div", {children: [
@@ -234,7 +236,7 @@
 								switch (itemDescriptor.TYPE)
 								{
 									case 'file':
-										self.hide(subElements.textInputContainer);
+										self.hide([subElements.textInputContainer, subElements.ttsDisclaimer]);
 										self.show([subElements.fileUploader, subElements.fileDescription]);
 										if(itemDescriptor._uploader)
 										{
@@ -242,13 +244,34 @@
 										}
 										break;
 									case 'message':
-										self.show(subElements.textInputContainer);
+										self.show([subElements.textInputContainer, subElements.ttsDisclaimer]);
 										self.hide([subElements.fileUploader, subElements.fileDescription]);
 										break;
 								}
 							}
 					}}),
 					subElements.fileUploader = BX.create("div", {props: {className: 'ivr-uploader-container'}, style: (itemDescriptor.TYPE == 'message' ? {display: 'none'} : {})})
+				]}),
+				subElements.ttsDisclaimer = BX.create("div", {
+					props: {className: 'ivr-block-row'},
+					style: (itemDescriptor.TYPE == 'file') ? {display: 'none'} : {},
+					children: [
+					BX.create("div", {
+						props: {className: 'ui-alert ui-alert-warning ui-alert-icon-danger ',},
+						children: [
+							BX.create("span", {
+								props: {className: 'ui-alert-message'},
+								html: this.ttsDisclaimer
+							}),
+							BX.create("span", {
+								props: {className: 'ui-alert-close-btn'},
+								events: {
+									click: () => this.hide(subElements.ttsDisclaimer)
+								}
+							}),
+
+						]
+					}),
 				]}),
 				subElements.fileDescription = BX.create("div", {
 					props: {className: 'ivr-block-row'},

@@ -207,7 +207,11 @@ class Provider
 				],
 				'UTM_CONTENT' => 'cid|{campaignid}|gid|{adgroupid}|kwid|{targetid}',
 			],
-			[
+		];
+
+		if (!Product::isRegionRussian(true))
+		{
+			$list[] = [
 				'CODE' => 'fb',
 				'ICON_CLASS' => 'ui-icon ui-icon-service-fb',
 				'ICON_COLOR' => '#38659f',
@@ -218,8 +222,9 @@ class Provider
 					? ['www.facebook.com', 'facebook.com']
 					: [],
 				'UTM_CONTENT' => 'cid|{{campaign.id}}|gid|{{adset.id}}|kwid|{{ad.id}}',
-			],
-			[
+			];
+
+			$list[] = [
 				'CODE' => 'instagram',
 				'ICON_CLASS' => 'ui-icon ui-icon-service-instagram',
 				'ICON_COLOR' => '#d56c9a',
@@ -228,9 +233,10 @@ class Provider
 				'HAS_PATH_TO_LIST' => true,
 				'REF_DOMAIN' => Settings::isSocialRefDomainUsed()
 					? ['www.instagram.com', 'instagram.com']
-					: [],
-			],
-		];
+					: []
+				,
+			];
+		}
 
 		if (Product::isRegionRussian())
 		{
@@ -401,6 +407,11 @@ class Provider
 			{
 				$item = ['NAME' => $item['NAME']] + $adsSources[$item['CODE']] + $item;
 				$adsSources[$item['CODE']]['SAVED'] = true;
+			}
+
+			if (!isset($adsSources[$item['CODE']]))
+			{
+				$item['CODE'] = '';
 			}
 
 			if (!$item['CODE'])

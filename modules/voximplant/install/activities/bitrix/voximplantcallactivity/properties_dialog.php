@@ -37,6 +37,7 @@ if (empty($outputNumber)):?>
 			function __BPVICA_change(v)
 			{
 				document.getElementById("bpvica_text").style.display = v == 'Y'? 'none' : '';
+				document.getElementById("bpvica_text-alert").style.display = v == 'Y'? 'none' : '';
 				document.getElementById("bpvica_voice_language").style.display = v == 'Y'? 'none' : '';
 				document.getElementById("bpvica_voice_speed").style.display = v == 'Y'? 'none' : '';
 				document.getElementById("bpvica_voice_volume").style.display = v == 'Y'? 'none' : '';
@@ -49,6 +50,15 @@ if (empty($outputNumber)):?>
 		</select>
 	</td>
 </tr>
+
+<tr id="bpvica_text-alert" <?if ($currentValues['use_audio_file'] == 'Y'):?> style="display: none" <?endif?>>
+	<td align="right" width="40%" valign="top" colspan="2" style="color: red">
+		<div class="ui-alert ui-alert-warning ui-alert-icon-danger">
+			<div class="ui-alert-message"><?= Bitrix\Voximplant\Tts\Disclaimer::getHtml() ?></div>
+		</div>
+	</td>
+</tr>
+
 <tr id="bpvica_text" <?if ($currentValues['use_audio_file'] == 'Y'):?> style="display: none" <?endif?>>
 	<td align="right" width="40%" valign="top"><span class="adm-required-field"><?= GetMessage("BPVICA_PD_TEXT") ?>:</span></td>
 	<td width="60%" valign="top">

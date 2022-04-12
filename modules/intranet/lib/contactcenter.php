@@ -1155,11 +1155,17 @@ class ContactCenter
 
 		$codeMap = \Bitrix\Crm\Ads\AdsForm::getAdsIconMap();
 		$cisCheck = $this->cisCheck() && $filter["CHECK_REGION"] !== "N";
+		$isRuPortal = $this->isRuZone() && $filter["CHECK_REGION"] !== "N";
 
 		$itemsList = [];
 		foreach (\Bitrix\Crm\Ads\AdsForm::getServiceTypes() as $type)
 		{
 			if ($cisCheck && $type === \Bitrix\Seo\LeadAds\Service::TYPE_VKONTAKTE)
+			{
+				continue;
+			}
+
+			if ($isRuPortal && $type === \Bitrix\Seo\LeadAds\Service::TYPE_FACEBOOK)
 			{
 				continue;
 			}
@@ -1405,6 +1411,22 @@ class ContactCenter
 		}
 
 		return $this->cisCheck;
+	}
+
+	/**
+	 * Checks if the portal is in RU zone.
+	 *
+	 * @return boolean
+	 */
+	public function isRuZone(): bool
+	{
+		$region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion();
+		if (is_null($region) || mb_strtolower($region) === 'ru')
+		{
+			return true;
+		}
+
+		return false;
 	}
 
 	/**

@@ -14,6 +14,7 @@ use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\IO\Directory;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\DateTime;
 
 Loc::loadMessages(__FILE__);
 
@@ -39,8 +40,16 @@ class FaceId
 	const CODE_OK_UNKNOWN_PERSON = 'OK_UNKNOWN_PERSON';
 	const CODE_OK_NOT_FOUND = 'OK_NOT_FOUND'; // when deleting user
 
+	/**
+	 * Checks if faceid is allowed
+	 *
+	 * @return bool
+	 * @throws \Bitrix\Main\LoaderException
+	 */
 	public static function isAvailable()
 	{
+		return false;
+
 		if (Loader::includeModule('bitrix24'))
 		{
 			// check for b24 conditions
@@ -68,6 +77,28 @@ class FaceId
 		}
 
 		return true;
+	}
+
+	/**
+	 * Alternative for isAvailable(), allows showing final notice
+	 *
+	 * @return bool
+	 */
+	public static function isClosed()
+	{
+		/** @var DateTime[] $last */
+		$last = \Bitrix\Faceid\TrackingWorkdayTable::query()
+			->addSelect('DATE')
+			->addOrder('ID', 'DESC')
+			->setLimit(1)
+			->fetch();
+
+		if (!empty($last['DATE']) && (time() - $last['DATE']->getTimestamp()) < 3600*24*120)
+		{
+			return true;
+		}
+
+		return false;
 	}
 
 	public static function insertIntoCrmMenu(&$items)

@@ -13,6 +13,25 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.ph
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Timeman\Model\Schedule\ScheduleTable;
 
+// disabled
+$actionStatus = 'ERROR';
+$errorResponse = array(
+	'msg' => Loc::getMessage('FACEID_TRACKERWD_CMP_ERROR_CLOSED')
+);
+
+// output
+echo \Bitrix\Main\Web\Json::encode([
+	'visitor' => [],
+	'action' => $actionStatus,
+	'status' => [
+		'balance' => 0,
+	],
+	'portal' => [],
+	'error' => $errorResponse
+], JSON_FORCE_OBJECT);
+
+die;
+
 // check permissions
 $accessAllowed = false;
 $acceptedAgreement = \Bitrix\Faceid\AgreementTable::checkUser($USER->getId());

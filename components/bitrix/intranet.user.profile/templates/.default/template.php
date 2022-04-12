@@ -415,6 +415,22 @@ if (
 	</div>
 	<div class="intranet-user-profile-column-right">
 		<?
+		//region Ru-zone notification
+		$showRuNotification = false;
+		if (LANGUAGE_ID === 'ru'
+			&& method_exists(\Bitrix\Main\Application::getInstance(), 'getLicense')
+			&& ($region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion())
+			&& (is_null($region) || mb_strtolower($region) === 'ru'))
+		{
+			array_walk($arResult["FormFields"], function(&$item) use (&$showRuNotification) {
+				if (is_array($item) && $item['name'] === 'UF_FACEBOOK')
+				{
+					$showRuNotification = true;
+					$item['title'] = '*'.$item['title'];
+				}
+			});
+		}
+		//endregion
 		$APPLICATION->IncludeComponent(
 			"bitrix:ui.form",
 			"",
@@ -648,7 +664,17 @@ if (
 				</div>
 			</div><?
 		}
-	?>
+		if ($showRuNotification === true)
+		{
+			?>
+				<div class="intranet-user-profile-container">
+						<div class="intranet-user-profile-container-body-title">
+							<?=Loc::getMessage("INTRANET_USER_PROFILE_FACEBOOK_RESTRICTIONS_META_RU")?>
+						</div>
+				</div>
+			<?
+		}
+		?>
 	</div>
 </div>
 <div class="intranet-user-profile-bottom-controls">

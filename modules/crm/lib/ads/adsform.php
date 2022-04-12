@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Ads;
 
+use Bitrix\Crm\Integration;
 use Bitrix\Crm\WebForm\Form;
 use Bitrix\Crm\Ads\Form\FieldMapper;
 use Bitrix\Crm\WebForm\Internals\FormFieldMappingTable;
@@ -44,6 +45,11 @@ class AdsForm extends AdsService
 		foreach (parent::getServiceTypes() as $type)
 		{
 			if ($type === LeadAds\Service::TYPE_VKONTAKTE && self::isDisabled())
+			{
+				continue;
+			}
+
+			if ($type === LeadAds\Service::TYPE_FACEBOOK && Integration\Bitrix24\Product::isRegionRussian(true))
 			{
 				continue;
 			}

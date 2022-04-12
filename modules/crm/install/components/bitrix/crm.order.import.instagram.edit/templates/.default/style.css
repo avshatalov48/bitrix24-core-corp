@@ -170,3 +170,9 @@
 .instagram-app-link:hover {
 	border-color: rgba(39, 107, 179, .8);
 }
+
+.crm-order-instagram-edit-restriction {
+	font: 13px/19px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #828B95;
+	margin: 15px 0 0;
+}

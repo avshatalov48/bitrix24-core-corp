@@ -315,11 +315,11 @@ class CVoximplantIvrEditComponent extends \CBitrixComponent
 		{
 			$result['STRUCTURE'] = CSocNetLogDestination::GetStucture();
 		}
-
-		if($ivr instanceof \Bitrix\Voximplant\Ivr\Ivr)
+		if(isset($ivr) && $ivr instanceof \Bitrix\Voximplant\Ivr\Ivr)
 		{
 			$result['USERS'] = $this->resolveUsers($ivr->toArray());
 		}
+		$result['TTS_DISCLAIMER'] = \Bitrix\Voximplant\Tts\Disclaimer::getHtml();
 		
 		return $result;
 	}

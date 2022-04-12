@@ -33,6 +33,11 @@ if (empty($outputNumber)):?>
 			<option value="Y"<?= $currentValues['use_audio_file'] == 'Y' ? " selected" : "" ?>><?= GetMessage("BPVICA_RPD_CALL_TYPE_AUDIO") ?></option>
 		</select>
 	</div>
+
+	<div id="bpvica_text-alert" class="ui-alert ui-alert-warning ui-alert-icon-danger" <?if ($currentValues['use_audio_file'] == 'Y'):?> style="display: none" <?endif?>>
+		<div class="ui-alert-message"><?= Bitrix\Voximplant\Tts\Disclaimer::getHtml() ?></div>
+	</div>
+
 	<div class="bizproc-automation-popup-settings" id="bpvica_text" <?if ($currentValues['use_audio_file'] == 'Y'):?> style="display: none" <?endif?>>
 		<?= $dialog->renderFieldControl($map['Text'])?>
 	</div>
@@ -70,6 +75,7 @@ if (empty($outputNumber)):?>
 		function __BPVICA_change(v)
 		{
 			document.getElementById("bpvica_text").style.display = v == 'Y'? 'none' : '';
+			document.getElementById("bpvica_text-alert").style.display = v == 'Y'? 'none' : '';
 			document.getElementById("bpvica_voice_language").style.display = v == 'Y'? 'none' : '';
 			document.getElementById("bpvica_voice_speed").style.display = v == 'Y'? 'none' : '';
 			document.getElementById("bpvica_voice_volume").style.display = v == 'Y'? 'none' : '';
