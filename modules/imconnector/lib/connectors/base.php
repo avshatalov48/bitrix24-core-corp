@@ -132,6 +132,19 @@ class Base
 		return $this->processingInputUpdateMessage($message, $line);
 	}
 
+	public function processingInputWelcomeMessage(array $message, int $line): Result
+	{
+		$result = new Result();
+
+		$result->addError(new Error(
+			'Does not support this method call',
+			'ERROR_IMCONNECTOR_DOES_NOT_SUPPORT_THIS_METHOD_CALL',
+			__METHOD__
+		));
+
+		return $result;
+	}
+
 	/**
 	 * @param $params
 	 * @param $line

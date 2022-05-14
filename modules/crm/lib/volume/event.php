@@ -837,6 +837,7 @@ class Event
 				->setLimit(self::MAX_FILE_PER_INTERACTION)
 				->setOrder(array('EVENT_ID' => 'ASC'))
 				->whereNotNull('FILES')
+				->where('FILES', '<>', '')
 			;
 			/*
 			if ($this->getProcessOffset() > 0)

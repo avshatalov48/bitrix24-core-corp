@@ -3,17 +3,20 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
+
+use Bitrix\Main;
+
 /** @var array $arParams */
 
-CJSCore::RegisterExt('popup_menu', array('js' => array('/bitrix/js/main/popup_menu.js')));
-
-\Bitrix\Main\UI\Extension::load("ui.buttons");
-\Bitrix\Main\UI\Extension::load("ui.buttons.icons");
+CJSCore::RegisterExt('popup_menu', ['js' => ['/bitrix/js/main/popup_menu.js']]);
+Main\UI\Extension::load([
+	'ui.buttons',
+	'ui.buttons.icons'
+]);
 
 $toolbarId = $arParams['TOOLBAR_ID'];
-
-$items = array();
-$moreItems = array();
+$items = [];
+$settingsItems = [];
 $enableMoreButton = false;
 
 foreach($arParams['BUTTONS'] as $item)
@@ -26,7 +29,7 @@ foreach($arParams['BUTTONS'] as $item)
 
 	if($enableMoreButton)
 	{
-		$moreItems[] = $item;
+		$settingsItems[] = $item;
 	}
 	else
 	{
@@ -34,38 +37,14 @@ foreach($arParams['BUTTONS'] as $item)
 	}
 }
 
-$this->SetViewTarget('inside_pagetitle', 10000);
-
-?><div id="<?=htmlspecialcharsbx($toolbarId)?>" class="pagetitle-container pagetitle-align-right-container"><?
-if(!empty($moreItems))
-{
-	$buttonID = "{$toolbarId}_button";
-	?>
-	<script type="text/javascript">
-		BX.ready(
-			function ()
-			{
-				BX.InterfaceToolBar.create(
-					"<?=CUtil::JSEscape($toolbarId)?>",
-					BX.CrmParamBag.create(
-						{
-							"buttonId": "<?=CUtil::JSEscape($buttonID)?>",
-							"items": <?=CUtil::PhpToJSObject($moreItems)?>
-						}
-					)
-				);
-			}
-		);
-	</script>
-	<button id="<?=htmlspecialcharsbx($buttonID)?>" class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-setting"></button>
-	<?
-}
+//region toolbar buttons
+$this->SetViewTarget('inside_pagetitle', 0);
+?><div id="<?=htmlspecialcharsbx($toolbarId)?>" class="pagetitle-container pagetitle-align-left-container"><?
 $itemCount = count($items);
 for($i = 0; $i < $itemCount; $i++)
 {
 	$item = $items[$i];
-
-	$type = isset($item['TYPE']) ? $item['TYPE'] : '';
+	$type = $item['TYPE'] ?? '';
 	$text = isset($item['TEXT']) ? htmlspecialcharsbx(strip_tags($item['TEXT'])) : '';
 	$title = isset($item['TITLE']) ? htmlspecialcharsbx(strip_tags($item['TITLE'])) : '';
 	$link = isset($item['LINK']) ? htmlspecialcharsbx($item['LINK']) : '#';
@@ -78,7 +57,7 @@ for($i = 0; $i < $itemCount; $i++)
 
 		$menuItems = isset($item['ITEMS']) && is_array($item['ITEMS']) ? $item['ITEMS'] : array();
 		?>
-		<button id="<?=htmlspecialcharsbx($buttonID)?>" class="ui-btn ui-btn-primary ui-btn-dropdown" <?=$onClick !== '' ? " onclick=\"{$onClick}; return false;\"" : ''?>>
+		<button id="<?=htmlspecialcharsbx($buttonID)?>" class="ui-btn ui-btn-success ui-btn-dropdown" style="margin-right: 12px;" <?=$onClick !== '' ? " onclick=\"{$onClick}; return false;\"" : ''?>>
 			<?=$text?>
 		</button>
 		<?
@@ -126,7 +105,7 @@ for($i = 0; $i < $itemCount; $i++)
 				}
 			);
 		</script>
-        <div id="<?=$bindElementID?>" class="ui-btn-split ui-btn-primary">
+        <div id="<?=$bindElementID?>" class="ui-btn-split ui-btn-success" style="margin-right: 12px;">
             <a href="<?=$link?>" class="ui-btn-main" title="<?=$title?>"<?=$onClick !== '' ? " onclick=\"{$onClick}; return false;\"" : ''?>><?=$text?></a>
             <button id="<?=$buttonID?>" class="ui-btn-menu"></button>
         </div>
@@ -135,9 +114,38 @@ for($i = 0; $i < $itemCount; $i++)
 	elseif(!isset($item['SEPARATOR']))
 	{
 		?>
-		<a href="<?=$link?>" class="ui-btn ui-btn-primary ui-btn-icon-add crm-btn-toolbar-add" title="<?=$title?>"<?=$onClick !== '' ? " onclick=\"{$onClick}; return false;\"" : ''?>><?=$text?></a>
+		<a href="<?=$link?>" class="ui-btn ui-btn-success ui-btn-icon-add crm-btn-toolbar-add" title="<?=$title?>"<?=$onClick !== '' ? " onclick=\"{$onClick}; return false;\"" : ''?>><?=$text?></a>
 		<?
 	}
 }
 ?></div><?
 $this->EndViewTarget();
+
+if(!empty($settingsItems))
+{
+	$buttonID = "{$toolbarId}_button";
+	//region Settings
+	$this->SetViewTarget('inside_pagetitle', 10000);
+
+	?><div id="<?=htmlspecialcharsbx($toolbarId)?>" class="pagetitle-container pagetitle-align-right-container">
+	<script type="text/javascript">
+		BX.ready(
+			function ()
+			{
+				BX.InterfaceToolBar.create(
+					"<?=CUtil::JSEscape($toolbarId)?>",
+					BX.CrmParamBag.create(
+						{
+							"buttonId": "<?=CUtil::JSEscape($buttonID)?>",
+							"items": <?=CUtil::PhpToJSObject($settingsItems)?>
+						}
+					)
+				);
+			}
+		);
+	</script>
+	<button id="<?=htmlspecialcharsbx($buttonID)?>" class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-setting"></button>
+	</div><?
+
+	$this->EndViewTarget();
+}

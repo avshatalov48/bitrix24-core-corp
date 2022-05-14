@@ -28,7 +28,53 @@ class ImConnectorTelegrambot extends \CBitrixComponent
 
 	protected $pageId = 'page_tg';
 
-	protected $listOptions = ['api_token'];
+	protected $listOptions = ['api_token', 'welcome_message', 'eshop_enabled', 'eshop_custom_url', 'eshop_name', 'eshop_id'];
+
+	protected function getEshopList(): array
+	{
+		$result = [];
+
+		if (!\Bitrix\Main\Loader::includeModule('landing'))
+		{
+			return $result;
+		}
+
+		if (!\Bitrix\Main\Loader::includeModule('salescenter'))
+		{
+			return $result;
+		}
+
+		$dbRes = \Bitrix\Landing\Site::getList([
+			'filter' => [
+				'!=ID' => \Bitrix\SalesCenter\Integration\LandingManager::getInstance()->getConnectedSiteId(),
+				'CHECK_PERMISSIONS' => 'N',
+				'=DELETED' => ['N'],
+				'=TYPE' => 'STORE',
+			]
+		]);
+
+		while ($data = $dbRes->fetch())
+		{
+			$data['PUBLIC_URL'] = \Bitrix\Landing\Site::getPublicUrl($data['ID']);
+
+			$result[] = $data;
+		}
+
+		return $result;
+	}
+
+	function installTelegramTradingPlatform(): void
+	{
+		if (Loader::includeModule('crm'))
+		{
+			$platformCode = \Bitrix\Crm\Order\TradingPlatform\Telegram\Telegram::TRADING_PLATFORM_CODE;
+			$platform = \Bitrix\Crm\Order\TradingPlatform\Telegram\Telegram::getInstanceByCode($platformCode);
+			if (!$platform->isInstalled())
+			{
+				$platform->install();
+			}
+		}
+	}
 
 	/**
 	 * Check the connection of the necessary modules.
@@ -56,6 +102,7 @@ class ImConnectorTelegrambot extends \CBitrixComponent
 		$this->arResult['CONNECTION_STATUS'] = $this->status->getConnection();
 		$this->arResult['REGISTER_STATUS'] = $this->status->getRegister();
 		$this->arResult['ERROR_STATUS'] = $this->status->getError();
+		$this->arResult['IS_SUCCESS_SAVE'] = false;
 
 		$this->cacheId = Connector::getCacheIdConnector($this->arParams['LINE'], $this->connector);
 	}
@@ -112,9 +159,51 @@ class ImConnectorTelegrambot extends \CBitrixComponent
 								$this->connectorOutput->unregister();
 							}
 
-							$saved = $this->connectorOutput->saveSettings($this->arResult['FORM']);
+							$dataToSave = [
+								'eshop_enabled' => $this->arResult['FORM']['eshop_enabled'],
+								'welcome_message' => $this->arResult['FORM']['welcome_message'] ? : ''
+							];
 
-							if ($saved-> isSuccess())
+							if ($this->arResult['FORM']['eshop_enabled'] && $this->arResult['FORM']['eshop_enabled'] === 'Y')
+							{
+								if ((int)$this->request['eshop_id'] > 0)
+								{
+									$this->installTelegramTradingPlatform();
+									foreach ($this->getEshopList() as $eshop)
+									{
+										if ((int)$eshop['ID'] === (int)$this->request['eshop_id'])
+										{
+											$dataToSave['eshop_url'] = $eshop['PUBLIC_URL'];
+											$dataToSave['eshop_id'] = $eshop['ID'];
+
+											break;
+										}
+									}
+								}
+								else if ((int)$this->request['eshop_id'] === 0)
+								{
+									$dataToSave['eshop_url'] = $this->arResult['FORM']['eshop_custom_url'];
+									$dataToSave['eshop_id'] = '0';
+								}
+								$dataToSave['eshop_name'] = Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_ESHOP_DEFAULT_NAME');
+
+								$this->arResult['FORM']['eshop_name'] = $dataToSave['eshop_name'];
+							}
+							$this->status->setData($dataToSave);
+
+							$dataToSaveOnServer = [
+								'eshop_name' => $dataToSave['eshop_name'],
+								'eshop_url' => $dataToSave['eshop_url'],
+								'api_token' => $this->arResult['FORM']['api_token'],
+							];
+
+							if (is_null($dataToSaveOnServer['api_token']))
+							{
+								unset($dataToSaveOnServer['api_token']);
+							}
+							$saved = $this->connectorOutput->saveSettings($dataToSaveOnServer);
+
+							if ($saved->isSuccess())
 							{
 								$this->messages[] = Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_OK_SAVE');
 								$this->arResult['SAVE_STATUS'] = true;
@@ -201,11 +290,14 @@ class ImConnectorTelegrambot extends \CBitrixComponent
 
 						if ($register->isSuccess())
 						{
+							Cache::createInstance()->cleanDir(Library::CACHE_DIR_COMPONENT);
+
 							$this->messages[] = Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_OK_REGISTER');
 
 							$this->status->setRegister(true);
 							$this->arResult['REGISTER_STATUS'] = true;
 							$this->arResult['STATUS'] = true;
+							$this->arResult['IS_SUCCESS_SAVE'] = true;
 
 							$this->status->setError(false);
 							$this->arResult['ERROR_STATUS'] = false;
@@ -275,7 +367,6 @@ class ImConnectorTelegrambot extends \CBitrixComponent
 			if (!empty($this->arResult['PAGE']))
 			{
 				$settings = $this->connectorOutput->readSettings();
-
 				$result = $settings->getResult();
 
 				foreach ($this->listOptions as $value)
@@ -292,6 +383,35 @@ class ImConnectorTelegrambot extends \CBitrixComponent
 							$this->arResult['placeholder'][$value] = true;
 						}
 					}
+				}
+
+				$statusData = $this->status->getData();
+				if ($statusData['welcome_message'])
+				{
+					$this->arResult['FORM']['welcome_message'] = $statusData['welcome_message'];
+				}
+				elseif (!isset($statusData['welcome_message']))
+				{
+					$companyName = \Bitrix\Main\Config\Option::get("main", "site_name", "");
+					$this->arResult['FORM']['welcome_message'] = Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_WELCOME_MESSAGE_DEFAULT', ['#COMPANY_TITLE#' => $companyName]);
+				}
+				else
+				{
+					$this->arResult['FORM']['welcome_message'] = '';
+				}
+				if ($statusData['eshop_url'])
+				{
+					$this->arResult['FORM']['eshop_enabled'] = 'Y';
+					$this->arResult['FORM']['eshop_url'] = $statusData['eshop_url'];
+					if ((int)$statusData['eshop_id'] === 0)
+					{
+						$this->arResult['FORM']['eshop_custom_url'] = $statusData['eshop_url'];
+					}
+					$this->arResult['FORM']['eshop_id'] = $statusData['eshop_id'];
+				}
+				if (!$this->arResult['FORM']['eshop_enabled'])
+				{
+					unset($this->arResult['FORM']['eshop_enabled']);
 				}
 			}
 
@@ -313,8 +433,12 @@ class ImConnectorTelegrambot extends \CBitrixComponent
 						$this->arResult['INFO_CONNECTION'] = [
 							'ID' => $infoConnectData['id'],
 							'URL' => $infoConnectData['url'],
-							'NAME' => $infoConnectData['name']
+							'NAME' => $infoConnectData['name'],
 						];
+						if ($infoConnectData['eshop_url'])
+						{
+							$this->arResult['INFO_CONNECTION']['ESHOP_URL'] = $infoConnectData['eshop_url'];
+						}
 
 						$cache->endDataCache($this->arResult['INFO_CONNECTION']);
 					}
@@ -342,6 +466,8 @@ class ImConnectorTelegrambot extends \CBitrixComponent
 		}
 
 		$this->arResult['CONNECTOR'] = $this->connector;
+
+		$this->arResult['ESHOP_LIST'] = $this->getEshopList();
 	}
 
 	public function executeComponent()

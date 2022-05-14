@@ -791,3 +791,21 @@ select.crm-entity-product-control-select-field:hover {
 .crm-entity-product-list-wrapper .main-grid-editor-text:focus:-ms-input-placeholder { color: transparent; }
 .crm-entity-product-list-wrapper .main-grid-editor-text:focus::-webkit-input-placeholder { color: transparent; }
 .crm-entity-product-list-wrapper .main-grid-editor-text:focus:-moz-placeholder { color: transparent; }
+
+.crm-entity-product-list-disabled-setting {
+	color: #7e7e7e;
+}
+
+.crm-entity-product-list-setting-hint {
+	display: inline;
+	margin-left: 5px;
+}
+
+.crm-entity-product-list-setting-hint .ui-hint-icon {
+	margin-top: 0;
+}
+
+.crm-entity-product-list-setting-hint.ui-hint {
+	line-height: unset;
+	vertical-align: middle;
+}

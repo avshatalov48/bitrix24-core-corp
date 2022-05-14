@@ -97,10 +97,12 @@ final class SubscriberManager
 				path." . ($direction === self::DIRECTION_PARENTS? 'OBJECT_ID' : 'PARENT_ID') . " = {$objectId} AND sharing.STATUS <> {$sharingStatus}							
 		";
 
+		$sliceHashes = [];
 		while ($currentDepth < $maxInnerJoinDepth && !$emptySelect)
 		{
+			$aliasTable = "sharing" . ($currentDepth-1 >= 0 ? $currentDepth-1: '');
 			$query = "
-				SELECT sharing" . ($currentDepth-1 >= 0 ? $currentDepth-1: '') . ".*
+				SELECT DISTINCT {$aliasTable}.ID, {$aliasTable}.TO_ENTITY, {$aliasTable}.LINK_STORAGE_ID, {$aliasTable}.REAL_STORAGE_ID 
 				FROM b_disk_object_path path
 					INNER JOIN b_disk_sharing sharing ON sharing.REAL_OBJECT_ID = path." . ($direction === self::DIRECTION_PARENTS? 'PARENT_ID' : 'OBJECT_ID') . "
 			";
@@ -114,15 +116,17 @@ final class SubscriberManager
 					 INNER JOIN b_disk_object_path path{$i} ON path{$i}.OBJECT_ID = sharing{$prevI}.LINK_OBJECT_ID
 					 INNER JOIN b_disk_sharing sharing{$i} ON sharing{$i}.REAL_OBJECT_ID = path{$i}.PARENT_ID
 				";
-
 			}
 
-			$finalQuery = $finalQuery . $where;
-			$s = null;
+			$finalQuery = $finalQuery . $where . " ORDER BY {$aliasTable}.ID";
+
+			$ids = [];
 			foreach ($connection->query($finalQuery) as $row)
 			{
+				$ids[] = $row['ID'];
+
 				$emptySelect = false;
-				list($type, $id) = Sharing::parseEntityValue($row['TO_ENTITY']);
+				[$type, $id] = Sharing::parseEntityValue($row['TO_ENTITY']);
 				if($type === Sharing::TYPE_TO_USER && $row['LINK_STORAGE_ID'])
 				{
 					$subscribers[$row['LINK_STORAGE_ID']] = $id;
@@ -130,6 +134,15 @@ final class SubscriberManager
 
 				$ownerStorageIds[$row['REAL_STORAGE_ID']] = $row['REAL_STORAGE_ID'];
 			}
+
+			$currentHash = md5(implode('|', $ids));
+			if (in_array($currentHash, $sliceHashes, true))
+			{
+				//it's cycle! recursion!
+
+				break;
+			}
+			$sliceHashes[$currentDepth] = $currentHash;
 
 			$currentDepth++;
 		}
@@ -148,16 +161,16 @@ final class SubscriberManager
 	{
 		$subscribers = [];
 		$storagesId = array_filter($storagesId);
-		if (!$storagesId)
-		{
-			return $subscribers;
-		}
 
 		foreach ($storagesId as $k => $id)
 		{
 			if (Storage::isLoaded($id))
 			{
-				$subscribers[$id] = Storage::loadById($id)->getEntityId();
+				$probablyUserStorage = Storage::loadById($id);
+				if ($probablyUserStorage && $probablyUserStorage->getProxyType() instanceof ProxyType\User)
+				{
+					$subscribers[$id] = $probablyUserStorage->getEntityId();
+				}
 				unset($storagesId[$k]);
 			}
 		}
@@ -170,7 +183,7 @@ final class SubscriberManager
 		$storages = Storage::getList([
 			'select' => ['ID', 'ENTITY_ID'],
 			'filter' => [
-				'=ENTITY_TYPE' => \Bitrix\Disk\ProxyType\User::className(),
+				'=ENTITY_TYPE' => ProxyType\User::class,
 				'@ID' => $storagesId,
 			]
 		]);

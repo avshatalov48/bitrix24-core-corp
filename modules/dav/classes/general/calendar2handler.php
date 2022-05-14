@@ -2,6 +2,7 @@
 IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Dav\Integration\Calendar\SyncConnector;
+use Bitrix\Main\Localization\Loc;
 
 if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_exists("CDavCalendarHandler"))
 {
@@ -449,9 +450,26 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 					$iCalEvent["PRIORITY"] = 5;
 			}
 
-			if (isset($event["DESCRIPTION"]) && $event["DESCRIPTION"] !== '' && is_string($event['DESCRIPTION']))
+			if ((isset($event["DESCRIPTION"]) && $event["DESCRIPTION"] !== '') || $event['ATTENDEES_CODES'])
 			{
-				$iCalEvent["DESCRIPTION"] = self::replaceBBcodes($event['DESCRIPTION']);
+				$event['DESCRIPTION'] = self::replaceBBcodes($event['DESCRIPTION']);
+				if (empty($eventData['MEETING']['LANGUAGE_ID']))
+				{
+					$event['MEETING']['LANGUAGE_ID'] = \CCalendar::getUserLanguageId((int)$event['OWNER_ID']);
+				}
+				if (isset($event['ATTENDEES_CODES']) && count($event['ATTENDEES_CODES']) > 1)
+				{
+					$users = self::GetAttendees($event['ATTENDEES_CODES']);
+					IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/dav/classes/general/calendarhandler.php");
+					$iCalEvent["DESCRIPTION"] = \Bitrix\Main\Localization\Loc::getMessage('ATTENDEES_EVENT', null, $event['MEETING']['LANGUAGE_ID']).': '
+						.$users
+						."\r\n"
+						.$event["DESCRIPTION"];
+				}
+				else
+				{
+					$iCalEvent["DESCRIPTION"] = $event["DESCRIPTION"];
+				}
 			}
 
 			if (isset($event["REMIND"]) && is_array($event["REMIND"]) && count($event["REMIND"]) > 0)
@@ -904,7 +922,7 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 					foreach ($arContentType as $attribute)
 					{
 						$attribute = trim($attribute);
-						list($key, $value) = explode('=', $attribute);
+						[$key, $value] = explode('=', $attribute);
 						if (mb_strtolower($key) == 'charset')
 							$charset = mb_strtolower($value);
 					}

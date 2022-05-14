@@ -4,6 +4,8 @@
 	const platform = Application.getPlatform();
 	const caches = new Map();
 
+	const { EntityReady } = jn.require('entity-ready');
+
 	class Util
 	{
 		static debounce(fn, timeout, ctx)
@@ -443,7 +445,7 @@
 			this.cache = Cache.getInstance('filterCounters');
 			this.total = this.cache.get().counterValue || 0;
 
-			ChatReadyCheck.wait().then(() => this.updateCounters());
+			EntityReady.wait('chat').then(() => this.updateCounters());
 		}
 
 		updateCounters()

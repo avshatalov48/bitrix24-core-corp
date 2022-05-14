@@ -93,6 +93,9 @@ class Requisite extends BaseRequisite
 					'SECOND_NAME' => $this->data['RQ_SECOND_NAME'],
 					'LAST_NAME' => $this->data['RQ_LAST_NAME'],
 				];
+				$this->rawNameValues['RQ_FIRST_NAME'] = $this->data['RQ_FIRST_NAME'];
+				$this->rawNameValues['RQ_SECOND_NAME'] = $this->data['RQ_SECOND_NAME'];
+				$this->rawNameValues['RQ_LAST_NAME'] = $this->data['RQ_LAST_NAME'];
 				unset($this->data['RQ_FIRST_NAME']);
 				unset($this->data['RQ_SECOND_NAME']);
 				unset($this->data['RQ_LAST_NAME']);
@@ -237,5 +240,10 @@ class Requisite extends BaseRequisite
 		}
 
 		return false;
+	}
+
+	public function getRawNameValue(string $placeholder): ?string
+	{
+		return $this->rawNameValues[$placeholder] ?? null;
 	}
 }

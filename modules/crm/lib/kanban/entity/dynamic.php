@@ -7,6 +7,7 @@ use Bitrix\Crm\Filter\ItemDataProvider;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Kanban;
 use Bitrix\Crm\PhaseSemantics;
+use Bitrix\Crm\Relation\EntityRelationTable;
 use Bitrix\Crm\Search\SearchEnvironment;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
@@ -17,17 +18,12 @@ use Bitrix\Main\Result;
 
 class Dynamic extends Kanban\Entity
 {
-	protected const GRID_ID_PREFIX = 'crm-type-item-list';
-
-	/** @var Service\Factory\Dynamic */
-	protected $factory;
 	protected $stages;
 
-	public function setFactory(Service\Factory\Dynamic $factory): Kanban\Entity
+	public function initFactory(): void
 	{
-		$this->factory = $factory;
-
-		return $this;
+		// automatic factory initialisation is disabled for dynamic types
+		// factory should be set after creating kanban object using $this->setFactory(...)
 	}
 
 	public function getTypeName(): string
@@ -40,11 +36,6 @@ class Dynamic extends Kanban\Entity
 		return \CCrmOwnerType::GetCategoryCaption($this->getTypeId());
 	}
 
-	public function getStatusEntityId(): string
-	{
-		return $this->factory->getStagesEntityId($this->getCategoryId());
-	}
-
 	public function getItemsSelectPreset(): array
 	{
 		$select = array_keys($this->factory->getFieldsInfo());
@@ -54,6 +45,8 @@ class Dynamic extends Kanban\Entity
 				$fieldName !== Item::FIELD_NAME_CONTACTS
 				&& $fieldName !== Item::FIELD_NAME_CONTACT_IDS
 				&& $fieldName !== Item::FIELD_NAME_CONTACT_BINDINGS
+				&& $fieldName !== Item::FIELD_NAME_OBSERVERS
+				&& $fieldName !== Item::FIELD_NAME_PRODUCTS
 			);
 		});
 
@@ -73,11 +66,6 @@ class Dynamic extends Kanban\Entity
 	public function isCustomPriceFieldsSupported(): bool
 	{
 		return false;
-	}
-
-	public function isCategoriesSupported(): bool
-	{
-		return $this->factory->isCategoriesSupported();
 	}
 
 	public function getCloseDateFieldName(): ?string
@@ -116,18 +104,6 @@ class Dynamic extends Kanban\Entity
 		}
 
 		return $fields;
-	}
-
-	public function getGridId(): string
-	{
-		$gridId = static::GRID_ID_PREFIX . '-' . $this->factory->getEntityTypeId();
-
-		if ($this->categoryId > 0)
-		{
-			$gridId .= '-' . $this->categoryId;
-		}
-
-		return $gridId;
 	}
 
 	protected function getDetailComponentName(): ?string

@@ -15,9 +15,9 @@ return [
 		"webcomponent/urlrewrite",
 		"webcomponent/storage",
 
-		"chat/widgetcache",
-		"chat/const/background",
-		"chat/performance",
+		"im:chat/widgetcache",
+		"im:chat/const/background",
+		"im:chat/performance",
 	],
 	"js" => [],
 	"css"=>[],

@@ -70,6 +70,11 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 				'+prefilters' => [
 					new CloseSession()
 				]
+			],
+			'getTagData' => [
+				'prefilters' => [
+					new \Bitrix\Intranet\ActionFilter\UserType(['employee']),
+				]
 			]
 		];
 	}
@@ -244,7 +249,7 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 				'PERSONAL_COUNTRY', 'PERSONAL_FAX', 'PERSONAL_MAILBOX',
 				'PERSONAL_PHONE', 'PERSONAL_STATE', 'PERSONAL_STREET', 'PERSONAL_ZIP',
 				'WORK_CITY', 'WORK_COUNTRY', 'WORK_COMPANY', 'WORK_DEPARTMENT',
-				'PERSONAL_PROFESSION', 'WORK_NOTES', 'WORK_PROFILE'
+				'PERSONAL_PROFESSION', 'WORK_NOTES', 'WORK_PROFILE', 'LANGUAGE_ID',
 			],
 			'SELECT' => [ 'UF_DEPARTMENT', 'UF_PHONE_INNER', 'UF_SKYPE', 'UF_SKYPE_LINK', 'UF_ZOOM', 'UF_PUBLIC' ]
 		];
@@ -387,7 +392,7 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 			'LOGIN', 'PASSWORD', 'CONFIRM_PASSWORD',
 			'PERSONAL_FAX',  'PERSONAL_MAILBOX', 'PERSONAL_PHONE', 'PERSONAL_STATE', 'PERSONAL_STREET', 'PERSONAL_ZIP',
 			'WORK_CITY', 'WORK_COUNTRY', 'WORK_COMPANY', 'WORK_DEPARTMENT',
-			'PERSONAL_PROFESSION', 'WORK_NOTES', 'WORK_PROFILE'
+			'PERSONAL_PROFESSION', 'WORK_NOTES', 'WORK_PROFILE', 'LANGUAGE_ID',
 		];
 
 		$newFields = [];

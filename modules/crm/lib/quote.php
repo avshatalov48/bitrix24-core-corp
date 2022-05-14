@@ -9,22 +9,16 @@ namespace Bitrix\Crm;
 
 use Bitrix\Crm\Binding\QuoteContactTable;
 use Bitrix\Crm\Integration\StorageType;
-use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Settings\QuoteSettings;
-use Bitrix\Main\Application;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Event;
 use Bitrix\Main\ORM\EventResult;
 use Bitrix\Main\ORM\Fields\ArrayField;
-use Bitrix\Main\ORM\Fields\BooleanField;
-use Bitrix\Main\ORM\Fields\DateField;
-use Bitrix\Main\ORM\Fields\DatetimeField;
 use Bitrix\Main\ORM\Fields\EnumField;
-use Bitrix\Main\ORM\Fields\ExpressionField;
-use Bitrix\Main\ORM\Fields\FloatField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\Relations\CascadePolicy;
 use Bitrix\Main\ORM\Fields\Relations\OneToMany;
@@ -33,8 +27,6 @@ use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\ORM\Fields\TextField;
 use Bitrix\Main\ORM\Objectify\EntityObject;
 use Bitrix\Main\ORM\Query\Join;
-use Bitrix\Main\Type\Date;
-use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UserTable;
 
 Loc::loadMessages(__FILE__);
@@ -90,65 +82,44 @@ class QuoteTable extends DataManager
 	{
 		Container::getInstance()->getLocalization()->loadMessages();
 
+		$fieldRepository = ServiceLocator::getInstance()->get('crm.model.fieldRepository');
+
 		return [
-			(new IntegerField('ID'))
-				->configurePrimary()
-				->configureAutocomplete(),
+			$fieldRepository->getId(),
 
-			(new DatetimeField('DATE_CREATE'))
-				->configureRequired()
-				->configureDefaultValue(static function()
-				{
-					return new DateTime();
-				})
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_CREATED_TIME')),
-			(new ExpressionField('DATE_CREATE_SHORT', static::getShortDateExpression(), 'DATE_CREATE'))
-				->configureValueType(DateField::class),
+			$fieldRepository->getCreatedTime('DATE_CREATE'),
 
-			(new DatetimeField('DATE_MODIFY'))
-				->configureRequired()
-				->configureDefaultValue(static function()
-				{
-					return new DateTime();
-				})
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_UPDATED_TIME')),
-			(new ExpressionField('DATE_MODIFY_SHORT', static::getShortDateExpression(), 'DATE_MODIFY'))
-				->configureValueType(DateField::class),
+			$fieldRepository->getShortDate(
+				'DATE_CREATE_SHORT',
+				['DATE_CREATE'],
+			),
 
-			(new IntegerField('CREATED_BY_ID'))
-				->configureRequired()
-				->configureDefaultValue(static function()
-				{
-					return Container::getInstance()->getContext()->getUserId();
-				})
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_CREATED_BY')),
+			$fieldRepository->getUpdatedTime('DATE_MODIFY'),
+
+			$fieldRepository->getShortDate(
+				'DATE_MODIFY_SHORT',
+				['DATE_MODIFY'],
+			),
+
+			$fieldRepository->getCreatedBy('CREATED_BY_ID'),
 
 			(new Reference('CREATED_BY', UserTable::class, Join::on('this.CREATED_BY_ID', 'ref.ID'))),
 
-			(new IntegerField('MODIFY_BY_ID'))
-				->configureRequired()
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_UPDATED_BY')),
+			$fieldRepository->getUpdatedBy('MODIFY_BY_ID'),
 
 			(new Reference('MODIFY_BY', UserTable::class, Join::on('this.MODIFY_BY_ID', 'ref.ID'))),
 
-			(new IntegerField('ASSIGNED_BY_ID'))
-				->configureDefaultValue(static function()
-				{
-					return Container::getInstance()->getContext()->getUserId();
-				})
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_ASSIGNED_BY_ID')),
+			$fieldRepository->getAssigned(),
 
 			(new Reference('ASSIGNED_BY', UserTable::class, Join::on('this.ASSIGNED_BY_ID', 'ref.ID'))),
 
-			(new BooleanField('OPENED'))
-				->configureStorageValues('N', 'Y')
+			$fieldRepository->getOpened()
 				->configureDefaultValue(static function() {
-					return QuoteSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N';
+					return QuoteSettings::getCurrent()->getOpenedFlag();
 				})
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_OPENED')),
+			,
 
-			(new IntegerField('LEAD_ID'))
-				->configureTitle(\CCrmOwnerType::GetAllDescriptions()[\CCrmOwnerType::Lead]),
+			$fieldRepository->getLeadId(),
 
 			(new Reference('LEAD_BY', LeadTable::class, Join::on('this.LEAD_ID', 'ref.ID'))),
 
@@ -158,13 +129,11 @@ class QuoteTable extends DataManager
 			(new Reference('DEAL', DealTable::class, Join::on('this.DEAL_ID', 'ref.ID')))
 				->configureTitle(\CCrmOwnerType::GetAllDescriptions()[\CCrmOwnerType::Deal]),
 
-			(new IntegerField('COMPANY_ID'))
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_COMPANY_ID')),
+			$fieldRepository->getCompanyId(),
 
 			(new Reference('COMPANY_BY', CompanyTable::class, Join::on('this.COMPANY_ID', 'ref.ID'))),
 
-			(new IntegerField('CONTACT_ID'))
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_CONTACT_ID')),
+			$fieldRepository->getContactId(),
 
 			(new Reference('CONTACT_BY', ContactTable::class, Join::on('this.CONTACT_ID', 'ref.ID'))),
 
@@ -176,169 +145,136 @@ class QuoteTable extends DataManager
 				->configureValues(static::getPersonTypeValues())
 				->configureDefaultValue([static::class, 'getDefaultPersonType']),
 
-			(new IntegerField('MYCOMPANY_ID'))
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_MYCOMPANY_ID'))
-				->configureDefaultValue(static function() {
-					$defaultMyCompanyId = (int)EntityLink::getDefaultMyCompanyId();
-					if ($defaultMyCompanyId > 0)
-					{
-						return $defaultMyCompanyId;
-					}
-
-					return null;
-				}),
+			$fieldRepository->getMyCompanyId(),
 
 			(new Reference('MYCOMPANY', CompanyTable::class, Join::on('this.MYCOMPANY_ID', 'ref.ID'))),
 
-			(new StringField('TITLE'))
-				->configureSize(255)
-				->configureTitle(Loc::getMessage('CRM_QUOTE_TITLE_TITLE')),
+			$fieldRepository->getTitle()
+				->configureTitle(Loc::getMessage('CRM_QUOTE_TITLE_TITLE'))
+			,
 
-			(new StringField('STATUS_ID'))
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_STAGE_ID'))
-				->configureSize(50)
-				->configureDefaultValue([static::class, 'getDefaultStatusId']),
+			$fieldRepository->getStageId('STATUS_ID', \CCrmOwnerType::Quote),
 
-			(new BooleanField('CLOSED'))
-				->configureStorageValues('N', 'Y')
-				->configureDefaultValue('N')
-				->configureTitle(Loc::getMessage('CRM_QUOTE_CLOSED_TITLE')),
+			$fieldRepository->getClosed()
+				->configureTitle(Loc::getMessage('CRM_QUOTE_CLOSED_TITLE'))
+			,
 
-			(new FloatField('OPPORTUNITY'))
-				->configureScale(2)
-				->configureDefaultValue(0.00)
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_OPPORTUNITY')),
+			$fieldRepository->getOpportunity(),
 
-			(new BooleanField('IS_MANUAL_OPPORTUNITY'))
-				->configureStorageValues('N', 'Y')
-				->configureDefaultValue('N')
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_IS_MANUAL_OPPORTUNITY')),
+			$fieldRepository->getIsManualOpportunity(),
 
-			(new FloatField('TAX_VALUE'))
-				->configureScale(2)
-				->configureDefaultValue(0.00)
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_TAX_VALUE')),
+			$fieldRepository->getTaxValue(),
 
-			(new StringField('CURRENCY_ID'))
-				->configureSize(50)
-				->configureDefaultValue(Currency::getBaseCurrencyId())
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_CURRENCY_ID')),
+			$fieldRepository->getCurrencyId(),
 
-			(new FloatField('OPPORTUNITY_ACCOUNT'))
-				->configureScale(2)
-				->configureDefaultValue(0.00)
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_OPPORTUNITY_ACCOUNT')),
+			$fieldRepository->getOpportunityAccount(),
 
-			(new FloatField('TAX_VALUE_ACCOUNT'))
-				->configureScale(2)
-				->configureDefaultValue(0.00)
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_TAX_VALUE_ACCOUNT')),
+			$fieldRepository->getTaxValueAccount(),
 
-			(new StringField('ACCOUNT_CURRENCY_ID'))
-				->configureSize(50)
-				->configureDefaultValue(Currency::getAccountCurrencyId())
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_ACCOUNT_CURRENCY_ID')),
+			$fieldRepository->getAccountCurrencyId(),
 
-			(new TextField('COMMENTS'))
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_COMMENTS')),
+			$fieldRepository->getComments(),
 
 			(new IntegerField('COMMENTS_TYPE'))
-				->configureDefaultValue(static::DEFAULT_TEXT_TYPE),
+				->configureNullable()
+				->configureDefaultValue(static::DEFAULT_TEXT_TYPE)
+			,
 
-			(new DateField('BEGINDATE'))
-				->configureDefaultValue(static function()
-				{
-					return new Date();
-				})
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_BEGINDATE')),
-			(new ExpressionField('BEGINDATE_SHORT', static::getShortDateExpression(), 'BEGINDATE'))
-				->configureValueType(DateField::class),
+			$fieldRepository->getBeginDate(),
 
-			(new DateField('CLOSEDATE'))
-				->configureDefaultValue([static::class, 'getDefaultCloseDate'])
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_CLOSEDATE')),
-			(new ExpressionField('CLOSEDATE_SHORT', static::getShortDateExpression(), 'CLOSEDATE'))
-				->configureValueType(DateField::class),
+			$fieldRepository->getShortDate(
+				'BEGINDATE_SHORT',
+				['BEGINDATE'],
+			),
 
-			(new FloatField('EXCH_RATE'))
-				->configureScale(4),
+			$fieldRepository->getCloseDate(),
+
+			$fieldRepository->getShortDate(
+				'CLOSEDATE_SHORT',
+				['CLOSEDATE']
+			),
+
+			$fieldRepository->getExchRate(),
 
 			(new StringField('QUOTE_NUMBER'))
 				->configureSize(100)
 				->configureUnique()
-				->configureTitle(Loc::getMessage('CRM_QUOTE_QUOTE_NUMBER_TITLE')),
+				->configureTitle(Loc::getMessage('CRM_QUOTE_QUOTE_NUMBER_TITLE'))
+			,
 
 			(new TextField('CONTENT'))
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_CONTENT')),
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_CONTENT'))
+			,
 
 			(new IntegerField('CONTENT_TYPE'))
-				->configureDefaultValue(static::DEFAULT_TEXT_TYPE),
+				->configureDefaultValue(static::DEFAULT_TEXT_TYPE)
+			,
 
 			(new TextField('TERMS'))
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_TERMS')),
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_TERMS'))
+			,
 
 			(new IntegerField('TERMS_TYPE'))
-				->configureDefaultValue(static::DEFAULT_TEXT_TYPE),
+				->configureDefaultValue(static::DEFAULT_TEXT_TYPE)
+			,
 
 			(new EnumField('STORAGE_TYPE_ID'))
 				->configureValues(static::getStorageTypeIdValues())
-				->configureDefaultValue([static::class, 'getDefaultStorageTypeId']),
+				->configureDefaultValue([static::class, 'getDefaultStorageTypeId'])
+			,
 
 			(new ArrayField('STORAGE_ELEMENT_IDS'))
 				// For compatibility reasons
 				->configureSerializationPhp()
-				->addSaveDataModifier([static::class, 'normalizeStorageElementIds']),
+				->addSaveDataModifier([static::class, 'normalizeStorageElementIds'])
+			,
 
-			(new StringField('LOCATION_ID'))
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_LOCATION'))
-				->configureSize(100),
+			$fieldRepository->getLocationId(),
 
-			(new IntegerField('WEBFORM_ID'))
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_WEBFORM_ID')),
+			$fieldRepository->getWebformId(),
 
 			(new StringField('CLIENT_TITLE'))
-				->configureSize(255),
+				->configureSize(255)
+			,
 
 			(new StringField('CLIENT_ADDR'))
-				->configureSize(255),
+				->configureSize(255)
+			,
 
 			(new StringField('CLIENT_CONTACT'))
-				->configureSize(255),
+				->configureSize(255)
+			,
 
 			(new StringField('CLIENT_EMAIL'))
-				->configureSize(255),
+				->configureSize(255)
+			,
 
 			(new StringField('CLIENT_PHONE'))
-				->configureSize(255),
+				->configureSize(255)
+			,
 
 			(new StringField('CLIENT_TP_ID'))
-				->configureSize(255),
+				->configureSize(255)
+			,
 
 			(new StringField('CLIENT_TPA_ID'))
-				->configureSize(255),
+				->configureSize(255)
+			,
 
-			(new StringField('SEARCH_CONTENT')),
+			$fieldRepository->getSearchContent(),
 
-			(new ExpressionField('HAS_PRODUCTS',
-				"CASE WHEN EXISTS (SELECT ID FROM ".ProductRowTable::getTableName().
-				" WHERE OWNER_ID = %s AND OWNER_TYPE = '".static::getTypeAbbreviation()."') THEN 1 ELSE 0 END",
-				'ID'
-			))
-				->configureValueType(BooleanField::class),
+			$fieldRepository->getHasProducts(
+				\CCrmOwnerType::Quote,
+			),
 
-			(new OneToMany('PRODUCT_ROWS', ProductRowTable::class, 'QUOTE_OWNER'))
-				// products will be deleted in onAfterDelete, if it's needed
-				->configureCascadeDeletePolicy(CascadePolicy::NO_ACTION)
-				->configureTitle(Loc::getMessage('CRM_COMMON_PRODUCTS')),
+			$fieldRepository->getProductRows(
+				'QUOTE_OWNER',
+			),
 
 			(new OneToMany('ELEMENTS', QuoteElementTable::class, 'QUOTE'))
-				->configureJoinType(Join::TYPE_INNER),
+				->configureJoinType(Join::TYPE_INNER)
+			,
 		];
-	}
-
-	protected static function getShortDateExpression(): string
-	{
-		return Application::getConnection()->getSqlHelper()->getDatetimeToDateFunction('%s');
 	}
 
 	public static function getDefaultStorageTypeId(): int
@@ -371,18 +307,6 @@ class QuoteTable extends DataManager
 		}
 
 		return $value;
-	}
-
-	public static function getDefaultCloseDate(): Date
-	{
-		$currentDate = new Date();
-
-		return $currentDate->add(static::getCloseDateOffset());
-	}
-
-	protected static function getCloseDateOffset(): string
-	{
-		return '7D';
 	}
 
 	public static function onAfterUpdate(Event $event): EventResult
@@ -423,23 +347,6 @@ class QuoteTable extends DataManager
 		$values = StorageType::getAllTypes();
 
 		return array_merge($values, array_map('strval', $values));
-	}
-
-	public static function getDefaultStatusId(): ?string
-	{
-		$factory = Container::getInstance()->getFactory(\CCrmOwnerType::Quote);
-		if(!$factory)
-		{
-			return null;
-		}
-
-		$firstStage = $factory->getStages()->getAll()[0] ?? null;
-		if($firstStage)
-		{
-			return $firstStage->getStatusId();
-		}
-
-		return null;
 	}
 
 	protected static function checkUfFields($object, $ufdata, $result)

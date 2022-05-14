@@ -9,6 +9,7 @@ use Bitrix\Crm\Filter\ItemDataProvider;
 use Bitrix\Crm\Filter\ItemUfDataProvider;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Kanban;
+use Bitrix\Crm\Relation\EntityRelationTable;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
@@ -78,10 +79,17 @@ abstract class ItemList extends Base
 			}
 		}
 
-		$canReadThisCategory = $this->userPermissions->canReadType(
-			$this->entityTypeId,
-			$this->category ? $this->category->getId() : 0
-		);
+		if ($this->category)
+		{
+			$canReadThisCategory = $this->userPermissions->canReadTypeInCategory(
+				$this->entityTypeId,
+				$this->category->getId()
+			);
+		}
+		else
+		{
+			$canReadThisCategory = $this->userPermissions->canReadType($this->entityTypeId);
+		}
 		if (!$canReadThisCategory)
 		{
 			if($this->factory->isCategoriesEnabled())
@@ -89,7 +97,7 @@ abstract class ItemList extends Base
 				// if user can not read current category, but can read some another - make the redirect there.
 				foreach ($this->factory->getCategories() as $category)
 				{
-					if ($this->userPermissions->canReadType($this->entityTypeId, $category->getId()))
+					if ($this->userPermissions->canReadTypeInCategory($this->entityTypeId, $category->getId()))
 					{
 						LocalRedirect(
 							$router->getItemListUrlInCurrentView(
@@ -117,6 +125,8 @@ abstract class ItemList extends Base
 		$this->provider = $filterFactory->getDataProvider($settings);
 		$this->ufProvider = $filterFactory->getUserFieldDataProvider($settings);
 		$this->filter = $filterFactory->createFilter($settings->getID(), $this->provider, [$this->ufProvider]);
+
+		EntityRelationTable::initiateClearingDuplicateSourceElementsWithInterval($this->factory->getEntityTypeId());
 	}
 
 	protected function getGridId(): string
@@ -124,6 +134,9 @@ abstract class ItemList extends Base
 		return $this->kanbanEntity->getGridId();
 	}
 
+	/**
+	 * @return Category|null - returns null if no category is selected
+	 */
 	protected function initCategory(): ?Category
 	{
 		$categoryId = (int)$this->arParams['categoryId'];
@@ -173,7 +186,7 @@ abstract class ItemList extends Base
 		if (
 			$container->getUserPermissions()->checkAddPermissions(
 				$this->entityTypeId,
-				$category ? $category->getId() : 0
+				$category ? $category->getId() : null
 			)
 		)
 		{
@@ -196,7 +209,7 @@ abstract class ItemList extends Base
 				|| Container::getInstance()->getUserPermissions()->canWriteConfig()
 			)
 			{
-				$buttons[Toolbar\ButtonLocation::RIGHT][] = new Buttons\Button([
+				$buttons[Toolbar\ButtonLocation::AFTER_TITLE][] = new Buttons\Button([
 					'color' => Buttons\Color::LIGHT_BORDER,
 					'className' => 'ui-btn ui-btn-themes ui-btn-light-border ui-btn-dropdown ui-toolbar-btn-dropdown',
 					'text' => $this->category ? $this->category->getName() : Loc::getMessage('CRM_TYPE_TOOLBAR_ALL_ITEMS'),
@@ -361,10 +374,29 @@ abstract class ItemList extends Base
 	{
 		$views = [];
 
+		if ($this->isIntranetBindingMenuViewAvailable())
+		{
+			$views[] = $this->getIntranetBindingMenuView();
+		}
+
+		if ($this->factory->isStagesEnabled())
+		{
+			$views[Service\Router::LIST_VIEW_KANBAN] = [
+				'title' => Loc::getMessage('CRM_COMMON_KANBAN'),
+				'url' => Container::getInstance()->getRouter()->getKanbanUrl($this->entityTypeId, $this->getCategoryId()),
+				'isActive' => false,
+			];
+			$views[Service\Router::LIST_VIEW_LIST] = [
+				'title' => Loc::getMessage('CRM_COMMON_LIST'),
+				'url' => Container::getInstance()->getRouter()->getItemListUrl($this->entityTypeId, $this->getCategoryId()),
+				'isActive' => true,
+			];
+		}
+
 		if (Automation\Factory::isSupported($this->entityTypeId))
 		{
 			$categoryId = $this->getCategoryId();
-			if (!$categoryId)
+			if (is_null($categoryId) && $this->factory->isCategoriesSupported())
 			{
 				$categoryId = $this->factory->createDefaultCategoryIfNotExist()->getId();
 			}
@@ -387,25 +419,6 @@ abstract class ItemList extends Base
 				unset($robotView['url']);
 			}
 			$views[] = $robotView;
-		}
-
-		if ($this->isIntranetBindingMenuViewAvailable())
-		{
-			$views[] = $this->getIntranetBindingMenuView();
-		}
-
-		if ($this->factory->isStagesEnabled())
-		{
-			$views[Service\Router::LIST_VIEW_KANBAN] = [
-				'title' => Loc::getMessage('CRM_COMMON_KANBAN'),
-				'url' => Container::getInstance()->getRouter()->getKanbanUrl($this->entityTypeId, $this->getCategoryId()),
-				'isActive' => false,
-			];
-			$views[Service\Router::LIST_VIEW_LIST] = [
-				'title' => Loc::getMessage('CRM_COMMON_LIST'),
-				'url' => Container::getInstance()->getRouter()->getItemListUrl($this->entityTypeId, $this->getCategoryId()),
-				'isActive' => true,
-			];
 		}
 
 		return $views;
@@ -484,7 +497,7 @@ abstract class ItemList extends Base
 	protected function getAddButtonParameters(): array
 	{
 		return [
-			'color' => Buttons\Color::PRIMARY,
+			'color' => Buttons\Color::SUCCESS,
 			'text' => Loc::getMessage('CRM_COMMON_ACTION_ADD'),
 			'icon' => Buttons\Icon::ADD,
 			'link' => Service\Container::getInstance()->getRouter()

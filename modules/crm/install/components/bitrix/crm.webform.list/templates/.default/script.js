@@ -3,6 +3,12 @@
 
 	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7;
 
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
+
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
+
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
 	var _groupAction = /*#__PURE__*/new WeakMap();
@@ -23,19 +29,19 @@
 	  function WebFormList() {
 	    babelHelpers.classCallCheck(this, WebFormList);
 
-	    _getGridContainer.add(this);
+	    _classPrivateMethodInitSpec(this, _getGridContainer);
 
-	    _getGrid.add(this);
+	    _classPrivateMethodInitSpec(this, _getGrid);
 
-	    _renderActiveSwitchers.add(this);
+	    _classPrivateMethodInitSpec(this, _renderActiveSwitchers);
 
-	    _renderEntities.add(this);
+	    _classPrivateMethodInitSpec(this, _renderEntities);
 
-	    _renderQrButtons.add(this);
+	    _classPrivateMethodInitSpec(this, _renderQrButtons);
 
-	    _renderGridRows.add(this);
+	    _classPrivateMethodInitSpec(this, _renderGridRows);
 
-	    _groupAction.set(this, {
+	    _classPrivateFieldInitSpec(this, _groupAction, {
 	      writable: true,
 	      value: null
 	    });
@@ -178,7 +184,7 @@
 
 	            _this2.showNotification(main_core.Loc.getMessage('CRM_WEBFORM_LIST_DELETE_ERROR'));
 	          }
-	        }).catch(function () {
+	        })["catch"](function () {
 	          _this2.hideGridLoader();
 
 	          _this2.showNotification(main_core.Loc.getMessage('CRM_WEBFORM_LIST_DELETE_ERROR'));
@@ -210,7 +216,7 @@
 	        }
 	      }).then(function () {
 	        return _this4.reloadGrid();
-	      }).catch(function () {
+	      })["catch"](function () {
 	        _this4.checkOnWriteAccessError(result);
 
 	        _this4.hideGridLoader();
@@ -228,7 +234,7 @@
 	        }
 	      }).then(function () {
 	        return _this5.reloadGrid();
-	      }).catch(function () {
+	      })["catch"](function () {
 	        _this5.checkOnWriteAccessError(result);
 
 	        _this5.hideGridLoader();
@@ -261,7 +267,7 @@
 	        }
 	      }).then(function () {
 	        return _this6.reloadGrid();
-	      }).catch(function () {
+	      })["catch"](function () {
 	        _this6.checkOnWriteAccessError(result);
 
 	        _this6.hideGridLoader();
@@ -288,14 +294,14 @@
 	        }
 	      }).then(function () {
 	        if (switcher) {
-	          nodeText.textContent = switcher.isChecked() ? data.dateToday : main_core.Loc.getMessage('CRM_WEBFORM_LIST_NOT_ACTIVE');
+	          nodeText.textContent = switcher.isChecked() ? BX.date.format(BX.date.convertBitrixFormat(BX.message("FORMAT_DATE"))) : main_core.Loc.getMessage('CRM_WEBFORM_LIST_NOT_ACTIVE');
 	          switcher.setLoading(false);
 	        }
 
 	        if (reloadGrid) {
 	          _this7.reloadGrid();
 	        }
-	      }).catch(function (result) {
+	      })["catch"](function (result) {
 	        _this7.checkOnWriteAccessError(result);
 
 	        if (switcher) {
@@ -339,6 +345,10 @@
 	  var switchers = container.querySelectorAll('[' + switcherAttr + ']');
 	  switchers = Array.prototype.slice.call(switchers);
 	  switchers.forEach(function (node) {
+	    if (node.querySelector('.crm-webform-qr-btn')) {
+	      return;
+	    }
+
 	    var data = JSON.parse(node.getAttribute(switcherAttr));
 	    new BX.Crm.Form.Qr({
 	      link: data.path

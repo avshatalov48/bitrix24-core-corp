@@ -28,7 +28,15 @@ export class RequestSender
 
 	completeSprint(data): Promise
 	{
-		return this.sendRequest('sprint', 'completeSprint', data);
+		return this.sendRequest(
+			'sprint',
+			'completeSprint',
+			data,
+			{
+				scrum: 'Y',
+				action: 'finish_sprint',
+			}
+		);
 	}
 
 	showErrorAlert(response: ErrorResponse, alertTitle?: string)

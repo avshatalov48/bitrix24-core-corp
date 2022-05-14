@@ -2,45 +2,16 @@
 
 namespace Bitrix\Crm\Service\Operation;
 
-use Bitrix\Crm\Field\Collection;
-use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Item;
-use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Operation;
+use Bitrix\Crm\Statistics;
 use Bitrix\Crm\Timeline\TimelineManager;
-use Bitrix\Main\Error;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 
-class Restore extends Operation
+class Restore extends Operation\Add
 {
-	public function __construct(Item $item, Operation\Settings $settings, Collection $fieldsCollection = null)
-	{
-		parent::__construct($item, $settings, $fieldsCollection);
-		//todo do not forget to delete usages of \Bitrix\Crm\Recycling\BaseController::startRecoveryWorkflows
-		// otherwise it will start bizproc twice
-		$this->bizProcEventType = \CCrmBizProcEventType::Create;
-	}
-
-	public function checkAccess(): Result
-	{
-		$result = new Result();
-
-		$userPermissions = Container::getInstance()->getUserPermissions($this->getContext()->getUserId());
-		$canAddItem = $userPermissions->canAddItem($this->item);
-
-		if(!$canAddItem)
-		{
-			$result->addError(
-				new Error(
-					Loc::getMessage('CRM_TYPE_ITEM_PERMISSIONS_ADD_DENIED'),
-					static::ERROR_CODE_ITEM_ADD_ACCESS_DENIED
-				)
-			);
-		}
-
-		return $result;
-	}
+	//todo do not forget to delete usages of \Bitrix\Crm\Recycling\BaseController::startRecoveryWorkflows
+	// otherwise launch of this operation will start bizproc twice
 
 	/**
 	 * We should be able to explicitly set created, updated and moved data for an item during restoration. Otherwise, we
@@ -101,9 +72,9 @@ class Restore extends Operation
 		return false;
 	}
 
-	protected function save(): Result
+	protected function registerStatistics(Statistics\OperationFacade $statisticsFacade): Result
 	{
-		return $this->item->save($this->isCheckFieldsEnabled());
+		return $statisticsFacade->restore($this->getItem());
 	}
 
 	protected function createTimelineRecord(): void
@@ -117,22 +88,10 @@ class Restore extends Operation
 			$timelineController->onRestore(
 				$this->item->getId(),
 				[
-					'FIELDS' => $this->item->getCompatibleData(),
+					'FIELDS' => $this->item->getData(),
+					'FIELDS_MAP' => $this->item->getFieldsMap(),
 				],
 			);
 		}
-	}
-
-	protected function sendPullEvent(): void
-	{
-		parent::sendPullEvent();
-
-		\Bitrix\Crm\Kanban\SupervisorTable::sendItem(
-			$this->item->getId(),
-			\CCrmOwnerType::ResolveName($this->item->getEntityTypeId()),
-			'kanban_add'
-		);
-
-		PullManager::getInstance()->sendItemAddedEvent($this->pullItem, $this->pullParams);
 	}
 }

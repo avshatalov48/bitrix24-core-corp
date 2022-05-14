@@ -34,7 +34,7 @@ class Contact extends EntityBase
 	{
 		return ContactTable::getEntity();
 	}
-	protected function getDbTableAlias()
+	public function getDbTableAlias()
 	{
 		return \CCrmContact::TABLE_ALIAS;
 	}

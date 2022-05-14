@@ -169,9 +169,16 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 	{
 		$typeData = static::getType();
 		$itemIndexTableDataClass = Driver::getInstance()->getFactory()->getItemIndexDataClass($typeData);
-		return new Reference($referenceName, $itemIndexTableDataClass::getEntity(), [
-			'=this.ID' => 'ref.ITEM_ID',
-		]);
+		return new Reference(
+			$referenceName,
+			$itemIndexTableDataClass::getEntity(),
+			[
+				'=this.ID' => 'ref.ITEM_ID',
+			],
+			[
+				'join_type' => \Bitrix\Main\ORM\Query\Join::TYPE_INNER,
+			]
+		);
 	}
 
 	protected static function updateFullTextIndex(Item $item): Result

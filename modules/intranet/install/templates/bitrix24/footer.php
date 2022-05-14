@@ -151,6 +151,8 @@ if ($isBitrix24Cloud)
 {
 	$APPLICATION->IncludeComponent("bitrix:bitrix24.notify.panel", "", array());
 }
+
+$APPLICATION->IncludeComponent("bitrix:intranet.placement", "", array());
 ?>
 
 <?

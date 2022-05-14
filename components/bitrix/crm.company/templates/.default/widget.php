@@ -39,7 +39,7 @@ $APPLICATION->IncludeComponent(
 $isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
 if($isBitrix24Template)
 {
-	$this->SetViewTarget('below_pagetitle', 0);
+	$this->SetViewTarget('below_pagetitle', 1000);
 }
 
 $APPLICATION->IncludeComponent(

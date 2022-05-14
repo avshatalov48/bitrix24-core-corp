@@ -12,9 +12,9 @@ use Bitrix\Main\ORM\Fields\Validators;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_ItemChecklist_Query query()
- * @method static EO_ItemChecklist_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ItemChecklist_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_ItemChecklist_Result getById($id)
- * @method static EO_ItemChecklist_Result getList(array $parameters = array())
+ * @method static EO_ItemChecklist_Result getList(array $parameters = [])
  * @method static EO_ItemChecklist_Entity getEntity()
  * @method static \Bitrix\Tasks\Scrum\Internal\EO_ItemChecklist createObject($setDefaultValues = true)
  * @method static \Bitrix\Tasks\Scrum\Internal\EO_ItemChecklist_Collection createCollection()

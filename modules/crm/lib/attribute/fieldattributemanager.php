@@ -11,6 +11,8 @@ use CCrmOwnerType;
 
 class FieldAttributeManager
 {
+	protected const CACHE_TTL = 86400;
+
 	public static function isEnabled()
 	{
 		return true;
@@ -39,9 +41,12 @@ class FieldAttributeManager
 		return true;
 	}
 
-	public static function resolveEntityScope($entityTypeID, $entityID, array $options = null): string
+	public static function resolveEntityScope($entityTypeId, $entityId, array $options = null): string
 	{
-		if (!CCrmOwnerType::IsDefined($entityTypeID))
+		$entityTypeId = (int)$entityTypeId;
+		$entityId = (int)$entityId;
+
+		if (!CCrmOwnerType::IsDefined($entityTypeId))
 		{
 			throw new Main\ArgumentException(
 				'The argument must be valid CCrmOwnerType.',
@@ -49,41 +54,27 @@ class FieldAttributeManager
 			);
 		}
 
-		$categoryID = null;
+		$categoryId = null;
 
-		if ($entityTypeID === CCrmOwnerType::Deal)
+		$factory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+		if ($factory)
 		{
-			$categoryID = is_array($options) && isset($options['CATEGORY_ID']) ? (int)$options['CATEGORY_ID'] : -1;
-			if ($categoryID < 0)
+			if (is_array($options))
 			{
-				$categoryID = \CCrmDeal::GetCategoryID($entityID);
+				$categoryId = isset($options['CATEGORY_ID']) ? (int)$options['CATEGORY_ID'] : null;
 			}
-		}
-		else
-		{
-			$factory = Crm\Service\Container::getInstance()->getFactory($entityTypeID);
-			if ($factory)
+			if (is_null($categoryId) && $factory->isCategoriesSupported())
 			{
-				if (is_array($options))
+				$categoryId = $factory->getItemCategoryId($entityId);
+
+				if (is_null($categoryId))
 				{
-					$categoryID = (int)($options['CATEGORY_ID'] ?? null);
-				}
-				if (!$categoryID && $factory->isCategoriesSupported())
-				{
-					$item = $factory->getItem($entityID);
-					if ($item)
-					{
-						$categoryID = $item->getCategoryId();
-					}
-					else
-					{
-						$categoryID = $factory->createDefaultCategoryIfNotExist()->getId();
-					}
+					$categoryId = $factory->createDefaultCategoryIfNotExist()->getId();
 				}
 			}
 		}
 
-		return static::getEntityScopeByCategory($categoryID);
+		return static::getEntityScopeByCategory($categoryId);
 	}
 
 	public static function getEntityScopeByCategory(?int $categoryId = 0): string
@@ -276,7 +267,7 @@ class FieldAttributeManager
 		$phases = static::sortPhasesBySortAscAndIdDesc($phases);
 
 		// Find prev and next phases
-		list($prevPhaseId, $nextPhaseId) = static::findNeighborPhases($phaseID, $phases);
+		[$prevPhaseId, $nextPhaseId] = static::findNeighborPhases($phaseID, $phases);
 
 		// Preparation of actions for deleting or changing attributes,
 		// the extreme phase of which coincides with the status to be deleted.
@@ -564,18 +555,13 @@ class FieldAttributeManager
 			return;
 		}
 
-		$connection = Main\Application::getConnection();
-		$helper = $connection->getSqlHelper();
-		$conditionSql = implode(
-			' AND ',
-			array(
-				$helper->prepareAssignment('b_crm_field_attr', 'ENTITY_TYPE_ID', $entityTypeID),
-				$helper->prepareAssignment('b_crm_field_attr', 'ENTITY_SCOPE', $entityScope),
-				$helper->prepareAssignment('b_crm_field_attr', 'TYPE_ID', $typeID),
-				$helper->prepareAssignment('b_crm_field_attr', 'FIELD_NAME', $fieldName)
-			)
-		);
-		$connection->queryExecute('DELETE FROM b_crm_field_attr WHERE '.$conditionSql);
+		$filter = [
+			'=ENTITY_TYPE_ID' => $entityTypeID,
+			'=ENTITY_SCOPE' => $entityScope,
+			'=TYPE_ID' => $typeID,
+			'=FIELD_NAME' => $fieldName,
+		];
+		self::delete($filter);
 	}
 
 	public static function getRequiredFields(
@@ -721,12 +707,12 @@ class FieldAttributeManager
 			return;
 		}
 
-		$connection = Main\Application::getConnection();
-		$helper = $connection->getSqlHelper();
-		$connection->queryExecute('DELETE FROM b_crm_field_attr WHERE '
-			.$helper->prepareAssignment('b_crm_field_attr', 'FIELD_NAME', $fieldName)
-		);
+		$filter = [
+			'=FIELD_NAME' => $fieldName,
+		];
+		self::delete($filter);
 	}
+
 	public static function onUserFieldUpdate(array $fields, $ID)
 	{
 		if($ID <= 0)
@@ -750,18 +736,11 @@ class FieldAttributeManager
 
 		if(isset($fields['MANDATORY']) && $fields['MANDATORY'] === 'Y')
 		{
-			$connection = Main\Application::getConnection();
-			$helper = $connection->getSqlHelper();
-
-			$conditionSql = implode(
-				' AND ',
-				array(
-					$helper->prepareAssignment('b_crm_field_attr', 'FIELD_NAME', $fieldName),
-					$helper->prepareAssignment('b_crm_field_attr', 'TYPE_ID', FieldAttributeType::REQUIRED)
-				)
-			);
-
-			$connection->queryExecute("DELETE FROM b_crm_field_attr WHERE {$conditionSql}");
+			$filter = [
+				'=FIELD_NAME' => $fieldName,
+				'=TYPE_ID' => FieldAttributeType::REQUIRED,
+			];
+			self::delete($filter);
 		}
 	}
 
@@ -978,25 +957,34 @@ class FieldAttributeManager
 		?int $typeId = FieldAttributeType::REQUIRED
 	): array
 	{
-		$query = new Main\Entity\Query(Entity\FieldAttributeTable::getEntity());
-		$query->addSelect('ENTITY_TYPE_ID');
-		$query->addSelect('FIELD_NAME');
-		$query->addSelect('START_PHASE');
-		$query->addSelect('FINISH_PHASE');
-		$query->addSelect('IS_CUSTOM_FIELD');
+		static $list = [];
 
-		$query->addFilter('=ENTITY_TYPE_ID', $entityTypeId);
-		$query->addFilter('=ENTITY_SCOPE', $entityScope);
-		if($fieldOrigin > 0)
+		$staticKey = ($entityTypeId . '-' . $entityScope . '-' . $fieldOrigin . '-' . $typeId);
+		if (!isset($list[$staticKey]))
 		{
-			$query->addFilter('=IS_CUSTOM_FIELD', $fieldOrigin === FieldOrigin::CUSTOM ? 'Y' : 'N');
-		}
-		if($typeId > 0)
-		{
-			$query->addFilter('=TYPE_ID', $typeId);
-		}
+			$query = new Main\Entity\Query(Entity\FieldAttributeTable::getEntity());
+			$query->addSelect('ENTITY_TYPE_ID');
+			$query->addSelect('FIELD_NAME');
+			$query->addSelect('START_PHASE');
+			$query->addSelect('FINISH_PHASE');
+			$query->addSelect('IS_CUSTOM_FIELD');
 
-		return $query->exec()->fetchAll();
+			$query->addFilter('=ENTITY_TYPE_ID', $entityTypeId);
+			$query->addFilter('=ENTITY_SCOPE', $entityScope);
+			if($fieldOrigin > 0)
+			{
+				$query->addFilter('=IS_CUSTOM_FIELD', $fieldOrigin === FieldOrigin::CUSTOM ? 'Y' : 'N');
+			}
+			if($typeId > 0)
+			{
+				$query->addFilter('=TYPE_ID', $typeId);
+			}
+
+			$query->setCacheTtl(self::CACHE_TTL);
+
+			$list[$staticKey] = $query->exec()->fetchAll();
+		}
+		return $list[$staticKey];
 	}
 
 	/**
@@ -1060,16 +1048,23 @@ class FieldAttributeManager
 
 	public static function deleteByOwnerType(int $entityTypeId)
 	{
-		$res = FieldAttributeTable::getList(
-			[
-				'filter' => [
-					'=ENTITY_TYPE_ID' => $entityTypeId
-				],
-				'select' => [
-					'ID'
-				]
-			]
-		);
+		$filter = [
+			'=ENTITY_TYPE_ID' => $entityTypeId,
+		];
+		self::delete($filter);
+	}
+
+	/**
+	 * @param array $filter
+	 */
+	protected static function delete(array $filter): void
+	{
+		$res = FieldAttributeTable::getList([
+			'filter' => $filter,
+			'select' => [
+				'ID',
+			],
+		]);
 		while($item = $res->fetch())
 		{
 			FieldAttributeTable::delete($item['ID']);

@@ -32,7 +32,7 @@ class Lead extends EntityBase
 	{
 		return Crm\LeadTable::getEntity();
 	}
-	protected function getDbTableAlias()
+	public function getDbTableAlias()
 	{
 		return \CCrmLead::TABLE_ALIAS;
 	}

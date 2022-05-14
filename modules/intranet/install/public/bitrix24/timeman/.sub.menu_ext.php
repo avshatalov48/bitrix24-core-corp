@@ -5,12 +5,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-// OLD MENU
-if (defined('OLD_MENU'))
-{
-	return;
-}
-
 use Bitrix\Intranet\Site\Sections\TimemanSection;
 use Bitrix\Main\Loader;
 

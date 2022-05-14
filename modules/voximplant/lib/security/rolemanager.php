@@ -128,7 +128,7 @@ class RoleManager
 		$result = array();
 		$userAccessCodes = \CAccess::GetUserCodesArray($userId);
 
-		if(!is_array($userAccessCodes) || count($userAccessCodes) === 0)
+		if(!is_array($userAccessCodes) || empty($userAccessCodes))
 			return array();
 
 		foreach ($userAccessCodes as $accessCode)

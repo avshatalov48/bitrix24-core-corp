@@ -163,7 +163,7 @@ export class EntityStorage
 		return null;
 	}
 
-	findItemBySourceId(sourceId: number): Item
+	findItemBySourceId(sourceId: number): ?Item
 	{
 		sourceId = parseInt(sourceId, 10);
 

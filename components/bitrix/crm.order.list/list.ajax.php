@@ -18,6 +18,7 @@ define(
 );
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
+require_once(__DIR__ . '/class.php');
 global $DB, $APPLICATION;
 if(!function_exists('__CrmOrderListEndResponse'))
 {
@@ -201,11 +202,19 @@ elseif ($action === 'GET_ROW_COUNT')
 
 	$gridData = $_SESSION['CRM_GRID_DATA'][$gridID];
 	$filter = isset($gridData['FILTER']) && is_array($gridData['FILTER']) ? $gridData['FILTER'] : array();
-	$select = isset($gridData['SELECT']) && is_array($gridData['SELECT']) ? $gridData['SELECT'] : array('*');
-	$runtime = isset($gridData['RUNTIME']) && is_array($gridData['RUNTIME']) ? $gridData['RUNTIME'] : array();
+	$runtime = [];
+	$isFilteredByCheckPrinted = \CCrmOrderListComponent::isFilteredByRuntimeField(
+		\CCrmOrderListComponent::RUNTIME_ORDER_CHECK_PRINTED,
+		$filter
+	);
+	if ($isFilteredByCheckPrinted)
+	{
+		$runtime[] = \CCrmOrderListComponent::getCheckPrintedRuntime();
+	}
+
 	$result = Bitrix\Crm\Order\Order::getList(array(
 		'filter' => $filter,
-		'select' => $select,
+		'select' => ['ID'],
 		'runtime' => $runtime,
 		'count_total' => true,
 	));

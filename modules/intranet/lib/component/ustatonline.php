@@ -38,9 +38,31 @@ class UstatOnline extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 		return $this->errorCollection->getErrorByCode($code);
 	}
 
-	public function configureActions()
+	protected function getDefaultPreFilters()
 	{
-		return array();
+		return [ new \Bitrix\Intranet\ActionFilter\UserType(['employee']) ];
+	}
+
+	public function configureActions(): array
+	{
+		$defaultPrefilters = [
+			new \Bitrix\Intranet\ActionFilter\UserType(['employee']),
+		];
+
+		return [
+			'getAllOnlineUser' => [
+				'prefilters' => $defaultPrefilters
+			],
+			'getOpenedTimemanUser' => [
+				'prefilters' => $defaultPrefilters
+			],
+			'getClosedTimemanUser' => [
+				'prefilters' => $defaultPrefilters
+			],
+			'checkTimeman' => [
+				'prefilters' => $defaultPrefilters
+			]
+		];
 	}
 
 	public function getErrors()

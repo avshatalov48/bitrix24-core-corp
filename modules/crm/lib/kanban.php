@@ -208,8 +208,8 @@ abstract class Kanban
 
 			'ITEMS' => [],
 			'ADMINS' => $this->getAdmins(),
-			'MORE_FIELDS' => $this->getAdditionalFields(),
-			'MORE_EDIT_FIELDS' => $this->getAdditionalEditFields(),
+			'MORE_FIELDS' => (!$this->isOnlyItems() ? $this->getAdditionalFields() : []),
+			'MORE_EDIT_FIELDS' => (!$this->isOnlyItems() ? $this->getAdditionalEditFields() : []),
 			'FIELDS_DISABLED' => $this->disableMoreFields,
 			'CATEGORIES' => [],
 
@@ -235,31 +235,42 @@ abstract class Kanban
 			);
 		}
 
-		$inlineEditorParameters = $this->entity->getInlineEditorParameters();
-		$params['FIELDS_SECTIONS'] = $inlineEditorParameters['fieldsSections'];
-
-		if ($this->entity->isInlineEditorSupported())
+		if (!$this->isOnlyItems())
 		{
-			$params['USER_FIELDS'] = $this->entity->getUserFields();
+			$inlineEditorParameters = $this->entity->getInlineEditorParameters();
+			$params['FIELDS_SECTIONS'] = $inlineEditorParameters['fieldsSections'];
 
-			$schemeFields = $inlineEditorParameters['schemeFields'];
-
-			if($schemeFields)
+			if ($this->entity->isInlineEditorSupported())
 			{
-				$params['SCHEME_INLINE'] = [
-					[
-						'name' => 'main',
-						'title' => '',
-						'type' => 'section',
-						'elements' => array_values($schemeFields)
-					]
-				];
+				$params['USER_FIELDS'] = $this->entity->getUserFields();
+
+				$schemeFields = $inlineEditorParameters['schemeFields'];
+
+				if ($schemeFields)
+				{
+					$params['SCHEME_INLINE'] = [
+						[
+							'name' => 'main',
+							'title' => '',
+							'type' => 'section',
+							'elements' => array_values($schemeFields)
+						]
+					];
+				}
 			}
 		}
 
 		$this->prepareComponentParams($params);
 
 		return $params;
+	}
+
+	/**
+	 * @return bool
+	 */
+	protected function isOnlyItems(): bool
+	{
+		return (isset($this->params['ONLY_ITEMS']) && $this->params['ONLY_ITEMS'] === 'Y');
 	}
 
 	/**
@@ -395,9 +406,9 @@ abstract class Kanban
 			if($this->entity->getTypeName() === \CCrmOwnerType::OrderName)
 			{
 				$filter = $this->getOrderFilter($runtime);
-				if(isset($filter[$this->statusKey]))
+				if(isset($filter[$this->getStatusKey()]))
 				{
-					$this->allowStages = $filter[$this->statusKey];
+					$this->allowStages = $filter[$this->getStatusKey()];
 				}
 			}
 			else
@@ -976,7 +987,7 @@ abstract class Kanban
 	 */
 	protected function prepareAllowStages(array $filter): void
 	{
-		$this->allowStages = ($filter[$this->statusKey] ?? $this->entity->getAllowStages($filter));
+		$this->allowStages = ($filter[$this->getStatusKey()] ?? $this->entity->getAllowStages($filter));
 	}
 
 	protected function prepareAllowSemantics(): void
@@ -1279,21 +1290,27 @@ abstract class Kanban
 					$row[$fmUp] = '';
 				}
 				// check each key
-				foreach ($row as $key => $val)
+				foreach ($row as $fieldName => $fieldValue)
 				{
-					if ($returnCustomer && isset($this->exclusiveFieldsReturnCustomer[$key]))
+					if ($returnCustomer && isset($this->exclusiveFieldsReturnCustomer[$fieldName]))
 					{
 						continue;
 					}
-					if (isset($this->requiredFields[$key]) && !$val && $val !== '0')
+					if (
+						isset($this->requiredFields[$fieldName])
+						&& !$fieldValue
+						&& $fieldValue !== '0'
+						&& $fieldValue !== 0
+						&& $fieldValue !== 0.0
+					)
 					{
-						foreach ($this->requiredFields[$key] as $status)
+						foreach ($this->requiredFields[$fieldName] as $stageId)
 						{
-							if (!isset($required[$status]))
+							if (!isset($required[$stageId]))
 							{
-								$required[$status] = [];
+								$required[$stageId] = [];
 							}
-							$required[$status][] = $key;
+							$required[$stageId][] = $fieldName;
 						}
 					}
 				}
@@ -1331,7 +1348,7 @@ abstract class Kanban
 				'id' =>  $row['ID'],
 				'name' => htmlspecialcharsbx($row['TITLE'] ?: '#' . $row['ID']),
 				'link' => ($row['LINK'] ?? str_replace($this->getPathMarkers(), $row['ID'], $path)),
-				'columnId' => ($columnId = htmlspecialcharsbx($row[$this->statusKey])),
+				'columnId' => ($columnId = htmlspecialcharsbx($row[$this->getStatusKey()])),
 				'columnColor' => (isset($columns[$columnId]) ? $columns[$columnId]['color'] : ''),
 				'price' => $row['PRICE'],
 				'price_formatted' => $row['PRICE_FORMATTED'],
@@ -1762,5 +1779,13 @@ abstract class Kanban
 			'im',
 			'web',
 		];
+	}
+
+	/**
+	 * @return string
+	 */
+	protected function getStatusKey(): string
+	{
+		return ($this->statusKey ?? $this->entity->getStageFieldName());
 	}
 }

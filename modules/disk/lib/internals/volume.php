@@ -288,6 +288,12 @@ final class VolumeTable extends DataManager
 			'LAST_ERROR' => array(
 				'data_type' => 'string',
 			),
+			'FILES_LEFT' => array(
+				'data_type' => 'integer',
+				'expression' => array(
+					"(DISK_COUNT - DROPPED_FILE_COUNT)",
+				),
+			),
 		);
 	}
 

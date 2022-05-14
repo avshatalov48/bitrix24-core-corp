@@ -2,15 +2,7 @@ this.BX = this.BX || {};
 (function (exports,main_core,main_popup) {
 	'use strict';
 
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span class=\"crm-webform-edit-warning-popup-alert\">", "</span>\n\t\t\t"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject;
 	var CreateLine = /*#__PURE__*/function () {
 	  function CreateLine(options) {
 	    babelHelpers.classCallCheck(this, CreateLine);
@@ -60,7 +52,6 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "onSuccess",
 	    value: function onSuccess(data) {
-	      BX.SidePanel.Instance.close();
 	      BX.SidePanel.Instance.open(this.path.replace('#LINE#', data.config_id), {
 	        width: 700,
 	        cacheable: false
@@ -114,7 +105,7 @@ this.BX = this.BX || {};
 	    key: "getPopupContent",
 	    value: function getPopupContent(message) {
 	      return this.cache.remember('popupContent', function () {
-	        return main_core.Tag.render(_templateObject(), message);
+	        return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span class=\"crm-webform-edit-warning-popup-alert\">", "</span>\n\t\t\t"])), message);
 	      });
 	    }
 	  }]);

@@ -3,7 +3,7 @@
 return [
 	'extensions' => [
 		'cache',
-		'chat/readycheck',
+		'entity-ready',
 		'layout/socialnetwork/project/create',
 		'layout/socialnetwork/project/edit',
 		'layout/socialnetwork/project/view',

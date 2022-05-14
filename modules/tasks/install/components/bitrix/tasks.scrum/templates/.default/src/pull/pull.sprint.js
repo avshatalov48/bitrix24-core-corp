@@ -1,21 +1,26 @@
+import {Type} from 'main.core';
+
 import {PlanBuilder} from '../view/plan/plan.builder';
 
 import {EntityStorage} from '../entity/entity.storage';
 import {Sprint} from '../entity/sprint/sprint';
+import {Item} from '../item/item';
 
 import {RequestSender} from '../utility/request.sender';
-
-import type {SprintParams} from '../entity/sprint/sprint';
 
 type Params = {
 	requestSender: RequestSender,
 	planBuilder: PlanBuilder,
 	entityStorage: EntityStorage,
-	groupId: number
+	groupId: number,
+	canStartSprint: boolean,
+	canCompleteSprint: boolean
 }
 
-type RemoveParams = {
-	sprintId: number
+type PushParams = {
+	id: number,
+	groupId: number,
+	tmpId?: string
 }
 
 export class PullSprint
@@ -32,7 +37,7 @@ export class PullSprint
 		this.listIdsToSkipRemoving = new Set();
 	}
 
-	getModuleId()
+	getModuleId(): string
 	{
 		return 'tasks';
 	}
@@ -46,76 +51,114 @@ export class PullSprint
 		};
 	}
 
-	onSprintAdded(params: SprintParams)
+	onSprintAdded(params: PushParams)
 	{
 		if (this.groupId !== params.groupId)
 		{
 			return;
 		}
 
-		const sprint = Sprint.buildSprint(params);
-
-		if (this.needSkipAdd(sprint))
+		if (this.needSkipAdd(params.tmpId))
 		{
-			this.cleanSkipAdd(sprint);
+			this.cleanSkipAdd(params.tmpId);
 
 			return;
 		}
 
-		this.planBuilder.createSprintNode(sprint);
+		this.requestSender.getSprintData({
+			sprintId: params.id
+		})
+			.then((response) => {
+				const sprint = Sprint.buildSprint(response.data);
+				this.planBuilder.createSprintNode(sprint);
+			})
+			.catch((response) => {})
+		;
 	}
 
-	onSprintUpdated(params: SprintParams)
+	onSprintUpdated(params: PushParams)
 	{
-		const tmpSprint = Sprint.buildSprint(params);
-
-		if (this.needSkipUpdate(tmpSprint))
+		if (this.groupId !== params.groupId)
 		{
-			this.cleanSkipUpdate(tmpSprint);
+			return;
+		}
+
+		if (this.needSkipUpdate(params.id))
+		{
+			this.cleanSkipUpdate(params.id);
 
 			return;
 		}
 
-		const sprint = this.entityStorage.findEntityByEntityId(tmpSprint.getId());
-		if (sprint)
-		{
-			if (tmpSprint.getStatus() !== sprint.getStatus())
-			{
-				if (tmpSprint.getStatus() === 'active')
+		this.requestSender.getSprintData({
+			sprintId: params.id
+		})
+			.then((response) => {
+				const tmpSprint = Sprint.buildSprint(response.data);
+				const sprint = this.entityStorage.findEntityByEntityId(tmpSprint.getId());
+				if (sprint)
 				{
-					this.planBuilder.moveSprintToActiveListNode(sprint);
+					const currentStatus = sprint.getStatus();
+
+					sprint.updateYourself(tmpSprint);
+
+					if (tmpSprint.getStatus() !== currentStatus)
+					{
+						if (tmpSprint.getStatus() === 'active')
+						{
+							this.planBuilder.moveSprintToActiveListNode(sprint);
+						}
+
+						if (tmpSprint.getStatus() === 'completed')
+						{
+							sprint.getItems()
+								.forEach((item: Item) => {
+									if (item.isShownSubTasks())
+									{
+										item.hideSubTasks();
+									}
+									sprint.removeItem(item);
+									item.removeYourself();
+								})
+							;
+							sprint.setBlank(sprint);
+							sprint.hideContent();
+
+							this.planBuilder.moveSprintToCompletedListNode(sprint);
+						}
+					}
+
+					this.planBuilder.updatePlannedSprints(
+						this.entityStorage.getPlannedSprints(),
+						(!Type.isUndefined(this.entityStorage.getActiveSprint()))
+					);
+
+					this.planBuilder.updateSprintContainers();
 				}
-
-				if (tmpSprint.getStatus() === 'completed')
-				{
-					this.planBuilder.moveSprintToCompletedListNode(sprint);
-				}
-
-				this.planBuilder.updatePlannedSprints(
-					this.entityStorage.getPlannedSprints(),
-					tmpSprint.getStatus() === 'active'
-				);
-			}
-
-			sprint.updateYourself(tmpSprint);
-
-			this.planBuilder.updateSprintContainers();
-		}
+			})
+			.catch((response) => {})
+		;
 	}
 
-	onSprintRemoved(params: RemoveParams)
+	onSprintRemoved(params: PushParams)
 	{
-		if (this.needSkipRemove(params.sprintId))
+		if (this.groupId !== params.groupId)
 		{
-			this.cleanSkipRemove(params.sprintId);
+			return;
+		}
+
+		if (this.needSkipRemove(params.id))
+		{
+			this.cleanSkipRemove(params.id);
 
 			return;
 		}
 
-		const sprint = this.entityStorage.findEntityByEntityId(params.sprintId);
+		const sprint = this.entityStorage.findEntityByEntityId(params.id);
 		if (sprint)
 		{
 			sprint.removeYourself();
+
 			this.entityStorage.removeSprint(sprint.getId());
 		}
 	}
@@ -135,24 +178,24 @@ export class PullSprint
 		this.listIdsToSkipRemoving.add(sprintId);
 	}
 
-	needSkipAdd(sprint: Sprint): boolean
+	needSkipAdd(tmpId: string): boolean
 	{
-		return this.listIdsToSkipAdding.has(sprint.getTmpId());
+		return this.listIdsToSkipAdding.has(tmpId);
 	}
 
-	cleanSkipAdd(sprint: Sprint)
+	cleanSkipAdd(tmpId: string)
 	{
-		this.listIdsToSkipAdding.delete(sprint.getTmpId());
+		this.listIdsToSkipAdding.delete(tmpId);
 	}
 
-	needSkipUpdate(sprint: Sprint): boolean
+	needSkipUpdate(sprintId: number): boolean
 	{
-		return this.listIdsToSkipUpdating.has(sprint.getId());
+		return this.listIdsToSkipUpdating.has(sprintId);
 	}
 
-	cleanSkipUpdate(sprint: Sprint)
+	cleanSkipUpdate(sprintId: number)
 	{
-		this.listIdsToSkipUpdating.delete(sprint.getId());
+		this.listIdsToSkipUpdating.delete(sprintId);
 	}
 
 	needSkipRemove(sprintId: number): boolean

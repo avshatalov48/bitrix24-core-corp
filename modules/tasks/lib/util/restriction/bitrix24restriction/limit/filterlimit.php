@@ -22,7 +22,7 @@ Loc::loadMessages(__FILE__);
  */
 class FilterLimit extends Limit
 {
-	protected static $variableName = 'tasks_entity_search_limit';
+	protected static $variableName = Bitrix24\FeatureDictionary::VARIABLE_SEARCH_LIMIT;
 
 	/**
 	 * Checks if limit exceeded

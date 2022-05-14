@@ -337,7 +337,7 @@ class Call
 			return ($user['STATUS'] == CallUserTable::STATUS_INVITING);
 		});
 
-		if(count($invitedUsers) > 0)
+		if(!empty($invitedUsers))
 		{
 			$this->removeUsers(array_keys($invitedUsers));
 		}
@@ -680,7 +680,7 @@ class Call
 
 			unset($this->users[$userId]);
 		}
-		if(count($users) > 0)
+		if(!empty($users))
 		{
 			if($sendTimeout)
 			{
@@ -708,7 +708,7 @@ class Call
 			}
 		}
 
-		if(count($usersToRemove) > 0)
+		if(!empty($usersToRemove))
 		{
 			$this->removeUsers($usersToRemove);
 		}
@@ -835,7 +835,8 @@ class Call
 
 		$commandResult = $this->scenario->sendDequeue($userId, true);
 
-		if(!$commandResult) {
+		if(!$commandResult->isSuccess())
+		{
 			$this->finish();
 		}
 
@@ -924,7 +925,7 @@ class Call
 		}
 
 		$users = array_keys($this->users);
-		if(count($users) > 0)
+		if(!empty($users))
 		{
 			$this->signaling->sendTimeout($users, $additionalParams);
 		}

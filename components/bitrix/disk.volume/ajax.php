@@ -1189,6 +1189,23 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 		}
 		$storageIndicatorId = $storageIndicatorType::getIndicatorId();
 
+		if ($this->filterId < 0 && $this->storageId > 0)
+		{
+			// detect previous measured data to prevent dublication
+			$storageList = \Bitrix\Disk\Internals\VolumeTable::getList(array(
+				'filter' => array(
+					'=OWNER_ID' =>  $this->getUser()->getId(),
+					'=STORAGE_ID' => $this->storageId,
+					'=INDICATOR_TYPE' => $storageIndicatorType,
+				),
+				'select' => ['ID']
+			));
+			if ($filter = $storageList->fetch())
+			{
+				$this->filterId = $filter['ID'];
+			}
+		}
+
 		if ($storageIndicatorType == Volume\Storage\TrashCan::className())
 		{
 			$folderIndicatorId = Volume\FolderDeleted::getIndicatorId();
@@ -1272,7 +1289,6 @@ class DiskVolumeController extends \Bitrix\Disk\Internals\Controller
 					$folderIndicatorId,
 					array(
 						'=STORAGE_ID' => $this->storageId,
-						//'=PARENT_ID' => $this->folderId,
 						'=FOLDER_ID' => $this->folderId,
 					)
 				);

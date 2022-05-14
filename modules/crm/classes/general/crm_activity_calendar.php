@@ -40,10 +40,19 @@ class CCrmActivityCalendar
 			$CAllUserTypeEntity->Add($arFields);
 		}
 
-		if (isset($arFilter['ENTITY_TYPE']) && isset($arFilter['ENTITY_ID']))
+		$entityTypeId = \CCrmOwnerType::ResolveID($arFilter['ENTITY_TYPE'] ?? '');
+		if (
+			$entityTypeId > 0
+			&& isset($arFilter['ENTITY_ID'])
+			&& (int)$arFilter['ENTITY_ID'] > 0
+		)
 		{
-			$arFilter['ENTITY_TYPE'] = CUserTypeCrm::GetShortEntityType($arFilter['ENTITY_TYPE']);
-			$arFilter['UF_CRM_CAL_EVENT'] = $arFilter['ENTITY_TYPE'].'_'.$arFilter['ENTITY_ID'];
+			$arFilter['UF_CRM_CAL_EVENT'] = \Bitrix\Crm\UserField\Types\ElementType::getValueByIdentifier(
+				new \Bitrix\Crm\ItemIdentifier(
+					(int)$arFilter['ENTITY_TYPE'],
+					(int)$arFilter['ENTITY_ID']
+				)
+			);
 			unset($arFilter['ENTITY_TYPE'], $arFilter['ENTITY_ID']);
 		}
 		else if (!empty($arFilter['ENTITY_TYPE']))

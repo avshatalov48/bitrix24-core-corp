@@ -3,6 +3,7 @@ namespace Bitrix\Tasks\Internals\Task;
 
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Internals\TaskDataManager;
 
 Loc::loadMessages(__FILE__);
 
@@ -22,9 +23,9 @@ Loc::loadMessages(__FILE__);
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_Parameter_Query query()
- * @method static EO_Parameter_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Parameter_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_Parameter_Result getById($id)
- * @method static EO_Parameter_Result getList(array $parameters = array())
+ * @method static EO_Parameter_Result getList(array $parameters = [])
  * @method static EO_Parameter_Entity getEntity()
  * @method static \Bitrix\Tasks\Internals\Task\EO_Parameter createObject($setDefaultValues = true)
  * @method static \Bitrix\Tasks\Internals\Task\EO_Parameter_Collection createCollection()
@@ -32,7 +33,7 @@ Loc::loadMessages(__FILE__);
  * @method static \Bitrix\Tasks\Internals\Task\EO_Parameter_Collection wakeUpCollection($rows)
  */
 
-class ParameterTable extends Main\Entity\DataManager
+class ParameterTable extends TaskDataManager
 {
 	public const PARAM_SUBTASKS_TIME = 1;
 	public const PARAM_SUBTASKS_AUTOCOMPLETE = 2;

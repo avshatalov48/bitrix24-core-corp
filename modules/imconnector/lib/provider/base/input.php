@@ -57,7 +57,7 @@ class Input
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$resultReceiving = $this->routing($this->command, $this->connector, $this->line, $this->data);
 			if (
@@ -99,9 +99,9 @@ class Input
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
-			if(empty($command))
+			if (empty($command))
 			{
 				$result->addError(new Error(
 					Loc::getMessage('IMCONNECTOR_NOT_SPECIFIED_CORRECT_COMMAND'),
@@ -116,7 +116,7 @@ class Input
 				));
 			}
 
-			if(
+			if (
 				empty($connector)
 				&& Connector::isConnector($connector, true)
 			)
@@ -135,7 +135,7 @@ class Input
 			}
 		}
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			switch ($command)
 			{
@@ -157,7 +157,8 @@ class Input
 				case 'receivingStatusBlock':
 					$result = $this->receivingStatusBlock();
 					break;
-				case 'deactivateConnector'://The disconnection of the connector due to the connection with the specified data on a different portal or lines
+				//The disconnection of the connector due to the connection with the specified data on a different portal or lines
+				case 'deactivateConnector':
 					$result = $this->deactivateConnector();
 					break;
 				default:
@@ -175,7 +176,7 @@ class Input
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$result->setResult('OK');
 		}
@@ -190,7 +191,7 @@ class Input
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$lineStatus = Status::getInstance($this->connector, $this->line);
 			if ($lineStatus->isStatus())
@@ -201,7 +202,7 @@ class Input
 					$resultProcessingMessage = $this->processingMessage($message);
 
 					$resultData[$cell] = $resultProcessingMessage->getResult();
-					if($resultProcessingMessage->isSuccess())
+					if ($resultProcessingMessage->isSuccess())
 					{
 						$resultData[$cell]['SUCCESS'] = true;
 					}
@@ -241,9 +242,9 @@ class Input
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
-			if(empty($message['type_message']))
+			if (empty($message['type_message']))
 			{
 				$typeMessage = 'message';
 			}
@@ -273,6 +274,9 @@ class Input
 				case 'post_update':
 					$result = $this->processingUpdatePost($message);
 					break;
+				case 'welcome':
+					$result = $this->processingWelcomeMessage($message);
+					break;
 				default:
 					$result->addError(new Error(
 						Loc::getMessage('IMCONNECTOR_ERROR_PROVIDER_UNSUPPORTED_TYPE_INCOMING_MESSAGE'),
@@ -295,15 +299,15 @@ class Input
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$result = Connector::initConnectorHandler($this->connector)->processingInputNewMessage($message, $this->line);
 		}
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$resultEvent = $this->sendEventAddMessage($result->getResult());
-			if(!$resultEvent->isSuccess())
+			if (!$resultEvent->isSuccess())
 			{
 				$result->addErrors($resultEvent->getErrors());
 			}
@@ -322,15 +326,15 @@ class Input
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$result = Connector::initConnectorHandler($this->connector)->processingInputUpdateMessage($message, $this->line);
 		}
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$resultEvent = $this->sendEventUpdateMessage($result->getResult());
-			if(!$resultEvent->isSuccess())
+			if (!$resultEvent->isSuccess())
 			{
 				$result->addErrors($resultEvent->getErrors());
 			}
@@ -349,15 +353,15 @@ class Input
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$result = Connector::initConnectorHandler($this->connector)->processingInputDelMessage($message, $this->line);
 		}
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$resultEvent = $this->sendEventDelMessage($result->getResult());
-			if(!$resultEvent->isSuccess())
+			if (!$resultEvent->isSuccess())
 			{
 				$result->addErrors($resultEvent->getErrors());
 			}
@@ -376,15 +380,15 @@ class Input
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$result = Connector::initConnectorHandler($this->connector)->processingInputTypingStatus($message, $this->line);
 		}
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$resultEvent = $this->sendEventTypingStatus($result->getResult());
-			if(!$resultEvent->isSuccess())
+			if (!$resultEvent->isSuccess())
 			{
 				$result->addErrors($resultEvent->getErrors());
 			}
@@ -403,15 +407,15 @@ class Input
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$result = Connector::initConnectorHandler($this->connector)->processingInputNewPost($message, $this->line);
 		}
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$resultEvent = $this->sendEventAddPost($result->getResult());
-			if(!$resultEvent->isSuccess())
+			if (!$resultEvent->isSuccess())
 			{
 				$result->addErrors($resultEvent->getErrors());
 			}
@@ -430,15 +434,15 @@ class Input
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$result = Connector::initConnectorHandler($this->connector)->processingInputUpdatePost($message, $this->line);
 		}
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$resultEvent = $this->sendEventUpdatePost($result->getResult());
-			if(!$resultEvent->isSuccess())
+			if (!$resultEvent->isSuccess())
 			{
 				$result->addErrors($resultEvent->getErrors());
 			}
@@ -449,6 +453,17 @@ class Input
 		return $result;
 	}
 
+	protected function processingWelcomeMessage($message): Result
+	{
+		$result = clone $this->result;
+
+		if ($result->isSuccess())
+		{
+			$result = Connector::initConnectorHandler($this->connector)->processingInputWelcomeMessage($message, $this->line);
+		}
+
+		return $result;
+	}
 
 	/**
 	 * @return Result
@@ -457,11 +472,11 @@ class Input
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			foreach ($this->data as $cell => $status)
 			{
-				if(!Library::isEmpty($status['message']['date']))
+				if (!Library::isEmpty($status['message']['date']))
 				{
 					$status['message']['date'] = DateTime::createFromTimestamp($status['message']['date']);
 				}
@@ -484,7 +499,7 @@ class Input
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			foreach ($this->data as $cell => $status)
 			{
@@ -508,7 +523,7 @@ class Input
 
 		foreach ($this->data as $error)
 		{
-			if(!empty($error['userId']))
+			if (!empty($error['userId']))
 			{
 				$user = Connector::initConnectorHandler($this->connector)->getUserByUserCode(['id' => $error['userId']]);
 
@@ -540,7 +555,7 @@ class Input
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			foreach ($this->data as $status)
 			{
@@ -574,7 +589,7 @@ class Input
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			Status::getInstance($this->connector, $this->line)->setError(true);
 			$cacheId = Connector::getCacheIdConnector($this->line, $this->connector);
@@ -594,7 +609,7 @@ class Input
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$result->addError(new Error(
 				Loc::getMessage('IMCONNECTOR_ERROR_PROVIDER_DOES_NOT_SUPPORT_THIS_METHOD_CALL'),
@@ -614,7 +629,7 @@ class Input
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$result->addError(new Error(
 				Loc::getMessage('IMCONNECTOR_NOT_SPECIFIED_CORRECT_COMMAND'),
@@ -732,7 +747,7 @@ class Input
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$data['connector'] = $this->connector;
 			$data['line'] = $this->line;

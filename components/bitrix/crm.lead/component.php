@@ -142,6 +142,11 @@ $arResult = array_merge(
 	$arResult
 );
 
+\CCrmEntityHelper::setEnabledFactoryFlagByRequest(
+	Crm\Settings\LeadSettings::getCurrent(),
+	\Bitrix\Main\Application::getInstance()->getContext()->getRequest()
+);
+
 if(isset($_GET['redirect_to']))
 {
 	$viewName = mb_strtoupper(trim($_GET['redirect_to']));

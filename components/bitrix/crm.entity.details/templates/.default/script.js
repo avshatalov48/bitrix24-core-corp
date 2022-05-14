@@ -967,7 +967,8 @@ if(typeof BX.Crm.EntityDetailTabManager === "undefined")
 			var activeItem = menuManager.getActive();
 			if (activeItem['DATA_ID'] === 'main' && firstItem.dataset.id !== activeItem['DATA_ID'])
 			{
-				var script = BX.data(firstItem, 'onclick');
+				const firstItemData = menuManager.getItemData(firstItem);
+				const script = firstItemData['ON_CLICK'];
 				if (BX.type.isNotEmptyString(script))
 				{
 					eval(script);

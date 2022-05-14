@@ -21,9 +21,11 @@ Loc::loadMessages(__FILE__);
 class CAllCrmInvoice
 {
 	static public $sUFEntityID = 'CRM_INVOICE';
+
 	const USER_FIELD_ENTITY_ID = 'CRM_INVOICE';
 	const SUSPENDED_USER_FIELD_ENTITY_ID = 'CRM_INVOICE_SPD';
-	const TOTAL_COUNT_CACHE_ID =  'crm_invoice_total_count';
+	const TOTAL_COUNT_CACHE_ID = 'crm_invoice_total_count';
+	const CACHE_TTL = 3600;
 
 	public $LAST_ERROR = '';
 	public $cPerms = null;
@@ -1944,7 +1946,7 @@ class CAllCrmInvoice
 
 	public static function GetTotalCount()
 	{
-		if(defined('BX_COMP_MANAGED_CACHE') && $GLOBALS['CACHE_MANAGER']->Read(600, self::TOTAL_COUNT_CACHE_ID, 'b_crm_invoice'))
+		if(defined('BX_COMP_MANAGED_CACHE') && $GLOBALS['CACHE_MANAGER']->Read(self::CACHE_TTL, self::TOTAL_COUNT_CACHE_ID, 'b_crm_invoice'))
 		{
 			return $GLOBALS['CACHE_MANAGER']->Get(self::TOTAL_COUNT_CACHE_ID);
 		}
@@ -2084,8 +2086,6 @@ class CAllCrmInvoice
 				{
 					Bitrix\Crm\History\InvoiceStatusHistoryEntry::register($ID);
 					Bitrix\Crm\Statistics\InvoiceSumStatisticEntry::register($ID, null);
-
-					Bitrix\Crm\Automation\Trigger\InvoiceTrigger::onInvoiceStatusChanged($ID, $statusID);
 				}
 			}
 		}

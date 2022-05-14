@@ -28,11 +28,11 @@ abstract class Queue
 {
 	const PREFIX_KEY_LOCK = 'imol_transfer_chat_id_';
 
-	/**Session*/
+	/** @var Session */
 	protected $sessionManager = null;
 	protected $session = [];
 	protected $config = [];
-	/**Chat*/
+	/** @var Chat */
 	protected $chat = null;
 
 	protected $cacheRemoveSession = [];
@@ -183,10 +183,13 @@ abstract class Queue
 	 */
 	function __construct($session)
 	{
-		$this->sessionManager = $session;
-		$this->session = $session->getData();
-		$this->config = $session->getConfig();
-		$this->chat = $session->getChat();
+		if ($session instanceof Session)
+		{
+			$this->sessionManager = $session;
+			$this->session = $session->getData();
+			$this->config = $session->getConfig();
+			$this->chat = $session->getChat();
+		}
 	}
 
 	/**
@@ -567,12 +570,15 @@ abstract class Queue
 					{
 						if((int)$this->session['OPERATOR_ID'] !== (int)$resultOperatorQueue['OPERATOR_ID'])
 						{
-							$this->chat->transfer([
-								'FROM' => $this->session['OPERATOR_ID'],
-								'TO' => $resultOperatorQueue['OPERATOR_ID'],
-								'MODE' => Chat::TRANSFER_MODE_AUTO,
-								'LEAVE' => $leaveTransfer
-							]);
+							$this->chat->transfer(
+								[
+									'FROM' => $this->session['OPERATOR_ID'],
+									'TO' => $resultOperatorQueue['OPERATOR_ID'],
+									'MODE' => Chat::TRANSFER_MODE_AUTO,
+									'LEAVE' => $leaveTransfer
+								],
+								$this->sessionManager
+							);
 						}
 					}
 					elseif(!empty($resultOperatorQueue['OPERATOR_LIST']))
@@ -589,12 +595,15 @@ abstract class Queue
 				{
 					if((int)$this->session['OPERATOR_ID'] !== 0)
 					{
-						$this->chat->transfer([
-							'FROM' => $this->session['OPERATOR_ID'],
-							'TO' => 0,
-							'MODE' => Chat::TRANSFER_MODE_AUTO,
-							'LEAVE' => $leaveTransfer
-						]);
+						$this->chat->transfer(
+							[
+								'FROM' => $this->session['OPERATOR_ID'],
+								'TO' => 0,
+								'MODE' => Chat::TRANSFER_MODE_AUTO,
+								'LEAVE' => $leaveTransfer
+							],
+							$this->sessionManager
+						);
 					}
 
 					$updateSessionCheck['UNDISTRIBUTED'] = 'Y';

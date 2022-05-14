@@ -1,5 +1,6 @@
 <?php
 $MESS["CRM_CTRL_PANEL_ITEM_ANALYTICS"] = "Analytics";
+$MESS["CRM_CTRL_PANEL_ITEM_ANALYTICS_BI"] = "BI-Analytik";
 $MESS["CRM_CTRL_PANEL_ITEM_ANALYTICS_CALLS"] = "Anrufanalytik";
 $MESS["CRM_CTRL_PANEL_ITEM_ANALYTICS_DIALOGS"] = "Konversationsanalytik";
 $MESS["CRM_CTRL_PANEL_ITEM_ANALYTICS_MANAGERS"] = "Mitarbeitereffektivität";
@@ -52,6 +53,7 @@ $MESS["CRM_CTRL_PANEL_ITEM_QUOTE_TITLE"] = "Alle Angebote";
 $MESS["CRM_CTRL_PANEL_ITEM_RECYCLE_BIN"] = "Papierkorb";
 $MESS["CRM_CTRL_PANEL_ITEM_RECYCLE_BIN_TITLE"] = "Gelöschte Leads, Kontakte, Unternehmen und Aufträge anzeigen und wiederherstellen.";
 $MESS["CRM_CTRL_PANEL_ITEM_REPORT"] = "Berichte";
+$MESS["CRM_CTRL_PANEL_ITEM_REPORT_CONSTRUCTOR"] = "Reports Designer";
 $MESS["CRM_CTRL_PANEL_ITEM_REPORT_TITLE"] = "Berichte";
 $MESS["CRM_CTRL_PANEL_ITEM_SALES"] = "Umsatz";
 $MESS["CRM_CTRL_PANEL_ITEM_SALES_CENTER"] = "Vertriebsstelle";

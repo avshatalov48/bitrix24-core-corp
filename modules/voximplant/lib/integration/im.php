@@ -43,7 +43,7 @@ class Im
 		);
 
 		$attach = new \CIMMessageParamAttach();
-		if(count($buttons) > 0)
+		if(!empty($buttons))
 		{
 			foreach ($buttons as $button)
 			{

@@ -15,9 +15,11 @@ use Bitrix\Crm\Binding\QuoteContactTable;
 class CAllCrmQuote
 {
 	public static $sUFEntityID = 'CRM_QUOTE';
+
 	const USER_FIELD_ENTITY_ID = 'CRM_QUOTE';
 	const SUSPENDED_USER_FIELD_ENTITY_ID = 'CRM_QUOTE_SPD';
-	const TOTAL_COUNT_CACHE_ID =  'crm_quote_total_count';
+	const TOTAL_COUNT_CACHE_ID = 'crm_quote_total_count';
+	const CACHE_TTL = 3600;
 
 	protected static $TYPE_NAME = 'QUOTE';
 	private static $QUOTE_STATUSES = null;
@@ -30,6 +32,9 @@ class CAllCrmQuote
 	public $cPerms = null;
 	protected $bCheckPermission = true;
 	protected $lastErrors;
+
+	/** @var \Bitrix\Crm\Entity\Compatibility\Adapter */
+	private $compatibiltyAdapter;
 
 	const TABLE_ALIAS = 'Q';
 	const OWNER_TYPE = self::TABLE_ALIAS;
@@ -47,14 +52,62 @@ class CAllCrmQuote
 	 */
 	public function isUseOperation(): bool
 	{
+		return static::isFactoryEnabled();
+	}
+
+	private static function isFactoryEnabled(): bool
+	{
 		return Crm\Settings\QuoteSettings::getCurrent()->isFactoryEnabled();
 	}
 
-	protected function prepareOperation(Crm\Service\Operation $operation, ?array $options = []): Crm\Service\Operation
+	private function getCompatibilityAdapter(): Crm\Entity\Compatibility\Adapter
 	{
-		\CCrmEntityHelper::prepareOperationByOptions($operation, $options ?? [], $this->bCheckPermission);
+		if (!$this->compatibiltyAdapter)
+		{
+			$this->compatibiltyAdapter = static::createCompatibilityAdapter();
 
-		return $operation;
+			if ($this->compatibiltyAdapter instanceof Crm\Entity\Compatibility\Adapter\Operation)
+			{
+				$this->compatibiltyAdapter
+					///bind newly created adapter to this instance
+					->setCheckPermissions((bool)$this->bCheckPermission)
+					->setErrorMessageContainer($this->LAST_ERROR)
+					->setErrorCollectionContainer($this->lastErrors)
+				;
+			}
+		}
+
+		return $this->compatibiltyAdapter;
+	}
+
+	private static function createCompatibilityAdapter(): Crm\Entity\Compatibility\Adapter
+	{
+		$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Quote);
+		if (!$factory)
+		{
+			throw new Error('No factory for quote');
+		}
+
+		return
+			(new Crm\Entity\Compatibility\Adapter\Operation($factory))
+				->setAlwaysExposedFields([
+					'MODIFY_BY_ID',
+					'PERSON_TYPE_ID',
+					'STORAGE_TYPE_ID',
+					'STORAGE_ELEMENT_IDS',
+					'ID',
+				])
+				->setExposedOnlyAfterAddFields([
+					'CREATED_BY_ID',
+					'ASSIGNED_BY_ID',
+					'STATUS_ID',
+					'CLOSED',
+					'BEGINDATE',
+				])
+				->setExposedOnlyAfterUpdateFields([
+					'QUOTE_NUMBER',
+				])
+		;
 	}
 
 	public function __construct($bCheckPermission = true)
@@ -67,6 +120,11 @@ class CAllCrmQuote
 	{
 		$this->lastErrors = null;
 
+		if (!is_array($arFields))
+		{
+			$arFields = (array)$arFields;
+		}
+
 		if(!is_array($options))
 		{
 			$options = array();
@@ -74,30 +132,7 @@ class CAllCrmQuote
 
 		if($this->isUseOperation())
 		{
-			$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Quote);
-			if(!$factory)
-			{
-				throw new Error('No factory for quote');
-			}
-			$item = $factory->createItem();
-			$item->setFromCompatibleData($arFields);
-
-			$operation = $this->prepareOperation($factory->getAddOperation($item), $options);
-
-			$result = $operation->launch();
-			if($result->isSuccess())
-			{
-				$arFields = $item->getCompatibleData();
-
-				return $item->getId();
-			}
-
-			$this->lastErrors = $result->getErrorCollection();
-
-			$this->LAST_ERROR = implode(', ', $result->getErrorMessages());
-			$arFields['RESULT_MESSAGE'] = &$this->LAST_ERROR;
-
-			return false;
+			return $this->getCompatibilityAdapter()->performAdd($arFields, $options);
 		}
 
 		global $DB;
@@ -572,46 +607,25 @@ class CAllCrmQuote
 
 	public function Update($ID, &$arFields, $bCompare = true, $bUpdateSearch = true, $options = array())
 	{
+		$ID = (int) $ID;
+		if (!is_array($arFields))
+		{
+			$arFields = (array)$arFields;
+		}
+		if(!is_array($options))
+		{
+			$options = array();
+		}
+
 		$this->lastErrors = null;
 		if($this->isUseOperation())
 		{
-			$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Quote);
-			if(!$factory)
-			{
-				throw new Error('No factory for quote');
-			}
-			$item = $factory->getItem($ID);
-			if(!$item)
-			{
-				return false;
-			}
-			$item->setFromCompatibleData($arFields);
-
-			$operation = $this->prepareOperation($factory->getUpdateOperation($item), $options);
-
-			$result = $operation->launch();
-			if($result->isSuccess())
-			{
-				$arFields = $item->getCompatibleData();
-
-				return true;
-			}
-
-			$this->lastErrors = $result->getErrorCollection();
-			$this->LAST_ERROR = implode(', ', $result->getErrorMessages());
-			$arFields['RESULT_MESSAGE'] = &$this->LAST_ERROR;
-
-			return false;
+			return $this->getCompatibilityAdapter()->performUpdate($ID, $arFields, $options);
 		}
 
 		global $DB;
 
 		$this->LAST_ERROR = '';
-		$ID = (int) $ID;
-		if(!is_array($options))
-		{
-			$options = array();
-		}
 
 		$arFilterTmp = array('ID' => $ID);
 		if (!$this->bCheckPermission)
@@ -970,32 +984,6 @@ class CAllCrmQuote
 	public function Delete($ID, $options = array())
 	{
 		$this->lastErrors = null;
-		if($this->isUseOperation())
-		{
-			$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Quote);
-			if(!$factory)
-			{
-				throw new Error('No factory for quote');
-			}
-			$item = $factory->getItem($ID);
-			if(!$item)
-			{
-				return false;
-			}
-
-			$operation = $this->prepareOperation($factory->getDeleteOperation($item), $options);
-
-			$result = $operation->launch();
-
-			if (!$result->isSuccess())
-			{
-				$this->lastErrors = $result->getErrorCollection();
-			}
-
-			return $result->isSuccess();
-		}
-
-		global $DB, $APPLICATION;
 
 		$ID = (int)$ID;
 
@@ -1003,6 +991,13 @@ class CAllCrmQuote
 		{
 			$options = array();
 		}
+
+		if($this->isUseOperation())
+		{
+			return $this->getCompatibilityAdapter()->performDelete($ID, $options);
+		}
+
+		global $DB, $APPLICATION;
 
 		if(isset($options['CURRENT_USER']))
 		{
@@ -1929,142 +1924,149 @@ class CAllCrmQuote
 	{
 		if(!self::$FIELD_INFOS)
 		{
-			self::$FIELD_INFOS = array(
-				'ID' => array(
-					'TYPE' => 'integer',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'QUOTE_NUMBER' => array(
-					'TYPE' => 'string',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'TITLE' => array(
-					'TYPE' => 'string',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Required)
-				),
-				'STATUS_ID' => array(
-					'TYPE' => 'crm_status',
-					'CRM_STATUS_TYPE' => 'QUOTE_STATUS'
-				),
-				'CURRENCY_ID' => array(
-					'TYPE' => 'crm_currency'
-				),
-				'OPPORTUNITY' => array(
-					'TYPE' => 'double'
-				),
-				'TAX_VALUE' => array(
-					'TYPE' => 'double'
-				),
-				'EXCH_RATE' => array(
-					'TYPE' => 'double',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
-				),
-				'ACCOUNT_CURRENCY_ID' => array(
-					'TYPE' => 'string',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
-				),
-				'OPPORTUNITY_ACCOUNT' => array(
-					'TYPE' => 'double',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
-				),
-				'TAX_VALUE_ACCOUNT' => array(
-					'TYPE' => 'double',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
-				),
-				'COMPANY_ID' => array(
-					'TYPE' => 'crm_company'
-				),
-				'MYCOMPANY_ID' => array(
-					'TYPE' => 'crm_company'
-				),
-				'CONTACT_ID' => array(
-					'TYPE' => 'crm_contact',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Deprecated)
-				),
-				'CONTACT_IDS' => array(
-					'TYPE' => 'crm_contact',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Multiple)
-				),
-				'BEGINDATE' => array(
-					'TYPE' => 'date'
-				),
-				'CLOSEDATE' => array(
-					'TYPE' => 'date'
-				),
-				'OPENED' => array(
-					'TYPE' => 'char'
-				),
-				'CLOSED' => array(
-					'TYPE' => 'char'
-				),
-				'COMMENTS' => array(
-					'TYPE' => 'string',
-					'VALUE_TYPE' => 'html',
-				),
-				'CONTENT' => array(
-					'TYPE' => 'string'
-				),
-				'TERMS' => array(
-					'TYPE' => 'string'
-				),
-				'CLIENT_TITLE' => array(
-					'TYPE' => 'string'
-				),
-				'CLIENT_ADDR' => array(
-					'TYPE' => 'string'
-				),
-				'CLIENT_CONTACT' => array(
-					'TYPE' => 'string'
-				),
-				'CLIENT_EMAIL' => array(
-					'TYPE' => 'string'
-				),
-				'CLIENT_PHONE' => array(
-					'TYPE' => 'string'
-				),
-				'CLIENT_TP_ID' => array(
-					'TYPE' => 'string'
-				),
-				'CLIENT_TPA_ID' => array(
-					'TYPE' => 'string'
-				),
-				'ASSIGNED_BY_ID' => array(
-					'TYPE' => 'user'
-				),
-				'CREATED_BY_ID' => array(
-					'TYPE' => 'user',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'MODIFY_BY_ID' => array(
-					'TYPE' => 'user',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'DATE_CREATE' => array(
-					'TYPE' => 'datetime',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'DATE_MODIFY' => array(
-					'TYPE' => 'datetime',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'LEAD_ID' => array(
-					'TYPE' => 'crm_lead'
-				),
-				'DEAL_ID' => array(
-					'TYPE' => 'crm_deal'
-				),
-				'PERSON_TYPE_ID' => array(
-					'TYPE' => 'integer'
-				),
-				'LOCATION_ID' => array(
-					'TYPE' => 'location'
-				)
-			);
+			if (static::isFactoryEnabled())
+			{
+				self::$FIELD_INFOS = static::createCompatibilityAdapter()->getFieldsInfo();
+			}
+			else
+			{
+				self::$FIELD_INFOS = array(
+					'ID' => array(
+						'TYPE' => 'integer',
+						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+					),
+					'QUOTE_NUMBER' => array(
+						'TYPE' => 'string',
+						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+					),
+					'TITLE' => array(
+						'TYPE' => 'string',
+						'ATTRIBUTES' => array(CCrmFieldInfoAttr::Required)
+					),
+					'STATUS_ID' => array(
+						'TYPE' => 'crm_status',
+						'CRM_STATUS_TYPE' => 'QUOTE_STATUS'
+					),
+					'CURRENCY_ID' => array(
+						'TYPE' => 'crm_currency'
+					),
+					'OPPORTUNITY' => array(
+						'TYPE' => 'double'
+					),
+					'TAX_VALUE' => array(
+						'TYPE' => 'double'
+					),
+					'EXCH_RATE' => array(
+						'TYPE' => 'double',
+						'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
+					),
+					'ACCOUNT_CURRENCY_ID' => array(
+						'TYPE' => 'string',
+						'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
+					),
+					'OPPORTUNITY_ACCOUNT' => array(
+						'TYPE' => 'double',
+						'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
+					),
+					'TAX_VALUE_ACCOUNT' => array(
+						'TYPE' => 'double',
+						'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
+					),
+					'COMPANY_ID' => array(
+						'TYPE' => 'crm_company'
+					),
+					'MYCOMPANY_ID' => array(
+						'TYPE' => 'crm_company'
+					),
+					'CONTACT_ID' => array(
+						'TYPE' => 'crm_contact',
+						'ATTRIBUTES' => array(CCrmFieldInfoAttr::Deprecated)
+					),
+					'CONTACT_IDS' => array(
+						'TYPE' => 'crm_contact',
+						'ATTRIBUTES' => array(CCrmFieldInfoAttr::Multiple)
+					),
+					'BEGINDATE' => array(
+						'TYPE' => 'date'
+					),
+					'CLOSEDATE' => array(
+						'TYPE' => 'date'
+					),
+					'OPENED' => array(
+						'TYPE' => 'char'
+					),
+					'CLOSED' => array(
+						'TYPE' => 'char'
+					),
+					'COMMENTS' => array(
+						'TYPE' => 'string',
+						'VALUE_TYPE' => 'html',
+					),
+					'CONTENT' => array(
+						'TYPE' => 'string'
+					),
+					'TERMS' => array(
+						'TYPE' => 'string'
+					),
+					'CLIENT_TITLE' => array(
+						'TYPE' => 'string'
+					),
+					'CLIENT_ADDR' => array(
+						'TYPE' => 'string'
+					),
+					'CLIENT_CONTACT' => array(
+						'TYPE' => 'string'
+					),
+					'CLIENT_EMAIL' => array(
+						'TYPE' => 'string'
+					),
+					'CLIENT_PHONE' => array(
+						'TYPE' => 'string'
+					),
+					'CLIENT_TP_ID' => array(
+						'TYPE' => 'string'
+					),
+					'CLIENT_TPA_ID' => array(
+						'TYPE' => 'string'
+					),
+					'ASSIGNED_BY_ID' => array(
+						'TYPE' => 'user'
+					),
+					'CREATED_BY_ID' => array(
+						'TYPE' => 'user',
+						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+					),
+					'MODIFY_BY_ID' => array(
+						'TYPE' => 'user',
+						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+					),
+					'DATE_CREATE' => array(
+						'TYPE' => 'datetime',
+						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+					),
+					'DATE_MODIFY' => array(
+						'TYPE' => 'datetime',
+						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+					),
+					'LEAD_ID' => array(
+						'TYPE' => 'crm_lead'
+					),
+					'DEAL_ID' => array(
+						'TYPE' => 'crm_deal'
+					),
+					'PERSON_TYPE_ID' => array(
+						'TYPE' => 'integer'
+					),
+					'LOCATION_ID' => array(
+						'TYPE' => 'location'
+					)
+				);
 
-			// add utm fields
-			self::$FIELD_INFOS = self::$FIELD_INFOS + UtmTable::getUtmFieldsInfo();
+				// add utm fields
+				self::$FIELD_INFOS = self::$FIELD_INFOS + UtmTable::getUtmFieldsInfo();
 
-			self::$FIELD_INFOS += Crm\Service\Container::getInstance()->getParentFieldManager()->getParentFieldsInfo(\CCrmOwnerType::Quote);
+				self::$FIELD_INFOS += Crm\Service\Container::getInstance()->getParentFieldManager()->getParentFieldsInfo(\CCrmOwnerType::Quote);
+			}
 		}
 
 		return self::$FIELD_INFOS;
@@ -2389,7 +2391,7 @@ class CAllCrmQuote
 
 	public static function GetTotalCount()
 	{
-		if(defined('BX_COMP_MANAGED_CACHE') && $GLOBALS['CACHE_MANAGER']->Read(600, self::TOTAL_COUNT_CACHE_ID, 'b_crm_quote'))
+		if(defined('BX_COMP_MANAGED_CACHE') && $GLOBALS['CACHE_MANAGER']->Read(self::CACHE_TTL, self::TOTAL_COUNT_CACHE_ID, 'b_crm_quote'))
 		{
 			return $GLOBALS['CACHE_MANAGER']->Get(self::TOTAL_COUNT_CACHE_ID);
 		}

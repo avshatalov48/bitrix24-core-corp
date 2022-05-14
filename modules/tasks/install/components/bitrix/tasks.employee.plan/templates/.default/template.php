@@ -1,21 +1,21 @@
-<?
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Main\Localization\Loc;
-
-use Bitrix\Tasks\Manager;
-use Bitrix\Tasks\Util\Type;
+use Bitrix\Main\UI\Extension;
 use Bitrix\Tasks\UI;
 
-\Bitrix\Main\UI\Extension::load("ui.buttons");
-?>
+Extension::load(['ui.buttons']);
 
-<?
 $APPLICATION->IncludeComponent(
 	'bitrix:tasks.interface.topmenu',
 	'',
-	array(
-		'USER_ID' => $arResult['USER_ID'],
+	[
+		'USER_ID' => $arParams['USER_ID'],
 		'GROUP_ID' => $arParams['GROUP_ID'],
 		'SECTION_URL_PREFIX' => '',
 		'PATH_TO_GROUP_TASKS' => $arParams['PATH_TO_GROUP_TASKS'],
@@ -32,16 +32,12 @@ $APPLICATION->IncludeComponent(
 		'MARK_SECTION_EMPLOYEE_PLAN' => 'Y',
 		'MARK_TEMPLATES' => 'N',
 		'MARK_ACTIVE_ROLE' => 'N'
-	),
+	],
 	$component,
-	array('HIDE_ICONS' => true)
+	['HIDE_ICONS' => true]
 );
 
 $filter = $arResult['FILTER'];
-
-$pathToTask = UI\Task::makeActionUrl($arResult['HELPER']->findParameterValue('PATH_TO_USER_TASKS_TASK'), false, 'view');
-$pathToTask = UI::convertActionPathToBarNotation($pathToTask);
-$pathToTask = str_replace('TASK_ID', 'ID', $pathToTask);
 ?>
 
 <?$arResult['HELPER']->displayFatals();?>

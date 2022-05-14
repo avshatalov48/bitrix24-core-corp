@@ -20,6 +20,8 @@ if (!Loader::includeModule('intranet'))
 	return;
 }
 
+\Bitrix\Main\UI\Extension::load(['ui.info-helper']);
+
 $teamWorkIds = array_flip([
 	'menu_live_feed',
 	'menu_im_messenger',

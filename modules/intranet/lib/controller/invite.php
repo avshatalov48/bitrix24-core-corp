@@ -5,6 +5,7 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Event;
+use Bitrix\Main\ModuleManager;
 use Bitrix\Main\UserTable;
 use Bitrix\Socialservices\Network;
 use Bitrix\Intranet\Invitation;
@@ -251,17 +252,32 @@ class Invite extends \Bitrix\Main\Engine\Controller
 		];
 	}
 
-	public function copyRegisterUrlAction(array $params = [])
+	public function copyRegisterUrlAction()
 	{
-		$userId = (
-			!empty($params['userId'])
-				? intval($params['userId'])
-				: $this->getCurrentUser()->getId()
-		);
+		$userId = $this->getCurrentUser()->getId();
 
 		if ($userId <= 0)
 		{
 			$this->addError(new Error(Loc::getMessage('INTRANET_CONTROLLER_INVITE_NO_USER_ID'), 'INTRANET_CONTROLLER_INVITE_NO_USER_ID'));
+			return null;
+		}
+
+		$allowSelfRegister = false;
+		if (
+			ModuleManager::isModuleInstalled('bitrix24')
+			&& Loader::includeModule('socialservices')
+		)
+		{
+			$registerSettings = \Bitrix\Socialservices\Network::getRegisterSettings();
+			if ($registerSettings['REGISTER'] === 'Y')
+			{
+				$allowSelfRegister = true;
+			}
+		}
+
+		if (!$allowSelfRegister)
+		{
+			$this->addError(new Error(Loc::getMessage('INTRANET_CONTROLLER_INVITE_NO_PERMISSIONS'), 'INTRANET_CONTROLLER_INVITE_NO_PERMISSIONS'));
 			return null;
 		}
 

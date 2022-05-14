@@ -4,11 +4,11 @@
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var namespace = main_core.Reflection.namespace('BX.Crm.Activity');
 
-	var _selector = /*#__PURE__*/new WeakMap();
+	var _selector = new WeakMap();
 
-	var _onProductClick = /*#__PURE__*/new WeakSet();
+	var _onProductClick = new WeakSet();
 
-	var _getProductSelector = /*#__PURE__*/new WeakSet();
+	var _getProductSelector = new WeakSet();
 
 	var CrmAddProductRowActivity = /*#__PURE__*/function () {
 	  function CrmAddProductRowActivity(options) {
@@ -47,11 +47,11 @@
 	  return CrmAddProductRowActivity;
 	}();
 
-	function _onProductClick2() {
+	var _onProductClick2 = function _onProductClick2() {
 	  _classPrivateMethodGet(this, _getProductSelector, _getProductSelector2).call(this).show();
-	}
+	};
 
-	function _getProductSelector2() {
+	var _getProductSelector2 = function _getProductSelector2() {
 	  var _this = this;
 
 	  if (!babelHelpers.classPrivateFieldGet(this, _selector)) {
@@ -79,7 +79,7 @@
 	  }
 
 	  return babelHelpers.classPrivateFieldGet(this, _selector);
-	}
+	};
 
 	namespace.CrmAddProductRowActivity = CrmAddProductRowActivity;
 

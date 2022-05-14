@@ -136,7 +136,7 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 		}
 		if (
 			!Restriction::canManage($ufController->getEntityCode())
-			&& TaskLimit::isLimitExceeded(TaskLimit::isLimitExist() ? 0 : 100)
+			&& TaskLimit::isLimitExceeded(TaskLimit::isLimitExist() ? 0 : \Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit::DEFAULT_LIMIT)
 		)
 		{
 			$this->errorCollection->add('ACTION_RESTRICTED', Loc::getMessage('TASKS_TUFE_UF_MANAGING_RESTRICTED'));
@@ -446,7 +446,7 @@ class TasksUserFieldPanelComponent extends TasksBaseComponent
 			'USE' => Restriction::canUse($entityCode, $this->userId),
 			'MANAGE' => Restriction::canManage($entityCode, $this->userId),
 			'CREATE_MANDATORY' => Restriction::canCreateMandatory($entityCode, $this->userId),
-			'TASK_LIMIT_EXCEEDED' => TaskLimit::isLimitExceeded(TaskLimit::isLimitExist() ? 0 : 100),
+			'TASK_LIMIT_EXCEEDED' => TaskLimit::isLimitExceeded(TaskLimit::isLimitExist() ? 0 : \Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit::DEFAULT_LIMIT),
 		);
 	}
 

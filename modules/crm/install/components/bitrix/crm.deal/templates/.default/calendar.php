@@ -45,7 +45,7 @@ elseif (\Bitrix\Main\Loader::includeModule('calendar'))
 	$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
 	if($isBitrix24Template)
 	{
-		$this->SetViewTarget('below_pagetitle', 0);
+		$this->SetViewTarget('below_pagetitle', 1000);
 	}
 
 	if ($arResult['IS_RECURRING'] !== 'Y')
@@ -78,21 +78,6 @@ elseif (\Bitrix\Main\Loader::includeModule('calendar'))
 	}
 
 	$catalogPath = ($arResult['IS_RECURRING'] !== 'Y') ? $arResult['PATH_TO_DEAL_CATEGORY'] : $arResult['PATH_TO_DEAL_RECUR_CATEGORY'];
-
-	$APPLICATION->IncludeComponent(
-		'bitrix:crm.deal_category.panel',
-		$isBitrix24Template ? 'tiny' : '',
-		array(
-			'PATH_TO_DEAL_LIST' => $arResult['PATH_TO_DEAL_CALENDAR'],
-			'PATH_TO_DEAL_EDIT' => $arResult['PATH_TO_DEAL_EDIT'],
-			'PATH_TO_DEAL_CATEGORY' => $arResult['PATH_TO_DEAL_CALENDARCATEGORY'],
-			'PATH_TO_DEAL_CATEGORY_LIST' => $arResult['PATH_TO_DEAL_CATEGORY_LIST'],
-			'PATH_TO_DEAL_CATEGORY_EDIT' => $arResult['PATH_TO_DEAL_CATEGORY_EDIT'],
-			'CATEGORY_ID' => $categoryID,
-			'LAYOUT_WRAP_CLASSNAME' => 'pagetitle-container pagetitle-align-right-container pagetitle-flexible-space'
-		),
-		$component
-	);
 
 	if($isBitrix24Template)
 	{
@@ -202,6 +187,21 @@ elseif (\Bitrix\Main\Loader::includeModule('calendar'))
 					'ONCLICK' => Calendar::getCalendarSettingsOpenJs($settingsParams)
 				)
 			)
+		),
+		$component
+	);
+
+	$APPLICATION->IncludeComponent(
+		'bitrix:crm.deal_category.panel',
+		$isBitrix24Template ? 'tiny' : '',
+		array(
+			'PATH_TO_DEAL_LIST' => $arResult['PATH_TO_DEAL_CALENDAR'],
+			'PATH_TO_DEAL_EDIT' => $arResult['PATH_TO_DEAL_EDIT'],
+			'PATH_TO_DEAL_CATEGORY' => $arResult['PATH_TO_DEAL_CALENDARCATEGORY'],
+			'PATH_TO_DEAL_CATEGORY_LIST' => $arResult['PATH_TO_DEAL_CATEGORY_LIST'],
+			'PATH_TO_DEAL_CATEGORY_EDIT' => $arResult['PATH_TO_DEAL_CATEGORY_EDIT'],
+			'CATEGORY_ID' => $categoryID,
+			'LAYOUT_WRAP_CLASSNAME' => 'pagetitle-container pagetitle-align-right-container pagetitle-flexible-space'
 		),
 		$component
 	);

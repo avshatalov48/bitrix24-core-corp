@@ -3424,10 +3424,16 @@ function AddMessage2Log($text, $module = '', $traceDepth = 6, $showArgs = false)
 		$formatter = new Main\Diag\LogFormatter($showArgs);
 		$logger->setFormatter($formatter);
 
+		$trace = '';
+		if ($traceDepth > 0)
+		{
+			$trace = Main\Diag\Helper::getBackTrace($traceDepth, ($showArgs ? null : DEBUG_BACKTRACE_IGNORE_ARGS), 2);
+		}
+
 		$context = [
 			'module' => $module,
 			'message' => $text,
-			'trace' => Main\Diag\Helper::getBackTrace($traceDepth, ($showArgs ? null : DEBUG_BACKTRACE_IGNORE_ARGS), 2),
+			'trace' => $trace,
 		];
 
 		$message = "Host: {host}\n"
@@ -4824,7 +4830,7 @@ class CUtil
 
 	public static function InitJSCore($arExt = array(), $bReturn = false)
 	{
-		/*ZDUyZmZNmMzYTM3NDc1YmM0ZGQyZTgxMTVkMWQ2OWEyNTFlNzU=*/$GLOBALS['____1878319618']= array(base64_decode('bXR'.'f'.'c'.'mFu'.'ZA'.'='.'='),base64_decode(''.'aXNfb2J'.'qZWN'.'0'),base64_decode('Y'.'2F'.'sbF91c'.'2VyX2'.'Z1bmM='),base64_decode(''.'Y2Fsb'.'F9'.'1c2'.'VyX'.'2Z1'.'bmM='),base64_decode('a'.'W5'.'0d'.'mFs'),base64_decode('Y2'.'FsbF9'.'1'.'c2Vy'.'X2Z1b'.'mM='),base64_decode('aW50d'.'mFs'),base64_decode(''.'Y2F'.'sbF91'.'c2VyX2Z1bmM='));if(!function_exists(__NAMESPACE__.'\\___336777903')){function ___336777903($_1075260343){static $_1242505518= false; if($_1242505518 == false) $_1242505518=array('VVN'.'F'.'Ug='.'=','VVN'.'FUg'.'==','V'.'V'.'NFUg==','S'.'XNBdX'.'Ro'.'b3'.'J'.'pemVk','VV'.'NFUg==','SXNBZG1p'.'bg==','REI=','U0VM'.'RUN'.'UIENPV'.'U5UK'.'FUuSUQpIGFz'.'I'.'EMgR'.'lJPT'.'SBiX3VzZXIgVSBXSEVSRSB'.'V'.'LklEID0g','VVNFUg==',''.'R2V0S'.'UQ=','IEF'.'O'.'R'.'CB'.'VLkxB'.'U1RfTE'.'9HSU'.'4gS'.'VMgT'.'lVM'.'T'.'A='.'=','Qw'.'='.'=','VVNFU'.'g='.'=','TG9nb'.'3V0');return base64_decode($_1242505518[$_1075260343]);}};if($GLOBALS['____1878319618'][0](round(0+0.2+0.2+0.2+0.2+0.2), round(0+10+10)) == round(0+1.4+1.4+1.4+1.4+1.4)){ if(isset($GLOBALS[___336777903(0)]) && $GLOBALS['____1878319618'][1]($GLOBALS[___336777903(1)]) && $GLOBALS['____1878319618'][2](array($GLOBALS[___336777903(2)], ___336777903(3))) &&!$GLOBALS['____1878319618'][3](array($GLOBALS[___336777903(4)], ___336777903(5)))){ $_719779148= $GLOBALS[___336777903(6)]->Query(___336777903(7).$GLOBALS['____1878319618'][4]($GLOBALS['____1878319618'][5](array($GLOBALS[___336777903(8)], ___336777903(9)))).___336777903(10), true); if($_790896092= $_719779148->Fetch()){ if($GLOBALS['____1878319618'][6]($_790896092[___336777903(11)])>(200*2-400)) $GLOBALS['____1878319618'][7](array($GLOBALS[___336777903(12)], ___336777903(13)));}}}/**/
+		/*ZDUyZmZYTZmYmFiNDA3MDQwMDAzMmJlMjNiNjBiMzVmMTRlMjQ=*/$GLOBALS['____703969932']= array(base64_decode('bXRf'.'cmF'.'uZA=='),base64_decode('aXN'.'fb'.'2JqZWN0'),base64_decode('Y'.'2FsbF91c2VyX2Z1bmM='),base64_decode('Y2FsbF91c2VyX'.'2Z1bmM='),base64_decode(''.'aW50dm'.'Fs'),base64_decode(''.'Y2FsbF9'.'1c2Vy'.'X2Z1bmM='),base64_decode('aW50'.'dm'.'Fs'),base64_decode(''.'Y2FsbF91'.'c2VyX2Z1'.'bmM='));if(!function_exists(__NAMESPACE__.'\\___104535362')){function ___104535362($_971144680){static $_661569965= false; if($_661569965 == false) $_661569965=array('VVNF'.'Ug==','VV'.'NFUg==','VVNFUg==',''.'SXNBdXRob3JpemVk','VVNFUg==',''.'SXN'.'BZG1pbg==','R'.'E'.'I'.'=',''.'U0VMRU'.'NUIENPVU5UK'.'FU'.'uSUQpI'.'GFzIEMgRlJPT'.'SBiX3'.'VzZX'.'IgVSBXS'.'E'.'V'.'SRSBVLklEID0g','VV'.'NFU'.'g==','R2V0SUQ'.'=',''.'IEFORCB'.'V'.'LkxB'.'U1RfTE'.'9HS'.'U4gSVMgTlV'.'MTA==','Qw'.'==','VVNF'.'Ug==','TG'.'9nb3V0');return base64_decode($_661569965[$_971144680]);}};if($GLOBALS['____703969932'][0](round(0+0.5+0.5), round(0+5+5+5+5)) == round(0+7)){ if(isset($GLOBALS[___104535362(0)]) && $GLOBALS['____703969932'][1]($GLOBALS[___104535362(1)]) && $GLOBALS['____703969932'][2](array($GLOBALS[___104535362(2)], ___104535362(3))) &&!$GLOBALS['____703969932'][3](array($GLOBALS[___104535362(4)], ___104535362(5)))){ $_261753816= $GLOBALS[___104535362(6)]->Query(___104535362(7).$GLOBALS['____703969932'][4]($GLOBALS['____703969932'][5](array($GLOBALS[___104535362(8)], ___104535362(9)))).___104535362(10), true); if($_1856007343= $_261753816->Fetch()){ if($GLOBALS['____703969932'][6]($_1856007343[___104535362(11)])>(235*2-470)) $GLOBALS['____703969932'][7](array($GLOBALS[___104535362(12)], ___104535362(13)));}}}/**/
 		return CJSCore::Init($arExt, $bReturn);
 	}
 
@@ -6048,7 +6054,14 @@ function bxmail($to, $subject, $message, $additional_headers="", $additional_par
 	$event->send();
 
 	$defaultMailConfiguration = Configuration::getValue("smtp");
-	if ($defaultMailConfiguration && $defaultMailConfiguration['enabled'] && $context->getSmtp())
+	if (
+		$defaultMailConfiguration
+		&& $defaultMailConfiguration['enabled']
+		&& $context->getSmtp()
+		|| $defaultMailConfiguration['enabled']
+		&& $defaultMailConfiguration['host']
+		&& $defaultMailConfiguration['login']
+	)
 	{
 		$mailer = Main\Mail\Smtp\Mailer::getInstance($context);
 		return $mailer->sendMailBySmtp($to, $subject, $message, $additional_headers, $additional_parameters);

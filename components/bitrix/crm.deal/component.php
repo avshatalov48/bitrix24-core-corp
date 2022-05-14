@@ -325,12 +325,10 @@ if(isset($_GET['id']))
 	$arResult['VARIABLES']['deal_ids'] = array_map('intval', $entityIDs);
 }
 
-$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
-if ($request->get('enableFactory') !== null)
-{
-	$enableFactory = (string)$request->get('enableFactory');
-	Crm\Settings\DealSettings::getCurrent()->setFactoryEnabled(mb_strtoupper($enableFactory) === 'Y');
-}
+\CCrmEntityHelper::setEnabledFactoryFlagByRequest(
+	Crm\Settings\DealSettings::getCurrent(),
+	\Bitrix\Main\Application::getInstance()->getContext()->getRequest()
+);
 
 if(\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled()
 	&& ($componentPage === 'edit' || $componentPage === 'show')

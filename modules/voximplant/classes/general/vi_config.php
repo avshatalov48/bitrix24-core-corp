@@ -53,7 +53,7 @@ class CVoxImplantConfig
 		CVoxImplantUser::clearCache();
 
 		$users = CVoxImplantUser::getOnlineUsersWithNotDefaultNumber();
-		if(count($users) > 0)
+		if(!empty($users))
 		{
 			VI\Integration\Pull::sendDefaultLineId($users, $number);
 		}
@@ -867,6 +867,12 @@ class CVoxImplantConfig
 				]
 			]);
 			$result['SEARCH_ID'] = $result['LINE_NUMBER'] = $result['PHONE_NAME'] = $row['NUMBER'];
+		}
+
+		if ($result['LINE_TYPE'] === self::MODE_SIP && $result['SIP_TYPE'] === CVoxImplantSip::TYPE_CLOUD)
+		{
+			// password is not required in this case, because call is performed by REG_ID
+			$result['SIP_PASSWORD'] = '';
 		}
 
 		return $result;

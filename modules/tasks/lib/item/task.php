@@ -318,10 +318,7 @@ final class Task extends \Bitrix\Tasks\Item
 				['SPAWNED_BY_AGENT' => $data['SPAWNED_BY_AGENT'] === 'Y' || $data['SPAWNED_BY_AGENT'] === true]
 			);
 
-			foreach ($data['AUDITORS'] as $auditorId)
-			{
-				UserOption::add($taskId, $auditorId, UserOption\Option::MUTED);
-			}
+			\Bitrix\Tasks\Internals\UserOption\Task::onTaskAdd($data);
 
 			Counter\CounterService::addEvent(
 				Counter\Event\EventDictionary::EVENT_AFTER_TASK_ADD,

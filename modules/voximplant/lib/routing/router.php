@@ -490,7 +490,7 @@ class Router
 			{
 				$userIds[] = $userFields['USER_ID'];
 			}
-			if(count($userIds) > 0)
+			if(!empty($userIds))
 			{
 				$this->call->addUsers($userIds, CallUserTable::ROLE_CALLEE, CallUserTable::STATUS_INVITING);
 				$firstUserId = (int)$userIds[0];

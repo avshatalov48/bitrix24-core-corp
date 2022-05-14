@@ -18,7 +18,7 @@ export class EntityCounters
 		this.entityStorage = params.entityStorage;
 	}
 
-	updateCounters(entities: Map<number, Backlog|Sprint>)
+	updateCounters(entities: Map<number, Backlog | Sprint>)
 	{
 		const requestData = {
 			entityIds: [...entities.keys()]

@@ -81,6 +81,7 @@ CREATE TABLE IF NOT EXISTS `b_documentgenerator_document` (
   `VALUES` TEXT NULL,
   PRIMARY KEY (ID),
   INDEX ix_docgen_doc_templ_val(TEMPLATE_ID, VALUE(10)),
+  INDEX ix_docgen_doc_val_prov(VALUE(10), PROVIDER),
   INDEX ix_docgen_doc_file(FILE_ID)
 );
 

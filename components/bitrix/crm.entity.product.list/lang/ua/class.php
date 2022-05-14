@@ -1,5 +1,5 @@
 <?php
-$MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_AVAILABLE"] = "Доступно";
+$MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_AVAILABLE"] = "Доступний залишок";
 $MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_BASE_PRICE"] = "Базова ціна";
 $MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_CURRENCY"] = "Валюта";
 $MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_CUSTOM_PRICE"] = "Ціна користувача";
@@ -38,4 +38,5 @@ $MESS["CRM_ENTITY_PRODUCT_LIST_SETTING_DISCOUNTS_TITLE"] = "Показати з�
 $MESS["CRM_ENTITY_PRODUCT_LIST_SETTING_NEW_ROW_POSITION_TITLE"] = "Додавати товар на початок списку";
 $MESS["CRM_ENTITY_PRODUCT_LIST_SETTING_TAXES_DESC"] = "Опис для податків";
 $MESS["CRM_ENTITY_PRODUCT_LIST_SETTING_TAXES_TITLE"] = "Показати податок";
+$MESS["CRM_ENTITY_PRODUCT_LIST_SETTING_WAREHOUSE_HINT"] = "Складський облік включений. Відключити складський облік можна в налаштуваннях";
 $MESS["CRM_ENTITY_PRODUCT_LIST_SETTING_WAREHOUSE_TITLE"] = "Включити складський облік";

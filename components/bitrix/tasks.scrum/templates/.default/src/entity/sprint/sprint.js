@@ -5,14 +5,13 @@ import {Entity} from '../entity';
 import {Blank} from '../blank';
 import {Dropzone} from '../dropzone';
 
-import {Item} from '../../item/item';
+import {Item, ItemParams} from '../../item/item';
 import {SubTasks} from '../../item/task/sub.tasks';
 
 import {Header} from './header/header';
 
 import {StoryPointsStorage} from '../../utility/story.points.storage';
 
-import type {ItemParams} from '../../item/item';
 import type {Views} from '../../view/view';
 
 import '../../css/sprint.css';
@@ -41,8 +40,14 @@ export type SprintParams = {
 	numberTasks?: number,
 	items?: Array<ItemParams>,
 	info?: SprintInfo,
-	views: Views
+	views?: Views,
+	allowedActions?: AllowedActions
 };
+
+type AllowedActions = {
+	start: boolean,
+	complete: boolean
+}
 
 export class Sprint extends Entity
 {
@@ -78,6 +83,7 @@ export class Sprint extends Entity
 		this.setUncompletedTasks(params.uncompletedTasks);
 		this.setItems(params.items);
 		this.setInfo(params.info);
+		this.setAllowedActions(params.allowedActions);
 	}
 
 	static buildSprint(params: SprintParams): Sprint
@@ -354,6 +360,30 @@ export class Sprint extends Entity
 		this.info = (Type.isPlainObject(info) ? info : {sprintGoal: ''});
 	}
 
+	setAllowedActions(allowedActions: AllowedActions)
+	{
+		this.allowedActions = {
+			start: false,
+			complete: false
+		};
+
+		if (Type.isPlainObject(allowedActions))
+		{
+			this.allowedActions.start = allowedActions.start === true;
+			this.allowedActions.complete = allowedActions.complete === true;
+		}
+	}
+
+	canStart(): boolean
+	{
+		return this.allowedActions.start === true;
+	}
+
+	canComplete(): boolean
+	{
+		return this.allowedActions.complete === true;
+	}
+
 	setNumberTasks(numberTasks: number)
 	{
 		super.setNumberTasks(numberTasks);
@@ -493,9 +523,11 @@ export class Sprint extends Entity
 	{
 		Event.bind(this.node, 'transitionend', this.removeNode.bind(this));
 
+		/* eslint-disable */
 		this.node.style.height = `${ this.node.scrollHeight }px`;
 		this.node.clientHeight;
 		this.node.style.height = '0';
+		/* eslint-enable */
 	}
 
 	removeNode()
@@ -550,9 +582,15 @@ export class Sprint extends Entity
 			const parentItem: Item = baseEvent.getTarget();
 			const subTasks: SubTasks = baseEvent.getData();
 
-			if (subTasks.isEmpty())
+			if (!this.isSubTaskLoadingActive() && subTasks.isEmpty())
 			{
+				this.subTaskLoadingActive = true;
+
 				this.emit('getSubTasks', subTasks);
+			}
+			else
+			{
+				parentItem.unDisableToggle();
 			}
 
 			this.appendNodeAfterItem(subTasks.render(), parentItem.getNode());
@@ -632,9 +670,9 @@ export class Sprint extends Entity
 
 	onTransitionEnd(node: HTMLElement)
 	{
-		if (node.style.height !== '0px')
+		if (Dom.style(node, 'height') !== '0px')
 		{
-			node.style.height = 'auto'
+			Dom.style(node, 'height', 'auto');
 		}
 
 		this.emit('toggleVisibilityContent');
@@ -668,7 +706,10 @@ export class Sprint extends Entity
 	{
 		this.hideCont = false;
 
-		node.style.height = `${ node.scrollHeight }px`
+		if (node)
+		{
+			Dom.style(node, 'height', `${ node.scrollHeight }px`);
+		}
 
 		if (this.header)
 		{
@@ -676,13 +717,18 @@ export class Sprint extends Entity
 		}
 	}
 
-	hideContent(node: HTMLElement)
+	hideContent(node?: HTMLElement)
 	{
 		this.hideCont = true;
 
-		node.style.height = `${ node.scrollHeight }px`;
-		node.clientHeight;
-		node.style.height = '0';
+		if (node)
+		{
+			/* eslint-disable */
+			node.style.height = `${ node.scrollHeight }px`;
+			node.clientHeight;
+			node.style.height = '0';
+			/* eslint-enable */
+		}
 
 		if (this.header)
 		{
@@ -699,7 +745,7 @@ export class Sprint extends Entity
 	{
 		if (this.node)
 		{
-			this.node.style.display = 'block';
+			Dom.style(this.node, 'display', 'block');
 		}
 	}
 
@@ -707,7 +753,7 @@ export class Sprint extends Entity
 	{
 		if (this.node)
 		{
-			this.node.style.display = 'none';
+			Dom.style(this.node, 'display', 'none');
 		}
 	}
 
@@ -730,6 +776,18 @@ export class Sprint extends Entity
 		{
 			super.fadeIn();
 		}
+	}
+
+	deactivateSubTaskLoading(item: Item)
+	{
+		this.subTaskLoadingActive = false;
+
+		item.unDisableToggle();
+	}
+
+	isSubTaskLoadingActive(): boolean
+	{
+		return this.subTaskLoadingActive === true;
 	}
 }
 

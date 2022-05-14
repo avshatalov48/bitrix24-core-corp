@@ -15,7 +15,7 @@ use Bitrix\Main\Loader;
 
 Loc::loadMessages(__FILE__);
 
-class LeadDataProvider extends Main\Filter\EntityDataProvider
+class LeadDataProvider extends EntityDataProvider
 {
 	/** @var LeadSettings|null */
 	protected $settings = null;

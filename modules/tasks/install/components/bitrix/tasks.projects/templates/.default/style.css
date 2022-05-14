@@ -626,3 +626,20 @@
 	text-align: center;
 	box-sizing: border-box;
 }
+
+.tasks-scrum-members-popup-name {
+	display: inline-block;
+	flex-grow: 1;
+	flex-shrink: 1;
+	flex-basis: 0;
+	padding-left: 6px;
+	max-width: 200px;
+	height: 15px;
+	color: #656365;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	padding-top: 1px;
+	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	white-space: nowrap;
+	cursor: pointer;
+}

@@ -150,13 +150,18 @@ $pageAsset->addCss('/bitrix/js/calendar/planner-style.css');
 							<div class="crm-activity-popup-calendar-planner-wrap" id="calendar-planner-outer<?=htmlspecialcharsbx($arResult['PLANNER_ID'])?>" data-role="calendar-planner-container" style="min-height: 104px">
 								<?
 								\Bitrix\Main\UI\Extension::load("ui.alerts");
-								CCalendarPlanner::Init(array(
-									'id' => 'calendar_planner_'.htmlspecialcharsbx($arResult['PLANNER_ID']),
-									'scaleLimitOffsetLeft' => 2,
-									'scaleLimitOffsetRight' => 2,
-									'maxTimelineSize' => 30
-								));
+
+								Bitrix\Main\Loader::includeModule('calendar');
+								\Bitrix\Main\UI\Extension::load("calendar.planner");
+
+								// CCalendarPlanner::Init(array(
+								// 	'id' => 'calendar_planner_'.htmlspecialcharsbx($arResult['PLANNER_ID']),
+								// 	'scaleLimitOffsetLeft' => 2,
+								// 	'scaleLimitOffsetRight' => 2,
+								// 	'maxTimelineSize' => 30
+								// ));
 								?>
+								<div class="calendar-planner-wrapper"></div>
 							</div>
 
 							<div class="crm-activity-popup-timeline-detail-info-container" data-role="detail-container">

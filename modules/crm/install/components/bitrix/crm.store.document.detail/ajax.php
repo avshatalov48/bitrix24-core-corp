@@ -805,7 +805,15 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 
 			if ($formDataProducts)
 			{
-				$formData['SHIPMENT'][$shipmentIndex]['PRODUCT'] = $this->prepareShipmentProducts($formDataProducts);
+				$shipmentProducts = $this->prepareShipmentProducts($formDataProducts);
+				$formData['SHIPMENT'][$shipmentIndex]['PRODUCT'] = $shipmentProducts;
+
+				$checkProductQuantityResult = $this->checkProductsQuantity($formData['PRODUCT'], $shipmentProducts);
+				if (!$checkProductQuantityResult->isSuccess())
+				{
+					$this->addErrors($checkProductQuantityResult->getErrors());
+					return null;
+				}
 			}
 		}
 
@@ -986,6 +994,12 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 
 		foreach ($products as $product)
 		{
+			$productId = $product['SKU_ID'] ?? null;
+			if (!$productId)
+			{
+				continue;
+			}
+
 			$basketCode = $product['BASKET_ID'] ?? null;
 			if (
 				!$basketCode
@@ -994,12 +1008,6 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 			)
 			{
 				$basketCode = ('n' . (count($result) + 1));
-			}
-
-			$productId = $product['SKU_ID'] ?? null;
-			if (!$productId)
-			{
-				continue;
 			}
 
 			$item = [
@@ -1072,6 +1080,70 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 			];
 
 			$result[$basketCode] = $item;
+		}
+
+		return $result;
+	}
+
+	protected function checkProductsQuantity(array $basketProducts, array $shipmentProducts): Main\Result
+	{
+		$result = new Main\Result();
+
+		/** @var Sale\Reservation\BasketReservationService $basketReservation */
+		$basketReservation = Main\DI\ServiceLocator::getInstance()->get('sale.basketReservation');
+
+		foreach ($basketProducts as $product)
+		{
+			$basketCode = $product['BASKET_CODE'];
+			$productId = $product['PRODUCT_ID'];
+			$storeId = key($shipmentProducts[$basketCode]['BARCODE_INFO']);
+			$quantity = $product['QUANTITY'];
+			$availableQuantity = $quantity;
+
+			if ((int)$basketCode > 0)
+			{
+				$availableQuantity = $basketReservation->getAvailableCountForBasketItem(
+					(int)$basketCode,
+					$storeId
+				);
+			}
+			else
+			{
+				$storeQuantityRow = Catalog\StoreProductTable::getRow([
+					'select' => [
+						'AMOUNT',
+						'QUANTITY_RESERVED',
+					],
+					'filter' => [
+						'=STORE_ID' => $storeId,
+						'=PRODUCT_ID' => $productId,
+					],
+				]);
+				if ($storeQuantityRow)
+				{
+					$availableQuantity = min(
+						$quantity,
+						$storeQuantityRow['AMOUNT'] - $storeQuantityRow['QUANTITY_RESERVED']
+					);
+				}
+			}
+
+			if ($quantity > $availableQuantity)
+			{
+				$result->addError(
+					new Main\Error(
+						Loc::getMessage(
+							'CRM_STORE_DOCUMENT_SD_PRODUCT_QUANTITY_ERROR',
+							[
+								'#PRODUCT_NAME#' => $product['NAME'],
+								'#PRODUCT_ID#' => $product['PRODUCT_ID'],
+								'#STORE_NAME#' => \CCatalogStoreControlUtil::getStoreName($storeId),
+								'#STORE_ID#' => $storeId,
+							]
+						)
+					)
+				);
+			}
 		}
 
 		return $result;

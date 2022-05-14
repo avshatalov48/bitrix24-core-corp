@@ -1,0 +1,20 @@
+.menu-popup-item.menu-popup-item-sgm-accept-sm,
+.menu-popup-item.menu-popup-item-sgm-empty-sm {
+	flex-direction: row-reverse;
+}
+
+.menu-popup-item-sgm-accept-sm .menu-popup-item-icon,
+.menu-popup-item-sgm-empty-sm .menu-popup-item-icon {
+	padding-right: 5px;
+	background-color: transparent;
+	background-repeat: no-repeat;
+}
+
+.menu-popup-item-sgm-accept-sm .menu-popup-item-text,
+.menu-popup-item-sgm-empty-sm .menu-popup-item-text {
+	padding-left: 15px;
+}
+
+.menu-popup-item-sgm-accept-sm .menu-popup-item-icon {
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='19' height='16' viewBox='-4 -4 19 16'%3E%3Cpolygon fill='%232066B0' points='23.36 225.446 26.013 228.1 32.316 222 33.676 223.36 27.377 229.46 26.013 230.82 24.653 229.46 22 226.806' transform='translate(-22 -222)'/%3E%3C/svg%3E%0A");
+}

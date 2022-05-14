@@ -29,7 +29,7 @@ $MESS["CRM_CF_ORDER_NUMERATOR_TEMPLATE"] = "Нумерация заказов";
 $MESS["CRM_CF_PRODUCT_CARD"] = "Карточка товара";
 $MESS["CRM_CF_PRODUCT_CARD_SLIDER_ENABLED"] = "Включить новую карточку товара";
 $MESS["CRM_CF_PRODUCT_CARD_DEFAULT_VALUES"] = "Значения параметров товаров по умолчанию";
-$MESS["CRM_CF_STORE"] = "Складской учет";
+$MESS["CRM_CF_STORE"] = "Складской учёт";
 
 $MESS["CRM_CF_FORMAT_QUANTITY"] = "Знаков после запятой при выводе количественного значения";
 $MESS["CRM_CF_FORMAT_QUANTITY_AUTO"] = "Авто";
@@ -51,7 +51,7 @@ $MESS["CRM_CHECK_TYPE_ON_PAY_SELL"] = "Полная оплата";
 $MESS["CRM_CHECK_TYPE_ON_PAY_ADVANCE"] = "Аванс";
 $MESS["CRM_CHECK_TYPE_ON_PAY_PREPAYMENT"] = "Предоплата";
 $MESS["CRM_CF_DEF_CURRENCY"] = "Валюта по умолчанию";
-$MESS["CRM_CF_USE_STORE_CONTROL_1"] = "Включить складской учет";
+$MESS["CRM_CF_USE_STORE_CONTROL_1"] = "Включить складской учёт";
 $MESS["CRM_CF_USE_STORE_CONTROL_LOCK_TARIFF"] = "Перейти на расширенный тариф";
 $MESS["CRM_CF_ENABLE_RESERVATION"] = "Включить резервирование";
 $MESS["CRM_CF_RESERVATION_CLEAR_PERIOD"] = "Снятие резервов (через сколько дней)";

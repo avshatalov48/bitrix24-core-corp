@@ -1500,6 +1500,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		{
 			$basketItem->setField('CUSTOM_PRICE', 'N');
 			$basketItem->setFieldNoDemand('PRODUCT_ID', $newProductId);
+			$this->updateBasketItemProperties($basketItem, (int)$newProductId);
 			$basket->refresh(Basket\RefreshFactory::createSingle($basketItem->getBasketCode()));
 		}
 
@@ -1507,6 +1508,119 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			'ORDER_DATA' => $this->formatResultData($order, $formData),
 			'PRODUCT_COMPONENT_RESULT' => $this->getProductComponentData($order)
 		]);
+	}
+
+	/**
+	 * Removes old basket item's properties and creates new properties
+	 * from the new product's properties
+	 * @param \Bitrix\Sale\BasketItemBase $basketItem
+	 * @param int $newProductId
+	 */
+	private function updateBasketItemProperties(\Bitrix\Sale\BasketItemBase $basketItem, int $newProductId): void
+	{
+		$oldProductId = (int)$basketItem->getFields()->getOriginalValues()['PRODUCT_ID'];
+
+		$repositoryFacade = Catalog\v2\IoC\ServiceContainer::getRepositoryFacade();
+		if (!$repositoryFacade)
+		{
+			return;
+		}
+
+		$oldVariation = $repositoryFacade->loadVariation($oldProductId);
+		$newVariation = $repositoryFacade->loadVariation($newProductId);
+		if (!$oldVariation || !$newVariation)
+		{
+			return;
+		}
+
+		// get properties with "Add value to shopping cart" and, if needed, "Can select SKU's" features
+		// for both the old and the new product
+		$oldVariationPropertyCodes = $this->getVariationPropertyCodes($oldVariation);
+		$newVariationPropertyCodes = $this->getVariationPropertyCodes($newVariation);
+
+		$mergedProperties = $oldVariationPropertyCodes + $newVariationPropertyCodes;
+
+		$basketItemProperties = $basketItem->getPropertyCollection();
+		if (!$basketItemProperties)
+		{
+			return;
+		}
+
+		// clear all the properties that remain from the old product and that the new product might have
+		foreach ($basketItemProperties->toArray() as $basketItemPropertyIndex => $basketItemProperty)
+		{
+			$currentPropertyCode = $basketItemProperty['CODE'];
+			if (
+				isset($mergedProperties[(int)$currentPropertyCode])
+				|| in_array($currentPropertyCode, $mergedProperties, true)
+			)
+			{
+				$basketItemProperties->deleteItem($basketItemPropertyIndex);
+			}
+		}
+
+		// load all the properties we've gathered earlier for the new product and add them to the collection
+		$skuInfo = \CCatalogSku::GetInfoByOfferIBlock($newVariation->getIblockId());
+		if (empty($skuInfo))
+		{
+			return;
+		}
+
+		$parentIblockId = $skuInfo['PRODUCT_IBLOCK_ID'];
+		$properties = \CIBlockPriceTools::GetOfferProperties(
+			$newProductId,
+			$parentIblockId,
+			array_keys($newVariationPropertyCodes)
+		);
+
+		$productXmlId = $newVariation->getField('XML_ID');
+		if (mb_strpos($productXmlId, '#') === false)
+		{
+			$parent = $newVariation->getParent();
+			if ($parent)
+			{
+				$productXmlId = $parent->getId() . '#' . $productXmlId;
+			}
+		}
+		foreach ($basketItemProperties as $basketItemProperty)
+		{
+			if ($basketItemProperty->getField('CODE') === 'PRODUCT.XML_ID')
+			{
+				$basketItemProperty->setField('VALUE', $productXmlId);
+				break;
+			}
+		}
+
+		foreach ($properties as $propertyValues)
+		{
+			$basketItemProperty = $basketItemProperties->createItem();
+			$basketItemProperty->initFields($propertyValues);
+		}
+	}
+
+	private function getVariationPropertyCodes(Catalog\v2\Sku\BaseSku $variation)
+	{
+		$result = [];
+		$iblockId = $variation->getIblockId();
+		if (!$iblockId)
+		{
+			return $result;
+		}
+
+		$basketPropertyIds = Catalog\Product\PropertyCatalogFeature::getBasketPropertyCodes($iblockId);
+		$basketPropertyCodes = Catalog\Product\PropertyCatalogFeature::getBasketPropertyCodes($iblockId, ['CODE' => 'Y']);
+		$result = array_combine($basketPropertyIds, $basketPropertyCodes);
+		if ($variation->getType() !== Catalog\ProductTable::TYPE_OFFER)
+		{
+			return $result;
+		}
+
+		$offerTreeIds = Catalog\Product\PropertyCatalogFeature::getOfferTreePropertyCodes($iblockId);
+		$offerTreeCodes = Catalog\Product\PropertyCatalogFeature::getOfferTreePropertyCodes($iblockId, ['CODE' => 'Y']);
+		$offerTreeProperties = array_combine($offerTreeIds, $offerTreeCodes);
+		$result += $offerTreeProperties;
+
+		return $result;
 	}
 
 	protected function getFormData()
@@ -1755,8 +1869,14 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			return;
 		}
 
+		$basket = $order->getBasket();
+		if (!$basket)
+		{
+			return;
+		}
+
 		$res = Catalog\Product\Basket::addProductToBasket(
-			$order->getBasket(),
+			$basket,
 			$basketItemFields,
 			$context,
 			['FILL_PRODUCT_PROPERTIES' => 'Y']
@@ -1764,6 +1884,13 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 
 		if($res->isSuccess())
 		{
+			$basketItemCode = $res->getData()['BASKET_ITEM']->getBasketCode();
+			$refreshResult = $basket->refresh(Basket\RefreshFactory::createSingle($basketItemCode));
+			if (!$refreshResult->isSuccess())
+			{
+				$this->result->addErrors($refreshResult->getErrors());
+			}
+
 			$this->addData([
 				'ORDER_DATA' => $this->formatResultData($order, $formData),
 				'PRODUCT_COMPONENT_RESULT' => $this->getProductComponentData($order)
@@ -1820,6 +1947,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		{
 			$item = $basketItem->getFieldValues();
 			$item['BASKET_CODE'] = $basketItem->getBasketCode();
+			$item['VAT'] = $basketItem->getVat();
 			$propertyCollection = $basketItem->getPropertyCollection();
 			foreach ($propertyCollection as $property)
 			{

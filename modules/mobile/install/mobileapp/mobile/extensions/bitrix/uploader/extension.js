@@ -1,84 +1,8 @@
+// noinspection NpmUsedModulesInstalled
+
 (()=>{
-
-	/** *********
-	 * Uploader
-	 *********** */
-
+	let { ModernFileDataSender, DiskFileDataSender } = jn.require('uploader/sender')
 	let userId = BX.componentParameters.get("USER_ID", "0");
-
-	BX.FileDataSender = function (config)
-	{
-		this.config = config;
-	};
-
-	BX.FileDataSender.prototype = {
-		start: function ()
-		{
-			return new Promise((resolve, reject) =>
-			{
-				"use strict";
-
-				let config = this.config;
-				let xhr = new XMLHTTPRequest(true);
-				xhr.open("POST", config["url"]);
-
-				if (config.headers)
-				{
-					Object.keys(config.headers).forEach(
-						headerName => xhr.setRequestHeader(headerName, config.headers[headerName]))
-				}
-				if (config.timeout)
-				{
-					xhr.timeout = config.timeout;
-				}
-
-				if (config["onUploadProgress"])
-				{
-					if (Application.getPlatform() == "android")
-					{
-						xhr.upload = {};
-					}
-					xhr.upload.onprogress = config["onUploadProgress"];
-				}
-
-				xhr.onerror = e => reject({error: e});
-				xhr.onload = () =>
-				{
-					var isSuccess = BX.ajax.xhrSuccess(xhr);
-					if (isSuccess)
-					{
-						try
-						{
-							var json = BX.parseJSON(xhr.responseText);
-							resolve(json);
-						}
-						catch (e)
-						{
-							reject({error: e});
-						}
-					}
-					else
-					{
-						reject({error: {message: "XMLHTTPRequest error status " + xhr.status}});
-					}
-				};
-
-				xhr.send(config["data"]);
-				this.config = config = null;
-
-			});
-		},
-
-	};
-
-	/**
-	 * @param config
-	 * @returns {BX.FileDataSender}
-	 */
-	BX.FileDataSender.create = function (config)
-	{
-		return new BX.FileDataSender(config);
-	};
 
 	/**
 	 *
@@ -130,6 +54,7 @@
 		beforeInitAction: null,
 		applyData: function (fileData)
 		{
+			console.error(fileData);
 			this.id = fileData.taskId || "";
 			this.fileData = fileData;
 		},
@@ -139,11 +64,11 @@
 			this.startTime = (new Date()).getTime();
 			this.initFileData().then(() =>
 			{
-				if (!this.fileEntry.folderId)
+				if (!this.fileEntry.folderId && !this.fileEntry.controller)
 				{
 					this.status = Statuses.FAILED;
 					this.callListener(TaskEventConsts.TASK_STARTED_FAILED, {
-						error: {code: 4, message: "The property 'folderId' is not set"}
+						error: {code: 4, message: "Property 'folderId' or 'controller' are not set"}
 					});
 					return;
 				}
@@ -211,6 +136,8 @@
 									.then(entry =>
 									{
 										entry.params = this.fileData.params;
+										entry.controller = this.fileData.controller;
+										entry.controllerOptions = this.fileData.controllerOptions;
 										entry.folderId = this.fileData.folderId;
 										entry.chunk = this.fileData.chunk || this.chunkSize;
 
@@ -237,64 +164,6 @@
 				}
 			});
 		},
-		commit: function ()
-		{
-			return new Promise(resolve =>
-			{
-				this.uploadPreview().then(previewData =>
-					{
-						let body = "";
-						let headers = {};
-						if (previewData)
-						{
-
-							// let comp = BX.utils.parseUrl(this.fileData.previewUrl);
-							// console.error(comp);
-							let previewName = "preview_" + this.getFileName() + ".jpg";
-							let boundary = "FormUploaderBoundary";
-							headers = {"Content-Type": "multipart/form-data; boundary=" + boundary};
-							body = "--" + boundary + "\r\n" +
-								"Content-Disposition: form-data; name=\"previewFile\"; filename=\"" + previewName + "\"\r\n" +
-								"Content-Type: image/jpeg\r\n\r\n" + previewData + "\r\n\r\n" +
-								"--" + boundary + "--";
-						}
-
-						if (this.fileEntry.getMimeType())
-						{
-							headers['X-Upload-Content-Type'] = this.fileEntry.getMimeType();
-						}
-
-						BX.ajax({
-							method: "POST",
-							dataType: "json",
-							prepareData: false,
-							headers: headers,
-							data: body,
-							uploadBinary: true,
-							url: "/bitrix/services/main/ajax.php?action=disk.api.file.createByContent&filename="
-								+ this.getFileName()
-								+ "&folderId=" + this.fileEntry.folderId
-								+ "&contentId=" + this.token
-								+ "&generateUniqueName=Y"
-						}).then((res) =>
-						{
-							this.endTime = (new Date()).getTime();
-							console.info("Task execution time:", (this.endTime - this.startTime) / 1000, this.fileEntry);
-							this.status = Statuses.DONE;
-							this.callListener(TaskEventConsts.FILE_CREATED, {result: res});
-							resolve();
-
-						}).catch(error =>
-						{
-							this.status = Statuses.FAILED;
-							this.callListener(TaskEventConsts.FILE_CREATED_FAILED, {error: error});
-							resolve();
-						});
-					}
-				);
-			});
-		},
-
 		onNext: function ()
 		{
 			if (!this.isCancelled())
@@ -308,25 +177,13 @@
 					.catch(e =>
 					{
 						this.currentChunk = null;
-						if (e.code === 101) //eof
-						{
-							this.beforeCommit()
-								.then(() => this.commit())
-								.then(() => this.afterCommit())
-
-						}
-						else
-						{
-							this.status =
-								this.callListener(TaskEventConsts.FILE_UPLOAD_FAILED, {error: e})
-						}
+						this.callListener(TaskEventConsts.FILE_UPLOAD_FAILED, {error: e})
 					})
 			}
 			else
 			{
 				this.currentChunk = null;
 			}
-
 		},
 		callAction: function (actionName)
 		{
@@ -373,42 +230,22 @@
 		},
 		sendChunk: function (data)
 		{
-			let url = "/bitrix/services/main/ajax.php?action=disk.api.content.upload&filename="
-				+ this.getFileName()
-				+ (this.token ? "&token=" + this.token : "");
+			let progress = e => {
+				let currentTotalSent = data.start + e.loaded;
+				this.progress.byteSent = currentTotalSent;
+				this.progress.percent = Math.round((currentTotalSent / this.fileEntry.getSize()) * 100);
+				this.callListener(TaskEventConsts.FILE_UPLOAD_PROGRESS, {
+					percent: Math.round((currentTotalSent / this.fileEntry.getSize()) * 100),
+					byteSent: currentTotalSent,
+					byteTotal: this.fileEntry.getSize(),
+				});
+			}
 
-			let headers = {
-				"Content-Type": this.fileEntry.getType(),
-				"Content-Range": "bytes " + data.start + "-" + (data.end - 1) + "/" + this.fileEntry.getSize()
-			};
-
-			let config = {
-				headers: headers,
-				onUploadProgress: (e) =>
-				{
-					let currentTotalSent = data.start + e.loaded;
-					this.progress.byteSent = currentTotalSent;
-					this.progress.percent = Math.round((currentTotalSent / this.fileEntry.getSize()) * 100);
-					this.callListener(TaskEventConsts.FILE_UPLOAD_PROGRESS, {
-						percent: Math.round((currentTotalSent / this.fileEntry.getSize()) * 100),
-						byteSent: currentTotalSent,
-						byteTotal: this.fileEntry.getSize(),
-					});
-				},
-				data: data.content,
-				url: url
-			};
-
-			let error = e =>
-			{
+			let error = e => {
 				this.status = Statuses.FAILED;
 				let error = {};
-				if (e.xhr)
-				{
-					error = {
-						message: "Ajax request error",
-						code: 0
-					}
+				if (e.xhr) {
+					error = { message: "Ajax request error",  code: 0}
 				}
 				else
 				{
@@ -418,57 +255,58 @@
 				this.callListener(TaskEventConsts.FILE_CREATED_FAILED, {error: error})
 			};
 
-			BX.FileDataSender.create(config).start()
-				.then(res =>
+			let failed = data => {
+				if (data.error && data.error.code && data.error.code === -2 && data.error.code === 0) //offline
 				{
-					if (!res.status || res.status !== "success")
+					console.warn("Wait for online....");
+					let sendChuckWhenOnline = () =>
 					{
-						error({code: 0, message: "wrong response", response: res});
-					}
-					else
-					{
-						if (res.data.token && this.token == null)
-						{
-							this.token = res.data.token;
-
-							this.callListener(TaskEventConsts.TASK_TOKEN_DEFINED, {token: this.token});
-						}
-
-						this.onNext();
-					}
-				})
-				.catch(data =>
-				{
-					if (data.error.code && data.error.code == -2 && data.error.code == 0) //offline
-					{
-						console.warn("Wait for online....");
-						let sendChuckWhenOnline = () =>
-						{
-							BX.removeCustomEvent("online", sendChuckWhenOnline);
-							this.sendChunk(this.currentChunk);
-						};
-						BX.addCustomEvent("online", sendChuckWhenOnline);
-					}
-					else
-					{
-						error(data);
-					}
-				});
-		},
-		uploadPreview: function ()
-		{
-			return new Promise((resolve) =>
-			{
-				if (this.fileData.previewUrl)
-				{
-					BX.FileUtils.readFileByPath(this.fileData.previewUrl, "readAsBinaryString")
-						.then(result => resolve(result), () => resolve())
+						BX.removeCustomEvent("online", sendChuckWhenOnline);
+						this.sendChunk(this.currentChunk);
+					};
+					BX.addCustomEvent("online", sendChuckWhenOnline);
 				}
 				else
 				{
-					resolve();
+					error(data);
 				}
-			})
+			}
+
+			let config = {
+				name: this.getFileName(),
+				token: this.token,
+				type: this.fileEntry.getType(),
+				content: data.content,
+				start: data.start,
+				end: data.end,
+				size: this.fileEntry.getSize(),
+				folderId: this.fileEntry.folderId,
+				controller:this.fileEntry.controller,
+				controllerOptions: this.fileEntry.controllerOptions ? JSON.stringify(this.fileEntry.controllerOptions) : []
+			};
+
+			this.createSender(config)
+				.on("chunkUploaded", () => this.onNext() )
+				.on("newToken", token => this.token = token )
+				.on("progress", e => progress(e) )
+				.on("error", e => error(e) )
+				.on("failed", e => failed(e) )
+				.on("committed", result => {
+					this.status = Statuses.DONE;
+					this.callListener(TaskEventConsts.FILE_CREATED, { result });
+				})
+				.send()
+		},
+		/**
+		 * @param config
+		 * @returns {BaseFileDataSender}
+		 */
+		createSender: (config) => {
+			if (config.controller) {
+				return new ModernFileDataSender(config)
+			}
+
+			return new DiskFileDataSender(config)
 		},
 		/**
 		 *

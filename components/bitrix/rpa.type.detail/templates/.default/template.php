@@ -4,6 +4,8 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+global $APPLICATION;
+$bodyClass = $APPLICATION->getPageProperty("BodyClass");
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-background");
 use \Bitrix\Main\Localization\Loc;
 

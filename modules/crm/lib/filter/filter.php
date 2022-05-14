@@ -49,44 +49,6 @@ class Filter extends \Bitrix\Main\Filter\Filter
 	}
 
 	/**
-	 * Clear filter fields from main.ui.filter which are not actually needed for orm filter
-	 * @param array $filter
-	 */
-	public function clearServiceUiFilterFields(array &$filter)
-	{
-		$uiFilterPostfixes = [
-			'_datesel', '_month', '_quarter', '_year', '_days', // date
-			'_numsel', // number
-			'_from', '_to', // date and number ranges
-			'_label', // custom entity title
-		];
-
-		$uiFilterServiceFields = [
-			'FILTER_ID',
-			'FILTER_APPLIED',
-			'PRESET_ID',
-			'FIND',
-		];
-
-		foreach ($filter as $fieldId => $fieldValue)
-		{
-			if (in_array($fieldId, $uiFilterServiceFields, true))
-			{
-				unset($filter[$fieldId]);
-				continue;
-			}
-			foreach ($uiFilterPostfixes as $postfix)
-			{
-				if (mb_substr($fieldId, -mb_strlen($postfix)) === $postfix)
-				{
-					unset($filter[$fieldId]);
-					continue;
-				}
-			}
-		}
-	}
-
-	/**
 	 * In order to use a join with smart process entities in the filter,
 	 * need to execute this code, which will create a smart process entity class
 	 * @param \Bitrix\Main\Event $event

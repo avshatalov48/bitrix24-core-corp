@@ -84,8 +84,7 @@ this.BX.Mobile.Field = this.BX.Mobile.Field || {};
 	          if (!(key in sections)) {
 	            sections.push(key);
 	            var span = document.createElement('span');
-	            span.setAttribute('class', 'mobile-grid-data-span mobile-grid-crm-element-category-title'); //span.innerHTML = key;
-
+	            span.setAttribute('class', 'mobile-grid-data-span mobile-grid-crm-element-category-title');
 	            span.innerHTML = main_core.Loc.getMessage('CRM_ENTITY_TYPE_' + key.toUpperCase());
 	            div.appendChild(span);
 	          }

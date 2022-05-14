@@ -155,6 +155,8 @@ $arResult['SESSION_ID'] = bitrix_sessid();
 $arResult['NAVIGATION_CONTEXT_ID'] = isset($arParams['NAVIGATION_CONTEXT_ID']) ? $arParams['NAVIGATION_CONTEXT_ID'] : '';
 $arResult['ENABLE_SLIDER'] = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled();
 
+$arResult['CATEGORY_ID'] = (int)($arParams['CATEGORY_ID'] ?? 0);
+
 if(LayoutSettings::getCurrent()->isSimpleTimeFormatEnabled())
 {
 	$arResult['TIME_FORMAT'] = array(
@@ -275,7 +277,10 @@ if(!$bInternal && isset($_REQUEST['counter']))
 				CCrmOwnerType::Company,
 				$counterTypeID,
 				$userID,
-				Bitrix\Crm\Counter\EntityCounter::internalizeExtras($_REQUEST)
+				array_merge(
+					Bitrix\Crm\Counter\EntityCounter::internalizeExtras($_REQUEST),
+					['CATEGORY_ID' => $arResult['CATEGORY_ID']]
+				)
 			);
 
 			$arFilter = $counter->prepareEntityListFilter(
@@ -319,8 +324,16 @@ $arResult['IS_EXTERNAL_FILTER'] = ($enableWidgetFilter || $enableCounterFilter |
 $CCrmUserType = new CCrmUserType($USER_FIELD_MANAGER, CCrmCompany::$sUFEntityID);
 $CCrmFieldMulti = new CCrmFieldMulti();
 
-$gridId = $isMyCompanyMode ? 'CRM_MYCOMPANY_LIST_V12' : 'CRM_COMPANY_LIST_V12';
-$arResult['GRID_ID'] = $gridId.($bInternal && !empty($arParams['GRID_ID_SUFFIX']) ? '_'.$arParams['GRID_ID_SUFFIX'] : '');
+$arResult['GRID_ID'] =
+	(new Crm\Component\EntityList\GridId(CCrmOwnerType::Company))
+		->getValue(
+			(string)$arParams['GRID_ID_SUFFIX'],
+			[
+				'IS_MY_COMPANY' => $isMyCompanyMode,
+			]
+		)
+;
+
 $arResult['COMPANY_TYPE_LIST'] = CCrmStatus::GetStatusListEx('COMPANY_TYPE');
 $arResult['EMPLOYEES_LIST'] = CCrmStatus::GetStatusListEx('EMPLOYEES');
 $arResult['INDUSTRY_LIST'] = CCrmStatus::GetStatusListEx('INDUSTRY');
@@ -352,7 +365,7 @@ if (!$bInternal)
 //endregion
 
 $gridOptions = new \Bitrix\Main\Grid\Options($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
-$filterOptions = new \Bitrix\Main\UI\Filter\Options($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
+$filterOptions = new \Bitrix\Crm\Filter\UiFilterOptions($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
 
 //region Navigation Params
 if ($arParams['COMPANY_COUNT'] <= 0)
@@ -730,6 +743,8 @@ if(!$arResult['IS_EXTERNAL_FILTER'])
 $CCrmUserType->PrepareListFilterValues($arResult['FILTER'], $arFilter, $arResult['GRID_ID']);
 $USER_FIELD_MANAGER->AdminListAddFilter(CCrmCompany::$sUFEntityID, $arFilter);
 
+$arFilter['@CATEGORY_ID'] = $arResult['CATEGORY_ID'];
+
 //region Apply Search Restrictions
 $searchRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getSearchLimitRestriction();
 if(!$searchRestriction->isExceeded(CCrmOwnerType::Company))
@@ -782,7 +797,10 @@ if(isset($arFilter['ACTIVITY_COUNTER']))
 				CCrmOwnerType::Company,
 				$counterTypeID,
 				0,
-				Bitrix\Crm\Counter\EntityCounter::internalizeExtras($_REQUEST)
+				array_merge(
+					Bitrix\Crm\Counter\EntityCounter::internalizeExtras($_REQUEST),
+					['CATEGORY_ID' => $arResult['CATEGORY_ID']]
+				)
 			);
 
 			$arFilter += $counter->prepareEntityListFilter(
@@ -813,7 +831,8 @@ $arImmutableFilters = array(
 	'COMPANY_TYPE', 'INDUSTRY', 'EMPLOYEES', 'WEBFORM_ID',
 	'HAS_PHONE', 'HAS_EMAIL', 'IS_MY_COMPANY', '!IS_MY_COMPANY', 'RQ',
 	'SEARCH_CONTENT', 'TRACKING_SOURCE_ID', 'TRACKING_CHANNEL_CODE',
-	'FILTER_ID', 'FILTER_APPLIED', 'PRESET_ID'
+	'FILTER_ID', 'FILTER_APPLIED', 'PRESET_ID',
+	'@CATEGORY_ID',
 );
 
 foreach ($arFilter as $k => $v)
@@ -2372,7 +2391,12 @@ if (!$isInExportMode)
 		}
 
 		$arResult['NEED_FOR_BUILD_TIMELINE'] = \Bitrix\Crm\Agent\Timeline\CompanyTimelineBuildAgent::getInstance()->isEnabled();
-		$arResult['NEED_FOR_REBUILD_SECURITY_ATTRS'] = \Bitrix\Crm\Agent\Security\CompanyAttributeRebuildAgent::getInstance()->isEnabled();
+
+		$attributeRebuildAgent = \Bitrix\Crm\Agent\Security\CompanyAttributeRebuildAgent::getInstance();
+		$arResult['NEED_FOR_REBUILD_SECURITY_ATTRS'] =
+			$attributeRebuildAgent->isEnabled()
+			&& ($attributeRebuildAgent->getProgressData()['TOTAL_ITEMS'] > 0)
+		;
 
 		$agent = Bitrix\Crm\Agent\Duplicate\CompanyDuplicateIndexRebuildAgent::getInstance();
 		$isAgentEnabled = $agent->isEnabled();

@@ -172,6 +172,7 @@ $gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
 					columns: <?= \CUtil::PhpToJSObject(array_values($data['columns']), false, false, true)?>,
 					items: <?= \CUtil::PhpToJSObject($data['items'], false, false, true)?>,
 					dropZones: <?= \CUtil::PhpToJSObject(array_values($data['dropzones']), false, false, true)?>,
+					emptyStubItems: <?= \CUtil::PhpToJSObject($arResult['STUB'])?>,
 					data:
 						{
 							schemeInline: schemeInline,

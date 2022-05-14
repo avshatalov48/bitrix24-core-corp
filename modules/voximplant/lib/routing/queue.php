@@ -40,7 +40,7 @@ class Queue extends Node
 
 		[$users, $busyUsers] = $this->getUsersToInvite($this->queue, $call->getQueueHistory());
 
-		if(count($users) > 0)
+		if(!empty($users))
 		{
 			$call->addToQueueHistory(array_keys($users));
 			$this->queue->touchUser(array_keys($users)[0]);
@@ -53,11 +53,11 @@ class Queue extends Node
 		}
 
 		// could not find users to invite
-		if ($this->queue->getNoAnswerRule() == \CVoxImplantIncoming::RULE_QUEUE && (count($call->getQueueHistory()) > 0 || count($busyUsers) > 0))
+		if ($this->queue->getNoAnswerRule() == \CVoxImplantIncoming::RULE_QUEUE && (!empty($call->getQueueHistory()) || !empty($busyUsers)))
 		{
 			$call->clearQueueHistory();
 
-			if (count($busyUsers) > 0)
+			if (!empty($busyUsers))
 			{
 				// enqueue call and wait for free user
 				return $this->enqueue($call);
@@ -96,7 +96,7 @@ class Queue extends Node
 			$query->setOrder(['ID' => 'asc']);
 		}
 
-		if (count($queueHistory) > 0)
+		if (!empty($queueHistory))
 		{
 			$query->whereNotIn('USER_ID', $queueHistory);
 		}

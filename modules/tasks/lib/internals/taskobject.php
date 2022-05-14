@@ -62,6 +62,14 @@ class TaskObject extends EO_Task
 	}
 
 	/**
+	 * @return bool
+	 */
+	public function isDeleted()
+	{
+		return $this->getZombie();
+	}
+
+	/**
 	 * @param int $userId
 	 * @return bool
 	 * @throws Main\ArgumentException

@@ -718,28 +718,32 @@ if(!$isInternal
 		//endregion
 
 		//$actionList[] = $snippet->getRemoveAction();
-		$actionList[] = array(
-			'NAME' => GetMessage('CRM_CONTACT_ACTION_MERGE'),
-			'VALUE' => 'merge',
-			'ONCHANGE' => array(
-				array(
-					'ACTION' => Bitrix\Main\Grid\Panel\Actions::CREATE,
-					'DATA' => array(
-						array_merge(
-							$applyButton,
-							['SETTINGS' => [
-								'minSelectedRows' => 2,
-								'buttonId' => 'apply_button'
-							]]
+
+		if(!$arResult['IS_EXTERNAL_FILTER'])
+		{
+			$actionList[] = array(
+				'NAME' => GetMessage('CRM_CONTACT_ACTION_MERGE'),
+				'VALUE' => 'merge',
+				'ONCHANGE' => array(
+					array(
+						'ACTION' => Bitrix\Main\Grid\Panel\Actions::CREATE,
+						'DATA' => array(
+							array_merge(
+								$applyButton,
+								['SETTINGS' => [
+									'minSelectedRows' => 2,
+									'buttonId' => 'apply_button'
+								]]
+							)
 						)
+					),
+					array(
+						'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
+						'DATA' => array(array('JS' => "BX.CrmUIGridExtension.applyAction('{$gridManagerID}', 'merge')"))
 					)
-				),
-				array(
-					'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
-					'DATA' => array(array('JS' => "BX.CrmUIGridExtension.applyAction('{$gridManagerID}', 'merge')"))
 				)
-			)
-		);
+			);
+		}
 
 		$actionList[] = array(
 			'NAME' => GetMessage('CRM_CONTACT_ACTION_DELETE'),
@@ -909,14 +913,14 @@ $APPLICATION->IncludeComponent(
 		'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
 		'NAVIGATION_BAR' => array(
 			'ITEMS' => array(
-				array(
+				/*array(
 					//'icon' => 'table',
 					'id' => 'list',
 					'name' => GetMessage('CRM_CONTACT_LIST_FILTER_NAV_BUTTON_LIST'),
 					'active' => true,
 					'url' => $arParams['PATH_TO_CONTACT_LIST'],
 				)
-				/*array(
+				array(
 					//'icon' => 'chart',
 					'id' => 'widget',
 					'name' => GetMessage('CRM_CONTACT_LIST_FILTER_NAV_BUTTON_WIDGET'),
@@ -1018,6 +1022,7 @@ BX.ready(
 			{
 				gridId: gridId,
 				entityTypeId: <?=CCrmOwnerType::Contact?>,
+				extras: { CATEGORY_ID: <?=(int)$arResult['CATEGORY_ID']?> },
 				container: "batchDeletionWrapper",
 				stateTemplate: "<?=GetMessageJS('CRM_CONTACT_STEPWISE_STATE_TEMPLATE')?>",
 				messages:

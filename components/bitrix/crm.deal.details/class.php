@@ -1020,21 +1020,22 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 		//endregion
 
 		//region WAIT TARGET DATES
-		$this->arResult['WAIT_TARGET_DATES'] = array(
-			array('name' => 'BEGINDATE', 'caption' => \CAllCrmDeal::GetFieldCaption('BEGINDATE')),
-			array('name' => 'CLOSEDATE', 'caption' => \CAllCrmDeal::GetFieldCaption('CLOSEDATE')),
-		);
-
-		$userFields = $this->userType->GetFields();
-		foreach($userFields as $userField)
+		$this->arResult['WAIT_TARGET_DATES'] = [
+			['name' => 'BEGINDATE', 'caption' => \CAllCrmDeal::GetFieldCaption('BEGINDATE')],
+			['name' => 'CLOSEDATE', 'caption' => \CAllCrmDeal::GetFieldCaption('CLOSEDATE')],
+		];
+		if ($this->userType)
 		{
-			if($userField['USER_TYPE_ID'] === 'date')
+			$userFields = $this->userType->GetFields();
+			foreach($userFields as $userField)
 			{
-				$this->arResult['WAIT_TARGET_DATES'][] = array(
-					'name' => $userField['FIELD_NAME'],
-					'caption' => isset($userField['EDIT_FORM_LABEL'])
-						? $userField['EDIT_FORM_LABEL'] : $userField['FIELD_NAME']
-				);
+				if($userField['USER_TYPE_ID'] === 'date' && $userField['MULTIPLE'] !== 'Y')
+				{
+					$this->arResult['WAIT_TARGET_DATES'][] = [
+						'name' => $userField['FIELD_NAME'],
+						'caption' => $userField['EDIT_FORM_LABEL'] ?? $userField['FIELD_NAME']
+					];
+				}
 			}
 		}
 		//endregion

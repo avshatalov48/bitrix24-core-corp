@@ -1,4 +1,4 @@
-import {ajax, Event, Loc, Tag, Uri} from 'main.core';
+import {ajax, Event, Loc, Tag, Uri, Type} from 'main.core';
 
 import {PopupComponentsMaker} from 'ui.popupcomponentsmaker';
 
@@ -78,7 +78,9 @@ export class Methodology
 		}
 
 		this.menu = new PopupComponentsMaker({
+			id: 'tasks-scrum-methodology-widget',
 			target: targetNode,
+			cacheable: false,
 			content: [
 				{
 					html: [
@@ -157,8 +159,10 @@ export class Methodology
 					: ''
 				;
 
+				const baseClasses = 'tasks-scrum__widget-methodology tasks-scrum__widget-methodology--scope';
+
 				const node = Tag.render`
-					<div class="tasks-scrum__widget-methodology tasks-scrum__widget-methodology--scope tasks-scrum__widget-methodology--bg  ${blockClass}">
+					<div class="${baseClasses} tasks-scrum__widget-methodology--bg ${blockClass}">
 						<div class="tasks-scrum__widget-methodology--conteiner">
 							<div
 								class="ui-icon ${iconClass} tasks-scrum__widget-methodology--icon"
@@ -171,7 +175,10 @@ export class Methodology
 									</span>
 								</div>
 								<div class="tasks-scrum__widget-methodology--btn-box">
-									<button class="ui-qr-popupcomponentmaker__btn ${buttonClass}">
+									<button
+										class="ui-qr-popupcomponentmaker__btn ${buttonClass}"
+										data-role="open-epics"
+									>
 										${buttonText}
 									</button>
 								</div>
@@ -244,7 +251,10 @@ export class Methodology
 									</span>
 								</div>
 								<div class="tasks-scrum__widget-methodology--btn-box">
-									<button class="ui-qr-popupcomponentmaker__btn ${buttonClass}">
+									<button
+										class="ui-qr-popupcomponentmaker__btn ${buttonClass}"
+										data-role="open-dod"
+									>
 										${buttonText}
 									</button>
 								</div>
@@ -278,7 +288,10 @@ export class Methodology
 				const disableClass = isDisabled ? '--disabled' : '';
 
 				const node = Tag.render`
-					<div class="tasks-scrum__widget-methodology tasks-scrum__widget-methodology--scope">
+					<div
+						class="tasks-scrum__widget-methodology tasks-scrum__widget-methodology--scope"
+						data-role="show-team-speed-chart"
+					>
 						<div class="tasks-scrum__widget-methodology--btn-box-center">
 							<div class="tasks-scrum__widget-methodology--image ${disableClass}">
 							</div>
@@ -308,12 +321,15 @@ export class Methodology
 			groupId: this.groupId
 		})
 			.then((response: BurnDownResponse) => {
-				const existsChart = response.data.sprint !== null;
+				const existsChart = !Type.isNull(response.data.sprint);
 				const btnUiClasses = 'ui-qr-popupcomponentmaker__btn --border';
 				const disableClass = existsChart ? '' : '--disabled';
 
 				const node = Tag.render`
-					<div class="tasks-scrum__widget-methodology tasks-scrum__widget-methodology--scope">
+					<div
+						class="tasks-scrum__widget-methodology tasks-scrum__widget-methodology--scope"
+						data-role="show-burn-down-chart"
+					>
 						<div class="tasks-scrum__widget-methodology--btn-box-center">
 							<div class="tasks-scrum__widget-methodology--image-diagram ${disableClass}">
 							</div>
@@ -365,7 +381,10 @@ export class Methodology
 				;
 
 				const node = Tag.render`
-					<div class="${baseClasses} ${tutorClasses} ${blockClass}"
+					<div
+						class="${baseClasses} ${tutorClasses} ${blockClass}"
+						data-role="open-tutor"
+					>
 						<div class="tasks-scrum__widget-methodology--conteiner">
 							<div class="tasks-scrum__widget-methodology--conteiner">
 								<div class="ui-icon ${iconClass} tasks-scrum__widget-methodology--icon">
@@ -391,7 +410,7 @@ export class Methodology
 					if (existsTutor)
 					{
 						ajax.runAction(
-							'bitrix:tasks.scrum.info.openTutor',
+							'bitrix:tasks.scrum.info.saveAnalyticsLabel',
 							{
 								data: {
 									groupId: this.groupId
@@ -429,7 +448,7 @@ export class Methodology
 		const iconClass = 'ui-icon-service-tutorial tasks-scrum__widget-methodology--migration-btn';
 
 		const node = Tag.render`
-			<div class="${baseClasses} ${migrationClasses}"
+			<div class="${baseClasses} ${migrationClasses}" data-role="open-migration">
 				<div class="tasks-scrum__widget-methodology--conteiner">
 					<div class="tasks-scrum__widget-methodology--conteiner">
 						<div class="ui-icon ${iconClass} tasks-scrum__widget-methodology--icon">
@@ -519,6 +538,17 @@ export class Methodology
 		}
 
 		this.menu.close();
+
+		ajax.runAction(
+			'bitrix:tasks.scrum.info.saveAnalyticsLabel',
+			{
+				data: {},
+				analyticsLabel: {
+					scrum: 'Y',
+					action: 'open_team_speed_diag'
+				}
+			}
+		);
 	}
 
 	showBurnDownChart(sprintId: number)
@@ -533,6 +563,17 @@ export class Methodology
 		}
 
 		this.menu.close();
+
+		ajax.runAction(
+			'bitrix:tasks.scrum.info.saveAnalyticsLabel',
+			{
+				data: {},
+				analyticsLabel: {
+					scrum: 'Y',
+					action: 'open_burn_diag'
+				}
+			}
+		);
 	}
 
 	initHints(node: HTMLElement)

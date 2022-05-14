@@ -38,6 +38,10 @@ final class Cleaner
 		 * but remember this note and make sure that code that you place here handles this case correctly
 		 */
 
+		(new \CCrmFieldMulti())->DeleteByElement(
+			\CCrmOwnerType::ResolveName($this->getEntityTypeId()),
+			$this->getEntityId()
+		);
 		ProductRowTable::deleteByItem($this->getEntityTypeId(), $this->getEntityId());
 		Kanban\SortTable::clearEntity($this->getEntityId(), \CCrmOwnerType::ResolveName($this->getEntityTypeId()));
 		EntityPermsTable::clearByEntity(\CCrmOwnerType::ResolveName($this->getEntityTypeId()), $this->getEntityId());

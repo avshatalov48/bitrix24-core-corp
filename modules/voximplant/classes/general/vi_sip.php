@@ -86,7 +86,7 @@ class CVoxImplantSip
 			'QUEUE_ID' => CVoxImplantMain::getDefaultGroupId(),
 		));
 		CVoxImplantUser::clearCache();
-		if (!$result)
+		if (!$result->isSuccess())
 		{
 			$this->error = new CVoxImplantError(__METHOD__, 'TITLE_EXISTS', GetMessage('VI_SIP_TITLE_EXISTS'));
 
@@ -369,7 +369,7 @@ class CVoxImplantSip
 			$result['LINE_DETECT_HEADER_ORDER'] = $fields['LINE_DETECT_HEADER_ORDER'];
 		}
 
-		if (count($errors) > 0)
+		if (!empty($errors))
 		{
 			$this->error = new CVoxImplantError(__METHOD__, 'CHECK_FIELDS_ERROR', implode('<br> ', $errors));
 			return false;

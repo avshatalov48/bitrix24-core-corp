@@ -390,6 +390,8 @@ class Field
 	 */
 	private static function changeDealCategory($data, $newId)
 	{
+		// @todo rename to changeEntityCategory and support contacts, companies and smart processes categories
+
 		if (is_string($data))
 		{
 			$data =	preg_replace(static::$regExpDealCategory, '${1}'.$newId.'${3}', $data);

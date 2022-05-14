@@ -110,4 +110,6 @@ DROP TABLE IF EXISTS b_tasks_scrum_epic;
 
 DROP TABLE IF EXISTS b_tasks_scrum_chat;
 
+DROP TABLE IF EXISTS b_tasks_scrum_type_participants;
+
 DROP TABLE IF EXISTS b_tasks_marketing;

@@ -12,6 +12,8 @@ class OrderConversionConfig extends EntityConversionConfig
 
 		$this->addItem(new EntityConversionConfigItem(\CCrmOwnerType::Deal));
 		$this->addItem(new EntityConversionConfigItem(\CCrmOwnerType::Invoice));
+
+		$this->appendCustomRelations();
 	}
 
 	protected static function getEntityTypeId(): int

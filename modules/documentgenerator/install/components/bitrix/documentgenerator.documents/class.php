@@ -277,7 +277,7 @@ class DocumentGeneratorDocumentsComponent extends CBitrixComponent
 		$grid['AJAX_OPTION_STYLE'] = "N";
 		$grid['AJAX_OPTION_HISTORY'] = "N";
 		$grid['SHOW_PAGESIZE'] = true;
-		$grid['PAGE_SIZES'] = [['NAME' => 10, 'VALUE' => 10], ['NAME' => 20, 'VALUE' => 20], ['NAME' => 50, 'VALUE' => 50]];
+		$grid['PAGE_SIZES'] = [['NAME' => '10', 'VALUE' => '10'], ['NAME' => '20', 'VALUE' => '20'], ['NAME' => '50', 'VALUE' => '50']];
 		$grid['AJAX_ID'] = \CAjax::GetComponentID("bitrix:main.ui.grid", '', '');
 		$grid['SHOW_ROW_CHECKBOXES'] = false;
 		$grid['SHOW_CHECK_ALL_CHECKBOXES'] = false;
@@ -362,10 +362,10 @@ class DocumentGeneratorDocumentsComponent extends CBitrixComponent
 	 */
 	protected function getListFilter()
 	{
-		$providerClassName = str_replace("\\", "\\\\", mb_strtolower(get_class($this->provider)));
+		$providerClassName = mb_strtolower(get_class($this->provider));
 		$filter = [
-			'PROVIDER' => $providerClassName,
-			'VALUE' => $this->provider->getSource(),
+			'=PROVIDER' => $providerClassName,
+			'=VALUE' => $this->provider->getSource(),
 		];
 
 		$filterOptions = new Bitrix\Main\UI\Filter\Options($this->filterId);

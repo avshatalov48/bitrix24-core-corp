@@ -59,9 +59,14 @@ final class Bitrix24Scenario
 
 		if ($userSettings['v'] === null)
 		{
-			$user = UserTable::getById($GLOBALS['USER']->getId())->fetchObject();
 			$dateInstallationOnlyOffice = $this->getDateInstallationOnlyOffice();
-			if (!$user || !$dateInstallationOnlyOffice)
+			if (!$dateInstallationOnlyOffice)
+			{
+				return true;
+			}
+
+			$user = UserTable::getById($GLOBALS['USER']->getId())->fetchObject();
+			if (!$user)
 			{
 				return true;
 			}

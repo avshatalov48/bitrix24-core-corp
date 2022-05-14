@@ -577,7 +577,7 @@ class CrmQuoteDetailsComponent extends FactoryBased
 	{
 		if ($tabCode === static::TAB_NAME_DEALS)
 		{
-			if ($this->item->getDealId() > 0 && !$this->item->isNew())
+			if ($this->item->getDealId() > 0 && $this->item->getDeal() && !$this->item->isNew())
 			{
 				$dealTitle = htmlspecialcharsbx($this->item->getDeal()->getTitle());
 				$linkToDealDetails = Container::getInstance()->getRouter()->getItemDetailUrl(\CCrmOwnerType::Deal, $this->item->getDealId());

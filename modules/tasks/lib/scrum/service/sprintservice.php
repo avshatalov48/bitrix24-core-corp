@@ -36,8 +36,14 @@ class SprintService implements Errorable
 
 	protected $errorCollection;
 
-	public function __construct()
+	private $userId;
+
+	private static $allowedActions = [];
+
+	public function __construct(int $userId = 0)
 	{
+		$this->userId = $userId;
+
 		$this->errorCollection = new ErrorCollection;
 	}
 
@@ -135,14 +141,6 @@ class SprintService implements Errorable
 			}
 
 			$allTaskIds = $itemService->getTaskIdsByEntityId($sprint->getId());
-			if (empty($allTaskIds))
-			{
-				$this->errorCollection->setError(
-					new Error(Loc::getMessage('TASKS_SCRUM_SPRINT_START_NOT_TASKS_ERROR'))
-				);
-
-				return $sprint;
-			}
 
 			$backlog = $backlogService->getBacklogByGroupId($sprint->getGroupId());
 
@@ -173,7 +171,7 @@ class SprintService implements Errorable
 			$itemIds = $itemService->getItemIdsBySourceIds($completedTaskIds, $sprint->getId());
 			if (!$itemService->getErrors())
 			{
-				$itemService->moveItemsToEntity($itemIds, $backlog->getId());
+				$itemService->moveItemsToEntity($itemIds, $backlog->getId(), $pushService);
 			}
 
 			$subTaskIds = [];
@@ -188,7 +186,22 @@ class SprintService implements Errorable
 				return $sprint;
 			}
 
-			$kanbanService->addTasksToKanban($sprint->getId(), array_unique(array_merge($taskIds, $subTaskIds)));
+			if (empty($taskIds))
+			{
+				$this->errorCollection->setError(
+					new Error(Loc::getMessage('TASKS_SCRUM_SPRINT_START_NOT_TASKS_ERROR'))
+				);
+
+				return $sprint;
+			}
+
+			$lastSprintId = $kanbanService->getLastCompletedSprintIdSameGroup($sprint->getId());
+
+			$kanbanService->addTasksToKanban(
+				$sprint->getId(),
+				array_unique(array_merge($taskIds, $subTaskIds)),
+				$lastSprintId
+			);
 			if ($kanbanService->getErrors())
 			{
 				$this->errorCollection->add($kanbanService->getErrors());
@@ -196,12 +209,11 @@ class SprintService implements Errorable
 				return $sprint;
 			}
 
-			if ($robotService)
+			if ($lastSprintId && $robotService)
 			{
-				if ($lastSprintId = $kanbanService->getLastCompletedSprintIdSameGroup($sprint->getId()))
+				$stageIdsMap = $kanbanService->getStageIdsMapBetweenTwoSprints($sprint->getId(), $lastSprintId);
+				if ($stageIdsMap)
 				{
-					$stageIdsMap = $kanbanService->getStageIdsMapBetweenTwoSprints($sprint->getId(), $lastSprintId);
-
 					$robotService->updateRobotsOfLastSprint($sprint->getGroupId(), $stageIdsMap);
 				}
 
@@ -951,7 +963,11 @@ class SprintService implements Errorable
 			'items' => [],
 			'views' => [],
 			'info' => $info->getInfoData(),
-			'isExactSearchApplied' => 'N'
+			'isExactSearchApplied' => 'N',
+			'allowedActions' => [
+				'start' => $this->canStartSprint($this->userId, $sprint->getGroupId()),
+				'complete' => $this->canCompleteSprint($this->userId, $sprint->getGroupId()),
+			],
 		];
 	}
 
@@ -1025,5 +1041,67 @@ class SprintService implements Errorable
 		}
 
 		return 0;
+	}
+
+	private function canStartSprint(int $userId, int $groupId): bool
+	{
+		if ($userId === 0)
+		{
+			return false;
+		}
+
+		$key = $userId . $groupId;
+		if (self::$allowedActions[$key])
+		{
+			return self::$allowedActions[$key];
+		}
+
+		$userRoleInGroup = \CSocNetUserToGroup::getUserRole($userId, $groupId);
+
+		if (
+			$userRoleInGroup == SONET_ROLES_MODERATOR
+			|| $userRoleInGroup == SONET_ROLES_OWNER
+			|| \CSocNetUser::isCurrentUserModuleAdmin()
+		)
+		{
+			self::$allowedActions[$key] = true;
+		}
+		else
+		{
+			self::$allowedActions[$key] = false;
+		}
+
+		return self::$allowedActions[$key];
+	}
+
+	private function canCompleteSprint(int $userId, int $groupId): bool
+	{
+		if ($userId === 0)
+		{
+			return false;
+		}
+
+		$key = $userId . $groupId;
+		if (self::$allowedActions[$key])
+		{
+			return self::$allowedActions[$key];
+		}
+
+		$userRoleInGroup = \CSocNetUserToGroup::getUserRole($userId, $groupId);
+
+		if (
+			$userRoleInGroup == SONET_ROLES_MODERATOR
+			|| $userRoleInGroup == SONET_ROLES_OWNER
+			|| \CSocNetUser::isCurrentUserModuleAdmin()
+		)
+		{
+			self::$allowedActions[$key] = true;
+		}
+		else
+		{
+			self::$allowedActions[$key] = false;
+		}
+
+		return self::$allowedActions[$key];
 	}
 }

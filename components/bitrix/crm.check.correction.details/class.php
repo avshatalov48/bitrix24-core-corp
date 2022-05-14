@@ -379,7 +379,7 @@ class CCrmCheckCorrectionDetailsComponent extends Crm\Component\EntityDetails\Ba
 			}
 
 			$cashbox = Cashbox\Manager::getObjectById($item['ID']);
-			if ($cashbox instanceof Cashbox\ICorrection)
+			if ($cashbox->isCorrection())
 			{
 				$result[] = [
 					'NAME' => $cashbox->getField('NAME'),

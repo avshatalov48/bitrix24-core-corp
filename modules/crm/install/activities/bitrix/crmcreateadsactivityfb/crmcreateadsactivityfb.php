@@ -39,7 +39,7 @@ class CBPCrmCreateAdsActivityFb extends CBPCrmCreateAdsActivityVk
 	{
 		if (static::isRestricted())
 		{
-			$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, [
+			$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, array(
 				'documentType' => $documentType,
 				'activityName' => $activityName,
 				'workflowTemplate' => $arWorkflowTemplate,
@@ -48,7 +48,7 @@ class CBPCrmCreateAdsActivityFb extends CBPCrmCreateAdsActivityVk
 				'currentValues' => $arCurrentValues,
 				'formName' => $formName,
 				'siteId' => $siteId
-			]);
+			));
 
 			$dialog->setRenderer(function () {
 				return '<div class="ui-alert ui-alert-danger">

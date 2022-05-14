@@ -77,4 +77,5 @@ $arResult['JS_DATA'] = [
 	'entityId' => $arParams['ENTITY_ID'],
 	'entityRoute' => $arParams['ENTITY_ROUTE'],
 	'groupId' => (empty($group) ? 0 : $group['ID']),
+	'context' => $arParams['CONTEXT'],
 ];

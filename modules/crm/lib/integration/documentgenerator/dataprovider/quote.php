@@ -4,7 +4,9 @@ namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 
 use Bitrix\Crm\Binding\QuoteContactTable;
 use Bitrix\Crm\Integration\DocumentGenerator\Value\Money;
+use Bitrix\Crm\Item;
 use Bitrix\Crm\QuoteTable;
+use Bitrix\Crm\Service\Container;
 use Bitrix\DocumentGenerator\DataProvider\ArrayDataProvider;
 use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\DocumentGenerator\Value\DateTime;
@@ -23,6 +25,8 @@ class Quote extends ProductsDataProvider
 		if($this->fields === null)
 		{
 			parent::getFields();
+			$factory = Container::getInstance()->getFactory(\CCrmOwnerType::Quote);
+			$factoryFieldsInfo = $factory ? $factory->getFieldsInfo() : [];
 			$this->fields['ID'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_ID_TITLE'),];
 			$this->fields['TITLE'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_TITLE_TITLE'),];
 			$this->fields['OPPORTUNITY'] = [
@@ -33,8 +37,14 @@ class Quote extends ProductsDataProvider
 			$this->fields['CURRENCY_ID'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_CURRENCY_ID_TITLE'),];
 			$this->fields['LOCATION_ID'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_LOCATION_ID_TITLE'),];
 			$this->fields['COMMENTS'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_COMMENTS_TITLE'), 'TYPE' => static::FIELD_TYPE_TEXT];
-			$this->fields['BEGINDATE'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_BEGINDATE_TITLE'), 'TYPE' => DateTime::class];
-			$this->fields['CLOSEDATE'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_CLOSEDATE_TITLE'), 'TYPE' => DateTime::class];
+			$this->fields['BEGINDATE'] = [
+				'TITLE' => $factoryFieldsInfo['BEGINDATE']['TITLE'] ?? GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_BEGINDATE_TITLE'),
+				'TYPE' => DateTime::class,
+			];
+			$this->fields['CLOSEDATE'] = [
+				'TITLE' => $factoryFieldsInfo['CLOSEDATE']['TITLE'] ?? GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_CLOSEDATE_TITLE'),
+				'TYPE' => DateTime::class,
+			];
 			$this->fields['DATE_CREATE'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_DATE_CREATE_TITLE'), 'TYPE' => DateTime::class];
 			$this->fields['DATE_MODIFY'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_DATE_MODIFY_TITLE'), 'TYPE' => DateTime::class];
 			$this->fields['CONTENT'] = ['TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_QUOTE_CONTENT_TITLE'), 'TYPE' => static::FIELD_TYPE_TEXT];
@@ -158,6 +168,12 @@ class Quote extends ProductsDataProvider
 			'BEGINDATE_SHORT',
 			'CLOSEDATE_SHORT',
 			'MYCOMPANY_ID',
+			'DATE_CREATE_SHORT',
+			'DATE_MODIFY_SHORT',
+			'CREATED_BY',
+			'MODIFY_BY',
+			'ASSIGNED_BY',
+			'LEAD_BY',
 		]);
 	}
 

@@ -333,4 +333,27 @@ class UserFieldManager
 
 		return static::isEntityEnabledInUserField($userField, $entityTypeName);
 	}
+
+	public static function isEnabledInCalendarUserField(string $entityTypeName): bool
+	{
+		if (!Main\Loader::includeModule('calendar'))
+		{
+			return false;
+		}
+
+		$filter = [
+			'=ENTITY_ID' => \Bitrix\Crm\Integration\Calendar::USER_FIELD_ENTITY_ID,
+			'=FIELD_NAME' => \Bitrix\Crm\Integration\Calendar::EVENT_FIELD_NAME,
+		];
+
+		$userField = Main\UserFieldTable::getList([
+			'filter' => $filter,
+		])->fetch();
+		if (!$userField)
+		{
+			return false;
+		}
+
+		return static::isEntityEnabledInUserField($userField, $entityTypeName);
+	}
 }

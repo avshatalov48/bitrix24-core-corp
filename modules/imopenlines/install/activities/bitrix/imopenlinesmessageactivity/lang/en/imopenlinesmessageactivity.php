@@ -1,7 +1,7 @@
 <?php
 $MESS["IMOL_MA_ATTACHMENT"] = "Attachments";
 $MESS["IMOL_MA_ATTACHMENT_DISK"] = "Drive";
-$MESS["IMOL_MA_ATTACHMENT_FILE"] = "Document files";
+$MESS["IMOL_MA_ATTACHMENT_FILE_1"] = "Element files";
 $MESS["IMOL_MA_ATTACHMENT_TYPE"] = "Attachment type";
 $MESS["IMOL_MA_EMPTY_MESSAGE"] = "The 'Message Text' parameter is missing.";
 $MESS["IMOL_MA_IS_SYSTEM"] = "Hidden message (whisper mode)";

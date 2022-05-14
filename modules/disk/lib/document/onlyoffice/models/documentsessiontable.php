@@ -163,7 +163,7 @@ final class DocumentSessionTable extends DataManager
 				'STATUS' => self::STATUS_NON_ACTIVE,
 			],
 			[
-				'EXTERNAL_HASH' => $hash,
+				'=EXTERNAL_HASH' => $hash,
 			]
 		);
 	}

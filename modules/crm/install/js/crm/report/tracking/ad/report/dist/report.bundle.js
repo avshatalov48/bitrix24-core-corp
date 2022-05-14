@@ -15,9 +15,7 @@ this.BX.Crm.Report.Tracking = this.BX.Crm.Report.Tracking || {};
 	  return data;
 	}
 
-	var Report =
-	/*#__PURE__*/
-	function () {
+	var Report = /*#__PURE__*/function () {
 	  function Report(options) {
 	    babelHelpers.classCallCheck(this, Report);
 	    babelHelpers.defineProperty(this, "ui", {
@@ -407,5 +405,5 @@ this.BX.Crm.Report.Tracking = this.BX.Crm.Report.Tracking || {};
 
 	exports.Report = Report;
 
-}((this.BX.Crm.Report.Tracking.Ad = this.BX.Crm.Report.Tracking.Ad || {}),BX,BX,BX,BX.Event,BX.Main));
+}((this.BX.Crm.Report.Tracking.Ad = this.BX.Crm.Report.Tracking.Ad || {}),BX,BX.UI,BX,BX.Event,BX.Main));
 //# sourceMappingURL=report.bundle.js.map

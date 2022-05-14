@@ -38,7 +38,11 @@ Library::loadMessages();
  * @method Result updateMessage(array $data)
  * @method Result deleteMessage(array $data)
  *
+ * @see \Bitrix\ImConnectorServer\Connector::infoConnectorsLine
  * @method static Result infoConnectorsLine(int $lineId)
+ *
+ * @see \Bitrix\ImConnectorServer\Connector::saveDomainSite
+ * @method static Result saveDomainSite(string $publicUrl)
  *
  * @package Bitrix\ImConnector
  * @final
@@ -66,7 +70,8 @@ final class Output
 
 		if(
 			$connector !== 'all'
-		&& (
+			&&
+			(
 				!empty($ignoreDeactivatedConnector) ||
 				Connector::isConnector($connector)
 			)
@@ -74,7 +79,7 @@ final class Output
 		{
 			$provider = Provider::getProviderForConnectorOutput($connector, $line);
 
-			if($provider->isSuccess())
+			if ($provider->isSuccess())
 			{
 				$this->provider = $provider->getResult();
 			}
@@ -83,13 +88,23 @@ final class Output
 				$this->result->addErrors($provider->getErrors());
 			}
 		}
-		elseif($connector == 'all')
+		elseif ($connector == 'all')
 		{
-			$this->result->addError(new Error(Loc::getMessage('IMCONNECTOR_ERROR_PROVIDER_GENERAL_REQUEST_NOT_DYNAMIC_METHOD'), Library::ERROR_IMCONNECTOR_PROVIDER_GENERAL_REQUEST_NOT_DYNAMIC_METHOD, __METHOD__, $connector));
+			$this->result->addError(new Error(
+				Loc::getMessage('IMCONNECTOR_ERROR_PROVIDER_GENERAL_REQUEST_NOT_DYNAMIC_METHOD'),
+				Library::ERROR_IMCONNECTOR_PROVIDER_GENERAL_REQUEST_NOT_DYNAMIC_METHOD,
+				__METHOD__,
+				$connector
+			));
 		}
 		else
 		{
-			$this->result->addError(new Error(Loc::getMessage('IMCONNECTOR_ERROR_PROVIDER_NO_ACTIVE_CONNECTOR'), Library::ERROR_IMCONNECTOR_PROVIDER_NO_ACTIVE_CONNECTOR, __METHOD__, $connector));
+			$this->result->addError(new Error(
+				Loc::getMessage('IMCONNECTOR_ERROR_PROVIDER_NO_ACTIVE_CONNECTOR'),
+				Library::ERROR_IMCONNECTOR_PROVIDER_NO_ACTIVE_CONNECTOR,
+				__METHOD__,
+				$connector
+			));
 		}
 	}
 
@@ -131,12 +146,12 @@ final class Output
 		{
 			$resultCall = $provider->call($name, $arguments);
 
-			if(!empty($resultCall->getData()))
+			if (!empty($resultCall->getData()))
 			{
 				$resultsCall = array_merge($resultsCall, $resultCall->getData());
 			}
 
-			if(!$resultCall->isSuccess())
+			if (!$resultCall->isSuccess())
 			{
 				$result->addErrors($resultCall->getErrors());
 			}

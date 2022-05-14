@@ -237,7 +237,7 @@ if (!$bInternal)
 //endregion
 
 $gridOptions = new \Bitrix\Main\Grid\Options($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
-$filterOptions = new \Bitrix\Main\UI\Filter\Options($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
+$filterOptions = new \Bitrix\Crm\Filter\UiFilterOptions($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
 
 //region Navigation Params
 if ($arParams['QUOTE_COUNT'] <= 0)
@@ -291,6 +291,7 @@ foreach ($arResult['~STATUS_LIST_WRITE'] as $sStatusId => $sStatusTitle)
 	if ($CCrmPerms->GetPermType('QUOTE', 'WRITE', array('STATUS_ID'.$sStatusId)) > BX_CRM_PERM_NONE)
 		$arResult['STATUS_LIST_WRITE'][$sStatusId] = $sStatusTitle;
 }
+$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Quote);
 
 //region Headers initialization
 $arResult['HEADERS'] = 	array(
@@ -299,10 +300,9 @@ $arResult['HEADERS'] = 	array(
 	array('id' => 'STATUS_ID', 'name' => GetMessage('CRM_COLUMN_STATUS_ID'), 'sort' => 'status_sort', 'width' => 200, 'default' => true, 'prevent_default' => false, 'editable' => array('items' => $arResult['STATUS_LIST_WRITE']), 'type' => 'list'),
 	array('id' => 'SUM', 'name' => GetMessage('CRM_COLUMN_SUM'), 'sort' => 'opportunity_account', 'first_order' => 'desc', 'default' => true, 'editable' => false, 'align' => 'right'),
 	array('id' => 'ENTITIES_LINKS', 'name' => GetMessage('CRM_COLUMN_ENTITIES_LINKS'), 'default' => true, 'editable' => false),
-	array('id' => 'CLOSEDATE', 'name' => GetMessage('CRM_COLUMN_CLOSEDATE'), 'sort' => 'closedate', 'default' => true, 'editable' => true, 'type' => 'date'),
-	array('id' => 'BEGINDATE', 'name' => GetMessage('CRM_COLUMN_BEGINDATE'), 'sort' => 'begindate', 'editable' => true, 'type' => 'date'),
+	array('id' => 'CLOSEDATE', 'name' => $factory->getFieldCaption('CLOSEDATE'), 'sort' => 'closedate', 'default' => true, 'editable' => true, 'type' => 'date'),
+	array('id' => 'BEGINDATE', 'name' => $factory->getFieldCaption('BEGINDATE'), 'sort' => 'begindate', 'editable' => true, 'type' => 'date'),
 	array('id' => 'ASSIGNED_BY', 'name' => GetMessage('CRM_COLUMN_ASSIGNED_BY'), 'sort' => 'assigned_by', 'default' => true, 'editable' => false),
-
 	array('id' => 'ID', 'name' => GetMessage('CRM_COLUMN_ID'), 'sort' => 'id', 'first_order' => 'desc', 'width' => 60, 'editable' => false, 'type' => 'int'),
 	array('id' => 'QUOTE_NUMBER', 'name' => GetMessage('CRM_COLUMN_QUOTE_NUMBER'), 'sort' => 'quote_number', 'width' => 60, 'editable' => false),
 	array('id' => 'TITLE', 'name' => GetMessage('CRM_COLUMN_TITLE'), 'sort' => 'title', 'editable' => true),
@@ -315,7 +315,7 @@ $arResult['HEADERS'] = 	array(
 	array('id' => 'DEAL_ID', 'name' => GetMessage('CRM_COLUMN_DEAL_ID'), 'sort' => 'deal_id', 'editable' => false),
 	array('id' => 'MYCOMPANY_ID', 'name' => GetMessage('CRM_COLUMN_MYCOMPANY_ID1'), 'sort' => 'mycompany_id', 'editable' => false),
 	array('id' => 'CLOSED', 'name' => GetMessage('CRM_COLUMN_CLOSED'), 'sort' => 'closed', 'align' => 'center', 'editable' => array('items' => array('' => '', 'Y' => GetMessage('MAIN_YES'), 'N' => GetMessage('MAIN_NO'))), 'type' => 'list'),
-	array('id' => 'DATE_CREATE', 'name' => GetMessage('CRM_COLUMN_DATE_CREATE'), 'sort' => 'date_create', 'first_order' => 'desc', 'default' => true,),
+	array('id' => 'DATE_CREATE', 'name' => $factory->getFieldCaption('DATE_CREATE'), 'sort' => 'date_create', 'first_order' => 'desc', 'default' => true,),
 	array('id' => 'CREATED_BY', 'name' => GetMessage('CRM_COLUMN_CREATED_BY'), 'sort' => 'created_by', 'editable' => false),
 	array('id' => 'DATE_MODIFY', 'name' => GetMessage('CRM_COLUMN_DATE_MODIFY'), 'sort' => 'date_modify', 'first_order' => 'desc'),
 	array('id' => 'MODIFY_BY', 'name' => GetMessage('CRM_COLUMN_MODIFY_BY'), 'sort' => 'modify_by', 'editable' => false),

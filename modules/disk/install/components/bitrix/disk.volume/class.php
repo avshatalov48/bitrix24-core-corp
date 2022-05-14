@@ -458,6 +458,7 @@ class CDiskVolumeComponent extends BaseComponent
 			Volume\FolderTree::getIndicatorId(),
 			Volume\FolderDeleted::getIndicatorId(),
 			'Duplicate',// indicator has been removed
+			'Storage_Uploaded',// indicator has been removed
 		);
 
 		foreach ($indicatorIdList as $indicatorId => $indicatorIdClass)
@@ -2743,6 +2744,8 @@ class CDiskVolumeComponent extends BaseComponent
 		{
 			$indicator->addFilter($key, $val);
 		}
+
+		$indicator->addFilter('>FILES_LEFT', 0);
 
 		$indicator->loadTotals();
 

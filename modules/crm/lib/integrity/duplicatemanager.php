@@ -1,11 +1,49 @@
 <?php
+
 namespace Bitrix\Crm\Integrity;
+
 use Bitrix\Crm\Communication\Type;
+use Bitrix\Crm\Item;
 use Bitrix\Main;
-use Bitrix\Crm\CommunicationType;
 
 class DuplicateManager
 {
+	public static function getCriterionRegistrar(int $entityTypeId): CriterionRegistrar
+	{
+		if ($entityTypeId === \CCrmOwnerType::Lead)
+		{
+			return new CriterionRegistrar\Decorator\OrganizationCriterion(
+				new CriterionRegistrar\Decorator\PersonCriterion(
+					new CriterionRegistrar\Decorator\CommunicationCriterion(
+						new CriterionRegistrar\EntityRanking(),
+					),
+				),
+				Item\Lead::FIELD_NAME_COMPANY_TITLE,
+			);
+		}
+
+		if ($entityTypeId === \CCrmOwnerType::Company)
+		{
+			return new CriterionRegistrar\Decorator\OrganizationCriterion(
+				new CriterionRegistrar\Decorator\CommunicationCriterion(
+					new CriterionRegistrar\EntityRanking(),
+				),
+				Item::FIELD_NAME_TITLE,
+			);
+		}
+
+		if ($entityTypeId === \CCrmOwnerType::Contact)
+		{
+			return new CriterionRegistrar\Decorator\PersonCriterion(
+				new CriterionRegistrar\Decorator\CommunicationCriterion(
+					new CriterionRegistrar\EntityRanking(),
+				),
+			);
+		}
+
+		return new CriterionRegistrar\NullRegistrar();
+	}
+
 	/**
 	* @return DuplicateCriterion
 	*/

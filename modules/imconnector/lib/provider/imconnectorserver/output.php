@@ -44,7 +44,12 @@ class Output extends Base\Output
 			$serverUri = $uriServer;
 		}
 
-		$serverUri = 'https://' . $serverUri . '/imwebhook/portal.php';
+		if (!(mb_strpos($serverUri, 'https://') === 0 || mb_strpos($serverUri, 'http://') === 0))
+		{
+			$serverUri = 'https://' . $serverUri;
+		}
+
+		$serverUri .= '/imwebhook/portal.php';
 
 		return $serverUri;
 	}
@@ -88,7 +93,7 @@ class Output extends Base\Output
 
 		if($result->isSuccess())
 		{
-			if(in_array($this->connector, Library::ENABLE_SETSTATUSREADING))
+			if (in_array($this->connector, Library::ENABLE_SETSTATUSREADING))
 			{
 				$result = $this->query('setStatusReading', [$data]);
 			}
@@ -105,7 +110,7 @@ class Output extends Base\Output
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			foreach ($data as $id=>$message)
 			{
@@ -129,7 +134,7 @@ class Output extends Base\Output
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$data = $this->sendMessagesProcessing($data);
 
@@ -149,7 +154,7 @@ class Output extends Base\Output
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$data = $this->updateMessagesProcessing($data);
 
@@ -169,7 +174,7 @@ class Output extends Base\Output
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$data = $this->deleteMessagesProcessing($data);
 
@@ -189,7 +194,7 @@ class Output extends Base\Output
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$result = $this->query('deleteLine', [$lineId]);
 		}
@@ -205,7 +210,7 @@ class Output extends Base\Output
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$result = $this->query('infoConnectorsLine', [$lineId]);
 		}
@@ -224,7 +229,7 @@ class Output extends Base\Output
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			if (empty($command))
 			{
@@ -244,11 +249,11 @@ class Output extends Base\Output
 				$params = Converter::convertStubInEmpty($params);
 				$params = Encoding::convertEncoding($params, SITE_CHARSET, 'UTF-8');
 
-				$params['DATA'] = base64_encode(serialize($params['DATA']));
+				$params['DATA'] = \base64_encode(\serialize($params['DATA']));
 				$params['BX_HASH'] = self::requestSign($this->type, md5(implode('|', $params)));
 
 				$waitResponse = true;
-				if(in_array(mb_strtolower($params['BX_COMMAND']), self::LIST_COMMAND_NOT_WAIT_RESPONSE))
+				if (in_array(mb_strtolower($params['BX_COMMAND']), self::LIST_COMMAND_NOT_WAIT_RESPONSE))
 				{
 					$waitResponse = false;
 				}
@@ -265,7 +270,7 @@ class Output extends Base\Output
 
 				$request = $httpClient->post($this->controllerUrl, $params);
 
-				if($waitResponse && $result->isSuccess())
+				if ($waitResponse && $result->isSuccess())
 				{
 					try
 					{
@@ -277,6 +282,48 @@ class Output extends Base\Output
 						$result->addError(new Error($e->getMessage(), $e->getCode(), __METHOD__));
 					}
 				}
+			}
+		}
+
+		return $result;
+	}
+
+	protected function sessionFinish(array $data): Result
+	{
+		$result = clone $this->result;
+
+		foreach ($data as $key => $value)
+		{
+			if ($value['connector']['connector_id'] === 'telegrambot')
+			{
+				$messageData = [
+					'lineId' => $value['connector']['line_id'],
+					'chatId' => $value['connector']['chat_id'],
+					'userId' => $value['connector']['user_id'],
+				];
+				$result = $this->query('finishSession', [$messageData]);
+				break;
+			}
+		}
+
+		return $result;
+	}
+
+	protected function sessionStart(array $data): Result
+	{
+		$result = clone $this->result;
+
+		foreach ($data as $key => $value)
+		{
+			if ($value['connector']['connector_id'] === 'telegrambot')
+			{
+				$messageData = [
+					'lineId' => $value['connector']['line_id'],
+					'chatId' => $value['connector']['chat_id'],
+					'userId' => $value['connector']['user_id'],
+				];
+				$result = $this->query('startSession', [$messageData]);
+				break;
 			}
 		}
 

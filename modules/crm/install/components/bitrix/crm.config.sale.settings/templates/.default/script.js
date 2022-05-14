@@ -227,14 +227,6 @@ BX.CrmSaleSettings = (function ()
 			events : {
 				onPopupClose : function() {
 					this.destroy();
-				},
-				onAfterPopupShow : function(popup) {
-					var title = BX.findChild(popup.contentContainer, {className: "bx-crm-popup-title"}, true);
-					if (title)
-					{
-						title.style.cursor = "move";
-						BX.bind(title, "mousedown", BX.proxy(popup._startDrag, popup));
-					}
 				}
 			},
 			buttons: [
@@ -1325,14 +1317,6 @@ BX.CrmSaleSettings = (function ()
 				events : {
 					onPopupClose : function() {
 						this.destroy();
-					},
-					onAfterPopupShow : function(popup) {
-						var title = BX.findChild(popup.contentContainer, {className: "bx-crm-popup-title"}, true);
-						if (title)
-						{
-							title.style.cursor = "move";
-							BX.bind(title, "mousedown", BX.proxy(popup._startDrag, popup));
-						}
 					}
 				},
 				buttons: [

@@ -8,33 +8,17 @@ class CCrmGridOptions extends CGridOptions
 	{
 		parent::__construct($grid_id, $filterPresets);
 	}
-
+	/**
+	 * @deprecated Use \Bitrix\Crm\Component\EntityList\GridId::getValue
+	 * @see \Bitrix\Crm\Component\EntityList\GridId::getValue
+	 */
 	static public function GetDefaultGrigID($entityTypeID)
 	{
 		$entityTypeID = (int)$entityTypeID;
-		if(!CCrmOwnerType::IsDefined($entityTypeID))
-		{
-			return '';
-		}
 
-		if($entityTypeID === CCrmOwnerType::Lead)
-		{
-			return 'CRM_LEAD_LIST_V12';
-		}
-		elseif($entityTypeID === CCrmOwnerType::Deal)
-		{
-			return 'CRM_DEAL_LIST_V12';
-		}
-		elseif($entityTypeID === CCrmOwnerType::Contact)
-		{
-			return 'CRM_CONTACT_LIST_V12';
-		}
-		elseif($entityTypeID === CCrmOwnerType::Company)
-		{
-			return 'CRM_COMPANY_LIST_V12';
-		}
-
-		return '';
+		return  (new \Bitrix\Crm\Component\EntityList\GridId($entityTypeID))
+			->getValue()
+		;
 	}
 
 	static public function AddVisibleColumn($gridID, $columnName)

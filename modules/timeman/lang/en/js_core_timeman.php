@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["JS_CORE_CL"] = "Select Time";
 $MESS["JS_CORE_EMPTYTPL"] = "(empty template)";
 $MESS["JS_CORE_HINT_EVENTS"] = "Upcoming Event";
@@ -51,6 +51,7 @@ $MESS["JS_CORE_TMR_REPORT_EMPTY"] = "no report text";
 $MESS["JS_CORE_TMR_REPORT_FINISH"] = "Reason for change (end time)";
 $MESS["JS_CORE_TMR_REPORT_FULL_DAY"] = "Daily report";
 $MESS["JS_CORE_TMR_REPORT_FULL_MONTH"] = "Monthly report";
+$MESS["JS_CORE_TMR_REPORT_FULL_NONE"] = "Report is not required";
 $MESS["JS_CORE_TMR_REPORT_FULL_WEEK"] = "Weekly report";
 $MESS["JS_CORE_TMR_REPORT_INC"] = "include in report";
 $MESS["JS_CORE_TMR_REPORT_ORIG"] = "Original";
@@ -91,6 +92,16 @@ $MESS["JS_CORE_TM_EVENTS_ADD"] = "new event";
 $MESS["JS_CORE_TM_EVENT_ABSENT"] = "Out of office";
 $MESS["JS_CORE_TM_EVENT_SET"] = "Set";
 $MESS["JS_CORE_TM_FILES"] = "Files";
+$MESS["JS_CORE_TM_MONITOR"] = "Personal worktime assistant";
+$MESS["JS_CORE_TM_MONITOR_DESKTOP_CLOSED_ERROR"] = "Please start the Bitrix24 desktop application to measure your work efficiency.";
+$MESS["JS_CORE_TM_MONITOR_ENABLED"] = "Personal worktime assistant is enabled";
+$MESS["JS_CORE_TM_MONITOR_ENABLE_BUTTON"] = "Enable Personal worktime assistant";
+$MESS["JS_CORE_TM_MONITOR_GET_DESKTOP_BUTTON"] = "Download Bitrix24";
+$MESS["JS_CORE_TM_MONITOR_OPEN_ERROR"] = "Personal worktime assistant is only available in the new version of Bitrix24 for Windows and Mac";
+$MESS["JS_CORE_TM_MONITOR_REPORT_NOTIFICATION"] = "Remember to share your working time report with your supervisor.";
+$MESS["JS_CORE_TM_MONITOR_REPORT_NOTIFICATION_DESKTOP_DISABLED"] = "Remember to share your working time report with your supervisor in Bitrix24 app.";
+$MESS["JS_CORE_TM_MONITOR_REPORT_OPEN"] = "View";
+$MESS["JS_CORE_TM_MONITOR_UPDATE_DESKTOP"] = "Personal worktime assistant is available. Please install the new version of Bitrix24 for Windows or Mac to use it.";
 $MESS["JS_CORE_TM_OPEN"] = "Clock In";
 $MESS["JS_CORE_TM_PAUSE"] = "Break";
 $MESS["JS_CORE_TM_PLAN"] = "Daily Plan";
@@ -114,4 +125,3 @@ $MESS["JS_CORE_TM_WD_EXPIRED"] = "You have not clocked out yet";
 $MESS["JS_CORE_TM_WD_OPENED"] = "Working Day Duration:";
 $MESS["JS_CORE_TM_WD_PAUSED"] = "Break:";
 $MESS["JS_CORE_TM_WD_PAUSED_1"] = "Break";
-?>

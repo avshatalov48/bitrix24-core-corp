@@ -105,7 +105,7 @@ else
 	// counters
 	if ($isBitrix24Template)
 	{
-		$this->SetViewTarget('below_pagetitle', 0);
+		$this->SetViewTarget('below_pagetitle', 1000);
 	}
 
 	$APPLICATION->IncludeComponent(
@@ -122,42 +122,6 @@ else
 							array('category_id' => $categoryID)
 				)
 		)
-	);
-
-	if ($isBitrix24Template)
-	{
-		$this->EndViewTarget();
-	}
-
-	// category selector
-	if ($isBitrix24Template)
-	{
-		$this->SetViewTarget('inside_pagetitle', 100);
-	}
-	$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-	$map = array_fill_keys(CCrmDeal::GetPermittedToReadCategoryIDs($userPermissions), true);
-	// first available category
-	if (!array_key_exists($categoryID, $map))
-	{
-		$accessCID = array_shift(array_keys($map));
-		LocalRedirect(CComponentEngine::MakePathFromTemplate(
-			$arResult['PATH_TO_DEAL_KANBANCATEGORY'],
-			array('category_id' => $accessCID)
-		), true);
-	}
-	$APPLICATION->IncludeComponent(
-		'bitrix:crm.deal_category.panel',
-		$isBitrix24Template ? 'tiny' : '',
-		array(
-			'PATH_TO_DEAL_LIST' => $arResult['PATH_TO_DEAL_KANBAN'],
-			'PATH_TO_DEAL_EDIT' => $arResult['PATH_TO_DEAL_EDIT'],
-			'PATH_TO_DEAL_CATEGORY' => $arResult['PATH_TO_DEAL_KANBANCATEGORY'],
-			'PATH_TO_DEAL_CATEGORY_LIST' => $arResult['PATH_TO_DEAL_CATEGORY_LIST'],
-			'PATH_TO_DEAL_CATEGORY_EDIT' => $arResult['PATH_TO_DEAL_CATEGORY_EDIT'],
-			'ENABLE_CATEGORY_ALL' => 'N',
-			'CATEGORY_ID' => $categoryID
-		),
-		$component
 	);
 
 	if ($isBitrix24Template)
@@ -212,6 +176,42 @@ else
 		),
 		$component
 	);
+
+	// category selector
+	if ($isBitrix24Template)
+	{
+		$this->SetViewTarget('inside_pagetitle', 100);
+	}
+	$userPermissions = CCrmPerms::GetCurrentUserPermissions();
+	$map = array_fill_keys(CCrmDeal::GetPermittedToReadCategoryIDs($userPermissions), true);
+	// first available category
+	if (!array_key_exists($categoryID, $map))
+	{
+		$accessCID = array_shift(array_keys($map));
+		LocalRedirect(CComponentEngine::MakePathFromTemplate(
+			$arResult['PATH_TO_DEAL_KANBANCATEGORY'],
+			array('category_id' => $accessCID)
+		), true);
+	}
+	$APPLICATION->IncludeComponent(
+		'bitrix:crm.deal_category.panel',
+		$isBitrix24Template ? 'tiny' : '',
+		array(
+			'PATH_TO_DEAL_LIST' => $arResult['PATH_TO_DEAL_KANBAN'],
+			'PATH_TO_DEAL_EDIT' => $arResult['PATH_TO_DEAL_EDIT'],
+			'PATH_TO_DEAL_CATEGORY' => $arResult['PATH_TO_DEAL_KANBANCATEGORY'],
+			'PATH_TO_DEAL_CATEGORY_LIST' => $arResult['PATH_TO_DEAL_CATEGORY_LIST'],
+			'PATH_TO_DEAL_CATEGORY_EDIT' => $arResult['PATH_TO_DEAL_CATEGORY_EDIT'],
+			'ENABLE_CATEGORY_ALL' => 'N',
+			'CATEGORY_ID' => $categoryID
+		),
+		$component
+	);
+
+	if ($isBitrix24Template)
+	{
+		$this->EndViewTarget();
+	}
 
 	\Bitrix\Crm\Kanban\Helper::setCategoryId($categoryID);
 

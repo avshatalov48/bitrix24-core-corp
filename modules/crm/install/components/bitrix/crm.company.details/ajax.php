@@ -81,14 +81,6 @@ if($action === '')
 }
 if($action === 'SAVE')
 {
-	$ID = isset($_POST['ACTION_ENTITY_ID']) ? max((int)$_POST['ACTION_ENTITY_ID'], 0) : 0;
-	if(($ID > 0 && !\CCrmCompany::CheckUpdatePermission($ID, $currentUserPermissions))
-		|| ($ID === 0 && !\CCrmCompany::CheckCreatePermission($currentUserPermissions))
-	)
-	{
-		__CrmCompanyDetailsEndJsonResonse(['ERROR'=> \Bitrix\Main\Localization\Loc::getMessage('CRM_TYPE_ITEM_PERMISSIONS_UPDATE_DENIED')]);
-	}
-
 	$diskQuotaRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getDiskQuotaRestriction();
 	if (!$diskQuotaRestriction->hasPermission())
 	{
@@ -100,7 +92,16 @@ if($action === 'SAVE')
 	}
 
 	$params = isset($_POST['PARAMS']) && is_array($_POST['PARAMS']) ? $_POST['PARAMS'] : array();
+	$categoryID =  isset($params['CATEGORY_ID']) ? (int)$params['CATEGORY_ID'] : 0;
 	$sourceEntityID =  isset($params['COMPANY_ID']) ? (int)$params['COMPANY_ID'] : 0;
+
+	$ID = isset($_POST['ACTION_ENTITY_ID']) ? max((int)$_POST['ACTION_ENTITY_ID'], 0) : 0;
+	if(($ID > 0 && !\CCrmCompany::CheckUpdatePermission($ID, $currentUserPermissions, $categoryID))
+		|| ($ID === 0 && !\CCrmCompany::CheckCreatePermission($currentUserPermissions, $categoryID))
+	)
+	{
+		__CrmCompanyDetailsEndJsonResonse(['ERROR'=> \Bitrix\Main\Localization\Loc::getMessage('CRM_TYPE_ITEM_PERMISSIONS_UPDATE_DENIED')]);
+	}
 
 	$isNew = $ID === 0;
 	$isCopyMode = $isNew && $sourceEntityID > 0;
@@ -148,7 +149,7 @@ if($action === 'SAVE')
 		{
 			$sourceFields = array();
 		}
-		unset($sourceFields['PHOTO']);
+		unset($sourceFields['LOGO']);
 
 		$sourceFields['FM'] = array();
 		$multiFieldDbResult = \CCrmFieldMulti::GetList(
@@ -257,6 +258,15 @@ if($action === 'SAVE')
 	if($isNew && isset($params['IS_MY_COMPANY']) && $params['IS_MY_COMPANY'] === 'Y')
 	{
 		$fields['IS_MY_COMPANY'] = 'Y';
+	}
+
+	if($isNew)
+	{
+		$fields['CATEGORY_ID'] = $categoryID;
+	}
+	else
+	{
+		unset($fields['CATEGORY_ID']);
 	}
 
 	//region CLIENT
@@ -566,6 +576,14 @@ if($action === 'SAVE')
 	$component = new CCrmCompanyDetailsComponent();
 	$component->initializeParams($params);
 	$component->setEntityID($ID);
+	if($ID > 0)
+	{
+		$component->setCategoryID((int)Container::getInstance()->getFactory(CCrmOwnerType::Company)->getItemCategoryId($ID));
+	}
+	elseif(isset($context['PARAMS']) && isset($context['PARAMS']['CATEGORY_ID']))
+	{
+		$component->setCategoryID((int)$context['PARAMS']['CATEGORY_ID']);
+	}
 	$component->initializeData();
 	$result = $component->getEntityEditorData();
 

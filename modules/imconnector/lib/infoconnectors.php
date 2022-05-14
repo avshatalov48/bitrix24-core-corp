@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: varfolomeev
- * Date: 25.09.2018
- * Time: 17:27
- */
 
 namespace Bitrix\ImConnector;
 
@@ -19,10 +13,6 @@ class InfoConnectors
 	 * Method for agent which add data about all lines connections info, which haven't them
 	 *
 	 * @return string
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function infoConnectorsAddAgent()
 	{
@@ -53,12 +43,6 @@ class InfoConnectors
 	 * @param int $isCalledRecursively
 	 *
 	 * @return string
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function infoConnectorsUpdateAgent($isCalledRecursively = 0)
 	{
@@ -79,24 +63,20 @@ class InfoConnectors
 		{
 			return '\Bitrix\ImConnector\InfoConnectors::infoConnectorsUpdateAgent();';
 		}
+
+		return '';
 	}
 
 	/**
 	 * Method for agent, which add connectors info for certain line
 	 *
-	 * @param $lineId
+	 * @param int $lineId
 	 *
 	 * @return string
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function infoConnectorsLineAddAgent($lineId)
 	{
-		$lineId = intval($lineId);
+		$lineId = (int)$lineId;
 		if ($lineId > 0)
 		{
 			self::addInfoConnectors($lineId);
@@ -108,23 +88,22 @@ class InfoConnectors
 	/**
 	 * Method for agent, which check and update connectors info for certain line
 	 *
-	 * @param $lineId
+	 * @param int $lineId
 	 *
 	 * @return string
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function infoConnectorsLineUpdateAgent($lineId): string
 	{
-		$lineId = intval($lineId);
+		$lineId = (int)$lineId;
 		if ($lineId > 0)
 		{
 			$result = self::updateInfoConnectors($lineId);
 
-			if ($result && Loader::includeModule('crm'))
+			if (
+				$result instanceof \Bitrix\Main\ORM\Data\UpdateResult
+				&& $result->isSuccess()
+				&& Loader::includeModule('crm')
+			)
 			{
 				\CAgent::AddAgent(
 					'\\Bitrix\\Crm\\SiteButton\\Manager::updateScriptCacheAgent();',
@@ -149,34 +128,36 @@ class InfoConnectors
 	 */
 	public static function addAllLinesUpdateAgent($isCalledRecursively = 0, $interval = Library::LOCAL_AGENT_EXEC_INTERVAL)
 	{
-		$isCalledRecursively = intval($isCalledRecursively);
+		$isCalledRecursively = (int)$isCalledRecursively;
 		$method = '\Bitrix\ImConnector\InfoConnectors::infoConnectorsUpdateAgent('.$isCalledRecursively.');';
-		\CAgent::AddAgent($method,
-						  'imconnector',
-						  'N',
-						  $interval,
-						  '',
-						  'Y',
-						  ConvertTimeStamp((time() + \CTimeZone::GetOffset() + $interval), 'FULL')
+		\CAgent::AddAgent(
+			$method,
+			'imconnector',
+			'N',
+			$interval,
+			'',
+			'Y',
+			\ConvertTimeStamp((time() + \CTimeZone::GetOffset() + $interval), 'FULL')
 		);
 	}
 
 	/**
 	 * Add short time non period agent to add connectors info for certain line
 	 *
-	 * @param $lineId
+	 * @param int $lineId
 	 * @param int $interval
 	 */
 	public static function addSingleLineAddAgent($lineId, $interval = Library::INSTANT_AGENT_EXEC_INTERVAL)
 	{
-		$method = '\Bitrix\ImConnector\InfoConnectors::infoConnectorsLineAddAgent('.intval($lineId).');';
-		\CAgent::AddAgent($method,
-						  'imconnector',
-						  'N',
-						  $interval,
-						  '',
-						  'Y',
-						  ConvertTimeStamp((time() + \CTimeZone::GetOffset() + $interval), 'FULL')
+		$method = '\Bitrix\ImConnector\InfoConnectors::infoConnectorsLineAddAgent('.(int)$lineId.');';
+		\CAgent::AddAgent(
+			$method,
+			'imconnector',
+			'N',
+			$interval,
+			'',
+			'Y',
+			\ConvertTimeStamp((time() + \CTimeZone::GetOffset() + $interval), 'FULL')
 		);
 	}
 
@@ -185,17 +166,19 @@ class InfoConnectors
 	 *
 	 * @param $lineId
 	 * @param int $interval
+	 * @return void
 	 */
 	public static function addSingleLineUpdateAgent($lineId, $interval = Library::INSTANT_AGENT_EXEC_INTERVAL)
 	{
-		$method = '\Bitrix\ImConnector\InfoConnectors::infoConnectorsLineUpdateAgent('.intval($lineId).');';
-		\CAgent::AddAgent($method,
-						  'imconnector',
-						  'N',
-						  $interval,
-						  '',
-						  'Y',
-						  ConvertTimeStamp((time() + \CTimeZone::GetOffset() + $interval), 'FULL')
+		$method = '\Bitrix\ImConnector\InfoConnectors::infoConnectorsLineUpdateAgent('.(int)$lineId.');';
+		\CAgent::AddAgent(
+			$method,
+			'imconnector',
+			'N',
+			$interval,
+			'',
+			'Y',
+			\ConvertTimeStamp((time() + \CTimeZone::GetOffset() + $interval), 'FULL')
 		);
 	}
 
@@ -203,6 +186,7 @@ class InfoConnectors
 	 * Event handler for add/delete connector statuses
 	 *
 	 * @param \Bitrix\Main\Event $event
+	 * @return void
 	 */
 	public static function onChangeStatusConnector(\Bitrix\Main\Event $event)
 	{
@@ -214,17 +198,25 @@ class InfoConnectors
 	 * Event handler for update connector status
 	 *
 	 * @param \Bitrix\Main\Event $event
+	 * @return void
 	 */
 	public static function onUpdateStatusConnector(\Bitrix\Main\Event $event)
 	{
 		$parameters = $event->getParameters();
 
-		if (($parameters['fields']['ACTIVE'] == 'Y' &&
-			$parameters['fields']['CONNECTION'] == 'Y' &&
-			$parameters['fields']['REGISTER'] == 'Y' &&
-			$parameters['fields']['ERROR'] == 'N') ||
-			($parameters['fields']['ERROR'] == 'Y' &&
-			$parameters['fields']['ACTIVE'] == 'Y'))
+		if (
+			(
+				$parameters['fields']['ACTIVE'] == 'Y'
+				&& $parameters['fields']['CONNECTION'] == 'Y'
+				&& $parameters['fields']['REGISTER'] == 'Y'
+				&& $parameters['fields']['ERROR'] == 'N'
+			)
+			||
+			(
+				$parameters['fields']['ERROR'] == 'Y'
+				&& $parameters['fields']['ACTIVE'] == 'Y'
+			)
+		)
 		{
 			self::addSingleLineUpdateAgent($parameters['line']);
 		}
@@ -234,13 +226,7 @@ class InfoConnectors
 	 * Event handler for imopenline create
 	 *
 	 * @param \Bitrix\Main\Event $event
-	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @return void
 	 */
 	public static function onImopenlineCreate(\Bitrix\Main\Event $event)
 	{
@@ -253,10 +239,7 @@ class InfoConnectors
 	 * Event handler for imopenline delete
 	 *
 	 * @param \Bitrix\Main\Event $event
-	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @return void
 	 */
 	public static function onImopenlineDelete(\Bitrix\Main\Event $event)
 	{
@@ -271,9 +254,6 @@ class InfoConnectors
 	 * @param array $filter
 	 *
 	 * @return \Bitrix\Main\ORM\Query\Result
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getInfoConnectors($filter = array())
 	{
@@ -289,17 +269,14 @@ class InfoConnectors
 	/**
 	 * Return info connectors line data with cache
 	 *
-	 * @param $lineId
+	 * @param int $lineId
 	 *
-	 * @return array|\Bitrix\Main\ORM\Query\Result
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @return array
 	 */
 	public static function infoConnectorsLine($lineId)
 	{
 		$cache = Cache::createInstance();
-		$result = array();
+		$result = [];
 
 		if ($cache->initCache(Library::CACHE_TIME_INFO_CONNECTORS_LINE, $lineId, Library::CACHE_DIR_INFO_CONNECTORS_LINE))
 		{
@@ -326,32 +303,24 @@ class InfoConnectors
 	/**
 	 * Return info connectors data by line id
 	 *
-	 * @param $lineId
+	 * @param int $lineId
 	 *
 	 * @return \Bitrix\Main\ORM\Query\Result
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getInfoConnectorsById($lineId)
 	{
-		$lineId = intval($lineId);
+		$lineId = (int)$lineId;
 		$filter  = array(
 			'LINE_ID' => $lineId
 		);
 
-		$result = self::getInfoConnectors($filter);
-
-		return $result;
+		return self::getInfoConnectors($filter);
 	}
 
 	/**
 	 * Return list of expired info connector data from InfoConnector table
 	 *
 	 * @return \Bitrix\Main\ORM\Query\Result
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getExpiredInfoConnectors()
 	{
@@ -359,9 +328,7 @@ class InfoConnectors
 			'<EXPIRES' => \Bitrix\Main\Type\DateTime::createFromTimestamp(time())
 		);
 
-		$result = self::getInfoConnectors($filter);
-
-		return $result;
+		return self::getInfoConnectors($filter);
 	}
 
 	/**
@@ -392,21 +359,15 @@ class InfoConnectors
 	 * @param $lineId
 	 *
 	 * @return \Bitrix\Main\ORM\Data\AddResult|bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function addInfoConnectors($lineId)
 	{
-		$connectorsInfoCount = self::getInfoConnectorsById($lineId)->getSelectedRowsCount();
+		$connectorsInfoCount = InfoConnectorsTable::getByPrimary(['LINE_ID' => $lineId])->getSelectedRowsCount();
 		$result = false;
 
 		if ($connectorsInfoCount == 0)
 		{
-			$cacheTime = intval(Library::CACHE_TIME_INFO_CONNECTORS_LINE);
+			$cacheTime = (int)Library::CACHE_TIME_INFO_CONNECTORS_LINE;
 			$timeExpires = \Bitrix\Main\Type\DateTime::createFromTimestamp(time() + $cacheTime);
 
 			$data = Connector::getOutputInfoConnectorsLine($lineId);
@@ -440,16 +401,11 @@ class InfoConnectors
 	 * @param $lineId
 	 *
 	 * @return \Bitrix\Main\ORM\Data\UpdateResult|bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function updateInfoConnectors($lineId)
 	{
-		$connectorsInfoCount = self::getInfoConnectorsById($lineId)->getSelectedRowsCount();
+		$connectorRes = InfoConnectorsTable::getByPrimary(['LINE_ID' => $lineId]);
+		$connectorsInfoCount = $connectorRes->getSelectedRowsCount();
 		$result = false;
 
 		if ($connectorsInfoCount === 1)
@@ -461,7 +417,7 @@ class InfoConnectors
 			$dataEncoded = Json::encode($data);
 			$hashDataEncoded = md5($dataEncoded);
 
-			$connectorData = InfoConnectorsTable::getByPrimary(['LINE_ID' => $lineId])->fetch();
+			$connectorData = $connectorRes->fetch();
 
 			$result = InfoConnectorsTable::update(
 				$lineId,
@@ -495,9 +451,6 @@ class InfoConnectors
 	 * @param $lineId
 	 *
 	 * @return \Bitrix\Main\ORM\Data\DeleteResult|bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function deleteInfoConnectors($lineId)
 	{

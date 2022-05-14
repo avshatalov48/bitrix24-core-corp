@@ -754,7 +754,7 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 								'ID' => $arTask['ID'],
 								'PRIORITY' => $arTask['PRIORITY'],
 								'STATUS' => $arTask['STATUS'],
-								'TITLE' => $arTask['TITLE'],
+								'TITLE' => \Bitrix\Main\Text\Emoji::decode($arTask['TITLE']),
 								'TASK_CONTROL' => $arTask['TASK_CONTROL'],
 								'TIME' => $arTask['TIME'],
 								'URL' => str_replace(
@@ -787,7 +787,9 @@ if (check_bitrix_sessid() && $USER->IsAuthorized())
 								"DATE_FROM" => ConvertTimeStamp($_POST["DATE_FROM"], "SHORT"),
 								"MARK" => "X",
 								"TASKS" => $_POST["TASKS"],
-								"EVENTS" => $_POST["EVENTS"],
+								"EVENTS" => is_string($_POST["EVENTS"])
+									? CUtil::JsObjectToPhp($_POST["EVENTS"], true)
+									: null,
 								"ACTIVE" => $_POST["ACTIVE"],
 								"REPORT" => $sanitizer->SanitizeHtml($_POST["REPORT"]),
 								"PLANS" => $sanitizer->SanitizeHtml($_POST["PLANS"]),

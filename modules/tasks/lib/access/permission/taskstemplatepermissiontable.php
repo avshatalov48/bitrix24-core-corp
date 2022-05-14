@@ -18,9 +18,9 @@ use Bitrix\Main\Entity;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_TasksTemplatePermission_Query query()
- * @method static EO_TasksTemplatePermission_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_TasksTemplatePermission_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_TasksTemplatePermission_Result getById($id)
- * @method static EO_TasksTemplatePermission_Result getList(array $parameters = array())
+ * @method static EO_TasksTemplatePermission_Result getList(array $parameters = [])
  * @method static EO_TasksTemplatePermission_Entity getEntity()
  * @method static \Bitrix\Tasks\Access\Permission\TasksTemplatePermission createObject($setDefaultValues = true)
  * @method static \Bitrix\Tasks\Access\Permission\EO_TasksTemplatePermission_Collection createCollection()

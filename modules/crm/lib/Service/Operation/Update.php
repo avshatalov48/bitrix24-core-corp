@@ -3,11 +3,12 @@
 namespace Bitrix\Crm\Service\Operation;
 
 use Bitrix\Crm\Automation\Helper;
+use Bitrix\Crm\Comparer\ComparerBase;
 use Bitrix\Crm\Counter\EntityCounterManager;
 use Bitrix\Crm\Field\Collection;
 use Bitrix\Crm\Integration\PullManager;
+use Bitrix\Crm\Integrity;
 use Bitrix\Crm\Item;
-use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Operation;
@@ -100,9 +101,70 @@ class Update extends Operation
 		return true;
 	}
 
+	protected function updateDuplicates(): void
+	{
+		parent::updateDuplicates();
+
+		if ($this->isDuplicatesIndexInvalidationEnabled())
+		{
+			$itemBeforeSave = $this->getItemBeforeSave();
+			$item = $this->getItem();
+
+			Integrity\DuplicateManager::markDuplicateIndexAsDirty($item->getEntityTypeId(), $item->getId());
+
+			if (
+				$item->hasField(Item::FIELD_NAME_ASSIGNED)
+				&& $item->getAssignedById() !== $itemBeforeSave->remindActual(Item::FIELD_NAME_ASSIGNED)
+			)
+			{
+				Integrity\DuplicateManager::onChangeEntityAssignedBy($item->getEntityTypeId(), $item->getId());
+			}
+		}
+	}
+
+	protected function registerDuplicateCriteria(): void
+	{
+		$registrar = Integrity\DuplicateManager::getCriterionRegistrar($this->getItem()->getEntityTypeId());
+
+		$registrar->updateByItem($this->getItemBeforeSave(), $this->getItem());
+	}
+
 	protected function isCountersUpdateNeeded(): bool
 	{
-		return true;
+		$difference = ComparerBase::compareEntityFields(
+			$this->itemBeforeSave->getData(Values::ACTUAL),
+			$this->item->getData(),
+		);
+
+		return (
+			$difference->isChanged(Item::FIELD_NAME_ASSIGNED)
+			|| $difference->isChanged(Item::FIELD_NAME_STAGE_ID)
+			|| $difference->isChanged(Item::FIELD_NAME_CATEGORY_ID)
+		);
+	}
+
+	protected function getUserIdsForCountersReset(): array
+	{
+		if (!$this->item->hasField(Item::FIELD_NAME_ASSIGNED))
+		{
+			return [];
+		}
+
+		$userIds = [];
+
+		$assigned = $this->item->getAssignedById();
+		if ($assigned > 0)
+		{
+			$userIds[] = $assigned;
+		}
+
+		$previousAssigned = $this->itemBeforeSave->remindActual(Item::FIELD_NAME_ASSIGNED);
+		if ($previousAssigned > 0 && $assigned !== $previousAssigned)
+		{
+			$userIds[] = $previousAssigned;
+		}
+
+		return $userIds;
 	}
 
 	protected function getCountersCodes(): array
@@ -123,8 +185,7 @@ class Update extends Operation
 				$this->item->getEntityTypeId(),
 				$this->getTypesOfCountersToReset(),
 				[
-					'EXTENDED_MODE' => true,
-					'DEAL_CATEGORY_ID' => $previousCategoryId,
+					'CATEGORY_ID' => $previousCategoryId,
 				],
 			);
 
@@ -134,27 +195,38 @@ class Update extends Operation
 		return $codes;
 	}
 
-	protected function getUserIdsForCountersReset(): array
+	protected function autocompleteActivities(): Result
 	{
-		$userIds = [];
-
-		$previousAssigned = $this->itemBeforeSave->remindActual(Item::FIELD_NAME_ASSIGNED);
-		$currentAssigned = $this->item->getAssignedById();
-
-		if ($previousAssigned !== $currentAssigned)
+		if ($this->wasItemMovedToFinalStage())
 		{
-			if ($previousAssigned > 0)
+			$authorId = $this->getContext()->getUserId();
+			if ($authorId <= 0)
 			{
-				$userIds[] = $previousAssigned;
+				$authorId = $this->getItem()->getUpdatedBy();
 			}
 
-			if ($currentAssigned > 0)
-			{
-				$userIds[] = $currentAssigned;
-			}
+			\CCrmActivity::SetAutoCompletedByOwner(
+				$this->getItem()->getEntityTypeId(),
+				$this->getItem()->getId(),
+				$this->getActivityProvidersToAutocomplete(),
+				['CURRENT_USER' => $authorId]
+			);
 		}
 
-		return $userIds;
+		return new Result();
+	}
+
+	private function wasItemMovedToFinalStage(): bool
+	{
+		if (!$this->getItem()->hasField(Item::FIELD_NAME_STAGE_ID))
+		{
+			return false;
+		}
+
+		$previousStageId = (string)$this->getItemBeforeSave()->remindActual(Item::FIELD_NAME_STAGE_ID);
+		$currentStageId = (string)$this->getItem()->getStageId();
+
+		return ComparerBase::isMovedToFinalStage($this->getItem()->getEntityTypeId(), $previousStageId, $currentStageId);
 	}
 
 	protected function registerStatistics(Statistics\OperationFacade $statisticsFacade): Result
@@ -183,6 +255,7 @@ class Update extends Operation
 				[
 					'PREVIOUS_FIELDS' => $this->itemBeforeSave->getData(Values::ACTUAL),
 					'CURRENT_FIELDS' => $this->item->getData(),
+					'FIELDS_MAP' => $this->item->getFieldsMap(),
 				]
 			);
 		}
@@ -190,8 +263,8 @@ class Update extends Operation
 		RelationController::getInstance()->registerEventsByFieldsChange(
 			$this->getItemIdentifier(),
 			$this->fieldsCollection->toArray(),
-			$this->itemBeforeSave->getCompatibleData(Values::ACTUAL),
-			$this->item->getCompatibleData(),
+			$this->itemBeforeSave->getData(Values::ACTUAL),
+			$this->item->getData(),
 			$this->getItemsThatExcludedFromTimelineRelationEventsRegistration()
 		);
 
@@ -208,28 +281,11 @@ class Update extends Operation
 			);
 		}
 
-		if (!$factory->isStagesSupported())
-		{
-			return;
-		}
-
-		$newStage = $factory->getStage((string)$this->item->getStageId());
-		if (!$newStage)
-		{
-			return;
-		}
-
-		$wasItemMovedToFinalStage = (
-			$factory->isStagesEnabled()
-			&& ($this->itemBeforeSave->remindActual(Item::FIELD_NAME_STAGE_ID) !== $this->item->getStageId())
-			&& PhaseSemantics::isFinal($newStage->getSemantics())
-		);
-
-		if ($wasItemMovedToFinalStage)
+		if ($factory->isStagesEnabled() && $this->wasItemMovedToFinalStage())
 		{
 			MarkController::getInstance()->onItemMoveToFinalStage(
 				$this->getItemIdentifier(),
-				$newStage->getSemantics()
+				$factory->getStageSemantics((string)$this->item->getStageId()),
 			);
 		}
 	}
@@ -316,5 +372,10 @@ class Update extends Operation
 		}
 
 		return $result;
+	}
+
+	protected function isClearItemCategoryCacheNeeded(): bool
+	{
+		return $this->item->isCategoriesSupported() && $this->item->isChangedCategoryId();
 	}
 }

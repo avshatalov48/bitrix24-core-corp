@@ -43,6 +43,11 @@ export class Name extends EventEmitter
 		return this.value;
 	}
 
+	setCompleted(value: boolean)
+	{
+		this.completed = value;
+	}
+
 	strikeOut()
 	{
 		Dom.addClass(this.node, '--completed');

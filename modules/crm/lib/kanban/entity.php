@@ -8,7 +8,6 @@ use Bitrix\Crm\Component\EntityDetails\BaseComponent;
 use Bitrix\Crm\Entity\EntityEditorConfigScope;
 use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\Filter;
-use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Crm\Statistics\StatisticEntryManager;
 use Bitrix\Crm\Exclusion;
 use Bitrix\Crm\Service;
@@ -48,6 +47,8 @@ abstract class Entity
 	protected $userFields;
 	protected $loadedItems = [];
 	protected $displayedFields;
+	/** @var Service\Factory */
+	protected $factory;
 
 	protected $dateFormats = [
 		'short' => [
@@ -81,6 +82,26 @@ abstract class Entity
 	public function __construct()
 	{
 		Service\Container::getInstance()->getLocalization()->loadMessages();
+		$this->initFactory();
+	}
+
+	public function initFactory(): void
+	{
+		$this->initFactoryByEntityTypeId($this->getTypeId());
+	}
+
+	public function initFactoryByEntityTypeId(int $entityTypeId): self
+	{
+		$this->factory = Container::getInstance()->getFactory($entityTypeId);
+
+		return $this;
+	}
+
+	public function setFactory(Service\Factory $factory): self
+	{
+		$this->factory = $factory;
+
+		return $this;
 	}
 
 	/**
@@ -131,7 +152,10 @@ abstract class Entity
 	 *
 	 * @return string
 	 */
-	abstract public function getStatusEntityId(): string;
+	public function getStatusEntityId(): string
+	{
+		return $this->factory->getStagesEntityId($this->getCategoryId());
+	}
 
 	/**
 	 * Get initial fields to select items
@@ -162,7 +186,13 @@ abstract class Entity
 
 	public function getGridId(): string
 	{
-		return 'CRM_' . $this->getTypeName() . '_LIST_V12';
+		$gridId = new \Bitrix\Crm\Component\EntityList\GridId($this->getTypeId());
+		if($this->factory->isCategoriesSupported())
+		{
+			return $gridId->getValueForCategory($this->getCategoryId());
+		}
+
+		return $gridId->getValue();
 	}
 
 	public function getFilterPresets(): array
@@ -187,7 +217,7 @@ abstract class Entity
 	 */
 	public function isCategoriesSupported(): bool
 	{
-		return false;
+		return $this->factory->isCategoriesSupported();
 	}
 
 	/**
@@ -719,7 +749,7 @@ abstract class Entity
 
 	public function getBaseFields(): array
 	{
-		return Container::getInstance()->getFactory($this->getTypeId())->getFieldsInfo();
+		return $this->factory->getFieldsInfo();
 	}
 
 	/**
@@ -1582,7 +1612,7 @@ abstract class Entity
 		$result = [];
 
 		$labelCodes = [
-			'LIST_FILTER_LABEL', 'LIST_COLUMN_LABEL', 'EDIT_FORM_LABEL',
+			'LIST_COLUMN_LABEL', 'EDIT_FORM_LABEL', 'LIST_FILTER_LABEL',
 		];
 		foreach($this->getUserFields() as $fieldName => $userField)
 		{
@@ -1937,7 +1967,6 @@ abstract class Entity
 			'hasPlusButtonTitle' => false,
 			'useFactoryBasedApproach' => false,
 			'hasRestictionToMoveToWinColumn' => false,
-			'doLayoutFieldsInItemRender' => false,
 			'useRequiredVisibleFields' => false,
 			'isQuickEditorEnabled' => $this->isInlineEditorSupported(),
 			'isRecyclebinEnabled' => false,

@@ -239,6 +239,12 @@ class Limits
 	 */
 	public static function canRentNumber()
 	{
+		$account = new \CVoxImplantAccount();
+		if ($account->GetAccountLang() === 'ua')
+		{
+			return false;
+		}
+
 		$maximumNumbers = self::getMaximumNumbers();
 		if ($maximumNumbers == 0)
 			return true;

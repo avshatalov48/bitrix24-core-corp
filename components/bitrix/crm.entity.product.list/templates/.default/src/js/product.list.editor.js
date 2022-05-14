@@ -1495,10 +1495,6 @@ export class Editor
 		{
 			const promise = new Promise((resolve, reject) => {
 				const fields = data.fields;
-				if (!Type.isNil(fields['SKU_TREE']))
-				{
-					fields['SKU_TREE'] = JSON.stringify(fields['SKU_TREE']);
-				}
 
 				if (!Type.isNil(fields['IMAGE_INFO']))
 				{

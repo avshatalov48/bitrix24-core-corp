@@ -1,4 +1,4 @@
-import {BitrixVue} from "ui.vue";
+import { BitrixVue } from "ui.vue";
 
 import "./consent.css";
 
@@ -7,12 +7,16 @@ export const Consent = BitrixVue.localComponent('bx-timeman-monitor-report-conse
 	{
 		isWindows()
 		{
-			return navigator.userAgent.toLowerCase().includes('windows') || (!this.isMac() && !this.isLinux());
+			return navigator.userAgent.toLowerCase().includes('windows') || (!this.isMac && !this.isLinux);
 		},
 		isMac()
 		{
 			return navigator.userAgent.toLowerCase().includes('macintosh');
 		},
+		isLinux()
+		{
+			return navigator.userAgent.toLowerCase().includes('linux');
+		}
 	},
 	methods:
 	{
@@ -24,6 +28,10 @@ export const Consent = BitrixVue.localComponent('bx-timeman-monitor-report-conse
 			this.grantPermission();
 		},
 		grantPermissionWindows()
+		{
+			this.grantPermission();
+		},
+		grantPermissionLinux()
 		{
 			this.grantPermission();
 		},
@@ -90,6 +98,14 @@ export const Consent = BitrixVue.localComponent('bx-timeman-monitor-report-conse
 						<button
 							v-else-if="isWindows"
 							@click="grantPermissionWindows"
+							class="ui-btn ui-btn-success"
+							style="margin-left: 16px;"
+						>
+							{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PROVIDE') }}
+						</button>
+						<button
+							v-else-if="isLinux"
+							@click="grantPermissionLinux"
 							class="ui-btn ui-btn-success"
 							style="margin-left: 16px;"
 						>

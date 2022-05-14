@@ -138,18 +138,8 @@ $placeholder = $arResult['placeholder']['api_token'] ? Loc::getMessage('IMCONNEC
 	if ($arResult['STATUS'])
 	{
 		include 'info.php';
-	}
-	else
-	{
-		?>
-		<div class="imconnector-field-container">
-			<div class="imconnector-field-section">
-				<?include 'connection-help.php';?>
-			</div>
-		</div>
-		<?
-	}
-else:?>
+	}?>
+<?else:?>
 	<div class="imconnector-field-container">
 		<div class="imconnector-field-section imconnector-field-section-social">
 			<div class="imconnector-field-box">
@@ -175,40 +165,103 @@ else:?>
 		</div>
 		<?include 'messages.php'?>
 		<div class="imconnector-field-section imconnector-field-section-control">
-			<div class="imconnector-field-box">
-				<div class="imconnector-field-box-subtitle">
-					<?=Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_API_TOKEN')?>
-				</div>
-				<form action="<?=$arResult['URL']['SIMPLE_FORM_EDIT']?>"
-					  method="post"
-					  class="imconnector-field-control-box imconnector-field-control-box-border">
+		<?if (empty($arResult['INFO_CONNECTION']) || !$arResult['IS_SUCCESS_SAVE']) //not connected yet case
+		{?>
+				<form
+					action="<?=$arResult['URL']['SIMPLE_FORM_EDIT']?>"
+					method="post"
+					class="imconnector-field-control-box-border"
+				>
 					<input type="hidden" name="<?=$arResult['CONNECTOR']?>_form" value="true">
 					<input type="hidden" name="<?=$arResult['CONNECTOR']?>_active">
 					<?=bitrix_sessid_post();?>
-					<input type="text"
-						   class="imconnector-field-control-input"
-						   id="imconnector-telegrambot-have-bot"
-						   name="api_token"
-						   value="<?=htmlspecialcharsbx($arResult['FORM']['api_token'])?>"
-						   placeholder="<?=$placeholder?>">
-					<button class="ui-btn ui-btn-success"
-							id="webform-small-button-have-bot"
-							name="<?=$arResult['CONNECTOR']?>_save"
-							value="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT')?>">
-						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT')?>
-					</button>
+					<div class="imconnector-field-container">
+						<div class="imconnector-field-box-subtitle">
+							<?=Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_API_TOKEN')?>
+						</div>
+						<input
+							type="text"
+							class="imconnector-field-control-input"
+							id="imconnector-telegrambot-have-bot"
+							name="api_token"
+							value="<?=htmlspecialcharsbx($arResult['FORM']['api_token'])?>"
+							placeholder="<?=$placeholder?>"
+						>
+					</div>
+					<div class="imconnector-field-container">
+						<span class="imconnector-field-box-subtitle">
+							<?=Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_WELCOME_MESSAGE')?>
+						</span>
+						<textarea
+							class="imconnector-field-control-input imconnector-field-control-textbox imconnector-telegrambot-welcome-message-textarea"
+							name="welcome_message"><?=htmlspecialcharsbx($arResult['FORM']['welcome_message'])?></textarea>
+					</div>
+					<div class="imconnector-field-container">
+						<input
+							class="imconnector-public-link-settings-inner-option-field"
+							type="checkbox"
+							name="eshop_enabled"
+							id="imconnector-telegrambot-eshop-enabled"
+							value="Y"
+							<?=($arResult['FORM']['eshop_enabled'] === 'Y' ? 'checked' : '')?>
+						>
+						<div class="imconnector-field-box-subtitle imconnector-telegrambot-eshop-checkbox-beta" style="display: inline-block">
+							<?=Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_CONNECT_ESHOP')?>
+							<span class="imconnector-telegrambot-eshop-beta"></span>
+						</div>
+						<div class="imconnector-telegrambot-eshop-checkbox-beta-more-info">
+							<a
+								onclick="top.BX.Helper.show('redirect=detail&code=15718474');"
+								class="imconnector-field-box-entity-link"
+								target="_blank">
+								<?=Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_CONNECT_ESHOP_MORE')?>
+							</a>
+						</div>
+					</div>
+					<div class="imconnector-field-container" id="imconnector-telegrambot-eshop-url">
+						<div class="imconnector-field-box-subtitle">
+							<?=Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_SELECT_ESHOP')?>
+						</div>
+						<select name="eshop_id" id="imconnector-telegrambot-eshop-list" class="imconnector-telegrambot-select-eshop imconnector-field-control-select" onchange='window.checkCustomEshopSelected()'>
+							<option value="0" <?=$arResult['FORM']['eshop_id']=== '0' ? 'selected': ''?>>
+								<?=Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_SELECT_ESHOP_EXTERNAL')?>
+							</option>
+							<?php foreach ($arResult['ESHOP_LIST'] as $key => $eshop): ?>
+								<option value="<?=$eshop['ID']?>" <?=$arResult['FORM']['eshop_id']===$eshop['ID'] || is_null($arResult['FORM']['eshop_id']) ? 'selected': ''?>>
+									<?=htmlspecialcharsbx($eshop['TITLE'])?>
+								</option>
+							<?php endforeach; ?>
+						</select>
+					</div>
+					<div class="imconnector-field-container" id="imconnector-telegrambot-eshop-custom-url">
+						<div class="imconnector-field-box-subtitle">
+							<?=Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_URL_ESHOP')?>
+						</div>
+						<input
+							type="text"
+							class="imconnector-field-control-input"
+							name="eshop_custom_url"
+							value="<?=htmlspecialcharsbx($arResult['FORM']['eshop_custom_url'])?>"
+							placeholder="https://"
+						>
+					</div>
+					<div class="imconnector-field-container">
+						<button class="ui-btn ui-btn-success"
+						        id="webform-small-button-have-bot"
+						        name="<?=$arResult['CONNECTOR']?>_save"
+						        value="<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT')?>">
+							<?=Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_TO_CONNECT')?>
+						</button>
+					</div>
 				</form>
-			</div>
-			<?
-			if (empty($arResult['INFO_CONNECTION'])) //not connected yet case
-			{
-				include 'connection-help.php';
-			}
-			else
-			{
-				include 'info.php';
-			}
-			?>
+		<?
+			include 'connection-help.php';
+		}
+		else
+		{
+			include 'info.php';
+		}
+		?>
 		</div>
 	</div>
 <?endif;

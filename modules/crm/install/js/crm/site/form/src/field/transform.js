@@ -17,7 +17,12 @@ const Filter = {
 };
 
 const Normalizer = {
-	Email: Filter.Email,
+	Email: value => {
+		return Filter.Email(value)
+			.replace(/\.{2,}/g, '.')
+			.replace(/^\.+/g, '')
+		;
+	},
 	Double: value => {
 		return Filter.Double(value).replace(/,/g, '.');
 	},

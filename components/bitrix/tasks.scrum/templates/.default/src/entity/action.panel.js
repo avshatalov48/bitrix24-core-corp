@@ -1,5 +1,7 @@
-import {Dom, Event, Loc, Tag} from 'main.core';
+import {Dom, Event, Loc, Tag, Type} from 'main.core';
 import {EventEmitter} from 'main.core.events';
+
+import 'main.polyfill.intersectionobserver';
 
 import {Entity} from './entity';
 import {Item} from '../item/item';
@@ -64,6 +66,8 @@ export class ActionPanel extends EventEmitter
 		{
 			this.observer.disconnect();
 		}
+
+		this.emit('onDestroy');
 	}
 
 	getNode(): HTMLElement
@@ -365,7 +369,7 @@ export class ActionPanel extends EventEmitter
 
 	observeBindElement()
 	{
-		if (typeof IntersectionObserver === `undefined`)
+		if (Type.isUndefined(IntersectionObserver))
 		{
 			return;
 		}
@@ -413,9 +417,9 @@ export class ActionPanel extends EventEmitter
 		let left = `${position.left}px`;
 
 		const fakePanel = panel.cloneNode(true);
-		fakePanel.style.visibility = 'hidden';
-		fakePanel.style.top = `${position.top}px`;
-		fakePanel.style.left = `${position.left}px`;
+		Dom.style(fakePanel, 'visibility', 'hidden');
+		Dom.style(fakePanel, 'top', `${position.top}px`);
+		Dom.style(fakePanel, 'left', `${position.left}px`);
 
 		Dom.append(fakePanel, document.body);
 		if (this.isPanelWiderThanViewport(fakePanel))
@@ -426,9 +430,9 @@ export class ActionPanel extends EventEmitter
 		}
 		Dom.remove(fakePanel);
 
-		panel.style.top = top;
-		panel.style.left = left;
-		panel.style.zIndex = 1100;
+		Dom.style(panel, 'top', top);
+		Dom.style(panel, 'left', left);
+		Dom.style(panel, 'zIndex', 1100);
 
 		this.removeLastSeparator(panel);
 
@@ -452,7 +456,7 @@ export class ActionPanel extends EventEmitter
 
 		const position = Dom.getPosition(this.bindElement);
 
-		this.getNode().style.top = `${position.top}px`;
+		Dom.style(this.getNode(), 'top', `${position.top}px`);
 	}
 
 	removeLastSeparator(panel: HTMLElement)

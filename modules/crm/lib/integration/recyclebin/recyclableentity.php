@@ -28,10 +28,13 @@ abstract class RecyclableEntity implements Recyclebin\Internals\Contracts\Recycl
 
 	/**
 	 * Erase entity from Recycle Bin.
+	 *
 	 * @param Recyclebin\Internals\Entity $entity
+	 * @param array $params
+	 *
 	 * @return Main\Result|void
 	 */
-	abstract public static function removeFromRecyclebin(Recyclebin\Internals\Entity $entity);
+	abstract public static function removeFromRecyclebin(Recyclebin\Internals\Entity $entity, array $params = []);
 
 	/**
 	 * Prepare entity view.

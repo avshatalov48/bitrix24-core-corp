@@ -373,7 +373,14 @@ class CommentPoster
 			return $this->parseUserToLinked($userId);
 		};
 
-		if ($creatorId !== $responsibleId && $taskData['TASK_CONTROL'] === 'Y')
+		if (
+			$creatorId !== $responsibleId
+			&&
+			(
+				$taskData['TASK_CONTROL'] === 'Y'
+				|| $taskData['TASK_CONTROL'] === true
+			)
+		)
 		{
 			$messageKey = 'COMMENT_POSTER_COMMENT_TASK_UPDATE_CHANGES_CONTROL';
 			$messageKey = $this->getLastVersionedMessageKey($messageKey);

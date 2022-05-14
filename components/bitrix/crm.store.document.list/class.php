@@ -146,6 +146,11 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 			}
 		}
 
+		if ($sortField === 'DEDUCTED')
+		{
+			$gridSort['sort']['EMP_DEDUCTED_ID'] = $gridSort['sort']['DEDUCTED'];
+		}
+
 		$result['COLUMNS'] = $gridColumns;
 
 		$pageNavigation = new Main\UI\PageNavigation($this->navParamName);
@@ -756,6 +761,7 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 			'FILTER' => $this->filter->getFieldArrays(),
 			'FILTER_PRESETS' => [],
 			'ENABLE_LABEL' => true,
+			'THEME' => Bitrix\Main\UI\Filter\Theme::LIGHT,
 		];
 		UI\Toolbar\Facade\Toolbar::addFilter($filterOptions);
 

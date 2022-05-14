@@ -8,8 +8,8 @@
 
 namespace Bitrix\Tasks\Internals\Counter\Event;
 
-use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\ORM\Query\Query;
+use Bitrix\Tasks\Internals\TaskDataManager;
 use Bitrix\Tasks\Util\Type\DateTime;
 
 /**
@@ -19,16 +19,16 @@ use Bitrix\Tasks\Util\Type\DateTime;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_Event_Query query()
- * @method static EO_Event_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Event_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_Event_Result getById($id)
- * @method static EO_Event_Result getList(array $parameters = array())
+ * @method static EO_Event_Result getList(array $parameters = [])
  * @method static EO_Event_Entity getEntity()
  * @method static \Bitrix\Tasks\Internals\Counter\Event\EO_Event createObject($setDefaultValues = true)
  * @method static \Bitrix\Tasks\Internals\Counter\Event\EO_Event_Collection createCollection()
  * @method static \Bitrix\Tasks\Internals\Counter\Event\EO_Event wakeUpObject($row)
  * @method static \Bitrix\Tasks\Internals\Counter\Event\EO_Event_Collection wakeUpCollection($rows)
  */
-class EventTable extends DataManager
+class EventTable extends TaskDataManager
 {
 	private const LOST_LIMIT = 50;
 	private const LOST_TTL = 60;
@@ -73,30 +73,6 @@ class EventTable extends DataManager
 				'data_type' => 'datetime'
 			],
 		];
-	}
-
-	/**
-	 * @param array $filter
-	 * @return \Bitrix\Main\DB\Result
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\DB\SqlQueryException
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	public static function deleteList(array $filter)
-	{
-		$entity = static::getEntity();
-		$connection = $entity->getConnection();
-
-		\CTimeZone::disable();
-		$sql = sprintf(
-			'DELETE FROM %s WHERE %s',
-			$connection->getSqlHelper()->quote($entity->getDbTableName()),
-			Query::buildFilterSql($entity, $filter)
-		);
-		$res = $connection->query($sql);
-		\CTimeZone::enable();
-
-		return $res;
 	}
 
 	/**

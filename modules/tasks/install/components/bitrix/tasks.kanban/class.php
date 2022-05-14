@@ -21,6 +21,7 @@ use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Component\Kanban\ScrumManager;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\Result\ResultManager;
+use Bitrix\Tasks\Internals\TaskTable;
 use \Bitrix\Tasks\Kanban\StagesTable;
 use \Bitrix\Tasks\Kanban\TaskStageTable;
 use \Bitrix\Tasks\Kanban\TimeLineTable;
@@ -2988,11 +2989,13 @@ class TasksKanbanComponent extends \CBitrixComponent
 		}
 
 		$isAllChildTasksCompleted = true;
-		$queryObject = \CTasks::getList(
-			['ID' => 'ASC'],
-			['PARENT_ID' => $parentTaskId],
-			['ID', 'STATUS', 'PARENT_ID']
-		);
+		$queryObject = TaskTable::getList([
+			'select' => ['ID', 'STATUS', 'PARENT_ID'],
+			'filter' => [
+				'PARENT_ID' => $parentTaskId,
+			],
+			'order' => ['ID' => 'ASC']
+		]);
 		while ($childTaskData = $queryObject->fetch())
 		{
 			if ($childTaskData['STATUS'] != \CTasks::STATE_COMPLETED)

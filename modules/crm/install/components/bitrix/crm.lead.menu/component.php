@@ -13,6 +13,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 if (!CModule::IncludeModule('crm'))
 	return;
 
+\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
+
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Integration\Sender\Rc;
 
@@ -273,15 +275,14 @@ if($arParams['TYPE'] === 'list')
 		if (!$arResult['RC']['CAN_USE'])
 		{
 			$arResult['BUTTONS'][] = array(
-				'TEXT' => GetMessage('LEAD_ADD'),
-				'TITLE' => GetMessage('LEAD_ADD_TITLE'),
+				'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
 				'LINK' => $link,
 				'HIGHLIGHT' => true
 			);
 		}
 		else
 		{
-			$itemAdd = ['TEXT' => GetMessage('LEAD_ADD')];
+			$itemAdd = ['TEXT' => GetMessage('CRM_COMMON_ACTION_ADD')];
 			if ($isSliderEnabled)
 			{
 				$itemAdd['ONCLICK'] = 'BX.SidePanel.Instance.open("' . CUtil::JSEscape($link) . '")';
@@ -292,8 +293,7 @@ if($arParams['TYPE'] === 'list')
 			}
 			$arResult['BUTTONS'][] = [
 				'TYPE' => 'crm-btn-double',
-				'TEXT' => GetMessage('LEAD_ADD'),
-				'TITLE' => GetMessage('LEAD_ADD_TITLE'),
+				'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
 				'LINK' => $link,
 				'ITEMS' => [
 					$itemAdd,
@@ -690,8 +690,7 @@ if ($bAdd && ($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show' || $arP
 if ($bAdd && $arParams['TYPE'] != 'list')
 {
 	$arResult['BUTTONS'][] = array(
-		'TEXT' => GetMessage('LEAD_ADD'),
-		'TITLE' => GetMessage('LEAD_ADD_TITLE'),
+		'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
 		'LINK' => CComponentEngine::MakePathFromTemplate(
 			$arParams[$isSliderEnabled ? 'PATH_TO_LEAD_DETAILS' : 'PATH_TO_LEAD_EDIT'],
 			array('lead_id' => 0)

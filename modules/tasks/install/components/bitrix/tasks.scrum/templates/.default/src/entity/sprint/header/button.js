@@ -20,8 +20,18 @@ export class Button extends EventEmitter
 
 	render(): HTMLElement
 	{
+		if (this.sprint.isCompleted())
+		{
+			return this.node;
+		}
+
+		const disableUiClass = (this.isAccessDenied() ? 'ui-btn-disabled' : '');
+
 		this.node = Tag.render`
-			<div class="tasks-scrum__sprint--btn-run ${this.getUiClasses()}" title="${this.getButtonText()}">
+			<div
+				class="tasks-scrum__sprint--btn-run ${this.getUiClasses()} ${disableUiClass}"
+				title="${this.getButtonText()}"
+			>
 				<span class="tasks-scrum__sprint--btn-run-text">${this.getButtonText()}</span>
 			</div>
 		`;
@@ -38,7 +48,7 @@ export class Button extends EventEmitter
 
 	onClick()
 	{
-		if (this.disabled)
+		if (this.disabled || this.isAccessDenied())
 		{
 			return;
 		}
@@ -70,9 +80,17 @@ export class Button extends EventEmitter
 	{
 		this.disabled = false;
 
-		if (this.node)
+		if (this.node && !this.isAccessDenied())
 		{
 			Dom.removeClass(this.node, 'ui-btn-disabled');
 		}
+	}
+
+	isAccessDenied(): boolean
+	{
+		return (
+			this.sprint.isActive() && !this.sprint.canComplete()
+			|| this.sprint.isPlanned() && !this.sprint.canStart()
+		);
 	}
 }

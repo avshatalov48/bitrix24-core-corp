@@ -1218,7 +1218,7 @@ class CCrmRequisiteEditComponent extends \CBitrixComponent
 
 			if ($this->bEdit)
 			{
-				if (!$this->requisite->delete($this->elementId))
+				if (!$this->requisite->delete($this->elementId)->isSuccess())
 				{
 					$this->errors[] = GetMessage('CRM_DELETE_ERROR');
 					return false;

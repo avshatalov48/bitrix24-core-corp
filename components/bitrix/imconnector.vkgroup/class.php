@@ -386,7 +386,7 @@ class ImConnectorVkgroup extends \CBitrixComponent
 
 		return $groupList;
 	}
-	
+
 	public function executeComponent()
 	{
 		$this->includeComponentLang('class.php');

@@ -3,6 +3,7 @@ namespace Bitrix\ImConnector;
 
 use Bitrix\Main\IO\File;
 use Bitrix\Main\Context;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\IO\Path;
 use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Web\HttpClient;
@@ -57,86 +58,98 @@ class Library
 	const LOCAL_AGENT_EXEC_INTERVAL  = 30;
 	const INSTANT_AGENT_EXEC_INTERVAL  = 10;
 
+	// Endpoint
+	public const PORTAL_PATH = '/pub/imconnector/index.php';
+
 	/** const error */
-	const ERROR_CONNECTOR_PROXY_NO_USER_IM = "CONNECTOR_PROXY_NO_USER_IM";//Not the received user id of messenger
-	const ERROR_CONNECTOR_PROXY_NO_ADD_USER = "CONNECTOR_PROXY_NO_ADD_USER";//Failed to create or retrieve a user system associated with a user of the remote messenger
-	const ERROR_IMCONNECTOR_NOT_SPECIFIED_CORRECT_CONNECTOR = "IMCONNECTOR_NOT_SPECIFIED_CORRECT_CONNECTOR";//Not specified connector
-	const ERROR_IMCONNECTOR_NOT_SPECIFIED_CORRECT_COMMAND = "IMCONNECTOR_NOT_SPECIFIED_CORRECT_COMMAND";//Not a valid command
-	const ERROR_IMCONNECTOR_NOT_ACTIVE_LINE = 'NOT_ACTIVE_LINE';//Not active or not exists line
-	const ERROR_IMCONNECTOR_NOT_ALL_THE_REQUIRED_DATA = "IMCONNECTOR_NOT_ALL_THE_REQUIRED_DATA";//Passed not all the required data
-	const ERROR_IMCONNECTOR_EMPTY_PARAMETRS = 'IMCONNECTOR_EMPTY_PARAMETRS';//Passed empty parameters
-	const ERROR_NOT_AVAILABLE_CONNECTOR = 'NOT_AVAILABLE_CONNECTOR';//Try to access non-existent or non-active connector
-	const ERROR_FEATURE_IS_NOT_SUPPORTED = 'FEATURE_IS_NOT_SUPPORTED';//This feature is not supported
-	const ERROR_ADD_EXISTING_CONNECTOR = 'ADD_EXISTING_CONNECTOR';//Attempt to add an existing connector
-	const ERROR_UPDATE_NOT_EXISTING_CONNECTOR = 'UPDATE_NOT_EXISTING_CONNECTOR';//Trying to update, not activated connector
-	const ERROR_DELETE_NOT_EXISTING_CONNECTOR = 'DELETE_NOT_EXISTING_CONNECTOR';//Attempt deletion of activated connector
-	const ERROR_FAILED_TO_ADD_CONNECTOR = 'FAILED_TO_ADD_CONNECTOR';//Failed to add the connector, open line
-	const ERROR_FAILED_TO_UPDATE_CONNECTOR = 'FAILED_TO_UPDATE_CONNECTOR';//Failed to update connector, open line
-	const ERROR_FAILED_TO_DELETE_CONNECTOR = 'FAILED_TO_DELETE_CONNECTOR';//Failed to remove the connector, open line
-	const ERROR_FAILED_TO_LOAD_MODULE_OPEN_LINES = 'FAILED_TO_LOAD_MODULE_OPEN_LINES';//Failed to load module open lines
-	const ERROR_FAILED_TO_SAVE_SETTINGS_CONNECTOR = 'FAILED_TO_SAVE_SETTINGS_CONNECTOR';//Failed to save settings connector
-	const ERROR_FAILED_TO_TEST_CONNECTOR = 'FAILED_TO_TEST_CONNECTOR';//Failed to test the connection of the connector
-	const ERROR_FAILED_REGISTER_CONNECTOR = 'FAILED_REGISTER_CONNECTOR';//Failed to register connector
-	public const ERROR_CONNECTOR_NOT_SEND_MESSAGE_CHAT = 'CONNECTOR_NOT_SEND_MESSAGE_CHAT';
-	public const ERROR_CONNECTOR_DELETE_MESSAGE = 'CONNECTOR_ERROR_DELETE_MESSAGE';
+	public const
+		ERROR_CONNECTOR_PROXY_NO_USER_IM = 'CONNECTOR_PROXY_NO_USER_IM',//Not the received user id of messenger
+		ERROR_CONNECTOR_PROXY_NO_ADD_USER = 'CONNECTOR_PROXY_NO_ADD_USER',//Failed to create or retrieve a user system associated with a user of the remote messenger
+		ERROR_IMCONNECTOR_NOT_SPECIFIED_CORRECT_CONNECTOR = 'IMCONNECTOR_NOT_SPECIFIED_CORRECT_CONNECTOR',//Not specified connector
+		ERROR_IMCONNECTOR_NOT_SPECIFIED_CORRECT_COMMAND = 'IMCONNECTOR_NOT_SPECIFIED_CORRECT_COMMAND',//Not a valid command
+		ERROR_IMCONNECTOR_NOT_ACTIVE_LINE = 'NOT_ACTIVE_LINE',//Not active or not exists line
+		ERROR_IMCONNECTOR_NOT_ALL_THE_REQUIRED_DATA = 'IMCONNECTOR_NOT_ALL_THE_REQUIRED_DATA',//Passed not all the required data
+		ERROR_IMCONNECTOR_EMPTY_PARAMETRS = 'IMCONNECTOR_EMPTY_PARAMETRS',//Passed empty parameters
+		ERROR_NOT_AVAILABLE_CONNECTOR = 'NOT_AVAILABLE_CONNECTOR',//Try to access non-existent or non-active connector
+		ERROR_FEATURE_IS_NOT_SUPPORTED = 'FEATURE_IS_NOT_SUPPORTED',//This feature is not supported
+		ERROR_ADD_EXISTING_CONNECTOR = 'ADD_EXISTING_CONNECTOR',//Attempt to add an existing connector
+		ERROR_UPDATE_NOT_EXISTING_CONNECTOR = 'UPDATE_NOT_EXISTING_CONNECTOR',//Trying to update, not activated connector
+		ERROR_DELETE_NOT_EXISTING_CONNECTOR = 'DELETE_NOT_EXISTING_CONNECTOR',//Attempt deletion of activated connector
+		ERROR_FAILED_TO_ADD_CONNECTOR = 'FAILED_TO_ADD_CONNECTOR',//Failed to add the connector, open line
+		ERROR_FAILED_TO_UPDATE_CONNECTOR = 'FAILED_TO_UPDATE_CONNECTOR',//Failed to update connector, open line
+		ERROR_FAILED_TO_DELETE_CONNECTOR = 'FAILED_TO_DELETE_CONNECTOR',//Failed to remove the connector, open line
+		ERROR_FAILED_TO_LOAD_MODULE_OPEN_LINES = 'FAILED_TO_LOAD_MODULE_OPEN_LINES',//Failed to load module open lines
+		ERROR_FAILED_TO_SAVE_SETTINGS_CONNECTOR = 'FAILED_TO_SAVE_SETTINGS_CONNECTOR',//Failed to save settings connector
+		ERROR_FAILED_TO_TEST_CONNECTOR = 'FAILED_TO_TEST_CONNECTOR',//Failed to test the connection of the connector
+		ERROR_FAILED_REGISTER_CONNECTOR = 'FAILED_REGISTER_CONNECTOR',//Failed to register connector
+		ERROR_CONNECTOR_NOT_SEND_MESSAGE_CHAT = 'CONNECTOR_NOT_SEND_MESSAGE_CHAT',
+		ERROR_CONNECTOR_DELETE_MESSAGE = 'CONNECTOR_ERROR_DELETE_MESSAGE',
 
-	const ERROR_IMCONNECTOR_REST_APPLICATION_REGISTRATION_ERROR = 'APPLICATION_REGISTRATION_ERROR';//Application registration error
-	const ERROR_IMCONNECTOR_REST_APPLICATION_REGISTRATION_ERROR_POINT = 'APPLICATION_REGISTRATION_ERROR_POINT';
-	const ERROR_IMCONNECTOR_REST_APPLICATION_UNREGISTRATION_ERROR = 'APPLICATION_UNREGISTRATION_ERROR';//
-	const ERROR_IMCONNECTOR_REST_CONNECTOR_ID_REQUIRED = 'CONNECTOR_ID_REQUIRED';
-	const ERROR_IMCONNECTOR_REST_NAME_REQUIRED = 'NAME_REQUIRED';
-	const ERROR_IMCONNECTOR_REST_ICON_REQUIRED = 'ICON_REQUIRED';
-	const ERROR_IMCONNECTOR_REST_NO_APPLICATION_ID = 'NO_APPLICATION_ID';
-	const ERROR_IMCONNECTOR_REST_NO_PLACEMENT_HANDLER = 'NO_PLACEMENT_HANDLER';
-	const ERROR_IMCONNECTOR_REST_GENERAL_CONNECTOR_REGISTRATION_ERROR = 'GENERAL_CONNECTOR_REGISTRATION_ERROR';
+		ERROR_IMCONNECTOR_REST_APPLICATION_REGISTRATION_ERROR = 'APPLICATION_REGISTRATION_ERROR',//Application registration error
+		ERROR_IMCONNECTOR_REST_APPLICATION_REGISTRATION_ERROR_POINT = 'APPLICATION_REGISTRATION_ERROR_POINT',
+		ERROR_IMCONNECTOR_REST_APPLICATION_UNREGISTRATION_ERROR = 'APPLICATION_UNREGISTRATION_ERROR',
+		ERROR_IMCONNECTOR_REST_CONNECTOR_ID_REQUIRED = 'CONNECTOR_ID_REQUIRED',
+		ERROR_IMCONNECTOR_REST_NAME_REQUIRED = 'NAME_REQUIRED',
+		ERROR_IMCONNECTOR_REST_ICON_REQUIRED = 'ICON_REQUIRED',
+		ERROR_IMCONNECTOR_REST_NO_APPLICATION_ID = 'NO_APPLICATION_ID',
+		ERROR_IMCONNECTOR_REST_NO_PLACEMENT_HANDLER = 'NO_PLACEMENT_HANDLER',
+		ERROR_IMCONNECTOR_REST_GENERAL_CONNECTOR_REGISTRATION_ERROR = 'GENERAL_CONNECTOR_REGISTRATION_ERROR',
 
-	/** const error connector server*/
-	const ERROR_CONNECTOR_MESSENGER_INVALID_OAUTH_ACCESS_TOKEN = "CONNECTOR_MESSENGER_INVALID_OAUTH_ACCESS_TOKEN";
+		/** const error connector server*/
+		ERROR_CONNECTOR_MESSENGER_INVALID_OAUTH_ACCESS_TOKEN = "CONNECTOR_MESSENGER_INVALID_OAUTH_ACCESS_TOKEN",
 
-	public const ERROR_IMCONNECTOR_PROVIDER_NO_ACTIVE_CONNECTOR = 'IMCONNECTOR_PROVIDER_NO_ACTIVE_CONNECTOR';
-	public const ERROR_IMCONNECTOR_PROVIDER_CONTROLLER_CONNECTOR_URL = 'IMCONNECTOR_PROVIDER_CONTROLLER_CONNECTOR_URL';
-	public const ERROR_IMCONNECTOR_PROVIDER_LICENCE_CODE_PORTAL = 'IMCONNECTOR_PROVIDER_LICENCE_CODE_PORTAL';
-	public const ERROR_IMCONNECTOR_PROVIDER_TYPE_PORTAL = 'IMCONNECTOR_PROVIDER_TYPE_PORTAL';
-	public const ERROR_IMCONNECTOR_PROVIDER_CONNECTOR = 'IMCONNECTOR_PROVIDER_CONNECTOR';
-	public const ERROR_IMCONNECTOR_PROVIDER_LINE = 'IMCONNECTOR_PROVIDER_LINE';
-	public const ERROR_IMCONNECTOR_PROVIDER_NOT_CALL = 'IMCONNECTOR_PROVIDER_NOT_CALL';
-	public const ERROR_IMCONNECTOR_PROVIDER_INCORRECT_INCOMING_DATA = 'IMCONNECTOR_PROVIDER_INCORRECT_INCOMING_DATA';
-	public const ERROR_IMCONNECTOR_NO_CORRECT_PROVIDER = 'IMCONNECTOR_NO_CORRECT_PROVIDER';
-	public const ERROR_IMCONNECTOR_PROVIDER_GENERAL_REQUEST_NOT_DYNAMIC_METHOD = 'IMCONNECTOR_PROVIDER_GENERAL_REQUEST_NOT_DYNAMIC_METHOD';
-	public const ERROR_IMCONNECTOR_PROVIDER_GENERAL_REQUEST_DYNAMIC_METHOD = 'IMCONNECTOR_PROVIDER_GENERAL_REQUEST_DYNAMIC_METHOD';
-	public const ERROR_IMCONNECTOR_COULD_NOT_GET_PROVIDER_OBJECT = 'IMCONNECTOR_COULD_NOT_GET_PROVIDER_OBJECT';
-	public const ERROR_IMCONNECTOR_PROVIDER_DOES_NOT_SUPPORT_THIS_METHOD_CALL = 'PROVIDER_DOES_NOT_SUPPORT_THIS_METHOD_CALL';
-	public const ERROR_IMCONNECTOR_PROVIDER_UNSUPPORTED_TYPE_INCOMING_MESSAGE = 'PROVIDER_UNSUPPORTED_TYPE_INCOMING_MESSAGE';
+		ERROR_IMCONNECTOR_PROVIDER_NO_ACTIVE_CONNECTOR = 'IMCONNECTOR_PROVIDER_NO_ACTIVE_CONNECTOR',
+		ERROR_IMCONNECTOR_PROVIDER_CONTROLLER_CONNECTOR_URL = 'IMCONNECTOR_PROVIDER_CONTROLLER_CONNECTOR_URL',
+		ERROR_IMCONNECTOR_PROVIDER_LICENCE_CODE_PORTAL = 'IMCONNECTOR_PROVIDER_LICENCE_CODE_PORTAL',
+		ERROR_IMCONNECTOR_PROVIDER_TYPE_PORTAL = 'IMCONNECTOR_PROVIDER_TYPE_PORTAL',
+		ERROR_IMCONNECTOR_PROVIDER_CONNECTOR = 'IMCONNECTOR_PROVIDER_CONNECTOR',
+		ERROR_IMCONNECTOR_PROVIDER_LINE = 'IMCONNECTOR_PROVIDER_LINE',
+		ERROR_IMCONNECTOR_PROVIDER_NOT_CALL = 'IMCONNECTOR_PROVIDER_NOT_CALL',
+		ERROR_IMCONNECTOR_PROVIDER_INCORRECT_INCOMING_DATA = 'IMCONNECTOR_PROVIDER_INCORRECT_INCOMING_DATA',
+		ERROR_IMCONNECTOR_NO_CORRECT_PROVIDER = 'IMCONNECTOR_NO_CORRECT_PROVIDER',
+		ERROR_IMCONNECTOR_PROVIDER_GENERAL_REQUEST_NOT_DYNAMIC_METHOD = 'IMCONNECTOR_PROVIDER_GENERAL_REQUEST_NOT_DYNAMIC_METHOD',
+		ERROR_IMCONNECTOR_PROVIDER_GENERAL_REQUEST_DYNAMIC_METHOD = 'IMCONNECTOR_PROVIDER_GENERAL_REQUEST_DYNAMIC_METHOD',
+		ERROR_IMCONNECTOR_COULD_NOT_GET_PROVIDER_OBJECT = 'IMCONNECTOR_COULD_NOT_GET_PROVIDER_OBJECT',
+		ERROR_IMCONNECTOR_PROVIDER_DOES_NOT_SUPPORT_THIS_METHOD_CALL = 'PROVIDER_DOES_NOT_SUPPORT_THIS_METHOD_CALL',
+		ERROR_IMCONNECTOR_PROVIDER_UNSUPPORTED_TYPE_INCOMING_MESSAGE = 'PROVIDER_UNSUPPORTED_TYPE_INCOMING_MESSAGE',
+
+		ERROR_IMCONNECTOR_PUBLIC_URL_EMPTY = 'PUBLIC_URL_EMPTY',
+		ERROR_IMCONNECTOR_PUBLIC_URL_MALFORMED = 'PUBLIC_URL_MALFORMED',
+		ERROR_IMCONNECTOR_PUBLIC_URL_LOCALHOST = 'PUBLIC_URL_LOCALHOST',
+		ERROR_IMCONNECTOR_PUBLIC_URL_HANDLER_PATH = 'PUBLIC_URL_HANDLER_PATH'
+	;
 
 	/** const event */
-	const EVENT_RECEIVED_MESSAGE = "OnReceivedMessage";
-	const EVENT_RECEIVED_POST = "OnReceivedPost";
+	public const
+		EVENT_RECEIVED_MESSAGE = "OnReceivedMessage",
+		EVENT_RECEIVED_POST = "OnReceivedPost",
 
-	const EVENT_RECEIVED_POST_UPDATE = "OnReceivedPostUpdate";
-	const EVENT_RECEIVED_MESSAGE_UPDATE = "OnReceivedMessageUpdate";
+		EVENT_RECEIVED_POST_UPDATE = "OnReceivedPostUpdate",
+		EVENT_RECEIVED_MESSAGE_UPDATE = "OnReceivedMessageUpdate",
 
-	const EVENT_RECEIVED_MESSAGE_DEL = "OnReceivedMessageDel";
+		EVENT_RECEIVED_MESSAGE_DEL = "OnReceivedMessageDel",
 
-	const EVENT_RECEIVED_STATUS_DELIVERY = "OnReceivedStatusDelivery";
-	const EVENT_RECEIVED_STATUS_READING = "OnReceivedStatusReading";
+		EVENT_RECEIVED_STATUS_DELIVERY = "OnReceivedStatusDelivery",
+		EVENT_RECEIVED_STATUS_READING = "OnReceivedStatusReading",
 
-	const EVENT_RECEIVED_CLIENT_COMMAND = "OnReceivedClientCommand";
+		EVENT_RECEIVED_CLIENT_COMMAND = "OnReceivedClientCommand",
 
-	public const EVENT_RECEIVED_ERROR = 'OnReceivedError';
-	public const EVENT_RECEIVED_STATUS_BLOCK = 'OnReceivedStatusBlock';
-	public const EVENT_RECEIVED_TYPING_STATUS = 'OnReceivedStatusWrites';
+		EVENT_RECEIVED_ERROR = 'OnReceivedError',
+		EVENT_RECEIVED_STATUS_BLOCK = 'OnReceivedStatusBlock',
+		EVENT_RECEIVED_TYPING_STATUS = 'OnReceivedStatusWrites',
 
-	const EVENT_STATUS_ADD = "OnAddStatusConnector";
-	const EVENT_STATUS_UPDATE = "OnUpdateStatusConnector";
-	const EVENT_STATUS_DELETE = "OnDeleteStatusConnector";
+		EVENT_STATUS_ADD = "OnAddStatusConnector",
+		EVENT_STATUS_UPDATE = "OnUpdateStatusConnector",
+		EVENT_STATUS_DELETE = "OnDeleteStatusConnector",
 
-	const EVENT_REGISTRATION_CUSTOM_CONNECTOR = 'OnImConnectorBuildList';
-	const EVENT_INFO_LINE_CUSTOM_CONNECTOR = 'OnInfoLine';
-	const EVENT_DELETE_MESSAGE_CUSTOM_CONNECTOR = 'OnDeleteMessageCustom';
-	const EVENT_UPDATE_MESSAGE_CUSTOM_CONNECTOR = 'OnUpdateMessageCustom';
-	const EVENT_SEND_MESSAGE_CUSTOM_CONNECTOR = 'OnSendMessageCustom';
+		EVENT_REGISTRATION_CUSTOM_CONNECTOR = 'OnImConnectorBuildList',
+		EVENT_INFO_LINE_CUSTOM_CONNECTOR = 'OnInfoLine',
+		EVENT_DELETE_MESSAGE_CUSTOM_CONNECTOR = 'OnDeleteMessageCustom',
+		EVENT_UPDATE_MESSAGE_CUSTOM_CONNECTOR = 'OnUpdateMessageCustom',
+		EVENT_SEND_MESSAGE_CUSTOM_CONNECTOR = 'OnSendMessageCustom',
 
-	const EVENT_DELETE_LINE = 'OnDeleteLine';
+		EVENT_DELETE_LINE = 'OnDeleteLine'
+	;
 
 	public const CODE_ID_ARTICLE_TIME_LIMIT = '10632966';
 	public const TIME_LIMIT_RESTRICTIONS = [
@@ -186,7 +199,7 @@ class Library
 
 	public const connectorPortalZoneLimit = [
 		'avito' => [
-			'allow' => ['ru'],
+			'allow' => ['ru', 'by'],
 			'deny' => [],
 		],
 		'vkgroup' => [
@@ -994,18 +1007,31 @@ class Library
 	 *
 	 * @return string
 	 */
-	public static function getCurrentServerUrl()
+	public static function getCurrentServerUrl(): string
 	{
-		$url  = '';
-
-		$server = Context::getCurrent()->getServer();
-		$request = Context::getCurrent()->getRequest();
-		$serverName = $server->getServerName();
-
-		if(!empty($serverName))
+		static $url;
+		if ($url === null)
 		{
-			$url  = ($request->isHttps() ? 'https://' :  'http://')  . $serverName .
-				(($server->getServerPort() == 80 || ($server->get('HTTPS') && $server->getServerPort() == 443) ) ?  "" : ":" . $server->getServerPort());
+			$context = \Bitrix\Main\Application::getInstance()->getContext();
+			$scheme = $context->getRequest()->isHttps() ? 'https' : 'http';
+			$server = $context->getServer();
+			$domain = Option::get('main', 'server_name', '');
+			if (empty($domain))
+			{
+				$domain = $server->getServerName();
+			}
+			if (preg_match('/^(?<domain>.+):(?<port>\d+)$/', $domain, $matches))
+			{
+				$domain = $matches['domain'];
+				$port = $matches['port'];
+			}
+			else
+			{
+				$port = $server->getServerPort();
+			}
+			$port = in_array($port, [80, 443]) ? '' : ':'.$port;
+
+			$url = $scheme.'://'.$domain.$port;
 		}
 
 		return $url;
@@ -1021,11 +1047,9 @@ class Library
 		$server = Context::getCurrent()->getServer();
 		$request = Context::getCurrent()->getRequest();
 
-		$uri  = ($request->isHttps() ? 'https://' :  'http://')  . $server->getServerName() .
-			(($server->getServerPort() == 80 || ($server->get('HTTPS') && $server->getServerPort() == 443) ) ?  "" : ":" . $server->getServerPort()) .
+		return ($request->isHttps() ? 'https://' :  'http://')  . $server->getServerName() .
+			(($server->getServerPort() == 80 || ($server->get('HTTPS') && $server->getServerPort() == 443)) ? '' : ':' . $server->getServerPort()) .
 			$server->getRequestUri();
-
-		return $uri;
 	}
 
 	/**
@@ -1090,8 +1114,8 @@ class Library
 		}
 
 		if (
-			$fileName == '' &&
-			$notNull === true
+			$fileName == ''
+			&& $notNull === true
 		)
 		{
 			$fileName = uniqid();
@@ -1159,7 +1183,7 @@ class Library
 	 */
 	public static function downloadFile(array $file)
 	{
-		if(empty($file['url']))
+		if (empty($file['url']))
 		{
 			$file = false;
 		}
@@ -1185,9 +1209,9 @@ class Library
 				}
 			}
 
-			if(Library::isEmpty($file['name']))
+			if(self::isEmpty($file['name']))
 			{
-				$fileName = Library::getNameFile($file['url'], true);
+				$fileName = self::getNameFile($file['url'], true);
 			}
 			else
 			{
@@ -1210,13 +1234,13 @@ class Library
 					$type = $httpClient->getHeaders()->get('Content-Type');
 				}
 
-				if(Library::isEmpty($file['name']) )
+				if (self::isEmpty($file['name']) )
 				{
 					$contentDisposition = $httpClient->getHeaders()->get('Content-Disposition');
-					if(!empty($contentDisposition))
+					if (!empty($contentDisposition))
 					{
-						$fileNameContentDisposition = Library::getNameFileIsContentDisposition($contentDisposition);
-						if(
+						$fileNameContentDisposition = self::getNameFileIsContentDisposition($contentDisposition);
+						if (
 							!empty($fileNameContentDisposition)
 							&& is_string($fileNameContentDisposition)
 						)
@@ -1237,8 +1261,8 @@ class Library
 
 				if(
 					empty($type)
-					|| $type == 'application/octet-stream'
-					|| $type == 'binary/octet-stream'
+					|| $type === 'application/octet-stream'
+					|| $type === 'binary/octet-stream'
 				)
 				{
 					$fileTemp = new File($tempFilePath);
@@ -1247,11 +1271,11 @@ class Library
 
 				//The definition of the file extension, it is not specified.
 				if(
-					!empty(Library::$mimeTypeAssociationExtension[$type])
+					!empty(self::$mimeTypeAssociationExtension[$type])
 					&& mb_strpos($fileName, '.') === false
 				)
 				{
-					$fileName .= Library::$mimeTypeAssociationExtension[$type];
+					$fileName .= self::$mimeTypeAssociationExtension[$type];
 				}
 
 				if(empty($type))
@@ -1259,7 +1283,7 @@ class Library
 					$type = 'application/octet-stream';
 				}
 
-				if(Library::isEmpty($file['description']))
+				if (self::isEmpty($file['description']))
 				{
 					$description = '';
 				}
@@ -1273,7 +1297,7 @@ class Library
 					'tmp_name' => $tempFilePath,
 					'type' => $type,
 					'description' => $description,
-					'MODULE_ID' => Library::MODULE_ID
+					'MODULE_ID' => self::MODULE_ID
 				];
 			}
 			else

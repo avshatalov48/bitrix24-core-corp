@@ -3,6 +3,12 @@ import * as Mixins from "../base/components/mixins";
 
 const FieldFileItem = {
 	props: ['field', 'itemIndex', 'item'],
+	data()
+	{
+		return {
+			errorTextTypeFile: null,
+		};
+	},
 	template: `
 		<div>
 			<div v-if="file.content" class="b24-form-control-file-item">
@@ -22,7 +28,11 @@ const FieldFileItem = {
 				</div>
 				<div @click.prevent="removeFile" class="b24-form-control-file-item-remove"></div>
 			</div>
-			<div v-show="!file.content" class="b24-form-control-file-item-empty">
+			<div 
+				class="b24-form-control-file-item-empty"
+				:class="{'b24-form-control-alert': !!errorTextTypeFile}"
+				v-show="!file.content" 
+			>
 				<label class="b24-form-control">
 					{{ field.messages.get('fieldFileChoose') }}
 					<input type="file" style="display: none;"
@@ -33,6 +43,9 @@ const FieldFileItem = {
 						@focus="$emit('input-focus')"
 					>
 				</label>
+				<div class="b24-form-control-alert-message"
+					@click="errorTextTypeFile = null"
+				>{{errorTextTypeFile}}</div>
 			</div>
 		</div>
 	`,
@@ -69,20 +82,31 @@ const FieldFileItem = {
 		fileIcon ()
 		{
 			return (this.hasIcon
-				? 'data:' + this.file.type + ';base64,' + this.file.content
-				: null
+					? 'data:' + this.file.type + ';base64,' + this.file.content
+					: null
 			);
 		},
 	},
 	methods: {
-		setFiles() {
-			let file = this.$refs.inputFiles.files[0];
+		setFiles()
+		{
+			this.errorTextTypeFile = null;
 
-			if (file && this.field.contentTypes.length > 0)
+			let file = this.$refs.inputFiles.files[0];
+			if (!file)
 			{
-				const isTypeValid = this.field.contentTypes.some(type => {
+				return;
+			}
+
+			const fileType = file.type || '';
+			const fileExt = (file.name || '').split('.').pop();
+
+			let acceptTypes = this.field.getAcceptTypes()
+			acceptTypes = acceptTypes ? acceptTypes.split(',') : [];
+			if (file && acceptTypes.length > 0)
+			{
+				const isTypeValid = acceptTypes.some(type => {
 					type = type || '';
-					const fileType = file.type || '';
 					if (type === fileType)
 					{
 						return true;
@@ -92,12 +116,23 @@ const FieldFileItem = {
 					{
 						return fileType.indexOf(type.replace(/\*/g, '')) >= 0;
 					}
+					else if (type.indexOf('.') === 0)
+					{
+						return type === ('.' + fileExt);
+					}
 
 					return false;
 				});
 				if (!isTypeValid)
 				{
 					file = null;
+					const extensions = acceptTypes.filter(item => item.indexOf('/') < 0).join(', ');
+					this.errorTextTypeFile = (
+						this.field.messages.get('fieldFileErrorType')
+						||
+						this.field.messages.get('fieldErrorInvalid')
+					).replace('%extensions%', extensions);
+					setTimeout(() => this.errorTextTypeFile = null, 15000);
 				}
 			}
 
@@ -116,6 +151,7 @@ const FieldFileItem = {
 						type: result[0].split(':')[1],
 						content: result[1].split(',')[1],
 					};
+					this.$refs.inputFiles.value = null;
 				};
 				reader.readAsDataURL(file);
 			}

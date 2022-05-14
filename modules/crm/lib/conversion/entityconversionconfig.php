@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Conversion;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\NotImplementedException;
@@ -428,5 +429,23 @@ class EntityConversionConfig
 		}
 
 		return $this->scheme;
+	}
+
+	final protected function appendCustomRelations(): void
+	{
+		$relations = Container::getInstance()->getRelationManager()->getChildRelations(static::getEntityTypeId());
+
+		foreach ($relations as $relation)
+		{
+			if ($relation->isPredefined() || !$relation->getSettings()->isConversion())
+			{
+				continue;
+			}
+
+			if (!$this->getItem($relation->getChildEntityTypeId()))
+			{
+				$this->addItem(new EntityConversionConfigItem($relation->getChildEntityTypeId()));
+			}
+		}
 	}
 }

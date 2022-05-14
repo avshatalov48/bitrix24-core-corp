@@ -34,6 +34,7 @@ class ClearCache extends Action
 		{
 			/** @var \CCacheManager $cacheManager */
 			$cacheManager->CleanDir($this->directoryName);
+			$cacheManager->ClearByTag($this->directoryName);
 		}
 
 		if ($this->isDependantFieldsChanged($item))

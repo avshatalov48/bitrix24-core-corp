@@ -25,3 +25,4 @@ $MESS["SHOP_MENU_SHOP_MARKETING"] = "Маркетинг Магазину";
 $MESS["SHOP_MENU_SHOP_TITLE"] = "Магазини";
 $MESS["SHOP_MENU_SITES"] = "Сайти";
 $MESS["SHOP_MENU_WEBFORMS"] = "Форми";
+$MESS["SHOP_MENU_PAY_SYSTEMS_DELIVERY"] = "Платежі та Доставки";

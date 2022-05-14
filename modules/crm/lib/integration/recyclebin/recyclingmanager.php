@@ -3,6 +3,7 @@ namespace Bitrix\Crm\Integration\Recyclebin;
 
 use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Crm\Settings\ActivitySettings;
 use Bitrix\Recyclebin;
 
 class RecyclingManager
@@ -92,7 +93,9 @@ class RecyclingManager
 			throw new Main\InvalidOperationException("Could not load module RecycleBin.");
 		}
 
-		Recyclebin\Recyclebin::remove($recycleBinEntityID);
+		$params['SKIP_TASKS'] = ActivitySettings::getValue(ActivitySettings::KEEP_UNBOUND_TASKS);
+
+		Recyclebin\Recyclebin::remove($recycleBinEntityID, $params);
 	}
 	//endregion
 

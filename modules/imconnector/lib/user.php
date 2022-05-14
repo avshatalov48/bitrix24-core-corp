@@ -26,4 +26,39 @@ class User
 			}
 		}
 	}
+
+	public static function validateUserCode(string $userCode)
+	{
+		if (!\Bitrix\Main\Loader::includeModule('imopenlines'))
+		{
+			return false;
+		}
+
+		$result = \Bitrix\ImOpenLines\Chat::parseLinesChatEntityId($userCode);
+
+
+		$user = \Bitrix\Main\UserTable::getByPrimary($result['connectorUserId'], [
+			'select' => [
+				'ID',
+				'EXTERNAL_AUTH_ID',
+				'XML_ID'
+			]
+		])->fetch();
+		if (!$user)
+		{
+			return false;
+		}
+
+		if ($user['EXTERNAL_AUTH_ID'] !== Library::NAME_EXTERNAL_USER)
+		{
+			return false;
+		}
+
+		if ($user['XML_ID'] !== $result['connectorId'].'|'.$result['connectorChatId'])
+		{
+			return false;
+		}
+
+		return true;
+	}
 }

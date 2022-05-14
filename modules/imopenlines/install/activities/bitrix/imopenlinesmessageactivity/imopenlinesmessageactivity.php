@@ -186,7 +186,7 @@ class CBPImOpenLinesMessageActivity
 				'FieldName' => 'attachment_type',
 				'Type' => 'select',
 				'Options' => array(
-					static::ATTACHMENT_TYPE_FILE => GetMessage('IMOL_MA_ATTACHMENT_FILE'),
+					static::ATTACHMENT_TYPE_FILE => GetMessage('IMOL_MA_ATTACHMENT_FILE_1'),
 					static::ATTACHMENT_TYPE_DISK => GetMessage('IMOL_MA_ATTACHMENT_DISK')
 				)
 			),

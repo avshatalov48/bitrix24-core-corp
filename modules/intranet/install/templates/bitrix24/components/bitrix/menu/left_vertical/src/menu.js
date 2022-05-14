@@ -309,7 +309,7 @@ export default class Menu
 			}
 		});
 		//When clicked on a start Favorites like
-		BX.addCustomEvent('UI.Toolbar:onStarClick', (params) => {
+		EventEmitter.subscribe('UI.Toolbar:onStarClick', ({compatData: [params]}) => {
 			if (params.isActive)
 			{
 				this.getItemDirector().deleteCurrentPage({
@@ -338,9 +338,8 @@ export default class Menu
 				});
 			}
 		});
-
-		BX.addCustomEvent("BX.Main.InterfaceButtons:onBeforeResetMenu", function (promises) {
-			promises.push(function () {
+		EventEmitter.subscribe('BX.Main.InterfaceButtons:onBeforeResetMenu', ({compatData: [promises]}) => {
+			promises.push(() => {
 				const p = new BX.Promise();
 				Backend
 					.clearCache()
@@ -350,8 +349,8 @@ export default class Menu
 					)
 				;
 				return p;
-			}.bind(this));
-		}.bind(this));
+			});
+		});
 	}
 
 	isEditMode()
@@ -478,7 +477,7 @@ export default class Menu
 	// region Events servicing functions
 	onGettingSettingMenuItems()
 	{
-		const topPoint = ItemUserFavorites.searchCurrentPageInTopMenu();
+		const topPoint = ItemUserFavorites.getActiveTopMenuItem();
 		let menuItemWithAddingToFavorites = null;
 		if (topPoint)
 		{
@@ -1239,7 +1238,9 @@ export default class Menu
 	// region Public functions
 	initPagetitleStar(): boolean
 	{
-		return ItemUserFavorites.isCurrentPageStandard();
+		return ItemUserFavorites.isCurrentPageStandard(
+			ItemUserFavorites.getActiveTopMenuItem()
+		);
 	}
 
 	getStructureForHelper()

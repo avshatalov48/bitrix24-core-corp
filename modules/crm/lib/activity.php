@@ -154,10 +154,14 @@ class ActivityTable extends Entity\DataManager
 				'data_type' => 'integer'
 			),
 			'SUBJECT' => array(
-				'data_type' => 'string'
+				'data_type' => 'string',
+				'save_data_modification' => array('\Bitrix\Main\Text\Emoji', 'getSaveModificator'),
+				'fetch_data_modification' => array('\Bitrix\Main\Text\Emoji', 'getFetchModificator'),
 			),
 			'DESCRIPTION' => array(
 				'data_type' => 'string',
+				'save_data_modification' => array('\Bitrix\Main\Text\Emoji', 'getSaveModificator'),
+				'fetch_data_modification' => array('\Bitrix\Main\Text\Emoji', 'getFetchModificator'),
 			),
 			'DESCRIPTION_TYPE' => array(
 				'data_type' => 'integer',

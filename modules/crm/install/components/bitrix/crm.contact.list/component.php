@@ -153,6 +153,8 @@ $arResult['NAVIGATION_CONTEXT_ID'] = isset($arParams['NAVIGATION_CONTEXT_ID']) ?
 $arResult['PRESERVE_HISTORY'] = isset($arParams['PRESERVE_HISTORY']) ? $arParams['PRESERVE_HISTORY'] : false;
 $arResult['ENABLE_SLIDER'] = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled();
 
+$arResult['CATEGORY_ID'] = (int)($arParams['CATEGORY_ID'] ?? 0);
+
 if(LayoutSettings::getCurrent()->isSimpleTimeFormatEnabled())
 {
 	$arResult['TIME_FORMAT'] = array(
@@ -266,7 +268,10 @@ if(!$bInternal && isset($_REQUEST['counter']))
 				CCrmOwnerType::Contact,
 				$counterTypeID,
 				$userID,
-				Bitrix\Crm\Counter\EntityCounter::internalizeExtras($_REQUEST)
+				array_merge(
+					Bitrix\Crm\Counter\EntityCounter::internalizeExtras($_REQUEST),
+					['CATEGORY_ID' => $arResult['CATEGORY_ID']]
+				)
 			);
 
 			$arFilter = $counter->prepareEntityListFilter(
@@ -310,7 +315,10 @@ $arResult['IS_EXTERNAL_FILTER'] = ($enableWidgetFilter || $enableCounterFilter |
 $CCrmUserType = new CCrmUserType($USER_FIELD_MANAGER, CCrmContact::$sUFEntityID);
 $CCrmFieldMulti = new CCrmFieldMulti();
 
-$arResult['GRID_ID'] = 'CRM_CONTACT_LIST_V12'.($bInternal && !empty($arParams['GRID_ID_SUFFIX']) ? '_'.$arParams['GRID_ID_SUFFIX'] : '');
+$arResult['GRID_ID'] = (new Crm\Component\EntityList\GridId(CCrmOwnerType::Contact))
+	->getValue((string)$arParams['GRID_ID_SUFFIX'])
+;
+
 $arResult['HONORIFIC'] = CCrmStatus::GetStatusListEx('HONORIFIC');
 $arResult['TYPE_LIST'] = CCrmStatus::GetStatusListEx('CONTACT_TYPE');
 $arResult['SOURCE_LIST'] = CCrmStatus::GetStatusListEx('SOURCE');
@@ -349,7 +357,7 @@ if (!$bInternal)
 //endregion
 
 $gridOptions = new \Bitrix\Main\Grid\Options($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
-$filterOptions = new \Bitrix\Main\UI\Filter\Options($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
+$filterOptions = new \Bitrix\Crm\Filter\UiFilterOptions($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
 
 //region Navigation Params
 if ($arParams['CONTACT_COUNT'] <= 0)
@@ -787,6 +795,8 @@ $CCrmUserType->PrepareListFilterValues($arResult['FILTER'], $arFilter, $arResult
 
 $USER_FIELD_MANAGER->AdminListAddFilter(CCrmContact::$sUFEntityID, $arFilter);
 
+$arFilter['@CATEGORY_ID'] = $arResult['CATEGORY_ID'];
+
 //region Apply Search Restrictions
 $searchRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getSearchLimitRestriction();
 if(!$searchRestriction->isExceeded(CCrmOwnerType::Contact))
@@ -839,7 +849,10 @@ if(isset($arFilter['ACTIVITY_COUNTER']))
 				CCrmOwnerType::Contact,
 				$counterTypeID,
 				0,
-				Bitrix\Crm\Counter\EntityCounter::internalizeExtras($_REQUEST)
+				array_merge(
+					Bitrix\Crm\Counter\EntityCounter::internalizeExtras($_REQUEST),
+					['CATEGORY_ID' => $arResult['CATEGORY_ID']]
+				)
 			);
 
 			$arFilter += $counter->prepareEntityListFilter(
@@ -872,7 +885,8 @@ $arImmutableFilters = array(
 	'TYPE_ID', 'SOURCE_ID', 'WEBFORM_ID', 'TRACKING_SOURCE_ID', 'TRACKING_CHANNEL_CODE',
 	'HAS_PHONE', 'HAS_EMAIL', 'RQ',
 	'SEARCH_CONTENT',
-	'FILTER_ID', 'FILTER_APPLIED', 'PRESET_ID'
+	'FILTER_ID', 'FILTER_APPLIED', 'PRESET_ID',
+	'@CATEGORY_ID',
 );
 
 foreach ($arFilter as $k => $v)
@@ -2598,7 +2612,12 @@ if (!$isInExportMode)
 		}
 
 		$arResult['NEED_FOR_BUILD_TIMELINE'] = \Bitrix\Crm\Agent\Timeline\ContactTimelineBuildAgent::getInstance()->isEnabled();
-		$arResult['NEED_FOR_REBUILD_SECURITY_ATTRS'] = \Bitrix\Crm\Agent\Security\ContactAttributeRebuildAgent::getInstance()->isEnabled();
+
+		$attributeRebuildAgent = \Bitrix\Crm\Agent\Security\ContactAttributeRebuildAgent::getInstance();
+		$arResult['NEED_FOR_REBUILD_SECURITY_ATTRS'] =
+			$attributeRebuildAgent->isEnabled()
+			&& ($attributeRebuildAgent->getProgressData()['TOTAL_ITEMS'] > 0)
+		;
 
 		$agent = Bitrix\Crm\Agent\Duplicate\ContactDuplicateIndexRebuildAgent::getInstance();
 		$isAgentEnabled = $agent->isEnabled();

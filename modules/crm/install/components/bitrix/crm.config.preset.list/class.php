@@ -568,10 +568,14 @@ class PresetListComponent extends \CBitrixComponent
 						if (!empty($updateFields))
 						{
 							$dbConnection->startTransaction();
-							if ($this->preset->update((int)$row['ID'], $updateFields))
+							if ($this->preset->update((int)$row['ID'], $updateFields)->isSuccess())
+							{
 								$dbConnection->commitTransaction();
+							}
 							else
+							{
 								$dbConnection->rollbackTransaction();
+							}
 						}
 					}
 				}

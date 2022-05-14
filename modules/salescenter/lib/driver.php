@@ -461,4 +461,15 @@ final class Driver
 
 		return '';
 	}
+
+	public function hasDeliveryServices()
+	{
+		$handlers = (new Delivery\Handlers\HandlersRepository())->getCollection()->getInstallableItems();
+		if (!empty($handlers))
+		{
+			return true;
+		}
+
+		return Integration\RestManager::getInstance()->hasDeliveryMarketplaceApp();
+	}
 }

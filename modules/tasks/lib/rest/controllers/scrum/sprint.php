@@ -499,6 +499,13 @@ class Sprint extends Base
 			return null;
 		}
 
+		if (!$this->canStartSprint($this->getUserId(), $sprint->getGroupId()))
+		{
+			$this->errorCollection->add([new Error('Access denied')]);
+
+			return null;
+		}
+
 		if (!$this->checkAccess($sprint->getGroupId()))
 		{
 			$this->errorCollection->add([new Error('Access denied')]);
@@ -556,6 +563,13 @@ class Sprint extends Base
 		if ($sprint->isEmpty())
 		{
 			$this->errorCollection->add([new Error('Sprint not found')]);
+
+			return null;
+		}
+
+		if (!$this->canCompleteSprint($this->getUserId(), $sprint->getGroupId()))
+		{
+			$this->errorCollection->add([new Error('Access denied')]);
 
 			return null;
 		}
@@ -659,5 +673,47 @@ class Sprint extends Base
 		}
 
 		return $date;
+	}
+
+	private function canStartSprint(int $userId, int $groupId): bool
+	{
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			return false;
+		}
+
+		$userRoleInGroup = \CSocNetUserToGroup::getUserRole($userId, $groupId);
+
+		if (
+			$userRoleInGroup == SONET_ROLES_MODERATOR
+			|| $userRoleInGroup == SONET_ROLES_OWNER
+			|| \CSocNetUser::isCurrentUserModuleAdmin()
+		)
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	private function canCompleteSprint(int $userId, int $groupId): bool
+	{
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			return false;
+		}
+
+		$userRoleInGroup = \CSocNetUserToGroup::getUserRole($userId, $groupId);
+
+		if (
+			$userRoleInGroup == SONET_ROLES_MODERATOR
+			|| $userRoleInGroup == SONET_ROLES_OWNER
+			|| \CSocNetUser::isCurrentUserModuleAdmin()
+		)
+		{
+			return true;
+		}
+
+		return false;
 	}
 }

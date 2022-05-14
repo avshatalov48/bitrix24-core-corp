@@ -6,7 +6,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
-$isExperimentalTrialTemplate = !in_array(\CBitrix24::getPortalZone(), ['ru', 'kz', 'by']);
+$isExperimentalTrialTemplate = !in_array(\CBitrix24::getPortalZone(), ['ru', 'kz', 'by'])
+	&& \Bitrix\Main\Config\Option::get('intranet', 'abtest:license.widget', 'N') === 'Y';
 if ($isExperimentalTrialTemplate)
 {
 	$arResult['buttonName'] = Loc::getMessage('INTRANET_LICENSE_WIDGET_START_FREE_TRIAL');

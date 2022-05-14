@@ -258,13 +258,12 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 
 		//region WAIT TARGET DATES
 		$this->arResult['WAIT_TARGET_DATES'] = [];
-
 		if ($this->userType)
 		{
 			$userFields = $this->userType->GetFields();
 			foreach ($userFields as $userField)
 			{
-				if ($userField['USER_TYPE_ID'] === 'date')
+				if ($userField['USER_TYPE_ID'] === 'date' && $userField['MULTIPLE'] !== 'Y')
 				{
 					$this->arResult['WAIT_TARGET_DATES'][] = [
 						'name' => $userField['FIELD_NAME'],
@@ -944,15 +943,18 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 			}
 		}
 
-		$bindingEntity = $this->getOwnerEntity();
-		if (empty($companyId) && empty($contactIds) && $bindingEntity)
+		if ($this->mode === ComponentMode::CREATION)
 		{
-			$companyId = $bindingEntity->getCompanyId();
-
-			$contacts = $bindingEntity->getContacts();
-			foreach ($contacts as $contact)
+			$bindingEntity = $this->getOwnerEntity();
+			if (empty($companyId) && empty($contactIds) && $bindingEntity)
 			{
-				$contactIds[] = $contact->getId();
+				$companyId = $bindingEntity->getCompanyId();
+
+				$contacts = $bindingEntity->getContacts();
+				foreach ($contacts as $contact)
+				{
+					$contactIds[] = $contact->getId();
+				}
 			}
 		}
 
@@ -1181,6 +1183,9 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 
 		$defaultStore = Catalog\StoreTable::getDefaultStoreId();
 
+		/** @var Sale\Reservation\BasketReservationService $basketReservation */
+		$basketReservation = Main\DI\ServiceLocator::getInstance()->get('sale.basketReservation');
+
 		/** @var Crm\Order\ShipmentItem $shipmentItem */
 		foreach ($this->shipment->getShipmentItemCollection() as $shipmentItem)
 		{
@@ -1253,6 +1258,9 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 			|| count($orderIds) === 0
 		)
 		{
+			/** @var Sale\Reservation\BasketReservationService $basketReservation */
+			$basketReservation = Main\DI\ServiceLocator::getInstance()->get('sale.basketReservation');
+
 			$productManager = new Crm\Order\ProductManager($ownerTypeId, $ownerId);
 			$productManager->setProductConverter(
 				new Crm\Order\ProductManager\EntityProductConverterWithReserve()
@@ -1269,17 +1277,46 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 
 			$defaultStore = Catalog\StoreTable::getDefaultStoreId();
 
-			$deliverableProducts = $productManager->getDeliverableItems();
+			$deliverableProducts = $productManager->getRealizationableItems();
 			foreach ($deliverableProducts as $deliverableProduct)
 			{
 				$reserve = $deliverableProduct['RESERVE'] ? current($deliverableProduct['RESERVE']) : [];
 				if (empty($reserve['STORE_ID']))
 				{
-					$deliverableProduct['STORE_ID'] = $defaultStore;
+					$deliverableProduct['STORE_ID'] = (int)$defaultStore;
 				}
 				else
 				{
 					$deliverableProduct['STORE_ID'] = (int)$reserve['STORE_ID'];
+				}
+
+				$quantity = $deliverableProduct['QUANTITY'];
+				if ((int)$deliverableProduct['BASKET_CODE'] > 0)
+				{
+					$availableQuantity = $basketReservation->getAvailableCountForBasketItem(
+						(int)$deliverableProduct['BASKET_CODE'],
+						$deliverableProduct['STORE_ID']
+					);
+
+					$quantity = min($quantity, $availableQuantity);
+				}
+				else
+				{
+					$storeQuantityRow = Catalog\StoreProductTable::getRow([
+						'select' => [
+							'AMOUNT',
+							'QUANTITY_RESERVED',
+						],
+						'filter' => [
+							'=STORE_ID' => $deliverableProduct['STORE_ID'],
+							'=PRODUCT_ID' => $deliverableProduct['PRODUCT_ID'],
+						],
+					]);
+					if ($storeQuantityRow)
+					{
+						$availableQuantity = $storeQuantityRow['AMOUNT'] - $storeQuantityRow['QUANTITY_RESERVED'];
+						$quantity = min($quantity, $availableQuantity);
+					}
 				}
 
 				$products[] = [
@@ -1288,7 +1325,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 					'STORE_TO' => 0,
 					'ELEMENT_ID' => $deliverableProduct['PRODUCT_ID'],
 					'BASKET_ID' => $deliverableProduct['BASKET_CODE'],
-					'AMOUNT' => $deliverableProduct['QUANTITY'],
+					'AMOUNT' => $quantity,
 					'PURCHASING_PRICE' => $deliverableProduct['BASE_PRICE'],
 					'BASE_PRICE' => $deliverableProduct['PRICE'],
 					'BASE_PRICE_EXTRA' => '',

@@ -73,7 +73,6 @@ class Connector
 	/**
 	 * @param $connector
 	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	protected static function isConnectorZoneEnable($connector): bool
 	{
@@ -125,7 +124,6 @@ class Connector
 	/**
 	 * @param array $connectors
 	 * @return array
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function removeConnectorsZonesPortal($connectors = []): array
 	{
@@ -310,8 +308,6 @@ class Connector
 	/**
 	 * @param bool $customConnectors
 	 * @return array|string
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
 	public static function getListConnectorActive($customConnectors = true)
 	{
@@ -347,7 +343,6 @@ class Connector
 	 * A list of matching id of the connector component.
 	 *
 	 * @return array.
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function getListComponentConnector(): array
 	{
@@ -377,9 +372,7 @@ class Connector
 			$components = array_merge($customComponents, $components);
 		}
 
-		$components = self::removeConnectorsZonesPortal($components);
-
-		return $components;
+		return self::removeConnectorsZonesPortal($components);
 	}
 
 	/**
@@ -728,13 +721,13 @@ class Connector
 	 */
 	public static function getDomainDefault()
 	{
-		$uriOption = Option::get(Library::MODULE_ID, 'uri_client');
+		$uriOption = Option::getRealValue(Library::MODULE_ID, 'uri_client', '');
 
-		if(!empty($uriOption))
+		if (!empty($uriOption))
 		{
 			$uri = $uriOption;
 		}
-		elseif(defined('BX24_HOST_NAME') && !empty(BX24_HOST_NAME))
+		elseif (defined('BX24_HOST_NAME') && !empty(BX24_HOST_NAME))
 		{
 			$uri = (Context::getCurrent()->getRequest()->isHttps() ? 'https://' :  'http://') . BX24_HOST_NAME;
 		}
@@ -752,12 +745,6 @@ class Connector
 	 * @param $lineId
 	 *
 	 * @return array|mixed
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function infoConnectorsLine($lineId)
 	{
@@ -765,7 +752,7 @@ class Connector
 
 		$info = InfoConnectors::infoConnectorsLine($lineId);
 
-		if (!empty($info['DATA']))
+		if (isset($info, $info['DATA']) && !empty($info['DATA']))
 		{
 			$result = Json::decode($info['DATA']);
 			$expiresTime =  new \Bitrix\Main\Type\DateTime($info['EXPIRES']);
@@ -780,7 +767,7 @@ class Connector
 		{
 			$infoConnectors = InfoConnectors::addInfoConnectors($lineId);
 
-			if (!empty($infoConnectors))
+			if ($infoConnectors instanceof \Bitrix\Main\ORM\Data\AddResult)
 			{
 				if ($infoConnectors->isSuccess())
 				{
@@ -799,9 +786,6 @@ class Connector
 	 * @param $lineId
 	 *
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function getOutputInfoConnectorsLine($lineId)
 	{
@@ -1047,17 +1031,20 @@ class Connector
 	 * @param array $params Settings.
 	 * @return Result The result of the addition.
 	 */
-	public static function add($line, $connector, $params = array())
+	public static function add($line, $connector, $params = [])
 	{
 		$result = new Result();
 
-		if(empty($line) || empty($connector))
+		if (
+			empty($line)
+			|| empty($connector)
+		)
 		{
 			$result->addError(new Error(Loc::getMessage('IMCONNECTOR_EMPTY_PARAMETRS'), Library::ERROR_IMCONNECTOR_EMPTY_PARAMETRS, __METHOD__, array('line' => $line, 'connector' => $connector, 'params' => $params)));
 		}
 		else
 		{
-			if(!self::isConnector($connector))
+			if (!self::isConnector($connector))
 			{
 				$result->addError(new Error(Loc::getMessage('IMCONNECTOR_NOT_AVAILABLE_CONNECTOR'), Library::ERROR_NOT_AVAILABLE_CONNECTOR, __METHOD__, $connector));
 			}
@@ -1067,9 +1054,12 @@ class Connector
 				$cacheId = self::getCacheIdConnector($line, $connector);
 
 				if($status->getActive())
-					$result->addError(new Error(Loc::getMessage('IMCONNECTOR_ADD_EXISTING_CONNECTOR'), Library::ERROR_ADD_EXISTING_CONNECTOR, __METHOD__, $connector));
+				{
+					$result->addError(new Error(Loc::getMessage('IMCONNECTOR_ADD_EXISTING_CONNECTOR'),
+						Library::ERROR_ADD_EXISTING_CONNECTOR, __METHOD__, $connector));
+				}
 
-				if($result->isSuccess())
+				if ($result->isSuccess())
 				{
 					switch ($connector)
 					{
@@ -1078,7 +1068,10 @@ class Connector
 							{
 								$liveChatManager = new LiveChatManager($line);
 								if (!$liveChatManager->add($params))
-									$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FAILED_TO_ADD_CONNECTOR'), Library::ERROR_FAILED_TO_ADD_CONNECTOR, __METHOD__, $connector));
+								{
+									$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FAILED_TO_ADD_CONNECTOR'),
+										Library::ERROR_FAILED_TO_ADD_CONNECTOR, __METHOD__, $connector));
+								}
 							}
 							else
 							{
@@ -1087,7 +1080,7 @@ class Connector
 							break;
 
 						case 'network':
-							if(Loader::includeModule(Library::MODULE_ID_OPEN_LINES))
+							if (Loader::includeModule(Library::MODULE_ID_OPEN_LINES))
 							{
 								$output = new Output($connector, $line);
 								$resultRegister = $output->register($params);
@@ -1180,17 +1173,20 @@ class Connector
 	 * @param array $params Settings.
 	 * @return Result The result of the addition.
 	 */
-	public static function update($line, $connector, $params = array())
+	public static function update($line, $connector, $params = [])
 	{
 		$result = new Result();
 
-		if(empty($line) || empty($connector))
+		if (
+			empty($line)
+			|| empty($connector)
+		)
 		{
 			$result->addError(new Error(Loc::getMessage('IMCONNECTOR_EMPTY_PARAMETRS'), Library::ERROR_IMCONNECTOR_EMPTY_PARAMETRS, __METHOD__, array('line' => $line, 'connector' => $connector, 'params' => $params)));
 		}
 		else
 		{
-			if(!self::isConnector($connector))
+			if (!self::isConnector($connector))
 			{
 				$result->addError(new Error(Loc::getMessage('IMCONNECTOR_NOT_AVAILABLE_CONNECTOR'), Library::ERROR_NOT_AVAILABLE_CONNECTOR, __METHOD__, $connector));
 			}
@@ -1199,8 +1195,11 @@ class Connector
 				$status = Status::getInstance($connector, $line);
 				$cacheId = self::getCacheIdConnector($line, $connector);
 
-				if(!$status->getActive())
-					$result->addError(new Error(Loc::getMessage('IMCONNECTOR_UPDATE_NOT_EXISTING_CONNECTOR'), Library::ERROR_UPDATE_NOT_EXISTING_CONNECTOR, __METHOD__, $connector));
+				if (!$status->getActive())
+				{
+					$result->addError(new Error(Loc::getMessage('IMCONNECTOR_UPDATE_NOT_EXISTING_CONNECTOR'),
+						Library::ERROR_UPDATE_NOT_EXISTING_CONNECTOR, __METHOD__, $connector));
+				}
 
 				if($result->isSuccess())
 				{
@@ -1335,13 +1334,16 @@ class Connector
 	{
 		$result = new Result();
 
-		if(empty($line) || empty($connector))
+		if (
+			empty($line)
+			|| empty($connector)
+		)
 		{
 			$result->addError(new Error(Loc::getMessage('IMCONNECTOR_EMPTY_PARAMETRS'), Library::ERROR_IMCONNECTOR_EMPTY_PARAMETRS, __METHOD__, array('line' => $line, 'connector' => $connector)));
 		}
 		else
 		{
-			if(!self::isConnector($connector))
+			if (!self::isConnector($connector))
 			{
 				$result->addError(new Error(Loc::getMessage('IMCONNECTOR_NOT_AVAILABLE_CONNECTOR'), Library::ERROR_NOT_AVAILABLE_CONNECTOR, __METHOD__, $connector));
 			}
@@ -1350,8 +1352,11 @@ class Connector
 				$status = Status::getInstance($connector, $line);
 				$cacheId = self::getCacheIdConnector($line, $connector);
 
-				if(!$status->getActive())
-					$result->addError(new Error(Loc::getMessage('IMCONNECTOR_DELETE_NOT_EXISTING_CONNECTOR'), Library::ERROR_DELETE_NOT_EXISTING_CONNECTOR, __METHOD__, $connector));
+				if (!$status->getActive())
+				{
+					$result->addError(new Error(Loc::getMessage('IMCONNECTOR_DELETE_NOT_EXISTING_CONNECTOR'),
+						Library::ERROR_DELETE_NOT_EXISTING_CONNECTOR, __METHOD__, $connector));
+				}
 
 				if($result->isSuccess())
 				{
@@ -1362,7 +1367,10 @@ class Connector
 							{
 							$liveChatManager = new LiveChatManager($line);
 							if (!$liveChatManager->delete())
-								$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FAILED_TO_DELETE_CONNECTOR'), Library::ERROR_FAILED_TO_DELETE_CONNECTOR,  __METHOD__, $connector));
+							{
+								$result->addError(new Error(Loc::getMessage('IMCONNECTOR_FAILED_TO_DELETE_CONNECTOR'),
+									Library::ERROR_FAILED_TO_DELETE_CONNECTOR, __METHOD__, $connector));
+							}
 							}
 							else
 							{
@@ -1372,7 +1380,7 @@ class Connector
 							break;
 
 						case 'network':
-							if(Loader::includeModule(Library::MODULE_ID_OPEN_LINES))
+							if (Loader::includeModule(Library::MODULE_ID_OPEN_LINES))
 							{
 								$output = new Output($connector, $line);
 								$resultDelete = $output->delete();
@@ -1474,9 +1482,6 @@ class Connector
 	 *
 	 * @param array $message
 	 * @return array|null
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
 	public static function sendMessageProcessing(array $message): array
 	{
@@ -1598,5 +1603,112 @@ class Connector
 		}
 
 		return $zone;
+	}
+
+	/**
+	 * Checks availability of the external public url.
+	 * @see \Bitrix\ImConnector\Output::checkPublicUrl
+	 * @param string $publicUrl Portal public url to validate.
+	 * @param bool $checkHandlerPath
+	 * @return Result
+	 */
+	public static function checkPublicUrl(string $publicUrl, bool $checkHandlerPath = true): Result
+	{
+		$result = new Result();
+
+		if (empty($publicUrl))
+		{
+			$message = Loc::getMessage('IMCONNECTOR_ERROR_PUBLIC_URL_EMPTY');
+			if (empty($message))
+			{
+				$message = 'Cannot detect a value of the portal public url.';
+			}
+
+			return $result->addError(new Error($message, Library::ERROR_IMCONNECTOR_PUBLIC_URL_EMPTY));
+		}
+
+		if (
+			!($parsedUrl = \parse_url($publicUrl))
+			|| empty($parsedUrl['host'])
+			|| strpos($parsedUrl['host'], '.') === false
+			|| !in_array($parsedUrl['scheme'], ['http', 'https'])
+		)
+		{
+			$message = Loc::getMessage('IMCONNECTOR_ERROR_PUBLIC_URL_MALFORMED');
+			if (empty($message))
+			{
+				$message = 'Portal public url is malformed.';
+			}
+
+			return $result->addError(new Error($message, Library::ERROR_IMCONNECTOR_PUBLIC_URL_MALFORMED));
+		}
+
+		// check for local address
+		$host = $parsedUrl['host'];
+		if (
+			strtolower($host) == 'localhost'
+			|| $host == '0.0.0.0'
+			||
+			(
+				preg_match('#^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$#', $host)
+				&& preg_match('#^(127|10|172\.16|192\.168)\.#', $host)
+			)
+		)
+		{
+			$message = Loc::getMessage('IMCONNECTOR_ERROR_PUBLIC_URL_LOCALHOST', ['#HOST#' => $host]);
+			if (empty($message))
+			{
+				$message = 'Portal public url points to localhost: '.$host;
+			}
+
+			return $result->addError(new Error($message, Library::ERROR_IMCONNECTOR_PUBLIC_URL_LOCALHOST));
+		}
+
+		$error = (new \Bitrix\Main\Web\Uri($publicUrl))->convertToPunycode();
+		if ($error instanceof \Bitrix\Main\Error)
+		{
+			$message = Loc::getMessage('IMCONNECTOR_ERROR_CONVERTING_PUNYCODE', ['#HOST#' => $host, '#ERROR#' => $error->getMessage()]);
+			if (empty($message))
+			{
+				$message = 'Error converting hostname '.$host.' to punycode: '.$error->getMessage();
+			}
+
+			return $result->addError(new Error($message, Library::ERROR_IMCONNECTOR_PUBLIC_URL_MALFORMED));
+		}
+
+		if ($checkHandlerPath)
+		{
+			$documentRoot = '';
+			$siteList = \CSite::getList('', '', ['DOMAIN' => $host, 'ACTIVE' => 'Y']);
+			if ($site = $siteList->fetch())
+			{
+				$documentRoot = $site['ABS_DOC_ROOT'];
+			}
+			else
+			{
+				$siteList = \CSite::getList('', '', ['DEFAULT' => 'Y', 'ACTIVE' => 'Y']);
+				if ($site = $siteList->fetch())
+				{
+					$documentRoot = $site['ABS_DOC_ROOT'];
+				}
+			}
+			if ($documentRoot)
+			{
+				$documentRoot = \Bitrix\Main\IO\Path::normalize($documentRoot);
+				$publicHandler = new \Bitrix\Main\IO\File($documentRoot. Library::PORTAL_PATH);
+				if (!$publicHandler->isExists())
+				{
+					$message = Loc::getMessage('IMCONNECTOR_ERROR_PUBLIC_URL_HANDLER_PATH', ['#PATH#' => Library::PORTAL_PATH]);
+					if (empty($message))
+					{
+						$message = 'The file handler has not been found within the site document root. Expected: '. Library::PORTAL_PATH;
+					}
+
+					return $result->addError(new Error($message, Library::ERROR_IMCONNECTOR_PUBLIC_URL_HANDLER_PATH));
+				}
+			}
+		}
+
+		return $result;
 	}
 }

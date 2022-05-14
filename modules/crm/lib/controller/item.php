@@ -15,10 +15,13 @@ use Bitrix\Main\Engine\Response\Component;
 use Bitrix\Main\Engine\Response\DataType\Page;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\NotSupportedException;
 use Bitrix\Main\UI\PageNavigation;
 
 class Item extends Base
 {
+	public const MAX_IMPORT_BATCH_SIZE = 20;
+
 	public function configureActions(): array
 	{
 		$configureActions = parent::configureActions();
@@ -162,10 +165,8 @@ class Item extends Base
 		}
 		if (!Container::getInstance()->getUserPermissions()->canDeleteItem($item))
 		{
-			$this->addError(new Error(
-				Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED'),
-				ErrorCode::ACCESS_DENIED
-			));
+			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
+
 			return null;
 		}
 
@@ -245,13 +246,22 @@ class Item extends Base
 					$value = (array)$fields[$fieldName];
 					foreach($value as $date)
 					{
-						$result[] = \CRestUtil::$convertDateMethod($date);
+						// can return false and wrong value should not be set in this case:
+						$convertedValue = \CRestUtil::$convertDateMethod($date);
+						if ($convertedValue)
+						{
+							$result[] = $convertedValue;
+						}
 					}
 					$item->set($fieldName, $result);
 				}
 				else
 				{
-					$item->set($fieldName, \CRestUtil::$convertDateMethod($fields[$fieldName]));
+					$convertedValue = \CRestUtil::$convertDateMethod($fields[$fieldName]);
+					if ($convertedValue)
+					{
+						$item->set($fieldName, $convertedValue);
+					}
 				}
 			}
 			else
@@ -352,10 +362,8 @@ class Item extends Base
 
 		if (!Container::getInstance()->getUserPermissions()->canAddItem($item))
 		{
-			$this->addError(new Error(
-				Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED'),
-				ErrorCode::ACCESS_DENIED
-			));
+			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
+
 			return null;
 		}
 
@@ -405,10 +413,8 @@ class Item extends Base
 		}
 		if (!Container::getInstance()->getUserPermissions()->canUpdateItem($item))
 		{
-			$this->addError(new Error(
-				Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED'),
-				ErrorCode::ACCESS_DENIED
-			));
+			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
+
 			return null;
 		}
 
@@ -435,6 +441,104 @@ class Item extends Base
 		$this->addErrors($result->getErrors());
 
 		return null;
+	}
+
+	/**
+	 * Import new item with $fields.
+	 * Allow to set some system fields (CREATED_BY, UPDATED_BY, CREATED_DATE, UPDATED_DATE) for admins
+	 * Automation will not be executed for created items
+	 *
+	 * @param array $fields
+	 * @return array|null
+	 */
+	public function importAction(int $entityTypeId, array $fields): ?array
+	{
+		$factory = $this->getFactory($entityTypeId);
+		if (!$factory)
+		{
+			return null;
+		}
+
+		if ($this->shouldUseDeprecatedImportApi($entityTypeId))
+		{
+			return $this->importViaDeprecatedApi($entityTypeId, $fields);
+		}
+
+		$item = $factory->createItem();
+
+		$fields = $this->convertKeysToUpper($fields);
+		$this->processFields($item, $fields, $factory->getFieldsCollection());
+
+		if (!Container::getInstance()->getUserPermissions()->canImportItem($item))
+		{
+			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
+
+			return null;
+		}
+
+		$operation = $factory->getImportOperation($item);
+		if (
+			$this->getScope() === static::SCOPE_REST
+			&& !RestSettings::getCurrent()->isRequiredUserFieldCheckEnabled()
+		)
+		{
+			$operation->disableCheckRequiredUserFields();
+		}
+		$result = $operation->launch();
+		if ($result->isSuccess())
+		{
+			return [
+				'item' => [
+					'id' => $item->getId(),
+				],
+			];
+		}
+
+		$this->addErrors($result->getErrors());
+
+		return null;
+	}
+
+	public function batchImportAction(int $entityTypeId, array $data): ?array
+	{
+		$factory = $this->getFactory($entityTypeId);
+		if (!$factory)
+		{
+			return null;
+		}
+
+		if (count($data) > self::MAX_IMPORT_BATCH_SIZE)
+		{
+			$this->addError(new Error(
+				'You can only import ' . self::MAX_IMPORT_BATCH_SIZE . ' items at a time',
+				'MAX_IMPORT_BATCH_SIZE_EXCEEDED'
+			));
+
+			return null;
+		}
+
+		$executionResult = [];
+
+		foreach ($data as $itemKey => $itemData)
+		{
+			$itemData = is_array($itemData) ? $itemData : [];
+			$itemResult = $this->importAction($entityTypeId, $itemData);
+
+			$error = $this->getErrors()[0] ?? null;
+
+			$executionResult[$itemKey] = $error
+				? [
+					'error' => $error->getCode(),
+					'error_description' => $error->getMessage(),
+				]
+				: $itemResult
+			;
+			$this->errorCollection->clear();
+		}
+
+		return [
+			'items' => $executionResult,
+		];
 	}
 
 	/**
@@ -706,30 +810,10 @@ class Item extends Base
 
 		$isCheckSelect = (is_array($select) && !in_array('*', $select, true));
 
-		$fileFields = [];
-		$fieldsCollection = $factory->getFieldsCollection();
-		foreach ($fieldsCollection as $field)
-		{
-			if (
-				$isCheckSelect
-				&& in_array($field->getName(), $select, true)
-				&& $field->isFileUserField()
-			)
-			{
-				$fileFields[$field->getName()] = $field;
-			}
-		}
-		$fileFields = Container::getInstance()->getItemConverter()->convertKeysToCamelCase($fileFields);
 		foreach ($items as $item)
 		{
 			$itemId = $item->getId();
 			$result[$itemId] = $item->jsonSerialize();
-
-			foreach ($fileFields as $fieldName => $field)
-			{
-				$result[$itemId][$fieldName] = $this->prepareFileFieldValue($field, $item);
-			}
-
 		}
 
 		if ($isCheckSelect)
@@ -744,48 +828,96 @@ class Item extends Base
 		return $result;
 	}
 
-	protected function prepareFileFieldValue(Field $field, \Bitrix\Crm\Item $item): array
+	/**
+	 * @deprecated This method will be removed when operations will be supported for all entity types
+	 */
+	private function shouldUseDeprecatedImportApi(int $entityTypeId): bool
 	{
-		$result = [];
-
-		$router = Container::getInstance()->getRouter();
-		$itemId = $item->getId();
-		$fieldName = $field->getName();
-		$value = $item->get($fieldName);
-		if (is_array($value))
+		if (
+			$entityTypeId == \CCrmOwnerType::Lead
+			&& !method_exists(\Bitrix\Crm\Settings\LeadSettings::class, 'isFactoryEnabled')
+		)
 		{
-			foreach ($value as $singleValue)
-			{
-				if ($singleValue > 0)
-				{
-					$result[] = [
-						'id' => (int)$singleValue,
-						'url' => $router->getFileUrl(
-							$item->getEntityTypeId(),
-							$itemId,
-							$fieldName,
-							(int)$singleValue
-						),
-					];
-				}
-			}
+			//check for availability of \Bitrix\Crm\Settings\LeadSettings::getCurrent()->isFactoryEnabled();
+			return true;
 		}
-		else
+		if (
+			$entityTypeId == \CCrmOwnerType::Contact
+			&& !method_exists(\Bitrix\Crm\Settings\ContactSettings::class, 'isFactoryEnabled')
+		)
 		{
-			if ($value > 0)
-			{
-				$result = [
-					'id' => (int)$value,
-					'url' => $router->getFileUrl(
-						$item->getEntityTypeId(),
-						$itemId,
-						$fieldName,
-						(int)$value
-					),
-				];
-			}
+			//check for availability of \Bitrix\Crm\Settings\ContactSettings::getCurrent()->isFactoryEnabled();
+			return true;
+		}
+		if (
+			$entityTypeId == \CCrmOwnerType::Company
+			&& !method_exists(\Bitrix\Crm\Settings\CompanySettings::class, 'isFactoryEnabled')
+		)
+		{
+			//check for availability of \Bitrix\Crm\Settings\CompanySettings::getCurrent()->isFactoryEnabled();
+			return true;
 		}
 
-		return $result;
+		return false;
+	}
+
+	/**
+	 * @deprecated This method will be removed when operations will be supported for all entity types
+	 */
+	private function importViaDeprecatedApi(int $entityTypeId, array $fields): ?array
+	{
+		switch ($entityTypeId)
+		{
+			case \CCrmOwnerType::Lead:
+				$restEntity = new \CCrmLeadRestProxy();
+				break;
+
+			case \CCrmOwnerType::Contact:
+				$restEntity = new \CCrmContactRestProxy();
+				break;
+
+			case \CCrmOwnerType::Company:
+				$restEntity = new \CCrmCompanyRestProxy();
+				break;
+			default:
+				throw new NotSupportedException("Entity type {$entityTypeId} is not supported");
+		}
+
+		if (!\CCrmAuthorizationHelper::CheckImportPermission($entityTypeId))
+		{
+			$this->addError(new Error(
+				Loc::getMessage('CRM_COMMON_READ_ACCESS_DENIED'),
+				ErrorCode::ACCESS_DENIED
+			));
+
+			return null;
+		}
+
+		$fields = $this->convertKeysToUpper($fields);
+		$fieldsMap = Container::getInstance()->getFactory($entityTypeId)->getFieldsMap();
+		foreach ($fieldsMap as $commonFieldName => $fieldName)
+		{
+			if (isset($fields[$commonFieldName]))
+			{
+				$fields[$fieldName] = $fields[$commonFieldName];
+				unset($fields[$commonFieldName]);
+			}
+		}
+		try
+		{
+			$id = $restEntity->add($fields, [ 'IMPORT' => true ]);
+		}
+		catch (\Bitrix\Rest\RestException $e)
+		{
+			$this->addError(new Error(
+				$e->getMessage()
+			));
+
+			return null;
+		}
+
+		return [
+			'id' => (int)$id,
+		];
 	}
 }

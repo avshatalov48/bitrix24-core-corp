@@ -55,13 +55,14 @@ class Type extends Base
 		$params[] = new ExactParameter(
 			\Bitrix\Crm\Model\Dynamic\Type::class,
 			'type',
-			static function($className, $id)
+			function($className, $id)
 			{
 				$id = (int)$id;
 				$type = Container::getInstance()->getType($id);
 
-				if ($type && \CCrmOwnerType::isDynamicTypeBasedStaticEntity($type->getEntityTypeId()))
+				if (!$type || \CCrmOwnerType::isDynamicTypeBasedStaticEntity($type->getEntityTypeId()))
 				{
+					$this->addError(new Error(Loc::getMessage('CRM_TYPE_TYPE_NOT_FOUND')));
 					return null;
 				}
 
@@ -538,7 +539,7 @@ class Type extends Base
 					// empty string to provoke CODE regeneration
 					'CODE' => '',
 				]);
-				if (!$updatePageResult)
+				if (!$updatePageResult->isSuccess())
 				{
 					$result->addErrors($updatePageResult->getErrors());
 				}

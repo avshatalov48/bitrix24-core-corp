@@ -115,8 +115,10 @@ const Wrapper = {
 
 			if (css)
 			{
-				css = `.b24-form #b24-${this.form.getId()}, .b24-form #b24-${this.form.getId()}.b24-form-dark
-				 {
+				css = `
+				.b24-window-mounts #b24-window-mount-${this.form.getId()},
+				.b24-form #b24-${this.form.getId()}, 
+				.b24-form #b24-${this.form.getId()}.b24-form-dark {
 					${css}
 				}`;
 

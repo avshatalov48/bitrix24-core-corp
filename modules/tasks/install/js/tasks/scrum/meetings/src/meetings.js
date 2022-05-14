@@ -1,4 +1,4 @@
-import {Event, Loc, Tag, Text, Type, Dom} from 'main.core';
+import {Event, Loc, Tag, Text, Type, Dom, ajax} from 'main.core';
 import {BaseEvent} from 'main.core.events';
 import {Loader} from 'main.loader';
 import {Menu} from 'main.popup';
@@ -128,7 +128,9 @@ export class Meetings
 		});
 
 		this.menu = new PopupComponentsMaker({
+			id: 'tasks-scrum-meetings-widget',
 			target: targetNode,
+			cacheable: false,
 			content: [
 				{
 					html: [
@@ -307,20 +309,24 @@ export class Meetings
 	{
 		const calendarSettings = response.data.calendarSettings;
 
+		const uiClasses = 'ui-btn-split ui-btn-light-border ui-btn-xs ui-btn-light ui-btn-no-caps ui-btn-round';
+
 		const node = Tag.render`
 			<div class="tasks-scrum__widget-meetings--header">
 
-				<div class="ui-icon ui-icon-service-calendar tasks-scrum__widget-meetings--icon-calendar"><i></i></div>
+				<div class="ui-icon ui-icon-service-calendar tasks-scrum__widget-meetings--icon-calendar">
+					<i></i>
+				</div>
 
 				<div class="tasks-scrum__widget-meetings--header-title">
 					${Loc.getMessage('TSM_MEETINGS_HEADER_TITLE')}
 				</div>
 
-				<div class="ui-btn-split ui-btn-light-border ui-btn-xs ui-btn-light ui-btn-no-caps ui-btn-round tasks-scrum__widget-meetings--btn-create">
-					<button class="ui-btn-main">
+				<div class="tasks-scrum__widget-meetings--btn-create ${uiClasses}">
+					<button class="ui-btn-main" data-role="create-default-event">
 						${Loc.getMessage('TSM_MEETINGS_CREATE_BUTTON')}
 					</button>
-					<div class="ui-btn-menu"></div>
+					<div class="ui-btn-menu" data-role="show-menu-event-templates"></div>
 				</div>
 
 			</div>
@@ -356,7 +362,10 @@ export class Meetings
 			<div class="tasks-scrum__widget-meetings--content ${contentVisibilityClass}">
 			
 				<div class="tasks-scrum__widget-meetings--creation-block ${templateVisibility}">
-					<span class="tasks-scrum__widget-meetings--creation-close-btn"></span>
+					<span
+						class="tasks-scrum__widget-meetings--creation-close-btn"
+						data-role="close-event-templates"
+					></span>
 					<div class="tasks-scrum__widget-meetings--create-element-info">
 						${Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATES_INFO')}
 					</div>
@@ -426,7 +435,7 @@ export class Meetings
 		const todayEvent = response.data.todayEvent;
 		const listEvents = response.data.listEvents;
 
-		const todayEventVisibility = (todayEvent === null ? '' : '--visible');
+		const todayEventVisibility = (Type.isNull(todayEvent)? '' : '--visible');
 
 		this.listEvents.setTodayEvent(todayEvent);
 
@@ -463,7 +472,10 @@ export class Meetings
 					</span>
 				</div>
 				<div class="tasks-scrum__widget-meetings--create-btn">
-					<button class="ui-qr-popupcomponentmaker__btn">
+					<button
+						class="ui-qr-popupcomponentmaker__btn"
+						data-role="create-event-template-${eventTemplate.id}"
+					>
 						${Loc.getMessage('TSM_MEETINGS_CREATE_BUTTON')}
 					</button>
 				</div>
@@ -578,13 +590,13 @@ export class Meetings
 			}
 		).show();
 
-		if (eventTemplate)
-		{
-			top.BX.Event.EventEmitter.subscribeOnce(
-				'BX.Calendar:onEntrySave',
-				(baseEvent: BaseEvent) => {
-					const data = baseEvent.getData();
-					if (sliderId === data.sliderId)
+		top.BX.Event.EventEmitter.subscribeOnce(
+			'BX.Calendar:onEntrySave',
+			(baseEvent: BaseEvent) => {
+				const data = baseEvent.getData();
+				if (sliderId === data.sliderId)
+				{
+					if (eventTemplate)
 					{
 						this.requestSender.saveEventInfo({
 							groupId: this.groupId,
@@ -599,9 +611,21 @@ export class Meetings
 							})
 						;
 					}
+
+					ajax.runAction(
+						'bitrix:tasks.scrum.info.saveAnalyticsLabel',
+						{
+							data: {},
+							analyticsLabel: {
+								scrum: 'Y',
+								action: 'create_meet',
+								template: eventTemplate ? eventTemplate.id : 'custom'
+							}
+						}
+					);
 				}
-			);
-		}
+			}
+		);
 
 		this.menu.close();
 	}

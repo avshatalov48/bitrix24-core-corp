@@ -57,15 +57,7 @@ this.BX.Mobile.Crm = this.BX.Mobile.Crm || {};
 	  return Titlebar;
 	}();
 
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"crm-phonetracker-detail-control-container\">\n\t\t\t<div class=\"crm-phonetracker-detail-control-icon crm-phonetracker-detail-control-icon-avatar\" ", "></div>\n\t\t\t<div class=\"crm-phonetracker-detail-control-inner\">\n\t\t\t\t<div class=\"crm-phonetracker-detail-control-title\">", "</div>\n\t\t\t\t<div class=\"crm-phonetracker-detail-control-field-container\">\n\t\t\t\t\t<input\n\t\t\t\t\t\tonchange=\"BX.onCustomEvent('onCrmCallTrackerNeedToSendForm", "')\"\n\t\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\t\tname=\"CONTACTS[", "][FULL_NAME]\"\n\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\tclass=\"crm-phonetracker-detail-control-field\">\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject;
 
 	var Contact = /*#__PURE__*/function () {
 	  //defined in template
@@ -98,7 +90,7 @@ this.BX.Mobile.Crm = this.BX.Mobile.Crm || {};
 	      var avatar = this.avatar !== '' ? "style=\"background-image: url('".concat(main_core.Text.encode(this.avatar), "')\"") : '';
 	      var avatar2 = this.avatar !== '' ? "<i style=\"background-image:url('".concat(main_core.Text.encode(this.avatar), "')\"></i>") : '';
 	      var onclick = this.onclick.bind(this);
-	      return main_core.Tag.render(_templateObject(), avatar, main_core.Loc.getMessage('CRM_CONTACT'), this.formId, onclick, this.id, main_core.Loc.getMessage('CRM_CONTACT_PLACEHOLDER'), main_core.Text.encode(this.name));
+	      return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"crm-phonetracker-detail-control-container\">\n\t\t\t<div class=\"crm-phonetracker-detail-control-icon crm-phonetracker-detail-control-icon-avatar\" ", "></div>\n\t\t\t<div class=\"crm-phonetracker-detail-control-inner\">\n\t\t\t\t<div class=\"crm-phonetracker-detail-control-title\">", "</div>\n\t\t\t\t<div class=\"crm-phonetracker-detail-control-field-container\">\n\t\t\t\t\t<input\n\t\t\t\t\t\tonchange=\"BX.onCustomEvent('onCrmCallTrackerNeedToSendForm", "')\"\n\t\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\t\tname=\"CONTACTS[", "][FULL_NAME]\"\n\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\tclass=\"crm-phonetracker-detail-control-field\">\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>"])), avatar, main_core.Loc.getMessage('CRM_CONTACT'), this.formId, onclick, this.id, main_core.Loc.getMessage('CRM_CONTACT_PLACEHOLDER'), main_core.Text.encode(this.name));
 	    }
 	  }, {
 	    key: "draw",
@@ -155,15 +147,7 @@ this.BX.Mobile.Crm = this.BX.Mobile.Crm || {};
 	babelHelpers.defineProperty(Contact, "newIdsCounter", 0);
 	babelHelpers.defineProperty(Contact, "ids", []);
 
-	function _templateObject$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"crm-phonetracker-detail-control-container\">\n\t\t\t<div class=\"crm-phonetracker-detail-control-icon crm-phonetracker-detail-control-icon-avatar\" ", "></div>\n\t\t\t<div class=\"crm-phonetracker-detail-control-inner\">\n\t\t\t\t<div class=\"crm-phonetracker-detail-control-title\">", "</div>\n\t\t\t\t<div class=\"crm-phonetracker-detail-control-field-container\">\n\t\t\t\t\t<input type=\"hidden\" name=\"COMPANY[ID]\" value=\"", "\" >\n\t\t\t\t\t<input\n\t\t\t\t\t\tonchange=\"BX.onCustomEvent('onCrmCallTrackerNeedToSendForm", "')\"\n\t\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\t\ttype=\"text\"\n\t\t\t\t\t\tname=\"COMPANY[TITLE]\"\n\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\t", "\n\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\tclass=\"crm-phonetracker-detail-control-field\">\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>"]);
-
-	  _templateObject$1 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$1;
 
 	var Company = /*#__PURE__*/function () {
 	  // defined in template
@@ -195,7 +179,7 @@ this.BX.Mobile.Crm = this.BX.Mobile.Crm || {};
 	      var logo = this.logo !== '' ? "style=\"background-image: url('".concat(main_core.Text.encode(this.logo), "')\"") : '';
 	      var logo2 = this.logo !== '' ? "<i style=\"background-image:url('".concat(main_core.Text.encode(this.logo), "')\"></i>") : '';
 	      var onclick = this.onclick.bind(this);
-	      return main_core.Tag.render(_templateObject$1(), logo, main_core.Loc.getMessage('CRM_COMPANY'), this.id, this.formId, onclick, main_core.Text.encode(this.title), this.id <= 0 ? ' readonly ' : '', main_core.Loc.getMessage('CRM_COMPANY_PLACEHOLDER'));
+	      return main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"crm-phonetracker-detail-control-container\">\n\t\t\t<div class=\"crm-phonetracker-detail-control-icon crm-phonetracker-detail-control-icon-avatar\" ", "></div>\n\t\t\t<div class=\"crm-phonetracker-detail-control-inner\">\n\t\t\t\t<div class=\"crm-phonetracker-detail-control-title\">", "</div>\n\t\t\t\t<div class=\"crm-phonetracker-detail-control-field-container\">\n\t\t\t\t\t<input type=\"hidden\" name=\"COMPANY[ID]\" value=\"", "\" >\n\t\t\t\t\t<input\n\t\t\t\t\t\tonchange=\"BX.onCustomEvent('onCrmCallTrackerNeedToSendForm", "')\"\n\t\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\t\ttype=\"text\"\n\t\t\t\t\t\tname=\"COMPANY[TITLE]\"\n\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\t", "\n\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\tclass=\"crm-phonetracker-detail-control-field\">\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>"])), logo, main_core.Loc.getMessage('CRM_COMPANY'), this.id, this.formId, onclick, main_core.Text.encode(this.title), this.id <= 0 ? ' readonly ' : '', main_core.Loc.getMessage('CRM_COMPANY_PLACEHOLDER'));
 	    }
 	  }, {
 	    key: "draw",

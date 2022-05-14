@@ -49,7 +49,7 @@ class Chat implements Tabable
 		return [
 			"name" => "JSComponentChatRecent",
 			"componentCode" => "im.recent",
-			"scriptPath" => \Bitrix\MobileApp\Janative\Manager::getComponentPath("im.recent"),
+			"scriptPath" => \Bitrix\MobileApp\Janative\Manager::getComponentPath("im:im.recent"),
 			"params" => array_merge(
 				self::getComponentParams(),
 				[
@@ -126,7 +126,7 @@ class Chat implements Tabable
 			"component" => [
 				"name" => "JSStackComponent",
 				"componentCode" => "im.notify.legacy",
-				"scriptPath" => \Bitrix\MobileApp\Janative\Manager::getComponentPath("im.notify.legacy"),
+				"scriptPath" => \Bitrix\MobileApp\Janative\Manager::getComponentPath("im:im.notify.legacy"),
 				"params" => [
 					"MESSAGES" => [
 						"COMPONENT_TITLE" => Loc::getMessage("TAB_NAME_IM_RECENT_FULL")
@@ -169,7 +169,7 @@ class Chat implements Tabable
 			"name" => "JSStackComponent",
 			"title" => Loc::getMessage("MD_COMPONENT_IM_RECENT"),
 			"componentCode" => "im.navigation",
-			"scriptPath" => \Bitrix\MobileApp\Janative\Manager::getComponentPath("im.navigation"),
+			"scriptPath" => \Bitrix\MobileApp\Janative\Manager::getComponentPath("im:im.navigation"),
 			"rootWidget" => [
 				"name" => "tabs",
 				"settings" => [
@@ -240,10 +240,10 @@ class Chat implements Tabable
 			"INTRANET_INVITATION_REGISTER_SHARING_MESSAGE" => $registerSharingMessage,
 			"INTRANET_INVITATION_IS_ADMIN" => $isIntranetInvitationAdmin,
 
-			"WIDGET_CHAT_CREATE_VERSION" => \Bitrix\MobileApp\Janative\Manager::getComponentVersion('im.chat.create'),
-			"WIDGET_CHAT_USERS_VERSION" => \Bitrix\MobileApp\Janative\Manager::getComponentVersion('im.chat.user.list'),
-			"WIDGET_CHAT_RECIPIENTS_VERSION" => \Bitrix\MobileApp\Janative\Manager::getComponentVersion('im.chat.user.selector'),
-			"WIDGET_CHAT_TRANSFER_VERSION" => \Bitrix\MobileApp\Janative\Manager::getComponentVersion('im.chat.transfer.selector'),
+			"WIDGET_CHAT_CREATE_VERSION" => \Bitrix\MobileApp\Janative\Manager::getComponentVersion('im:im.chat.create'),
+			"WIDGET_CHAT_USERS_VERSION" => \Bitrix\MobileApp\Janative\Manager::getComponentVersion('im:im.chat.user.list'),
+			"WIDGET_CHAT_RECIPIENTS_VERSION" => \Bitrix\MobileApp\Janative\Manager::getComponentVersion('im:im.chat.user.selector'),
+			"WIDGET_CHAT_TRANSFER_VERSION" => \Bitrix\MobileApp\Janative\Manager::getComponentVersion('im:im.chat.transfer.selector'),
 			"WIDGET_BACKDROP_MENU_VERSION" => \Bitrix\MobileApp\Janative\Manager::getComponentVersion('backdrop.menu'),
 			"COMPONENT_CHAT_DIALOG_VERSION" => WebComponentManager::getWebComponentVersion('im.dialog'),
 			"COMPONENT_CHAT_DIALOG_VUE_VERSION" => WebComponentManager::getWebComponentVersion('im.dialog.vue'),

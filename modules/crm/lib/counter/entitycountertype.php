@@ -1,5 +1,6 @@
 <?php
 namespace Bitrix\Crm\Counter;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 
 class EntityCounterType
@@ -51,17 +52,17 @@ class EntityCounterType
 	}
 	/**
 	 * Check if specified counter type is supported for specified entity type.
-	 * @param int $entityCounterTypeID Entity Counter Type ID.
+	 * @param int $typeID Entity Counter Type ID.
 	 * @param int $entityTypeID Entity Type ID.
 	 * @return bool
 	 */
 	public static function isSupported($typeID, $entityTypeID)
 	{
-		if($typeID === EntityCounterType::IDLE)
-		{
-			return $entityTypeID === \CCrmOwnerType::Deal || $entityTypeID === \CCrmOwnerType::Lead || $entityTypeID === \CCrmOwnerType::Order;
-		}
-		return true;
+		$typeID = (int)$typeID;
+		$entityTypeID = (int)$entityTypeID;
+		$factory = Container::getInstance()->getFactory($entityTypeID);
+
+		return ($factory && $factory->getCountersSettings()->isCounterTypeEnabled($typeID));
 	}
 	/**
 	 * @param int $typeID Type ID.
@@ -156,17 +157,23 @@ class EntityCounterType
 	 */
 	public static function getAllSupported($entityTypeID, $enableGrouping = false)
 	{
-		$results = array();
-		$all = self::getAll($enableGrouping);
-		foreach($all as $typeID)
+		$entityTypeID = (int)$entityTypeID;
+		$factory = Container::getInstance()->getFactory($entityTypeID);
+		if (!$factory)
 		{
-			if(self::isSupported($typeID, $entityTypeID))
-			{
-				$results[] = $typeID;
-			}
+			return [];
 		}
-		return $results;
+
+		$countersTypes = $factory->getCountersSettings()->getEnabledCountersTypes();
+
+		if (!$enableGrouping)
+		{
+			$countersTypes = array_diff($countersTypes, self::getGroupings());
+		}
+
+		return $countersTypes;
 	}
+
 	public static function getGroupings()
 	{
 		return array(self::CURRENT, self::ALL);
@@ -209,31 +216,50 @@ class EntityCounterType
 
 		if($params === null)
 		{
-			$params = array();
+			$params = [];
 		}
 
 		if($options === null)
 		{
-			$options = array();
+			$options = [];
 		}
-		$entityTypeID = isset($options['ENTITY_TYPE_ID']) ? (int)$options['ENTITY_TYPE_ID'] : \CCrmOwnerType::Undefined;
+		$entityTypeId = (int)($options['ENTITY_TYPE_ID'] ?? \CCrmOwnerType::Undefined);
 
-		$items = array();
+		$items = [];
 		if(!(isset($params['params']) && isset($params['params']['multiple']) && strcasecmp($params['params']['multiple'], 'Y') === 0))
 		{
 			//Add 'Not Selected' for single filter
 			$items[''] = '';
 		}
 
-		if(\CCrmUserCounterSettings::GetValue(\CCrmUserCounterSettings::ReckonActivitylessItems, true)
-			&& ($entityTypeID === \CCrmOwnerType::Deal || $entityTypeID === \CCrmOwnerType::Lead || $entityTypeID === \CCrmOwnerType::Order))
+		$entityTypeId = (int)$entityTypeId;
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+		if (!$factory)
+		{
+			return [];
+		}
+
+		$countersSettings = $factory->getCountersSettings();
+
+		if ($countersSettings->isIdleCounterEnabled())
 		{
 			$items[self::IDLE] = GetMessage('CRM_ENTITY_COUNTER_TYPE_FILTER_IDLE');
 		}
+		if ($countersSettings->isPendingCounterEnabled())
+		{
+			$items[self::PENDING] = GetMessage('CRM_ENTITY_COUNTER_TYPE_FILTER_PENDING');
+		}
+		if ($countersSettings->isOverdueCounterEnabled())
+		{
+			$items[self::OVERDUE] = GetMessage('CRM_ENTITY_COUNTER_TYPE_FILTER_OVERDUE');
+		}
 
-		$items[self::PENDING] = GetMessage('CRM_ENTITY_COUNTER_TYPE_FILTER_PENDING');
-		$items[self::OVERDUE] = GetMessage('CRM_ENTITY_COUNTER_TYPE_FILTER_OVERDUE');
-
-		return array_merge(array('type' => 'list', 'items' => $items), $params);
+		return array_merge(
+			[
+				'type' => 'list',
+				'items' => $items,
+			],
+			$params
+		);
 	}
 }

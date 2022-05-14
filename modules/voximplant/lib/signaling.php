@@ -37,11 +37,11 @@ class Signaling
 
 	public function sendInvite($users)
 	{
-		$config = $this->call->getConfig();
+		$lineConfig = $this->call->getConfig();
 		$isTransfer = $this->call->getParentCallId() != '';
 		$call = $isTransfer ? Call::load($this->call->getParentCallId()) : $this->call;
 
-		if ($config['PORTAL_MODE'] == \CVoxImplantConfig::MODE_SIP)
+		if ($lineConfig['PORTAL_MODE'] === \CVoxImplantConfig::MODE_SIP)
 		{
 			if($call->getExternalLineId())
 			{
@@ -49,7 +49,7 @@ class Signaling
 				$externalNumber = $externalLine ? $externalLine['NUMBER'] : '';
 			}
 
-			$phoneTitle = $externalNumber ?: $config['PHONE_TITLE'];
+			$phoneTitle = $externalNumber ?: $lineConfig['PHONE_TITLE'];
 		}
 		else
 		{
@@ -58,25 +58,25 @@ class Signaling
 
 		if($call->isInternalCall() && Loader::includeModule('im'))
 		{
-			$portalCallData = \CIMContactList::GetUserData(array(
-				'ID' => array($call->getUserId(), $call->getPortalUserId()),
+			$portalCallData = \CIMContactList::GetUserData([
+				'ID' => [$call->getUserId(), $call->getPortalUserId()],
 				'DEPARTMENT' => 'N',
 				'HR_PHOTO' => 'Y'
-			));
+			]);
 		}
 		else
 		{
-			$portalCallData = array();
+			$portalCallData = [];
 		}
 
-		$config = Array(
-			"callId" => $call->getCallId(),
+		$config = [
+			"callId" => $this->call->getCallId(), // callId of the transfer call in case of transfer
 			"callerId" => $call->getCallerId(),
 			"lineNumber" => $call->getPortalNumber(),
 			"companyPhoneNumber" => $phoneTitle,
 			"phoneNumber" => $phoneTitle,
 			"chatId" => 0,
-			"chat" => array(),
+			"chat" => [],
 			"portalCall" => $call->isInternalCall(),
 			"portalCallUserId" => $call->isInternalCall() ? (int)$call->getUserId() : 0,
 			"portalCallData" => $call->isInternalCall() ? $portalCallData : [],
@@ -90,50 +90,59 @@ class Signaling
 			"crmEntityId" => $call->getPrimaryEntityId(),
 			"isCallback" => ($call->getIncoming() == \CVoxImplantMain::CALL_CALLBACK),
 			"isTransfer" => $isTransfer
-		);
+		];
 
-		$callName = $call->getCallerId();
-		if (isset($config['CRM']['CONTACT']['NAME']) && $config['CRM']['CONTACT']['NAME'] <> '')
-		{
-			$callName = $config['CRM']['CONTACT']['NAME'];
-		}
-		if (isset($config['CRM']['COMPANY']) && $config['CRM']['COMPANY'] <> '')
-		{
-			$callName .= ' ('.$config['CRM']['COMPANY'].')';
-		}
-		else if (isset($config['CRM']['CONTACT']['POST']) && $config['CRM']['CONTACT']['POST'] <> '')
-		{
-			$callName .= ' ('.$config['CRM']['CONTACT']['POST'].')';
-		}
-
-		$push['sub_tag'] = 'VI_CALL_' . $call->getCallId();
-		$push['send_immediately'] = 'Y';
-		$push['sound'] = 'call.aif';
-		$push['advanced_params'] = Array(
-			"id" => 'VI_CALL_'.$call->getCallId(),
-			"notificationsToCancel" => array('VI_CALL_'.$call->getCallId()),
-			"androidHighPriority" => true,
-		);
 		if ($call->isInternalCall())
 		{
-			$push['message'] = Loc::getMessage('INCOMING_CALL', Array('#NAME#' => $portalCallData['users'][$call->getUserId()]['name']));
+			$callerName = $portalCallData['users'][$call->getUserId()]['name'];
 		}
 		else
 		{
-			$push['message'] = Loc::getMessage('INCOMING_CALL', Array('#NAME#' => $callName));
-			$push['message'] = $push['message'].' '.Loc::getMessage('CALL_FOR_NUMBER', Array('#NUMBER#' => $phoneTitle));
+			$callerName = $call->getCallerId();
+			if (isset($config['CRM']['CONTACT']['NAME']) && $config['CRM']['CONTACT']['NAME'] <> '')
+			{
+				$callerName = $config['CRM']['CONTACT']['NAME'];
+			}
+			if (isset($config['CRM']['COMPANY']) && $config['CRM']['COMPANY'] <> '')
+			{
+				$callerName .= ' ('.$config['CRM']['COMPANY'].')';
+			}
+			else if (isset($config['CRM']['CONTACT']['POST']) && $config['CRM']['CONTACT']['POST'] <> '')
+			{
+				$callerName .= ' ('.$config['CRM']['CONTACT']['POST'].')';
+			}
 		}
 
+		$pushTag = "VI_CALL_{$call->getCallId()}";
+		$push = [
+			'sub_tag' => $pushTag,
+			'message' => Loc::getMessage('INCOMING_CALL', ['#NAME#' => $callerName])
+				. ($call->isInternalCall() ? ''	: ' ' . Loc::getMessage('CALL_FOR_NUMBER', ['#NUMBER#' => $phoneTitle]))
+			,
+			'send_immediately' => 'Y',
+			'sound' => 'call.aif',
+			'advanced_params' => [
+				'id' => $pushTag,
+				'notificationsToCancel' => [$pushTag],
+				'androidHighPriority' => true,
+				'isVoip' => true,
+				'callkit' => true,
+			]
+		];
+
 		$pushParams = [
+			'type' => 'telephony',
 			'callId' => $config['callId'],
 			'callerId' => $config['callerId'],
-			'callerName' => $callName,
+			'callerName' => $callerName,
 			'companyPhoneNumber' => $config['companyPhoneNumber'],
 			'config' => $config['config'],
 			'isCallback' => $config['isCallback'],
 			'isTransfer' => $config['isTransfer'],
 			'portalCall' => $config['portalCall'],
+			'ts' => time(),
 		];
+
 		if($call->isInternalCall() && is_array($portalCallData['users']))
 		{
 			$pushParams['portalCallUserId'] = $config['portalCallUserId'];
@@ -155,21 +164,15 @@ class Signaling
 		{
 			$pushParams['CRM'] = [
 				'FOUND' => $config['CRM']['FOUND'],
+				'CONTACT' => $config['CRM']['CONTACT'] ?? null,
+				'COMPANY' => $config['CRM']['COMPANY'] ?? null,
 			];
-			if(isset($config['CRM']['CONTACT']))
-			{
-				$pushParams['CRM']['CONTACT'] = $config['CRM']['CONTACT'];
-			}
-			if(isset($config['CRM']['COMPANY']))
-			{
-				$pushParams['CRM']['COMPANY'] = $config['CRM']['COMPANY'];
-			}
 		}
 
-		$push['params'] = Array(
-			'ACTION' => 'VI_CALL_'.$call->getCallId(),
+		$push['params'] = [
+			'ACTION' => $pushTag,
 			'PARAMS' => $pushParams
-		);
+		];
 
 		$this->send($users, static::COMMAND_INVITE, $config, $push);
 	}
@@ -181,7 +184,7 @@ class Signaling
 	public function sendOutgoing(int $userId,$callDevice = 'WEBRTC')
 	{
 		$call = $this->call;
-		$config = $call->getConfig();
+		$lineConfig = $call->getConfig();
 		$queueId = $call->getQueueId();
 		$queueName = $queueId ? Queue::createWithId($queueId)->getName() : null;
 
@@ -210,7 +213,7 @@ class Signaling
 			'portalCallQueueName' => $queueName,
 			'config' => \CVoxImplantConfig::getConfigForPopup($call->getCallId()),
 			'lineNumber' => $call->getPortalNumber() ?: '',
-			'lineName' => $config['PORTAL_MODE'] === \CVoxImplantConfig::MODE_SIP ? $config['PHONE_TITLE'] : $config['PHONE_NAME'],
+			'lineName' => $lineConfig['PORTAL_MODE'] === \CVoxImplantConfig::MODE_SIP ? $lineConfig['PHONE_TITLE'] : $lineConfig['PHONE_NAME'],
 			"CRM" => $crmData,
 		];
 

@@ -1385,7 +1385,6 @@ RegisterModuleDependences('iblock', 'OnAfterIBlockSectionUpdate', 'intranet', 'C
 			)
 		);
 	}
-
 /*
 RegisterModuleDependences('main', 'OnBeforeProlog', 'intranet', 'CIntranetEventHandlers', 'OnCreatePanel');
 */

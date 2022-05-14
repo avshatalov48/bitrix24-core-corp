@@ -690,7 +690,7 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 				threeWeeks: "<?=GetMessageJS('CRM_TIMELINE_WAIT_3W')?>",
 				custom: "<?=GetMessageJS('CRM_TIMELINE_WAIT_CUSTOM')?>",
 				afterDays: "<?=GetMessageJS('CRM_TIMELINE_WAIT_AFTER_CUSTOM_DAYS')?>",
-				beforeDate: "<?=GetMessageJS('CRM_TIMELINE_WAIT_DEFORE_CUSTOM_DATE')?>"
+				beforeDate: "<?=GetMessageJS('CRM_TIMELINE_WAIT_BEFORE_CUSTOM_DATE')?>"
 			};
 
 			BX.CrmHistoryItemSender.messages =

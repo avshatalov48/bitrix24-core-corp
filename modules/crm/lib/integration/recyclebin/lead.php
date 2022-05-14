@@ -60,9 +60,11 @@ class Lead extends RecyclableEntity
 	/**
 	 * Erase entity from Recycle Bin.
 	 * @param Recyclebin\Internals\Entity $entity
+	 * @param array $params
+	 *
 	 * @return Main\Result
 	 */
-	public static function removeFromRecyclebin(Recyclebin\Internals\Entity $entity)
+	public static function removeFromRecyclebin(Recyclebin\Internals\Entity $entity, array $params = [])
 	{
 		if($entity->getEntityType() !== self::getEntityName())
 		{

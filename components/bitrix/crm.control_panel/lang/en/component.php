@@ -1,5 +1,6 @@
 <?php
 $MESS["CRM_CTRL_PANEL_ITEM_ANALYTICS"] = "Analytics";
+$MESS["CRM_CTRL_PANEL_ITEM_ANALYTICS_BI"] = "BI analytics";
 $MESS["CRM_CTRL_PANEL_ITEM_ANALYTICS_CALLS"] = "Call analytics";
 $MESS["CRM_CTRL_PANEL_ITEM_ANALYTICS_DIALOGS"] = "Conversation analytics";
 $MESS["CRM_CTRL_PANEL_ITEM_ANALYTICS_MANAGERS"] = "Employee performance";
@@ -52,6 +53,7 @@ $MESS["CRM_CTRL_PANEL_ITEM_QUOTE_TITLE"] = "View all quotes";
 $MESS["CRM_CTRL_PANEL_ITEM_RECYCLE_BIN"] = "Recycle Bin";
 $MESS["CRM_CTRL_PANEL_ITEM_RECYCLE_BIN_TITLE"] = "View and recover deleted leads, contacts, companies and deals.";
 $MESS["CRM_CTRL_PANEL_ITEM_REPORT"] = "Reports";
+$MESS["CRM_CTRL_PANEL_ITEM_REPORT_CONSTRUCTOR"] = "Report Wizard";
 $MESS["CRM_CTRL_PANEL_ITEM_REPORT_TITLE"] = "Reports";
 $MESS["CRM_CTRL_PANEL_ITEM_SALES"] = "Sales";
 $MESS["CRM_CTRL_PANEL_ITEM_SALES_CENTER"] = "Sales center";

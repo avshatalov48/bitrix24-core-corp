@@ -101,7 +101,6 @@ else
 	$host = preg_replace("/:(80|443)$/", "", $host);
 	$arResult["host"] = htmlspecialcharsbx($host);
 	$user = $USER->GetByID($userId)->Fetch();
-	$arResult["user"] = $user;
 	$arResult["user"]["fullName"] = CUser::FormatName(CSite::GetNameFormat(false), $user);
 	$arResult["user"]["avatar"] = "";
 

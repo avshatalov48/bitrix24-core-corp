@@ -11,9 +11,9 @@ use \Bitrix\Main\Entity;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_TaskStage_Query query()
- * @method static EO_TaskStage_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_TaskStage_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_TaskStage_Result getById($id)
- * @method static EO_TaskStage_Result getList(array $parameters = array())
+ * @method static EO_TaskStage_Result getList(array $parameters = [])
  * @method static EO_TaskStage_Entity getEntity()
  * @method static \Bitrix\Tasks\Kanban\EO_TaskStage createObject($setDefaultValues = true)
  * @method static \Bitrix\Tasks\Kanban\EO_TaskStage_Collection createCollection()

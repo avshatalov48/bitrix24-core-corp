@@ -81,7 +81,6 @@ class AutomationSection
 		];
 	}
 
-
 	public static function getOnec(): array
 	{
 		$allowedLangs = ['ru', 'kz', 'by', 'ua'];
@@ -110,12 +109,15 @@ class AutomationSection
 	{
 		$available = ModuleManager::isModuleInstalled('lists') && ModuleManager::isModuleInstalled('bitrix24');
 
-		$listUrl = "javascript:BX.UI.InfoHelper.show('limit_office_records_management');";
-		$locked = true;
-		if (Loader::includeModule('lists') && \CLists::isFeatureEnabled('lists'))
+		$listUrl = SITE_DIR . 'company/lists/';
+		$locked = false;
+		$onclick = '';
+
+		if (!Loader::includeModule('lists') || !\CLists::isFeatureEnabled('lists'))
 		{
-			$listUrl = SITE_DIR . 'company/lists/';
-			$locked = false;
+			$onclick = "javascript:BX.UI.InfoHelper.show('limit_office_records_management');";
+			$listUrl = '';
+			$locked = true;
 		}
 
 		return [
@@ -126,6 +128,7 @@ class AutomationSection
 			'locked' => $locked,
 			'menuData' => [
 				'is_locked' => $locked,
+				'onclick' => $onclick,
 			],
 			'iconClass' => 'ui-icon intranet-automation-lists-icon',
 		];
@@ -153,13 +156,27 @@ class AutomationSection
 	public static function getRootMenuItem(): array
 	{
 		$extraUrls = [];
+		$firstItemUrl = '';
 		foreach (static::getItems() as $item)
 		{
 			if ($item['available'])
 			{
+				if (isset($item['menuData']['real_link']) && is_string($item['menuData']['real_link']))
+				{
+					if (empty($firstItemUrl))
+					{
+						$firstItemUrl = $item['menuData']['real_link'];
+					}
+				}
+
 				if (isset($item['url']) && is_string($item['url']))
 				{
 					$extraUrls[] = $item['url'];
+
+					if (empty($firstItemUrl))
+					{
+						$firstItemUrl = $item['url'];
+					}
 				}
 
 				if (isset($item['extraUrls']) && is_array($item['extraUrls']))
@@ -176,6 +193,8 @@ class AutomationSection
 			[
 				'menu_item_id' => 'menu_automation',
 				'top_menu_id' => 'top_menu_id_automation',
+				'counter_id' => 'bp_tasks',
+				'first_item_url' => $firstItemUrl,
 			],
 			'',
 		];

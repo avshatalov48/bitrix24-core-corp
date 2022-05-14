@@ -17,6 +17,7 @@ use Bitrix\Main\Web\Json;
  */
 
 Extension::load([
+	'ui.hint',
 	'ui.notification',
 	'catalog.product-calculator',
 	'catalog.store-use',

@@ -1,10 +1,16 @@
 import {Text, Type} from 'main.core';
 
 export type ItemTypeParams = {
-	id?: number|string,
+	id?: number | string,
 	name?: string,
 	sort?: number,
-	dodRequired?: 'Y' | 'N'
+	dodRequired?: 'Y' | 'N',
+	participants: Array<Participant>
+}
+
+export type Participant = {
+	id: number | string,
+	entityId: string
 }
 
 export class ItemType
@@ -15,6 +21,7 @@ export class ItemType
 		this.setName(params.name);
 		this.setSort(params.sort);
 		this.setDodRequired(params.dodRequired);
+		this.setParticipants(params.participants);
 	}
 
 	setId(id: number)
@@ -59,5 +66,26 @@ export class ItemType
 	isDodRequired(): boolean
 	{
 		return this.dodRequired;
+	}
+
+	setParticipants(participants: Array<Participant>)
+	{
+		this.participants = [];
+
+		if (!Type.isArray(participants))
+		{
+			return;
+		}
+
+		participants
+			.forEach((participant: Participant) => {
+				this.participants.push([participant.entityId, participant.id])
+			})
+		;
+	}
+
+	getParticipants(): Array<Participant>
+	{
+		return this.participants;
 	}
 }

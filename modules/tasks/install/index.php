@@ -156,6 +156,9 @@ Class tasks extends CModule
 		$eventManager->registerEventHandler('socialnetwork', 'OnSocNetUserToGroupUpdate', 'tasks', '\Bitrix\Tasks\Integration\SocialNetwork\EventListener', 'onGroupUserUpdate');
 		$eventManager->registerEventHandler('socialnetwork', 'OnSocNetUserToGroupDelete', 'tasks', '\Bitrix\Tasks\Integration\SocialNetwork\EventListener', 'onGroupUserDelete');
 
+		// bitrix24
+		$eventManager->registerEventHandler('bitrix24', 'onFeedbackCollectorCheckCanRun', 'tasks', '\Bitrix\Tasks\Integration\Bitrix24\FeedbackCollector', 'onFeedbackCollectorCheckCanRun');
+
 		$this->InstallTasks();
 
 		CModule::includeModule('tasks');
@@ -705,6 +708,9 @@ Class tasks extends CModule
 		$eventManager->unRegisterEventHandler('socialnetwork', 'OnSocNetUserToGroupAdd', 'tasks', '\Bitrix\Tasks\Integration\SocialNetwork\EventListener', 'onGroupUserAdd');
 		$eventManager->unRegisterEventHandler('socialnetwork', 'OnSocNetUserToGroupUpdate', 'tasks', '\Bitrix\Tasks\Integration\SocialNetwork\EventListener', 'onGroupUserUpdate');
 		$eventManager->unRegisterEventHandler('socialnetwork', 'OnSocNetUserToGroupDelete', 'tasks', '\Bitrix\Tasks\Integration\SocialNetwork\EventListener', 'onGroupUserDelete');
+
+		// bitrix24
+		$eventManager->unRegisterEventHandler('bitrix24', 'onFeedbackCollectorCheckCanRun', 'tasks', '\Bitrix\Tasks\Integration\Bitrix24\FeedbackCollector', 'onFeedbackCollectorCheckCanRun');
 
 		// remove tasks from socnetlog table
 		if (

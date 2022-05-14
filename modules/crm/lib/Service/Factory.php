@@ -5,12 +5,15 @@ namespace Bitrix\Crm\Service;
 use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\Cleaning\CleaningManager;
 use Bitrix\Crm\Conversion\EntityConversionConfig;
+use Bitrix\Crm\Counter\EntityCounterSettings;
 use Bitrix\Crm\Currency;
 use Bitrix\Crm\EO_Status;
 use Bitrix\Crm\EO_Status_Collection;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Service\EventHistory\TrackedObject;
+use Bitrix\Crm\Settings\HistorySettings;
 use Bitrix\Crm\Statistics;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Crm\UI\Filter\EntityHandler;
@@ -34,6 +37,7 @@ abstract class Factory
 	protected $userType;
 	protected $editorAdapter;
 	protected $isParentFieldsAdded = false;
+	protected $itemsCategoryCache = [];
 
 	/** @var StatusTable */
 	protected $statusTableClassName = StatusTable::class;
@@ -332,13 +336,28 @@ abstract class Factory
 	public function getItems(array $parameters = []): array
 	{
 		$items = [];
+		$itemIds = [];
+
+		$fmIndex = array_search(Item::FIELD_NAME_FM, $parameters['select'] ?? [], true);
+		$isFmInSelect = $fmIndex !== false;
+		if ($isFmInSelect)
+		{
+			unset($parameters['select'][$fmIndex]);
+		}
 
 		$parameters = $this->prepareGetListParameters($parameters);
 
 		$list = $this->getDataClass()::getList($parameters);
 		while($item = $list->fetchObject())
 		{
-			$items[] = $this->getItemByEntityObject($item);
+			$item =  $this->getItemByEntityObject($item);
+			$items[] = $item;
+			$itemIds[] = $item->getId();
+		}
+
+		if ($isFmInSelect && !empty($itemIds) && $this->isMultiFieldsEnabled())
+		{
+			Container::getInstance()->getMultifieldStorage()->warmupCache($this->getEntityTypeId(), $itemIds);
 		}
 
 		return $items;
@@ -463,11 +482,7 @@ abstract class Factory
 			$parameters['select'][] = Item::FIELD_NAME_OBSERVERS;
 		}
 
-		$parameters = $this->prepareGetListParameters($parameters);
-
-		$object = $this->getDataClass()::getList($parameters)->fetchObject();
-
-		return $object ? $this->getItemByEntityObject($object) : null;
+		return $this->getItems($parameters)[0] ?? null;
 	}
 
 	/**
@@ -1060,12 +1075,18 @@ abstract class Factory
 	{
 		$add = new Operation\Add($item, $this->getOperationSettings($context), $this->getFieldsCollection());
 
-		$this->configureAddOrImportOperation($add);
+		$this->configureAddOperation($add);
 
 		return $add;
 	}
 
-	protected function configureAddOrImportOperation(Operation $operation): void
+	/**
+	 * Configure all operations, that extends Operation\Add: Add itself, Import and Restore
+	 *
+	 * @param Operation $operation
+	 * @return void
+	 */
+	protected function configureAddOperation(Operation $operation): void
 	{
 	}
 
@@ -1102,6 +1123,11 @@ abstract class Factory
 			);
 		}
 
+		if (!HistorySettings::getCurrent()->isDeletionEventEnabled($this->getEntityTypeId()))
+		{
+			$operation->disableSaveToHistory();
+		}
+
 		return $operation;
 	}
 
@@ -1132,14 +1158,18 @@ abstract class Factory
 
 	public function getRestoreOperation(Item $item, Context $context = null): Operation\Restore
 	{
-		return new Operation\Restore($item, $this->getOperationSettings($context), $this->getFieldsCollection());
+		$restore = new Operation\Restore($item, $this->getOperationSettings($context), $this->getFieldsCollection());
+
+		$this->configureAddOperation($restore);
+
+		return $restore;
 	}
 
 	public function getImportOperation(Item $item, Context $context = null): Operation\Import
 	{
 		$import = new Operation\Import($item, $this->getOperationSettings($context), $this->getFieldsCollection());
 
-		$this->configureAddOrImportOperation($import);
+		$this->configureAddOperation($import);
 
 		return $import;
 	}
@@ -1315,6 +1345,26 @@ abstract class Factory
 		}
 
 		return null;
+	}
+
+	/**
+	 * Returns semantics of a stage with $stageId
+	 * Returns null if the stage is not found
+	 *
+	 * @param string $stageId
+	 * @return string|null
+	 */
+	final public function getStageSemantics(string $stageId): ?string
+	{
+		$stage = $this->getStage($stageId);
+		if (!$stage)
+		{
+			return null;
+		}
+
+		$semantics = $stage->getSemantics();
+
+		return PhaseSemantics::isDefined($semantics) ? $semantics : PhaseSemantics::PROCESS;
 	}
 	//endregion
 
@@ -1569,6 +1619,12 @@ abstract class Factory
 			return 0;
 		}
 
+		if (array_key_exists($id, $this->itemsCategoryCache))
+		{
+			return $this->itemsCategoryCache[$id];
+		}
+		$this->itemsCategoryCache[$id] = null;
+
 		$items = $this->getItems([
 			'select' => [Item::FIELD_NAME_CATEGORY_ID],
 			'filter' => [
@@ -1577,9 +1633,41 @@ abstract class Factory
 		]);
 		if (!empty($items))
 		{
-			return $items[0]->getCategoryId();
+			$this->itemsCategoryCache[$id] = $items[0]->getCategoryId();
 		}
 
-		return null;
+		return $this->itemsCategoryCache[$id];
+	}
+
+	public function clearItemCategoryCache(int $id): void
+	{
+		if (array_key_exists($id, $this->itemsCategoryCache))
+		{
+			unset($this->itemsCategoryCache[$id]);
+		}
+	}
+
+	/**
+	 * Returns true if this entity supports counters.
+	 *
+	 * @return bool
+	 */
+	public function isCountersEnabled(): bool
+	{
+		return false;
+	}
+
+	/**
+	 * Return actual counters settings.
+	 *
+	 * @return EntityCounterSettings
+	 */
+	public function getCountersSettings(): EntityCounterSettings
+	{
+		return
+			$this->isCountersEnabled()
+			? EntityCounterSettings::createDefault($this->isStagesSupported())
+			: new EntityCounterSettings()
+		;
 	}
 }

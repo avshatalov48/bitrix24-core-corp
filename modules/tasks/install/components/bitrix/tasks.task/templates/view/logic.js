@@ -472,6 +472,7 @@ BX.namespace('Tasks.Component');
 					BX.Tasks.alert(response.errors);
 
 					this.isSaving = false;
+					BX.Tasks.CheckListInstance.deactivateLoading();
 				}
 			}.bind(this)
 		);

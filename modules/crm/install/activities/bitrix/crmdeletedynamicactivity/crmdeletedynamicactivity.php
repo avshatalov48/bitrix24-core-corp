@@ -7,7 +7,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Bizproc\FieldType;
 use Bitrix\Crm;
-use Bitrix\Crm\Automation;
 use Bitrix\Main\Localization\Loc;
 
 class CBPCrmDeleteDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
@@ -33,7 +32,7 @@ class CBPCrmDeleteDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		$errors = parent::checkProperties();
 
 		$factory = Crm\Service\Container::getInstance()->getFactory($this->EntityTypeId);
-		if (is_null($factory) || !Automation\Factory::isSupported($factory->getEntityTypeId()))
+		if (is_null($factory) || !CCrmBizProcHelper::ResolveDocumentName($this->EntityTypeId))
 		{
 			$errors->setError(new \Bitrix\Main\Error(Loc::getMessage('CRM_DDA_TYPE_ID_ERROR')));
 		}
@@ -82,7 +81,7 @@ class CBPCrmDeleteDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 			$entityTypeId = $factory->getEntityTypeId();
 			$documentType = CCrmBizProcHelper::ResolveDocumentType($entityTypeId);
 
-			if (isset($documentType) && Automation\Factory::isSupported($entityTypeId))
+			if (isset($documentType))
 			{
 				$typeNames[$entityTypeId] = static::getDocumentService()->getDocumentTypeName($documentType);
 			}

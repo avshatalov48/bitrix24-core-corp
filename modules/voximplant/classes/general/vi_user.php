@@ -636,7 +636,7 @@ class CVoxImplantUser
 			return $cacheManager->get($cacheTag);
 
 		$userAccessCodes = \CAccess::GetUserCodesArray($userId);
-		if(!is_array($userAccessCodes) || count($userAccessCodes) == 0)
+		if(!is_array($userAccessCodes) || empty($userAccessCodes))
 			return array();
 
 		$cursor = \Bitrix\Voximplant\Model\LineAccessTable::getList(array(

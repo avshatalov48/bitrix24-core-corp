@@ -4,11 +4,13 @@ namespace Bitrix\ImOpenLines;
 use Bitrix\Main;
 use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
+use Bitrix\Main\UserTable;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Entity\ReferenceField;
 
 use Bitrix\Im\User;
+use Bitrix\Im\Color;
 use Bitrix\Im\Recent;
 use Bitrix\Im\Model\ChatTable;
 use Bitrix\Im\Model\RelationTable;
@@ -95,7 +97,7 @@ class Chat
 				$chat = ChatTable::getById($chatId)->fetch();
 				if (
 					!empty($chat)
-					&& in_array($chat['ENTITY_TYPE'], [self::CHAT_TYPE_OPERATOR, self::CHAT_TYPE_CLIENT])
+					&& in_array($chat['ENTITY_TYPE'], [self::CHAT_TYPE_OPERATOR, self::CHAT_TYPE_CLIENT], true)
 				)
 				{
 					if (
@@ -110,6 +112,9 @@ class Chat
 
 					$this->chat = $chat;
 					$this->isDataLoaded = true;
+
+					//TODO: Hack for telegram 22.04.2022
+					$this->isNoSession($chat);
 				}
 			}
 		}
@@ -120,68 +125,136 @@ class Chat
 		return $this->moduleLoad;
 	}
 
+	/**
+	 * TODO: Hack for telegram 22.04.2022
+	 *
+	 * @param array $chat
+	 * @return bool
+	 */
+	protected function isNoSession(array $chat): bool
+	{
+		$result = false;
+		$isSession = true;
+
+		if(self::parseLinesChatEntityId($chat['ENTITY_ID'])['connectorId'] === 'telegrambot')
+		{
+			$isSession = (bool)Model\SessionTable::getList([
+				'select' => ['ID'],
+				'filter' => [
+					'=CHAT_ID' => $chat['ID'],
+				],
+				'limit' => 1
+			])->fetch();
+		}
+
+		if ($isSession === false)
+		{
+			$this->isCreated = true;
+			$result = true;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param $params
+	 * @return bool
+	 */
 	public function load($params)
 	{
-		if (!$this->isModuleLoad())
+		$result = false;
+
+		if ($this->isModuleLoad())
 		{
-			return false;
-		}
-		$orm = ChatTable::getList([
-			'filter' => [
-				'=ENTITY_TYPE' => 'LINES',
-				'=ENTITY_ID' => $params['USER_CODE']
-			],
-			'limit' => 1
-		]);
-		if($chat = $orm->fetch())
-		{
-			if(
-				isset($params['CONNECTOR']['chat']['description'])
-				&& $chat['DESCRIPTION'] != $params['CONNECTOR']['chat']['description']
-			)
+			$rawChat = ChatTable::getList([
+				'filter' => [
+					'=ENTITY_TYPE' => 'LINES',
+					'=ENTITY_ID' => $params['USER_CODE']
+				],
+				'limit' => 1
+			]);
+			if ($chat = $rawChat->fetch())
 			{
-				$chatManager = new \CIMChat(0);
-				$chatManager->SetDescription($chat['ID'], $params['CONNECTOR']['chat']['description']);
-				$chat['DESCRIPTION'] = $params['CONNECTOR']['chat']['description'];
+				if (
+					isset($params['CONNECTOR']['chat']['description'])
+					&& $chat['DESCRIPTION'] !== $params['CONNECTOR']['chat']['description']
+				)
+				{
+					$chatManager = new \CIMChat(0);
+					$chatManager->SetDescription($chat['ID'], $params['CONNECTOR']['chat']['description']);
+					$chat['DESCRIPTION'] = $params['CONNECTOR']['chat']['description'];
+				}
+
+				$this->chat = $chat;
+
+				$this->isDataLoaded = true;
+				$result = true;
+
+				//TODO: Hack for telegram 22.04.2022
+				$this->isNoSession($chat);
 			}
-			$this->chat = $chat;
+			elseif ($params['ONLY_LOAD'] !== 'Y')
+			{
+				$addParamsChat = $this->getParamsAddChat($params);
 
-			$this->isDataLoaded = true;
-			return true;
+				$chat = new \CIMChat(0);
+				$id = $chat->Add($addParamsChat);
+				if ($id)
+				{
+					$rawChat = ChatTable::getById($id);
+					$this->chat = $rawChat->fetch();
+					$this->isCreated = true;
+					$this->isDataLoaded = true;
+
+					$result = true;
+				}
+			}
 		}
-		elseif($params['ONLY_LOAD'] === 'Y')
-		{
-			return false;
-		}
 
-		$parsedUserCode = Session\Common::parseUserCode($params['USER_CODE']);
-		$connectorId = $parsedUserCode['CONNECTOR_ID'];
+		return $result;
+	}
 
-		$avatarId = 0;
+	/**
+	 * @param array $params
+	 * @return array
+	 */
+	protected function getParamsAddChat(array $params): array
+	{
+		$result = [
+			'TYPE' => IM_MESSAGE_OPEN_LINE,
+			'AVATAR_ID' => 0,
+			'USERS' => false,
+			'DESCRIPTION' => '',
+			'ENTITY_TYPE' => 'LINES',
+			'ENTITY_ID' => $params['USER_CODE'],
+			'SKIP_ADD_MESSAGE' => 'Y',
+		];
+
+		$connectorId = self::parseLinesChatEntityId($params['USER_CODE'])['connectorId'];
+
 		$userName = '';
 		$chatColorCode = '';
-		$addChat['USERS'] = false;
 		if ($params['USER_ID'])
 		{
-			$orm = \Bitrix\Main\UserTable::getById($params['USER_ID']);
-			if ($user = $orm->fetch())
+			$rawUser = UserTable::getById($params['USER_ID']);
+			if ($user = $rawUser->fetch())
 			{
 				if ($user['PERSONAL_PHOTO'] > 0)
 				{
-					$avatarId = \CFile::CopyFile($user['PERSONAL_PHOTO']);
+					$result['AVATAR_ID'] = \CFile::CopyFile($user['PERSONAL_PHOTO']);
 				}
-				$addChat['USERS'] = [$params['USER_ID']];
+				$result['USERS'] = [$params['USER_ID']];
 
 				if (
-					$connectorId != 'livechat' ||
-					!empty($user['NAME']))
+					$connectorId !== 'livechat'
+					|| !empty($user['NAME']))
 				{
 					$userName = User::getInstance($params['USER_ID'])->getFullName(false);
 				}
-				$chatColorCode = \Bitrix\Im\Color::getCodeByNumber($params['USER_ID']);
-				if (User::getInstance($params['USER_ID'])->getGender() == 'M')
+				$chatColorCode = Color::getCodeByNumber($params['USER_ID']);
+				if (User::getInstance($params['USER_ID'])->getGender() === 'M')
 				{
-					$replaceColor = \Bitrix\Im\Color::getReplaceColors();
+					$replaceColor = Color::getReplaceColors();
 					if (isset($replaceColor[$chatColorCode]))
 					{
 						$chatColorCode = $replaceColor[$chatColorCode];
@@ -190,36 +263,24 @@ class Chat
 			}
 		}
 
-		$description = '';
 		if (isset($params['CONNECTOR']['chat']['description']))
 		{
-			$description = trim($params['CONNECTOR']['chat']['description']);
+			$result['DESCRIPTION'] = trim($params['CONNECTOR']['chat']['description']);
+		}
+
+		if (empty($params['LINE_NAME']))
+		{
+			$lineId = self::parseLinesChatEntityId($params['USER_CODE'])['lineId'];
+			$configManager = new Config();
+			$params['LINE_NAME'] = $configManager->get($lineId)['LINE_NAME'];
 		}
 
 		$titleParams = $this->getTitle($params['LINE_NAME'], $userName, $chatColorCode);
 
-		$addChat['TYPE'] = IM_MESSAGE_OPEN_LINE;
-		$addChat['AVATAR_ID'] = $avatarId;
-		$addChat['TITLE'] = $titleParams['TITLE'];
-		$addChat['COLOR'] = $titleParams['COLOR'];
-		$addChat['DESCRIPTION'] = $description;
-		$addChat['ENTITY_TYPE'] = 'LINES';
-		$addChat['ENTITY_ID'] = $params['USER_CODE'];
-		$addChat['SKIP_ADD_MESSAGE'] = 'Y';
+		$result['TITLE'] = $titleParams['TITLE'];
+		$result['COLOR'] = $titleParams['COLOR'];
 
-		$chat = new \CIMChat(0);
-		$id = $chat->Add($addChat);
-		if (!$id)
-		{
-			return false;
-		}
-
-		$orm = ChatTable::getById($id);
-		$this->chat = $orm->fetch();
-		$this->isCreated = true;
-		$this->isDataLoaded = true;
-
-		return true;
+		return $result;
 	}
 
 	/**
@@ -260,6 +321,8 @@ class Chat
 				if($skipSession !== true)
 				{
 					$session = new Session();
+					$session->setChat($this);
+
 					$resultLoad = $session->load([
 						'USER_CODE' => $this->chat['ENTITY_ID'],
 						'MODE' => Session::MODE_OUTPUT,
@@ -399,11 +462,6 @@ class Chat
 	 *
 	 * @param int $userId
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function skip($userId = 0)
 	{
@@ -412,6 +470,8 @@ class Chat
 		if($this->isDataLoaded())
 		{
 			$session = new Session();
+			$session->setChat($this);
+
 			$resultLoad = $session->load(Array(
 				'USER_CODE' => $this->chat['ENTITY_ID'],
 				'SKIP_CREATE' => 'Y'
@@ -467,6 +527,8 @@ class Chat
 		if($this->isDataLoaded())
 		{
 			$session = new Session();
+			$session->setChat($this);
+
 			$resultLoadSession = $session->load([
 				'USER_CODE' => $this->chat['ENTITY_ID']
 			]);
@@ -505,10 +567,6 @@ class Chat
 
 	/**
 	 * @param $userId
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function waitAnswer($userId)
 	{
@@ -519,10 +577,11 @@ class Chat
 	}
 
 	/**
-	 * @param $params
+	 * @param array $params
+	 * @param Session $session
 	 * @return bool
 	 */
-	public function transfer($params): bool
+	public function transfer($params, $session = null): bool
 	{
 		$result = false;
 
@@ -536,7 +595,12 @@ class Chat
 				$selfExit = !(isset($params['LEAVE']) && $params['LEAVE'] === 'N');
 				$skipCheck = isset($params['SKIP_CHECK']) && $params['SKIP_CHECK'] === 'Y';
 
-				$session = new Session();
+				if (!$session instanceof Session)
+				{
+					$session = new Session();
+					$session->setChat($this);
+				}
+
 				$resultLoadSession = $session->load([
 					'USER_CODE' => $this->chat['ENTITY_ID']
 				]);
@@ -556,10 +620,12 @@ class Chat
 						]);
 						$event->send();
 
-						foreach($event->getResults() as $eventResult)
+						foreach ($event->getResults() as $eventResult)
 						{
 							if ($eventResult->getType() !== \Bitrix\Main\EventResult::SUCCESS)
+							{
 								continue;
+							}
 
 							$newValues = $eventResult->getParameters();
 							if (!empty($newValues['TRANSFER_ID']))
@@ -624,7 +690,12 @@ class Chat
 			{
 				$session->setOperatorId(0, true, !($mode === self::TRANSFER_MODE_MANUAL));
 				$this->update(['AUTHOR_ID' => 0]);
-				$this->updateFieldData([Chat::FIELD_SESSION => ['LINE_ID' => $queueId]]);
+				$this->updateFieldData([
+					self::FIELD_SESSION => [
+						'LINE_ID' => $queueId,
+						'ID' => $session->getData('ID'),
+					]
+				]);
 
 				$chat = new \CIMChat(0);
 				$relations = \CIMChat::GetRelationById($this->chat['ID']);
@@ -760,6 +831,16 @@ class Chat
 					$chat->DeleteUser($this->chat['ID'], $params['FROM'], false, true);
 				}
 
+				$sessionField = $this->getFieldData(self::FIELD_SESSION);
+				if ($sessionField['ID'] != $session->getData('ID'))
+				{
+					$this->updateFieldData([
+						self::FIELD_SESSION => [
+							'ID' => $session->getData('ID')
+						]
+					]);
+				}
+
 				if ($session->getConfig('ACTIVE') === 'Y')
 				{
 					$this->update(['AUTHOR_ID' => 0]);
@@ -857,10 +938,6 @@ class Chat
 	 * @param array $users
 	 * @param array $sessionId
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function setOperators($users = [], $sessionId = 0): bool
 	{
@@ -1019,11 +1096,13 @@ class Chat
 				$this->leave($relation['USER_ID']);
 			}
 
-			$this->updateFieldData([Chat::FIELD_SESSION => [
-				'ID' => '0',
-				'PAUSE' => 'N',
-				'WAIT_ACTION' => 'N'
-			]]);
+			$this->updateFieldData([
+				self::FIELD_SESSION => [
+					'ID' => '0',
+					'PAUSE' => 'N',
+					'WAIT_ACTION' => 'N'
+				]
+			]);
 
 			$this->update([
 				'AUTHOR_ID' => 0,
@@ -1059,9 +1138,6 @@ class Chat
 	 *				DEAL
 	 * 			)
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function setCrmFlag($params)
 	{
@@ -1204,6 +1280,7 @@ class Chat
 		$result = new Result();
 
 		$session = new Session();
+		$session->setChat($this);
 
 		if (
 			$this->isDataLoaded() &&
@@ -1301,7 +1378,6 @@ class Chat
 		}
 		else
 		{
-			$this->validationAction();
 			$result->addError(new Error('Session or chat failed to load', 'NOT_LOAD_SESSION_OR_CHAT', __METHOD__, ['USER_ID' => $userId, 'PERMISSION_OTHER_CLOSE' => $permissionOtherClose]));
 		}
 
@@ -1311,18 +1387,13 @@ class Chat
 	/**
 	 * @param $userId
 	 * @return Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\Db\SqlQueryException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function markSpamAndFinish($userId)
 	{
 		$result = new Result();
 
 		$session = new Session();
+		$session->setChat($this);
 
 		if (
 			$this->isDataLoaded() &&
@@ -1381,7 +1452,6 @@ class Chat
 		}
 		else
 		{
-			$this->validationAction();
 			$result->addError(new Error('Session or chat failed to load', 'NOT_LOAD_SESSION_OR_CHAT', __METHOD__, ['USER_ID' => $userId]));
 		}
 
@@ -1390,19 +1460,15 @@ class Chat
 
 	/**
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function dismissedOperatorFinish()
 	{
 		$result = false;
 
-		if($this->isDataLoaded())
+		if ($this->isDataLoaded())
 		{
 			$session = new Session();
+			$session->setChat($this);
 
 			$params = [
 				'SKIP_CREATE' => 'Y',
@@ -1432,11 +1498,6 @@ class Chat
 	/**
 	 * @param $userId
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function startSession($userId)
 	{
@@ -1445,6 +1506,8 @@ class Chat
 		if($this->isDataLoaded())
 		{
 			$session = new Session();
+			$session->setChat($this);
+
 			$resultLoad = $session->load(Array(
 				'USER_CODE' => $this->chat['ENTITY_ID'],
 				'MODE' => Session::MODE_OUTPUT,
@@ -1497,6 +1560,8 @@ class Chat
 				$user = User::getInstance($userId);
 
 				$session = new Session();
+				$session->setChat($this);
+
 				$resultLoad = $session->load([
 					'USER_CODE' => $this->chat['ENTITY_ID'],
 					'SKIP_CREATE' => 'Y'
@@ -1533,6 +1598,8 @@ class Chat
 						$mode = Session::MODE_OUTPUT;
 					}
 					$session = new Session();
+					$session->setChat($this);
+
 					$resultCreate = $session->load([
 						'USER_CODE' => $this->chat['ENTITY_ID'],
 						'MODE' => $mode,
@@ -1637,6 +1704,8 @@ class Chat
 				)
 				{
 					$session = new Session();
+					$session->setChat($this);
+
 					$resultLoadSession = $session->load([
 						'USER_CODE' => $this->chat['ENTITY_ID'],
 						'SKIP_CREATE' => 'Y'
@@ -1745,6 +1814,8 @@ class Chat
 			if (Tools\Lock::getInstance()->set($keyLock))
 			{
 				$session = new Session();
+				$session->setChat($this);
+
 				$resultLoad = $session->load([
 					'USER_CODE' => $this->chat['ENTITY_ID']
 				]);
@@ -1772,6 +1843,8 @@ class Chat
 						$session->finish(false, true, false);
 
 						$session = new Session();
+						$session->setChat($this);
+
 						$session->load([
 							'USER_CODE' => $this->chat['ENTITY_ID'],
 							'MODE' => Session::MODE_OUTPUT,
@@ -1886,6 +1959,8 @@ class Chat
 		elseif($this->isDataLoaded())
 		{
 			$session = new Session();
+			$session->setChat($this);
+
 			$resultLoad = $session->load([
 				'USER_CODE' => $this->chat['ENTITY_ID']
 			]);
@@ -1959,11 +2034,6 @@ class Chat
 	/**
 	 * @param int $userId
 	 * @return Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function createLead($userId = 0)
 	{
@@ -1977,6 +2047,8 @@ class Chat
 		elseif($this->isDataLoaded())
 		{
 			$session = new Session();
+			$session->setChat($this);
+
 			$resultLoad = $session->load([
 				'USER_CODE' => $this->chat['ENTITY_ID']
 			]);
@@ -2046,8 +2118,9 @@ class Chat
 	{
 		$data = [];
 
-		if ($this->isDataLoaded() &&
-			in_array($field, [self::FIELD_CRM, self::FIELD_SESSION, self::FIELD_LIVECHAT])
+		if (
+			$this->isDataLoaded()
+			&& in_array($field, [self::FIELD_CRM, self::FIELD_SESSION, self::FIELD_LIVECHAT])
 		)
 		{
 			if ($field == self::FIELD_SESSION)
@@ -2190,7 +2263,7 @@ class Chat
 
 		if (!$userColor)
 		{
-			$userColor = \Bitrix\Im\Color::getRandomCode();
+			$userColor = Color::getRandomCode();
 		}
 
 		return Array(
@@ -2202,9 +2275,6 @@ class Chat
 	/**
 	 * @param $fields
 	 * @return Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function updateFieldData($fields)
 	{
@@ -2420,10 +2490,6 @@ class Chat
 	/**
 	 * @param $fields
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function update($fields)
 	{
@@ -2471,6 +2537,8 @@ class Chat
 					if(!empty($fields['AUTHOR_ID']) && !User::getInstance($fields['AUTHOR_ID'])->isBot())
 					{
 						$session = new Session();
+						$session->setChat($this);
+
 						$loadSession = $session->load(Array(
 							'USER_CODE' => $this->chat['ENTITY_ID']
 						));
@@ -2540,13 +2608,13 @@ class Chat
 		if (!Loader::includeModule('im'))
 			return false;
 
-		if (\Bitrix\Im\Color::isEnabled())
+		if (Color::isEnabled())
 		{
 			if (!$chatColorCode)
 			{
 				\CGlobalCounter::Increment('im_chat_color_id', \CGlobalCounter::ALL_SITES, false);
 				$chatColorId = \CGlobalCounter::GetValue('im_chat_color_id', \CGlobalCounter::ALL_SITES);
-				$chatColorCode = \Bitrix\Im\Color::getCodeByNumber($chatColorId);
+				$chatColorCode = Color::getCodeByNumber($chatColorId);
 			}
 			\CGlobalCounter::Increment('im_chat_color_'.$chatColorCode, \CGlobalCounter::ALL_SITES, false);
 
@@ -2583,7 +2651,6 @@ class Chat
 	 * @param $userList
 	 * @param bool $userCrm
 	 * @return bool|int
-	 * @throws Main\LoaderException
 	 */
 	public function sendJoinMessage($userList, $userCrm = false)
 	{
@@ -2628,11 +2695,6 @@ class Chat
 	 * @param null $type
 	 * @param string $message
 	 * @return bool|int
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function sendAutoMessage($type = null, $message = '')
 	{
@@ -2645,6 +2707,8 @@ class Chat
 		elseif($this->isDataLoaded())
 		{
 			$session = new Session();
+			$session->setChat($this);
+
 			$resultLoadSession = $session->load([
 				'USER_CODE' => $this->chat['ENTITY_ID']
 			]);
@@ -2704,22 +2768,22 @@ class Chat
 	/**
 	 * Check before action that the same dialog was loaded.
 	 *
-	 * @param $loadChatId
+	 * @param int $loadChatId
 	 * @return bool
 	 */
-	protected function validationAction($loadChatId = 0): bool
+	protected function validationAction($loadChatId): bool
 	{
 		$result = false;
 
-		if($this->isDataLoaded())
+		if ($this->isDataLoaded())
 		{
-			if($this->chat['ID'] == $loadChatId)
+			if (
+				(int)$loadChatId > 0
+				&& (int)$this->chat['ID'] > 0
+				&& (int)$this->chat['ID'] == (int)$loadChatId
+			)
 			{
 				$result = true;
-			}
-			else
-			{
-				$this->close();
 			}
 		}
 
@@ -2757,7 +2821,6 @@ class Chat
 	 * @param $toUserId
 	 * @param null $fromUserId
 	 * @return bool
-	 * @throws Main\LoaderException
 	 */
 	public static function sendRatingNotify($type, $sessionId, $rating, $toUserId, $fromUserId = null)
 	{
@@ -2968,7 +3031,7 @@ class Chat
 
 		if(!empty($entityId))
 		{
-			list($result['connectorId'], $result['lineId']) = explode('|', $entityId);
+			[$result['connectorId'], $result['lineId']] = explode('|', $entityId);
 		}
 
 		return $result;
@@ -2980,10 +3043,6 @@ class Chat
 	 * @param $crmEntityType
 	 * @param $crmEntityId
 	 * @return int
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public static function getLastChatIdByCrmEntity($crmEntityType, $crmEntityId): int
 	{
@@ -3071,10 +3130,6 @@ class Chat
 	 * @param array $users
 	 * @param int $counter
 	 * @return Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	protected static function setCounterRelationForChat($chatId, array $users, int $counter = 0): Result
 	{

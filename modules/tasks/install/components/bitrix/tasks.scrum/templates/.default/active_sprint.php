@@ -79,7 +79,8 @@ $pathToTask = str_replace('#group_id#', $arParams['GROUP_ID'], $pathToTask);
 			activeSprintId: '<?= $arResult['activeSprintId'] ?>',
 			pathToTask: '<?= \CUtil::jSEscape($pathToTask) ?>',
 			taskLimitExceeded: '<?= ($arResult['taskLimitExceeded'] ? 'Y' : 'N') ?>',
-			canUseAutomation: '<?= ($arResult['canUseAutomation'] ? 'Y' : 'N') ?>'
+			canUseAutomation: '<?= ($arResult['canUseAutomation'] ? 'Y' : 'N') ?>',
+			canCompleteSprint: '<?= ($arResult['canCompleteSprint'] ? 'Y' : 'N') ?>'
 		});
 		BX.Tasks.Scrum.Entry.renderTabsTo(document.getElementById('tasks-scrum-switcher'));
 		BX.Tasks.Scrum.Entry.renderSprintStatsTo(document.getElementById('tasks-scrum-sprint-stats'));

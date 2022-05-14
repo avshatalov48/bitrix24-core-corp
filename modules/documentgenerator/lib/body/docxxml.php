@@ -826,7 +826,7 @@ class DocxXml extends Xml
 	 */
 	protected function isHtml($string): bool
 	{
-		return (preg_match('/<\s?[^\>]*\/?\s?>/i', $string) != false);
+		return static::detectHtml($string);
 	}
 
 	/**

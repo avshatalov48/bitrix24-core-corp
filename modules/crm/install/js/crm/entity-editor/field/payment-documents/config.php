@@ -8,12 +8,12 @@ return [
 	'css' => 'dist/payment-documents.bundle.css',
 	'js' => 'dist/payment-documents.bundle.js',
 	'rel' => [
-		'main.core.events',
 		'main.popup',
-		'currency.currency-core',
 		'ui.dialogs.messagebox',
 		'main.core',
+		'main.core.events',
 		'ui.label',
+		'currency.currency-core',
 	],
 	'skip_core' => false,
 ];

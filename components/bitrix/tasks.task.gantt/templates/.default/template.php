@@ -263,6 +263,7 @@ else
 										|| response.status !== 'success'
 									)
 									{
+										BX.reload();
 										return;
 									}
 
@@ -302,7 +303,14 @@ else
 						}).then(
 							function(response)
 							{
-
+								if (
+									!response.status
+									|| response.status !== 'success'
+								)
+								{
+									BX.reload();
+									return;
+								}
 							}.bind(this),
 							function(response)
 							{
@@ -335,6 +343,7 @@ else
 									|| response.status !== 'success'
 								)
 								{
+									BX.reload();
 									return;
 								}
 
@@ -349,7 +358,7 @@ else
 								});
 							},
 							function(response) {
-								BX.Tasks.alert(response.errors);
+								BX.Tasks.alert(response.errors, function(){ BX.reload(); });
 							}
 						);
                     },
@@ -370,6 +379,15 @@ else
 								taskTo: dep.to
 							}
 						}).then(function(response) {
+							if (
+								!response.status
+								|| response.status !== 'success'
+							)
+							{
+								BX.reload();
+								return;
+							}
+
 							void BX.ajax.runAction('tasks.analytics.hit', {
 								analyticsLabel: {
 									gantt: 'Y',

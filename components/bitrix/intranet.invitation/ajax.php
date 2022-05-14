@@ -1,7 +1,11 @@
 <?php
 
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
+use Bitrix\Intranet\Invitation\Register;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Localization\Loc;
@@ -19,7 +23,7 @@ use Bitrix\Main\Entity;
 
 class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Controller
 {
-	protected function isInvitingUsersAllowed()
+	protected function isInvitingUsersAllowed(): bool
 	{
 		if (!Invitation::canCurrentUserInvite())
 		{
@@ -28,14 +32,17 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 		if (Loader::includeModule("bitrix24"))
 		{
-			if (!\CBitrix24::isEmailConfirmed())
+			if (!CBitrix24::isEmailConfirmed())
 			{
 				return false;
 			}
 
-			$licensePrefix = \CBitrix24::getLicensePrefix();
-			$licenseType = \CBitrix24::getLicenseType();
-			if (in_array($licensePrefix, ['cn', 'en', 'vn', 'jp']) && $licenseType === "project")
+			$licensePrefix = CBitrix24::getLicensePrefix();
+			$licenseType = CBitrix24::getLicenseType();
+			if (
+				$licenseType === "project"
+				&& in_array($licensePrefix, ['cn', 'en', 'vn', 'jp'])
+			)
 			{
 				$res = InvitationTable::getList([
 					'filter' => [
@@ -112,7 +119,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 				'POPUP_COMPONENT_NAME' => 'bitrix:intranet.invitation',
 				'POPUP_COMPONENT_TEMPLATE_NAME' => '',
 				'POPUP_COMPONENT_PARAMS' => [
-					'USER_OPTIONS' => isset($params['USER_OPTIONS']) ? $params['USER_OPTIONS'] : []
+					'USER_OPTIONS' => $params['USER_OPTIONS'] ?? []
 				],
 				'IFRAME_MODE' => true
 			]
@@ -139,19 +146,14 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		return $bExtranetInstalled;
 	}
 
-	protected function isInvitationBySmsAvailable()
+	protected function isInvitationBySmsAvailable(): bool
 	{
 		return Loader::includeModule("bitrix24") && Option::get('bitrix24', 'phone_invite_allowed', 'N') === 'Y';
 	}
 
-	protected function isMoreUserAvailable()
+	protected function isMoreUserAvailable(): bool
 	{
-		if (Loader::includeModule("bitrix24") && !CBitrix24::isMoreUserAvailable())
-		{
-			return false;
-		}
-
-		return true;
+		return !(Loader::includeModule("bitrix24") && !CBitrix24::isMoreUserAvailable());
 	}
 
 	protected function getHeadDepartmentId()
@@ -178,22 +180,24 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		return false;
 	}
 
-	protected function prepareUsersForResponse($userIds)
+	protected function prepareUsersForResponse($userIds): array
 	{
 		if (
-			!Loader::includeModule("socialnetwork")
-			|| empty($userIds)
+			empty($userIds)
+			|| !Loader::includeModule("socialnetwork")
+
 		)
 		{
 			return [];
 		}
 
 		$userOptions = isset($_POST["userOptions"]) && is_array($_POST["userOptions"]) ? $_POST["userOptions"] : [];
-		$users = EntitySelector\UserProvider::makeItems(EntitySelector\UserProvider::getUsers(['userId' => $userIds]), $userOptions);
-		return $users;
+		return EntitySelector\UserProvider::makeItems(EntitySelector\UserProvider::getUsers([
+			'userId' => $userIds,
+		]), $userOptions);
 	}
 
-	protected function prepareGroupIds($groups)
+	protected function prepareGroupIds($groups): array
 	{
 		$formattedGroups = [];
 		foreach ($groups as $key => $id)
@@ -204,27 +208,27 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		return $formattedGroups;
 	}
 
-	protected function registerNewUser($newUsers, &$strError)
+	protected function registerNewUser($newUsers, &$strError): array
 	{
 		$arError = [];
-		$invitedUserIds = \Bitrix\Intranet\Invitation\Register::inviteNewUsers(SITE_ID, $newUsers, $arError);
+		$invitedUserIds = Register::inviteNewUsers(SITE_ID, $newUsers, $arError);
 
-		if(
+		if (
 			is_array($arError)
 			&& count($arError) > 0
 		)
 		{
 			foreach($arError as $strErrorText)
 			{
-				if(strlen($strErrorText) > 0)
+				if ((string)$strErrorText !== '')
 				{
-					$strError .= $strErrorText." ";
+					$strError .= $strErrorText . " ";
 				}
 			}
 		}
 		else
 		{
-			$isExtranet = isset($newUsers["UF_DEPARTMENT"]) ? false : true;
+			$isExtranet = !isset($newUsers["UF_DEPARTMENT"]);
 			if (isset($newUsers["SONET_GROUPS_CODE"]) && is_array($newUsers["SONET_GROUPS_CODE"]))
 			{
 				CIntranetInviteDialog::RequestToSonetGroups(
@@ -311,7 +315,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		$newUsers = [
 			"ITEMS" => $userData["ITEMS"],
 			"UF_DEPARTMENT" => $departmentId,
-			"SONET_GROUPS_CODE" => isset($userData["SONET_GROUPS_CODE"]) ? $userData["SONET_GROUPS_CODE"] : []
+			"SONET_GROUPS_CODE" => $userData["SONET_GROUPS_CODE"] ?? []
 		];
 
 		$res = $this->registerNewUser($newUsers, $strError);
@@ -468,10 +472,12 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		}
 
 		$isCurrentUserAdmin = (
-				Loader::includeModule("bitrix24") && \CBitrix24::IsPortalAdmin(\Bitrix\Main\Engine\CurrentUser::get()->getId())
-				|| \Bitrix\Main\Engine\CurrentUser::get()->isAdmin()
+			(
+				Loader::includeModule("bitrix24")
+				&& CBitrix24::IsPortalAdmin(\Bitrix\Main\Engine\CurrentUser::get()->getId())
 			)
-			? true : false;
+			|| \Bitrix\Main\Engine\CurrentUser::get()->isAdmin()
+		);
 
 		if (Loader::includeModule("socialservices"))
 		{
@@ -544,8 +550,6 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 	public function inviteIntegratorAction()
 	{
-		global $USER;
-
 		if (!Loader::includeModule("bitrix24"))
 		{
 			return false;
@@ -598,8 +602,6 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 
 		CIntranetInviteDialog::logAction($newIntegratorId, 'intranet', 'invite_user', 'integrator_dialog');
 
-		$res = $this->prepareUsersForResponse([$newIntegratorId]);
-
-		return $res;
+		return $this->prepareUsersForResponse([$newIntegratorId]);
 	}
 }

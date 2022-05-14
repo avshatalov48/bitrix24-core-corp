@@ -25,8 +25,8 @@ class VoximplantBlackListComponent extends \CBitrixComponent implements \Bitrix\
 
 	public function executeComponent()
 	{
-		$permissions = \Bitrix\Voximplant\Security\Permissions::createWithCurrentUser();
-		if(!$permissions->canPerform(\Bitrix\Voximplant\Security\Permissions::ENTITY_SETTINGS, \Bitrix\Voximplant\Security\Permissions::ACTION_MODIFY))
+		$permissions = Permissions::createWithCurrentUser();
+		if(!$permissions->canPerform(Permissions::ENTITY_SETTINGS, Permissions::ACTION_MODIFY))
 		{
 			return false;
 		}
@@ -108,12 +108,13 @@ class VoximplantBlackListComponent extends \CBitrixComponent implements \Bitrix\
 			"autoBlock" => Bitrix\Main\Config\Option::get("voximplant", "blacklist_auto", "N") == "Y" ? "Y" : "N",
 			"interval" => (int)Bitrix\Main\Config\Option::get("voximplant", "blacklist_time", 5),
 			"ringsCount" => (int)Bitrix\Main\Config\Option::get("voximplant", "blacklist_count", 5),
+			"registerInCRM" => Bitrix\Main\Config\Option::get("voximplant", "blacklist_register_in_crm", "N") == "Y" ? "Y" : "N",
 		];
 	}
 
 	public function setSettingsAction(array $settings)
 	{
-		if(!$this->userPermissions->canPerform(\Bitrix\Voximplant\Security\Permissions::ENTITY_SETTINGS, \Bitrix\Voximplant\Security\Permissions::ACTION_MODIFY))
+		if(!$this->userPermissions->canPerform(Permissions::ENTITY_SETTINGS, Permissions::ACTION_MODIFY))
 		{
 			return false;
 		}
@@ -121,13 +122,14 @@ class VoximplantBlackListComponent extends \CBitrixComponent implements \Bitrix\
 		Bitrix\Main\Config\Option::set("voximplant", "blacklist_auto", $settings["autoBlock"] == "Y" ? "Y" : "N");
 		Bitrix\Main\Config\Option::set("voximplant", "blacklist_time", (int)$settings["interval"] ?: 5);
 		Bitrix\Main\Config\Option::set("voximplant", "blacklist_count", (int)$settings["ringsCount"] ?: 5);
+		Bitrix\Main\Config\Option::set("voximplant", "blacklist_register_in_crm", $settings["registerInCRM"] == "Y" ? "Y" : "N");
 
 		return true;
 	}
 
 	public function addNumbersAction(array $numbers)
 	{
-		if(!$this->userPermissions->canPerform(\Bitrix\Voximplant\Security\Permissions::ENTITY_SETTINGS, \Bitrix\Voximplant\Security\Permissions::ACTION_MODIFY))
+		if(!$this->userPermissions->canPerform(Permissions::ENTITY_SETTINGS, Permissions::ACTION_MODIFY))
 		{
 			return false;
 		}
@@ -157,7 +159,7 @@ class VoximplantBlackListComponent extends \CBitrixComponent implements \Bitrix\
 
 	public function deleteNumberAction($numberId)
 	{
-		if(!$this->userPermissions->canPerform(\Bitrix\Voximplant\Security\Permissions::ENTITY_SETTINGS, \Bitrix\Voximplant\Security\Permissions::ACTION_MODIFY))
+		if(!$this->userPermissions->canPerform(Permissions::ENTITY_SETTINGS, Permissions::ACTION_MODIFY))
 		{
 			return false;
 		}

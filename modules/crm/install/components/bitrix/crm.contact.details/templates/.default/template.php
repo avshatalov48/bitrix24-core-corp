@@ -112,7 +112,8 @@ $APPLICATION->IncludeComponent(
 		'TIMELINE' => ['GUID' => "{$guid}_timeline", 'ENABLE_WAIT' => false],
 		'ACTIVITY_EDITOR_ID' => $activityEditorID,
 		'PATH_TO_USER_PROFILE' => $arResult['PATH_TO_USER_PROFILE'],
-		'ENABLE_PROGRESS_BAR' => false
+		'ENABLE_PROGRESS_BAR' => false,
+		'EXTRAS' => ['CATEGORY_ID' => $arResult['CATEGORY_ID']],
 	]
 );
 

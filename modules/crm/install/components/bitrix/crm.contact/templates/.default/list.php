@@ -1,6 +1,8 @@
 <?php
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
+$categoryId = (int)($arResult['VARIABLES']['category_id'] ?? 0);
+
 $isSlider = ($_REQUEST['IFRAME'] == 'Y' && $_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER');
 if (!$isSlider)
 {
@@ -43,7 +45,7 @@ else
 	$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
 	if($isBitrix24Template)
 	{
-		$this->SetViewTarget('below_pagetitle', 0);
+		$this->SetViewTarget('below_pagetitle', 1000);
 	}
 
 	$APPLICATION->IncludeComponent(
@@ -51,7 +53,9 @@ else
 		'',
 		array(
 			'ENTITY_TYPE_NAME' => CCrmOwnerType::ContactName,
-			'EXTRAS' => array(),
+			'EXTRAS' => [
+				'CATEGORY_ID' => $categoryId,
+			],
 			'PATH_TO_ENTITY_LIST' => $arResult['PATH_TO_CONTACT_LIST']
 		)
 	);
@@ -90,6 +94,7 @@ else
 			'PATH_TO_CONTACT_DEDUPE' => $arResult['PATH_TO_CONTACT_DEDUPE'],
 			'PATH_TO_CONTACT_DEDUPEWIZARD' => $arResult['PATH_TO_CONTACT_DEDUPEWIZARD'],
 			'ELEMENT_ID' => $arResult['VARIABLES']['contact_id'],
+			'CATEGORY_ID' => $categoryId,
 			'TYPE' => 'list',
 			'IN_SLIDER' => $isSlider ? 'Y' : 'N',
 		),
@@ -120,6 +125,9 @@ else
 			'POPUP_COMPONENT_NAME' => 'bitrix:crm.contact.list',
 			'POPUP_COMPONENT_TEMPLATE_NAME' => '',
 			'POPUP_COMPONENT_PARAMS' => [
+				'CATEGORY_ID' => $categoryId,
+				'GRID_ID_SUFFIX' => (new \Bitrix\Crm\Component\EntityList\GridId(CCrmOwnerType::Contact))
+					->getDefaultSuffix($categoryId),
 				'CONTACT_COUNT' => '20',
 				'PATH_TO_CONTACT_SHOW' => $arResult['PATH_TO_CONTACT_SHOW'],
 				'PATH_TO_CONTACT_EDIT' => $arResult['PATH_TO_CONTACT_EDIT'],

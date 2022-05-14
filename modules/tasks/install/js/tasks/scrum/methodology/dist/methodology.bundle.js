@@ -138,7 +138,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }
 
 	      this.menu = new ui_popupcomponentsmaker.PopupComponentsMaker({
+	        id: 'tasks-scrum-methodology-widget',
 	        target: targetNode,
+	        cacheable: false,
 	        content: [{
 	          html: [{
 	            html: this.renderEpics(),
@@ -181,7 +183,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        var buttonClass = existsEpic ? '--border' : '';
 	        var iconClass = existsEpic ? 'ui-icon-service-epics' : 'ui-icon-service-light-epics';
 	        var blockClass = existsEpic ? '--active' : '';
-	        var node = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology tasks-scrum__widget-methodology--scope tasks-scrum__widget-methodology--bg  ", "\">\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--conteiner\">\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tclass=\"ui-icon ", " tasks-scrum__widget-methodology--icon\"\n\t\t\t\t\t\t\t><i></i></div>\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--content\">\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--name\">\n\t\t\t\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t\t\t\t<span class=\"ui-hint\">\n\t\t\t\t\t\t\t\t\t\t<i class=\"ui-hint-icon\" data-hint=\"", "\"></i>\n\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--btn-box\">\n\t\t\t\t\t\t\t\t\t<button class=\"ui-qr-popupcomponentmaker__btn ", "\">\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), blockClass, iconClass, main_core.Loc.getMessage('TSF_EPIC_TITLE'), main_core.Loc.getMessage('TSF_EPIC_HINT'), buttonClass, buttonText);
+	        var baseClasses = 'tasks-scrum__widget-methodology tasks-scrum__widget-methodology--scope';
+	        var node = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"", " tasks-scrum__widget-methodology--bg ", "\">\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--conteiner\">\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tclass=\"ui-icon ", " tasks-scrum__widget-methodology--icon\"\n\t\t\t\t\t\t\t><i></i></div>\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--content\">\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--name\">\n\t\t\t\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t\t\t\t<span class=\"ui-hint\">\n\t\t\t\t\t\t\t\t\t\t<i class=\"ui-hint-icon\" data-hint=\"", "\"></i>\n\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--btn-box\">\n\t\t\t\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t\t\t\tclass=\"ui-qr-popupcomponentmaker__btn ", "\"\n\t\t\t\t\t\t\t\t\t\tdata-role=\"open-epics\"\n\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), baseClasses, blockClass, iconClass, main_core.Loc.getMessage('TSF_EPIC_TITLE'), main_core.Loc.getMessage('TSF_EPIC_HINT'), buttonClass, buttonText);
 
 	        _this.initHints(node);
 
@@ -193,7 +196,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          }
 	        });
 	        return node;
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -210,13 +213,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        var buttonClass = existsDod ? '--border' : '';
 	        var iconClass = existsDod ? 'ui-icon-service-dod' : 'ui-icon-service-light-dod';
 	        var blockClass = existsDod ? '--active' : '';
-	        var node = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology tasks-scrum__widget-methodology--scope tasks-scrum__widget-methodology--bg ", "\">\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--conteiner\">\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tclass=\"ui-icon ", " tasks-scrum__widget-methodology--icon\"\n\t\t\t\t\t\t\t><i></i></div>\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--content\">\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--name\">\n\t\t\t\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t\t\t\t<span class=\"ui-hint\">\n\t\t\t\t\t\t\t\t\t\t<i class=\"ui-hint-icon\" data-hint=\"", "\"></i>\n\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--btn-box\">\n\t\t\t\t\t\t\t\t\t<button class=\"ui-qr-popupcomponentmaker__btn ", "\">\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), blockClass, iconClass, main_core.Loc.getMessage('TSF_DOD_TITLE'), main_core.Loc.getMessage('TSF_DOD_HINT'), buttonClass, buttonText);
+	        var node = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology tasks-scrum__widget-methodology--scope tasks-scrum__widget-methodology--bg ", "\">\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--conteiner\">\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tclass=\"ui-icon ", " tasks-scrum__widget-methodology--icon\"\n\t\t\t\t\t\t\t><i></i></div>\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--content\">\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--name\">\n\t\t\t\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t\t\t\t<span class=\"ui-hint\">\n\t\t\t\t\t\t\t\t\t\t<i class=\"ui-hint-icon\" data-hint=\"", "\"></i>\n\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--btn-box\">\n\t\t\t\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t\t\t\tclass=\"ui-qr-popupcomponentmaker__btn ", "\"\n\t\t\t\t\t\t\t\t\t\tdata-role=\"open-dod\"\n\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), blockClass, iconClass, main_core.Loc.getMessage('TSF_DOD_TITLE'), main_core.Loc.getMessage('TSF_DOD_HINT'), buttonClass, buttonText);
 
 	        _this2.initHints(node);
 
 	        main_core.Event.bind(node.querySelector('button'), 'click', _this2.showDodSettings.bind(_this2));
 	        return node;
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this2.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -231,14 +234,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        var isDisabled = !response.data.existsCompletedSprint;
 	        var btnUiClasses = 'ui-qr-popupcomponentmaker__btn --border';
 	        var disableClass = isDisabled ? '--disabled' : '';
-	        var node = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology tasks-scrum__widget-methodology--scope\">\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--btn-box-center\">\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--image ", "\">\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<button class=\"", " ", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), disableClass, btnUiClasses, disableClass, main_core.Loc.getMessage('TSF_TEAM_SPEED_BUTTON'));
+	        var node = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass=\"tasks-scrum__widget-methodology tasks-scrum__widget-methodology--scope\"\n\t\t\t\t\t\tdata-role=\"show-team-speed-chart\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--btn-box-center\">\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--image ", "\">\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<button class=\"", " ", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), disableClass, btnUiClasses, disableClass, main_core.Loc.getMessage('TSF_TEAM_SPEED_BUTTON'));
 
 	        if (!isDisabled) {
 	          main_core.Event.bind(node, 'click', _this3.showTeamSpeedChart.bind(_this3));
 	        }
 
 	        return node;
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this3.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -250,17 +253,17 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      return this.requestSender.getBurnDownInfo({
 	        groupId: this.groupId
 	      }).then(function (response) {
-	        var existsChart = response.data.sprint !== null;
+	        var existsChart = !main_core.Type.isNull(response.data.sprint);
 	        var btnUiClasses = 'ui-qr-popupcomponentmaker__btn --border';
 	        var disableClass = existsChart ? '' : '--disabled';
-	        var node = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology tasks-scrum__widget-methodology--scope\">\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--btn-box-center\">\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--image-diagram ", "\">\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<button class=\"", " ", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), disableClass, btnUiClasses, disableClass, main_core.Loc.getMessage('TSF_TEAM_SPEED_DIAGRAM'));
+	        var node = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass=\"tasks-scrum__widget-methodology tasks-scrum__widget-methodology--scope\"\n\t\t\t\t\t\tdata-role=\"show-burn-down-chart\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--btn-box-center\">\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--image-diagram ", "\">\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<button class=\"", " ", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), disableClass, btnUiClasses, disableClass, main_core.Loc.getMessage('TSF_TEAM_SPEED_DIAGRAM'));
 
 	        if (existsChart) {
 	          main_core.Event.bind(node, 'click', _this4.showBurnDownChart.bind(_this4, response.data.sprint.id));
 	        }
 
 	        return node;
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this4.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -279,10 +282,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        var iconClass = existsTutor ? 'ui-icon-service-tutorial' : 'ui-icon-service-light-tutorial';
 	        var blockClass = existsTutor ? '--active' : '';
 	        var labelClass = existsTutor ? '--hidden' : '';
-	        var node = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"", " ", " ", "\"\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--conteiner\">\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--conteiner\">\n\t\t\t\t\t\t\t\t<div class=\"ui-icon ", " tasks-scrum__widget-methodology--icon\">\n\t\t\t\t\t\t\t\t\t<i></i>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--content\">\n\t\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--name\">\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--description\">\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--label ", "\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), baseClasses, tutorClasses, blockClass, iconClass, main_core.Loc.getMessage('TSF_TUTORIAL_TITLE'), main_core.Loc.getMessage('TSF_TUTORIAL_TEXT'), labelClass, main_core.Loc.getMessage('TSF_TEAM_SPEED_LABEL'));
+	        var node = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass=\"", " ", " ", "\"\n\t\t\t\t\t\tdata-role=\"open-tutor\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--conteiner\">\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--conteiner\">\n\t\t\t\t\t\t\t\t<div class=\"ui-icon ", " tasks-scrum__widget-methodology--icon\">\n\t\t\t\t\t\t\t\t\t<i></i>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--content\">\n\t\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--name\">\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--description\">\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--label ", "\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), baseClasses, tutorClasses, blockClass, iconClass, main_core.Loc.getMessage('TSF_TUTORIAL_TITLE'), main_core.Loc.getMessage('TSF_TUTORIAL_TEXT'), labelClass, main_core.Loc.getMessage('TSF_TEAM_SPEED_LABEL'));
 	        main_core.Event.bind(node, 'click', function () {
 	          if (existsTutor) {
-	            main_core.ajax.runAction('bitrix:tasks.scrum.info.openTutor', {
+	            main_core.ajax.runAction('bitrix:tasks.scrum.info.saveAnalyticsLabel', {
 	              data: {
 	                groupId: _this5.groupId
 	              },
@@ -301,7 +304,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          }
 	        });
 	        return node;
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this5.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -313,7 +316,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var baseClasses = 'tasks-scrum__widget-methodology tasks-scrum__widget-methodology--scope';
 	      var migrationClasses = 'tasks-scrum__widget-methodology--migration tasks-scrum__widget-methodology--bg';
 	      var iconClass = 'ui-icon-service-tutorial tasks-scrum__widget-methodology--migration-btn';
-	      var node = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"", " ", "\"\n\t\t\t\t<div class=\"tasks-scrum__widget-methodology--conteiner\">\n\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--conteiner\">\n\t\t\t\t\t\t<div class=\"ui-icon ", " tasks-scrum__widget-methodology--icon\">\n\t\t\t\t\t\t\t<i></i>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--content\">\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--name\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--label --migration\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), baseClasses, migrationClasses, iconClass, main_core.Loc.getMessage('TSF_MIGRATION_TITLE'), main_core.Loc.getMessage('TSF_MIGRATION_LABEL'));
+	      var node = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"", " ", "\" data-role=\"open-migration\">\n\t\t\t\t<div class=\"tasks-scrum__widget-methodology--conteiner\">\n\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--conteiner\">\n\t\t\t\t\t\t<div class=\"ui-icon ", " tasks-scrum__widget-methodology--icon\">\n\t\t\t\t\t\t\t<i></i>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--content\">\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--name\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--label --migration\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), baseClasses, migrationClasses, iconClass, main_core.Loc.getMessage('TSF_MIGRATION_TITLE'), main_core.Loc.getMessage('TSF_MIGRATION_LABEL'));
 	      main_core.Event.bind(node, 'click', function () {
 	        var uri = new main_core.Uri('/marketplace/');
 	        uri.setQueryParam('tag', ['migrator', 'tasks']);
@@ -369,6 +372,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }
 
 	      this.menu.close();
+	      main_core.ajax.runAction('bitrix:tasks.scrum.info.saveAnalyticsLabel', {
+	        data: {},
+	        analyticsLabel: {
+	          scrum: 'Y',
+	          action: 'open_team_speed_diag'
+	        }
+	      });
 	    }
 	  }, {
 	    key: "showBurnDownChart",
@@ -380,6 +390,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }
 
 	      this.menu.close();
+	      main_core.ajax.runAction('bitrix:tasks.scrum.info.saveAnalyticsLabel', {
+	        data: {},
+	        analyticsLabel: {
+	          scrum: 'Y',
+	          action: 'open_burn_diag'
+	        }
+	      });
 	    }
 	  }, {
 	    key: "initHints",

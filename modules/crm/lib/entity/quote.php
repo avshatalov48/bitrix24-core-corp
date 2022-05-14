@@ -31,7 +31,7 @@ class Quote extends EntityBase
 	{
 		return QuoteTable::getEntity();
 	}
-	protected function getDbTableAlias()
+	public function getDbTableAlias()
 	{
 		return \CCrmQuote::TABLE_ALIAS;
 	}

@@ -26,6 +26,7 @@ foreach ($arResult as $item)
 				? (int)$item['PARAMS']['counter_num']
 				: ''
 		,
+		'COUNTER_ID' => $item['PARAMS']['counter_id'] ?? '',
 		'IS_ACTIVE' => $item['SELECTED'],
 		'IS_LOCKED' => isset($item['PARAMS']['is_locked']) && $item['PARAMS']['is_locked'] === true,
 		'IS_NEW' => isset($item['PARAMS']['is_new']) && $item['PARAMS']['is_new'] === true,
@@ -41,15 +42,9 @@ foreach ($arResult as $item)
 		,
 		'SUB_LINK' => $item["PARAMS"]["sub_link"] ?? '',
 		'CLASS' => $item['PARAMS']['class'],
+		'IS_DISABLED' => $item['PARAMS']['is_disabled'] ?? false,
+		'IS_DELIMITER' => $item['PARAMS']['is_delimiter'] ?? false,
 		// 'CLASS_SUBMENU_ITEM',
-		// 'SUB_LINK',
-		// 'COUNTER',
-		// 'COUNTER_ID',
-		// 'IS_ACTIVE',
-		// 'IS_LOCKED',
-		// 'IS_DISABLED',
-		// 'ON_CLICK',
-		// 'SORT',
 	];
 
 	if (isset($item['PARAMS']['action']) && is_array($item['PARAMS']['action']))

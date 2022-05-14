@@ -265,6 +265,11 @@ class Field
 			return false;
 		}
 
+		if ($this->type === static::TYPE_STRING && $fieldValue === "0")
+		{
+			return false;
+		}
+
 		return empty($fieldValue);
 	}
 

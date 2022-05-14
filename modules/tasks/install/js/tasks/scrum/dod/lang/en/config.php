@@ -9,6 +9,7 @@ $MESS["TASKS_SCRUM_DOD_CONFIRM_TEXT_COMPLETE"] = "Do you want to close the task 
 $MESS["TASKS_SCRUM_DOD_INFO_TEXT"] = "All items in Definition of Done have to be finished to complete the task";
 $MESS["TASKS_SCRUM_DOD_LABEL_EMPTY"] = "Definition of Done needs to be <span>configured</span> ";
 $MESS["TASKS_SCRUM_DOD_LABEL_TYPES"] = "Task type";
+$MESS["TASKS_SCRUM_DOD_LABEL_USER_SELECTOR"] = "Ask for DoD:";
 $MESS["TASKS_SCRUM_DOD_OPTIONS_REQUIRED_LABEL"] = "These items are required to be completed";
 $MESS["TASKS_SCRUM_DOD_TITLE"] = "Definition of Done";
 $MESS["TSD_ERROR_POPUP_TITLE"] = "That's an error.";

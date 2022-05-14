@@ -6,6 +6,7 @@ class EntityInfo
 {
 	private $sprintGoal = '';
 	private $typesGenerated = 'N';
+	private $typesParticipantsGenerated = 'N';
 	private $events = [];
 	private $templatesClosed = 'N';
 
@@ -14,6 +15,7 @@ class EntityInfo
 		return [
 			$this->getSprintGoalKey() => $this->getSprintGoal(),
 			$this->getTypesGeneratedKey() => $this->getTypesGenerated(),
+			$this->getTypesParticipantsGeneratedKey() => $this->getTypesParticipantsGenerated(),
 			$this->getEventsKey() => $this->getEvents(),
 			$this->getTemplatesClosedKey() => $this->getTemplatesClosed(),
 		];
@@ -29,6 +31,14 @@ class EntityInfo
 		if (isset($infoData[$this->getTypesGeneratedKey()]) && is_string($infoData[$this->getTypesGeneratedKey()]))
 		{
 			$this->setTypesGenerated($infoData[$this->getTypesGeneratedKey()]);
+		}
+
+		if (
+			isset($infoData[$this->getTypesParticipantsGeneratedKey()])
+			&& is_string($infoData[$this->getTypesParticipantsGeneratedKey()])
+		)
+		{
+			$this->setTypesParticipantsGenerated($infoData[$this->getTypesParticipantsGeneratedKey()]);
 		}
 
 		if (isset($infoData[$this->getEventsKey()]) && is_array($infoData[$this->getEventsKey()]))
@@ -52,6 +62,11 @@ class EntityInfo
 		return 'typesGenerated';
 	}
 
+	public function getTypesParticipantsGeneratedKey(): string
+	{
+		return 'typesParticipantsGenerated';
+	}
+
 	public function getEventsKey(): string
 	{
 		return 'events';
@@ -72,6 +87,11 @@ class EntityInfo
 		return $this->typesGenerated;
 	}
 
+	public function getTypesParticipantsGenerated(): string
+	{
+		return $this->typesParticipantsGenerated;
+	}
+
 	public function getEvents(): array
 	{
 		return $this->events;
@@ -85,6 +105,11 @@ class EntityInfo
 	public function isTypesGenerated(): bool
 	{
 		return $this->typesGenerated === 'Y';
+	}
+
+	public function isTypesParticipantsGenerated(): bool
+	{
+		return $this->typesParticipantsGenerated === 'Y';
 	}
 
 	public function isTemplatesClosed(): bool
@@ -104,7 +129,19 @@ class EntityInfo
 		{
 			$typesGenerated = 'N';
 		}
+
 		$this->typesGenerated = $typesGenerated;
+	}
+
+	public function setTypesParticipantsGenerated(string $typesParticipantsGenerated): void
+	{
+		$availableValues = ['Y', 'N'];
+		if (!in_array($typesParticipantsGenerated, $availableValues))
+		{
+			$typesParticipantsGenerated = 'N';
+		}
+
+		$this->typesParticipantsGenerated = $typesParticipantsGenerated;
 	}
 
 	/**

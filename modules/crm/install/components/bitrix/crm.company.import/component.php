@@ -1100,14 +1100,20 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 
 				if ($currentKey == 'COMPANY_TYPE')
 				{
+					$data = htmlspecialcharsbx($data);
+
 					$arCompany[$currentKey] = isset($arStatus['COMPANY_TYPE_LIST'][$data])? $data: array_search($data, $arStatus['COMPANY_TYPE_LIST']);
 				}
 				elseif ($currentKey == 'EMPLOYEES')
 				{
+					$data = htmlspecialcharsbx($data);
+
 					$arCompany[$currentKey] = isset($arStatus['EMPLOYEES_LIST'][$data])? $data: array_search($data, $arStatus['EMPLOYEES_LIST']);
 				}
 				elseif ($currentKey  == 'INDUSTRY')
 				{
+					$data = htmlspecialcharsbx($data);
+
 					$arCompany[$currentKey] = isset($arStatus['INDUSTRY_LIST'][$data])? $data: array_search($data, $arStatus['INDUSTRY_LIST']);
 				}
 				elseif ($currentKey  == 'CURRENCY_ID')

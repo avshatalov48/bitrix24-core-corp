@@ -3,6 +3,9 @@
 namespace Bitrix\Crm;
 
 use Bitrix\Crm\Binding\EntityBinding;
+use Bitrix\Crm\Comparer\MultifieldComparer;
+use Bitrix\Crm\Data\EntityFieldsHelper;
+use Bitrix\Crm\Multifield;
 use Bitrix\Crm\Observer\Entity\EO_Observer;
 use Bitrix\Crm\Observer\Entity\EO_Observer_Collection;
 use Bitrix\Crm\Observer\Entity\ObserverTable;
@@ -14,6 +17,7 @@ use Bitrix\Main\Entity\ScalarField;
 use Bitrix\Main\Error;
 use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Fields\DateField;
 use Bitrix\Main\ORM\Fields\FieldTypeMask;
 use Bitrix\Main\ORM\Fields\FloatField;
 use Bitrix\Main\ORM\Fields\IntegerField;
@@ -90,8 +94,6 @@ use Bitrix\Main\Type\DateTime;
  * @method Item setSourceDescription(string $sourceDescription)
  * @method int|null getWebformId()
  * @method Item setWebformId(int $webformId)
- * @method null|array getFm()
- * @method bool isChangedFm()
  * @method int|null getLocationId()
  * @method Item setLocationId(int $locationId)
  * @method string|null getComments()
@@ -106,10 +108,12 @@ use Bitrix\Main\Type\DateTime;
  * @method Item setLastName(string $lastName)
  * @method string|null getFullName()
  * @method Item setFullName(string $fullName)
+ * @method string|null getPost()
+ * @method Item setPost(string $post)
  * @method Date|null getBirthdate()
  * @method Item setBirthdate(Date $birthdate)
- * @method int|null getBirthdateSort()
- * @method Item setBirthdateSort(int $birthdateSort)
+ * @method int|null getBirthdaySort()
+ * @method Item setBirthdaySort(int $birthdaySort)
  * @method string|null getOriginatorId()
  * @method Item setOriginatorId(string $originatorId)
  * @method int|null getOriginId()
@@ -175,8 +179,12 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	public const FIELD_NAME_SECOND_NAME = 'SECOND_NAME';
 	public const FIELD_NAME_LAST_NAME = 'LAST_NAME';
 	public const FIELD_NAME_FULL_NAME = 'FULL_NAME';
+	public const FIELD_NAME_POST = 'POST';
+	public const FIELD_NAME_HAS_PHONE = 'HAS_PHONE';
+	public const FIELD_NAME_HAS_EMAIL = 'HAS_EMAIL';
+	public const FIELD_NAME_HAS_IMOL = 'HAS_IMOL';
 	public const FIELD_NAME_BIRTHDATE = 'BIRTHDATE';
-	public const FIELD_NAME_BIRTHDATE_SORT = 'BIRTHDATE_SORT';
+	public const FIELD_NAME_BIRTHDAY_SORT = 'BIRTHDAY_SORT';
 	public const FIELD_NAME_ORIGINATOR_ID = 'ORIGINATOR_ID';
 	public const FIELD_NAME_ORIGIN_ID = 'ORIGIN_ID';
 	public const FIELD_NAME_ORIGIN_VERSION = 'ORIGIN_VERSION';
@@ -207,6 +215,10 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	protected $currentValues = [];
 	protected $disabledFieldNames = [];
 	protected $isUtmLoaded = false;
+	/** @var Multifield\Collection */
+	protected $actualFm;
+	/** @var Multifield\Collection|null */
+	protected $currentFm;
 
 	public function __construct(
 		int $entityTypeId,
@@ -522,7 +534,7 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		$externalData = [];
 		foreach ($data as $entityFieldName => $value)
 		{
-			$externalData[$entityFieldName] = $this->transformToExternalValue($entityFieldName, $value);
+			$externalData[$entityFieldName] = $this->transformToExternalValue($entityFieldName, $value, $valuesType);
 		}
 
 		return $externalData;
@@ -583,13 +595,21 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		if($result->isSuccess())
 		{
 			$saveExpressionFieldsResult = $this->saveExpressionFields($isNew);
-			if (!$saveExpressionFieldsResult->isSuccess())
+			if ($saveExpressionFieldsResult->isSuccess())
+			{
+				$this->actualValues = $this->currentValues + $this->actualValues;
+				$this->currentValues = [];
+			}
+			else
 			{
 				$result->addErrors($saveExpressionFieldsResult->getErrors());
 			}
 
-			$this->actualValues = $this->currentValues + $this->actualValues;
-			$this->currentValues = [];
+			$saveFmResult = $this->saveFm();
+			if (!$saveFmResult->isSuccess())
+			{
+				$result->addErrors($saveFmResult->getErrors());
+			}
 
 			$factory = Container::getInstance()->getFactory($this->getEntityTypeId());
 			if ($factory)
@@ -624,7 +644,7 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	// region Contacts
 
 	/**
-	 * Returns true if any of item client fields have non-empty value
+	 * Returns false if any of item client fields have non-empty value
 	 *
 	 * @return bool
 	 */
@@ -1659,20 +1679,20 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		return $data;
 	}
 
-	protected function transformToExternalValue(string $entityFieldName, $fieldValue)
+	protected function transformToExternalValue(string $entityFieldName, $fieldValue, int $valuesType = Values::ALL)
 	{
 		if (is_array($fieldValue))
 		{
 			$result = [];
-			foreach ($fieldValue as $singleValue)
+			foreach ($fieldValue as $key => $singleValue)
 			{
 				if ($singleValue instanceof Date)
 				{
-					$result[] = $singleValue->toString();
+					$result[$key] = $singleValue->toString();
 				}
 				else
 				{
-					$result[] = $singleValue;
+					$result[$key] = $singleValue;
 				}
 			}
 
@@ -1685,6 +1705,21 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 
 		if ($fieldValue instanceof ProductRowCollection)
 		{
+			return $fieldValue->toArray();
+		}
+
+		if (
+			$fieldValue instanceof Multifield\Collection
+			&& $this->getCommonFieldNameByMap($entityFieldName) === static::FIELD_NAME_FM
+		)
+		{
+			if ($valuesType === Values::CURRENT || $valuesType === Values::ALL)
+			{
+				$comparer = new MultifieldComparer();
+
+				return $comparer->getChangedCompatibleArray($this->remindActualFm(), $fieldValue);
+			}
+
 			return $fieldValue->toArray();
 		}
 
@@ -1773,6 +1808,10 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 			{
 				$value = ($value === 'Y');
 			}
+			if ($entityField instanceof DateField && is_string($value) && !DateTime::isCorrect($value))
+			{
+				$value = null;
+			}
 			if ($entityField instanceof DatetimeField && is_string($value))
 			{
 				$value = DateTime::createFromUserTime($value);
@@ -1807,6 +1846,12 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		elseif ($commonFieldName === static::FIELD_NAME_OBSERVERS)
 		{
 			$this->setObservers((array)$value);
+		}
+		elseif ($commonFieldName === static::FIELD_NAME_FM)
+		{
+			$current = $this->getFm();
+			Multifield\Assembler::updateCollectionByArray($current, (array)$value);
+			$this->setFm($current);
 		}
 
 		return $this;
@@ -1853,6 +1898,12 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 			static::FIELD_NAME_CONTACT_IDS,
 			static::FIELD_NAME_PRODUCTS,
 		];
+
+		if ($this->hasFm())
+		{
+			$names[] = static::FIELD_NAME_FM;
+		}
+
 		$names = array_merge(
 			$names,
 			$this->utmTableClassName::getCodeList(),
@@ -1876,10 +1927,6 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	protected function getInternalizableFieldNames(array $externalData): array
 	{
 		$internalizableFields = $this->getExternalizableFieldNames();
-		if ($this->hasFm())
-		{
-			$internalizableFields[] = static::FIELD_NAME_FM;
-		}
 
 		$fieldsToExclude = [
 			// can not change primary key
@@ -1923,6 +1970,18 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		return null;
 	}
 
+	/**
+	 * Returns map that describes this-entity-specific aliases for common field names.
+	 * If some common field name is not present in the map, it means that this field has no entity-specific alias
+	 *  and common name is used.
+	 *
+	 * @return array [$commonFieldName => $entityFieldName]
+	 */
+	final public function getFieldsMap(): array
+	{
+		return $this->fieldsMap;
+	}
+
 	public function isCategoriesSupported(): bool
 	{
 		return (!in_array(static::FIELD_NAME_CATEGORY_ID, $this->disabledFieldNames, true));
@@ -1936,21 +1995,21 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 	/**
 	 * Returns a CATEGORY_ID value that is used for user permissions calculation
 	 *
-	 * @return int
+	 * @return int|null
 	 */
-	public function getCategoryIdForPermissions(): int
+	public function getCategoryIdForPermissions(): ?int
 	{
 		if (!$this->isCategoriesSupported())
 		{
-			return 0;
+			return null;
 		}
 
 		if ($this->isNew())
 		{
-			return (int)$this->getCategoryId();
+			return $this->getCategoryId();
 		}
 
-		return (int)$this->remindActual(static::FIELD_NAME_CATEGORY_ID);
+		return $this->remindActual(static::FIELD_NAME_CATEGORY_ID);
 	}
 
 	/**
@@ -2024,14 +2083,17 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		}
 	}
 
-	protected function isExpressionField(string $commonFieldName): bool
+	private function loadExpressionField(string $commonFieldName): void
 	{
 		if ($this->isUtmField($commonFieldName))
 		{
-			return true;
+			$this->loadUtm();
 		}
+	}
 
-		if ($commonFieldName === static::FIELD_NAME_FM && $this->hasFm())
+	protected function isExpressionField(string $commonFieldName): bool
+	{
+		if ($this->isUtmField($commonFieldName))
 		{
 			return true;
 		}
@@ -2046,20 +2108,15 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 
 	protected function getExpressionField(string $commonFieldName)
 	{
-		if ($this->isUtmField($commonFieldName))
-		{
-			$this->loadUtm();
-		}
+		$this->loadExpressionField($commonFieldName);
 
 		return $this->currentValues[$commonFieldName] ?? $this->actualValues[$commonFieldName] ?? null;
 	}
 
 	protected function setExpressionField(string $commonFieldName, $value): self
 	{
-		if ($this->isUtmField($commonFieldName))
-		{
-			$this->loadUtm();
-		}
+		$this->loadExpressionField($commonFieldName);
+
 		if (isset($this->actualValues[$commonFieldName]) && $this->actualValues[$commonFieldName] === $value)
 		{
 			unset($this->currentValues[$commonFieldName]);
@@ -2074,10 +2131,8 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 
 	protected function unsetExpressionField(string $commonFieldName): self
 	{
-		if ($this->isUtmField($commonFieldName))
-		{
-			$this->loadUtm();
-		}
+		$this->loadExpressionField($commonFieldName);
+
 		unset(
 			$this->currentValues[$commonFieldName],
 			$this->actualValues[$commonFieldName],
@@ -2088,10 +2143,8 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 
 	protected function resetExpressionField(string $commonFieldName): self
 	{
-		if ($this->isUtmField($commonFieldName))
-		{
-			$this->loadUtm();
-		}
+		$this->loadExpressionField($commonFieldName);
+
 		unset($this->currentValues[$commonFieldName]);
 
 		return $this;
@@ -2099,24 +2152,23 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 
 	protected function isChangedExpressionField(string $commonFieldName): bool
 	{
-		if ($this->isUtmField($commonFieldName))
+		$this->loadExpressionField($commonFieldName);
+
+		if (!array_key_exists($commonFieldName, $this->currentValues))
 		{
-			$this->loadUtm();
-		}
-		if (array_key_exists($commonFieldName, $this->currentValues))
-		{
-			return $this->currentValues[$commonFieldName] !== ($this->actualValues[$commonFieldName] ?? null);
+			return false;
 		}
 
-		return false;
+		$actualValue = $this->actualValues[$commonFieldName] ?? null;
+		$currentValue = $this->currentValues[$commonFieldName];
+
+		return $actualValue !== $currentValue;
 	}
 
 	protected function remindActualExpressionField(string $commonFieldName)
 	{
-		if ($this->isUtmField($commonFieldName))
-		{
-			$this->loadUtm();
-		}
+		$this->loadExpressionField($commonFieldName);
+
 		return $this->actualValues[$commonFieldName] ?? null;
 	}
 
@@ -2139,23 +2191,109 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 			);
 		}
 
-		if ($this->hasFm() && $this->isChangedFm())
-		{
-			(new \CCrmFieldMulti())->SetFields(
-				\CCrmOwnerType::ResolveName($this->entityTypeId),
-				$this->getId(),
-				$this->getFm()
-			);
-		}
-
-		return Container::getInstance()->getParentFieldManager()->saveItemRelations($this, $this->currentValues);
+		return Container::getInstance()->getParentFieldManager()->saveItemRelations(
+			$this,
+			$this->currentValues,
+		);
 	}
 	// endregion
 
+	// region Multifields
 	public function hasFm(): bool
 	{
 		$factory = Container::getInstance()->getFactory($this->entityTypeId);
 
 		return $factory && $factory->isMultiFieldsEnabled();
 	}
+
+	public function getFm(): Multifield\Collection
+	{
+		$this->loadFm();
+
+		$multifields = $this->currentFm ?? $this->actualFm;
+
+		return clone $multifields;
+	}
+
+	public function setFm(Multifield\Collection $multifields): self
+	{
+		$this->loadFm();
+
+		if ($this->actualFm->isEqualTo($multifields))
+		{
+			unset($this->currentFm);
+		}
+		else
+		{
+			$this->currentFm = clone $multifields;
+		}
+
+		return $this;
+	}
+
+	public function isChangedFm(): bool
+	{
+		$this->loadFm();
+
+		return ($this->currentFm && !$this->currentFm->isEqualTo($this->actualFm));
+	}
+
+	private function remindActualFm(): Multifield\Collection
+	{
+		$this->loadFm();
+
+		return clone $this->actualFm;
+	}
+
+	private function resetFm(): self
+	{
+		$this->loadFm();
+
+		unset($this->currentFm);
+
+		return $this;
+	}
+
+	private function unsetFm(): self
+	{
+		unset($this->actualFm, $this->currentFm);
+
+		return $this;
+	}
+
+	private function loadFm(): void
+	{
+		if (!$this->actualFm)
+		{
+			$multifields = new Multifield\Collection();
+			if (!$this->isNew())
+			{
+				$storage = Container::getInstance()->getMultifieldStorage();
+				$multifields = $storage->get(ItemIdentifier::createByItem($this));
+			}
+
+			$this->actualFm = $multifields;
+		}
+	}
+
+	private function saveFm(): Result
+	{
+		if (!$this->hasFm() || !$this->isChangedFm())
+		{
+			return new Result();
+		}
+
+		$storage = Container::getInstance()->getMultifieldStorage();
+		$identifier = ItemIdentifier::createByItem($this);
+
+		$result = $storage->save($identifier, $this->getFm());
+		if ($result->isSuccess())
+		{
+			$this->actualFm = $storage->get($identifier);
+			$this->currentFm = null;
+		}
+
+		return $result;
+	}
+	//endregion
 }

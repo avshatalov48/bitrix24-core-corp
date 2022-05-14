@@ -1,14 +1,9 @@
 (function (exports,ui_vue,ui_vue_vuex) {
     'use strict';
 
-    /**
-     * Bitrix Messenger
-     * Form Vue component
-     *
-     * @package bitrix
-     * @subpackage im
-     * @copyright 2001-2019 Bitrix
-     */
+    function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+    function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
     var EVENT_POSTFIX = 'Openlines';
     var LIVECHAT_PREFIX = 'livechat';
     ui_vue.BitrixVue.component('bx-imopenlines-form', {
@@ -29,7 +24,7 @@
           this.formSuccess = true;
         }
       },
-      computed: babelHelpers.objectSpread({
+      computed: _objectSpread({
         chatId: function chatId() {
           return this.application.dialog.chatId;
         },
@@ -99,7 +94,7 @@
           return new Promise(function (resolve, reject) {
             _this.$Bitrix.RestClient.get().callMethod('imopenlines.widget.crm.bindings.get', {
               'OPENLINES_CODE': _this.buildOpenlinesCode()
-            }).then(resolve).catch(reject);
+            }).then(resolve)["catch"](reject);
           });
         },
         onBeforeFormSubmit: function onBeforeFormSubmit(eventData) {
@@ -127,23 +122,23 @@
                 _this2.getApplication().requestData();
               } // we have user and chat so we can just resolve form promise instantly
               else {
-                  // request current crm bindings and attach them to form
-                  if (_this2.widget.common.crmFormsSettings.welcomeFormDelay) {
-                    _this2.getCrmBindings().then(function (result) {
-                      _this2.signedEntities = result.data();
+                // request current crm bindings and attach them to form
+                if (_this2.widget.common.crmFormsSettings.welcomeFormDelay) {
+                  _this2.getCrmBindings().then(function (result) {
+                    _this2.signedEntities = result.data();
 
-                      _this2.setFormProperties();
-
-                      return resolve();
-                    }).catch(function (error) {
-                      console.error('Error getting CRM bindings', error);
-                    });
-                  } else {
                     _this2.setFormProperties();
 
                     return resolve();
-                  }
+                  })["catch"](function (error) {
+                    console.error('Error getting CRM bindings', error);
+                  });
+                } else {
+                  _this2.setFormProperties();
+
+                  return resolve();
                 }
+              }
             });
           });
         },

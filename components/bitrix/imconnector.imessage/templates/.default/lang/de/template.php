@@ -4,7 +4,7 @@ $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECTED"] = "Apple Business Chat ist ver
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_CONNECTION_STEP"] = "Um die Verbindung abzuschließen, müssen Sie einen Koomunikationskanal für die Verbindung auswählen.";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_CONNECTION_TITLE"] = "Business-Chat ist mit Ihrem Kommunikationskanal fast verbunden";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_HELP"] = "<div class=\"imconnector-field-button-subtitle\">Ich möchte</div>
-				<div class=\"imconnector-field-button-name\"><span class=\"imconnector-field-box-text-bold\"></span> Business-Chat</div>verbinden";
+				<div class=\"imconnector-field-button-name\">Business-Chat <span class=\"imconnector-field-box-text-bold\">verbinden</span></div>";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_STEP"] = "Vor der Verbindung müssen Sie <a onclick=\"top.BX.Helper.show('#ID#');\" class=\"imconnector-field-box-link\">einen Business-Chat erstellen</a>
  oder <a onclick=\"top.BX.Helper.show('#ID#');\" class=\"imconnector-field-box-link\">einen bereits existierenden verbinden</a>.";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_TITLE"] = "Business-Chat mit dem Kommunikationskanal verbinden";

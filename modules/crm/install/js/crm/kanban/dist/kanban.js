@@ -3,9 +3,139 @@ this.BX.Crm = this.BX.Crm || {};
 (function (exports,main_core_events,ui_notification,main_popup,main_core) {
 	'use strict';
 
+	var PullOperation = /*#__PURE__*/function () {
+	  babelHelpers.createClass(PullOperation, null, [{
+	    key: "createInstance",
+	    value: function createInstance(data) {
+	      var instance = new PullOperation(data.grid);
+	      instance.setItemId(data.itemId);
+	      instance.setAction(data.action);
+	      instance.setActionParams(data.actionParams);
+	      return instance;
+	    }
+	  }]);
+
+	  function PullOperation(grid) {
+	    babelHelpers.classCallCheck(this, PullOperation);
+	    this.grid = grid;
+	  }
+
+	  babelHelpers.createClass(PullOperation, [{
+	    key: "setItemId",
+	    value: function setItemId(itemId) {
+	      this.itemId = itemId;
+	      return this;
+	    }
+	  }, {
+	    key: "getItemId",
+	    value: function getItemId() {
+	      return this.itemId;
+	    }
+	  }, {
+	    key: "setAction",
+	    value: function setAction(action) {
+	      this.action = action;
+	      return this;
+	    }
+	  }, {
+	    key: "getAction",
+	    value: function getAction() {
+	      return this.action;
+	    }
+	  }, {
+	    key: "setActionParams",
+	    value: function setActionParams(actionParams) {
+	      this.actionParams = actionParams;
+	      return this;
+	    }
+	  }, {
+	    key: "getActionParams",
+	    value: function getActionParams() {
+	      return this.actionParams;
+	    }
+	  }, {
+	    key: "execute",
+	    value: function execute() {
+	      if (this.getAction() === 'updateItem') {
+	        return this.updateItem();
+	      }
+
+	      if (this.getAction() === 'addItem') {
+	        return this.addItem();
+	      }
+	    }
+	  }, {
+	    key: "updateItem",
+	    value: function updateItem() {
+	      var params = this.getActionParams();
+	      var item = this.grid.getItem(params.item.id);
+	      var paramsItem = params.item;
+
+	      if (!item) {
+	        return;
+	      }
+
+	      var oldPrice = parseFloat(item.data.price);
+	      var oldColumnId = item.columnId;
+
+	      for (var key in paramsItem.data) {
+	        if (key in item.data) {
+	          item.data[key] = paramsItem.data[key];
+	        }
+	      }
+
+	      item.rawData = paramsItem.rawData;
+	      item.setActivityExistInnerHtml();
+	      item.useAnimation = true;
+	      item.setChangedInPullRequest();
+	      this.grid.resetMultiSelectMode();
+	      this.grid.insertItem(item);
+	      var newColumnId = paramsItem.data.columnId;
+	      var newColumn = this.grid.getColumn(newColumnId);
+	      var newPrice = parseFloat(paramsItem.data.price);
+	      item.columnId = newColumnId;
+
+	      if (oldColumnId !== newColumnId) {
+	        var oldColumn = this.grid.getColumn(oldColumnId);
+	        oldColumn.decPrice(oldPrice);
+	        oldColumn.renderSubTitle();
+
+	        if (newColumn) {
+	          newColumn.incPrice(newPrice);
+	          newColumn.renderSubTitle();
+	        }
+	      } else {
+	        if (oldPrice < newPrice) {
+	          newColumn.incPrice(newPrice - oldPrice);
+	          newColumn.renderSubTitle();
+	        } else if (oldPrice > newPrice) {
+	          newColumn.decPrice(oldPrice - newPrice);
+	          newColumn.renderSubTitle();
+	        }
+	      }
+	    }
+	  }, {
+	    key: "addItem",
+	    value: function addItem() {
+	      var params = this.getActionParams();
+	      var oldItem = this.grid.getItem(params.item.id);
+
+	      if (oldItem) {
+	        return;
+	      }
+
+	      this.grid.addItemTop(params.item);
+	    }
+	  }]);
+	  return PullOperation;
+	}();
+
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
 
 	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	/**
+	 * @class PullQueue
+	 */
 
 	var _queue = /*#__PURE__*/new WeakMap();
 
@@ -40,9 +170,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 
 	    babelHelpers.classPrivateFieldSet(this, _grid, grid);
-	    babelHelpers.classPrivateFieldSet(this, _queue, new Set());
+	    babelHelpers.classPrivateFieldSet(this, _queue, new Map());
 	    babelHelpers.classPrivateFieldSet(this, _isProgress, false);
 	    babelHelpers.classPrivateFieldSet(this, _isFreeze, false);
+	    this.loadItemsTimer = null;
 	  }
 
 	  babelHelpers.createClass(PullQueue, [{
@@ -50,21 +181,42 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function loadItem(isForce) {
 	      var _this = this;
 
-	      setTimeout(function () {
+	      if (this.loadItemsTimer) {
+	        return;
+	      }
+
+	      this.loadItemsTimer = setTimeout(function () {
 	        isForce = isForce || false;
 
 	        if (babelHelpers.classPrivateFieldGet(_this, _isProgress) && !isForce) {
+	          _this.loadItemsTimer = null;
 	          return;
 	        }
 
 	        if (document.hidden || _this.isOverflow() || _this.isFreezed()) {
+	          _this.loadItemsTimer = null;
 	          return;
 	        }
 
-	        var id = _this.pop();
+	        var items = _this.popAllAsArray();
 
-	        if (id) {
-	          var loadNextOnSuccess = function loadNextOnSuccess(response) {
+	        if (items.length) {
+	          var ids = [];
+	          items.map(function (item) {
+	            ids.push(item.id);
+	            var data = item.data;
+	            var operation = PullOperation.createInstance({
+	              grid: babelHelpers.classPrivateFieldGet(_this, _grid),
+	              itemId: data.id,
+	              action: data.action,
+	              actionParams: data.actionParams
+	            });
+	            operation.execute();
+	          });
+
+	          var loadNextOnSuccess = function loadNextOnSuccess() {
+	            _this.loadItemsTimer = null;
+
 	            if (_this.peek()) {
 	              _this.loadItem(true);
 	            }
@@ -72,33 +224,72 @@ this.BX.Crm = this.BX.Crm || {};
 	            babelHelpers.classPrivateFieldSet(_this, _isProgress, false);
 	          };
 
-	          var doNothingOnError = function doNothingOnError(err) {};
+	          var doNothingOnError = function doNothingOnError() {
+	            _this.loadItemsTimer = null;
+	          };
 
 	          babelHelpers.classPrivateFieldSet(_this, _isProgress, true);
-	          babelHelpers.classPrivateFieldGet(_this, _grid).loadNew(id, false, true, true).then(loadNextOnSuccess, doNothingOnError);
+	          babelHelpers.classPrivateFieldGet(_this, _grid).loadNew(ids, false, true, true).then(loadNextOnSuccess, doNothingOnError);
 	        }
-	      }, 1000);
+	      }, 5000);
 	    }
 	  }, {
 	    key: "push",
-	    value: function push(id) {
+	    value: function push(id, item) {
 	      id = parseInt(id, 10);
 
-	      if (babelHelpers.classPrivateFieldGet(this, _queue).has(id)) {
-	        babelHelpers.classPrivateFieldGet(this, _queue).delete(id);
+	      if (this.has(id)) {
+	        this["delete"](id);
 	      }
 
-	      babelHelpers.classPrivateFieldGet(this, _queue).add(id);
+	      babelHelpers.classPrivateFieldGet(this, _queue).set(id, item);
 	      return this;
+	    }
+	  }, {
+	    key: "popAllAsArray",
+	    value: function popAllAsArray() {
+	      var items = Array.from(babelHelpers.classPrivateFieldGet(this, _queue), function (_ref) {
+	        var _ref2 = babelHelpers.slicedToArray(_ref, 2),
+	            id = _ref2[0],
+	            data = _ref2[1];
+
+	        return {
+	          id: id,
+	          data: data
+	        };
+	      });
+	      babelHelpers.classPrivateFieldGet(this, _queue).clear();
+	      return items;
+	    }
+	  }, {
+	    key: "popBatch",
+	    value: function popBatch(count) {
+	      if (count <= 0) {
+	        return [];
+	      }
+
+	      var results = [];
+
+	      for (var i = 0; i < count; i++) {
+	        var item = this.pop();
+
+	        if (!item) {
+	          break;
+	        }
+
+	        results.push(item);
+	      }
+
+	      return results;
 	    }
 	  }, {
 	    key: "pop",
 	    value: function pop() {
-	      var values = babelHelpers.classPrivateFieldGet(this, _queue).values();
-	      var first = values.next();
+	      var items = babelHelpers.classPrivateFieldGet(this, _queue).entries();
+	      var first = items.next();
 
-	      if (first.value !== undefined) {
-	        babelHelpers.classPrivateFieldGet(this, _queue).delete(first.value);
+	      if (first.value) {
+	        babelHelpers.classPrivateFieldGet(this, _queue)["delete"](first.value[0]);
 	      }
 
 	      return first.value;
@@ -106,14 +297,16 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "peek",
 	    value: function peek() {
-	      var values = babelHelpers.classPrivateFieldGet(this, _queue).values();
-	      var first = values.next();
-	      return first.value !== undefined ? first.value : null;
+	      var _first$value;
+
+	      var items = babelHelpers.classPrivateFieldGet(this, _queue).entries();
+	      var first = items.next();
+	      return (_first$value = first.value) !== null && _first$value !== void 0 ? _first$value : null;
 	    }
 	  }, {
 	    key: "delete",
 	    value: function _delete(id) {
-	      babelHelpers.classPrivateFieldGet(this, _queue).delete(id);
+	      babelHelpers.classPrivateFieldGet(this, _queue)["delete"](id);
 	    }
 	  }, {
 	    key: "has",
@@ -128,7 +321,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "isOverflow",
 	    value: function isOverflow() {
-	      var MAX_PENDING_ITEMS = 10;
+	      var MAX_PENDING_ITEMS = 30;
 	      return babelHelpers.classPrivateFieldGet(this, _queue).size > MAX_PENDING_ITEMS;
 	    }
 	  }, {
@@ -155,6 +348,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    babelHelpers.classCallCheck(this, PullManager);
 	    this.grid = grid;
 	    this.queue = new PullQueue(this.grid);
+	    this.openedSlidersCount = 0;
 
 	    if (main_core.Type.isString(grid.getData().moduleId) && grid.getData().userId > 0) {
 	      this.init();
@@ -220,49 +414,13 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "updateItem",
 	    value: function updateItem(params) {
 	      var item = this.grid.getItem(params.item.id);
-	      var paramsItem = params.item;
 
 	      if (item) {
-	        var oldPrice = parseFloat(item.data.price);
-	        var oldColumnId = item.columnId;
-
-	        for (var key in paramsItem.data) {
-	          if (key in item.data) {
-	            item.data[key] = paramsItem.data[key];
-	          }
-	        }
-
-	        item.rawData = paramsItem.rawData;
-	        item.setActivityExistInnerHtml();
-	        item.useAnimation = true;
-	        item.setChangedInPullRequest();
-	        this.grid.resetMultiSelectMode();
-	        this.grid.insertItem(item);
-	        var newColumnId = paramsItem.data.columnId;
-	        var newColumn = this.grid.getColumn(newColumnId);
-	        var newPrice = parseFloat(paramsItem.data.price);
-	        item.columnId = newColumnId;
-
-	        if (oldColumnId !== newColumnId) {
-	          var oldColumn = this.grid.getColumn(oldColumnId);
-	          oldColumn.decPrice(oldPrice);
-	          oldColumn.renderSubTitle();
-
-	          if (newColumn) {
-	            newColumn.incPrice(newPrice);
-	            newColumn.renderSubTitle();
-	          }
-	        } else {
-	          if (oldPrice < newPrice) {
-	            newColumn.incPrice(newPrice - oldPrice);
-	            newColumn.renderSubTitle();
-	          } else if (oldPrice > newPrice) {
-	            newColumn.decPrice(oldPrice - newPrice);
-	            newColumn.renderSubTitle();
-	          }
-	        }
-
-	        this.queue.push(item.id);
+	        this.queue.push(item.id, {
+	          id: item.id,
+	          action: 'updateItem',
+	          actionParams: params
+	        });
 	        return true;
 	      }
 
@@ -272,20 +430,26 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "onPullItemAdded",
 	    value: function onPullItemAdded(params) {
-	      this.addItem(params);
-	      this.queue.loadItem();
+	      if (this.addItem(params)) {
+	        this.queue.loadItem();
+	      }
 	    }
 	  }, {
 	    key: "addItem",
 	    value: function addItem(params) {
-	      var oldItem = this.grid.getItem(params.item.id);
+	      var itemId = params.item.id;
+	      var oldItem = this.grid.getItem(itemId);
 
 	      if (oldItem) {
-	        return;
+	        return false;
 	      }
 
-	      this.grid.addItemTop(params.item);
-	      this.queue.push(params.item.id);
+	      this.queue.push(itemId, {
+	        id: itemId,
+	        action: 'addItem',
+	        actionParams: params
+	      });
+	      return true;
 	    }
 	  }, {
 	    key: "onPullItemDeleted",
@@ -301,7 +465,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      var delay = this.queue.has(params.item.id) ? 5000 : 0;
 	      setTimeout(function () {
-	        this.queue.delete(params.item.id);
+	        this.queue["delete"](params.item.id);
 	        this.grid.removeItem(params.item.id);
 	        var column = this.grid.getColumn(params.item.data.columnId);
 	        column.decPrice(params.item.data.price);
@@ -365,25 +529,21 @@ this.BX.Crm = this.BX.Crm || {};
 	      var _this3 = this;
 
 	      main_core_events.EventEmitter.subscribe('SidePanel.Slider:onOpen', function (event) {
-	        if (_this3.isEntitySlider(event.data[0].slider)) {
-	          _this3.queue.freeze();
-	        }
+	        _this3.openedSlidersCount++;
+
+	        _this3.queue.freeze();
 	      });
 	      main_core_events.EventEmitter.subscribe('SidePanel.Slider:onClose', function (event) {
-	        if (_this3.isEntitySlider(event.data[0].slider)) {
+	        _this3.openedSlidersCount--;
+
+	        if (_this3.openedSlidersCount <= 0) {
+	          _this3.openedSlidersCount = 0;
+
 	          _this3.queue.unfreeze();
 
 	          _this3.onTabActivated();
 	        }
 	      });
-	    }
-	  }, {
-	    key: "isEntitySlider",
-	    value: function isEntitySlider(slider) {
-	      var sliderUrl = slider.getUrl();
-	      var entityPath = this.grid.getData().entityPath;
-	      var maskUrl = entityPath.replace(/\#([^\#]+)\#/, '([\\d]+)');
-	      return new RegExp(maskUrl).test(sliderUrl);
 	    }
 	  }]);
 	  return PullManager;
@@ -501,7 +661,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          return button.setDisabled(false);
 	        });
 	        popup.adjustPosition();
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        BX.Kanban.Utils.showErrorDialog(response.errors.pop().message);
 	      });
 	      return popup;

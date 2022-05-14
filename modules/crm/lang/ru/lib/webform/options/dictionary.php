@@ -42,3 +42,7 @@ $MESS["CRM_WEBFORM_OPTIONS_DICT_PROPS_FORM_NAME_DESC"] = "Название фо�
 $MESS["CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_IMAGE"] = "Картинки";
 $MESS["CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_VIDEO"] = "Видео";
 $MESS["CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_AUDIO"] = "Аудио";
+$MESS["CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_DOC"] = "Документы";
+$MESS["CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_DOC_HINT"] = "К документам относятся PDF-файлы, презентации(.ppt, .pptx), таблицы(.xls, xlsx, .csv), текстовые файлы(.txt, .doc, .docx) и другие.";
+$MESS["CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_ARCHIVE"] = "Архивы";
+$MESS["CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_ARCHIVE_HINT"] = "К файлам архивов относятся ZIP, TAR, RAR, 7-Zip.";

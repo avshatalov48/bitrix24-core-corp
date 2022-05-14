@@ -279,11 +279,16 @@
 	 * @param {function} [config.onCreate]
 	 */
 	BX.ajax.runAction = (action, config = {} )=>{
+
 		let getParameters = prepareAjaxGetParameters(config);
 		getParameters.action = action;
 		let onCreate = (typeof config["onCreate"] == "function"? config["onCreate"]: ()=>{});
-		let url = '/bitrix/services/main/ajax.php?' + BX.ajax.prepareData(getParameters);
-		let prepareData = true;
+		let url = '/bitrix/services/main/ajax.php?' + BX.ajax.prepareData(getParameters, null, false);
+		let prepareData = true
+
+		if (typeof config.prepareData !== "undefined") {
+			prepareData = Boolean(config.prepareData)
+		}
 
 		if (config.json) {
 			prepareData = false;
@@ -295,9 +300,11 @@
 		config = {
 			url: url,
 			method:"POST",
+			uploadBinary: Boolean(config.binary),
 			dataType:"json",
 			data: config.data,
 			headers: config.headers,
+			onUploadProgress: config.onprogressupload || function(){},
 			prepareData: prepareData
 		};
 

@@ -65,8 +65,15 @@ if (empty($arParams['DISABLE_TOP_MENU']) || $arParams['DISABLE_TOP_MENU'] != 'Y'
 		</div>
 	</div><!--crm-config-automation-desc-main-->
 </div><!--crm-config-automation-desc-container-->
-<?endif;?>
-<?$APPLICATION->IncludeComponent(
+<?endif;
+
+$this->setViewTarget("inside_pagetitle_below", 100); ?>
+<div class="crm-config-automation-subtitle">
+	<?= htmlspecialcharsbx($arResult['SUBTITLE']) ?>
+</div>
+<? $this->endViewTarget();
+
+$APPLICATION->IncludeComponent(
 	'bitrix:crm.automation',
 	'',
 	array(

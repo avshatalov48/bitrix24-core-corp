@@ -57,6 +57,7 @@ export class Epic extends EventEmitter
 
 		this.editorHandler = null;
 
+		this.colorPickers = new Map();
 		this.defaultColor = '#69dafc';
 		this.selectedColor = '';
 	}
@@ -593,7 +594,7 @@ export class Epic extends EventEmitter
 		return Tag.render`
 			<div class="tasks-scrum-epic-form">
 				<div class="tasks-scrum-epic-form-container">
-					${this.renderNameField('', this.defaultColor)}
+					${this.renderNameField(0, '', this.defaultColor)}
 					${this.renderDescriptionField()}
 				</div>
 			</div>
@@ -639,14 +640,14 @@ export class Epic extends EventEmitter
 		return Tag.render`
 			<div class="tasks-scrum-epic-form">
 				<div class="tasks-scrum-epic-form-container">
-					${this.renderNameField(epic.name, this.selectedColor)}
+					${this.renderNameField(epic.id, epic.name, this.selectedColor)}
 					${this.renderDescriptionField()}
 				</div>
 			</div>
 		`;
 	}
 
-	renderNameField(name: String, color: String): HTMLElement
+	renderNameField(epicId: number, name: string, color: string): HTMLElement
 	{
 		const nameField = Tag.render`
 			<div class="tasks-scrum-epic-form-header">
@@ -657,8 +658,11 @@ export class Epic extends EventEmitter
 				</div>
 				<div class="tasks-scrum-epic-form-header-separate"></div>
 				<div class="tasks-scrum-epic-header-color">
-					<div class="tasks-scrum-epic-header-color-current" style=
-						"background-color: ${Text.encode(color)};">
+					<div
+						data-epic-id="${parseInt(epicId, 10)}"
+						class="tasks-scrum-epic-header-color-current"
+						style="background-color: ${Text.encode(color)};"
+					>
 					</div>
 					<div class="tasks-scrum-epic-header-color-btn-angle"></div>
 				</div>
@@ -786,27 +790,40 @@ export class Epic extends EventEmitter
 		return container;
 	}
 
-	getColorPicker(colorNode)
+	getColorPicker(colorNode): Object
 	{
-		/* eslint-disable */
-		return new top.BX.ColorPicker({
-			bindElement: colorNode,
-			defaultColor: this.defaultColor,
-			selectedColor: this.selectedColor ? this.selectedColor : this.defaultColor,
-			onColorSelected: (color, picker) => {
-				this.selectedColor = color;
-				colorNode.style.backgroundColor = color;
-			},
-			popupOptions: {
-				className: 'tasks-scrum-epic-color-popup'
-			},
-			allowCustomColor: false,
-			colors: [
-				['#aae9fc', '#bbecf1', '#98e1dc', '#e3f299', '#ffee95', '#ffdd93', '#dfd3b6', '#e3c6bb'],
-				['#ffad97', '#ffbdbb', '#ffcbd8', '#ffc4e4', '#c4baed', '#dbdde0', '#bfc5cd', '#a2a8b0']
-			]
-		});
-		/* eslint-enable */
+		const epicId = Dom.attr(colorNode, 'data-epic-id');
+
+		if (!this.colorPickers.has(epicId))
+		{
+			/* eslint-disable */
+			const picker =  new top.BX.ColorPicker({
+				bindElement: colorNode,
+				defaultColor: this.defaultColor,
+				selectedColor: this.selectedColor ? this.selectedColor : this.defaultColor,
+				onColorSelected: (color, picker) => {
+					this.selectedColor = color;
+					colorNode.style.backgroundColor = color;
+				},
+				popupOptions: {
+					angle: {
+						position: 'top',
+						offset: 33
+					},
+					className: 'tasks-scrum-epic-color-popup'
+				},
+				allowCustomColor: false,
+				colors: [
+					['#aae9fc', '#bbecf1', '#98e1dc', '#e3f299', '#ffee95', '#ffdd93', '#dfd3b6', '#e3c6bb'],
+					['#ffad97', '#ffbdbb', '#ffcbd8', '#ffc4e4', '#c4baed', '#dbdde0', '#bfc5cd', '#a2a8b0']
+				]
+			});
+
+			this.colorPickers.set(epicId, picker);
+			/* eslint-enable */
+		}
+
+		return this.colorPickers.get(epicId);
 	}
 
 	focusToName()

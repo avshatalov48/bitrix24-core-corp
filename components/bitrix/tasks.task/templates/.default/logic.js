@@ -1116,10 +1116,10 @@ BX.namespace('Tasks.Component');
 				var items = [];
 
 				titles.forEach(function(title) {
-					var parsedTitle = BX.util.htmlspecialchars(title.trim());
-					if (parsedTitle.length > 0)
+					title = title.trim();
+					if (title.length > 0)
 					{
-						var newCheckListItem = new BX.Tasks.CheckListItem({TITLE: parsedTitle});
+						var newCheckListItem = new BX.Tasks.CheckListItem({TITLE: title});
 						items.push(newCheckListItem);
 					}
 				});

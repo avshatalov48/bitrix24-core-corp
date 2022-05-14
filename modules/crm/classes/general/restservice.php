@@ -1226,6 +1226,32 @@ abstract class CCrmRestProxyBase implements ICrmRestProxy
 	public function add(&$fields, array $params = null)
 	{
 		$fieldsInfo = $this->getFieldsInfo();
+
+		$isImportMode = (bool)($params['IMPORT'] ?? false);
+		if ($isImportMode)
+		{
+			// allow set system fields in import
+			$systemFields = [
+				'DATE_CREATE',
+				'DATE_MODIFY',
+				'MOVED_TIME',
+				'CREATED_BY_ID',
+				'MODIFY_BY_ID',
+				'MOVED_BY_ID',
+			];
+
+			foreach ($systemFields as $systemField)
+			{
+				if (isset($fieldsInfo[$systemField]) && is_array($fieldsInfo[$systemField]['ATTRIBUTES']))
+				{
+					$readonlyAttrPos = array_search(\CCrmFieldInfoAttr::ReadOnly, $fieldsInfo[$systemField]['ATTRIBUTES']);
+					if ($readonlyAttrPos !== false)
+					{
+						unset($fieldsInfo[$systemField]['ATTRIBUTES'][$readonlyAttrPos]);
+					}
+				}
+			}
+		}
 		$fieldsInfo['TRACE'] = [
 			'TYPE' => 'string',
 			'ATTRIBUTES' => [\CCrmFieldInfoAttr::Immutable]
@@ -5385,7 +5411,9 @@ class CCrmLeadRestProxy extends CCrmRestProxyBase
 	}
 	protected function innerAdd(&$fields, &$errors, array $params = null)
 	{
-		if(!CCrmLead::CheckCreatePermission())
+		$isImportMode = is_array($params) && isset($params['IMPORT']) && $params['IMPORT'];
+
+		if(!($isImportMode ? CCrmLead::CheckImportPermission() : CCrmLead::CheckCreatePermission()))
 		{
 			$errors[] = 'Access denied.';
 			return false;
@@ -5404,7 +5432,7 @@ class CCrmLeadRestProxy extends CCrmRestProxyBase
 		}
 
 		$entity = self::getEntity();
-		$options = array();
+		$options = [];
 		if(!$this->isRequiredUserFieldCheckEnabled())
 		{
 			$options['DISABLE_REQUIRED_USER_FIELD_CHECK'] = true;
@@ -5412,6 +5440,11 @@ class CCrmLeadRestProxy extends CCrmRestProxyBase
 		if(is_array($params) && isset($params['REGISTER_SONET_EVENT']))
 		{
 			$options['REGISTER_SONET_EVENT'] = mb_strtoupper($params['REGISTER_SONET_EVENT']) === 'Y';
+		}
+		if($isImportMode)
+		{
+			$options['ALLOW_SET_SYSTEM_FIELDS'] = true;
+			$fields['PERMISSION'] = 'IMPORT';
 		}
 		$result = $entity->Add($fields, true, $options);
 		if($result <= 0)
@@ -5421,7 +5454,7 @@ class CCrmLeadRestProxy extends CCrmRestProxyBase
 		else
 		{
 			self::traceEntity(\CCrmOwnerType::Lead, $result, $fields);
-			if (self::isBizProcEnabled())
+			if (self::isBizProcEnabled() && !$isImportMode)
 			{
 				CCrmBizProcHelper::AutoStartWorkflows(
 					CCrmOwnerType::Lead,
@@ -7451,7 +7484,9 @@ class CCrmCompanyRestProxy extends CCrmRestProxyBase
 	}
 	protected function innerAdd(&$fields, &$errors, array $params = null)
 	{
-		if(!CCrmCompany::CheckCreatePermission())
+		$isImportMode = is_array($params) && isset($params['IMPORT']) && $params['IMPORT'];
+
+		if(!($isImportMode ? CCrmCompany::CheckImportPermission() : CCrmCompany::CheckCreatePermission()))
 		{
 			$errors[] = 'Access denied.';
 			return false;
@@ -7470,7 +7505,7 @@ class CCrmCompanyRestProxy extends CCrmRestProxyBase
 		}
 
 		$entity = self::getEntity();
-		$options = array();
+		$options = [];
 		if(!$this->isRequiredUserFieldCheckEnabled())
 		{
 			$options['DISABLE_REQUIRED_USER_FIELD_CHECK'] = true;
@@ -7478,6 +7513,12 @@ class CCrmCompanyRestProxy extends CCrmRestProxyBase
 		if(is_array($params) && isset($params['REGISTER_SONET_EVENT']))
 		{
 			$options['REGISTER_SONET_EVENT'] = mb_strtoupper($params['REGISTER_SONET_EVENT']) === 'Y';
+		}
+
+		if($isImportMode)
+		{
+			$options['ALLOW_SET_SYSTEM_FIELDS'] = true;
+			$fields['PERMISSION'] = 'IMPORT';
 		}
 		$result = $entity->Add($fields, true, $options);
 		if($result <= 0)
@@ -7487,7 +7528,7 @@ class CCrmCompanyRestProxy extends CCrmRestProxyBase
 		else
 		{
 			self::traceEntity(\CCrmOwnerType::Company, $result, $fields);
-			if (self::isBizProcEnabled())
+			if (self::isBizProcEnabled() && !$isImportMode)
 			{
 				CCrmBizProcHelper::AutoStartWorkflows(
 					CCrmOwnerType::Company,
@@ -7759,7 +7800,9 @@ class CCrmContactRestProxy extends CCrmRestProxyBase
 	}
 	protected function innerAdd(&$fields, &$errors, array $params = null)
 	{
-		if(!CCrmContact::CheckCreatePermission())
+		$isImportMode = is_array($params) && isset($params['IMPORT']) && $params['IMPORT'];
+
+		if(!($isImportMode ? CCrmContact::CheckImportPermission() : CCrmContact::CheckCreatePermission()))
 		{
 			$errors[] = 'Access denied.';
 			return false;
@@ -7778,7 +7821,7 @@ class CCrmContactRestProxy extends CCrmRestProxyBase
 		}
 
 		$entity = self::getEntity();
-		$options = array();
+		$options = [];
 		if(!$this->isRequiredUserFieldCheckEnabled())
 		{
 			$options['DISABLE_REQUIRED_USER_FIELD_CHECK'] = true;
@@ -7786,6 +7829,12 @@ class CCrmContactRestProxy extends CCrmRestProxyBase
 		if(is_array($params) && isset($params['REGISTER_SONET_EVENT']))
 		{
 			$options['REGISTER_SONET_EVENT'] = mb_strtoupper($params['REGISTER_SONET_EVENT']) === 'Y';
+		}
+
+		if($isImportMode)
+		{
+			$options['ALLOW_SET_SYSTEM_FIELDS'] = true;
+			$fields['PERMISSION'] = 'IMPORT';
 		}
 		$result = $entity->Add($fields, true, $options);
 		if($result <= 0)
@@ -7795,7 +7844,7 @@ class CCrmContactRestProxy extends CCrmRestProxyBase
 		else
 		{
 			self::traceEntity(\CCrmOwnerType::Contact, $result, $fields);
-			if (self::isBizProcEnabled())
+			if (self::isBizProcEnabled() && !$isImportMode)
 			{
 				CCrmBizProcHelper::AutoStartWorkflows(
 					CCrmOwnerType::Contact,
@@ -12895,10 +12944,8 @@ class CCrmRequisiteLinkRestProxy extends CCrmRestProxyBase
 				$entityTypeId = intval($this->resolveParam($arParams, 'entityTypeId'));
 				$entityId = intval($this->resolveParam($arParams, 'entityId'));
 
-				if(!$this->isValidID($entityTypeId)
-					|| !($entityTypeId === CCrmOwnerType::Deal
-						|| $entityTypeId === CCrmOwnerType::Quote
-						|| $entityTypeId === CCrmOwnerType::Invoice))
+				$availableEntityTypeIds = \Bitrix\Crm\Requisite\EntityLink::getAvailableEntityTypeIds();
+				if (!isset($availableEntityTypeIds[$entityTypeId]))
 				{
 					$errors[] = 'entityTypeId is not defined or invalid.';
 					return false;
@@ -12936,10 +12983,8 @@ class CCrmRequisiteLinkRestProxy extends CCrmRestProxyBase
 				$entityTypeId = intval($this->resolveParam($arParams, 'entityTypeId'));
 				$entityId = intval($this->resolveParam($arParams, 'entityId'));
 
-				if(!$this->isValidID($entityTypeId)
-					|| !($entityTypeId === CCrmOwnerType::Deal
-						|| $entityTypeId === CCrmOwnerType::Quote
-						|| $entityTypeId === CCrmOwnerType::Invoice))
+				$availableEntityTypeIds = \Bitrix\Crm\Requisite\EntityLink::getAvailableEntityTypeIds();
+				if (!isset($availableEntityTypeIds[$entityTypeId]))
 				{
 					$errors[] = 'entityTypeId is not defined or invalid.';
 					return false;

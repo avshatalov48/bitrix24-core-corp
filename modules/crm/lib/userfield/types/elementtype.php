@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\UserField\Types;
 
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Main\Loader;
@@ -72,7 +73,7 @@ class ElementType extends StringType
 			}
 		}
 
-		$entityType['LEAD'] = ($entityQuantity === 0 ? 'Y' : $entityTypes['LEAD']);
+		$entityTypes['LEAD'] = ($entityQuantity === 0 ? 'Y' : $entityTypes['LEAD']);
 
 		return $entityTypes;
 	}
@@ -388,5 +389,10 @@ class ElementType extends StringType
 		}
 
 		return $selectorOptions;
+	}
+
+	public static function getValueByIdentifier(ItemIdentifier $identifier): string
+	{
+		return \CCrmOwnerTypeAbbr::ResolveByTypeID($identifier->getEntityTypeId()) . '_' . $identifier->getEntityId();
 	}
 }

@@ -68,15 +68,27 @@ class FieldAttributeTable extends Main\Entity\DataManager
 			$entityScope = (string)$entityScope;
 		}
 
-		$connection = Main\HttpApplication::getConnection();
-		$helper = $connection->getSqlHelper();
-		$phaseID = $helper->forSql($phaseID);
-		$entityScope = $helper->forSql($entityScope);
+		$res = self::getList([
+			'filter' => [
+				'LOGIC' => 'AND',
+				[
+					'=ENTITY_TYPE_ID' => $entityTypeID,
+					'=ENTITY_SCOPE' => $entityScope,
+				],
+				[
+					'LOGIC' => 'OR',
+					'=START_PHASE' => $phaseID,
+					'=FINISH_PHASE' => $phaseID
+				],
+			],
+			'select' => [
+				'ID',
+			],
+		]);
 
-		$connection->query(
-			"DELETE FROM b_crm_field_attr "
-			. "WHERE ENTITY_TYPE_ID = {$entityTypeID} AND ENTITY_SCOPE = '{$entityScope}' "
-			. "AND (START_PHASE = '{$phaseID}' OR FINISH_PHASE = '{$phaseID}')"
-		);
+		while($item = $res->fetch())
+		{
+			self::delete($item['ID']);
+		}
 	}
 }

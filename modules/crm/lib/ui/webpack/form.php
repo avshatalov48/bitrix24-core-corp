@@ -169,15 +169,21 @@ class Form extends Webpack\Base
 
 	protected function configureFile()
 	{
-		if (!$this->form)
+		if ($this->form)
 		{
-			$this->form = new WebForm\Form($this->getId());
+			$sec = $this->form->get()['SECURITY_CODE'] ?? '';
+		}
+		else
+		{
+			$sec = WebForm\Internals\FormTable::getRow([
+					'select' => ['SECURITY_CODE'],
+					'filter' => ['=ID' => $this->getId()]
+				])['SECURITY_CODE'] ?? '';
 		}
 
-		$data = $this->form->get();
 		$this->configureFormEmbeddedScript([
 			'action' => 'inline',
-			'sec' => $data['SECURITY_CODE'],
+			'sec' => $sec,
 		]);
 	}
 

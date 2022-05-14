@@ -10,6 +10,7 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/intranet/public_bitrix24/bizproc/.left.menu_ext.php');
 
+$tasksCount = (int)CUserCounter::getValue($GLOBALS['USER']->getID(), 'bp_tasks');
 $aMenuLinks = [
 	[
 		GetMessage('MENU_BIZPROC_TASKS_1'),
@@ -17,6 +18,7 @@ $aMenuLinks = [
 		[],
 		[
 			'counter_id' => 'bp_tasks',
+			'counter_num' => $tasksCount,
 			'menu_item_id' => 'menu_bizproc'
 		],
 		'',

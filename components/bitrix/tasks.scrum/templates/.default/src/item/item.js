@@ -1,23 +1,22 @@
 import {Type, Dom, Event, Tag, Text} from 'main.core';
 import {BaseEvent, EventEmitter} from 'main.core.events';
+
 import {Dialog} from 'ui.entity-selector';
 
 import {Toggle} from './task/toggle';
 import {Name} from './task/name';
 import {Checklist} from './task/checklist';
 import {Files} from './task/files';
-import {Comments} from './task/comments';
-import {Epic} from './task/epic';
+import {Comments, TaskCounter} from './task/comments';
+import {Epic, EpicType} from './task/epic';
 import {Tags} from './task/tags';
-import {Responsible} from './task/responsible';
+import {Responsible, ResponsibleType} from './task/responsible';
 import {StoryPoints} from './task/story.points';
 import {SubTasks} from './task/sub.tasks';
 
-import '../css/item.css';
+import 'main.polyfill.intersectionobserver';
 
-import type {TaskCounter} from './task/comments';
-import type {EpicType} from './task/epic';
-import type {ResponsibleType} from './task/responsible';
+import '../css/item.css';
 
 type AllowedActions = {
 	task_edit: boolean,
@@ -39,7 +38,7 @@ type SubTasksInfo = {
 }
 
 export type ItemParams = {
-	id: number|string,
+	id: number | string,
 	tmpId: string,
 	name: string,
 	checkListComplete: number,
@@ -57,7 +56,6 @@ export type ItemParams = {
 	completed?: 'Y' | 'N',
 	sort?: number,
 	allowedActions?: AllowedActions,
-
 	info?: ItemInfo,
 	isParentTask?: 'Y' | 'N',
 	isLinkedTask?: 'Y' | 'N',
@@ -356,7 +354,7 @@ export class Item extends EventEmitter
 		return this.subTasks;
 	}
 
-	setId(id: number|string)
+	setId(id: number | string)
 	{
 		this.id = (
 			Type.isInteger(id) ? parseInt(id, 10) :
@@ -449,6 +447,8 @@ export class Item extends EventEmitter
 
 		if (this.name)
 		{
+			this.name.setCompleted(completed);
+
 			if (completed)
 			{
 				this.name.strikeOut();
@@ -731,6 +731,13 @@ export class Item extends EventEmitter
 		this.toggle.hide();
 
 		this.getSubTasks().hide();
+
+		this.unDisableToggle();
+	}
+
+	cleanSubTasks()
+	{
+		this.getSubTasks().cleanTasks();
 	}
 
 	isShownSubTasks(): boolean
@@ -970,7 +977,7 @@ export class Item extends EventEmitter
 	{
 		const target = event.target;
 
-		if (target.classList.contains('tasks-scrum__item--link'))
+		if (Dom.hasClass(target, 'tasks-scrum__item--link'))
 		{
 			this.emit('showLinked');
 
@@ -1110,7 +1117,12 @@ export class Item extends EventEmitter
 		this.hideSubTasks();
 	}
 
-	hasNode(parentNode: HTMLElement|Array<HTMLElement>, searchNode: HTMLElement, skipParent = false): boolean
+	unDisableToggle()
+	{
+		this.toggle.unDisable();
+	}
+
+	hasNode(parentNode: HTMLElement | Array<HTMLElement>, searchNode: HTMLElement, skipParent = false): boolean
 	{
 		if (Type.isArray(parentNode))
 		{
@@ -1147,7 +1159,7 @@ export class Item extends EventEmitter
 			return;
 		}
 
-		if (typeof IntersectionObserver === `undefined`)
+		if (Type.isUndefined(IntersectionObserver))
 		{
 			return;
 		}

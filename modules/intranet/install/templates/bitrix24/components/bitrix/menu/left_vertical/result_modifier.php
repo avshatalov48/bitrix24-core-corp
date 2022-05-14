@@ -7,6 +7,7 @@
 
 use Bitrix\Main;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Type\Date;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
@@ -116,3 +117,27 @@ if (
 		}
 	}
 }
+
+$shouldShowWhatsNew = function() {
+	if (\COption::getOptionString('intranet', 'new_portal_structure', 'N') === 'Y')
+	{
+		return false;
+	}
+
+	$option = \CUserOptions::getOption('intranet', 'left_menu_whats_new_dialog');
+	if (isset($option['closed']) && $option['closed'] === 'Y')
+	{
+		return false;
+	}
+
+	$spotlight = new Main\UI\Spotlight('left_menu_whats_new_dialog');
+	$spotlight->setUserTimeSpan(3600 * 24 * 7);
+	if (ModuleManager::isModuleInstalled('bitrix24'))
+	{
+		$spotlight->setEndDate(gmmktime(8, 30, 0, 5, 10, 2022));
+	}
+
+	return $spotlight->isAvailable();
+};
+
+$arResult["SHOW_WHATS_NEW"] = $shouldShowWhatsNew();

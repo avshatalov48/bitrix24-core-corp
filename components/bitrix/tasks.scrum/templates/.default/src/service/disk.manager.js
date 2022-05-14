@@ -69,9 +69,17 @@ export class DiskManager extends EventEmitter
 		this.popup.show();
 	}
 
+	closeAttachmentMenu()
+	{
+		if (this.popup)
+		{
+			this.popup.close();
+		}
+	}
+
 	openDiskFileDialog()
 	{
-		if (BX.DiskFileDialog.popupWindow != null)
+		if (BX.DiskFileDialog.popupWindow !== null)
 		{
 			BX.DiskFileDialog.popupWindow.subscribe('onClose', () => this.popup.close());
 		}

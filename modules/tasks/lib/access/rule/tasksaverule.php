@@ -28,11 +28,13 @@ class TaskSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 	{
 		if (!$task)
 		{
+			$this->controller->addError(static::class, 'Incorrect task');
 			return false;
 		}
 
 		if (!$this->checkParams($params))
 		{
+			$this->controller->addError(static::class, 'Incorrect params');
 			return false;
 		}
 
@@ -45,6 +47,7 @@ class TaskSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			&& !$this->newTask->getGroup()['TASKS_ENABLED']
 		)
 		{
+			$this->controller->addError(static::class, 'Tasks are disabled in group');
 			return false;
 		}
 
@@ -57,6 +60,7 @@ class TaskSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		// user can update task
 		if (!$this->canUpdateTask())
 		{
+			$this->controller->addError(static::class, 'Access to create or update task denied');
 			return false;
 		}
 
@@ -67,6 +71,7 @@ class TaskSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			&& !$this->canSetGroup($this->newTask->getGroupId())
 		)
 		{
+			$this->controller->addError(static::class, 'Access to set group denied');
 			return false;
 		}
 
@@ -75,6 +80,7 @@ class TaskSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		{
 			if (!$this->canAssignTask($this->oldTask, RoleDictionary::ROLE_RESPONSIBLE, $member, $this->newTask))
 			{
+				$this->controller->addError(static::class, 'Access to assign responsible denied');
 				return false;
 			}
 		}
@@ -84,6 +90,7 @@ class TaskSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		{
 			if (!$this->canAssignTask($this->oldTask, RoleDictionary::ROLE_ACCOMPLICE, $member, $this->newTask))
 			{
+				$this->controller->addError(static::class, 'Access to assign accomplice denied');
 				return false;
 			}
 		}
@@ -92,9 +99,10 @@ class TaskSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		if (
 			$this->changedDirector()
 			&& !in_array($this->user->getUserId(), $this->newTask->getMembers(RoleDictionary::ROLE_RESPONSIBLE))
-			&& !$this->controller->check(ActionDictionary::ACTION_TASK_CHANGE_DIRECTOR, $task)
+			&& !$this->controller->check(ActionDictionary::ACTION_TASK_CHANGE_DIRECTOR, $task, $params)
 		)
 		{
+			$this->controller->addError(static::class, 'Access to assign director denied');
 			return false;
 		}
 

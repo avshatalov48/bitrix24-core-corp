@@ -176,7 +176,7 @@ class RpaPanelComponent extends Bitrix\Rpa\Components\Base implements Controller
 		$grid['AJAX_OPTION_STYLE'] = "N";
 		$grid['AJAX_OPTION_HISTORY'] = "N";
 		$grid['SHOW_PAGESIZE'] = true;
-		$grid['PAGE_SIZES'] = [['NAME' => 10, 'VALUE' => 10], ['NAME' => 20, 'VALUE' => 20], ['NAME' => 50, 'VALUE' => 50]];
+		$grid['PAGE_SIZES'] = [['NAME' => '10', 'VALUE' => '10'], ['NAME' => '20', 'VALUE' => '20'], ['NAME' => '50', 'VALUE' => '50']];
 		$grid['SHOW_ROW_CHECKBOXES'] = false;
 		$grid['SHOW_CHECK_ALL_CHECKBOXES'] = false;
 		$grid['SHOW_ACTION_PANEL'] = false;

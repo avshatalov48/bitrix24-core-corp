@@ -25,12 +25,17 @@ class CAllCrmLead
 	use UserFieldPreparer;
 
 	static public $sUFEntityID = 'CRM_LEAD';
+
 	const USER_FIELD_ENTITY_ID = 'CRM_LEAD';
 	const SUSPENDED_USER_FIELD_ENTITY_ID = 'CRM_LEAD_SPD';
-	const TOTAL_COUNT_CACHE_ID =  'crm_lead_total_count';
+	const TOTAL_COUNT_CACHE_ID = 'crm_lead_total_count';
+	const CACHE_TTL = 3600;
 
 	public $LAST_ERROR = '';
 	protected $checkExceptions = array();
+
+	/** @var \Bitrix\Crm\Entity\Compatibility\Adapter */
+	private $compatibilityAdapter;
 
 	public $cPerms = null;
 	protected $bCheckPermission = true;
@@ -45,6 +50,89 @@ class CAllCrmLead
 	{
 		$this->bCheckPermission = $bCheckPermission;
 		$this->cPerms = CCrmPerms::GetCurrentUserPermissions();
+	}
+
+	/**
+	 * Returns true if this class should invoke Service\Operation instead old API.
+	 * For a start it will return false by default. Please use this period to test your customization on compatibility with new API.
+	 * Later it will return true by default.
+	 * In several months this class will be declared as deprecated and old code will be deleted completely.
+	 *
+	 * @return bool
+	 */
+	public function isUseOperation(): bool
+	{
+		return static::isFactoryEnabled();
+	}
+
+	private static function isFactoryEnabled(): bool
+	{
+		return Crm\Settings\LeadSettings::getCurrent()->isFactoryEnabled();
+	}
+
+	private function getCompatibilityAdapter(): Crm\Entity\Compatibility\Adapter
+	{
+		if (!$this->compatibilityAdapter)
+		{
+			$this->compatibilityAdapter = static::createCompatibilityAdapter();
+
+			if ($this->compatibilityAdapter instanceof Crm\Entity\Compatibility\Adapter\Operation)
+			{
+				$this->compatibilityAdapter
+					//bind newly created adapter to this instance
+					->setCheckPermissions((bool)$this->bCheckPermission)
+					->setErrorMessageContainer($this->LAST_ERROR)
+					->setCheckExceptionsContainer($this->checkExceptions)
+				;
+			}
+		}
+
+		return $this->compatibilityAdapter;
+	}
+
+	private static function createCompatibilityAdapter(): Bitrix\Crm\Entity\Compatibility\Adapter
+	{
+		$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Lead);
+		if (!$factory)
+		{
+			throw new Error('No factory for lead');
+		}
+
+		$compatibilityAdapter =
+			(new Crm\Entity\Compatibility\Adapter\Operation($factory))
+				->setRunAutomation(false)
+				->setRunBizProc(false)
+				->setAlwaysExposedFields([
+					'ID',
+					'MODIFY_BY_ID',
+					'EXCH_RATE',
+					'ACCOUNT_CURRENCY_ID',
+					'OPPORTUNITY_ACCOUNT',
+				])
+				->setExposedOnlyAfterAddFields([
+					'CREATED_BY_ID',
+					'ASSIGNED_BY_ID',
+					'OPPORTUNITY',
+					'TITLE',
+					'BIRTHDAY_SORT',
+					'STATUS_ID',
+					'STATUS_SEMANTIC_ID',
+					'CURRENCY_ID',
+					'HAS_IMOL',
+					'HAS_PHONE',
+					'HAS_EMAIL',
+					'DATE_MODIFY',
+					'DATE_CREATE',
+				])
+				->setExposedOnlyAfterUpdateFields([
+					'FULL_NAME',
+				])
+		;
+
+		$addressAdapter = new Crm\Entity\Compatibility\Adapter\Address(\CCrmOwnerType::Lead, EntityAddressType::Primary);
+		$compatibilityAdapter->addChild($addressAdapter);
+
+		return $compatibilityAdapter;
 	}
 
 	// Service -->
@@ -76,186 +164,193 @@ class CAllCrmLead
 	{
 		if(!self::$FIELD_INFOS)
 		{
-			self::$FIELD_INFOS = array(
-				'ID' => array(
-					'TYPE' => 'integer',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'TITLE' => array(
-					'TYPE' => 'string',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Required)
-				),
-				'HONORIFIC' => array(
-					'TYPE' => 'crm_status',
-					'CRM_STATUS_TYPE' => 'HONORIFIC'
-				),
-				'NAME' => array(
-					'TYPE' => 'string'
-				),
-				'SECOND_NAME' => array(
-					'TYPE' => 'string'
-				),
-				'LAST_NAME' => array(
-					'TYPE' => 'string'
-				),
-				'BIRTHDATE' => array(
-					'TYPE' => 'date'
-				),
-				'BIRTHDAY_SORT' => array(
-					'TYPE' => 'integer',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
-				),
-				'COMPANY_TITLE' => array(
-					'TYPE' => 'string'
-				),
-				'SOURCE_ID' => array(
-					'TYPE' => 'crm_status',
-					'CRM_STATUS_TYPE' => 'SOURCE',
-					'ATTRIBUTES' => [CCrmFieldInfoAttr::HasDefaultValue],
-				),
-				'SOURCE_DESCRIPTION' => array(
-					'TYPE' => 'string'
-				),
-				'STATUS_ID' => array(
-					'TYPE' => 'crm_status',
-					'CRM_STATUS_TYPE' => 'STATUS',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Progress)
-				),
-				'STATUS_DESCRIPTION' => array(
-					'TYPE' => 'string'
-				),
-				'STATUS_SEMANTIC_ID' => array(
-					'TYPE' => 'string',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'POST' => array(
-					'TYPE' => 'string'
-				),
-				'ADDRESS' => array(
-					'TYPE' => 'string'
-				),
-				'ADDRESS_2' => array(
-					'TYPE' => 'string'
-				),
-				'ADDRESS_CITY' => array(
-					'TYPE' => 'string'
-				),
-				'ADDRESS_POSTAL_CODE' => array(
-					'TYPE' => 'string'
-				),
-				'ADDRESS_REGION' => array(
-					'TYPE' => 'string'
-				),
-				'ADDRESS_PROVINCE' => array(
-					'TYPE' => 'string'
-				),
-				'ADDRESS_COUNTRY' => array(
-					'TYPE' => 'string'
-				),
-				'ADDRESS_COUNTRY_CODE' => array(
-					'TYPE' => 'string'
-				),
-				'ADDRESS_LOC_ADDR_ID' => array(
-					'TYPE' => 'integer'
-				),
-				'CURRENCY_ID' => array(
-					'TYPE' => 'crm_currency'
-				),
-				'OPPORTUNITY' => array(
-					'TYPE' => 'double'
-				),
-				'IS_MANUAL_OPPORTUNITY' => array(
-					'TYPE' => 'char'
-				),
-				'OPENED' => array(
-					'TYPE' => 'char'
-				),
-				'COMMENTS' => array(
-					'TYPE' => 'string',
-					'VALUE_TYPE' => 'html',
-				),
-				'HAS_PHONE' => array(
-					'TYPE' => 'char',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'HAS_EMAIL' => array(
-					'TYPE' => 'char',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'HAS_IMOL' => array(
-					'TYPE' => 'char',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'ASSIGNED_BY_ID' => array(
-					'TYPE' => 'user',
-				),
-				'CREATED_BY_ID' => array(
-					'TYPE' => 'user',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'MODIFY_BY_ID' => array(
-					'TYPE' => 'user',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'MOVED_BY_ID' => [
-					'TYPE' => 'user',
-					'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly],
-				],
-				'DATE_CREATE' => array(
-					'TYPE' => 'datetime',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'DATE_MODIFY' => array(
-					'TYPE' => 'datetime',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'MOVED_TIME' => [
-					'TYPE' => 'datetime',
-					'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly],
-				],
-				'COMPANY_ID' => array(
-					'TYPE' => 'crm_company',
-					'SETTINGS' => [
-						'parentEntityTypeId' => \CCrmOwnerType::Company,
+			if (static::isFactoryEnabled())
+			{
+				self::$FIELD_INFOS = static::createCompatibilityAdapter()->getFieldsInfo();
+			}
+			else
+			{
+				self::$FIELD_INFOS = array(
+					'ID' => array(
+						'TYPE' => 'integer',
+						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+					),
+					'TITLE' => array(
+						'TYPE' => 'string',
+						'ATTRIBUTES' => array(CCrmFieldInfoAttr::Required)
+					),
+					'HONORIFIC' => array(
+						'TYPE' => 'crm_status',
+						'CRM_STATUS_TYPE' => 'HONORIFIC'
+					),
+					'NAME' => array(
+						'TYPE' => 'string'
+					),
+					'SECOND_NAME' => array(
+						'TYPE' => 'string'
+					),
+					'LAST_NAME' => array(
+						'TYPE' => 'string'
+					),
+					'BIRTHDATE' => array(
+						'TYPE' => 'date'
+					),
+					'BIRTHDAY_SORT' => array(
+						'TYPE' => 'integer',
+						'ATTRIBUTES' => array(CCrmFieldInfoAttr::Hidden)
+					),
+					'COMPANY_TITLE' => array(
+						'TYPE' => 'string'
+					),
+					'SOURCE_ID' => array(
+						'TYPE' => 'crm_status',
+						'CRM_STATUS_TYPE' => 'SOURCE',
+						'ATTRIBUTES' => [CCrmFieldInfoAttr::HasDefaultValue],
+					),
+					'SOURCE_DESCRIPTION' => array(
+						'TYPE' => 'string'
+					),
+					'STATUS_ID' => array(
+						'TYPE' => 'crm_status',
+						'CRM_STATUS_TYPE' => 'STATUS',
+						'ATTRIBUTES' => array(CCrmFieldInfoAttr::Progress)
+					),
+					'STATUS_DESCRIPTION' => array(
+						'TYPE' => 'string'
+					),
+					'STATUS_SEMANTIC_ID' => array(
+						'TYPE' => 'string',
+						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+					),
+					'POST' => array(
+						'TYPE' => 'string'
+					),
+					'ADDRESS' => array(
+						'TYPE' => 'string'
+					),
+					'ADDRESS_2' => array(
+						'TYPE' => 'string'
+					),
+					'ADDRESS_CITY' => array(
+						'TYPE' => 'string'
+					),
+					'ADDRESS_POSTAL_CODE' => array(
+						'TYPE' => 'string'
+					),
+					'ADDRESS_REGION' => array(
+						'TYPE' => 'string'
+					),
+					'ADDRESS_PROVINCE' => array(
+						'TYPE' => 'string'
+					),
+					'ADDRESS_COUNTRY' => array(
+						'TYPE' => 'string'
+					),
+					'ADDRESS_COUNTRY_CODE' => array(
+						'TYPE' => 'string'
+					),
+					'ADDRESS_LOC_ADDR_ID' => array(
+						'TYPE' => 'integer'
+					),
+					'CURRENCY_ID' => array(
+						'TYPE' => 'crm_currency'
+					),
+					'OPPORTUNITY' => array(
+						'TYPE' => 'double'
+					),
+					'IS_MANUAL_OPPORTUNITY' => array(
+						'TYPE' => 'char'
+					),
+					'OPENED' => array(
+						'TYPE' => 'char'
+					),
+					'COMMENTS' => array(
+						'TYPE' => 'string',
+						'VALUE_TYPE' => 'html',
+					),
+					'HAS_PHONE' => array(
+						'TYPE' => 'char',
+						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+					),
+					'HAS_EMAIL' => array(
+						'TYPE' => 'char',
+						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+					),
+					'HAS_IMOL' => array(
+						'TYPE' => 'char',
+						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+					),
+					'ASSIGNED_BY_ID' => array(
+						'TYPE' => 'user',
+					),
+					'CREATED_BY_ID' => array(
+						'TYPE' => 'user',
+						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+					),
+					'MODIFY_BY_ID' => array(
+						'TYPE' => 'user',
+						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+					),
+					'MOVED_BY_ID' => [
+						'TYPE' => 'user',
+						'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly],
 					],
-				),
-				'CONTACT_ID' => array(
-					'TYPE' => 'crm_contact',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Deprecated)
-				),
-				'CONTACT_IDS' => array(
-					'TYPE' => 'crm_contact',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::Multiple)
-				),
-				'IS_RETURN_CUSTOMER' => array(
-					'TYPE' => 'char',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'DATE_CLOSED' => array(
-					'TYPE' => 'datetime',
-					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
-				),
-				'ORIGINATOR_ID' => array(
-					'TYPE' => 'string'
-				),
-				'ORIGIN_ID' => array(
-					'TYPE' => 'string'
-				),
-				/*'DISCOUNT_TYPE_ID' => array(
-					'TYPE' => 'integer'
-				),
-				'DISCOUNT_RATE' => array(
-					'TYPE' => 'double'
-				),
-				'DISCOUNT_SUM' => array(
-					'TYPE' => 'double'
-				)*/
-			);
+					'DATE_CREATE' => array(
+						'TYPE' => 'datetime',
+						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+					),
+					'DATE_MODIFY' => array(
+						'TYPE' => 'datetime',
+						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+					),
+					'MOVED_TIME' => [
+						'TYPE' => 'datetime',
+						'ATTRIBUTES' => [CCrmFieldInfoAttr::ReadOnly],
+					],
+					'COMPANY_ID' => array(
+						'TYPE' => 'crm_company',
+						'SETTINGS' => [
+							'parentEntityTypeId' => \CCrmOwnerType::Company,
+						],
+					),
+					'CONTACT_ID' => array(
+						'TYPE' => 'crm_contact',
+						'ATTRIBUTES' => array(CCrmFieldInfoAttr::Deprecated)
+					),
+					'CONTACT_IDS' => array(
+						'TYPE' => 'crm_contact',
+						'ATTRIBUTES' => array(CCrmFieldInfoAttr::Multiple)
+					),
+					'IS_RETURN_CUSTOMER' => array(
+						'TYPE' => 'char',
+						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+					),
+					'DATE_CLOSED' => array(
+						'TYPE' => 'datetime',
+						'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+					),
+					'ORIGINATOR_ID' => array(
+						'TYPE' => 'string'
+					),
+					'ORIGIN_ID' => array(
+						'TYPE' => 'string'
+					),
+					/*'DISCOUNT_TYPE_ID' => array(
+						'TYPE' => 'integer'
+					),
+					'DISCOUNT_RATE' => array(
+						'TYPE' => 'double'
+					),
+					'DISCOUNT_SUM' => array(
+						'TYPE' => 'double'
+					)*/
+				);
 
-			// add utm fields
-			self::$FIELD_INFOS += UtmTable::getUtmFieldsInfo();
+				// add utm fields
+				self::$FIELD_INFOS += UtmTable::getUtmFieldsInfo();
 
-			self::$FIELD_INFOS += Crm\Service\Container::getInstance()->getParentFieldManager()->getParentFieldsInfo(\CCrmOwnerType::Lead);
+				self::$FIELD_INFOS += Crm\Service\Container::getInstance()->getParentFieldManager()->getParentFieldsInfo(\CCrmOwnerType::Lead);
+			}
 		}
 
 		return self::$FIELD_INFOS;
@@ -515,7 +610,7 @@ class CAllCrmLead
 			}
 			else
 			{
-				list($ufId, $ufType, $ufName) = \Bitrix\Crm\Integration\Calendar::parseUserfieldKey($arFilter['CALENDAR_FIELD']);
+				[$ufId, $ufType, $ufName] = \Bitrix\Crm\Integration\Calendar::parseUserfieldKey($arFilter['CALENDAR_FIELD']);
 
 				if (intval($ufId) > 0 && $ufType == 'resourcebooking' || is_null($ufType))
 				{
@@ -654,7 +749,7 @@ class CAllCrmLead
 
 	public static function GetTotalCount()
 	{
-		if(defined('BX_COMP_MANAGED_CACHE') && $GLOBALS['CACHE_MANAGER']->Read(600, self::TOTAL_COUNT_CACHE_ID, 'b_crm_lead'))
+		if(defined('BX_COMP_MANAGED_CACHE') && $GLOBALS['CACHE_MANAGER']->Read(self::CACHE_TTL, self::TOTAL_COUNT_CACHE_ID, 'b_crm_lead'))
 		{
 			return $GLOBALS['CACHE_MANAGER']->Get(self::TOTAL_COUNT_CACHE_ID);
 		}
@@ -1246,10 +1341,18 @@ class CAllCrmLead
 			$options = array();
 		}
 
+		if ($this->isUseOperation())
+		{
+			return $this->getCompatibilityAdapter()->performAdd($arFields, $options);
+		}
+
 		$this->LAST_ERROR = '';
 		$this->checkExceptions = array();
 
 		$isRestoration = isset($options['IS_RESTORATION']) && $options['IS_RESTORATION'];
+
+		// ALLOW_SET_SYSTEM_FIELDS is deprecated temporary option. It will be removed soon! Do not use it!
+		$allowSetSystemFields = $options['ALLOW_SET_SYSTEM_FIELDS'] ?? $isRestoration;
 
 		$userID = isset($options['CURRENT_USER'])
 			? (int)$options['CURRENT_USER'] : CCrmSecurityHelper::GetCurrentUserID();
@@ -1262,23 +1365,23 @@ class CAllCrmLead
 
 		unset($arFields['ID']);
 
-		if(!($isRestoration && isset($arFields['DATE_CREATE'])))
+		if(!($allowSetSystemFields && isset($arFields['DATE_CREATE'])))
 		{
 			unset($arFields['DATE_CREATE']);
 			$arFields['~DATE_CREATE'] = $DB->CurrentTimeFunction();
 		}
 
-		if(!($isRestoration && isset($arFields['DATE_MODIFY'])))
+		if(!($allowSetSystemFields && isset($arFields['DATE_MODIFY'])))
 		{
 			unset($arFields['DATE_MODIFY']);
 			$arFields['~DATE_MODIFY'] = $DB->CurrentTimeFunction();
 		}
 
-		if(!($isRestoration && isset($arFields['MOVED_TIME'])))
+		if(!($allowSetSystemFields && isset($arFields['MOVED_TIME'])))
 		{
 			unset($arFields['MOVED_TIME']);
 		}
-		if(!($isRestoration && isset($arFields['MOVED_BY_ID'])))
+		if(!($allowSetSystemFields && isset($arFields['MOVED_BY_ID'])))
 		{
 			unset($arFields['MOVED_BY_ID']);
 		}
@@ -1440,7 +1543,6 @@ class CAllCrmLead
 		}
 
 		//region Setup HAS_EMAIL & HAS_PHONE & HAS_IMOL fields
-		//todo fill HAS_EMAIL and similar fields based on multifields
 		$arFields['HAS_EMAIL'] = $arFields['HAS_PHONE'] = $arFields['HAS_IMOL'] = 'N';
 		if(isset($arFields['FM']) && is_array($arFields['FM']))
 		{
@@ -1527,7 +1629,6 @@ class CAllCrmLead
 		//endregion
 
 		//region Rise BeforeAdd event
-		//todo rise events
 		$beforeEvents = GetModuleEvents('crm', 'OnBeforeCrmLeadAdd');
 		while ($arEvent = $beforeEvents->Fetch())
 		{
@@ -1582,26 +1683,6 @@ class CAllCrmLead
 		}
 		//endregion
 
-		//todo register duplication criterions
-		$companyTitle = isset($arFields['COMPANY_TITLE']) ? $arFields['COMPANY_TITLE'] : '';
-		if($companyTitle !== '')
-		{
-			DuplicateOrganizationCriterion::register(CCrmOwnerType::Lead, $ID, $companyTitle);
-		}
-
-		$lastName = isset($arFields['LAST_NAME']) ? $arFields['LAST_NAME'] : '';
-		if($lastName !== '')
-		{
-			DuplicatePersonCriterion::register(
-				CCrmOwnerType::Lead,
-				$ID,
-				$lastName,
-				isset($arFields['NAME']) ? $arFields['NAME'] : '',
-				isset($arFields['SECOND_NAME']) ? $arFields['SECOND_NAME'] : ''
-			);
-		}
-
-
 		$addressFields = array(
 			'ADDRESS_1' => isset($arFields['ADDRESS']) ? $arFields['ADDRESS'] : null,
 			'ADDRESS_2' => isset($arFields['ADDRESS_2']) ? $arFields['ADDRESS_2'] : null,
@@ -1615,7 +1696,6 @@ class CAllCrmLead
 			'LOC_ADDR' => isset($arFields['ADDRESS_LOC_ADDR']) ? $arFields['ADDRESS_LOC_ADDR'] : null
 		);
 
-		//todo register address
 		if(!\Bitrix\Crm\EntityAddress::isEmpty($addressFields) || $addressFields['LOC_ADDR'])
 		{
 			\Bitrix\Crm\EntityAddress::register(
@@ -1630,7 +1710,6 @@ class CAllCrmLead
 		$GLOBALS['USER_FIELD_MANAGER']->Update(self::$sUFEntityID, $ID, $arFields);
 
 		//Statistics & History -->
-		//todo implement lead statistics facade
 		Bitrix\Crm\Statistics\LeadSumStatisticEntry::register($ID, $arFields);
 		Bitrix\Crm\History\LeadStatusHistoryEntry::register($ID, $arFields, array('IS_NEW' => !$isRestoration));
 		if($arFields['STATUS_ID'] === 'CONVERTED')
@@ -1671,15 +1750,19 @@ class CAllCrmLead
 		{
 			$CCrmFieldMulti = new CCrmFieldMulti();
 			$CCrmFieldMulti->SetFields('LEAD', $ID, $arFields['FM']);
-			$duplicateCommData = DuplicateCommunicationCriterion::prepareBulkData($arFields['FM']);
-			if(!empty($duplicateCommData))
-			{
-				DuplicateCommunicationCriterion::bulkRegister(CCrmOwnerType::Lead, $ID, $duplicateCommData);
-			}
 		}
 		//endregion
 
-		DuplicateEntityRanking::registerEntityStatistics(CCrmOwnerType::Lead, $ID, $arFields);
+		$duplicateCriterionRegistrar = Crm\Integrity\DuplicateManager::getCriterionRegistrar(\CCrmOwnerType::Lead);
+
+		$data =
+			(new Crm\Integrity\CriterionRegistrar\Data())
+				->setEntityTypeId(\CCrmOwnerType::Lead)
+				->setEntityId($ID)
+				->setCurrentFields($arFields)
+		;
+
+		$duplicateCriterionRegistrar->register($data);
 
 		if($assignedByID > 0)
 		{
@@ -1734,7 +1817,6 @@ class CAllCrmLead
 		)->build($ID, ['checkExist' => true]);
 		//endregion
 
-		//todo register social network events for lead
 		if(isset($options['REGISTER_SONET_EVENT']) && $options['REGISTER_SONET_EVENT'] === true)
 		{
 			$opportunity = round((isset($arFields['OPPORTUNITY']) ? doubleval($arFields['OPPORTUNITY']) : 0.0), 2);
@@ -1947,6 +2029,12 @@ class CAllCrmLead
 		{
 			$options = array();
 		}
+
+		if ($this->isUseOperation())
+		{
+			return $this->getCompatibilityAdapter()->performUpdate($ID, $arFields, $options);
+		}
+
 		$isSystemAction = isset($options['IS_SYSTEM_ACTION']) && $options['IS_SYSTEM_ACTION'];
 
 		if(isset($options['CURRENT_USER']))
@@ -2350,7 +2438,6 @@ class CAllCrmLead
 				$arFields['FULL_NAME'] = trim((isset($arFields['NAME'])? $arFields['NAME']: $arRes['NAME']).' '.(isset($arFields['LAST_NAME'])? $arFields['LAST_NAME']: $arRes['LAST_NAME']));
 			}
 
-			//todo make HAS_EMAIL and similar fields immutable
 			if(isset($arFields['HAS_EMAIL']))
 			{
 				unset($arFields['HAS_EMAIL']);
@@ -2368,37 +2455,11 @@ class CAllCrmLead
 
 			unset($arFields['ID']);
 
-			$notChangeStatus = ($_POST['NOT_CHANGE_STATUS'] ?? 'N');
-			if ($notChangeStatus === 'Y')
-			{
-				unset($arFields['STATUS_ID']);
-			}
-
 			$sUpdate = $DB->PrepareUpdate('b_crm_lead', $arFields, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
 			if ($sUpdate <> '')
 			{
 				$DB->Query("UPDATE b_crm_lead SET {$sUpdate} WHERE ID = {$ID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
-				if(isset($arFields['COMPANY_TITLE']))
-				{
-					$newCompanyTitle = $arFields['COMPANY_TITLE'];
-					$oldCompanyTitle = isset($arRow['COMPANY_TITLE']) ? $arRow['COMPANY_TITLE'] : '';
-					if($newCompanyTitle !== $oldCompanyTitle)
-					{
-						DuplicateOrganizationCriterion::register(CCrmOwnerType::Lead, $ID, $newCompanyTitle);
-					}
-				}
 
-				if(isset($arFields['LAST_NAME']) || isset($arFields['NAME']) || isset($arFields['SECOND_NAME']))
-				{
-					$lastName = isset($arFields['LAST_NAME'])
-						? $arFields['LAST_NAME'] : (isset($arRow['LAST_NAME']) ? $arRow['LAST_NAME'] : '');
-					$name = isset($arFields['NAME'])
-						? $arFields['NAME'] : (isset($arRow['NAME']) ? $arRow['NAME'] : '');
-					$secondName = isset($arFields['SECOND_NAME'])
-						? $arFields['SECOND_NAME'] : (isset($arRow['SECOND_NAME']) ? $arRow['SECOND_NAME'] : '');
-
-					DuplicatePersonCriterion::register(CCrmOwnerType::Lead, $ID, $lastName, $name, $secondName);
-				}
 				$bResult = true;
 			}
 
@@ -2523,18 +2584,11 @@ class CAllCrmLead
 							? (int)$arFields['ADDRESS_LOC_ADDR_ID'] : (isset($arRow['ADDRESS_LOC_ADDR_ID']) ? (int)$arRow['ADDRESS_LOC_ADDR_ID'] : 0),
 						'LOC_ADDR' => isset($arFields['ADDRESS_LOC_ADDR']) ? $arFields['ADDRESS_LOC_ADDR'] : null
 					),
-					[
-						'updateLocationAddress' => !(
-							(isset($arFields['ADDRESS_LOC_ADDR_ID']) && $arFields['ADDRESS_LOC_ADDR_ID'] > 0) ||
-							(isset($arFields['ADDRESS_LOC_ADDR']) && is_object($arFields['ADDRESS_LOC_ADDR']))
-						)
-					]
 				);
 			}
 			//endregion
 
 			//region Enrich associated company and primary contact of returning customer
-			//todo update company and contact on lead update
 			if(isset($arFields['IS_RETURN_CUSTOMER']) && $arFields['IS_RETURN_CUSTOMER'] === 'Y')
 			{
 				if($companyID > 0)
@@ -2579,7 +2633,6 @@ class CAllCrmLead
 			{
 				$providerIDs = array();
 				$completionConfig = \Bitrix\Crm\Settings\LeadSettings::getCurrent()->getActivityCompletionConfig();
-				//todo complete activities based on settings
 				foreach(\Bitrix\Crm\Activity\Provider\ProviderManager::getCompletableProviderList() as $providerInfo)
 				{
 					$providerID = $providerInfo['ID'];
@@ -2623,7 +2676,6 @@ class CAllCrmLead
 						new Bitrix\Crm\Conversion\LeadConversionConfig()
 					);
 					$converter->setEntityID($ID);
-					//todo unbind lead child entities after move to a success stage
 					$converter->unbindChildEntities();
 				}
 
@@ -2637,7 +2689,6 @@ class CAllCrmLead
 			}
 			//endregion
 
-			//todo add multifields support
 			if (isset($arFields['FM']) && is_array($arFields['FM']))
 			{
 				$CCrmFieldMulti = new CCrmFieldMulti();
@@ -2646,12 +2697,6 @@ class CAllCrmLead
 				$multifields = DuplicateCommunicationCriterion::prepareEntityMultifieldValues(
 					CCrmOwnerType::Lead,
 					$ID
-				);
-
-				DuplicateCommunicationCriterion::bulkRegister(
-					CCrmOwnerType::Lead,
-					$ID,
-					DuplicateCommunicationCriterion::prepareBulkData($multifields)
 				);
 
 				$hasEmail = CCrmFieldMulti::HasValues($multifields, CCrmFieldMulti::EMAIL) ? 'Y' : 'N';
@@ -2672,7 +2717,18 @@ class CAllCrmLead
 					$arFields['HAS_IMOL'] = $hasImol;
 				}
 			}
-			DuplicateEntityRanking::registerEntityStatistics(CCrmOwnerType::Lead, $ID, array_merge($arRow, $arFields));
+
+			$duplicateCriterionRegistrar = Crm\Integrity\DuplicateManager::getCriterionRegistrar(\CCrmOwnerType::Lead);
+
+			$data =
+				(new Crm\Integrity\CriterionRegistrar\Data())
+					->setEntityTypeId(\CCrmOwnerType::Lead)
+					->setEntityId($ID)
+					->setCurrentFields($arFields)
+					->setPreviousFields($arRow)
+			;
+
+			$duplicateCriterionRegistrar->update($data);
 
 			$enableDupIndexInvalidation = isset($arOptions['ENABLE_DUP_INDEX_INVALIDATION'])
 				? (bool)$arOptions['ENABLE_DUP_INDEX_INVALIDATION'] : true;
@@ -2973,6 +3029,11 @@ class CAllCrmLead
 			$arOptions = array();
 		}
 
+		if ($this->isUseOperation())
+		{
+			return $this->getCompatibilityAdapter()->performDelete($ID, $arOptions);
+		}
+
 		if(isset($arOptions['CURRENT_USER']))
 		{
 			$iUserId = intval($arOptions['CURRENT_USER']);
@@ -3094,10 +3155,6 @@ class CAllCrmLead
 			else
 			{
 				Bitrix\Crm\Cleaning\CleaningManager::register(CCrmOwnerType::Lead, $ID);
-				if(!Bitrix\Crm\Agent\Routine\CleaningAgent::isActive())
-				{
-					Bitrix\Crm\Agent\Routine\CleaningAgent::activate();
-				}
 			}
 
 			Bitrix\Crm\History\LeadStatusHistoryEntry::unregister($ID);
@@ -3112,16 +3169,24 @@ class CAllCrmLead
 			}
 
 			$enableDupIndexInvalidation = is_array($arOptions) && isset($arOptions['ENABLE_DUP_INDEX_INVALIDATION'])
-				? (bool)$arOptions['ENABLE_DUP_INDEX_INVALIDATION'] : true;
+				? (bool)$arOptions['ENABLE_DUP_INDEX_INVALIDATION']
+				: true;
+
 			if($enableDupIndexInvalidation)
 			{
 				\Bitrix\Crm\Integrity\DuplicateManager::markDuplicateIndexAsJunk(CCrmOwnerType::Lead, $ID);
 			}
 
-			DuplicateEntityRanking::unregisterEntityStatistics(CCrmOwnerType::Lead, $ID);
-			DuplicatePersonCriterion::unregister(CCrmOwnerType::Lead, $ID);
-			DuplicateOrganizationCriterion::unregister(CCrmOwnerType::Lead, $ID);
-			DuplicateCommunicationCriterion::unregister(CCrmOwnerType::Lead, $ID);
+			$duplicateCriterionRegistrar = Crm\Integrity\DuplicateManager::getCriterionRegistrar(\CCrmOwnerType::Lead);
+
+			$data =
+				(new Crm\Integrity\CriterionRegistrar\Data())
+					->setEntityTypeId(\CCrmOwnerType::Lead)
+					->setEntityId($ID)
+			;
+
+			$duplicateCriterionRegistrar->unregister($data);
+
 			DuplicateIndexMismatch::unregisterEntity(CCrmOwnerType::Lead, $ID);
 
 			if($assignedByID > 0)
@@ -3140,7 +3205,6 @@ class CAllCrmLead
 				);
 			}
 
-			//todo rebind activities to a client if lead is converted
 			if($isConverted)
 			{
 				if($contactID > 0)
@@ -3237,6 +3301,15 @@ class CAllCrmLead
 		$this->LAST_ERROR = '';
 		$this->checkExceptions = array();
 
+		if (isset($arFields['BIRTHDATE']) && $arFields['BIRTHDATE'] !== '' && !CheckDateTime($arFields['BIRTHDATE']))
+		{
+			$this->LAST_ERROR .= GetMessage(
+					'CRM_ERROR_FIELD_INCORRECT',
+					['%FIELD_NAME%' => CAllCrmLead::GetFieldCaption('BIRTHDATE')]
+				) . "<br />"
+			;
+		}
+
 		if (($ID == false || isset($arFields['TITLE'])) && empty($arFields['TITLE']))
 			$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_IS_MISSING', array('%FIELD_NAME%' => GetMessage('CRM_LEAD_FIELD_TITLE')))."<br />";
 
@@ -3262,11 +3335,6 @@ class CAllCrmLead
 			{
 				$this->LAST_ERROR .= $CCrmFieldMulti->LAST_ERROR;
 			}
-		}
-
-		if(isset($arFields['BIRTHDATE']) && $arFields['BIRTHDATE'] !== '' && !CheckDateTime($arFields['BIRTHDATE']))
-		{
-			$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_INCORRECT', array('%FIELD_NAME%' => self::GetFieldCaption('BIRTHDATE')))."<br />";
 		}
 
 		if(!is_array($options))
@@ -3410,6 +3478,55 @@ class CAllCrmLead
 				$e = $APPLICATION->GetException();
 				$this->checkExceptions[] = $e;
 				$this->LAST_ERROR .= $e->GetString();
+			}
+		}
+		// Temporary crutch.
+		// This check will be removed when operations will be completely supported for contacts:
+		$allowSetSystemFields = $options['ALLOW_SET_SYSTEM_FIELDS'] ?? false;
+		if ($allowSetSystemFields)
+		{
+			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(CCrmOwnerType::Lead);
+			$currentUserId =  isset($options['CURRENT_USER'])
+				? (int)$options['CURRENT_USER']
+				: CCrmSecurityHelper::GetCurrentUserID()
+			;
+
+			$checkSystemFieldsResult = (new \Bitrix\Crm\Service\Operation\Import(
+				$factory->createItem(),
+				new \Bitrix\Crm\Service\Operation\Settings(\Bitrix\Crm\Service\Container::getInstance()->getContext()),
+				$factory->getFieldsCollection()
+			))->checkSystemFieldsValues([
+				\Bitrix\Crm\Item::FIELD_NAME_CREATED_TIME => isset($arFields['DATE_CREATE'])
+					? \Bitrix\Main\Type\DateTime::createFromUserTime($arFields['DATE_CREATE'])
+					: null
+				,
+				\Bitrix\Crm\Item::FIELD_NAME_UPDATED_TIME => isset($arFields['DATE_MODIFY'])
+					? \Bitrix\Main\Type\DateTime::createFromUserTime($arFields['DATE_MODIFY'])
+					: null
+				,
+				\Bitrix\Crm\Item::FIELD_NAME_MOVED_TIME => isset($arFields['MOVED_TIME'])
+					? \Bitrix\Main\Type\DateTime::createFromUserTime($arFields['MOVED_TIME'])
+					: null
+				,
+				\Bitrix\Crm\Item::FIELD_NAME_CREATED_BY =>
+					(isset($arFields['CREATED_BY_ID']) && $arFields['CREATED_BY_ID'] != $currentUserId)
+						? (int)$arFields['CREATED_BY_ID']
+						: null
+				,
+				\Bitrix\Crm\Item::FIELD_NAME_UPDATED_BY =>
+					(isset($arFields['MODIFY_BY_ID']) && $arFields['MODIFY_BY_ID'] != $currentUserId)
+						? (int)$arFields['MODIFY_BY_ID']
+						: null
+				,
+				\Bitrix\Crm\Item::FIELD_NAME_MOVED_BY =>
+					(isset($arFields['MODIFY_BY_ID']) && $arFields['MODIFY_BY_ID'] != $currentUserId)
+						? (int)$arFields['MODIFY_BY_ID']
+						: null
+				,
+			]);
+			if (!$checkSystemFieldsResult->isSuccess())
+			{
+				$this->LAST_ERROR .= implode(', ', $checkSystemFieldsResult->getErrorMessages());
 			}
 		}
 
@@ -4384,38 +4501,22 @@ class CAllCrmLead
 			$IDs
 		);
 
+		$duplicateCriterionRegistrar = Crm\Integrity\DuplicateManager::getCriterionRegistrar(\CCrmOwnerType::Lead);
+
 		while($fields = $dbResult->Fetch())
 		{
 			$ID = (int)$fields['ID'];
 
-			$companyTitle = isset($fields['COMPANY_TITLE']) ? $fields['COMPANY_TITLE'] : '';
-			if($companyTitle !== '')
-			{
-				DuplicateOrganizationCriterion::register(CCrmOwnerType::Lead, $ID, $companyTitle);
-			}
+			$fields['FM'] = $entityMultifields[$ID] ?? null;
 
-			$lastName = isset($fields['LAST_NAME']) ? $fields['LAST_NAME'] : '';
-			if($lastName !== '')
-			{
-				DuplicatePersonCriterion::register(
-					CCrmOwnerType::Lead,
-					$ID,
-					$lastName,
-					isset($fields['NAME']) ? $fields['NAME'] : '',
-					isset($fields['SECOND_NAME']) ? $fields['SECOND_NAME'] : ''
-				);
-			}
+			$data =
+				(new Crm\Integrity\CriterionRegistrar\Data())
+					->setEntityTypeId(\CCrmOwnerType::Lead)
+					->setEntityId($ID)
+					->setCurrentFields($fields)
+			;
 
-			if(isset($entityMultifields[$ID]))
-			{
-				DuplicateCommunicationCriterion::bulkRegister(
-					CCrmOwnerType::Lead,
-					$ID,
-					DuplicateCommunicationCriterion::prepareBulkData($entityMultifields[$ID])
-				);
-			}
-
-			DuplicateEntityRanking::registerEntityStatistics(CCrmOwnerType::Lead, $ID, $fields);
+			$duplicateCriterionRegistrar->register($data);
 		}
 	}
 

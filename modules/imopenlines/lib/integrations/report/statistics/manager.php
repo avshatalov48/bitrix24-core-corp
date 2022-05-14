@@ -96,27 +96,41 @@ abstract class Manager
 		StatisticQueueTable::delete($primary);
 	}
 
+	/**
+	 * @return string
+	 */
 	public static function calculateStatisticsInQueue()
 	{
+		$pageSize = 100000;
+
 		$query = new Query(StatisticQueueTable::getEntity());
 		$query->addSelect('ID');
-		$query->addSelect('SESSION_ID');
 		$query->addSelect('STATISTIC_KEY');
 		$query->addSelect('PARAMS');
 		$query->addOrder('DATE_QUEUE');
 		$query->where('DATE_QUEUE', '<=', new DateTime());
-		$resultsFromQueue = $query->exec()->fetchAll();
+		$query->setLimit($pageSize);
 
-
-		foreach ($resultsFromQueue as $resultFromQueue)
+		$offset = 0;
+		do
 		{
-			$id = $resultFromQueue['ID'];
-			$statisticNameKey = $resultFromQueue['STATISTIC_KEY'];
-			$params = $resultFromQueue['PARAMS'];
-			self::writeToStatistics($statisticNameKey, $params);
-
-			self::removeFromQueue($id);
+			$query->setOffset($offset);
+			$cursor = $query->exec();
+			$hasResultData = $cursor->getSelectedRowsCount() > 0;
+			if ($hasResultData)
+			{
+				while ($resultFromQueue = $cursor->fetch())
+				{
+					$id = $resultFromQueue['ID'];
+					$statisticNameKey = $resultFromQueue['STATISTIC_KEY'];
+					$params = $resultFromQueue['PARAMS'];
+					self::writeToStatistics($statisticNameKey, $params);
+					self::removeFromQueue($id);
+				}
+				$offset += $pageSize;
+			}
 		}
+		while ($hasResultData);
 
 		$className = get_called_class();
 		return $className  . '::calculateStatisticsInQueue();';

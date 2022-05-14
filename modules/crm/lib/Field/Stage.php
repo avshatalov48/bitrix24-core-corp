@@ -8,7 +8,6 @@ use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Service\Factory;
-use Bitrix\Crm\Service\Operation\FieldAfterSaveResult;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 
@@ -109,40 +108,5 @@ class Stage extends Field
 		}
 
 		return null;
-	}
-
-	public function processAfterSave(Item $itemBeforeSave, Item $item, Context $context = null): FieldAfterSaveResult
-	{
-		$result = new FieldAfterSaveResult();
-
-		if ($itemBeforeSave->isNew())
-		{
-			return $result;
-		}
-
-		$factory = Container::getInstance()->getFactory($item->getEntityTypeId());
-		if (!$factory)
-		{
-			$result->addError($this->getFactoryNotFoundError($item->getEntityTypeId()));
-
-			return $result;
-		}
-
-		$previousStage = $factory->getStage((string)$itemBeforeSave->remindActual($this->getName()));
-		$currentStage = $factory->getStage((string)$item->get($this->getName()));
-		if (is_null($previousStage) || is_null($currentStage))
-		{
-			return $result;
-		}
-
-		if (
-			$previousStage->getSemantics() !== $currentStage->getSemantics()
-			&& PhaseSemantics::isFinal($currentStage->getSemantics())
-		)
-		{
-			\CCrmActivity::SetAutoCompletedByOwner($item->getEntityTypeId(), $item->getId());
-		}
-
-		return $result;
 	}
 }

@@ -6,6 +6,7 @@
  * @copyright 2001-2013 Bitrix
  */
 
+use Bitrix\Main\Text\Emoji;
 use Bitrix\Tasks\Kanban\StagesTable;
 
 class CTaskLog
@@ -229,6 +230,23 @@ class CTaskLog
 		if (array_key_exists('REAL_STATUS', $currentFields))
 		{
 			$currentFields['STATUS'] = $currentFields['REAL_STATUS'];
+		}
+
+		if (array_key_exists('TITLE', $currentFields))
+		{
+			$currentFields['TITLE'] = Emoji::encode($currentFields['TITLE']);
+		}
+		if (array_key_exists('DESCRIPTION', $currentFields))
+		{
+			$currentFields['DESCRIPTION'] = Emoji::encode($currentFields['DESCRIPTION']);
+		}
+		if (array_key_exists('TITLE', $newFields))
+		{
+			$newFields['TITLE'] = Emoji::encode($newFields['TITLE']);
+		}
+		if (array_key_exists('DESCRIPTION', $newFields))
+		{
+			$newFields['DESCRIPTION'] = Emoji::encode($newFields['DESCRIPTION']);
 		}
 
 		$comparedFields = static::getTrackedFields();

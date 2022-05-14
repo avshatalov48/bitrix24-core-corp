@@ -4,16 +4,13 @@ use Bitrix\DocumentGenerator\Body\Docx;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
-$allProviders = [
-	'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Deal',
-	'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Invoice',
-	'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Quote',
-	'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Lead',
-	'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Company',
-	'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Contact',
-	'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Order',
-	'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\SmartInvoice',
-];
+$deal = 'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Deal';
+$invoice = 'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Invoice';
+$quote = 'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Quote';
+$smartInvoice = 'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\SmartInvoice';
+$invoiceAndDeal = [$deal, $invoice, $smartInvoice];
+$quoteAndDeal = [$deal, $quote];
+
 return [
 	[
 		'REGION' => 'ru',
@@ -23,7 +20,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/act_ru.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => $invoiceAndDeal,
 	],
 	[
 		'REGION' => 'ru',
@@ -33,7 +30,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/bill_ru.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => $invoiceAndDeal,
 	],
 	[
 		'REGION' => 'ru',
@@ -43,7 +40,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/faktura_ru.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => $invoiceAndDeal,
 	],
 	[
 		'REGION' => 'ru',
@@ -53,7 +50,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/nakl_ru.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => $invoiceAndDeal,
 	],
 	[
 		'REGION' => 'ru',
@@ -63,7 +60,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/dover_ru.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => [$deal],
 	],
 	[
 		'REGION' => 'ru',
@@ -73,7 +70,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/quote_ru.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => $quoteAndDeal,
 	],
 	[
 		'REGION' => 'ru',
@@ -83,7 +80,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/dog_podryad_ru.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => [$deal],
 	],
 	[
 		'REGION' => 'ru',
@@ -93,7 +90,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/dog_postavka_ru.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => [$deal],
 	],
 	[
 		'REGION' => 'ru',
@@ -103,7 +100,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/dog_uslugi_ru.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => [$deal],
 	],
 	[
 		'REGION' => 'ru',
@@ -113,7 +110,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/upd_ru.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => [$deal],
 	],
 	[
 		'REGION' => 'by',
@@ -123,7 +120,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/act_by.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => $invoiceAndDeal,
 	],
 	[
 		'REGION' => 'by',
@@ -133,7 +130,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/bill_by.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => $invoiceAndDeal,
 	],
 	[
 		'REGION' => 'by',
@@ -143,7 +140,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/dover_by.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => [$deal],
 	],
 	[
 		'REGION' => 'by',
@@ -153,7 +150,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/nakl_by.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => [$deal],
 	],
 	[
 		'REGION' => 'by',
@@ -163,7 +160,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/ttn_by.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => [$deal],
 	],
 	[
 		'REGION' => 'by',
@@ -173,7 +170,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/bill_protocol_by.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => [$deal],
 	],
 	[
 		'REGION' => 'by',
@@ -183,7 +180,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/dogovor_podryad_by.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => [$deal],
 	],
 	[
 		'REGION' => 'by',
@@ -193,7 +190,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/dogovor_prodazha_by.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => [$deal],
 	],
 	[
 		'REGION' => 'by',
@@ -203,7 +200,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/dogovor_uslugi_by.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => [$deal],
 	],
 	[
 		'REGION' => 'by',
@@ -213,7 +210,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/quote_by.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => $quoteAndDeal,
 	],
 	[
 		'REGION' => 'kz',
@@ -223,7 +220,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/act_kz.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => $invoiceAndDeal,
 	],
 	[
 		'REGION' => 'kz',
@@ -233,7 +230,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/bill_kz.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => $invoiceAndDeal,
 	],
 	[
 		'REGION' => 'kz',
@@ -243,7 +240,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/dover_kz.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => [$deal],
 	],
 	[
 		'REGION' => 'kz',
@@ -253,7 +250,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/faktura_kz.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => [$deal],
 	],
 	[
 		'REGION' => 'kz',
@@ -263,7 +260,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/nakl_kz.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => [$deal],
 	],
 	[
 		'REGION' => 'kz',
@@ -273,7 +270,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/quote_kz.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => $quoteAndDeal,
 	],
 	[
 		'REGION' => 'ua',
@@ -283,7 +280,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/act_ua.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => $invoiceAndDeal,
 	],
 	[
 		'REGION' => 'ua',
@@ -293,7 +290,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/bill_iban_ua.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => $invoiceAndDeal,
 	],
 	[
 		'REGION' => 'ua',
@@ -303,7 +300,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/dover_ua.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => [$deal],
 	],
 	[
 		'REGION' => 'ua',
@@ -313,7 +310,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/dog_podryad_ua.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => [$deal],
 	],
 	[
 		'REGION' => 'ua',
@@ -323,7 +320,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/dog_postavka_ua.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => [$deal],
 	],
 	[
 		'REGION' => 'ua',
@@ -333,7 +330,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/dog_yslugi_ua.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => [$deal],
 	],
 	[
 		'REGION' => 'ua',
@@ -343,7 +340,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/nakl_ua.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => [$deal],
 	],
 	[
 		'REGION' => 'ua',
@@ -353,7 +350,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/quote_ua.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => $quoteAndDeal,
 	],
 	[
 		'REGION' => 'ua',
@@ -363,7 +360,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/bill_ua.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => $invoiceAndDeal,
 	],
 	[
 		'REGION' => 'de',
@@ -373,7 +370,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/quote_de.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => $quoteAndDeal,
 	],
 	[
 		'REGION' => 'de',
@@ -383,7 +380,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/invoice_de.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => $invoiceAndDeal,
 	],
 	[
 		'REGION' => 'de',
@@ -393,7 +390,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/packing_slip_de.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => [$deal],
 	],
 	[
 		'REGION' => 'de',
@@ -403,7 +400,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/sales_order_de.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => [$deal],
 	],
 	[
 		'REGION' => 'uk',
@@ -413,7 +410,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/quote_uk.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => $quoteAndDeal,
 	],
 	[
 		'REGION' => 'uk',
@@ -423,7 +420,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/invoice_uk.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => $invoiceAndDeal,
 	],
 	[
 		'REGION' => 'uk',
@@ -433,7 +430,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/packing_slip_uk.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => [$deal],
 	],
 	[
 		'REGION' => 'uk',
@@ -443,7 +440,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/sales_order_uk.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => [$deal],
 	],
 	[
 		'REGION' => 'br',
@@ -453,7 +450,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/invoice_br.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => $invoiceAndDeal,
 	],
 	[
 		'REGION' => 'br',
@@ -463,7 +460,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/quote_br.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => $quoteAndDeal,
 	],
 	[
 		'REGION' => 'mx',
@@ -473,7 +470,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/quote_mx.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => $quoteAndDeal,
 	],
 	[
 		'REGION' => 'pl',
@@ -483,7 +480,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/invoice_pl.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => $invoiceAndDeal,
 	],
 	[
 		'REGION' => 'pl',
@@ -493,7 +490,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/sales_order_pl.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => [$deal],
 	],
 	[
 		'REGION' => 'fr',
@@ -503,7 +500,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/invoice_fr.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => $invoiceAndDeal,
 	],
 	[
 		'REGION' => 'fr',
@@ -513,7 +510,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/quote_fr.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => $quoteAndDeal,
 	],
 	[
 		'REGION' => 'sp',
@@ -523,7 +520,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/invoice_sp.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => $invoiceAndDeal,
 	],
 	[
 		'REGION' => 'sp',
@@ -533,6 +530,6 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/quote_sp.docx',
-		'PROVIDERS' => $allProviders,
+		'PROVIDERS' => $quoteAndDeal,
 	],
 ];

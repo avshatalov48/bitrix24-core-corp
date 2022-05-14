@@ -11,6 +11,7 @@ $MESS['CRM_STORE_DOCUMENT_DETAIL_DEDUCT_BUTTON'] = 'Провести докум�
 $MESS['CRM_STORE_DOCUMENT_DETAIL_CANCEL_DEDUCT_BUTTON'] = 'Отменить проведение';
 $MESS['CRM_STORE_DOCUMENT_DETAIL_COLUMN_STORE_FROM_INFO'] = 'Склад';
 $MESS['CRM_STORE_DOCUMENT_DETAIL_COLUMN_STORE_FROM_AMOUNT'] = 'Количество на складе';
+$MESS['CRM_STORE_DOCUMENT_DETAIL_COLUMN_STORE_FROM_AVAILABLE_AMOUNT'] = 'Доступный остаток';
 $MESS['CRM_STORE_DOCUMENT_DETAIL_LINK_COPIED'] = 'Ссылка на документ скопирована в буфер обмена';
 $MESS['CRM_STORE_DOCUMENT_OPEN_DOCUMENT'] = 'Посмотреть';
 $MESS['CRM_STORE_DOCUMENT_SAVE_AND_CONDUCT_NOTIFICATION'] = 'Документ проведен';

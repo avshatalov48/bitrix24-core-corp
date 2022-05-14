@@ -1,10 +1,10 @@
-import {Dom, Type} from 'main.core';
+import {Type} from 'main.core';
 import {BaseEvent} from 'main.core.events';
 
 import {EntityStorage} from '../entity/entity.storage';
 
 import {Item} from '../item/item';
-import {ItemMover} from '../item/item.mover';
+import {ItemMover, ItemsSortInfo} from '../item/item.mover';
 
 import {EntityCounters} from '../counters/entity.counters';
 
@@ -13,20 +13,20 @@ import {TagSearcher} from '../utility/tag.searcher';
 
 import {Entity} from '../entity/entity';
 
-import type {ItemParams} from '../item/item';
-import type {ItemsSortInfo} from '../item/item.mover';
-
 type Params = {
 	requestSender: RequestSender,
 	entityStorage: EntityStorage,
 	entityCounters: EntityCounters,
 	tagSearcher: TagSearcher,
 	itemMover: ItemMover,
-	currentUserId: number
+	currentUserId: number,
+	groupId: number
 }
 
-type RemoveParams = {
-	itemId: number
+type PushParams = {
+	id: number,
+	groupId: number,
+	tmpId?: string
 }
 
 export class PullItem
@@ -39,8 +39,9 @@ export class PullItem
 		this.tagSearcher = params.tagSearcher;
 		this.itemMover = params.itemMover;
 		this.currentUserId = params.currentUserId;
+		this.groupId = params.groupId;
 
-		this.listToAddAfterUpdate = new Map();
+		this.listToAddAfterUpdate = new Set();
 
 		this.listIdsToSkipAdding = new Set();
 		this.listIdsToSkipUpdating = new Set();
@@ -50,12 +51,12 @@ export class PullItem
 		this.itemMover.subscribe('calculateSort', this.onCalculateSort.bind(this));
 	}
 
-	getModuleId()
+	getModuleId(): string
 	{
 		return 'tasks';
 	}
 
-	getMap()
+	getMap(): Object
 	{
 		return {
 			itemAdded: this.onItemAdded.bind(this),
@@ -66,71 +67,104 @@ export class PullItem
 		};
 	}
 
-	onItemAdded(itemData: ItemParams)
+	onItemAdded(params: PushParams)
 	{
-		const item = Item.buildItem(itemData);
+		if (this.groupId !== params.groupId)
+		{
+			return;
+		}
 
-		this.setDelayedAdd(item);
+		this.setDelayedAdd(params.id);
 
-		this.externalAdd(item)
-			.finally(() => this.cleanDelayedAdd(item))
-			.then(() => this.addItemToEntity(item))
+		this.externalAdd(params.id)
+			.finally(() => this.cleanDelayedAdd(params.id))
+			.then(() => {
+				this.requestSender.getItemData({
+					itemId: params.id
+				})
+					.then((response) => {
+						const item = Item.buildItem(response.data);
+						this.addItemToEntity(item);
+					})
+					.catch((response) => {})
+				;
+			})
 			.catch(() => {})
 		;
 	}
 
-	onItemUpdated(itemData: ItemParams)
+	onItemUpdated(params: PushParams)
 	{
-		const item = Item.buildItem(itemData);
-
-		if (this.isDelayedAdd(item))
+		if (this.groupId !== params.groupId)
 		{
-			this.cleanDelayedAdd(item);
-
-			if (this.needSkipAdd(item))
-			{
-				this.cleanSkipAdd(item);
-
-				return;
-			}
-
-			this.addItemToEntity(item);
-
 			return;
 		}
 
-		if (this.needSkipUpdate(item))
-		{
-			this.cleanSkipUpdate(item);
+		this.requestSender.getItemData({
+			itemId: params.id
+		})
+			.then((response) => {
+				const item = Item.buildItem(response.data);
 
-			return;
-		}
+				if (this.isDelayedAdd(item.getId()))
+				{
+					this.cleanDelayedAdd(item.getId());
 
-		this.updateItem(item);
+					if (this.needSkipAdd(params.tmpId))
+					{
+						this.cleanSkipAdd(params.tmpId);
+
+						return;
+					}
+
+					this.addItemToEntity(item);
+
+					return;
+				}
+
+				if (this.needSkipUpdate(item))
+				{
+					this.cleanSkipUpdate(item);
+
+					return;
+				}
+
+				this.updateItem(item);
+			})
+			.catch((response) => {})
+		;
 	}
 
-	onItemRemoved(params: RemoveParams)
+	onItemRemoved(params: PushParams)
 	{
-		if (this.needSkipRemove(params.itemId))
+		if (this.groupId !== params.groupId)
 		{
-			this.cleanSkipRemove(params.itemId);
+			return;
+		}
+
+		if (this.needSkipRemove(params.id))
+		{
+			this.cleanSkipRemove(params.id);
 
 			return;
 		}
 
-		const item = this.entityStorage.findItemByItemId(params.itemId);
+		const item = this.entityStorage.findItemByItemId(params.id);
 		if (item)
 		{
 			const entity = this.entityStorage.findEntityByItemId(item.getId());
 			entity.removeItem(item);
 			item.removeYourself();
+
+			this.updateEntityCounters(entity);
 		}
 	}
 
-	onItemSortUpdated(itemsSortInfo : ItemsSortInfo)
+	onItemSortUpdated(itemsSortInfo: ItemsSortInfo)
 	{
 		const itemsToSort = new Map();
 		const itemsInfoToSort = new Map();
+
 		Object.entries(itemsSortInfo).forEach(([itemId, info]) => {
 			const item = this.entityStorage.findItemByItemId(itemId);
 			if (item)
@@ -201,6 +235,14 @@ export class PullItem
 	{
 		if (item.isSubTask())
 		{
+			const parentItem = this.entityStorage.findItemBySourceId(item.getParentTaskId());
+
+			if (parentItem)
+			{
+				parentItem.hideSubTasks();
+				parentItem.cleanSubTasks();
+			}
+
 			return;
 		}
 
@@ -312,7 +354,7 @@ export class PullItem
 		});
 	}
 
-	addTmpIdsToSkipAdding(tmpId: string)
+	addTmpIdToSkipAdding(tmpId: string)
 	{
 		this.listIdsToSkipAdding.add(tmpId);
 	}
@@ -332,36 +374,36 @@ export class PullItem
 		this.listIdsToSkipSorting.add(tmpId);
 	}
 
-	externalAdd(item: Item): boolean
+	externalAdd(itemId: number): boolean
 	{
 		return new Promise((resolve, reject) => {
-			setTimeout(() => (this.isDelayedAdd(item) ? resolve() : reject()), 3000);
+			setTimeout(() => (this.isDelayedAdd(itemId) ? resolve() : reject()), 3000);
 		});
 	}
 
-	isDelayedAdd(item: Item): boolean
+	isDelayedAdd(itemId: number): boolean
 	{
-		return this.listToAddAfterUpdate.has(item.getId());
+		return this.listToAddAfterUpdate.has(itemId);
 	}
 
-	setDelayedAdd(item: Item)
+	setDelayedAdd(itemId: number)
 	{
-		this.listToAddAfterUpdate.set(item.getId(), item);
+		this.listToAddAfterUpdate.add(itemId);
 	}
 
-	cleanDelayedAdd(item: Item)
+	cleanDelayedAdd(itemId: number)
 	{
-		this.listToAddAfterUpdate.delete(item.getId());
+		this.listToAddAfterUpdate.delete(itemId);
 	}
 
-	needSkipAdd(item: Item): boolean
+	needSkipAdd(tmpId: string): boolean
 	{
-		return this.listIdsToSkipAdding.has(item.getTmpId());
+		return this.listIdsToSkipAdding.has(tmpId);
 	}
 
-	cleanSkipAdd(item: Item)
+	cleanSkipAdd(tmpId: string)
 	{
-		this.listIdsToSkipAdding.delete(item.getTmpId());
+		this.listIdsToSkipAdding.delete(tmpId);
 	}
 
 	needSkipUpdate(item: Item): boolean

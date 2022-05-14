@@ -369,6 +369,36 @@ class CCrmEntityHelper
 		{
 			$operation->disableDeferredCleaning();
 		}
+
+		$enableDupIndexInvalidation = (bool)($options['ENABLE_DUP_INDEX_INVALIDATION'] ?? true);
+		if ($enableDupIndexInvalidation)
+		{
+			$operation->enableDuplicatesIndexInvalidation();
+		}
+		else
+		{
+			$operation->disableDuplicatesIndexInvalidation();
+		}
+
+		$autocompleteActivities = (bool)($options['ENABLE_ACTIVITY_COMPLETION'] ?? true);
+		if ($autocompleteActivities)
+		{
+			$operation->enableActivitiesAutocompletion();
+		}
+		else
+		{
+			$operation->disableActivitiesAutocompletion();
+		}
+
+		$processBizProc = (bool)($options['PROCESS_BIZPROC'] ?? true);
+		if ($processBizProc)
+		{
+			$operation->enableBizProc();
+		}
+		else
+		{
+			$operation->disableBizProc();
+		}
 	}
 
 	/**
@@ -390,5 +420,19 @@ class CCrmEntityHelper
 		}
 
 		return [new \CAdminException($messages)];
+	}
+
+	/**
+	 * @param \Bitrix\Crm\Settings\Traits\EnableFactory $settings
+	 * @param \Bitrix\Main\Request $request
+	 */
+	public static function setEnabledFactoryFlagByRequest($settings, \Bitrix\Main\Request $request): void
+	{
+		if ($request->get('enableFactory') !== null)
+		{
+			$enableFactory = (string)$request->get('enableFactory');
+
+			$settings->setFactoryEnabled(mb_strtoupper($enableFactory) === 'Y');
+		}
 	}
 }

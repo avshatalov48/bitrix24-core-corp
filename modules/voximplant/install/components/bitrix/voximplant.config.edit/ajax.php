@@ -59,7 +59,7 @@ class VoximplantLinesAjaxController extends \Bitrix\Main\Engine\Controller
 		$checkRow = \Bitrix\Voximplant\Model\ExternalLineTable::getList([
 			"filter" => [
 				"=SIP_ID" => $sipId,
-				"=NUMBER" => $normalizedNumber
+				"=NORMALIZED_NUMBER" => $normalizedNumber
 			]
 		])->fetch();
 

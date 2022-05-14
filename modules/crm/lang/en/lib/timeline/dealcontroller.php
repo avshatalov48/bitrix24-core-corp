@@ -11,4 +11,5 @@ $MESS["CRM_DEAL_MODIFICATION_STAGE"] = "Stage changed";
 $MESS["CRM_DEAL_MOVING_TO_RECYCLEBIN"] = "Deal has been deleted to the Recycle Bin";
 $MESS["CRM_DEAL_RESTORATION"] = "Deal has been recovered from the Recycle Bin.";
 $MESS["CRM_DEAL_SUMMARY_ORDER"] = "Order ##ORDER_ID# of #ORDER_DATE#";
+$MESS["CRM_DEAL_SUMMARY_ORDER_WITHOUT_DATE"] = "Order ##ORDER_ID#";
 ?>

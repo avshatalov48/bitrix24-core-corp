@@ -34,7 +34,7 @@ if($action == 'delete')
 	$queueId = (int)$_POST['id'];
 	$queue = \Bitrix\Voximplant\Queue::createWithId($queueId);
 	$usages = ($queue instanceof \Bitrix\Voximplant\Queue) ? $queue->findUsages() : 0;
-	if(count($usages) > 0)
+	if(!empty($usages))
 	{
 		$result = array(
 			'SUCCESS' => false,

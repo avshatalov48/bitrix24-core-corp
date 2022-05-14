@@ -16,7 +16,10 @@ export class StoryPointsStorage
 			return;
 		}
 
-		if (Type.isUndefined(storyPoints) || isNaN(parseFloat(storyPoints)))
+		if (
+			Type.isUndefined(storyPoints)
+			|| (Type.isFloat(storyPoints) && isNaN(parseFloat(storyPoints)))
+		)
 		{
 			return;
 		}

@@ -244,7 +244,7 @@ else
 		"tabs" => $menuTabs,
 		"services" => [
 			[
-				"scriptPath" => \Bitrix\MobileApp\Janative\Manager::getComponentPath("calls"),
+				"scriptPath" => \Bitrix\MobileApp\Janative\Manager::getComponentPath("im:calls"),
 				"name" => \Bitrix\MobileApp\Mobile::getApiVersion() >= 36 ? "JNUIComponent" : "JSComponent",
 				"componentCode" => "calls",
 				"params" => [

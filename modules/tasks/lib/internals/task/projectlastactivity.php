@@ -14,9 +14,9 @@ use Bitrix\Tasks\Integration\SocialNetwork;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_ProjectLastActivity_Query query()
- * @method static EO_ProjectLastActivity_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ProjectLastActivity_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_ProjectLastActivity_Result getById($id)
- * @method static EO_ProjectLastActivity_Result getList(array $parameters = array())
+ * @method static EO_ProjectLastActivity_Result getList(array $parameters = [])
  * @method static EO_ProjectLastActivity_Entity getEntity()
  * @method static \Bitrix\Tasks\Internals\Task\EO_ProjectLastActivity createObject($setDefaultValues = true)
  * @method static \Bitrix\Tasks\Internals\Task\EO_ProjectLastActivity_Collection createCollection()

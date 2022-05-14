@@ -443,7 +443,10 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 		},
 		loadAllEntityEditors: function()
 		{
-			if(!(BX.type.isArray(this._entityIds) && this._entityIds.length > 0))
+			var totalEntities = this._entityIds.length;
+			var isProgressLoader = totalEntities > 3;
+
+			if(!(BX.type.isArray(this._entityIds) && totalEntities > 0))
 			{
 				BX.localStorage.set(
 					"onCrmEntityMergeComplete",
@@ -463,33 +466,57 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 			this.bindBeforeEditorLayout();
 			this.bindAfterEditorLayout();
 
+			var loader;
 			var sidebar = document.body.querySelector('.crm-entity-merger-sidebar');
-			sidebar.classList.remove('crm-entity-merger-sidebar-closing');
-
 			var columnContainer = document.querySelector('.crm-entity-merger-column');
-			columnContainer.classList.remove('crm-entity-merger-column-closing');
-
 			var container = document.querySelector('.crm-entity-merger-wrapper');
+
+			sidebar.classList.remove('crm-entity-merger-sidebar-closing');
+			columnContainer.classList.remove('crm-entity-merger-column-closing');
 			container.classList.add('crm-entity-merger-wrapper-loading');
 
-			var loader = new BX.Loader({ target: document.body });
-			loader.show();
+			if(isProgressLoader)
+			{
+				var step = 100 / totalEntities;
+
+				loader = new BX.UI.ProgressRound({
+					width: 100,
+					lineSize: 3
+				});
+				loader.renderTo(document.body);
+			}
+			else
+			{
+				loader = new BX.Loader({
+					target: document.body
+				});
+				loader.show();
+			}
 
 			var loaded = 0;
 			var onEditorLoad = function()
 			{
 				loaded++;
-				if (loaded === this._entityIds.length)
+				if (loaded === totalEntities)
 				{
+					if(isProgressLoader)
+					{
+						loader.finish();
+					}
 					loader.destroy();
 					container.classList.remove('crm-entity-merger-wrapper-loading');
 				}
+				else
+				{
+					if(isProgressLoader)
+					{
+						loader.update(Math.floor(step * loaded));
+					}
+					this.doLoadEntityEditor(this._entityIds[loaded]).then(onEditorLoad);
+				}
 			}.bind(this);
 
-			for(var i = 0, length = this._entityIds.length; i < length; i++)
-			{
-				this.doLoadEntityEditor(this._entityIds[i]).then(onEditorLoad);
-			}
+			this.doLoadEntityEditor(this._entityIds[loaded]).then(onEditorLoad);
 		},
 		reloadEntityEditor: function(entityId)
 		{
@@ -1130,6 +1157,9 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 		},
 		setupPrimaryEditor: function()
 		{
+			BX.addClass(this._panel._mergeButton, "ui-btn-disabled");
+			BX.addClass(this._panel._mergeButton, "ui-btn-wait");
+			BX.addClass(this._panel._mergeAndEditButton, "ui-btn-disabled");
 			BX.ajax.runComponentAction(
 				"bitrix:crm.entity.merger",
 				"prepareMergeData",
@@ -1144,9 +1174,10 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 			).then(
 				function(response)
 				{
-					var data = BX.prop.getObject(response, "data", {});
-					var updateModelData = {};
-					var currentModelData = this._primaryEditor.getModel().getData();
+					var data = BX.prop.getObject(response, "data", {}),
+					 	updateModelData = {},
+						currentModelData = this._primaryEditor.getModel().getData();
+
 					for(var i = 0, length = this._controls.length; i < length; i++)
 					{
 						this._controls[i].applyMergeResults(data, updateModelData, currentModelData);
@@ -1166,6 +1197,10 @@ if(typeof BX.Crm.EntityMerger === "undefined")
 						"BX.Crm.EntityEditor:onResolveFieldLayoutOptions",
 						this._editorResolveFieldLayoutHandler
 					);
+
+					BX.removeClass(this._panel._mergeButton, "ui-btn-wait");
+					BX.removeClass(this._panel._mergeButton, "ui-btn-disabled");
+					BX.removeClass(this._panel._mergeAndEditButton, "ui-btn-disabled");
 				}.bind(this)
 			);
 		},

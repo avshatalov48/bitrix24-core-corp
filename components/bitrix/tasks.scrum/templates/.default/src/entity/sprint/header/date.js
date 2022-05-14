@@ -16,7 +16,7 @@ export class Date extends EventEmitter
 		this.node = null;
 	}
 
-	render(): HTMLElement|string
+	render(): ?HTMLElement
 	{
 		if (this.sprint.isActive() || this.sprint.isCompleted())
 		{

@@ -144,7 +144,7 @@ final class CallList
 	public static function createWithGridId($entityType, $gridId)
 	{
 		$entityIds = static::getEntitiesFromGridId($entityType, $gridId);
-		$filterParameters = static::getGridFilter($gridId);
+		$filterParameters = static::getGridFilter($gridId, \CCrmOwnerType::ResolveID($entityType));
 
 		$callList = static::createWithEntities($entityType, $entityIds);
 		$callList->setFiltered(true);
@@ -213,7 +213,7 @@ final class CallList
 	{
 		$this->setFiltered(true);
 		$this->setGridId($gridId);
-		$this->setFilterParameters(static::getGridFilter($gridId));
+		$this->setFilterParameters(static::getGridFilter($gridId, $this->entityTypeId));
 		$entitiesIds = static::getEntitiesFromGridId(\CCrmOwnerType::ResolveName($this->entityTypeId), $gridId);
 		$this->addEntities($entitiesIds);
 	}
@@ -871,32 +871,9 @@ final class CallList
 
 	protected static function getEntitiesFromGridId($entityType, $gridId)
 	{
-		$gridFilter = static::getGridFilter($gridId);
-
-		if(!is_array($gridFilter))
-		{
-			$gridFilter = array();
-		}
-
-		if(isset($gridFilter['FIND']))
-		{
-			if(is_string($gridFilter['FIND']))
-			{
-				$find = trim($gridFilter['FIND']);
-				if($find !== '')
-				{
-					$gridFilter['SEARCH_CONTENT'] = $find;
-				}
-			}
-			unset($gridFilter['FIND']);
-		}
+		$gridFilter = static::getGridFilter($gridId, \CCrmOwnerType::ResolveID($entityType));
 
 		$gridFilter['CHECK_PERMISSIONS'] = 'Y';
-
-		//region: filter preparation; copy-paste from the crm.company.list component
-		\CCrmEntityHelper::PrepareMultiFieldFilter($gridFilter, array(), '=%', false);
-		$requisite = new \Bitrix\Crm\EntityRequisite();
-		$requisite->prepareEntityListFilter($gridFilter);
 
 		$arImmutableFilters = array(
 			'FM', 'ID', 'CURRENCY_ID', 'ASSOCIATED_CONTACT_ID',
@@ -904,7 +881,7 @@ final class CallList
 			'COMPANY_TYPE', 'INDUSTRY', 'EMPLOYEES', 'WEBFORM_ID',
 			'HAS_PHONE', 'HAS_EMAIL', 'IS_MY_COMPANY', '!IS_MY_COMPANY', 'RQ',
 			'SEARCH_CONTENT', 'TRACKING_SOURCE_ID', 'TRACKING_CHANNEL_CODE',
-			'FILTER_ID', 'FILTER_APPLIED', 'PRESET_ID'
+			'FILTER_ID', 'FILTER_APPLIED', 'PRESET_ID', 'CHECK_PERMISSIONS',
 		);
 
 		foreach ($gridFilter as $k => $v)
@@ -992,7 +969,7 @@ final class CallList
 				}
 				unset($gridFilter['COMMUNICATION_TYPE']);
 			}
-			elseif ($k != 'ID' && $k != 'LOGIC' && $k != '__INNER_FILTER' && $k != '__JOINS' && $k != '__CONDITIONS' && mb_strpos($k, 'UF_') !== 0 && preg_match('/^[^\=\%\?\>\<]{1}/', $k) === 1)
+			elseif ($k != 'ID' && $k != 'LOGIC' && $k != '__INNER_FILTER' && $k != '__JOINS' && $k != '__CONDITIONS' && mb_strpos($k, 'UF_') !== 0 && preg_match('/^[^\=\%\?\>\<\@]{1}/', $k) === 1)
 			{
 				$gridFilter['%'.$k] = $v;
 				unset($gridFilter[$k]);
@@ -1051,21 +1028,11 @@ final class CallList
 		return $entityIds;
 	}
 
-	protected static function getGridFilter($gridId)
+	protected static function getGridFilter($gridId, int $entityTypeId = 0)
 	{
-		$filterOptions = new \Bitrix\Main\UI\Filter\Options($gridId, array());
-		$gridFilter = $filterOptions->getFilter();
-
-		//Clear service fields
-		if(isset($gridFilter['PRESET_ID']))
-			unset($gridFilter['PRESET_ID']);
-
-		if(isset($gridFilter['FILTER_ID']))
-			unset($gridFilter['FILTER_ID']);
-
-		if(isset($gridFilter['FILTER_APPLIED']))
-			unset($gridFilter['FILTER_APPLIED']);
-		return $gridFilter;
+		return \Bitrix\Crm\Filter\Factory::createEntityFilter(
+			\Bitrix\Crm\Filter\Factory::getSettingsByGridId($entityTypeId, (string)$gridId)
+		)->getValue();
 	}
 
 	/**

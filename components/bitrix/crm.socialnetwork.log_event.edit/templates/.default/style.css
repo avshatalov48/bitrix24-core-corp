@@ -21,3 +21,25 @@
 .feed-add-post-micro-dnd-ready.feed-add-post-micro .feed-add-post-micro-dnd {
 	display: block;
 }
+
+.crm-feed-buttons-block {
+	padding-left: 18px;
+	padding-top: 10px;
+	padding-bottom: 15px;
+	overflow: hidden;
+	opacity: 1;
+	transition: height 0.2s ease 0s, opacity 0.2s ease 0s, padding-top 0.2s ease 0s, padding-bottom 0.2s ease 0s;
+}
+
+.crm-feed-buttons-block.crm-feed-post-form-block-hidden {
+	padding-top: 0;
+	padding-bottom: 0;
+	display: none;
+	height: 0;
+	opacity: 0;
+}
+
+.crm-feed-buttons-block .feed-cancel-com {
+	vertical-align: top;
+	margin-top: 25px;
+}

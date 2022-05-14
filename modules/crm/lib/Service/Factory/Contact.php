@@ -13,6 +13,7 @@ use Bitrix\Crm\Model\ItemCategoryTable;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Service\Operation;
+use Bitrix\Crm\Settings\ContactSettings;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\IO\Path;
@@ -40,7 +41,12 @@ class Contact extends Service\Factory
 
 	public function isRecyclebinEnabled(): bool
 	{
-		return true;
+		return ContactSettings::getCurrent()->isRecycleBinEnabled();
+	}
+
+	public function isDeferredCleaningEnabled(): bool
+	{
+		return ContactSettings::getCurrent()->isDeferredCleaningEnabled();
 	}
 
 	public function isNewRoutingForAutomationEnabled(): bool
@@ -100,7 +106,7 @@ class Contact extends Service\Factory
 	{
 		return [
 			Item::FIELD_NAME_CREATED_TIME => 'DATE_CREATE',
-			Item::FIELD_NAME_MOVED_TIME => 'DATE_MODIFY',
+			Item::FIELD_NAME_UPDATED_TIME => 'DATE_MODIFY',
 			Item::FIELD_NAME_CREATED_BY => 'CREATED_BY_ID',
 			Item::FIELD_NAME_UPDATED_BY => 'MODIFY_BY_ID'
 		];
@@ -143,7 +149,7 @@ class Contact extends Service\Factory
 			Item::FIELD_NAME_BIRTHDATE => [
 				'TYPE' => Field::TYPE_DATE,
 			],
-			Item::FIELD_NAME_BIRTHDATE_SORT => [
+			Item::FIELD_NAME_BIRTHDAY_SORT => [
 				'TYPE' => Field::TYPE_INTEGER,
 				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Hidden],
 				'CLASS' => Field\BirthdaySort::class,
@@ -331,5 +337,10 @@ class Contact extends Service\Factory
 	public function getImportOperation(Item $item, Context $context = null): Operation\Import
 	{
 		throw new InvalidOperationException('Contact factory is not ready to work with operations yet');
+	}
+
+	public function isCountersEnabled(): bool
+	{
+		return true;
 	}
 }

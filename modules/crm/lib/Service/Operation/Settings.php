@@ -28,6 +28,10 @@ class Settings
 	protected $isAfterSaveActionsEnabled = true;
 	protected $isCheckWorkflowsEnabled = true;
 	protected $isDeferredCleaningEnabled = true;
+	protected $isDuplicatesIndexInvalidationEnabled = true;
+	protected $isActivitiesAutocompletionEnabled = true;
+	/** @var string[] */
+	protected $activityProvidersToAutocomplete = [];
 
 	/**
 	 * Settings constructor.
@@ -495,6 +499,66 @@ class Settings
 	public function disableDeferredCleaning(): self
 	{
 		$this->isDeferredCleaningEnabled = false;
+
+		return $this;
+	}
+
+	public function isDuplicatesIndexInvalidationEnabled(): bool
+	{
+		return $this->isDuplicatesIndexInvalidationEnabled;
+	}
+
+	public function enableDuplicatesIndexInvalidation(): self
+	{
+		$this->isDuplicatesIndexInvalidationEnabled = true;
+
+		return $this;
+	}
+
+	public function disableDuplicatesIndexInvalidation(): self
+	{
+		$this->isDuplicatesIndexInvalidationEnabled = false;
+
+		return $this;
+	}
+
+	public function isActivitiesAutocompletionEnabled(): bool
+	{
+		return $this->isActivitiesAutocompletionEnabled;
+	}
+
+	public function enableActivitiesAutocompletion(): self
+	{
+		$this->isActivitiesAutocompletionEnabled = true;
+
+		return $this;
+	}
+
+	public function disableActivitiesAutocompletion(): self
+	{
+		$this->isActivitiesAutocompletionEnabled = false;
+
+		return $this;
+	}
+
+	/**
+	 * Returns ids of activity providers that should be autocompleted.
+	 * Empty array as result means that specific ids were not given and all possible providers will be used.
+	 *
+	 * @return string[]
+	 */
+	public function getActivityProvidersToAutocomplete(): array
+	{
+		return $this->activityProvidersToAutocomplete;
+	}
+
+	/**
+	 * @param string[] $providersIds
+	 * @return $this
+	 */
+	public function setActivityProvidersToAutocomplete(array $providersIds): self
+	{
+		$this->activityProvidersToAutocomplete = $providersIds;
 
 		return $this;
 	}

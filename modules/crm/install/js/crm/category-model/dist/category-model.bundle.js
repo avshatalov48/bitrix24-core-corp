@@ -6,9 +6,7 @@ this.BX.Crm = this.BX.Crm || {};
     /**
      * @memberOf BX.Crm.Models
      */
-    var CategoryModel =
-    /*#__PURE__*/
-    function (_Model) {
+    var CategoryModel = /*#__PURE__*/function (_Model) {
       babelHelpers.inherits(CategoryModel, _Model);
 
       function CategoryModel(data, params) {

@@ -14,6 +14,21 @@
 			this.selectorListener = listener;
 		}
 
+		on(eventName, eventHandler)
+		{
+			this.list.on(eventName, eventHandler);
+		}
+
+		once(eventName, eventHandler)
+		{
+			this.list.once(eventName, eventHandler);
+		}
+
+		off(eventName, eventHandler)
+		{
+			this.list.off(eventName, eventHandler);
+		}
+
 		onScopeSelected(data)
 		{
 			this.selectorListener('onScopeChanged', data);

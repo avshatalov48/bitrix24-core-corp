@@ -101,21 +101,17 @@ class CrmItemAutomation extends \Bitrix\Crm\Component\Base
 		}
 
 		$this->arResult['ENTITY_TYPE_ID'] = $this->entityTypeId;
-		$this->arResult['PAGE_TITLE'] = Loc::getMessage('CRM_ITEM_AUTOMATION_TITLE', [
-			'#ENTITY#' => htmlspecialcharsbx($this->description),
-		]);
+		$this->arResult['PAGE_TITLE'] = Loc::getMessage('CRM_ITEM_AUTOMATION_PAGETITLE');
+		$this->arResult['PAGE_SUBTITLE'] = \CCrmOwnerType::GetCategoryCaption($this->entityTypeId);
+
 		$this->arResult['BACK_URL'] = Container::getInstance()->getRouter()->getAutomationUrl(
 			$this->entityTypeId,
 			isset($this->category) ? $this->category->getId() : null
 		);
 		if ($this->category)
 		{
-			$this->arResult['CATEGORY_NAME'] = htmlspecialcharsbx($this->category->getName());
+			$this->arResult['CATEGORY_NAME'] = $this->category->getName();
 			$this->arResult['ENTITY_CATEGORY_ID'] = $this->category->getId();
-			$this->arResult['PAGE_TITLE'] = Loc::getMessage('CRM_ITEM_AUTOMATION_TITLE_CATEGORY', [
-				'#ENTITY#' => htmlspecialcharsbx($this->description),
-				'#CATEGORY#' => htmlspecialcharsbx($this->category->getName()),
-			]);
 			$this->arResult['CATEGORIES'] = $this->categories;
 		}
 

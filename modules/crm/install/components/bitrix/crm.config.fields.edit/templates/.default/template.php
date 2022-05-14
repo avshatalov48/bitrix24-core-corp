@@ -107,11 +107,14 @@ foreach($arResult['LANGUAGES'] as $lid => $arLang)
 	$arLabelInputNames[] = $inputName;
 }
 
-$arTab1Fields[] = array(
-	"id"=>"MANDATORY",
-	"name"=>GetMessage("CRM_FE_FIELD_IS_REQUIRED"),
-	"type"=>"checkbox",
-);
+if (!$arResult["DISABLE_MANDATORY"])
+{
+	$arTab1Fields[] = [
+		"id"=>"MANDATORY",
+		"name"=>GetMessage("CRM_FE_FIELD_IS_REQUIRED"),
+		"type"=>"checkbox",
+	];
+}
 
 if($arResult["NEW_FIELD"] && !$arResult["DISABLE_MULTIPLE"])
 	$arTab1Fields[] = array(

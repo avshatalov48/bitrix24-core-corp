@@ -200,4 +200,40 @@ class RestManager extends Base
 
 		return $actionboxItems;
 	}
+
+	public function hasDeliveryMarketplaceApp(): bool
+	{
+		if (!$this->isEnabled())
+		{
+			return false;
+		}
+
+		$zone = $this->getZone();
+		$partnerItems = $this->getByTag([
+			self::TAG_DELIVERY,
+			self::TAG_DELIVERY_RECOMMENDED,
+			$zone
+		]);
+
+		return !empty($partnerItems['ITEMS']);
+	}
+
+	private function getZone()
+	{
+		if (Main\ModuleManager::isModuleInstalled('bitrix24'))
+		{
+			$zone = \CBitrix24::getPortalZone();
+		}
+		else
+		{
+			$iterator = Main\Localization\LanguageTable::getList([
+				'select' => ['ID'],
+				'filter' => ['=DEF' => 'Y', '=ACTIVE' => 'Y']
+			]);
+			$row = $iterator->fetch();
+			$zone = $row['ID'];
+		}
+
+		return $zone;
+	}
 }

@@ -3,24 +3,15 @@
 namespace Bitrix\Tasks\Scrum\Controllers;
 
 use Bitrix\Main\Engine\Controller;
-use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
-use Bitrix\Main\Request;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Util\User;
 
 class Info extends Controller
 {
-	public function __construct(Request $request = null)
-	{
-		parent::__construct($request);
-
-		$this->errorCollection = new ErrorCollection;
-	}
-
 	public function getTutorInfoAction(int $groupId)
 	{
-		if (!Loader::includeModule('tasks') || !Loader::includeModule('socialnetwork'))
+		if (!Loader::includeModule('socialnetwork'))
 		{
 			return null;
 		}
@@ -85,7 +76,7 @@ class Info extends Controller
 		];
 	}
 
-	public function openTutorAction()
+	public function saveAnalyticsLabelAction()
 	{
 		return '';
 	}

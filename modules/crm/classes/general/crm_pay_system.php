@@ -1428,7 +1428,8 @@ class CCrmPaySystem
 			'order' => [
 				'SORT' => "ASC",
 				'NAME' => 'ASC'
-			]
+			],
+			'cache' => ['ttl' => 864000]
 		]);
 
 		while ($arPT = $dbRes->fetch())

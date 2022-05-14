@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Class TagTable
  *
@@ -7,9 +7,8 @@
 
 namespace Bitrix\Tasks\Internals\Task;
 
-use Bitrix\Main,
-	Bitrix\Main\Localization\Loc;
-//Loc::loadMessages(__FILE__);
+use Bitrix\Main;
+use Bitrix\Tasks\Internals\TaskDataManager;
 
 /**
  * Class TagTable
@@ -18,16 +17,16 @@ use Bitrix\Main,
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_Tag_Query query()
- * @method static EO_Tag_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Tag_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_Tag_Result getById($id)
- * @method static EO_Tag_Result getList(array $parameters = array())
+ * @method static EO_Tag_Result getList(array $parameters = [])
  * @method static EO_Tag_Entity getEntity()
  * @method static \Bitrix\Tasks\Internals\Task\EO_Tag createObject($setDefaultValues = true)
  * @method static \Bitrix\Tasks\Internals\Task\EO_Tag_Collection createCollection()
  * @method static \Bitrix\Tasks\Internals\Task\EO_Tag wakeUpObject($row)
  * @method static \Bitrix\Tasks\Internals\Task\EO_Tag_Collection wakeUpCollection($rows)
  */
-class TagTable extends Main\Entity\DataManager
+class TagTable extends TaskDataManager
 {
 	/**
 	 * Returns DB table name for entity.

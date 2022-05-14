@@ -14,14 +14,14 @@ class TimemanSection
 	public static function getItems(): array
 	{
 		return [
-			static::getAbsence(),
 			static::getWorkTime(),
-			static::getBitrix24Time(),
-			static::getMonitorReport(),
 			static::getWorkReport(),
 			static::getSchedules(),
-			static::getPermissions(),
+			static::getMonitorReport(),
+			static::getBitrix24Time(),
 			static::getMeetings(),
+			static::getAbsence(),
+			static::getPermissions(),
 		];
 	}
 
@@ -49,11 +49,13 @@ class TimemanSection
 		;
 
 		$locked = false;
+		$onclick = '';
 		$workTimeUrl = SITE_DIR . 'timeman/timeman.php';
 		if (static::isBitrix24() && !static::isTimemanInstalled())
 		{
 			$locked = true;
-			$workTimeUrl = 'javascript:BX.UI.InfoHelper.show("limit_office_worktime");';
+			$workTimeUrl = '';
+			$onclick = 'javascript:BX.UI.InfoHelper.show("limit_office_worktime");';
 		}
 
 		return [
@@ -65,6 +67,7 @@ class TimemanSection
 			'menuData' => [
 				'menu_item_id' => 'menu_timeman',
 				'is_locked' => $locked,
+				'onclick' => $onclick,
 			],
 		];
 	}
@@ -137,12 +140,14 @@ class TimemanSection
 				: static::isTimemanInstalled() && \CBXFeatures::isFeatureEnabled('timeman')
 		;
 
+		$onclick = '';
 		$locked = false;
 		$workReportUrl = SITE_DIR . 'timeman/work_report.php';
 		if (static::isBitrix24() && !static::isTimemanInstalled())
 		{
 			$locked = true;
-			$workReportUrl = 'javascript:BX.UI.InfoHelper.show("limit_office_reports");';
+			$workReportUrl = '';
+			$onclick = 'javascript:BX.UI.InfoHelper.show("limit_office_reports");';
 		}
 
 		return [
@@ -154,6 +159,7 @@ class TimemanSection
 			'menuData' => [
 				'menu_item_id' => 'menu_work_report',
 				'is_locked' => $locked,
+				'onclick' => $onclick,
 			],
 		];
 	}
@@ -170,6 +176,7 @@ class TimemanSection
 
 		$available = false;
 		$locked = false;
+		$onclick = '';
 		$workSchedulesUrl = SITE_DIR . 'timeman/schedules/';
 		if (static::isBitrix24())
 		{
@@ -177,7 +184,8 @@ class TimemanSection
 			if (!static::isTimemanInstalled())
 			{
 				$locked = true;
-				$workSchedulesUrl = 'javascript:BX.UI.InfoHelper.show("limit_office_shift_scheduling");';
+				$workSchedulesUrl = '';
+				$onclick = 'javascript:BX.UI.InfoHelper.show("limit_office_shift_scheduling");';
 			}
 			else if (!$canReadSchedules)
 			{
@@ -198,6 +206,7 @@ class TimemanSection
 			'menuData' => [
 				'menu_item_id' => 'menu_schedules_list',
 				'is_locked' => $locked,
+				'onclick' => $onclick,
 			],
 		];
 	}

@@ -303,7 +303,7 @@ if (!$bInternal)
 //endregion Filter Presets Initialization
 
 $gridOptions = new \Bitrix\Main\Grid\Options($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
-$filterOptions = new \Bitrix\Main\UI\Filter\Options($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
+$filterOptions = new \Bitrix\Crm\Filter\UiFilterOptions($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
 
 //region Navigation Params
 if ($arParams['INVOICE_COUNT'] <= 0)

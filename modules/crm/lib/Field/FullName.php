@@ -11,30 +11,28 @@ class FullName extends Field
 {
 	protected function processLogic(Item $item, Context $context = null): Result
 	{
-		$name = $item->get(Item::FIELD_NAME_NAME);
-		$lastName = $item->get(Item::FIELD_NAME_LAST_NAME);
-		$secondName = $item->get(Item::FIELD_NAME_SECOND_NAME);
+		$name = $item->hasField(Item::FIELD_NAME_NAME) ? $item->getName() : null;
+		$lastName = $item->hasField(Item::FIELD_NAME_LAST_NAME) ? $item->getLastName() : null;
 
 		$fullName = '';
 
-		if (!empty($name) || !empty($lastName))
+		if (!empty($name) && !empty($lastName))
 		{
-			if (!empty($name))
-			{
-				$fullName .= $name . ' ';
-			}
-			if (!empty($lastName))
-			{
-				$fullName .= $lastName . ' ';
-			}
-			if (!empty($secondName))
-			{
-				$fullName .= $secondName;
-			}
+			$fullName = "{$name} {$lastName}";
+		}
+		elseif (!empty($lastName))
+		{
+			$fullName = $lastName;
+		}
+		elseif (!empty($name))
+		{
+			$fullName = $name;
 		}
 
-		$item->set($this->getName(), trim($fullName));
+		$fullName = trim($fullName);
 
-		return new Result;
+		$item->set($this->getName(), $fullName);
+
+		return new Result();
 	}
 }

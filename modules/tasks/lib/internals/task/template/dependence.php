@@ -23,9 +23,9 @@ use Bitrix\Main,
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_Dependence_Query query()
- * @method static EO_Dependence_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Dependence_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_Dependence_Result getById($id)
- * @method static EO_Dependence_Result getList(array $parameters = array())
+ * @method static EO_Dependence_Result getList(array $parameters = [])
  * @method static EO_Dependence_Entity getEntity()
  * @method static \Bitrix\Tasks\Internals\Task\Template\EO_Dependence createObject($setDefaultValues = true)
  * @method static \Bitrix\Tasks\Internals\Task\Template\EO_Dependence_Collection createCollection()

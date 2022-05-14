@@ -119,6 +119,15 @@ class CAllCrmActivity
 
 		self::NormalizeDateTimeFields($arFields);
 
+		if (isset($arFields['SUBJECT']))
+		{
+			$arFields['SUBJECT'] = \Bitrix\Main\Text\Emoji::encode($arFields['SUBJECT']);
+		}
+		if (isset($arFields['DESCRIPTION']))
+		{
+			$arFields['DESCRIPTION'] = \Bitrix\Main\Text\Emoji::encode($arFields['DESCRIPTION']);
+		}
+
 		$ID = $DB->Add(CCrmActivity::TABLE_NAME, $arFields, array('DESCRIPTION', 'STORAGE_ELEMENT_IDS', 'SETTINGS', 'PROVIDER_PARAMS', 'PROVIDER_DATA'));
 		if(is_string($ID) && $ID !== '')
 		{
@@ -490,6 +499,15 @@ class CAllCrmActivity
 		if(isset($arFields['ID']))
 		{
 			unset($arFields['ID']);
+		}
+
+		if (isset($arFields['SUBJECT']))
+		{
+			$arFields['SUBJECT'] = \Bitrix\Main\Text\Emoji::encode($arFields['SUBJECT']);
+		}
+		if (isset($arFields['DESCRIPTION']))
+		{
+			$arFields['DESCRIPTION'] = \Bitrix\Main\Text\Emoji::encode($arFields['DESCRIPTION']);
 		}
 
 		$sql = 'UPDATE '.CCrmActivity::TABLE_NAME.' SET '.$DB->PrepareUpdate(CCrmActivity::TABLE_NAME, $arFields).' WHERE ID = '.$ID;
@@ -2492,9 +2510,21 @@ class CAllCrmActivity
 		if(!empty($responsibleIDs))
 		{
 			EntityCounterManager::reset(
-				EntityCounterManager::prepareCodes(
-					$ownerTypeID,
-					EntityCounterType::getAll(true)
+				array_merge(
+					EntityCounterManager::prepareCodes(
+						$ownerTypeID,
+						EntityCounterType::getAll(true),
+						[
+							'ENTITY_ID' => $oldOwnerID,
+						]
+					),
+					EntityCounterManager::prepareCodes(
+						$ownerTypeID,
+						EntityCounterType::getAll(true),
+						[
+							'ENTITY_ID' => $newOwnerID,
+						]
+					)
 				),
 				$responsibleIDs
 			);
@@ -2550,7 +2580,10 @@ class CAllCrmActivity
 			return;
 		}
 
-		$oldSlug = CUserTypeCrm::GetShortEntityType(CCrmOwnerType::ResolveName($oldOwnerTypeID)).'_'.$oldOwnerID;
+		$oldSlug = Crm\UserField\Types\ElementType::getValueByIdentifier(new Crm\ItemIdentifier(
+			$oldOwnerTypeID,
+			$oldOwnerID
+		));
 		$events = CCalendarEvent::GetList(
 			array(
 				'arFilter' => array(
@@ -2568,7 +2601,10 @@ class CAllCrmActivity
 			return;
 		}
 
-		$newSlug = CUserTypeCrm::GetShortEntityType(CCrmOwnerType::ResolveName($newOwnerTypeID)).'_'.$newOwnerID;
+		$newSlug = Crm\UserField\Types\ElementType::getValueByIdentifier(new Crm\ItemIdentifier(
+			$newOwnerTypeID,
+			$newOwnerID
+		));
 		foreach($events as $event)
 		{
 			if(!(isset($event['UF_CRM_CAL_EVENT']) && is_array($event['UF_CRM_CAL_EVENT'])))
@@ -6170,13 +6206,15 @@ class CAllCrmActivity
 				$arUserFields = array();
 				foreach($arBindings as &$arBinding)
 				{
-					//White list: DEAL, (CONTACT, COMPANY, LEAD)
-					if (
-						(int)$arBinding['OWNER_TYPE_ID'] === \CCrmOwnerType::Deal
-						|| CCrmOwnerType::IsClient($arBinding['OWNER_TYPE_ID'])
-					)
+					$entityTypeName = CCrmOwnerType::ResolveName($arBinding['OWNER_TYPE_ID']);
+					if (Crm\UserField\UserFieldManager::isEnabledInCalendarUserField($entityTypeName))
 					{
-						$arUserFields[] = CUserTypeCrm::GetShortEntityType(CCrmOwnerType::ResolveName($arBinding['OWNER_TYPE_ID'])).'_'.$arBinding['OWNER_ID'];
+						$arUserFields[] = Crm\UserField\Types\ElementType::getValueByIdentifier(
+							new Crm\ItemIdentifier(
+								$arBinding['OWNER_TYPE_ID'],
+								$arBinding['OWNER_ID'],
+							)
+						);
 					}
 				}
 				unset($arBinding);
@@ -6311,11 +6349,14 @@ class CAllCrmActivity
 			{
 				CCalendarEvent::UpdateUserFields(
 					$assocEntityID,
-					array(
-						'UF_CRM_CAL_EVENT' => array(
-							CUserTypeCrm::GetShortEntityType(CCrmOwnerType::ResolveName($ownerTypeID)).'_'.$ownerID
-						)
-					)
+					[
+						'UF_CRM_CAL_EVENT' => [
+							Crm\UserField\Types\ElementType::getValueByIdentifier(new Crm\ItemIdentifier(
+								$ownerTypeID,
+								$ownerID,
+							)),
+						]
+					]
 				);
 			}
 		}
@@ -8082,6 +8123,15 @@ class CCrmActivityDbResult extends CDBResult
 			if($this->selectCommunications)
 			{
 				$result['COMMUNICATIONS'] = CCrmActivity::GetCommunications($result['ID']);
+			}
+
+			if (isset($result['SUBJECT']))
+			{
+				$result['SUBJECT'] = \Bitrix\Main\Text\Emoji::decode($result['SUBJECT']);
+			}
+			if (isset($result['DESCRIPTION']))
+			{
+				$result['DESCRIPTION'] = \Bitrix\Main\Text\Emoji::decode($result['DESCRIPTION']);
 			}
 		}
 		return $result;

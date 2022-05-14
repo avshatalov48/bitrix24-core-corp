@@ -17,6 +17,7 @@ Main\UI\Extension::load([
 	"sidepanel",
 	'crm.form.embed',
 	"crm.form.qr",
+	'date',
 ]);
 Main\Loader::includeModule("ui");
 if(Main\Loader::includeModule("bitrix24"))
@@ -284,6 +285,7 @@ UI\Toolbar\Facade\Toolbar::addFilter([
 	"DISABLE_SEARCH" => false,
 	"ENABLE_LIVE_SEARCH" => true,
 	"ENABLE_LABEL" => true,
+	'THEME' => Bitrix\Main\UI\Filter\Theme::LIGHT,
 ]);
 
 

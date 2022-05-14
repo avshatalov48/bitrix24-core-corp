@@ -8,6 +8,7 @@
 namespace Bitrix\Tasks\Internals\Task;
 
 use Bitrix\Main;
+use Bitrix\Tasks\Internals\TaskDataManager;
 
 /**
  * Class MemberTable
@@ -16,16 +17,16 @@ use Bitrix\Main;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_Member_Query query()
- * @method static EO_Member_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Member_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_Member_Result getById($id)
- * @method static EO_Member_Result getList(array $parameters = array())
+ * @method static EO_Member_Result getList(array $parameters = [])
  * @method static EO_Member_Entity getEntity()
  * @method static \Bitrix\Tasks\Internals\Task\MemberObject createObject($setDefaultValues = true)
  * @method static \Bitrix\Tasks\Internals\Task\EO_Member_Collection createCollection()
  * @method static \Bitrix\Tasks\Internals\Task\MemberObject wakeUpObject($row)
  * @method static \Bitrix\Tasks\Internals\Task\EO_Member_Collection wakeUpCollection($rows)
  */
-class MemberTable extends Main\Entity\DataManager
+class MemberTable extends TaskDataManager
 {
 	public const MEMBER_TYPE_ORIGINATOR = 'O';
 	public const MEMBER_TYPE_RESPONSIBLE = 'R';

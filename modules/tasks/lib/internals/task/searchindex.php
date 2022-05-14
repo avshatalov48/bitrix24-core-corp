@@ -9,6 +9,7 @@ use Bitrix\Main\Db\SqlQueryException;
 use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Tasks\Internals\TaskDataManager;
 
 /**
  * Class SearchIndexTable
@@ -19,16 +20,16 @@ use Bitrix\Main\SystemException;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_SearchIndex_Query query()
- * @method static EO_SearchIndex_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_SearchIndex_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_SearchIndex_Result getById($id)
- * @method static EO_SearchIndex_Result getList(array $parameters = array())
+ * @method static EO_SearchIndex_Result getList(array $parameters = [])
  * @method static EO_SearchIndex_Entity getEntity()
  * @method static \Bitrix\Tasks\Internals\Task\EO_SearchIndex createObject($setDefaultValues = true)
  * @method static \Bitrix\Tasks\Internals\Task\EO_SearchIndex_Collection createCollection()
  * @method static \Bitrix\Tasks\Internals\Task\EO_SearchIndex wakeUpObject($row)
  * @method static \Bitrix\Tasks\Internals\Task\EO_SearchIndex_Collection wakeUpCollection($rows)
  */
-class SearchIndexTable extends DataManager
+class SearchIndexTable extends TaskDataManager
 {
 	/**
 	 * @return string

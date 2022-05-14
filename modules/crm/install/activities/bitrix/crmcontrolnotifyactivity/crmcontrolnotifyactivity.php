@@ -161,8 +161,7 @@ class CBPCrmControlNotifyActivity
 				"NAME" => $documentService->getDocumentTypeName($this->GetDocumentType()) . ':',
 				"VALUE" => $documentService->getDocumentName($documentId),
 				"LINK" => $documentService->GetDocumentAdminPage($documentId),
-				"DISPLAY" => "COLUMN",
-				"WIDTH" => 60,
+				'DISPLAY' => 'BLOCK'
 			),
 		));
 		$attach->AddDelimiter();
@@ -175,7 +174,10 @@ class CBPCrmControlNotifyActivity
 			"MESSAGE_TYPE" => IM_MESSAGE_SYSTEM,
 			"MESSAGE_OUT" => CBPHelper::ConvertTextForMail($messageText),
 			"ATTACH" => $attach,
-			'NOTIFY_TAG' => 'ROBOT|'.implode('|', array_map('mb_strtoupper', $documentId))
+			'NOTIFY_TAG' => 'ROBOT|'.implode('|', array_map('mb_strtoupper', $documentId)),
+			'NOTIFY_MODULE' => 'bizproc',
+			'NOTIFY_EVENT' => 'activity',
+			'PUSH_MESSAGE' => $messageText,
 		);
 
 		if ($from)

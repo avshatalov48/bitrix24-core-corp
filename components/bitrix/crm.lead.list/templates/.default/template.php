@@ -803,15 +803,15 @@ if(!$isInternal
 		}
 		//endregion
 
-		if($allowDelete)
+		if($allowDelete && !$arResult['IS_EXTERNAL_FILTER'])
 		{
-			$actionList[] = array(
+			$actionList[] = [
 				'NAME' => GetMessage('CRM_LEAD_ACTION_MERGE'),
 				'VALUE' => 'merge',
-				'ONCHANGE' => array(
-					array(
+				'ONCHANGE' => [
+					[
 						'ACTION' => Bitrix\Main\Grid\Panel\Actions::CREATE,
-						'DATA' => array(
+						'DATA' => [
 							array_merge(
 								$applyButton,
 								['SETTINGS' => [
@@ -819,14 +819,14 @@ if(!$isInternal
 									'buttonId' => 'apply_button'
 								]]
 							)
-						)
-					),
-					array(
+						]
+					],
+					[
 						'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
-						'DATA' => array(array('JS' => "BX.CrmUIGridExtension.applyAction('{$gridManagerID}', 'merge')"))
-					)
-				)
-			);
+						'DATA' => [['JS' => "BX.CrmUIGridExtension.applyAction('{$gridManagerID}', 'merge')"]]
+					]
+				]
+			];
 		}
 	}
 

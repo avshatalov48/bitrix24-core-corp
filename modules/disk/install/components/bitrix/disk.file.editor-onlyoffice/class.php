@@ -106,6 +106,7 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 			return;
 		}
 
+		$this->arResult['EXTERNAL_LINK_MODE'] = (bool)($this->arParams['EXTERNAL_LINK_MODE'] ?? false);
 		$documentInfo = $documentSession->getInfo();
 		if (!$documentInfo)
 		{
@@ -137,12 +138,8 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 		];
 		$onlyOfficeController = new Disk\Controller\OnlyOffice();
 
-		$allowEdit = false;
 		$allowRename = false;
-		if (!$documentSession->isVersion() && OnlyOffice\OnlyOfficeHandler::isEditable($documentSession->getObject()->getExtension()))
-		{
-			$allowEdit = $documentSession->canTransformUserToEdit(CurrentUser::get());
-		}
+		$allowEdit = $this->isEditAllowed($documentSession);
 		if ($documentSession->isEdit() && !$documentSession->isVersion())
 		{
 			$allowRename = $documentSession->canUserRename(CurrentUser::get());
@@ -200,7 +197,6 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 			$documentSession->getObject()->getRealObjectId()
 		);
 
-		$this->arResult['EXTERNAL_LINK_MODE'] = (bool)($this->arParams['EXTERNAL_LINK_MODE'] ?? false);
 		$this->arResult['CURRENT_USER_AS_GUEST'] = $this->currentUser instanceof OnlyOffice\Models\GuestUser;
 		$this->arResult['CURRENT_USER'] = Json::encode([
 			'id' => $this->getUserIdForOnline(),
@@ -467,5 +463,28 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 		}
 
 		return rtrim(ServiceLocator::getInstance()->get('disk.onlyofficeConfiguration')->getServer(), '/');
+	}
+
+	protected function isEditAllowed(OnlyOffice\Models\DocumentSession $documentSession): bool
+	{
+		$allowEdit = false;
+
+		if (
+			!$documentSession->isVersion()
+			&& OnlyOffice\OnlyOfficeHandler::isEditable($documentSession->getObject()->getExtension())
+		)
+		{
+			$allowEdit = $documentSession->canTransformUserToEdit(CurrentUser::get());
+			if ($allowEdit && $this->arResult['EXTERNAL_LINK_MODE'])
+			{
+				$externalLink = $documentSession->getContext()->getExternalLink();
+				if ($externalLink && !$externalLink->allowEdit())
+				{
+					$allowEdit = false;
+				}
+			}
+		}
+
+		return $allowEdit;
 	}
 }

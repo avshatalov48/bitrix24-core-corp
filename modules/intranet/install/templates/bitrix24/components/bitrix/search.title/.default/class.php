@@ -451,8 +451,7 @@ final class CB24SearchTitle
 		return $result;
 	}
 
-	final public static function
-	getMenuItems($searchString = false)
+	final public static function getMenuItems($searchString = false)
 	{
 		global $APPLICATION;
 
@@ -476,12 +475,13 @@ final class CB24SearchTitle
 				'USE_EXT' => 'Y',
 				'DELAY' => 'N',
 				'ALLOW_MULTI_SELECT' => 'N',
-				'RETURN' => 'Y'
+				'RETURN' => 'Y',
 			],
 			false,
 			['HIDE_ICONS' => 'Y']
 		);
 
+		$itemCache = [];
 		foreach($arMenuResult as $menuItem)
 		{
 			if (empty($menuItem['LINK']))
@@ -492,17 +492,28 @@ final class CB24SearchTitle
 				|| mb_strpos(ToLower($menuItem['TEXT']), ToLower($searchString)) !== false
 			)
 			{
+				$url = isset($menuItem['PARAMS']) && isset($menuItem['PARAMS']["real_link"]) ?
+					$menuItem['PARAMS']["real_link"] :
+					$menuItem['LINK']
+				;
+
+				$hash = md5($menuItem['TEXT'] . '~' . $url);
+				if (isset($itemCache[$hash]))
+				{
+					continue;
+				}
+
+				$itemCache[$hash] = true;
+
 				$result[] = array(
 					'NAME' => $menuItem['TEXT'],
-					'URL' =>
-						isset($menuItem['PARAMS']) && isset($menuItem['PARAMS']["real_link"]) ?
-							$menuItem['PARAMS']["real_link"] :
-							$menuItem['LINK'],
+					'URL' => $url,
 					'CHAIN' => (!empty($menuItem['CHAIN']) && is_array($menuItem['CHAIN']) ? $menuItem['CHAIN'] : array($menuItem['TEXT'])),
 					'MODULE_ID' => '',
 					'PARAM1' => '',
 					'ITEM_ID' => 'M'.$menuItem['LINK'],
-					'ICON' => ''
+					'ICON' => '',
+					'ON_CLICK' => $menuItem['PARAMS']['onclick'] ?? '',
 				);
 			}
 		}

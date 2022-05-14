@@ -38,7 +38,7 @@ $MESS["TOP_MENU_AI"] = "Лаборатория AI";
 $MESS["MENU_SALESCENTER_SECTION"] = "Центр продаж";
 $MESS["MENU_RPA_SECTION"] = "Роботизация бизнеса (RPA)";
 $MESS["TOP_MENU_DEVOPS"] = "Разработчикам";
-$MESS["MENU_STORE_ACCOUNTING_SECTION"] = "Складской учет";
+$MESS["MENU_STORE_ACCOUNTING_SECTION"] = "Складской учёт";
 $MESS["TOP_MENU_SITES_AND_STORES"] = "Сайты и Магазины";
 $MESS["TOP_MENU_COMPANY_SECTION"] = "Компания";
 ?>

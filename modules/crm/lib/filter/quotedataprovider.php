@@ -13,7 +13,7 @@ use Bitrix\Main\Loader;
 
 Loc::loadMessages(__FILE__);
 
-class QuoteDataProvider extends Main\Filter\EntityDataProvider
+class QuoteDataProvider extends EntityDataProvider
 {
 	/** @var QuoteSettings|null */
 	protected $settings = null;
@@ -39,14 +39,27 @@ class QuoteDataProvider extends Main\Filter\EntityDataProvider
 	 */
 	protected function getFieldName($fieldID)
 	{
-		$phrase = "CRM_QUOTE_FILTER_{$fieldID}";
-		if ($phrase === 'CRM_QUOTE_FILTER_MYCOMPANY_ID')
+		$name = null;
+		$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Quote);
+		if ($factory)
 		{
-			$name = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Quote)->getFieldCaption(Crm\Item::FIELD_NAME_MYCOMPANY_ID);
+			$name = $factory->getFieldCaption((string)$fieldID);
+			if ($name === $fieldID)
+			{
+				$name = null;
+			}
 		}
-		else
+		if (empty($name))
 		{
-			$name = Loc::getMessage($phrase);
+			$phrase = "CRM_QUOTE_FILTER_{$fieldID}";
+			if ($phrase === 'CRM_QUOTE_FILTER_MYCOMPANY_ID')
+			{
+				$name = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Quote)->getFieldCaption(Crm\Item::FIELD_NAME_MYCOMPANY_ID);
+			}
+			else
+			{
+				$name = Loc::getMessage($phrase);
+			}
 		}
 		if (empty($name))
 		{
@@ -57,15 +70,6 @@ class QuoteDataProvider extends Main\Filter\EntityDataProvider
 		{
 			$parentEntityTypeId = ParentFieldManager::getEntityTypeIdFromFieldName($fieldID);
 			$name = \CCrmOwnerType::GetDescription($parentEntityTypeId);
-		}
-
-		if (empty($name))
-		{
-			$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Quote);
-			if ($factory)
-			{
-				$name = $factory->getFieldCaption((string)$fieldID);
-			}
 		}
 
 		if (empty($name))

@@ -67,6 +67,13 @@ elseif ($arResult["bShowRequestSentMessage"] === "G")
 elseif ($arResult["bUserCanRequestGroup"])
 {
 	?><script>
+		BX.ready(function() {
+			B24SGControl.getInstance().init({
+				groupId: <?= (int)$arParams["GROUP_ID"] ?>,
+				slider: <?= ($arResult['IS_IFRAME'] ? 'true' : 'false') ?>,
+			});
+		});
+
 		BX.message({
 			SONET_C6_T_AJAX_ERROR: '<?=GetMessageJS('SONET_C6_T_AJAX_ERROR')?>'
 		});
@@ -257,5 +264,4 @@ $this->SetViewTarget("pagetitle", 1000);
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."pagetitle-menu-visible");
 
-include("title_buttons.php");
 $this->EndViewTarget();

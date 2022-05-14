@@ -90,9 +90,12 @@ if (
 			SONET_SGM_T_CONTROL_NOTIFICATION_COPYURL: '<?= htmlspecialcharsbx(Loc::getMessage('SONET_SGM_T_CONTROL_NOTIFICATION_COPYURL')) ?>',
 			SONET_SGM_T_CONTROL_HINT_FAVORITES_ADD: '<?= htmlspecialcharsbx(Loc::getMessage('SONET_SGM_T_CONTROL_HINT_FAVORITES_ADD')) ?>',
 			SONET_SGM_T_CONTROL_HINT_FAVORITES_REMOVE: '<?= htmlspecialcharsbx(Loc::getMessage('SONET_SGM_T_CONTROL_HINT_FAVORITES_REMOVE')) ?>',
+			SONET_SGM_T_MORE_MENU_SUBSCRIBE: '<?= htmlspecialcharsbx(Loc::getMessage('SONET_SGM_T_MORE_MENU_SUBSCRIBE')) ?>',
+			SONET_SGM_T_MORE_MENU_UNSUBSCRIBE: '<?= htmlspecialcharsbx(Loc::getMessage('SONET_SGM_T_MORE_MENU_UNSUBSCRIBE')) ?>',
+			SONET_SGM_T_MORE_MENU_BINDING: '<?= htmlspecialcharsbx(Loc::getMessage('SONET_SGM_T_MORE_MENU_BINDING')) ?>',
 		});
 
-		BX.BXSGM24.init({
+		new BX.Intranet.GroupMenu({
 			currentUserId: BX.message('USER_ID'),
 			groupId: <?=(int)$arResult["Group"]["ID"]?>,
 			groupType: '<?= CUtil::JSEscape($arResult['Group']['TypeCode']) ?>',
@@ -101,12 +104,17 @@ if (
 			isScrumProject: <?= ($arResult['isScrumProject'] ? 'true' : 'false') ?>,
 			isOpened: <?=($arResult["Group"]["OPENED"] === "Y" ? 'true' : 'false')?>,
 			favoritesValue: <?=($arResult["FAVORITES"] ? 'true' : 'false')?>,
+			subscribedValue: <?= ($arResult['isSubscribed'] ? 'true' : 'false') ?>,
+
 			canInitiate: <?=($arResult["CurrentUserPerms"]["UserCanInitiate"] && !$arResult["HideArchiveLinks"] ? 'true' : 'false')?>,
 			canProcessRequestsIn: <?=($arResult["CurrentUserPerms"]["UserCanProcessRequestsIn"] && !$arResult["HideArchiveLinks"] ? 'true' : 'false')?>,
 			canModify: <?=($arResult["CurrentUserPerms"]["UserCanModifyGroup"] ? 'true' : 'false')?>,
+
 			userRole: '<?=$arResult["CurrentUserPerms"]["UserRole"]?>',
 			userIsMember: <?=($arResult["CurrentUserPerms"]["UserIsMember"] ? 'true' : 'false')?>,
 			userIsAutoMember: <?=(isset($arResult["CurrentUserPerms"]["UserIsAutoMember"]) && $arResult["CurrentUserPerms"]["UserIsAutoMember"] ? 'true' : 'false')?>,
+			userIsScrumMaster: <?= (isset($arResult['CurrentUserPerms']['UserIsScrumMaster']) && $arResult['CurrentUserPerms']['UserIsScrumMaster'] ? 'true' : 'false') ?>,
+
 			editFeaturesAllowed: <?=(\Bitrix\Socialnetwork\Helper\Workgroup::getEditFeaturesAvailability() ? 'true' : 'false')?>,
 			copyFeatureAllowed: <?=(\Bitrix\Socialnetwork\Helper\Workgroup::isGroupCopyFeatureEnabled() ? 'true' : 'false')?>,
 			canPickTheme: <?= (
@@ -121,6 +129,8 @@ if (
 			pageId: '<?= $arParams['PAGE_ID'] ?>',
 			avatarPath: '<?= CUtil::JSEscape(isset($arResult['Group']['IMAGE_FILE']['src']) ? (string)$arResult['Group']['IMAGE_FILE']['src'] : '') ?>',
 			avatarType: '<?= CUtil::JSEscape(isset($arResult['Group']['AVATAR_TYPE']) ? \Bitrix\Socialnetwork\Helper\Workgroup::getAvatarTypeWebCssClass($arResult['Group']['AVATAR_TYPE']) : '') ?>',
+			bindingMenuItems: <?= CUtil::PhpToJSObject($arResult['bindingMenuItems']) ?>,
+			inIframe: <?= ($arResult['inIframe'] ? 'true' : 'false') ?>,
 		});
 	});
 </script><?php
@@ -220,7 +230,23 @@ if (
 							<?php
 						}
 
+						if (
+							$arResult['CanView']['chat']
+							&& !$arResult['isScrumProject']
+						)
+						{
+							?><span id="group-menu-control-button-cont" class="profile-menu-button-container"></span><?php
+						}
+
 						?><a href="<?= $arResult['Urls']['Card'] ?>" id="project-widget-button" class="ui-btn ui-btn-light-border" data-slider-ignore-autobinding="true" data-workgroup="<?= htmlspecialcharsbx(Json::encode($arResult['projectWidgetData'])) ?>"><?= $aboutTitle ?></a><?php
+
+						if (
+							!empty($arResult['bindingMenuItems'])
+							|| in_array($arResult['CurrentUserPerms']['UserRole'], UserToGroupTable::getRolesMember(), true)
+						)
+						{
+							?><button id="group-menu-more-button" class="ui-btn ui-btn-light-border ui-btn-icon-dots"></button><?php
+						}
 
 					?></span><?php
 				}
@@ -270,30 +296,9 @@ if (
 							?><span id="group-menu-control-button-cont" class="profile-menu-button-container"></span><?php
 						}
 
-						if (
-							$groupMember
-							&& in_array($arParams['PAGE_ID'], [ 'group', 'group_general', 'group_log' ], true)
-						)
-						{
-							$classList = [
-								'ui-btn',
-								'ui-btn-light-border',
-								'ui-btn-icon-follow',
-								'ui-btn-themes',
-							];
-
-							if ($arResult['bSubscribed'])
-							{
-								$classList[] = 'ui-btn-active';
-							}
-
-							?><button id="group_menu_subscribe_button" class="<?= implode(' ', $classList) ?>"
-									  title="<?= Loc::getMessage('SONET_SGM_T_NOTIFY_TITLE_' . ($arResult['bSubscribed'] ? 'ON' : 'OFF')) ?>"
-									  onclick="B24SGControl.getInstance().setSubscribe(event);"
-							></button><?php
-						}
-
 						?><a href="<?= $arResult['Urls']['Card'] ?>" id="project-widget-button" class="ui-btn ui-btn-light-border ui-btn-themes" data-slider-ignore-autobinding="true" data-workgroup="<?= htmlspecialcharsbx(Json::encode($arResult['projectWidgetData'])) ?>"><?= $aboutTitle ?></a><?php
+
+						?><button id="group-menu-more-button" class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-dots"></button><?php
 
 					?></span><?php
 				}

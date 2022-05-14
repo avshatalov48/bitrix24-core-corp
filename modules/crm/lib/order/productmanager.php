@@ -10,6 +10,8 @@ Main\Localization\Loc::loadMessages(__FILE__);
 
 class ProductManager
 {
+	use Crm\Order\ProductManager\ProductFinder;
+
 	/** @var Order $order */
 	private $order;
 
@@ -19,7 +21,7 @@ class ProductManager
 	/** @var int $ownerId */
 	private $ownerId;
 
-	/** @var ProductManager\ProductConverter */
+	/** @var ProductManager\ProductConverter $productConverter */
 	private $productConverter;
 
 	/**
@@ -38,7 +40,7 @@ class ProductManager
 	 * @param Order $order
 	 * @return $this
 	 */
-	public function setOrder(Order $order) : self
+	public function setOrder(Order $order): self
 	{
 		$this->order = $order;
 
@@ -48,9 +50,30 @@ class ProductManager
 	/**
 	 * @return Order|null
 	 */
-	public function getOrder(): ?Order
+	protected function getOrder(): ?Order
 	{
 		return $this->order;
+	}
+
+	protected function getOrderProducts(): array
+	{
+		$result = [];
+
+		if (!$this->getOrder())
+		{
+			return $result;
+		}
+
+		/** @var Sale\BasketItem $basketItem */
+		foreach ($this->order->getBasket() as $basketItem)
+		{
+			$item = $basketItem->toArray();
+			$item['BASKET_CODE'] = $basketItem->getBasketCode();
+
+			$result[] = $item;
+		}
+
+		return $result;
 	}
 
 	/**
@@ -65,50 +88,49 @@ class ProductManager
 	/**
 	 * @return array
 	 */
-	public function getDeliverableItems() : array
+	public function getDeliverableItems(): array
 	{
 		$orderProducts = $this->getUnShippableProductList();
 		$entityProducts = $this->getConvertedToBasketEntityProductList();
 
-		return $this->mergeProducts($orderProducts, $entityProducts);
+		return
+			(new ProductManager\MergeStrategy\Selling($this->getOrder()))
+				->mergeProducts($orderProducts, $entityProducts)
+			;
 	}
 
 	/**
 	 * @return array
 	 */
-	public function getPayableItems() : array
+	public function getPayableItems(): array
 	{
 		$unPayableProductList = $this->getUnPayableProductList();
 		$entityProducts = $this->getConvertedToBasketEntityProductList();
 
-		return $this->mergeProducts($unPayableProductList, $entityProducts);
+		return
+			(new ProductManager\MergeStrategy\Selling($this->getOrder()))
+				->mergeProducts($unPayableProductList, $entityProducts)
+			;
 	}
 
 	/**
 	 * @return array
 	 */
-	protected function getProductList() : array
+	public function getRealizationableItems(): array
 	{
-		$products = [];
+		$orderProducts = $this->getShippableProductList();
+		$entityProducts = $this->getConvertedToBasketEntityProductList();
 
-		if ($this->order)
-		{
-			$basket = $this->order->getBasket();
-
-			/** @var BasketItem $basketItem */
-			foreach ($basket as $basketItem)
-			{
-				$products[] = $this->extractDataFromBasketItem($basketItem);
-			}
-		}
-
-		return $products;
+		return
+			(new ProductManager\MergeStrategy\Realization($this->getOrder()))
+				->mergeProducts($orderProducts, $entityProducts)
+			;
 	}
 
 	/**
 	 * @return array
 	 */
-	protected function getUnPayableProductList() : array
+	protected function getUnPayableProductList(): array
 	{
 		$products = [];
 
@@ -139,7 +161,7 @@ class ProductManager
 	 * @param BasketItem $item
 	 * @return float
 	 */
-	protected function getPayableQuantityByBasketItem(BasketItem $item) : float
+	protected function getPayableQuantityByBasketItem(BasketItem $item): float
 	{
 		$quantity = 0;
 
@@ -167,7 +189,7 @@ class ProductManager
 	 * @param BasketItem $basketItem
 	 * @return array
 	 */
-	protected function extractDataFromBasketItem(BasketItem $basketItem) : array
+	protected function extractDataFromBasketItem(BasketItem $basketItem): array
 	{
 		return [
 			'BASKET_CODE' => $basketItem->getBasketCode(),
@@ -181,7 +203,7 @@ class ProductManager
 	/**
 	 * @return array
 	 */
-	protected function getUnShippableProductList() : array
+	protected function getUnShippableProductList(): array
 	{
 		$products = [];
 
@@ -203,6 +225,42 @@ class ProductManager
 		}
 
 		return $products;
+	}
+
+	/**
+	 * @return array
+	 */
+	protected function getShippableProductList(): array
+	{
+		$products = [];
+
+		if ($this->order)
+		{
+			$shipmentCollection = $this->order->getShipmentCollection()->getNotSystemItems();
+			foreach ($shipmentCollection as $shipment)
+			{
+				/** @var ShipmentItem $shipmentItem */
+				foreach ($shipment->getShipmentItemCollection() as $shipmentItem)
+				{
+					/** @var BasketItem $basketItem */
+					$basketItem = $shipmentItem->getBasketItem();
+
+					if (isset($products[$basketItem->getId()]))
+					{
+						$products[$basketItem->getId()]['QUANTITY'] += $shipmentItem->getQuantity();
+					}
+					else
+					{
+						$item = $this->extractDataFromBasketItem($basketItem);
+						$item['QUANTITY'] = $shipmentItem->getQuantity();
+
+						$products[$basketItem->getId()] = $item;
+					}
+				}
+			}
+		}
+
+		return array_values($products);
 	}
 
 	/**
@@ -284,136 +342,22 @@ class ProductManager
 		return $this->productConverter->convertToSaleBasketFormat($product);
 	}
 
-	/**
-	 * @param array $product
-	 * @return Sale\BasketItem|null
-	 */
-	protected function getBasketItemByEntityProduct(array $product) :? Sale\BasketItem
+	private function getOrderProductByBasketCode(array $productList, string $code)
 	{
-		if (!$this->order)
-		{
-			return null;
-		}
+		$product = array_filter($productList, static function ($product) use ($code) {
+			return (string)$product['BASKET_CODE'] === $code;
+		});
 
-		/** @var Sale\BasketItem $basketItem */
-		foreach ($this->order->getBasket() as $basketItem)
-		{
-			if (
-				$basketItem->getProductId() === (int)$product['PRODUCT_ID']
-				&& $basketItem->getField('MODULE') === $product['MODULE']
-			)
-			{
-				return $basketItem;
-			}
-		}
-
-		return null;
+		return current($product) ?? null;
 	}
 
-	/**
-	 * @param $orderProducts
-	 * @param $dealProducts
-	 * @return array
-	 */
-	private function mergeProducts($orderProducts, $dealProducts) : array
+	private function getOrderProductByXmlId(array $productList, string $xmlId)
 	{
-		$result = [];
+		$product = array_filter($productList, static function ($product) use ($xmlId) {
+			return $product['XML_ID'] === $xmlId;
+		});
 
-		$counter = 0;
-		foreach ($dealProducts as $product)
-		{
-			$index = static::searchProduct($product, $orderProducts);
-			if ($index === false)
-			{
-				$basketItem = $this->getBasketItemByEntityProduct($product);
-				if ($basketItem)
-				{
-					if ($product['QUANTITY'] <= $basketItem->getQuantity())
-					{
-						continue;
-					}
-
-					$product['BASKET_CODE'] = $basketItem->getBasketCode();
-					$product['QUANTITY'] -= $basketItem->getQuantity();
-				}
-				else
-				{
-					$product['BASKET_CODE'] = 'n'.(++$counter);
-				}
-			}
-			else
-			{
-				$basketItem = $this->order->getBasket()->getItemByBasketCode($orderProducts[$index]['BASKET_CODE']);
-				if (!$basketItem)
-				{
-					continue;
-				}
-
-				$product['BASKET_CODE'] = $basketItem->getBasketCode();
-
-				if ($basketItem->getQuantity() !== $orderProducts[$index]['QUANTITY'])
-				{
-					$product['QUANTITY'] -= $orderProducts[$index]['QUANTITY'];
-				}
-			}
-
-			$result[] = $product;
-		}
-
-		return $result;
-	}
-
-	/**
-	 * @param array $searchableProduct
-	 * @param array $productList
-	 * @return false|int|string
-	 */
-	public static function searchProduct(array $searchableProduct, array $productList)
-	{
-		if ((int)$searchableProduct['PRODUCT_ID'] === 0)
-		{
-			return false;
-		}
-
-		static $foundProducts = [];
-
-		foreach ($productList as $index => $item)
-		{
-			if (
-				(int)$searchableProduct['PRODUCT_ID'] === (int)$item['PRODUCT_ID']
-				&& $searchableProduct['MODULE'] === $item['MODULE']
-				&& !in_array($item['BASKET_CODE'], $foundProducts, true)
-			)
-			{
-				$foundProducts[] = $item['BASKET_CODE'];
-				return $index;
-			}
-		}
-
-		return false;
-	}
-
-	/**
-	 * @param array $productList
-	 * @param int $productId
-	 * @return false|int|string
-	 */
-	private function searchProductById(array $productList, int $productId)
-	{
-		if ($productId === 0)
-		{
-			return false;
-		}
-
-		foreach ($productList as $index => $item)
-		{
-			if ($productId === (int)$item['PRODUCT_ID'])
-			{
-				return $index;
-			}
-		}
-
-		return false;
+		return current($product) ?? null;
 	}
 
 	/**
@@ -457,7 +401,7 @@ class ProductManager
 		$result = $this->mergeWithOrderProducts($result, $products);
 		if ($result)
 		{
-			\CCrmDeal::SaveProductRows($this->ownerId, $result);
+			\CCrmDeal::SaveProductRows($this->ownerId, $result, false);
 		}
 	}
 
@@ -492,14 +436,17 @@ class ProductManager
 	 * @param array $basketProducts
 	 * @return array
 	 */
-	private function mergeWithOrderProducts(array $entityProducts, array $basketProducts): array
+	protected function mergeWithOrderProducts(array $entityProducts, array $basketProducts): array
 	{
 		$resultProductList = $entityProducts;
-		if (!$this->order)
+
+		$orderProducts = $this->getOrderProducts();
+		if (empty($orderProducts))
 		{
 			return $resultProductList;
 		}
 
+		$usedIndexes = [];
 		foreach ($basketProducts as $product)
 		{
 			$productId = $product['skuId'] ?? $product['productId'];
@@ -509,14 +456,13 @@ class ProductManager
 				&& $product['additionalFields']['originBasketId'] !== $product['code']
 			)
 			{
-				$basketItem = $this->order->getBasket()->getItemByBasketCode($product['additionalFields']['originBasketId']);
-
-				if ($basketItem)
+				$basketProduct = $this->getOrderProductByBasketCode($orderProducts, $product['additionalFields']['originBasketId']);
+				if ($basketProduct)
 				{
-					$index = $this->searchProductById($resultProductList, $basketItem->getProductId());
+					$index = $this->searchProductById($resultProductList, $basketProduct['PRODUCT_ID'], $usedIndexes);
 					if ($index !== false)
 					{
-						$resultProductList[$index]['QUANTITY'] = $basketItem->getQuantity();
+						$resultProductList[$index]['QUANTITY'] = $basketProduct['QUANTITY'];
 					}
 				}
 			}
@@ -525,7 +471,7 @@ class ProductManager
 				&& $product['additionalFields']['originProductId'] !== $productId
 			)
 			{
-				$index = $this->searchProductById($resultProductList, $product['additionalFields']['originProductId']);
+				$index = $this->searchProductById($resultProductList, $product['additionalFields']['originProductId'], $usedIndexes);
 				if ($index !== false)
 				{
 					$resultProductList[$index]['PRODUCT_ID'] = $productId;
@@ -539,15 +485,15 @@ class ProductManager
 			}
 			else
 			{
-				$index = $this->searchProductById($resultProductList, $productId);
+				$index = $this->searchProductById($resultProductList, $productId, $usedIndexes);
 				if ($index !== false)
 				{
-					$basketItem = $this->order->getBasket()->getItemByXmlId($product['innerId']);
-					if ($basketItem)
+					$basketProduct = $this->getOrderProductByXmlId($orderProducts, $product['innerId']);
+					if ($basketProduct)
 					{
-						if ($resultProductList[$index]['QUANTITY'] < $basketItem->getQuantity())
+						if ($resultProductList[$index]['QUANTITY'] < $basketProduct['QUANTITY'])
 						{
-							$resultProductList[$index]['QUANTITY'] = $basketItem->getQuantity();
+							$resultProductList[$index]['QUANTITY'] = $basketProduct['QUANTITY'];
 						}
 
 						$resultProductList[$index]['PRICE'] = $product['price'];

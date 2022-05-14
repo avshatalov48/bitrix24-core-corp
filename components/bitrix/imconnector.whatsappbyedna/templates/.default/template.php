@@ -36,7 +36,6 @@ if ($arParams['INDIVIDUAL_USE'] !== 'Y')
 $placeholder = ' placeholder="'.Loc::getMessage('IMCONNECTOR_COMPONENT_SETTINGS_PLACEHOLDER').'"';
 
 $iconCode = \Bitrix\ImConnector\Connector::getIconByConnector($arResult['CONNECTOR']);
-$ednaLandingUrl = 'https://edna.ru/whatsapp-business-api-bitrix/?utm_source=referral&utm_campaign=Bitrix';
 ?>
 
 	<form action="<?=$arResult['URL']['DELETE']?>" method="post" id="form_delete_<?=$arResult['CONNECTOR']?>">
@@ -119,11 +118,6 @@ if (empty($arResult['PAGE']))
 							</ul>
 							<div class="imconnector-field-box-content-text-light">
 								<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_INDEX_ADDITIONAL_DESCRIPTION')?>
-							</div>
-							<div class="imconnector-field-box-content-text-light">
-								<a href="<?=$ednaLandingUrl?>" target="_blank">
-									<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_INDEX_ADDITIONAL_DESCRIPTION2')?>
-								</a>
 							</div>
 						</div>
 						<div class="imconnector-field-box-content-btn">

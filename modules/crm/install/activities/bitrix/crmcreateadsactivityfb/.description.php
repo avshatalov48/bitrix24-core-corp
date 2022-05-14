@@ -28,7 +28,6 @@ $arActivityDescription = array(
 );
 
 $region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion();
-
 if ($region === null || $region === 'ru')
 {
 	$arActivityDescription['EXCLUDED'] = true;

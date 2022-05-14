@@ -1,4 +1,4 @@
-import {ajax, Loc, Runtime} from 'main.core';
+import {ajax, Loc, Reflection, Runtime} from 'main.core';
 import {rest} from 'rest.client';
 
 class CommentActionController
@@ -91,9 +91,8 @@ class CommentActionController
 		return new Promise((resolve) => {
 			rest.callMethod('calendar.settings.get').then((response) => {
 				const {result} = response.answer;
-				const {work_time_start, work_time_end} = result;
-				const [startHours, startMinutes] = work_time_start.split('.');
-				const [endHours, endMinutes] = work_time_end.split('.');
+				const [startHours, startMinutes] = String(result.work_time_start).split('.');
+				const [endHours, endMinutes] = String(result.work_time_end).split('.');
 
 				CommentActionController.workHours = {
 					start: {
@@ -127,7 +126,7 @@ class CommentActionController
 		return Object.keys(CommentActionController.possibleActions).includes(action);
 	}
 
-	static processLink(link: Object): void
+	static processLink(link: Object)
 	{
 		const [url, userId, taskId, action, deadline] = link.matches;
 
@@ -155,7 +154,7 @@ class CommentActionController
 		);
 	}
 
-	static showDeadlinePicker(target: HTMLElement, taskId: Integer, deadline: any): void
+	static showDeadlinePicker(target: HTMLElement, taskId: Integer, deadline: any)
 	{
 		const now = new Date();
 		const today = new Date(
@@ -171,7 +170,8 @@ class CommentActionController
 			deadline ? new Date((Number(deadline) - (new Date()).getTimezoneOffset() * 60) * 1000) : today
 		);
 
-		BX.calendar({
+		const calendar = Reflection.getClass('BX.calendar');
+		calendar({
 			node: target,
 			value,
 			field: '',
@@ -190,7 +190,7 @@ class CommentActionController
 		});
 	}
 
-	static onDeadlinePicked(value: Date, taskId: Integer): void
+	static onDeadlinePicked(value: Date, taskId: Integer)
 	{
 		const action = CommentActionController.possibleActions.deadlineChange;
 
@@ -242,7 +242,7 @@ class CommentActionController
 		});
 	}
 
-	static runAjaxAction(action: string, taskId: Integer, data: Object = {}): void
+	static runAjaxAction(action: string, taskId: Integer, data: Object = {})
 	{
 		if (CommentActionController.isAjaxRunning)
 		{
@@ -288,17 +288,19 @@ class CommentActionController
 							ui: 'notification'
 						}
 					}
-					BX.Tasks.alert([errorMsg]);
+					const Tasks = Reflection.getClass('BX.Tasks');
+					Tasks.alert([errorMsg]);
 				}
 				CommentActionController.isAjaxRunning = false;
 			}
 		);
 	}
 
-	static showNotification(action: string): void
+	static showNotification(action: string)
 	{
 		Runtime.loadExtension('ui.notification').then(() => {
-			BX.UI.Notification.Center.notify({
+			const notificationCenter = Reflection.getClass('BX.UI.Notification.Center');
+			notificationCenter.notify({
 				content: CommentActionController.actionNotificationMessages[action],
 			});
 		});

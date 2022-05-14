@@ -466,6 +466,8 @@ class File extends Volume\Base implements Volume\IVolumeIndicatorParent, Volume\
 				->addFilter('@PARENT_ID', Volume\QueryHelper::prepareFolderTreeQuery($parentFolderId));
 		}
 
+		$this->unsetFilter('FILES_LEFT');
+
 		$whereSql = Volume\QueryHelper::prepareWhere(
 			$this->getFilter(array(
 				'DELETED_TYPE' => ObjectTable::DELETED_TYPE_NONE,

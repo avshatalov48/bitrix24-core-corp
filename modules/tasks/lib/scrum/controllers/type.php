@@ -5,13 +5,12 @@ namespace Bitrix\Tasks\Scrum\Controllers;
 use Bitrix\Main\Engine\Action;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Error;
-use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Request;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Scrum\Checklist\ItemChecklistFacade;
 use Bitrix\Tasks\Scrum\Checklist\TypeChecklistFacade;
+use Bitrix\Tasks\Scrum\Form\TypeForm;
 use Bitrix\Tasks\Scrum\Service\BacklogService;
 use Bitrix\Tasks\Scrum\Service\DefinitionOfDoneService;
 use Bitrix\Tasks\Scrum\Service\ItemService;
@@ -23,17 +22,11 @@ class Type extends Controller
 	const ERROR_COULD_NOT_LOAD_MODULE = 'TASKS_STC_01';
 	const ERROR_ACCESS_DENIED = 'TASKS_STC_02';
 	const ERROR_COULD_NOT_CREATE_TYPE = 'TASKS_STC_03';
-
-	public function __construct(Request $request = null)
-	{
-		parent::__construct($request);
-
-		$this->errorCollection = new ErrorCollection;
-	}
+	const ERROR_COULD_NOT_CHANGE_TYPE_NAME = 'TASKS_STC_04';
 
 	protected function processBeforeAction(Action $action)
 	{
-		if (!Loader::includeModule('tasks') || !Loader::includeModule('socialnetwork'))
+		if (!Loader::includeModule('socialnetwork'))
 		{
 			$this->errorCollection->setError(
 				new Error(
@@ -65,7 +58,15 @@ class Type extends Controller
 		return parent::processBeforeAction($action);
 	}
 
-	public function createTypeAction(int $groupId, string $name, int $sort)
+	/**
+	 * Creates a new task type.
+	 *
+	 * @param int $groupId Group id.
+	 * @param string $name The type name.
+	 * @param int $sort The type sort.
+	 * @return array|null An array of type data.
+	 */
+	public function createTypeAction(int $groupId, string $name, int $sort): ?array
 	{
 		$typeService = new TypeService();
 		$backlogService = new BacklogService();
@@ -76,7 +77,7 @@ class Type extends Controller
 		{
 			$this->errorCollection->setError(
 				new Error(
-					Loc::getMessage('TASKS_STC_ERROR_COULD_NOT_CREATE_TYPE'),
+					Loc::getMessage('TASKS_STC_ERROR_COULD_NOT_FOUND_TYPE'),
 					self::ERROR_COULD_NOT_CREATE_TYPE
 				)
 			);
@@ -90,7 +91,7 @@ class Type extends Controller
 			return null;
 		}
 
-		$type = $typeService->getTypeObject();
+		$type = new TypeForm();
 		$type->setEntityId($backlog->getId());
 		$type->setName($name);
 		$type->setSort($sort);
@@ -104,16 +105,35 @@ class Type extends Controller
 			return null;
 		}
 
-		return $typeService->getTypeData($createdType);
+		return $createdType->toArray();
 	}
 
-	public function changeTypeNameAction(int $id, string $name)
+	/**
+	 * Changes a type name.
+	 *
+	 * @param int $id Type id.
+	 * @param string $name New type name.
+	 * @return string|null
+	 */
+	public function changeTypeNameAction(int $id, string $name): ?string
 	{
 		$typeService = new TypeService();
 
-		$type = $typeService->getTypeObject();
-		$type->setId($id);
-		$type->setName($name);
+		$type = $typeService->getType($id);
+		if ($type->isEmpty())
+		{
+			$this->errorCollection->setError(
+				new Error(
+					Loc::getMessage('TASKS_SDC_ERROR_TYPE_NOT_FOUND'),
+					self::ERROR_COULD_NOT_CHANGE_TYPE_NAME
+				)
+			);
+		}
+
+		$typeForm = new TypeForm();
+
+		$typeForm->setId($type->getId());
+		$typeForm->setName($name);
 
 		$typeService->changeType($type);
 
@@ -127,7 +147,13 @@ class Type extends Controller
 		return '';
 	}
 
-	public function removeTypeAction(int $id)
+	/**
+	 * Removes a type.
+	 *
+	 * @param int $id Type id.
+	 * @return string|null
+	 */
+	public function removeTypeAction(int $id): ?string
 	{
 		$userId = User::getId();
 
@@ -135,7 +161,7 @@ class Type extends Controller
 		$definitionOfDoneService = new DefinitionOfDoneService($userId);
 		$itemService = new ItemService();
 
-		$type = $typeService->getTypeObject();
+		$type = new TypeForm();
 		$type->setId($id);
 
 		$typeService->removeType($type);

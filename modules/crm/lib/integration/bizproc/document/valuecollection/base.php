@@ -7,6 +7,7 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Crm;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\DateTime;
 
 if (!Loader::includeModule('bizproc'))
 {
@@ -338,9 +339,24 @@ abstract class Base extends ValueCollection
 
 		if ($resourceList)
 		{
+			$dateFrom = $resourceList['DATE_FROM'];
+			$dateTo = $resourceList['DATE_TO'];
+
+			if (!\CTimeZone::Enabled())
+			{
+				$userOffset = \CCalendar::getOffset(\CCalendar::getCurUserId());
+
+				$dateFrom = DateTime::createFromTimestamp(
+					\CCalendar::timestamp($resourceList['DATE_FROM']) - $userOffset
+				);
+				$dateTo = DateTime::createFromTimestamp(
+					\CCalendar::timestamp($resourceList['DATE_TO']) - $userOffset
+				);
+			}
+
 			$document[$fieldId . '.SERVICE_NAME'] = $resourceList['SERVICE_NAME'];
-			$document[$fieldId . '.DATE_FROM'] = $resourceList['DATE_FROM'];
-			$document[$fieldId . '.DATE_TO'] = $resourceList['DATE_TO'];
+			$document[$fieldId . '.DATE_FROM'] = (string)$dateFrom;
+			$document[$fieldId . '.DATE_TO'] = (string)$dateTo;
 			$users = [];
 
 			foreach ($resourceList['ENTRIES'] as $entry)
@@ -471,7 +487,7 @@ abstract class Base extends ValueCollection
 		{
 			$res = \CCrmFieldMulti::GetList(
 				['ID' => 'asc'],
-				['ENTITY_ID' => $type, 'ELEMENT_ID' => $id]
+				['=ENTITY_ID' => $type, 'ELEMENT_ID' => $id]
 			);
 			while ($ar = $res->Fetch())
 			{

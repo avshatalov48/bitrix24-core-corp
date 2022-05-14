@@ -198,6 +198,16 @@ class Fill
 					$fieldValues
 				);
 			}
+			elseif($field['type'] === 'email')
+			{
+				$fieldValues = array_filter(
+					$fieldValues,
+					function ($value)
+					{
+						return check_email($value);
+					}
+				);
+			}
 			else if ($field['entity_field_name'] == 'COMMENTS')
 			{
 				$fieldValues = array_map(

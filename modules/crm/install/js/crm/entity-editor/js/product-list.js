@@ -26,6 +26,7 @@ if (typeof BX.Crm.EntityProductListController === "undefined")
 
 		BX.addCustomEvent(window, 'EntityProductListController', this.handleSetProductList.bind(this));
 		BX.addCustomEvent(window, 'onEntityDetailsTabShow', this.onTabShow.bind(this));
+		BX.addCustomEvent(window, 'Crm.EntityProgress.Saved', BX.delegate(this.onEntityProgressSave, this));
 
 		this._editor.addModeChangeListener(this._editorModeChangeHandler);
 
@@ -54,6 +55,15 @@ if (typeof BX.Crm.EntityProductListController === "undefined")
 		if (tab.getId() === 'tab_products' && this.productList)
 		{
 			this.productList.handleOnTabShow();
+		}
+	};
+
+	BX.Crm.EntityProductListController.prototype.onEntityProgressSave = function(sender, data)
+	{
+		var semantic = BX.prop.getString(data, 'currentSemantics', '');
+		if (semantic === 'success' || semantic === 'failure')
+		{
+			this.reinitializeProductList();
 		}
 	};
 

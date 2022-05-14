@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["TASKS_BAD_TITLE"] = "Не указано название задачи";
 $MESS["TASKS_LONG_TITLE"] = "Слишком длинное название задачи";
 $MESS["TASKS_BAD_CREATED_BY"] = "Не указан постановщик";

@@ -1,6 +1,7 @@
-import {Dialog} from 'ui.entity-selector';
-import {Loc, Tag, Text} from 'main.core';
+import {Loc, Type, Text} from 'main.core';
 import {BaseEvent, EventEmitter} from 'main.core.events';
+
+import {Dialog} from 'ui.entity-selector';
 
 import {Input} from './input';
 
@@ -8,7 +9,7 @@ import type {EpicType} from '../item/task/epic';
 
 export class TagSearcher extends EventEmitter
 {
-	static tagRegExp = '#[^#@](?:[^#@]*[^\s#@])?';
+	static tagRegExp = '#([^\\s,\\[\\]<>]+)';
 	static epicRegExp = '@[^#@](?:[^#@]*[^\s#@])?';
 
 	constructor()
@@ -282,7 +283,7 @@ export class TagSearcher extends EventEmitter
 		return (this.epicDialog || this.tagDialog)
 	}
 
-	showTagsSearchDialog(inputObject: Input, enteredHashTagName: string): Dialog
+	showTagsSearchDialog(inputObject: Input, enteredQuery: string): Dialog
 	{
 		const input = inputObject.getInputNode();
 
@@ -301,30 +302,22 @@ export class TagSearcher extends EventEmitter
 				multiple: false,
 				dropdownMode: true,
 				items: this.getTagsList(),
-				searchOptions: {
-					allowCreateItem: true,
-					footerOptions: {
-						label: Loc.getMessage('TASKS_SCRUM_SEARCHER_ACTIONS_TAG_ADD')
-					}
-				},
 				events: {
-					'Search:onItemCreateAsync': (event) => {
-						return new Promise((resolve) => {
-							const dialog = event.getTarget();
-							dialog.hide();
-							input.focus();
-							resolve();
-						});
-					},
 					'Item:onSelect': (event) => {
+						let newValue = '';
+						const regex = new RegExp('\\s|#$', 'm');
+						const currentPiece = input.value.split(regex).pop();
+						input.value.split(regex)
+							.forEach((pieceOfValue: string) => {
+								if (currentPiece !== pieceOfValue)
+								{
+									newValue = newValue + ' ' + pieceOfValue;
+								}
+							})
+						;
 						const selectedItem = event.getData().item;
-						const selectedHashTag = '#' + selectedItem.getTitle();
-						const hashTags = TagSearcher.getHashTagNamesFromText(input.value);
-						const enteredHashTag = (hashTags.length > 0 ? hashTags.pop() : '');
-						input.value = input.value.replace(
-							new RegExp('#' + enteredHashTag, 'g'),
-							selectedHashTag
-						);
+						newValue = newValue + ' #' + selectedItem.getTitle();
+						input.value = newValue.trim();
 						input.focus();
 						selectedItem.deselect();
 					}
@@ -335,9 +328,22 @@ export class TagSearcher extends EventEmitter
 				inputObject.setTagsSearchMode(false);
 			});
 
-			inputObject.subscribeOnce('onMetaEnter', () => {
-				this.tagSearchDialog.hide();
-				input.focus();
+			inputObject.subscribe('onEnter', () => {
+				if (Type.isNil(this.tagSearchDialog))
+				{
+					return;
+				}
+				const searchTab = this.tagSearchDialog.getSearchTab();
+				if (Type.isNil(searchTab))
+				{
+					return;
+				}
+				if (searchTab.isEmptyResult())
+				{
+					this.tagSearchDialog.hide();
+					this.tagSearchDialog = null;
+					input.focus();
+				}
 			});
 		}
 
@@ -345,7 +351,7 @@ export class TagSearcher extends EventEmitter
 
 		this.tagSearchDialog.show();
 
-		this.tagSearchDialog.search(enteredHashTagName);
+		this.tagSearchDialog.search(enteredQuery);
 	}
 
 	closeTagsSearchDialog()
@@ -356,7 +362,7 @@ export class TagSearcher extends EventEmitter
 		}
 	}
 
-	showEpicSearchDialog(inputObject: Input, enteredHashEpicName: string): Dialog
+	showEpicSearchDialog(inputObject: Input, enteredQuery: string): Dialog
 	{
 		const input = inputObject.getInputNode();
 
@@ -364,6 +370,8 @@ export class TagSearcher extends EventEmitter
 		{
 			this.epicSearchDialog = null;
 		}
+
+		this.epicEnteredQuery = enteredQuery;
 
 		if (!this.epicSearchDialog)
 		{
@@ -384,23 +392,22 @@ export class TagSearcher extends EventEmitter
 				events: {
 					'Search:onItemCreateAsync': (event) => {
 						return new Promise((resolve) => {
-							const dialog = event.getTarget();
 							const { searchQuery } = event.getData();
-							this.emit('createEpic', searchQuery.getQuery());
-							dialog.hide();
+							const epicName = searchQuery.getQuery();
+							this.emit('createEpic', epicName);
+							inputObject.setSelectedEpicLength([...epicName].length);
 							input.focus();
+							this.epicSearchDialog.hide();
 							this.epicSearchDialog = null;
 							resolve();
 						});
 					},
 					'Item:onSelect': (event: BaseEvent) => {
 						const selectedItem = event.getData().item;
-						const selectedHashEpic = '@' + selectedItem.getTitle();
-						input.value = input.value.replace(
-							selectedHashEpic === '' ? '@' : new RegExp(TagSearcher.epicRegExp, 'g'),
-							''
-						);
-						input.value = input.value + selectedHashEpic
+						const epicName = selectedItem.getTitle();
+						input.value = input.value.replace('@' + this.epicEnteredQuery, '').replace('@', '');
+						input.value = input.value + '@' + epicName
+						inputObject.setSelectedEpicLength([...epicName].length);
 						input.focus();
 						selectedItem.deselect();
 						inputObject.setEpic(this.getEpicByName(selectedItem.getTitle()));
@@ -413,12 +420,25 @@ export class TagSearcher extends EventEmitter
 			});
 
 			inputObject.subscribe('onMetaEnter', () => {
-				this.emit(
-					'createEpic',
-					this.epicSearchDialog.getSearchTab().getLastSearchQuery().getQuery()
-				);
+				if (Type.isNil(this.epicSearchDialog))
+				{
+					return;
+				}
+				const searchTab = this.epicSearchDialog.getSearchTab();
+				if (Type.isNil(searchTab))
+				{
+					return;
+				}
+				const lastSearchQuery = searchTab.getLastSearchQuery();
+				if (Type.isNil(lastSearchQuery))
+				{
+					return;
+				}
+				const epicName = lastSearchQuery.getQuery();
+				this.emit('createEpic', epicName);
 				this.epicSearchDialog.hide();
 				this.epicSearchDialog = null;
+				inputObject.setSelectedEpicLength([...epicName].length);
 				input.focus();
 			});
 		}
@@ -426,7 +446,7 @@ export class TagSearcher extends EventEmitter
 		inputObject.setEpicSearchMode(true);
 
 		this.epicSearchDialog.show();
-		this.epicSearchDialog.search(enteredHashEpicName);
+		this.epicSearchDialog.search(this.epicEnteredQuery);
 	}
 
 	closeEpicSearchDialog()
@@ -454,6 +474,7 @@ export class TagSearcher extends EventEmitter
 	static getHashEpicNamesFromText(inputText: string): Array
 	{
 		const regex = new RegExp(TagSearcher.epicRegExp, 'g');
+
 		const matches = [];
 		let match;
 		while (match = regex.exec(inputText))

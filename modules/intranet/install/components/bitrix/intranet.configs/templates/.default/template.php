@@ -102,6 +102,7 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 					<?foreach($arResult['CULTURES'] as $culture):?>
 					<option
 						value="<?=$culture['ID']?>"
+						data-value="<?=$culture['CODE']?>"
 						<?if ($culture['ID'] === $arResult['CURRENT_CULTURE_ID']) echo 'selected'?>
 					>
 						<?=$culture['NAME']?>

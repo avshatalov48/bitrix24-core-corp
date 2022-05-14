@@ -2,14 +2,12 @@
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
+
 if(!\Bitrix\Main\Loader::includeModule('rpa'))
 {
 	ShowError(\Bitrix\Main\Localization\Loc::getMessage('RPA_MODULE_ERROR'));
-	return;
-}
-if (!\Bitrix\Main\Loader::includeModule('bizproc'))
-{
-	ShowError(\Bitrix\Main\Localization\Loc::getMessage('BIZPROC_MODULE_ERROR'));
 	return;
 }
 
@@ -35,6 +33,11 @@ class RpaRouterComponent extends Bitrix\Rpa\Components\Base
 	protected function init(): void
 	{
 		parent::init();
+
+		if (!Main\Loader::includeModule('bizproc'))
+		{
+			$this->errorCollection->setError(new Main\Error(Loc::getMessage('BIZPROC_MODULE_ERROR')));
+		}
 
 		$isSefMode = true;
 		if($this->arParams['isSefMode'] === 'n')

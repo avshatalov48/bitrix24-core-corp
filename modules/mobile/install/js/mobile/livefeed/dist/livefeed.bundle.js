@@ -326,7 +326,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "onClear",
 	    value: function onClear(params) {
-	      this.delete(params.groupId);
+	      this["delete"](params.groupId);
 	    }
 	  }, {
 	    key: "delete",
@@ -392,15 +392,7 @@ this.BX = this.BX || {};
 	  return Database;
 	}();
 
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"post-balloon-hidden post-balloon post-balloon-active\"><span class=\"post-balloon-icon\"></span><span class=\"post-balloon-text\">", "</span></div>\n\t\t\t"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject;
 
 	var PublicationQueue = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(PublicationQueue, _EventEmitter);
@@ -414,7 +406,7 @@ this.BX = this.BX || {};
 	    _this.nodeId = {
 	      container: 'post-balloon-container'
 	    };
-	    _this.class = {
+	    _this["class"] = {
 	      balloonHidden: 'post-balloon-hidden',
 	      balloonFixed: 'post-balloon-box-fixed',
 	      balloonPublished: 'post-balloon-done',
@@ -453,9 +445,9 @@ this.BX = this.BX || {};
 	      }
 
 	      if (window.pageYOffset > 0) {
-	        containerNode.classList.add(this.class.balloonFixed);
+	        containerNode.classList.add(this["class"].balloonFixed);
 	      } else {
-	        containerNode.classList.remove(this.class.balloonFixed);
+	        containerNode.classList.remove(this["class"].balloonFixed);
 	      }
 	    }
 	  }, {
@@ -495,7 +487,7 @@ this.BX = this.BX || {};
 	    value: function addToTray(key, params) {
 	      this.repo[key] = params;
 	      this.repo[key].node = this.drawItem();
-	      this.repo[key].node.classList.add(this.class.balloonShow);
+	      this.repo[key].node.classList.add(this["class"].balloonShow);
 	    }
 	  }, {
 	    key: "removeFromTray",
@@ -515,9 +507,9 @@ this.BX = this.BX || {};
 	      var _this4 = this;
 
 	      if (this.repo[key] && this.repo[key].node) {
-	        this.repo[key].node.classList.remove(this.class.balloonHidden);
-	        this.repo[key].node.classList.remove(this.class.balloonShow);
-	        this.repo[key].node.classList.add(this.class.balloonPublished);
+	        this.repo[key].node.classList.remove(this["class"].balloonHidden);
+	        this.repo[key].node.classList.remove(this["class"].balloonShow);
+	        this.repo[key].node.classList.add(this["class"].balloonPublished);
 	        this.repo[key].node.lastElementChild.innerHTML = main_core.Type.isStringFilled(warningText) ? warningText : main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_PUBLICATION_QUEUE_SUCCESS_TITLE');
 	      }
 
@@ -529,13 +521,13 @@ this.BX = this.BX || {};
 	    key: "drawItem",
 	    value: function drawItem() {
 	      var title = main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_PUBLICATION_QUEUE_ITEM_TITLE');
-	      return main_core.Tag.render(_templateObject(), title);
+	      return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"post-balloon-hidden post-balloon post-balloon-active\"><span class=\"post-balloon-icon\"></span><span class=\"post-balloon-text\">", "</span></div>\n\t\t\t"])), title);
 	    }
 	  }, {
 	    key: "hideItem",
 	    value: function hideItem(key, params) {
 	      if (this.repo[key]) {
-	        this.repo[key].node.classList.add(this.class.balloonHide);
+	        this.repo[key].node.classList.add(this["class"].balloonHide);
 	      }
 	    }
 	  }, {
@@ -1288,7 +1280,7 @@ this.BX = this.BX || {};
 	          iconName: 'delete',
 	          sectionCode: this.sectionCode,
 	          action: function action() {
-	            BlogPost$$1.delete({
+	            BlogPost$$1["delete"]({
 	              postId: _this.postId,
 	              context: _this.context
 	            });
@@ -1747,7 +1739,7 @@ this.BX = this.BX || {};
 	          }
 	        }, postData.groupId);
 	      });
-	      promise.catch(function (error) {
+	      promise["catch"](function (error) {
 	        console.error(error);
 	      });
 	      return promise;
@@ -1786,7 +1778,7 @@ this.BX = this.BX || {};
 	          returnEventName: returnEventName
 	        }, true);
 	      });
-	      promise.catch(function (error) {
+	      promise["catch"](function (error) {
 	        console.error(error);
 	      });
 	      return promise;
@@ -1821,7 +1813,7 @@ this.BX = this.BX || {};
 	          returnEventName: returnEventName
 	        }, true);
 	      });
-	      promise.catch(function (error) {
+	      promise["catch"](function (error) {
 	        console.error(error);
 	      });
 	      return promise;
@@ -1894,7 +1886,7 @@ this.BX = this.BX || {};
 
 	        resolve(postData);
 	      });
-	      promise.catch(function (error) {
+	      promise["catch"](function (error) {
 	        console.error(error);
 	      });
 	      return promise;
@@ -2334,7 +2326,7 @@ this.BX = this.BX || {};
 	          resolve();
 	        }
 	      });
-	      promise.catch(function (error) {
+	      promise["catch"](function (error) {
 	        console.error(error);
 	      });
 	      return promise;
@@ -2472,15 +2464,7 @@ this.BX = this.BX || {};
 	  return PostFormOldManager;
 	}();
 
-	function _templateObject$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"", "\" data-livefeed-id=\"", "\">\n\t\t\t<div class=\"post-pinned-cancel-panel-content\">\n\t\t\t\t<div class=\"post-pinned-cancel-panel-label\">", "</div>\n\t\t\t\t\t<div class=\"post-pinned-cancel-panel-text\">", "</div>\n\t\t\t\t</div>\n\t\t\t<div class=\"ui-btn ui-btn-light-border ui-btn-round ui-btn-sm ", "\">", "</div>\n\t\t</div>"]);
-
-	  _templateObject$1 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$1;
 
 	var PinnedPanel = /*#__PURE__*/function () {
 	  function PinnedPanel() {
@@ -2488,7 +2472,7 @@ this.BX = this.BX || {};
 
 	    babelHelpers.classCallCheck(this, PinnedPanel);
 	    this.panelInitialized = false;
-	    this.class = {
+	    this["class"] = {
 	      panel: 'lenta-pinned-panel',
 	      panelCollapsed: 'lenta-pinned-panel-collapsed',
 	      panelActive: 'lenta-pinned-panel-active',
@@ -2520,7 +2504,7 @@ this.BX = this.BX || {};
 	    value: function init() {
 	      var _this2 = this;
 
-	      var panel = document.querySelector(".".concat(this.class.panel));
+	      var panel = document.querySelector(".".concat(this["class"].panel));
 
 	      if (!panel || this.panelInitialized) {
 	        return;
@@ -2528,7 +2512,7 @@ this.BX = this.BX || {};
 
 	      this.panelInitialized = true;
 	      this.adjustCollapsedPostsPanel();
-	      var collapsedPanel = document.querySelector(".".concat(this.class.collapsedPanel));
+	      var collapsedPanel = document.querySelector(".".concat(this["class"].collapsedPanel));
 
 	      if (collapsedPanel) {
 	        collapsedPanel.addEventListener('touchend', function (e) {
@@ -2555,9 +2539,9 @@ this.BX = this.BX || {};
 	      var type = _ref.type;
 
 	      if (this.getPostsCount() > 0) {
-	        this.getPinnedPanelNode().classList.add("".concat(this.class.panelActive));
+	        this.getPinnedPanelNode().classList.add("".concat(this["class"].panelActive));
 	      } else {
-	        this.getPinnedPanelNode().classList.remove("".concat(this.class.panelActive));
+	        this.getPinnedPanelNode().classList.remove("".concat(this["class"].panelActive));
 	      }
 
 	      this.recalcCollapsedPostsPanel({
@@ -2570,11 +2554,11 @@ this.BX = this.BX || {};
 	      var type = _ref2.type;
 
 	      if (this.getPostsCount() >= main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_COLLAPSED_PINNED_PANEL_ITEMS_LIMIT')) {
-	        if (type === 'insert' || this.getPinnedPanelNode().classList.contains("".concat(this.class.panelCollapsed))) {
-	          this.getPinnedPanelNode().classList.add("".concat(this.class.panelCollapsed));
+	        if (type === 'insert' || this.getPinnedPanelNode().classList.contains("".concat(this["class"].panelCollapsed))) {
+	          this.getPinnedPanelNode().classList.add("".concat(this["class"].panelCollapsed));
 	        }
 	      } else {
-	        this.getPinnedPanelNode().classList.remove("".concat(this.class.panelCollapsed));
+	        this.getPinnedPanelNode().classList.remove("".concat(this["class"].panelCollapsed));
 	      }
 
 	      this.adjustCollapsedPostsPanel();
@@ -2582,36 +2566,36 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "expandCollapsedPostsPanel",
 	    value: function expandCollapsedPostsPanel() {
-	      this.getPinnedPanelNode().classList.remove("".concat(this.class.panelCollapsed));
+	      this.getPinnedPanelNode().classList.remove("".concat(this["class"].panelCollapsed));
 	    }
 	  }, {
 	    key: "getPostsCount",
 	    value: function getPostsCount() {
-	      return Array.from(this.getPinnedPanelNode().getElementsByClassName("".concat(this.class.post))).length;
+	      return Array.from(this.getPinnedPanelNode().getElementsByClassName("".concat(this["class"].post))).length;
 	    }
 	  }, {
 	    key: "adjustCollapsedPostsPanel",
 	    value: function adjustCollapsedPostsPanel() {
 	      var postsCounter = this.getPostsCount();
-	      var postsCounterNode = this.getPinnedPanelNode().querySelector(".".concat(this.class.collapsedPanelPostsValue));
+	      var postsCounterNode = this.getPinnedPanelNode().querySelector(".".concat(this["class"].collapsedPanelPostsValue));
 
 	      if (postsCounterNode) {
 	        postsCounterNode.innerHTML = parseInt(postsCounter);
 	      }
 
-	      var commentsCounterNode = this.getPinnedPanelNode().querySelector(".".concat(this.class.collapsedPanelComments));
-	      var commentsCounterValueNode = this.getPinnedPanelNode().querySelector(".".concat(this.class.collapsedPanelCommentsValue));
+	      var commentsCounterNode = this.getPinnedPanelNode().querySelector(".".concat(this["class"].collapsedPanelComments));
+	      var commentsCounterValueNode = this.getPinnedPanelNode().querySelector(".".concat(this["class"].collapsedPanelCommentsValue));
 
 	      if (commentsCounterNode && commentsCounterValueNode) {
-	        var newCommentCounter = Array.from(this.getPinnedPanelNode().querySelectorAll(".".concat(this.class.collapsedPanelCommentsValueNew))).reduce(function (acc, node) {
+	        var newCommentCounter = Array.from(this.getPinnedPanelNode().querySelectorAll(".".concat(this["class"].collapsedPanelCommentsValueNew))).reduce(function (acc, node) {
 	          return acc + parseInt(node.innerHTML);
 	        }, 0);
 	        commentsCounterValueNode.innerHTML = '+' + newCommentCounter;
 
 	        if (newCommentCounter > 0) {
-	          commentsCounterNode.classList.add("".concat(this.class.collapsedPanelCommentsShown));
+	          commentsCounterNode.classList.add("".concat(this["class"].collapsedPanelCommentsShown));
 	        } else {
-	          commentsCounterNode.classList.remove("".concat(this.class.collapsedPanelCommentsShown));
+	          commentsCounterNode.classList.remove("".concat(this["class"].collapsedPanelCommentsShown));
 	        }
 	      }
 	    }
@@ -2656,19 +2640,19 @@ this.BX = this.BX || {};
 	        return;
 	      }
 
-	      var postItemPinnedBlock = postNode.querySelector(".".concat(this.class.postItemPinnedBlock));
+	      var postItemPinnedBlock = postNode.querySelector(".".concat(this["class"].postItemPinnedBlock));
 
 	      if (!main_core.Type.isDomNode(postItemPinnedBlock)) {
 	        return;
 	      }
 
-	      postNode.classList.add(this.class.postItemPinned);
-	      postNode.classList.add(this.class.postItemPinActive);
-	      postItemPinnedBlock.innerHTML = "".concat(main_core.Type.isStringFilled(pinnedContent.TITLE) ? "<div class=\"".concat(this.class.postItemPinnedTitle, "\">").concat(pinnedContent.TITLE, "</div>") : '', "<div class=\"").concat(this.class.postItemPinnedTextBox, "\"><div class=\"").concat(this.class.postItemPinnedDesc, "\">").concat(pinnedContent.DESCRIPTION, "</div></div>");
-	      var cancelPinnedPanel = main_core.Tag.render(_templateObject$1(), this.class.cancelPanel, logId, main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_PINNED_CANCEL_TITLE'), main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_PINNED_CANCEL_DESCRIPTION'), this.class.cancelPanelButton, main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_PINNED_CANCEL_BUTTON'));
-	      var cancelButton = cancelPinnedPanel.querySelector(".".concat(this.class.cancelPanelButton));
+	      postNode.classList.add(this["class"].postItemPinned);
+	      postNode.classList.add(this["class"].postItemPinActive);
+	      postItemPinnedBlock.innerHTML = "".concat(main_core.Type.isStringFilled(pinnedContent.TITLE) ? "<div class=\"".concat(this["class"].postItemPinnedTitle, "\">").concat(pinnedContent.TITLE, "</div>") : '', "<div class=\"").concat(this["class"].postItemPinnedTextBox, "\"><div class=\"").concat(this["class"].postItemPinnedDesc, "\">").concat(pinnedContent.DESCRIPTION, "</div></div>");
+	      var cancelPinnedPanel = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"", "\" data-livefeed-id=\"", "\">\n\t\t\t<div class=\"post-pinned-cancel-panel-content\">\n\t\t\t\t<div class=\"post-pinned-cancel-panel-label\">", "</div>\n\t\t\t\t\t<div class=\"post-pinned-cancel-panel-text\">", "</div>\n\t\t\t\t</div>\n\t\t\t<div class=\"ui-btn ui-btn-light-border ui-btn-round ui-btn-sm ", "\">", "</div>\n\t\t</div>"])), this["class"].cancelPanel, logId, main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_PINNED_CANCEL_TITLE'), main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_PINNED_CANCEL_DESCRIPTION'), this["class"].cancelPanelButton, main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_POST_PINNED_CANCEL_BUTTON'));
+	      var cancelButton = cancelPinnedPanel.querySelector(".".concat(this["class"].cancelPanelButton));
 	      cancelButton.addEventListener('touchend', function (event) {
-	        var cancelPanel = event.currentTarget.closest(".".concat(_this3.class.cancelPanel));
+	        var cancelPanel = event.currentTarget.closest(".".concat(_this3["class"].cancelPanel));
 
 	        if (!cancelPanel) {
 	          return;
@@ -2680,7 +2664,7 @@ this.BX = this.BX || {};
 	          return;
 	        }
 
-	        var postNode = document.querySelector(".".concat(_this3.class.post, "[data-livefeed-id=\"").concat(logId, "\"]"));
+	        var postNode = document.querySelector(".".concat(_this3["class"].post, "[data-livefeed-id=\"").concat(logId, "\"]"));
 
 	        if (!postNode) {
 	          return;
@@ -2719,9 +2703,9 @@ this.BX = this.BX || {};
 	        return;
 	      }
 
-	      postNode.classList.remove(this.class.postItemPinned);
-	      postNode.classList.remove(this.class.postItemPinActive);
-	      var cancelPanel = document.querySelector(".".concat(this.class.cancelPanel, "[data-livefeed-id=\"").concat(parseInt(logId), "\"]"));
+	      postNode.classList.remove(this["class"].postItemPinned);
+	      postNode.classList.remove(this["class"].postItemPinActive);
+	      var cancelPanel = document.querySelector(".".concat(this["class"].cancelPanel, "[data-livefeed-id=\"").concat(parseInt(logId), "\"]"));
 
 	      if (cancelPanel) {
 	        cancelPanel.parentNode.insertBefore(postNode, cancelPanel);
@@ -3006,7 +2990,7 @@ this.BX = this.BX || {};
 	    this.showScrollButtonTimeout = null;
 	    this.showScrollButtonBottom = false;
 	    this.showScrollButtonTop = false;
-	    this.class = {
+	    this["class"] = {
 	      scrollButton: 'post-comment-block-scroll',
 	      scrollButtonTop: 'post-comment-block-scroll-top',
 	      scrollButtonBottom: 'post-comment-block-scroll-bottom',
@@ -3048,8 +3032,8 @@ this.BX = this.BX || {};
 
 	      var maxScroll = document.documentElement.scrollHeight - window.innerHeight - 100; // (this.keyboardShown ? 500 : 300)
 
-	      this.showScrollButtonBottom = !(document.documentElement.scrollHeight - window.innerHeight <= 0 || // short page
-	      scrollTop >= maxScroll // too much low
+	      this.showScrollButtonBottom = !(document.documentElement.scrollHeight - window.innerHeight <= 0 // short page
+	      || scrollTop >= maxScroll // too much low
 	      && (scrollTop > 0 // refresh patch
 	      || maxScroll > 0));
 	      this.showScrollButtonTop = scrollTop > 200;
@@ -3058,29 +3042,29 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "showHideScrollButton",
 	    value: function showHideScrollButton() {
-	      var postScrollButtonBottom = document.querySelector(".".concat(this.class.scrollButtonBottom));
-	      var postScrollButtonTop = document.querySelector(".".concat(this.class.scrollButtonTop));
+	      var postScrollButtonBottom = document.querySelector(".".concat(this["class"].scrollButtonBottom));
+	      var postScrollButtonTop = document.querySelector(".".concat(this["class"].scrollButtonTop));
 
 	      if (postScrollButtonBottom) {
 	        if (this.showScrollButtonBottom) {
-	          if (!postScrollButtonBottom.classList.contains("".concat(this.class.scrollButtonBottomActive))) {
-	            postScrollButtonBottom.classList.add("".concat(this.class.scrollButtonBottomActive));
+	          if (!postScrollButtonBottom.classList.contains("".concat(this["class"].scrollButtonBottomActive))) {
+	            postScrollButtonBottom.classList.add("".concat(this["class"].scrollButtonBottomActive));
 	          }
 	        } else {
-	          if (postScrollButtonBottom.classList.contains("".concat(this.class.scrollButtonBottomActive))) {
-	            postScrollButtonBottom.classList.remove("".concat(this.class.scrollButtonBottomActive));
+	          if (postScrollButtonBottom.classList.contains("".concat(this["class"].scrollButtonBottomActive))) {
+	            postScrollButtonBottom.classList.remove("".concat(this["class"].scrollButtonBottomActive));
 	          }
 	        }
 	      }
 
 	      if (postScrollButtonTop) {
 	        if (this.showScrollButtonTop) {
-	          if (!postScrollButtonTop.classList.contains("".concat(this.class.scrollButtonTopActive))) {
-	            postScrollButtonTop.classList.add("".concat(this.class.scrollButtonTopActive));
+	          if (!postScrollButtonTop.classList.contains("".concat(this["class"].scrollButtonTopActive))) {
+	            postScrollButtonTop.classList.add("".concat(this["class"].scrollButtonTopActive));
 	          }
 	        } else {
-	          if (postScrollButtonTop.classList.contains("".concat(this.class.scrollButtonTopActive))) {
-	            postScrollButtonTop.classList.remove("".concat(this.class.scrollButtonTopActive));
+	          if (postScrollButtonTop.classList.contains("".concat(this["class"].scrollButtonTopActive))) {
+	            postScrollButtonTop.classList.remove("".concat(this["class"].scrollButtonTopActive));
 	          }
 	        }
 	      }
@@ -3129,7 +3113,7 @@ this.BX = this.BX || {};
 	    babelHelpers.classCallCheck(this, FollowManager);
 	    this.defaultValue = true;
 	    this.value = true;
-	    this.class = {
+	    this["class"] = {
 	      postItemFollow: 'post-item-follow',
 	      postItemFollowActive: 'post-item-follow-active'
 	    };
@@ -3249,8 +3233,8 @@ this.BX = this.BX || {};
 	      var followBlock = main_core.Type.isDomNode(params.followBlock) ? params.followBlock : null;
 
 	      if (followBlock) {
-	        followBlock.classList.remove(value ? this.class.postItemFollow : this.class.postItemFollowActive);
-	        followBlock.classList.add(value ? this.class.postItemFollowActive : this.class.postItemFollow);
+	        followBlock.classList.remove(value ? this["class"].postItemFollow : this["class"].postItemFollowActive);
+	        followBlock.classList.add(value ? this["class"].postItemFollowActive : this["class"].postItemFollow);
 	        followBlock.setAttribute('data-follow', value ? 'Y' : 'N');
 	      }
 
@@ -3258,9 +3242,9 @@ this.BX = this.BX || {};
 
 	      if (followWrap && !this.getFollowDefaultValue()) {
 	        if (value) {
-	          followWrap.classList.add(this.class.postItemFollow);
+	          followWrap.classList.add(this["class"].postItemFollow);
 	        } else {
-	          followWrap.classList.remove(this.class.postItemFollow);
+	          followWrap.classList.remove(this["class"].postItemFollow);
 	        }
 	      }
 
@@ -3381,45 +3365,7 @@ this.BX = this.BX || {};
 	  return FollowManager;
 	}();
 
-	function _templateObject4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"post-comments-load-btn-wrap\"><div class=\"post-comments-load-text\">", "</div><a class=\"post-comments-load-btn\">", "</a></div>"]);
-
-	  _templateObject4 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"post-comments-load-btn-wrap\"><div class=\"post-comments-loader\"></div><div class=\"post-comments-load-text\">", "</div></div>"]);
-
-	  _templateObject3 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<span id=\"post-comment-last-after\"></span>"]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject$2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<span id=\"post-comment-last-after\"></span>"]);
-
-	  _templateObject$2 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$2, _templateObject2, _templateObject3, _templateObject4;
 
 	var Comments = /*#__PURE__*/function () {
 	  function Comments() {
@@ -3523,7 +3469,7 @@ this.BX = this.BX || {};
 	        }
 
 	        main_core.Dom.clean(container);
-	        container.appendChild(main_core.Tag.render(_templateObject$2()));
+	        container.appendChild(main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["<span id=\"post-comment-last-after\"></span>"]))));
 	      }
 
 	      this.showEmptyListWaiter({
@@ -3582,7 +3528,7 @@ this.BX = this.BX || {};
 	                BitrixMobile.LazyLoad.showImages();
 	              }, 1000);
 	            });
-	            container.appendChild(main_core.Tag.render(_templateObject2()));
+	            container.appendChild(main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<span id=\"post-comment-last-after\"></span>"]))));
 	            var cnt = 0;
 
 	            var func = function func() {
@@ -3694,7 +3640,7 @@ this.BX = this.BX || {};
 	        return;
 	      }
 
-	      container.appendChild(main_core.Tag.render(_templateObject3(), main_core.Loc.getMessage('MSLDetailCommentsLoading')));
+	      container.appendChild(main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<div class=\"post-comments-load-btn-wrap\"><div class=\"post-comments-loader\"></div><div class=\"post-comments-load-text\">", "</div></div>"])), main_core.Loc.getMessage('MSLDetailCommentsLoading')));
 	    }
 	  }, {
 	    key: "showEmptyListFailed",
@@ -3712,7 +3658,7 @@ this.BX = this.BX || {};
 	      }
 
 	      var errorMessage = main_core.Type.isObject(data) && main_core.Type.isStringFilled(data.ERROR_MESSAGE) ? data.ERROR_MESSAGE : main_core.Loc.getMessage('MSLDetailCommentsFailed');
-	      container.appendChild(main_core.Tag.render(_templateObject4(), errorMessage, main_core.Loc.getMessage('MSLDetailCommentsReload')));
+	      container.appendChild(main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<div class=\"post-comments-load-btn-wrap\"><div class=\"post-comments-load-text\">", "</div><a class=\"post-comments-load-btn\">", "</a></div>"])), errorMessage, main_core.Loc.getMessage('MSLDetailCommentsReload')));
 	      var button = container.querySelector('.post-comments-load-btn');
 
 	      if (!button) {
@@ -3845,7 +3791,7 @@ this.BX = this.BX || {};
 	      refresh: null,
 	      nextPage: null
 	    };
-	    this.class = {
+	    this["class"] = {
 	      notifier: 'lenta-notifier-waiter',
 	      notifierActive: 'lenta-notifier-shown'
 	    };
@@ -3961,7 +3907,7 @@ this.BX = this.BX || {};
 	      var notifier = document.getElementById('lenta_notifier');
 
 	      if (notifier) {
-	        notifier.classList.add(this.class.notifier);
+	        notifier.classList.add(this["class"].notifier);
 	      }
 
 	      Instance.setRefreshNeeded(false);
@@ -4014,7 +3960,7 @@ this.BX = this.BX || {};
 	          NextPageLoaderInstance.stopWaiter();
 
 	          if (document.getElementById('lenta_notifier')) {
-	            document.getElementById('lenta_notifier').classList.remove(_this2.class.notifier);
+	            document.getElementById('lenta_notifier').classList.remove(_this2["class"].notifier);
 	          }
 
 	          app.exec('pullDownLoadingStop');
@@ -4101,7 +4047,7 @@ this.BX = this.BX || {};
 	          NextPageLoaderInstance.stopWaiter();
 
 	          if (document.getElementById('lenta_notifier')) {
-	            document.getElementById('lenta_notifier').classList.remove(_this2.class.notifier);
+	            document.getElementById('lenta_notifier').classList.remove(_this2["class"].notifier);
 	          }
 
 	          app.exec('pullDownLoadingStop');
@@ -4192,7 +4138,7 @@ this.BX = this.BX || {};
 
 	      if (errorBlock) {
 	        if (show) {
-	          errorBlock.classList.add(this.class.notifierActive);
+	          errorBlock.classList.add(this["class"].notifierActive);
 
 	          if (type === 'refresh') {
 	            document.addEventListener('scroll', this.refreshErrorScroll);
@@ -4202,7 +4148,7 @@ this.BX = this.BX || {};
 	            document.removeEventListener('scroll', this.refreshErrorScroll);
 	          }
 
-	          errorBlock.classList.remove(this.class.notifierActive);
+	          errorBlock.classList.remove(this["class"].notifierActive);
 	        }
 	      } else {
 	        this.requestErrorTimeout[type] = setTimeout(function () {
@@ -4262,25 +4208,7 @@ this.BX = this.BX || {};
 	  return Page;
 	}();
 
-	function _templateObject2$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"]);
-
-	  _templateObject2$1 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject$3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"", " ", "\" ontransitionend=\"", "\"></div>"]);
-
-	  _templateObject$3 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$3, _templateObject2$1;
 
 	var Feed = /*#__PURE__*/function () {
 	  function Feed() {
@@ -4293,7 +4221,7 @@ this.BX = this.BX || {};
 	    this.nodeId = {
 	      feedContainer: 'lenta_wrapper'
 	    };
-	    this.class = {
+	    this["class"] = {
 	      listWrapper: 'lenta-list-wrap',
 	      postWrapper: 'post-wrap',
 	      pinnedPanel: 'lenta-pinned-panel',
@@ -4572,7 +4500,7 @@ this.BX = this.BX || {};
 	        return;
 	      }
 
-	      DatabaseUnsentPostInstance.delete(groupId);
+	      DatabaseUnsentPostInstance["delete"](groupId);
 
 	      if (postId <= 0 || main_core.Type.isStringFilled(params.warningText)) {
 	        return;
@@ -4824,10 +4752,10 @@ this.BX = this.BX || {};
 
 	        if (postContainer.id === 'lenta_item') // empty detail
 	          {
-	            this.processDetailBlock(postContainer, contentWrapper, ".".concat(this.class.postItemTop));
-	            this.processDetailBlock(postContainer, contentWrapper, ".".concat(this.class.postItemPostBlock)).then(function () {
-	              var pageBlockNode = postContainer.querySelector(".".concat(_this5.class.postItemPostBlock));
-	              var resultBlockNode = contentWrapper.querySelector(".".concat(_this5.class.postItemPostBlock));
+	            this.processDetailBlock(postContainer, contentWrapper, ".".concat(this["class"].postItemTop));
+	            this.processDetailBlock(postContainer, contentWrapper, ".".concat(this["class"].postItemPostBlock)).then(function () {
+	              var pageBlockNode = postContainer.querySelector(".".concat(_this5["class"].postItemPostBlock));
+	              var resultBlockNode = contentWrapper.querySelector(".".concat(_this5["class"].postItemPostBlock));
 
 	              if (pageBlockNode || resultBlockNode) {
 	                var pageClassList = _this5.filterPostBlockClassList(pageBlockNode.classList);
@@ -4844,14 +4772,14 @@ this.BX = this.BX || {};
 
 	              BitrixMobile.LazyLoad.showImages();
 	            });
-	            this.processDetailBlock(postContainer, contentWrapper, ".".concat(this.class.postItemAttachedFileWrap)).then(function () {
+	            this.processDetailBlock(postContainer, contentWrapper, ".".concat(this["class"].postItemAttachedFileWrap)).then(function () {
 	              BitrixMobile.LazyLoad.showImages();
 	            });
-	            this.processDetailBlock(postContainer, contentWrapper, ".".concat(this.class.postItemInformWrap));
-	            this.processDetailBlock(postContainer, contentWrapper, ".".concat(this.class.postItemInformWrapTree));
+	            this.processDetailBlock(postContainer, contentWrapper, ".".concat(this["class"].postItemInformWrap));
+	            this.processDetailBlock(postContainer, contentWrapper, ".".concat(this["class"].postItemInformWrapTree));
 	          } else {
-	          postContainer = postContainer.querySelector("div.".concat(this.class.postItemTopWrap));
-	          var contentPostItemTopWrap = contentWrapper.querySelector("div.".concat(this.class.postItemTopWrap));
+	          postContainer = postContainer.querySelector("div.".concat(this["class"].postItemTopWrap));
+	          var contentPostItemTopWrap = contentWrapper.querySelector("div.".concat(this["class"].postItemTopWrap));
 	          main_core.Runtime.html(postContainer, contentPostItemTopWrap.innerHTML).then(function () {
 	            oMSL.checkNodesHeight();
 	            BitrixMobile.LazyLoad.showImages();
@@ -4868,10 +4796,10 @@ this.BX = this.BX || {};
 
 	        contentWrapper.remove();
 	      } else if (action === 'add') {
-	        this.setNewPostContainer(main_core.Tag.render(_templateObject$3(), this.class.postNewContainerTransformNew, this.class.postLazyLoadCheck, this.handleInsertPostTransitionEnd.bind(this)));
+	        this.setNewPostContainer(main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["<div class=\"", " ", "\" ontransitionend=\"", "\"></div>"])), this["class"].postNewContainerTransformNew, this["class"].postLazyLoadCheck, this.handleInsertPostTransitionEnd.bind(this)));
 	        main_core.Dom.prepend(this.getNewPostContainer(), containerNode);
 	        mobile_utils.Utils.htmlWithInlineJS(this.getNewPostContainer(), content).then(function () {
-	          var postNode = _this5.getNewPostContainer().querySelector("div.".concat(_this5.class.listPost));
+	          var postNode = _this5.getNewPostContainer().querySelector("div.".concat(_this5["class"].listPost));
 
 	          main_core.Dom.style(_this5.getNewPostContainer(), 'height', "".concat(postNode.scrollHeight + 12
 	          /*margin-bottom*/
@@ -4933,8 +4861,8 @@ this.BX = this.BX || {};
 	    key: "handleInsertPostTransitionEnd",
 	    value: function handleInsertPostTransitionEnd(event) {
 	      if (event.propertyName === 'height') {
-	        this.getNewPostContainer().classList.remove(this.class.postNewContainerTransformNew);
-	        this.getNewPostContainer().classList.remove(this.class.postNewContainerTransform);
+	        this.getNewPostContainer().classList.remove(this["class"].postNewContainerTransformNew);
+	        this.getNewPostContainer().classList.remove(this["class"].postNewContainerTransform);
 	        main_core.Dom.style(this.getNewPostContainer(), 'height', null);
 	        this.recalcMaxScroll();
 	        BitrixMobile.LazyLoad.showImages();
@@ -4952,16 +4880,16 @@ this.BX = this.BX || {};
 	          imageNode = _event$getData2[0];
 
 	      if (imageNode) {
-	        var postCheckNode = imageNode.closest(".".concat(this.class.postLazyLoadCheck));
+	        var postCheckNode = imageNode.closest(".".concat(this["class"].postLazyLoadCheck));
 
 	        if (postCheckNode) {
-	          var postNode = postCheckNode.querySelector("div.".concat(this.class.listPost));
+	          var postNode = postCheckNode.querySelector("div.".concat(this["class"].listPost));
 
 	          if (postNode) {
-	            postCheckNode.classList.add(this.class.postNewContainerTransform);
+	            postCheckNode.classList.add(this["class"].postNewContainerTransform);
 	            main_core.Dom.style(postCheckNode, 'height', "".concat(postNode.scrollHeight, "px"));
 	            setTimeout(function () {
-	              postCheckNode.classList.remove(_this6.class.postNewContainerTransform);
+	              postCheckNode.classList.remove(_this6["class"].postNewContainerTransform);
 	              main_core.Dom.style(postCheckNode, 'height', null);
 	            }, 500);
 	          }
@@ -5042,10 +4970,10 @@ this.BX = this.BX || {};
 	        return;
 	      }
 
-	      var postNode = menuNode.closest(".".concat(this.class.detailPost));
+	      var postNode = menuNode.closest(".".concat(this["class"].detailPost));
 
 	      if (!postNode) {
-	        postNode = menuNode.closest(".".concat(this.class.listPost));
+	        postNode = menuNode.closest(".".concat(this["class"].listPost));
 	      }
 
 	      if (!postNode) {
@@ -5053,19 +4981,19 @@ this.BX = this.BX || {};
 	      }
 
 	      if (value === 'Y') {
-	        postNode.classList.add(this.class.postItemPinActive);
+	        postNode.classList.add(this["class"].postItemPinActive);
 	      } else {
-	        postNode.classList.remove(this.class.postItemPinActive);
+	        postNode.classList.remove(this["class"].postItemPinActive);
 	      }
 	    }
 	  }, {
 	    key: "handleClick",
 	    value: function handleClick(e) {
-	      if (e.target.classList.contains(this.class.pin)) {
+	      if (e.target.classList.contains(this["class"].pin)) {
 	        var post = null;
 	        var menuNode = null;
 	        var context = 'list';
-	        var postNode = e.target.closest(".".concat(this.class.listPost));
+	        var postNode = e.target.closest(".".concat(this["class"].listPost));
 
 	        if (postNode) // list
 	          {
@@ -5074,7 +5002,7 @@ this.BX = this.BX || {};
 	          } else // detail
 	          {
 	            context = 'detail';
-	            postNode = e.target.closest(".".concat(this.class.detailPost));
+	            postNode = e.target.closest(".".concat(this["class"].detailPost));
 
 	            if (postNode) {
 	              menuNode = postNode.querySelector('[data-menu-type="post"]');
@@ -5094,7 +5022,7 @@ this.BX = this.BX || {};
 
 	        e.stopPropagation();
 	        return e.preventDefault();
-	      } else if (e.target.classList.contains(this.class.addPostButton)) {
+	      } else if (e.target.classList.contains(this["class"].addPostButton)) {
 	        if (BXMobileAppContext.getApiVersion() >= this.getApiVersion('layoutPostForm')) {
 	          var formManager = new PostFormManager();
 	          formManager.show({
@@ -5104,21 +5032,21 @@ this.BX = this.BX || {};
 	        } else {
 	          app.exec('showPostForm', PostFormOldManagerInstance.show());
 	        }
-	      } else if (e.target.classList.contains(".".concat(PageScrollInstance.class.scrollButton)) || e.target.closest(".".concat(PageScrollInstance.class.scrollButton))) {
-	        if (e.target.classList.contains(".".concat(PageScrollInstance.class.scrollButtonTop)) || e.target.closest(".".concat(PageScrollInstance.class.scrollButtonTop))) {
+	      } else if (e.target.classList.contains(".".concat(PageScrollInstance["class"].scrollButton)) || e.target.closest(".".concat(PageScrollInstance["class"].scrollButton))) {
+	        if (e.target.classList.contains(".".concat(PageScrollInstance["class"].scrollButtonTop)) || e.target.closest(".".concat(PageScrollInstance["class"].scrollButtonTop))) {
 	          PageScrollInstance.scrollTo('top');
-	        } else if (e.target.classList.contains(".".concat(PageScrollInstance.class.scrollButtonBottom)) || e.target.closest(".".concat(PageScrollInstance.class.scrollButtonBottom))) {
+	        } else if (e.target.classList.contains(".".concat(PageScrollInstance["class"].scrollButtonBottom)) || e.target.closest(".".concat(PageScrollInstance["class"].scrollButtonBottom))) {
 	          PageScrollInstance.scrollTo('bottom');
 	        }
-	      } else if ((e.target.closest(".".concat(this.class.listWrapper)) || e.target.closest(".".concat(this.class.pinnedPanel))) && !(e.target.tagName.toLowerCase() === 'a' && main_core.Type.isStringFilled(e.target.getAttribute('target')) && e.target.getAttribute('target').toLowerCase() === '_blank')) {
-	        var detailFromPinned = !!(e.target.classList.contains(this.class.postItemPinnedBlock) || e.target.closest(".".concat(this.class.postItemPinnedBlock)));
-	        var detailFromNormal = !!(!detailFromPinned && (e.target.classList.contains(this.class.postItemPostContentView) || e.target.closest(".".concat(this.class.postItemPostContentView)) || e.target.classList.contains(this.class.postItemDescriptionBlock) // tasks
-	        || e.target.closest(".".concat(this.class.postItemDescriptionBlock))));
-	        var detailToComments = !!(!detailFromPinned && !detailFromNormal && (e.target.classList.contains(this.class.postItemInformComments) || e.target.closest(".".concat(this.class.postItemInformComments))));
-	        var detailToExpanded = !!(!detailFromPinned && !detailFromNormal && !detailToComments && (e.target.classList.contains(this.class.postItemInformMore) || e.target.closest(".".concat(this.class.postItemInformMore))));
+	      } else if ((e.target.closest(".".concat(this["class"].listWrapper)) || e.target.closest(".".concat(this["class"].pinnedPanel))) && !(e.target.tagName.toLowerCase() === 'a' && main_core.Type.isStringFilled(e.target.getAttribute('target')) && e.target.getAttribute('target').toLowerCase() === '_blank')) {
+	        var detailFromPinned = !!(e.target.classList.contains(this["class"].postItemPinnedBlock) || e.target.closest(".".concat(this["class"].postItemPinnedBlock)));
+	        var detailFromNormal = !!(!detailFromPinned && (e.target.classList.contains(this["class"].postItemPostContentView) || e.target.closest(".".concat(this["class"].postItemPostContentView)) || e.target.classList.contains(this["class"].postItemDescriptionBlock) // tasks
+	        || e.target.closest(".".concat(this["class"].postItemDescriptionBlock))));
+	        var detailToComments = !!(!detailFromPinned && !detailFromNormal && (e.target.classList.contains(this["class"].postItemInformComments) || e.target.closest(".".concat(this["class"].postItemInformComments))));
+	        var detailToExpanded = !!(!detailFromPinned && !detailFromNormal && !detailToComments && (e.target.classList.contains(this["class"].postItemInformMore) || e.target.closest(".".concat(this["class"].postItemInformMore))));
 
 	        if (detailFromPinned || detailFromNormal || detailToComments || detailToExpanded) {
-	          var _postNode = e.target.closest(".".concat(this.class.listPost));
+	          var _postNode = e.target.closest(".".concat(this["class"].listPost));
 
 	          if (_postNode) {
 	            var _post = this.getPostFromNode(_postNode);
@@ -5138,20 +5066,20 @@ this.BX = this.BX || {};
 	          e.stopPropagation();
 	          return e.preventDefault();
 	        }
-	      } else if (e.target.closest(".".concat(this.class.postWrapper))) {
-	        var expand = !!(e.target.classList.contains(this.class.postItemInformMore) || e.target.closest(".".concat(this.class.postItemInformMore)) || e.target.classList.contains(this.class.postItemMore) || e.target.closest(".".concat(this.class.postItemMore)));
+	      } else if (e.target.closest(".".concat(this["class"].postWrapper))) {
+	        var expand = !!(e.target.classList.contains(this["class"].postItemInformMore) || e.target.closest(".".concat(this["class"].postItemInformMore)) || e.target.classList.contains(this["class"].postItemMore) || e.target.closest(".".concat(this["class"].postItemMore)));
 	        var postItemGratitudeUsersSmallContainer = null;
 
-	        if (e.target.classList.contains(this.class.postItemGratitudeUsersSmallContainer)) {
+	        if (e.target.classList.contains(this["class"].postItemGratitudeUsersSmallContainer)) {
 	          postItemGratitudeUsersSmallContainer = e.target;
 	        } else {
-	          postItemGratitudeUsersSmallContainer = e.target.closest(".".concat(this.class.postItemGratitudeUsersSmallContainer));
+	          postItemGratitudeUsersSmallContainer = e.target.closest(".".concat(this["class"].postItemGratitudeUsersSmallContainer));
 	        }
 
 	        if (expand || main_core.Type.isDomNode(postItemGratitudeUsersSmallContainer)) {
 	          if (main_core.Type.isDomNode(postItemGratitudeUsersSmallContainer)) {
 	            postItemGratitudeUsersSmallContainer.style.display = 'none';
-	            var postItemGratitudeUsersSmallHidden = postItemGratitudeUsersSmallContainer.parentNode.querySelector(".".concat(this.class.postItemGratitudeUsersSmallHidden));
+	            var postItemGratitudeUsersSmallHidden = postItemGratitudeUsersSmallContainer.parentNode.querySelector(".".concat(this["class"].postItemGratitudeUsersSmallHidden));
 
 	            if (postItemGratitudeUsersSmallHidden) {
 	              postItemGratitudeUsersSmallHidden.style.display = 'block';
@@ -5172,10 +5100,10 @@ this.BX = this.BX || {};
 
 	        var importantUserListNode = null;
 
-	        if (e.target.classList.contains(this.class.postItemImportantUserList)) {
+	        if (e.target.classList.contains(this["class"].postItemImportantUserList)) {
 	          importantUserListNode = e.target;
 	        } else {
-	          importantUserListNode = e.target.closest(".".concat(this.class.postItemImportantUserList));
+	          importantUserListNode = e.target.closest(".".concat(this["class"].postItemImportantUserList));
 	        }
 
 	        if (importantUserListNode) {
@@ -5419,7 +5347,7 @@ this.BX = this.BX || {};
 	      var responseData = _ref.responseData,
 	          logId = _ref.logId;
 	      logId = !main_core.Type.isUndefined(logId) ? parseInt(logId) : 0;
-	      var newPostNode = main_core.Tag.render(_templateObject2$1(), responseData.text);
+	      var newPostNode = main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"])), responseData.text);
 	      var container = document.getElementById('blog-post-first-after');
 
 	      if (container) {

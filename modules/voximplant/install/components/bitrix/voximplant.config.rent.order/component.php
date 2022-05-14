@@ -10,6 +10,10 @@ $permissions = \Bitrix\Voximplant\Security\Permissions::createWithCurrentUser();
 if(!$permissions->canPerform(\Bitrix\Voximplant\Security\Permissions::ENTITY_LINE, \Bitrix\Voximplant\Security\Permissions::ACTION_MODIFY))
 	return;
 
+$viAccount = new CVoxImplantAccount();
+if ($viAccount->GetAccountLang() === 'ua')
+	return;
+
 $arResult = Array();
 
 $arResult['LIST_RENT_NUMBERS'] = Array();
@@ -38,7 +42,6 @@ while ($row = $res->fetch())
 	);
 }
 
-$viAccount = new CVoxImplantAccount();
 $arResult['ACCOUNT_NAME'] = str_replace('.bitrixphone.com', '', $viAccount->GetAccountName());
 $arResult['ACCOUNT_LANG'] = $viAccount->GetAccountLang();
 $arResult['ORDER_STATUS'] = CVoxImplantPhoneOrder::GetStatus(true);

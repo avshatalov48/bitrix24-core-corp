@@ -34,9 +34,27 @@ $arResult['COLUMNS'] = $columns;
 $data = array();
 foreach($arParams['DATA'] as $i => $item)
 {
+	$responsible = $arParams['USERS'][$item['RESPONSIBLE_ID']];
+	if (
+		array_key_exists('RESPONSIBLE_NAME', $item)
+		&&
+		(
+			!empty($item['RESPONSIBLE_NAME'])
+			|| !empty($item['RESPONSIBLE_LAST_NAME'])
+		)
+	)
+	{
+		$responsible = [
+			'ID' => $item['RESPONSIBLE_ID'],
+			'NAME' => $item['RESPONSIBLE_NAME'],
+			'LAST_NAME' => $item['RESPONSIBLE_LAST_NAME'],
+			'SECOND_NAME' => $item['RESPONSIBLE_SECOND_NAME'],
+		];
+	}
+
 	$arParams['DATA'][$i]['ENTITY_TYPE'] = $item['ENTITY_TYPE'] == 'TT' ? 'TT' : 'T';
 	$arParams['DATA'][$i]['URL'] = str_replace('#id#', $item['ID'], $pathTask);
-	$arParams['DATA'][$i]['RESPONSIBLE_FORMATTED_NAME'] = \Bitrix\Tasks\Util\User::formatName($arParams['USERS'][$item['RESPONSIBLE_ID']], false, $arParams["NAME_TEMPLATE"]);
+	$arParams['DATA'][$i]['RESPONSIBLE_FORMATTED_NAME'] = \Bitrix\Tasks\Util\User::formatName($responsible, false, $arParams["NAME_TEMPLATE"]);
 	$arParams['DATA'][$i]['RESPONSIBLE_URL'] = CComponentEngine::makePathFromTemplate(
 		$arParams["PATH_TO_USER_PROFILE"],
 		array(

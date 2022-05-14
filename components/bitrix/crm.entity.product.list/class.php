@@ -2251,7 +2251,7 @@ final class CCrmEntityProductListComponent
 				$skuTree = \Bitrix\Catalog\v2\IoC\ServiceContainer::make('sku.tree', ['iblockId' => $iblockId]);
 				if ($skuTree)
 				{
-					$skuTreeItems = $skuTree->loadWithSelectedOffers($iblockProductsToOffers);
+					$skuTreeItems = $skuTree->loadJsonOffers($iblockProductsToOffers);
 					if (!empty($skuTreeItems))
 					{
 						foreach ($skuTreeItems as $offers)
@@ -2503,30 +2503,20 @@ final class CCrmEntityProductListComponent
 			return $items;
 		}
 
+		$isInventoryControlEnabled = \Bitrix\Catalog\Component\UseStore::isUsed();
 		$sliderPath = \CComponentEngine::makeComponentPath('bitrix:catalog.warehouse.master.clear');
 		$sliderPath = getLocalPath('components' . $sliderPath . '/slider.php');
 
-		if(\Bitrix\Catalog\Component\UseStore::isUsed())
-		{
-			$items[] = [
-				'id' => 'WAREHOUSE',
-				'checked' => true,
-				'title' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_SETTING_WAREHOUSE_TITLE'),
-				'desc' => '',
-				'action' => 'grid',
-			];
-		}
-		else
-		{
-			$items[] = [
-				'id' => 'SLIDER',
-				'checked' => false,
-				'title' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_SETTING_WAREHOUSE_TITLE'),
-				'url' => $sliderPath,
-				'desc' => '',
-				'action' => 'grid',
-			];
-		}
+		$items[] = [
+			'id' => 'SLIDER',
+			'checked' => $isInventoryControlEnabled,
+			'disabled' => $isInventoryControlEnabled,
+			'title' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_SETTING_WAREHOUSE_TITLE'),
+			'url' => $sliderPath,
+			'desc' => '',
+			'hint' => $isInventoryControlEnabled ? Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_SETTING_WAREHOUSE_HINT') : '',
+			'action' => 'grid',
+		];
 
 		return $items;
 	}

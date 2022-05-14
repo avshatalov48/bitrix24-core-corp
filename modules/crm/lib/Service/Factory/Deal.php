@@ -208,6 +208,11 @@ final class Deal extends Factory
 			],
 			Item::FIELD_NAME_CURRENCY_ID => [
 				'TYPE' => Field::TYPE_CRM_CURRENCY,
+				'ATTRIBUTES' => [
+					\CCrmFieldInfoAttr::NotDisplayed,
+					\CCrmFieldInfoAttr::HasDefaultValue,
+					\CCrmFieldInfoAttr::CanNotBeEmptied,
+				],
 				'CLASS' => Field\CurrencyId::class,
 			],
 			Item::FIELD_NAME_ACCOUNT_CURRENCY_ID => [
@@ -215,8 +220,9 @@ final class Deal extends Factory
 				'ATTRIBUTES' => [
 					\CCrmFieldInfoAttr::NotDisplayed,
 					\CCrmFieldInfoAttr::Hidden,
+					\CCrmFieldInfoAttr::ReadOnly,
+					\CCrmFieldInfoAttr::HasDefaultValue,
 				],
-				'CLASS' => Field\AccountCurrencyId::class,
 			],
 			Item::FIELD_NAME_IS_MANUAL_OPPORTUNITY => [
 				'TYPE' => Field::TYPE_BOOLEAN,
@@ -241,6 +247,7 @@ final class Deal extends Factory
 				'ATTRIBUTES' => [
 					\CCrmFieldInfoAttr::NotDisplayed,
 					\CCrmFieldInfoAttr::Hidden,
+					\CCrmFieldInfoAttr::ReadOnly,
 				],
 				'CLASS' => Field\OpportunityAccount::class,
 			],
@@ -249,6 +256,7 @@ final class Deal extends Factory
 				'ATTRIBUTES' => [
 					\CCrmFieldInfoAttr::NotDisplayed,
 					\CCrmFieldInfoAttr::Hidden,
+					\CCrmFieldInfoAttr::ReadOnly,
 				],
 				'CLASS' => Field\TaxValueAccount::class,
 			],
@@ -273,7 +281,6 @@ final class Deal extends Factory
 			],
 			Item\Deal::FIELD_NAME_QUOTE_ID => [
 				'TYPE' => Field::TYPE_CRM_QUOTE,
-				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly],
 				'SETTINGS' => [
 					'parentEntityTypeId' => \CCrmOwnerType::Quote,
 				],
@@ -512,7 +519,7 @@ final class Deal extends Factory
 		return new Statistics\OperationFacade\Deal();
 	}
 
-	protected function configureAddOrImportOperation(Operation $operation): void
+	protected function configureAddOperation(Operation $operation): void
 	{
 		$operation
 			->addAction(
@@ -528,6 +535,10 @@ final class Deal extends Factory
 			)
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\Compatible\SocialNetwork\ProcessAdd(),
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
 				new Operation\Action\Compatible\SendEvent('OnAfterCrmDealAdd'),
 			)
 			->addAction(
@@ -537,10 +548,6 @@ final class Deal extends Factory
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
 				new Operation\Action\Compatible\SendEvent\ProductRowsSave('OnAfterCrmDealProductRowsSave'),
-			)
-			->addAction(
-				Operation::ACTION_AFTER_SAVE,
-				new Operation\Action\Compatible\SocialNetwork\ProcessAdd(),
 			)
 		;
 	}
@@ -567,18 +574,18 @@ final class Deal extends Factory
 			)
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\Compatible\SocialNetwork\ProcessUpdate(),
+			)->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\UpdateMlScoring(),
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
 				new Operation\Action\Compatible\SendEvent('OnAfterCrmDealUpdate'),
 			)
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
 				new Operation\Action\Compatible\SendEvent\ProductRowsSave('OnAfterCrmDealProductRowsSave'),
-			)
-			->addAction(
-				Operation::ACTION_AFTER_SAVE,
-				new Operation\Action\Compatible\SocialNetwork\ProcessUpdate(),
-			)->addAction(
-				Operation::ACTION_AFTER_SAVE,
-				new Operation\Action\UpdateMlScoring(),
 			)
 		;
 
@@ -603,10 +610,6 @@ final class Deal extends Factory
 			)
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
-				new Operation\Action\Compatible\SendEvent\Delete('OnAfterCrmDealDelete')
-			)
-			->addAction(
-				Operation::ACTION_AFTER_SAVE,
 				new Operation\Action\Compatible\SocialNetwork\ProcessDelete(),
 			)
 			->addAction(
@@ -628,6 +631,10 @@ final class Deal extends Factory
 					}
 				}
 			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\Compatible\SendEvent\Delete('OnAfterCrmDealDelete')
+			)
 		;
 
 		return $operation;
@@ -635,6 +642,18 @@ final class Deal extends Factory
 
 	public function getItemCategoryId(int $id): ?int
 	{
-		return \CCrmDeal::GetCategoryID($id);
+		// here is some extra logic for backward compatibility
+		if($id <= 0)
+		{
+			return 0;
+		}
+		$categoryId = parent::getItemCategoryId($id);
+
+		return is_null($categoryId) ? -1 : $categoryId;
+	}
+
+	public function isCountersEnabled(): bool
+	{
+		return true;
 	}
 }

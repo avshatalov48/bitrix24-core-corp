@@ -14,7 +14,7 @@ use Bitrix\Main\Loader;
 
 Loc::loadMessages(__FILE__);
 
-class DealDataProvider extends Main\Filter\EntityDataProvider
+class DealDataProvider extends EntityDataProvider
 {
 	/** @var DealSettings|null */
 	protected $settings = null;
@@ -687,5 +687,34 @@ class DealDataProvider extends Main\Filter\EntityDataProvider
 			}
 			unset($filter[$fieldID]);
 		}
+	}
+
+	protected function applySettingsDependantFilter(array &$filterFields): void
+	{
+		$filterFields['IS_RECURRING'] = $this->getSettings()->checkFlag(DealSettings::FLAG_RECURRING) ? 'Y' : 'N';
+
+		$categoryId = $this->getSettings()->getCategoryID();
+		if ($categoryId >= 0)
+		{
+			$filterFields['@CATEGORY_ID'] = $categoryId;
+		}
+	}
+
+	protected function getCounterExtras(): array
+	{
+		$settings = $this->getSettings();
+
+		$result = parent::getCounterExtras();
+		if ($settings->checkFlag(\Bitrix\Crm\Filter\DealSettings::FLAG_RECURRING))
+		{
+			$result['IS_RECURRING'] = 'Y';
+		}
+		$categoryId = $settings->getCategoryID();
+		if ($categoryId >= 0)
+		{
+			$result['CATEGORY_ID'] = $categoryId;
+		}
+
+		return $result;
 	}
 }

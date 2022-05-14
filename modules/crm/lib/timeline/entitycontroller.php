@@ -2,11 +2,11 @@
 namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Crm\ItemIdentifier;
-use Bitrix\Crm\Timeline\HistoryDataModel\Presenter;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Main;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Sale\Cashbox\CheckManager;
 
 class EntityController extends Controller
 {
@@ -275,5 +275,93 @@ class EntityController extends Controller
 	protected function getItemIdentifier(int $entityId): ItemIdentifier
 	{
 		return new ItemIdentifier($this->getEntityTypeID(), $entityId);
+	}
+
+	/**
+	 * @deprecated
+	 */
+	final protected function createManualOpportunityModificationEntryIfNeeded(
+		int $ownerId,
+		int $authorId,
+		array $currentFields,
+		?array $previousFields = null
+	): void
+	{
+		$prevIsManualOpportunity = 'N';
+		if (is_array($previousFields))
+		{
+			$prevIsManualOpportunity = $previousFields['IS_MANUAL_OPPORTUNITY'] ?? 'N';
+			if (is_bool($prevIsManualOpportunity))
+			{
+				$prevIsManualOpportunity = $prevIsManualOpportunity ? 'Y' : 'N';
+			}
+		}
+
+		$curIsManualOpportunity = $currentFields['IS_MANUAL_OPPORTUNITY'] ?? $prevIsManualOpportunity;
+		if (is_bool($curIsManualOpportunity))
+		{
+			$curIsManualOpportunity = $curIsManualOpportunity ? 'Y' : 'N';
+		}
+
+		if ($prevIsManualOpportunity !== $curIsManualOpportunity)
+		{
+			$this->createManualOpportunityModificationEntry(
+				$ownerId,
+				$authorId,
+				$prevIsManualOpportunity,
+				$curIsManualOpportunity,
+			);
+		}
+	}
+
+	/**
+	 * @deprecated
+	 */
+	protected function createManualOpportunityModificationEntry($ownerId, $authorId, $prevValue, $curValue)
+	{
+		Container::getInstance()->getLocalization()->loadMessages();
+
+		$names = [
+			'N' => Loc::getMessage('CRM_COMMON_IS_MANUAL_OPPORTUNITY_FALSE'),
+			'Y' => Loc::getMessage('CRM_COMMON_IS_MANUAL_OPPORTUNITY_TRUE'),
+		];
+		$historyEntryID = ModificationEntry::create(
+			[
+				'ENTITY_TYPE_ID' => $this->getEntityTypeID(),
+				'ENTITY_ID' => $ownerId,
+				'AUTHOR_ID' => $authorId,
+				'SETTINGS' => [
+					'FIELD' => 'IS_MANUAL_OPPORTUNITY',
+					'START' => $prevValue,
+					'FINISH' => $curValue,
+					'START_NAME' => isset($names[$prevValue]) ? $names[$prevValue] : $prevValue,
+					'FINISH_NAME' => isset($names[$curValue]) ? $names[$curValue] : $curValue
+				]
+			]
+		);
+
+		$enableHistoryPush = $historyEntryID > 0;
+		if (($enableHistoryPush) && Main\Loader::includeModule('pull'))
+		{
+			$pushParams = [];
+			$historyFields = TimelineEntry::getByID($historyEntryID);
+			if (is_array($historyFields))
+			{
+				$pushParams['HISTORY_ITEM'] = $this->prepareHistoryDataModel(
+					$historyFields,
+					['ENABLE_USER_INFO' => true]
+				);
+			}
+			$tag = $pushParams['TAG'] = TimelineEntry::prepareEntityPushTag($this->getEntityTypeID(), $ownerId);
+
+			\CPullWatch::AddToStack(
+				$tag,
+				[
+					'module_id' => 'crm',
+					'command' => 'timeline_activity_add',
+					'params' => $pushParams,
+				]
+			);
+		}
 	}
 }

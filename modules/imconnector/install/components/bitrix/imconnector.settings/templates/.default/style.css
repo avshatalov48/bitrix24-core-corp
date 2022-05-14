@@ -801,7 +801,7 @@
 .imconnector-public-link-settings-inner-param {
 	display: inline-block;
 	width: 160px;
-	min-height: 1px;
+	min-height: 24px;
 	padding: 0 24px 0 0;
 	float: left;
 	color: #424956;

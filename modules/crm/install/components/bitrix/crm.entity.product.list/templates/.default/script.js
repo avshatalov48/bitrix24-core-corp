@@ -2163,7 +2163,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  return PageEventsManager;
 	}();
 
-	var _templateObject$3, _templateObject2$2, _templateObject3$2, _templateObject4$2;
+	var _templateObject$3, _templateObject2$2, _templateObject3$2, _templateObject4$2, _templateObject5$2;
 
 	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
 
@@ -2351,25 +2351,19 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	}
 
 	function _getSettingItem2(item) {
-	  var _this5 = this;
+	  var _item$disabled,
+	      _this5 = this;
 
 	  var input = main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<input type=\"checkbox\">\n\t\t"])));
 	  input.checked = item.checked;
+	  input.disabled = (_item$disabled = item.disabled) !== null && _item$disabled !== void 0 ? _item$disabled : false;
 	  input.dataset.settingId = item.id;
 	  var descriptionNode = main_core.Type.isStringFilled(item.desc) ? main_core.Tag.render(_templateObject3$2 || (_templateObject3$2 = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-entity-editor-popup-create-field-item-desc\">", "</span>"])), item.desc) : '';
-	  var setting = main_core.Tag.render(_templateObject4$2 || (_templateObject4$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<label class=\"ui-ctl-block ui-entity-editor-popup-create-field-item ui-ctl-w100\">\n\t\t\t\t<div class=\"ui-ctl-w10\" style=\"text-align: center\">", "</div>\n\t\t\t\t<div class=\"ui-ctl-w75\">\n\t\t\t\t\t<span class=\"ui-entity-editor-popup-create-field-item-title\">", "</span>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</label>\n\t\t"])), input, item.title, descriptionNode);
+	  var hintNode = main_core.Type.isStringFilled(item.hint) ? main_core.Tag.render(_templateObject4$2 || (_templateObject4$2 = babelHelpers.taggedTemplateLiteral(["<span class=\"crm-entity-product-list-setting-hint\" data-hint=\"", "\"></span>"])), item.hint) : '';
+	  var setting = main_core.Tag.render(_templateObject5$2 || (_templateObject5$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<label class=\"ui-ctl-block ui-entity-editor-popup-create-field-item ui-ctl-w100\">\n\t\t\t\t<div class=\"ui-ctl-w10\" style=\"text-align: center\">", "</div>\n\t\t\t\t<div class=\"ui-ctl-w75\">\n\t\t\t\t\t<span class=\"ui-entity-editor-popup-create-field-item-title ", "\">", "", "</span>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</label>\n\t\t"])), input, item.disabled ? 'crm-entity-product-list-disabled-setting' : '', item.title, hintNode, descriptionNode);
+	  BX.UI.Hint.init(setting);
 
-	  if (item.id === 'WAREHOUSE') {
-	    main_core.Event.bind(setting, 'change', function (event) {
-	      new catalog_storeUse.DialogDisable().popup();
-	      main_core_events.EventEmitter.subscribe(catalog_storeUse.EventType.popup.disable, function () {
-	        return _classPrivateMethodGet$2(_this5, _setSetting, _setSetting2).call(_this5, event);
-	      });
-	      main_core_events.EventEmitter.subscribe(catalog_storeUse.EventType.popup.disableCancel, function () {
-	        return event.target.checked = true;
-	      });
-	    });
-	  } else if (item.id === 'SLIDER') {
+	  if (item.id === 'SLIDER') {
 	    main_core.Event.bind(setting, 'change', function (event) {
 	      new catalog_storeUse.Slider().open(item.url, {}).then(function () {
 	        return babelHelpers.classPrivateFieldGet(_this5, _editor).reloadGrid(false);
@@ -3861,10 +3855,6 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      if (productRow && data.fields) {
 	        var promise = new Promise(function (resolve, reject) {
 	          var fields = data.fields;
-
-	          if (!main_core.Type.isNil(fields['SKU_TREE'])) {
-	            fields['SKU_TREE'] = JSON.stringify(fields['SKU_TREE']);
-	          }
 
 	          if (!main_core.Type.isNil(fields['IMAGE_INFO'])) {
 	            fields['IMAGE_INFO'] = JSON.stringify(fields['IMAGE_INFO']);

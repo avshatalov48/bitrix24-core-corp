@@ -1,6 +1,6 @@
 <?php
 $MESS["CRM_TAB_ACTIVITY_CONFIG"] = "Activity";
-$MESS["CRM_TAB_ACTIVITY_CONFIG_TITLE2"] = "Activity settings";
+$MESS["CRM_TAB_ACTIVITY_CONFIG_TITLE2"] = "Activity preferences";
 $MESS["CRM_TAB_CONFIG"] = "E-mail sending";
 $MESS["CRM_TAB_CONFIG_TITLE"] = "Configure e-mail sending parameters";
 $MESS["CRM_TAB_DEAL_CONFIG"] = "Deals";
@@ -20,4 +20,4 @@ $MESS["CRM_TAB_RECYCLE_BIN_CONFIG_TITLE"] = "Recycle Bin Settings";
 $MESS["CRM_TAB_REST_2"] = "Market";
 $MESS["CRM_TAB_REST_TITLE"] = "Application settings";
 $MESS["CRM_TAB_STATUS_CONFIG"] = "Statuses and Dropdowns";
-$MESS["CRM_TAB_STATUS_CONFIG_TITLE"] = "Dictionary settings";
+$MESS["CRM_TAB_STATUS_CONFIG_TITLE"] = "Entity selection controls";

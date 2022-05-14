@@ -498,7 +498,7 @@ class CVoxImplantRestService extends IRestService
 				if(!$isPlainArray)
 				{
 					$subFilter = static::checkStatisticFilter($value);
-					if (is_array($subFilter) && count($subFilter) > 0)
+					if (!empty($subFilter) && is_array($subFilter))
 					{
 						$arFilter[$key] = $subFilter;
 					}
@@ -524,7 +524,7 @@ class CVoxImplantRestService extends IRestService
 					switch ($field)
 					{
 						case 'CALL_START_DATE':
-							$value = CRestUtil::unConvertDateTime($value);
+							$value = CRestUtil::unConvertDateTime($value, true);
 							break;
 						case 'CALL_TYPE':
 							$field = 'INCOMING';
@@ -646,7 +646,7 @@ class CVoxImplantRestService extends IRestService
 		if (is_array($allowedUserIds))
 			$userIds = array_intersect($userIds, $allowedUserIds);
 
-		if (count($userIds) == 0)
+		if (empty($userIds))
 			throw new \Bitrix\Rest\AccessException('You have no permission to query selected users');
 
 		if (\Bitrix\Voximplant\Integration\Bitrix24::isInstalled())

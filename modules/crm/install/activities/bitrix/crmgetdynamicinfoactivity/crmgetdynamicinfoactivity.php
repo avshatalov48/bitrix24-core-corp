@@ -52,7 +52,8 @@ class CBPCrmGetDynamicInfoActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		$filter = ['LOGIC' => 'OR'];
 
 		$conditionGroup = new ConditionGroup($this->DynamicFilterFields);
-		$fieldsMap = Document\Dynamic::getEntityFields($this->DynamicTypeId);
+		$complexDocumentType = CCrmBizProcHelper::ResolveDocumentType($this->DynamicTypeId);
+		$fieldsMap = static::getDocumentService()->GetDocumentFields($complexDocumentType);
 		$i = 0;
 
 		/**@var \Bitrix\Bizproc\Automation\Engine\Condition $condition*/
@@ -117,10 +118,14 @@ class CBPCrmGetDynamicInfoActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		}
 
 		$factory = Container::getInstance()->getFactory($this->DynamicTypeId);
-		$items = $factory->getItems([
-			'select' => ['ID'],
-			'filter' => $filter,
-		]);
+		$items = [];
+		if (isset($factory))
+		{
+			$items = $factory->getItems([
+				'select' => ['ID'],
+				'filter' => $filter,
+			]);
+		}
 
 		return $items ? $items[0]->getId() : 0;
 	}
@@ -186,7 +191,7 @@ class CBPCrmGetDynamicInfoActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 	{
 		$errors = parent::checkProperties();
 
-		if (!CCrmOwnerType::isPossibleDynamicTypeId($this->DynamicTypeId))
+		if (!CCrmBizProcHelper::ResolveDocumentName($this->DynamicTypeId))
 		{
 			$errors->setError(new Error(Loc::getMessage('CRM_GDIA_ENTITY_TYPE_ERROR')));
 		}
@@ -202,7 +207,8 @@ class CBPCrmGetDynamicInfoActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 	{
 		$errors = parent::internalExecute();
 
-		$document = new Document\ValueCollection\Item($this->DynamicTypeId, $this->DynamicId);
+		$complexDocumentId = CCrmBizProcHelper::ResolveDocumentId($this->DynamicTypeId, $this->DynamicId);
+		$document = static::getDocumentService()->GetDocument($complexDocumentId);
 		foreach ($this->ReturnFields as $fieldId)
 		{
 			$this->arProperties[$fieldId] = $document[$fieldId];
@@ -295,27 +301,28 @@ class CBPCrmGetDynamicInfoActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 
 	public static function getPropertiesDialogMap(?\Bitrix\Bizproc\Activity\PropertiesDialog $dialog = null): array
 	{
-		$typesMap = Container::getInstance()->getDynamicTypesMap();
-		$typesMap->load([
-			'isLoadStages' => false,
-			'isLoadCategories' => false,
-		]);
-
 		$typeNames = [];
 		$filteringFieldsMap = [];
 		$returnFieldsMap = [];
-		foreach ($typesMap->getTypes() as $type)
-		{
-			$entityTypeId = $type->getEntityTypeId();
 
-			$typeNames[$entityTypeId] = $type->getTitle();
-			$returnFieldsMap[$entityTypeId] = static::getReturnFieldsMap($entityTypeId);
-			$filteringFieldsMap[$entityTypeId] = static::getFilteringFieldsMap($entityTypeId);
+		$typesMap = Container::getInstance()->getTypesMap();
+
+		foreach ($typesMap->getFactories() as $factory)
+		{
+			$entityTypeId = $factory->getEntityTypeId();
+			$documentType = CCrmBizProcHelper::ResolveDocumentType($entityTypeId);
+
+			if (isset($documentType))
+			{
+				$typeNames[$entityTypeId] = static::getDocumentService()->getDocumentTypeName($documentType);
+				$returnFieldsMap[$entityTypeId] = static::getReturnFieldsMap($entityTypeId);
+				$filteringFieldsMap[$entityTypeId] = static::getFilteringFieldsMap($entityTypeId);
+			}
 		}
 
 		return [
 			'DynamicTypeId' => [
-				'Name' => Loc::getMessage('CRM_GDIA_DYNAMIC_TYPE_ID'),
+				'Name' => Loc::getMessage('CRM_GDIA_TYPE_ID'),
 				'FieldName' => 'dynamic_type_id',
 				'Type' => FieldType::SELECT,
 				'Options' => $typeNames,
@@ -349,7 +356,7 @@ class CBPCrmGetDynamicInfoActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		$documentType = CCrmBizProcHelper::ResolveDocumentType($entityTypeId);
 
 		$factory = Container::getInstance()->getFactory($entityTypeId);
-		$originalFieldsCollection = $factory->getFieldsCollection();
+		$originalFieldsCollection = isset($factory) ? $factory->getFieldsCollection() : null;
 
 		$map = [];
 
@@ -360,17 +367,22 @@ class CBPCrmGetDynamicInfoActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 			FieldType::STRING,
 			FieldType::BOOL,
 		];
-
 		foreach (Crm\Automation\Helper::getDocumentFields($documentType) as $fieldId => $field)
 		{
 			if ($fieldId === 'OBSERVER_IDS')
 			{
 				$fieldId = Crm\Item::FIELD_NAME_OBSERVERS;
 			}
+
+			$isEntityField = true;
+			if (isset($originalFieldsCollection))
+			{
+				$isEntityField = $originalFieldsCollection->hasField($factory->getCommonFieldNameByMap($fieldId));
+			}
 			if (
 				in_array($field['Type'], $supportedFieldTypes, true)
 				&& !static::isInternalField($fieldId)
-				&& $originalFieldsCollection->hasField($factory->getCommonFieldNameByMap($fieldId))
+				&& $isEntityField
 			)
 			{
 				$map[] = $field;

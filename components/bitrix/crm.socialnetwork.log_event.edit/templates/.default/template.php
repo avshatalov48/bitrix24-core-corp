@@ -1,8 +1,21 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
-global $APPLICATION;
-$APPLICATION->SetAdditionalCSS("/bitrix/components/bitrix/socialnetwork.log.ex/templates/.default/style.css");
 
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+/**
+ * Bitrix vars
+ * @global CUser $USER
+ * @global CMain $APPLICATION
+ * @global CDatabase $DB
+ * @var array $arParams
+ * @var array $arResult
+ * @var CBitrixComponent $component
+ * @var string $templateFolder
+ */
+
+$APPLICATION->SetAdditionalCSS("/bitrix/components/bitrix/socialnetwork.log.ex/templates/.default/style.css");
 
 $UID = $arResult['UID'];
 $editorName = "{$UID}_lhe";
@@ -14,7 +27,7 @@ $event = $arResult['EVENT'];
 $errorMessages = $arResult['ERROR_MESSAGES'];
 $hasErrors = !empty($errorMessages);
 
-$selectorId = randString(6);
+$selectorId = \Bitrix\Main\Security\Random::getString(6, true);
 
 $formParams = array(
 	'FORM_ID' => $UID,
@@ -79,38 +92,39 @@ $formParams = array(
 	"ALLOW_CRM_EMAILS" => "Y"
 );
 
-$postFormUri = isset($arResult['POST_FORM_URI']) ? $arResult['POST_FORM_URI'] : '';
+$postFormUri = $arResult['POST_FORM_URI'] ?? '';
 
 if($hasErrors):
-	?><div class="feed-notice-block" style="display: block; opacity: 1; height: auto;"><?
-	foreach($errorMessages as &$errorMessage):
+	?><div class="feed-notice-block" style="display: block; opacity: 1; height: auto;"><?php
+	foreach ($errorMessages as &$errorMessage)
+	{
 		?><div class="feed-add-error">
 			<span class="feed-add-info-icon"></span>
-			<span class="feed-add-info-text"><?=htmlspecialcharsbx($errorMessage);?></span>
-		</div><?
-	endforeach;
+			<span class="feed-add-info-text"><?= htmlspecialcharsbx($errorMessage) ?></span>
+		</div><?php
+	}
 	unset($errorMessage);
-	?></div><?
+	?></div><?php
 endif;
 ?><div class="feed-wrap" style="position:relative;"><div class="feed-add-post-block">
-<div class="feed-add-post-micro" id="<?=CUtil::JSEscape($UID)?>_micro" style="display: <?=(($hasErrors)? 'none' : 'block')?>"><?
-	?><div id="<?=CUtil::JSEscape($UID)?>_micro_inner"><?
-		?><span class="feed-add-post-micro-title"><?=GetMessage('CRM_SL_EVENT_EDIT_LINK_SHOW_NEW')?></span><?
-		?><span class="feed-add-post-micro-dnd"><?=GetMessage('CRM_SL_EVENT_EDIT_DRAG_ATTACHMENTS2')?></span><?
-	?></div><?
+<div class="feed-add-post-micro" id="<?=CUtil::JSEscape($UID)?>_micro" style="display: <?=(($hasErrors)? 'none' : 'block')?>"><?php
+	?><div id="<?=CUtil::JSEscape($UID)?>_micro_inner"><?php
+		?><span class="feed-add-post-micro-title"><?=GetMessage('CRM_SL_EVENT_EDIT_LINK_SHOW_NEW')?></span><?php
+		?><span class="feed-add-post-micro-dnd"><?=GetMessage('CRM_SL_EVENT_EDIT_DRAG_ATTACHMENTS2')?></span><?php
+	?></div><?php
 ?></div>
 <div id="microblog-form">
 <form action="<?=htmlspecialcharsbx($postFormUri !== '' ? $postFormUri : POST_FORM_ACTION_URI)?>" id="<?=htmlspecialcharsbx($UID)?>" name="<?=htmlspecialcharsbx($UID)?>" method="POST" enctype="multipart/form-data" target="_self" data-bx-selector-id="<?=htmlspecialcharsbx($selectorId)?>">
-	<?=bitrix_sessid_post();?>
+	<?= bitrix_sessid_post() ?>
 	<div id="feed-add-post-content-message">
 		<div class="feed-add-post-title" id="<?=$prefix?>message_title_wrapper"<?=$enableTitle ? '' : ' style="display: none;"'?>>
 			<input id="<?=$prefix?>message_title" type="text" name="POST_TITLE" class="feed-add-post-inp feed-add-post-inp-active"
 				value="<?=htmlspecialcharsbx($event['TITLE'])?>" placeholder="<?=GetMessage("CRM_SL_EVENT_EDIT_BUTTON_TITLE_LEGEND")?>" />
 			<input id="<?=$prefix?>enable_message_title" type="hidden" name="ENABLE_POST_TITLE" value="<?=$enableTitle ? 'Y' : 'N'?>" />
 			<div class="feed-add-close-icon" id="<?=$prefix?>message_title_close_btn"></div>
-		</div><?
+		</div><?php
 		if(!$hasErrors):
-			?><span class="crm-feed-form-title-arrow"></span><?
+			?><span class="crm-feed-form-title-arrow"></span><?php
 		endif;
 
 		$this->SetViewTarget('mpl_input_additional', 100);
@@ -126,13 +140,13 @@ endif;
 		);
 
 	?></div>
-	<div class="feed-buttons-block" id="<?=$prefix?>button_block">
+	<div class="crm-feed-buttons-block crm-feed-post-form-block-hidden" id="<?=$prefix?>button_block">
 		<a href="#" id="<?=$prefix?>button_save" class="feed-add-button" onmousedown="BX.addClass(this, 'feed-add-button-press')" onmouseup="BX.removeClass(this,'feed-add-button-press')"><span class="feed-add-button-left"></span><span class="feed-add-button-text" onclick="MPFbuttonShowWait(this);"><?=htmlspecialcharsbx(GetMessage('CRM_SL_EVENT_EDIT_BUTTON_SAVE'))?></span><span class="feed-add-button-right"></span></a>
 		<a href="#" id="<?=$prefix?>button_cancel" class="feed-cancel-com"><?=htmlspecialcharsbx(GetMessage('CRM_SL_EVENT_EDIT_BUTTON_CANCEL'))?></a>
 	</div>
 </form>
 </div></div></div>
-<script type="text/javascript">
+<script>
 	BX.ready(
 		function()
 		{

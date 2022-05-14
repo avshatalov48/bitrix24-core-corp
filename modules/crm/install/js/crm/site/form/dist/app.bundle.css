@@ -738,7 +738,8 @@ div.b24-form-loader {
 .b24-form-control::-webkit-input-placeholder {
 	color: rgba(0, 0, 0, 0);
 	-webkit-transition: 170ms linear all;
-	-o-transition: 170ms linear all;
+	-moz-transition: 170ms linear all;
+	-ms-transition: 170ms linear all;
 	transition: 170ms linear all;
 }
 
@@ -1541,7 +1542,7 @@ div.b24-form-loader {
 	-webkit-box-align: center;
 	-ms-flex-align: center;
 	align-items: center;
-	z-index: 99999;
+	z-index: 1100001;
 	top: 0;
 	left: 0;
 	right: 0;

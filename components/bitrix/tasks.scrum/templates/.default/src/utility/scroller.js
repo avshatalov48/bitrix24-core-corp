@@ -1,9 +1,11 @@
 import {Dom} from 'main.core';
 
+import {PlanBuilder} from '../view/plan/plan.builder';
+
 import {EntityStorage} from '../entity/entity.storage';
 
+import {Sprint} from '../entity/sprint/sprint';
 import {Item} from '../item/item';
-import {PlanBuilder} from "../view/plan/plan.builder";
 
 type Params = {
 	planBuilder: PlanBuilder,
@@ -49,6 +51,23 @@ export class Scroller
 				behavior: 'smooth'
 			});
 		}
+	}
+
+	scrollToSprint(sprint: Sprint)
+	{
+		window.scrollTo({ top: 240, behavior: 'smooth' });
+
+		// todo dynamic focus to sprint node (loadItems)
+
+		const offset = 80;
+
+		const sprintsContainer = this.planBuilder.getSprintsContainer();
+		const position = Dom.getRelativePosition(sprint.getNode(), sprintsContainer).top;
+
+		sprintsContainer.scrollTo({
+			top: sprintsContainer.scrollTop + position - offset,
+			behavior: 'smooth'
+		});
 	}
 
 	isItemInViewport(item: Item): boolean

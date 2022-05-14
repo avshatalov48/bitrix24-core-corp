@@ -9,6 +9,6 @@ $MESS["IMOL_MA_NO_CHAT"] = "Чат с клиентом не найден";
 $MESS["IMOL_MA_TIMELINE_ERROR"] = "Сообщение не отправлено. #ERROR_TEXT#";
 $MESS["IMOL_MA_ATTACHMENT_TYPE"] = "Тип вложений";
 $MESS["IMOL_MA_ATTACHMENT"] = "Вложения";
-$MESS["IMOL_MA_ATTACHMENT_FILE"] = "Файлы документа";
+$MESS["IMOL_MA_ATTACHMENT_FILE_1"] = "Файлы документа";
 $MESS["IMOL_MA_ATTACHMENT_DISK"] = "Диск";
 ?>

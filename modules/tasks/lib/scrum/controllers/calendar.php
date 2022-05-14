@@ -6,10 +6,8 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Engine\Action;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Error;
-use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Request;
 use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Scrum\Service\BacklogService;
@@ -21,18 +19,10 @@ class Calendar extends Controller
 	const ERROR_COULD_NOT_LOAD_MODULE = 'TASKS_CC_01';
 	const ERROR_ACCESS_DENIED = 'TASKS_CC_02';
 
-	public function __construct(Request $request = null)
-	{
-		parent::__construct($request);
-
-		$this->errorCollection = new ErrorCollection;
-	}
-
 	protected function processBeforeAction(Action $action)
 	{
 		if (
-			!Loader::includeModule('tasks')
-			|| !Loader::includeModule('socialnetwork')
+			!Loader::includeModule('socialnetwork')
 			|| !Loader::includeModule('calendar')
 		)
 		{
@@ -66,7 +56,14 @@ class Calendar extends Controller
 		return parent::processBeforeAction($action);
 	}
 
-	public function getMeetingsAction(int $groupId)
+	/**
+	 * Returns the data needed to display Scrum events.
+	 *
+	 * @param int $groupId Group id.
+	 * @return array|null
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public function getMeetingsAction(int $groupId): ?array
 	{
 		if (!Loader::includeModule('im'))
 		{
@@ -107,7 +104,14 @@ class Calendar extends Controller
 		];
 	}
 
-	public function getChatAction(int $groupId, int $chatId)
+	/**
+	 * Checks if the chat exists. Whether the user can access it. Adds it to the chat if needed.
+	 *
+	 * @param int $chatId Chat id.
+	 * @return int|null
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public function getChatAction(int $chatId): ?int
 	{
 		if (!Loader::includeModule('im'))
 		{
@@ -141,7 +145,15 @@ class Calendar extends Controller
 		return $chatId;
 	}
 
-	public function saveEventInfoAction(int $groupId, string $templateId, int $eventId)
+	/**
+	 * Creates a chat for a template event and saves the link to the template.
+	 *
+	 * @param int $groupId Group id.
+	 * @param string $templateId Event template id.
+	 * @param int $eventId Event id.
+	 * @return int[]|null
+	 */
+	public function saveEventInfoAction(int $groupId, string $templateId, int $eventId): ?array
 	{
 		$userId = User::getId();
 
@@ -166,6 +178,12 @@ class Calendar extends Controller
 		];
 	}
 
+	/**
+	 * Handles the logic for closing templates.
+	 *
+	 * @param int $groupId Group id.
+	 * @return string
+	 */
 	public function closeTemplatesAction(int $groupId)
 	{
 		$backlogService = new BacklogService();

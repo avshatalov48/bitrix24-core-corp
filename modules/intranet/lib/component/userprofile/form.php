@@ -230,6 +230,25 @@ class Form
 			);
 		}
 
+		$languages = Main\Localization\LanguageTable::getList([
+			'select' => ['VALUE' => 'ID', 'NAME'],
+			'filter'=> ['ACTIVE'=>'Y'],
+			'order'=> ['SORT'=>'ASC'],
+		])->fetchAll();
+		if (count($languages) > 1)
+		{
+			$fields[] = array(
+				'title' => Loc::getMessage('INTRANET_USER_PROFILE_FIELD_LANGUAGE_ID'),
+				'name' => 'LANGUAGE_ID',
+				'type' => 'list',
+				'data' => array(
+					'items'=> $languages,
+					'class' => 'ui-ctl-w50'
+				),
+				'editable' => true
+			);
+		}
+
 
 		if (!$isExtranetUser)
 		{
@@ -631,6 +650,7 @@ class Form
 				array('name' => 'UF_SKYPE_LINK'),
 				array('name' => 'UF_ZOOM'),
 				array('name' => 'TIME_ZONE'),
+				array('name' => 'LANGUAGE_ID'),
 			);
 		}
 		else
@@ -702,6 +722,7 @@ class Form
 			'DATE_REGISTER' => $result["User"]["DATE_REGISTER"],
 			'WORK_NOTES' => $result["User"]["WORK_NOTES"],
 			'LAST_ACTIVITY_DATE' => $result["User"]["LAST_ACTIVITY_DATE"],
+			'LANGUAGE_ID' => $result["User"]["LANGUAGE_ID"],
 		];
 
 		$userFields = $this->getUserFields();

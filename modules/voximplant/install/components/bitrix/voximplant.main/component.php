@@ -91,7 +91,7 @@ if($arResult['SHOW_STATISTICS'])
 		$arResult['STATISTICS'][] = $row;
 	}
 
-	if(count($arResult['STATISTICS']) == 0)
+	if(empty($arResult['STATISTICS']))
 	{
 		$row = array(
 			'YEAR' => date('Y'),

@@ -4,7 +4,7 @@ $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECTED"] = "Apple Messages for Business
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_CONNECTION_STEP"] = "Для завершення підключення виберіть відкриту лінію, до якої потрібно підключитися.";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_CONNECTION_TITLE"] = "Завершення підключення бізнес-чату до Відкритої лінії";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_HELP"] = "<div class=\"imconnector-field-button-subtitle\">Я хочу</div>
-    <div class=\"imconnector-field-button-name\"><span class=\"imconnector-field-box-text-bold\">Підключити</span>Бізнес-чат</div>";
+    <div class=\"imconnector-field-button-name\"><span class=\"imconnector-field-box-text-bold\">Підключити</span> Бізнес-чат</div>";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_STEP"] = "Для підключення необхідно <a onclick=\"top.BX.Helper.show('#ID#');\" class=\"imconnector-field-box-link\">створити бізнес-чат</a>
  або <a onclick=\"top.BX.Helper.show('#ID#');\" class=\"imconnector-field-box-link\">підключити вже існуючий</a>.";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_TITLE"] = "Підключіть бізнес-чат до Відкритої лінії";

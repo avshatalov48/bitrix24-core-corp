@@ -219,7 +219,11 @@ class Dynamic extends Service\Factory
 		{
 			$info[Item::FIELD_NAME_CURRENCY_ID] = [
 				'TYPE' => Field::TYPE_CRM_CURRENCY,
-				'ATTRIBUTES' => [\CCrmFieldInfoAttr::NotDisplayed],
+				'ATTRIBUTES' => [
+					\CCrmFieldInfoAttr::NotDisplayed,
+					\CCrmFieldInfoAttr::HasDefaultValue,
+					\CCrmFieldInfoAttr::CanNotBeEmptied,
+				],
 				'CLASS' => Field\CurrencyId::class,
 			];
 			$info[Item::FIELD_NAME_ACCOUNT_CURRENCY_ID] = [
@@ -227,8 +231,9 @@ class Dynamic extends Service\Factory
 				'ATTRIBUTES' => [
 					\CCrmFieldInfoAttr::NotDisplayed,
 					\CCrmFieldInfoAttr::Hidden,
+					\CCrmFieldInfoAttr::ReadOnly,
+					\CCrmFieldInfoAttr::HasDefaultValue,
 				],
-				'CLASS' => Field\AccountCurrencyId::class,
 			];
 			$info[Item::FIELD_NAME_IS_MANUAL_OPPORTUNITY] = [
 				'TYPE' => Field::TYPE_BOOLEAN,
@@ -253,6 +258,7 @@ class Dynamic extends Service\Factory
 				'ATTRIBUTES' => [
 					\CCrmFieldInfoAttr::NotDisplayed,
 					\CCrmFieldInfoAttr::Hidden,
+					\CCrmFieldInfoAttr::ReadOnly,
 				],
 				'CLASS' => Field\OpportunityAccount::class,
 			];
@@ -261,6 +267,7 @@ class Dynamic extends Service\Factory
 				'ATTRIBUTES' => [
 					\CCrmFieldInfoAttr::NotDisplayed,
 					\CCrmFieldInfoAttr::Hidden,
+					\CCrmFieldInfoAttr::ReadOnly,
 				],
 				'CLASS' => Field\TaxValueAccount::class,
 			];
@@ -445,7 +452,7 @@ class Dynamic extends Service\Factory
 		return $objects;
 	}
 
-	protected function configureAddOrImportOperation(Operation $operation): void
+	protected function configureAddOperation(Operation $operation): void
 	{
 		$eventManager = Service\Container::getInstance()->getRestEventManager();
 

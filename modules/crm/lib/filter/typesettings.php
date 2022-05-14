@@ -12,6 +12,11 @@ class TypeSettings extends EntitySettings
 		return '';
 	}
 
+	public function getEntityTypeID()
+	{
+		return \CCrmOwnerType::Undefined;
+	}
+
 	public function getEntity(): Entity
 	{
 		return Container::getInstance()->getDynamicTypeDataClass()::getEntity();

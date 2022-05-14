@@ -58,8 +58,8 @@ class Item extends Converter
 			foreach ($value as $key => $fileId)
 			{
 				$result[$key] = [
-					'id' => $fileId,
-					'url' => $router->getFileUrl(
+					'ID' => $fileId,
+					'URL' => $router->getFileUrl(
 						$item->getEntityTypeId(),
 						$item->getId(),
 						$fieldName,
@@ -71,8 +71,8 @@ class Item extends Converter
 		else
 		{
 			$result = [
-				'id' => $value,
-				'url' => $router->getFileUrl(
+				'ID' => $value,
+				'URL' => $router->getFileUrl(
 					$item->getEntityTypeId(),
 					$item->getId(),
 					$fieldName,

@@ -116,7 +116,7 @@ class Ivr
 				$item = Item::createFromArray($item);
 			}
 
-			if($item->getId() > 0 && count($oldItems) > 0)
+			if($item->getId() > 0 && !empty($oldItems))
 			{
 				if(isset($oldItems[$item->getId()]))
 				{
@@ -269,7 +269,7 @@ class Ivr
 			$attachedToNumbers[] = $row['PHONE_NAME'];
 		}
 
-		if(count($attachedToNumbers) > 0)
+		if(!empty($attachedToNumbers))
 		{
 			$result->addError(new Error(Loc::getMessage(
 				"IVR_ERROR_IN_USE",

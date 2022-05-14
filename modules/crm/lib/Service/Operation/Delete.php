@@ -4,6 +4,8 @@ namespace Bitrix\Crm\Service\Operation;
 
 use Bitrix\Crm\Cleaning;
 use Bitrix\Crm\Integration\PullManager;
+use Bitrix\Crm\Integrity;
+use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Operation;
 use Bitrix\Crm\Statistics;
@@ -55,11 +57,12 @@ class Delete extends Operation
 
 		if ($this->isDeferredCleaningEnabled())
 		{
-			$this->scheduleCleaning();
+			Cleaning\CleaningManager::register($this->itemBeforeSave->getEntityTypeId(), $this->itemBeforeSave->getId());
 		}
 		else
 		{
 			$cleaningResult = $this->runCleaning();
+
 			if (!$cleaningResult->isSuccess())
 			{
 				$result->addErrors($cleaningResult->getErrors());
@@ -76,7 +79,12 @@ class Delete extends Operation
 
 	protected function getUserIdsForCountersReset(): array
 	{
-		return [$this->itemBeforeSave->getAssignedById()];
+		if ($this->itemBeforeSave->hasField(Item::FIELD_NAME_ASSIGNED) && $this->itemBeforeSave->getAssignedById() > 0)
+		{
+			return [$this->itemBeforeSave->getAssignedById()];
+		}
+
+		return [];
 	}
 
 	protected function registerStatistics(Statistics\OperationFacade $statisticsFacade): Result
@@ -100,7 +108,12 @@ class Delete extends Operation
 		]);
 		if ($timelineController)
 		{
-			$timelineController->onDelete($this->itemBeforeSave->getId(), ['FIELDS' => $this->itemBeforeSave->getData()]);
+			$timelineController->onDelete(
+				$this->itemBeforeSave->getId(),
+				[
+					'FIELDS' => $this->itemBeforeSave->getData(),
+					'FIELDS_MAP' => $this->itemBeforeSave->getFieldsMap(),
+				]);
 		}
 	}
 
@@ -155,7 +168,34 @@ class Delete extends Operation
 
 	protected function updateSearchIndexes(): void
 	{
-		\CCrmSearch::DeleteSearch(\CCrmOwnerType::ResolveName($this->item->getEntityTypeId()), $this->item->getId());
+		$itemBeforeSave = $this->getItemBeforeSave();
+
+		\CCrmSearch::DeleteSearch(\CCrmOwnerType::ResolveName($itemBeforeSave->getEntityTypeId()), $itemBeforeSave->getId());
+
+		\Bitrix\Crm\Search\SearchContentBuilderFactory::create($itemBeforeSave->getEntityTypeId())
+			->removeShortIndex($itemBeforeSave->getId())
+		;
+	}
+
+	protected function updateDuplicates(): void
+	{
+		parent::updateDuplicates();
+
+		$itemBeforeSave = $this->getItemBeforeSave();
+
+		if ($this->isDuplicatesIndexInvalidationEnabled())
+		{
+			Integrity\DuplicateManager::markDuplicateIndexAsJunk($itemBeforeSave->getEntityTypeId(), $itemBeforeSave->getId());
+		}
+
+		Integrity\DuplicateIndexMismatch::unregisterEntity($itemBeforeSave->getEntityTypeId(), $itemBeforeSave->getId());
+	}
+
+	protected function registerDuplicateCriteria(): void
+	{
+		$registrar = Integrity\DuplicateManager::getCriterionRegistrar($this->getItemBeforeSave()->getEntityTypeId());
+
+		$registrar->unregisterByItem($this->getItemBeforeSave());
 	}
 
 	protected function sendPullEvent(): void
@@ -181,15 +221,6 @@ class Delete extends Operation
 		;
 	}
 
-	protected function scheduleCleaning(): void
-	{
-		Cleaning\CleaningManager::register($this->itemBeforeSave->getEntityTypeId(), $this->itemBeforeSave->getId());
-		if(!\Bitrix\Crm\Agent\Routine\CleaningAgent::isActive())
-		{
-			\Bitrix\Crm\Agent\Routine\CleaningAgent::activate();
-		}
-	}
-
 	protected function runCleaning(): Result
 	{
 		if (!$this->cleaner)
@@ -204,5 +235,10 @@ class Delete extends Operation
 		}
 
 		return $this->cleaner->cleanup();
+	}
+
+	protected function isClearItemCategoryCacheNeeded(): bool
+	{
+		return true;
 	}
 }

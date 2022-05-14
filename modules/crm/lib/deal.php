@@ -9,11 +9,9 @@ namespace Bitrix\Crm;
 
 use Bitrix\Crm\History\Entity\DealStageHistoryTable;
 use Bitrix\Crm\History\Entity\DealStageHistoryWithSupposedTable;
-use Bitrix\Crm\Observer\Entity\ObserverTable;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\DealSettings;
 use Bitrix\Main;
-use Bitrix\Main\Application;
 use Bitrix\Main\Entity\IntegerField;
 use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Entity\StringField;
@@ -21,16 +19,12 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Event;
 use Bitrix\Main\ORM\EventResult;
 use Bitrix\Main\ORM\Fields\BooleanField;
-use Bitrix\Main\ORM\Fields\DateField;
 use Bitrix\Main\ORM\Fields\DatetimeField;
 use Bitrix\Main\ORM\Fields\ExpressionField;
-use Bitrix\Main\ORM\Fields\FloatField;
 use Bitrix\Main\ORM\Fields\Relations\CascadePolicy;
 use Bitrix\Main\ORM\Fields\Relations\OneToMany;
 use Bitrix\Main\ORM\Fields\TextField;
 use Bitrix\Main\ORM\Query\Join;
-use Bitrix\Main\Type\Date;
-use Bitrix\Main\Type\DateTime;
 
 Loc::loadMessages(__FILE__);
 
@@ -66,139 +60,112 @@ class DealTable extends Main\ORM\Data\DataManager
 
 	public static function getMap()
 	{
-		Container::getInstance()->getLocalization()->loadMessages();
+		$fieldRepository = Main\DI\ServiceLocator::getInstance()->get('crm.model.fieldRepository');
 
-		//todo move common fields descriptions in some other place to eliminate duplication
 		$map = [
-			(new IntegerField('ID'))
-				->configurePrimary()
-				->configureAutocomplete()
-			,
+			//fields here are sorted by b_crm_deal columns order in install.sql. Please, keep it that way
 
-			(new DatetimeField('DATE_CREATE'))
-				->configureNullable()
-				->configureDefaultValue(static function () {
-					return new DateTime();
-				})
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_CREATED_TIME'))
-			,
+			$fieldRepository->getId(),
 
-			(new ExpressionField(
+			$fieldRepository->getCreatedTime('DATE_CREATE'),
+
+			$fieldRepository->getShortDate(
 				'DATE_CREATE_SHORT',
-				static::getShortDateExpression(),
-				'DATE_CREATE',
-			))
-				->configureValueType(DatetimeField::class)
+				['DATE_CREATE'],
+			)
+				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_DATE_CREATE_SHORT_FIELD'))
 			,
 
-			(new DatetimeField('DATE_MODIFY'))
-				->configureNullable()
-				->configureDefaultValue(static function () {
-					return new DateTime();
-				})
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_UPDATED_TIME'))
-			,
+			$fieldRepository->getUpdatedTime('DATE_MODIFY'),
 
-			(new ExpressionField(
+			$fieldRepository->getShortDate(
 				'DATE_MODIFY_SHORT',
-				static::getShortDateExpression(),
-				'DATE_MODIFY',
-			))
-				->configureValueType(DatetimeField::class)
+				['DATE_MODIFY'],
+			)
+				->configureTitle('CRM_DEAL_ENTITY_DATE_MODIFY_SHORT_FIELD')
 			,
 
-			(new IntegerField('CREATED_BY_ID'))
-				->configureRequired()
-				->configureDefaultValue(static function () {
-					return Container::getInstance()->getContext()->getUserId();
-				})
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_CREATED_BY'))
-			,
+			$fieldRepository->getCreatedBy('CREATED_BY_ID'),
 
 			(new ReferenceField(
 				'CREATED_BY',
 				Main\UserTable::class,
 				Join::on('this.CREATED_BY_ID', 'ref.ID'),
-			)),
-
-			(new IntegerField('MODIFY_BY_ID'))
-				->configureNullable()
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_UPDATED_BY'))
+			))
+				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_CREATED_BY_FIELD'))
 			,
+
+			$fieldRepository->getUpdatedBy('MODIFY_BY_ID'),
 
 			(new ReferenceField(
 				'MODIFY_BY',
 				Main\UserTable::class,
 				Join::on('this.MODIFY_BY_ID', 'ref.ID'),
-			)),
-
-			(new IntegerField('ASSIGNED_BY_ID'))
-				->configureNullable()
-				->configureDefaultValue(static function () {
-					return Container::getInstance()->getContext()->getUserId();
-				})
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_ASSIGNED_BY_ID'))
+			))
+				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_MODIFY_BY_FIELD'))
 			,
+
+			$fieldRepository->getAssigned(),
 
 			(new ReferenceField(
 				'ASSIGNED_BY',
 				Main\UserTable::class,
 				Join::on('this.ASSIGNED_BY_ID', 'ref.ID'),
-			)),
+			))
+				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_ASSIGNED_BY_FIELD'))
+			,
 
-			(new BooleanField('OPENED'))
-				->configureRequired()
-				->configureStorageValues('N', 'Y')
+			$fieldRepository->getOpened()
 				->configureDefaultValue(static function () {
 					return DealSettings::getCurrent()->getOpenedFlag();
 				})
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_OPENED'))
 			,
 
-			(new IntegerField('LEAD_ID'))
-				->configureNullable()
-				->configureTitle(\CCrmOwnerType::GetAllDescriptions()[\CCrmOwnerType::Lead])
-			,
+			$fieldRepository->getLeadId(),
 
 			(new ReferenceField(
 				'LEAD_BY',
 				LeadTable::class,
 				Join::on('this.LEAD_ID', 'ref.ID'),
-			)),
-
-			(new IntegerField('COMPANY_ID'))
-				->configureNullable()
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_COMPANY_ID'))
+			))
+				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_LEAD_BY_FIELD'))
 			,
+
+			$fieldRepository->getCompanyId(),
 
 			(new ReferenceField(
 				'COMPANY_BY',
 				CompanyTable::class,
 				Join::on('this.COMPANY_ID', 'ref.ID'),
-			)),
+			))
+				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_COMPANY_BY_FIELD'))
+			,
 
 			(new ReferenceField(
 				'COMPANY',
 				CompanyTable::class,
 				Join::on('this.COMPANY_ID', 'ref.ID'),
-			)),
-
-			(new IntegerField('CONTACT_ID'))
-				->configureNullable()
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_CONTACT_ID'))
+			))
+				->configureTitle(\CCrmOwnerType::GetDescription(\CCrmOwnerType::Company))
 			,
+
+			$fieldRepository->getContactId(),
 
 			(new ReferenceField(
 				'CONTACT_BY',
 				ContactTable::class,
 				Join::on('this.CONTACT_ID', 'ref.ID'),
-			)),
+			))
+				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_CONTACT_BY_FIELD'))
+			,
 
 			(new ReferenceField(
 				'CONTACT',
 				ContactTable::class,
 				Join::on('this.CONTACT_ID', 'ref.ID'),
-			)),
+			))
+				->configureTitle(\CCrmOwnerType::GetDescription(\CCrmOwnerType::Contact))
+			,
 
 			(new ReferenceField(
 				'BINDING_CONTACT',
@@ -219,29 +186,14 @@ class DealTable extends Main\ORM\Data\DataManager
 				->configureTitle(\CCrmOwnerType::GetAllDescriptions()[\CCrmOwnerType::Quote])
 			,
 
-			(new StringField('TITLE'))
-				->configureNullable()
-				->configureSize(255)
-				->configureTitle(Loc::getMessage('CRM_COMMON_TITLE'))
-			,
+			$fieldRepository->getTitle(),
 
 			/** @deprecated */
-			(new StringField('PRODUCT_ID'))
-				->configureNullable()
-				->configureSize(50)
-			,
+			$fieldRepository->getProductId(),
 
-			(new IntegerField('CATEGORY_ID'))
-				->configureDefaultValue([static::class, 'getDefaultCategoryId'])
-				->configureTitle(Loc::getMessage('CRM_COMMON_CATEGORY'))
-			,
+			$fieldRepository->getCategoryId(Item::FIELD_NAME_CATEGORY_ID, \CCrmOwnerType::Deal),
 
-			(new StringField('STAGE_ID'))
-				->configureNullable()
-				->configureSize(50)
-				->configureDefaultValue([static::class, 'getDefaultStageId'])
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_STAGE_ID'))
-			,
+			$fieldRepository->getStageId(Item::FIELD_NAME_STAGE_ID, \CCrmOwnerType::Deal),
 
 			(new ReferenceField(
 				'STAGE_BY',
@@ -249,13 +201,11 @@ class DealTable extends Main\ORM\Data\DataManager
 				Join::on('this.STAGE_ID', 'ref.STATUS_ID')
 					->where('ref.ENTITY_ID', '=', 'DEAL_STAGE')
 				,
-			)),
-
-			(new StringField('STAGE_SEMANTIC_ID'))
-				->configureNullable()
-				->configureSize(3)
-				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_STAGE_SEMANTIC_ID_FIELD'))
+			))
+				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_STAGE_BY_FIELD'))
 			,
+
+			$fieldRepository->getStageSemanticId(),
 
 			(new BooleanField('IS_NEW'))
 				->configureNullable()
@@ -276,10 +226,7 @@ class DealTable extends Main\ORM\Data\DataManager
 				Join::on('this.ID', 'ref.DEAL_ID'),
 			)),
 
-			(new BooleanField('IS_RETURN_CUSTOMER'))
-				->configureRequired()
-				->configureStorageValues('N', 'Y')
-				->configureDefaultValue(false)
+			$fieldRepository->getIsReturnCustomer()
 				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_IS_RETURN_CUSTOMER_FIELD'))
 			,
 
@@ -290,10 +237,7 @@ class DealTable extends Main\ORM\Data\DataManager
 				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_IS_REPEATED_APPROACH_FIELD'))
 			,
 
-			(new BooleanField('CLOSED'))
-				->configureRequired()
-				->configureStorageValues('N', 'Y')
-				->configureDefaultValue(false)
+			$fieldRepository->getClosed()
 				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_CLOSED_FIELD'))
 			,
 
@@ -309,91 +253,47 @@ class DealTable extends Main\ORM\Data\DataManager
 				Join::on('this.TYPE_ID', 'ref.STATUS_ID')
 					->where('ref.ENTITY_ID', '=', 'DEAL_TYPE')
 				,
-			)),
-
-			(new FloatField('OPPORTUNITY'))
-				->configureScale(2)
-				->configureDefaultValue(0.00)
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_OPPORTUNITY'))
+			))
+				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_TYPE_BY_FIELD'))
 			,
 
-			(new BooleanField('IS_MANUAL_OPPORTUNITY'))
-				->configureRequired()
-				->configureStorageValues('N', 'Y')
-				->configureDefaultValue(false)
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_IS_MANUAL_OPPORTUNITY'))
-			,
+			$fieldRepository->getOpportunity(),
 
-			(new FloatField('TAX_VALUE'))
-				->configureScale(2)
-				->configureDefaultValue(0.00)
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_TAX_VALUE'))
-			,
+			$fieldRepository->getIsManualOpportunity(),
 
-			(new StringField('CURRENCY_ID'))
-				->configureNullable()
-				->configureSize(50)
-				->configureDefaultValue(Currency::getBaseCurrencyId())
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_CURRENCY_ID'))
-			,
+			$fieldRepository->getTaxValue(),
 
-			(new FloatField('OPPORTUNITY_ACCOUNT'))
-				->configureScale(2)
-				->configureDefaultValue(0.00)
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_OPPORTUNITY_ACCOUNT'))
-			,
+			$fieldRepository->getCurrencyId(),
 
-			(new FloatField('TAX_VALUE_ACCOUNT'))
-				->configureScale(2)
-				->configureDefaultValue(0.00)
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_TAX_VALUE_ACCOUNT'))
-			,
+			$fieldRepository->getOpportunityAccount(),
 
-			(new StringField('ACCOUNT_CURRENCY_ID'))
-				->configureNullable()
-				->configureSize(50)
-				->configureDefaultValue(Currency::getAccountCurrencyId())
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_ACCOUNT_CURRENCY_ID'))
-			,
+			$fieldRepository->getTaxValueAccount(),
+
+			$fieldRepository->getAccountCurrencyId(),
 
 			(new IntegerField('PROBABILITY'))
 				->configureNullable()
 				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_PROBABILITY_FIELD'))
 			,
 
-			(new TextField('COMMENTS'))
-				->configureNullable()
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_COMMENTS'))
-			,
+			$fieldRepository->getComments(),
 
-			(new DateField('BEGINDATE'))
-				->configureRequired()
-				->configureDefaultValue(static function() {
-					return new Date();
-				})
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_BEGINDATE'))
-			,
+			$fieldRepository->getBeginDate(),
 
-			(new ExpressionField(
+			$fieldRepository->getShortDate(
 				'BEGINDATE_SHORT',
-				static::getShortDateExpression(),
-				'BEGINDATE',
-			))
-				->configureValueType(DatetimeField::class)
+				['BEGINDATE'],
+			)
+				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_BEGINDATE_SHORT_FIELD'))
 			,
 
-			(new DateField('CLOSEDATE'))
-				->configureRequired()
-				->configureDefaultValue([static::class, 'getDefaultCloseDate'])
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_CLOSEDATE'))
-			,
+			$fieldRepository->getCloseDate(),
 
-			(new ExpressionField(
+			$fieldRepository->getShortDate(
 				'CLOSEDATE_SHORT',
-				static::getShortDateExpression(),
-				'CLOSEDATE',
-			))
-				->configureValueType(DatetimeField::class)
+				['CLOSEDATE'],
+			)
+				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_CLOSEDATE_SHORT_FIELD'))
 			,
 
 			(new DatetimeField('EVENT_DATE'))
@@ -401,12 +301,11 @@ class DealTable extends Main\ORM\Data\DataManager
 				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_EVENT_DATE_FIELD'))
 			,
 
-			(new ExpressionField(
+			$fieldRepository->getShortDate(
 				'EVENT_DATE_SHORT',
-				static::getShortDateExpression(),
-				'EVENT_DATE',
-			))
-				->configureValueType(DatetimeField::class)
+				['EVENT_DATE'],
+			)
+				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_EVENT_DATE_SHORT_FIELD'))
 			,
 
 			(new StringField('EVENT_ID'))
@@ -421,7 +320,9 @@ class DealTable extends Main\ORM\Data\DataManager
 				Join::on('this.EVENT_ID', 'ref.STATUS_ID')
 					->where('ref.ENTITY_ID', '=', 'EVENT_TYPE')
 				,
-			)),
+			))
+				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_EVENT_BY_FIELD'))
+			,
 
 			(new ReferenceField(
 				'EVENT_RELATION',
@@ -436,68 +337,36 @@ class DealTable extends Main\ORM\Data\DataManager
 				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_EVENT_DESCRIPTION_FIELD'))
 			,
 
-			/** @deprecated */
-			(new FloatField('EXCH_RATE'))
-				->configureRequired()
-				->configureScale(4)
-				->configureDefaultValue(1)
-			,
+			$fieldRepository->getExchRate(),
 
-			(new StringField('LOCATION_ID'))
-				->configureNullable()
-				->configureSize(100)
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_LOCATION'))
-			,
+			$fieldRepository->getLocationId(),
 
-			(new IntegerField('WEBFORM_ID'))
-				->configureNullable()
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_WEBFORM_ID'))
-			,
+			$fieldRepository->getWebformId(),
 
-			(new StringField('SOURCE_ID'))
-				->configureNullable()
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_SOURCE_ID'))
-			,
+			$fieldRepository->getSourceId(),
 
-			(new ReferenceField(
-				'SOURCE_BY',
-				StatusTable::class,
-				Join::on('this.SOURCE_ID', 'ref.STATUS_ID')
-					->where('ref.ENTITY_ID', '=', 'SOURCE')
-				,
-			)),
+			$fieldRepository->getSourceBy(),
 
-			(new TextField('SOURCE_DESCRIPTION'))
-				->configureNullable()
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_SOURCE_DESCRIPTION'))
-			,
+			$fieldRepository->getSourceDescription(),
 
-			(new StringField('ORIGINATOR_ID'))
-				->configureNullable()
-				->configureSize(255)
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_ORIGINATOR_ID'))
-			,
+			$fieldRepository->getOriginatorId(),
 
 			(new ReferenceField(
 				'ORIGINATOR_BY',
 				ExternalSaleTable::class,
 				Join::on('this.ORIGINATOR_ID', 'ref.ID'),
-			)),
-
-			(new StringField('ORIGIN_ID'))
-				->configureNullable()
-				->configureSize(255)
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_ORIGIN_ID'))
+			))
+				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_ORIGINATOR_BY_FIELD'))
 			,
+
+			$fieldRepository->getOriginId(),
 
 			(new TextField('ADDITIONAL_INFO'))
 				->configureNullable()
 				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_ADDITIONAL_INFO_FIELD'))
 			,
 
-			(new TextField('SEARCH_CONTENT'))
-				->configureNullable()
-			,
+			$fieldRepository->getSearchContent(),
 
 			(new StringField('ORDER_STAGE'))
 				->configureNullable()
@@ -505,17 +374,9 @@ class DealTable extends Main\ORM\Data\DataManager
 				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_ORDER_STAGE_FIELD'))
 			,
 
-			(new IntegerField('MOVED_BY_ID'))
-				->configureDefaultValue(static function () {
-					return Container::getInstance()->getContext()->getUserId();
-				})
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_MOVED_BY'))
-			,
+			$fieldRepository->getMovedBy('MOVED_BY_ID'),
 
-			(new DatetimeField('MOVED_TIME'))
-				->configureNullable()
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_MOVED_TIME'))
-			,
+			$fieldRepository->getMovedTime(),
 
 			(new ExpressionField(
 				'IS_WORK',
@@ -562,12 +423,7 @@ class DealTable extends Main\ORM\Data\DataManager
 				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_LOST_AMOUNT_FIELD'))
 			,
 
-			(new ExpressionField(
-				'HAS_PRODUCTS',
-				'CASE WHEN EXISTS (SELECT ID FROM b_crm_product_row WHERE OWNER_ID = %s AND OWNER_TYPE = \'D\') THEN 1 ELSE 0 END',
-				'ID',
-			))
-				->configureValueType(BooleanField::class)
+			$fieldRepository->getHasProducts(\CCrmOwnerType::Deal)
 				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_HAS_PRODUCTS_FIELD'))
 			,
 
@@ -603,44 +459,12 @@ class DealTable extends Main\ORM\Data\DataManager
 				,
 			)),
 
-			(new OneToMany(
-				'PRODUCT_ROWS',
-				ProductRowTable::class,
-				'DEAL_OWNER',
-			))
-				// products will be deleted in onAfterDelete, if it's needed
-				->configureCascadeDeletePolicy(CascadePolicy::NO_ACTION)
-				->configureTitle(Loc::getMessage('CRM_COMMON_PRODUCTS'))
-			,
+			$fieldRepository->getProductRows('DEAL_OWNER'),
 
-			(new OneToMany(
-				'OBSERVER_IDS',
-				ObserverTable::class,
-				'DEAL'
-			))
-				->configureCascadeDeletePolicy(CascadePolicy::FOLLOW)
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_OBSERVERS'))
-			,
+			$fieldRepository->getObservers('DEAL', 'OBSERVER_IDS'),
 		];
 
-		foreach (UtmTable::getCodeList() as $utmFieldName)
-		{
-			$map[] = new ReferenceField(
-				$utmFieldName,
-				UtmTable::class,
-				Join::on('this.ID', 'ref.ENTITY_ID')
-					->where('ref.ENTITY_TYPE_ID', \CCrmOwnerType::Deal)
-					->where('ref.CODE', $utmFieldName)
-				,
-			);
-		}
-
-		return $map;
-	}
-
-	protected static function getShortDateExpression(): string
-	{
-		return Application::getConnection()->getSqlHelper()->getDatetimeToDateFunction('%s');
+		return array_merge($map, $fieldRepository->getUtm(\CCrmOwnerType::Deal));
 	}
 
 	public static function disableUserFieldsCheck(): void
@@ -672,45 +496,6 @@ class DealTable extends Main\ORM\Data\DataManager
 	protected static function getFactory(): \Bitrix\Crm\Service\Factory
 	{
 		return Container::getInstance()->getFactory(static::getEntityTypeId());
-	}
-
-	public static function getDefaultCloseDate(): Date
-	{
-		$currentDate = new Date();
-
-		return $currentDate->add(static::getCloseDateOffset());
-	}
-
-	protected static function getCloseDateOffset(): string
-	{
-		return '7D';
-	}
-
-	public static function getDefaultCategoryId(): ?int
-	{
-		$factory = static::getFactory();
-
-		if($factory)
-		{
-			return $factory->createDefaultCategoryIfNotExist()->getId();
-		}
-
-		return null;
-	}
-
-	public static function getDefaultStageId(): ?string
-	{
-		$factory = static::getFactory();
-		if ($factory)
-		{
-			$categoryId = $factory->createDefaultCategoryIfNotExist()->getId();
-			$stages = $factory->getStages($categoryId);
-			$firstStage = $stages->getAll()[0] ?? null;
-
-			return $firstStage ? $firstStage->getStatusId() : null;
-		}
-
-		return null;
 	}
 
 	//todo move common event handlers in some common place

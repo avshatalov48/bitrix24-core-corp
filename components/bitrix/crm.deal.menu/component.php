@@ -16,6 +16,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 if (!CModule::IncludeModule('crm'))
 	return;
 
+\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
+
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Integration\Sender\Rc;
@@ -398,7 +400,6 @@ if($arParams['TYPE'] === 'list')
 			$arResult['BUTTONS'][] = array(
 				'TEXT' => GetMessage('DEAL_ADD'),
 				'TYPE' => 'crm-context-menu',
-				'TITLE' => GetMessage('DEAL_ADD_TITLE'),
 				'ONCLICK' => "BX.CrmDealCategorySelector.items['{$categorySelectorID}'].openMenu(this)",
 				'HIGHLIGHT' => true
 			);
@@ -417,7 +418,7 @@ if($arParams['TYPE'] === 'list')
 			if (!$arResult['RC']['CAN_USE'])
 			{
 				$arResult['BUTTONS'][] = array(
-						'TEXT' => GetMessage('DEAL_ADD'),
+						'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
 						'TITLE' => GetMessage('DEAL_ADD_TITLE'),
 						'LINK' => $link,
 						'HIGHLIGHT' => true
@@ -425,7 +426,7 @@ if($arParams['TYPE'] === 'list')
 			}
 			else
 			{
-				$itemAdd = ['TEXT' => GetMessage('DEAL_ADD')];
+				$itemAdd = ['TEXT' => GetMessage('CRM_COMMON_ACTION_ADD')];
 				if ($isSliderEnabled)
 				{
 					$itemAdd['ONCLICK'] = 'BX.SidePanel.Instance.open("' . CUtil::JSEscape($link) . '")';
@@ -436,8 +437,7 @@ if($arParams['TYPE'] === 'list')
 				}
 				$arResult['BUTTONS'][] = [
 					'TYPE' => 'crm-btn-double',
-					'TEXT' => GetMessage('DEAL_ADD'),
-					'TITLE' => GetMessage('DEAL_ADD_TITLE'),
+					'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
 					'LINK' => $link,
 					'ITEMS' => [
 						$itemAdd,
@@ -509,7 +509,8 @@ if($arParams['TYPE'] === 'list')
 			'PATH_TO_DEAL_WIDGETCATEGORY' => $arResult['PATH_TO_DEAL_WIDGETCATEGORY'],
 			'PATH_TO_DEAL_KANBANCATEGORY' => $arResult['PATH_TO_DEAL_KANBANCATEGORY'],
 			'PATH_TO_DEAL_CALENDARCATEGORY' => $arResult['PATH_TO_DEAL_CALENDARCATEGORY'],
-			'GRID_ID_SUFFIX' => $arResult['CATEGORY_ID'] >= 0 ? "C_".$arResult['CATEGORY_ID'] : '',
+			'GRID_ID_SUFFIX' => (new \Bitrix\Crm\Component\EntityList\GridId(CCrmOwnerType::Deal))
+				->getDefaultSuffix($arResult['CATEGORY_ID']),
 			'CATEGORY_ID' => $arResult['CATEGORY_ID'],
 		);
 		if (isset($_REQUEST['WG']) && mb_strtoupper($_REQUEST['WG']) === 'Y')
@@ -840,8 +841,7 @@ if (($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show') && $bDelete && 
 if ($bAdd && $arParams['TYPE'] != 'list')
 {
 	$arResult['BUTTONS'][] = array(
-		'TEXT' => GetMessage('DEAL_ADD'),
-		'TITLE' => GetMessage('DEAL_ADD_TITLE'),
+		'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
 		'LINK' => CCrmUrlUtil::AddUrlParams(
 			CComponentEngine::MakePathFromTemplate(
 				$arParams[$isSliderEnabled ? 'PATH_TO_DEAL_DETAILS' : 'PATH_TO_DEAL_EDIT'],

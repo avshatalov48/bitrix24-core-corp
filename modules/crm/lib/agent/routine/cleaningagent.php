@@ -13,6 +13,11 @@ class CleaningAgent extends Crm\Agent\AgentBase
 		$start = microtime(true);
 		//\CCrmUtils::Trace("CleaningAgent: run", ConvertTimeStamp($now, 'FULL'), 1);
 		$items = Crm\Cleaning\CleaningManager::getQueuedItems(50);
+		if(empty($items))
+		{
+			return false;
+		}
+
 		foreach($items as $item)
 		{
 			$entityTypeID = (int)$item['ENTITY_TYPE_ID'];
@@ -49,6 +54,7 @@ class CleaningAgent extends Crm\Agent\AgentBase
 
 			Crm\Cleaning\CleaningManager::unregister($entityTypeID, $entityID);
 			$end = microtime(true);
+
 			if(($end - $start) >= 1.0)
 			{
 				break;

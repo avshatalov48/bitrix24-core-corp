@@ -119,7 +119,13 @@ class CVoxImplantHistory
 			$arFields["PORTAL_USER_ID"] = intval(self::detectResponsible($call));
 		}
 
-		if(CVoxImplantCrmHelper::shouldCreateLead($call))
+		$registerInCrmByBlacklist = (
+			$arFields["INCOMING"] != CVoxImplantMain::CALL_INCOMING
+			|| $arFields["CALL_FAILED_CODE"] != 423
+			|| Bitrix\Main\Config\Option::get("voximplant", "blacklist_register_in_crm", "N") == "Y"
+		);
+
+		if(CVoxImplantCrmHelper::shouldCreateLead($call) && $registerInCrmByBlacklist)
 		{
 			// Create lead if the call was finished too early and a lead was not created (but should have been created)
 			if(!$call->getUserId() && $arFields["PORTAL_USER_ID"])
@@ -157,7 +163,7 @@ class CVoxImplantHistory
 		$arFields['COMMENT'] = $call->getComment() ?: null;
 
 		$insertResult = Bitrix\VoxImplant\StatisticTable::add($arFields);
-		if (!$insertResult)
+		if (!$insertResult->isSuccess())
 		{
 			static::releaseLock($callId);
 			return false;
@@ -186,7 +192,7 @@ class CVoxImplantHistory
 			];
 
 			$insertMissedCallResult = VI\Model\StatisticMissedTable::add($missedCall);
-			if (!$insertMissedCallResult)
+			if (!$insertMissedCallResult->isSuccess())
 			{
 				static::releaseLock($callId);
 				return false;
@@ -218,7 +224,7 @@ class CVoxImplantHistory
 			}
 		}
 
-		if (!$call->isInternalCall() && $call->isCrmEnabled())
+		if (!$call->isInternalCall() && $call->isCrmEnabled() && $registerInCrmByBlacklist)
 		{
 			if($call->getCrmActivityId() > 0 && CVoxImplantCrmHelper::shouldAttachCallToActivity($arFields, $call->getCrmActivityId()))
 			{
@@ -368,7 +374,7 @@ class CVoxImplantHistory
 				$errors[] = $code . ": " . $message;
 			}
 
-			if(count($errors) > 0)
+			if(!empty($errors))
 			{
 				$error = join("; " , $errors);
 			}

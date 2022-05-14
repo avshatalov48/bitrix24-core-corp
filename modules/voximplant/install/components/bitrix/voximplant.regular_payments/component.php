@@ -72,7 +72,7 @@ if ($arResult['PAID_BEFORE']['TS'] > 0)
 	}
 }
 
-if (count($arResult['NUMBERS']) > 0 && !(isset($arParams['TEMPLATE_HIDE']) && $arParams['TEMPLATE_HIDE'] == 'Y'))
+if (!empty($arResult['NUMBERS']) && !(isset($arParams['TEMPLATE_HIDE']) && $arParams['TEMPLATE_HIDE'] == 'Y'))
 	$this->IncludeComponentTemplate();
 
 return $arResult;

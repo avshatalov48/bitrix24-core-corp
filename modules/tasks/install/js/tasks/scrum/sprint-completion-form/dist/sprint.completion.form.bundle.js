@@ -28,7 +28,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "completeSprint",
 	    value: function completeSprint(data) {
-	      return this.sendRequest('sprint', 'completeSprint', data);
+	      return this.sendRequest('sprint', 'completeSprint', data, {
+	        scrum: 'Y',
+	        action: 'finish_sprint'
+	      });
 	    }
 	  }, {
 	    key: "showErrorAlert",
@@ -53,7 +56,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return RequestSender;
 	}();
 
-	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12;
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14;
 	var SprintCompletionForm = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(SprintCompletionForm, _EventEmitter);
 
@@ -62,6 +65,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	    babelHelpers.classCallCheck(this, SprintCompletionForm);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(SprintCompletionForm).call(this, params));
+
+	    _this.setEventNamespace('BX.Tasks.Scrum.SprintCompletionForm');
+
 	    _this.groupId = parseInt(params.groupId, 10);
 	    /* eslint-disable */
 
@@ -140,7 +146,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	          _this3.emit('afterComplete');
 	        }
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this3.requestSender.showErrorAlert(response, main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_ERROR_TITLE_POPUP'));
 	      });
 	    }
@@ -169,7 +175,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          groupId: _this5.groupId
 	        }).then(function (response) {
 	          resolve(_this5.render(response.data));
-	        }).catch(function (response) {
+	        })["catch"](function (response) {
 	          reject();
 
 	          _this5.sidePanelManager.close(false, function () {
@@ -182,9 +188,28 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "render",
 	    value: function render(sprintData) {
 	      var storyPoints = sprintData.storyPoints === '' ? 0 : sprintData.storyPoints;
-	      this.node = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div id=\"", "\" class=\"tasks-scrum__scope--side-panel-completion\">\n\n\t\t\t<div class=\"tasks-scrum__side-panel-completion--block\">\n\n\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-basic\">\n\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-basic-block\">\n\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-basic-title\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-additional\">\n\n\t\t\t\t\t", "\n\n\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-row\">\n\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-title\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-content tasks-scrum__side-panel-completion--sprint-timing\">\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--date-name-block\">\n\t\t\t\t\t\t\t\t<div>", "</div>\n\t\t\t\t\t\t\t\t<div>", "</div>\n\t\t\t\t\t\t\t\t<div>", "</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--date-result-block\">\n\t\t\t\t\t\t\t\t<div>", "</div>\n\t\t\t\t\t\t\t\t<div>", "</div>\n\t\t\t\t\t\t\t\t<div>", "</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\n\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-row\">\n\n\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-title\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-content\">\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--plan-block\">\n\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--sprint-plans\">\n\t\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--plan-block-number --percent\">\n\t\t\t\t\t\t\t\t\t\t<div \n\t\t\t\t\t\t\t\t\t\t\tclass=\"tasks-scrum__side-panel-completion--plan-block-number-date\"\n\t\t\t\t\t\t\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--plan-block-name\">\n\t\t\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--plan-block-name-text\">\n\t\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t<div class=\"ui-hint\">\n\t\t\t\t\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\t\t\t\t\tclass=\"ui-hint-icon\"\n\t\t\t\t\t\t\t\t\t\t\t\tdata-hint=\"", "\"\n\t\t\t\t\t\t\t\t\t\t\t\tdata-hint-no-icon\n\t\t\t\t\t\t\t\t\t\t\t></span>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--sprint-plans\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--plan-block-name\">\n\t\t\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--plan-block-name-text\">\n\t\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t<div class=\"ui-hint\">\n\t\t\t\t\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\t\t\t\t\tclass=\"ui-hint-icon\"\n\t\t\t\t\t\t\t\t\t\t\t\tdata-hint=\"", "\"\n\t\t\t\t\t\t\t\t\t\t\t\tdata-hint-no-icon\n\t\t\t\t\t\t\t\t\t\t\t></span>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\n\t\t\t", "\n\n\t\t\t</div>\n\t\t"])), main_core.Text.getRandom(), main_core.Text.encode(sprintData.name), this.renderGoal(sprintData.info.sprintGoal), this.renderEpics(sprintData.epics), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_TIME_ROW_LABEL'), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_DATE_START_LABEL'), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_DATE_END_LABEL'), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_PERIOD_LABEL'), this.getFormattedDateStart(sprintData.dateStart), this.getFormattedDateStart(sprintData.dateEnd), this.getPeriodDays(sprintData.dateStart), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_PLAN_ROW_LABEL'), main_core.Text.encode(storyPoints), main_core.Text.encode(storyPoints), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_PLAN_SP'), main_core.Loc.getMessage('TSS_START_STORY_POINTS_HINT'), this.renderWheelCompletedStoryPoints(sprintData), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_DONE_SP'), main_core.Loc.getMessage('TSS_START_STORY_POINTS_HINT'), this.renderUncompletedTasks(sprintData));
+	      var periodDays = this.getPeriodDays(sprintData.dateStart);
+	      this.node = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div id=\"", "\" class=\"tasks-scrum__scope--side-panel-completion\">\n\n\t\t\t<div class=\"tasks-scrum__side-panel-completion--block\">\n\n\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-basic\">\n\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-basic-block\">\n\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-basic-title\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-additional\">\n\n\t\t\t\t\t", "\n\n\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-row\">\n\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-title\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-content tasks-scrum__side-panel-completion--sprint-timing\">\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--date-name-block\">\n\t\t\t\t\t\t\t\t<div>", "</div>\n\t\t\t\t\t\t\t\t<div>", "</div>\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--date-result-block\">\n\t\t\t\t\t\t\t\t<div>", "</div>\n\t\t\t\t\t\t\t\t<div>", "</div>\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\n\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-row\">\n\n\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-title\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-content\">\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--plan-block\">\n\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--sprint-plans\">\n\t\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--plan-block-number --percent\">\n\t\t\t\t\t\t\t\t\t\t<div \n\t\t\t\t\t\t\t\t\t\t\tclass=\"tasks-scrum__side-panel-completion--plan-block-number-date\"\n\t\t\t\t\t\t\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--plan-block-name\">\n\t\t\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--plan-block-name-text\">\n\t\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t<div class=\"ui-hint\">\n\t\t\t\t\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\t\t\t\t\tclass=\"ui-hint-icon\"\n\t\t\t\t\t\t\t\t\t\t\t\tdata-hint=\"", "\"\n\t\t\t\t\t\t\t\t\t\t\t\tdata-hint-no-icon\n\t\t\t\t\t\t\t\t\t\t\t></span>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--sprint-plans\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--plan-block-name\">\n\t\t\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--plan-block-name-text\">\n\t\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t<div class=\"ui-hint\">\n\t\t\t\t\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\t\t\t\t\tclass=\"ui-hint-icon\"\n\t\t\t\t\t\t\t\t\t\t\t\tdata-hint=\"", "\"\n\t\t\t\t\t\t\t\t\t\t\t\tdata-hint-no-icon\n\t\t\t\t\t\t\t\t\t\t\t></span>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\n\t\t\t", "\n\n\t\t\t</div>\n\t\t"])), main_core.Text.getRandom(), main_core.Text.encode(sprintData.name), this.renderGoal(sprintData.info.sprintGoal), this.renderEpics(sprintData.epics), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_TIME_ROW_LABEL'), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_DATE_START_LABEL'), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_DATE_END_LABEL'), this.renderLabelPeriodDays(periodDays), this.getFormattedDateStart(sprintData.dateStart), this.getFormattedDateStart(sprintData.dateEnd), this.renderPeriodDays(periodDays), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_PLAN_ROW_LABEL'), main_core.Text.encode(storyPoints), main_core.Text.encode(storyPoints), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_PLAN_SP'), main_core.Loc.getMessage('TSS_START_STORY_POINTS_HINT'), this.renderWheelCompletedStoryPoints(sprintData), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_DONE_SP'), main_core.Loc.getMessage('TSS_START_STORY_POINTS_HINT'), this.renderUncompletedTasks(sprintData));
 	      this.initHints(this.node);
 	      return this.node;
+	    }
+	  }, {
+	    key: "renderLabelPeriodDays",
+	    value: function renderLabelPeriodDays(periodDays) {
+	      if (main_core.Type.isNull(periodDays)) {
+	        return '';
+	      }
+
+	      return main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"])), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_PERIOD_LABEL'));
+	    }
+	  }, {
+	    key: "renderPeriodDays",
+	    value: function renderPeriodDays(periodDays) {
+	      if (main_core.Type.isNull(periodDays)) {
+	        return '';
+	      }
+
+	      return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"])), main_core.Text.encode(periodDays));
 	    }
 	  }, {
 	    key: "renderGoal",
@@ -193,7 +218,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        return '';
 	      }
 
-	      return main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-basic-block\">\n\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-basic-description\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(goal));
+	      return main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-basic-block\">\n\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-basic-description\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(goal));
 	    }
 	  }, {
 	    key: "renderEpics",
@@ -204,12 +229,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        return '';
 	      }
 
-	      return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-row\">\n\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-title\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-content\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_EPICS_ROW_LABEL'), epics.map(function (epic) {
+	      return main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-row\">\n\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-title\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-content\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_EPICS_ROW_LABEL'), epics.map(function (epic) {
 	        var colorBorder = _this6.convertHexToRGBA(epic.color, 0.7);
 
 	        var colorBackground = _this6.convertHexToRGBA(epic.color, 0.3);
 
-	        return main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\t\tclass=\"tasks-scrum__epic-label\"\n\t\t\t\t\t\t\t\t\tstyle=\"background: ", "; border-color: ", ";\"\n\t\t\t\t\t\t\t\t>", "</span>"])), colorBackground, colorBorder, main_core.Text.encode(epic.name));
+	        return main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\t\tclass=\"tasks-scrum__epic-label\"\n\t\t\t\t\t\t\t\t\tstyle=\"background: ", "; border-color: ", ";\"\n\t\t\t\t\t\t\t\t>", "</span>"])), colorBackground, colorBorder, main_core.Text.encode(epic.name));
 	      }));
 	    }
 	  }, {
@@ -240,10 +265,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          return '';
 	        }
 
-	        return main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--progress\">\n\t\t\t\t\t<span class=\"tasks-scrum__side-panel-completion--progress-number\">", "</span>\n\t\t\t\t\t<span class=\"tasks-scrum__side-panel-completion--progress-percent\">%</span></div>\n\t\t\t\t</div>\n\t\t\t"])), percent);
+	        return main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--progress\">\n\t\t\t\t\t<span class=\"tasks-scrum__side-panel-completion--progress-number\">", "</span>\n\t\t\t\t\t<span class=\"tasks-scrum__side-panel-completion--progress-percent\">%</span></div>\n\t\t\t\t</div>\n\t\t\t"])), percent);
 	      };
 
-	      return main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"", "\">\n\t\t\t\t<div \n\t\t\t\t\tclass=\"tasks-scrum__side-panel-completion--plan-block-number-date\"\n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), wheelClass, main_core.Text.encode(sprintData.completedStoryPoints), main_core.Text.encode(sprintData.completedStoryPoints), renderProgress(absoluteValue));
+	      return main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"", "\">\n\t\t\t\t<div \n\t\t\t\t\tclass=\"tasks-scrum__side-panel-completion--plan-block-number-date\"\n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), wheelClass, main_core.Text.encode(sprintData.completedStoryPoints), main_core.Text.encode(sprintData.completedStoryPoints), renderProgress(absoluteValue));
 	    }
 	  }, {
 	    key: "renderUncompletedTasks",
@@ -254,7 +279,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        return '';
 	      }
 
-	      return main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__side-panel-completion--block\">\n\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-basic\">\n\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-basic-block\">\n\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-basic-title-icon\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-basic-description\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-items\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_ACTION_ROW_LABEL'), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_ACTION_MOVE_LABEL'), this.renderMoveSelect(sprintData.plannedSprints), sprintData.uncompletedTasks.map(function (item) {
+	      return main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__side-panel-completion--block\">\n\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-basic\">\n\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-basic-block\">\n\t\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-basic-title-icon\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-basic-description\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-items\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_ACTION_ROW_LABEL'), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_ACTION_MOVE_LABEL'), this.renderMoveSelect(sprintData.plannedSprints), sprintData.uncompletedTasks.map(function (item) {
 	        return _this7.renderItem(item);
 	      }));
 	    }
@@ -266,7 +291,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      plannedSprints.forEach(function (sprint) {
 	        sprintsOptions += "<option value=\"".concat(sprint.id, "\">").concat(main_core.Text.encode(sprint.name), "</option>");
 	      });
-	      return main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-select ", "\">\n\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t<select class=\"ui-ctl-element\">\n\t\t\t\t\t<option value=\"backlog\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</option>\n\t\t\t\t\t<option value=\"0\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</option>\n\t\t\t\t\t", "\n\t\t\t\t</select>\n\t\t\t</div>\n\t\t"])), uiClasses, main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_SELECTOR_BACKLOG'), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_SELECTOR_SPRINT'), sprintsOptions);
+	      return main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__side-panel-completion--info-select ", "\">\n\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t<select class=\"ui-ctl-element\">\n\t\t\t\t\t<option value=\"backlog\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</option>\n\t\t\t\t\t<option value=\"0\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</option>\n\t\t\t\t\t", "\n\t\t\t\t</select>\n\t\t\t</div>\n\t\t"])), uiClasses, main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_SELECTOR_BACKLOG'), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_SELECTOR_SPRINT'), sprintsOptions);
 	    }
 	  }, {
 	    key: "renderItem",
@@ -276,7 +301,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var src = item.responsible.photo ? main_core.Text.encode(item.responsible.photo.src) : null;
 	      var photoStyle = src ? "background-image: url('".concat(src, "');") : '';
 	      var storyPointsClass = item.storyPoints === '' ? '--empty' : '';
-	      var node = main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__item-side-panel\">\n\t\t\t\t<div class=\"tasks-scrum__item-side-panel--info\">\n\t\t\t\t\t<div class=\"tasks-scrum__item-side-panel--main-info\">\n\t\t\t\t\t\t<div class=\"tasks-scrum__item-side-panel--title\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"tasks-scrum__item-side-panel--tags\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__item-side-panel--responsible\">\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass=\"tasks-scrum__item-side-panel--responsible-photo ui-icon ui-icon-common-user\"\n\t\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t><i style=\"", "\"></i>\n\t\t\t\t\t</div>\n\t\t\t\t\t<span>", "</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__item-side-panel--story-points ", "\">\n\t\t\t\t\t<div class=\"tasks-scrum__item-side-panel--story-points-content\">\n\t\t\t\t\t\t<div class=\"tasks-scrum__item-side-panel--story-points-element\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(item.name), this.renderEpic(item.epic), this.renderTags(item.tags), main_core.Text.encode(item.responsible.name), photoStyle, main_core.Text.encode(item.responsible.name), storyPointsClass, item.storyPoints === '' ? '-' : main_core.Text.encode(item.storyPoints));
+	      var node = main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__item-side-panel\">\n\t\t\t\t<div class=\"tasks-scrum__item-side-panel--info\">\n\t\t\t\t\t<div class=\"tasks-scrum__item-side-panel--main-info\">\n\t\t\t\t\t\t<div class=\"tasks-scrum__item-side-panel--title\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"tasks-scrum__item-side-panel--tags\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__item-side-panel--responsible\">\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass=\"tasks-scrum__item-side-panel--responsible-photo ui-icon ui-icon-common-user\"\n\t\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t><i style=\"", "\"></i>\n\t\t\t\t\t</div>\n\t\t\t\t\t<span>", "</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__item-side-panel--story-points ", "\">\n\t\t\t\t\t<div class=\"tasks-scrum__item-side-panel--story-points-content\">\n\t\t\t\t\t\t<div class=\"tasks-scrum__item-side-panel--story-points-element\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(item.name), this.renderEpic(item.epic), this.renderTags(item.tags), main_core.Text.encode(item.responsible.name), photoStyle, main_core.Text.encode(item.responsible.name), storyPointsClass, item.storyPoints === '' ? '-' : main_core.Text.encode(item.storyPoints));
 	      main_core.Event.bind(node, 'click', function () {
 	        return _this8.emit('taskClick', item.sourceId);
 	      });
@@ -289,7 +314,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        return '';
 	      }
 
-	      return main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__item-side-panel--epic --visible\">\n\t\t\t\t<i\n\t\t\t\t\tclass=\"tasks-scrum__item-side-panel--epic-point\"\n\t\t\t\t\tstyle=\"", "\"\n\t\t\t\t></i>\n\t\t\t\t<span>", "</span>\n\t\t\t</div>\n\t\t"])), "background-color: ".concat(epic.color), main_core.Text.encode(epic.name));
+	      return main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__item-side-panel--epic --visible\">\n\t\t\t\t<i\n\t\t\t\t\tclass=\"tasks-scrum__item-side-panel--epic-point\"\n\t\t\t\t\tstyle=\"", "\"\n\t\t\t\t></i>\n\t\t\t\t<span>", "</span>\n\t\t\t</div>\n\t\t"])), "background-color: ".concat(epic.color), main_core.Text.encode(epic.name));
 	    }
 	  }, {
 	    key: "renderTags",
@@ -298,8 +323,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        return '';
 	      }
 
-	      return main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t", "\n\t\t"])), tags.map(function (tag) {
-	        return main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-scrum__item-side-panel--hashtag --visible\">#", "</div>\n\t\t\t"])), main_core.Text.encode(tag));
+	      return main_core.Tag.render(_templateObject13 || (_templateObject13 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t", "\n\t\t"])), tags.map(function (tag) {
+	        return main_core.Tag.render(_templateObject14 || (_templateObject14 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-scrum__item-side-panel--hashtag --visible\">#", "</div>\n\t\t\t"])), main_core.Text.encode(tag));
 	      }));
 	    }
 	  }, {
@@ -323,6 +348,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      dateWithWeekendOffset.setSeconds(dateWithWeekendOffset.getSeconds());
 	      dateWithWeekendOffset.setHours(0, 0, 0, 0);
 	      var dateStart = new Date(dateStartTime * 1000);
+	      var date = new Date();
+
+	      if (dateStart >= date) {
+	        return null;
+	      }
+
 	      return BX.date.format('ddiff', dateStart, dateWithWeekendOffset);
 	    }
 	  }, {

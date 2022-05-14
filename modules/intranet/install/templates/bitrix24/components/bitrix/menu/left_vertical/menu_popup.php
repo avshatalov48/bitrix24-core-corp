@@ -56,7 +56,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 			?>
 
 			<label class="left-menu-popup-card-item js-left-menu-preset-item<?if ($arResult["CURRENT_PRESET_ID"] == "social"):?> left-menu-popup-selected<?endif?>" for="presetTypeSocial" >
-				<div class="left-menu-popup-card-item-title"><?=GetMessage("MENU_PRESET_SOCIAL_TITLE1")?></div>
+				<div class="left-menu-popup-card-item-title"><?=GetMessage("MENU_PRESET_SOCIAL_TITLE1_1")?></div>
 				<div class="left-menu-popup-card-item-icon-box left-menu-popup-icon-communication">
 					<div class="left-menu-popup-card-item-icon"></div>
 				</div>

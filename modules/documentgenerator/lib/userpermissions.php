@@ -84,7 +84,16 @@ class UserPermissions
 			if($document && $document->hasAccess($this->userId))
 			{
 				$template = $document->getTemplate();
-				return ($template && isset($this->getRelatedTemplateIds()[$template->ID]));
+				if (!$template)
+				{
+					return true;
+				}
+				if ($template->isDeleted())
+				{
+					return true;
+				}
+
+				return isset($this->getRelatedTemplateIds()[$template->ID]);
 			}
 		}
 

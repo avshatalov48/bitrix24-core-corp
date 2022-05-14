@@ -468,9 +468,10 @@ class EntityConversionWizard
 			$result['QUOTE_ID'] = $entityID;
 		}
 
-		if($targetEntityTypeID === \CCrmOwnerType::Deal)
+		$factory = Container::getInstance()->getFactory((int)$targetEntityTypeID);
+		if($factory && $factory->isCategoriesEnabled())
 		{
-			$config = $this->getEntityConfig(\CCrmOwnerType::Deal);
+			$config = $this->getEntityConfig($targetEntityTypeID);
 			if($config)
 			{
 				$initData = $config->getInitData();

@@ -10,6 +10,7 @@ use Bitrix\Crm\Item;
 use Bitrix\Crm\QuoteTable;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Objectify\Values;
 use Bitrix\Main\Type\Date;
 
 /**
@@ -63,9 +64,9 @@ class Quote extends Item
 		return 'QUOTE_OWNER';
 	}
 
-	protected function transformToExternalValue(string $entityFieldName, $fieldValue)
+	protected function transformToExternalValue(string $entityFieldName, $fieldValue, int $valuesType = Values::ALL)
 	{
-		$value = parent::transformToExternalValue($entityFieldName, $fieldValue);
+		$value = parent::transformToExternalValue($entityFieldName, $fieldValue, $valuesType);
 
 		$commonFieldName = $this->getCommonFieldNameByMap($entityFieldName);
 		if($commonFieldName === static::FIELD_NAME_STORAGE_ELEMENTS && is_array($value))

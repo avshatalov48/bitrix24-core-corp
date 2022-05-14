@@ -12,7 +12,15 @@ class IntranetUstatDepartment extends \CBitrixComponent implements \Bitrix\Main\
 
 	public function configureActions()
 	{
-		return [];
+		$defaultPrefilters = [
+			new \Bitrix\Intranet\ActionFilter\UserType(['employee']),
+		];
+
+		return [
+			'getJson' => [
+				'prefilters' => $defaultPrefilters
+			]
+		];
 	}
 
 	public function getJsonAction(): ?\Bitrix\Main\Engine\Response\AjaxJson

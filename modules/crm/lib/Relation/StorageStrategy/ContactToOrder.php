@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Relation\StorageStrategy;
 
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Order\Contact;
+use Bitrix\Crm\Order\ContactCompanyBinding;
 use Bitrix\Crm\Order\ContactCompanyEntity;
 use Bitrix\Crm\Order\Order;
 use Bitrix\Main\Result;
@@ -47,7 +48,10 @@ class ContactToOrder extends ContactCompanyToOrder
 
 	protected function replaceBindings(ItemIdentifier $fromItem, ItemIdentifier $toItem): Result
 	{
-		\Bitrix\Crm\Order\Contact::rebind($fromItem->getEntityId(), $toItem->getEntityId());
+		(new ContactCompanyBinding(\CCrmOwnerType::Contact))->rebind(
+			$fromItem->getEntityId(),
+			$toItem->getEntityId()
+		);
 
 		return new Result();
 	}

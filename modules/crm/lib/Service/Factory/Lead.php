@@ -3,19 +3,21 @@
 namespace Bitrix\Crm\Service\Factory;
 
 use Bitrix\Crm\Category\Entity\Category;
-use Bitrix\Crm\Conversion\EntityConversionConfig;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\LeadTable;
+use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Service\EventHistory\TrackedObject;
 use Bitrix\Crm\Service\Operation;
+use Bitrix\Crm\Settings\LeadSettings;
+use Bitrix\Crm\Statistics;
 use Bitrix\Crm\StatusTable;
-use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\IO\Path;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ObjectNotFoundException;
 
 final class Lead extends Service\Factory
 {
@@ -38,7 +40,12 @@ final class Lead extends Service\Factory
 
 	public function isRecyclebinEnabled(): bool
 	{
-		return true;
+		return LeadSettings::getCurrent()->isRecycleBinEnabled();
+	}
+
+	public function isDeferredCleaningEnabled(): bool
+	{
+		return LeadSettings::getCurrent()->isDeferredCleaningEnabled();
 	}
 
 	public function isNewRoutingForAutomationEnabled(): bool
@@ -111,7 +118,6 @@ final class Lead extends Service\Factory
 			Item::FIELD_NAME_STAGE_SEMANTIC_ID => 'STATUS_SEMANTIC_ID',
 			Item::FIELD_NAME_CREATED_TIME => Item\Lead::FIELD_NAME_DATE_CREATE,
 			Item::FIELD_NAME_UPDATED_TIME => Item\Lead::FIELD_NAME_DATE_MODIFY,
-			Item::FIELD_NAME_CLOSE_DATE => Item\Lead::FIELD_NAME_DATE_CLOSED,
 			Item::FIELD_NAME_CREATED_BY => Item\Lead::FIELD_NAME_CREATED_BY_ID,
 			Item::FIELD_NAME_UPDATED_BY => Item\Lead::FIELD_NAME_MODIFY_BY_ID,
 			Item::FIELD_NAME_MOVED_BY => 'MOVED_BY_ID',
@@ -133,7 +139,7 @@ final class Lead extends Service\Factory
 			],
 			Item::FIELD_NAME_TITLE => [
 				'TYPE' => Field::TYPE_STRING,
-				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Required],
+				'CLASS' => Field\Title::class,
 			],
 			Item::FIELD_NAME_HONORIFIC => [
 				'TYPE' => Field::TYPE_CRM_STATUS,
@@ -150,15 +156,15 @@ final class Lead extends Service\Factory
 			],
 			Item::FIELD_NAME_FULL_NAME => [
 				'TYPE' => Field::TYPE_STRING,
-				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Hidden],
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Hidden, \CCrmFieldInfoAttr::ReadOnly],
 				'CLASS' => Field\FullName::class,
 			],
 			Item::FIELD_NAME_BIRTHDATE => [
 				'TYPE' => Field::TYPE_DATE,
 			],
-			Item::FIELD_NAME_BIRTHDATE_SORT => [
+			Item::FIELD_NAME_BIRTHDAY_SORT => [
 				'TYPE' => Field::TYPE_INTEGER,
-				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Hidden],
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Hidden, \CCrmFieldInfoAttr::ReadOnly],
 				'CLASS' => Field\BirthdaySort::class,
 			],
 			Item\Lead::FIELD_NAME_COMPANY_TITLE => [
@@ -186,8 +192,16 @@ final class Lead extends Service\Factory
 				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly],
 				'CLASS' => Field\StageSemanticId::class,
 			],
+			Item::FIELD_NAME_POST => [
+				'TYPE' => Field::TYPE_STRING,
+			],
 			Item::FIELD_NAME_CURRENCY_ID => [
 				'TYPE' => Field::TYPE_CRM_CURRENCY,
+				'ATTRIBUTES' => [
+					\CCrmFieldInfoAttr::NotDisplayed,
+					\CCrmFieldInfoAttr::HasDefaultValue,
+					\CCrmFieldInfoAttr::CanNotBeEmptied,
+				],
 				'CLASS' => Field\CurrencyId::class,
 			],
 			Item::FIELD_NAME_ACCOUNT_CURRENCY_ID => [
@@ -195,8 +209,9 @@ final class Lead extends Service\Factory
 				'ATTRIBUTES' => [
 					\CCrmFieldInfoAttr::NotDisplayed,
 					\CCrmFieldInfoAttr::Hidden,
+					\CCrmFieldInfoAttr::ReadOnly,
+					\CCrmFieldInfoAttr::HasDefaultValue,
 				],
-				'CLASS' => Field\AccountCurrencyId::class,
 			],
 			Item::FIELD_NAME_IS_MANUAL_OPPORTUNITY => [
 				'TYPE' => Field::TYPE_BOOLEAN,
@@ -211,26 +226,14 @@ final class Lead extends Service\Factory
 				'CLASS' => Field\Opportunity::class,
 				'ATTRIBUTES' => [\CCrmFieldInfoAttr::NotDisplayed],
 			],
-			Item::FIELD_NAME_TAX_VALUE => [
-				'TYPE' => Field::TYPE_DOUBLE,
-				'ATTRIBUTES' => [\CCrmFieldInfoAttr::NotDisplayed],
-				'CLASS' => Field\TaxValue::class,
-			],
 			Item::FIELD_NAME_OPPORTUNITY_ACCOUNT => [
 				'TYPE' => Field::TYPE_DOUBLE,
 				'ATTRIBUTES' => [
 					\CCrmFieldInfoAttr::NotDisplayed,
 					\CCrmFieldInfoAttr::Hidden,
+					\CCrmFieldInfoAttr::ReadOnly,
 				],
 				'CLASS' => Field\OpportunityAccount::class,
-			],
-			Item::FIELD_NAME_TAX_VALUE_ACCOUNT => [
-				'TYPE' => Field::TYPE_DOUBLE,
-				'ATTRIBUTES' => [
-					\CCrmFieldInfoAttr::NotDisplayed,
-					\CCrmFieldInfoAttr::Hidden,
-				],
-				'CLASS' => Field\TaxValueAccount::class,
 			],
 			Item::FIELD_NAME_OPENED => [
 				'TYPE' => Field::TYPE_BOOLEAN,
@@ -239,12 +242,26 @@ final class Lead extends Service\Factory
 			],
 			Item::FIELD_NAME_COMMENTS => [
 				'TYPE' => Field::TYPE_TEXT,
-				'ATTRIBUTES' => [],
 				'VALUE_TYPE' => Field::VALUE_TYPE_HTML,
+			],
+			Item::FIELD_NAME_HAS_PHONE => [
+				'TYPE' => Field::TYPE_BOOLEAN,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly],
+				'CLASS' => Field\HasPhone::class,
+			],
+			Item::FIELD_NAME_HAS_EMAIL => [
+				'TYPE' => Field::TYPE_BOOLEAN,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly],
+				'CLASS' => Field\HasEmail::class,
+			],
+			Item::FIELD_NAME_HAS_IMOL => [
+				'TYPE' => Field::TYPE_BOOLEAN,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly],
+				'CLASS' => Field\HasImol::class,
 			],
 			Item::FIELD_NAME_ASSIGNED => [
 				'TYPE' => Field::TYPE_USER,
-				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Required],
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Required, \CCrmFieldInfoAttr::HasDefaultValue],
 				'CLASS' => Field\Assigned::class,
 			],
 			Item::FIELD_NAME_CREATED_BY => [
@@ -288,6 +305,10 @@ final class Lead extends Service\Factory
 				'TYPE' => Field::TYPE_CRM_CONTACT,
 				'ATTRIBUTES' => [\CCrmFieldInfoAttr::NotDisplayed, \CCrmFieldInfoAttr::Deprecated],
 			],
+			Item::FIELD_NAME_CONTACT_IDS => [
+				'TYPE' => Field::TYPE_CRM_CONTACT,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::NotDisplayed, \CCrmFieldInfoAttr::Multiple]
+			],
 			Item::FIELD_NAME_CONTACTS => [
 				'TYPE' => Field::TYPE_CRM_CONTACT,
 				'ATTRIBUTES' => [\CCrmFieldInfoAttr::NotDisplayed, \CCrmFieldInfoAttr::Multiple]
@@ -297,13 +318,17 @@ final class Lead extends Service\Factory
 				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly, \CCrmFieldInfoAttr::NotDisplayed],
 				'CLASS' => Field\IsReturnCustomer::class,
 				'SETTINGS' => [
-					'determineValueByClientOnly' => true,
+					'isPrimarySource' => true,
 				],
 			],
-			Item::FIELD_NAME_CLOSE_DATE => [
+			// it has similar logic to Item::FIELD_NAME_CLOSE_DATE, but they are not the same field.
+			Item\Lead::FIELD_NAME_DATE_CLOSED => [
 				'TYPE' => Field::TYPE_DATETIME,
-				'ATTRIBUTES' => [\CCrmFieldInfoAttr::CanNotBeEmptied, \CCrmFieldInfoAttr::HasDefaultValue],
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly, \CCrmFieldInfoAttr::NotDisplayed],
 				'CLASS' => Field\CloseDate::class,
+				'SETTINGS' => [
+					'isSetCurrentDateOnCompletionEnabled' => true,
+				],
 			],
 			Item::FIELD_NAME_ORIGINATOR_ID => [
 				'TYPE' => Field::TYPE_STRING,
@@ -343,11 +368,24 @@ final class Lead extends Service\Factory
 	{
 		return [
 			Item::FIELD_NAME_TITLE,
-			Item::FIELD_NAME_ASSIGNED,
-			Item::FIELD_NAME_CURRENCY_ID,
+			Item::FIELD_NAME_NAME,
+			Item::FIELD_NAME_SECOND_NAME,
+			Item::FIELD_NAME_LAST_NAME,
+			Item::FIELD_NAME_POST,
 			Item::FIELD_NAME_STAGE_ID,
-			Item::FIELD_NAME_COMPANY_ID,
+			Item\Lead::FIELD_NAME_STATUS_DESCRIPTION,
+			Item::FIELD_NAME_COMMENTS,
+			Item::FIELD_NAME_CURRENCY_ID,
+			Item::FIELD_NAME_OPPORTUNITY,
 			Item::FIELD_NAME_IS_MANUAL_OPPORTUNITY,
+			Item::FIELD_NAME_SOURCE_ID,
+			Item::FIELD_NAME_SOURCE_DESCRIPTION,
+			Item\Lead::FIELD_NAME_COMPANY_TITLE,
+			Item::FIELD_NAME_ASSIGNED,
+			Item::FIELD_NAME_BIRTHDATE,
+			Item::FIELD_NAME_COMPANY_ID,
+			Item::FIELD_NAME_IS_RETURN_CUSTOMER,
+			Item::FIELD_NAME_FM,
 		];
 	}
 
@@ -366,43 +404,173 @@ final class Lead extends Service\Factory
 		return $objects;
 	}
 
-	public function getAddOperation(Item $item, Context $context = null): Operation\Add
+	protected function getOperationSettings(?Context $context): Operation\Settings
 	{
-		// duplication and statistic procession is not ready yet
-		throw new InvalidOperationException('Lead factory is not ready to work with operations yet');
+		$settings = parent::getOperationSettings($context);
+
+		$providersToAutocomplete = [];
+
+		$completionConfig = LeadSettings::getCurrent()->getActivityCompletionConfig();
+		foreach (\Bitrix\Crm\Activity\Provider\ProviderManager::getCompletableProviderList() as $providerInfo)
+		{
+			$providerID = (string)$providerInfo['ID'];
+
+			$shouldBeAutocompleted = $completionConfig[$providerID] ?? true;
+			if ($shouldBeAutocompleted)
+			{
+				$providersToAutocomplete[] = $providerID;
+			}
+		}
+
+		$settings->setActivityProvidersToAutocomplete($providersToAutocomplete);
+		if (empty($providersToAutocomplete))
+		{
+			// nothing to complete, all providers disabled by settings
+			$settings->disableActivitiesAutocompletion();
+		}
+
+		return $settings;
+	}
+
+	protected function configureAddOperation(Operation $operation): void
+	{
+		$operation
+			->addAction(
+				Operation::ACTION_BEFORE_SAVE,
+				new Operation\Action\Compatible\SendEvent\WithCancel\Update(
+					'OnBeforeCrmLeadAdd',
+					'CRM_LEAD_CREATION_CANCELED',
+			),
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\ClearCache('b_crm_lead'),
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\Compatible\SocialNetwork\ProcessAdd(),
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\Compatible\SendEvent('OnAfterCrmLeadAdd'),
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\Compatible\SendEvent\ExternalAdd('OnAfterExternalCrmLeadAdd'),
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\Compatible\SendEvent\ProductRowsSave('OnAfterCrmLeadProductRowsSave'),
+			)
+		;
 	}
 
 	public function getUpdateOperation(Item $item, Context $context = null): Operation\Update
 	{
-		throw new InvalidOperationException('Lead factory is not ready to work with operations yet');
+		$operation = parent::getUpdateOperation($item, $context);
+
+		$operation
+			->addAction(
+				Operation::ACTION_BEFORE_SAVE,
+				new Operation\Action\Compatible\SendEvent\WithCancel\Update(
+					'OnBeforeCrmLeadUpdate',
+					'CRM_LEAD_UPDATE_CANCELED',
+				),
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\ClearCache(
+					null,
+					'crm_entity_name_' . $this->getEntityTypeId() . '_',
+					[Item::FIELD_NAME_TITLE]
+				)
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\Compatible\SocialNetwork\ProcessUpdate(),
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\UpdateMlScoring(),
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\Compatible\SendEvent('OnAfterCrmLeadUpdate'),
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\Compatible\SendEvent\ProductRowsSave('OnAfterCrmLeadProductRowsSave'),
+			)
+		;
+
+		return $operation;
 	}
 
 	public function getDeleteOperation(Item $item, Context $context = null): Operation\Delete
 	{
-		throw new InvalidOperationException('Lead factory is not ready to work with operations yet');
+		$operation = parent::getDeleteOperation($item, $context);
+
+		$operation
+			->addAction(
+				Operation::ACTION_BEFORE_SAVE,
+				new Operation\Action\Compatible\SendEvent\WithCancel\Delete('OnBeforeCrmLeadDelete')
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\ClearCache(
+					'b_crm_lead',
+					'crm_entity_name_' . $this->getEntityTypeId() . '_'
+				)
+			)
+		;
+
+		// the action works properly only in this case. otherwise, does basically nothing, since on time of execution all
+		// activities either rebound to recycle bin entity or deleted immediately.
+		// in most cases this action is not needed, was added to extend backwards compatibility
+		if (!$this->isRecyclebinEnabled() && $this->isDeferredCleaningEnabled())
+		{
+			$operation
+				->addAction(
+					Operation::ACTION_AFTER_SAVE,
+					new Operation\Action\Compatible\RebindActivitiesToClient($this->getSuccessfulStageId()),
+				)
+			;
+		}
+
+		$operation
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\Compatible\SocialNetwork\ProcessDelete(),
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\Compatible\SendEvent\Delete('OnAfterCrmLeadDelete')
+			)
+		;
+
+		return $operation;
 	}
 
-	public function getConversionOperation(
-		Item $item,
-		EntityConversionConfig $configs,
-		Context $context = null
-	): Service\Operation\Conversion
+	private function getSuccessfulStageId(): string
 	{
-		throw new InvalidOperationException('Lead factory is not ready to work with operations yet');
+		foreach ($this->getStages() as $stage)
+		{
+			if ($stage->getSemantics() === PhaseSemantics::SUCCESS)
+			{
+				return $stage->getStatusId();
+			}
+		}
+
+		throw new ObjectNotFoundException('Successful stage for lead was not found');
 	}
 
-	public function getCopyOperation(Item $item, Context $context = null): Operation\Copy
+	protected function getStatisticsFacade(): ?Statistics\OperationFacade
 	{
-		throw new InvalidOperationException('Lead factory is not ready to work with operations yet');
+		return new Statistics\OperationFacade\Lead($this->getSuccessfulStageId());
 	}
 
-	public function getRestoreOperation(Item $item, Context $context = null): Operation\Restore
+	public function isCountersEnabled(): bool
 	{
-		throw new InvalidOperationException('Lead factory is not ready to work with operations yet');
-	}
-
-	public function getImportOperation(Item $item, Context $context = null): Operation\Import
-	{
-		throw new InvalidOperationException('Lead factory is not ready to work with operations yet');
+		return true;
 	}
 }

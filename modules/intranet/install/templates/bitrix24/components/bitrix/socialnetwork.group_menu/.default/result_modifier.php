@@ -413,6 +413,11 @@ $sliderPages = [
 //	'forum' => [],
 	'wiki' => [],
 	'photo' => [],
+	'landing_knowledge' => [
+		'newWindowLabel' => false,
+		'copyLinkLabel' => false,
+		'allowChangeHistory' => false,
+	],
 ];
 
 if (!$firstMenuItemCode)
@@ -429,14 +434,27 @@ foreach ($arResult['Urls'] as $key => $value)
 	{
 		$arResult['Urls'][$key] = (new Uri($value))->addParams([ 'IFRAME' => 'Y' ])->getUri();
 	}
-	elseif (isset($sliderPages[$key]))
+	elseif (preg_match('/^javascript:void\((.*)\);$/', $value, $matches))
 	{
-		$arResult['OnClicks'][$key] = "BX.SidePanel.Instance.open('" . (new Uri($value))->addParams([ 'IFRAME' => 'Y' ])->getUri() . "', {
-			customLeftBoundary: 270,
-			loader: '" . ($sliderPages[$key]['loader'] ?? '') . "',
-			newWindowLabel: true,
-			copyLinkLabel: true,
-		})";
+		$arResult['OnClicks'][$key] = $matches[1];
+	}
+	elseif (
+		isset($sliderPages[$key])
+		&& (string)$value !== ''
+	)
+	{
+		$options = [
+			'customLeftBoundary' => 270,
+			'loader' => $sliderPages[$key]['loader'] ?? '',
+			'newWindowLabel' => $sliderPages[$key]['newWindowLabel'] ?? true,
+			'copyLinkLabel' => $sliderPages[$key]['copyLinkLabel'] ?? true,
+			'allowChangeHistory' => $sliderPages[$key]['allowChangeHistory'] ?? null,
+		];
+
+		$arResult['OnClicks'][$key] =
+			"BX.SidePanel.Instance.open('"
+			. (new Uri($value))->addParams([ 'IFRAME' => 'Y' ])->getUri() .
+			"', " . CUtil::phpToJSObject($options) . " )";
 	}
 	elseif ($key === 'marketplace')
 	{
@@ -463,7 +481,6 @@ foreach ($arResult['Urls'] as $key => $value)
 			'grouprequestsout',
 			'userleavegroup',
 			'copy',
-			'landing_knowledge',
 			'groupslist',
 			'view',
 			'general',
@@ -484,8 +501,20 @@ $arResult['IS_CURRENT_PAGE_FIRST'] = \Bitrix\Socialnetwork\ComponentHelper::isCu
 ]);
 
 $arResult['projectWidgetData'] = [
-	'avatar' => (isset($arResult['Group']['IMAGE_FILE']['src']) ? $arResult['Group']['IMAGE_FILE']['src'] : ''),
+	'avatar' => ($arResult['Group']['IMAGE_FILE']['src'] ?? ''),
 	'name' => $arResult['Group']['NAME'],
-//	'description' => $arResult['Group']['DESCRIPTION'],
 	'isProject' => ($arResult['Group']['PROJECT'] === 'Y'),
 ];
+
+$arResult['isSubscribed'] = (
+	in_array($arResult['CurrentUserPerms']['UserRole'], UserToGroupTable::getRolesMember(), true)
+	&& CSocNetSubscription::isUserSubscribed($USER->getId(), 'SG' . $arResult['Group']['ID'])
+);
+
+$arResult['bindingMenuItems'] = \Bitrix\Intranet\Binding\Menu::getMenuItems(
+	'socialnetwork',
+	'group_notifications',
+	[
+		'GROUP_ID' => $arResult['Group']['ID'],
+	]
+);

@@ -95,7 +95,8 @@ class CrmDocumentViewComponent extends \Bitrix\DocumentGenerator\Components\View
 		else
 		{
 			\Bitrix\DocumentGenerator\CreationMethod::markDocumentAsCreatedByPublic($this->document);
-			$result = $this->document->getFile();
+			$isSendToTransformation = !$this->document->PDF_ID;
+			$result = $this->document->getFile($isSendToTransformation);
 		}
 		$this->arResult = $result->getData();
 		if(!$result->isSuccess())

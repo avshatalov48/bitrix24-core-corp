@@ -1,12 +1,124 @@
 import {Loc, Tag} from 'main.core';
+import {EventEmitter} from 'main.core.events';
 import {Label, LabelColor} from 'ui.label';
 import {EntityEditorPaymentDocuments} from './entity-editor';
+import {CurrencyCore} from 'currency.currency-core';
 
 export class TimelineSummaryDocuments extends EntityEditorPaymentDocuments
 {
 	static _rootNodeClass = 'crm-entity-stream-content-detail-table crm-entity-stream-content-documents-table';
 
-	_renderDealTotalSum() {
+	render(): HTMLElement {
+		this._menus.forEach((menu) => menu.destroy());
+		this._rootNode.innerHTML = '';
+		this._setupCurrencyFormat();
+
+		if (this.hasContent())
+		{
+			this._filterSuccessfulDocuments();
+			this._rootNode.classList.remove('is-hidden');
+
+			if (this._isWithOrdersMode)
+			{
+				this._renderDocumentWithOrdersMode();
+			}
+			else
+			{
+				this._renderDocumentWithoutOrdersMode();
+			}
+
+			let checkExists = this._isCheckExists();
+			if (checkExists)
+			{
+				this._rootNode.append(Tag.render`
+					<div class="crm-entity-stream-content-document-table-group">
+						${this._renderChecksDocument()}
+					</div>
+				`);
+			}
+		}
+		else
+		{
+			this._rootNode.classList.add('is-hidden');
+		}
+
+		EventEmitter.emit('PaymentDocuments:render', [this]);
+
+		return this._rootNode;
+	}
+
+	_renderDocumentWithOrdersMode()
+	{
+		let orderDocument = Tag.render`<div></div>`;
+
+		this._orders().forEach(order => {
+			let documents = this._renderDocumentsByOrder(order.ID);
+			if (documents.length > 0)
+			{
+				orderDocument.append(this._renderOrderDetailBlock(order));
+				documents.forEach(document => {
+					orderDocument.append(document);
+				});
+			}
+		});
+
+		this._rootNode.append(Tag.render`
+			<div>
+				${orderDocument}
+				<div class="crm-entity-stream-content-document-table-group">
+					${this._renderEntityTotalSum()}
+					${this._renderEntityPaidSum()}
+				</div>
+				<div class="crm-entity-stream-content-document-table-group">
+					${this._renderTotalSum()}
+				</div>
+			</div>
+		`);
+	}
+
+	_renderDocumentWithoutOrdersMode()
+	{
+		this._rootNode.append(Tag.render`
+			<div>
+				${this._renderDocuments()}
+				<div class="crm-entity-stream-content-document-table-group">
+					${this._renderEntityTotalSum()}
+					${this._renderEntityPaidSum()}
+				</div>
+				<div class="crm-entity-stream-content-document-table-group">
+					${this._renderTotalSum()}
+				</div>
+			</div>
+		`);
+	}
+
+	_renderDocumentsByOrder(orderId: number): HTMLElement[]
+	{
+		const nodes = [];
+
+		let orderDocs = this._docs().filter((item) => {
+			return item.ORDER_ID === orderId;
+		});
+
+		orderDocs.forEach(doc => {
+			if (doc.TYPE === 'PAYMENT')
+			{
+				nodes.push(this._renderPaymentDocument(doc));
+			}
+			else if (doc.TYPE === 'SHIPMENT')
+			{
+				nodes.push(this._renderDeliveryDocument(doc));
+			}
+			else if (doc.TYPE === 'SHIPMENT_DOCUMENT')
+			{
+				nodes.push(this._renderRealizationDocument(doc));
+			}
+		});
+
+		return nodes;
+	}
+
+	_renderEntityTotalSum() {
 		let phrase = 'CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DEAL_SUM';
 		if (Number(this._options.OWNER_TYPE_ID) === BX.CrmEntityType.enumeration.smartinvoice)
 		{
@@ -27,34 +139,25 @@ export class TimelineSummaryDocuments extends EntityEditorPaymentDocuments
 		`;
 	}
 
-	render(): HTMLElement {
-		this._menus.forEach((menu) => menu.destroy());
-		this._rootNode.innerHTML = '';
-		this._setupCurrencyFormat();
-
-		if (this.hasContent())
-		{
-			this._filterSuccessfulDocuments();
-			this._rootNode.classList.remove('is-hidden');
-			this._rootNode.append(Tag.render`
-				<div>
-					${this._renderDealTotalSum()}
-					${this._renderDocuments()}
-					${this._renderTotalSum()}
+	_renderEntityPaidSum() {
+		return Tag.render`
+			<div class="crm-entity-stream-content-detail-table-row crm-entity-stream-content-document-table-row">
+				<div class="crm-entity-stream-content-detail-description">
+					${Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ENTITY_PAID_SUM')}
 				</div>
-			`);
-		}
-		else
-		{
-			this._rootNode.classList.add('is-hidden');
-		}
-
-		return this._rootNode;
+				<div class="crm-entity-stream-content-detail-cost">
+					<span>
+						${this._renderMoney(this._options.PAID_AMOUNT)}
+					</span>
+				</div>
+			</div>
+		`;
 	}
 
 	_renderPaymentDocument(doc: PaymentDocument): HTMLElement
 	{
 		const title = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_DATE').replace(/#DATE#/gi, doc.FORMATTED_DATE);
+		const sum = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_AMOUNT').replace(/#SUM#/gi, this._renderMoney(doc.SUM));
 		const labelOptions = {
 			text: Loc.getMessage(`CRM_ENTITY_ED_PAYMENT_DOCUMENTS_STAGE_${doc.STAGE}`),
 			customClass: 'crm-entity-widget-payment-label',
@@ -82,13 +185,8 @@ export class TimelineSummaryDocuments extends EntityEditorPaymentDocuments
 		return Tag.render`
 			<div class="crm-entity-stream-content-detail-table-row">
 				<div class="crm-entity-stream-content-document-description">
-					<a class="ui-link" onclick="${openSlider}">${title}</a>
+					<a class="ui-link" onclick="${openSlider}">${title} (${sum})</a>
 					${(new Label(labelOptions)).render()}
-				</div>
-				<div class="crm-entity-stream-content-detail-cost">
-					<span>
-						${this._renderMoney(doc.SUM)}
-					</span>
 				</div>
 			</div>
 		`;
@@ -108,6 +206,7 @@ export class TimelineSummaryDocuments extends EntityEditorPaymentDocuments
 			labelOptions.color = LabelColor.LIGHT_GREEN;
 		}
 		const title = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DELIVERY_DATE').replace(/#DATE#/gi, doc.FORMATTED_DATE);
+		const sum = Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_AMOUNT').replace(/#SUM#/gi, this._renderMoney(doc.SUM));
 
 		const openSlider = () => this._viewDeliverySlider(doc.ORDER_ID, doc.ID);
 
@@ -115,14 +214,9 @@ export class TimelineSummaryDocuments extends EntityEditorPaymentDocuments
 			<div class="crm-entity-stream-content-detail-table-row">
 				<div class="crm-entity-stream-content-document-description">
 					<a class="ui-link" onclick="${openSlider}">
-						${title} (${doc.DELIVERY_NAME})
+						${title} (${doc.DELIVERY_NAME}, ${sum})
 					</a>
 					${(new Label(labelOptions)).render()}
-				</div>
-				<div class="crm-entity-stream-content-detail-cost">
-					<span>
-						${this._renderMoney(doc.SUM)}
-					</span>
 				</div>
 			</div>
 		`;
@@ -169,19 +263,12 @@ export class TimelineSummaryDocuments extends EntityEditorPaymentDocuments
 					</a>
 					${(new Label(labelOptions)).render()}
 				</div>
-				<div class="crm-entity-stream-content-detail-cost">
-					<span>
-						${this._renderMoney(doc.SUM)}
-					</span>
-				</div>
 			</div>
 		`;
 	}
 
 	_renderTotalSum(): HTMLElement
 	{
-		const totalSum = this._calculateTotalSum();
-
 		let phrase = 'CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TOTAL_SUM';
 		if (Number(this._options.OWNER_TYPE_ID) === BX.CrmEntityType.enumeration.smartinvoice)
 		{
@@ -189,7 +276,7 @@ export class TimelineSummaryDocuments extends EntityEditorPaymentDocuments
 		}
 
 		return Tag.render`
-			<div class="crm-entity-stream-content-detail-table-row">
+			<div class="crm-entity-stream-content-detail-table-row crm-entity-stream-content-detail-table-row-total">
 				<div class="crm-entity-stream-content-detail-description">
 					<span>
 						${Loc.getMessage(phrase)}
@@ -197,8 +284,64 @@ export class TimelineSummaryDocuments extends EntityEditorPaymentDocuments
 				</div>
 				<div class="crm-entity-stream-content-detail-cost">
 					<span>
-						${this._renderMoney(totalSum)}
+						${this._renderTotalMoney(this._options.TOTAL_AMOUNT)}
 					</span>
+				</div>
+			</div>
+		`;
+	}
+
+	_renderTotalMoney(sum: number): string
+	{
+		let fullPrice = CurrencyCore.currencyFormat(sum, this._options.CURRENCY_ID, true);
+		const onlyPrice = CurrencyCore.currencyFormat(sum, this._options.CURRENCY_ID, false);
+		const currency = fullPrice.replace(onlyPrice, '').trim();
+
+		fullPrice = fullPrice.replace(currency, `<span class="crm-entity-widget-payment-currency">${currency}</span>`);
+		fullPrice = fullPrice.replace(onlyPrice, `<b>${onlyPrice}</b>`);
+
+		return fullPrice;
+	}
+
+	_renderChecksDocument(): HTMLElement[]
+	{
+		const nodes = [];
+
+		this._docs().forEach(doc => {
+			if (doc.TYPE === 'CHECK')
+			{
+				nodes.push(this._renderCheckDocument(doc));
+			}
+		});
+
+		return nodes;
+	}
+
+	_renderCheckDocument(doc: CheckDocument): HTMLElement
+	{
+		let link;
+
+		if (doc.URL)
+		{
+			link = Tag.render`<a href="${doc.URL}" target="_blank">${doc.TITLE}</a>`;
+		}
+		else
+		{
+			link = Tag.render`<span>${doc.TITLE}</span>`;
+		}
+
+		return Tag.render`<div class="crm-entity-stream-content-detail-notice">${link}</div>`;
+	}
+
+	_renderOrderDetailBlock(doc: OrderDocument): HTMLElement
+	{
+		return Tag.render`
+			<div class="crm-entity-stream-content-document-table-order-group crm-entity-stream-content-detail-table-row">
+				<div class="crm-entity-stream-content-detail-description">
+					<span>${doc.TITLE}</span>
+				</div>
+				<div class="crm-entity-stream-content-detail-cost">
+					<span class="crm-entity-stream-content-detail-cost-current">${doc.PRICE_FORMAT}</span>
 				</div>
 			</div>
 		`;
@@ -211,7 +354,17 @@ export class TimelineSummaryDocuments extends EntityEditorPaymentDocuments
 				(item.TYPE === 'PAYMENT' && item.PAID === 'Y')
 				|| (item.TYPE === 'SHIPMENT' && item.DEDUCTED === 'Y')
 				|| (item.TYPE === 'SHIPMENT_DOCUMENT' && item.DEDUCTED === 'Y')
+				|| (item.TYPE === 'CHECK' && item.STATUS === 'Y')
 			);
 		});
+	}
+
+	_isCheckExists()
+	{
+		let checks = this._options.DOCUMENTS.filter((item) => {
+			return item.TYPE === 'CHECK' && item.STATUS === 'Y';
+		});
+
+		return checks.length > 1;
 	}
 }

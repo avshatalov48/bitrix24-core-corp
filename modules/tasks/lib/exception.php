@@ -4,7 +4,7 @@
  * @package bitrix
  * @subpackage tasks
  * @copyright 2001-2012 Bitrix
- * 
+ *
  * See tasks\tools.php to see legacy exception TasksException
  */
 namespace Bitrix\Tasks;
@@ -84,6 +84,30 @@ class Exception extends \Bitrix\Main\SystemException
 	protected function dumpAuxError()
 	{
 		return true;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getFirstErrorMessage(): string
+	{
+		$message = $this->getMessage();
+		$message = @unserialize($message, ['allowed_classes' => false]);
+
+		if ($message === false)
+		{
+			return $this->getMessage();
+		}
+
+		if (
+			is_array($message)
+			&& isset($message[0]['text'])
+		)
+		{
+			return $message[0]['text'];
+		}
+
+		return $this->getDefaultMessage();
 	}
 
 	public function getErrors()

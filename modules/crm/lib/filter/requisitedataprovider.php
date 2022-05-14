@@ -220,4 +220,14 @@ class RequisiteDataProvider extends Main\Filter\DataProvider
 	{
 		return new Field($this, $fieldID, $params);
 	}
+
+	public function prepareFilterValue(array $rawFilterValue): array
+	{
+		$filterValue = parent::prepareFilterValue($rawFilterValue);
+
+		$requisite = new \Bitrix\Crm\EntityRequisite();
+		$requisite->prepareEntityListFilter($filterValue);
+
+		return $filterValue;
+	}
 }

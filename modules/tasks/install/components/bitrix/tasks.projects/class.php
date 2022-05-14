@@ -324,7 +324,10 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 	{
 		if (!$this->request->isAjaxRequest())
 		{
-			if (count($this->arResult['GROUPS']) > 0)
+			if (
+				count($this->arResult['GROUPS']) > 0
+				|| !\Bitrix\Socialnetwork\Helper\Workgroup::canCreate()
+			)
 			{
 				$popupData = [];
 				$showTour = false;
@@ -466,6 +469,14 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 		}
 
 		$this->initForAjaxCalls();
+
+		foreach ($data as $key => $value)
+		{
+			if (mb_strpos($key, '~') === 0 || mb_strpos($key, '=') === 0)
+			{
+				unset($data[$key]);
+			}
+		}
 
 		$result = [];
 

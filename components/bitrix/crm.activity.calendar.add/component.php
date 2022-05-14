@@ -178,11 +178,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 
 	if (false == $boolError)
 	{
-		$strEntityShort = CUserTypeCrm::GetShortEntityType($arResult['ENTITY_TYPE']).'_';;
+		$entityTypeId = \CCrmOwnerType::ResolveID($arFilter['ENTITY_TYPE'] ?? '');
 		foreach ($arID as $intID => $iUserID)
 		{
-			$arCrmEvents = array();
-			$arCrmEvents[] = $strEntityShort.$intID;
+			if ($entityTypeId <= 0 || $intID <= 0)
+			{
+				continue;
+			}
+			$arCrmEvents = [\Bitrix\Crm\UserField\Types\ElementType::getValueByIdentifier(new \Bitrix\Crm\ItemIdentifier(
+				$entityTypeId,
+				$intID
+			))];
 			$arFields = array(
 				'CAL_TYPE' => 'user',
 				'OWNER_ID' => $iUserID,

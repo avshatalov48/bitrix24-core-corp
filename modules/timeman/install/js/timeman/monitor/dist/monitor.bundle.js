@@ -262,6 +262,43 @@ this.BX = this.BX || {};
 
 	var debug = new Debug();
 
+	var ActionTimer = /*#__PURE__*/function () {
+	  function ActionTimer() {
+	    babelHelpers.classCallCheck(this, ActionTimer);
+	    this.actionsCollection = {};
+	  }
+
+	  babelHelpers.createClass(ActionTimer, [{
+	    key: "start",
+	    value: function start(key) {
+	      this.actionsCollection[key] = {};
+	      this.actionsCollection[key].start = Date.now();
+	    }
+	  }, {
+	    key: "finish",
+	    value: function finish(key) {
+	      if (!this.actionsCollection[key] || !this.actionsCollection[key].start || this.actionsCollection[key].finish) {
+	        return;
+	      }
+
+	      this.actionsCollection[key].finish = Date.now();
+	    }
+	  }, {
+	    key: "getDuration",
+	    value: function getDuration(key) {
+	      if (!this.actionsCollection[key] || !this.actionsCollection[key].start || !this.actionsCollection[key].finish) {
+	        return;
+	      }
+
+	      var timeInSeconds = (this.actionsCollection[key].finish - this.actionsCollection[key].start) / 1000;
+	      return "ACTION: ".concat(key, ", TIME: ").concat(timeInSeconds.toFixed(2), "s");
+	    }
+	  }]);
+	  return ActionTimer;
+	}();
+
+	var actionTimer = new ActionTimer();
+
 	var Notification = /*#__PURE__*/function () {
 	  function Notification(title, text, callback) {
 	    babelHelpers.classCallCheck(this, Notification);
@@ -524,11 +561,19 @@ this.BX = this.BX || {};
 	            privateCode = entity.privateCode;
 	          }
 
+	          var logEntity = {
+	            type: result.type,
+	            title: result.title
+	          };
+
 	          if (!historyEntry) {
 	            delete result.title;
 	            store.commit('addHistory', babelHelpers.objectSpread({}, _this.getHistoryState(), result, {
 	              privateCode: privateCode
 	            }));
+	            actionTimer.finish('CATCH_ENTITY');
+	            debug.log('Caught new:', logEntity, actionTimer.getDuration('CATCH_ENTITY'));
+	            logger.log('Caught new:', logEntity, actionTimer.getDuration('CATCH_ENTITY'));
 	            return;
 	          }
 
@@ -552,6 +597,10 @@ this.BX = this.BX || {};
 	                store.commit('setLastRemindDate', _this.getDateLog());
 	              }
 	          }
+
+	          actionTimer.finish('CATCH_ENTITY');
+	          debug.log('Caught:', logEntity, actionTimer.getDuration('CATCH_ENTITY'));
+	          logger.log('Caught:', logEntity, actionTimer.getDuration('CATCH_ENTITY'));
 	        },
 	        preFinishLastInterval: function preFinishLastInterval(store) {
 	          store.commit('preFinishLastInterval');
@@ -1646,9 +1695,6 @@ this.BX = this.BX || {};
 	        this.createIncognito();
 	        break;
 	    }
-
-	    logger.log('Caught:', this);
-	    debug.log('Caught:', this);
 	  }
 
 	  babelHelpers.createClass(Entity, [{
@@ -1731,6 +1777,7 @@ this.BX = this.BX || {};
 	        return;
 	      }
 
+	      actionTimer.start('CATCH_ENTITY');
 	      var type = this.getEntityTypeByEvent({
 	        process: process,
 	        name: name,

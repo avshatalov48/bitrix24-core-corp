@@ -2,8 +2,10 @@ import {Event, Loc, Tag, Type, Dom} from 'main.core';
 import {Loader} from 'main.loader';
 import {EventEmitter} from 'main.core.events';
 
+import 'main.polyfill.intersectionobserver';
+
 import {EntityStorage} from '../../entity/entity.storage';
-import {Sprint} from '../../entity/sprint/sprint';
+import {Sprint, SprintParams} from '../../entity/sprint/sprint';
 
 import {RequestSender} from '../../utility/request.sender';
 
@@ -20,8 +22,6 @@ type Stats = {
 	averageNumberStoryPoints: number,
 	averagePercentageCompletion: number
 }
-
-import type {SprintParams} from '../../entity/sprint/sprint';
 
 import '../../css/completed.sprints.css';
 
@@ -100,7 +100,7 @@ export class CompletedSprints extends EventEmitter
 	{
 		const node = event.currentTarget;
 
-		const isShown = node.classList.contains('--up');
+		const isShown = Dom.hasClass(node, '--up');
 
 		if (isShown)
 		{
@@ -112,7 +112,7 @@ export class CompletedSprints extends EventEmitter
 
 			Dom.addClass(this.listNode, '--visible');
 
-			if (!this.isSprintsUploaded() && this.loader === null)
+			if (!this.isSprintsUploaded() && Type.isNull(this.loader))
 			{
 				this.loader = this.showLoader();
 			}
@@ -164,7 +164,7 @@ export class CompletedSprints extends EventEmitter
 
 	bindLoad(loader: HTMLElement)
 	{
-		if (typeof IntersectionObserver === `undefined`)
+		if (Type.isUndefined(IntersectionObserver))
 		{
 			return;
 		}
@@ -211,7 +211,7 @@ export class CompletedSprints extends EventEmitter
 	{
 		this.isActiveLoad = true;
 
-		if (this.isSprintsUploaded() && this.loader === null)
+		if (this.isSprintsUploaded() && Type.isNull(this.loader))
 		{
 			this.loader = this.showLoader();
 		}
@@ -313,7 +313,7 @@ export class CompletedSprints extends EventEmitter
 
 		Dom.addClass(parentNode, '--open');
 
-		this.listNode.style.height = `${ this.listNode.scrollHeight }px`;
+		Dom.style(this.listNode, 'height', `${ this.listNode.scrollHeight }px`);
 
 		this.emit('adjustWidth');
 	}
@@ -324,14 +324,16 @@ export class CompletedSprints extends EventEmitter
 
 		Dom.removeClass(parentNode, '--open');
 
+		/* eslint-disable */
 		this.listNode.style.height = `${ this.listNode.scrollHeight }px`;
 		this.listNode.clientHeight;
 		this.listNode.style.height = '0';
+		/* eslint-enable */
 	}
 
 	onTransitionEnd()
 	{
-		const isHide = (this.listNode.style.height === '0px');
+		const isHide = (Dom.style(this.listNode, 'height') === '0px');
 
 		if (isHide)
 		{
@@ -339,7 +341,7 @@ export class CompletedSprints extends EventEmitter
 		}
 		else
 		{
-			this.listNode.style.height = 'auto';
+			Dom.style(this.listNode, 'height', 'auto');
 		}
 
 		this.emit('adjustWidth');

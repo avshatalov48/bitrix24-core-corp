@@ -1,5 +1,10 @@
 <?php
 use Bitrix\Crm\PhaseSemantics;
+
+/**
+ * @deprecated
+ * @see \Bitrix\Crm\Counter\EntityCounterFactory
+ */
 class CCrmUserCounter
 {
 	const Undefined = 0;

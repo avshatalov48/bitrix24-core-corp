@@ -299,7 +299,7 @@ class CCrmMlEntityDetailComponent extends CBitrixComponent
 		return [
 			'ID' => 'crm-scoring',
 			'FORM' => $this->getFeedbackForm(),
-			'PORTAL' => 'https://landing.bitrix24.ru',
+			'PORTAL' => 'https://product-feedback.bitrix24.com',
 			'PRESETS' => [
 				'c_name' => \Bitrix\Main\Engine\CurrentUser::get()->getFullName(),
 				'b24_plan' => \Bitrix\Main\Loader::includeModule("bitrix24") ? CBitrix24::getLicenseType() : "",

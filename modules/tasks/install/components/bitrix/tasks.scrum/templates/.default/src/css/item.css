@@ -123,7 +123,7 @@
 	transition: .3s;
 }
 
-.tasks-scrum__item.--subtasks.--full-view {
+.tasks-scrum__item-sub-tasks .tasks-scrum__item.--subtasks.--full-view {
 	margin-left: 37px;
 }
 

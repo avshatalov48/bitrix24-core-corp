@@ -537,10 +537,15 @@ class CCrmDocumentLead extends CCrmDocument
 			}
 		}
 
-		//Region automation
+		if (isset($arFields['TRACKING_SOURCE_ID']))
+		{
+			Crm\Tracking\UI\Details::saveEntityData(\CCrmOwnerType::Lead, $id, $arFields);
+		}
+
+		//region automation
 		$starter = new Crm\Automation\Starter(\CCrmOwnerType::Lead, $id);
 		$starter->setContextToBizproc()->runOnAdd();
-		//End region
+		//endregion
 
 		if ($id && $id > 0 && $useTransaction)
 		{

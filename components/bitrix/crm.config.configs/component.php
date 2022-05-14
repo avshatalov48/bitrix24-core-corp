@@ -857,7 +857,7 @@ $arResult['FIELDS']['tab_activity_config'][] = array(
 
 $arResult['FIELDS']['tab_activity_config'][] = array(
 	'id' => 'KEEP_UNBOUND_TASKS',
-	'name' => GetMessage('CRM_FIELD_KEEP_UNBOUND_TASKS'),
+	'name' => GetMessage('CRM_FIELD_KEEP_UNBOUND_TASKS2'),
 	'type' => 'checkbox',
 	'value' => Settings\ActivitySettings::getValue(Settings\ActivitySettings::KEEP_UNBOUND_TASKS),
 	'required' => false

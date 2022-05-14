@@ -76,6 +76,43 @@ class Config
 		$this->userId = $userId ?? Security\Helper::getCurrentUserId();
 	}
 
+	/**
+	 * Checks any open line configuration existence and creates new one in other case.
+	 * @return bool
+	 */
+	public function createPreset(): bool
+	{
+		$anyActiveLine = ConfigTable::getRow([
+			'select' => ['ID'],
+			'filter' => ['=ACTIVE' => 'Y'],
+		]);
+		if (!$anyActiveLine)
+		{
+			if (!$this->userId)
+			{
+				$users = Security\Helper::getAdministrators();
+				$this->userId = \reset($users);
+			}
+
+			$lineId = $this->create([
+				'QUEUE' => [
+					$this->userId
+				]
+			]);
+			if (!$lineId)
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * @param $params
+	 * @param $mode
+	 * @return array
+	 */
 	private function prepareFields($params, $mode = self::MODE_ADD)
 	{
 		$companyName = \Bitrix\Main\Config\Option::get("main", "site_name", "");
@@ -881,11 +918,6 @@ class Config
 	/**
 	 * @param array $params
 	 * @return array|bool|int
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function create($params = [])
 	{

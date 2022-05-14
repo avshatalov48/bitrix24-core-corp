@@ -8,4 +8,5 @@ $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_NO_SAVE"] = "Возникла ошиб�
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_OK_CONNECT"] = "Тестовое соединение успешно";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_NO_CONNECT"] = "Тестовое соединение с указанными данными не удалось совершить";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_OK_REGISTER"] = "Регистрация прошла успешно";
-$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_NO_REGISTER"] = "Во время регистрации произошла ошибка";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_ESHOP_DEFAULT_NAME"] = "Магазин";
+$MESS['IMCONNECTOR_COMPONENT_TELEGRAMBOT_WELCOME_MESSAGE_DEFAULT'] = 'Здравствуйте, это чат-бот компании #COMPANY_TITLE#. Какой у вас вопрос?';

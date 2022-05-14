@@ -1,22 +1,23 @@
 <?php
 namespace Bitrix\Crm\Entity;
 
+use Bitrix\Crm\Category\PermissionEntityTypeHelper;
+use Bitrix\Crm\Filter\Factory;
+use Bitrix\Crm\Security\QueryBuilder\Options;
+use Bitrix\Crm\Security\QueryBuilder\Result;
 use Bitrix\Main;
-use Bitrix\Crm;
 use Bitrix\Crm\Security\EntityAuthorization;
 
 abstract class EntityBase
 {
 	abstract public function getEntityTypeID();
 	abstract protected function getDbEntity();
-	abstract protected function getDbTableAlias();
+	abstract public function getDbTableAlias();
 
 	abstract protected function buildPermissionSql(array $params);
 
 	abstract public function checkReadPermission($entityID = 0, $userPermissions = null);
 	abstract public function checkDeletePermission($entityID = 0, $userPermissions = null);
-
-	protected $categories = [];
 
 	public function create(array $fields)
 	{
@@ -55,8 +56,6 @@ abstract class EntityBase
 		$limit = isset($params['limit']) ? (int)$params['limit'] : 0;
 		$enablePermissionCheck = isset($params['enablePermissionCheck']) ? (bool)$params['enablePermissionCheck'] : true;
 
-		// @TODO optimise if filter is ['=CONTACT_ID' => xxx]
-
 		if (
 			!$this->areFieldsCompatibleWithOrm(array_keys($order))
 			|| !$this->areFieldsCompatibleWithOrm(array_keys($filter))
@@ -71,40 +70,57 @@ abstract class EntityBase
 		}
 
 		static $cache;
-		$cacheKey = md5(serialize($params));
+		$cacheKey = md5(serialize($params) . $this->getEntityTypeID());
 		if (isset($cache[$cacheKey]))
 		{
 			return $cache[$cacheKey];
 		}
 		$cache[$cacheKey] = [];
 
-		$permissionSql = '';
+		$categories = $filter['=CATEGORY_ID'] ?? $filter['@CATEGORY_ID'] ?? $filter['CATEGORY_ID'] ?? null;
+		if (!is_null($categories))
+		{
+			$categories = array_unique(array_map('intval',  (array)$categories));
+			if (empty($categories))
+			{
+				$categories = null;
+			}
+		}
+
 		if ($enablePermissionCheck)
 		{
-			/** @var \CCrmPerms $userPermissions */
 			$userPermissions = $params['userPermissions'] ?? \CCrmPerms::GetCurrentUserPermissions();
-			$permissionSql = \CCrmPerms::BuildSql(
-				\CCrmOwnerType::ResolveName($this->getEntityTypeID()),
-				'',
-				'READ',
-				[
-					'RAW_QUERY' => true,
-					'PERMS' => $userPermissions,
-				]
+			$builderOptions = (new Options())
+				->setNeedReturnRawQuery(true)
+			;
+			$builderResult = $this->buildPermissionSqlForCategories(
+				$userPermissions->GetUserID(),
+				$builderOptions,
+				$categories ?? [0]
 			);
 		}
-		if ($permissionSql === false) // Access denied
+
+		$isOnlyCategoryFilter = (count($filter) === 1) && is_array($categories);
+
+		if ($enablePermissionCheck && !$builderResult->hasAccess()) // Access denied
 		{
 			return $cache[$cacheKey];
 		}
 		elseif (
-			$permissionSql !== '' // need to check permissions
-			&& empty($filter)  // and has not any filters
+			$enablePermissionCheck
+			&& $builderResult->hasRestrictions() // need to check permissions
+			&& (empty($filter) || $isOnlyCategoryFilter)  // filter is suitable
 			&& count($order) === 1 // and ordered only by ID
 			&& isset($order['ID'])
 		)
 		{
-			$cache[$cacheKey] = $this->getTopIdsFromPermissions($userPermissions, $limit, $order['ID']);
+			$cache[$cacheKey] = $this->getTopIdsFromPermissions(
+				$userPermissions,
+				$limit,
+				$order['ID'],
+				$categories ?? [0]  // for backward compatibility, use categoryId = 0 if not defined
+			);
+
 			return $cache[$cacheKey];
 		}
 
@@ -114,9 +130,9 @@ abstract class EntityBase
 		$query->setFilter($filter);
 		$query->setLimit($limit);
 
-		if ($permissionSql !== '')
+		if ($enablePermissionCheck && $builderResult->hasRestrictions())
 		{
-			$query->addFilter('@ID', new Main\DB\SqlExpression($permissionSql));
+			$query->addFilter('@ID', $builderResult->getSqlExpression());
 		}
 
 		$dbResult = $query->exec();
@@ -308,93 +324,40 @@ abstract class EntityBase
 		$multifieldEntity->SetFields(\CCrmOwnerType::ResolveName($this->getEntityTypeID()), $entityID, $data);
 	}
 
+	/**
+	 * @deprecated Use \Bitrix\Main\Filter\Filter::getValue
+	 * @see \Bitrix\Main\Filter\Filter::getValue
+	 */
 	public function prepareFilter(array &$filterFields, array $params = null)
 	{
-		if(!is_array($params))
-		{
-			$params = array();
-		}
+		$entityTypeId = (int)$this->getEntityTypeID();
 
-		if(isset($filterFields['ACTIVITY_COUNTER']))
-		{
-			if(is_array($filterFields['ACTIVITY_COUNTER']))
-			{
-				$counterTypeID = Crm\Counter\EntityCounterType::joinType(
-					array_filter($filterFields['ACTIVITY_COUNTER'], 'is_numeric')
-				);
-			}
-			else
-			{
-				$counterTypeID = (int)$filterFields['ACTIVITY_COUNTER'];
-			}
-			unset($filterFields['ACTIVITY_COUNTER']);
-
-			$counter = null;
-			if($counterTypeID > 0)
-			{
-				$counterUserIDs = array();
-				if(isset($filterFields['ASSIGNED_BY_ID']))
-				{
-					if(is_array($filterFields['ASSIGNED_BY_ID']))
-					{
-						$counterUserIDs = array_filter($filterFields['ASSIGNED_BY_ID'], 'is_numeric');
-					}
-					elseif($filterFields['ASSIGNED_BY_ID'] > 0)
-					{
-						$counterUserIDs[] = $filterFields['ASSIGNED_BY_ID'];
-					}
-				}
-
-				try
-				{
-					$counter = Crm\Counter\EntityCounterFactory::create(
-						$this->getEntityTypeID(),
-						$counterTypeID,
-						0,
-						Crm\Counter\EntityCounter::internalizeExtras($params)
-					);
-
-					$filterFields += $counter->prepareEntityListFilter(
-						array(
-							'MASTER_ALIAS' => $this->getDbTableAlias(),
-							'MASTER_IDENTITY' => 'ID',
-							'USER_IDS' => $counterUserIDs
-						)
-					);
-					unset($filterFields['ASSIGNED_BY_ID']);
-				}
-				catch(Main\NotSupportedException $e)
-				{
-				}
-				catch(Main\ArgumentException $e)
-				{
-				}
-			}
-		}
+		$filterFields = Factory::createEntityFilter(
+			Factory::createEntitySettings(
+				$entityTypeId,
+				'',  // grid id is not valuable here
+				Factory::convertSettingsParams($entityTypeId, $params)
+			)
+		)->getValue($filterFields);
 	}
 
-	private function getTopIdsFromPermissions(\CCrmPerms $userPermissions, $limit, $sortOrder = 'asc'): array
+	private function getTopIdsFromPermissions(\CCrmPerms $userPermissions, $limit, $sortOrder = 'asc', array $categories = [0]): array
 	{
-		$result = [];
+		$builderOptions = (new Options())
+			->setRawQueryOrder((string)$sortOrder)
+			->setRawQueryLimit((int)$limit)
+			->setNeedReturnRawQuery(true)
+		;
+		$builderResult = $this->buildPermissionSqlForCategories($userPermissions->GetUserID(), $builderOptions, $categories);
 
-		$permissionSql = \CCrmPerms::BuildSql(
-			\CCrmOwnerType::ResolveName($this->getEntityTypeID()),
-			'',
-			'READ',
-			[
-				'RAW_QUERY' => [
-					'TOP' => $limit,
-					'SORT_TYPE' => $sortOrder
-				],
-				'PERMS' => $userPermissions,
-			]
-		);
-		if ($permissionSql === false || $permissionSql === '')
+		if (!$builderResult->hasRestrictions())
 		{
 			throw new \Bitrix\Main\NotSupportedException('Unable to get top ids from permissions');
 		}
-		$dbResult = \Bitrix\Main\Application::getConnection()->query($permissionSql);
-		while ($fields = $dbResult->fetch())
+
+		$result = [];
+		$permissionRecords = \Bitrix\Main\Application::getConnection()->query($builderResult->getSql());
+		while ($fields = $permissionRecords->fetch())
 		{
 			$result[] = (int)$fields['ENTITY_ID'];
 		}
@@ -402,20 +365,29 @@ abstract class EntityBase
 		return $result;
 	}
 
-	public function getCategoryId(int $id): int
+	private function buildPermissionSqlForCategories(int $userId, Options $builderOptions, ?array $categoryIds = null): Result
 	{
-		if($id <= 0)
+		$permEntityTypeHelper = new PermissionEntityTypeHelper($this->getEntityTypeID());
+
+
+		if (is_null($categoryIds))
 		{
-			return 0;
+			$permEntities = $permEntityTypeHelper->getAllPermissionEntityTypesForEntity();
 		}
-		if (!isset($this->categories[$id]))
+		else
 		{
-			$this->categories[$id] = (int)Crm\Service\Container::getInstance()
-				->getFactory($this->getEntityTypeID())
-				->getItemCategoryId($id)
-			;
+			$permEntities = [];
+			foreach ($categoryIds as $categoryId)
+			{
+				$permEntities[] = $permEntityTypeHelper->getPermissionEntityTypeForCategory((int)$categoryId);
+			}
 		}
 
-		return $this->categories[$id];
+		$queryBuilder = \Bitrix\Crm\Service\Container::getInstance()
+			->getUserPermissions($userId)
+			->createListQueryBuilder($permEntities, $builderOptions)
+		;
+
+		return $queryBuilder->build();
 	}
 }

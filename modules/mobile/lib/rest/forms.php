@@ -16,7 +16,11 @@ class Forms extends \IRestService
 	public static function userProfile($params, $n, \CRestServer $server)
 	{
 		global $USER_FIELD_MANAGER;
-
+		$region = "";
+		if (method_exists(\Bitrix\Main\Application::getInstance(), "getLicense"))
+		{
+			$region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion();
+		}
 		$result = [];
 		$result["fields"] = [
 			'PERSONAL_PHOTO' =>
@@ -154,7 +158,8 @@ class Forms extends \IRestService
 					'sectionCode' => 'extra',
 					'id' => 'UF_FACEBOOK',
 					'type' => 'input',
-					'title' => Loc::getMessage('UF_FACEBOOK')
+					'title' => Loc::getMessage('UF_FACEBOOK'),
+					'asterix' => ($region === "ru" || $region === null) ? Loc::getMessage('META_RESTRICTED_ORGANIZATION_MESSAGE'): ""
 				],
 			'UF_LINKEDIN' =>
 				[

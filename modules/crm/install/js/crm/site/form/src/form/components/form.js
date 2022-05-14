@@ -38,32 +38,34 @@ const Form = {
 					@submit="submit"
 					v-if="form.pager"
 				>
-					<component v-bind:is="'pager-block'"
-						v-bind:key="form.id"
-						v-bind:pager="form.pager"
+					<component 
+						:is="'pager-block'"
+						:pager="form.pager"
 						v-if="form.pager.iterable()"
 					></component>
 								
 					<div v-if="!form.disabled">		
-						<component v-bind:is="'field'"
+						<component 
+							:is="'field'"
 							v-for="field in form.pager.current().fields"
-							v-bind:key="field.id"
-							v-bind:field="field"
+							:key="field.id"
+							:field="field"
 						></component>
 					</div>	
 					
-					<component v-bind:is="'agreement-block'"
-						v-bind:key="form.id"
-						v-bind:fields="form.agreements"
-						v-bind:view="form.view"
-						v-bind:messages="form.messages"
+					<component 
+						:is="'agreement-block'"
+						:formId="form.getId()"
+						:fields="form.agreements"
+						:view="form.view"
+						:messages="form.messages"
 						v-if="form.pager.ended()"
 					></component>
 					
-					<component v-bind:is="'basket-block'"
-						v-bind:key="form.id"
-						v-bind:basket="form.basket"
-						v-bind:messages="form.messages"
+					<component 
+						:is="'basket-block'"
+						:basket="form.basket"
+						:messages="form.messages"
 					></component>
 					
 					<div class="b24-form-btn-container">
@@ -99,14 +101,15 @@ const Form = {
 				</form>
 			</div>
 			
-			<state-block v-bind:key="form.id" v-bind:form="form"></state-block>
+			<state-block :form="form" />
 			
-			<recaptcha-block :form="form"></recaptcha-block>
+			<recaptcha-block :form="form" />
 			
 			<div class="b24-form-sign" v-if="form.useSign">
 				<select v-show="false" v-model="form.messages.language">
-					<option v-for="language in form.languages" 
-						v-bind:value="language"																						
+					<option 
+						v-for="language in form.languages" 
+						:value="language"																						
 					>
 						{{ language }}
 					</option>				

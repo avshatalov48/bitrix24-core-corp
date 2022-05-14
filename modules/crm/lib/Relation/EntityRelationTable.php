@@ -4,6 +4,8 @@ namespace Bitrix\Crm\Relation;
 
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Main\Application;
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\Entity\Event;
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\EnumField;
 use Bitrix\Main\ORM\Fields\IntegerField;
@@ -115,5 +117,89 @@ class EntityRelationTable extends DataManager
 		$dstSql = "UPDATE IGNORE {$tableName} SET  DST_ENTITY_ID = {$toId} WHERE DST_ENTITY_ID = {$fromId} AND DST_ENTITY_TYPE_ID = {$entityTypeId}";
 		$connection->query($srcSql);
 		$connection->query($dstSql);
+	}
+
+	public static function onBeforeAdd(Event $event)
+	{
+		static::deleteExistingSourceElementsOfTheSameType($event->getParameter('object'));
+	}
+
+	public static function onBeforeUpdate(Event $event)
+	{
+		static::deleteExistingSourceElementsOfTheSameType($event->getParameter('object'));
+	}
+
+	public static function deleteExistingSourceElementsOfTheSameType(EO_EntityRelation $newBinding): void
+	{
+		$queryResult = static::getList([
+			'select' => ['*'],
+			'filter' => [
+				'=SRC_ENTITY_TYPE_ID' => $newBinding->getSrcEntityTypeId(),
+				'=DST_ENTITY_TYPE_ID' => $newBinding->getDstEntityTypeId(),
+				'=DST_ENTITY_ID' => $newBinding->getDstEntityId(),
+			],
+		]);
+		while ($existingElement = $queryResult->fetchObject())
+		{
+			$existingElement->delete();
+		}
+	}
+
+	public static function initiateClearingDuplicateSourceElementsWithInterval(int $dstEntityTypeId): void
+	{
+		$interval = 86400;
+		$optionName = 'last_time_clearing_duplicated_source_elements_' . $dstEntityTypeId;
+
+		$lastTimeLaunchedClearing = Option::get('crm', $optionName, 0);
+		if (time() - $lastTimeLaunchedClearing > $interval)
+		{
+			Option::set('crm', $optionName, time());
+
+			\Bitrix\Crm\Relation\EntityRelationTable::clearDuplicateSourceElements($dstEntityTypeId);
+		}
+	}
+
+	public static function clearDuplicateSourceElements(int $dstEntityTypeId, int $limit = 100): void
+	{
+		$connection = Application::getConnection();
+		$tableName = $connection->getSqlHelper()->quote(static::getTableName());
+
+		$srcSql = "SELECT 
+       		SRC_ENTITY_ID,
+			SRC_ENTITY_TYPE_ID, COUNT(SRC_ENTITY_TYPE_ID),
+			DST_ENTITY_TYPE_ID, COUNT(DST_ENTITY_TYPE_ID), 
+			DST_ENTITY_ID, COUNT(DST_ENTITY_ID)
+			FROM ${tableName}
+			WHERE DST_ENTITY_TYPE_ID = ${dstEntityTypeId}
+			GROUP BY 
+			SRC_ENTITY_TYPE_ID,
+			DST_ENTITY_TYPE_ID,
+			DST_ENTITY_ID
+			HAVING
+			COUNT(SRC_ENTITY_TYPE_ID) > 1 AND
+			COUNT(DST_ENTITY_TYPE_ID) > 1 AND
+			COUNT(DST_ENTITY_ID) > 1
+			LIMIT ${limit}
+		";
+
+		$queryResult = $connection->query($srcSql);
+		$helper = $connection->getSqlHelper();
+		while ($record = $queryResult->fetch())
+		{
+			$sql = sprintf(
+				'DELETE FROM %s WHERE 
+					SRC_ENTITY_TYPE_ID = %d 
+				    AND SRC_ENTITY_ID != %d
+					AND DST_ENTITY_TYPE_ID = %d
+					AND DST_ENTITY_ID = %d
+				',
+				$helper->quote(static::getTableName()),
+				$helper->convertToDbInteger($record['SRC_ENTITY_TYPE_ID']),
+				$helper->convertToDbInteger($record['SRC_ENTITY_ID']),
+				$helper->convertToDbInteger($record['DST_ENTITY_TYPE_ID']),
+				$helper->convertToDbInteger($record['DST_ENTITY_ID'])
+			);
+			$connection->query($sql);
+		}
 	}
 }

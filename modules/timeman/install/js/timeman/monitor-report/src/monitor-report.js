@@ -208,11 +208,15 @@ class MonitorReport
 				},
 				isWindows()
 				{
-					return navigator.userAgent.toLowerCase().includes('windows') || (!this.isMac() && !this.isLinux());
+					return navigator.userAgent.toLowerCase().includes('windows') || (!this.isMac && !this.isLinux);
 				},
 				isMac()
 				{
 					return navigator.userAgent.toLowerCase().includes('macintosh');
+				},
+				isLinux()
+				{
+					return navigator.userAgent.toLowerCase().includes('linux');
 				},
 				hasActivity()
 				{

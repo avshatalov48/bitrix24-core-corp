@@ -106,7 +106,14 @@ class DynamicTypesMap
 		}
 		$entityTypeIds = array_keys($this->types);
 
-		if (empty($entityTypeIds) || !$isLoadCategories)
+		if (empty($entityTypeIds))
+		{
+			$this->isCategoriesLoaded = true;
+			$this->isStagesLoaded = true;
+			return $this;
+		}
+
+		if (!$isLoadCategories)
 		{
 			return $this;
 		}

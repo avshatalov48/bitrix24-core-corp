@@ -1,6 +1,18 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+/** @var array $arParams */
+/** @var array $arResult */
+/** @global CDatabase $DB */
+/** @global CUser $USER */
+/** @global CMain $APPLICATION */
 
 use Bitrix\Main\Application;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Counter\Name;
@@ -13,8 +25,8 @@ if (
 	!isset($arResult["User"]["ID"])
 	|| (
 		$USER->IsAuthorized()
-		&& $arResult["User"]["ID"] == $USER->GetID()
-		&& $arParams["PAGE_ID"] != "user"
+		&& (int)$arResult["User"]["ID"] === (int)$USER->GetID()
+		&& $arParams["PAGE_ID"] !== "user"
 	)
 )
 {
@@ -30,35 +42,21 @@ if (!(isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y"))
 {
 	$this->SetViewTarget("above_pagetitle", 100);
 }
-elseif($arParams['PAGE_ID'] == 'user')
+elseif($arParams['PAGE_ID'] === 'user')
 {
 	$this->SetViewTarget("below_pagetitle", 100);
 }
 
 $className = '';
-if ($arResult["User"]["TYPE"] == 'extranet')
+if ($arResult["User"]["TYPE"] === 'extranet')
 {
 	$className = ' profile-menu-user-info-extranet';
 }
-elseif ($arResult["User"]["TYPE"] == 'email')
+elseif ($arResult["User"]["TYPE"] === 'email')
 {
 	$className = ' profile-menu-user-info-email';
 }
-/*
-elseif ($arResult["User"]["TYPE"] == 'imconnector')
-{
-	$className = ' profile-menu-user-info-imconnector';
-}
-elseif ($arResult["User"]["TYPE"] == 'bot')
-{
-	$className = ' profile-menu-user-info-bot';
-}
-elseif ($arResult["User"]["TYPE"] == 'replica')
-{
-	$className = ' profile-menu-user-info-replica';
-}
-*/
-elseif ($arResult["User"]["IS_EXTRANET"] == 'Y')
+elseif ($arResult["User"]["IS_EXTRANET"] === 'Y')
 {
 	$className = ' profile-menu-user-info-extranet';
 }
@@ -91,10 +89,10 @@ $items = array_merge($items, $profileItem);
 
 if (
 	is_array($arResult["CanView"])
-	&& !!$arResult["CanView"]['tasks']
+	&& $arResult["CanView"]['tasks']
 )
 {
-	$uri = new \Bitrix\Main\Web\Uri($arResult["Urls"]['tasks']);
+	$uri = new Uri($arResult["Urls"]['tasks']);
 	$uri->addParams(array("IFRAME" => "Y"));
 	$redirect = $uri->getUri();
 
@@ -120,10 +118,10 @@ if (
 
 if (
 	is_array($arResult["CanView"])
-	&& !!$arResult["CanView"]['calendar']
+	&& $arResult["CanView"]['calendar']
 )
 {
-	$uri = new \Bitrix\Main\Web\Uri($arResult["Urls"]['calendar']);
+	$uri = new Uri($arResult["Urls"]['calendar']);
 	$uri->addParams(array("IFRAME" => "Y"));
 	$redirect = $uri->getUri();
 
@@ -140,10 +138,11 @@ if (
 
 if (
 	is_array($arResult["CanView"])
-	&& !!$arResult["CanView"]['files']
+	&& $arResult["CanView"]['files']
+	&& $arResult["Urls"]['files'] !== ''
 )
 {
-	$uri = new \Bitrix\Main\Web\Uri($arResult["Urls"]['files']);
+	$uri = new Uri($arResult["Urls"]['files']);
 	$uri->addParams(array("IFRAME" => "Y"));
 	$redirect = $uri->getUri();
 
@@ -163,7 +162,7 @@ if (
 	&& !!$arResult["CanView"]['blog']
 )
 {
-	$uri = new \Bitrix\Main\Web\Uri($arResult["Urls"]['blog']);
+	$uri = new Uri($arResult["Urls"]['blog']);
 	$uri->addParams(array("IFRAME" => "Y"));
 	$redirect = $uri->getUri();
 
@@ -194,7 +193,7 @@ if (
 	$uri->addParams(['IFRAME' => 'Y']);
 	$redirect = $uri->getUri();
 
-	\CModule::includeModule('tasks');
+	CModule::includeModule('tasks');
 
 	$efficiencyUrl = (
 		$arResult['isExtranetSite']
@@ -227,7 +226,7 @@ if (
 foreach($items as $key => $item)
 {
 	if (
-		$key != 'profile'
+		$key !== 'profile'
 		&& $item['IS_ACTIVE']
 	)
 	{
@@ -240,7 +239,7 @@ $items = array_values($items);
 function checkEffectiveRights($viewedUser)
 {
 	//TODO move to tasks/security later
-	\Bitrix\Main\Loader::includeModule('tasks');
+	Loader::includeModule('tasks');
 	$currentUser = User::getId();
 
 	if (!$viewedUser)
@@ -257,7 +256,7 @@ function checkEffectiveRights($viewedUser)
 if (
 	is_array($arResult["CurrentUserPerms"])
 	&& is_array($arResult["CurrentUserPerms"]["Operations"])
-	&& !!$arResult["CurrentUserPerms"]["Operations"]["timeman"]
+	&& $arResult["CurrentUserPerms"]["Operations"]["timeman"]
 )
 {
 	$items = array_merge($items, array(
@@ -270,7 +269,7 @@ if (
 		array
 		(
 			"ID" => "work_report",
-			"TEXT"     => GetMessage("SONET_UM_REPORTS"),
+			"TEXT" => GetMessage("SONET_UM_REPORTS"),
 			"ON_CLICK" => "BX.SidePanel.Instance.open('".SITE_DIR."timeman/work_report.php', { width: 1000, loader: 'intranet:workreport' })"
 		)
 	));
@@ -279,10 +278,10 @@ if (
 if (
 	is_array($arResult["CurrentUserPerms"])
 	&& is_array($arResult["CurrentUserPerms"]["Operations"])
-	&& !!$arResult["CurrentUserPerms"]["Operations"]['viewgroups']
+	&& $arResult["CurrentUserPerms"]["Operations"]['viewgroups']
 )
 {
-	$uri = new \Bitrix\Main\Web\Uri($arResult["Urls"]['groups']);
+	$uri = new Uri($arResult["Urls"]['groups']);
 	$uri->addParams(array("IFRAME" => "Y"));
 	$redirect = $uri->getUri();
 
@@ -296,30 +295,6 @@ if (
 	));
 }
 
-/* photogallery is not available in slider yet
-if (
-	is_array($arResult["CanView"])
-	&& !!$arResult["CanView"]['photo']
-	&& !IsModuleInstalled("bitrix24")
-)
-{
-	$uri = new \Bitrix\Main\Web\Uri($arResult["Urls"]['photo']);
-	$uri->addParams(array("IFRAME" => "Y"));
-	$redirect = $uri->getUri();
-
-	$items = array_merge($items, array(
-		array
-		(
-			"ID" => "photo",
-			"TEXT" => $arResult["Title"]['photo'],
-			"ON_CLICK" => "BX.SidePanel.Instance.open('".$uri->getUri()."', {
-				width: 1000 
-			})",
-			'IS_ACTIVE' => (mb_strpos($requestUri, $arResult["Urls"]['photo']) === 0)
-		)
-	));
-}*/
-
 $APPLICATION->IncludeComponent(
 	"bitrix:main.interface.buttons",
 	"",
@@ -329,11 +304,14 @@ $APPLICATION->IncludeComponent(
 		"DISABLE_SETTINGS" => !(
 			$USER->isAuthorized()
 			&& (
-				$USER->getId() == $arResult["User"]["ID"]
-				|| (\Bitrix\Main\Loader::includeModule('socialnetwork') && \CSocNetUser::isCurrentUserModuleAdmin())
+				(int)$USER->getId() === (int)$arResult["User"]["ID"]
+				|| (
+					Loader::includeModule('socialnetwork')
+					&& CSocNetUser::isCurrentUserModuleAdmin()
+				)
 			)
 		)
 	)
 );
-?>
-<?$this->EndViewTarget();?>
+
+$this->EndViewTarget();

@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Invoice;
 
 use Bitrix\Crm\Search;
+use Bitrix\Crm\Automation;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale;
@@ -44,38 +45,67 @@ class Invoice extends Sale\Order
 	 */
 	public function save()
 	{
-		$id = (int)$this->getField('ID');
-		$accountNumber = $this->getField('ACCOUNT_NUMBER');
-		if (is_string($accountNumber) && $accountNumber <> '' || is_numeric($accountNumber))
+		$result = $this->checkAccountNumber($this->getField('ACCOUNT_NUMBER'));
+		if (!$result->isSuccess())
+		{
+			return $result;
+		}
+
+		return parent::save();
+	}
+
+	private function checkAccountNumber($accountNumber) : Sale\Result
+	{
+		$result = new Sale\Result();
+
+		if (
+			(
+				is_string($accountNumber)
+				&& $accountNumber !== ''
+			)
+			|| is_numeric($accountNumber))
 		{
 			$res = static::getList(
 				[
 					'order' => ['ID' => 'ASC'],
 					'filter' => [
 						'=ACCOUNT_NUMBER' => $accountNumber,
-						'!ID' => $id
+						'!ID' => $this->getField('ID')
 					],
 					'select' => ['ID'],
 					'limit' => 1
 				]
 			);
+
 			if ($res->fetch())
 			{
-				$result = new Sale\Result();
 				$result->addError(new Main\Error(
 					Loc::getMessage('CRM_INVOICE_ERR_EXISTING_ACCOUNT_NUMBER'),
 					'CRM_INVOICE_ERR_EXISTING_ACCOUNT_NUMBER'
 				));
-
-				return $result;
 			}
 		}
-
-		$result = parent::save();
 
 		return $result;
 	}
 
+	protected function onAfterSave()
+	{
+		$result = parent::onAfterSave();
+
+		if (
+			$this->fields->isChanged('STATUS_ID')
+			&& Automation\Factory::canUseAutomation()
+		)
+		{
+			Automation\Trigger\InvoiceTrigger::onInvoiceStatusChanged(
+				$this->getId(),
+				$this->getField('STATUS_ID')
+			);
+		}
+
+		return $result;
+	}
 
 	/**
 	 * @param array $data

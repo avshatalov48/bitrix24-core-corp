@@ -81,14 +81,6 @@ if($action === '')
 }
 elseif($action === 'SAVE')
 {
-	$ID = isset($_POST['ACTION_ENTITY_ID']) ? max((int)$_POST['ACTION_ENTITY_ID'], 0) : 0;
-	if(($ID > 0 && !\CCrmContact::CheckUpdatePermission($ID, $currentUserPermissions))
-		|| ($ID === 0 && !\CCrmContact::CheckCreatePermission($currentUserPermissions))
-	)
-	{
-		__CrmContactDetailsEndJsonResonse(['ERROR'=> \Bitrix\Main\Localization\Loc::getMessage('CRM_TYPE_ITEM_PERMISSIONS_UPDATE_DENIED')]);
-	}
-
 	$diskQuotaRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getDiskQuotaRestriction();
 	if (!$diskQuotaRestriction->hasPermission())
 	{
@@ -100,7 +92,17 @@ elseif($action === 'SAVE')
 	}
 
 	$params = isset($_POST['PARAMS']) && is_array($_POST['PARAMS']) ? $_POST['PARAMS'] : array();
+	$categoryID =  isset($params['CATEGORY_ID']) ? (int)$params['CATEGORY_ID'] : 0;
 	$sourceEntityID =  isset($params['CONTACT_ID']) ? (int)$params['CONTACT_ID'] : 0;
+
+	$ID = isset($_POST['ACTION_ENTITY_ID']) ? max((int)$_POST['ACTION_ENTITY_ID'], 0) : 0;
+
+	if(($ID > 0 && !\CCrmContact::CheckUpdatePermission($ID, $currentUserPermissions, $categoryID))
+		|| ($ID === 0 && !\CCrmContact::CheckCreatePermission($currentUserPermissions, $categoryID))
+	)
+	{
+		__CrmContactDetailsEndJsonResonse(['ERROR'=> \Bitrix\Main\Localization\Loc::getMessage('CRM_TYPE_ITEM_PERMISSIONS_UPDATE_DENIED')]);
+	}
 
 	$isNew = $ID === 0;
 	$isCopyMode = $isNew && $sourceEntityID > 0;
@@ -239,6 +241,15 @@ elseif($action === 'SAVE')
 		'FORM' => $fields,
 		'FILES' => [],
 	]);
+
+	if($isNew)
+	{
+		$fields['CATEGORY_ID'] = $categoryID;
+	}
+	else
+	{
+		unset($fields['CATEGORY_ID']);
+	}
 
 	//region CLIENT
 	$clientData = null;
@@ -543,6 +554,14 @@ elseif($action === 'SAVE')
 	$component = new CCrmContactDetailsComponent();
 	$component->initializeParams($params);
 	$component->setEntityID($ID);
+	if($ID > 0)
+	{
+		$component->setCategoryID((int)Container::getInstance()->getFactory(CCrmOwnerType::Contact)->getItemCategoryId($ID));
+	}
+	elseif(isset($context['PARAMS']) && isset($context['PARAMS']['CATEGORY_ID']))
+	{
+		$component->setCategoryID((int)$context['PARAMS']['CATEGORY_ID']);
+	}
 	$component->initializeData();
 	$result = $component->getEntityEditorData();
 

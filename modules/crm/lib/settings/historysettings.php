@@ -1,6 +1,7 @@
 <?php
+
 namespace Bitrix\Crm\Settings;
-use Bitrix\Main;
+
 class HistorySettings
 {
 	/** @var HistorySettings|null  */
@@ -28,7 +29,10 @@ class HistorySettings
 	{
 		$this->enableExportEvent = new BooleanSetting('history_enable_export_event', true);
 		$this->enableViewEvent = new BooleanSetting('history_enable_view_event', true);
-		$this->viewEventGroupInterval = new IntegerSetting('history_view_event_group_interval', self::VIEW_EVENT_GROUPING_INTERVAL);
+		$this->viewEventGroupInterval = new IntegerSetting(
+			'history_view_event_group_interval',
+			self::VIEW_EVENT_GROUPING_INTERVAL,
+		);
 		$this->enableLeadDeletionEvent = new BooleanSetting('history_enable_lead_rm_event', true);
 		$this->enableDealDeletionEvent = new BooleanSetting('history_enable_deal_rm_event', true);
 		$this->enableQuoteDeletionEvent = new BooleanSetting('history_enable_quote_rm_event', true);
@@ -96,6 +100,28 @@ class HistorySettings
 		}
 		$this->viewEventGroupInterval->set($interval);
 	}
+
+	/**
+	 * Parametrized alias for 'is*DeletionEventEnabled' methods
+	 *
+	 * @param int $entityTypeId
+	 * @return bool
+	 */
+	public function isDeletionEventEnabled(int $entityTypeId): bool
+	{
+		$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeId);
+		$camelTypeName = mb_convert_case($entityTypeName, MB_CASE_TITLE);
+
+		$methodName = "is{$camelTypeName}DeletionEventEnabled";
+
+		if (method_exists($this, $methodName))
+		{
+			return (bool)$this->$methodName();
+		}
+
+		return true;
+	}
+
 	/**
 	 * Check if registration of event for Lead deletion is enabled.
 	 * @return bool

@@ -6,9 +6,7 @@ import {Blank} from '../blank';
 import {Dropzone} from '../dropzone';
 
 import {Entity} from '../entity';
-import {Item} from '../../item/item';
-
-import type {ItemParams} from '../../item/item';
+import {Item, ItemParams} from '../../item/item';
 
 import '../../css/backlog.css';
 

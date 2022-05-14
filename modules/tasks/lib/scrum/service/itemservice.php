@@ -247,7 +247,10 @@ class ItemService implements Errorable
 			]);
 			while ($itemData = $queryObject->fetch())
 			{
-				$itemsStoryPoints[$itemData['SOURCE_ID']] = $itemData['STORY_POINTS'] ? $itemData['STORY_POINTS'] : '';
+				$itemsStoryPoints[$itemData['SOURCE_ID']] = $itemData['STORY_POINTS'] !== null
+					? $itemData['STORY_POINTS']
+					: ''
+				;
 			}
 
 			return $itemsStoryPoints;

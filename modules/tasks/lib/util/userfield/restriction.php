@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
@@ -27,7 +27,7 @@ final class Restriction
 			return true;
 		}
 
-		return !TaskLimit::isLimitExceeded((TaskLimit::isLimitExist() ? 0 : 100));
+		return !TaskLimit::isLimitExceeded((TaskLimit::isLimitExist() ? 0 : Util\Restriction\Bitrix24Restriction\Limit::DEFAULT_LIMIT));
 	}
 
 	public static function canManage($entityCode, $userId = 0)

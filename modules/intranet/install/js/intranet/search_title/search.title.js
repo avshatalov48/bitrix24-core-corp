@@ -391,6 +391,12 @@ BX.Intranet.SearchTitle = function(arParams)
 						href: currentItem.URL,
 						className: "search-title-top-item-link"
 					},
+					dataset: {
+						onclick: BX.Type.isStringFilled(currentItem.ON_CLICK) ? currentItem.ON_CLICK : null
+					},
+					events: {
+						click: BX.Type.isStringFilled(currentItem.ON_CLICK) ? this.invokeItemOnClick.bind(this) : null
+					},
 					children: [
 						currentItem.TYPE == "users" || currentItem.TYPE == "sonetgroups" ?
 							BX.create('span', {
@@ -429,7 +435,7 @@ BX.Intranet.SearchTitle = function(arParams)
 								}
 							}, {userId: currentItem.ITEM_ID.substring(1)})
 						}
-					}) : ""
+					}) : null
 			],
 			events: {
 				"mouseover" : BX.proxy(function () {
@@ -913,6 +919,13 @@ BX.Intranet.SearchTitle = function(arParams)
 		BX.firstChild(_this.RESULT).insertBefore(limitsSection, BX("search-title-block-tools"));
 	};
 
+	this.invokeItemOnClick = function(event)
+	{
+		event.preventDefault();
+
+		eval('(function() {' + event.currentTarget.dataset['onclick'] + '})();');
+	}
+
 	this.checkSelectedItem = function ()
 	{
 		var selectedNode = BX.findChild(_this.RESULT, {className: "search-title-top-item-selected"}, true);
@@ -1064,18 +1077,13 @@ BX.Intranet.SearchTitle = function(arParams)
 						}
 						BX.onCustomEvent(_this, 'onFinderAjaxSuccess', [ ajaxDbEntities, _this.ITEMS, 'sonetgroups' ]);
 					}
-/*
 					else if (_this.arParams.CATEGORIES_ALL[i].CODE == 'custom_users')
 					{
-						ajaxDbEntities = {};
 						for (j=0;j<result.CATEGORIES[i].ITEMS.length;j++)
 						{
-							ajaxDbEntities[result.CATEGORIES[i].ITEMS[j].ITEM_ID] = _this.ConvertAjaxToClientDB(result.CATEGORIES[i].ITEMS[j], 'users');
 							ajaxUserCodeList.push(result.CATEGORIES[i].ITEMS[j].ITEM_ID);
 						}
-						BX.onCustomEvent(_this, 'onFinderAjaxSuccess', [ ajaxDbEntities, _this.ITEMS, 'users' ]);
 					}
-*/
 				}
 
 				var z = 0;

@@ -2,8 +2,10 @@
 
 namespace Bitrix\Crm\Service\EventHistory\TrackedObject;
 
+use Bitrix\Crm\Comparer\MultifieldComparer;
 use Bitrix\Crm\Format\Money;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\EventHistory\EventHistoryData;
 use Bitrix\Crm\Service\EventHistory\TrackedObject;
 use Bitrix\Main\Localization\Loc;
 
@@ -31,7 +33,7 @@ class Item extends TrackedObject
 
 	protected static function getEntityTitleMethod(): string
 	{
-		return 'getTitle';
+		return 'getHeading';
 	}
 
 	protected function getEntityTypeId(): int
@@ -91,5 +93,37 @@ class Item extends TrackedObject
 		$factory = Container::getInstance()->getFactory($this->getEntityTypeId());
 
 		return $factory ? $factory->getFieldValueCaption($fieldName, $fieldValue) : (string)$fieldValue;
+	}
+
+	protected function prepareUpdateEventDataForField(string $fieldName): array
+	{
+		if ($fieldName === \Bitrix\Crm\Item::FIELD_NAME_FM && !$this->isDependantField($fieldName))
+		{
+			/** @var \Bitrix\Crm\Multifield\Collection $actual */
+			$actual = $this->getActualValue($fieldName);
+			/** @var \Bitrix\Crm\Multifield\Collection $current */
+			$current = $this->getCurrentValue($fieldName);
+
+			$comparer = new MultifieldComparer();
+
+			$changes = \CCrmFieldMulti::CompareFields(
+				$actual->toArray(),
+				$comparer->getChangedCompatibleArray($actual, $current),
+			);
+
+			$result = [];
+			foreach ($changes as $change)
+			{
+				$data = new EventHistoryData($change);
+				$data->setEntityType($this->getEntityType());
+				$data->setEntityId($this->getEntityId());
+
+				$result[] = $data;
+			}
+
+			return $result;
+		}
+
+		return parent::prepareUpdateEventDataForField($fieldName);
 	}
 }

@@ -65,6 +65,11 @@ class TemplateTable extends FileModel
 			]),
 			new Main\Entity\StringField('NAME', [
 				'required' => true,
+				'validation' => function() {
+					return [
+						new Main\ORM\Fields\Validators\LengthValidator(1, 100),
+					];
+				}
 			]),
 			new Main\Entity\StringField('CODE'),
 			new Main\Entity\StringField('REGION'),
@@ -145,28 +150,40 @@ class TemplateTable extends FileModel
 	public static function getListByClassName($className, $userId = null, $value = ' ', $activeOnly = true)
 	{
 		$filterProvider = $className;
-		if(is_a($className, Filterable::class, true))
+		if (is_a($className, Filterable::class, true))
 		{
 			/** @var Filterable $provider */
 			$provider = DataProviderManager::getInstance()->getDataProvider($className, $value, [
 				'isLightMode' => true,
 				'noSubstitution' => true,
 			]);
-			if($provider)
+			if ($provider)
 			{
 				$filterProvider = $provider->getFilterString();
 			}
 		}
-		$filterProvider = str_replace("\\", "\\\\", mb_strtolower($filterProvider));
-		$filter = Main\Entity\Query::filter()->whereLike('PROVIDER.PROVIDER', $filterProvider)->where('IS_DELETED', 'N');
-		if($activeOnly)
+		$filter = Main\Entity\Query::filter()
+			->where('IS_DELETED', 'N')
+		;
+		$filterProvider = mb_strtolower($filterProvider);
+		if (mb_strpos($filterProvider, '%'))
+		{
+			$filterProvider = str_replace('\\', '\\\\', $filterProvider);
+			$filter->whereLike('PROVIDER.PROVIDER', $filterProvider);
+		}
+		else
+		{
+			$filter->where('PROVIDER.PROVIDER', $filterProvider);
+		}
+		if ($activeOnly)
 		{
 			$filter->where('ACTIVE', 'Y');
 		}
-		if($userId > 0)
+		if ($userId > 0)
 		{
 			$filter->where(Driver::getInstance()->getUserPermissions($userId)->getFilterForRelatedTemplateList());
 		}
+
 		return static::getList([
 			'order' => ['SORT' => 'asc', 'ID' => 'asc'],
 			'filter' => $filter,

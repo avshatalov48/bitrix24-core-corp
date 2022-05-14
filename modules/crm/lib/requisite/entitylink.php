@@ -1776,29 +1776,7 @@ class EntityLink
 	 */
 	public static function checkUpdatePermissionOwnerEntity($entityTypeID = 0, $entityID = 0)
 	{
-		if(!is_int($entityTypeID))
-		{
-			$entityTypeID = (int)$entityTypeID;
-		}
-
-		if(intval($entityTypeID) <= 0 && intval($entityID) <= 0)
-		{
-			return (
-				\CCrmAuthorizationHelper::CheckUpdatePermission(\CCrmOwnerType::Deal, 0)
-				&& \CCrmAuthorizationHelper::CheckUpdatePermission(\CCrmOwnerType::Quote, 0)
-				&& \CCrmAuthorizationHelper::CheckUpdatePermission(\CCrmOwnerType::Invoice, 0)
-			);
-		}
-
-		if ($entityTypeID === \CCrmOwnerType::Deal
-			|| $entityTypeID === \CCrmOwnerType::Quote
-			|| $entityTypeID === \CCrmOwnerType::Invoice)
-		{
-			$entityType = \CCrmOwnerType::ResolveName($entityTypeID);
-			return \CCrmAuthorizationHelper::CheckUpdatePermission($entityType, $entityID);
-		}
-
-		return false;
+		return Service\Container::getInstance()->getUserPermissions()->checkUpdatePermissions((int)$entityTypeID, (int)$entityID);
 	}
 
 	public static function moveDependencies(

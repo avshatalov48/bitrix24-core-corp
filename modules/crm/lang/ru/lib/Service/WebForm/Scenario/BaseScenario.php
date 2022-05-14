@@ -18,11 +18,11 @@ $MESS['CRM_SERVICE_FORM_SCENARIO_CALLBACK_BUTTON'] = 'Жду звонка';
 $MESS['CRM_SERVICE_FORM_SCENARIO_CALLBACK_SUCCESS_TEXT'] = 'В ближайшие несколько секунд с вами свяжется менеджер.';
 $MESS['CRM_SERVICE_FORM_SCENARIO_CALLBACK_FAILURE_TEXT'] = 'Не удалось отправить сообщение. Повторите попытку позже.';
 
-$MESS['CRM_SERVICE_FORM_SCENARIO_WHATSAPP'] = 'Обратный Whatsapp';
-$MESS['CRM_SERVICE_FORM_SCENARIO_WHATSAPP_DESCRIPTION'] = 'Форма для запуска обратного whatsapp';
-$MESS['CRM_SERVICE_FORM_SCENARIO_WHATSAPP_BUTTON'] = 'Жду сообщения';
-$MESS['CRM_SERVICE_FORM_SCENARIO_WHATSAPP_SUCCESS_TEXT'] = 'В ближайшие несколько секунд с вами свяжется менеджер.';
-$MESS['CRM_SERVICE_FORM_SCENARIO_WHATSAPP_FAILURE_TEXT'] = 'Не удалось отправить сообщение. Повторите попытку позже.';
+// $MESS['CRM_SERVICE_FORM_SCENARIO_WHATSAPP'] = 'Обратный Whatsapp';
+// $MESS['CRM_SERVICE_FORM_SCENARIO_WHATSAPP_DESCRIPTION'] = 'Форма для запуска обратного whatsapp';
+// $MESS['CRM_SERVICE_FORM_SCENARIO_WHATSAPP_BUTTON'] = 'Жду сообщения';
+// $MESS['CRM_SERVICE_FORM_SCENARIO_WHATSAPP_SUCCESS_TEXT'] = 'В ближайшие несколько секунд с вами свяжется менеджер.';
+// $MESS['CRM_SERVICE_FORM_SCENARIO_WHATSAPP_FAILURE_TEXT'] = 'Не удалось отправить сообщение. Повторите попытку позже.';
 
 $MESS['CRM_SERVICE_FORM_SCENARIO_EXPERT'] = 'Индивидуальная настройка';
 $MESS['CRM_SERVICE_FORM_SCENARIO_EXPERT_DESCRIPTION'] = 'Расширенные настройки форм';
@@ -114,7 +114,6 @@ $MESS['CRM_SERVICE_FORM_MENU_ITEM_CALLBACK'] = 'Обратный звонок';
 $MESS['CRM_SERVICE_FORM_MENU_ITEM_OTHER'] = 'Другие настройки';
 $MESS['CRM_SERVICE_FORM_MENU_ITEM_FACEBOOK'] = 'Facebook Lead Ads';
 $MESS['CRM_SERVICE_FORM_MENU_ITEM_VK'] = 'ВКонтакте';
-$MESS['CRM_SERVICE_FORM_MENU_ITEM_WHATSAPP'] = 'Обратный Whatsapp';
 $MESS['CRM_SERVICE_FORM_MENU_ITEM_DESIGN'] = 'Дизайн';
 $MESS['CRM_SERVICE_FORM_SCENARIO_DELIVERY_BUTTON'] = 'Заказать';
 $MESS['CRM_SERVICE_FORM_SCENARIO_FILLING_DATA_BUTTON'] = 'Заполнить еще раз';

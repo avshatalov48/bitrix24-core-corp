@@ -5,7 +5,10 @@ namespace Bitrix\Tasks\Scrum\Service;
 use Bitrix\Main\Error;
 use Bitrix\Main\Errorable;
 use Bitrix\Main\ErrorCollection;
+use Bitrix\Main\ORM\Objectify\Values;
 use Bitrix\Main\Result;
+use Bitrix\Tasks\Scrum\Form\TypeForm;
+use Bitrix\Tasks\Scrum\Internal\TypeParticipantsTable;
 use Bitrix\Tasks\Scrum\Internal\TypeTable;
 
 class TypeService implements Errorable
@@ -15,6 +18,7 @@ class TypeService implements Errorable
 	const ERROR_COULD_NOT_CHANGE = 'TASKS_ITEM_TYPE_03';
 	const ERROR_COULD_NOT_REMOVE = 'TASKS_ITEM_TYPE_04';
 	const ERROR_COULD_NOT_READ = 'TASKS_ITEM_TYPE_05';
+	const ERROR_COULD_NOT_ADD_PARTICIPANTS = 'TASKS_ITEM_TYPE_06';
 
 	private $errorCollection;
 
@@ -55,32 +59,23 @@ class TypeService implements Errorable
 		}
 	}
 
-	/**
-	 * Returns an object of type.
-	 *
-	 * @param array $fields Fields to create object.
-	 * @return TypeTable
-	 */
-	public function getTypeObject(array $fields = []): TypeTable
+	public function getType(int $typeId): TypeForm
 	{
-		return TypeTable::createType($fields);
-	}
-
-	public function getType(int $typeId): TypeTable
-	{
-		$type = $this->getTypeObject();
+		$type = new TypeForm();
 
 		try
 		{
 			$queryObject = TypeTable::getList([
-				'select' => ['*'],
+				'select' => ['*', 'PARTICIPANTS'],
 				'filter' => [
 					'ID' => $typeId,
 				],
 			]);
-			while ($typeData = $queryObject->fetch())
+			while ($typeObject = $queryObject->fetchObject())
 			{
-				$type = $this->getTypeObject($typeData);
+				$type->fillFromDatabase($typeObject->collectValues(Values::ACTUAL));
+
+				$type->setParticipantsCodes($typeObject->getParticipants()->getCodeList());
 			}
 		}
 		catch (\Exception $exception)
@@ -99,18 +94,18 @@ class TypeService implements Errorable
 	/**
 	 * Creates a type.
 	 *
-	 * @param TypeTable $type
-	 * @return TypeTable
+	 * @param TypeForm $typeForm The type form object.
+	 * @return TypeForm
 	 */
-	public function createType(TypeTable $type): TypeTable
+	public function createType(TypeForm $typeForm): TypeForm
 	{
 		try
 		{
-			$result = TypeTable::add($type->getFieldsToCreate());
+			$result = TypeTable::add($typeForm->getFieldsToCreate());
 
 			if ($result->isSuccess())
 			{
-				$type->setId($result->getId());
+				$typeForm->setId($result->getId());
 			}
 			else
 			{
@@ -127,20 +122,20 @@ class TypeService implements Errorable
 			);
 		}
 
-		return $type;
+		return $typeForm;
 	}
 
 	/**
 	 * Changes the type.
 	 *
-	 * @param TypeTable $type The type.
+	 * @param TypeForm $typeForm The type form object.
 	 * @return bool
 	 */
-	public function changeType(TypeTable $type): bool
+	public function changeType(TypeForm $typeForm): bool
 	{
 		try
 		{
-			$result = TypeTable::update($type->getId(), $type->getFieldsToUpdate());
+			$result = TypeTable::update($typeForm->getId(), $typeForm->getFieldsToUpdate());
 
 			if ($result->isSuccess())
 			{
@@ -167,19 +162,58 @@ class TypeService implements Errorable
 	}
 
 	/**
-	 * Removes the type.
+	 * Saves the type participants.
 	 *
-	 * @param TypeTable $type The type.
+	 * @param TypeForm $typeForm The type form object.
 	 * @return bool
 	 */
-	public function removeType(TypeTable $type): bool
+	public function saveParticipants(TypeForm $typeForm): bool
 	{
 		try
 		{
-			$result = TypeTable::delete($type->getId());
+			$participants = $typeForm->getParticipantsCodes();
+
+			$this->removeParticipants($typeForm);
+
+			foreach ($participants as $code)
+			{
+				TypeParticipantsTable::add([
+					'TYPE_ID' => $typeForm->getId(),
+					'CODE' => $code,
+				]);
+			}
+
+			return true;
+		}
+		catch (\Exception $exception)
+		{
+			$this->errorCollection->setError(
+				new Error(
+					$exception->getMessage(),
+					self::ERROR_COULD_NOT_ADD_PARTICIPANTS
+				)
+			);
+
+			return false;
+		}
+	}
+
+	/**
+	 * Removes the type.
+	 *
+	 * @param TypeForm $typeForm The type form object.
+	 * @return bool
+	 */
+	public function removeType(TypeForm $typeForm): bool
+	{
+		try
+		{
+			$result = TypeTable::delete($typeForm->getId());
 
 			if ($result->isSuccess())
 			{
+				$this->removeParticipants($typeForm);
+
 				return true;
 			}
 			else
@@ -206,7 +240,7 @@ class TypeService implements Errorable
 	 * Returns types based on entity id.
 	 *
 	 * @param int $entityId The types entity id.
-	 * @return TypeTable[]
+	 * @return TypeForm[]
 	 */
 	public function getTypes(int $entityId): array
 	{
@@ -215,17 +249,24 @@ class TypeService implements Errorable
 		try
 		{
 			$queryObject = TypeTable::getList([
-				'select' => ['*'],
+				'select' => ['*', 'PARTICIPANTS'],
 				'filter' => [
 					'ENTITY_ID' => $entityId,
 				],
 				'order' => [
 					'SORT' => 'ASC',
+					'PARTICIPANTS.ID' => 'ASC',
 				],
 			]);
-			while ($typeData = $queryObject->fetch())
+			while ($typeObject = $queryObject->fetchObject())
 			{
-				$types[] = $this->getTypeObject($typeData);
+				$type = new TypeForm();
+
+				$type->fillFromDatabase($typeObject->collectValues(Values::ACTUAL));
+
+				$type->setParticipantsCodes($typeObject->getParticipants()->getCodeList());
+
+				$types[] = $type;
 			}
 		}
 		catch (\Exception $exception)
@@ -241,22 +282,6 @@ class TypeService implements Errorable
 		return $types;
 	}
 
-	/**
-	 * Returns an array of data in the required format for the client app.
-	 *
-	 * @param TypeTable $type The type object.
-	 * @return array
-	 */
-	public function getTypeData(TypeTable $type): array
-	{
-		return [
-			'id' => $type->getId(),
-			'name' => $type->getName(),
-			'sort' => $type->getSort(),
-			'dodRequired' => $type->getDodRequired(),
-		];
-	}
-
 	public function getErrors()
 	{
 		return $this->errorCollection->toArray();
@@ -265,6 +290,19 @@ class TypeService implements Errorable
 	public function getErrorByCode($code)
 	{
 		return $this->errorCollection->getErrorByCode($code);
+	}
+
+	private function removeParticipants(TypeForm $typeForm): void
+	{
+		$queryObject = TypeParticipantsTable::getList([
+			'filter' => [
+				'=TYPE_ID' => $typeForm->getId(),
+			]
+		]);
+		while ($participant = $queryObject->fetch())
+		{
+			TypeParticipantsTable::delete($participant['ID']);
+		}
 	}
 
 	private function setErrors(Result $result, string $code): void

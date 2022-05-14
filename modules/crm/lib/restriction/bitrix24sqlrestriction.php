@@ -30,4 +30,22 @@ class Bitrix24SqlRestriction extends SqlRestriction
 	{
 		return $this->restrictionInfo->getHtml();
 	}
+
+	/**
+	 * Get id for tariff slider
+	 * @return string
+	 */
+	public function getInfoHelperId(): string
+	{
+		return $this->restrictionInfo->getInfoHelperId();
+	}
+
+	/**
+	 * Get id for tariff slider in mobile app
+	 * @return string
+	 */
+	public function getMobileInfoHelperId(): string
+	{
+		return $this->restrictionInfo->getMobileInfoHelperId();
+	}
 }

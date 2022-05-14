@@ -84,7 +84,7 @@ class FacebookComments extends Base
 	{
 		$message = parent::sendMessageProcessing($message, $line);
 
-		if(!Library::isEmpty($message['message']['text']))
+		if(!empty($message['message']['files']) || !Library::isEmpty($message['message']['text']))
 		{
 			$lastMessageId = Chat::getChatLastMessageId($message['chat']['id'], $this->idConnector);
 

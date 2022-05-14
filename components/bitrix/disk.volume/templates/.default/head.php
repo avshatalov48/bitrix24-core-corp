@@ -50,12 +50,12 @@ if ($isBitrix24Template)
 				'bitrix:main.ui.filter',
 				'',
 				array(
-					'GRID_ID'               => $arResult['GRID_ID'],
-					'FILTER_ID'             => $arResult['FILTER_ID'],
-					'FILTER'                => $arResult["FILTER"],
-					'FILTER_PRESETS'        => $arResult['FILTER_PRESETS'],
-					'ENABLE_LIVE_SEARCH'    => true,
-					'ENABLE_LABEL'          => true,
+					'GRID_ID' => $arResult['GRID_ID'],
+					'FILTER_ID' => $arResult['FILTER_ID'],
+					'FILTER' => $arResult["FILTER"],
+					'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
+					'ENABLE_LIVE_SEARCH' => true,
+					'ENABLE_LABEL' => true,
 					'RESET_TO_DEFAULT_MODE' => false,
 				),
 				$component
@@ -147,28 +147,32 @@ if ($isBitrix24Template && !$arResult['DISK_EMPTY'] && !$isQueueRunning && $arRe
 
 	$menuItems = array();
 
-	$menuItems[] = array(
-		'TEXT' => Loc::getMessage('DISK_VOLUME_EXPERT_MODE_OFF'),
-		'COMMENT' => Loc::getMessage('DISK_VOLUME_EXPERT_MODE_EXIT'),
-		'URL' => $component->getActionUrl(array('expert' => 'off', 'action' => $component::ACTION_DEFAULT, 'storageId' => '')),
-		'ID' => 'expertOff',
-		'IS_ACTIVE' => (bool)($arResult['EXPERT_MODE'] === false),
-		'CLASS' => '',
-	);
-
-	$menuItems[] = array(
-		'TEXT' => Loc::getMessage('DISK_VOLUME_EXPERT_MODE'),
-		'COMMENT' => Loc::getMessage('DISK_VOLUME_EXPERT_MODE_ON'),
-		'URL' => $component->getActionUrl(array(
-			'expert' => 'on',
-			'action' => ($arResult['ADMIN_MODE'] === true ? $component::ACTION_DISKS : $component::ACTION_STORAGE),
-			'storageId' => '',
-		)),
-		'ID' => 'expertOn',
-		'IS_ACTIVE' => (bool)($arResult['EXPERT_MODE'] === true),
-		'CLASS' => '',
-	);
-
+	if ($arResult['EXPERT_MODE'] === true)
+	{
+		$menuItems[] = array(
+			//'TEXT' => Loc::getMessage('DISK_VOLUME_EXPERT_MODE_OFF'),
+			'TEXT' => Loc::getMessage('DISK_VOLUME_EXPERT_MODE_EXIT'),
+			'URL' => $component->getActionUrl(array('expert' => 'off', 'action' => $component::ACTION_DEFAULT, 'storageId' => '')),
+			'ID' => 'expertOff',
+			'IS_ACTIVE' => (bool)($arResult['EXPERT_MODE'] === false),
+			'CLASS' => '',
+		);
+	}
+	else
+	{
+		$menuItems[] = array(
+			//'TEXT' => Loc::getMessage('DISK_VOLUME_EXPERT_MODE'),
+			'TEXT' => Loc::getMessage('DISK_VOLUME_EXPERT_MODE_ON'),
+			'URL' => $component->getActionUrl(array(
+				'expert' => 'on',
+				'action' => ($arResult['ADMIN_MODE'] === true ? $component::ACTION_DISKS : $component::ACTION_STORAGE),
+				'storageId' => '',
+			)),
+			'ID' => 'expertOn',
+			'IS_ACTIVE' => (bool)($arResult['EXPERT_MODE'] === true),
+			'CLASS' => '',
+		);
+	}
 
 	?>
 	<div class="tasks-view-switcher pagetitle-align-right-container">

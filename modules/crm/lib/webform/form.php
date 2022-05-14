@@ -281,6 +281,7 @@ class Form
 		{
 			$this->params['PRESET_FIELDS'][] = $presetField;
 		}
+		unset($dbPresetField);
 
 		$fieldResult = Internals\FieldTable::getList(array(
 			'filter' => array('=FORM_ID' => $id),
@@ -294,6 +295,7 @@ class Form
 			}
 		);
 		$this->params['FIELDS'] = $fieldResult->fetchAll();
+		unset($fieldResult);
 
 
 		$this->params['DEPENDENCIES'] = Internals\FieldDependenceTable::getList(array(

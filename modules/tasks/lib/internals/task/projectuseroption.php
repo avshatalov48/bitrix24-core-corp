@@ -12,9 +12,9 @@ use Bitrix\Main;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_ProjectUserOption_Query query()
- * @method static EO_ProjectUserOption_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ProjectUserOption_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_ProjectUserOption_Result getById($id)
- * @method static EO_ProjectUserOption_Result getList(array $parameters = array())
+ * @method static EO_ProjectUserOption_Result getList(array $parameters = [])
  * @method static EO_ProjectUserOption_Entity getEntity()
  * @method static \Bitrix\Tasks\Internals\Task\EO_ProjectUserOption createObject($setDefaultValues = true)
  * @method static \Bitrix\Tasks\Internals\Task\EO_ProjectUserOption_Collection createCollection()

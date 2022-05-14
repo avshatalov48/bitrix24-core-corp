@@ -48,7 +48,7 @@ class ItemIdentifier
 
 	private function setEntityTypeId(int $entityTypeId): ItemIdentifier
 	{
-		if (!\CCrmOwnerType::IsDefined($entityTypeId))
+		if (!\CCrmOwnerType::isCorrectEntityTypeId($entityTypeId))
 		{
 			throw new ArgumentException('The provided $entityTypeId is invalid', 'entityTypeId');
 		}

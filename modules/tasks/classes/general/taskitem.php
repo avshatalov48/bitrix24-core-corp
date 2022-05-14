@@ -2198,16 +2198,21 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		}
 
 		if (isset($arFields['ID']))
+		{
 			unset($arFields['ID']);
+		}
 
 		$arParams = array_merge($arParams, array(
 			'USER_ID'               => $this->executiveUserId,
 			'CHECK_RIGHTS_ON_FILES' => true
 		));
 
+		$prevGroupId = (int) $arTaskData['GROUP_ID'];
+
 		$this->checkProjectDates($arTaskData, $arFields); //
 
 		$this->markCacheAsDirty();
+
 		$o = new CTasks();
 		/** @noinspection PhpDeprecationInspection */
 		if ($o->update($this->taskId, $arFields, $arParams) !== true)
@@ -2218,10 +2223,10 @@ final class CTaskItem implements CTaskItemInterface, ArrayAccess
 		$this->markCacheAsDirty();
 		$this->lastOperationResultData['UPDATE'] = $o->getLastOperationResultData();
 
-		$prevData = $o->getPreviousData();
-		if($arActionArguments['SUBTASKS_CHANGE_GROUP'] !== false &&
-			array_key_exists('GROUP_ID', $arFields) &&
-			intval($prevData['GROUP_ID']) != intval($arFields['GROUP_ID'])
+		if(
+			$arActionArguments['SUBTASKS_CHANGE_GROUP'] !== false
+			&& array_key_exists('GROUP_ID', $arFields)
+			&& $prevGroupId !== (int) $arFields['GROUP_ID']
 		)
 		{
 			$this->moveSubTasksToGroup($arFields['GROUP_ID']);

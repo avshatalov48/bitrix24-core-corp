@@ -3447,7 +3447,7 @@ BX.CTimeManEventPopup.prototype.GetContent = function()
 
 		if (this.data.HOST)
 		{
-			html += '<div class="tm-event-popup-participant"><div class="tm-event-popup-participant-status tm-event-popup-participant-status-accept"></div><div class="tm-event-popup-participant-name"><a class="tm-event-popup-participant-link" href="' + this.data.HOST.url + '">' + this.data.HOST.name + '</a><span class="tm-event-popup-participant-hint">' + BX.message('JS_CORE_HOST') + '</span></div></div>';
+			html += '<div class="tm-event-popup-participant"><div class="tm-event-popup-participant-status tm-event-popup-participant-status-accept"></div><div class="tm-event-popup-participant-name"><a class="tm-event-popup-participant-link" href="' + this.data.HOST.url + '">' + BX.util.htmlspecialchars(this.data.HOST.name) + '</a><span class="tm-event-popup-participant-hint">' + BX.message('JS_CORE_HOST') + '</span></div></div>';
 		}
 
 		if (this.data.GUESTS.length > 0)
@@ -3465,7 +3465,7 @@ BX.CTimeManEventPopup.prototype.GetContent = function()
 				else if (this.data.GUESTS[i].status == 'N')
 					status = 'tm-event-popup-participant-status-decline';
 
-				grids[i<d?0:1] += '<div class="tm-event-popup-participant"><div class="tm-event-popup-participant-status ' + status + '"></div><div class="tm-event-popup-participant-name"><a class="tm-event-popup-participant-link" href="' + this.data.GUESTS[i].url + '">' + this.data.GUESTS[i].name + '</a></div></div>';
+				grids[i<d?0:1] += '<div class="tm-event-popup-participant"><div class="tm-event-popup-participant-status ' + status + '"></div><div class="tm-event-popup-participant-name"><a class="tm-event-popup-participant-link" href="' + this.data.GUESTS[i].url + '">' + BX.util.htmlspecialchars(this.data.GUESTS[i].name) + '</a></div></div>';
 			}
 
 			html += '<td class="tm-event-popup-participants-grid-left">' + grids[0] + '</td><td class="tm-event-popup-participants-grid-right">' + grids[1] + '</td>';
@@ -5174,6 +5174,12 @@ BX.CTimeManReportFormWeekly.prototype.ActionEdit = function()
 			}
 		}
 	}
+
+	if (data.EVENTS.length)
+	{
+		data.EVENTS = JSON.stringify(data.EVENTS);
+	}
+
 	this.post = true;
 	this.parent.Query('save_full_report', data, BX.proxy(this._ActionEdit, this));
 };

@@ -862,7 +862,7 @@ class TasksTaskComponent extends TasksBaseComponent
 		if (!empty($data))
 		{
 			// todo: move to \Bitrix\Tasks\Item\Task
-			$mgrResult = Manager\Task::update(Util\User::getId(), $taskId, $data, array(
+			$mgrResult = Manager\Task::update($this->userId, $taskId, $data, array(
 				'PUBLIC_MODE' => true,
 				'ERRORS' => $this->errorCollection,
 				'THROTTLE_MESSAGES' => $parameters[ 'THROTTLE_MESSAGES' ],
@@ -1037,8 +1037,16 @@ class TasksTaskComponent extends TasksBaseComponent
 			return $result;
 		}
 
-		$task = \CTaskItem::getInstance($taskId, $this->userId);
-		$task->approve();
+		try
+		{
+			$task = \CTaskItem::getInstance($taskId, $this->userId);
+			$task->approve();
+		}
+		catch (Bitrix\Tasks\Exception $e)
+		{
+			$this->errorCollection->add('ACTION_ERROR.UNEXPECTED_ERROR', $e->getFirstErrorMessage(), false, ['ui' => 'notification']);
+			return $result;
+		}
 
 		return $result;
 	}
@@ -1064,8 +1072,16 @@ class TasksTaskComponent extends TasksBaseComponent
 			return $result;
 		}
 
-		$task = \CTaskItem::getInstance($taskId, $this->userId);
-		$task->disapprove();
+		try
+		{
+			$task = \CTaskItem::getInstance($taskId, $this->userId);
+			$task->disapprove();
+		}
+		catch (Bitrix\Tasks\Exception $e)
+		{
+			$this->errorCollection->add('ACTION_ERROR.UNEXPECTED_ERROR', $e->getFirstErrorMessage(), false, ['ui' => 'notification']);
+			return $result;
+		}
 
 		return $result;
 	}
@@ -1091,8 +1107,16 @@ class TasksTaskComponent extends TasksBaseComponent
 			return $result;
 		}
 
-		$task = \CTaskItem::getInstance($taskId, $this->userId);
-		$taskData = $task->getData(false);
+		try
+		{
+			$task = \CTaskItem::getInstance($taskId, $this->userId);
+			$taskData = $task->getData(false);
+		}
+		catch (Bitrix\Tasks\Exception $e)
+		{
+			$this->errorCollection->add('ACTION_ERROR.UNEXPECTED_ERROR', $e->getFirstErrorMessage(), false, ['ui' => 'notification']);
+			return $result;
+		}
 
 		if ($taskData)
 		{
@@ -1369,8 +1393,16 @@ class TasksTaskComponent extends TasksBaseComponent
 			return $result;
 		}
 
-		$task = \CTaskItem::getInstance($taskId, $this->userId);
-		$task->pauseExecution();
+		try
+		{
+			$task = \CTaskItem::getInstance($taskId, $this->userId);
+			$task->pauseExecution();
+		}
+		catch (Bitrix\Tasks\Exception $e)
+		{
+			$this->errorCollection->add('ACTION_ERROR.UNEXPECTED_ERROR', $e->getFirstErrorMessage(), false, ['ui' => 'notification']);
+			return $result;
+		}
 
 		return $result;
 	}
@@ -1396,9 +1428,16 @@ class TasksTaskComponent extends TasksBaseComponent
 			return $result;
 		}
 
-		// todo: move to \Bitrix\Tasks\Item\Task
-		$task = \CTaskItem::getInstance($taskId, $this->userId);
-		$task->renew();
+		try
+		{
+			$task = \CTaskItem::getInstance($taskId, $this->userId);
+			$task->renew();
+		}
+		catch (Bitrix\Tasks\Exception $e)
+		{
+			$this->errorCollection->add('ACTION_ERROR.UNEXPECTED_ERROR', $e->getFirstErrorMessage(), false, ['ui' => 'notification']);
+			return $result;
+		}
 
 		return $result;
 	}
@@ -1424,9 +1463,16 @@ class TasksTaskComponent extends TasksBaseComponent
 			return $result;
 		}
 
-		// todo: move to \Bitrix\Tasks\Item\Task
-		$task = \CTaskItem::getInstance($taskId, $this->userId);
-		$task->startExecution();
+		try
+		{
+			$task = \CTaskItem::getInstance($taskId, $this->userId);
+			$task->startExecution();
+		}
+		catch (Bitrix\Tasks\Exception $e)
+		{
+			$this->errorCollection->add('ACTION_ERROR.UNEXPECTED_ERROR', $e->getFirstErrorMessage(), false, ['ui' => 'notification']);
+			return $result;
+		}
 
 		return $result;
 	}
@@ -1467,8 +1513,16 @@ class TasksTaskComponent extends TasksBaseComponent
 			return $result;
 		}
 
-		$task = \CTaskItem::getInstance($taskId, $this->userId);
-		$task->complete();
+		try
+		{
+			$task = \CTaskItem::getInstance($taskId, $this->userId);
+			$task->complete();
+		}
+		catch (Bitrix\Tasks\Exception $e)
+		{
+			$this->errorCollection->add('ACTION_ERROR.UNEXPECTED_ERROR', $e->getFirstErrorMessage(), false, ['ui' => 'notification']);
+			return $result;
+		}
 
 		return $result;
 	}
@@ -1516,9 +1570,10 @@ class TasksTaskComponent extends TasksBaseComponent
 			$task = \CTaskItem::getInstance($taskId, $this->userId);
 			$task->delegate($userId);
 		}
-		catch (\TasksException $exception)
+		catch (Bitrix\Tasks\Exception $e)
 		{
-			$this->errorCollection->add('ACTION_ERROR.UNEXPECTED_ERROR', $exception->getMessageOrigin());
+			$this->errorCollection->add('ACTION_ERROR.UNEXPECTED_ERROR', $e->getFirstErrorMessage(), false, ['ui' => 'notification']);
+			return $result;
 		}
 
 		return $result;
@@ -1545,9 +1600,16 @@ class TasksTaskComponent extends TasksBaseComponent
 			return $result;
 		}
 
-		// todo: move to \Bitrix\Tasks\Item\Task
-		$task = \CTaskItem::getInstance($taskId, Util\User::getId());
-		$task->defer();
+		try
+		{
+			$task = \CTaskItem::getInstance($taskId, Util\User::getId());
+			$task->defer();
+		}
+		catch (Bitrix\Tasks\Exception $e)
+		{
+			$this->errorCollection->add('ACTION_ERROR.UNEXPECTED_ERROR', $e->getFirstErrorMessage(), false, ['ui' => 'notification']);
+			return $result;
+		}
 
 		return $result;
 	}
@@ -1573,8 +1635,16 @@ class TasksTaskComponent extends TasksBaseComponent
 			return $result;
 		}
 
-		$task = \CTaskItem::getInstance($taskId, $this->userId);
-		$task->delete();
+		try
+		{
+			$task = \CTaskItem::getInstance($taskId, $this->userId);
+			$task->delete();
+		}
+		catch (Bitrix\Tasks\Exception $e)
+		{
+			$this->errorCollection->add('ACTION_ERROR.UNEXPECTED_ERROR', $e->getFirstErrorMessage(), false, ['ui' => 'notification']);
+			return $result;
+		}
 
 		$result['id'] = $taskId;
 
@@ -1730,9 +1800,17 @@ class TasksTaskComponent extends TasksBaseComponent
 			return $result;
 		}
 
-		$task = \CTaskItem::getInstanceFromPool($taskId, $this->userId);
-		$item = new \CTaskElapsedItem($task, $id);
-		$item->delete();
+		try
+		{
+			$task = \CTaskItem::getInstanceFromPool($taskId, $this->userId);
+			$item = new \CTaskElapsedItem($task, $id);
+			$item->delete();
+		}
+		catch (Bitrix\Tasks\Exception $e)
+		{
+			$this->errorCollection->add('ACTION_ERROR.UNEXPECTED_ERROR', $e->getFirstErrorMessage(), false, ['ui' => 'notification']);
+			return $result;
+		}
 
 		return $result;
 	}

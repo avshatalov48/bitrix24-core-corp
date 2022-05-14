@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Class implements all further interactions with "search" module considering "task item" entity
  *

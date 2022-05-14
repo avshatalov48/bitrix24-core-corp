@@ -289,9 +289,8 @@ BX.CRM.Kanban.Item.prototype = {
 	{
 		var wrapperCreated = this.fieldsWrapper ? true : false;
 		var itemHasFields = this.getData().fields ? true : false;
-		var entityAllowsRendering = this.getGrid().getTypeInfoParam('doLayoutFieldsInItemRender');
 
-		return wrapperCreated && itemHasFields && entityAllowsRendering;
+		return wrapperCreated && itemHasFields;
 	},
 
 	getItemFields: function()

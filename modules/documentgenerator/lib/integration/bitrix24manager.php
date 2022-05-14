@@ -108,6 +108,11 @@ class Bitrix24Manager
 		\CUserOptions::SetOption(Driver::MODULE_ID, 'documents_count', $count);
 	}
 
+	public static function getPortalZone(): string
+	{
+		return (string)\CBitrix24::getPortalZone();
+	}
+
 	/**
 	 * @param string $region
 	 * @return array

@@ -1,13 +1,25 @@
-.tasks-scrum__item.--add-block {
-	border-color: var(--tasks_scrum-grey-4);
-	padding: 6px 11px 8px;
+.tasks-scrum__input {
+	box-sizing: border-box;
+	padding: 12px 0;
+	border-radius: 3px;
+	margin-top: 10px;
+	color: var(--tasks_scrum-light-grey);
+	position: relative;
+	z-index: 3;
+	user-select: none;
 }
 
-.tasks-scrum__item.--add-block.--disabled {
+.tasks-scrum__input.--add-block {
+	border-color: var(--tasks_scrum-grey-4);
+	padding: 6px 11px 8px;
+	background: var(--tasks_scrum-white);
+}
+
+.tasks-scrum__input.--add-block.--disabled {
 	opacity: 0.6;
 }
 
-.tasks-scrum__item--textarea {
+.tasks-scrum__input--textarea {
 	height: 60px;
 	grid-column: 1 / 6;
 	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -22,19 +34,19 @@
 	outline: none;
 }
 
-.tasks-scrum__item--textarea::placeholder {
+.tasks-scrum__input--textarea::placeholder {
 	color: var(--tasks_scrum-dark-grey_alpha_50);
 	transition: .2s;
 }
 
-.tasks-scrum__item--textarea-help {
+.tasks-scrum__input--textarea-help {
 	font-family: "OpenSans-Italic", "Helvetica Neue", Arial, Helvetica, sans-serif;
 	font-size: 13px;
 	color: var(--tasks_scrum-dark-grey_alpha_60);
 	grid-column: 1 / 6;
 }
 
-.tasks-scrum__item--textarea-help span::before {
+.tasks-scrum__input--textarea-help span::before {
 	content: '';
 	display: inline-block;
 	vertical-align: top;

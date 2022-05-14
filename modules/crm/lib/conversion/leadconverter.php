@@ -919,17 +919,20 @@ class LeadConverter extends EntityConverter
 
 		$lead = new \CCrmLead(false);
 		$entityFields = array('LEAD_ID' => false);
+		$leadOptions = [
+			'EXCLUDE_FROM_RELATION_REGISTRATION' => [new Crm\ItemIdentifier($entityTypeID, $entityID)],
+		];
 		if($entityTypeID === \CCrmOwnerType::Contact)
 		{
 			(new \CCrmContact(false))->Update($entityID, $entityFields);
 			$leadFields = array('CONTACT_ID' => false);
-			$lead->Update($this->entityID, $leadFields);
+			$lead->Update($this->entityID, $leadFields, true, true, $leadOptions);
 		}
 		elseif($entityTypeID === \CCrmOwnerType::Company)
 		{
 			(new \CCrmCompany(false))->Update($entityID, $entityFields);
 			$leadFields = array('COMPANY_ID' => false);
-			$lead->Update($this->entityID, $leadFields);
+			$lead->Update($this->entityID, $leadFields, true, true, $leadOptions);
 		}
 		elseif($entityTypeID === \CCrmOwnerType::Deal)
 		{

@@ -49,18 +49,13 @@ class OrderBinder extends BaseBinder
 	public function unbindEntities($associatedEntityTypeID, $associatedEntityID, array $entityIDs)
 	{
 		$saleModuleInstalled = Main\Loader::includeModule('sale');
-		if($associatedEntityTypeID === \CCrmOwnerType::Contact)
+		if(in_array($associatedEntityTypeID, [\CCrmOwnerType::Contact, \CCrmOwnerType::Company]))
 		{
 			if ($saleModuleInstalled)
 			{
-				\Bitrix\Crm\Order\Contact::unbindFromOrders($associatedEntityID, $entityIDs);
-			}
-		}
-		elseif($associatedEntityTypeID === \CCrmOwnerType::Company)
-		{
-			if ($saleModuleInstalled)
-			{
-				\Bitrix\Crm\Order\Company::unbindFromOrders($associatedEntityID, $entityIDs);
+				(new \Bitrix\Crm\Order\ContactCompanyBinding($associatedEntityTypeID))
+					->unbindFromOrders($associatedEntityID, $entityIDs)
+				;
 			}
 		}
 		else
@@ -72,18 +67,13 @@ class OrderBinder extends BaseBinder
 	public function bindEntities($associatedEntityTypeID, $associatedEntityID, array $entityIDs)
 	{
 		$saleModuleInstalled = Main\Loader::includeModule('sale');
-		if($associatedEntityTypeID === \CCrmOwnerType::Contact)
+		if(in_array($associatedEntityTypeID, [\CCrmOwnerType::Contact, \CCrmOwnerType::Company]))
 		{
 			if ($saleModuleInstalled)
 			{
-				\Bitrix\Crm\Order\Contact::bindToOrders($associatedEntityID, $entityIDs);
-			}
-		}
-		elseif($associatedEntityTypeID === \CCrmOwnerType::Company)
-		{
-			if ($saleModuleInstalled)
-			{
-				\Bitrix\Crm\Order\Company::bindToOrders($associatedEntityID, $entityIDs);
+				(new \Bitrix\Crm\Order\ContactCompanyBinding($associatedEntityTypeID))
+					->bindToOrders($associatedEntityID, $entityIDs)
+				;
 			}
 		}
 		else

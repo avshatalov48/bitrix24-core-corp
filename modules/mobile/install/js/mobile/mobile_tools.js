@@ -429,18 +429,16 @@
 		},
 		diskFolderIdFromUrl:function(url)
 		{
-			var result = url.match(/\/bitrix\/tools\/disk\/focus.php\?folderId=(\d+)/i);
+			var result = url.match(/\/bitrix\/tools\/disk\/focus.php\?.*(folderId|objectId)=(\d+)/i);
 			if(result)
 			{
-				return result[1];
+				return result[2];
 			}
 
 			return null;
 		},
 		diskFileIdFromUrl:function(url)
 		{
-			//http://192.168.1.171:8080/disk/showFile/761/?&ncc=1&ts=1560508899&filename=%D0%9F%D0%BB%D0%BE%D0%B22.pdf
-
 			var result = url.match(/\/disk\/showFile\/(\d+)\//i);
 			if(result)
 			{
@@ -451,9 +449,6 @@
 		},
 		projectIdFromUrl: function(url)
 		{
-			//http://192.168.1.171:8080/mobile/log/?group_id=1
-			//http://192.168.1.171:8080/workgroups/group/1/
-
 			var regs = [
 				/\/mobile\/log\/\?group_id=(\d+)/i,
 				/\/workgroups\/group\/(\d+)\//i,
@@ -627,6 +622,25 @@
 		requestUserCounters: function ()
 		{
 			BXMobileApp.onCustomEvent("requestUserCounters", {web: true}, true);
+		},
+		getDesktopStatus: function()
+		{
+			return new Promise(function(resolve)
+			{
+				var responseHandler = function(response)
+				{
+					resolve(response);
+					BXMobileApp.Events.unsubscribe("onRequestDesktopStatus");
+				};
+				BXMobileApp.Events.addEventListener("onRequestDesktopStatus", responseHandler);
+				BXMobileApp.Events.postToComponent("requestDesktopStatus", {
+					web: true
+				}, 'communication');
+			});
+		},
+		openDesktopPage: function(url)
+		{
+			return BX.rest.callMethod('im.desktop.page.open', {url: url});
 		}
 	};
 

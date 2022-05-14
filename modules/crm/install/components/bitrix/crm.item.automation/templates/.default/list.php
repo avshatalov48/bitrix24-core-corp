@@ -11,7 +11,7 @@ $cmpName = 'bitrix:crm.item.list';
 
 if ((int)$arParams['entityTypeId'] === \CCrmOwnerType::Quote)
 {
-	$cmpName = 'bitrix:crm.quote.list';
+	$cmpName = 'bitrix:crm.quote';
 }
 
 $APPLICATION->IncludeComponent(

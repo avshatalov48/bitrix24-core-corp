@@ -35,6 +35,7 @@ class FileDeleted extends Volume\File
 	{
 		$this->addFilter('!DELETED_TYPE', ObjectTable::DELETED_TYPE_NONE);
 		$this->unsetFilter('PARENT_ID');
+		$this->unsetFilter('FILES_LEFT');
 
 		return parent::getMeasurementResult($collectedData);
 	}

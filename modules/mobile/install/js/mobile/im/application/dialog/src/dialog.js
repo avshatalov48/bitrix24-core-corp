@@ -1203,7 +1203,7 @@ export class MobileDialogApplication
 		app.exec("openComponent", {
 			name: "JSStackComponent",
 			componentCode: 'im.dialog.list',
-			scriptPath: "/mobileapp/jn/im.chat.user.list/?version="+BX.componentParameters.get('WIDGET_CHAT_USERS_VERSION', '1.0.0'),
+			scriptPath: "/mobileapp/jn/im:im.chat.user.list/?version="+BX.componentParameters.get('WIDGET_CHAT_USERS_VERSION', '1.0.0'),
 			params: {
 				"DIALOG_ID": this.controller.application.getDialogId(),
 				"DIALOG_OWNER_ID": this.controller.application.getDialogData().ownerId,
@@ -1369,7 +1369,7 @@ export class MobileDialogApplication
 		app.exec("openComponent", {
 			name: "JSStackComponent",
 			componentCode: "im.chat.user.selector",
-			scriptPath: "/mobileapp/jn/im.chat.user.selector/?version="+BX.componentParameters.get('WIDGET_CHAT_RECIPIENTS_VERSION', '1.0.0'),
+			scriptPath: "/mobileapp/jn/im:im.chat.user.selector/?version="+BX.componentParameters.get('WIDGET_CHAT_RECIPIENTS_VERSION', '1.0.0'),
 			params: {
 				"DIALOG_ID": this.controller.application.getDialogId(),
 				"USER_ID": this.controller.application.getUserId(),

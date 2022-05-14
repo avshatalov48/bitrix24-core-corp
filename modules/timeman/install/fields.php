@@ -295,7 +295,7 @@ $arUserFields = array(
 		'IS_SEARCHABLE' => 'N',
 		'SETTINGS' => array(
 			'SIZE' => '8',
-			'MAX_LENGTH' => '20',
+			'MAX_LENGTH' => '30',
 			'DEFAULT_VALUE' => '',
 		),
 		'EDIT_FORM_LABEL' => array(),

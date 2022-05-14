@@ -375,13 +375,6 @@ class Output
 	 */
 	protected function query($command, array $data): Result
 	{
-		$result = clone $this->result;
-
-		if($result->isSuccess())
-		{
-			$result->addError(new Error(Loc::getMessage('IMCONNECTOR_ERROR_PROVIDER_NOT_CALL'), Library::ERROR_IMCONNECTOR_PROVIDER_NOT_CALL, __METHOD__, $this->connector));
-		}
-
-		return $result;
+		return $this->result;
 	}
 }

@@ -321,9 +321,6 @@ input.task-detail-field-add {
 
 .task-dashed-link {
 	display: inline-block;
-	vertical-align: middle;
-	line-height: 19px;
-	font-size: 13px;
 	color: #1f67b0;
 	cursor: pointer;
 }
@@ -436,33 +433,53 @@ input.task-detail-field-add {
 }
 
 .task-detail-extra {
-	/*padding-top: 15px;*/
-	overflow: hidden;
-	/*border-top: 1px solid #e7e6d6;*/
+	display: flex;
+	align-items: flex-start;
 }
 
 .task-detail-extra-right {
-	float: right;
 	display: flex;
 	align-items: center;
+	margin-left: auto;
 }
 
 .task-detail-extra .feed-post-emoji-top-panel-outer {
-	float: right;
-	clear: right;
+	display: inline-flex;
+	padding-bottom: 0;
+	padding-left: 9px;
 }
 
 .task-detail-extra .feed-post-emoji-top-panel-box.feed-post-emoji-top-panel-container-active {
-	padding-top: 0;
-	padding-left: 7px;
-	margin-left: 0;
+	display: inline-flex;
+	padding-bottom: 0;
+}
+
+.task-detail-extra .feed-post-emoji-top-panel-container-active.feed-post-emoji-top-panel-box {
+	max-height: 22px;
+}
+
+.task-detail-extra .feed-post-emoji-container-nonempty .feed-post-emoji-icon-container {
+	min-width: auto;
+}
+
+.task-detail-group-member-selector {
+	display: inline-flex;
 }
 
 .task-detail-group {
 }
 
+.task-detail-group.--flex-center {
+	display: inline-flex;
+	align-items: center;
+	flex-wrap: wrap;
+}
+
+.task-detail-group.--flex-center > span {
+	display: inline-flex;
+}
+
 .task-detail-group-label {
-	vertical-align: middle;
 	margin-right: 5px;
 }
 
@@ -491,37 +508,39 @@ input.task-detail-field-add {
 }
 
 .task-group-field-inner {
+	display: inline-block;
 	position: relative;
-	padding-right: 24px;
 }
 
 .task-group-field-label {
 	display: inline-block;
 	font-size: 14px;
-	vertical-align: middle;
-	line-height: 18px;
+	vertical-align: unset;
+	line-height: unset;
 	color: #2067b0;
 	border-bottom: 1px solid transparent;
 	transition: border-bottom-color .2s linear;
 }
 
-.task-group-field-label:hover {
-	border-bottom: 1px solid;
+.task-group-field-inner a.task-group-field-label {
+	display: unset;
 }
 
-.task-group-field-title-del {
-	width: 20px;
-	cursor: pointer;
-	height: 16px;
+.task-group-field-inner .task-group-field-title-del {
+	position: relative;
 	display: none;
-	position: absolute;
-	top: 2px;
-	right: 0;
+	vertical-align: middle;
+	margin-top: 2px;
+	width: 20px;
+	height: 16px;
+	top: auto;
+	right: auto;
+	cursor: pointer;
 	opacity: 0.5;
 }
 
 .task-group-field:hover .task-group-field-title-del {
-	display: block;
+	display: inline-block;
 }
 
 .task-group-field-title-del:hover {
@@ -561,8 +580,8 @@ input.task-detail-field-add {
 	margin-right: 5px;
 }
 
-.task-detail-supertask {
-	margin-top: 5px;
+.task-detail-extra .task-detail-supertask {
+	margin-top: 0;
 }
 
 .task-detail-properties-layout a:hover {
@@ -573,16 +592,8 @@ input.task-detail-field-add {
 	text-align: left;
 }
 
-.task-detail-like {
-/*	float: right;
-	height: 27px;*/
-}
-
-.task-detail-like .feed-inform-ilike a {
-	border-bottom: 1px solid transparent;
-	color: #A8AEB5;
-	text-decoration: none;
-	transition: color .3s;
+.task-detail-like.--flex {
+	display: inline-flex;
 }
 
 .task-detail-like .feed-inform-ilike .bx-you-like-button a {
@@ -595,6 +606,8 @@ input.task-detail-field-add {
 }
 
 .task-detail-like .feed-inform-ilike.feed-new-like {
+	display: inline-flex;
+	align-items: center;
 	margin-right: 0;
 }
 
@@ -613,11 +626,6 @@ input.task-detail-field-add {
 .task-detail-like a {
 	text-decoration: none;
 	font-size: 13px;
-	line-height: 14px;
-}
-
-.task-detail-like .bx-ilike-left-wrap {
-	line-height: 24px;
 }
 
 .task-detail-contentview {

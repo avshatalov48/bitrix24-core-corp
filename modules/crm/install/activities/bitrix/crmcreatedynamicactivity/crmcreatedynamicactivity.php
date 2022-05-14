@@ -179,7 +179,7 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 
 	private static function isTypeSupported(int $entityTypeId): bool
 	{
-		return Crm\Automation\Factory::isSupported($entityTypeId) && $entityTypeId !== CCrmOwnerType::Order;
+		return (bool)CCrmBizProcHelper::ResolveDocumentName($entityTypeId);
 	}
 
 	private static function getEntityFields(int $entityTypeId): array

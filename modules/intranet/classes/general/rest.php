@@ -5,6 +5,7 @@ if(!CModule::IncludeModule('rest'))
 class CIntranetRestService extends IRestService
 {
 	const CONTACT_CENTER_PLACEMENT = 'CONTACT_CENTER';
+	public const PAGE_BACKGROUND_WORKER_PLACEMENT = 'PAGE_BACKGROUND_WORKER';
 
 	protected static $arAllowedDepartmentFields = array(
 		"ID", "NAME", "SORT", "PARENT", "UF_HEAD"
@@ -27,7 +28,24 @@ class CIntranetRestService extends IRestService
 				\CRestUtil::PLACEMENTS => array(
 					self::CONTACT_CENTER_PLACEMENT => array()
 				),
-			)
+			),
+			\CRestUtil::GLOBAL_SCOPE => [
+				\CRestUtil::PLACEMENTS => [
+					self::PAGE_BACKGROUND_WORKER_PLACEMENT => [
+						'max_count' => 1,
+						'options' => [
+							'errorHandlerUrl' => 'string',
+						],
+						'registerCallback' => [
+							'moduleId' => 'intranet',
+							'callback' => [
+								'CIntranetRestService',
+								'onRegisterPlacementPageBackground',
+							],
+						],
+					],
+				],
+			],
 		);
 
 		$placementMap = \Bitrix\Intranet\Binding\Menu::getRestMap();
@@ -44,6 +62,25 @@ class CIntranetRestService extends IRestService
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Check params on register INTRANET_PAGE_BACKGROUND.
+	 * @param array $placementBind
+	 * @param array $placementInfo
+	 * @return array
+	 */
+	public static function onRegisterPlacementPageBackground(array $placementBind, array $placementInfo): array
+	{
+		if (empty($placementBind['OPTIONS']['errorHandlerUrl']))
+		{
+			$placementBind = [
+				'error' => 'EMPTY_ERROR_HANDLER_URL',
+				'error_description' => 'Field errorHandlerUrl is empty.',
+			];
+		}
+
+		return $placementBind;
 	}
 
 	public static function departmentFields($arParams)

@@ -85,7 +85,7 @@ else
 	$entityType = \CCrmOwnerType::LeadName;
 
 	// counters
-	$this->SetViewTarget('below_pagetitle', 0);
+	$this->SetViewTarget('below_pagetitle', 1000);
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.entity.counter.panel',
 		'',

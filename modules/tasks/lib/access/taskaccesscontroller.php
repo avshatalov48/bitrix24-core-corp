@@ -15,7 +15,10 @@ use Bitrix\Tasks\Access\Model\UserModel;
 use Bitrix\Main\Access\AccessibleItem;
 
 class TaskAccessController extends BaseAccessController
+	implements AccessErrorable
 {
+	use AccessErrorTrait;
+
 	public static $cache = [];
 
 	public function check(string $action, AccessibleItem $item = null, $params = null): bool

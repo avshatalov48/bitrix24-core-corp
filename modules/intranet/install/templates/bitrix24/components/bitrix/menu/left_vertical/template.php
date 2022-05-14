@@ -538,5 +538,10 @@ $filter = CUserOptions::GetOption("intranet", "left_menu_group_filter_".SITE_ID,
 		endforeach
 	?></div>
 	<div class="sitemap-close-link group-panel-close-link" id="group-panel-close-link"></div>
-</div>
-<? endif ?>
+</div><?
+endif;
+
+if ($arResult['SHOW_WHATS_NEW'])
+{
+	include(__DIR__ . '/whats-new/left-menu-new-structure.php');
+}

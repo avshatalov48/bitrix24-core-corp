@@ -47,8 +47,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 					<? else: ?>
 						href="<?=$link?>"
 						target="_top"
-						<? if (isset($item['PARAMS']['ON_CLICK'])): ?>
-							data-onclick="<?=htmlspecialcharsbx($item['PARAMS']['ON_CLICK'])?>"
+						<? if (isset($item['PARAMS']['onclick'])): ?>
+							data-onclick="<?=htmlspecialcharsbx($item['PARAMS']['onclick'])?>"
 							onclick="return invokeSiteMapItemOnClick(event, this)"
 						<? endif ?>
 					<? endif ?>
@@ -75,8 +75,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 <script>
 	function invokeSiteMapItemOnClick(event, item)
 	{
-		eval('(function() {' + item.dataset['onclick'] + '})();');
+		if (BX.Type.isStringFilled(item.dataset['onclick']))
+		{
+			eval('(function() {' + item.dataset['onclick'] + '})();');
 
-		return false;
+			return false;
+		}
+
+		return true;
 	}
 </script>

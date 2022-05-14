@@ -7,6 +7,7 @@ $cpActiveItemID = ($arResult['MYCOMPANY_MODE'] === 'Y') ? 'MY_COMPANY' : 'COMPAN
 
 $isMyCompanyMode = (isset($arResult['MYCOMPANY_MODE']) && $arResult['MYCOMPANY_MODE'] === 'Y');
 
+$categoryId = (int)($arResult['VARIABLES']['category_id'] ?? 0);
 
 $isSlider = ($_REQUEST['IFRAME'] == 'Y' && $_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER');
 
@@ -52,7 +53,7 @@ else
 	$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
 	if($isBitrix24Template)
 	{
-		$this->SetViewTarget('below_pagetitle', 0);
+		$this->SetViewTarget('below_pagetitle', 1000);
 	}
 
 	if (!$isMyCompanyMode)
@@ -62,7 +63,9 @@ else
 			'',
 			array(
 				'ENTITY_TYPE_NAME' => CCrmOwnerType::CompanyName,
-				'EXTRAS' => array(),
+				'EXTRAS' => [
+					'CATEGORY_ID' => $categoryId,
+				],
 				'PATH_TO_ENTITY_LIST' => $arResult['PATH_TO_COMPANY_LIST']
 			)
 		);
@@ -101,6 +104,7 @@ else
 			'PATH_TO_COMPANY_DEDUPEWIZARD' => $arResult['PATH_TO_COMPANY_DEDUPEWIZARD'],
 			'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
 			'ELEMENT_ID' => $arResult['VARIABLES']['company_id'],
+			'CATEGORY_ID' => $categoryId,
 			'TYPE' => 'list',
 			'MYCOMPANY_MODE' => ($arResult['MYCOMPANY_MODE'] === 'Y' ? 'Y' : 'N'),
 			'IN_SLIDER' => $isSlider ? 'Y' : 'N',
@@ -132,6 +136,9 @@ else
 			'POPUP_COMPONENT_NAME' => 'bitrix:crm.company.list',
 			'POPUP_COMPONENT_TEMPLATE_NAME' => '',
 			'POPUP_COMPONENT_PARAMS' => [
+				'CATEGORY_ID' => $categoryId,
+				'GRID_ID_SUFFIX' => (new \Bitrix\Crm\Component\EntityList\GridId(CCrmOwnerType::Company))
+					->getDefaultSuffix($categoryId),
 				'COMPANY_COUNT' => '20',
 				'PATH_TO_COMPANY_LIST' => $arResult['PATH_TO_COMPANY_LIST'],
 				'PATH_TO_COMPANY_SHOW' => $arResult['PATH_TO_COMPANY_SHOW'],

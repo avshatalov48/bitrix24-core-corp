@@ -4,7 +4,7 @@ BX.namespace('BX.Crm.Activity');
 {
 	'use strict';
 
-	if(typeof BX.Crm.Activity.Planner !== 'undefined')
+	if (typeof BX.Crm.Activity.Planner !== 'undefined')
 		return;
 
 	var CRM_ACTIVITY_PLANNER_ID_ATTRIBUTE = 'data-crm-act-planner';
@@ -17,8 +17,8 @@ BX.namespace('BX.Crm.Activity');
 			config = {};
 
 		this.ajaxUrl = config.ajaxUrl || DEFAULT_AJAX_URL;
-		this.loadOffsetLeft = 2;
-		this.loadOffsetRight = 2;
+		this.loadOffsetLeft = 3;
+		this.loadOffsetRight = 10;
 		this.PLANNER_DURATION_LIMIT = 864000000; // 10 days
 		this.activityId = null;
 
@@ -117,7 +117,7 @@ BX.namespace('BX.Crm.Activity');
 		fireGlobalEvent: function(eventName, params, context)
 		{
 			this.fireEvent(eventName, params, context);
-			if(window !== top && top.BX.Crm && top.BX.Crm.Activity && top.BX.Crm.Activity.Planner && top.BX.Crm.Activity.Planner.Manager)
+			if (window !== top && top.BX.Crm && top.BX.Crm.Activity && top.BX.Crm.Activity.Planner && top.BX.Crm.Activity.Planner.Manager)
 			{
 				top.BX.Crm.Activity.Planner.Manager.fireEvent(eventName, params, context);
 			}
@@ -364,27 +364,6 @@ BX.namespace('BX.Crm.Activity');
 						wrapper.setAttribute(CRM_ACTIVITY_PLANNER_ID_ATTRIBUTE, planner.getPlannerId());
 						planner.setPlannerNode(wrapper);
 						planner.prepareEditLayout(wrapper);
-
-						// planner events
-						BX.addCustomEvent('OnCalendarPlannerSelectorChanged', function(params)
-						{
-							planner.skipPlannerRefresh = true;
-							planner.setStartTime(params.dateFrom);
-							params.dateTo ? planner.setEndTime(params.dateTo) : planner.recalculateEndTime(true);
-							planner.refreshDateTimeView();
-							planner.skipPlannerRefresh = false;
-						});
-
-						BX.addCustomEvent('OnCalendarPlannerScaleChanged', function(params)
-						{
-							planner.updatePlanner({
-								users: params.entrieIds,
-								entries: params.entries,
-								from: params.from,
-								to: params.to,
-								focusSelector: params.focusSelector === true
-							});
-						});
 
 						BX.addCustomEvent('onAfterActivitySave', function(params)
 						{
@@ -669,27 +648,6 @@ BX.namespace('BX.Crm.Activity');
 		{
 			params['ajax_action'] = 'activity_edit';
 			this._createAjaxPopup(params, me.prepareEditLayout.bind(this));
-
-			// planner events
-			BX.addCustomEvent('OnCalendarPlannerSelectorChanged', function(params)
-			{
-				me.skipPlannerRefresh = true;
-				me.setStartTime(params.dateFrom);
-				params.dateTo ? me.setEndTime(params.dateTo) : me.recalculateEndTime(true);
-				me.refreshDateTimeView();
-				me.skipPlannerRefresh = false;
-			});
-
-			BX.addCustomEvent('OnCalendarPlannerScaleChanged', function(params)
-			{
-				me.updatePlanner({
-					users: params.entrieIds,
-					entries: params.entries,
-					from: params.from,
-					to: params.to,
-					focusSelector: params.focusSelector === true
-				});
-			});
 		}
 
 		return false;
@@ -1056,7 +1014,7 @@ BX.namespace('BX.Crm.Activity');
 		return dt;
 	};
 
-	Planner.prototype.recalculateDuration = function()
+	Planner.prototype.recalculateDuration = function(silent)
 	{
 		var d1 = this.getEndTime();
 		var d2 = this.getStartTime();
@@ -1072,6 +1030,11 @@ BX.namespace('BX.Crm.Activity');
 		{
 			value = value / 60;
 			type = 2;
+		}
+
+		if (!silent)
+		{
+			this.refreshPlannerState({refreshIfShown: true});
 		}
 
 		this.getNode('duration-value').value = value > 0 ? value : '';
@@ -1129,7 +1092,6 @@ BX.namespace('BX.Crm.Activity');
 	Planner.prototype.checkPlannerState = function (params)
 	{
 		var
-			me = this,
 			dayLength = 86400000,
 			updateParams = {users: []},
 			fromDate = this.getStartTime(),
@@ -1142,16 +1104,26 @@ BX.namespace('BX.Crm.Activity');
 
 		if (!fromDate && !toDate)
 		{
-			this.checkPlannerTimeout = setTimeout(function(){me.checkPlannerState(params);}, 100);
+			this.checkPlannerTimeout = setTimeout(
+				function(){this.checkPlannerState(params);}.bind(this),
+				100
+			);
 			return;
 		}
 
-		if (params.item && params.item.entityId > 0 && params.item.entityType == 'users')
+		if (params.item && params.item.entityId > 0 && params.item.entityType === 'users')
+		{
 			updateParams.users.push(params.item.entityId);
+		}
+
+		if (updateParams.users.length)
+		{
+			this.lastUserList = updateParams.users;
+		}
 
 		if (
 			fromDate && toDate &&
-			updateParams.users.length > 0
+			updateParams.users.length
 		)
 		{
 			updateParams.from = BX.formatDate(new Date((fromDate.getTime() - dayLength * this.loadOffsetLeft)), BX.message('FORMAT_DATE'));
@@ -1173,15 +1145,14 @@ BX.namespace('BX.Crm.Activity');
 				ajax_action: 'PLANNER_UPDATE',
 				from: params.from,
 				to: params.to,
-				entries: params.users,
+				entries: params.users || this.lastUserList,
 				activity_id: this.getActivityId() || 0
 			},
 			onsuccess: function (response)
 			{
 				var data = response.DATA || {};
-				var
-					showPlanner = true,
-					plannerShown = BX.hasClass(me.getPlannerContainer(), 'crm-activity-popup-calendar-planner-wrap-shown');
+				var showPlanner = true;
+				var plannerShown = BX.hasClass(me.getPlannerContainer(), 'crm-activity-popup-calendar-planner-wrap-shown');
 
 				if (showPlanner)
 				{
@@ -1201,6 +1172,11 @@ BX.namespace('BX.Crm.Activity');
 					refreshParams.data = data;
 					refreshParams.focusSelector = refreshParams.show ? true : (params.focusSelector == undefined ? false : params.focusSelector);
 					me.refreshPlannerState(refreshParams);
+					
+					if (me.calendarPlanner)
+					{
+						me.calendarPlanner.hideLoader();
+					}
 				}
 				me.ajaxProgress = false;
 			}
@@ -1209,34 +1185,24 @@ BX.namespace('BX.Crm.Activity');
 
 	Planner.prototype.refreshPlannerState = function(params)
 	{
+		params = BX.Type.isObject(params) ? params : {};
+
 		var me = this;
 
 		if (!window.CalendarPlanner)
 		{
 			if (this.refreshPlannerStateTimeout)
+			{
 				this.refreshPlannerStateTimeout = !!clearTimeout(this.refreshPlannerStateTimeout);
+			}
 
-			this.refreshPlannerStateTimeout = setTimeout(function(){me.refreshPlannerState(params);}, 200);
+			this.refreshPlannerStateTimeout = setTimeout(function(){this.refreshPlannerState(params);}.bind(this), 200);
 		}
 
-		if (!params || typeof params !== 'object')
-			params = {};
+		var plannerWrap = this.getPlannerContainer();
+		var plannerShown = BX.hasClass(plannerWrap, 'crm-activity-popup-calendar-planner-wrap-shown');
 
-		var
-			plannerId = 'calendar_planner_' + this.getPlannerId(),
-			fromDate, toDate,
-			config = {
-				scaleType: '1hour',
-				showTimelineDayTitle: true,
-				compactMode: true,
-				width: me.getPlannerContainer().clientWidth - 20,
-				minWidth: 600,
-				minHeight: 104,
-				height: 104
-			},
-			plannerShown = BX.hasClass(me.getPlannerContainer(), 'crm-activity-popup-calendar-planner-wrap-shown');
-
-		if(!plannerShown && params.refreshIfShown || this.skipPlannerRefresh === true)
+		if (!plannerShown && params.refreshIfShown || this.skipPlannerRefresh === true)
 		{
 			return;
 		}
@@ -1246,11 +1212,8 @@ BX.namespace('BX.Crm.Activity');
 			BX.addClass(me.getPlannerContainer(), 'crm-activity-popup-calendar-planner-wrap-shown');
 		}
 
-		if (params.focusSelector == undefined)
-			params.focusSelector = true;
-
-		fromDate = this.getStartTime();
-		toDate = this.getEndTime();
+		var fromDate = this.getStartTime();
+		var toDate = this.getEndTime();
 
 		if (toDate.getTime() - fromDate.getTime() > this.PLANNER_DURATION_LIMIT)
 		{
@@ -1269,25 +1232,85 @@ BX.namespace('BX.Crm.Activity');
 			}
 			else
 			{
-				BX.onCustomEvent('OnCalendarPlannerDoUpdate', [
+				if (params.data?.dayOfWeekMonthFormat)
+				{
+					this.dayOfWeekMonthFormat = params.data.dayOfWeekMonthFormat;
+				}
+
+				if (params.show)
+				{
+					this.initPlanner();
+				}
+
+				if (params.data)
+				{
+					this.calendarPlanner.update(
+						params.data.entries,
+						params.data.accessibility
+					);
+				}
+
+				this.calendarPlanner.updateSelector(
+					fromDate,
+					toDate,
+					false,
 					{
-						plannerId: plannerId,
-						config: config,
-						focusSelector: params.focusSelector,
-						selector: {
-							from: fromDate,
-							to: toDate,
-							fullDay: false,
-							animation: true,
-							updateScaleLimits: true
-						},
-						data: params.data || false,
-						loadedDataFrom: params.loadedDataFrom,
-						loadedDataTo: params.loadedDataTo,
-						show: !!params.show
+						focus: params.focusSelector !== false
 					}
-				]);
+				);
 			}
+		}
+	};
+
+	Planner.prototype.initPlanner = function()
+	{
+		var plannerWrap = this.getPlannerContainer();
+		this.calendarPlanner = new BX.Calendar.Planner({
+			wrap: plannerWrap,
+			compactMode: true,
+			minWidth: 600,
+			minHeight: 104,
+			height: 104,
+			width: plannerWrap.clientWidth - 20,
+			dayOfWeekMonthFormat: this.dayOfWeekMonthFormat
+		});
+		this.calendarPlanner.subscribe('onDateChange', this.handlePlannerSelectorChanges.bind(this));
+		this.calendarPlanner.subscribe('onExpandTimeline', this.handleExpandPlannerTimeline.bind(this));
+
+		this.calendarPlanner.show();
+		this.calendarPlanner.showLoader();
+	}
+
+	Planner.prototype.handlePlannerSelectorChanges = function(event)
+	{
+		if (event && event.getData)
+		{
+			var data = event.getData();
+
+			this.skipPlannerRefresh = true;
+			this.setStartTime(data.dateFrom);
+			if (data.dateTo)
+			{
+				this.setEndTime(data.dateTo);
+			}
+			else
+			{
+				this.recalculateEndTime(true);
+			}
+			this.refreshDateTimeView();
+			this.skipPlannerRefresh = false;
+		}
+	};
+
+	Planner.prototype.handleExpandPlannerTimeline = function(event)
+	{
+		if (event && event.getData)
+		{
+			var data = event.getData();
+			this.updatePlanner({
+				from: BX.formatDate(data.dateFrom, BX.message('FORMAT_DATE')),
+				to: BX.formatDate(data.dateTo, BX.message('FORMAT_DATE'))
+			});
 		}
 	};
 
@@ -1858,7 +1881,7 @@ BX.namespace('BX.Crm.Activity');
 		if (config.communicationType === 'EMAIL')
 			communicationType = BX.CrmCommunicationType.email;
 
-		if(typeof(BX.CrmCommunicationSearch.messages) === 'undefined')
+		if (typeof(BX.CrmCommunicationSearch.messages) === 'undefined')
 		{
 			BX.CrmCommunicationSearch.messages =
 			{
@@ -1888,15 +1911,15 @@ BX.namespace('BX.Crm.Activity');
 	};
 	Communications.prototype.inputKeypress = function(e)
 	{
-		if(!e)
+		if (!e)
 			e = window.event;
 
-		if(e.keyCode !== 13)
+		if (e.keyCode !== 13)
 			return;
 
 		var input = this.getNode('destination-input');
 
-		if(BX.type.isNotEmptyString(input.value))
+		if (BX.type.isNotEmptyString(input.value))
 		{
 			var rx = /^\s*\+?[\d-\s\(\)]+\s*$/;
 			if (rx.test(input.value))
@@ -2026,7 +2049,7 @@ BX.namespace('BX.Crm.Activity');
 		BX.style(inputBox, 'display', 'inline-block');
 		BX.style(tagNode, 'display', 'none');
 
-		if(!this._communicationSearchController)
+		if (!this._communicationSearchController)
 		{
 			this._communicationSearchController = BX.CrmCommunicationSearchController.create(this._communicationSearch, input);
 			this._communicationSearchController.start();
@@ -2044,7 +2067,7 @@ BX.namespace('BX.Crm.Activity');
 		var input = this.getNode('destination-input');
 		var tagNode = this.getNode('destination-tag');
 
-		if(this._communicationSearchController)
+		if (this._communicationSearchController)
 		{
 			this._communicationSearchController.stop();
 			this._communicationSearchController = null;
@@ -2062,7 +2085,7 @@ BX.namespace('BX.Crm.Activity');
 	// <- Communications
 
 	// Temporary use BX.CrmActivityProvider as proxy for old editor.
-	if(typeof(BX.CrmActivityProvider) == 'undefined')
+	if (typeof(BX.CrmActivityProvider) == 'undefined')
 	{
 		BX.addCustomEvent(
 			'Bitrix24.Slider:onMessage',
@@ -2233,10 +2256,10 @@ BX.namespace('BX.Crm.Activity');
 							sliderOptions.width = 1080;
 						}
 						var defaultStorageTypeId = this.getSetting('defaultStorageTypeId');
-						if(defaultStorageTypeId === Planner.util.storageType.Disk)
+						if (defaultStorageTypeId === Planner.util.storageType.Disk)
 						{
 							var storageElementIds = this.getSetting('diskfiles');
-							if(BX.type.isArray(storageElementIds))
+							if (BX.type.isArray(storageElementIds))
 							{
 								params['STORAGE_TYPE_ID'] = defaultStorageTypeId;
 								params['STORAGE_ELEMENT_IDS'] = storageElementIds;
@@ -2773,7 +2796,7 @@ BX.namespace('BX.Crm.Activity');
 				if (this.getType() === BX.CrmActivityType.email && this._parentActivity)
 				{
 					var direction = parseInt(this.getSetting('direction', BX.CrmActivityDirection.outgoing));
-					if(direction === BX.CrmActivityDirection.incoming)
+					if (direction === BX.CrmActivityDirection.incoming)
 					{
 						result.push(
 							{
@@ -2844,7 +2867,7 @@ BX.namespace('BX.Crm.Activity');
 						}
 					);
 
-					if(
+					if (
 						this.getOption('enableEditButton', true)
 						&& (
 							this.getType() ===  BX.CrmActivityType.call
@@ -2881,7 +2904,7 @@ BX.namespace('BX.Crm.Activity');
 				var ownerType = this.getSetting('ownerType', '');
 				var ownerID = parseInt(this.getSetting('ownerID', 0));
 
-				if(typeof BX.Crm.Activity.Planner !== 'undefined')
+				if (typeof BX.Crm.Activity.Planner !== 'undefined')
 				{
 					(new BX.Crm.Activity.Planner()).showEdit({
 						TYPE_ID: BX.CrmActivityType.call,
@@ -2896,7 +2919,7 @@ BX.namespace('BX.Crm.Activity');
 				var ownerType = this.getSetting('ownerType', '');
 				var ownerID = parseInt(this.getSetting('ownerID', 0));
 
-				if(typeof BX.Crm.Activity.Planner !== 'undefined')
+				if (typeof BX.Crm.Activity.Planner !== 'undefined')
 				{
 					(new BX.Crm.Activity.Planner()).showEdit({
 						TYPE_ID: BX.CrmActivityType.meeting,
@@ -2911,7 +2934,7 @@ BX.namespace('BX.Crm.Activity');
 				var settings = {};
 				var ownerType = this.getSetting('ownerType', '');
 				var ownerID = parseInt(this.getSetting('ownerID', 0));
-				if(ownerType !== '' && ownerID > 0)
+				if (ownerType !== '' && ownerID > 0)
 				{
 					settings['ownerType'] = ownerType;
 					settings['ownerID'] = ownerID;
@@ -2919,21 +2942,21 @@ BX.namespace('BX.Crm.Activity');
 					settings['ownerUrl'] = this.getSetting('ownerUrl', '');
 				}
 
-				if(this.getSetting('ownerType', '') === 'DEAL')
+				if (this.getSetting('ownerType', '') === 'DEAL')
 				{
 					// Need for custom logic when owner is DEAL (that doesnt have communications)
 					var commData = this.getSetting('communications', []);
 					var comm = BX.type.isArray(commData) && commData.length > 0 ? commData[0] : null;
-					if(comm)
+					if (comm)
 					{
 						var commEntityType =  comm['entityType'];
-						if(!BX.type.isNotEmptyString(commEntityType))
+						if (!BX.type.isNotEmptyString(commEntityType))
 						{
 							commEntityType = ownerType;
 						}
 
 						var commEntityId =  parseInt(comm['entityId']);
-						if(isNaN(commEntityId) || commEntityId <= 0)
+						if (isNaN(commEntityId) || commEntityId <= 0)
 						{
 							commEntityId = ownerID;
 						}
@@ -2945,7 +2968,7 @@ BX.namespace('BX.Crm.Activity');
 							this.getSetting('serviceUrl', '')
 						);
 
-						if(defaultComm)
+						if (defaultComm)
 						{
 							settings['communications'] = [defaultComm.getSettings()];
 						}
@@ -2984,7 +3007,7 @@ BX.namespace('BX.Crm.Activity');
 	}
 
 	//region BX.CrmCustomActivityType
-	if(typeof(BX.CrmCustomActivityType) == "undefined")
+	if (typeof(BX.CrmCustomActivityType) == "undefined")
 	{
 		BX.CrmCustomActivityType = function()
 		{
@@ -2992,7 +3015,7 @@ BX.namespace('BX.Crm.Activity');
 
 		BX.CrmCustomActivityType.getListItems = function(infos)
 		{
-			if(!BX.type.isArray(infos))
+			if (!BX.type.isArray(infos))
 			{
 				infos = BX.CrmCustomActivityType.infos;
 			}
@@ -3009,7 +3032,7 @@ BX.namespace('BX.Crm.Activity');
 		BX.CrmCustomActivityType.prepareEditorParams = function(id, params)
 		{
 			var info = this.getInfo(id);
-			if(info !== null)
+			if (info !== null)
 			{
 				params["PROVIDER_ID"] = "CUST";
 				params["PROVIDER_TYPE_ID"] = info["id"];
@@ -3023,7 +3046,7 @@ BX.namespace('BX.Crm.Activity');
 			for(var i = 0, l = BX.CrmCustomActivityType.infos.length; i < l; i++)
 			{
 				var info = BX.CrmCustomActivityType.infos[i];
-				if(info["id"] == id)
+				if (info["id"] == id)
 				{
 					return info;
 				}
@@ -3031,14 +3054,14 @@ BX.namespace('BX.Crm.Activity');
 			return null;
 		};
 
-		if(typeof(BX.CrmCustomActivityType.infos) === "undefined")
+		if (typeof(BX.CrmCustomActivityType.infos) === "undefined")
 		{
 			BX.CrmCustomActivityType.infos = [];
 		}
 	}
 	//endregion
 	//region BX.CrmCustomActivityTypeSelector
-	if(typeof(BX.CrmCustomActivityTypeSelector) == "undefined")
+	if (typeof(BX.CrmCustomActivityTypeSelector) == "undefined")
 	{
 		BX.CrmCustomActivityTypeSelector = function()
 		{
@@ -3094,10 +3117,10 @@ BX.namespace('BX.Crm.Activity');
 			},
 			openMenu: function(anchor)
 			{
-				if(!this._selectorMenu)
+				if (!this._selectorMenu)
 				{
 					var items = BX.CrmCustomActivityType.getListItems();
-					//if(this._canCreateType)
+					//if (this._canCreateType)
 					//{
 					//	items.push({ text: this.getMessage("create"), value: "new" });
 					//}
@@ -3105,7 +3128,7 @@ BX.namespace('BX.Crm.Activity');
 					this._selectorMenu.addOnSelectListener(this._menuItemSelectHandler);
 				}
 
-				if(!this._selectorMenu.isOpened())
+				if (!this._selectorMenu.isOpened())
 				{
 					this._selectorMenu.open(anchor);
 				}
@@ -3113,13 +3136,13 @@ BX.namespace('BX.Crm.Activity');
 			onMenuItemSelect: function(sender, selectedItem)
 			{
 				var selectedValue = selectedItem.getValue();
-				if(this._selectorMenu.isOpened())
+				if (this._selectorMenu.isOpened())
 				{
 					this._selectorMenu.close();
 				}
 
 				this.openCreationDialog(parseInt(selectedValue));
-				//if(selectedValue === "new")
+				//if (selectedValue === "new")
 				//{
 				//	window.location = this._categoryCreateUrl;
 				//}
@@ -3130,7 +3153,7 @@ BX.namespace('BX.Crm.Activity');
 			}
 		};
 
-		if(typeof(BX.CrmCustomActivityTypeSelector.messages) === "undefined")
+		if (typeof(BX.CrmCustomActivityTypeSelector.messages) === "undefined")
 		{
 			BX.CrmCustomActivityTypeSelector.messages = {};
 		}
@@ -3145,7 +3168,7 @@ BX.namespace('BX.Crm.Activity');
 	}
 	//endregion
 
-	if(typeof(BX.CrmCallListHelper) == "undefined")
+	if (typeof(BX.CrmCallListHelper) == "undefined")
 	{
 		BX.CrmCallListHelper = function(){};
 
@@ -3166,7 +3189,7 @@ BX.namespace('BX.Crm.Activity');
 				},
 				onsuccess: function(data)
 				{
-					if(data && successCallback)
+					if (data && successCallback)
 					{
 						successCallback(data);
 					}
@@ -3183,7 +3206,7 @@ BX.namespace('BX.Crm.Activity');
 			var callListId = params.callListId || 0;
 			var entityIds = (params.entityIds ? params.entityIds : [params.id]);
 
-			if(context == '' || callListId == 0)
+			if (context == '' || callListId == 0)
 				return;
 
 			BX.ajax({
@@ -3201,15 +3224,15 @@ BX.namespace('BX.Crm.Activity');
 				},
 				onsuccess: function(response)
 				{
-					if(response && !response.SUCCESS && response.ERRORS)
+					if (response && !response.SUCCESS && response.ERRORS)
 					{
 						var error = response.ERRORS.join('. \n');
 						window.alert(error);
 					}
-					else if(response && response.SUCCESS && response.DATA)
+					else if (response && response.SUCCESS && response.DATA)
 					{
 						var callListId = response.DATA.ID;
-						if(response.DATA && response.DATA.MESSAGE)
+						if (response.DATA && response.DATA.MESSAGE)
 						{
 							window.alert(response.DATA.MESSAGE);
 						}

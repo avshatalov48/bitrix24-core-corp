@@ -7,4 +7,9 @@ abstract class EntitySettings extends \Bitrix\Main\Filter\EntitySettings
 	{
 		return $this->getEntityTypeID();
 	}
+
+	public function getEntityTypeID()
+	{
+		return \CCrmOwnerType::Undefined;
+	}
 }

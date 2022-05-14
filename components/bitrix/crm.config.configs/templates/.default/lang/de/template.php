@@ -1,6 +1,6 @@
 <?php
 $MESS["CRM_TAB_ACTIVITY_CONFIG"] = "Aktivitäten";
-$MESS["CRM_TAB_ACTIVITY_CONFIG_TITLE2"] = "Aktivitätseinstellungen";
+$MESS["CRM_TAB_ACTIVITY_CONFIG_TITLE2"] = "Aktivitätsparameter";
 $MESS["CRM_TAB_CONFIG"] = "E-Mails versenden";
 $MESS["CRM_TAB_CONFIG_TITLE"] = "Einstellungen der E-Mail-Übermittlung";
 $MESS["CRM_TAB_DEAL_CONFIG"] = "Aufträge";
@@ -20,4 +20,4 @@ $MESS["CRM_TAB_RECYCLE_BIN_CONFIG_TITLE"] = "Papierkorbeinstellungen";
 $MESS["CRM_TAB_REST_2"] = "Market";
 $MESS["CRM_TAB_REST_TITLE"] = "Einstellungen der Anwendungen";
 $MESS["CRM_TAB_STATUS_CONFIG"] = "Auswahllisten";
-$MESS["CRM_TAB_STATUS_CONFIG_TITLE"] = "Einstellungen der Auswahllisten";
+$MESS["CRM_TAB_STATUS_CONFIG_TITLE"] = "Elementauswahl";

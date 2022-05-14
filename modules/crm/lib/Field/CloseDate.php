@@ -2,13 +2,12 @@
 
 namespace Bitrix\Crm\Field;
 
+use Bitrix\Crm\Comparer\ComparerBase;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Item;
-use Bitrix\Crm\PhaseSemantics;
-use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
 use Bitrix\Main\Result;
-use Bitrix\Main\Type\Date;
+use Bitrix\Main\Type\DateTime;
 
 class CloseDate extends Field
 {
@@ -27,36 +26,13 @@ class CloseDate extends Field
 			return $result;
 		}
 
-		$previousStageId = $item->remindActual(Item::FIELD_NAME_STAGE_ID);
-		$currentStageId = $item->getStageId();
+		$previousStageId = (string)$item->remindActual(Item::FIELD_NAME_STAGE_ID);
+		$currentStageId = (string)$item->getStageId();
 
-		if ($previousStageId === $currentStageId)
+		if (ComparerBase::isMovedToFinalStage($item->getEntityTypeId(), $previousStageId, $currentStageId))
 		{
-			return $result;
-		}
-
-		$factory = Container::getInstance()->getFactory($item->getEntityTypeId());
-		if (!$factory)
-		{
-			return $result->addError($this->getFactoryNotFoundError($item->getEntityTypeId()));
-		}
-
-		$previousStage = $factory->getStage((string)$previousStageId);
-		// it's okay if there is no previous stage. For example, it could be a new item
-		$previousStageSemantics = $previousStage ? $previousStage->getSemantics() : PhaseSemantics::PROCESS;
-
-		$currentStage = $factory->getStage((string)$currentStageId);
-		if (is_null($currentStage))
-		{
-			return $result;
-		}
-
-		if (
-			$previousStageSemantics !== $currentStage->getSemantics()
-			&& PhaseSemantics::isFinal($currentStage->getSemantics())
-		)
-		{
-			$item->set($this->getName(), new Date());
+			// hack: some fields could be datetime, set them with time to maintain backward compatibility
+			$item->set($this->getName(), new DateTime());
 		}
 
 		return $result;

@@ -1208,7 +1208,8 @@ class CCrmSaleHelper
 				60,
 				"",
 				"Y",
-				\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 3, "FULL")
+				\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 3, "FULL"),
+				1500
 			);
 		}
 	}

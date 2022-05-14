@@ -154,6 +154,7 @@ class TaskRegistry
 			->addSelect('ALLOW_TIME_TRACKING')
 			->addSelect('DEADLINE')
 			->addSelect('FORUM_TOPIC_ID')
+			->addSelect('RESPONSIBLE_ID')
 			->whereIn('ID', $taskIds)
 			->exec();
 

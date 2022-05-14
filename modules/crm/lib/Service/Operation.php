@@ -5,7 +5,6 @@ namespace Bitrix\Crm\Service;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Automation\Starter;
 use Bitrix\Crm\Counter\EntityCounterManager;
-use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Field\Collection;
 use Bitrix\Crm\Item;
@@ -184,10 +183,22 @@ abstract class Operation
 		{
 			$this->updatePermissions();
 			$this->updateSearchIndexes();
+			$this->updateDuplicates();
 
-			if ($this->isCountersUpdateNeeded())
+			$this->updateCounters();
+
+			if ($this->isClearItemCategoryCacheNeeded())
 			{
-				$this->updateCounters();
+				$this->clearItemCategoryCache();
+			}
+		}
+
+		if ($result->isSuccess() && $this->isActivitiesAutocompletionEnabled())
+		{
+			$autocompletionResult = $this->autocompleteActivities();
+			if (!$autocompletionResult->isSuccess())
+			{
+				$result->addErrors($autocompletionResult->getErrors());
 			}
 		}
 
@@ -869,6 +880,66 @@ abstract class Operation
 	{
 		return $this->settings->isDeferredCleaningEnabled();
 	}
+
+	public function enableDuplicatesIndexInvalidation(): self
+	{
+		$this->settings->enableDuplicatesIndexInvalidation();
+
+		return $this;
+	}
+
+	public function disableDuplicatesIndexInvalidation(): self
+	{
+		$this->settings->disableDuplicatesIndexInvalidation();
+
+		return $this;
+	}
+
+	public function isDuplicatesIndexInvalidationEnabled(): bool
+	{
+		return $this->settings->isDuplicatesIndexInvalidationEnabled();
+	}
+
+	public function enableActivitiesAutocompletion(): self
+	{
+		$this->settings->enableActivitiesAutocompletion();
+
+		return $this;
+	}
+
+	public function disableActivitiesAutocompletion(): self
+	{
+		$this->settings->disableActivitiesAutocompletion();
+
+		return $this;
+	}
+
+	public function isActivitiesAutocompletionEnabled(): bool
+	{
+		return $this->settings->isActivitiesAutocompletionEnabled();
+	}
+
+	/**
+	 * Returns ids of activity providers that should be autocompleted.
+	 * Empty array as result means that specific ids were not given and all possible providers will be used.
+	 *
+	 * @return string[]
+	 */
+	public function getActivityProvidersToAutocomplete(): array
+	{
+		return $this->settings->getActivityProvidersToAutocomplete();
+	}
+
+	/**
+	 * @param string[] $providersIds
+	 * @return $this
+	 */
+	public function setActivityProvidersToAutocomplete(array $providersIds): self
+	{
+		$this->settings->setActivityProvidersToAutocomplete($providersIds);
+
+		return $this;
+	}
 	//endregion
 
 	protected function saveToHistory(): Result
@@ -972,37 +1043,51 @@ abstract class Operation
 		);
 	}
 
-	protected function isCountersUpdateNeeded(): bool
+	protected function updateDuplicates(): void
 	{
-		return false;
+		$this->registerDuplicateCriteria();
+	}
+
+	protected function registerDuplicateCriteria(): void
+	{
 	}
 
 	protected function updateCounters(): void
 	{
-		if (!$this->fieldsCollection || !$this->fieldsCollection->hasField(Item::FIELD_NAME_ASSIGNED))
+		$factory = Container::getInstance()->getFactory($this->item->getEntityTypeId());
+		if (!$factory || !$factory->isCountersEnabled())
 		{
 			return;
 		}
 
 		$userIds = $this->getUserIdsForCountersReset();
-		if (empty($userIds))
-		{
-			return;
-		}
 
-		EntityCounterManager::reset(
-			$this->getCountersCodes(),
-			$userIds,
-		);
+		if ($this->isCountersUpdateNeeded() && !empty($userIds))
+		{
+			EntityCounterManager::reset(
+				$this->getCountersCodes(),
+				$userIds,
+			);
+		}
+	}
+
+	protected function isCountersUpdateNeeded(): bool
+	{
+		return false;
+	}
+
+	protected function getUserIdsForCountersReset(): array
+	{
+		return [];
 	}
 
 	protected function getCountersCodes(): array
 	{
-		$extra = ['EXTENDED_MODE' => true];
+		$extra = [];
 
 		if ($this->item->isCategoriesSupported())
 		{
-			$extra['DEAL_CATEGORY_ID'] = $this->item->getCategoryId();
+			$extra['CATEGORY_ID'] = $this->item->getCategoryId();
 		}
 
 		return EntityCounterManager::prepareCodes(
@@ -1014,17 +1099,18 @@ abstract class Operation
 
 	protected function getTypesOfCountersToReset(): array
 	{
-		return [
-			EntityCounterType::PENDING,
-			EntityCounterType::OVERDUE,
-			EntityCounterType::IDLE,
-			EntityCounterType::ALL,
-		];
+		$factory = Container::getInstance()->getFactory($this->item->getEntityTypeId());
+		if ($factory)
+		{
+			return $factory->getCountersSettings()->getEnabledCountersTypes();
+		}
+
+		return [];
 	}
 
-	protected function getUserIdsForCountersReset(): array
+	protected function autocompleteActivities(): Result
 	{
-		return [];
+		return new Result();
 	}
 
 	protected function registerStatistics(Statistics\OperationFacade $statisticsFacade): Result
@@ -1118,6 +1204,20 @@ abstract class Operation
 			{
 				$this->item = $factory->getItemByEntityObject($item);
 			}
+		}
+	}
+
+	protected function isClearItemCategoryCacheNeeded(): bool
+	{
+		return false;
+	}
+
+	protected function clearItemCategoryCache(): void
+	{
+		$factory = Container::getInstance()->getFactory($this->item->getEntityTypeId());
+		if ($factory && $factory->isCategoriesSupported())
+		{
+			$factory->clearItemCategoryCache($this->item->getId());
 		}
 	}
 }

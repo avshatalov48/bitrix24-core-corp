@@ -116,7 +116,7 @@ class Scenario
 	 * @param bool $waitResponse
 	 * @return Result
 	 */
-	protected function send(array $command, $waitResponse)
+	protected function send(array $command, $waitResponse): Result
 	{
 		$result = new Result();
 
@@ -135,7 +135,7 @@ class Scenario
 			if ($queryResult === false)
 			{
 				$httpClientErrors = $httpClient->getError();
-				if(count($httpClientErrors) > 0)
+				if(!empty($httpClientErrors))
 				{
 					foreach ($httpClientErrors as $code => $message)
 					{

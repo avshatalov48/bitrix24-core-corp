@@ -442,6 +442,16 @@ class ConfigOrderPropertyEdit extends \CBitrixComponent
 			$commonSettings['TYPE']['OPTIONS'] = $types;
 		}
 
+		if (isset($commonSettings['TYPE']['OPTIONS']['ADDRESS'])
+			&& (
+				!is_set($this->property['ID'])
+				|| $this->property['TYPE'] !== 'ADDRESS'
+			)
+		)
+		{
+			unset($commonSettings['TYPE']['OPTIONS']['ADDRESS']);
+		}
+
 		if (!$this->checkMultipleField($this->property))
 		{
 			$commonSettings['MULTIPLE']['DISABLED'] = 'Y';

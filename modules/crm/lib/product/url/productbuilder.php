@@ -70,15 +70,7 @@ if (Loader::includeModule('catalog'))
 			$sliderPath = \CComponentEngine::makeComponentPath('bitrix:catalog.warehouse.master.clear');
 			$sliderPath = getLocalPath('components' . $sliderPath . '/slider.php');
 
-			if(Catalog\Component\UseStore::isUsed())
-			{
-				$result[] = [
-					'TEXT' => Loc::getMessage('CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_WAREHOUSE_NAME_N'),
-					'TITLE' => Loc::getMessage('CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_WAREHOUSE_TITLE_N'),
-					'ONCLICK' => "openWarehousePanel('".$sliderPath."')"
-				];
-			}
-			else
+			if(!Catalog\Component\UseStore::isUsed())
 			{
 				$result[] = [
 					'TEXT' => Loc::getMessage('CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_WAREHOUSE_NAME_Y'),

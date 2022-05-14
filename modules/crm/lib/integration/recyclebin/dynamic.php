@@ -124,9 +124,11 @@ class Dynamic extends RecyclableEntity
 
 	/**
 	 * @param Recyclebin\Internals\Entity $entity
+	 * @param array $params
+	 *
 	 * @return Main\Result|void
 	 */
-	public static function removeFromRecyclebin(Recyclebin\Internals\Entity $entity): Main\Result
+	public static function removeFromRecyclebin(Recyclebin\Internals\Entity $entity, array $params = []): Main\Result
 	{
 		$entityID = (int)$entity->getEntityId();
 		if($entityID <= 0)

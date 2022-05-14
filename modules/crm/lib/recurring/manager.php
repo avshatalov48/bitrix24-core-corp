@@ -132,11 +132,17 @@ class Manager
 	 *
 	 * @param $typeEntity
 	 *
-	 * @return Result
+	 * @return bool
 	 */
 	public static function isAllowedExpose($typeEntity)
 	{
-		return Command::execute($typeEntity, __FUNCTION__);
+		$result = Command::execute($typeEntity, __FUNCTION__);
+		if ($result instanceof Result)
+		{
+			return $result->isSuccess();
+		}
+
+		return $result;
 	}
 
 	/**

@@ -9,11 +9,11 @@ trait EnableFactory
 	/** @var BooleanSetting */
 	private $isFactoryEnabled;
 
-	private function initIsFactoryEnabledSetting(int $entityTypeId): void
+	private function initIsFactoryEnabledSetting(int $entityTypeId, bool $defaultValue = true): void
 	{
 		$entityTypeName = mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId));
 
-		$this->isFactoryEnabled = new BooleanSetting("{$entityTypeName}_enable_factory", true);
+		$this->isFactoryEnabled = new BooleanSetting("{$entityTypeName}_enable_factory", $defaultValue);
 	}
 
 	/**

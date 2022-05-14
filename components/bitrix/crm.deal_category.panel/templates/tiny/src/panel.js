@@ -76,6 +76,7 @@ export class Panel extends Event.EventEmitter
 			)
 			.then((response) => {
 				const newContainer = Runtime.html(null, response.data.html);
+
 				Dom.replace(this.container, newContainer);
 				this.getMenu().destroy();
 			});

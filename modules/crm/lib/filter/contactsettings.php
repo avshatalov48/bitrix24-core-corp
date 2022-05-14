@@ -4,6 +4,17 @@ class ContactSettings extends EntitySettings
 {
 	const FLAG_ENABLE_ADDRESS = 1;
 
+	/** @var int */
+	protected $categoryId;
+
+	function __construct(array $params)
+	{
+		parent::__construct($params);
+
+		$this->categoryId = isset($params['categoryID'])
+			? (int)$params['categoryID'] : null;
+	}
+
 	/**
 	 * Get Entity Type ID.
 	 * @return int
@@ -20,5 +31,13 @@ class ContactSettings extends EntitySettings
 	public function getUserFieldEntityID()
 	{
 		return \CCrmContact::GetUserFieldEntityID();
+	}
+
+	/**
+	 * Get Contact Category Id.
+	 */
+	public function getCategoryId(): ?int
+	{
+		return $this->categoryId;
 	}
 }

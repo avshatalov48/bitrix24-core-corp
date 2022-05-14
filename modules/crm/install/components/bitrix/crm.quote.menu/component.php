@@ -17,6 +17,8 @@ use Bitrix\Main\Localization\Loc;
 if (!CModule::IncludeModule('crm'))
 	return;
 
+\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
+
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
 $CrmPerms = CCrmPerms::GetCurrentUserPermissions();
 if(!CCrmQuote::CheckReadPermission(0, $CrmPerms))
@@ -175,8 +177,7 @@ if($arParams['TYPE'] === 'list')
 	if ($bAdd)
 	{
 		$arResult['BUTTONS'][] = array(
-			'TEXT' => GetMessage('QUOTE_ADD'),
-			'TITLE' => GetMessage('QUOTE_ADD_TITLE'),
+			'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
 			'LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_QUOTE_EDIT'],
 				array(
 					'quote_id' => 0
@@ -467,8 +468,7 @@ if (($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show') && $bDelete && 
 if ($bAdd)
 {
 	$arResult['BUTTONS'][] = array(
-		'TEXT' => GetMessage('QUOTE_ADD'),
-		'TITLE' => GetMessage('QUOTE_ADD_TITLE'),
+		'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
 		'LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_QUOTE_EDIT'],
 			array(
 				'quote_id' => 0

@@ -88,11 +88,11 @@ export default class ThemePicker extends EventEmitter {
 				<div class="system-auth-form__item-logo">
 					<div data-role="preview-color" class="system-auth-form__item-logo--image --theme"></div>
 				</div>
-				<div class="system-auth-form__item-container --overflow --flex --column">
+				<div class="system-auth-form__item-container --flex --column">
 					<div class="system-auth-form__item-title --white-space --block">
 						<span data-role="title">Theme</span>
 					</div>
-					<div class="system-auth-form__item-content --margin-top-auto">
+					<div class="system-auth-form__item-content --margin-top-auto --center --center-force">
 						<div class="ui-qr-popupcomponentmaker__btn" onclick="${onclick}">${Loc.getMessage('INTRANET_USER_PROFILE_CHANGE')}</div>
 					</div>
 				</div>

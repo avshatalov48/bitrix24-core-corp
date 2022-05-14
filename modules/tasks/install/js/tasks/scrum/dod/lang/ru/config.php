@@ -12,3 +12,4 @@ $MESS["TASKS_SCRUM_CONFIRM_TEXT_REMOVE_TYPE"] = "Вы действительно
 $MESS["TASKS_SCRUM_CREATE_TYPE"] = "Создать тип";
 $MESS["TASKS_SCRUM_CREATE_TYPE_PROMPT"] = "Создайте новый тип задачи";
 $MESS["TASKS_SCRUM_BUTTON_TEXT_REMOVE"] = "Удалить";
+$MESS["TASKS_SCRUM_DOD_LABEL_USER_SELECTOR"] = "Запрашивать DoD:";

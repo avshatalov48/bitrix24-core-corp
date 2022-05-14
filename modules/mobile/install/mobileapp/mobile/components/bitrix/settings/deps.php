@@ -6,9 +6,9 @@ return [
 		"reload/listeners",
 		"form",
 		// settings panel
-		"settings/notify",
+		"im:chat/settings/notify",
 		"settings/sync",
-		"settings/chat",
+		"im:chat/settings/chat",
 		"settings/tabs",
 		"settings/system",
 		"settings/calltracker",

@@ -15,7 +15,7 @@ type PaymentDocument = {
 	ORDER_ID: number,
 	FORMATTED_DATE: string,
 	SUM: number,
-	TYPE: 'PAYMENT' | 'SHIPMENT',
+	TYPE: 'PAYMENT' | 'SHIPMENT' | 'SHIPMENT_DOCUMENT',
 	PAID?: 'Y' | 'N',
 	STAGE?: 'NOT_PAID' | 'SENT_NO_VIEWED' | 'VIEWED_NO_PAID' | 'PAID' | 'CANCEL' | 'REFUND',
 	DELIVERY_NAME?: string,
@@ -26,6 +26,19 @@ type PaymentDocument = {
 	ACCOUNT_NUMBER?: string,
 };
 
+type CheckDocument = {
+	TYPE: 'CHECK',
+	URL: string,
+	TITLE: string,
+}
+
+type OrderDocument = {
+	ID: number,
+	ACCOUNT_NUMBER: string,
+	TITLE: string,
+	PRICE_FORMAT: string,
+}
+
 type Phrases = {[string]: string};
 
 type EntityEditorPaymentDocumentsOptions = {
@@ -35,13 +48,17 @@ type EntityEditorPaymentDocumentsOptions = {
 	OWNER_TYPE_ID: number,
 	OWNER_ID: number,
 	ENTITY_AMOUNT: number,
-	DOCUMENTS: Array<PaymentDocument>,
+	DOCUMENTS: Array<PaymentDocument|CheckDocument>,
+	ORDERS: Array<OrderDocument>,
 	ORDER_IDS: Array<number>,
 	PARENT_CONTEXT: StartsSalescenterApp,
 	IS_DELIVERY_AVAILABLE: boolean,
 	IS_USED_INVENTORY_MANAGEMENT: boolean,
 	IS_INVENTORY_MANAGEMENT_RESTRICTED: boolean,
+	IS_WITH_ORDERS_MODE: boolean,
 	PHRASES: Phrases,
+	PAID_AMOUNT: number,
+	TOTAL_AMOUNT: number,
 };
 
 type Destroyable = {
@@ -98,6 +115,7 @@ export class EntityEditorPaymentDocuments
 		this._menus = [];
 		this._isUsedInventoryManagement = this._options.IS_USED_INVENTORY_MANAGEMENT;
 		this._isInventoryManagementRestricted = this._options.IS_INVENTORY_MANAGEMENT_RESTRICTED;
+		this._isWithOrdersMode = this._options.IS_WITH_ORDERS_MODE;
 
 		this._subscribeToGlobalEvents();
 	}
@@ -612,30 +630,9 @@ export class EntityEditorPaymentDocuments
 		`;
 	}
 
-	_calculateTotalSum()
-	{
-		let totalSum = parseFloat(this._options.ENTITY_AMOUNT);
-		this._docs().forEach(doc => {
-			if (doc.TYPE === 'PAYMENT')
-			{
-				if (doc.PAID && doc.PAID === 'Y')
-				{
-					totalSum -= parseFloat(doc.SUM);
-				}
-			}
-		});
-
-		if (totalSum < 0)
-		{
-			totalSum = 0.0;
-		}
-
-		return totalSum;
-	}
-
 	_renderTotalSum(): HTMLElement
 	{
-		let totalSum = this._calculateTotalSum();
+		let totalSum = this._options.TOTAL_AMOUNT;
 
 		const node = Tag.render`
 			<div class="crm-entity-widget-payment-total">
@@ -661,12 +658,23 @@ export class EntityEditorPaymentDocuments
 		return fullPrice.replace(currency, `<span class="crm-entity-widget-payment-currency">${currency}</span>`);
 	}
 
-	_docs(): Array<PaymentDocument>
+	_docs(): Array<PaymentDocument|CheckDocument>
 	{
 		if (this._options && this._options.DOCUMENTS && this._options.DOCUMENTS.length)
 		{
 			return this._options.DOCUMENTS;
 		}
+
+		return [];
+	}
+
+	_orders(): Array<OrderDocument>
+	{
+		if (this._options && this._options.ORDERS && this._options.ORDERS.length)
+		{
+			return this._options.ORDERS;
+		}
+
 		return [];
 	}
 

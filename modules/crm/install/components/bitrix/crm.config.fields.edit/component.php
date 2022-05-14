@@ -27,7 +27,6 @@ if ($CCrmFields->CheckError())
 	return;
 }
 
-$arResult['DISABLE_MULTIPLE'] = false;
 $arResult['NEW_FIELD'] = false;
 if (!$arResult['FIELD_ID'])
 	$arResult['NEW_FIELD'] = true;
@@ -39,6 +38,28 @@ if (!$arResult['NEW_FIELD'] && !($arResult['FIELD'] = $CCrmFields->GetByName($ar
 	return;
 }
 
+global $USER_FIELD_MANAGER;
+$userField = $arResult['FIELD']['USER_TYPE'] ?? null;
+$userTypeId = $arResult['FIELD']['USER_TYPE']['USER_TYPE_ID'] ?? $_POST['USER_TYPE_ID'] ?? null;
+if (!$userField)
+{
+	$userField = $USER_FIELD_MANAGER->GetUserType($userTypeId);
+}
+$className = $userField['CLASS_NAME'] ?? null;
+if (!is_a($className, \Bitrix\Main\UserField\Types\BaseType::class, true))
+{
+	$className = \Bitrix\Main\UserField\Types\BaseType::class;
+}
+$arResult['DISABLE_MULTIPLE'] = $userTypeId === 'boolean';
+$arResult['DISABLE_MANDATORY'] = $userTypeId === 'boolean';
+if (method_exists($className, 'isMandatorySupported'))
+{
+	$arResult['DISABLE_MANDATORY'] = !$className::isMandatorySupported();
+}
+if (method_exists($className, 'isMultiplicitySupported'))
+{
+	$arResult['DISABLE_MULTIPLE'] = !$className::isMultiplicitySupported();
+}
 if(isset($arResult['FIELD']['ID']))
 {
 	//HACK: is required for obtain a multilang support for EDIT_FORM_LABEL
@@ -494,10 +515,13 @@ if($bVarsFromForm)
 		$arResult['FIELD']['ROWS'] = isset($_POST['ROWS']) ? $_POST['ROWS'] : 1;
 	}
 
-	if ($_POST['USER_TYPE_ID'] === 'boolean')
+	if ($arResult['DISABLE_MULTIPLE'])
 	{
 		$arResult['FIELD']['MULTIPLE'] = 'N';
-		$arResult['DISABLE_MULTIPLE'] = true;
+	}
+	if ($arResult['DISABLE_MANDATORY'])
+	{
+		$arResult['FIELD']['MANDATORY'] = 'N';
 	}
 
 	if(isset($_POST['LIST']) && is_array($_POST['LIST']))

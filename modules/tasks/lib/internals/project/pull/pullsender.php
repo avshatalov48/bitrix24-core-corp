@@ -52,6 +52,14 @@ class PullSender
 		{
 			if ($eventData['ROLE'] !== UserToGroupTable::ROLE_REQUEST)
 			{
+				if (!array_key_exists('USER_ID', $eventData))
+				{
+					$eventData['USER_ID'] = [];
+				}
+				if (!is_array($eventData['USER_ID']))
+				{
+					$eventData['USER_ID'] = [$eventData['USER_ID']];
+				}
 				$recipients = array_unique(array_merge($eventData['USER_ID'], $notVisibleGroupsUsers[$groupId]));
 				PushService::addEvent($recipients, $pushParams);
 			}

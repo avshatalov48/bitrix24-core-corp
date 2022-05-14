@@ -1513,32 +1513,17 @@ if (!$res->fetch())
 		]
 	];
 
-	if (\Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->isEnabled() && $shopLocalization == 'ru')
+	if (\Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->isEnabled())
 	{
-		$templateId = 0;
-
-		$controller = new \Bitrix\DocumentGenerator\Controller\Template();
-		$result = $controller::getDefaultTemplateList(['CODE' => 'BILL_RU']);
-		if ($result->isSuccess())
-		{
-			$template = $result->getData()['BILL_RU'];
-			if ($template['ID'] <= 0)
-			{
-				$result = $controller->installDefaultTemplate($template);
-				$data = $result->getData();
-				$templateId = $data['templateId'];
-			}
-			else
-			{
-				$templateId = $template['ID'];
-			}
-		}
-		else
-		{
-			return;
-		}
-
-		if ($templateId)
+		\Bitrix\DocumentGenerator\Driver::installDefaultTemplatesForCurrentRegion();
+		$template = \Bitrix\DocumentGenerator\Model\TemplateTable::getList([
+			'select' => ['ID'],
+			'filter' => [
+				'=CODE' => 'BILL_RU',
+			],
+		])->fetch();
+		$templateId = $template['ID'] ?? null;
+		if ($templateId > 0)
 		{
 			$paySystemList[] = [
 				'NAME' => \Bitrix\Main\Localization\Loc::getMessage('CRM_ORDER_PAY_SYSTEM_ORDERDOCUMENT_NAME_V2'),
@@ -1769,6 +1754,25 @@ foreach ($groupsData as $groupData)
 					CGroup::SetModulePermission($groupId, $moduleId, CTask::GetIdByLetter($letter, $moduleId));
 			}
 		}
+	}
+}
+
+$adminGroupId = CCrmSaleHelper::getShopGroupIdByType('admin');
+if($adminGroupId>0)
+{
+	global $USER;
+
+	$currentUserId = 0;
+	if ($USER instanceof \CUser)
+	{
+		$currentUserId = (int)$USER->GetID();
+	}
+
+	$userId = 1;
+	\CUser::AppendUserGroup($userId, $adminGroupId);
+	if ($currentUserId == $userId)
+	{
+		$USER->CheckAuthActions();
 	}
 }
 

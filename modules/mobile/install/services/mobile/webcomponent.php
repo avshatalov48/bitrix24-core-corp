@@ -10,7 +10,7 @@ if ($USER->IsAuthorized())
 {
 	if ($componentName)
 	{
-		$APPLICATION->IncludeComponent("bitrix:mobile.webcomponent", "", array(
+		$APPLICATION->IncludeComponent("bitrix:immobile.webcomponent", "", array(
 			"componentName" => $componentName,
 		), null, array("HIDE_ICONS" => "Y"));
 	}

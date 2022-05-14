@@ -13,6 +13,7 @@ use Bitrix\Crm;
 use Bitrix\SalesCenter\Integration\Bitrix24Manager;
 use Bitrix\SalesCenter\Integration\CrmManager;
 use Bitrix\SalesCenter\Integration\ImOpenLinesManager;
+use Bitrix\SalesCenter\Integration\ImConnectorManager;
 use Bitrix\SalesCenter\Integration\LandingManager;
 use Bitrix\SalesCenter\Integration\LocationManager;
 use Bitrix\SalesCenter\Integration\SaleManager;
@@ -723,7 +724,15 @@ class Order extends Base
 				$data['deal'] = $this->getEntityData($entityTypeId, $entityId);
 			}
 
-			$this->processDocumentSelectorOptions($payment->getId(), $options);
+			if ($payment)
+			{
+				$this->processDocumentSelectorOptions($payment->getId(), $options);
+
+				if (SaleManager::getInstance()->isTelegramOrder($order))
+				{
+					ImConnectorManager::getInstance()->sendTelegramPaymentNotification($payment, $options['sendingMethodDesc']);
+				}
+			}
 
 			$data['entity'] = $this->getEntityData($entityTypeId, $entityId);
 

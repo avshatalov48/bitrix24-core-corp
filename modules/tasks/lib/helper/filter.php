@@ -155,6 +155,7 @@ class Filter extends Common
 						\CTasks::STATE_DEFERRED,
 						EntityForm::STATE_COMPLETED_IN_ACTIVE_SPRINT
 					],
+					'STORY_POINTS' => ''
 				],
 				'sort' => 1,
 			];
@@ -265,16 +266,6 @@ class Filter extends Common
 	{
 		$filter['CHECK_PERMISSIONS'] = 'Y';
 		$filter['ONLY_ROOT_TASKS'] = 'Y';
-
-		if ($this->isScrumProject())
-		{
-			$epicKey = '::SUBFILTER-EPIC';
-			if (isset($filter[$epicKey]))
-			{
-				$filter['EPIC'] = $filter[$epicKey]['EPIC'];
-				unset($filter[$epicKey]);
-			}
-		}
 
 		return $filter;
 	}
@@ -816,6 +807,17 @@ class Filter extends Common
 
 		if ($isScrumProject)
 		{
+			$filter['STORY_POINTS'] = array(
+				'id' => 'STORY_POINTS',
+				'name' => Loc::getMessage('TASKS_FILTER_STORY_POINTS'),
+				'type' => 'list',
+				'items' => [
+					'Y' => Loc::getMessage('TASKS_FILTER_STORY_POINTS_Y'),
+					'N' => Loc::getMessage('TASKS_FILTER_STORY_POINTS_N'),
+				],
+				'default' => true
+			);
+
 			$filter['EPIC'] = array(
 				'id' => 'EPIC',
 				'name' => Loc::getMessage('TASKS_FILTER_EPIC'),

@@ -5,10 +5,8 @@ namespace Bitrix\Tasks\Scrum\Controllers;
 use Bitrix\Main\Engine\Action;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Error;
-use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Request;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Scrum\Form\EntityInfo;
@@ -35,16 +33,9 @@ class Sprint extends Controller
 	const ERROR_COULD_NOT_READ_SPRINT = 'TASKS_SCS_05';
 	const ERROR_COULD_NOT_READ_ACTIVE_SPRINT = 'TASKS_SCS_06';
 
-	public function __construct(Request $request = null)
-	{
-		parent::__construct($request);
-
-		$this->errorCollection = new ErrorCollection;
-	}
-
 	protected function processBeforeAction(Action $action)
 	{
-		if (!Loader::includeModule('tasks') || !Loader::includeModule('socialnetwork'))
+		if (!Loader::includeModule('socialnetwork'))
 		{
 			$this->errorCollection->setError(
 				new Error(
@@ -76,12 +67,22 @@ class Sprint extends Controller
 		return parent::processBeforeAction($action);
 	}
 
-	public function getDataForSprintStartFormAction(int $groupId, int $sprintId)
+	/**
+	 * Returns sprint data for the sprint start form.
+	 *
+	 * @param int $groupId Group id.
+	 * @param int $sprintId Sprint id.
+	 * @return array|null
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function getDataForSprintStartFormAction(int $groupId, int $sprintId): ?array
 	{
 		$userId = User::getId();
 
 		$entityService = new EntityService();
-		$sprintService = new SprintService();
+		$sprintService = new SprintService($userId);
 		$itemService = new ItemService();
 		$taskService = new TaskService($userId);
 		$kanbanService = new KanbanService();
@@ -164,12 +165,21 @@ class Sprint extends Controller
 		return $sprintData;
 	}
 
-	public function getDataForSprintCompletionFormAction(int $groupId)
+	/**
+	 * Returns sprint data for the sprint completion form.
+	 *
+	 * @param int $groupId Group id.
+	 * @return array|null
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function getDataForSprintCompletionFormAction(int $groupId): ?array
 	{
 		$userId = User::getId();
 
 		$entityService = new EntityService();
-		$sprintService = new SprintService();
+		$sprintService = new SprintService($userId);
 		$itemService = new ItemService();
 		$taskService = new TaskService($userId);
 		$kanbanService = new KanbanService();
@@ -294,11 +304,31 @@ class Sprint extends Controller
 		return $sprintData;
 	}
 
-	public function startSprintAction()
+	/**
+	 * Starts the sprint.
+	 *
+	 * @return string|null
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public function startSprintAction(): ?string
 	{
 		$post = $this->request->getPostList()->toArray();
 
 		$userId = User::getId();
+
+		$groupId = (is_numeric($post['groupId']) ? (int) $post['groupId'] : 0);
+
+		if (!$this->canStartSprint($userId, $groupId))
+		{
+			$this->errorCollection->setError(
+				new Error(
+					Loc::getMessage('TSSC_ERROR_ACCESS_DENIED'),
+					self::ERROR_ACCESS_DENIED
+				)
+			);
+
+			return null;
+		}
 
 		$sprintService = new SprintService();
 
@@ -364,9 +394,33 @@ class Sprint extends Controller
 		return '';
 	}
 
-	public function completeSprintAction(int $groupId, $direction)
+	/**
+	 * Completes the sprint.
+	 *
+	 * @param int $groupId Group id.
+	 * @param string|int $direction Where to move unfinished tasks. Backlog or sprint.
+	 * @return array|null
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public function completeSprintAction(int $groupId, $direction): ?array
 	{
 		$userId = User::getId();
+
+		$post = $this->request->getPostList()->toArray();
+
+		$groupId = (is_numeric($post['groupId']) ? (int) $post['groupId'] : 0);
+
+		if (!$this->canCompleteSprint($userId, $groupId))
+		{
+			$this->errorCollection->setError(
+				new Error(
+					Loc::getMessage('TSSC_ERROR_ACCESS_DENIED'),
+					self::ERROR_ACCESS_DENIED
+				)
+			);
+
+			return null;
+		}
 
 		$isTargetBacklog = ($direction === 'backlog');
 		$targetSprintId = (is_numeric($direction) ? (int) $direction : 0);
@@ -420,7 +474,13 @@ class Sprint extends Controller
 		return $sprint->toArray();
 	}
 
-	public function getTeamSpeedInfoAction(int $groupId)
+	/**
+	 * Returns a data that the application might need.
+	 *
+	 * @param int $groupId Group id.
+	 * @return array
+	 */
+	public function getTeamSpeedInfoAction(int $groupId): array
 	{
 		$sprintService = new SprintService();
 
@@ -431,7 +491,13 @@ class Sprint extends Controller
 		];
 	}
 
-	public function getBurnDownInfoAction(int $groupId)
+	/**
+	 * Returns a data that the application might need.
+	 *
+	 * @param int $groupId Group id.
+	 * @return array
+	 */
+	public function getBurnDownInfoAction(int $groupId): array
 	{
 		$sprintService = new SprintService();
 
@@ -450,6 +516,38 @@ class Sprint extends Controller
 	private function canReadGroupTasks(int $userId, int $groupId): bool
 	{
 		return Group::canReadGroupTasks($userId, $groupId);
+	}
+
+	private function canStartSprint(int $userId, int $groupId): bool
+	{
+		$userRoleInGroup = \CSocNetUserToGroup::getUserRole($userId, $groupId);
+
+		if (
+			$userRoleInGroup == SONET_ROLES_MODERATOR
+			|| $userRoleInGroup == SONET_ROLES_OWNER
+			|| \CSocNetUser::isCurrentUserModuleAdmin()
+		)
+		{
+			return true;
+		}
+
+		return false;
+	}
+
+	private function canCompleteSprint(int $userId, int $groupId): bool
+	{
+		$userRoleInGroup = \CSocNetUserToGroup::getUserRole($userId, $groupId);
+
+		if (
+			$userRoleInGroup == SONET_ROLES_MODERATOR
+			|| $userRoleInGroup == SONET_ROLES_OWNER
+			|| \CSocNetUser::isCurrentUserModuleAdmin()
+		)
+		{
+			return true;
+		}
+
+		return false;
 	}
 
 	private function getEpicData(int $epicId): array

@@ -215,6 +215,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      });
 	    }
 	  }, {
+	    key: "cleanNeighborKanbans",
+	    value: function cleanNeighborKanbans() {
+	      this.kanbanHeader.cleanNeighborGrids();
+	      this.kanban.cleanNeighborGrids();
+	      this.kanbanGroupedByParentTasks.forEach(function (parentTaskKanban) {
+	        parentTaskKanban.cleanNeighborGrids();
+	      });
+	    }
+	  }, {
 	    key: "updateHeaderColumns",
 	    value: function updateHeaderColumns() {
 	      this.kanbanHeader.updateTotals();
@@ -332,6 +341,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.kanban.ajax({
 	        action: 'changeSprint'
 	      }, function (data) {
+	        _this7.cleanNeighborKanbans();
+
 	        _this7.kanbanHeader.getColumns().forEach(function (column) {
 	          return _this7.kanbanHeader.removeColumn(column);
 	        });
@@ -358,6 +369,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            _this7.createParentTaskKanban(parentTaskData);
 	          });
 	        }
+
+	        _this7.fillNeighborKanbans();
 
 	        _this7.adjustGroupHeadersWidth();
 	      }, function (error) {});

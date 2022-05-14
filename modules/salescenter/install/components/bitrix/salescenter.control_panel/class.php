@@ -132,9 +132,7 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 		{
 			$items[] = $this->getPaymentSystemsTile();
 
-			if ($this->hasInternalDeliveryItems()
-				|| (RestManager::getInstance()->isEnabled() && $this->hasDeliveryMarketplaceApp())
-			)
+			if (Driver::getInstance()->hasDeliveryServices())
 			{
 				$items[] = $this->getDeliveryTile();
 			}
@@ -627,31 +625,6 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 		]);
 
 		return $count > 0;
-	}
-
-	private function hasDeliveryMarketplaceApp(): bool
-	{
-		$zone = $this->getZone();
-		$partnerItems = RestManager::getInstance()->getByTag([
-			RestManager::TAG_DELIVERY,
-			RestManager::TAG_DELIVERY_RECOMMENDED,
-			$zone
-		]);
-
-		return !empty($partnerItems['ITEMS']);
-	}
-
-	/**
-	 * @return bool
-	 * @throws Main\SystemException
-	 */
-	private function hasInternalDeliveryItems(): bool
-	{
-		$handlers = (new SalesCenter\Delivery\Handlers\HandlersRepository())
-			->getCollection()
-			->getInstallableItems();
-
-		return !empty($handlers);
 	}
 
 	public function getDeliveryTileAction(): array

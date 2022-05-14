@@ -647,6 +647,7 @@ class FolderTree extends Volume\Folder
 				'=INDICATOR_TYPE' => Volume\Folder::className(),
 				'=OWNER_ID' => $this->getOwner(),
 				'>FILE_COUNT' => 0,
+				'>FILES_LEFT' => 0,
 			),
 			VolumeTable::getEntity()
 		);

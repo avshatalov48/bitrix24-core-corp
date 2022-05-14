@@ -1,6 +1,8 @@
 <?php
+
 namespace Bitrix\Crm\Integration\Recyclebin;
 
+use Bitrix\Crm\Settings\ActivitySettings;
 use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Recyclebin;
@@ -59,10 +61,13 @@ class Activity extends RecyclableEntity
 
 	/**
 	 * Erase entity from Recycle Bin.
+	 *
 	 * @param Recyclebin\Internals\Entity $entity
+	 * @param array $params
+	 *
 	 * @return Main\Result
 	 */
-	public static function removeFromRecyclebin(Recyclebin\Internals\Entity $entity)
+	public static function removeFromRecyclebin(Recyclebin\Internals\Entity $entity, array $params = [])
 	{
 		if($entity->getEntityType() !== self::getEntityName())
 		{
@@ -83,7 +88,8 @@ class Activity extends RecyclableEntity
 					'ID' => $entity->getId(),
 					'SLOTS' => self::prepareDataSlots($entity),
 					'SLOT_MAP' => self::prepareDataSlotMap($entity),
-					'FILES' => $entity->getFiles()
+					'FILES' => $entity->getFiles(),
+					'SKIP_TASKS' => ActivitySettings::getValue(ActivitySettings::KEEP_UNBOUND_TASKS)
 				)
 			);
 		}

@@ -34,8 +34,9 @@
 	      var buttonNode = document.querySelector('[data-role="bx-crm-toolbar-categories-button"]');
 
 	      if (buttonNode) {
+	        var toolbar = BX.UI.ToolbarManager.getDefaultToolbar();
+	        var button = toolbar.getButton(main_core.Dom.attr(buttonNode, 'data-btn-uniqid'));
 	        var entityTypeId = Number(buttonNode.dataset.entityTypeId);
-	        var button = ui_buttons.ButtonManager.createFromNode(buttonNode);
 
 	        if (button && entityTypeId > 0) {
 	          this.subscribeCategoriesUpdatedEvent(function () {
@@ -109,7 +110,7 @@
 	        options.items = items;
 	        button.menuWindow = new main_popup.Menu(options);
 	        main_core.Event.bind(button.getContainer(), 'click', button.menuWindow.show.bind(button.menuWindow));
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        console.log('error trying reload categories', response.errors);
 	      });
 	    }

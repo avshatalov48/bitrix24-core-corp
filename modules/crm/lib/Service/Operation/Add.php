@@ -5,6 +5,7 @@ namespace Bitrix\Crm\Service\Operation;
 use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\Field\Collection;
 use Bitrix\Crm\Integration\PullManager;
+use Bitrix\Crm\Integrity;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Restriction\RestrictionManager;
@@ -51,22 +52,40 @@ class Add extends Operation
 		return $this->item->save($this->isCheckFieldsEnabled());
 	}
 
+	protected function registerDuplicateCriteria(): void
+	{
+		$registrar = Integrity\DuplicateManager::getCriterionRegistrar($this->getItem()->getEntityTypeId());
+
+		$registrar->registerByItem($this->getItem());
+	}
+
 	protected function isCountersUpdateNeeded(): bool
 	{
 		return true;
 	}
 
+	protected function getUserIdsForCountersReset(): array
+	{
+		if ($this->item->hasField(Item::FIELD_NAME_ASSIGNED) && $this->item->getAssignedById() > 0)
+		{
+			return [$this->item->getAssignedById()];
+		}
+
+		return [];
+	}
+
 	protected function getTypesOfCountersToReset(): array
 	{
+		$factory = Container::getInstance()->getFactory($this->item->getEntityTypeId());
+		if (!$factory || !$factory->getCountersSettings()->isIdleCounterEnabled())
+		{
+			return [];
+		}
+
 		return [
 			EntityCounterType::IDLE,
 			EntityCounterType::ALL,
 		];
-	}
-
-	protected function getUserIdsForCountersReset(): array
-	{
-		return [$this->item->getAssignedById()];
 	}
 
 	protected function registerStatistics(Statistics\OperationFacade $statisticsFacade): Result
@@ -86,6 +105,7 @@ class Add extends Operation
 				$this->item->getId(),
 				[
 					'FIELDS' => $this->item->getData(),
+					'FIELDS_MAP' => $this->item->getFieldsMap(),
 				]
 			);
 		}
@@ -94,7 +114,7 @@ class Add extends Operation
 			$this->getItemIdentifier(),
 			$this->fieldsCollection->toArray(),
 			[],
-			$this->item->getCompatibleData(),
+			$this->item->getData(),
 			$this->getItemsThatExcludedFromTimelineRelationEventsRegistration()
 		);
 

@@ -10,7 +10,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 //\CJSCore::Init(array('date'));
 \CJSCore::Init(array('ls'));
-\Bitrix\Main\UI\Extension::load(['ui.fonts.opensans', 'ui.notification', 'main.loader']);
+\Bitrix\Main\UI\Extension::load(['ui.fonts.opensans', 'ui.notification', 'main.loader', 'ui.progressround']);
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
 $guid = $arResult['GUID'];
 $prefix = mb_strtolower($guid);
@@ -21,7 +21,6 @@ $secondaryEditorHeaderContainerID = "{$prefix}_secondary_header_container";
 
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'no-background');
-
 
 ?>
 <div class="crm-entity-merger-wrapper">
@@ -121,9 +120,9 @@ $APPLICATION->IncludeComponent('bitrix:ui.button.panel', '', [
 						</div>
 					</div>
 					<div class="ui-btn-container ui-btn-container-center">
-					  <input type="submit" class="ui-btn ui-btn-success"  name="merge"  value="'.GetMessage('CRM_ENTITY_MERGER_PROCESS').'" id="mergeButton" >
-					  <input type="button" class="ui-btn ui-btn-light-border" name="merge_with_edit" value="'.GetMessage('CRM_ENTITY_MERGER_MERGE_AND_EDIT').'" id="mergeWithEditButton" title="" >
-					  <input type="button" class="ui-btn ui-btn-link"  name="postpone" value="'.GetMessage('CRM_ENTITY_MERGER_POSTPONE').'" id="postponeButton" title="" >
+					  <input type="submit" class="ui-btn ui-btn-success ui-btn-disabled" name="merge" value="'.GetMessage('CRM_ENTITY_MERGER_PROCESS').'" id="mergeButton" >
+					  <input type="button" class="ui-btn ui-btn-light-border ui-btn-disabled" name="merge_with_edit" value="'.GetMessage('CRM_ENTITY_MERGER_MERGE_AND_EDIT').'" id="mergeWithEditButton" title="" >
+					  <input type="button" class="ui-btn ui-btn-link" name="postpone" value="'.GetMessage('CRM_ENTITY_MERGER_POSTPONE').'" id="postponeButton" title="" >
 					</div>
 					<div class="crm-entity-merger-panel-toggler-container">
 						<div class="crm-entity-merger-panel-toggler-inner">

@@ -1,4 +1,33 @@
+import { MountingPortal } from '../../vue/portal-vue.esm.js';
 import {Scrollable} from "./scrolldown";
+
+function getPortalSelector(mountId)
+{
+	const className = 'b24-window-mounts';
+	mountId = mountId || `empty`;
+	mountId = `b24-window-mount-${mountId}`;
+
+	const selector = `#${mountId}`;
+	if (document.getElementById(mountId))
+	{
+		return selector;
+	}
+
+	let wrapper = document.querySelector(`.${className}`);
+	if (!wrapper)
+	{
+		wrapper = document.createElement('div');
+		wrapper.classList.add(className);
+		document.body.appendChild(wrapper);
+	}
+
+	const container = document.createElement('div');
+	container.id = mountId;
+	container.classList.add('b24-form');
+	wrapper.appendChild(container);
+
+	return selector;
+}
 
 const Overlay = {
 	props: ['show', 'background'],
@@ -15,10 +44,15 @@ const Overlay = {
 };
 
 let windowMixin = {
-	props: ['show', 'title', 'position', 'vertical', 'maxWidth', 'zIndex', 'scrollDown', 'scrollDownText'],
+	props: [
+		'show', 'title', 'position', 'vertical',
+		'maxWidth', 'zIndex', 'scrollDown', 'scrollDownText',
+		'mountId'
+	],
 	components: {
 		'b24-overlay': Overlay,
 		'b24-scrollable': Scrollable,
+		MountingPortal,
 	},
 	data: function ()
 	{
@@ -50,6 +84,11 @@ let windowMixin = {
 				? document.addEventListener('keydown', this.escHandler)
 				: document.removeEventListener('keydown', this.escHandler);
 		},
+
+		getMountTo(mountId)
+		{
+			return getPortalSelector(mountId);
+		},
 	},
 	mounted ()
 	{
@@ -65,42 +104,48 @@ let windowMixin = {
 		zIndexComputed()
 		{
 			return this.zIndex || 200;
-		}
+		},
 	}
 };
 
 const Popup = {
 	mixins: [windowMixin],
 	template: `
-		<div class="b24-window">
-			<b24-overlay :show="show" @click="hide()"></b24-overlay>
-			<transition :name="getTransitionName()" appear>
-				<div class="b24-window-popup" 
-					:class="classes()"
-					@click.self.prevent="hide()"
-					v-show="show"
-				>
-					<div class="b24-window-popup-wrapper" 
-						:style="{ maxWidth: maxWidth + 'px' }"
+		<MountingPortal
+			append
+			:disabled="!mountId"
+			:mountTo="getMountTo(mountId)"
+		>
+			<div class="b24-window">
+				<b24-overlay :show="show" @click="hide()"></b24-overlay>
+				<transition :name="getTransitionName()" appear>
+					<div class="b24-window-popup" 
+						:class="classes()"
+						@click.self.prevent="hide()"
+						v-show="show"
 					>
-						<button @click="hide()" type="button" class="b24-window-close" :style="{ zIndex: zIndexComputed + 20}" ></button>
-						<b24-scrollable
-							:show="show"
-							:enabled="scrollDown"
-							:zIndex="zIndex"
-							:text="scrollDownText"
+						<div class="b24-window-popup-wrapper" 
+							:style="{ maxWidth: maxWidth + 'px' }"
 						>
-							<div v-if="title" class="b24-window-popup-head">
-								<div class="b24-window-popup-title">{{ title }}</div>
-							</div>
-							<div class="b24-window-popup-body">
-								<slot></slot>
-							</div>
-						</b24-scrollable>
+							<button @click="hide()" type="button" class="b24-window-close" :style="{ zIndex: zIndexComputed + 20}" ></button>
+							<b24-scrollable
+								:show="show"
+								:enabled="scrollDown"
+								:zIndex="zIndex"
+								:text="scrollDownText"
+							>
+								<div v-if="title" class="b24-window-popup-head">
+									<div class="b24-window-popup-title">{{ title }}</div>
+								</div>
+								<div class="b24-window-popup-body">
+									<slot></slot>
+								</div>
+							</b24-scrollable>
+						</div>
 					</div>
-				</div>
-			</transition>
-		</div>
+				</transition>
+			</div>
+		</MountingPortal>
 	`,
 	methods: {
 		getTransitionName() {

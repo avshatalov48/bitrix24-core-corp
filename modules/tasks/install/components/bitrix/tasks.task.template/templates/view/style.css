@@ -540,6 +540,10 @@ input.task-detail-field-add {
 	margin-top: 5px;
 }
 
+.task-detail-extra .task-detail-supertask {
+	margin-top: 0;
+}
+
 .task-detail-properties-layout a:hover {
 	border-bottom: 1px solid;
 }

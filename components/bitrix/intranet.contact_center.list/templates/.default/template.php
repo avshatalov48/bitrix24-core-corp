@@ -92,20 +92,6 @@ if(!empty($arResult["ADDITIONAL_STYLES"]))
 								target: document.querySelector('[data-crop="crop_<?=$cropTextID?>"] '),
 							});
 							text.init();
-							<?php
-							// It is an advertisement from bitrix24 preset.
-							if ($code === 'virtual_whatsapp'
-								&& Main\Context::getCurrent()->getRequest()->getQuery('infoHelperId') === 'vwhatsapp')
-							{
-								echo <<<JS
-									setTimeout(function() {
-										BX.loadExt('ui.info-helper').then(function() {
-											BX.UI.InfoHelper.show('info_imopenlines_virtual_whatsapp'); 
-										});
-									}, 0);
-JS;
-							}
-							?>
 						});
 					</script>
 				<?

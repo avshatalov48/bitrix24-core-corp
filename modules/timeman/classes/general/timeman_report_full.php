@@ -584,16 +584,15 @@ class CUserReportFull
 		switch ($settings["UF_REPORT_PERIOD"])
 		{
 			case "WEEK":
-				$fields["DATE_FROM"] = ConvertTimeStampForReport($lastReportDate+$this->oneDayTime,"SHORT");
 				if ($settings["UF_TM_DAY"]<=4)//mon,tue,wen,thu
 				{
-					if ($lastReportDate>strtotime("last sun -1 week"))
+					if ($lastReportDate>strtotime("last sun -1 week") && $lastReportDate<=strtotime("last sun"))
 						$fields["DATE_FROM"] = $lastReportDate+$this->oneDayTime;
 					else
 						$fields["DATE_FROM"] = strtotime("next mon",$lastReportDate);
 
 					$fields["DATE_TO"] = strtotime("next sun", $fields["DATE_FROM"]);
-					if ($settings["UF_TM_DAY"] === null)
+					if (!is_numeric($settings["UF_TM_DAY"]))
 					{
 						$fields["DATE_SUBMIT"] = strtotime(
 							"next " . reset($this->days), $fields["DATE_TO"]
@@ -609,14 +608,14 @@ class CUserReportFull
 				}
 				else//fri,sat,sun
 				{
-					if ($lastReportDate>strtotime("last sun"))
+					if ($lastReportDate>strtotime("last sun") && $lastReportDate<=strtotime("next sun"))
 						$fields["DATE_FROM"] = $lastReportDate+$this->oneDayTime;
 					else
 						$fields["DATE_FROM"] = strtotime("mon next week",$lastReportDate-date('Z'));
 
 					$fields["DATE_TO"] = strtotime("next sun", $fields["DATE_FROM"]);
 
-					if ($settings["UF_TM_DAY"] === null)
+					if (!is_numeric($settings["UF_TM_DAY"]))
 					{
 						$fields["DATE_SUBMIT"] = strtotime(
 							"last " . reset($this->days),
@@ -964,17 +963,11 @@ class CUserReportFull
 			);
 
 			//report is delayed?
-			$datefomat = $this->TimeShort;
 			if($arReport["DELAY_TIME"] > 0)
 			{
 				if($arReport["DELAY_TIME"]>time())
 				{
 					$arReport["IS_DELAY"] = "Y";
-				}
-				else
-				{
-					// if report delayed, not active, and next report period started
-					$arData["DATE_SUBMIT"] = ConvertTimeStampForReport($arReport["DELAY_TIME"], "FULL");
 				}
 			}
 
@@ -1014,10 +1007,12 @@ class CUserReportFull
 		{
 			return false;
 		}
+
 		$fullFormat = CSite::getDateFormat("FULL", SITE_ID);
 		$dateSubmitTimeStamp = MakeTimeStamp($dateSubmit, $fullFormat);
-		$currentTimeWihOffset = time() + CTimeZone::getOffset();
-		return (CTimeMan::removeHoursTS($dateSubmitTimeStamp) <= CTimeMan::removeHoursTS($currentTimeWihOffset));
+		$currentTimeWithOffset = time() + CTimeZone::getOffset();
+
+		return (CTimeMan::removeHoursTS($dateSubmitTimeStamp) <= CTimeMan::removeHoursTS($currentTimeWithOffset));
 	}
 
 	private function isShowReportForm(string $dateSubmit): bool
@@ -1026,10 +1021,12 @@ class CUserReportFull
 		{
 			return false;
 		}
+
 		$fullFormat = CSite::getDateFormat("FULL", SITE_ID);
 		$dateSubmitTimeStamp = MakeTimeStamp($dateSubmit, $fullFormat);
-		$currentTimeWihOffset = time() + CTimeZone::getOffset();
-		return (doubleval($dateSubmitTimeStamp) <= doubleval($currentTimeWihOffset));
+		$currentTimeWithOffset = time() + CTimeZone::getOffset();
+
+		return ($dateSubmitTimeStamp <= $currentTimeWithOffset);
 	}
 
 	/**

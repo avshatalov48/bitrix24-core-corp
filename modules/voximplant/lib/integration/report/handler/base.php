@@ -169,7 +169,10 @@ abstract class Base extends BaseReport
 				case 'PORTAL_USER_ID':
 					if ($allowedUserIds)
 					{
-						$query->whereIn('PORTAL_USER_ID', array_intersect($allowedUserIds, [$filterValue]));
+						$availableUserIds = array_intersect($allowedUserIds, [$filterValue]);
+						$portalUserIds = $availableUserIds ?: [-1];
+
+						$query->whereIn('PORTAL_USER_ID', $portalUserIds);
 					}
 					else
 					{
@@ -784,7 +787,7 @@ abstract class Base extends BaseReport
 	public function preloadUserInfo(array $userIds): void
 	{
 		$missingUserIds = array_diff($userIds, array_keys(static::$userFields));
-		if (count($missingUserIds) === 0)
+		if (empty($missingUserIds))
 		{
 			return;
 		}

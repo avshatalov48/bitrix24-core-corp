@@ -1,0 +1,5 @@
+<?php
+$MESS["CRM_IMCONNECTOR_TELEGRAM_ORDER"] = "Order ##ORDER_ID# of #DATE# for #SUM_WITH_CURRENCY# has been placed";
+$MESS["CRM_IMCONNECTOR_TELEGRAM_PAYMENT_PAID"] = "Order ##ORDER_ID# of #DATE# for #SUM_WITH_CURRENCY# has been paid";
+$MESS["CRM_IMCONNECTOR_TELEGRAM_SHIPMENT_DEDUCTED"] = "Order ##ORDER_ID# of #DATE# for #SUM_WITH_CURRENCY# has been shipped";
+$MESS["CRM_IMCONNECTOR_TELEGRAM_SHIPMENT_READY"] = "Order ##ORDER_ID# of #DATE# for #SUM_WITH_CURRENCY# can be collected from the warehouse at \"#STORE_ADDRESS#\"";

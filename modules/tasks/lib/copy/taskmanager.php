@@ -17,6 +17,7 @@ use Bitrix\Tasks\Copy\Implement\Robots;
 use Bitrix\Tasks\Copy\Implement\Stage as StageImplementer;
 use Bitrix\Tasks\Copy\Implement\TaskCheckList as CheckListImplementer;
 use Bitrix\Tasks\Copy\Implement\Task as TaskImplementer;
+use Bitrix\Tasks\Copy\Implement\Template as TemplateImplementer;
 use Bitrix\Tasks\Copy\Stage as StageCopier;
 use Bitrix\Tasks\Copy\Task as TaskCopier;
 use Bitrix\Tasks\Integration\Bizproc\Document\Task as TaskDocumentType;
@@ -162,6 +163,7 @@ class TaskManager
 		$taskImplementer->setExecutiveUserId($this->executiveUserId);
 		$taskImplementer->setTargetGroupId($this->targetGroupId);
 		$taskImplementer->setProjectTerm($this->projectTerm);
+		$taskImplementer->setTemplateCopier($this->getTemplateCopier());
 
 		if ($this->markerComment && Loader::includeModule("forum"))
 		{
@@ -196,6 +198,11 @@ class TaskManager
 		return new EntityCopier($this->getTopicImplementer());
 	}
 
+	private function getTemplateCopier(): Template
+	{
+		return new Template($this->getTemplateImplementer());
+	}
+
 	private function getTopicImplementer()
 	{
 		global $USER_FIELD_MANAGER;
@@ -208,6 +215,18 @@ class TaskManager
 		$topicImplementer->setCommentCopier($commentCopier);
 
 		return $topicImplementer;
+	}
+
+	private function getTemplateImplementer(): TemplateImplementer
+	{
+		global $USER_FIELD_MANAGER;
+
+		$templateImplementer = new TemplateImplementer();
+
+		$templateImplementer->setUserFieldManager($USER_FIELD_MANAGER);
+		$templateImplementer->setExecutiveUserId($this->executiveUserId);
+
+		return $templateImplementer;
 	}
 
 	private function getRobotsImplementer(array $documentType, array $mapIdsCopiedStages)

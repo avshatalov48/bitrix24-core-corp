@@ -6,7 +6,6 @@ use Bitrix\Main\Engine\Action;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Engine\Response\Component;
 use Bitrix\Main\Error;
-use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Grid;
 use Bitrix\Main\HttpResponse;
 use Bitrix\Main\Loader;
@@ -43,13 +42,11 @@ class Epic extends Controller
 
 		global $USER_FIELD_MANAGER;
 		$this->userFieldManager = $USER_FIELD_MANAGER;
-
-		$this->errorCollection = new ErrorCollection;
 	}
 
 	protected function processBeforeAction(Action $action)
 	{
-		if (!Loader::includeModule('tasks') || !Loader::includeModule('socialnetwork'))
+		if (!Loader::includeModule('socialnetwork'))
 		{
 			$this->errorCollection->setError(
 				new Error(
@@ -81,7 +78,13 @@ class Epic extends Controller
 		return parent::processBeforeAction($action);
 	}
 
-	public function createEpicAction()
+	/**
+	 * Creates an epic.
+	 *
+	 * @return array|null
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public function createEpicAction(): ?array
 	{
 		$post = $this->request->getPostList()->toArray();
 
@@ -136,7 +139,13 @@ class Epic extends Controller
 		return $epic->toArray();
 	}
 
-	public function editEpicAction()
+	/**
+	 * Changes an epic.
+	 *
+	 * @return array|null
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public function editEpicAction(): ?array
 	{
 		$post = $this->request->getPostList()->toArray();
 
@@ -204,6 +213,13 @@ class Epic extends Controller
 		return $inputEpic->toArray();
 	}
 
+	/**
+	 * Returns a component with a list of epics and processes requests for that component.
+	 *
+	 * @return Component|HttpResponse|string|null
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ArgumentTypeException
+	 */
 	public function getListAction()
 	{
 		$post = $this->request->getPostList()->toArray();
@@ -360,7 +376,13 @@ class Epic extends Controller
 		return $component;
 	}
 
-	public function getEpicAction(int $epicId)
+	/**
+	 * Returns an epic data.
+	 *
+	 * @param int $epicId Epic id.
+	 * @return array|null
+	 */
+	public function getEpicAction(int $epicId): ?array
 	{
 		$userId = Util\User::getId();
 
@@ -400,7 +422,14 @@ class Epic extends Controller
 		return $epic->toArray();
 	}
 
-	public function removeEpicAction(int $epicId)
+	/**
+	 * Removes an epic.
+	 *
+	 * @param int $epicId Epic id.
+	 * @return array|null
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public function removeEpicAction(int $epicId): ?array
 	{
 		$epicService = new EpicService();
 		$pushService = (Loader::includeModule('pull') ? new PushService() : null);
@@ -429,7 +458,15 @@ class Epic extends Controller
 		return $epic->toArray();
 	}
 
-	public function getDescriptionEditorAction(string $editorId, int $epicId = 0)
+	/**
+	 * Returns the component displaying the description editor.
+	 *
+	 * @param string $editorId Editor id.
+	 * @param int $epicId Epic id.
+	 * @return Component|null
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public function getDescriptionEditorAction(string $editorId, int $epicId = 0): ?Component
 	{
 		if (!Loader::includeModule('disk'))
 		{
@@ -507,7 +544,14 @@ class Epic extends Controller
 		return new Component('bitrix:main.post.form', '', $params);
 	}
 
-	public function getEpicFilesAction(int $epicId)
+	/**
+	 * Returns the component displaying the attached disk files.
+	 *
+	 * @param int $epicId Epic id.
+	 * @return Component|null
+	 * @throws \Bitrix\Main\LoaderException
+	 */
+	public function getEpicFilesAction(int $epicId): ?Component
 	{
 		if (!Loader::includeModule('disk'))
 		{
@@ -542,6 +586,12 @@ class Epic extends Controller
 		);
 	}
 
+	/**
+	 * Returns a data that the application might need.
+	 *
+	 * @param int $groupId Group id.
+	 * @return bool[]|null
+	 */
 	public function getEpicInfoAction(int $groupId)
 	{
 		$userId = Util\User::getId();

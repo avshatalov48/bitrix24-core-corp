@@ -5,6 +5,7 @@ import {Code} from './utils/code';
 import {Time} from './utils/time';
 import {Logger} from '../lib/logger';
 import {Debug} from '../lib/debug';
+import {ActionTimer} from '../lib/action-timer';
 import {DateFormatter} from 'timeman.dateformatter';
 import {Notification} from "../lib/notification";
 
@@ -300,6 +301,11 @@ export class MonitorModel extends VuexBuilderModel
 					privateCode = entity.privateCode;
 				}
 
+				const logEntity = {
+					type: result.type,
+					title: result.title,
+				};
+
 				if (!historyEntry)
 				{
 					delete result.title;
@@ -309,6 +315,10 @@ export class MonitorModel extends VuexBuilderModel
 						...result,
 						privateCode,
 					});
+
+					ActionTimer.finish('CATCH_ENTITY');
+					Debug.log('Caught new:', logEntity, ActionTimer.getDuration('CATCH_ENTITY'));
+					Logger.log('Caught new:', logEntity, ActionTimer.getDuration('CATCH_ENTITY'));
 
 					return;
 				}
@@ -339,6 +349,10 @@ export class MonitorModel extends VuexBuilderModel
 						store.commit('setLastRemindDate', this.getDateLog());
 					}
 				}
+
+				ActionTimer.finish('CATCH_ENTITY');
+				Debug.log('Caught:', logEntity, ActionTimer.getDuration('CATCH_ENTITY'));
+				Logger.log('Caught:', logEntity, ActionTimer.getDuration('CATCH_ENTITY'));
 			},
 
 			preFinishLastInterval: (store) =>

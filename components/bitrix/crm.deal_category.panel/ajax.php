@@ -11,6 +11,12 @@ class Item extends \Bitrix\Main\Engine\Controller
 {
 	public function getComponentAction($params)
 	{
+		$params = \Bitrix\Main\Component\ParameterSigner::unsignParameters(
+			'bitrix:crm.deal_category.panel',
+			$params
+		);
+		$params['USE_VIEW_TARGET'] = 'N';
+
 		return new Component('bitrix:crm.deal_category.panel', 'tiny', $params);
 	}
 }

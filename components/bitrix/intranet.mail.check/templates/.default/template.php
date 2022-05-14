@@ -25,7 +25,7 @@ if ($arResult['SETTED_UP'] !== false): ?>
 				lsForce: force ? true : false,
 				onsuccess: function (json)
 				{
-					if (!BX.Type.isPlanObject(json))
+					if (!BX.Type.isPlainObject(json))
 					{
 						return;
 					}

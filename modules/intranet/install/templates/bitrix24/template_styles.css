@@ -1016,9 +1016,9 @@ td.bx-layout-inner-inner-cont {
 	/*display: none;*/
 }
 
-.pagetitle-wrap-filter-opened .pagetitle {
-	display: inline-block;
-}
+/*.pagetitle-wrap-filter-opened .pagetitle {*/
+/*	display: inline-block;*/
+/*}*/
 
 /*
 .pagetitle-toolbar-field-view .pagetitle-below {

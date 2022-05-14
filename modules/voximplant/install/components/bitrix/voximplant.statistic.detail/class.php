@@ -505,7 +505,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 		$crmEntities = array();
 		$rowCount = 0;
 
-		if(count($idList) > 0)
+		if(!empty($idList))
 		{
 			$cursor = Voximplant\StatisticTable::getList(array(
 				"select" => array(
@@ -836,7 +836,7 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 
 		$now = new \Bitrix\Main\Type\DateTime();
 
-		if ($now > $expireLinkDate)
+		if ($now->getTimestamp() > $expireLinkDate->getTimestamp())
 		{
 			return false;
 		}

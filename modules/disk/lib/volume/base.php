@@ -248,6 +248,7 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 				'=INDICATOR_TYPE' => static::className(),
 				'=OWNER_ID' => $this->getOwner(),
 				'>FILE_COUNT' => 0,
+				'>FILES_LEFT' => 0,
 			),
 			VolumeTable::getEntity()
 		);
@@ -810,6 +811,7 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 				'=INDICATOR_TYPE' => static::className(),
 				'=OWNER_ID' => $this->getOwner(),
 				'>FILE_COUNT' => 0,
+				'>FILES_LEFT' => 0,
 			),
 			VolumeTable::getEntity()
 		);
@@ -894,6 +896,7 @@ abstract class Base implements \Bitrix\Disk\Volume\IVolumeIndicator, IErrorable
 					'=INDICATOR_TYPE' => static::className(),
 					'=OWNER_ID' => $this->getOwner(),
 					'>FILE_COUNT' => 0,
+					'>FILES_LEFT' => 0,
 				),
 				VolumeTable::getEntity()
 			);

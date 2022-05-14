@@ -199,7 +199,7 @@ class ProductRow extends EO_ProductRow implements \JsonSerializable
 
 	protected function trySetMeasureFromReference(): bool
 	{
-		$arrayOfReferenceMeasures = Measure::getProductMeasures($this->getProductId())[$this->getProductId()] ?? null;
+		$arrayOfReferenceMeasures = Measure::getProductMeasures($this->getProductId())[$this->getProductId()] ?? [];
 		$referenceMeasure = reset($arrayOfReferenceMeasures);
 
 		if (empty($referenceMeasure))

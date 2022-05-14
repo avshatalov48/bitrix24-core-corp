@@ -114,6 +114,18 @@ abstract class IndexSupportedProvider extends \Bitrix\Crm\Search\Result\Provider
 	{
 		$query = $this->getIndexTableQuery();
 		$columnName = $this->getShortIndexColumnName();
+		if (!empty($this->additionalFilter))
+		{
+			$referenceFilter = $this->convertToReferenceFilter($this->additionalFilter);
+			$referenceFilter['=this.' . $columnName ] = 'ref.ID';
+			$query->registerRuntimeField('',
+				new \Bitrix\Main\Entity\ReferenceField('ENTITY',
+					$this->getEntityTableQuery()->getEntity(),
+					$referenceFilter,
+					['join_type' => 'INNER'],
+				)
+			);
+		}
 		if (!empty($excludedIds))
 		{
 			$query->whereNotIn($columnName, $excludedIds);
@@ -314,4 +326,20 @@ abstract class IndexSupportedProvider extends \Bitrix\Crm\Search\Result\Provider
 
 	abstract protected function searchByDenomination(string $searchQuery): Result;
 
+	protected function convertToReferenceFilter(array $entityFilter)
+	{
+		$result = [];
+
+		$sqlWhere = new \CSQLWhere();
+		foreach ($entityFilter as $filterKey => $filterValue)
+		{
+			$operationData = $sqlWhere->makeOperation($filterKey);
+			$operation = \CSQLWhere::getOperationByCode($operationData['OPERATION']);
+			$field = $operationData['FIELD'];
+			// @todo support array type of $filterValue
+			$result[$operation . 'ref.' . $field] = new SqlExpression('?', $filterValue);
+		}
+
+		return $result;
+	}
 }

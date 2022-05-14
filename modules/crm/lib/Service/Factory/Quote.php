@@ -190,7 +190,11 @@ class Quote extends Factory
 		{
 			$info[Item::FIELD_NAME_CURRENCY_ID] = [
 				'TYPE' => Field::TYPE_CRM_CURRENCY,
-				'ATTRIBUTES' => [\CCrmFieldInfoAttr::NotDisplayed],
+				'ATTRIBUTES' => [
+					\CCrmFieldInfoAttr::NotDisplayed,
+					\CCrmFieldInfoAttr::HasDefaultValue,
+					\CCrmFieldInfoAttr::CanNotBeEmptied,
+				],
 				'CLASS' => Field\CurrencyId::class,
 			];
 			$info[Item::FIELD_NAME_ACCOUNT_CURRENCY_ID] = [
@@ -198,8 +202,9 @@ class Quote extends Factory
 				'ATTRIBUTES' => [
 					\CCrmFieldInfoAttr::NotDisplayed,
 					\CCrmFieldInfoAttr::Hidden,
+					\CCrmFieldInfoAttr::ReadOnly,
+					\CCrmFieldInfoAttr::HasDefaultValue,
 				],
-				'CLASS' => Field\AccountCurrencyId::class,
 			];
 			$info[Item::FIELD_NAME_IS_MANUAL_OPPORTUNITY] = [
 				'TYPE' => Field::TYPE_BOOLEAN,
@@ -224,6 +229,7 @@ class Quote extends Factory
 				'ATTRIBUTES' => [
 					\CCrmFieldInfoAttr::NotDisplayed,
 					\CCrmFieldInfoAttr::Hidden,
+					\CCrmFieldInfoAttr::ReadOnly,
 				],
 				'CLASS' => Field\OpportunityAccount::class,
 			];
@@ -232,6 +238,7 @@ class Quote extends Factory
 				'ATTRIBUTES' => [
 					\CCrmFieldInfoAttr::NotDisplayed,
 					\CCrmFieldInfoAttr::Hidden,
+					\CCrmFieldInfoAttr::ReadOnly,
 				],
 				'CLASS' => Field\TaxValueAccount::class,
 			];
@@ -374,7 +381,7 @@ class Quote extends Factory
 		return $objects;
 	}
 
-	protected function configureAddOrImportOperation(Operation $operation): void
+	protected function configureAddOperation(Operation $operation): void
 	{
 		$operation
 			->addAction(
@@ -386,11 +393,11 @@ class Quote extends Factory
 			)
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
-				new Operation\Action\Compatible\SendEvent('OnAfterCrmQuoteAdd')
+				new Operation\Action\ClearCache('b_crm_quote')
 			)
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
-				new Operation\Action\ClearCache('b_crm_quote')
+				new Operation\Action\Compatible\SendEvent('OnAfterCrmQuoteAdd')
 			)
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
@@ -410,17 +417,20 @@ class Quote extends Factory
 					'OnBeforeCrmQuoteUpdate',
 					'CRM_QUOTE_UPDATE_CANCELED'
 				)
-			)->addAction(
-				Operation::ACTION_AFTER_SAVE,
-				new Operation\Action\Compatible\SendEvent('OnAfterCrmQuoteUpdate')
-			)->addAction(
+			)
+			->addAction(
 				Operation::ACTION_AFTER_SAVE,
 				new Operation\Action\ClearCache(
 					null,
 					'crm_entity_name_' . $this->getEntityTypeId() . '_',
 					[Item::FIELD_NAME_TITLE]
 				)
-			)->addAction(
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\Compatible\SendEvent('OnAfterCrmQuoteUpdate')
+			)
+			->addAction(
 				Operation::ACTION_AFTER_SAVE,
 				$this->getProductRowsSaveEventAction()
 			)
@@ -436,12 +446,12 @@ class Quote extends Factory
 	{
 		$operation = parent::getDeleteOperation($item, $context);
 
-		return $operation->addAction(
+		return $operation
+			->addAction(
 				Operation::ACTION_BEFORE_SAVE,
 				new Operation\Action\Compatible\SendEvent\WithCancel\Delete('OnBeforeCrmQuoteDelete')
-			)->addAction(Operation::ACTION_AFTER_SAVE,
-				new Operation\Action\Compatible\SendEvent\Delete('OnAfterCrmQuoteDelete')
-			)->addAction(
+			)
+			->addAction(
 				Operation::ACTION_AFTER_SAVE,
 				new Operation\Action\ClearCache(
 					'b_crm_quote',
@@ -470,7 +480,12 @@ class Quote extends Factory
 
 					return $result;
 				}
-			});
+			})
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\Compatible\SendEvent\Delete('OnAfterCrmQuoteDelete')
+			)
+		;
 	}
 
 	public function getConversionOperation(

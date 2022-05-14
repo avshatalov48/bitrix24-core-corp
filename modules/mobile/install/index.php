@@ -32,6 +32,36 @@ Class mobile extends CModule
 		$this->MODULE_DESCRIPTION = Loc::getMessage('APP_MODULE_DESCRIPTION');
 	}
 
+	private function getSubmodules(): ?array {
+		return [
+			"im",
+			"crm"
+		];
+	}
+
+	public function installSubmodules() {
+		$submodules = $this->getSubmodules();
+		foreach ($submodules as $submoduleId)
+		{
+			$name = "{$submoduleId}mobile";
+			if (!IsModuleInstalled($name) && file_exists($_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/$name/install/index.php"))
+			{
+				include_once($_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/$name/install/index.php");
+				$instance = new $name();
+				if (method_exists($instance, "installFiles"))
+				{
+					call_user_func([$instance, "installFiles"]);
+				}
+
+				if (method_exists($instance, "installDB"))
+				{
+					call_user_func([$instance, "installDB"]);
+				}
+			}
+		}
+
+	}
+
 	function InstallDB()
 	{
 		RegisterModule("mobile");
@@ -191,6 +221,7 @@ Class mobile extends CModule
 		$this->InstallFiles();
 		$this->InstallMobileApp();
 		$this->InstallPull();
+		$this->installSubmodules();
 
 		$APPLICATION->IncludeAdminFile(Loc::getMessage("APP_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/mobile/install/step.php");
 	}

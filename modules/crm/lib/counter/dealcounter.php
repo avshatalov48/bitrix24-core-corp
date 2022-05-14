@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Counter;
 use Bitrix\Crm\ActivityBindingTable;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\DB\SqlExpression;
@@ -77,20 +78,30 @@ class DealCounter extends EntityCounter
 		}
 
 		$results = array();
-		$categoryID = $this->getIntegerExtraParam('DEAL_CATEGORY_ID', -1);
+		$categoryID = $this->getIntegerExtraParam(
+			'DEAL_CATEGORY_ID',
+			$this->getIntegerExtraParam('CATEGORY_ID', -1)
+		);
 		$typeIDs = EntityCounterType::splitType($this->typeID);
 
+		$factory = Container::getInstance()->getFactory($this->entityTypeID);
+		if (!$factory || !$factory->isCountersEnabled())
+		{
+			return $results;
+		}
+
 		$isCurrentCounter = in_array(EntityCounterType::PENDING, $typeIDs) && in_array(EntityCounterType::OVERDUE, $typeIDs);
+
+		$countersSettings = $factory->getCountersSettings();
 		foreach($typeIDs as $typeID)
 		{
+			if (!$countersSettings->isCounterTypeEnabled($typeID))
+			{
+				continue;
+			}
 			//echo EntityCounterType::resolveName($typeID), "<br>";
 			if($typeID === EntityCounterType::IDLE)
 			{
-				if(!\CCrmUserCounterSettings::GetValue(\CCrmUserCounterSettings::ReckonActivitylessItems, true))
-				{
-					continue;
-				}
-
 				$query = new Query(DealTable::getEntity());
 
 				if($select === 'ENTY')

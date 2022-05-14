@@ -2,9 +2,7 @@ this.BX = this.BX || {};
 (function (exports,main_loader,main_popup,main_core) {
 	'use strict';
 
-	var Template =
-	/*#__PURE__*/
-	function () {
+	var Template = /*#__PURE__*/function () {
 	  function Template(data) {
 	    babelHelpers.classCallCheck(this, Template);
 	    this.data = data;
@@ -33,9 +31,7 @@ this.BX = this.BX || {};
 	  return Template;
 	}();
 
-	var Document =
-	/*#__PURE__*/
-	function () {
+	var Document = /*#__PURE__*/function () {
 	  function Document(data) {
 	    babelHelpers.classCallCheck(this, Document);
 	    this.data = data;
@@ -69,9 +65,7 @@ this.BX = this.BX || {};
 	  return Document;
 	}();
 
-	var Menu =
-	/*#__PURE__*/
-	function () {
+	var Menu = /*#__PURE__*/function () {
 	  function Menu(params) {
 	    babelHelpers.classCallCheck(this, Menu);
 	    babelHelpers.defineProperty(this, "progress", false);
@@ -154,7 +148,7 @@ this.BX = this.BX || {};
 	              } else {
 	                reject('error trying create document object');
 	              }
-	            }).catch(function (response) {
+	            })["catch"](function (response) {
 	              _this.progress = false;
 
 	              _this.hideLoader();
@@ -205,7 +199,7 @@ this.BX = this.BX || {};
 
 	              document.data.publicUrl = response.data.publicUrl;
 	              resolve(document.getPublicUrl());
-	            }).catch(function (response) {
+	            })["catch"](function (response) {
 	              _this2.progress = false;
 
 	              _this2.hideLoader();
@@ -241,7 +235,7 @@ this.BX = this.BX || {};
 	            offsetTop: 0,
 	            closeByEsc: true
 	          });
-	        }).catch(function (error) {
+	        })["catch"](function (error) {
 	          if (error !== 'loading') {
 	            reject(error);
 	          }
@@ -284,7 +278,7 @@ this.BX = this.BX || {};
 	            _this4.parseButtonResponse(response);
 
 	            resolve(_this4.templates);
-	          }).catch(function (response) {
+	          })["catch"](function (response) {
 	            _this4.progress = false;
 
 	            _this4.hideLoader();
@@ -317,8 +311,8 @@ this.BX = this.BX || {};
 	            data: {
 	              select: ['id', 'number', 'title'],
 	              filter: {
-	                provider: _this5.provider.replace(/\\/g, '\\\\'),
-	                value: _this5.value
+	                "=provider": _this5.provider.toLowerCase(),
+	                "=value": _this5.value
 	              },
 	              order: {
 	                id: 'desc'
@@ -338,7 +332,7 @@ this.BX = this.BX || {};
 	              }
 	            });
 	            resolve(_this5.documents);
-	          }).catch(function (response) {
+	          })["catch"](function (response) {
 	            _this5.progress = false;
 
 	            _this5.hideLoader();
@@ -420,7 +414,7 @@ this.BX = this.BX || {};
 
 	                _this7.showSubMenu();
 	              }
-	            }).catch(function (error) {
+	            })["catch"](function (error) {
 	              if (loadingItem) {
 	                loadingItem.getLayout().text.innerText = error;
 	              }
@@ -517,7 +511,7 @@ this.BX = this.BX || {};
 
 	      this.getFeatureContent().then(function (content) {
 	        _this9.getFeaturePopup(content).show();
-	      }).catch(function (error) {
+	      })["catch"](function (error) {
 	        console.error(error);
 	      });
 	    }
@@ -567,7 +561,7 @@ this.BX = this.BX || {};
 	          }).then(function () {
 	            resolve(_this11.featureContent);
 	          });
-	        }).catch(function (response) {
+	        })["catch"](function (response) {
 	          reject(_this11.getErrorMessageFromResponse(response));
 	        });
 	      });
@@ -584,5 +578,5 @@ this.BX = this.BX || {};
 
 	exports.Selector = Selector;
 
-}((this.BX.DocumentGenerator = this.BX.DocumentGenerator || {}),BX,BX,BX));
+}((this.BX.DocumentGenerator = this.BX.DocumentGenerator || {}),BX,BX.Main,BX));
 //# sourceMappingURL=selector.bundle.js.map

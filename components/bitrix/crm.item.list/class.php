@@ -11,7 +11,6 @@ use Bitrix\Crm\Service\Router;
 use Bitrix\Crm\Settings\HistorySettings;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\UI\Buttons;
 
@@ -331,7 +330,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 			return $filter;
 		}
 
-		$filterOptions = new Options($this->getGridId(), $this->kanbanEntity->getFilterPresets());
+		$filterOptions = new \Bitrix\Crm\Filter\UiFilterOptions($this->getGridId(), $this->kanbanEntity->getFilterPresets());
 		$filterFields = $this->getDefaultFilterFields();
 		$requestFilter = $filterOptions->getFilter($filterFields);
 
@@ -468,7 +467,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 			Item::FIELD_NAME_COMPANY => [Item::FIELD_NAME_CONTACT_ID, Item::FIELD_NAME_COMPANY_ID, 'CLIENT_INFO'],
 			// Item::FIELD_NAME_CONTACTS => [Item::FIELD_NAME_CONTACT_ID, 'CLIENT_INFO'],
 			Item::FIELD_NAME_MYCOMPANY => [Item::FIELD_NAME_MYCOMPANY_ID],
-			Item::FIELD_NAME_PRODUCTS => [Item::FIELD_NAME_PRODUCTS.'.PRODUCT_ID'],
+			// Item::FIELD_NAME_PRODUCTS => [Item::FIELD_NAME_PRODUCTS.'.PRODUCT_ID'],
 		];
 
 		$visibleColumns = $this->getVisibleColumns();
@@ -596,6 +595,32 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 					}
 				}
 			}
+			$isLoadProducts = $this->isColumnVisible(Item::FIELD_NAME_PRODUCTS.'.PRODUCT_ID');
+			$itemProducts = [];
+			if ($isLoadProducts)
+			{
+				foreach($list as $item)
+				{
+					$itemProducts[$item->getId()] = [];
+				}
+				if (!empty($itemProducts))
+				{
+					$products = \Bitrix\Crm\ProductRowTable::getList([
+						'select' => [
+							'PRODUCT_NAME',
+							'OWNER_ID'
+						],
+						'filter' => [
+							'=OWNER_TYPE' => \CCrmOwnerTypeAbbr::ResolveByTypeID($this->factory->getEntityTypeId()),
+							'@OWNER_ID' => array_keys($itemProducts),
+						],
+					]);
+					foreach ($products->fetchCollection() as $product)
+					{
+						$itemProducts[$product->getOwnerId()][] = $product;
+					}
+				}
+			}
 			foreach($list as $item)
 			{
 				$itemId = $item->getId();
@@ -614,6 +639,10 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 				{
 					$this->appendParentColumns($item, $itemColumn);
 					$this->appendOptionalColumns($item, $itemColumn);
+					if (!empty($itemProducts[$item->getId()]))
+					{
+						$itemColumn[Item::FIELD_NAME_PRODUCTS.'.PRODUCT_ID'] = $this->getProductsItemColumn($itemProducts[$item->getId()]);
+					}
 				}
 
 				$result[] = [
@@ -731,10 +760,6 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 
 		if ($this->factory->isLinkWithProductsEnabled())
 		{
-			if ($this->isColumnVisible(Item::FIELD_NAME_PRODUCTS.'.PRODUCT_ID'))
-			{
-				$columns[Item::FIELD_NAME_PRODUCTS.'.PRODUCT_ID'] = $this->getProductsItemColumn($item);
-			}
 			$columns['OPPORTUNITY_WITH_CURRENCY'] = Bitrix\Crm\Format\Money::format($item->getOpportunity(), $item->getCurrencyId());
 			$columns[Item::FIELD_NAME_OPPORTUNITY] = number_format($item->getOpportunity(), 2, '.', '');
 			$columns[Item::FIELD_NAME_CURRENCY_ID] = htmlspecialcharsbx(\Bitrix\Crm\Currency::getCurrencyCaption($item->getCurrencyId()));
@@ -821,10 +846,10 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		}
 	}
 
-	protected function getProductsItemColumn(Item $item): string
+	protected function getProductsItemColumn(array $products): string
 	{
 		$productNames = [];
-		foreach ($item->getProductRows() as $product)
+		foreach ($products as $product)
 		{
 			$productNames[] = htmlspecialcharsbx($product->getProductName());
 		}
@@ -882,7 +907,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 	protected function getToolbarSettingsItems(): array
 	{
 		$settingsItems = parent::getToolbarSettingsItems();
-		if (Container::getInstance()->getUserPermissions()->canExportType(
+		if (Container::getInstance()->getUserPermissions()->canExportTypeInCategory(
 			$this->entityTypeId,
 			(int)$this->getCategoryId())
 		)

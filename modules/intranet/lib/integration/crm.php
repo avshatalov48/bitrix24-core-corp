@@ -58,7 +58,7 @@ final class Crm
 	}
 
 	//region Permissions
-	public function checkReadPermissions(int $entityTypeId, int $id = 0, int $categoryId = 0, ?int $userId = null): bool
+	public function checkReadPermissions(int $entityTypeId, int $id = 0, ?int $categoryId = null, ?int $userId = null): bool
 	{
 		if (!$this->includeCrm())
 		{

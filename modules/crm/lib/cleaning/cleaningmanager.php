@@ -1,6 +1,9 @@
 <?php
 namespace Bitrix\Crm\Cleaning;
 
+use Bitrix\Crm\Cleaning\Cleaner\Options;
+use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\EntityAddressType;
 use Bitrix\Main;
 use Bitrix\Main\Result;
 
@@ -8,6 +11,11 @@ class CleaningManager
 {
 	public static function register($entityTypeID, $entityID)
 	{
+		if(!\Bitrix\Crm\Agent\Routine\CleaningAgent::isActive())
+		{
+			\Bitrix\Crm\Agent\Routine\CleaningAgent::activate();
+		}
+
 		[$entityTypeID, $entityID] = static::normalizeIds($entityTypeID, $entityID);
 
 		Entity\CleaningTable::upsert(['ENTITY_TYPE_ID' => $entityTypeID, 'ENTITY_ID' => $entityID]);
@@ -40,10 +48,7 @@ class CleaningManager
 
 	public static function getQueuedItems($limit = 10)
 	{
-		if(!is_int($limit))
-		{
-			$limit = (int)$limit;
-		}
+		$limit = (int)$limit;
 
 		if($limit <= 0)
 		{
@@ -51,18 +56,19 @@ class CleaningManager
 		}
 
 		$dbResult = Entity\CleaningTable::getList(
-			array(
-				'select' => array('ENTITY_TYPE_ID', 'ENTITY_ID'),
-				'order' => array('CREATED_TIME' => 'ASC'),
+			[
+				'select' => ['ENTITY_TYPE_ID', 'ENTITY_ID'],
+				'order' => ['CREATED_TIME' => 'ASC'],
 				'limit' => $limit
-			)
+			]
 		);
 
-		$items = array();
+		$items = [];
 		while($fields = $dbResult->Fetch())
 		{
 			$items[] = $fields;
 		}
+
 		return $items;
 	}
 
@@ -79,7 +85,49 @@ class CleaningManager
 
 	private static function customizeCleaner(Cleaner $cleaner): void
 	{
-		if ($cleaner->getOptions()->getEntityTypeId() === \CCrmOwnerType::Deal)
+		$entityTypeId = $cleaner->getOptions()->getEntityTypeId();
+
+		if (
+			$entityTypeId === \CCrmOwnerType::Lead
+			|| $entityTypeId === \CCrmOwnerType::Contact
+			|| $entityTypeId === \CCrmOwnerType::Company
+		)
+		{
+			$cleaner->addJob(
+				new class extends  Cleaner\Job {
+					public function run(Options $options): Result
+					{
+						EntityAddress::unregister(
+							$options->getEntityTypeId(),
+							$options->getEntityId(),
+							EntityAddressType::Primary,
+						);
+
+						return new Result();
+					}
+				}
+			);
+		}
+
+		if ($entityTypeId === \CCrmOwnerType::Company)
+		{
+			$cleaner->addJob(
+				new class extends  Cleaner\Job {
+					public function run(Options $options): Result
+					{
+						EntityAddress::unregister(
+							$options->getEntityTypeId(),
+							$options->getEntityId(),
+							EntityAddressType::Registered,
+						);
+
+						return new Result();
+					}
+				}
+			);
+		}
+
+		if ($entityTypeId === \CCrmOwnerType::Deal)
 		{
 			$cleaner->addJob(
 				new class extends Cleaner\Job {
@@ -93,7 +141,7 @@ class CleaningManager
 			);
 		}
 
-		if ($cleaner->getOptions()->getEntityTypeId() === \CCrmOwnerType::Quote)
+		if ($entityTypeId === \CCrmOwnerType::Quote)
 		{
 			$cleaner
 				->addJob(
@@ -117,7 +165,7 @@ class CleaningManager
 			;
 		}
 
-		if (\CCrmOwnerType::isUseDynamicTypeBasedApproach($cleaner->getOptions()->getEntityTypeId()))
+		if (\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
 		{
 			$cleaner
 				->addJob(

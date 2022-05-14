@@ -49,7 +49,8 @@ endif;
 							"/rpa/automation",
 						],
 						options: {
-							cacheable: false
+							cacheable: false,
+							customLeftBoundary: 0,
 						}
 					},
 					{

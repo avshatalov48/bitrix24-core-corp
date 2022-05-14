@@ -345,7 +345,7 @@ class CVoximplantIvrEditComponent extends \CBitrixComponent
 			}
 		}
 
-		if(count($userIds) > 0)
+		if(!empty($userIds))
 		{
 			return CSocNetLogDestination::GetUsers(array('id' => $userIds));
 		}

@@ -4783,10 +4783,23 @@ class CCrmLiveFeed
 			return;
 		}
 
-		if ($item->getCreatedBy() !== $item->getAssignedById())
+		if (
+			static::isNotificationEnabled($item->getEntityTypeId())
+			&& $item->getCreatedBy() !== $item->getAssignedById()
+		)
 		{
 			static::sendNotificationAboutResponsibleAdd($item);
 		}
+	}
+
+	private static function isNotificationEnabled(int $entityTypeId): bool
+	{
+		if ($entityTypeId === \CCrmOwnerType::Lead)
+		{
+			return \Bitrix\Crm\Settings\LeadSettings::isEnabled();
+		}
+
+		return true;
 	}
 
 	private static function sendNotificationAboutResponsibleAdd(Item $item): void
@@ -4802,7 +4815,7 @@ class CCrmLiveFeed
 			'CRM_LF_EVENT_BECOME_RESPONSIBLE',
 			[
 				'#ENTITY_TYPE_CAPTION#' => htmlspecialcharsbx(\CCrmOwnerType::GetDescription($item->getEntityTypeId())),
-				'#TITLE#' => htmlspecialcharsbx($item->getTitle() ?? $item->getTitlePlaceholder()),
+				'#TITLE#' => htmlspecialcharsbx($item->getHeading()),
 				'#URL#' => '#URL#',
 			],
 		);
@@ -4849,14 +4862,17 @@ class CCrmLiveFeed
 				continue;
 			}
 
-			if ($singleEvent['TYPE'] === \CCrmLiveFeedEvent::Responsible)
+			if (static::isNotificationEnabled($item->getEntityTypeId()))
 			{
-				static::sendNotificationAboutAssignedChange($itemBeforeSave, $item);
-			}
+				if ($singleEvent['TYPE'] === \CCrmLiveFeedEvent::Responsible)
+				{
+					static::sendNotificationAboutAssignedChange($itemBeforeSave, $item);
+				}
 
-			if ($singleEvent['TYPE'] === \CCrmLiveFeedEvent::Progress)
-			{
-				static::sendNotificationAboutStageChange($itemBeforeSave, $item);
+				if ($singleEvent['TYPE'] === \CCrmLiveFeedEvent::Progress)
+				{
+					static::sendNotificationAboutStageChange($itemBeforeSave, $item);
+				}
 			}
 		}
 	}
@@ -4871,7 +4887,7 @@ class CCrmLiveFeed
 		}
 
 		$eventData = [];
-		if ($difference->isChanged(Item::FIELD_NAME_STAGE_ID))
+		if ($factory->isStagesEnabled() && $difference->isChanged(Item::FIELD_NAME_STAGE_ID))
 		{
 			$eventData[\CCrmLiveFeedEvent::Progress] = [
 				'TYPE' => \CCrmLiveFeedEvent::Progress,
@@ -4912,40 +4928,43 @@ class CCrmLiveFeed
 			];
 		}
 
-		[$addedBindings, $removedBindings] = EntityBinding::prepareBoundAndUnboundEntities(
-			\CCrmOwnerType::Contact,
-			$itemBeforeSave->remindActual(Item::FIELD_NAME_CONTACT_BINDINGS),
-			$item->getContactBindings(),
-		);
-
-		$isContactsChanged = !empty($addedBindings) || !empty($removedBindings);
-
-		if ($isContactsChanged || $difference->isChanged(Item::FIELD_NAME_COMPANY_ID))
+		if ($factory->isClientEnabled())
 		{
-			$addedContactIds = EntityBinding::prepareEntityIDs(\CCrmOwnerType::Contact, $addedBindings);
-			$removedContactIds = EntityBinding::prepareEntityIDs(\CCrmOwnerType::Contact, $removedBindings);
+			[$addedBindings, $removedBindings] = EntityBinding::prepareBoundAndUnboundEntities(
+				\CCrmOwnerType::Contact,
+				$itemBeforeSave->remindActual(Item::FIELD_NAME_CONTACT_BINDINGS),
+				$item->getContactBindings(),
+			);
 
-			$eventData[\CCrmLiveFeedEvent::Client] = [
-				'CODE'=> 'CLIENT',
-				'TYPE' => \CCrmLiveFeedEvent::Client,
-				'FIELDS' => [
-					'ENTITY_TYPE_ID' => $item->getEntityTypeId(),
-					'ENTITY_ID' => $item->getId(),
-					'USER_ID' => $item->getUpdatedBy(),
-					'TITLE' => Loc::getMessage(
-						'CRM_LF_EVENT_FIELD_CHANGED',
-						['#FIELD_CAPTION#' => Loc::getMessage('C_CRM_LF_CLIENT_NAME_TITLE')]
-					),
-					'PARAMS' => [
-						'ADDED_CLIENT_CONTACT_IDS' => $addedContactIds,
-						'REMOVED_CLIENT_CONTACT_IDS' => $removedContactIds,
-						'START_CLIENT_CONTACT_ID' => $removedContactIds[0] ?? 0,
-						'FINAL_CLIENT_CONTACT_ID' => $addedContactIds[0] ?? 0,
-						'START_CLIENT_COMPANY_ID' => $difference->getPreviousValue(Item::FIELD_NAME_COMPANY_ID),
-						'FINAL_CLIENT_COMPANY_ID' => $difference->getCurrentValue(Item::FIELD_NAME_COMPANY_ID),
+			$isContactsChanged = !empty($addedBindings) || !empty($removedBindings);
+
+			if ($isContactsChanged || $difference->isChanged(Item::FIELD_NAME_COMPANY_ID))
+			{
+				$addedContactIds = EntityBinding::prepareEntityIDs(\CCrmOwnerType::Contact, $addedBindings);
+				$removedContactIds = EntityBinding::prepareEntityIDs(\CCrmOwnerType::Contact, $removedBindings);
+
+				$eventData[\CCrmLiveFeedEvent::Client] = [
+					'CODE'=> 'CLIENT',
+					'TYPE' => \CCrmLiveFeedEvent::Client,
+					'FIELDS' => [
+						'ENTITY_TYPE_ID' => $item->getEntityTypeId(),
+						'ENTITY_ID' => $item->getId(),
+						'USER_ID' => $item->getUpdatedBy(),
+						'TITLE' => Loc::getMessage(
+							'CRM_LF_EVENT_FIELD_CHANGED',
+							['#FIELD_CAPTION#' => Loc::getMessage('C_CRM_LF_CLIENT_NAME_TITLE')]
+						),
+						'PARAMS' => [
+							'ADDED_CLIENT_CONTACT_IDS' => $addedContactIds,
+							'REMOVED_CLIENT_CONTACT_IDS' => $removedContactIds,
+							'START_CLIENT_CONTACT_ID' => $removedContactIds[0] ?? 0,
+							'FINAL_CLIENT_CONTACT_ID' => $addedContactIds[0] ?? 0,
+							'START_CLIENT_COMPANY_ID' => $difference->getPreviousValue(Item::FIELD_NAME_COMPANY_ID),
+							'FINAL_CLIENT_COMPANY_ID' => $difference->getCurrentValue(Item::FIELD_NAME_COMPANY_ID),
+						]
 					]
-				]
-			];
+				];
+			}
 		}
 
 		if ($difference->isChanged(Item::FIELD_NAME_TITLE))
@@ -4978,11 +4997,26 @@ class CCrmLiveFeed
 		return $eventData;
 	}
 
-	public static function prepareParentRelations(Item $item): array
+	private static function prepareParentRelations(Item $item): ?array
+	{
+		if ($item->getEntityTypeId() === \CCrmOwnerType::Deal)
+		{
+			return static::prepareParentRelationsForDeal($item);
+		}
+
+		if ($item->getEntityTypeId() === \CCrmOwnerType::Contact)
+		{
+			return static::prepareParentRelationsForContact($item);
+		}
+
+		return null;
+	}
+
+	private static function prepareParentRelationsForDeal(Item $item): array
 	{
 		$parents = [];
 
-		if ($item->getCompanyId() > 0)
+		if ($item->hasField(Item::FIELD_NAME_COMPANY_ID) && $item->getCompanyId() > 0)
 		{
 			static::PrepareOwnershipRelations(
 				\CCrmOwnerType::Company,
@@ -4991,7 +5025,7 @@ class CCrmLiveFeed
 			);
 		}
 
-		if (!empty($item->getContacts()))
+		if ($item->hasField(Item::FIELD_NAME_CONTACTS) && !empty($item->getContacts()))
 		{
 			$contactIds = [];
 			foreach ($item->getContacts() as $contact)
@@ -5007,6 +5041,38 @@ class CCrmLiveFeed
 		}
 
 		return array_values($parents);
+	}
+
+	private static function prepareParentRelationsForContact(Item $item): array
+	{
+		return [];
+
+		//todo implement when multiple companies for contact will be implemented
+
+		// below - copypaste from \CCrmContact, that will serve as reference
+
+		// $parents = array();
+		// if($sonetEventType === CCrmLiveFeedEvent::Owner && is_array($removedCompanyIDs))
+		// {
+		// 	CCrmLiveFeed::PrepareOwnershipRelations(
+		// 		CCrmOwnerType::Company,
+		// 		array_merge($parentCompanyIDs, $removedCompanyIDs),
+		// 		$parents
+		// 	);
+		// }
+		// else
+		// {
+		// 	CCrmLiveFeed::PrepareOwnershipRelations(
+		// 		CCrmOwnerType::Company,
+		// 		$parentCompanyIDs,
+		// 		$parents
+		// 	);
+		// }
+		//
+		// if(!empty($parents))
+		// {
+		// 	$sonetEventFields['PARENTS'] = array_values($parents);
+		// }
 	}
 
 	private static function sendNotificationAboutAssignedChange(Item $itemBeforeSave, Item $item): void
@@ -6732,7 +6798,7 @@ class CCrmLiveFeedComponent
 				{
 					return GetMessage('C_CRM_LF_SUBJECT_TITLE_EMPTY');
 				}
-				
+
 				if ($realKey === 'LOCATION' && Loader::includeModule('calendar'))
 				{
 					return htmlspecialcharsbx(CCalendar::GetTextLocation($this->activity[$realKey]));

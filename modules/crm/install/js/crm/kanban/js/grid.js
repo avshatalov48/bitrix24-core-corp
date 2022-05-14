@@ -953,46 +953,44 @@ BX.CRM.Kanban.Grid.prototype = {
 
 	/**
 	 * Load new items by interval.
-	 * @param {int} id Entity id (optional).
+	 * @param {int|int[]} id Entity id or array of entity ids (optional).
 	 * @param {boolean} force Force load without filter.
 	 * @param {boolean} forceUpdate Force update entity.
 	 * @param {boolean} onlyItems
-	 * @param {boolean} incColumnPrice
-	 * @returns {void}
+	 * @returns {Promise}
 	 */
-	loadNew: function(id, force, forceUpdate, onlyItems, incColumnPrice)
+	loadNew: function(id, force, forceUpdate, onlyItems)
 	{
 		var gridData = this.getData();
-		var entityId = typeof id !== "undefined" ? id : 0;
-
-		// we need to check the status (created last time or already exist element), if a new element, then always inc the column price (ticket #136848)
-		if (entityId > gridData.lastId)
-		{
-			incColumnPrice = true;
-		}
-		else
-		{
-			incColumnPrice = (typeof incColumnPrice !== 'undefined' ? incColumnPrice : true);
-		}
-
+		var entityIds = (typeof id !== 'undefined' ? (Array.isArray(id) ? id : [id]) : 0);
 
 		if (document.hidden)
 		{
 			return Promise.reject(new Error('Tab is not active'));
 		}
 
-		var item = this.getItem(entityId);
-		if (item && item.getData().updateRestrictionCallback)
+		var loadItemsCount = 0;
+		loadItemsCount = entityIds.reduce(function(count, current, index, arr){
+			var item = this.getItem(current);
+			if (item && item.getData().updateRestrictionCallback)
+			{
+				delete arr[index];
+				return count;
+			}
+			return ++count;
+		}.bind(this), 0);
+
+		if (!loadItemsCount)
 		{
-			return;
+			return Promise.resolve();
 		}
 
 		return new Promise(function(resolve, reject){
 			this.ajax(
-				entityId
+				entityIds[0]
 					? {
 						action: "get",
-						entity_id: entityId,
+						entity_id: entityIds,
 						force: force === true ? "Y" : "N",
 						onlyItems: (onlyItems === true ? 'Y' : 'N')
 					}
@@ -1007,7 +1005,7 @@ BX.CRM.Kanban.Grid.prototype = {
 					if (data && data.items)
 					{
 						var worked = false;
-						if (data.items.length > 0)
+						if (data.items.length)
 						{
 							var titlesForRender = {};
 							for (var i = data.items.length - 1; i >= 0; i--)
@@ -1054,7 +1052,7 @@ BX.CRM.Kanban.Grid.prototype = {
 								{
 									this.addItemTop(item);
 								}
-								if (!entityId)
+								if (!entityIds[0])
 								{
 									gridData.lastId = item.id;
 									this.setData(gridData);
@@ -1067,16 +1065,16 @@ BX.CRM.Kanban.Grid.prototype = {
 							}
 						}
 
-						if (!worked && entityId)
+						if (!worked && entityIds[0])
 						{
-							var item = this.getItem(entityId);
+							var item = this.getItem(entityIds[0]);
 							if (item)
 							{
 								var itemData = item.getData();
 								var column = item.getColumn();
 
 								column.decPrice(itemData.price);
-								this.removeItem(entityId);
+								this.removeItem(entityIds[0]);
 							}
 						}
 					}
@@ -2422,7 +2420,7 @@ BX.CRM.Kanban.Grid.prototype = {
 		var match = sliderUrl.match(new RegExp(maskUrl));
 		if (match && match[1])
 		{
-			this.loadNew(match[1], false, true, true, false);
+			this.loadNew(match[1], false, true, true);
 		}
 	},
 
@@ -3019,7 +3017,7 @@ BX.CRM.Kanban.Grid.prototype = {
 	getTypeInfo: function()
 	{
 		return this.getData().typeInfo;
-	},
+	}
 };
 
 })();

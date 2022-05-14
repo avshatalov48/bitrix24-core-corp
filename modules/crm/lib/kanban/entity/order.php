@@ -47,53 +47,6 @@ class Order extends Entity
 		return OrderStatus::NAME;
 	}
 
-	public function getBaseFields(): array
-	{
-		// @todo move to \Bitrix\Crm\Service\Factory\Order::getFieldsInfo() when it will appear
-
-		$result = [];
-
-		$orderFields =
-			Loader::includeModule('sale')
-				? \Bitrix\Crm\Order\Order::getFieldsDescription()
-				: []
-		;
-
-		$specialTypes = [
-			'USER_ID' => 'user',
-			'CURRENCY' => 'crm_currency',
-			'COMPANY_ID' => 'crm_company',
-			'CREATED_BY' => 'user',
-			'RESPONSIBLE_ID' => 'user',
-			'LOCKED_BY' => 'user',
-			'EMP_PAYED_ID' => 'user',
-			'EMP_DEDUCTED_ID' => 'user',
-			'EMP_STATUS_ID' => 'user',
-			'EMP_MARKED_ID' => 'user',
-			'EMP_CANCELED_ID' => 'user',
-		];
-
-		$ignoredFields = [
-			'SEARCH_CONTENT',
-		];
-
-		/** @var \Bitrix\Main\ORM\Fields\Field $field */
-		foreach ($orderFields as $field)
-		{
-			$fieldName = $field['CODE'];
-			if (in_array($fieldName, $ignoredFields, true))
-			{
-				continue;
-			}
-
-			$result[$fieldName] = [
-				'TYPE' => $specialTypes[$fieldName] ?? $field['TYPE'],
-			];
-		}
-
-		return $result;
-	}
-
 	public function getFilterPresets(): array
 	{
 		$user = $this->getCurrentUserInfo();
@@ -705,7 +658,6 @@ class Order extends Entity
 			[
 				'canUseCreateTaskInPanel' => true,
 				'canUseCallListInPanel' => true,
-				'doLayoutFieldsInItemRender' => true,
 			]
 		);
 	}

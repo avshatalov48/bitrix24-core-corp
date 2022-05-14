@@ -1,6 +1,9 @@
 <?php
 namespace Bitrix\Crm\Comparer;
 
+use Bitrix\Crm\PhaseSemantics;
+use Bitrix\Crm\Service\Container;
+
 class ComparerBase
 {
 	public static function areFieldsEquals(array $left, array $right, $name)
@@ -47,5 +50,53 @@ class ComparerBase
 		$difference->configureTreatingAbsentCurrentValueAsNotChanged();
 
 		return $difference;
+	}
+
+	public static function isMovedToFinalStage(int $entityTypeId, string $previousStageId, string $currentStageId): bool
+	{
+		$previousSemantics = static::getStageSemantics($entityTypeId, $previousStageId);
+		$currentSemantics = static::getStageSemantics($entityTypeId, $currentStageId);
+
+		return (
+			$previousSemantics !== $currentSemantics
+			&& PhaseSemantics::isFinal($currentSemantics)
+		);
+	}
+
+	private static function getStageSemantics(int $entityTypeId, string $stageId): ?string
+	{
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+		if (!$factory || !$factory->isStagesSupported())
+		{
+			return null;
+		}
+
+		return $factory->getStageSemantics($stageId);
+	}
+
+	public static function isMovedToSuccessfulStage(
+		int $entityTypeId,
+		string $previousStageId,
+		string $currentStageId
+	): bool
+	{
+		$previousSemantics = static::getStageSemantics($entityTypeId, $previousStageId);
+		$currentSemantics = static::getStageSemantics($entityTypeId, $currentStageId);
+
+		return (
+			$previousSemantics !== $currentSemantics
+			&& $currentSemantics === PhaseSemantics::SUCCESS
+		);
+	}
+
+	public static function isMovedToFailStage(int $entityTypeId, string $previousStageId, string $currentStageId): bool
+	{
+		$previousSemantics = static::getStageSemantics($entityTypeId, $previousStageId);
+		$currentSemantics = static::getStageSemantics($entityTypeId, $currentStageId);
+
+		return (
+			$previousSemantics !== $currentSemantics
+			&& PhaseSemantics::isLost($currentSemantics)
+		);
 	}
 }

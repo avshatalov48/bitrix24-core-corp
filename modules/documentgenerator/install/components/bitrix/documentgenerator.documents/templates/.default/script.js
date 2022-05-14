@@ -101,7 +101,7 @@
 					grid.instance.getLoader().hide();
 				}
 				BX.UI.Notification.Center.notify({
-					content: BX.message('DOCGEN_DOCUMENTS_DELETE_ERROR') + response.errors.join(", ")
+					content: BX.message('DOCGEN_DOCUMENTS_DELETE_ERROR') + response.errors.pop().message
 				});
 			});
 		}

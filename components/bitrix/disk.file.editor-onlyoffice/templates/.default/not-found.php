@@ -34,20 +34,7 @@ $containerId = 'not-found-file-'.$this->randString();
 $headerText = Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_HEADER_MODE_VIEW');
 ?>
 
-
-<div data-id="<?= $containerId ?>-wrapper">
-	<div class="disk-fe-office-header">
-		<div class="disk-fe-office-header-left">
-			<a href="<?= $arResult['HEADER_LOGO_LINK'] ?>" class="disk-fe-office-header-logo" target="_blank"></a>
-			<div class="disk-fe-office-header-mode">
-				<span class="disk-fe-office-header-mode-text"><?= $headerText ?></span>
-			</div>
-		</div>
-	</div>
-	<div data-id="<?= $containerId ?>">
-		<div data-id="<?= $containerId ?>-base" style="height: calc(100vh - 70px)"></div>
-	</div>
-</div>
+<?php include __DIR__ . '/base-info-skeleton.php' ?>
 
 <script>
 	<?='BX.message(' . \CUtil::PhpToJSObject(Loc::loadLanguageFile(__DIR__ . '/template.php')) . ');'?>

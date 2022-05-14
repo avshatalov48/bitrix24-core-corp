@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Timeline;
 
+use Bitrix\Crm\Data\EntityFieldsHelper;
 use Bitrix\Crm\Recurring;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
@@ -25,6 +26,15 @@ class DealRecurringController extends DealController
 		}
 
 		$fields = isset($params['FIELDS']) && is_array($params['FIELDS']) ? $params['FIELDS'] : null;
+		if (is_array($fields))
+		{
+			$fieldsMap = $params['FIELDS_MAP'] ?? null;
+			if (is_array($fieldsMap))
+			{
+				$fields = EntityFieldsHelper::replaceFieldNamesByMap($fields, $fieldsMap);
+			}
+		}
+
 		if(!is_array($fields) || empty($fields))
 		{
 			$fields = self::getEntity($ownerID);
@@ -186,6 +196,13 @@ class DealRecurringController extends DealController
 			? $params['CURRENT_FIELDS'] : array();
 		$previousFields = isset($params['PREVIOUS_FIELDS']) && is_array($params['PREVIOUS_FIELDS'])
 			? $params['PREVIOUS_FIELDS'] : array();
+
+		$fieldsMap = $params['FIELDS_MAP'] ?? null;
+		if (is_array($fieldsMap))
+		{
+			$currentFields = EntityFieldsHelper::replaceFieldNamesByMap($currentFields, $fieldsMap);
+			$previousFields = EntityFieldsHelper::replaceFieldNamesByMap($previousFields, $fieldsMap);
+		}
 
 		if($params['FIELD_NAME'] <> '')
 		{

@@ -8,10 +8,26 @@
 
 namespace Bitrix\Tasks\Internals\Marketing;
 
-use Bitrix\Main\Entity\DataManager;
 use Bitrix\Main\ORM\Query\Query;
+use Bitrix\Tasks\Internals\TaskDataManager;
 
-class MarketingTable extends DataManager
+/**
+ * Class MarketingTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Marketing_Query query()
+ * @method static EO_Marketing_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_Marketing_Result getById($id)
+ * @method static EO_Marketing_Result getList(array $parameters = [])
+ * @method static EO_Marketing_Entity getEntity()
+ * @method static \Bitrix\Tasks\Internals\Marketing\EO_Marketing createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Internals\Marketing\EO_Marketing_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\Marketing\EO_Marketing wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Internals\Marketing\EO_Marketing_Collection wakeUpCollection($rows)
+ */
+class MarketingTable extends TaskDataManager
 {
 	public static function getTableName(): string
 	{
@@ -61,29 +77,5 @@ class MarketingTable extends DataManager
 				'reference' => ['=this.USER_ID' => 'ref.ID'],
 			],
 		];
-	}
-
-	/**
-	 * @param array $filter
-	 * @return \Bitrix\Main\DB\Result
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\DB\SqlQueryException
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	public static function deleteList(array $filter)
-	{
-		$entity = static::getEntity();
-		$connection = $entity->getConnection();
-
-		\CTimeZone::disable();
-		$sql = sprintf(
-			'DELETE FROM %s WHERE %s',
-			$connection->getSqlHelper()->quote($entity->getDbTableName()),
-			Query::buildFilterSql($entity, $filter)
-		);
-		$res = $connection->query($sql);
-		\CTimeZone::enable();
-
-		return $res;
 	}
 }

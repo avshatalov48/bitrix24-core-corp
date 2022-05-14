@@ -6,6 +6,8 @@ use Bitrix\Crm\Restriction\RestrictionManager;
 
 class LeadSettings
 {
+	use Traits\EnableFactory;
+
 	const VIEW_LIST = EntityViewSettings::LIST_VIEW;
 	const VIEW_KANBAN = EntityViewSettings::KANBAN_VIEW;
 	const VIEW_CALENDAR = EntityViewSettings::CALENDAR_VIEW;
@@ -46,6 +48,7 @@ class LeadSettings
 		$this->enableAutoUsingFinishedLead = new BooleanSetting('enable_auto_using_finished_lead', false);
 		$this->enableDeferredCleaning = new BooleanSetting('enable_lead_deferred_cleaning', true);
 		$this->enableRecycleBin = new BooleanSetting('enable_lead_recycle_bin', true);
+		$this->initIsFactoryEnabledSetting(\CCrmOwnerType::Lead, false);
 
 		$completionConfig = array();
 		foreach(Activity\Provider\ProviderManager::getCompletableProviderList() as $providerInfo)

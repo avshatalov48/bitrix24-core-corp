@@ -621,6 +621,14 @@ function GetCrmEntityCommunications($entityType, $entityID, $communicationType)
 		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::ResolveID($entityType));
 		if($factory)
 		{
+			$fieldsCollection = $factory->getFieldsCollection();
+			if (
+				!$fieldsCollection->hasField(Bitrix\Crm\Item::FIELD_NAME_COMPANY)
+				&& !$fieldsCollection->hasField(Bitrix\Crm\Item::FIELD_NAME_CONTACTS)
+			)
+			{
+				return ['ERROR' => 'Invalid data'];
+			}
 			$item = $factory->getItemsFilteredByPermissions([
 				'select' => [Bitrix\Crm\Item::FIELD_NAME_COMPANY, Bitrix\Crm\Item::FIELD_NAME_CONTACTS],
 				'filter' => ['='.\Bitrix\Crm\Item::FIELD_NAME_ID => $entityID]

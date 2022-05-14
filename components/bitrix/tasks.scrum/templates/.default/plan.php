@@ -60,7 +60,7 @@ $pathToBurnDown = str_replace('#group_id#', $arParams['GROUP_ID'], $arParams['PA
 			defaultResponsible: <?= Json::encode($arResult['defaultResponsible']) ?>,
 			pageSize: <?= $arResult['pageSize'] ?>,
 			isShortView: '<?= $arResult['isShortView'] ?>',
-			displayPriority: '<?= $arResult['displayPriority'] ?>',
+			displayPriority: '<?= $arResult['displayPriority'] ?>'
 		});
 		BX.Tasks.Scrum.Entry.renderTabsTo(document.getElementById('tasks-scrum-switcher'));
 		BX.Tasks.Scrum.Entry.renderRightElementsTo(document.getElementById('tasks-scrum-right-container'));

@@ -4,6 +4,7 @@ namespace Bitrix\Tasks\Comments\Task;
 use Bitrix\Main;
 use Bitrix\Tasks\Comments;
 use Bitrix\Tasks\Comments\Internals\Comment;
+use Bitrix\Tasks\Internals\Log\Log;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Tasks\Internals\Task\ViewedTable;
@@ -102,17 +103,24 @@ class CommentReader
 
 		foreach ($this->members as $member)
 		{
-			$memberId = $member['USER_ID'];
+			$memberId = (int) $member['USER_ID'];
 
 			if (
-				array_key_exists($memberId, $commentsCountByUser)
+				$memberId < 1
+				|| array_key_exists($memberId, $commentsCountByUser)
 				|| in_array($memberId, $usersToSkipReading, true)
 			)
 			{
 				continue;
 			}
 
-			$commentsCount = Comments\Task::getNewCommentsCountForTasks([$this->taskId], $memberId)[$this->taskId];
+			$commentsCount = Comments\Task::getNewCommentsCountForTasks([$this->taskId], $memberId);
+			if (!array_key_exists($this->taskId, $commentsCount))
+			{
+				continue;
+			}
+			$commentsCount = $commentsCount[$this->taskId];
+
 			$commentsCountByUser[$memberId] = $commentsCount;
 
 			if ($commentsCount <= 1)

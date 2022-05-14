@@ -5,6 +5,22 @@ namespace Bitrix\Tasks\Scrum\Internal;
 use Bitrix\Main\Entity;
 use Bitrix\Main\ORM\Fields;
 
+/**
+ * Class EpicTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Epic_Query query()
+ * @method static EO_Epic_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_Epic_Result getById($id)
+ * @method static EO_Epic_Result getList(array $parameters = [])
+ * @method static EO_Epic_Entity getEntity()
+ * @method static \Bitrix\Tasks\Scrum\Internal\EO_Epic createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Scrum\Internal\EO_Epic_Collection createCollection()
+ * @method static \Bitrix\Tasks\Scrum\Internal\EO_Epic wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Scrum\Internal\EO_Epic_Collection wakeUpCollection($rows)
+ */
 class EpicTable extends Entity\DataManager
 {
 	public static function getTableName()

@@ -16,11 +16,6 @@ class Lead extends Entity
 		return \CCrmOwnerType::LeadName;
 	}
 
-	public function getStatusEntityId(): string
-	{
-		return 'STATUS';
-	}
-
 	public function isContactCenterSupported(): bool
 	{
 		return true;

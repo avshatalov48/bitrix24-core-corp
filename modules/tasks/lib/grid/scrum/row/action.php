@@ -68,7 +68,7 @@ class Action
 			'href' => $this->rowData['PATH'],
 		];
 
-		if ($user['IS_OWNER'] === 'Y')
+		if ($user['IS_OWNER'] === 'Y' || $user['IS_SCRUM_MASTER'] === 'Y')
 		{
 			$actions[] = [
 				'text' => Loc::getMessage('TASKS_GRID_SCRUM_ROW_ACTION_EDIT'),
@@ -77,7 +77,10 @@ class Action
 					$groupIdReplace
 				),
 			];
+		}
 
+		if ($user['IS_OWNER'] === 'Y')
+		{
 			if ($this->rowData['CLOSED'] === 'N')
 			{
 				$actions[] = [

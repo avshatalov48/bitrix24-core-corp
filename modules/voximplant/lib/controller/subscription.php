@@ -58,7 +58,7 @@ class Subscription extends Controller
 			]
 		])->fetchAll();
 
-		if(count($numbersInSubscription) == 0)
+		if(empty($numbersInSubscription))
 		{
 			$this->errorCollection[] = new Error(Loc::getMessage("VOX_SUBSCRIPTION_NUMBER_NOT_FOUND"), "not_found");
 			return null;

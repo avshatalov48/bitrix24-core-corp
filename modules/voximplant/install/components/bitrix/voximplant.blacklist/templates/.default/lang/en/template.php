@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BLACKLIST_ABOUT_2"] = "A call will be rejected if the caller ID is found in the list. You will find information on this call here: \"#LINK#\"";
 $MESS["BLACKLIST_ABOUT_LINK"] = "Call Log";
 $MESS["BLACKLIST_CANCEL"] = "Cancel";
@@ -10,6 +10,7 @@ $MESS["BLACKLIST_ERROR_TITLE"] = "Error";
 $MESS["BLACKLIST_NUMBERS"] = "Blacklisted numbers";
 $MESS["BLACKLIST_NUMBER_ADD"] = "Add number";
 $MESS["BLACKLIST_NUMBER_DELETE"] = "Delete";
+$MESS["BLACKLIST_REGISTER_IN_CRM"] = "Register calls from blacklisted phone numbers";
 $MESS["BLACKLIST_SAVE"] = "Save";
 $MESS["BLACKLIST_SETTINGS_TITLE"] = "Configure blacklist";
 $MESS["BLACKLIST_TEXT1"] = "If a call originates from the same caller ID";
@@ -24,4 +25,3 @@ $MESS["VOX_BLACKLIST_NUMBERS_SUBTITLE"] = "Phone numbers";
 $MESS["VOX_BLACKLIST_NUMBERS_TITLE"] = "Add to black list";
 $MESS["VOX_BLACKLIST_RINGS_COUNT"] = "Number of calls";
 $MESS["VOX_BLACKLIST_VALUE"] = "Value";
-?>

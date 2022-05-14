@@ -7,7 +7,7 @@ use Bitrix\Main\IO\File;
 
 class WebComponentManager
 {
-	private static $webComponentPath = "/bitrix/components/bitrix/mobile.webcomponent/webcomponents/";
+	private static $webComponentPath = "/bitrix/components/bitrix/immobile.webcomponent/webcomponents/";
 	public static function getWebComponentVersion($componentName)
 	{
 		$componentFolder = new Directory(Application::getDocumentRoot() . self::$webComponentPath . $componentName);

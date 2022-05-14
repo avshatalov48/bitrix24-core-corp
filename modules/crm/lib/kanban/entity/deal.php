@@ -26,11 +26,6 @@ class Deal extends Entity
 		return \CCrmOwnerType::DealName;
 	}
 
-	public function getStatusEntityId(): string
-	{
-		return DealCategory::getStatusEntityID($this->getCategoryId());
-	}
-
 	public function getItemsSelectPreset(): array
 	{
 		return ['ID', 'STAGE_ID', 'TITLE', 'DATE_CREATE', 'BEGINDATE', 'OPPORTUNITY', 'OPPORTUNITY_ACCOUNT', 'EXCH_RATE', 'CURRENCY_ID', 'ACCOUNT_CURRENCY_ID', 'IS_REPEATED_APPROACH', 'IS_RETURN_CUSTOMER', 'CONTACT_ID', 'COMPANY_ID', 'MODIFY_BY_ID', 'ASSIGNED_BY'];
@@ -53,16 +48,9 @@ class Deal extends Entity
 				'canUseCreateTaskInPanel' => true,
 				'canUseCallListInPanel' => true,
 				'canUseMergeInPanel' => true,
-				'doLayoutFieldsInItemRender' => true,
 			]
 		);
 	}
-
-	public function getGridId(): string
-	{
-		return 'CRM_DEAL_LIST_V12_C_' . $this->getCategoryId();
-	}
-
 
 	public function getFilterOptions(): Options
 	{
@@ -126,11 +114,6 @@ class Deal extends Entity
 		];
 	}
 
-	public function isCategoriesSupported(): bool
-	{
-		return true;
-	}
-
 	public function isRestPlacementSupported(): bool
 	{
 		return true;
@@ -166,6 +149,7 @@ class Deal extends Entity
 			'DELIVERY_STAGE' => '',
 			'CLIENT' => '',
 			'PROBLEM_NOTIFICATION' => '',
+			'OBSERVER' => '',
 		];
 	}
 

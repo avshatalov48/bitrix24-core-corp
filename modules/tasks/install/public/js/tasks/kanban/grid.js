@@ -1537,6 +1537,11 @@ BX.Tasks.Kanban.Grid.prototype = {
 		}
 	},
 
+	cleanNeighborGrids: function()
+	{
+		this.neighborGrids = [];
+	},
+
 	getNeighborGrids: function()
 	{
 		return this.neighborGrids;

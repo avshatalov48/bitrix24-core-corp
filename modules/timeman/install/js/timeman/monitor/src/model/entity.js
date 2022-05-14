@@ -1,6 +1,4 @@
 import {EntityType} from 'timeman.const';
-import {Logger} from '../lib/logger';
-import {Debug} from '../lib/debug';
 import {Loc} from 'main.core';
 
 export class Entity
@@ -29,9 +27,6 @@ export class Entity
 				this.createIncognito();
 				break;
 		}
-
-		Logger.log('Caught:', this);
-		Debug.log('Caught:', this);
 	}
 
 	createSite(params)

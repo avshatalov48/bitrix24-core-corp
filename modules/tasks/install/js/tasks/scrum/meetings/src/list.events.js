@@ -129,7 +129,10 @@ export class ListEvents extends EventEmitter
 	{
 		this.buttonNode = Tag.render`
 			<div class="tasks-scrum__widget-meetings-btn-box-center ">
-				<button class="tasks-scrum__widget-meetings--plan-btn ui-qr-popupcomponentmaker__btn --border --visible">
+				<button
+					class="tasks-scrum__widget-meetings--plan-btn ui-qr-popupcomponentmaker__btn --border --visible"
+					data-role="toggle-list-events"
+				>
 					${this.getButtonText()}
 				</button>
 			</div>

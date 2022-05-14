@@ -19,7 +19,7 @@ class Manager
 		$thisDir = $thisFile->getDirectory();
 		foreach ($thisDir->getChildren() as $child)
 		{
-			if (!($child instanceof Main\IO\File))
+			if (!($child instanceof Main\IO\File) || $child->getExtension() !== 'php')
 			{
 				continue;
 			}

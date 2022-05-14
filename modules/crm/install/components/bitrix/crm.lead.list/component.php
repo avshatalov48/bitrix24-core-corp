@@ -362,7 +362,11 @@ $arResult['IS_EXTERNAL_FILTER'] = ($enableWidgetFilter || $enableCounterFilter |
 $CCrmUserType = new CCrmUserType($USER_FIELD_MANAGER, CCrmLead::$sUFEntityID);
 
 $CCrmFieldMulti = new CCrmFieldMulti();
-$arResult['GRID_ID'] = 'CRM_LEAD_LIST_V12'.($bInternal && !empty($arParams['GRID_ID_SUFFIX']) ? '_'.$arParams['GRID_ID_SUFFIX'] : '');
+
+$arResult['GRID_ID'] = (new Crm\Component\EntityList\GridId(CCrmOwnerType::Lead))
+	->getValue((string)$arParams['GRID_ID_SUFFIX'])
+;
+
 $arResult['HONORIFIC'] = CCrmStatus::GetStatusListEx('HONORIFIC');
 $arResult['STATUS_LIST'] = CCrmStatus::GetStatusListEx('STATUS');
 $arResult['SOURCE_LIST'] = CCrmStatus::GetStatusListEx('SOURCE');
@@ -442,11 +446,11 @@ if (!empty($externalFilterId))
 {
 	Main\Loader::includeModule('report');
 	$arResult['GRID_ID'] = 'report_' . $boardId . '_grid';
-	$filterOptions = new \Bitrix\Main\UI\Filter\Options($arResult['GRID_ID'], []);
+	$filterOptions = new \Bitrix\Crm\Filter\UiFilterOptions($arResult['GRID_ID'], []);
 }
 else
 {
-	$filterOptions = new \Bitrix\Main\UI\Filter\Options($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
+	$filterOptions = new \Bitrix\Crm\Filter\UiFilterOptions($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
 }
 
 $gridOptions = new \Bitrix\Main\Grid\Options($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
@@ -2872,7 +2876,12 @@ if (!$isInExportMode)
 		$arResult['NEED_FOR_BUILD_TIMELINE'] = \Bitrix\Crm\Agent\Timeline\LeadTimelineBuildAgent::getInstance()->isEnabled();
 		$arResult['NEED_FOR_REBUILD_TIMELINE_SEARCH_CONTENT'] = \Bitrix\Crm\Agent\Search\TimelineSearchContentRebuildAgent::getInstance()->isEnabled();
 		$arResult['NEED_FOR_REFRESH_ACCOUNTING'] = \Bitrix\Crm\Agent\Accounting\LeadAccountSyncAgent::getInstance()->isEnabled();
-		$arResult['NEED_FOR_REBUILD_SECURITY_ATTRS'] = \Bitrix\Crm\Agent\Security\LeadAttributeRebuildAgent::getInstance()->isEnabled();
+
+		$attributeRebuildAgent = \Bitrix\Crm\Agent\Security\LeadAttributeRebuildAgent::getInstance();
+		$arResult['NEED_FOR_REBUILD_SECURITY_ATTRS'] =
+			$attributeRebuildAgent->isEnabled()
+			&& ($attributeRebuildAgent->getProgressData()['TOTAL_ITEMS'] > 0)
+		;
 
 		if(CCrmPerms::IsAdmin())
 		{

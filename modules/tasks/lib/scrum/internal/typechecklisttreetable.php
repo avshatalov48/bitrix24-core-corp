@@ -11,9 +11,9 @@ use Bitrix\Main\ORM\Fields;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_TypeChecklistTree_Query query()
- * @method static EO_TypeChecklistTree_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_TypeChecklistTree_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_TypeChecklistTree_Result getById($id)
- * @method static EO_TypeChecklistTree_Result getList(array $parameters = array())
+ * @method static EO_TypeChecklistTree_Result getList(array $parameters = [])
  * @method static EO_TypeChecklistTree_Entity getEntity()
  * @method static \Bitrix\Tasks\Scrum\Internal\EO_TypeChecklistTree createObject($setDefaultValues = true)
  * @method static \Bitrix\Tasks\Scrum\Internal\EO_TypeChecklistTree_Collection createCollection()

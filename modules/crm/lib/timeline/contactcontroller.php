@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Timeline;
 
+use Bitrix\Crm\Data\EntityFieldsHelper;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
@@ -33,10 +34,19 @@ class ContactController extends EntityController
 		}
 
 		$fields = isset($params['FIELDS']) && is_array($params['FIELDS']) ? $params['FIELDS'] : null;
-		if(!is_array($fields))
+		if (is_array($fields))
+		{
+			$fieldsMap = $params['FIELDS_MAP'] ?? null;
+			if (is_array($fieldsMap))
+			{
+				$fields = EntityFieldsHelper::replaceFieldNamesByMap($fields, $fieldsMap);
+			}
+		}
+		else
 		{
 			$fields = self::getEntity($ownerID);
 		}
+
 		if(!is_array($fields))
 		{
 			return;

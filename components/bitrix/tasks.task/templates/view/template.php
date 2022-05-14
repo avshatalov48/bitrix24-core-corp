@@ -201,16 +201,42 @@ if (
 
 			?><div class="task-detail-extra"><?
 
-				?><div class="task-detail-extra-right"><?php
+				?>
+			<?
+				if($can["EDIT"] || !empty($templateData["GROUP"])):?>
+					<div class="task-detail-group --flex-center">
+						<span class="task-detail-group-label"><?=Loc::getMessage("TASKS_TTDP_PROJECT_TASK_IN")?>:</span>
+						<?$APPLICATION->IncludeComponent(
+							'bitrix:tasks.widget.member.selector',
+							'projectlink',
+							array(
+								'TYPES' => array('PROJECT'),
+								'DATA' => array(
+									$templateData["GROUP"]
+								),
+								'READ_ONLY' => !$can["EDIT"],
+								'ENTITY_ID' => $taskData["ID"],
+								'ENTITY_ROUTE' => 'task',
+								'PATH_TO_GROUP' => $arParams['PATH_TO_GROUP'],
+								'GROUP_ID' => (array_key_exists('GROUP_ID', $taskData)) ? $taskData['GROUP_ID'] : 0,
+								'ROLE_KEY' => \Bitrix\Tasks\Access\Role\RoleDictionary::ROLE_AUDITOR
+							),
+							null,
+							array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
+						);?>
+
+					</div>
+				<?endif?>
+				<div class="task-detail-extra-right"><?php
 
 					if ($arResult["LIKE_TEMPLATE"] == 'like_react')
 					{
-						?><div class="task-detail-like"><?
+						?><div class="task-detail-like --flex"><?
 
 							$voteId = "TASK".'_'.$taskData["ID"].'-'.(time()+rand(0, 1000));
 							$emotion = (!empty($templateData["RATING"]["USER_REACTION"])? mb_strtoupper($templateData["RATING"]["USER_REACTION"]) : 'LIKE');
 
-							?><span id="bx-ilike-button-<?=htmlspecialcharsbx($voteId)?>" class="feed-inform-ilike feed-new-like"><?
+							?><span id="bx-ilike-button-<?=htmlspecialcharsbx($voteId)?>" class="feed-inform-ilike feed-new-like "><?
 								?><span class="bx-ilike-left-wrap<?=(isset($templateData["RATING"]) && isset($templateData["RATING"]["USER_HAS_VOTED"]) && $templateData["RATING"]["USER_HAS_VOTED"] == "Y" ? ' bx-you-like-button' : '')?>"><a href="#like" class="bx-ilike-text"><?=\CRatingsComponentsMain::getRatingLikeMessage($emotion)?></a></span><?
 							?></span><?
 						?></div><?
@@ -292,33 +318,7 @@ if (
 						?></div><?php
 					}
 
-				?></div><?php
-
-				if($can["EDIT"] || !empty($templateData["GROUP"])):?>
-					<div class="task-detail-group">
-						<span class="task-detail-group-label"><?=Loc::getMessage("TASKS_TTDP_PROJECT_TASK_IN")?>:</span>
-
-						<?$APPLICATION->IncludeComponent(
-							'bitrix:tasks.widget.member.selector',
-							'projectlink',
-							array(
-								'TYPES' => array('PROJECT'),
-								'DATA' => array(
-									$templateData["GROUP"]
-								),
-								'READ_ONLY' => !$can["EDIT"],
-								'ENTITY_ID' => $taskData["ID"],
-								'ENTITY_ROUTE' => 'task',
-								'PATH_TO_GROUP' => $arParams['PATH_TO_GROUP'],
-								'GROUP_ID' => (array_key_exists('GROUP_ID', $taskData)) ? $taskData['GROUP_ID'] : 0,
-								'ROLE_KEY' => \Bitrix\Tasks\Access\Role\RoleDictionary::ROLE_AUDITOR
-							),
-							null,
-							array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
-						);?>
-
-					</div>
-				<?endif?>
+				?></div>
 
 				<? if (!empty($templateData["RELATED_TASK"])):?>
 				<div class="task-detail-supertask"><?

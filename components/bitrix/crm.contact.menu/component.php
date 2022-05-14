@@ -10,11 +10,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
  * @global CDatabase $DB
  */
 
+use Bitrix\Crm\Entity\Contact;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Main\Localization\Loc;
 
 if (!CModule::IncludeModule('crm'))
 	return;
+
+\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
 
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
 $CrmPerms = CCrmPerms::GetCurrentUserPermissions();
@@ -33,6 +36,18 @@ $arParams['PATH_TO_MIGRATION'] = SITE_DIR."marketplace/category/migration/";
 $arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? CSite::GetNameFormat(false) : str_replace(array("#NOBR#","#/NOBR#"), array("",""), $arParams["NAME_TEMPLATE"]);
 
 $arParams['ELEMENT_ID'] = isset($arParams['ELEMENT_ID']) ? intval($arParams['ELEMENT_ID']) : 0;
+
+if($arParams['ELEMENT_ID'] > 0)
+{
+	$arResult['CATEGORY_ID'] =(int)\Bitrix\Crm\Service\Container::getInstance()
+		->getFactory(CCrmOwnerType::Contact)
+		->getItemCategoryId($arParams['ELEMENT_ID'])
+	;
+}
+else
+{
+	$arResult['CATEGORY_ID'] = (int)($arParams['CATEGORY_ID'] ?? 0);
+}
 
 if (!isset($arParams['TYPE']))
 	$arParams['TYPE'] = 'list';
@@ -53,14 +68,14 @@ $isInSlider = ($arParams['IN_SLIDER'] === 'Y');
 
 if ($arParams['TYPE'] == 'list')
 {
-	$bRead   = CCrmContact::CheckReadPermission(0, $CrmPerms);
-	$bExport = CCrmContact::CheckExportPermission($CrmPerms);
-	$bImport = CCrmContact::CheckImportPermission($CrmPerms);
-	$bAdd    = CCrmContact::CheckCreatePermission($CrmPerms);
-	$bWrite  = CCrmContact::CheckUpdatePermission(0, $CrmPerms);
+	$bRead   = CCrmContact::CheckReadPermission(0, $CrmPerms, $arResult['CATEGORY_ID']);
+	$bExport = CCrmContact::CheckExportPermission($CrmPerms, $arResult['CATEGORY_ID']);
+	$bImport = CCrmContact::CheckImportPermission($CrmPerms, $arResult['CATEGORY_ID']);
+	$bAdd    = CCrmContact::CheckCreatePermission($CrmPerms, $arResult['CATEGORY_ID']);
+	$bWrite  = CCrmContact::CheckUpdatePermission(0, $CrmPerms, $arResult['CATEGORY_ID']);
 	$bDelete = false;
 
-	$bDedupe = $bRead && $bWrite && CCrmContact::CheckDeletePermission(0, $CrmPerms);
+	$bDedupe = $bRead && $bWrite && CCrmContact::CheckDeletePermission(0, $CrmPerms, $arResult['CATEGORY_ID']);
 }
 else
 {
@@ -68,10 +83,10 @@ else
 	$bImport = false;
 	$bDedupe = false;
 
-	$bRead   = CCrmContact::CheckReadPermission($arParams['ELEMENT_ID'], $CrmPerms);
-	$bAdd    = CCrmContact::CheckCreatePermission($CrmPerms);
-	$bWrite  = CCrmContact::CheckUpdatePermission($arParams['ELEMENT_ID'], $CrmPerms);
-	$bDelete = CCrmContact::CheckDeletePermission($arParams['ELEMENT_ID'], $CrmPerms);
+	$bRead   = CCrmContact::CheckReadPermission($arParams['ELEMENT_ID'], $CrmPerms, $arResult['CATEGORY_ID']);
+	$bAdd    = CCrmContact::CheckCreatePermission($CrmPerms, $arResult['CATEGORY_ID']);
+	$bWrite  = CCrmContact::CheckUpdatePermission($arParams['ELEMENT_ID'], $CrmPerms, $arResult['CATEGORY_ID']);
+	$bDelete = CCrmContact::CheckDeletePermission($arParams['ELEMENT_ID'], $CrmPerms, $arResult['CATEGORY_ID']);
 }
 
 $isSliderEnabled = \CCrmOwnerType::IsSliderEnabled(\CCrmOwnerType::Contact);
@@ -180,27 +195,40 @@ if($arParams['TYPE'] === 'list')
 {
 	if($bAdd)
 	{
+		$addEntityUrl = CComponentEngine::MakePathFromTemplate(
+			$arParams[$isSliderEnabled ? 'PATH_TO_CONTACT_DETAILS' : 'PATH_TO_CONTACT_EDIT'],
+			['contact_id' => 0]
+		);
+		if ($arResult['CATEGORY_ID'] > 0)
+		{
+			$addEntityUrl = CCrmUrlUtil::AddUrlParams($addEntityUrl, ['category_id' => $arResult['CATEGORY_ID']]);
+		}
 		$arResult['BUTTONS'][] = array(
-			'TEXT' => GetMessage('CRM_CONTACT_ADD'),
-			'TITLE' => GetMessage('CRM_CONTACT_ADD_TITLE'),
-			'LINK' => CComponentEngine::MakePathFromTemplate(
-				$arParams[$isSliderEnabled ? 'PATH_TO_CONTACT_DETAILS' : 'PATH_TO_CONTACT_EDIT'],
-				array('contact_id' => 0)
-			),
+			'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
+			'LINK' => $addEntityUrl,
 			'HIGHLIGHT' => true
 		);
 	}
 
 	if ($bImport && !$isInSlider)
 	{
+		$importFromVCardUrl = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_IMPORTVCARD'], []);
+		if ($arResult['CATEGORY_ID'] > 0)
+		{
+			$importFromVCardUrl = CCrmUrlUtil::AddUrlParams($importFromVCardUrl, ['category_id' => $arResult['CATEGORY_ID']]);
+		}
 		$arResult['BUTTONS'][] = array(
 			'HTML' => GetMessage('CRM_CONTACT_IMPORT_VCARD'),
 			'TITLE' => GetMessage('CRM_CONTACT_IMPORT_VCARD_TITLE'),
-			'LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_IMPORTVCARD'], array()),
+			'LINK' => $importFromVCardUrl,
 			'ICON' => 'btn-import'
 		);
 
 		$importUrl = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_IMPORT'], array());
+		if ($arResult['CATEGORY_ID'] > 0)
+		{
+			$importUrl = CCrmUrlUtil::AddUrlParams($importUrl, ['category_id' => $arResult['CATEGORY_ID']]);
+		}
 
 		$arResult['BUTTONS'][] = array(
 			'HTML' => GetMessage('CRM_CONTACT_IMPORT_GMAIL'),
@@ -291,8 +319,12 @@ if($arParams['TYPE'] === 'list')
 			'PATH_TO_COMPANY_SHOW' => $arParams['PATH_TO_COMPANY_SHOW'],
 			'PATH_TO_DEAL_EDIT' => $arParams['PATH_TO_DEAL_EDIT'],
 			'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
-			'NAVIGATION_CONTEXT_ID' => $entityType
+			'NAVIGATION_CONTEXT_ID' => $entityType,
+			'CATEGORY_ID' => $arResult['CATEGORY_ID'],
+			'GRID_ID_SUFFIX' => (new \Bitrix\Crm\Component\EntityList\GridId(CCrmOwnerType::Contact))
+				->getDefaultSuffix($arResult['CATEGORY_ID']),
 		);
+
 		if (isset($_REQUEST['WG']) && mb_strtoupper($_REQUEST['WG']) === 'Y')
 		{
 			$widgetDataFilter = \Bitrix\Crm\Widget\Data\Contact\DataSource::extractDetailsPageUrlParams($_REQUEST);
@@ -594,8 +626,7 @@ elseif ($qty >= 3)
 if ($bAdd && $arParams['TYPE'] != 'list' && $arParams['TYPE'] !== 'portrait')
 {
 	$arResult['BUTTONS'][] = array(
-		'TEXT' => GetMessage('CRM_CONTACT_ADD'),
-		'TITLE' => GetMessage('CRM_CONTACT_ADD_TITLE'),
+		'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
 		'LINK' => CComponentEngine::MakePathFromTemplate(
 			$arParams[$isSliderEnabled ? 'PATH_TO_CONTACT_DETAILS' : 'PATH_TO_CONTACT_EDIT'],
 			array('contact_id' => 0)

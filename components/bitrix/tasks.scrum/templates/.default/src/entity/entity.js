@@ -2,6 +2,8 @@ import {Dom, Type} from 'main.core';
 import {BaseEvent, EventEmitter} from 'main.core.events';
 import {Loader} from 'main.loader';
 
+import 'main.polyfill.intersectionobserver';
+
 import {Item} from '../item/item';
 import {ListItems} from './list.items';
 
@@ -68,7 +70,7 @@ export class Entity extends EventEmitter
 		this.listItems = new ListItems(entity);
 	}
 
-	getListItems(): ListItems|null
+	getListItems(): ?ListItems
 	{
 		return this.listItems;
 	}
@@ -270,7 +272,7 @@ export class Entity extends EventEmitter
 
 	isNodeCreated(): boolean
 	{
-		return (this.node !== null);
+		return !Type.isNull(this.node);
 	}
 
 	setNumberTasks(numberTasks: number)
@@ -348,12 +350,12 @@ export class Entity extends EventEmitter
 		});
 	}
 
-	getItemByItemId(itemId: number|string): Item|undefined
+	getItemByItemId(itemId: number | string): ?Item
 	{
 		return this.items.get((Type.isInteger(itemId) ? parseInt(itemId, 10) : itemId));
 	}
 
-	getItemBySourceId(sourceId: number): Item|undefined
+	getItemBySourceId(sourceId: number): ?Item
 	{
 		return [...this.items.values()].find((item: Item) => item.getSourceId() === sourceId);
 	}
@@ -499,7 +501,7 @@ export class Entity extends EventEmitter
 			}
 		}
 
-		if (typeof IntersectionObserver === `undefined`)
+		if (Type.isUndefined(IntersectionObserver))
 		{
 			return;
 		}

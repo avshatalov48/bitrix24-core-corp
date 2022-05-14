@@ -3,6 +3,8 @@
 namespace Bitrix\Intranet\Controller;
 
 use Bitrix\Main\Error;
+use Bitrix\Main\EventManager;
+use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Localization\Loc;
@@ -574,6 +576,16 @@ class LeftMenu extends \Bitrix\Main\Engine\Controller
 		if ($_POST['mode'] == 'global' && $this->isCurrentUserAdmin())
 		{
 			Option::set('intranet', 'left_menu_preset', $_POST['preset'], false, SITE_ID);
+
+			$event = new Event(
+				'intranet',
+				'onAfterChangeLeftMenuPreset',
+				[
+					'SITE_ID' => SITE_ID,
+					'VALUE' => $_POST['preset'],
+				]
+			);
+			EventManager::getInstance()->send($event);
 		}
 		else
 		{
@@ -812,5 +824,43 @@ class LeftMenu extends \Bitrix\Main\Engine\Controller
 				'N'
 			);
 		}
+	}
+
+	public function resetAllAction()
+	{
+		if (!$this->isCurrentUserAdmin())
+		{
+			return null;
+		}
+		$sites = \CSite::getList();
+
+		while ($site = $sites->Fetch())
+		{
+			$this->resetAction($site['SITE_ID']);
+		}
+	}
+
+	public function resetAction(string $siteId)
+	{
+		if (!$this->isCurrentUserAdmin())
+		{
+			return null;
+		}
+
+		\CUserOptions::DeleteOptionsByName('intranet', 'left_menu_first_page_' . $siteId);
+		\CUserOptions::DeleteOptionsByName('intranet', 'left_menu_preset_' . $siteId);
+		\CUserOptions::DeleteOptionsByName('intranet', 'left_menu_self_items_' . $siteId);
+		\CUserOptions::DeleteOptionsByName('intranet', 'left_menu_preset_' . $siteId);
+		\CUserOptions::DeleteOptionsByName('intranet', 'left_menu_standard_items_' . $siteId);
+		\CUserOptions::DeleteOptionsByName('intranet', 'left_menu_sorted_items_' . $siteId);
+		\CUserOptions::DeleteOptionsByName('intranet', 'left_menu_groups_' . $siteId);
+		\CUserOptions::DeleteOptionsByName('intranet', 'left_menu_collapsed');
+
+		\COption::RemoveOption('intranet', 'left_menu_preset');
+		\COption::RemoveOption('intranet', 'show_menu_preset_popup');
+
+		\COption::RemoveOption('intranet', 'left_menu_items_to_all_' . $siteId);
+		\COption::RemoveOption('intranet', 'left_menu_custom_preset_items', $siteId);
+		\COption::RemoveOption('intranet', 'left_menu_custom_preset_sort', $siteId);
 	}
 }

@@ -226,6 +226,11 @@ final class Storage extends Base
 		{
 			throw new AccessException;
 		}
+		if ($rights && !$storage->getRootObject()->canChangeRights($securityContext))
+		{
+			throw new AccessException;
+		}
+
 		$folder = $storage->addFolder(array(
 			'NAME' => $data['NAME'],
 			'CREATED_BY' => $this->userId
@@ -299,6 +304,10 @@ final class Storage extends Base
 		$storage = $this->getStorageById($id);
 		$securityContext = $storage->getCurrentUserSecurityContext();
 		if(!$storage->getRootObject()->canAdd($securityContext))
+		{
+			throw new AccessException;
+		}
+		if ($rights && !$storage->getRootObject()->canChangeRights($securityContext))
 		{
 			throw new AccessException;
 		}

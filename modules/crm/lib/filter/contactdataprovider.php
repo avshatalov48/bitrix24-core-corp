@@ -12,7 +12,7 @@ use Bitrix\Crm\Counter\EntityCounterType;
 
 Loc::loadMessages(__FILE__);
 
-class ContactDataProvider extends Main\Filter\EntityDataProvider
+class ContactDataProvider extends EntityDataProvider
 {
 	/** @var ContactSettings|null */
 	protected $settings = null;
@@ -420,5 +420,24 @@ class ContactDataProvider extends Main\Filter\EntityDataProvider
 			}
 			unset($filter[$fieldID]);
 		}
+	}
+
+	protected function applySettingsDependantFilter(array &$filterFields): void
+	{
+		// filter by category should be always set
+		$filterFields['@CATEGORY_ID'] = (int)$this->getSettings()->getCategoryId();
+	}
+
+	protected function getCounterExtras(): array
+	{
+		$result = parent::getCounterExtras();
+
+		$categoryId = $this->getSettings()->getCategoryID();
+		if (!is_null($categoryId))
+		{
+			$result['CATEGORY_ID'] = $categoryId;
+		}
+
+		return $result;
 	}
 }

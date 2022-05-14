@@ -5,14 +5,20 @@ use \Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
 
 Bitrix\Main\UI\Extension::load([
-		'ui.buttons',
-		'main.popup',
+	'ui.buttons',
+	'main.popup',
 ]);
 
 $guid = $arResult['GUID'];
 $containerId = HtmlFilter::encode("{$guid}_container");
 $buttonId = HtmlFilter::encode("{$guid}_selector");
 $counterId = HtmlFilter::encode("{$guid}_counter");
+$useViewTarget = !(isset($arParams['USE_VIEW_TARGET']) && $arParams['USE_VIEW_TARGET'] === 'N');
+
+if ($useViewTarget)
+{
+	$this->SetViewTarget('inside_pagetitle', 0);
+}
 ?>
 
 <div id="<?= $containerId; ?>" class="crm-interface-toolbar-button-container">
@@ -24,6 +30,12 @@ $counterId = HtmlFilter::encode("{$guid}_counter");
 	</button>
 </div>
 
+<?php
+$sighedParams = \Bitrix\Main\Component\ParameterSigner::signParameters(
+	'bitrix:crm.deal_category.panel',
+	$arParams
+);
+?>
 <script>
 	BX.message(<?=CUtil::phpToJsObject(Loc::loadLanguageFile(__FILE__))?>);
 
@@ -33,7 +45,12 @@ $counterId = HtmlFilter::encode("{$guid}_counter");
 		container: document.getElementById('<?= $containerId; ?>'),
 		items: <?= CUtil::PhpToJSObject($arResult['ITEMS']); ?>,
 		tunnelsUrl: '/crm/tunnels/',
-		componentParams: <?= CUtil::PhpToJSObject($arParams); ?>
+		componentParams: <?= CUtil::PhpToJSObject($sighedParams); ?>
 	});
 </script>
 
+<?
+if ($useViewTarget)
+{
+	$this->EndViewTarget();
+}

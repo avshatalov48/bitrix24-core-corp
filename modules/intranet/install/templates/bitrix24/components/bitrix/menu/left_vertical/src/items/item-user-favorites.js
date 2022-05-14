@@ -88,7 +88,7 @@ export default class ItemUserFavorites extends Item
 		return Backend.updateFavoritesItemMenu(itemInfoToSave);
 	}
 
-	static searchCurrentPageInTopMenu()
+	static getActiveTopMenuItem()
 	{
 		if (this.#currentPageInTopMenu)
 		{
@@ -101,33 +101,33 @@ export default class ItemUserFavorites extends Item
 			return null;
 		}
 
-		const firstTopMenuItem = Array.from(
+		const firstTopMenuInstance = Array.from(
 			Object.values(
 				BX.Main.interfaceButtonsManager
 					.getObjects()
 			)
 		).shift();
 
-		if (firstTopMenuItem)
+		if (firstTopMenuInstance)
 		{
-			const pointNotItem = firstTopMenuItem.getActive();
+			const topMenuItem = firstTopMenuInstance.getActive();
 
-			if (pointNotItem && typeof pointNotItem === "object")
+			if (topMenuItem && typeof topMenuItem === "object")
 			{
 				const link = document.createElement("a");
-				link.href = pointNotItem.URL;
+				link.href = topMenuItem['URL'];
 				//IE11 omits slash in the pathname
 				const path = link.pathname[0] !== "/" ? ("/" + link.pathname) : link.pathname;
 
 				this.#currentPageInTopMenu = {
-					ID: pointNotItem['ID'] || null,
-					NODE: pointNotItem['NODE'] || null,
-					URL: Text.encode(path + link.search),
-					TEXT: Text.encode(pointNotItem['TEXT']),
-					DATA_ID: pointNotItem['DATA_ID'],
-					COUNTER_ID: pointNotItem['COUNTER_ID'],
-					COUNTER: pointNotItem['COUNTER'],
-					SUB_LINK: pointNotItem['SUB_LINK'],
+					ID: topMenuItem['ID'] || null,
+					NODE: topMenuItem['NODE'] || null,
+					URL: path + link.search,
+					TEXT: topMenuItem['TEXT'],
+					DATA_ID: topMenuItem['DATA_ID'],
+					COUNTER_ID: topMenuItem['COUNTER_ID'],
+					COUNTER: topMenuItem['COUNTER'],
+					SUB_LINK: topMenuItem['SUB_LINK'],
 				};
 			}
 		}
@@ -135,40 +135,39 @@ export default class ItemUserFavorites extends Item
 		return this.#currentPageInTopMenu;
 	}
 
-	static isCurrentPageStandard(): boolean
+	static isCurrentPageStandard(topMenuPoint): boolean
 	{
-		const topPoint = this.searchCurrentPageInTopMenu();
-		if (topPoint)
+		if (topMenuPoint && topMenuPoint['URL'])
 		{
 			const currentFullPath = document.location.pathname + document.location.search;
-			return topPoint.URL === currentFullPath && topPoint.URL.indexOf('workgroups') < 0;
+			return topMenuPoint.URL === currentFullPath && topMenuPoint.URL.indexOf('workgroups') < 0;
 		}
 		return false;
 	}
 
 	static saveCurrentPage({pageTitle, pageLink})
 	{
-		const topPoint = this.searchCurrentPageInTopMenu();
+		const topMenuPoint = this.getActiveTopMenuItem();
 		let itemInfo, startX, startY;
 
-		if (this.isCurrentPageStandard()
-			&& topPoint
-			&& topPoint.NODE
-			&& (pageLink === Utils.getCurPage() || pageLink === topPoint.URL || !pageLink)
+		if (topMenuPoint
+			&& topMenuPoint.NODE
+			&& this.isCurrentPageStandard(topMenuPoint)
+			&& (pageLink === Utils.getCurPage() || pageLink === topMenuPoint.URL || !pageLink)
 		)
 		{
-			const menuNodeCoord = topPoint.NODE.getBoundingClientRect();
+			const menuNodeCoord = topMenuPoint.NODE.getBoundingClientRect();
 			startX = menuNodeCoord.left;
 			startY = menuNodeCoord.top;
 
 			itemInfo = {
-				id: topPoint.DATA_ID,
-				text: pageTitle || topPoint.TEXT,
-				link: Utils.getCurPage() || topPoint.URL,
-				counterId: topPoint.COUNTER_ID,
-				counterValue: topPoint.COUNTER,
+				id: topMenuPoint.DATA_ID,
+				text: pageTitle || topMenuPoint.TEXT,
+				link: Utils.getCurPage() || topMenuPoint.URL,
+				counterId: topMenuPoint.COUNTER_ID,
+				counterValue: topMenuPoint.COUNTER,
 				isStandardItem: true,
-				subLink: topPoint.SUB_LINK
+				subLink: topMenuPoint.SUB_LINK
 			};
 		}
 		else
@@ -195,13 +194,11 @@ export default class ItemUserFavorites extends Item
 
 	static deleteCurrentPage({pageLink})
 	{
-		const topPoint = this.searchCurrentPageInTopMenu();
+		const topPoint = this.getActiveTopMenuItem();
 
 		var itemInfo = {}, startX, startY;
 
-		if (this.isCurrentPageStandard()
-			&& topPoint
-		)
+		if (topPoint && this.isCurrentPageStandard(topPoint))
 		{
 			itemInfo['id'] = topPoint.DATA_ID;
 
@@ -232,7 +229,7 @@ export default class ItemUserFavorites extends Item
 	{
 		const itemInfo = {
 			id: DATA_ID,
-			text: Text.encode(TEXT),
+			text: TEXT,
 			link: URL,
 			subLink: SUB_LINK,
 			counterId: COUNTER_ID,
@@ -248,7 +245,7 @@ export default class ItemUserFavorites extends Item
 				itemInfo.id = itemId;
 				itemInfo.topMenuId = itemInfo.id;
 
-				const topPoint = this.searchCurrentPageInTopMenu();
+				const topPoint = this.getActiveTopMenuItem();
 				BX.onCustomEvent("BX.Bitrix24.LeftMenuClass:onMenuItemAdded", [itemInfo, this]);
 				BX.onCustomEvent('BX.Bitrix24.LeftMenuClass:onStandardItemChangedSuccess', [{
 					isActive: true,

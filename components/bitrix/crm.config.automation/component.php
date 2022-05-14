@@ -80,6 +80,7 @@ if ($arResult['ENTITY_TYPE_ID'] === \CCrmOwnerType::Deal)
 	}
 }
 
+$arResult['SUBTITLE'] = CCrmOwnerType::GetCategoryCaption($arResult['ENTITY_TYPE_ID']);
 $arResult['CATEGORIES'] = $categories;
 $arResult['HIDE_HELP'] = CUserOptions::GetOption('crm.config.automation', 'hide_help');
 

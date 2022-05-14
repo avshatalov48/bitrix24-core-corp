@@ -94,25 +94,7 @@ this.BX.Mobile.Crm = this.BX.Mobile.Crm || {};
 	  return Backend;
 	}();
 
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"loader\"></div>"]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-phonetracker-detail-comments-btn-container\" onclick=\"", "\">\n\t\t\t\t<div class=\"crm-phonetracker-detail-comments-btn\">", "</div>\n\t\t\t</div>"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject, _templateObject2;
 	var Pagination = /*#__PURE__*/function () {
 	  function Pagination(itemId, callback) {
 	    babelHelpers.classCallCheck(this, Pagination);
@@ -129,14 +111,14 @@ this.BX.Mobile.Crm = this.BX.Mobile.Crm || {};
 	      var _this = this;
 
 	      return this.cache.remember('mainNode', function () {
-	        return main_core.Tag.render(_templateObject(), _this.sendPagination.bind(_this), main_core.Loc.getMessage('MPT_PREVIOUS_COMMENTS'));
+	        return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-phonetracker-detail-comments-btn-container\" onclick=\"", "\">\n\t\t\t\t<div class=\"crm-phonetracker-detail-comments-btn\">", "</div>\n\t\t\t</div>"])), _this.sendPagination.bind(_this), main_core.Loc.getMessage('MPT_PREVIOUS_COMMENTS'));
 	      });
 	    }
 	  }, {
 	    key: "getLoader",
 	    value: function getLoader() {
 	      if (!this.cache.has('PaginationLoader')) {
-	        var target = this.getNode().appendChild(main_core.Tag.render(_templateObject2()));
+	        var target = this.getNode().appendChild(main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<div class=\"loader\"></div>"]))));
 	        this.cache.set('PaginationLoader', new main_loader.Loader({
 	          target: target,
 	          size: 20
@@ -176,7 +158,7 @@ this.BX.Mobile.Crm = this.BX.Mobile.Crm || {};
 	        }
 	      }, function () {
 	        _this2.showErrors(_arguments);
-	      }).finally(function () {
+	      })["finally"](function () {
 	        _this2.busy = false;
 	      });
 	    }
@@ -191,7 +173,7 @@ this.BX.Mobile.Crm = this.BX.Mobile.Crm || {};
 
 	      this.getNode().style.display = 'none';
 	      this.cache.keys().forEach(function (key) {
-	        _this3.cache.delete(key);
+	        _this3.cache["delete"](key);
 	      });
 	    }
 	  }, {
@@ -203,75 +185,7 @@ this.BX.Mobile.Crm = this.BX.Mobile.Crm || {};
 	  return Pagination;
 	}();
 
-	function _templateObject7() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"post-comment-control-box\">\n\t\t\t\t\t<div class=\"post-comment-control-item\">Edit</div>\n\t\t\t\t\t<div class=\"post-comment-control-item\">Delete</div>\n\t\t\t\t</div>"]);
-
-	  _templateObject7 = function _templateObject7() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject6() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"post-item-attached-file-wrap\">", "</div>"]);
-
-	  _templateObject6 = function _templateObject6() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject5() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"post-item-attached-file-wrap\">\n\t\t\t<div class=\"post-item-attached-file-list\">\n\t\t\t</div>\n\t\t</div>"]);
-
-	  _templateObject5 = function _templateObject5() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"post-comment-text\"></div>"]);
-
-	  _templateObject4 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<i></i>"]);
-
-	  _templateObject3 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<i style=\"background-image:url('", "')\"></i>"]);
-
-	  _templateObject2$1 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"feed-com-block-cover\">\n\t\t\t\t<div class=\"post-comment-block post-comment-block-old post-comment-block-approved mobile-longtap-menu\">\n\t\t\t\t\t<div class=\"ui-icon ui-icon-common-user post-comment-block-avatar\">\n\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"post-comment-detail\">\n\t\t\t\t\t\t<div class=\"post-comment-balloon\">\n\t\t\t\t\t\t\t<div class=\"post-comment-cont\">\n\t\t\t\t\t\t\t\t<a href=\"\" class=\"post-comment-author\">", "</a>\n\t\t\t\t\t\t\t\t<div class=\"post-comment-time\">", "</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"post-comment-wrap-outer\">\n\t\t\t\t\t\t\t\t<div class=\"post-comment-wrap\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"post-comment-more\" data-bx-role=\"more-button\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t\t<div class=\"post-comment-more-but\"></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>"]);
-
-	  _templateObject$1 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$1, _templateObject2$1, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7;
 	var intersectionObserver;
 
 	function observeIntersection(entity, callback) {
@@ -361,7 +275,7 @@ this.BX.Mobile.Crm = this.BX.Mobile.Crm || {};
 	          }).animate();
 	        };
 
-	        var render = main_core.Tag.render(_templateObject$1(), avatarUrl ? main_core.Tag.render(_templateObject2$1(), avatarUrl) : main_core.Tag.render(_templateObject3()), main_core.Text.encode(_this.data['AUTHOR']['FORMATTED_NAME']), _this.getDateNode(), _this.getTextNode(), expand, _this.getFilesNode(), _this.getActionNode());
+	        var render = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"feed-com-block-cover\">\n\t\t\t\t<div class=\"post-comment-block post-comment-block-old post-comment-block-approved mobile-longtap-menu\">\n\t\t\t\t\t<div class=\"ui-icon ui-icon-common-user post-comment-block-avatar\">\n\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"post-comment-detail\">\n\t\t\t\t\t\t<div class=\"post-comment-balloon\">\n\t\t\t\t\t\t\t<div class=\"post-comment-cont\">\n\t\t\t\t\t\t\t\t<a href=\"\" class=\"post-comment-author\">", "</a>\n\t\t\t\t\t\t\t\t<div class=\"post-comment-time\">", "</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"post-comment-wrap-outer\">\n\t\t\t\t\t\t\t\t<div class=\"post-comment-wrap\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"post-comment-more\" data-bx-role=\"more-button\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t\t<div class=\"post-comment-more-but\"></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>"])), avatarUrl ? main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["<i style=\"background-image:url('", "')\"></i>"])), avatarUrl) : main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<i></i>"]))), main_core.Text.encode(_this.data['AUTHOR']['FORMATTED_NAME']), _this.getDateNode(), _this.getTextNode(), expand, _this.getFilesNode(), _this.getActionNode());
 	        return render;
 	      });
 	    }
@@ -371,7 +285,7 @@ this.BX.Mobile.Crm = this.BX.Mobile.Crm || {};
 	      var _this2 = this;
 
 	      return this.cache.remember('textNode', function () {
-	        var renderTag = main_core.Tag.render(_templateObject4());
+	        var renderTag = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<div class=\"post-comment-text\"></div>"])));
 	        main_core.Runtime.html(renderTag, _this2.data['COMMENT']);
 	        return renderTag;
 	      });
@@ -399,7 +313,7 @@ this.BX.Mobile.Crm = this.BX.Mobile.Crm || {};
 	          return '';
 	        }
 
-	        var renderTag = main_core.Tag.render(_templateObject5());
+	        var renderTag = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"post-item-attached-file-wrap\">\n\t\t\t<div class=\"post-item-attached-file-list\">\n\t\t\t</div>\n\t\t</div>"])));
 
 	        if (main_core.Type.isStringFilled(_this4.data['PARSED_ATTACHMENT'])) {
 	          main_core.Runtime.html(renderTag, _this4.data['PARSED_ATTACHMENT']);
@@ -432,7 +346,7 @@ this.BX.Mobile.Crm = this.BX.Mobile.Crm || {};
 	          }, 100);
 	        }
 
-	        return main_core.Tag.render(_templateObject6(), renderTag);
+	        return main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["<div class=\"post-item-attached-file-wrap\">", "</div>"])), renderTag);
 	      });
 	    }
 	  }, {
@@ -440,7 +354,7 @@ this.BX.Mobile.Crm = this.BX.Mobile.Crm || {};
 	    value: function getActionNode() {
 	      return this.cache.remember('actionNode', function () {
 	        return '';
-	        return main_core.Tag.render(_templateObject7());
+	        return main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"post-comment-control-box\">\n\t\t\t\t\t<div class=\"post-comment-control-item\">Edit</div>\n\t\t\t\t\t<div class=\"post-comment-control-item\">Delete</div>\n\t\t\t\t</div>"])));
 	      });
 	    }
 	  }]);
@@ -500,45 +414,7 @@ this.BX.Mobile.Crm = this.BX.Mobile.Crm || {};
 	  return Utils;
 	}();
 
-	function _templateObject4$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"post-item-attached-file-wrap\">\n\t\t\t\t<div class=\"post-item-attached-file-wrap\">\n\t\t\t\t\t<div class=\"post-item-attached-file-list\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>"]);
-
-	  _templateObject4$1 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"post-item-attached-audio\"></div>"]);
-
-	  _templateObject3$1 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2$2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"post-comment-wrap\">\n\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"post-comment-text\">", "</div>\n\t\t\t\t\t\t\t\t\t\t\t</div>"]);
-
-	  _templateObject2$2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject$2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"feed-com-block-cover crm-phonetracker-notification\">\n\t\t\t\t<div class=\"post-comment-block post-comment-block-old post-comment-block-approved  mobile-longtap-menu \">\n\t\t\t\t\t<div class=\"ui-icon ", " crm-phonetracker-icon\">\n\t\t\t\t\t\t<i></i>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"post-comment-detail\">\n\t\t\t\t\t\t<div class=\"post-comment-balloon\">\n\t\t\t\t\t\t\t<div class=\"post-comment-cont\">\n\t\t\t\t\t\t\t\t<span class=\"post-comment-author crm-phonetracker-event-name\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t<div class=\"post-comment-time\">", "</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"post-comment-wrap-outer\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t<div class=\"post-label-wrap\">\n\t\t\t\t\t\t\t\t\t<svg width=\"19\" height=\"18\" viewBox=\"0 0 19 18\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n\t\t\t\t\t\t\t\t\t\t<path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M12.5615 10.4593L14.0291 11.559C14.4726 11.8959 14.507 12.5616 14.0978 12.9414C12.5634 14.4077 10.0067 14.977 6.64094 11.4185C3.27513 7.86011 3.94451 5.31279 5.47892 3.8464C5.88763 3.46681 6.53873 3.52962 6.8498 3.99195L7.87625 5.49314C8.23575 6.04419 8.00868 6.79498 7.45713 7.16309L6.84098 7.57434C6.6994 7.66453 6.65996 7.85351 6.73593 7.99833C7.53276 9.39692 8.68397 10.6226 10.0304 11.5009C10.1646 11.5784 10.3575 11.5383 10.4511 11.4106L10.8862 10.7938C11.2666 10.2563 12.0403 10.0677 12.5615 10.4593Z\" fill=\"white\"/>\n\t\t\t\t\t\t\t\t\t\t<path d=\"M13.8358 4.26291C12.8706 3.2977 11.577 2.7646 10.1993 2.77788C9.9525 2.79346 9.7557 2.99026 9.75345 3.22376C9.76427 3.47033 9.95731 3.66337 10.1908 3.66111C11.3472 3.63671 12.4084 4.0686 13.2193 4.8795C14.0303 5.69041 14.4621 6.75159 14.4372 7.90855C14.436 8.0385 14.4867 8.14155 14.5641 8.21887C14.6415 8.29628 14.7579 8.33373 14.875 8.34529C15.1218 8.32972 15.3186 8.13292 15.3209 7.89942C15.3348 6.52238 14.801 5.22812 13.8358 4.26291Z\" fill=\"white\"/>\n\t\t\t\t\t\t\t\t\t\t<path d=\"M12.5749 5.52404C12.0088 4.95793 11.258 4.65303 10.4524 4.66131C10.2056 4.67688 10.0088 4.87368 10.0065 5.10718C10.0174 5.35375 10.2104 5.54679 10.4439 5.54453C11.0155 5.53902 11.5458 5.7547 11.945 6.15386C12.3436 6.5525 12.5598 7.08336 12.5543 7.65492C12.553 7.78487 12.6038 7.88792 12.6812 7.96534L12.7231 8.00097C12.7976 8.05494 12.8946 8.08326 12.9923 8.0929C13.2391 8.07732 13.4359 7.88052 13.4381 7.64702C13.4459 6.84088 13.141 6.09014 12.5749 5.52404Z\" fill=\"white\"/>\n\t\t\t\t\t\t\t\t\t</svg>\n\t\t\t\t\t\t\t\t\t<div class=\"post-label-text\">", "</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject$2 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$2, _templateObject2$2, _templateObject3$1, _templateObject4$1;
 
 	var ItemCalltracker = /*#__PURE__*/function (_Item) {
 	  babelHelpers.inherits(ItemCalltracker, _Item);
@@ -568,7 +444,7 @@ this.BX.Mobile.Crm = this.BX.Mobile.Crm || {};
 	        var hasStatus = _this.data['ASSOCIATED_ENTITY']['CALL_INFO'] ? _this.data['ASSOCIATED_ENTITY']['CALL_INFO']['HAS_STATUS'] : false;
 	        var status = _this.data['ASSOCIATED_ENTITY']['CALL_INFO'] ? _this.data['ASSOCIATED_ENTITY']['CALL_INFO']['SUCCESSFUL'] : null;
 	        var iconClasses = [direction === BX.CrmActivityDirection.incoming ? 'ui-icon-service-call-in' : direction === BX.CrmActivityDirection.outgoing ? 'ui-icon-service-call-out' : 'ui-icon-service-callback'];
-	        var render = main_core.Tag.render(_templateObject$2(), iconClasses.join(' '), hasStatus && status !== true ? "<div class=\"ui-icon-cross\">\n\t\t\t\t\t\t\t\t<svg width=\"11\" height=\"11\" viewBox=\"0 0 11 11\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n\t\t\t\t\t\t\t\t\t<path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M7.19252 5.532L10.7451 9.08457L9.08463 10.745L5.53206 7.19246L1.91046 10.8141L0.25 9.15361L3.87161 5.532L0.319037 1.97943L1.97949 0.318976L5.53206 3.87155L9.15367 0.249939L10.8141 1.91039L7.19252 5.532Z\" fill=\"#767C87\"/>\n\t\t\t\t\t\t\t\t</svg>\n\t\t\t\t\t\t\t</div>" : '', comment, created, hasDuration ? main_core.Tag.render(_templateObject2$2(), duration) : '', main_core.Text.encode(_this.data['ASSOCIATED_ENTITY']['CREATED']), _this.getFilesNode(), _this.getActionNode());
+	        var render = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"feed-com-block-cover crm-phonetracker-notification\">\n\t\t\t\t<div class=\"post-comment-block post-comment-block-old post-comment-block-approved  mobile-longtap-menu \">\n\t\t\t\t\t<div class=\"ui-icon ", " crm-phonetracker-icon\">\n\t\t\t\t\t\t<i></i>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"post-comment-detail\">\n\t\t\t\t\t\t<div class=\"post-comment-balloon\">\n\t\t\t\t\t\t\t<div class=\"post-comment-cont\">\n\t\t\t\t\t\t\t\t<span class=\"post-comment-author crm-phonetracker-event-name\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t<div class=\"post-comment-time\">", "</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"post-comment-wrap-outer\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t<div class=\"post-label-wrap\">\n\t\t\t\t\t\t\t\t\t<svg width=\"19\" height=\"18\" viewBox=\"0 0 19 18\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n\t\t\t\t\t\t\t\t\t\t<path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M12.5615 10.4593L14.0291 11.559C14.4726 11.8959 14.507 12.5616 14.0978 12.9414C12.5634 14.4077 10.0067 14.977 6.64094 11.4185C3.27513 7.86011 3.94451 5.31279 5.47892 3.8464C5.88763 3.46681 6.53873 3.52962 6.8498 3.99195L7.87625 5.49314C8.23575 6.04419 8.00868 6.79498 7.45713 7.16309L6.84098 7.57434C6.6994 7.66453 6.65996 7.85351 6.73593 7.99833C7.53276 9.39692 8.68397 10.6226 10.0304 11.5009C10.1646 11.5784 10.3575 11.5383 10.4511 11.4106L10.8862 10.7938C11.2666 10.2563 12.0403 10.0677 12.5615 10.4593Z\" fill=\"white\"/>\n\t\t\t\t\t\t\t\t\t\t<path d=\"M13.8358 4.26291C12.8706 3.2977 11.577 2.7646 10.1993 2.77788C9.9525 2.79346 9.7557 2.99026 9.75345 3.22376C9.76427 3.47033 9.95731 3.66337 10.1908 3.66111C11.3472 3.63671 12.4084 4.0686 13.2193 4.8795C14.0303 5.69041 14.4621 6.75159 14.4372 7.90855C14.436 8.0385 14.4867 8.14155 14.5641 8.21887C14.6415 8.29628 14.7579 8.33373 14.875 8.34529C15.1218 8.32972 15.3186 8.13292 15.3209 7.89942C15.3348 6.52238 14.801 5.22812 13.8358 4.26291Z\" fill=\"white\"/>\n\t\t\t\t\t\t\t\t\t\t<path d=\"M12.5749 5.52404C12.0088 4.95793 11.258 4.65303 10.4524 4.66131C10.2056 4.67688 10.0088 4.87368 10.0065 5.10718C10.0174 5.35375 10.2104 5.54679 10.4439 5.54453C11.0155 5.53902 11.5458 5.7547 11.945 6.15386C12.3436 6.5525 12.5598 7.08336 12.5543 7.65492C12.553 7.78487 12.6038 7.88792 12.6812 7.96534L12.7231 8.00097C12.7976 8.05494 12.8946 8.08326 12.9923 8.0929C13.2391 8.07732 13.4359 7.88052 13.4381 7.64702C13.4459 6.84088 13.141 6.09014 12.5749 5.52404Z\" fill=\"white\"/>\n\t\t\t\t\t\t\t\t\t</svg>\n\t\t\t\t\t\t\t\t\t<div class=\"post-label-text\">", "</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t"])), iconClasses.join(' '), hasStatus && status !== true ? "<div class=\"ui-icon-cross\">\n\t\t\t\t\t\t\t\t<svg width=\"11\" height=\"11\" viewBox=\"0 0 11 11\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n\t\t\t\t\t\t\t\t\t<path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M7.19252 5.532L10.7451 9.08457L9.08463 10.745L5.53206 7.19246L1.91046 10.8141L0.25 9.15361L3.87161 5.532L0.319037 1.97943L1.97949 0.318976L5.53206 3.87155L9.15367 0.249939L10.8141 1.91039L7.19252 5.532Z\" fill=\"#767C87\"/>\n\t\t\t\t\t\t\t\t</svg>\n\t\t\t\t\t\t\t</div>" : '', comment, created, hasDuration ? main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"post-comment-wrap\">\n\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"post-comment-text\">", "</div>\n\t\t\t\t\t\t\t\t\t\t\t</div>"])), duration) : '', main_core.Text.encode(_this.data['ASSOCIATED_ENTITY']['CREATED']), _this.getFilesNode(), _this.getActionNode());
 	        return render;
 	      });
 	    }
@@ -582,12 +458,12 @@ this.BX.Mobile.Crm = this.BX.Mobile.Crm || {};
 	          return '';
 	        }
 
-	        var renderTag = main_core.Tag.render(_templateObject3$1());
+	        var renderTag = main_core.Tag.render(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"post-item-attached-audio\"></div>"])));
 	        ui_vue.Vue.create({
 	          el: renderTag.appendChild(document.createElement('DIV')),
 	          template: "<bx-audioplayer src=\"".concat(_this2.data['ASSOCIATED_ENTITY']['MEDIA_FILE_INFO']['URL'], "\" background=\"dark\"/>")
 	        });
-	        return main_core.Tag.render(_templateObject4$1(), renderTag);
+	        return main_core.Tag.render(_templateObject4$1 || (_templateObject4$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"post-item-attached-file-wrap\">\n\t\t\t\t<div class=\"post-item-attached-file-wrap\">\n\t\t\t\t\t<div class=\"post-item-attached-file-list\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>"])), renderTag);
 	      });
 	    }
 	  }], [{
@@ -599,35 +475,7 @@ this.BX.Mobile.Crm = this.BX.Mobile.Crm || {};
 	  return ItemCalltracker;
 	}(Item);
 
-	function _templateObject3$2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<i></i>"]);
-
-	  _templateObject3$2 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2$3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<i style=\"background-image:url('", "')\"></i>"]);
-
-	  _templateObject2$3 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject$3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"feed-com-block-cover\">\n\t\t\t\t<div class=\"post-comment-block post-comment-block-old post-comment-block-approved mobile-longtap-menu\">\n\t\t\t\t\t<div class=\"ui-icon ui-icon-common-user post-comment-block-avatar\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"post-comment-detail\">\n\t\t\t\t\t\t<div class=\"post-comment-balloon\">\n\t\t\t\t\t\t\t<div class=\"post-comment-cont\">\n\t\t\t\t\t\t\t\t<a href=\"\" class=\"post-comment-author\">", "</a>\n\t\t\t\t\t\t\t\t<div class=\"post-comment-time\">", "</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"post-comment-wrap-outer\">\n\t\t\t\t\t\t\t\t<div class=\"post-comment-wrap\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"post-comment-more\" style=\"display: none;\">\n\t\t\t\t\t\t\t\t\t<div class=\"post-comment-more-but\"></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"post-comment-control-box\" data-bx-role=\"loader-block\">\n\t\t\t\t\t\t\t<div class=\"post-comment-control-item\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"post-comment-control-box\" data-bx-role=\"error-block\">\n\t\t\t\t\t\t\t<div class=\"post-comment-control-item\" data-bx-role=\"error-text\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>"]);
-
-	  _templateObject$3 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$3, _templateObject2$3, _templateObject3$2;
 
 	var ItemPreview = /*#__PURE__*/function (_Item) {
 	  babelHelpers.inherits(ItemPreview, _Item);
@@ -661,7 +509,7 @@ this.BX.Mobile.Crm = this.BX.Mobile.Crm || {};
 
 	      return this.cache.remember('mainNode', function () {
 	        var avatarUrl = main_core.Text.encode(_this2.data['AUTHOR'] && _this2.data['AUTHOR']['IMAGE_URL'] ? _this2.data['AUTHOR']['IMAGE_URL'] : '');
-	        var render = main_core.Tag.render(_templateObject$3(), avatarUrl ? main_core.Tag.render(_templateObject2$3(), avatarUrl) : main_core.Tag.render(_templateObject3$2()), main_core.Text.encode(_this2.data['AUTHOR']['FORMATTED_NAME']), _this2.getDateNode(), _this2.getTextNode(), main_core.Loc.getMessage('MPL_MOBILE_PUBLISHING'));
+	        var render = main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["<div class=\"feed-com-block-cover\">\n\t\t\t\t<div class=\"post-comment-block post-comment-block-old post-comment-block-approved mobile-longtap-menu\">\n\t\t\t\t\t<div class=\"ui-icon ui-icon-common-user post-comment-block-avatar\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"post-comment-detail\">\n\t\t\t\t\t\t<div class=\"post-comment-balloon\">\n\t\t\t\t\t\t\t<div class=\"post-comment-cont\">\n\t\t\t\t\t\t\t\t<a href=\"\" class=\"post-comment-author\">", "</a>\n\t\t\t\t\t\t\t\t<div class=\"post-comment-time\">", "</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"post-comment-wrap-outer\">\n\t\t\t\t\t\t\t\t<div class=\"post-comment-wrap\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"post-comment-more\" style=\"display: none;\">\n\t\t\t\t\t\t\t\t\t<div class=\"post-comment-more-but\"></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"post-comment-control-box\" data-bx-role=\"loader-block\">\n\t\t\t\t\t\t\t<div class=\"post-comment-control-item\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"post-comment-control-box\" data-bx-role=\"error-block\">\n\t\t\t\t\t\t\t<div class=\"post-comment-control-item\" data-bx-role=\"error-text\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>"])), avatarUrl ? main_core.Tag.render(_templateObject2$3 || (_templateObject2$3 = babelHelpers.taggedTemplateLiteral(["<i style=\"background-image:url('", "')\"></i>"])), avatarUrl) : main_core.Tag.render(_templateObject3$2 || (_templateObject3$2 = babelHelpers.taggedTemplateLiteral(["<i></i>"]))), main_core.Text.encode(_this2.data['AUTHOR']['FORMATTED_NAME']), _this2.getDateNode(), _this2.getTextNode(), main_core.Loc.getMessage('MPL_MOBILE_PUBLISHING'));
 	        return render;
 	      });
 	    }
@@ -683,25 +531,7 @@ this.BX.Mobile.Crm = this.BX.Mobile.Crm || {};
 
 	babelHelpers.defineProperty(ItemPreview, "count", 0);
 
-	function _templateObject2$4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t\t\t\t<div class=\"post-comment-wrap\">\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"post-comment-text\">", "</div>\n\t\t\t\t\t\t\t\t\t\t</div>"]);
-
-	  _templateObject2$4 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject$4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"feed-com-block-cover crm-calltracker-notification\">\n\t\t\t\t<div class=\"post-comment-block post-comment-block-old post-comment-block-approved  mobile-longtap-menu \">\n\t\t\t\t\t<div class=\"ui-icon ", " crm-phonetracker-icon\">\n\t\t\t\t\t\t<i></i>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"ui-icon-counter\">1</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"post-comment-detail\">\n\t\t\t\t\t\t<div class=\"post-comment-balloon\">\n\t\t\t\t\t\t\t<div class=\"post-comment-cont\">\n\t\t\t\t\t\t\t\t<span class=\"post-comment-author    crm-phonetracker-event-name\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t<div class=\"post-comment-time\">", "</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"post-comment-wrap-outer\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t<div class=\"post-label-wrap\">\n\t\t\t\t\t\t\t\t\t<svg width=\"19\" height=\"18\" viewBox=\"0 0 19 18\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n\t\t\t\t\t\t\t\t\t\t<path d=\"M8.26297 5.9911H9.76297V8.2411H12.013V9.7411H8.26297V5.9911Z\" fill=\"white\"/>\n\t\t\t\t\t\t\t\t\t\t<path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M3.5682 11.4511C4.56845 13.6754 6.81991 15.0688 9.25682 14.9716C12.4898 14.9055 15.0579 12.2327 14.995 8.99971C14.9949 6.56087 13.5128 4.36679 11.2504 3.45607C8.98799 2.54536 6.39916 3.10075 4.70939 4.85933C3.01962 6.61792 2.56795 9.22685 3.5682 11.4511ZM4.95948 10.8255C5.70444 12.4821 7.38125 13.5198 9.19618 13.4475C11.604 13.3982 13.5167 11.4076 13.4698 8.99978C13.4697 7.18341 12.3659 5.54933 10.6809 4.87106C8.99597 4.19279 7.06789 4.60642 5.8094 5.91616C4.55092 7.2259 4.21453 9.16894 4.95948 10.8255Z\" fill=\"white\"/>\n\t\t\t\t\t\t\t\t\t</svg>\n\t\t\t\t\t\t\t\t\t<div class=\"post-label-text\">", "</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject$4 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$4, _templateObject2$4;
 
 	var ItemActivity = /*#__PURE__*/function (_Item) {
 	  babelHelpers.inherits(ItemActivity, _Item);
@@ -736,7 +566,7 @@ this.BX.Mobile.Crm = this.BX.Mobile.Crm || {};
 	        var hasStatus = _this2.data['ASSOCIATED_ENTITY']['CALL_INFO'] ? _this2.data['ASSOCIATED_ENTITY']['CALL_INFO']['HAS_STATUS'] : false;
 	        var status = _this2.data['ASSOCIATED_ENTITY']['CALL_INFO'] ? _this2.data['ASSOCIATED_ENTITY']['CALL_INFO']['SUCCESSFUL'] : null;
 	        var iconClasses = [direction === BX.CrmActivityDirection.incoming ? 'ui-icon-service-call-in' : direction === BX.CrmActivityDirection.outgoing ? 'ui-icon-service-call-out' : 'ui-icon-service-callback'];
-	        var render = main_core.Tag.render(_templateObject$4(), iconClasses.join(' '), hasStatus && status !== true ? "<div class=\"ui-icon-cross\">\n\t\t\t\t\t\t\t\t<svg width=\"11\" height=\"11\" viewBox=\"0 0 11 11\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n\t\t\t\t\t\t\t\t\t<path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M7.19252 5.532L10.7451 9.08457L9.08463 10.745L5.53206 7.19246L1.91046 10.8141L0.25 9.15361L3.87161 5.532L0.319037 1.97943L1.97949 0.318976L5.53206 3.87155L9.15367 0.249939L10.8141 1.91039L7.19252 5.532Z\" fill=\"#767C87\"/>\n\t\t\t\t\t\t\t\t</svg>\n\t\t\t\t\t\t\t</div>" : '', comment, main_core.Text.encode(_this2.data['ASSOCIATED_ENTITY']['CREATED']), hasDuration ? main_core.Tag.render(_templateObject2$4(), duration) : '', deadline);
+	        var render = main_core.Tag.render(_templateObject$4 || (_templateObject$4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"feed-com-block-cover crm-calltracker-notification\">\n\t\t\t\t<div class=\"post-comment-block post-comment-block-old post-comment-block-approved  mobile-longtap-menu \">\n\t\t\t\t\t<div class=\"ui-icon ", " crm-phonetracker-icon\">\n\t\t\t\t\t\t<i></i>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"ui-icon-counter\">1</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"post-comment-detail\">\n\t\t\t\t\t\t<div class=\"post-comment-balloon\">\n\t\t\t\t\t\t\t<div class=\"post-comment-cont\">\n\t\t\t\t\t\t\t\t<span class=\"post-comment-author    crm-phonetracker-event-name\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t<div class=\"post-comment-time\">", "</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"post-comment-wrap-outer\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t<div class=\"post-label-wrap\">\n\t\t\t\t\t\t\t\t\t<svg width=\"19\" height=\"18\" viewBox=\"0 0 19 18\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n\t\t\t\t\t\t\t\t\t\t<path d=\"M8.26297 5.9911H9.76297V8.2411H12.013V9.7411H8.26297V5.9911Z\" fill=\"white\"/>\n\t\t\t\t\t\t\t\t\t\t<path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M3.5682 11.4511C4.56845 13.6754 6.81991 15.0688 9.25682 14.9716C12.4898 14.9055 15.0579 12.2327 14.995 8.99971C14.9949 6.56087 13.5128 4.36679 11.2504 3.45607C8.98799 2.54536 6.39916 3.10075 4.70939 4.85933C3.01962 6.61792 2.56795 9.22685 3.5682 11.4511ZM4.95948 10.8255C5.70444 12.4821 7.38125 13.5198 9.19618 13.4475C11.604 13.3982 13.5167 11.4076 13.4698 8.99978C13.4697 7.18341 12.3659 5.54933 10.6809 4.87106C8.99597 4.19279 7.06789 4.60642 5.8094 5.91616C4.55092 7.2259 4.21453 9.16894 4.95948 10.8255Z\" fill=\"white\"/>\n\t\t\t\t\t\t\t\t\t</svg>\n\t\t\t\t\t\t\t\t\t<div class=\"post-label-text\">", "</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t"])), iconClasses.join(' '), hasStatus && status !== true ? "<div class=\"ui-icon-cross\">\n\t\t\t\t\t\t\t\t<svg width=\"11\" height=\"11\" viewBox=\"0 0 11 11\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">\n\t\t\t\t\t\t\t\t\t<path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M7.19252 5.532L10.7451 9.08457L9.08463 10.745L5.53206 7.19246L1.91046 10.8141L0.25 9.15361L3.87161 5.532L0.319037 1.97943L1.97949 0.318976L5.53206 3.87155L9.15367 0.249939L10.8141 1.91039L7.19252 5.532Z\" fill=\"#767C87\"/>\n\t\t\t\t\t\t\t\t</svg>\n\t\t\t\t\t\t\t</div>" : '', comment, main_core.Text.encode(_this2.data['ASSOCIATED_ENTITY']['CREATED']), hasDuration ? main_core.Tag.render(_templateObject2$4 || (_templateObject2$4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t\t\t\t<div class=\"post-comment-wrap\">\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"post-comment-text\">", "</div>\n\t\t\t\t\t\t\t\t\t\t</div>"])), duration) : '', deadline);
 	        return render;
 	      });
 	    }
@@ -785,7 +615,7 @@ this.BX.Mobile.Crm = this.BX.Mobile.Crm || {};
 
 	      this.status = 'busy';
 	      this.emit('start');
-	      this.prepare().then(this.submit.bind(this)).then(this.succeed.bind(this)).then(this.finalise.bind(this)).catch(function (err) {
+	      this.prepare().then(this.submit.bind(this)).then(this.succeed.bind(this)).then(this.finalise.bind(this))["catch"](function (err) {
 	        _this2.fail(err);
 
 	        _this2.finalise();
@@ -1168,7 +998,7 @@ this.BX.Mobile.Crm = this.BX.Mobile.Crm || {};
 	        files: this.files.map(function (file) {
 	          return file.file['VALUE'];
 	        })
-	      }).catch(function (result) {
+	      })["catch"](function (result) {
 	        var errors = [];
 
 	        if (main_core.Type.isArrayFilled(result.errors)) {
@@ -1393,7 +1223,7 @@ this.BX.Mobile.Crm = this.BX.Mobile.Crm || {};
 	          activity.getNode().parentNode.removeChild(activity.getNode());
 	          activity.solve();
 
-	          _this3.activities.delete(activity.getOwnerId());
+	          _this3.activities["delete"](activity.getOwnerId());
 	        }
 
 	        _this3.container.insertBefore(item.getNode(), pointerNode);
@@ -1453,7 +1283,7 @@ this.BX.Mobile.Crm = this.BX.Mobile.Crm || {};
 	          activity.getNode().parentNode.removeChild(activity.getNode());
 	          activity.solve();
 
-	          _this4.activities.delete(activity.getOwnerId());
+	          _this4.activities["delete"](activity.getOwnerId());
 	        }
 
 	        if (item.getId() < commentData['ID']) {

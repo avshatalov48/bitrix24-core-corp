@@ -1,5 +1,5 @@
 module.exports = {
-	input: 'src/timeline.js',
+	input: 'src/index.js',
 	output: 'dist/timeline.bundle.js',
 	namespace: 'BX.Crm.Timeline'
 };

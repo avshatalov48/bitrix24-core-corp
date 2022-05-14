@@ -1,5 +1,6 @@
 import {Logger} from './lib/logger';
 import {Debug} from "./lib/debug";
+import {ActionTimer} from './lib/action-timer';
 import {Entity} from './model/entity';
 import {EntityType} from 'timeman.const';
 import {Loc} from 'main.core';
@@ -25,6 +26,8 @@ class EventHandler
 		{
 			return;
 		}
+
+		ActionTimer.start('CATCH_ENTITY');
 
 		const type = this.getEntityTypeByEvent({process, name, title, url});
 

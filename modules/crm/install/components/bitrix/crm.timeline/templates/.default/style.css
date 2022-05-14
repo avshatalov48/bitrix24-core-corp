@@ -726,10 +726,15 @@
 	color: #000;
 }
 
-.crm-entity-stream-content-detail-notice {
+.crm-entity-stream-content-event-payment-initiate-pay-error {
 	padding-top: 13px;
 	margin-top: 18px;
 	border-top: 1px solid #edeef0;
+	position: relative;
+}
+
+.crm-entity-stream-content-detail-notice {
+	padding-top: 13px;
 	position: relative;
 }
 
@@ -779,14 +784,13 @@
 }
 
 .crm-entity-stream-section-payment .crm-entity-stream-content-detail-notice {
-	padding: 15px 50px 6px 22px;
+	padding: 0 50px 6px 22px;
 }
 
 .crm-entity-stream-section-payment .crm-entity-stream-content-detail-notice:before  {
 	content: '';
 	position: absolute;
 	left: 2px;
-	top: 15px;
 	width: 12px;
 	height: 15px;
 	background: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2212%22%20height%3D%2215%22%3E%3Cpath%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M10.435.982a1.4%201.4%200%20011.4%201.392l.01%201.877v9.3a1.4%201.4%200%2001-1.4%201.4h-9.02a1.4%201.4%200%2001-1.4-1.4V2.38a1.4%201.4%200%20011.4-1.4h9.01zm.022%201.507H1.384v10.954h9.102V4.752l-.03-2.263zM9.019%206.83v1.424H2.85V6.83H9.02zm0-2.897v1.406H2.85V3.932H9.02z%22%20opacity%3D%22.648%22/%3E%3C/svg%3E) no-repeat center;
@@ -794,10 +798,6 @@
 
 .crm-entity-stream-section-payment .crm-entity-stream-content-detail-description a {
 	margin-right: 5px;
-}
-
-.crm-entity-stream-content-documents-table {
-	margin-top: 10px;
 }
 
 .crm-entity-stream-content-detail-table-row,
@@ -811,24 +811,16 @@
 }
 
 .crm-entity-stream-content-detail-table-row {
-	padding-bottom: 12px;
-}
-
-.crm-entity-stream-content-detail-table-row:first-child {
-	border-bottom: 1px solid #edeef0;
-	font-size: 14px;
-	margin: 8px 0 16px;
-	padding-bottom: 7px;
+	padding-bottom: 5px;
 }
 
 .crm-entity-stream-content-document-table-row:first-child {
 	border-bottom: 0;
 	font-size: inherit;
 	margin: inherit;
-	padding-bottom: 15px;
 }
 
-.crm-entity-stream-content-detail-table-row:first-child .crm-entity-stream-content-detail-cost-current {
+.crm-entity-stream-content-detail-table-row .crm-entity-stream-content-detail-cost-current {
 	color: #333;
 }
 
@@ -837,11 +829,9 @@
 	opacity: 1;
 }
 
-.crm-entity-stream-content-detail-table-row:last-child {
-	border-top: 1px solid #edeef0;
+.crm-entity-stream-content-detail-table-row.crm-entity-stream-content-detail-table-row-total {
 	font-size: 14px;
 	color: #333;
-	padding: 18px 0 0;
 }
 
 .crm-entity-stream-content-detail-table-row .crm-entity-stream-content-detail-description {
@@ -851,6 +841,34 @@
 .crm-entity-stream-content-detail-date {
 	color: #000;
 	font-size: 14px;
+}
+
+.crm-entity-stream-content-document-table-group {
+	border-top: 1px solid #edeef0;
+	border-bottom: 1px solid #edeef0;
+	padding-top: 20px;
+	padding-bottom: 10px;
+}
+
+.crm-entity-stream-content-document-table-group + .crm-entity-stream-content-document-table-group {
+	border-top: 0;
+}
+
+.crm-entity-stream-content-document-table-group:last-child {
+	border-bottom: 0;
+}
+
+.crm-entity-stream-content-document-table-order-group {
+	margin: 5px 0 5px 0;
+}
+
+.crm-entity-stream-content-document-table-order-group:first-child {
+	margin-top: 15px;
+}
+
+.crm-entity-stream-content-document-table-order-group .crm-entity-stream-content-detail-description {
+	opacity: 1;
+	color: #000;
 }
 
 .crm-entity-stream-content-detail-icon {

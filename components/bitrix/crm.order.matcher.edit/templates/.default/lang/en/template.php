@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_ORDERFORM_EDIT_ADD_CAPTION"] = "Add title";
 $MESS["CRM_ORDERFORM_EDIT_ADD_DESCRIPTION"] = "Add description";
 $MESS["CRM_ORDERFORM_EDIT_ADS_LINKED"] = "This form was linked to an ad to receive data from it.";
@@ -50,7 +50,7 @@ $MESS["CRM_ORDERFORM_EDIT_DEP_BUTTON_ADD"] = "add a rule";
 $MESS["CRM_ORDERFORM_EDIT_DEP_SECTION"] = "Field rules";
 $MESS["CRM_ORDERFORM_EDIT_DEP_SECTION_NAV"] = "Rules";
 $MESS["CRM_ORDERFORM_EDIT_DESCRIPTION_LENGTH"] = "Description can include up to 1000 characters";
-$MESS["CRM_ORDERFORM_EDIT_DOCUMENT_CREATE"] = "CRM entities created for this order";
+$MESS["CRM_ORDERFORM_EDIT_DOCUMENT_CREATE"] = "Each order will create these CRM entities";
 $MESS["CRM_ORDERFORM_EDIT_DOC_ADD_INVOICE"] = "create an invoice";
 $MESS["CRM_ORDERFORM_EDIT_DOC_DUPLICATES"] = "Existing records and duplicates";
 $MESS["CRM_ORDERFORM_EDIT_DOC_INVOICE_ADD_PAYER"] = "A payer is required to create an invoice. You have not selected any contact or company fields, therefore a new payer will be created.";
@@ -207,4 +207,3 @@ $MESS["CRM_ORDERFORM_EDIT_TMPL_SETTINGS_STYPE_DEFAULT"] = "Don't verify";
 $MESS["CRM_ORDERFORM_EDIT_TMPL_SETTINGS_TIME"] = "time";
 $MESS["CRM_ORDERFORM_EDIT_TMPL_SETTINGS_USER_PROPS"] = "included in user profile";
 $MESS["CRM_ORDERFORM_PERSON_TYPE"] = "Payer type";
-?>

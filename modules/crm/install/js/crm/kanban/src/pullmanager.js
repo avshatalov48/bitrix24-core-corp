@@ -7,11 +7,13 @@ export default class PullManager
 	grid: BX.CRM.Kanban.Grid;
 	queue: PullQueue;
 	notifier: BX.UI.Notification.Balloon;
+	openedSlidersCount: Number;
 
 	constructor(grid)
 	{
 		this.grid = grid;
 		this.queue = new PullQueue(this.grid);
+		this.openedSlidersCount = 0;
 		if (Type.isString(grid.getData().moduleId) && grid.getData().userId > 0)
 		{
 			this.init();
@@ -91,62 +93,14 @@ export default class PullManager
 	updateItem(params)
 	{
 		const item = this.grid.getItem(params.item.id);
-		const paramsItem = params.item;
 
 		if (item)
 		{
-			const oldPrice = parseFloat(item.data.price);
-			const oldColumnId = item.columnId;
-
-			for (let key in paramsItem.data)
-			{
-				if (key in item.data)
-				{
-					item.data[key] = paramsItem.data[key];
-				}
-			}
-
-			item.rawData = paramsItem.rawData;
-			item.setActivityExistInnerHtml();
-			item.useAnimation = true;
-			item.setChangedInPullRequest();
-			this.grid.resetMultiSelectMode();
-
-			this.grid.insertItem(item);
-
-			const newColumnId = paramsItem.data.columnId;
-			const newColumn = this.grid.getColumn(newColumnId);
-			const newPrice = parseFloat(paramsItem.data.price);
-
-			item.columnId = newColumnId;
-
-			if (oldColumnId !== newColumnId)
-			{
-				const oldColumn = this.grid.getColumn(oldColumnId);
-				oldColumn.decPrice(oldPrice);
-				oldColumn.renderSubTitle();
-
-				if (newColumn)
-				{
-					newColumn.incPrice(newPrice);
-					newColumn.renderSubTitle();
-				}
-			}
-			else
-			{
-				if (oldPrice < newPrice)
-				{
-					newColumn.incPrice(newPrice - oldPrice);
-					newColumn.renderSubTitle();
-				}
-				else if (oldPrice > newPrice)
-				{
-					newColumn.decPrice(oldPrice - newPrice);
-					newColumn.renderSubTitle();
-				}
-			}
-
-			this.queue.push(item.id);
+			this.queue.push(item.id, {
+				id: item.id,
+				action: 'updateItem',
+				actionParams: params,
+			});
 
 			return true;
 		}
@@ -157,20 +111,28 @@ export default class PullManager
 
 	onPullItemAdded(params)
 	{
-		this.addItem(params);
-		this.queue.loadItem();
+		if (this.addItem(params))
+		{
+			this.queue.loadItem();
+		}
 	}
 
 	addItem(params)
 	{
-		const oldItem = this.grid.getItem(params.item.id);
+		const itemId = params.item.id;
+		const oldItem = this.grid.getItem(itemId);
 		if (oldItem)
 		{
-			return;
+			return false;
 		}
 
-		this.grid.addItemTop(params.item);
-		this.queue.push(params.item.id);
+		this.queue.push(itemId, {
+			id: itemId,
+			action: 'addItem',
+			actionParams: params,
+		});
+
+		return true;
 	}
 
 	onPullItemDeleted(params)
@@ -252,26 +214,17 @@ export default class PullManager
 	bindEvents(): void
 	{
 		EventEmitter.subscribe('SidePanel.Slider:onOpen', (event) => {
-			if (this.isEntitySlider(event.data[0].slider))
-			{
-				this.queue.freeze();
-			}
+			this.openedSlidersCount++;
+			this.queue.freeze();
 		});
 		EventEmitter.subscribe('SidePanel.Slider:onClose', (event) => {
-			if (this.isEntitySlider(event.data[0].slider))
+			this.openedSlidersCount--;
+			if (this.openedSlidersCount <= 0)
 			{
+				this.openedSlidersCount = 0;
 				this.queue.unfreeze();
 				this.onTabActivated();
 			}
 		});
-	}
-
-	isEntitySlider(slider): boolean
-	{
-		const sliderUrl = slider.getUrl();
-		const entityPath = this.grid.getData().entityPath;
-		const maskUrl = entityPath.replace(/\#([^\#]+)\#/, '([\\d]+)');
-
-		return (new RegExp(maskUrl)).test(sliderUrl);
 	}
 }

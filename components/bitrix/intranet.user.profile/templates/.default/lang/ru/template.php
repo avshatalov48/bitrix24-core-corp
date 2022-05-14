@@ -111,5 +111,6 @@ $MESS["INTRANET_USER_PROFILE_DISK_INSTALLED"] = "Установлен Битри
 $MESS["INTRANET_USER_PROFILE_FIRE_INVITED_USER"] = "Вы не можете удалить приглашенного пользователя, так как он связан с другими инструментами.
 Деактивируйте (увольте) пользователя, чтобы закрыть ему доступ к этому Битрикс24.
 <br><br>Хотите уволить?";
-$MESS['INTRANET_USER_PROFILE_FACEBOOK_RESTRICTIONS_META_RU'] = '* Деятельность организации запрещена на территории Российской Федерации';
+$MESS['INTRANET_USER_PROFILE_FACEBOOK_RESTRICTIONS_META_RU'] = '* Деятельность Meta Platforms Inc. (Facebook, Instagram) запрещена на территории Российской Федерации';
+
 ?>

@@ -18,6 +18,7 @@ use Bitrix\Crm\Timeline\DocumentController;
 use Bitrix\Crm\Timeline\DocumentEntry;
 use Bitrix\Crm\Timeline\TimelineType;
 use Bitrix\Crm\UI\Barcode;
+use Bitrix\Crm\UI\Barcode\Payment\TransactionData;
 use Bitrix\DocumentGenerator\CreationMethod;
 use Bitrix\DocumentGenerator\DataProvider;
 use Bitrix\DocumentGenerator\DataProvider\EntityDataProvider;
@@ -246,6 +247,11 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 		if($this->fields === null)
 		{
 			$fields = array_merge(parent::getFields(), $this->getCommonFields());
+
+			if ($this->isLightMode())
+			{
+				unset($fields['PAYMENT_QR_CODE']);
+			}
 
 			$this->fields = $fields;
 			$fields = $this->getUserFields();
@@ -1098,7 +1104,15 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 					$entityId = $this->getContactId();
 					$entityTypeId = \CCrmOwnerType::Contact;
 				}
-
+				while ($entityId instanceof CrmEntityDataProvider)
+				{
+					$entityId = $entityId->getSource();
+				}
+				if (!is_numeric($entityId))
+				{
+					$entityId = 0;
+				}
+				$entityId = (int)$entityId;
 				if($entityId > 0)
 				{
 					/** @var EntityRequisite $entityRequisite */
@@ -1225,6 +1239,10 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 		{
 			return $this->paymentQrCodePath;
 		}
+		if (!$this->isLoaded())
+		{
+			return null;
+		}
 
 		$transactionData = $this->prepareTransactionData();
 
@@ -1240,29 +1258,149 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 		return $this->paymentQrCodePath;
 	}
 
-	protected function prepareTransactionData(): Barcode\Payment\TransactionData
+	public function prepareTransactionData(): Barcode\Payment\TransactionData
 	{
-		$myCompanyRequisiteId = $this->getMyCompanyRequisiteId();
-		$myCompanyBankDetailId = $this->getMyCompanyBankDetailId();
-
-		$clientRequisiteId = $this->getRequisiteId();
-		if (is_array($clientRequisiteId))
+		$dataProviderManager = DataProviderManager::getInstance();
+		$myCompany = $dataProviderManager->getDataProviderValue($this, 'MY_COMPANY');
+		if (!($myCompany instanceof Company))
 		{
-			$clientRequisiteId = DataProviderManager::getInstance()->getValueFromList($clientRequisiteId);
-		}
+			if (is_array($myCompany))
+			{
+				// several my companies, get selected one
+				$myCompany = $dataProviderManager->getValueFromList($myCompany);
+			}
 
-		$clientBankDetailId = $this->getBankDetailId();
-		if (is_array($clientBankDetailId))
+			// we have id of my company
+			if (is_numeric($myCompany))
+			{
+				$myCompanyFieldDescription = $this->fields['MY_COMPANY'] ?? null;
+				if (is_array($myCompanyFieldDescription))
+				{
+					$myCompany = $dataProviderManager->createDataProvider($myCompanyFieldDescription, $myCompany, $this);
+				}
+			}
+		}
+		$myCompanyRequisites = [];
+		$myCompanyBankDetail = [];
+		if ($myCompany instanceof Company)
 		{
-			$clientBankDetailId = DataProviderManager::getInstance()->getValueFromList($clientBankDetailId);
+			[$myCompanyRequisites, $myCompanyBankDetail] = $this->extractRequisiteAndBankDetailDataFromProvider($myCompany, 'MY_COMPANY');
 		}
-
-		return Barcode\Payment\DataAssembler::createTransactionDataByRequisites(
-			(int)$myCompanyRequisiteId,
-			(int)$myCompanyBankDetailId,
-			(int)$clientRequisiteId,
-			(int)$clientBankDetailId,
+		$myCompanyTransactionPartyData = Barcode\Payment\DataAssembler::createTransactionPartyDataByRequisiteData(
+			$myCompanyRequisites,
+			$myCompanyBankDetail
 		);
+		[$requisites, $bankDetails] = $this->extractRequisiteAndBankDetailDataFromProvider($this);
+		$clientTransactionPartyData = Barcode\Payment\DataAssembler::createTransactionPartyDataByRequisiteData(
+			$requisites,
+			$bankDetails
+		);
+
+		return new TransactionData($myCompanyTransactionPartyData, $clientTransactionPartyData);
+	}
+
+	protected function extractRequisiteAndBankDetailDataFromProvider(
+		CrmEntityDataProvider $provider,
+		string $prefix = ''
+	): array
+	{
+		$requisiteData = [];
+		$bankDetailData = [];
+		$optionValues = $this->getOptions()['VALUES'] ?? [];
+		$dataProviderManager = DataProviderManager::getInstance();
+		$requisiteId = $dataProviderManager->getDataProviderValue($provider, 'REQUISITE');
+		if (is_array($requisiteId))
+		{
+			$requisiteId = $dataProviderManager->getValueFromList($requisiteId);
+		}
+		if (!is_scalar($requisiteId) || (int)$requisiteId <= 0)
+		{
+			$requisiteId = null;
+		}
+		$requisite = null;
+		$requisiteFieldDescription = $provider->getFields()['REQUISITE'] ?? null;
+		if (is_array($requisiteFieldDescription))
+		{
+			$requisite = $dataProviderManager->createDataProvider(
+				$requisiteFieldDescription,
+				$requisiteId,
+				$provider
+			);
+		}
+		if ($requisite)
+		{
+			$requisiteData = $dataProviderManager->getArray($requisite, [
+				'rawValue' => true,
+			]);
+		}
+		else
+		{
+			$requisite = new Requisite(0);
+		}
+		foreach ($requisite->getFields() as $placeholder => $fieldDescription)
+		{
+			$templatePlaceholder = $dataProviderManager->valueToPlaceholder(
+				($prefix ? $prefix . '.' : '')
+				. 'REQUISITE'
+				. '.' . $placeholder
+			);
+			if (isset($optionValues[$templatePlaceholder]))
+			{
+				$requisiteData[$placeholder] = $optionValues[$templatePlaceholder];
+				continue;
+			}
+			if (($fieldDescription['TYPE'] ?? '') === static::FIELD_TYPE_NAME)
+			{
+				$requisiteData[$placeholder] = $requisite->getRawNameValue($placeholder);
+			}
+		}
+
+		$bankDetailId = $dataProviderManager->getDataProviderValue($provider, 'BANK_DETAIL');
+		if (is_array($bankDetailId))
+		{
+			$bankDetailId = $dataProviderManager->getValueFromList($bankDetailId);
+		}
+		if (!is_scalar($bankDetailId) || (int)$bankDetailId <= 0)
+		{
+			$bankDetailId = null;
+		}
+		$bankDetail = null;
+		$bankDetailFieldDescription = $provider->getFields()['BANK_DETAIL'] ?? null;
+		if (is_array($bankDetailFieldDescription))
+		{
+			$bankDetail = $dataProviderManager->createDataProvider(
+				$provider->getFields()['BANK_DETAIL'],
+				$bankDetailId,
+				$provider
+			);
+		}
+		if ($bankDetail)
+		{
+			$bankDetailData = $dataProviderManager->getArray($bankDetail, [
+				'rawValue' => true,
+			]);
+		}
+		else
+		{
+			$bankDetail = new BankDetail(0);
+		}
+		foreach ($bankDetail->getFields() as $placeholder => $fieldDescription)
+		{
+			$templatePlaceholder = $dataProviderManager->valueToPlaceholder(
+				($prefix ? $prefix . '.' : '')
+				. 'BANK_DETAIL'
+				. '.' . $placeholder
+			);
+			if (isset($optionValues[$templatePlaceholder]))
+			{
+				$bankDetailData[$placeholder] = $optionValues[$templatePlaceholder];
+			}
+		}
+
+		return [
+			$requisiteData,
+			$bankDetailData,
+		];
 	}
 
 	/**

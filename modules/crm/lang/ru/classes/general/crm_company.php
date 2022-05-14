@@ -97,5 +97,5 @@ $MESS["CRM_COMPANY_UNTITLED"] = "Без названия";
 $MESS["CRM_PERMISSION_USER_NOT_DEFINED"] = "Не удалось выполнить проверку прав. Не задан пользователь.";
 $MESS["CRM_COMPANY_FIELD_UTM"] = "UTM-метки";
 $MESS["CRM_COMPANY_DEFAULT_TITLE_TEMPLATE"] = "Компания #%NUMBER%";
-$MESS["CRM_ERROR_FIELD_MY_COMPANY_IN_CUSTOM_CATEGORY"] = "Реквизиты вашей компании могут принадлежать только категории по-умолчанию";
+$MESS["CRM_ERROR_FIELD_MY_COMPANY_IN_CUSTOM_CATEGORY"] = "Реквизиты вашей компании могут принадлежать только категории по умолчанию";
 ?>

@@ -17,11 +17,7 @@ class KanbanService implements Errorable
 {
 	const ERROR_COULD_NOT_ADD_TASK = 'TASKS_KS_01';
 	const ERROR_COULD_NOT_REMOVE_TASK = 'TASKS_KS_02';
-	const ERROR_COULD_NOT_GET_TASKS = 'TASKS_KS_03';
-	const ERROR_COULD_NOT_GET_STAGES = 'TASKS_KS_04';
 	const ERROR_COULD_NOT_ADD_ONE_TASK = 'TASKS_KS_05';
-	const ERROR_COULD_NOT_GET_FINISH_STAGE = 'TASKS_KS_06';
-	const ERROR_COULD_NOT_CHECK_IS_TASK_IN_BASKET = 'TASKS_TS_07';
 
 	private $errorCollection;
 
@@ -149,9 +145,10 @@ class KanbanService implements Errorable
 	 *
 	 * @param int $sprintId Sprint id.
 	 * @param array $taskIds List task id.
+	 * @param int $lastSprintId Last sprint id only for start new sprint.
 	 * @return bool
 	 */
-	public function addTasksToKanban(int $sprintId, array $taskIds): bool
+	public function addTasksToKanban(int $sprintId, array $taskIds, int $lastSprintId = 0): bool
 	{
 		try
 		{
@@ -165,24 +162,25 @@ class KanbanService implements Errorable
 			$defaultStageId = StagesTable::getDefaultStageId($sprintId);
 
 			$taskStageIdsMap = [];
-
-			if ($lastSprintId = $this->getLastCompletedSprintIdSameGroup($sprintId))
+			if ($lastSprintId)
 			{
 				$stageIdsMap = $this->getStageIdsMapBetweenTwoSprints($sprintId, $lastSprintId);
-
-				$lastStages = $this->getStagesCompletedSprint($lastSprintId);
-				foreach ($lastStages as $lastStage)
+				if ($stageIdsMap)
 				{
-					$taskIdsInLastSprint = $this->getTaskIds([
-						'=STAGE.ENTITY_TYPE' => StagesTable::WORK_MODE_ACTIVE_SPRINT,
-						'TASK_ID' => $taskIds,
-						'STAGE_ID' => $lastStage['ID']
-					]);
-					if ($taskIdsInLastSprint)
+					$lastStages = $this->getStagesCompletedSprint($lastSprintId);
+					foreach ($lastStages as $lastStage)
 					{
-						foreach ($taskIdsInLastSprint as $taskIdInLastSprint)
+						$taskIdsInLastSprint = $this->getTaskIds([
+							'=STAGE.ENTITY_TYPE' => StagesTable::WORK_MODE_ACTIVE_SPRINT,
+							'TASK_ID' => $taskIds,
+							'STAGE_ID' => $lastStage['ID']
+						]);
+						if ($taskIdsInLastSprint)
 						{
-							$taskStageIdsMap[$taskIdInLastSprint] = $stageIdsMap[$lastStage['ID']];
+							foreach ($taskIdsInLastSprint as $taskIdInLastSprint)
+							{
+								$taskStageIdsMap[$taskIdInLastSprint] = $stageIdsMap[$lastStage['ID']];
+							}
 						}
 					}
 				}
@@ -381,26 +379,17 @@ class KanbanService implements Errorable
 	{
 		$stages = [];
 
-		try
+		if ($sprintId > 0)
 		{
-			if ($sprintId > 0)
+			if ($lastSprintId = $this->getLastCompletedSprintIdSameGroup($sprintId))
 			{
-				if ($lastSprintId = $this->getLastCompletedSprintIdSameGroup($sprintId))
-				{
-					$stages = $this->getStagesCompletedSprint($lastSprintId);
-				}
-			}
-
-			if ($stages)
-			{
-				return $stages;
+				$stages = $this->getStagesCompletedSprint($lastSprintId);
 			}
 		}
-		catch (\Exception $exception)
+
+		if ($stages)
 		{
-			$this->errorCollection->setError(
-				new Error($exception->getMessage(), self::ERROR_COULD_NOT_GET_STAGES)
-			);
+			return $stages;
 		}
 
 		return [
@@ -542,39 +531,6 @@ class KanbanService implements Errorable
 		return true;
 	}
 
-	private function getTaskIds(array $filter): array
-	{
-		$taskIds = [];
-
-		try
-		{
-			$queryObject = TaskStageTable::getList([
-				'select' => ['TASK_ID'],
-				'filter' => $filter
-			]);
-			while ($taskStage = $queryObject->fetch())
-			{
-				$taskIds[$taskStage['TASK_ID']] = $taskStage['TASK_ID'];
-			}
-
-			foreach ($this->isTasksInBasket($taskIds) as $taskId => $result)
-			{
-				if ($result === true)
-				{
-					unset($taskIds[$taskId]);
-				}
-			}
-		}
-		catch (\Exception $exception)
-		{
-			$this->errorCollection->setError(
-				new Error($exception->getMessage(), self::ERROR_COULD_NOT_GET_TASKS)
-			);
-		}
-
-		return array_values($taskIds);
-	}
-
 	public function getLastCompletedSprintIdSameGroup(int $sprintId): int
 	{
 		$queryObject = EntityTable::getList([
@@ -583,20 +539,97 @@ class KanbanService implements Errorable
 				'ID'=> (int) $sprintId
 			]
 		]);
+
 		if ($sprintData = $queryObject->fetch())
 		{
 			$queryObjectLastSprint = EntityTable::getList([
-				'select' => ['ID'],
+				'select' => ['ID', 'DATE_END'],
 				'filter' => [
-					'!ID' => $sprintId,
-					'GROUP_ID' => $sprintData['GROUP_ID'],
+					'GROUP_ID'=> (int) $sprintData['GROUP_ID'],
+					'=ENTITY_TYPE' => EntityForm::SPRINT_TYPE,
 					'=STATUS' => EntityForm::SPRINT_COMPLETED
 				],
-				'order' => ['DATE_END' => 'DESC']
+				'order' => ['DATE_END' => 'DESC'],
+				'limit' => 1
 			]);
+
 			return (($fields = $queryObjectLastSprint->fetch()) ? $fields['ID'] : 0);
 		}
+
 		return 0;
+	}
+
+	public function getStageIdsMapBetweenTwoSprints(int $firstSprintId, int $secondSprintId): array
+	{
+		$firstStages = [];
+		$secondStages = [];
+
+		$queryObject = StagesTable::getList([
+			'select' => ['*'],
+			'filter' => [
+				'ENTITY_TYPE' => StagesTable::WORK_MODE_ACTIVE_SPRINT,
+				'ENTITY_ID' => [$firstSprintId, $secondSprintId],
+			],
+			'order' => ['SORT' => 'ASC']
+		]);
+		while ($stage = $queryObject->fetch())
+		{
+			if ($stage['ENTITY_ID'] == $firstSprintId)
+			{
+				$firstStages[] = $stage;
+			}
+			else if ($stage['ENTITY_ID'] == $secondSprintId)
+			{
+				$secondStages[] = $stage;
+			}
+		}
+
+		$stageIdsMap = [];
+
+		if (count($firstStages) !== count($secondStages))
+		{
+			return $stageIdsMap;
+		}
+
+		foreach ($firstStages as $firstStage)
+		{
+			foreach ($secondStages as $secondStage)
+			{
+				if (
+					$firstStage['TITLE'] === $secondStage['TITLE']
+					&& $firstStage['SORT'] === $secondStage['SORT']
+				)
+				{
+					$stageIdsMap[$secondStage['ID']] = $firstStage['ID'];
+				}
+			}
+		}
+
+		return $stageIdsMap;
+	}
+
+	private function getTaskIds(array $filter): array
+	{
+		$taskIds = [];
+
+		$queryObject = TaskStageTable::getList([
+			'select' => ['TASK_ID'],
+			'filter' => $filter
+		]);
+		while ($taskStage = $queryObject->fetch())
+		{
+			$taskIds[$taskStage['TASK_ID']] = $taskStage['TASK_ID'];
+		}
+
+		foreach ($this->isTasksInBasket($taskIds) as $taskId => $result)
+		{
+			if ($result === true)
+			{
+				unset($taskIds[$taskId]);
+			}
+		}
+
+		return array_values($taskIds);
 	}
 
 	private function getStagesCompletedSprint(int $sprintId): array
@@ -651,122 +684,45 @@ class KanbanService implements Errorable
 		return self::$sprintStageIds[$sprintId];
 	}
 
-	public function getStageIdsMapBetweenTwoSprints(int $firstSprintId, int $secondSprintId): array
-	{
-		$firstStages = [];
-		$secondStages = [];
-
-		$queryObject = StagesTable::getList([
-			'select' => ['*'],
-			'filter' => [
-				'ENTITY_TYPE' => StagesTable::WORK_MODE_ACTIVE_SPRINT,
-				'ENTITY_ID' => [$firstSprintId, $secondSprintId],
-			],
-			'order' => ['SORT' => 'ASC']
-		]);
-		while ($stage = $queryObject->fetch())
-		{
-			if ($stage['ENTITY_ID'] == $firstSprintId)
-			{
-				$firstStages[] = $stage;
-			}
-			else if ($stage['ENTITY_ID'] == $secondSprintId)
-			{
-				$secondStages[] = $stage;
-			}
-		}
-
-		$stageIdsMap = [];
-
-		foreach ($firstStages as $firstStage)
-		{
-			foreach ($secondStages as $secondStage)
-			{
-				if ($firstStage['SORT'] === $secondStage['SORT'])
-				{
-					$stageIdsMap[$secondStage['ID']] = $firstStage['ID'];
-				}
-			}
-		}
-
-		return $stageIdsMap;
-	}
-
 	private function getFinishStageId(int $sprintId): int
 	{
-		try
+		StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
+
+		$stageId = 0;
+
+		$stages = StagesTable::getStages($sprintId, true);
+		foreach ($stages as $stage)
 		{
-			StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
-
-			$stageId = 0;
-
-			$stages = StagesTable::getStages($sprintId, true);
-			foreach ($stages as $stage)
+			if ($stage['SYSTEM_TYPE'] == $this->getFinishStatus())
 			{
-				if ($stage['SYSTEM_TYPE'] == $this->getFinishStatus())
-				{
-					$stageId = (int) $stage['ID'];
-				}
+				$stageId = (int) $stage['ID'];
 			}
-
-			return $stageId;
-		}
-		catch (\Exception $exception)
-		{
-			$this->errorCollection->setError(
-				new Error($exception->getMessage(), self::ERROR_COULD_NOT_GET_FINISH_STAGE)
-			);
 		}
 
-		return 0;
+		return $stageId;
 	}
 
 	private function getNewStageId(int $sprintId): int
 	{
-		try
+		StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
+
+		$stageId = 0;
+
+		$stages = StagesTable::getStages($sprintId, true);
+		foreach ($stages as $stage)
 		{
-			StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
-
-			$stageId = 0;
-
-			$stages = StagesTable::getStages($sprintId, true);
-			foreach ($stages as $stage)
+			if ($stage['SYSTEM_TYPE'] == $this->getNewStatus())
 			{
-				if ($stage['SYSTEM_TYPE'] == $this->getNewStatus())
-				{
-					$stageId = (int)$stage['ID'];
-				}
+				$stageId = (int)$stage['ID'];
 			}
-
-			return $stageId;
-		}
-		catch (\Exception $exception)
-		{
-			$this->errorCollection->setError(
-				new Error($exception->getMessage(), self::ERROR_COULD_NOT_GET_FINISH_STAGE)
-			);
 		}
 
-		return 0;
+		return $stageId;
 	}
 
 	private function isTasksInBasket(array $taskIds): array
 	{
-		try
-		{
-			return Recyclebin\Task::isInTheRecycleBin($taskIds);
-		}
-		catch (\Exception $exception)
-		{
-			$this->errorCollection->setError(
-				new Error(
-					$exception->getMessage(),
-					self::ERROR_COULD_NOT_CHECK_IS_TASK_IN_BASKET
-				)
-			);
-
-			return [];
-		}
+		return Recyclebin\Task::isInTheRecycleBin($taskIds);
 	}
 
 	private function completeTask(int $taskId)

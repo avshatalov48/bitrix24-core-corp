@@ -5,6 +5,7 @@ import {EntityStorage} from '../../entity/entity.storage';
 import {Sprint, SprintParams} from '../../entity/sprint/sprint';
 
 import {RequestSender} from '../../utility/request.sender';
+import {Scroller} from '../../utility/scroller';
 
 import {CompletedSprints} from './completed.sprints';
 
@@ -33,6 +34,11 @@ export class PlanBuilder extends EventEmitter
 		this.displayPriority = params.displayPriority;
 		this.isShortView = params.isShortView;
 		this.mandatoryExists = params.mandatoryExists;
+
+		this.scroller = new Scroller({
+			planBuilder: this,
+			entityStorage: this.entityStorage
+		});
 	}
 
 	renderTo(container: HTMLElement)
@@ -173,7 +179,7 @@ export class PlanBuilder extends EventEmitter
 
 				this.appendToPlannedContainer(sprint);
 
-				this.scrollToSprint(sprint);
+				this.scroller.scrollToSprint(sprint);
 
 				this.emit('createSprint', sprint);
 
@@ -294,21 +300,6 @@ export class PlanBuilder extends EventEmitter
 		{
 			Dom.addClass(plannedContainer, '--empty');
 		}
-	}
-
-	scrollToSprint(sprint: Sprint)
-	{
-		// todo dynamic focus to sprint node (loadItems)
-
-		window.scrollTo({ top: 240, behavior: 'smooth' });
-
-		const sprintsContainer = this.getSprintsContainer();
-		const position = Dom.getRelativePosition(sprint.getNode(), sprintsContainer).bottom;
-
-		sprintsContainer.scrollTo({
-			top: sprintsContainer.scrollTop + position,
-			behavior: 'smooth'
-		});
 	}
 
 	updatePlannedSprints(plannedSprints: Set<Sprint>, existActiveSprint: boolean)

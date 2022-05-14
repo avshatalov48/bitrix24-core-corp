@@ -95,7 +95,7 @@ export class Dod extends EventEmitter
 				width: 1000,
 				contentCallback: () => {
 					return Layout.createContent({
-						extensions: ['tasks.scrum.dod'],
+						extensions: ['tasks.scrum.dod', 'ui.entity-selector'],
 						title: Loc.getMessage('TASKS_SCRUM_DOD_TITLE'),
 						content: this.createSettingsContent.bind(this),
 						design: {

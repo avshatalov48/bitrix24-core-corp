@@ -2,13 +2,11 @@ import {Dom, Tag, Type, Loc, Event} from 'main.core';
 import {BaseEvent} from 'main.core.events';
 import {Loader} from 'main.loader';
 
-import {ItemType} from './item.type';
+import {ItemType, ItemTypeParams} from './item.type';
 import {TypeStorage} from './type.storage';
 import {Tabs} from './tabs';
 
 import {RequestSender} from './request.sender';
-
-import type {ItemTypeParams} from './item.type';
 
 type Params = {
 	requestSender: RequestSender,
@@ -72,6 +70,8 @@ export class Settings
 
 	render(): HTMLElement
 	{
+		const currentType: ItemType = this.typeStorage.getNextType();
+
 		this.node = Tag.render`
 			<div class="tasks-scrum-dod-settings">
 				<div class="tasks-scrum-dod-settings-container">
@@ -79,7 +79,7 @@ export class Settings
 						<div class="tasks-scrum-dod-settings-container-shell">
 							${this.tabs.render()}
 							<div class="tasks-scrum-dod-settings-container-sidebar-wrapper">
-								${this.renderContainer()}
+								${this.renderContainer(currentType)}
 							</div>
 						</div>
 					</div>
@@ -90,7 +90,7 @@ export class Settings
 		return this.node;
 	}
 
-	renderContainer(): HTMLElement
+	renderContainer(type: ItemType): HTMLElement
 	{
 		if (this.tabs.isEmpty())
 		{
@@ -98,7 +98,7 @@ export class Settings
 		}
 		else
 		{
-			return this.renderEditingForm(this.typeStorage.getNextType());
+			return this.renderEditingForm(type);
 		}
 	}
 
@@ -109,6 +109,11 @@ export class Settings
 				<div class="ui-form-row">
 					<div class="ui-form-content">
 						${this.renderRequiredOption(type)}
+					</div>
+				</div>
+				<div class="ui-form-row">
+					<div class="ui-form-content">
+						${this.renderParticipantsSelector()}
 					</div>
 				</div>
 				<div class="ui-form-row">
@@ -158,11 +163,69 @@ export class Settings
 		return node;
 	}
 
+	renderParticipantsSelector(): ?HTMLElement
+	{
+		return ''; //todo tmp
+
+		return Tag.render`
+			<div class="ui-form-row">
+				<div class="ui-form-label">
+					<div class="ui-ctl-label-text">
+						${Loc.getMessage('TASKS_SCRUM_DOD_LABEL_USER_SELECTOR')}
+					</div>
+				</div>
+				<div class="ui-form-content">
+					<div class="tasks-scrum-dod-settings-user-selector"></div>
+				</div>
+			</div>
+		`;
+	}
+
+	initParticipantsSelector(type: ItemType)
+	{
+		const participantsSelectorContainer = this.node.querySelector('.tasks-scrum-dod-settings-user-selector');
+
+		if (Type.isNil(participantsSelectorContainer))
+		{
+			return;
+		}
+
+		const selectorId = 'tasks-scrum-dod-settings-participants-selector-' + type.getId();
+
+		this.participantsSelector = new top.BX.UI.EntitySelector.TagSelector({
+			id: selectorId,
+			dialogOptions: {
+				id: selectorId,
+				context: 'TASKS',
+				preselectedItems: this.tabs.getActiveType().getParticipants(),
+				entities: [
+					{
+						id: 'user',
+						options: {
+							inviteEmployeeLink: false
+						}
+					},
+					{
+						id: 'project-roles',
+						options: {
+							projectId: this.groupId
+						},
+						dynamicLoad: true
+					}
+				],
+			}
+		});
+
+		this.participantsSelector.renderTo(participantsSelectorContainer);
+	}
+
 	buildEditingForm(type: ItemType)
 	{
 		const container = this.cleanTypeForm();
 
 		Dom.append(this.renderEditingForm(type), container);
+
+		this.initParticipantsSelector(type);
 
 		const listContainer = this.node.querySelector('.ui-form-content-dod-list');
 
@@ -191,13 +254,18 @@ export class Settings
 
 	onSwitchType(baseEvent: BaseEvent)
 	{
-		const type = baseEvent.getData();
-		const previousType = this.tabs.getPreviousType();
+		const type: ItemType = baseEvent.getData();
+		const previousType: ?ItemType = this.tabs.getPreviousType();
 
 		if (previousType)
 		{
 			this.saveSettings(previousType)
-				.then(() => {
+				.then((response) => {
+					const updatedType: ItemTypeParams = response.data.type;
+
+					previousType.setDodRequired(updatedType.dodRequired);
+					previousType.setParticipants(updatedType.participants);
+
 					this.buildEditingForm(type);
 				})
 			;
@@ -281,7 +349,7 @@ export class Settings
 			return Promise.resolve();
 		}
 
-		const type = inputType? inputType : this.tabs.getActiveType();
+		const type = inputType ? inputType : this.tabs.getActiveType();
 
 		if (!(type instanceof ItemType))
 		{
@@ -292,7 +360,8 @@ export class Settings
 			groupId: this.groupId,
 			typeId: type.getId(),
 			requiredOption: this.getRequiredOptionValue(),
-			items: this.getChecklistItems()
+			items: this.getChecklistItems(),
+			participants: this.getSelectedParticipants()
 		})
 		.catch((response) => {
 			this.requestSender.showErrorAlert(response);
@@ -311,6 +380,27 @@ export class Settings
 
 		return treeStructure.getRequestData();
 		/* eslint-enable */
+	}
+
+	getSelectedParticipants(): Array
+	{
+		if (Type.isNil(this.participantsSelector))
+		{
+			return [];
+		}
+
+		const selectedParticipants = [];
+
+		this.participantsSelector.getTags()
+			.forEach((tag) => {
+				selectedParticipants.push({
+					id: tag.getId(),
+					entityId: tag.getEntityId()
+				});
+			})
+		;
+
+		return selectedParticipants;
 	}
 
 	getRequiredOptionValue(): string

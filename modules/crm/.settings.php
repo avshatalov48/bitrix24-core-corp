@@ -62,6 +62,9 @@ return array(
 			'crm.service.factory.smartInvoice' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Factory\\SmartInvoice',
 			],
+			'crm.service.factory.order' => [
+				'className' => '\\Bitrix\\Crm\\Service\\Factory\\Order',
+			],
 			'crm.type.factory' => [
 				'className' => '\\Bitrix\\Crm\\Model\\Dynamic\\Factory',
 			],
@@ -151,6 +154,9 @@ return array(
 			],
 			'crm.service.fileUploader' => [
 				'className' => '\\Bitrix\\Crm\\Service\\FileUploader',
+			],
+			'crm.service.multifieldStorage' => [
+				'className' => '\\Bitrix\\Crm\\Service\\MultifieldStorage',
 			],
 			'crm.kanban.entity.lead' => [
 				'className' => '\\Bitrix\\Crm\\Kanban\\Entity\\Lead',
@@ -250,6 +256,9 @@ return array(
 			],
 			'crm.conversion.mapper' => [
 				'className' => '\\Bitrix\\Crm\\Conversion\\Mapper',
+			],
+			'crm.model.fieldRepository' => [
+				'className' => '\\Bitrix\\Crm\\Model\\FieldRepository',
 			],
 		],
 		'readonly' => true,

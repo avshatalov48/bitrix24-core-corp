@@ -27,6 +27,8 @@ class LeadConversionConfig extends EntityConversionConfig
 		{
 			$this->addItem(new EntityConversionConfigItem($entityTypeID));
 		}
+
+		$this->appendCustomRelations();
 	}
 
 	protected static function getEntityTypeId(): int

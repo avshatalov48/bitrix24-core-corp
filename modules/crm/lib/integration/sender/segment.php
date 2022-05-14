@@ -191,20 +191,13 @@ class Segment extends Main\Engine\Controller
 			return $result;
 		}
 
-		$filterOptions = new Main\UI\Filter\Options($gridId);
-		$filterFields = $filterOptions->getFilter();
-		$entityFilter = Crm\Filter\Factory::createEntityFilter(
-			Crm\Filter\Factory::createEntitySettings($entityTypeId, $gridId)
-		);
-
-		$entityFilter->prepareListFilterParams($filterFields);
-		Crm\Search\SearchEnvironment::convertEntityFilterValues($entityTypeId, $filterFields);
-		\CCrmEntityHelper::PrepareMultiFieldFilter($filterFields, array(), '=%', false);
+		$filterFields = \Bitrix\Crm\Filter\Factory::createEntityFilter(
+			\Bitrix\Crm\Filter\Factory::getSettingsByGridId($entityTypeId, (string)$gridId)
+		)->getValue();
 
 		$entity = Crm\Entity\EntityManager::resolveByTypeID($entityTypeId);
 		if($entity)
 		{
-			$entity->prepareFilter($filterFields, []);
 			if ($entity->getCount(['filter' => $filterFields]) > self::ENTITIES_LIMIT)
 			{
 				$result->addError(

@@ -338,7 +338,7 @@ export default class Widget extends EventEmitter
 							<span>${Loc.getMessage('INTRANET_USER_PROFILE_MASKS')}</span>
 							<span class="system-auth-form__icon-help"></span>
 						</div>
-						<div class="system-auth-form__item-content">
+						<div class="system-auth-form__item-content --center --center-force">
 							<div class="ui-qr-popupcomponentmaker__btn">${Loc.getMessage('INTRANET_USER_PROFILE_INSTALL')}</div>
 						</div>
 					</div>
@@ -550,7 +550,7 @@ export default class Widget extends EventEmitter
 							<a href="${linkToDistributive}" class="system-auth-form__item-title --link-dotted">${Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD')}</a>
 							` : ''
 							}
-						<div class="system-auth-form__item-content">
+						<div class="system-auth-form__item-content --center --center-force">
 							<a class="ui-qr-popupcomponentmaker__btn" href="${linkToDistributive}" target="_blank" onclick="${onclick}">
 								${isInstalled ? Loc.getMessage('INTRANET_USER_PROFILE_INSTALLED') : Loc.getMessage('INTRANET_USER_PROFILE_INSTALL')}
 							</a>
@@ -606,7 +606,7 @@ export default class Widget extends EventEmitter
 									<div class="system-auth-form__item-title --link-dotted" onclick="${onclick}">${Loc.getMessage('INTRANET_USER_PROFILE_CONFIGURE')}</div>
 								` : ''
 							}
-							<div class="system-auth-form__item-content --margin-top-auto">
+							<div class="system-auth-form__item-content --margin-top-auto --center --center-force">
 								${button}
 							</div>
 						</div>
@@ -659,7 +659,7 @@ export default class Widget extends EventEmitter
 					</div>
 					${isInstalled ? Tag.render`<div class="system-auth-form__config --absolute" onclick="${popupClick}"></div>` : ''}
 					<div class="system-auth-form__item-container --flex --column --space-around">
-						<div class="system-auth-form__item-content --center --flex --display-flex">
+						<div class="system-auth-form__item-content --flex --display-flex">
 							${button}
 						</div>
 					</div>

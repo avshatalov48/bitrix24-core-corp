@@ -1,9 +1,11 @@
 "use strict";
 (()=>{
+	const { EntityReady } = jn.require('entity-ready');
+
 	if (typeof this.SocketConnection == 'undefined')
 	{
 		this.SocketConnection = new Connection();
-		// ChatReadyCheck.wait().then(() => this.SocketConnection.start());
+		// EntityReady.wait('chat').then(() => this.SocketConnection.start());
 		setTimeout(() => this.SocketConnection.start(), 0);
 	}
 	else
@@ -12,7 +14,7 @@
 		this.SocketConnection = new Connection();
 		setTimeout(() => {
 			this.SocketConnection.start();
-			// ChatReadyCheck.wait().then(() => this.SocketConnection.start());
+			// EntityReady.wait('chat').then(() => this.SocketConnection.start());
 		}, 2000);
 	}
 
@@ -431,6 +433,67 @@
 
 	window.Counters = new AppCounters();
 
+	class DesktopStatus
+	{
+		constructor()
+		{
+			this.isOnline = false;
+			this.version = 0;
+			BX.addCustomEvent("setDesktopStatus", this.setDesktopStatus.bind(this));
+			BX.addCustomEvent("requestDesktopStatus", this.requestDesktopStatus.bind(this));
+		}
+
+		setDesktopStatus({isOnline, version})
+		{
+			console.info('DesktopStatus.set:', isOnline, version);
+
+			if (typeof isOnline === 'boolean')
+			{
+				this.isOnline = isOnline;
+				BX.postComponentEvent("desktopOnlineStatus", [this.getCurrentStatus()]);
+				BX.postWebEvent("desktopOnlineStatus", this.getCurrentStatus());
+			}
+			if (typeof version === 'number')
+			{
+				this.version = version;
+			}
+		}
+
+		requestDesktopStatus({component, web})
+		{
+			console.info('DesktopStatus.requestDesktopStatus: ', component);
+
+			if (component)
+			{
+				BX.postComponentEvent("onRequestDesktopStatus", [this.getCurrentStatus()], component);
+			}
+			else if (web)
+			{
+				BX.postWebEvent("onRequestDesktopStatus", this.getCurrentStatus());
+			}
+		}
+
+		getOnlineStatus()
+		{
+			return this.isOnline;
+		}
+
+		getVersion()
+		{
+			return this.version;
+		}
+
+		getCurrentStatus()
+		{
+			return {
+				isOnline: this.getOnlineStatus(),
+				version: this.getVersion()
+			};
+		}
+	}
+
+	window.DesktopStatus = new DesktopStatus();
+
 
 	/**
 	 * Auth restore
@@ -553,7 +616,7 @@
 			}, "Device", "getDeviceInfo", []);
 	};
 
-	ChatReadyCheck.wait().then(() => pushNotificationRegister);
+	EntityReady.wait('chat').then(() => pushNotificationRegister);
 	setTimeout(pushNotificationRegister, 5000);
 
 	/**

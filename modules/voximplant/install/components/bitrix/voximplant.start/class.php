@@ -165,7 +165,7 @@ class VoximplantStartComponent extends \CBitrixComponent
 
 		$result['MENU'] = [
 			'MAIN' => $this->getMenuItems(),
-			'SETTINGS' => $this->getSettingsItems(count($result['NUMBERS_LIST']) > 0),
+			'SETTINGS' => $this->getSettingsItems(!empty($result['NUMBERS_LIST'])),
 			'PARTNERS' => $this->getPartnerItems(),
 			'CRM' => $this->getCrmMenuItems(),
 		];
@@ -244,13 +244,16 @@ class VoximplantStartComponent extends \CBitrixComponent
 			return $result;
 		}
 
-		$result[] = [
-			'id' => 'rent-number',
-			'title' => Loc::getMessage("VOX_START_NUMBER_RENT"),
-			'className' => 'voximplant-start-logo-number-rental',
-			'selected' => (CVoxImplantPhone::hasRentedNumber() ? ' voximplant-tile-item-selected' : ''),
-			'onclick' => 'BX.Voximplant.Start.onRentButtonClick();'
-		];
+		if ($this->account->GetAccountLang() !== 'ua')
+		{
+			$result[] = [
+				'id' => 'rent-number',
+				'title' => Loc::getMessage("VOX_START_NUMBER_RENT"),
+				'className' => 'voximplant-start-logo-number-rental',
+				'selected' => (CVoxImplantPhone::hasRentedNumber() ? ' voximplant-tile-item-selected' : ''),
+				'onclick' => 'BX.Voximplant.Start.onRentButtonClick();'
+			];
+		}
 
 		if(\Bitrix\Voximplant\Limits::canRentMultiple())
 		{
@@ -633,7 +636,7 @@ class VoximplantStartComponent extends \CBitrixComponent
 		{
 			$res = $cache->GetVars();
 
-			if (is_array($res) && (count($res) > 0))
+			if (!empty($res) && is_array($res))
 			{
 				$items = $res;
 			}

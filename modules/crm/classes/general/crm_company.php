@@ -26,9 +26,11 @@ class CAllCrmCompany
 	use UserFieldPreparer;
 
 	static public $sUFEntityID = 'CRM_COMPANY';
+
 	const USER_FIELD_ENTITY_ID = 'CRM_COMPANY';
 	const SUSPENDED_USER_FIELD_ENTITY_ID = 'CRM_COMPANY_SPD';
-	const TOTAL_COUNT_CACHE_ID =  'crm_company_total_count';
+	const TOTAL_COUNT_CACHE_ID = 'crm_company_total_count';
+	const CACHE_TTL = 3600;
 
 	public $LAST_ERROR = '';
 	protected $checkExceptions = array();
@@ -535,7 +537,7 @@ class CAllCrmCompany
 			$cacheId .= '_all';
 		}
 
-		if($canUseCache && $GLOBALS['CACHE_MANAGER']->Read(600, $cacheId, 'b_crm_contact'))
+		if($canUseCache && $GLOBALS['CACHE_MANAGER']->Read(self::CACHE_TTL, $cacheId, 'b_crm_contact'))
 		{
 			return $GLOBALS['CACHE_MANAGER']->Get($cacheId);
 		}
@@ -1092,6 +1094,9 @@ class CAllCrmCompany
 
 		$isRestoration = isset($options['IS_RESTORATION']) && $options['IS_RESTORATION'];
 
+		// ALLOW_SET_SYSTEM_FIELDS is deprecated temporary option. It will be removed soon! Do not use it!
+		$allowSetSystemFields = $options['ALLOW_SET_SYSTEM_FIELDS'] ?? $isRestoration;
+
 		$userID = isset($options['CURRENT_USER'])
 			? (int)$options['CURRENT_USER'] : CCrmSecurityHelper::GetCurrentUserID();
 
@@ -1103,13 +1108,13 @@ class CAllCrmCompany
 
 		unset($arFields['ID']);
 
-		if(!($isRestoration && isset($arFields['DATE_CREATE'])))
+		if(!($allowSetSystemFields && isset($arFields['DATE_CREATE'])))
 		{
 			unset($arFields['DATE_CREATE']);
 			$arFields['~DATE_CREATE'] = $DB->CurrentTimeFunction();
 		}
 
-		if(!($isRestoration && isset($arFields['DATE_MODIFY'])))
+		if(!($allowSetSystemFields && isset($arFields['DATE_MODIFY'])))
 		{
 			unset($arFields['DATE_MODIFY']);
 			$arFields['~DATE_MODIFY'] = $DB->CurrentTimeFunction();
@@ -1306,8 +1311,6 @@ class CAllCrmCompany
 				Bitrix\Crm\Timeline\CompanyController::getInstance()->onCreate($ID, array('FIELDS' => $arFields));
 			}
 
-			DuplicateOrganizationCriterion::register(CCrmOwnerType::Company, $ID, $arFields['TITLE']);
-
 			EntityAddress::register(
 				CCrmOwnerType::Company,
 				$ID,
@@ -1352,14 +1355,19 @@ class CAllCrmCompany
 			{
 				$CCrmFieldMulti = new CCrmFieldMulti();
 				$CCrmFieldMulti->SetFields('COMPANY', $ID, $arFields['FM']);
-				$duplicateCommData = DuplicateCommunicationCriterion::prepareBulkData($arFields['FM']);
-				if(!empty($duplicateCommData))
-				{
-					DuplicateCommunicationCriterion::bulkRegister(CCrmOwnerType::Company, $ID, $duplicateCommData);
-				}
 			}
 			//endregion
-			DuplicateEntityRanking::registerEntityStatistics(CCrmOwnerType::Company, $ID, $arFields);
+
+			$duplicateCriterionRegistrar = Crm\Integrity\DuplicateManager::getCriterionRegistrar(\CCrmOwnerType::Company);
+
+			$data =
+				(new Crm\Integrity\CriterionRegistrar\Data())
+					->setEntityTypeId(\CCrmOwnerType::Company)
+					->setEntityId($ID)
+					->setCurrentFields($arFields)
+			;
+
+			$duplicateCriterionRegistrar->register($data);
 
 			// tracking of entity
 			Tracking\Entity::onAfterAdd(CCrmOwnerType::Company, $ID, $arFields);
@@ -1599,6 +1607,7 @@ class CAllCrmCompany
 		}
 
 		$assignedByID = (int)(isset($arFields['ASSIGNED_BY_ID']) ? $arFields['ASSIGNED_BY_ID'] : $arRow['ASSIGNED_BY_ID']);
+		$categoryId = (int)($arRow['CATEGORY_ID'] ?? 0);
 
 		$bResult = false;
 
@@ -1610,7 +1619,7 @@ class CAllCrmCompany
 		else
 		{
 			$permissionEntityType = (new PermissionEntityTypeHelper(CCrmOwnerType::Company))
-				->getPermissionEntityTypeForCategory((int)$arRow['CATEGORY_ID'])
+				->getPermissionEntityTypeForCategory($categoryId)
 			;
 
 			if($this->bCheckPermission && !CCrmAuthorizationHelper::CheckUpdatePermission($permissionEntityType, $ID, $this->cPerms))
@@ -1789,12 +1798,6 @@ class CAllCrmCompany
 			{
 				$DB->Query("UPDATE b_crm_company SET {$sUpdate} WHERE ID = {$ID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
 				$bResult = true;
-				$newTitle = isset($arFields['TITLE']) ? $arFields['TITLE'] : '';
-				$oldTitle = isset($arRow['TITLE']) ? $arRow['TITLE'] : '';
-				if($newTitle !== '' && $newTitle !== $oldTitle)
-				{
-					DuplicateOrganizationCriterion::register(CCrmOwnerType::Company, $ID, $newTitle);
-				}
 			}
 
 			if(defined("BX_COMP_MANAGED_CACHE"))
@@ -1861,12 +1864,6 @@ class CAllCrmCompany
 							? (int)$arFields['ADDRESS_LOC_ADDR_ID'] : (isset($arRow['ADDRESS_LOC_ADDR_ID']) ? (int)$arRow['ADDRESS_LOC_ADDR_ID'] : 0),
 						'LOC_ADDR' => isset($arFields['ADDRESS_LOC_ADDR']) ? $arFields['ADDRESS_LOC_ADDR'] : null
 					),
-					[
-						'updateLocationAddress' => !(
-							(isset($arFields['ADDRESS_LOC_ADDR_ID']) && $arFields['ADDRESS_LOC_ADDR_ID'] > 0) ||
-							(isset($arFields['ADDRESS_LOC_ADDR']) && is_object($arFields['ADDRESS_LOC_ADDR']))
-					)
-					]
 				);
 			}
 
@@ -1904,12 +1901,6 @@ class CAllCrmCompany
 							? (int)$arFields['REG_ADDRESS_LOC_ADDR_ID'] : (isset($arRow['REG_ADDRESS_LOC_ADDR_ID']) ? (int)$arRow['REG_ADDRESS_LOC_ADDR_ID'] : 0),
 						'LOC_ADDR' => isset($arFields['REG_ADDRESS_LOC_ADDR']) ? $arFields['REG_ADDRESS_LOC_ADDR'] : null
 					),
-					[
-						'updateLocationAddress' => !(
-							(isset($arFields['REG_ADDRESS_LOC_ADDR_ID']) && $arFields['REG_ADDRESS_LOC_ADDR_ID'] > 0) ||
-							(isset($arFields['REG_ADDRESS_LOC_ADDR']) && is_object($arFields['REG_ADDRESS_LOC_ADDR']))
-					)
-					]
 				);
 			}
 
@@ -1965,11 +1956,15 @@ class CAllCrmCompany
 					EntityCounterManager::reset(
 						EntityCounterManager::prepareCodes(
 							CCrmOwnerType::Company,
-							array(
+							[
 								EntityCounterType::PENDING,
 								EntityCounterType::OVERDUE,
-								EntityCounterType::ALL
-							)
+								EntityCounterType::ALL,
+							],
+							[
+								'CATEGORY_ID' => $categoryId,
+								'EXTENDED_MODE' => true,
+							]
 						),
 						$assignedByIDs
 					);
@@ -1988,12 +1983,6 @@ class CAllCrmCompany
 				$multifields = DuplicateCommunicationCriterion::prepareEntityMultifieldValues(
 					CCrmOwnerType::Company,
 					$ID
-				);
-
-				DuplicateCommunicationCriterion::bulkRegister(
-					CCrmOwnerType::Company,
-					$ID,
-					DuplicateCommunicationCriterion::prepareBulkData($multifields)
 				);
 
 				$hasEmail = CCrmFieldMulti::HasValues($multifields, CCrmFieldMulti::EMAIL) ? 'Y' : 'N';
@@ -2015,7 +2004,17 @@ class CAllCrmCompany
 				}
 			}
 
-			DuplicateEntityRanking::registerEntityStatistics(CCrmOwnerType::Company, $ID, array_merge($arRow, $arFields));
+			$duplicateCriterionRegistrar = Crm\Integrity\DuplicateManager::getCriterionRegistrar(\CCrmOwnerType::Company);
+
+			$data =
+				(new Crm\Integrity\CriterionRegistrar\Data())
+					->setEntityTypeId(\CCrmOwnerType::Company)
+					->setEntityId($ID)
+					->setCurrentFields($arFields)
+					->setPreviousFields($arRow)
+			;
+
+			$duplicateCriterionRegistrar->update($data);
 
 			// update utm fields
 			UtmTable::updateEntityUtmFromFields(CCrmOwnerType::Company, $ID, $arFields);
@@ -2267,11 +2266,13 @@ class CAllCrmCompany
 		{
 			return false;
 		}
-		$permissionEntityType = (new PermissionEntityTypeHelper(CCrmOwnerType::Company))
-			->getPermissionEntityTypeForCategory((int)$arFields['CATEGORY_ID'])
-		;
 
 		$assignedByID = isset($arFields['ASSIGNED_BY_ID']) ? (int)$arFields['ASSIGNED_BY_ID'] : 0;
+		$categoryId = (int)($arFields['CATEGORY_ID'] ?? 0);
+
+		$permissionEntityType = (new PermissionEntityTypeHelper(CCrmOwnerType::Company))
+			->getPermissionEntityTypeForCategory($categoryId)
+		;
 
 		$sWherePerm = '';
 		if ($this->bCheckPermission)
@@ -2330,6 +2331,8 @@ class CAllCrmCompany
 				self::ReleaseExternalResources($arFields);
 			}
 
+			Container::getInstance()->getFactory(CCrmOwnerType::Company)->clearItemCategoryCache((int)$ID);
+
 			CCrmSearch::DeleteSearch('COMPANY', $ID);
 
 			Bitrix\Crm\Search\SearchContentBuilderFactory::create(
@@ -2352,22 +2355,27 @@ class CAllCrmCompany
 			else
 			{
 				Bitrix\Crm\Cleaning\CleaningManager::register(CCrmOwnerType::Company, $ID);
-				if(!Bitrix\Crm\Agent\Routine\CleaningAgent::isActive())
-				{
-					Bitrix\Crm\Agent\Routine\CleaningAgent::activate();
-				}
 			}
 
 			$enableDupIndexInvalidation = isset($arOptions['ENABLE_DUP_INDEX_INVALIDATION'])
-				? (bool)$arOptions['ENABLE_DUP_INDEX_INVALIDATION'] : true;
+				? (bool)$arOptions['ENABLE_DUP_INDEX_INVALIDATION']
+				: true;
+
 			if($enableDupIndexInvalidation)
 			{
 				\Bitrix\Crm\Integrity\DuplicateManager::markDuplicateIndexAsJunk(CCrmOwnerType::Company, $ID);
 			}
 
-			DuplicateEntityRanking::unregisterEntityStatistics(CCrmOwnerType::Company, $ID);
-			DuplicateOrganizationCriterion::unregister(CCrmOwnerType::Company, $ID);
-			DuplicateCommunicationCriterion::unregister(CCrmOwnerType::Company, $ID);
+			$duplicateCriterionRegistrar = Crm\Integrity\DuplicateManager::getCriterionRegistrar(\CCrmOwnerType::Company);
+
+			$data =
+				(new Crm\Integrity\CriterionRegistrar\Data())
+					->setEntityTypeId(\CCrmOwnerType::Company)
+					->setEntityId($ID)
+			;
+
+			$duplicateCriterionRegistrar->unregister($data);
+
 			DuplicateIndexMismatch::unregisterEntity(CCrmOwnerType::Company, $ID);
 
 			//Statistics & History -->
@@ -2384,13 +2392,19 @@ class CAllCrmCompany
 				EntityCounterManager::reset(
 					EntityCounterManager::prepareCodes(
 						CCrmOwnerType::Company,
-						array(
+						[
 							EntityCounterType::PENDING,
 							EntityCounterType::OVERDUE,
-							EntityCounterType::ALL
-						)
+							EntityCounterType::ALL,
+						],
+						[
+							'CATEGORY_ID' => $categoryId,
+							'EXTENDED_MODE' => true,
+						]
 					),
-					array($assignedByID)
+					[
+						$assignedByID,
+					]
 				);
 			}
 
@@ -2426,7 +2440,7 @@ class CAllCrmCompany
 
 			if (Main\Loader::includeModule('sale'))
 			{
-				\Bitrix\Crm\Order\Company::unbind($ID);
+				(new \Bitrix\Crm\Order\ContactCompanyBinding(\CCrmOwnerType::Company))->unbind($ID);
 			}
 
 			\Bitrix\Crm\Timeline\CompanyController::getInstance()->onDelete(
@@ -2503,9 +2517,9 @@ class CAllCrmCompany
 				&& $options['DISABLE_USER_FIELD_CHECK'] === true);
 		}
 
+		$factory = Container::getInstance()->getFactory(CCrmOwnerType::Company);
 		if(isset($arFields['CATEGORY_ID']))
 		{
-			$factory = Container::getInstance()->getFactory(CCrmOwnerType::Company);
 			if (!$factory->isCategoryAvailable($arFields['CATEGORY_ID']))
 			{
 				if ($isRestoration)
@@ -2634,6 +2648,46 @@ class CAllCrmCompany
 				$e = $APPLICATION->GetException();
 				$this->checkExceptions[] = $e;
 				$this->LAST_ERROR .= $e->GetString();
+			}
+		}
+
+		// Temporary crutch.
+		// This check will be removed when operations will be completely supported for companies:
+		$allowSetSystemFields = $options['ALLOW_SET_SYSTEM_FIELDS'] ?? false;
+		if ($allowSetSystemFields)
+		{
+			$currentUserId =  isset($options['CURRENT_USER'])
+				? (int)$options['CURRENT_USER']
+				: CCrmSecurityHelper::GetCurrentUserID()
+			;
+
+			$checkSystemFieldsResult = (new \Bitrix\Crm\Service\Operation\Import(
+				$factory->createItem(),
+				new \Bitrix\Crm\Service\Operation\Settings(Container::getInstance()->getContext()),
+				$factory->getFieldsCollection()
+			))->checkSystemFieldsValues([
+				\Bitrix\Crm\Item::FIELD_NAME_CREATED_TIME => isset($arFields['DATE_CREATE'])
+					? Main\Type\DateTime::createFromUserTime($arFields['DATE_CREATE'])
+					: null
+				,
+				\Bitrix\Crm\Item::FIELD_NAME_UPDATED_TIME => isset($arFields['DATE_MODIFY'])
+					? Main\Type\DateTime::createFromUserTime($arFields['DATE_MODIFY'])
+					: null
+				,
+				\Bitrix\Crm\Item::FIELD_NAME_CREATED_BY =>
+					(isset($arFields['CREATED_BY_ID']) && $arFields['CREATED_BY_ID'] != $currentUserId)
+						? (int)$arFields['CREATED_BY_ID']
+						: null
+				,
+				\Bitrix\Crm\Item::FIELD_NAME_UPDATED_BY =>
+					(isset($arFields['MODIFY_BY_ID']) && $arFields['MODIFY_BY_ID'] != $currentUserId)
+						? (int)$arFields['MODIFY_BY_ID']
+						: null
+				,
+			]);
+			if (!$checkSystemFieldsResult->isSuccess())
+			{
+				$this->LAST_ERROR .= implode(', ', $checkSystemFieldsResult->getErrorMessages());
 			}
 		}
 
@@ -2801,7 +2855,11 @@ class CAllCrmCompany
 
 	public static function getPermissionEntityType(int $id, ?int $categoryId = null): string
 	{
-		$categoryId = $categoryId ?? Bitrix\Crm\Entity\Company::getInstance()->getCategoryId((int)$id);
+		$categoryId =
+			$categoryId
+			?? Container::getInstance()->getFactory(CCrmOwnerType::Company)->getItemCategoryId($id)
+			?? 0
+		;
 
 		return (new PermissionEntityTypeHelper(CCrmOwnerType::Company))->getPermissionEntityTypeForCategory($categoryId);
 	}
@@ -3010,30 +3068,25 @@ class CAllCrmCompany
 			$IDs
 		);
 
+		$duplicateCriterionRegistrar = Crm\Integrity\DuplicateManager::getCriterionRegistrar(\CCrmOwnerType::Company);
+
 		while($fields = $dbResult->Fetch())
 		{
 			$ID = (int)$fields['ID'];
-
-			$title = isset($fields['TITLE']) ? $fields['TITLE'] : '';
-			if($title !== '')
-			{
-				DuplicateOrganizationCriterion::register(CCrmOwnerType::Company, $ID, $title);
-			}
-
-			if(isset($entityMultifields[$ID]))
-			{
-				DuplicateCommunicationCriterion::bulkRegister(
-					CCrmOwnerType::Company,
-					$ID,
-					DuplicateCommunicationCriterion::prepareBulkData($entityMultifields[$ID])
-				);
-			}
+			$fields['FM'] = $entityMultifields[$ID] ?? null;
 
 			DuplicateRequisiteCriterion::registerByEntity(CCrmOwnerType::Company, $ID);
 
 			DuplicateBankDetailCriterion::registerByEntity(CCrmOwnerType::Company, $ID);
 
-			DuplicateEntityRanking::registerEntityStatistics(CCrmOwnerType::Company, $ID, $fields);
+			$data =
+				(new Crm\Integrity\CriterionRegistrar\Data())
+					->setEntityTypeId(\CCrmOwnerType::Company)
+					->setEntityId($ID)
+					->setCurrentFields($arFields)
+			;
+
+			$duplicateCriterionRegistrar->register($data);
 		}
 	}
 

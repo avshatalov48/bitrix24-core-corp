@@ -564,6 +564,7 @@ class CCrmViewHelper
 		if($ID > 0)
 		{
 			$subject = isset($arParams['ACTIVITY_SUBJECT']) ? $arParams['ACTIVITY_SUBJECT'] : '';
+			$subject = \Bitrix\Main\Text\Emoji::decode($subject); // possible double decode is not a problem
 
 			$time = isset($arParams['ACTIVITY_TIME']) ? $arParams['ACTIVITY_TIME'] : '';
 			if($time !== '' && CCrmDateTimeHelper::IsMaxDatabaseDate($time))

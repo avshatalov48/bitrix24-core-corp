@@ -519,6 +519,11 @@ class CCrmDocumentContact extends CCrmDocument implements IBPWorkflowDocument
 			}
 		}
 
+		if (isset($arFields['TRACKING_SOURCE_ID']))
+		{
+			Crm\Tracking\UI\Details::saveEntityData(\CCrmOwnerType::Contact, $ID, $arFields);
+		}
+
 		if ($useTransaction)
 		{
 			$DB->Commit();

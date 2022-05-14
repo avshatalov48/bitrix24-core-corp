@@ -316,7 +316,7 @@
 	          if (typeof handler.getMap === 'function') {
 	            var mapping = handler.getMap();
 
-	            if (mapping && babelHelpers.typeof(mapping) === 'object') {
+	            if (mapping && babelHelpers["typeof"](mapping) === 'object') {
 	              if (typeof mapping[data.command] === 'function') {
 	                method = mapping[data.command].bind(handler);
 	              } else if (typeof mapping[data.command] === 'string' && typeof handler[mapping[data.command]] === 'function') {
@@ -416,7 +416,7 @@
 	    return item && Object.prototype.toString.call(item) === "[object Array]";
 	  },
 	  isDomNode: function isDomNode(item) {
-	    return item && babelHelpers.typeof(item) == "object" && "nodeType" in item;
+	    return item && babelHelpers["typeof"](item) == "object" && "nodeType" in item;
 	  },
 	  isDate: function isDate(item) {
 	    return item && Object.prototype.toString.call(item) === "[object Date]";
@@ -429,12 +429,12 @@
 
 	    if (this.isDomNode(obj)) {
 	      _obj = obj.cloneNode(bCopyObj);
-	    } else if (babelHelpers.typeof(obj) == 'object') {
+	    } else if (babelHelpers["typeof"](obj) == 'object') {
 	      if (this.isArray(obj)) {
 	        _obj = [];
 
 	        for (i = 0, l = obj.length; i < l; i++) {
-	          if (babelHelpers.typeof(obj[i]) == "object" && bCopyObj) _obj[i] = this.clone(obj[i], bCopyObj);else _obj[i] = obj[i];
+	          if (babelHelpers["typeof"](obj[i]) == "object" && bCopyObj) _obj[i] = this.clone(obj[i], bCopyObj);else _obj[i] = obj[i];
 	        }
 	      } else {
 	        _obj = {};
@@ -448,7 +448,7 @@
 	            continue;
 	          }
 
-	          if (babelHelpers.typeof(obj[i]) == "object" && bCopyObj) _obj[i] = this.clone(obj[i], bCopyObj);else _obj[i] = obj[i];
+	          if (babelHelpers["typeof"](obj[i]) == "object" && bCopyObj) _obj[i] = this.clone(obj[i], bCopyObj);else _obj[i] = obj[i];
 	        }
 	      }
 	    } else {
@@ -458,7 +458,7 @@
 	    return _obj;
 	  },
 	  isPlainObject: function isPlainObject(item) {
-	    if (!item || babelHelpers.typeof(item) !== "object" || item.nodeType) {
+	    if (!item || babelHelpers["typeof"](item) !== "object" || item.nodeType) {
 	      return false;
 	    }
 

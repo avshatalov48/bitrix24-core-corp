@@ -1,5 +1,5 @@
 this.BX = this.BX || {};
-(function (exports,main_core_events,main_popup,currency_currencyCore,ui_dialogs_messagebox,main_core,ui_label) {
+(function (exports,main_popup,ui_dialogs_messagebox,main_core,main_core_events,ui_label,currency_currencyCore) {
 	'use strict';
 
 	var DocumentManager = /*#__PURE__*/function () {
@@ -185,6 +185,7 @@ this.BX = this.BX || {};
 	    this._menus = [];
 	    this._isUsedInventoryManagement = this._options.IS_USED_INVENTORY_MANAGEMENT;
 	    this._isInventoryManagementRestricted = this._options.IS_INVENTORY_MANAGEMENT_RESTRICTED;
+	    this._isWithOrdersMode = this._options.IS_WITH_ORDERS_MODE;
 
 	    this._subscribeToGlobalEvents();
 	  }
@@ -659,29 +660,9 @@ this.BX = this.BX || {};
 	      return main_core.Tag.render(_templateObject7(), openMenu, main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CREATE_DOCUMENT'));
 	    }
 	  }, {
-	    key: "_calculateTotalSum",
-	    value: function _calculateTotalSum() {
-	      var totalSum = parseFloat(this._options.ENTITY_AMOUNT);
-
-	      this._docs().forEach(function (doc) {
-	        if (doc.TYPE === 'PAYMENT') {
-	          if (doc.PAID && doc.PAID === 'Y') {
-	            totalSum -= parseFloat(doc.SUM);
-	          }
-	        }
-	      });
-
-	      if (totalSum < 0) {
-	        totalSum = 0.0;
-	      }
-
-	      return totalSum;
-	    }
-	  }, {
 	    key: "_renderTotalSum",
 	    value: function _renderTotalSum() {
-	      var totalSum = this._calculateTotalSum();
-
+	      var totalSum = this._options.TOTAL_AMOUNT;
 	      var node = main_core.Tag.render(_templateObject8(), this._getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TOTAL_SUM'), this._getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TOTAL_SUM_TOOLTIP'), this._renderMoney(totalSum));
 	      BX.UI.Hint.init(node);
 	      return node;
@@ -699,6 +680,15 @@ this.BX = this.BX || {};
 	    value: function _docs() {
 	      if (this._options && this._options.DOCUMENTS && this._options.DOCUMENTS.length) {
 	        return this._options.DOCUMENTS;
+	      }
+
+	      return [];
+	    }
+	  }, {
+	    key: "_orders",
+	    value: function _orders() {
+	      if (this._options && this._options.ORDERS && this._options.ORDERS.length) {
+	        return this._options.ORDERS;
 	      }
 
 	      return [];
@@ -1223,8 +1213,88 @@ this.BX = this.BX || {};
 	}();
 	babelHelpers.defineProperty(EntityEditorPaymentDocuments, "_rootNodeClass", 'crm-entity-widget-inner crm-entity-widget-inner--payment');
 
+	function _templateObject14() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-document-table-order-group crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-description\">\n\t\t\t\t\t<span>", "</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-cost\">\n\t\t\t\t\t<span class=\"crm-entity-stream-content-detail-cost-current\">", "</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
+
+	  _templateObject14 = function _templateObject14() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject13() {
+	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-entity-stream-content-detail-notice\">", "</div>"]);
+
+	  _templateObject13 = function _templateObject13() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject12() {
+	  var data = babelHelpers.taggedTemplateLiteral(["<span>", "</span>"]);
+
+	  _templateObject12 = function _templateObject12() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject11() {
+	  var data = babelHelpers.taggedTemplateLiteral(["<a href=\"", "\" target=\"_blank\">", "</a>"]);
+
+	  _templateObject11 = function _templateObject11() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject10() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row crm-entity-stream-content-detail-table-row-total\">\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-description\">\n\t\t\t\t\t<span>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-cost\">\n\t\t\t\t\t<span>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
+
+	  _templateObject10 = function _templateObject10() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject9() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-document-description\">\n\t\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t\t", " (", ")\n\t\t\t\t\t</a>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
+
+	  _templateObject9 = function _templateObject9() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject8$1() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-document-description\">\n\t\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t\t", " (", ", ", ")\n\t\t\t\t\t</a>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
+
+	  _templateObject8$1 = function _templateObject8() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject7$1() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-document-description\">\n\t\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">", " (", ")</a>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
+
+	  _templateObject7$1 = function _templateObject7() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
 	function _templateObject6$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-description\">\n\t\t\t\t\t<span>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-cost\">\n\t\t\t\t\t<span>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row crm-entity-stream-content-document-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-description\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-cost\">\n\t\t\t\t\t<span>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
 
 	  _templateObject6$1 = function _templateObject6() {
 	    return data;
@@ -1234,7 +1304,7 @@ this.BX = this.BX || {};
 	}
 
 	function _templateObject5$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-document-description\">\n\t\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t\t", " (", ")\n\t\t\t\t\t</a>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-cost\">\n\t\t\t\t\t<span>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row crm-entity-stream-content-document-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-description\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-cost\">\n\t\t\t\t\t<span>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
 
 	  _templateObject5$1 = function _templateObject5() {
 	    return data;
@@ -1244,7 +1314,7 @@ this.BX = this.BX || {};
 	}
 
 	function _templateObject4$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-document-description\">\n\t\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t\t", " (", ")\n\t\t\t\t\t</a>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-cost\">\n\t\t\t\t\t<span>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t", "\n\t\t\t\t<div class=\"crm-entity-stream-content-document-table-group\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-entity-stream-content-document-table-group\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
 
 	  _templateObject4$1 = function _templateObject4() {
 	    return data;
@@ -1254,7 +1324,7 @@ this.BX = this.BX || {};
 	}
 
 	function _templateObject3$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-document-description\">\n\t\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">", "</a>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-cost\">\n\t\t\t\t\t<span>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t", "\n\t\t\t\t<div class=\"crm-entity-stream-content-document-table-group\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-entity-stream-content-document-table-group\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
 
 	  _templateObject3$1 = function _templateObject3() {
 	    return data;
@@ -1264,7 +1334,7 @@ this.BX = this.BX || {};
 	}
 
 	function _templateObject2$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div>\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["<div></div>"]);
 
 	  _templateObject2$1 = function _templateObject2() {
 	    return data;
@@ -1274,7 +1344,7 @@ this.BX = this.BX || {};
 	}
 
 	function _templateObject$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row crm-entity-stream-content-document-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-description\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-cost\">\n\t\t\t\t\t<span>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"crm-entity-stream-content-document-table-group\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t"]);
 
 	  _templateObject$1 = function _templateObject() {
 	    return data;
@@ -1291,17 +1361,6 @@ this.BX = this.BX || {};
 	  }
 
 	  babelHelpers.createClass(TimelineSummaryDocuments, [{
-	    key: "_renderDealTotalSum",
-	    value: function _renderDealTotalSum() {
-	      var phrase = 'CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DEAL_SUM';
-
-	      if (Number(this._options.OWNER_TYPE_ID) === BX.CrmEntityType.enumeration.smartinvoice) {
-	        phrase = 'CRM_ENTITY_ED_PAYMENT_DOCUMENTS_INVOICE_SUM';
-	      }
-
-	      return main_core.Tag.render(_templateObject$1(), main_core.Loc.getMessage(phrase), this._renderMoney(this._options.ENTITY_AMOUNT));
-	    }
-	  }, {
 	    key: "render",
 	    value: function render() {
 	      this._menus.forEach(function (menu) {
@@ -1317,19 +1376,94 @@ this.BX = this.BX || {};
 
 	        this._rootNode.classList.remove('is-hidden');
 
-	        this._rootNode.append(main_core.Tag.render(_templateObject2$1(), this._renderDealTotalSum(), this._renderDocuments(), this._renderTotalSum()));
+	        if (this._isWithOrdersMode) {
+	          this._renderDocumentWithOrdersMode();
+	        } else {
+	          this._renderDocumentWithoutOrdersMode();
+	        }
+
+	        var checkExists = this._isCheckExists();
+
+	        if (checkExists) {
+	          this._rootNode.append(main_core.Tag.render(_templateObject$1(), this._renderChecksDocument()));
+	        }
 	      } else {
 	        this._rootNode.classList.add('is-hidden');
 	      }
 
+	      main_core_events.EventEmitter.emit('PaymentDocuments:render', [this]);
 	      return this._rootNode;
+	    }
+	  }, {
+	    key: "_renderDocumentWithOrdersMode",
+	    value: function _renderDocumentWithOrdersMode() {
+	      var _this = this;
+
+	      var orderDocument = main_core.Tag.render(_templateObject2$1());
+
+	      this._orders().forEach(function (order) {
+	        var documents = _this._renderDocumentsByOrder(order.ID);
+
+	        if (documents.length > 0) {
+	          orderDocument.append(_this._renderOrderDetailBlock(order));
+	          documents.forEach(function (document) {
+	            orderDocument.append(document);
+	          });
+	        }
+	      });
+
+	      this._rootNode.append(main_core.Tag.render(_templateObject3$1(), orderDocument, this._renderEntityTotalSum(), this._renderEntityPaidSum(), this._renderTotalSum()));
+	    }
+	  }, {
+	    key: "_renderDocumentWithoutOrdersMode",
+	    value: function _renderDocumentWithoutOrdersMode() {
+	      this._rootNode.append(main_core.Tag.render(_templateObject4$1(), this._renderDocuments(), this._renderEntityTotalSum(), this._renderEntityPaidSum(), this._renderTotalSum()));
+	    }
+	  }, {
+	    key: "_renderDocumentsByOrder",
+	    value: function _renderDocumentsByOrder(orderId) {
+	      var _this2 = this;
+
+	      var nodes = [];
+
+	      var orderDocs = this._docs().filter(function (item) {
+	        return item.ORDER_ID === orderId;
+	      });
+
+	      orderDocs.forEach(function (doc) {
+	        if (doc.TYPE === 'PAYMENT') {
+	          nodes.push(_this2._renderPaymentDocument(doc));
+	        } else if (doc.TYPE === 'SHIPMENT') {
+	          nodes.push(_this2._renderDeliveryDocument(doc));
+	        } else if (doc.TYPE === 'SHIPMENT_DOCUMENT') {
+	          nodes.push(_this2._renderRealizationDocument(doc));
+	        }
+	      });
+	      return nodes;
+	    }
+	  }, {
+	    key: "_renderEntityTotalSum",
+	    value: function _renderEntityTotalSum() {
+	      var phrase = 'CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DEAL_SUM';
+
+	      if (Number(this._options.OWNER_TYPE_ID) === BX.CrmEntityType.enumeration.smartinvoice) {
+	        phrase = 'CRM_ENTITY_ED_PAYMENT_DOCUMENTS_INVOICE_SUM';
+	      }
+
+	      return main_core.Tag.render(_templateObject5$1(), main_core.Loc.getMessage(phrase), this._renderMoney(this._options.ENTITY_AMOUNT));
+	    }
+	  }, {
+	    key: "_renderEntityPaidSum",
+	    value: function _renderEntityPaidSum() {
+	      return main_core.Tag.render(_templateObject6$1(), main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ENTITY_PAID_SUM'), this._renderMoney(this._options.PAID_AMOUNT));
 	    }
 	  }, {
 	    key: "_renderPaymentDocument",
 	    value: function _renderPaymentDocument(doc) {
-	      var _this = this;
+	      var _this3 = this;
 
 	      var title = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_DATE').replace(/#DATE#/gi, doc.FORMATTED_DATE);
+	      var sum = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_AMOUNT').replace(/#SUM#/gi, this._renderMoney(doc.SUM));
 	      var labelOptions = {
 	        text: main_core.Loc.getMessage("CRM_ENTITY_ED_PAYMENT_DOCUMENTS_STAGE_".concat(doc.STAGE)),
 	        customClass: 'crm-entity-widget-payment-label',
@@ -1348,15 +1482,15 @@ this.BX = this.BX || {};
 	      }
 
 	      var openSlider = function openSlider() {
-	        return _this._resendPaymentSlider(doc.ORDER_ID, doc.ID);
+	        return _this3._resendPaymentSlider(doc.ORDER_ID, doc.ID);
 	      };
 
-	      return main_core.Tag.render(_templateObject3$1(), openSlider, title, new ui_label.Label(labelOptions).render(), this._renderMoney(doc.SUM));
+	      return main_core.Tag.render(_templateObject7$1(), openSlider, title, sum, new ui_label.Label(labelOptions).render());
 	    }
 	  }, {
 	    key: "_renderDeliveryDocument",
 	    value: function _renderDeliveryDocument(doc) {
-	      var _this2 = this;
+	      var _this4 = this;
 
 	      var labelOptions = {
 	        text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_STATUS_WAITING'),
@@ -1371,17 +1505,18 @@ this.BX = this.BX || {};
 	      }
 
 	      var title = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DELIVERY_DATE').replace(/#DATE#/gi, doc.FORMATTED_DATE);
+	      var sum = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_PAYMENT_AMOUNT').replace(/#SUM#/gi, this._renderMoney(doc.SUM));
 
 	      var openSlider = function openSlider() {
-	        return _this2._viewDeliverySlider(doc.ORDER_ID, doc.ID);
+	        return _this4._viewDeliverySlider(doc.ORDER_ID, doc.ID);
 	      };
 
-	      return main_core.Tag.render(_templateObject4$1(), openSlider, title, doc.DELIVERY_NAME, new ui_label.Label(labelOptions).render(), this._renderMoney(doc.SUM));
+	      return main_core.Tag.render(_templateObject8$1(), openSlider, title, doc.DELIVERY_NAME, sum, new ui_label.Label(labelOptions).render());
 	    }
 	  }, {
 	    key: "_renderRealizationDocument",
 	    value: function _renderRealizationDocument(doc) {
-	      var _this3 = this;
+	      var _this5 = this;
 
 	      var labelOptions = {
 	        fill: true,
@@ -1407,30 +1542,80 @@ this.BX = this.BX || {};
 	      var sum = main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_AMOUNT').replace(/#SUM#/gi, this._renderMoney(doc.SUM));
 
 	      var openSlider = function openSlider() {
-	        return _this3._viewRealizationSlider(doc.ID);
+	        return _this5._viewRealizationSlider(doc.ID);
 	      };
 
-	      return main_core.Tag.render(_templateObject5$1(), openSlider, title, sum, new ui_label.Label(labelOptions).render(), this._renderMoney(doc.SUM));
+	      return main_core.Tag.render(_templateObject9(), openSlider, title, sum, new ui_label.Label(labelOptions).render());
 	    }
 	  }, {
 	    key: "_renderTotalSum",
 	    value: function _renderTotalSum() {
-	      var totalSum = this._calculateTotalSum();
-
 	      var phrase = 'CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TOTAL_SUM';
 
 	      if (Number(this._options.OWNER_TYPE_ID) === BX.CrmEntityType.enumeration.smartinvoice) {
 	        phrase = 'CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TOTAL_INVOICE_SUM';
 	      }
 
-	      return main_core.Tag.render(_templateObject6$1(), main_core.Loc.getMessage(phrase), this._renderMoney(totalSum));
+	      return main_core.Tag.render(_templateObject10(), main_core.Loc.getMessage(phrase), this._renderTotalMoney(this._options.TOTAL_AMOUNT));
+	    }
+	  }, {
+	    key: "_renderTotalMoney",
+	    value: function _renderTotalMoney(sum) {
+	      var fullPrice = currency_currencyCore.CurrencyCore.currencyFormat(sum, this._options.CURRENCY_ID, true);
+	      var onlyPrice = currency_currencyCore.CurrencyCore.currencyFormat(sum, this._options.CURRENCY_ID, false);
+	      var currency = fullPrice.replace(onlyPrice, '').trim();
+	      fullPrice = fullPrice.replace(currency, "<span class=\"crm-entity-widget-payment-currency\">".concat(currency, "</span>"));
+	      fullPrice = fullPrice.replace(onlyPrice, "<b>".concat(onlyPrice, "</b>"));
+	      return fullPrice;
+	    }
+	  }, {
+	    key: "_renderChecksDocument",
+	    value: function _renderChecksDocument() {
+	      var _this6 = this;
+
+	      var nodes = [];
+
+	      this._docs().forEach(function (doc) {
+	        if (doc.TYPE === 'CHECK') {
+	          nodes.push(_this6._renderCheckDocument(doc));
+	        }
+	      });
+
+	      return nodes;
+	    }
+	  }, {
+	    key: "_renderCheckDocument",
+	    value: function _renderCheckDocument(doc) {
+	      var link;
+
+	      if (doc.URL) {
+	        link = main_core.Tag.render(_templateObject11(), doc.URL, doc.TITLE);
+	      } else {
+	        link = main_core.Tag.render(_templateObject12(), doc.TITLE);
+	      }
+
+	      return main_core.Tag.render(_templateObject13(), link);
+	    }
+	  }, {
+	    key: "_renderOrderDetailBlock",
+	    value: function _renderOrderDetailBlock(doc) {
+	      return main_core.Tag.render(_templateObject14(), doc.TITLE, doc.PRICE_FORMAT);
 	    }
 	  }, {
 	    key: "_filterSuccessfulDocuments",
 	    value: function _filterSuccessfulDocuments() {
 	      this._options.DOCUMENTS = this._options.DOCUMENTS.filter(function (item) {
-	        return item.TYPE === 'PAYMENT' && item.PAID === 'Y' || item.TYPE === 'SHIPMENT' && item.DEDUCTED === 'Y' || item.TYPE === 'SHIPMENT_DOCUMENT' && item.DEDUCTED === 'Y';
+	        return item.TYPE === 'PAYMENT' && item.PAID === 'Y' || item.TYPE === 'SHIPMENT' && item.DEDUCTED === 'Y' || item.TYPE === 'SHIPMENT_DOCUMENT' && item.DEDUCTED === 'Y' || item.TYPE === 'CHECK' && item.STATUS === 'Y';
 	      });
+	    }
+	  }, {
+	    key: "_isCheckExists",
+	    value: function _isCheckExists() {
+	      var checks = this._options.DOCUMENTS.filter(function (item) {
+	        return item.TYPE === 'CHECK' && item.STATUS === 'Y';
+	      });
+
+	      return checks.length > 1;
 	    }
 	  }]);
 	  return TimelineSummaryDocuments;
@@ -1440,5 +1625,5 @@ this.BX = this.BX || {};
 	exports.EntityEditorPaymentDocuments = EntityEditorPaymentDocuments;
 	exports.TimelineSummaryDocuments = TimelineSummaryDocuments;
 
-}((this.BX.Crm = this.BX.Crm || {}),BX.Event,BX.Main,BX.Currency,BX.UI.Dialogs,BX,BX.UI));
+}((this.BX.Crm = this.BX.Crm || {}),BX.Main,BX.UI.Dialogs,BX,BX.Event,BX.UI,BX.Currency));
 //# sourceMappingURL=payment-documents.bundle.js.map

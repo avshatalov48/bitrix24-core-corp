@@ -1,3 +1,5 @@
+import HistoryItem from "../items/history";
+
 export default {
 	props: {
 		self: {
@@ -24,7 +26,7 @@ export default {
 		},
 		createdAt()
 		{
-			return (this.self instanceof BX.CrmHistoryItem) ? this.self.formatTime(this.self.getCreatedTime()) : '';
+			return (this.self instanceof HistoryItem) ? this.self.formatTime(this.self.getCreatedTime()) : '';
 		},
 	},
 	methods: {

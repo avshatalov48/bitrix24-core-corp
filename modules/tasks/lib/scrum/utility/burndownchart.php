@@ -58,9 +58,8 @@ class BurnDownChart
 			}
 			else
 			{
-				$realDayNumber = $sprintRanges->getRealDayNumber(
-					$sprintRanges->getPreviousWeekdayByDayNumber($dayNumber)
-				);
+				$previousWeekday = $sprintRanges->getPreviousWeekdayByDayNumber($dayNumber);
+				$realDayNumber = $previousWeekday ? $sprintRanges->getRealDayNumber($previousWeekday) : 0;
 				if ($realDayNumber)
 				{
 					$remainData[$realDayNumber]['remainValue'] = $remainStoryPoints;

@@ -73,6 +73,8 @@ export class SprintCompletionForm extends EventEmitter
 	{
 		super(params);
 
+		this.setEventNamespace('BX.Tasks.Scrum.SprintCompletionForm');
+
 		this.groupId = parseInt(params.groupId, 10);
 
 		/* eslint-disable */
@@ -203,6 +205,8 @@ export class SprintCompletionForm extends EventEmitter
 	{
 		const storyPoints = (sprintData.storyPoints === '' ? 0 : sprintData.storyPoints);
 
+		const periodDays = this.getPeriodDays(sprintData.dateStart);
+
 		this.node = Tag.render`
 			<div id="${Text.getRandom()}" class="tasks-scrum__scope--side-panel-completion">
 
@@ -229,12 +233,12 @@ export class SprintCompletionForm extends EventEmitter
 							<div class="tasks-scrum__side-panel-completion--date-name-block">
 								<div>${Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_DATE_START_LABEL')}</div>
 								<div>${Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_DATE_END_LABEL')}</div>
-								<div>${Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_PERIOD_LABEL')}</div>
+								${this.renderLabelPeriodDays(periodDays)}
 							</div>
 							<div class="tasks-scrum__side-panel-completion--date-result-block">
 								<div>${this.getFormattedDateStart(sprintData.dateStart)}</div>
 								<div>${this.getFormattedDateStart(sprintData.dateEnd)}</div>
-								<div>${this.getPeriodDays(sprintData.dateStart)}</div>
+								${this.renderPeriodDays(periodDays)}
 							</div>
 						</div>
 					</div>
@@ -300,6 +304,26 @@ export class SprintCompletionForm extends EventEmitter
 		this.initHints(this.node);
 
 		return this.node;
+	}
+
+	renderLabelPeriodDays(periodDays: ?string): ?HTMLElement
+	{
+		if (Type.isNull(periodDays))
+		{
+			return '';
+		}
+
+		return Tag.render`<div>${Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_PERIOD_LABEL')}</div>`;
+	}
+
+	renderPeriodDays(periodDays: ?string): ?HTMLElement
+	{
+		if (Type.isNull(periodDays))
+		{
+			return '';
+		}
+
+		return Tag.render`<div>${Text.encode(periodDays)}</div>`;
 	}
 
 	renderGoal(goal: string): ?HTMLElement
@@ -553,7 +577,7 @@ export class SprintCompletionForm extends EventEmitter
 		/* eslint-enable */
 	}
 
-	getPeriodDays(dateStartTime: number): string
+	getPeriodDays(dateStartTime: number): ?string
 	{
 		const dateWithWeekendOffset = new Date();
 
@@ -561,6 +585,12 @@ export class SprintCompletionForm extends EventEmitter
 		dateWithWeekendOffset.setHours(0, 0, 0, 0);
 
 		const dateStart = new Date(dateStartTime * 1000);
+
+		const date = new Date();
+		if (dateStart >= date)
+		{
+			return null;
+		}
 
 		return BX.date.format('ddiff', dateStart, dateWithWeekendOffset);
 	};

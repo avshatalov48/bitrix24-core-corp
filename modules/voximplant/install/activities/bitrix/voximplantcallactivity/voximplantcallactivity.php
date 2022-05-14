@@ -286,7 +286,7 @@ class CBPVoximplantCallActivity extends CBPActivity
 		}
 
 		$errors = self::ValidateProperties($properties, new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser));
-		if (count($errors) > 0)
+		if (!empty($errors))
 			return false;
 
 		$currentActivity = &CBPWorkflowTemplateLoader::FindActivityByName($workflowTemplate, $activityName);

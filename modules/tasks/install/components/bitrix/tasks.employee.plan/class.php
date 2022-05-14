@@ -1,6 +1,7 @@
 <?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
+use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UserTable;
 use Bitrix\Tasks\Access\ActionDictionary;
@@ -11,7 +12,6 @@ use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Util\Error;
 use Bitrix\Tasks\Integration\Intranet;
 use Bitrix\Tasks\Util\User;
-use Bitrix\Tasks\Integration;
 use Bitrix\Tasks\Integration\Report\Internals\TaskTable;
 use Bitrix\Tasks\Integration\Intranet\Department;
 use Bitrix\Tasks\Integration\Extranet;
@@ -517,74 +517,76 @@ class TasksEmployeePlanComponent extends TasksBaseComponent
 	 * @param array $taskParameters Task bound (horizontal, timeline)
 	 * @return array
 	 */
-	protected static function getGridRegionData(array $userParameters = array(), array $taskParameters = array())
+	protected static function getGridRegionData(array $userParameters = [], array $taskParameters = [])
 	{
-		$result = array(
-			'DATA' => array(),
-			'USER_DB_RESULT' => null,
-			'ERRORS' => new Collection()
-		);
+		$result = [
+			'DATA' => [],
+			'ERRORS' => new Collection(),
+		];
 
-		$qUser = new \Bitrix\Main\Entity\Query(UserTable::getEntity());
-		$qTask = new \Bitrix\Main\Entity\Query(TaskTable::getEntity());
+		$usersQuery = new Query(UserTable::getEntity());
+		static::applyQueryParameters($usersQuery, $userParameters);
 
-		static::applyQueryParameters($qUser, $userParameters);
-
-		$userRes = $qUser->exec();
-		$users = array();
-		$ids = array();
-		while($item = $userRes->fetch())
+		$userIds = [];
+		$users = [];
+		$usersResult = $usersQuery->exec();
+		while ($user = $usersResult->fetch())
 		{
-			$users[] = $item;
-			$ids[] = intval($item['ID']);
+			$userIds[] = (int)$user['ID'];
+			$users[] = $user;
 		}
-		$result['USER_DB_RESULT'] = $userRes;
+		$result['USER_DB_RESULT'] = $usersResult;
+		$result['DATA']['USERS'] = $users;
 
-		$tasks = array();
-		if(!empty($ids)) // some users match the user filter, take their tasks
+		$tasks = [];
+		if (!empty($userIds)) // some users match the user filter, take their tasks
 		{
-			$taskParameters['runtime']['M'] = array(
+			$taskParameters['runtime']['M'] = [
 				'data_type' => '\Bitrix\Tasks\MemberTable',
-				'reference' => array(
+				'reference' => [
 					'=this.ID' => 'ref.TASK_ID',
-					'=ref.TYPE' => array('?', 'A'),
-					'@ref.USER_ID' => new \Bitrix\Main\DB\SqlExpression(implode(', ', $ids)),
-				),
-				'join_type' => 'left'
-			);
+					'=ref.TYPE' => ['?', 'A'],
+					'@ref.USER_ID' => new \Bitrix\Main\DB\SqlExpression(implode(', ', $userIds)),
+				],
+				'join_type' => 'left',
+			];
 			$taskParameters['select']['ACCOMPLICE_ID'] = 'M.USER_ID';
-			$taskParameters['filter'][] = array(
+			$taskParameters['filter'][] = [
 				'LOGIC' => 'OR',
-				array('@RESPONSIBLE_ID' => $ids),
-				array('!M.TASK_ID' => false)
-			);
+				['@RESPONSIBLE_ID' => $userIds],
+				['!M.TASK_ID' => false],
+			];
 
-			static::applyQueryParameters($qTask, $taskParameters);
+			$tasksQuery = new Query(TaskTable::getEntity());
+			static::applyQueryParameters($tasksQuery, $taskParameters);
 
-			$taskResult = $qTask->exec();
-			while ($task = $taskResult->fetch())
+			$taskIds = [];
+			$tasksResult = $tasksQuery->exec();
+			while ($task = $tasksResult->fetch())
 			{
-				$taskId = (int)$task['ID'];
-				$tasks[$taskId] = $task;
+				$taskIds[(int)$task['ID']] = true;
+				$tasks[] = $task;
 			}
 
-			TaskRegistry::getInstance()->load(array_keys($tasks), true);
+			TaskRegistry::getInstance()->load(array_keys($taskIds), true);
 
-			foreach ($tasks as $taskId => $task)
+			foreach ($tasks as &$task)
 			{
-				// need to find out if i can view task or not
-				$canRead = TaskAccessController::can(User::getId(), ActionDictionary::ACTION_TASK_READ, $taskId);
+				// need to find out if I can view task or not
+				$canRead = TaskAccessController::can(
+					User::getId(),
+					ActionDictionary::ACTION_TASK_READ,
+					$task['ID']
+				);
 				if (!$canRead)
 				{
 					$task['TITLE'] = ''; // unable to see TITLE
 				}
 				$task['ACTION']['READ'] = $canRead;
-				$tasks[$taskId] = $task;
 			}
-			$tasks = array_values($tasks);
+			unset($task);
 		}
-
-		$result['DATA'] = array('USERS' => $users, 'TASKS' => $tasks);
+		$result['DATA']['TASKS'] = $tasks;
 
 		return $result;
 	}

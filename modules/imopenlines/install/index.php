@@ -1,20 +1,18 @@
-<?
-global $MESS;
-$PathInstall = str_replace("\\", "/", __FILE__);
-$PathInstall = mb_substr($PathInstall, 0, mb_strlen($PathInstall) - mb_strlen("/index.php"));
+<?php
 
-IncludeModuleLangFile($PathInstall."/install.php");
+use \Bitrix\Main\Localization\Loc;
 
-if(class_exists("imopenlines")) return;
+Loc::loadMessages(__DIR__. '/install.php');
 
-Class imopenlines extends CModule
+if (class_exists("imopenlines"))
 {
-	var $MODULE_ID = "imopenlines";
-	var $MODULE_VERSION;
-	var $MODULE_VERSION_DATE;
-	var $MODULE_NAME;
-	var $MODULE_DESCRIPTION;
-	var $MODULE_GROUP_RIGHTS = "Y";
+	return;
+}
+
+final class imopenlines extends \CModule
+{
+	public $MODULE_ID = "imopenlines";
+	public $MODULE_GROUP_RIGHTS = "Y";
 
 	public function __construct()
 	{
@@ -33,20 +31,20 @@ Class imopenlines extends CModule
 			$this->MODULE_VERSION_DATE = IMOPENLINES_VERSION_DATE;
 		}
 
-		$this->MODULE_NAME = GetMessage("IMOPENLINES_MODULE_NAME");
-		$this->MODULE_DESCRIPTION = GetMessage("IMOPENLINES_MODULE_DESCRIPTION");
+		$this->MODULE_NAME = Loc::getMessage("IMOPENLINES_MODULE_NAME");
+		$this->MODULE_DESCRIPTION = Loc::getMessage("IMOPENLINES_MODULE_DESCRIPTION");
 	}
 
 	public function DoInstall()
 	{
-		global $DOCUMENT_ROOT, $APPLICATION, $step;
-		$step = intval($step);
-		if($step < 2)
+		global $APPLICATION, $step;
+		$step = (int)$step;
+		if ($step < 2)
 		{
 			$this->CheckModules();
-			$APPLICATION->IncludeAdminFile(GetMessage("IMOPENLINES_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imopenlines/install/step1.php");
+			$APPLICATION->IncludeAdminFile(Loc::getMessage("IMOPENLINES_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imopenlines/install/step1.php");
 		}
-		elseif($step == 2)
+		elseif ($step == 2)
 		{
 			if ($this->CheckModules())
 			{
@@ -55,7 +53,7 @@ Class imopenlines extends CModule
 				]);
 				$this->InstallFiles();
 			}
-			$APPLICATION->IncludeAdminFile(GetMessage("IMOPENLINES_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imopenlines/install/step2.php");
+			$APPLICATION->IncludeAdminFile(Loc::getMessage("IMOPENLINES_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imopenlines/install/step2.php");
 		}
 		return true;
 	}
@@ -69,7 +67,7 @@ Class imopenlines extends CModule
 			)
 		));
 
-		if(!$orm->fetch())
+		if (!$orm->fetch())
 		{
 			include($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imopenlines/install/events/set_events.php");
 		}
@@ -81,38 +79,36 @@ Class imopenlines extends CModule
 	{
 		global $APPLICATION;
 
-		if (!CModule::IncludeModule('pull') || !CPullOptions::GetQueueServerStatus())
+		if (!\Bitrix\Main\Loader::includeModule('pull') || !\CPullOptions::GetQueueServerStatus())
 		{
-			$this->errors[] = GetMessage('IMOPENLINES_CHECK_PULL');
+			$this->errors[] = Loc::getMessage('IMOPENLINES_CHECK_PULL');
 		}
 
-		if (!IsModuleInstalled('imconnector'))
+		if (!\Bitrix\Main\ModuleManager::isModuleInstalled('imconnector'))
 		{
-			$this->errors[] = GetMessage('IMOPENLINES_CHECK_CONNECTOR');
+			$this->errors[] = Loc::getMessage('IMOPENLINES_CHECK_CONNECTOR');
 		}
 
-		if (!IsModuleInstalled('im'))
+		if (!\Bitrix\Main\ModuleManager::isModuleInstalled('im'))
 		{
-			$this->errors[] = GetMessage('IMOPENLINES_CHECK_IM');
+			$this->errors[] = Loc::getMessage('IMOPENLINES_CHECK_IM');
 		}
 		else
 		{
 			$imVersion = \Bitrix\Main\ModuleManager::getVersion('im');
 			if (version_compare("16.5.0", $imVersion) == 1)
 			{
-				$this->errors[] = GetMessage('IMOPENLINES_CHECK_IM_VERSION');
+				$this->errors[] = Loc::getMessage('IMOPENLINES_CHECK_IM_VERSION');
 			}
 		}
 
-		if(is_array($this->errors) && !empty($this->errors))
+		if (is_array($this->errors) && !empty($this->errors))
 		{
 			$APPLICATION->ThrowException(implode("<br>", $this->errors));
 			return false;
 		}
-		else
-		{
-			return true;
-		}
+
+		return true;
 	}
 
 	public function InstallDB($params = [])
@@ -127,35 +123,37 @@ Class imopenlines extends CModule
 			{
 				$this->errors = [];
 			}
-			$this->errors[] = GetMessage('IMOPENLINES_CHECK_PUBLIC_PATH');
+			$this->errors[] = Loc::getMessage('IMOPENLINES_CHECK_PUBLIC_PATH');
 		}
 
-		if(!$this->errors && !$DB->Query("SELECT 'x' FROM b_imopenlines_config", true))
+		if (!$this->errors && !$DB->Query("SELECT 'x' FROM b_imopenlines_config", true))
+		{
 			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/imopenlines/install/db/mysql/install.sql");
+		}
 
-		if($this->errors !== false)
+		if ($this->errors !== false)
 		{
 			$APPLICATION->ThrowException(implode("", $this->errors));
 			return false;
 		}
 
-		RegisterModule("imopenlines");
+		\Bitrix\Main\ModuleManager::registerModule("imopenlines");
 
-		COption::SetOptionString("imopenlines", "portal_url", $params['PUBLIC_URL']);
-
-		RegisterModuleDependences('im', 'OnBeforeChatMessageAdd', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onBeforeMessageSend');
-		RegisterModuleDependences('im', 'OnAfterMessagesAdd', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onMessageSend');
-		RegisterModuleDependences('im', 'OnAfterMessagesAdd', 'imopenlines', '\Bitrix\ImOpenLines\LiveChat', 'onMessageSend');
-		RegisterModuleDependences('im', 'OnAfterChatRead', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onChatRead');
-		RegisterModuleDependences('im', 'OnStartWriting', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onStartWriting');
-		RegisterModuleDependences('im', 'OnLoadLastMessage', 'imopenlines', '\Bitrix\ImOpenLines\Session', 'onSessionProlongLastMessage');
-		RegisterModuleDependences('im', 'OnStartWriting', 'imopenlines', '\Bitrix\ImOpenLines\Session', 'onSessionProlongWriting');
-		RegisterModuleDependences('im', 'OnChatRename', 'imopenlines', '\Bitrix\ImOpenLines\Session', 'onSessionProlongChatRename');
-		RegisterModuleDependences('im', 'OnAfterMessagesUpdate', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onMessageUpdate');
-		RegisterModuleDependences('im', 'OnAfterMessagesDelete', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onMessageDelete');
-		RegisterModuleDependences('im', 'OnGetNotifySchema', 'imopenlines', '\Bitrix\ImOpenLines\Chat', 'onGetNotifySchema');
+		\Bitrix\Main\Config\Option::set("imopenlines", "portal_url", $params['PUBLIC_URL']);
 
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
+		$eventManager->registerEventHandlerCompatible('im', 'OnBeforeChatMessageAdd', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onBeforeMessageSend');
+		$eventManager->registerEventHandlerCompatible('im', 'OnAfterMessagesAdd', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onMessageSend');
+		$eventManager->registerEventHandlerCompatible('im', 'OnAfterMessagesAdd', 'imopenlines', '\Bitrix\ImOpenLines\LiveChat', 'onMessageSend');
+		$eventManager->registerEventHandlerCompatible('im', 'OnAfterChatRead', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onChatRead');
+		$eventManager->registerEventHandlerCompatible('im', 'OnStartWriting', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onStartWriting');
+		$eventManager->registerEventHandlerCompatible('im', 'OnLoadLastMessage', 'imopenlines', '\Bitrix\ImOpenLines\Session', 'onSessionProlongLastMessage');
+		$eventManager->registerEventHandlerCompatible('im', 'OnStartWriting', 'imopenlines', '\Bitrix\ImOpenLines\Session', 'onSessionProlongWriting');
+		$eventManager->registerEventHandlerCompatible('im', 'OnChatRename', 'imopenlines', '\Bitrix\ImOpenLines\Session', 'onSessionProlongChatRename');
+		$eventManager->registerEventHandlerCompatible('im', 'OnAfterMessagesUpdate', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onMessageUpdate');
+		$eventManager->registerEventHandlerCompatible('im', 'OnAfterMessagesDelete', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onMessageDelete');
+		$eventManager->registerEventHandlerCompatible('im', 'OnGetNotifySchema', 'imopenlines', '\Bitrix\ImOpenLines\Chat', 'onGetNotifySchema');
+
 		$eventManager->registerEventHandler('imconnector', 'OnReceivedPost', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onReceivedPost');
 		$eventManager->registerEventHandler('imconnector', 'OnReceivedMessageUpdate', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onReceivedPostUpdate');
 		$eventManager->registerEventHandler('imconnector', 'OnReceivedMessage', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onReceivedMessage');
@@ -218,38 +216,51 @@ Class imopenlines extends CModule
 		$eventManager->registerEventHandler('crm', 'onSiteFormFilledOpenlines', 'imopenlines', '\Bitrix\ImOpenLines\Widget\FormHandler', 'onOpenlinesFormFilled');
 		$eventManager->registerEventHandler('crm', 'onSiteFormFillOpenlines', 'imopenlines', '\Bitrix\ImOpenLines\Widget\FormHandler', 'onOpenlinesFormFill');
 
-		CAgent::AddAgent('\Bitrix\ImOpenLines\Integrations\Report\Statistics\Manager::calculateStatisticsInQueue();', 'imopenlines', 'N');
+		\CAgent::AddAgent('\Bitrix\ImOpenLines\Integrations\Report\Statistics\Manager::calculateStatisticsInQueue();', 'imopenlines', 'N');
 
-		CAgent::AddAgent('\Bitrix\ImOpenLines\Session::transferToNextInQueueAgent(0);', "imopenlines", "N", 60);
-		CAgent::AddAgent('\Bitrix\ImOpenLines\Session::closeByTimeAgent(0);', "imopenlines", "N", 60);
-		CAgent::AddAgent('\Bitrix\ImOpenLines\Session::mailByTimeAgent(0);', "imopenlines", "N", 60);
-		CAgent::AddAgent('\Bitrix\ImOpenLines\Common::deleteBrokenSession();', "imopenlines", "N", 86400, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+86400, "FULL"));
-		CAgent::AddAgent('\Bitrix\ImOpenLines\Session::dismissedOperatorAgent(0);', "imopenlines", "N", 86400);
-		CAgent::AddAgent('\Bitrix\ImOpenLines\Session\Agent::sendMessageNoAnswer();', "imopenlines", "N", 60);
-		CAgent::AddAgent('\Bitrix\ImOpenLines\Session\Agent::sendAutomaticMessage();', 'imopenlines', 'N', 60);
-		CAgent::AddAgent('\Bitrix\ImOpenLines\KpiManager::setExpiredMessagesAgent();', "imopenlines", "N", 60, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+60, "FULL"));
+		\CAgent::AddAgent('\Bitrix\ImOpenLines\Session::transferToNextInQueueAgent(0);', "imopenlines", "N", 60);
+		\CAgent::AddAgent('\Bitrix\ImOpenLines\Session::closeByTimeAgent(0);', "imopenlines", "N", 60);
+		\CAgent::AddAgent('\Bitrix\ImOpenLines\Session::mailByTimeAgent(0);', "imopenlines", "N", 60);
+		\CAgent::AddAgent('\Bitrix\ImOpenLines\Common::deleteBrokenSession();', "imopenlines", "N", 86400, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+86400, "FULL"));
+		\CAgent::AddAgent('\Bitrix\ImOpenLines\Session::dismissedOperatorAgent(0);', "imopenlines", "N", 86400);
+		\CAgent::AddAgent('\Bitrix\ImOpenLines\Session\Agent::sendMessageNoAnswer();', "imopenlines", "N", 60);
+		\CAgent::AddAgent('\Bitrix\ImOpenLines\Session\Agent::sendAutomaticMessage();', 'imopenlines', 'N', 60);
+		\CAgent::AddAgent('\Bitrix\ImOpenLines\KpiManager::setExpiredMessagesAgent();', "imopenlines", "N", 60, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+60, "FULL"));
 
-		if (!IsModuleInstalled('bitrix24'))
+		if (!\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24'))
 		{
-			CAgent::AddAgent('\Bitrix\ImOpenLines\Security\Helper::installRolesAgent();', "imopenlines", "N", 60, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+60, "FULL"));
+			\CAgent::AddAgent('\Bitrix\ImOpenLines\Security\Helper::installRolesAgent();', "imopenlines", "N", 60, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+60, "FULL"));
 		}
 
-		\CModule::IncludeModule("imopenlines");
+		\Bitrix\Main\Loader::includeModule("imopenlines");
 		$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imopenlines/install/db/mysql/install_ft.sql");
 		if ($errors === false)
 		{
 			\Bitrix\Imopenlines\Model\SessionIndexTable::getEntity()->enableFullTextIndex("SEARCH_CONTENT");
 		}
 
-		if (!IsModuleInstalled('bitrix24'))
+		if (!\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24'))
 		{
 			$this->InstallChatApps();
 		}
 
 		$this->InstallEvents();
 
+		$this->installPreset();
+
 		\Bitrix\ImOpenLines\Integrations\Report\Statistic::bind();
+
 		return true;
+	}
+
+	public function installPreset()
+	{
+		if (!\Bitrix\Main\Loader::includeModule('imopenlines'))
+		{
+			return false;
+		}
+
+		return (new \Bitrix\ImOpenLines\Config)->createPreset();
 	}
 
 	public function InstallFiles()
@@ -267,7 +278,7 @@ Class imopenlines extends CModule
 
 	public function InstallChatApps()
 	{
-		if (!\CModule::IncludeModule("im"))
+		if (!\Bitrix\Main\Loader::includeModule("im"))
 		{
 			return false;
 		}
@@ -298,7 +309,7 @@ Class imopenlines extends CModule
 
 	public function UnInstallChatApps()
 	{
-		if (!\CModule::IncludeModule("im"))
+		if (!\Bitrix\Main\Loader::includeModule("im"))
 		{
 			return false;
 		}
@@ -318,7 +329,9 @@ Class imopenlines extends CModule
 	private static function uploadIcon($iconName)
 	{
 		if ($iconName == '')
+		{
 			return false;
+		}
 
 		$iconId = false;
 		if (\Bitrix\Main\IO\File::isFileExists(\Bitrix\Main\Application::getDocumentRoot().'/bitrix/modules/imopenlines/install/icon/icon_'.$iconName.'.png'))
@@ -345,57 +358,63 @@ Class imopenlines extends CModule
 
 	public function DoUninstall()
 	{
-		global $DOCUMENT_ROOT, $APPLICATION, $step;
-		$step = intval($step);
-		if($step<2)
+		global $APPLICATION, $step;
+		$step = (int)$step;
+		if ($step<2)
 		{
-			$APPLICATION->IncludeAdminFile(GetMessage("IMOPENLINES_UNINSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/imopenlines/install/unstep1.php");
+			$APPLICATION->IncludeAdminFile(Loc::getMessage("IMOPENLINES_UNINSTALL_TITLE"), $_SERVER['DOCUMENT_ROOT']."/bitrix/modules/imopenlines/install/unstep1.php");
 		}
-		elseif($step==2)
+		elseif ($step==2)
 		{
 			$this->UnInstallDB(array("savedata" => $_REQUEST["savedata"]));
 
-			if(!isset($_REQUEST["saveemails"]) || $_REQUEST["saveemails"] != "Y")
+			if (!isset($_REQUEST["saveemails"]) || $_REQUEST["saveemails"] != "Y")
+			{
 				$this->UnInstallEvents();
+			}
 
 			$this->UnInstallFiles();
 
-			$APPLICATION->IncludeAdminFile(GetMessage("IMOPENLINES_UNINSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/imopenlines/install/unstep2.php");
+			$APPLICATION->IncludeAdminFile(Loc::getMessage("IMOPENLINES_UNINSTALL_TITLE"), $_SERVER['DOCUMENT_ROOT']."/bitrix/modules/imopenlines/install/unstep2.php");
 		}
 	}
 
 	public function UnInstallDB($arParams = Array())
 	{
-		global $APPLICATION, $DB, $errors;
+		global $APPLICATION, $DB;
 
 		$this->errors = false;
 
 		if (!$arParams['savedata'])
+		{
 			$this->errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/imopenlines/install/db/mysql/uninstall.sql");
+		}
 
-		if(is_array($this->errors))
+		if (is_array($this->errors))
+		{
 			$arSQLErrors = $this->errors;
+		}
 
-		if(!empty($arSQLErrors))
+		if (!empty($arSQLErrors))
 		{
 			$this->errors = $arSQLErrors;
 			$APPLICATION->ThrowException(implode("", $arSQLErrors));
 			return false;
 		}
 
-		UnRegisterModuleDependences('im', 'OnBeforeChatMessageAdd', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onBeforeMessageSend');
-		UnRegisterModuleDependences('im', 'OnAfterMessagesAdd', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onMessageSend');
-		UnRegisterModuleDependences('im', 'OnAfterMessagesAdd', 'imopenlines', '\Bitrix\ImOpenLines\LiveChat', 'onMessageSend');
-		UnRegisterModuleDependences('im', 'OnAfterChatRead', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onChatRead');
-		UnRegisterModuleDependences('im', 'OnAfterMessagesUpdate', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onMessageUpdate');
-		UnRegisterModuleDependences('im', 'OnAfterMessagesDelete', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onMessageDelete');
-		UnRegisterModuleDependences('im', 'OnStartWriting', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onStartWriting');
-		UnRegisterModuleDependences('im', 'OnLoadLastMessage', 'imopenlines', '\Bitrix\ImOpenLines\Session', 'onSessionProlongLastMessage');
-		UnRegisterModuleDependences('im', 'OnStartWriting', 'imopenlines', '\Bitrix\ImOpenLines\Session', 'onSessionProlongWriting');
-		UnRegisterModuleDependences('im', 'OnChatRename', 'imopenlines', '\Bitrix\ImOpenLines\Session', 'onSessionProlongChatRename');
-		UnRegisterModuleDependences('im', 'OnGetNotifySchema', 'imopenlines', '\Bitrix\ImOpenLines\Chat', 'onGetNotifySchema');
-
 		$eventManager = \Bitrix\Main\EventManager::getInstance();
+		$eventManager->unRegisterEventHandler('im', 'OnBeforeChatMessageAdd', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onBeforeMessageSend');
+		$eventManager->unRegisterEventHandler('im', 'OnAfterMessagesAdd', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onMessageSend');
+		$eventManager->unRegisterEventHandler('im', 'OnAfterMessagesAdd', 'imopenlines', '\Bitrix\ImOpenLines\LiveChat', 'onMessageSend');
+		$eventManager->unRegisterEventHandler('im', 'OnAfterChatRead', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onChatRead');
+		$eventManager->unRegisterEventHandler('im', 'OnAfterMessagesUpdate', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onMessageUpdate');
+		$eventManager->unRegisterEventHandler('im', 'OnAfterMessagesDelete', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onMessageDelete');
+		$eventManager->unRegisterEventHandler('im', 'OnStartWriting', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onStartWriting');
+		$eventManager->unRegisterEventHandler('im', 'OnLoadLastMessage', 'imopenlines', '\Bitrix\ImOpenLines\Session', 'onSessionProlongLastMessage');
+		$eventManager->unRegisterEventHandler('im', 'OnStartWriting', 'imopenlines', '\Bitrix\ImOpenLines\Session', 'onSessionProlongWriting');
+		$eventManager->unRegisterEventHandler('im', 'OnChatRename', 'imopenlines', '\Bitrix\ImOpenLines\Session', 'onSessionProlongChatRename');
+		$eventManager->unRegisterEventHandler('im', 'OnGetNotifySchema', 'imopenlines', '\Bitrix\ImOpenLines\Chat', 'onGetNotifySchema');
+
 		$eventManager->unRegisterEventHandler('imconnector', 'OnReceivedPost', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onReceivedPost');
 		$eventManager->unRegisterEventHandler('imconnector', 'OnReceivedPostUpdate', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'OnReceivedPostUpdate');
 		$eventManager->unRegisterEventHandler('imconnector', 'OnReceivedMessage', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onReceivedMessage');
@@ -439,14 +458,9 @@ Class imopenlines extends CModule
 
 		$this->UnInstallChatApps();
 
-		UnRegisterModule("imopenlines");
+		\Bitrix\Main\ModuleManager::unRegisterModule("imopenlines");
 
-		return true;
-	}
-
-	public function UnInstallFiles($arParams = array())
-	{
 		return true;
 	}
 }
-?>
+

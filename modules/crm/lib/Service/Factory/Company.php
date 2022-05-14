@@ -14,6 +14,7 @@ use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Service\EventHistory\TrackedObject;
 use Bitrix\Crm\Service\Operation;
+use Bitrix\Crm\Settings\CompanySettings;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\IO\Path;
@@ -36,7 +37,12 @@ final class Company extends Service\Factory
 
 	public function isRecyclebinEnabled(): bool
 	{
-		return true;
+		return CompanySettings::getCurrent()->isRecycleBinEnabled();
+	}
+
+	public function isDeferredCleaningEnabled(): bool
+	{
+		return CompanySettings::getCurrent()->isDeferredCleaningEnabled();
 	}
 
 	public function isNewRoutingForAutomationEnabled(): bool
@@ -96,7 +102,7 @@ final class Company extends Service\Factory
 	{
 		return [
 			Item::FIELD_NAME_CREATED_TIME => 'DATE_CREATE',
-			Item::FIELD_NAME_MOVED_TIME => 'DATE_MODIFY',
+			Item::FIELD_NAME_UPDATED_TIME => 'DATE_MODIFY',
 			Item::FIELD_NAME_CREATED_BY => 'CREATED_BY_ID',
 			Item::FIELD_NAME_UPDATED_BY => 'MODIFY_BY_ID',
 			Item::FIELD_NAME_TYPE_ID => 'COMPANY_TYPE',
@@ -305,5 +311,10 @@ final class Company extends Service\Factory
 	public function getImportOperation(Item $item, Context $context = null): Operation\Import
 	{
 		throw new InvalidOperationException('Company factory is not ready to work with operations yet');
+	}
+
+	public function isCountersEnabled(): bool
+	{
+		return true;
 	}
 }

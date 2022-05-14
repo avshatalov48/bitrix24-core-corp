@@ -11,6 +11,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    this.setName(params.name);
 	    this.setSort(params.sort);
 	    this.setDodRequired(params.dodRequired);
+	    this.setParticipants(params.participants);
 	  }
 
 	  babelHelpers.createClass(ItemType, [{
@@ -53,6 +54,26 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function isDodRequired() {
 	      return this.dodRequired;
 	    }
+	  }, {
+	    key: "setParticipants",
+	    value: function setParticipants(participants) {
+	      var _this = this;
+
+	      this.participants = [];
+
+	      if (!main_core.Type.isArray(participants)) {
+	        return;
+	      }
+
+	      participants.forEach(function (participant) {
+	        _this.participants.push([participant.entityId, participant.id]);
+	      });
+	    }
+	  }, {
+	    key: "getParticipants",
+	    value: function getParticipants() {
+	      return this.participants;
+	    }
 	  }]);
 	  return ItemType;
 	}();
@@ -90,7 +111,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "removeType",
 	    value: function removeType(type) {
-	      this.types.delete(type.getId());
+	      this.types["delete"](type.getId());
 	    }
 	  }]);
 	  return TypeStorage;
@@ -172,7 +193,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function addType(newType, tmpType) {
 	      if (tmpType) {
 	        main_core.Dom.remove(this.tabNodes.get(tmpType.getId()));
-	        this.tabNodes.delete(tmpType.getId());
+	        this.tabNodes["delete"](tmpType.getId());
 	      }
 
 	      var node = this.renderTab(newType);
@@ -265,7 +286,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var _this6 = this;
 
 	      top.BX.UI.Dialogs.MessageBox.confirm(main_core.Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_REMOVE_TYPE'), function (messageBox) {
-	        _this6.tabNodes.delete(type.getId());
+	        _this6.tabNodes["delete"](type.getId());
 
 	        if (_this6.isActiveType(type)) {
 	          _this6.setActiveType(null);
@@ -407,7 +428,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return RequestSender;
 	}();
 
-	var _templateObject$1, _templateObject2$1, _templateObject3$1, _templateObject4$1;
+	var _templateObject$1, _templateObject2$1, _templateObject3$1, _templateObject4$1, _templateObject5$1;
 	var Settings = /*#__PURE__*/function () {
 	  function Settings(params) {
 	    babelHelpers.classCallCheck(this, Settings);
@@ -451,29 +472,30 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        _this.addEmptyCreationType();
 
 	        return _this.render();
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
 	    key: "render",
 	    value: function render() {
-	      this.node = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-dod-settings\">\n\t\t\t\t<div class=\"tasks-scrum-dod-settings-container\">\n\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-container-wrap\">\n\t\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-container-shell\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-container-sidebar-wrapper\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.tabs.render(), this.renderContainer());
+	      var currentType = this.typeStorage.getNextType();
+	      this.node = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-dod-settings\">\n\t\t\t\t<div class=\"tasks-scrum-dod-settings-container\">\n\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-container-wrap\">\n\t\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-container-shell\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-container-sidebar-wrapper\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.tabs.render(), this.renderContainer(currentType));
 	      return this.node;
 	    }
 	  }, {
 	    key: "renderContainer",
-	    value: function renderContainer() {
+	    value: function renderContainer(type) {
 	      if (this.tabs.isEmpty()) {
 	        return this.renderEmptyForm();
 	      } else {
-	        return this.renderEditingForm(this.typeStorage.getNextType());
+	        return this.renderEditingForm(type);
 	      }
 	    }
 	  }, {
 	    key: "renderEditingForm",
 	    value: function renderEditingForm(type) {
-	      return main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form\">\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-content ui-form-content-dod-list\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.renderRequiredOption(type));
+	      return main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form\">\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-content ui-form-content-dod-list\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.renderRequiredOption(type), this.renderParticipantsSelector());
 	    }
 	  }, {
 	    key: "renderEmptyForm",
@@ -494,12 +516,52 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      return node;
 	    }
 	  }, {
+	    key: "renderParticipantsSelector",
+	    value: function renderParticipantsSelector() {
+	      return ''; //todo tmp
+
+	      return main_core.Tag.render(_templateObject5$1 || (_templateObject5$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-user-selector\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_DOD_LABEL_USER_SELECTOR'));
+	    }
+	  }, {
+	    key: "initParticipantsSelector",
+	    value: function initParticipantsSelector(type) {
+	      var participantsSelectorContainer = this.node.querySelector('.tasks-scrum-dod-settings-user-selector');
+
+	      if (main_core.Type.isNil(participantsSelectorContainer)) {
+	        return;
+	      }
+
+	      var selectorId = 'tasks-scrum-dod-settings-participants-selector-' + type.getId();
+	      this.participantsSelector = new top.BX.UI.EntitySelector.TagSelector({
+	        id: selectorId,
+	        dialogOptions: {
+	          id: selectorId,
+	          context: 'TASKS',
+	          preselectedItems: this.tabs.getActiveType().getParticipants(),
+	          entities: [{
+	            id: 'user',
+	            options: {
+	              inviteEmployeeLink: false
+	            }
+	          }, {
+	            id: 'project-roles',
+	            options: {
+	              projectId: this.groupId
+	            },
+	            dynamicLoad: true
+	          }]
+	        }
+	      });
+	      this.participantsSelector.renderTo(participantsSelectorContainer);
+	    }
+	  }, {
 	    key: "buildEditingForm",
 	    value: function buildEditingForm(type) {
 	      var _this3 = this;
 
 	      var container = this.cleanTypeForm();
 	      main_core.Dom.append(this.renderEditingForm(type), container);
+	      this.initParticipantsSelector(type);
 	      var listContainer = this.node.querySelector('.ui-form-content-dod-list');
 	      var loader = this.showLoader(listContainer);
 	      this.requestSender.getChecklist({
@@ -508,7 +570,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }).then(function (response) {
 	        loader.hide();
 	        top.BX.Runtime.html(listContainer, response.data.html);
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        loader.hide();
 
 	        _this3.requestSender.showErrorAlert(response);
@@ -529,7 +591,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var previousType = this.tabs.getPreviousType();
 
 	      if (previousType) {
-	        this.saveSettings(previousType).then(function () {
+	        this.saveSettings(previousType).then(function (response) {
+	          var updatedType = response.data.type;
+	          previousType.setDodRequired(updatedType.dodRequired);
+	          previousType.setParticipants(updatedType.participants);
+
 	          _this4.buildEditingForm(type);
 	        });
 	      } else {
@@ -555,7 +621,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        _this5.typeStorage.addType(createdType);
 
 	        _this5.tabs.addType(createdType, tmpType);
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        loader.hide();
 
 	        _this5.requestSender.showErrorAlert(response);
@@ -571,7 +637,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        groupId: this.groupId,
 	        id: type.getId(),
 	        name: type.getName()
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this6.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -596,7 +662,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	          _this7.tabs.switchToType(nextType);
 	        }
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this7.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -619,8 +685,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        groupId: this.groupId,
 	        typeId: type.getId(),
 	        requiredOption: this.getRequiredOptionValue(),
-	        items: this.getChecklistItems()
-	      }).catch(function (response) {
+	        items: this.getChecklistItems(),
+	        participants: this.getSelectedParticipants()
+	      })["catch"](function (response) {
 	        _this8.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -635,6 +702,22 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var treeStructure = top.BX.Tasks.CheckListInstance.getTreeStructure();
 	      return treeStructure.getRequestData();
 	      /* eslint-enable */
+	    }
+	  }, {
+	    key: "getSelectedParticipants",
+	    value: function getSelectedParticipants() {
+	      if (main_core.Type.isNil(this.participantsSelector)) {
+	        return [];
+	      }
+
+	      var selectedParticipants = [];
+	      this.participantsSelector.getTags().forEach(function (tag) {
+	        selectedParticipants.push({
+	          id: tag.getId(),
+	          entityId: tag.getEntityId()
+	        });
+	      });
+	      return selectedParticipants;
 	    }
 	  }, {
 	    key: "getRequiredOptionValue",
@@ -718,7 +801,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	      return this.requestSender.getSettings({
 	        groupId: this.groupId,
-	        taskId: this.taskId
+	        taskId: this.taskId,
+	        saveRequest: this.isSkipNotifications() ? 'Y' : 'N'
 	      }).then(function (response) {
 	        var types = main_core.Type.isArray(response.data.types) ? response.data.types : [];
 	        var activeTypeId = main_core.Type.isInteger(response.data.activeTypeId) ? parseInt(response.data.activeTypeId, 10) : 0;
@@ -750,7 +834,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        }
 
 	        return _this2.render();
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this2.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -769,7 +853,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }).then(function (response) {
 	        loader.hide();
 	        top.BX.Runtime.html(listNode, response.data.html);
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this3.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -840,7 +924,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            }
 	          }
 	        }
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this6.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -1023,7 +1107,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        taskId: this.taskId
 	      }).then(function (response) {
 	        return response.data;
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this2.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -1050,7 +1134,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        width: 1000,
 	        contentCallback: function contentCallback() {
 	          return ui_sidepanel_layout.Layout.createContent({
-	            extensions: ['tasks.scrum.dod'],
+	            extensions: ['tasks.scrum.dod', 'ui.entity-selector'],
 	            title: main_core.Loc.getMessage('TASKS_SCRUM_DOD_TITLE'),
 	            content: _this3.createSettingsContent.bind(_this3),
 	            design: {
@@ -1137,7 +1221,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onCloseSettings",
 	    value: function onCloseSettings() {
-	      this.settings.saveSettings().then(function () {}).catch(function () {});
+	      this.settings.saveSettings().then(function () {})["catch"](function () {});
 	    }
 	  }, {
 	    key: "onSaveList",

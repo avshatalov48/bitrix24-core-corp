@@ -63,7 +63,7 @@ class CrmTypeDetailComponent extends Base
 				return;
 			}
 
-			if(!$userPermissions->canUpdateType($this->type->getId()))
+			if (!$userPermissions->canUpdateType($this->type->getEntityTypeId()))
 			{
 				$this->errorCollection[] = new Error(Loc::getMessage('CRM_TYPE_TYPE_ACCESS_DENIED'));
 			}

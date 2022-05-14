@@ -14,24 +14,20 @@ if (!Loader::includeModule('intranet'))
 	return;
 }
 
-$rootItem = AutomationSection::getRootMenuItem();
-$aMenuLinks = [
-	[
-		$rootItem[0],
-		$rootItem[1],
-	]
-];
-
+$aMenuLinks = [];
 $items = AutomationSection::getItems();
 foreach ($items as $item)
 {
 	if ($item['available'])
 	{
+		$menuData = $item['menuData'] ?? [];
+		unset($menuData['counter_id']);
+
 		$aMenuLinks[] = [
 			$item['title'] ?? '',
 			$item['url'] ?? '',
 			$item['extraUrls'] ?? [],
-			$item['menuData'] ?? [],
+			$menuData,
 			'',
 		];
 	}

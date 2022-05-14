@@ -7,9 +7,7 @@
 
 namespace Bitrix\Tasks\Internals\Task;
 
-use Bitrix\Main,
-	Bitrix\Main\Localization\Loc;
-//Loc::loadMessages(__FILE__);
+use Bitrix\Tasks\Internals\TaskDataManager;
 
 /**
  * Class RelatedTable
@@ -18,16 +16,16 @@ use Bitrix\Main,
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_Related_Query query()
- * @method static EO_Related_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Related_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_Related_Result getById($id)
- * @method static EO_Related_Result getList(array $parameters = array())
+ * @method static EO_Related_Result getList(array $parameters = [])
  * @method static EO_Related_Entity getEntity()
  * @method static \Bitrix\Tasks\Internals\Task\EO_Related createObject($setDefaultValues = true)
  * @method static \Bitrix\Tasks\Internals\Task\EO_Related_Collection createCollection()
  * @method static \Bitrix\Tasks\Internals\Task\EO_Related wakeUpObject($row)
  * @method static \Bitrix\Tasks\Internals\Task\EO_Related_Collection wakeUpCollection($rows)
  */
-class RelatedTable extends Main\Entity\DataManager
+class RelatedTable extends TaskDataManager
 {
 	/**
 	 * Returns DB table name for entity.

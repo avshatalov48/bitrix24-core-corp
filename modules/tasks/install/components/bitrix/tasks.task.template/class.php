@@ -124,7 +124,7 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 			return null;
 		}
 
-		if (!\Bitrix\Tasks\Access\TemplateAccessController::can($this->userId, \Bitrix\Tasks\Access\ActionDictionary::ACTION_TEMPLATE_EDIT, $templateId))
+		if (!\Bitrix\Tasks\Access\TemplateAccessController::can($this->userId, \Bitrix\Tasks\Access\ActionDictionary::ACTION_TEMPLATE_REMOVE, $templateId))
 		{
 			$this->addForbiddenError();
 			return [];
@@ -191,7 +191,7 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 		return [];
 	}
 
-	public function saveCheckListAction($templateId, $items, $params)
+	public function saveCheckListAction($templateId, $items = [], $params)
 	{
 		if (!is_array($items))
 		{

@@ -29,9 +29,11 @@ class CAllCrmDeal
 	use UserFieldPreparer;
 
 	static public $sUFEntityID = 'CRM_DEAL';
+
 	const USER_FIELD_ENTITY_ID = 'CRM_DEAL';
 	const SUSPENDED_USER_FIELD_ENTITY_ID = 'CRM_DEAL_SPD';
-	const TOTAL_COUNT_CACHE_ID =  'crm_deal_total_count';
+	const TOTAL_COUNT_CACHE_ID = 'crm_deal_total_count';
+	const CACHE_TTL = 3600;
 
 	public $LAST_ERROR = '';
 	protected $checkExceptions = array();
@@ -42,7 +44,9 @@ class CAllCrmDeal
 	protected static $TYPE_NAME = 'DEAL';
 	private static $DEAL_STAGES = null;
 	private static $FIELD_INFOS = null;
-	private static $categories = [];
+
+	/** @var \Bitrix\Crm\Entity\Compatibility\Adapter */
+	private $compatibilityAdapter;
 
 	function __construct($bCheckPermission = true)
 	{
@@ -68,127 +72,60 @@ class CAllCrmDeal
 		return Crm\Settings\DealSettings::getCurrent()->isFactoryEnabled();
 	}
 
-	private function prepareOperation(Crm\Service\Operation $operation, array $options): void
+	private function getCompatibilityAdapter(): Crm\Entity\Compatibility\Adapter
 	{
-		CCrmEntityHelper::prepareOperationByOptions($operation, $options, $this->bCheckPermission);
-
-		//todo remove when all old entities use Operation. We will have to remove automation start in a number of different places
-
-		//since in old api automation is always started by hand when needed, there is a chance that workflows will be started twice
-		//when we move to Operation completely, it will be possible to remove this calls at all. but now it is just extra if-branches
-		$operation->disableAutomation();
-		$operation->disableBizProc();
-	}
-
-	/**
-	 * Is used to maintain backwards compatibility
-	 *
-	 * @param array $fields
-	 * @param bool $isNew
-	 */
-	private function prepareFieldsForOperation(array &$fields, bool $isNew): void
-	{
-		global $USER_FIELD_MANAGER;
-
-		$crmUserType = new \CCrmUserType($USER_FIELD_MANAGER, self::$sUFEntityID);
-
-		// use the same workarounds as old api
-		$crmUserType->PrepareUpdate($fields, ['IS_NEW' => $isNew]);
-
-		foreach ($crmUserType->GetAbstractFields() as $fieldName => $userField)
+		if (!$this->compatibilityAdapter)
 		{
-			if (!isset($fields[$fieldName]))
-			{
-				continue;
-			}
+			$this->compatibilityAdapter = static::createCompatibilityAdapter();
 
-			$fieldValue = $fields[$fieldName];
-			// previously it was applied only for fields with type 'crm', expand it on other types for consistency
-			if ($userField['MULTIPLE'] === 'Y' && !is_iterable($fieldValue))
+			if ($this->compatibilityAdapter instanceof Crm\Entity\Compatibility\Adapter\Operation)
 			{
-				$fields[$fieldName] = [$fieldValue];
+				$this->compatibilityAdapter
+					// bind newly created adapter to this instance
+					->setCheckPermissions((bool)$this->bCheckPermission)
+					->setErrorMessageContainer($this->LAST_ERROR)
+					->setCheckExceptionsContainer($this->checkExceptions)
+				;
 			}
 		}
 
+		return $this->compatibilityAdapter;
+	}
+
+	private static function createCompatibilityAdapter(): Crm\Entity\Compatibility\Adapter
+	{
 		$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
-		if ($factory && array_key_exists('CATEGORY_ID', $fields))
+		if (!$factory)
 		{
-			$categoryId = (int)$fields['CATEGORY_ID'];
-			if (!$factory->isCategoryAvailable($categoryId))
-			{
-				$fields['CATEGORY_ID'] = $factory->createDefaultCategoryIfNotExist()->getId();
-			}
-		}
-	}
-
-	private function exposeFieldsAfterOperation(array $providedFields, \Bitrix\Crm\Item $item, bool $isAdd): array
-	{
-		static $alwaysExposed = [
-			'MODIFY_BY_ID',
-			'EXCH_RATE',
-			'ACCOUNT_CURRENCY_ID',
-			'OPPORTUNITY_ACCOUNT',
-			'TAX_VALUE_ACCOUNT',
-			'ID',
-		];
-
-		static $alwaysExposedOnAdd = [
-			'CREATED_BY_ID',
-			'ASSIGNED_BY_ID',
-			'TITLE',
-			'IS_RECURRING',
-			'CATEGORY_ID',
-			'STAGE_ID',
-			'STAGE_SEMANTIC_ID',
-			'IS_NEW',
-			'CURRENCY_ID',
-			'CLOSED',
-			'COMPANY_ID',
-		];
-
-		static $constantFieldsOnAdd = [
-			'~DATE_CREATE' => 'now()',
-			'~DATE_MODIFY' => 'now()',
-		];
-
-		static $constantFieldsOnUpdate = [
-			'~DATE_MODIFY' => 'now()',
-		];
-
-		$fieldsToExpose = array_merge($alwaysExposed, array_keys($providedFields));
-		if ($isAdd)
-		{
-			$fieldsToExpose = array_merge($alwaysExposed, $alwaysExposedOnAdd);
+			throw new Error('No factory for deal');
 		}
 
-		$result = [];
-		foreach ($item->getCompatibleData() as $fieldName => $value)
-		{
-			if (in_array($fieldName, $fieldsToExpose, true) || (mb_strpos($fieldName, 'UF_') === 0))
-			{
-				$result[$fieldName] = $value;
-			}
-		}
-
-		if ($isAdd)
-		{
-			$result = array_merge($result, $constantFieldsOnAdd);
-		}
-		else
-		{
-			$result = array_merge($result, $constantFieldsOnUpdate);
-		}
-
-		return $result;
-	}
-
-	/**
-	 * @param \Bitrix\Main\Error[] $errors
-	 * @return \CAdminException[]
-	 */
-	private function transformErrorsToCheckExceptions(array $errors): array
-	{
-		return \CCrmEntityHelper::transformOperationErrorsToCheckExceptions($errors);
+		return
+			(new Crm\Entity\Compatibility\Adapter\Operation($factory))
+				->setRunAutomation(false)
+				->setRunBizProc(false)
+				->setAlwaysExposedFields([
+					'MODIFY_BY_ID',
+					'EXCH_RATE',
+					'ACCOUNT_CURRENCY_ID',
+					'OPPORTUNITY_ACCOUNT',
+					'TAX_VALUE_ACCOUNT',
+					'ID',
+				])
+				->setExposedOnlyAfterAddFields([
+					'CREATED_BY_ID',
+					'ASSIGNED_BY_ID',
+					'TITLE',
+					'IS_RECURRING',
+					'CATEGORY_ID',
+					'STAGE_ID',
+					'STAGE_SEMANTIC_ID',
+					'IS_NEW',
+					'CURRENCY_ID',
+					'CLOSED',
+					'COMPANY_ID',
+				])
+		;
 	}
 
 	// Service -->
@@ -222,8 +159,7 @@ class CAllCrmDeal
 
 		if (static::isFactoryEnabled())
 		{
-			$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
-			self::$FIELD_INFOS = $factory->getFieldsInfoByMap();
+			self::$FIELD_INFOS = static::createCompatibilityAdapter()->getFieldsInfo();
 		}
 		else
 		{
@@ -1530,7 +1466,7 @@ class CAllCrmDeal
 
 	public static function GetTotalCount()
 	{
-		if(defined('BX_COMP_MANAGED_CACHE') && $GLOBALS['CACHE_MANAGER']->Read(600, self::TOTAL_COUNT_CACHE_ID, 'b_crm_deal'))
+		if(defined('BX_COMP_MANAGED_CACHE') && $GLOBALS['CACHE_MANAGER']->Read(self::CACHE_TTL, self::TOTAL_COUNT_CACHE_ID, 'b_crm_deal'))
 		{
 			return $GLOBALS['CACHE_MANAGER']->Get(self::TOTAL_COUNT_CACHE_ID);
 		}
@@ -1651,49 +1587,7 @@ class CAllCrmDeal
 
 		if ($this->isUseOperation())
 		{
-			$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
-			if (!$factory)
-			{
-				throw new Error('No factory for deal');
-			}
-			$item = $factory->createItem();
-
-			$this->prepareFieldsForOperation($arFields, true);
-			if (!$this->checkFieldsForOperation($arFields))
-			{
-				$arFields['RESULT_MESSAGE'] = &$this->LAST_ERROR;
-				return false;
-			}
-			$item->setFromCompatibleData($arFields);
-
-			if ($isRestoration)
-			{
-				$operation = $factory->getRestoreOperation($item);
-			}
-			elseif (isset($arFields['PERMISSION']) && $arFields['PERMISSION'] === 'IMPORT')
-			{
-				$operation = $factory->getImportOperation($item);
-			}
-			else
-			{
-				$operation = $factory->getAddOperation($item);
-			}
-
-			$this->prepareOperation($operation, $options);
-
-			$result = $operation->launch();
-			if ($result->isSuccess())
-			{
-				$arFields = $this->exposeFieldsAfterOperation($arFields, $item, true);
-
-				return $item->getId();
-			}
-
-			$this->checkExceptions = $this->transformErrorsToCheckExceptions($result->getErrors());
-			$this->LAST_ERROR = implode(', ', $result->getErrorMessages());
-			$arFields['RESULT_MESSAGE'] = &$this->LAST_ERROR;
-
-			return false;
+			return $this->getCompatibilityAdapter()->performAdd($arFields, $options);
 		}
 
 		$userID = isset($options['CURRENT_USER'])
@@ -2121,7 +2015,7 @@ class CAllCrmDeal
 							EntityCounterType::IDLE,
 							EntityCounterType::ALL
 						),
-						array('DEAL_CATEGORY_ID' => $categoryID, 'EXTENDED_MODE' => true)
+						array('CATEGORY_ID' => $categoryID, 'EXTENDED_MODE' => true)
 					),
 					array($assignedByID)
 				);
@@ -2288,47 +2182,32 @@ class CAllCrmDeal
 		return $result;
 	}
 
-	/**
-	 * When setting an incorrect value for date field, it will throw an exception. Old code expects to find a localized
-	 * message with error description in this case.
-	 *
-	 * Since there is no way to identify which field contains invalid value by an exception, we have to check values for
-	 * 'dangerous' fields before we set them to EntityObject.
-	 *
-	 * @param array $fields
-	 * @return bool
-	 */
-	private function checkFieldsForOperation(array $fields): bool
-	{
-		$errors = '';
-
-		if (!empty($fields['BEGINDATE']) && !CheckDateTime($fields['BEGINDATE']))
-		{
-			$errors .= GetMessage('CRM_ERROR_FIELD_INCORRECT', array('%FIELD_NAME%' => GetMessage('CRM_FIELD_BEGINDATE')))."<br />\n";
-		}
-
-		if (!empty($fields['CLOSEDATE']) && !CheckDateTime($fields['CLOSEDATE']))
-		{
-			$errors .= GetMessage('CRM_ERROR_FIELD_INCORRECT', array('%FIELD_NAME%' => GetMessage('CRM_FIELD_CLOSEDATE')))."<br />\n";
-		}
-
-		if (!empty($fields['EVENT_DATE']) && !CheckDateTime($fields['EVENT_DATE']))
-		{
-			$errors .= GetMessage('CRM_ERROR_FIELD_INCORRECT', array('%FIELD_NAME%' => GetMessage('CRM_FIELD_EVENT_DATE')))."<br />\n";
-		}
-
-		$this->LAST_ERROR .= $errors;
-
-		return empty($errors);
-	}
-
 	public function CheckFields(&$arFields, $ID = false, $options = array())
 	{
 		global $APPLICATION, $USER_FIELD_MANAGER;
 		$this->LAST_ERROR = '';
 		$this->checkExceptions = array();
 
-		$this->checkFieldsForOperation((array)$arFields);
+		if (!empty($arFields['BEGINDATE']) && !CheckDateTime($arFields['BEGINDATE']))
+		{
+			$this->LAST_ERROR .=
+				GetMessage('CRM_ERROR_FIELD_INCORRECT', ['%FIELD_NAME%' => GetMessage('CRM_FIELD_BEGINDATE')]) . "<br />\n"
+			;
+		}
+
+		if (!empty($arFields['CLOSEDATE']) && !CheckDateTime($arFields['CLOSEDATE']))
+		{
+			$this->LAST_ERROR .=
+				GetMessage('CRM_ERROR_FIELD_INCORRECT', ['%FIELD_NAME%' => GetMessage('CRM_FIELD_CLOSEDATE')]) . "<br />\n"
+			;
+		}
+
+		if (!empty($arFields['EVENT_DATE']) && !CheckDateTime($arFields['EVENT_DATE']))
+		{
+			$this->LAST_ERROR .=
+				GetMessage('CRM_ERROR_FIELD_INCORRECT', ['%FIELD_NAME%' => GetMessage('CRM_FIELD_EVENT_DATE')]) . "<br />\n"
+			;
+		}
 
 		if (($ID == false || isset($arFields['TITLE'])) && empty($arFields['TITLE']))
 			$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_IS_MISSING', array('%FIELD_NAME%' => GetMessage('CRM_DEAL_FIELD_TITLE')))."<br />\n";
@@ -2723,64 +2602,7 @@ class CAllCrmDeal
 
 		if ($this->isUseOperation())
 		{
-			$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
-			if (!$factory)
-			{
-				throw new Error('No factory for deal');
-			}
-			$item = $factory->getItem($ID);
-			if (!$item)
-			{
-				return false;
-			}
-
-			$this->prepareFieldsForOperation($arFields, false);
-			if (!$this->checkFieldsForOperation($arFields))
-			{
-				$arFields['RESULT_MESSAGE'] = &$this->LAST_ERROR;
-				return false;
-			}
-			$item->setFromCompatibleData($arFields);
-
-			// region ship or unreserve
-			$processInventoryManagementResult = Crm\Reservation\EventsHandler\Deal::processInventoryManagement($item->getCompatibleData());
-			if ($processInventoryManagementResult->isSuccess())
-			{
-				$processInventoryManagementData = $processInventoryManagementResult->getData();
-				if (
-					isset($processInventoryManagementData['IS_EXECUTING'])
-					&& $processInventoryManagementData['IS_EXECUTING']
-				)
-				{
-					return true;
-				}
-			}
-			else
-			{
-				$this->LAST_ERROR = implode(', ', $processInventoryManagementResult->getErrorMessages());
-				$arFields['RESULT_MESSAGE'] = &$this->LAST_ERROR;
-
-				return false;
-			}
-			// endregion
-
-			$operation = $factory->getUpdateOperation($item);
-
-			$this->prepareOperation($operation, $options);
-
-			$result = $operation->launch();
-			if ($result->isSuccess())
-			{
-				$arFields = $this->exposeFieldsAfterOperation($arFields, $item, false);
-
-				return true;
-			}
-
-			$this->checkExceptions = $this->transformErrorsToCheckExceptions($result->getErrors());
-			$this->LAST_ERROR = implode(', ', $result->getErrorMessages());
-			$arFields['RESULT_MESSAGE'] = &$this->LAST_ERROR;
-
-			return false;
+			return $this->getCompatibilityAdapter()->performUpdate($ID, $arFields, $options);
 		}
 
 		if(isset($options['CURRENT_USER']))
@@ -3414,7 +3236,7 @@ class CAllCrmDeal
 								EntityCounterType::IDLE,
 								EntityCounterType::ALL
 							),
-							array('DEAL_CATEGORY_ID' => $categoryID, 'EXTENDED_MODE' => true)
+							array('CATEGORY_ID' => $categoryID, 'EXTENDED_MODE' => true)
 						),
 						$assignedByIDs
 					);
@@ -3741,24 +3563,7 @@ class CAllCrmDeal
 
 		if($this->isUseOperation())
 		{
-			$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
-			if(!$factory)
-			{
-				throw new Error('No factory for deal');
-			}
-			$item = $factory->getItem($ID);
-			if(!$item)
-			{
-				return false;
-			}
-
-			$operation = $factory->getDeleteOperation($item);
-
-			$this->prepareOperation($operation, $arOptions);
-
-			$result = $operation->launch();
-
-			return $result->isSuccess();
+			return $this->getCompatibilityAdapter()->performDelete($ID, $arOptions);
 		}
 
 		if(isset($arOptions['CURRENT_USER']))
@@ -3874,10 +3679,6 @@ class CAllCrmDeal
 			else
 			{
 				Bitrix\Crm\Cleaning\CleaningManager::register(CCrmOwnerType::Deal, $ID);
-				if(!Bitrix\Crm\Agent\Routine\CleaningAgent::isActive())
-				{
-					Bitrix\Crm\Agent\Routine\CleaningAgent::activate();
-				}
 			}
 
 			if(!isset($arOptions['REGISTER_STATISTICS']) || $arOptions['REGISTER_STATISTICS'] === true)
@@ -3888,6 +3689,7 @@ class CAllCrmDeal
 				DealActivityStatisticEntry::unregister($ID);
 				DealChannelBinding::unregisterAll($ID);
 			}
+
 			if($assignedByID > 0)
 			{
 				EntityCounterManager::reset(
@@ -3899,7 +3701,7 @@ class CAllCrmDeal
 							EntityCounterType::IDLE,
 							EntityCounterType::ALL
 						),
-						array('DEAL_CATEGORY_ID' => $categoryID, 'EXTENDED_MODE' => true)
+						array('CATEGORY_ID' => $categoryID, 'EXTENDED_MODE' => true)
 					),
 					array($assignedByID)
 				);
@@ -4492,38 +4294,12 @@ class CAllCrmDeal
 
 	public static function GetCategoryID($ID)
 	{
-		if($ID <= 0)
-		{
-			return 0;
-		}
-		if (!isset(self::$categories[$ID]))
-		{
-
-			$dbRes = self::GetListEx(
-				[],
-				['=ID' => $ID, 'CHECK_PERMISSIONS' => 'N'],
-				false,
-				false,
-				['ID', 'CATEGORY_ID']
-			);
-
-			$fields = is_object($dbRes) ? $dbRes->Fetch() : null;
-			if (!is_array($fields))
-			{
-				self::$categories[$ID] = -1;
-			}
-			else
-			{
-				self::$categories[$ID] = isset($fields['CATEGORY_ID']) ? (int)$fields['CATEGORY_ID'] : 0;
-			}
-		}
-
-		return self::$categories[$ID];
+		return (int)Crm\Service\Container::getInstance()->getFactory(CCrmOwnerType::Deal)->getItemCategoryId((int)$ID);
 	}
 
 	public static function clearCategoryCache($ID)
 	{
-		unset(self::$categories[$ID]);
+		return Crm\Service\Container::getInstance()->getFactory(CCrmOwnerType::Deal)->clearItemCategoryCache((int)$ID);
 	}
 
 	protected static function GetPermittedCategoryIDs($permissionType, CCrmPerms $userPermissions = null)
@@ -5361,7 +5137,7 @@ class CAllCrmDeal
 					EntityCounterType::IDLE,
 					EntityCounterType::ALL
 				),
-				array('DEAL_CATEGORY_ID' => $categoryID)
+				array('CATEGORY_ID' => $categoryID)
 			),
 			array($assignedByID)
 		);
@@ -5374,7 +5150,7 @@ class CAllCrmDeal
 					EntityCounterType::IDLE,
 					EntityCounterType::ALL
 				),
-				array('DEAL_CATEGORY_ID' => $newCategoryID)
+				array('CATEGORY_ID' => $newCategoryID)
 			),
 			array($assignedByID)
 		);

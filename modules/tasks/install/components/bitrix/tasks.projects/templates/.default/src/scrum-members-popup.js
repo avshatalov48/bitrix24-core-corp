@@ -110,7 +110,7 @@ export class ScrumMembersPopup extends MembersPopup
 									${this.getAvatar(user)}
 									<span class="tasks-projects-members-popup-avatar-status-icon"></span>
 								</span>
-								<span class="tasks-projects-members-popup-name">${user['FORMATTED_NAME']}</span>
+								<span class="tasks-scrum-members-popup-name">${user['FORMATTED_NAME']}</span>
 							</a>
 						`
 					)
@@ -119,7 +119,25 @@ export class ScrumMembersPopup extends MembersPopup
 		}
 		else
 		{
-			super.renderUsers(users);
+			Object.values(users).forEach((user) => {
+				if (this.getCurrentPopupData().renderedUsers.indexOf(user.ID) >= 0)
+				{
+					return;
+				}
+				this.getCurrentPopupData().renderedUsers.push(user.ID);
+
+				this.getCurrentPopupData().innerContainer.appendChild(
+					Tag.render`
+					<a class="tasks-projects-members-popup-item" href="${user['HREF']}" target="_blank">
+						<span class="tasks-projects-members-popup-avatar-new">
+							${this.getAvatar(user)}
+							<span class="tasks-projects-members-popup-avatar-status-icon"></span>
+						</span>
+						<span class="tasks-scrum-members-popup-name">${user['FORMATTED_NAME']}</span>
+					</a>
+				`
+				);
+			})
 		}
 	}
 

@@ -89,7 +89,7 @@
 	  guest: 'guest'
 	});
 	var SessionStatus = Object.freeze({
-	  new: 0,
+	  "new": 0,
 	  skip: 5,
 	  answer: 10,
 	  client: 20,
@@ -618,7 +618,7 @@
 	    value: function setAuthId(authId) {
 	      var customAuthId = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
 
-	      if (babelHelpers.typeof(this.queryParams) !== 'object') {
+	      if (babelHelpers["typeof"](this.queryParams) !== 'object') {
 	        this.queryParams = {};
 	      }
 
@@ -638,7 +638,7 @@
 	  }, {
 	    key: "getAuthId",
 	    value: function getAuthId() {
-	      if (babelHelpers.typeof(this.queryParams) !== 'object') {
+	      if (babelHelpers["typeof"](this.queryParams) !== 'object') {
 	        this.queryParams = {};
 	      }
 
@@ -662,7 +662,7 @@
 	      this.restClient.callMethod(method, params, null, sendCallback, logTag).then(function (result) {
 	        _this.queryAuthRestore = false;
 	        promise.fulfill(result);
-	      }).catch(function (result) {
+	      })["catch"](function (result) {
 	        var error = result.error();
 
 	        if (error.ex.error == 'LIVECHAT_AUTH_WIDGET_USER') {
@@ -682,7 +682,7 @@
 	            _this.restClient.callMethod(method, params, null, sendCallback, logTag).then(function (result) {
 	              _this.queryAuthRestore = false;
 	              promise.fulfill(result);
-	            }).catch(function (result) {
+	            })["catch"](function (result) {
 	              _this.queryAuthRestore = false;
 	              promise.reject(result);
 	            });
@@ -1064,14 +1064,9 @@
 	  return WidgetImopenlinesPullCommandHandler;
 	}();
 
-	/**
-	 * Bitrix OpenLines widget
-	 * Widget private interface (base class)
-	 *
-	 * @package bitrix
-	 * @subpackage imopenlines
-	 * @copyright 2001-2020 Bitrix
-	 */
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 
 	var Widget = /*#__PURE__*/function () {
 	  /* region 01. Initialize and store data */
@@ -1120,8 +1115,8 @@
 	      this.language = this.params.language || 'en';
 	      this.copyright = this.params.copyright !== false;
 	      this.copyrightUrl = this.copyright && this.params.copyrightUrl ? this.params.copyrightUrl : '';
-	      this.buttonInstance = babelHelpers.typeof(this.params.buttonInstance) === 'object' && this.params.buttonInstance !== null ? this.params.buttonInstance : null;
-	      this.pageMode = babelHelpers.typeof(this.params.pageMode) === 'object' && this.params.pageMode;
+	      this.buttonInstance = babelHelpers["typeof"](this.params.buttonInstance) === 'object' && this.params.buttonInstance !== null ? this.params.buttonInstance : null;
+	      this.pageMode = babelHelpers["typeof"](this.params.pageMode) === 'object' && this.params.pageMode;
 
 	      if (this.pageMode) {
 	        this.pageMode.useBitrixLocalize = this.params.pageMode.useBitrixLocalize === true;
@@ -1154,7 +1149,7 @@
 
 	      this.localize = this.pageMode && this.pageMode.useBitrixLocalize ? window.BX.message : {};
 
-	      if (babelHelpers.typeof(this.params.localize) === 'object') {
+	      if (babelHelpers["typeof"](this.params.localize) === 'object') {
 	        this.addLocalize(this.params.localize);
 	      }
 
@@ -1476,7 +1471,7 @@
 
 	            _this4.fireInitEvent();
 	          }
-	        }).catch(function (result) {
+	        })["catch"](function (result) {
 	          _this4.configRequestXhr = null;
 
 	          _this4.setError(result.error().ex.error, result.error().ex.error_description);
@@ -1524,7 +1519,7 @@
 	          convert_text: 'Y'
 	        }];
 	      } else {
-	        query[RestMethod.widgetUserRegister] = [RestMethod.widgetUserRegister, babelHelpers.objectSpread({
+	        query[RestMethod.widgetUserRegister] = [RestMethod.widgetUserRegister, _objectSpread({
 	          config_id: '$result[' + RestMethod.widgetConfigGet + '][configId]'
 	        }, this.getUserRegisterFields())];
 	        query[im_const.RestMethodHandler.imChatGet] = [im_const.RestMethod.imChatGet, {
@@ -1666,7 +1661,7 @@
 
 	        _this5.startPullClient(config).then(function () {
 	          _this5.processSendMessages();
-	        }).catch(function (error) {
+	        })["catch"](function (error) {
 	          _this5.setError(error.ex.error, error.ex.error_description);
 	        });
 
@@ -1798,9 +1793,9 @@
 	        this.template.$Bitrix.PullClient.set(this.pullClient);
 	      }
 
-	      this.pullClient.start(babelHelpers.objectSpread({}, config, {
+	      this.pullClient.start(_objectSpread(_objectSpread({}, config), {}, {
 	        skipReconnectToLastSession: true
-	      })).catch(function () {
+	      }))["catch"](function () {
 	        promise.reject({
 	          ex: {
 	            error: 'PULL_CONNECTION_ERROR',
@@ -1844,7 +1839,7 @@
 	            _this8.controller.pullBaseHandler.option.skip = false;
 
 	            _this8.processSendMessages();
-	          }).catch(function () {
+	          })["catch"](function () {
 	            _this8.controller.pullBaseHandler.option.skip = false;
 	          });
 	          this.pullRequestMessage = false;
@@ -2064,7 +2059,7 @@
 	      if (!this.getDiskFolderId()) {
 	        this.requestDiskFolderId().then(function () {
 	          _this11.processSendMessages();
-	        }).catch(function () {
+	        })["catch"](function () {
 	          im_lib_logger.Logger.warn('uploadFile', 'Error get disk folder id');
 	          return false;
 	        });
@@ -2125,7 +2120,7 @@
 	        dialog: this.getDialogData()
 	      })).then(function (response) {
 	        _this12.controller.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, response, message);
-	      }).catch(function (error) {
+	      })["catch"](function (error) {
 	        _this12.controller.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, error, message);
 	      });
 	      return true;
@@ -2194,7 +2189,7 @@
 
 	          _this13.flagRequestDiskFolderIdSended = false;
 	          resolve();
-	        }).catch(function (error) {
+	        })["catch"](function (error) {
 	          _this13.flagRequestDiskFolderIdSended = false;
 
 	          _this13.controller.executeRestAnswer(im_const.RestMethodHandler.imDiskFolderGet, error);
@@ -2223,7 +2218,7 @@
 	        dialog: this.getDialogData()
 	      })).then(function (response) {
 	        _this14.controller.executeRestAnswer(im_const.RestMethodHandler.imDiskFileCommit, response, message);
-	      }).catch(function (error) {
+	      })["catch"](function (error) {
 	        _this14.controller.executeRestAnswer(im_const.RestMethodHandler.imDiskFileCommit, error, message);
 	      });
 	      return true;
@@ -2245,7 +2240,7 @@
 	        _this15.template.$emit(im_const.EventType.dialog.requestHistoryResult, {
 	          count: result.data().messages.length
 	        });
-	      }).catch(function (result) {
+	      })["catch"](function (result) {
 	        _this15.template.$emit(im_const.EventType.dialog.requestHistoryResult, {
 	          error: result.error().ex
 	        });
@@ -2426,7 +2421,7 @@
 	      this.controller.restClient.callMethod(RestMethod.widgetVoteSend, {
 	        'SESSION_ID': this.getSessionId(),
 	        'ACTION': result
-	      }).catch(function (result) {
+	      })["catch"](function (result) {
 	        _this17.controller.getStore().commit('widget/dialog', {
 	          userVote: VoteType.none
 	        });
@@ -2472,7 +2467,7 @@
 	        } else {
 	          console.error('Unknown error.');
 	        }
-	      }).catch(function () {
+	      })["catch"](function () {
 	        return console.error('Fetch error.');
 	      });
 	    }
@@ -2869,7 +2864,7 @@
 
 	      if (params instanceof Array) {
 	        params.forEach(function (element) {
-	          if (element && babelHelpers.typeof(element) === 'object') {
+	          if (element && babelHelpers["typeof"](element) === 'object') {
 	            result.push(element);
 	          }
 	        });
@@ -2954,7 +2949,7 @@
 	      }
 
 	      if (typeof params.callback !== 'function') {
-	        console.error("%cLiveChatWidget.subscribe: callback is not a function (%c".concat(babelHelpers.typeof(params.callback), "%c)"), "color: black;", "font-weight: bold; color: red", "color: black");
+	        console.error("%cLiveChatWidget.subscribe: callback is not a function (%c".concat(babelHelpers["typeof"](params.callback), "%c)"), "color: black;", "font-weight: bold; color: red", "color: black");
 	        return false;
 	      }
 
@@ -2984,7 +2979,7 @@
 	        return false;
 	      }
 
-	      if (babelHelpers.typeof(params.data) !== 'object' || !params.data) {
+	      if (babelHelpers["typeof"](params.data) !== 'object' || !params.data) {
 	        params.data = {};
 	      }
 
@@ -3008,7 +3003,7 @@
 	  }, {
 	    key: "addLocalize",
 	    value: function addLocalize(phrases) {
-	      if (babelHelpers.typeof(phrases) !== "object" || !phrases) {
+	      if (babelHelpers["typeof"](phrases) !== "object" || !phrases) {
 	        return false;
 	      }
 
@@ -3180,14 +3175,9 @@
 	  return WidgetPublicManager;
 	}();
 
-	/**
-	 * Bitrix OpenLines widget
-	 * LiveChat base component (Vue component)
-	 *
-	 * @package bitrix
-	 * @subpackage imopenlines
-	 * @copyright 2001-2019 Bitrix
-	 */
+	function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	/**
 	 * @notice Do not mutate or clone this component! It is under development.
 	 */
@@ -3255,7 +3245,7 @@
 	    main_core_events.EventEmitter.unsubscribe(EventType.requestShowForm, this.onRequestShowForm);
 	    this.onTextareaDragEventRemove();
 	  },
-	  computed: babelHelpers.objectSpread({
+	  computed: _objectSpread$1({
 	    FormType: function FormType$$1() {
 	      return FormType;
 	    },
@@ -3346,7 +3336,7 @@
 	          if (navigator.userAgent.toString().includes('iPhone')) {
 	            return true;
 	          } else {
-	            return !(babelHelpers.typeof(window.screen) === 'object' && window.screen.availHeight >= 800);
+	            return !(babelHelpers["typeof"](window.screen) === 'object' && window.screen.availHeight >= 800);
 	          }
 	        }
 	      }
@@ -4024,16 +4014,11 @@
 	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-show\" leave-active-class=\"bx-livechat-close\" @after-leave=\"onAfterClose\">\n\t\t\t<div :class=\"widgetClassName\" v-if=\"widget.common.showed\" :style=\"{height: widgetHeightStyle, width: widgetWidthStyle, userSelect: userSelectStyle}\" ref=\"widgetWrapper\">\n\t\t\t\t<div class=\"bx-livechat-box\">\n\t\t\t\t\t<div v-if=\"isBottomLocation\" class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t<bx-livechat-head :isWidgetDisabled=\"widgetMobileDisabled\" @like=\"showLikeForm\" @openMenu=\"onOpenMenu\" @close=\"close\"/>\n\t\t\t\t\t<template v-if=\"widgetMobileDisabled\">\n\t\t\t\t\t\t<bx-livechat-body-orientation-disabled/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"application.error.active\">\n\t\t\t\t\t\t<bx-livechat-body-error/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"!widget.common.configId\">\n\t\t\t\t\t\t<div class=\"bx-livechat-body\" key=\"loading-body\">\n\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<div v-show=\"!widget.common.dialogStart\" class=\"bx-livechat-body\" :class=\"{'bx-livechat-body-with-scroll': showWelcomeForm}\" key=\"welcome-body\">\n\t\t\t\t\t\t\t<bx-imopenlines-form\n\t\t\t\t\t\t\t  v-show=\"showWelcomeForm\"\n\t\t\t\t\t\t\t  @formSendSuccess=\"onWelcomeFormSendSuccess\"\n\t\t\t\t\t\t\t  @formSendError=\"onWelcomeFormSendError\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t<template v-if=\"!showWelcomeForm\">\n\t\t\t\t\t\t\t\t<bx-livechat-body-operators/>\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm === FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<template v-if=\"widget.common.dialogStart\">\n\t\t\t\t\t\t\t<bx-pull-component-status :canReconnect=\"true\" @reconnect=\"onPullRequestConfig\"/>\n\t\t\t\t\t\t\t<div :class=\"['bx-livechat-body', {'bx-livechat-body-with-message': showMessageDialog}]\" key=\"with-message\">\n\t\t\t\t\t\t\t\t<template v-if=\"showMessageDialog\">\n\t\t\t\t\t\t\t\t\t<div class=\"bx-livechat-dialog\">\n\t\t\t\t\t\t\t\t\t\t<bx-im-component-dialog\n\t\t\t\t\t\t\t\t\t\t\t:userId=\"application.common.userId\"\n\t\t\t\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t\t\t\t:messageLimit=\"application.dialog.messageLimit\"\n\t\t\t\t\t\t\t\t\t\t\t:enableReactions=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableDateActions=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableCreateContent=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureQuote=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureMenu=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageAvatar=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageMenu=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:skipDataRequest=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:showLoadingState=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:showEmptyState=\"false\"\n\t\t\t\t\t\t\t\t\t\t />\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t\t\t</template>\n\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm === FormType.like && widget.common.vote.enable\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-vote/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.welcome\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-welcome/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.offline\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-offline/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.history\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-history/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t\t<div v-if=\"showTextarea\" class=\"bx-livechat-textarea\" :style=\"[textareaHeightStyle, textareaBottomMargin]\" ref=\"textarea\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-textarea-resize-handle\" @mousedown=\"onTextareaStartDrag\" @touchstart=\"onTextareaStartDrag\"></div>\n\t\t\t\t\t\t\t<bx-im-component-textarea\n\t\t\t\t\t\t\t\t:siteId=\"application.common.siteId\"\n\t\t\t\t\t\t\t\t:userId=\"application.common.userId\"\n\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t:writesEventLetter=\"3\"\n\t\t\t\t\t\t\t\t:enableEdit=\"true\"\n\t\t\t\t\t\t\t\t:enableCommand=\"false\"\n\t\t\t\t\t\t\t\t:enableMention=\"false\"\n\t\t\t\t\t\t\t\t:enableFile=\"application.disk.enabled\"\n\t\t\t\t\t\t\t\t:autoFocus=\"application.device.type !== DeviceType.mobile\"\n\t\t\t\t\t\t\t\t:styles=\"{button: {backgroundColor: widget.common.styles.backgroundColor, iconColor: widget.common.styles.iconColor}}\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div v-if=\"!widget.common.copyright && !isBottomLocation\" class=\"bx-livechat-nocopyright-resize-wrap\" style=\"position: relative;\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<bx-livechat-form-consent @agree=\"agreeConsentWidow\" @disagree=\"disagreeConsentWidow\"/>\n\t\t\t\t\t\t<template v-if=\"widget.common.copyright\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-copyright\">\n\t\t\t\t\t\t\t\t<template v-if=\"widget.common.copyrightUrl\">\n\t\t\t\t\t\t\t\t\t<a class=\"bx-livechat-copyright-link\" :href=\"widget.common.copyrightUrl\" target=\"_blank\">\n\t\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<div v-if=\"!isBottomLocation\" class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</template>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\n\t"
 	});
 
-	/**
-	 * Bitrix OpenLines widget
-	 * Body error component (Vue component)
-	 *
-	 * @package bitrix
-	 * @subpackage imopenlines
-	 * @copyright 2001-2019 Bitrix
-	 */
+	function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread$2(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$2(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$2(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.BitrixVue.component('bx-livechat-body-error', {
-	  computed: babelHelpers.objectSpread({}, ui_vue_vuex.Vuex.mapState({
+	  computed: _objectSpread$2({}, ui_vue_vuex.Vuex.mapState({
 	    application: function application(state) {
 	      return state.application;
 	    }
@@ -4041,14 +4026,9 @@
 	  template: "\n\t\t<div class=\"bx-livechat-body\" key=\"error-body\">\n\t\t\t<div class=\"bx-livechat-warning-window\">\n\t\t\t\t<div class=\"bx-livechat-warning-icon\"></div>\n\t\t\t\t<template v-if=\"application.error.description\"> \n\t\t\t\t\t<div class=\"bx-livechat-help-title bx-livechat-help-title-sm bx-livechat-warning-msg\" v-html=\"application.error.description\"></div>\n\t\t\t\t</template> \n\t\t\t\t<template v-else>\n\t\t\t\t\t<div class=\"bx-livechat-help-title bx-livechat-help-title-md bx-livechat-warning-msg\">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_ERROR_TITLE')}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-help-title bx-livechat-help-title-sm bx-livechat-warning-msg\">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_ERROR_DESC')}}</div>\n\t\t\t\t</template> \n\t\t\t</div>\n\t\t</div>\n\t"
 	});
 
-	/**
-	 * Bitrix OpenLines widget
-	 * Head component (Vue component)
-	 *
-	 * @package bitrix
-	 * @subpackage imopenlines
-	 * @copyright 2001-2019 Bitrix
-	 */
+	function ownKeys$3(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread$3(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$3(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$3(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.BitrixVue.component('bx-livechat-head', {
 	  /**
 	   * @emits 'close'
@@ -4057,7 +4037,7 @@
 	   */
 	  props: {
 	    isWidgetDisabled: {
-	      default: false
+	      "default": false
 	    }
 	  },
 	  methods: {
@@ -4071,7 +4051,7 @@
 	      this.$emit('openMenu', event);
 	    }
 	  },
-	  computed: babelHelpers.objectSpread({
+	  computed: _objectSpread$3({
 	    VoteType: function VoteType$$1() {
 	      return VoteType;
 	    },
@@ -4171,16 +4151,11 @@
 	  template: "\n\t\t<div class=\"bx-livechat-loading-window\">\n\t\t\t<svg class=\"bx-livechat-loading-circular\" viewBox=\"25 25 50 50\">\n\t\t\t\t<circle class=\"bx-livechat-loading-path\" cx=\"50\" cy=\"50\" r=\"20\" fill=\"none\" stroke-miterlimit=\"10\"/>\n\t\t\t\t<circle class=\"bx-livechat-loading-inner-path\" cx=\"50\" cy=\"50\" r=\"20\" fill=\"none\" stroke-miterlimit=\"10\"/>\n\t\t\t</svg>\n\t\t\t<h3 class=\"bx-livechat-help-title bx-livechat-help-title-md bx-livechat-loading-msg\">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_LOADING')}}</h3>\n\t\t</div>\n\t"
 	});
 
-	/**
-	 * Bitrix OpenLines widget
-	 * Body operators component (Vue component)
-	 *
-	 * @package bitrix
-	 * @subpackage imopenlines
-	 * @copyright 2001-2019 Bitrix
-	 */
+	function ownKeys$4(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread$4(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$4(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$4(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.BitrixVue.component('bx-livechat-body-operators', {
-	  computed: babelHelpers.objectSpread({}, ui_vue_vuex.Vuex.mapState({
+	  computed: _objectSpread$4({}, ui_vue_vuex.Vuex.mapState({
 	    widget: function widget(state) {
 	      return state.widget;
 	    }
@@ -4200,20 +4175,15 @@
 	  template: "\n\t\t<div class=\"bx-livechat-body\" key=\"orientation-head\">\n\t\t\t<div class=\"bx-livechat-mobile-orientation-box\">\n\t\t\t\t<div class=\"bx-livechat-mobile-orientation-icon\"></div>\n\t\t\t\t<div class=\"bx-livechat-mobile-orientation-text\">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_MOBILE_ROTATE')}}</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	});
 
-	/**
-	 * Bitrix OpenLines widget
-	 * Form consent component (Vue component)
-	 *
-	 * @package bitrix
-	 * @subpackage imopenlines
-	 * @copyright 2001-2019 Bitrix
-	 */
+	function ownKeys$5(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread$5(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$5(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$5(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.BitrixVue.component('bx-livechat-form-consent', {
 	  /**
 	   * @emits 'agree' {event: object} -- 'event' - click event
 	   * @emits 'disagree' {event: object} -- 'event' - click event
 	   */
-	  computed: babelHelpers.objectSpread({}, ui_vue_vuex.Vuex.mapState({
+	  computed: _objectSpread$5({}, ui_vue_vuex.Vuex.mapState({
 	    widget: function widget(state) {
 	      return state.widget;
 	    }
@@ -4284,16 +4254,11 @@
 	  template: "\n\t\t<transition @enter=\"onShow\" @leave=\"onHide\">\n\t\t\t<template v-if=\"widget.common.showConsent && widget.common.consentUrl\">\n\t\t\t\t<div class=\"bx-livechat-consent-window\">\n\t\t\t\t\t<div class=\"bx-livechat-consent-window-title\">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_CONSENT_TITLE')}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-consent-window-content\">\n\t\t\t\t\t\t<iframe class=\"bx-livechat-consent-window-content-iframe\" ref=\"iframe\" frameborder=\"0\" marginheight=\"0\"  marginwidth=\"0\" allowtransparency=\"allow-same-origin\" seamless=\"true\" :src=\"widget.common.consentUrl\" @keydown=\"onKeyDown\"></iframe>\n\t\t\t\t\t</div>\t\t\t\t\t\t\t\t\n\t\t\t\t\t<div class=\"bx-livechat-consent-window-btn-box\">\n\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-success\" ref=\"success\" @click=\"agree\" @keydown=\"onKeyDown\" v-focus>{{$Bitrix.Loc.getMessage('BX_LIVECHAT_CONSENT_AGREE')}}</button>\n\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-cancel\" ref=\"cancel\" @click=\"disagree\" @keydown=\"onKeyDown\">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_CONSENT_DISAGREE')}}</button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</transition>\n\t"
 	});
 
-	/**
-	 * Bitrix OpenLines widget
-	 * Form vote component (Vue component)
-	 *
-	 * @package bitrix
-	 * @subpackage imopenlines
-	 * @copyright 2001-2019 Bitrix
-	 */
+	function ownKeys$6(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread$6(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$6(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$6(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.BitrixVue.component('bx-livechat-form-vote', {
-	  computed: babelHelpers.objectSpread({
+	  computed: _objectSpread$6({
 	    VoteType: function VoteType$$1() {
 	      return VoteType;
 	    }

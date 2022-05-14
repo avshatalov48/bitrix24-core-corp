@@ -41,8 +41,7 @@ $aMenuLinks = [
 		[
 			'menu_item_id' => 'rpa-top-panel-tasks',
 			'counter_num' => $tasksCounter,
+			'counter_id' => 'rpa_tasks',
 		],
-
-
 	]
 ];

@@ -99,7 +99,7 @@ class Task implements \IBPWorkflowDocument
 			return false;
 		}
 
-		if ($operation === \CBPCanUserOperateOperation::CreateAutomation)
+		// if ($operation === \CBPCanUserOperateOperation::CreateAutomation)
 		{
 			if (static::isProjectTask($documentType))
 			{

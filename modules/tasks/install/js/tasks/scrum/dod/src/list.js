@@ -55,7 +55,8 @@ export class List extends EventEmitter
 	{
 		return this.requestSender.getSettings({
 			groupId: this.groupId,
-			taskId: this.taskId
+			taskId: this.taskId,
+			saveRequest: this.isSkipNotifications() ? 'Y' : 'N'
 		})
 			.then((response: SettingsResponse) => {
 				const types = Type.isArray(response.data.types) ? response.data.types : [];

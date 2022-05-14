@@ -25,6 +25,8 @@ export class Input extends EventEmitter
 		this.value = '';
 		this.epic = null;
 		this.taskCreated = false;
+
+		this.selectedEpicLength = 0;
 	}
 
 	setEntity(entity: Entity)
@@ -57,12 +59,12 @@ export class Input extends EventEmitter
 		this.nodeId = Text.getRandom();
 
 		this.node = Tag.render`
-			<div id="${Text.encode(this.nodeId)}" class="tasks-scrum__item --add-block">
+			<div id="${Text.encode(this.nodeId)}" class="tasks-scrum__input --add-block">
 				<textarea
 					placeholder="${Loc.getMessage('TASKS_SCRUM_TASK_ADD_INPUT_TASK_PLACEHOLDER')}"
-					class="tasks-scrum__item--textarea"
+					class="tasks-scrum__input--textarea"
 				>${Text.encode(this.value)}</textarea>
-				<div class="tasks-scrum__item--textarea-help">
+				<div class="tasks-scrum__input--textarea-help">
 					${Loc.getMessage('TASKS_SCRUM_TASK_ADD_INPUT_TASK_PLACEHOLDER_HELPER')}
 				</div>
 			</div>
@@ -128,19 +130,17 @@ export class Input extends EventEmitter
 
 	onTagSearch(event)
 	{
-		const inputNode = event.target;
-		const enteredHashTags = TagSearcher.getHashTagNamesFromText(inputNode.value);
+		const currentPieceOfName = event.target.value.split(' ').pop();
+		const enteredHashTags = TagSearcher.getHashTagNamesFromText(currentPieceOfName);
 
-		if (event.data === '#')
+		const query = enteredHashTags.length ? enteredHashTags.pop() : '';
+
+		if (query || event.data === '#')
 		{
 			this.setEpicSearchMode(false);
 			this.setTagsSearchMode(true);
-		}
-		if (this.isTagsSearchMode())
-		{
-			const enteredHashTagName = enteredHashTags.pop();
 
-			this.emit('tagsSearchOpen', Type.isUndefined(enteredHashTagName) ? '' : enteredHashTagName);
+			this.emit('tagsSearchOpen', query);
 		}
 		else
 		{
@@ -152,15 +152,25 @@ export class Input extends EventEmitter
 	{
 		const inputNode = event.target;
 		const enteredHashEpics = TagSearcher.getHashEpicNamesFromText(inputNode.value);
-		if (event.data === '@')
+
+		const query = enteredHashEpics.length ? enteredHashEpics.pop() : '';
+
+		if (
+			this.selectedEpicLength > 0
+			&& this.selectedEpicLength <= [...query].length
+		)
+		{
+			return;
+		}
+
+		this.selectedEpicLength = 0;
+
+		if (query || event.data === '@')
 		{
 			this.setTagsSearchMode(false);
 			this.setEpicSearchMode(true);
-		}
-		if (this.isEpicSearchMode())
-		{
-			const enteredHashTagName = enteredHashEpics.pop();
-			this.emit('epicSearchOpen', Type.isUndefined(enteredHashTagName) ? '' : enteredHashTagName);
+
+			this.emit('epicSearchOpen', query);
 		}
 		else
 		{
@@ -247,6 +257,11 @@ export class Input extends EventEmitter
 	isEpicSearchMode(): boolean
 	{
 		return Dom.attr(this.getInputNode(), 'data-epic-disabled');
+	}
+
+	setSelectedEpicLength(length: number)
+	{
+		this.selectedEpicLength = parseInt(length, 10);
 	}
 
 	createTaskItem()

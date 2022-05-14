@@ -1,11 +1,11 @@
 <?php
 namespace Bitrix\Tasks\Util\Restriction\Bitrix24Restriction;
 
-use Bitrix\Main\Loader;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Loader;
 
 /**
  * Class Limit

@@ -170,7 +170,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function renderButton() {
 	      var _this4 = this;
 
-	      this.buttonNode = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__widget-meetings-btn-box-center \">\n\t\t\t\t<button class=\"tasks-scrum__widget-meetings--plan-btn ui-qr-popupcomponentmaker__btn --border --visible\">\n\t\t\t\t\t", "\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t"])), this.getButtonText());
+	      this.buttonNode = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__widget-meetings-btn-box-center \">\n\t\t\t\t<button\n\t\t\t\t\tclass=\"tasks-scrum__widget-meetings--plan-btn ui-qr-popupcomponentmaker__btn --border --visible\"\n\t\t\t\t\tdata-role=\"toggle-list-events\"\n\t\t\t\t>\n\t\t\t\t\t", "\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t"])), this.getButtonText());
 	      main_core.Event.bind(this.buttonNode, 'click', function () {
 	        _this4.listIsShown = !_this4.listIsShown;
 
@@ -310,7 +310,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        groupId: this.groupId
 	      });
 	      this.menu = new ui_popupcomponentsmaker.PopupComponentsMaker({
+	        id: 'tasks-scrum-meetings-widget',
 	        target: targetNode,
+	        cacheable: false,
 	        content: [{
 	          html: [{
 	            html: this.renderMeetings(response)
@@ -331,7 +333,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      return response.then(function (response) {
 	        _this.meetingsNode = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings tasks-scrum__widget-meetings--scope\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>"])), _this.renderMeetingsHeader(response), _this.renderEventTemplates(response), _this.renderScheduledMeetings(response));
 	        return _this.meetingsNode;
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -344,7 +346,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        var chats = response.data.chats;
 	        var node = main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings tasks-scrum__widget-meetings--scope\">\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--header\">\n\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\tclass=\"ui-icon ui-icon-service-livechat tasks-scrum__widget-meetings--icon-chats\"\n\t\t\t\t\t\t\t><i></i></div>\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--header-title\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t\n\t\t\t\t\t</div>\n\t\t\t\t"])), main_core.Loc.getMessage('TSM_CHATS_HEADER_TITLE'), _this2.renderChatsList(chats), _this2.renderChatsEmpty(chats));
 	        return node;
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this2.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -383,7 +385,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	          _this4.menu.close();
 	        }
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this4.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -407,7 +409,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderMeetingsHeader",
 	    value: function renderMeetingsHeader(response) {
 	      var calendarSettings = response.data.calendarSettings;
-	      var node = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__widget-meetings--header\">\n\n\t\t\t\t<div class=\"ui-icon ui-icon-service-calendar tasks-scrum__widget-meetings--icon-calendar\"><i></i></div>\n\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--header-title\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"ui-btn-split ui-btn-light-border ui-btn-xs ui-btn-light ui-btn-no-caps ui-btn-round tasks-scrum__widget-meetings--btn-create\">\n\t\t\t\t\t<button class=\"ui-btn-main\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</button>\n\t\t\t\t\t<div class=\"ui-btn-menu\"></div>\n\t\t\t\t</div>\n\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TSM_MEETINGS_HEADER_TITLE'), main_core.Loc.getMessage('TSM_MEETINGS_CREATE_BUTTON'));
+	      var uiClasses = 'ui-btn-split ui-btn-light-border ui-btn-xs ui-btn-light ui-btn-no-caps ui-btn-round';
+	      var node = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__widget-meetings--header\">\n\n\t\t\t\t<div class=\"ui-icon ui-icon-service-calendar tasks-scrum__widget-meetings--icon-calendar\">\n\t\t\t\t\t<i></i>\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--header-title\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--btn-create ", "\">\n\t\t\t\t\t<button class=\"ui-btn-main\" data-role=\"create-default-event\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</button>\n\t\t\t\t\t<div class=\"ui-btn-menu\" data-role=\"show-menu-event-templates\"></div>\n\t\t\t\t</div>\n\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TSM_MEETINGS_HEADER_TITLE'), uiClasses, main_core.Loc.getMessage('TSM_MEETINGS_CREATE_BUTTON'));
 	      var button = node.querySelector('button');
 	      var menu = node.querySelector('.ui-btn-menu');
 	      main_core.Event.bind(button, 'click', this.showEventSidePanel.bind(this));
@@ -426,7 +429,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var templateVisibility = isTemplatesClosed || this.isAllEventsCreated(mapCreatedEvents) ? '' : '--visible';
 	      var emptyVisibility = isTemplatesClosed && listEvents.length === 0 ? '--visible' : '';
 	      var contentVisibilityClass = emptyVisibility === '' && templateVisibility === '' ? '--content-hidden' : '';
-	      var node = main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__widget-meetings--content ", "\">\n\t\t\t\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--creation-block ", "\">\n\t\t\t\t\t<span class=\"tasks-scrum__widget-meetings--creation-close-btn\"></span>\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--create-element-info\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--empty-meetings ", "\">\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--empty-name\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--empty-text\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<button class=\"tasks-scrum__widget-meetings--one-click-btn ui-qr-popupcomponentmaker__btn\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</button>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), contentVisibilityClass, templateVisibility, main_core.Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATES_INFO'), babelHelpers.toConsumableArray(this.getEventTemplates(calendarSettings).values()).map(function (eventTemplate) {
+	      var node = main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__widget-meetings--content ", "\">\n\t\t\t\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--creation-block ", "\">\n\t\t\t\t\t<span\n\t\t\t\t\t\tclass=\"tasks-scrum__widget-meetings--creation-close-btn\"\n\t\t\t\t\t\tdata-role=\"close-event-templates\"\n\t\t\t\t\t></span>\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--create-element-info\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--empty-meetings ", "\">\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--empty-name\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--empty-text\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<button class=\"tasks-scrum__widget-meetings--one-click-btn ui-qr-popupcomponentmaker__btn\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</button>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), contentVisibilityClass, templateVisibility, main_core.Loc.getMessage('TSM_MEETINGS_EVENT_TEMPLATES_INFO'), babelHelpers.toConsumableArray(this.getEventTemplates(calendarSettings).values()).map(function (eventTemplate) {
 	        if (main_core.Type.isArray(mapCreatedEvents) || main_core.Type.isUndefined(mapCreatedEvents[eventTemplate.id])) {
 	          return _this5.renderEventTemplate(eventTemplate);
 	        } else {
@@ -447,7 +450,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	        _this5.requestSender.closeTemplates({
 	          groupId: _this5.groupId
-	        }).catch(function (response) {
+	        })["catch"](function (response) {
 	          _this5.requestSender.showErrorAlert(response);
 	        });
 	      });
@@ -462,7 +465,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function renderScheduledMeetings(response) {
 	      var todayEvent = response.data.todayEvent;
 	      var listEvents = response.data.listEvents;
-	      var todayEventVisibility = todayEvent === null ? '' : '--visible';
+	      var todayEventVisibility = main_core.Type.isNull(todayEvent) ? '' : '--visible';
 	      this.listEvents.setTodayEvent(todayEvent);
 	      var node = main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__widget-meetings--timetable\">\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--timetable-container ", "\">\n\t\t\t\t\t<div class=\"tasks-scrum__widget-meetings--timetable-title\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), todayEventVisibility, main_core.Loc.getMessage('TSM_TODAY_EVENT_TITLE'), this.todayEvent.render(todayEvent), this.listEvents.render(listEvents, todayEvent));
 	      return node;
@@ -470,7 +473,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "renderEventTemplate",
 	    value: function renderEventTemplate(eventTemplate) {
-	      var node = main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__widget-meetings--create-element ", "\">\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--create-element-title\">\n\t\t\t\t\t<span class=\"tasks-scrum__widget-meetings--create-element-name\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t\t<span class=\"ui-hint\">\n\t\t\t\t\t\t<i\n\t\t\t\t\t\t\tclass=\"ui-hint-icon\"\n\t\t\t\t\t\t\tdata-hint=\"", "\"\n\t\t\t\t\t\t\tdata-hint-no-icon\n\t\t\t\t\t\t\tdata-hint-html\n\t\t\t\t\t\t></i>\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--create-btn\">\n\t\t\t\t\t<button class=\"ui-qr-popupcomponentmaker__btn\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</button>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(eventTemplate.uiClass), main_core.Text.encode(eventTemplate.name), eventTemplate.hint, main_core.Loc.getMessage('TSM_MEETINGS_CREATE_BUTTON'));
+	      var node = main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__widget-meetings--create-element ", "\">\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--create-element-title\">\n\t\t\t\t\t<span class=\"tasks-scrum__widget-meetings--create-element-name\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t\t<span class=\"ui-hint\">\n\t\t\t\t\t\t<i\n\t\t\t\t\t\t\tclass=\"ui-hint-icon\"\n\t\t\t\t\t\t\tdata-hint=\"", "\"\n\t\t\t\t\t\t\tdata-hint-no-icon\n\t\t\t\t\t\t\tdata-hint-html\n\t\t\t\t\t\t></i>\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__widget-meetings--create-btn\">\n\t\t\t\t\t<button\n\t\t\t\t\t\tclass=\"ui-qr-popupcomponentmaker__btn\"\n\t\t\t\t\t\tdata-role=\"create-event-template-", "\"\n\t\t\t\t\t>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</button>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(eventTemplate.uiClass), main_core.Text.encode(eventTemplate.name), eventTemplate.hint, eventTemplate.id, main_core.Loc.getMessage('TSM_MEETINGS_CREATE_BUTTON'));
 	      var createButton = node.querySelector('.tasks-scrum__widget-meetings--create-btn');
 	      main_core.Event.bind(createButton, 'click', this.openCalendarSidePanel.bind(this, eventTemplate));
 	      this.initHints(node);
@@ -557,24 +560,31 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        type: 'group',
 	        ownerId: this.groupId
 	      }).show();
+	      top.BX.Event.EventEmitter.subscribeOnce('BX.Calendar:onEntrySave', function (baseEvent) {
+	        var data = baseEvent.getData();
 
-	      if (eventTemplate) {
-	        top.BX.Event.EventEmitter.subscribeOnce('BX.Calendar:onEntrySave', function (baseEvent) {
-	          var data = baseEvent.getData();
-
-	          if (sliderId === data.sliderId) {
+	        if (sliderId === data.sliderId) {
+	          if (eventTemplate) {
 	            _this7.requestSender.saveEventInfo({
 	              groupId: _this7.groupId,
 	              templateId: eventTemplate.id,
 	              eventId: data.responseData.entryId
 	            }).then(function () {// todo maybe update widget or repeat request if error
-	            }).catch(function (response) {
+	            })["catch"](function (response) {
 	              _this7.requestSender.showErrorAlert(response);
 	            });
 	          }
-	        });
-	      }
 
+	          main_core.ajax.runAction('bitrix:tasks.scrum.info.saveAnalyticsLabel', {
+	            data: {},
+	            analyticsLabel: {
+	              scrum: 'Y',
+	              action: 'create_meet',
+	              template: eventTemplate ? eventTemplate.id : 'custom'
+	            }
+	          });
+	        }
+	      });
 	      this.menu.close();
 	    }
 	  }, {

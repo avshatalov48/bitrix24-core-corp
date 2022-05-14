@@ -524,9 +524,15 @@ class CIntranetNotify
 		return array("G2");
 	}
 
-	protected static function GetSiteName()
+	protected static function GetSiteName(): string
 	{
-		return Option::get("main", "site_name");
+		$result = Option::get('main', 'site_name');
+
+		if ($result === '')
+		{
+			$result = Loc::getMessage('I_NEW_USER_SITE_NAME_DEFAULT');
+		}
+		return $result;
 	}
 
 	public static function OnSendMentionGetEntityFields($arCommentFields)

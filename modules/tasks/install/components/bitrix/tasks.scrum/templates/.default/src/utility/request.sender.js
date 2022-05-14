@@ -30,14 +30,15 @@ export class RequestSender
 		});
 	}
 
-	sendRequestToComponent(data = {}, action): Promise
+	sendRequestToComponent(data = {}, action, analyticsLabel = {}): Promise
 	{
 		data.debugMode = this.debugMode;
 		return new Promise((resolve, reject) => {
 			ajax.runComponentAction('bitrix:tasks.scrum', action, {
 				mode: 'class',
 				signedParameters: this.signedParameters,
-				data: data
+				data: data,
+				analyticsLabel: analyticsLabel
 			}).then(resolve, reject);
 		});
 	}
@@ -74,7 +75,14 @@ export class RequestSender
 
 	createTask(data): Promise
 	{
-		return this.sendRequestToComponent(data, 'createTask');
+		return this.sendRequestToComponent(
+			data,
+			'createTask',
+			{
+				scrum: 'Y',
+				action: 'create_task',
+			}
+		);
 	}
 
 	updateItem(data): Promise
@@ -207,13 +215,23 @@ export class RequestSender
 		return this.sendRequest('bitrix:tasks.scrum.epic.createEpic', data);
 	}
 
+	getItemData(data): Promise
+	{
+		return this.sendRequestToComponent(data, 'getItemData');
+	}
+
+	getSprintData(data): Promise
+	{
+		return this.sendRequestToComponent(data, 'getSprintData');
+	}
+
 	showErrorAlert(response: ErrorResponse, alertTitle?: string)
 	{
 		if (Type.isUndefined(response.errors))
 		{
-			console.log(response);
 			return;
 		}
+
 		if (response.errors.length)
 		{
 			const firstError = response.errors.shift();

@@ -304,7 +304,7 @@ class PullManager
 					if (Container::getInstance()->getUserPermissions($userId)->checkReadPermissions(
 						$entityTypeId,
 						$item['id'],
-						$item['data']['categoryId'] ?? 0
+						$item['data']['categoryId'] ?? null
 					))
 					{
 						$result[$userId] = $userId;

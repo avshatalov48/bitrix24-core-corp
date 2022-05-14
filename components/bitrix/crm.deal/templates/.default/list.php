@@ -51,7 +51,7 @@ else
 	$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
 	if($isBitrix24Template)
 	{
-		$this->SetViewTarget('below_pagetitle', 0);
+		$this->SetViewTarget('below_pagetitle', 1000);
 	}
 
 	if ($arResult['IS_RECURRING'] !== 'Y')
@@ -88,23 +88,6 @@ else
 	{
 		$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 		$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'crm-toolbar-modifier');
-	}
-
-	if (!$isSlider)
-	{
-		$APPLICATION->IncludeComponent(
-			'bitrix:crm.deal_category.panel',
-			$isBitrix24Template ? 'tiny' : '',
-			[
-				'PATH_TO_DEAL_LIST' => $arResult['PATH_TO_DEAL_LIST'],
-				'PATH_TO_DEAL_EDIT' => $arResult['PATH_TO_DEAL_EDIT'],
-				'PATH_TO_DEAL_CATEGORY' => $catalogPath,
-				'PATH_TO_DEAL_CATEGORY_LIST' => $arResult['PATH_TO_DEAL_CATEGORY_LIST'],
-				'PATH_TO_DEAL_CATEGORY_EDIT' => $arResult['PATH_TO_DEAL_CATEGORY_EDIT'],
-				'CATEGORY_ID' => $categoryID
-			],
-			$component
-		);
 	}
 
 	if($isBitrix24Template)
@@ -162,6 +145,23 @@ else
 		);
 	$this->EndViewTarget();
 
+	if (!$isSlider)
+	{
+		$APPLICATION->IncludeComponent(
+			'bitrix:crm.deal_category.panel',
+			$isBitrix24Template ? 'tiny' : '',
+			[
+				'PATH_TO_DEAL_LIST' => $arResult['PATH_TO_DEAL_LIST'],
+				'PATH_TO_DEAL_EDIT' => $arResult['PATH_TO_DEAL_EDIT'],
+				'PATH_TO_DEAL_CATEGORY' => $catalogPath,
+				'PATH_TO_DEAL_CATEGORY_LIST' => $arResult['PATH_TO_DEAL_CATEGORY_LIST'],
+				'PATH_TO_DEAL_CATEGORY_EDIT' => $arResult['PATH_TO_DEAL_CATEGORY_EDIT'],
+				'CATEGORY_ID' => $categoryID
+			],
+			$component
+		);
+	}
+
 	if(\Bitrix\Main\ModuleManager::isModuleInstalled('rest'))
 	{
 		$APPLICATION->IncludeComponent(
@@ -207,7 +207,8 @@ else
 				'PATH_TO_DEAL_CALENDARCATEGORY' => $arResult['PATH_TO_DEAL_CALENDARCATEGORY'],
 				'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
 				'NAVIGATION_CONTEXT_ID' => $arResult['NAVIGATION_CONTEXT_ID'],
-				'GRID_ID_SUFFIX' => $categoryID >= 0 ? "C_{$categoryID}" : '',
+				'GRID_ID_SUFFIX' => (new \Bitrix\Crm\Component\EntityList\GridId(CCrmOwnerType::Deal))
+					->getDefaultSuffix($categoryID),
 				'DISABLE_NAVIGATION_BAR' => ($arResult['IS_RECURRING'] === 'Y' && $isSlider) ? 'Y' : 'N',
 				'CATEGORY_ID' => $categoryID
 			]

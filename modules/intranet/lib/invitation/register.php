@@ -1,14 +1,14 @@
-<?
+<?php
+
 namespace Bitrix\Intranet\Invitation;
 
 use Bitrix\Intranet\Internals\InvitationTable;
-use Bitrix\Main\Error;
-use Bitrix\Main\Event;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main\Security\Random;
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Socialservices\Network;
 use Bitrix\Main\UserTable;
 use Bitrix\Socialnetwork;
 use Bitrix\Intranet\Invitation;
@@ -17,7 +17,7 @@ class Register
 {
 	public static function checkPhone(&$item)
 	{
-		$phoneCountry = isset($item["PHONE_COUNTRY"]) ? $item["PHONE_COUNTRY"] : "";
+		$phoneCountry = $item["PHONE_COUNTRY"] ?? "";
 		$phoneNumber = \Bitrix\Main\PhoneNumber\Parser::getInstance()->parse($item["PHONE"], $phoneCountry);
 
 		if ($phoneNumber->isValid())
@@ -25,10 +25,8 @@ class Register
 			$item["PHONE_NUMBER"] = $phoneNumber->format(\Bitrix\Main\PhoneNumber\Format::E164);
 			return true;
 		}
-		else
-		{
-			return false;
-		}
+
+		return false;
 	}
 
 	public static function getMaxEmailCount()
@@ -38,7 +36,10 @@ class Register
 			$licensePrefix = \CBitrix24::getLicensePrefix();
 			$licenseType = \CBitrix24::getLicenseType();
 
-			if (in_array($licensePrefix, ['cn', 'en', 'vn', 'jp']) && $licenseType === 'project')
+			if (
+				$licenseType === 'project'
+				&& in_array($licensePrefix, ['cn', 'en', 'vn', 'jp'])
+			)
 			{
 				return 10;
 			}
@@ -49,9 +50,12 @@ class Register
 
 	public static function checkItems($items, &$errors)
 	{
-		$emailItems = $phoneItems = [];
-		$errorEmailItems = $errorPhoneItems = [];
-		$phoneCnt = $emailCnt = 0;
+		$emailItems = [];
+		$phoneItems = [];
+		$errorEmailItems = [];
+		$errorPhoneItems = [];
+		$phoneCnt = 0;
+		$emailCnt = 0;
 
 		foreach ($items as $item)
 		{
@@ -116,13 +120,15 @@ class Register
 		$arPhoneToRegister = [];
 
 		$bExtranetInstalled = (
-			IsModuleInstalled("extranet")
-			&& \COption::GetOptionString("extranet", "extranet_site") <> ''
+			ModuleManager::isModuleInstalled("extranet")
+			&& Option::get("extranet", "extranet_site") !== ''
 		);
 
 		if (Loader::includeModule('socialnetwork'))
 		{
-			$externalAuthIdList = Socialnetwork\ComponentHelper::checkPredefinedAuthIdList(array_diff(\Bitrix\Main\UserTable::getExternalUserTypes(), [ 'email', 'shop' ]));
+			$externalAuthIdList = Socialnetwork\ComponentHelper::checkPredefinedAuthIdList(
+				array_diff(\Bitrix\Main\UserTable::getExternalUserTypes(), [ 'email', 'shop' ])
+			);
 		}
 
 		foreach ($phoneItems as $item)
@@ -159,12 +165,12 @@ class Register
 				$bFound = true;
 
 				if (
-					$arUser["CONFIRM_CODE"] != ""
+					(string)$arUser["CONFIRM_CODE"] !== ''
 					&& (
 						!$bExtranetInstalled
 						|| ( // both intranet
-							isset($item["UF_DEPARTMENT"]) && !empty($item["UF_DEPARTMENT"])
-							&& isset($arUser["UF_DEPARTMENT"])
+							isset($item["UF_DEPARTMENT"], $arUser["UF_DEPARTMENT"])
+							&& !empty($item["UF_DEPARTMENT"])
 							&& (
 								(
 									is_array($arUser["UF_DEPARTMENT"])
@@ -222,21 +228,24 @@ class Register
 		];
 	}
 
-	public static function checkExistingUserByEmail($emailItems)
+	public static function checkExistingUserByEmail($emailItems, $returnExistingUsers)
 	{
+		$existingUserIdList = [];
 		$arUserForTransfer = [];
 		$arEmailToReinvite = [];
 		$arEmailExist = [];
 		$arEmailToRegister = [];
 
 		$bExtranetInstalled = (
-			IsModuleInstalled("extranet")
-			&& \COption::GetOptionString("extranet", "extranet_site") <> ''
+			ModuleManager::isModuleInstalled("extranet")
+			&& Option::get("extranet", "extranet_site") !== ''
 		);
 
 		if (Loader::includeModule('socialnetwork'))
 		{
-			$externalAuthIdList = Socialnetwork\ComponentHelper::checkPredefinedAuthIdList(array_diff(\Bitrix\Main\UserTable::getExternalUserTypes(), [ 'email', 'shop' ]));
+			$externalAuthIdList = Socialnetwork\ComponentHelper::checkPredefinedAuthIdList(
+				array_diff(\Bitrix\Main\UserTable::getExternalUserTypes(), [ 'email', 'shop' ])
+			);
 		}
 
 		foreach ($emailItems as $item)
@@ -272,12 +281,15 @@ class Register
 					$arUserForTransfer[] = $arUser;
 				}
 				elseif (
-					$arUser["CONFIRM_CODE"] != ""
+					(
+						(string)$arUser["CONFIRM_CODE"] !== ''
+						|| $returnExistingUsers
+					)
 					&& (
 						!$bExtranetInstalled
 						|| ( // both intranet
-							isset($item["UF_DEPARTMENT"]) && !empty($item["UF_DEPARTMENT"])
-							&& isset($arUser["UF_DEPARTMENT"])
+							isset($item["UF_DEPARTMENT"], $arUser["UF_DEPARTMENT"])
+							&& !empty($item["UF_DEPARTMENT"])
 							&& (
 								(
 									is_array($arUser["UF_DEPARTMENT"])
@@ -307,13 +319,20 @@ class Register
 					)
 				)
 				{
-					$arEmailToReinvite[] = array(
-						"EMAIL" => $item["EMAIL"],
-						"REINVITE" => true,
-						"ID" => $arUser["ID"],
-						"CONFIRM_CODE" => $arUser["CONFIRM_CODE"],
-						"UF_DEPARTMENT" => $arUser["UF_DEPARTMENT"]
-					);
+					if ($returnExistingUsers)
+					{
+						$existingUserIdList[] = (int)$arUser['ID'];
+					}
+					else
+					{
+						$arEmailToReinvite[] = array(
+							"EMAIL" => $item["EMAIL"],
+							"REINVITE" => true,
+							"ID" => $arUser["ID"],
+							"CONFIRM_CODE" => $arUser["CONFIRM_CODE"],
+							"UF_DEPARTMENT" => $arUser["UF_DEPARTMENT"]
+						);
+					}
 				}
 				else
 				{
@@ -329,10 +348,11 @@ class Register
 		}
 
 		return [
+			"USER_ID_EXIST" => $existingUserIdList,
 			"TRANSFER_USER" => $arUserForTransfer,
 			"EMAIL_TO_REINVITE" => $arEmailToReinvite,
 			"EMAIL_EXIST" => $arEmailExist,
-			"EMAIL_TO_REGISTER" => $arEmailToRegister
+			"EMAIL_TO_REGISTER" => $arEmailToRegister,
 		];
 	}
 
@@ -411,7 +431,7 @@ class Register
 		$invitedUserIdList = [];
 		foreach ($items as $userData)
 		{
-			$bExtranet = isset($userData["UF_DEPARTMENT"]) ? false : true;
+			$bExtranet = !isset($userData["UF_DEPARTMENT"]);
 			$siteIdByDepartmentId = \CIntranetInviteDialog::getUserSiteId(array(
 				"UF_DEPARTMENT" => isset($userData["UF_DEPARTMENT"]) && is_array($userData["UF_DEPARTMENT"])
 					  ? $userData["UF_DEPARTMENT"][0] : "",
@@ -420,7 +440,7 @@ class Register
 			$arGroups = \CIntranetInviteDialog::getUserGroups($siteIdByDepartmentId, $bExtranet);
 
 			$userData['LOGIN'] = $userData['PHONE_NUMBER'];
-			$userData["CONFIRM_CODE"] = randString(8);
+			$userData["CONFIRM_CODE"] = Random::getString(8, true);
 			$userData["GROUP_ID"] = $arGroups;
 
 			$ID = \CIntranetInviteDialog::RegisterUser($userData, SITE_ID);
@@ -431,14 +451,11 @@ class Register
 
 				return false;
 			}
-			else
-			{
-				$arCreatedUserId[] = $ID;
-				$invitedUserIdList[] = $ID;
-				$userData['ID'] = $ID;
 
-				//TODO: invite user self::InviteUserByPhone($userData);
-			}
+			$arCreatedUserId[] = $ID;
+			$invitedUserIdList[] = $ID;
+			$userData['ID'] = $ID;
+			//TODO: invite user self::InviteUserByPhone($userData);
 		}
 
 		if (!empty($invitedUserIdList))
@@ -457,7 +474,7 @@ class Register
 		$invitedUserIdList = [];
 		foreach ($items as $userData)
 		{
-			$isExtranet = isset($userData["UF_DEPARTMENT"]) ? false : true;
+			$isExtranet = !isset($userData["UF_DEPARTMENT"]);
 			$siteIdByDepartmentId = \CIntranetInviteDialog::getUserSiteId(array(
 				"UF_DEPARTMENT" => isset($userData["UF_DEPARTMENT"]) && is_array($userData["UF_DEPARTMENT"])
 					? $userData["UF_DEPARTMENT"][0] : "",
@@ -465,7 +482,7 @@ class Register
 			));
 			$arGroups = \CIntranetInviteDialog::getUserGroups($siteIdByDepartmentId, $isExtranet);
 
-			$userData["CONFIRM_CODE"] = randString(8);
+			$userData["CONFIRM_CODE"] = Random::getString(8, true);
 			$userData["GROUP_ID"] = $arGroups;
 			$ID = \CIntranetInviteDialog::RegisterUser($userData, SITE_ID);
 
@@ -475,22 +492,20 @@ class Register
 
 				return false;
 			}
-			else
-			{
-				$arCreatedUserId[] = $ID;
-				$invitedUserIdList[] = $ID;
-				$userData['ID'] = $ID;
 
-				\CIntranetInviteDialog::InviteUser($userData, Loc::getMessage("INTRANET_INVITATION_INVITE_MESSAGE_TEXT"), array('checkB24' => false));
-			}
+			$arCreatedUserId[] = $ID;
+			$invitedUserIdList[] = $ID;
+			$userData['ID'] = $ID;
+
+			\CIntranetInviteDialog::InviteUser($userData, Loc::getMessage("INTRANET_INVITATION_INVITE_MESSAGE_TEXT"), array('checkB24' => false));
 		}
 
 		if (!empty($invitedUserIdList))
 		{
 			Invitation::add([
-								'USER_ID' => $invitedUserIdList,
-								'TYPE' => Invitation::TYPE_EMAIL
-							]);
+				'USER_ID' => $invitedUserIdList,
+				'TYPE' => Invitation::TYPE_EMAIL
+			]);
 		}
 
 		return $invitedUserIdList;
@@ -504,7 +519,6 @@ class Register
 		}
 
 		$res = self::checkItems($fields["ITEMS"], $errors);
-
 		if (!empty($errors))
 		{
 			return false;
@@ -514,27 +528,29 @@ class Register
 		$phoneItems = $res["PHONE_ITEMS"];
 
 		$resPhone =	self::checkExistingUserByPhone($phoneItems);
-		$resEmail = self::checkExistingUserByEmail($emailItems);
+		$resEmail = self::checkExistingUserByEmail($emailItems, !empty($fields['SONET_GROUPS_CODE']));
 
-		if(
+		if (
 			empty($resPhone["PHONE_TO_REGISTER"])
 			&& empty($resPhone["PHONE_TO_REINVITE"])
 			&& empty($resEmail["EMAIL_TO_REGISTER"])
 			&& empty($resEmail["EMAIL_TO_REINVITE"])
 			&& empty($resEmail["TRANSFER_USER"])
+			&& empty($resEmail['USER_ID_EXIST'])
 		)
 		{
 			if (!empty($resEmail["EMAIL_EXIST"]))
 			{
-				$errors[] = Loc::getMessage("INTRANET_INVITATION_USER_EXIST_ERROR",
-											["#EMAIL_LIST#" => implode(', ', $resEmail["EMAIL_EXIST"])]);
+				$errors[] = Loc::getMessage("INTRANET_INVITATION_USER_EXIST_ERROR", [
+					"#EMAIL_LIST#" => implode(', ', $resEmail["EMAIL_EXIST"]),
+				]);
 
 			}
 			if (!empty($resPhone["PHONE_EXIST"]))
 			{
-				$errors[] = Loc::getMessage("INTRANET_INVITATION_USER_PHONE_EXIST_ERROR",
-											["#PHONE_LIST#" => implode(', ', $resPhone["PHONE_EXIST"])]);
-
+				$errors[] = Loc::getMessage("INTRANET_INVITATION_USER_PHONE_EXIST_ERROR", [
+					"#PHONE_LIST#" => implode(', ', $resPhone["PHONE_EXIST"]),
+				]);
 			}
 
 			return false;
@@ -544,7 +560,7 @@ class Register
 
 		//reinvite users by email
 		$reinvitedUserIds = [];
-		foreach($resEmail["EMAIL_TO_REINVITE"] as $userData)
+		foreach ($resEmail["EMAIL_TO_REINVITE"] as $userData)
 		{
 			\CIntranetInviteDialog::InviteUser($userData, $messageText, array('checkB24' => false));
 			$reinvitedUserIds[] = (int)$userData['ID'];
@@ -557,14 +573,25 @@ class Register
 			$transferedUserIds = self::transferUser($resEmail["TRANSFER_USER"], $errors);
 		}
 
-		$phoneUserIds = self::registerUsersByPhone($resPhone["PHONE_TO_REGISTER"], $errors);
-		$emailUserIds = self::registerUsersByEmail($resEmail["EMAIL_TO_REGISTER"], $errors);
+		$phoneUserIds = [];
+		if (!empty($resPhone["PHONE_TO_REGISTER"]))
+		{
+			$phoneUserIds = self::registerUsersByPhone($resPhone["PHONE_TO_REGISTER"], $errors);
+		}
+
+		$emailUserIds = [];
+		if (!empty($resEmail["EMAIL_TO_REGISTER"]))
+		{
+			$emailUserIds = self::registerUsersByEmail($resEmail["EMAIL_TO_REGISTER"], $errors);
+		}
 
 		if (!empty($errors))
 		{
 			return false;
 		}
 
-		return array_merge($phoneUserIds, $emailUserIds, $reinvitedUserIds, $transferedUserIds);
+		$existingUserIds = $resEmail['USER_ID_EXIST'];
+
+		return array_merge($phoneUserIds, $emailUserIds, $reinvitedUserIds, $transferedUserIds, $existingUserIds);
 	}
 }

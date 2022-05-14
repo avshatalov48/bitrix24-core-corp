@@ -162,4 +162,5 @@ $arResult['JS_DATA'] = array(
 	'userType' => mb_substr($arParams['TEMPLATE_CONTROLLER_ID'], mb_strpos($arParams['TEMPLATE_CONTROLLER_ID'], '-') + 1),
 	'taskLimitExceeded' => $arResult['TASK_LIMIT_EXCEEDED'],
 	'networkEnabled' => \Bitrix\Tasks\Integration\Network\MemberSelector::isNetworkEnabled(),
+	'context' => $arParams['CONTEXT'],
 );

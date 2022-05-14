@@ -3,8 +3,8 @@
 return [
 	'extensions' => [
 		"reload/listeners", // reload vars after reload script
-		"chat/uploader", // chat uploader
-		"chat/background", // chat background processes (message, reaction, read, .etc)
+		"im:chat/uploader", // chat uploader
+		"im:chat/background", // chat background processes (message, reaction, read, .etc)
 		"task/checklist/uploader", // task checklist uploader
 		"task/uploader", // task uploader
 		"task/background", // task background processes (view, .etc)

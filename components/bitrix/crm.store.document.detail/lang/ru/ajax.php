@@ -5,3 +5,4 @@ $MESS["CRM_STORE_DOCUMENT_SD_FORM_DATA_MISSING"] = "Данные форм отс
 $MESS["CRM_STORE_DOCUMENT_SD_ORDER_ID_NEGATIVE"] = "Необходим положительный идентификатор заказа, либо данные для создания нового заказа";
 $MESS["CRM_STORE_DOCUMENT_SD_CART_NOT_FOUND"] = "Не найдена корзина заказа";
 $MESS["CRM_STORE_DOCUMENT_SD_PRODUCT_NOT_FOUND"] = "Введите хотя бы один товар";
+$MESS["CRM_STORE_DOCUMENT_SD_PRODUCT_QUANTITY_ERROR"] = "Недостаточное количество товара \"#PRODUCT_NAME#\" (##PRODUCT_ID#) на складе \"#STORE_NAME#\" (##STORE_ID#) для отгрузки.";

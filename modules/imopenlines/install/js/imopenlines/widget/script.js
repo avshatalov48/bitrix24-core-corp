@@ -33906,39 +33906,25 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			};
 		}
 
-		this.restClient.callBatch({
-			serverTime : ['server.time'],
-			configGet : [this.configGetMethod, {'CACHE': 'N'}]
-		}, function(response) {
-			if (!response)
-			{
-				result.reject(new Error("Network error while getting new config"));
-				return false;
-			}
-
+		this.restClient.callMethod(this.configGetMethod, {'CACHE': 'N'}).then(function(response) {
 			var timeShift = 0;
-			if (response.serverTime && !response.serverTime.error())
-			{
-				timeShift = Math.floor((Utils.getTimestamp() - new Date(response.serverTime.data()).getTime())/1000);
-			}
+			var data = response.data();
+			timeShift = Math.floor((Utils.getTimestamp() - new Date(data.serverTime).getTime())/1000);
+			delete data.serverTime;
 
-			if (response.configGet.error())
-			{
-				var error = response.configGet.error();
+			var config = Object.assign({}, data);
+			config.server.timeShift = timeShift;
+
+			result.resolve(config)
+		}).catch(function(response)
+		{
+				var error = response.error();
 				if(error.getError().error == "AUTHORIZE_ERROR" || error.getError().error == "WRONG_AUTH_TYPE")
 				{
 					error.status = 403;
 				}
 				result.reject(error);
-			}
-			else if (response.configGet)
-			{
-				var config = response.configGet.data();
-				config.server.timeShift = timeShift;
-
-				result.resolve(config)
-			}
-		}, false, false, 'pull.config');
+		});
 
 		return result;
 	};
@@ -36025,7 +36011,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 	   */
 	  props: {
 	    canReconnect: {
-	      default: false
+	      "default": false
 	    }
 	  },
 	  data: function data() {
@@ -37147,7 +37133,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 
 	ui_vue.WidgetBitrixVue.directive('bx-lazyload', {
 	  bind: function bind(element, bindings) {
-	    if (babelHelpers.typeof(bindings.value) === 'object' && typeof bindings.value.callback === 'function') {
+	    if (babelHelpers["typeof"](bindings.value) === 'object' && typeof bindings.value.callback === 'function') {
 	      element.lazyloadCallback = bindings.value.callback;
 	    }
 
@@ -37220,7 +37206,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
    var _global = typeof self !== 'undefined' ? self : typeof window !== 'undefined' ? window : global;
 
    function extend(obj, extension) {
-     if (babelHelpers.typeof(extension) !== 'object') return obj;
+     if (babelHelpers["typeof"](extension) !== 'object') return obj;
      keys(extension).forEach(function (key) {
        obj[key] = extension[key];
      });
@@ -37237,7 +37223,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
    function props(proto, extension) {
      if (typeof extension === 'function') extension = extension(getProto(proto)); // tag start 28122018
 
-     if (babelHelpers.typeof(extension) !== 'object') return; // tag end 28122018
+     if (babelHelpers["typeof"](extension) !== 'object') return; // tag end 28122018
 
      keys(extension).forEach(function (key) {
        setProp(proto, key, extension[key]);
@@ -37418,7 +37404,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
    });
 
    function deepClone(any) {
-     if (!any || babelHelpers.typeof(any) !== 'object') return any;
+     if (!any || babelHelpers["typeof"](any) !== 'object') return any;
      var rv;
 
      if (isArray(any)) {
@@ -37449,12 +37435,12 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
      keys(a).forEach(function (prop) {
        if (!hasOwn(b, prop)) rv[prfx + prop] = undefined; // Property removed
        else {
-           var ap = a[prop],
-               bp = b[prop];
-           if (babelHelpers.typeof(ap) === 'object' && babelHelpers.typeof(bp) === 'object' && ap && bp && // Now compare constructors are same (not equal because wont work in Safari)
-           '' + ap.constructor === '' + bp.constructor) // Same type of object but its properties may have changed
-             getObjectDiff(ap, bp, rv, prfx + prop + ".");else if (ap !== bp) rv[prfx + prop] = b[prop]; // Primitive value changed
-         }
+         var ap = a[prop],
+             bp = b[prop];
+         if (babelHelpers["typeof"](ap) === 'object' && babelHelpers["typeof"](bp) === 'object' && ap && bp && // Now compare constructors are same (not equal because wont work in Safari)
+         '' + ap.constructor === '' + bp.constructor) // Same type of object but its properties may have changed
+           getObjectDiff(ap, bp, rv, prfx + prop + ".");else if (ap !== bp) rv[prfx + prop] = b[prop]; // Primitive value changed
+       }
      });
      keys(b).forEach(function (prop) {
        if (!hasOwn(a, prop)) {
@@ -37663,7 +37649,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
        } else if (typeof msgOrInner === 'string') {
          this.message = msgOrInner;
          this.inner = inner || null;
-       } else if (babelHelpers.typeof(msgOrInner) === 'object') {
+       } else if (babelHelpers["typeof"](msgOrInner) === 'object') {
          this.message = msgOrInner.name + " " + msgOrInner.message;
          this.inner = msgOrInner;
        }
@@ -37938,7 +37924,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
    var tickFinalizers = []; // Finalizers to call when there are no more async calls scheduled within current physical tick.
 
    function Promise(fn) {
-     if (babelHelpers.typeof(this) !== 'object') throw new TypeError('Promises must be constructed via new');
+     if (babelHelpers["typeof"](this) !== 'object') throw new TypeError('Promises must be constructed via new');
      this._listeners = [];
      this.onuncatched = nop; // Deprecate in next major. Not needed. Better to use global error handler.
      // A library may set `promise._lib = true;` after promise is created to make resolve() or reject()
@@ -38019,7 +38005,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
        // A little tinier version of then() that don't have to create a resulting promise.
        propagateToListener(this, new Listener(null, null, onFulfilled, onRejected, PSD));
      },
-     catch: function _catch(onRejected) {
+     "catch": function _catch(onRejected) {
        if (arguments.length === 1) return this.then(null, onRejected); // First argument is the Error type to catch
 
        var type = arguments[0],
@@ -38035,7 +38021,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
          return err && err.name === type ? handler(err) : PromiseReject(err);
        });
      },
-     finally: function _finally(onFinally) {
+     "finally": function _finally(onFinally) {
        return this.then(function (value) {
          onFinally();
          return value;
@@ -38068,7 +38054,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
            return reject(new exceptions.Timeout(msg));
          }, ms);
 
-         _this.then(resolve, reject).finally(clearTimeout.bind(null, handle));
+         _this.then(resolve, reject)["finally"](clearTimeout.bind(null, handle));
        }) : this;
      }
    });
@@ -38214,7 +38200,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
      reason = rejectionMapper(reason);
      promise._state = false;
      promise._value = reason;
-     debug && reason !== null && babelHelpers.typeof(reason) === 'object' && !reason._promise && tryCatch(function () {
+     debug && reason !== null && babelHelpers["typeof"](reason) === 'object' && !reason._promise && tryCatch(function () {
        var origProp = getPropertyDescriptor(reason, "stack");
        reason._promise = promise;
        setProp(reason, "stack", {
@@ -38739,7 +38725,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
      return rv;
 
      function add(eventName, chainFunction, defaultFunction) {
-       if (babelHelpers.typeof(eventName) === 'object') return addConfiguredEvents(eventName);
+       if (babelHelpers["typeof"](eventName) === 'object') return addConfiguredEvents(eventName);
        if (!chainFunction) chainFunction = reverseStoppableEventChain;
        if (!defaultFunction) defaultFunction = nop;
        var context = {
@@ -38999,7 +38985,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 
        trans.create(idbtrans);
 
-       trans._completion.catch(reject);
+       trans._completion["catch"](reject);
 
        var rejectTransaction = trans._reject.bind(trans);
 
@@ -39013,8 +38999,8 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
            });
            Promise.follow(function () {
              return db.on.populate.fire(trans);
-           }).catch(rejectTransaction);
-         } else updateTablesAndIndexes(oldVersion, trans, idbtrans).catch(rejectTransaction);
+           })["catch"](rejectTransaction);
+         } else updateTablesAndIndexes(oldVersion, trans, idbtrans)["catch"](rejectTransaction);
        });
      }
 
@@ -39205,7 +39191,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
        if (!openComplete && !PSD.letThrough) {
          if (!isBeingOpened) {
            if (!autoOpen) return rejection(new exceptions.DatabaseClosed());
-           db.open().catch(nop); // Open in background. If if fails, it will be catched by the final promise anyway.
+           db.open()["catch"](nop); // Open in background. If if fails, it will be catched by the final promise anyway.
          }
 
          return dbReadyPromise.then(function () {
@@ -39255,7 +39241,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
              return;
            }
 
-           db.open().catch(nop); // Open in background. If if fails, it will be catched by the final promise anyway.
+           db.open()["catch"](nop); // Open in background. If if fails, it will be catched by the final promise anyway.
          }
 
          dbReadyPromise.then(resolve, reject);
@@ -39343,7 +39329,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
            if (!hasNativeGetDatabaseNames && dbName !== '__dbnames') {
              dbNamesDB.dbnames.put({
                name: dbName
-             }).catch(nop);
+             })["catch"](nop);
            }
 
            resolve();
@@ -39362,13 +39348,13 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
              return Promise.resolve(Dexie.vip(remainders)).then(fireRemainders);
            }
          });
-       }).finally(function () {
+       })["finally"](function () {
          onReadyBeingFired = null;
        }).then(function () {
          // Resolve the db.open() with the db instance.
          isBeingOpened = false;
          return db;
-       }).catch(function (err) {
+       })["catch"](function (err) {
          try {
            // Did we fail within onupgradeneeded? Make sure to abort the upgrade transaction so it doesnt commit.
            upgradeTransaction && upgradeTransaction.abort();
@@ -39382,7 +39368,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
          dbOpenError = err; // Record the error. It will be used to reject further promises of db operations.
 
          return rejection(dbOpenError);
-       }).finally(function () {
+       })["finally"](function () {
          openComplete = true;
          resolveDbReady(); // dbReadyPromise is resolved no matter if open() rejects or resolved. It's just to wake up waiters.
        });
@@ -39412,7 +39398,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
        });
      };
 
-     this.delete = function () {
+     this["delete"] = function () {
        var hasArguments = arguments.length > 0;
        return new Promise(function (resolve, reject) {
          if (hasArguments) throw new exceptions.InvalidArgument("Arguments not allowed in db.delete()");
@@ -39428,7 +39414,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
            var req = indexedDB.deleteDatabase(dbName);
            req.onsuccess = wrap(function () {
              if (!hasNativeGetDatabaseNames) {
-               dbNamesDB.dbnames.delete(dbName).catch(nop);
+               dbNamesDB.dbnames["delete"](dbName)["catch"](nop);
              }
 
              resolve();
@@ -39630,7 +39616,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
                if (returnValue.constructor === NativePromise) {
                  var decrementor = decrementExpectedAwaits.bind(null, null);
                  returnValue.then(decrementor, decrementor);
-               } else if (typeof returnValue.next === 'function' && typeof returnValue.throw === 'function') {
+               } else if (typeof returnValue.next === 'function' && typeof returnValue["throw"] === 'function') {
                  // scopeFunc returned an iterator with throw-support. Handle yield as await.
                  returnValue = awaitIterator(returnValue);
                }
@@ -39651,7 +39637,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
              return trans._completion.then(function () {
                return x;
              });
-           }).catch(function (e) {
+           })["catch"](function (e) {
              trans._reject(e); // Yes, above then-handler were maybe not called because of an unhandled rejection in scopeFunc!
 
 
@@ -39707,7 +39693,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 
          if (!hasDeleteHook) {
            for (var i = 0; i < len; ++i) {
-             var req = idbstore.delete(keysOrTuples[i]);
+             var req = idbstore["delete"](keysOrTuples[i]);
              req.onerror = eventRejectHandler(reject);
              if (i === lastItem) req.onsuccess = wrap(function () {
                return resolve();
@@ -39725,7 +39711,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
                };
                var tuple = keysOrTuples[i];
                deletingHook.call(hookCtx, tuple[0], tuple[1], trans);
-               var req = idbstore.delete(tuple[0]);
+               var req = idbstore["delete"](tuple[0]);
                req._hookCtx = hookCtx;
                req.onerror = errorHandler;
                if (i === lastItem) req.onsuccess = hookedEventSuccessHandler(resolve);else req.onsuccess = successHandler;
@@ -39894,7 +39880,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
              resolve(_bulkDelete(idbstore, trans, keys$$1, false, nop));
            });
          } else {
-           return this.where(':id').anyOf(keys$$1).delete().then(function () {}); // Resolve with undefined.
+           return this.where(':id').anyOf(keys$$1)["delete"]().then(function () {}); // Resolve with undefined.
          }
        },
        bulkPut: function bulkPut(objects, keys$$1) {
@@ -39947,7 +39933,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
              })).modify(function () {
                this.value = objectLookup[this.primKey];
                objectLookup[this.primKey] = null; // Mark as "don't add this"
-             }).catch(ModifyError, function (e) {
+             })["catch"](ModifyError, function (e) {
                errorList = e.failures; // No need to concat here. These are the first errors added.
              }).then(function () {
                // Now, let's examine which items didnt exist so we can add them:
@@ -39977,11 +39963,11 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 
                return lastEffectiveKey != null ? lastEffectiveKey : lastAddedKey;
              });
-             promise.then(done).catch(BulkError, function (e) {
+             promise.then(done)["catch"](BulkError, function (e) {
                // Concat failure from ModifyError and reject using our 'done' method.
                errorList = errorList.concat(e.failures);
                done();
-             }).catch(reject);
+             })["catch"](reject);
            }
          }, "locked"); // If called from transaction scope, lock transaction til all steps are done.
        },
@@ -40154,11 +40140,11 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
          if (this.hook.deleting.subscribers.length) {
            // People listens to when("deleting") event. Must implement delete using Collection.delete() that will
            // call the CRUD event. Only Collection.delete() will know whether an object was actually deleted.
-           return this.where(":id").equals(key).delete();
+           return this.where(":id").equals(key)["delete"]();
          } else {
            // No one listens. Use standard IDB delete() method.
            return this._idbstore(READWRITE, function (resolve, reject, idbstore) {
-             var req = idbstore.delete(key);
+             var req = idbstore["delete"](key);
              req.onerror = eventRejectHandler(reject);
              req.onsuccess = wrap(function () {
                resolve(req.result);
@@ -40170,7 +40156,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
          if (this.hook.deleting.subscribers.length) {
            // People listens to when("deleting") event. Must implement delete using Collection.delete() that will
            // call the CRUD event. Only Collection.delete() will knows which objects that are actually deleted.
-           return this.toCollection().delete();
+           return this.toCollection()["delete"]();
          } else {
            return this._idbstore(READWRITE, function (resolve, reject, idbstore) {
              var req = idbstore.clear();
@@ -40182,9 +40168,9 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
          }
        },
        update: function update(keyOrObject, modifications) {
-         if (babelHelpers.typeof(modifications) !== 'object' || isArray(modifications)) throw new exceptions.InvalidArgument("Modifications must be an object.");
+         if (babelHelpers["typeof"](modifications) !== 'object' || isArray(modifications)) throw new exceptions.InvalidArgument("Modifications must be an object.");
 
-         if (babelHelpers.typeof(keyOrObject) === 'object' && !isArray(keyOrObject)) {
+         if (babelHelpers["typeof"](keyOrObject) === 'object' && !isArray(keyOrObject)) {
            // object to modify. Also modify given object with the modifications:
            keys(modifications).forEach(function (keyPath) {
              setByKeyPath(keyOrObject, keyPath, modifications[keyPath]);
@@ -40355,7 +40341,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
                var rv = fn(resolve, reject, _this);
                if (rv && rv.then) rv.then(resolve, reject);
              });
-             p.finally(function () {
+             p["finally"](function () {
                return _this._unlock();
              });
              p._lib = true;
@@ -40410,7 +40396,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
              return root._waitingQueue.push(wrap(resolve.bind(null, res)));
            }, function (err) {
              return root._waitingQueue.push(wrap(reject.bind(null, err)));
-           }).finally(function () {
+           })["finally"](function () {
              if (root._waitingFor === currentWaitPromise) {
                // No one added a wait after us. Safe to stop the spinning.
                root._waitingFor = null;
@@ -40579,7 +40565,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 
              if (lowestPossibleCasing !== null) {
                advance(function () {
-                 cursor.continue(lowestPossibleCasing + nextKeySuffix);
+                 cursor["continue"](lowestPossibleCasing + nextKeySuffix);
                });
              } else {
                advance(resolve);
@@ -40720,7 +40706,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
              } else {
                // cursor.key not yet at set[i]. Forward cursor to the next key to hunt for.
                advance(function () {
-                 cursor.continue(set[i]);
+                 cursor["continue"](set[i]);
                });
                return false;
              }
@@ -40864,7 +40850,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
              } else {
                // cursor.key not yet at set[i]. Forward cursor to the next key to hunt for.
                advance(function () {
-                 if (sortDirection === ascending) cursor.continue(set[i][0]);else cursor.continue(set[i][1]);
+                 if (sortDirection === ascending) cursor["continue"](set[i][0]);else cursor["continue"](set[i][1]);
                });
                return false;
              }
@@ -41417,7 +41403,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
                  var bDelete = !hasOwn(thisContext, "value");
                  ++count;
                  tryCatch(function () {
-                   var req = bDelete ? cursor.delete() : cursor.update(thisContext.value);
+                   var req = bDelete ? cursor["delete"]() : cursor.update(thisContext.value);
                    req._hookCtx = thisContext;
                    req.onerror = hookedEventRejectHandler(onerror);
                    req.onsuccess = hookedEventSuccessHandler(function () {
@@ -41474,7 +41460,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
                countReq.onsuccess = function () {
                  var count = countReq.result;
                  tryCatch(function () {
-                   var delReq = range ? idbstore.delete(range) : idbstore.clear();
+                   var delReq = range ? idbstore["delete"](range) : idbstore.clear();
                    delReq.onerror = onerror;
 
                    delReq.onsuccess = function () {
@@ -41588,7 +41574,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 
            if (cursor) {
              var c = function c() {
-               cursor.continue();
+               cursor["continue"]();
              };
 
              if (filter(cursor, function (advancer) {
@@ -41607,7 +41593,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 
            if (cursor) {
              var c = function c() {
-               cursor.continue();
+               cursor["continue"]();
              };
 
              wrappedFn(cursor.value, cursor, function (advancer) {
@@ -41756,7 +41742,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
        return new type();
      } else if (isArray(type)) {
        return [parseType(type[0])];
-     } else if (type && babelHelpers.typeof(type) === 'object') {
+     } else if (type && babelHelpers["typeof"](type) === 'object') {
        var rv = {};
        applyStructure(rv, type);
        return rv;
@@ -41834,7 +41820,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
        return iterator.next(result);
      },
          doThrow = function doThrow(error) {
-       return iterator.throw(error);
+       return iterator["throw"](error);
      },
          onSuccess = step(callNext),
          onError = step(doThrow);
@@ -41909,9 +41895,9 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
      //
      // Static delete() method.
      //
-     delete: function _delete(databaseName) {
+     "delete": function _delete(databaseName) {
        var db = new Dexie(databaseName),
-           promise = db.delete();
+           promise = db["delete"]();
 
        promise.onblocked = function (fn) {
          db.on("blocked", fn);
@@ -41927,7 +41913,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
        return new Dexie(name).open().then(function (db) {
          db.close();
          return true;
-       }).catch(Dexie.NoSuchDatabaseError, function () {
+       })["catch"](Dexie.NoSuchDatabaseError, function () {
          return false;
        });
      },
@@ -42105,7 +42091,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
      // https://github.com/dfahlander/Dexie.js/issues/186
      // typescript compiler tsc in mode ts-->es5 & commonJS, will expect require() to return
      // x.default. Workaround: Set Dexie.default = Dexie.
-     default: Dexie,
+     "default": Dexie,
      // Make it possible to import {Dexie} (non-default import)
      // Reason 1: May switch to that in future.
      // Reason 2: We declare it both default and named exported in d.ts to make it possible
@@ -42126,12 +42112,12 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
      var DBNAMES = 'Dexie.DatabaseNames';
 
      try {
-       if ((typeof localStorage === "undefined" ? "undefined" : babelHelpers.typeof(localStorage)) !== undefined && _global.document !== undefined) {
+       if ((typeof localStorage === "undefined" ? "undefined" : babelHelpers["typeof"](localStorage)) !== undefined && _global.document !== undefined) {
          // Have localStorage and is not executing in a worker. Lets migrate from Dexie 1.x.
          JSON.parse(localStorage.getItem(DBNAMES) || "[]").forEach(function (name) {
            return dbNamesDB.dbnames.put({
              name: name
-           }).catch(nop);
+           })["catch"](nop);
          });
          localStorage.removeItem(DBNAMES);
        }
@@ -42154,7 +42140,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
      return new Dexie(database);
    };
 
-   Dexie$1.delete = Dexie.delete;
+   Dexie$1["delete"] = Dexie["delete"];
    Dexie$1.exists = Dexie.exists;
    Dexie$1.getDatabaseNames = Dexie.getDatabaseNames;
    Dexie$1.defineClass = Dexie.defineClass;
@@ -42190,7 +42176,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
    Dexie$1.dependencies = Dexie.dependencies;
    Dexie$1.semVer = Dexie.semVer;
    Dexie$1.version = Dexie.version;
-   Dexie$1.default = Dexie.default;
+   Dexie$1["default"] = Dexie["default"];
    Dexie$1.Dexie = Dexie.Dexie;
 
    exports.Dexie = Dexie$1;
@@ -42205,6 +42191,9 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 (function (exports,ui_vue_directives_lazyload,ui_vue,ui_dexie) {
 	'use strict';
 
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var SmileManager = /*#__PURE__*/function () {
 	  function SmileManager(restClient) {
 	    babelHelpers.classCallCheck(this, SmileManager);
@@ -42233,10 +42222,10 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 	      this.db.transaction('r', this.db.sets, this.db.smiles, function () {
 	        _this.db.sets.each(function (set) {
 	          return _this.db.smiles.where('setId').equals(set.id).first().then(function (smile) {
-	            sets.push(babelHelpers.objectSpread({}, set, {
+	            sets.push(_objectSpread(_objectSpread({}, set), {}, {
 	              image: smile.image
 	            }));
-	          }).catch(function (error) {
+	          })["catch"](function (error) {
 	            return promise.reject(error);
 	          });
 	        }).then(function () {
@@ -42249,7 +42238,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 	            smiles: smiles
 	          };
 	          promise.resolve(promiseResult);
-	        }).catch(function (error) {
+	        })["catch"](function (error) {
 	          return promise.reject(error);
 	        });
 	      });
@@ -42287,13 +42276,13 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 	            originalHeight = originalHeight * 4;
 	          }
 
-	          return babelHelpers.objectSpread({}, smile, {
+	          return _objectSpread(_objectSpread({}, smile), {}, {
 	            originalWidth: originalWidth,
 	            originalHeight: originalHeight
 	          });
 	        });
 	        answer.sets.forEach(function (set) {
-	          sets.push(babelHelpers.objectSpread({}, set, {
+	          sets.push(_objectSpread(_objectSpread({}, set), {}, {
 	            image: setImage[set.id]
 	          }));
 	        });
@@ -42313,13 +42302,13 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 	            _this2.db.sets.bulkAdd(sets);
 
 	            _this2.db.smiles.bulkAdd(answer.smiles);
-	          }).catch(function (error) {
+	          })["catch"](function (error) {
 	            return promise.reject(error);
 	          });
-	        }).catch(function (error) {
+	        })["catch"](function (error) {
 	          return promise.reject(error);
 	        });
-	      }).catch(function (error) {
+	      })["catch"](function (error) {
 	        return promise.reject(error);
 	      });
 	      return promise;
@@ -42330,7 +42319,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 	      var promise = new BX.Promise();
 	      this.db.smiles.where('setId').equals(setId).toArray(function (smiles) {
 	        promise.resolve(smiles);
-	      }).catch(function (error) {
+	      })["catch"](function (error) {
 	        return promise.reject(error);
 	      });
 	      return promise;
@@ -46358,13 +46347,13 @@ this.BX = this.BX || {};
 
 	    this.blurElement = params.blurElement;
 	    this.direction = Uploader.direction[params.direction] ? params.direction : Uploader.direction.vertical;
-	    params.sizes = params.sizes && babelHelpers.typeof(params.sizes) === 'object' ? params.sizes : {};
+	    params.sizes = params.sizes && babelHelpers["typeof"](params.sizes) === 'object' ? params.sizes : {};
 	    this.sizes = {
 	      circle: params.sizes.circle ? params.sizes.circle : 54,
 	      progress: params.sizes.progress ? params.sizes.progress : 4,
 	      margin: params.sizes.margin ? params.sizes.margin : 0
 	    };
-	    params.labels = params.labels && babelHelpers.typeof(params.labels) === 'object' ? params.labels : {};
+	    params.labels = params.labels && babelHelpers["typeof"](params.labels) === 'object' ? params.labels : {};
 	    this.labels = {
 	      loading: params.labels.loading ? params.labels.loading : '',
 	      completed: params.labels.completed ? params.labels.completed : '',
@@ -47447,7 +47436,7 @@ this.BX = this.BX || {};
 	      var _this3 = this;
 
 	      return new Promise(function (resolve, reject) {
-	        _this3.db.data.delete(_this3.code).then(function (data) {
+	        _this3.db.data["delete"](_this3.code).then(function (data) {
 	          resolve(true);
 	        }, function (error) {
 	          reject(error);
@@ -47554,7 +47543,7 @@ this.BX = this.BX || {};
 	        value = value.map(function (element) {
 	          return _this4.prepareValueAfterGet(element);
 	        });
-	      } else if (value instanceof Date) ; else if (value && babelHelpers.typeof(value) === 'object') {
+	      } else if (value instanceof Date) ; else if (value && babelHelpers["typeof"](value) === 'object') {
 	        for (var index in value) {
 	          if (value.hasOwnProperty(index)) {
 	            value[index] = this.prepareValueAfterGet(value[index]);
@@ -47583,7 +47572,7 @@ this.BX = this.BX || {};
 	        });
 	      } else if (value instanceof Date) {
 	        value = '#DT#' + value.toISOString();
-	      } else if (value && babelHelpers.typeof(value) === 'object') {
+	      } else if (value && babelHelpers["typeof"](value) === 'object') {
 	        for (var index in value) {
 	          if (value.hasOwnProperty(index)) {
 	            value[index] = this.prepareValueBeforeSet(value[index]);
@@ -47683,7 +47672,7 @@ this.BX = this.BX || {};
 	        value = value.map(function (element) {
 	          return _this3.prepareValueAfterGet(element);
 	        });
-	      } else if (value instanceof Date) ; else if (value && babelHelpers.typeof(value) === 'object') {
+	      } else if (value instanceof Date) ; else if (value && babelHelpers["typeof"](value) === 'object') {
 	        for (var index in value) {
 	          if (value.hasOwnProperty(index)) {
 	            value[index] = this.prepareValueAfterGet(value[index]);
@@ -47712,7 +47701,7 @@ this.BX = this.BX || {};
 	        });
 	      } else if (value instanceof Date) {
 	        value = '#DT#' + value.toISOString();
-	      } else if (value && babelHelpers.typeof(value) === 'object') {
+	      } else if (value && babelHelpers["typeof"](value) === 'object') {
 	        for (var index in value) {
 	          if (value.hasOwnProperty(index)) {
 	            value[index] = this.prepareValueBeforeSet(value[index]);
@@ -47854,7 +47843,7 @@ this.BX = this.BX || {};
 	    value: function setVariables() {
 	      var variables = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
-	      if (!(babelHelpers.typeof(variables) === 'object' && variables)) {
+	      if (!(babelHelpers["typeof"](variables) === 'object' && variables)) {
 	        this.logger('error', 'VuexBuilderModel.setVars: passed variables is not a Object', store);
 	        return this;
 	      }
@@ -48140,7 +48129,7 @@ this.BX = this.BX || {};
 	        if (typeof lastState === 'function') {
 	          lastState = lastState();
 
-	          if (babelHelpers.typeof(lastState) !== 'object' || !lastState) {
+	          if (babelHelpers["typeof"](lastState) !== 'object' || !lastState) {
 	            return false;
 	          }
 	        }
@@ -48210,7 +48199,7 @@ this.BX = this.BX || {};
 
 	          if (typeof filter[field] === 'undefined') {
 	            return true;
-	          } else if (babelHelpers.typeof(filter[field]) === 'object' && filter[field]) {
+	          } else if (babelHelpers["typeof"](filter[field]) === 'object' && filter[field]) {
 	            var result = checkFunction(payload[field], filter[field]);
 
 	            if (result) {
@@ -48315,7 +48304,7 @@ this.BX = this.BX || {};
 
 	        if (typeof newState[key] === 'undefined') {
 	          newState[key] = currentState[key];
-	        } else if (!(newState[key] instanceof Array) && babelHelpers.typeof(newState[key]) === 'object' && newState[key] && babelHelpers.typeof(currentState[key]) === 'object' && currentState[key]) {
+	        } else if (!(newState[key] instanceof Array) && babelHelpers["typeof"](newState[key]) === 'object' && newState[key] && babelHelpers["typeof"](currentState[key]) === 'object' && currentState[key]) {
 	          newState[key] = Object.assign({}, currentState[key], newState[key]);
 	        }
 	      }
@@ -48369,7 +48358,7 @@ this.BX = this.BX || {};
 	        }));
 	      } else if (element instanceof Date) {
 	        result = new Date(element.toISOString());
-	      } else if (babelHelpers.typeof(element) === 'object' && element) {
+	      } else if (babelHelpers["typeof"](element) === 'object' && element) {
 	        result = {};
 
 	        for (var param in element) {
@@ -48379,7 +48368,7 @@ this.BX = this.BX || {};
 
 	          if (typeof exceptions === 'undefined' || typeof exceptions[param] === 'undefined') {
 	            result[param] = this.cloneState(element[param]);
-	          } else if (babelHelpers.typeof(exceptions[param]) === 'object' && exceptions[param]) {
+	          } else if (babelHelpers["typeof"](exceptions[param]) === 'object' && exceptions[param]) {
 	            result[param] = this.cloneState(element[param], exceptions[param]);
 	          }
 	        }
@@ -48631,7 +48620,7 @@ this.BX = this.BX || {};
 	    value: function setDatabaseConfig() {
 	      var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
-	      if (!(babelHelpers.typeof(config) === 'object' && config)) {
+	      if (!(babelHelpers["typeof"](config) === 'object' && config)) {
 	        return this;
 	      }
 
@@ -48898,7 +48887,7 @@ this.BX = this.BX || {};
 	  var cache = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
 
 	  // just return if obj is immutable value
-	  if (obj === null || babelHelpers.typeof(obj) !== 'object') {
+	  if (obj === null || babelHelpers["typeof"](obj) !== 'object') {
 	    return obj;
 	  } // if obj is hit, it is in circular structure
 
@@ -48935,7 +48924,7 @@ this.BX = this.BX || {};
 	}
 
 	function isObject(obj) {
-	  return obj !== null && babelHelpers.typeof(obj) === 'object';
+	  return obj !== null && babelHelpers["typeof"](obj) === 'object';
 	}
 
 	function isPromise(val) {
@@ -49156,7 +49145,7 @@ this.BX = this.BX || {};
 	};
 	var objectAssert = {
 	  assert: function assert(value) {
-	    return typeof value === 'function' || babelHelpers.typeof(value) === 'object' && typeof value.handler === 'function';
+	    return typeof value === 'function' || babelHelpers["typeof"](value) === 'object' && typeof value.handler === 'function';
 	  },
 	  expected: 'function or object with "handler" function'
 	};
@@ -49432,7 +49421,7 @@ this.BX = this.BX || {};
 
 	      this._withCommit(function () {
 	        var parentState = getNestedState(_this7.state, path.slice(0, -1));
-	        ui_vue.WidgetVueVendor.delete(parentState, path[path.length - 1]);
+	        ui_vue.WidgetVueVendor["delete"](parentState, path[path.length - 1]);
 	      });
 
 	      resetStore(this);
@@ -49713,7 +49702,7 @@ this.BX = this.BX || {};
 	    }
 
 	    if (store._devtoolHook) {
-	      return res.catch(function (err) {
+	      return res["catch"](function (err) {
 	        store._devtoolHook.emit('vuex:error', err);
 
 	        throw err;
@@ -49768,7 +49757,7 @@ this.BX = this.BX || {};
 	  }
 
 	  {
-	    assert(typeof type === 'string', "expects string as the type, but found ".concat(babelHelpers.typeof(type), "."));
+	    assert(typeof type === 'string', "expects string as the type, but found ".concat(babelHelpers["typeof"](type), "."));
 	  }
 	  return {
 	    type: type,
@@ -50117,7 +50106,7 @@ this.BX = this.BX || {};
 	  try {
 	    logger.groupEnd();
 	  } catch (e) {
-	    logger.log('—— log end ——');
+	    logger.log('â€”â€” log end â€”â€”');
 	  }
 	}
 
@@ -50174,11 +50163,19 @@ this.BX.Messenger = this.BX.Messenger || {};
 (function (exports) {
 	'use strict';
 
-	var _types = new WeakMap();
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 
-	var _config = new WeakMap();
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 
-	var _custom = new WeakMap();
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
+
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
+	var _types = /*#__PURE__*/new WeakMap();
+
+	var _config = /*#__PURE__*/new WeakMap();
+
+	var _custom = /*#__PURE__*/new WeakMap();
 
 	/**
 	 * Bitrix Messenger
@@ -50192,17 +50189,17 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  function Logger() {
 	    babelHelpers.classCallCheck(this, Logger);
 
-	    _types.set(this, {
+	    _classPrivateFieldInitSpec(this, _types, {
 	      writable: true,
 	      value: {}
 	    });
 
-	    _config.set(this, {
+	    _classPrivateFieldInitSpec(this, _config, {
 	      writable: true,
 	      value: {}
 	    });
 
-	    _custom.set(this, {
+	    _classPrivateFieldInitSpec(this, _custom, {
 	      writable: true,
 	      value: {}
 	    });
@@ -50366,7 +50363,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	          if (typeof custom === 'string') {
 	            babelHelpers.classPrivateFieldSet(this, _custom, JSON.parse(custom));
-	            babelHelpers.classPrivateFieldSet(this, _types, babelHelpers.objectSpread({}, babelHelpers.classPrivateFieldGet(this, _types), babelHelpers.classPrivateFieldGet(this, _custom)));
+	            babelHelpers.classPrivateFieldSet(this, _types, _objectSpread(_objectSpread({}, babelHelpers.classPrivateFieldGet(this, _types)), babelHelpers.classPrivateFieldGet(this, _custom)));
 	          }
 	        } catch (e) {}
 	      }
@@ -50442,7 +50439,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  recentTitle: 'recentTitle',
 	  recentLinesTitle: 'recentLinesTitle',
 	  readedTitle: 'readedTitle',
-	  default: 'default',
+	  "default": 'default',
 	  vacationTitle: 'vacationTitle'
 	});
 
@@ -50475,7 +50472,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  none: 'none',
 	  add: 'delete',
 	  update: 'update',
-	  delete: 'delete',
+	  "delete": 'delete',
 	  set: 'set',
 	  setAfter: 'after',
 	  setBefore: 'before'
@@ -50609,7 +50606,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	 * @copyright 2001-2020 Bitrix
 	 */
 	var DialogType = Object.freeze({
-	  private: 'private',
+	  "private": 'private',
 	  chat: 'chat',
 	  open: 'open',
 	  call: 'call',
@@ -52117,13 +52114,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      return item === null ? false : typeof item == "function" || item instanceof Function;
 	    },
 	    isDomNode: function isDomNode(item) {
-	      return item && babelHelpers.typeof(item) == "object" && "nodeType" in item;
+	      return item && babelHelpers["typeof"](item) == "object" && "nodeType" in item;
 	    },
 	    isDate: function isDate(item) {
 	      return item && Object.prototype.toString.call(item) == "[object Date]";
 	    },
 	    isPlainObject: function isPlainObject(item) {
-	      if (!item || babelHelpers.typeof(item) !== "object" || item.nodeType) {
+	      if (!item || babelHelpers["typeof"](item) !== "object" || item.nodeType) {
 	        return false;
 	      }
 
@@ -52333,7 +52330,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (params && params.FILE_ID && params.FILE_ID.length > 0) {
 	        var filesText = [];
 
-	        if (babelHelpers.typeof(files) === 'object') {
+	        if (babelHelpers["typeof"](files) === 'object') {
 	          params.FILE_ID.forEach(function (fileId) {
 	            if (typeof files[fileId] === 'undefined') ; else if (files[fileId].type === 'image') {
 	              filesText.push(localize['IM_UTILS_TEXT_IMAGE']);
@@ -52412,7 +52409,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  },
 	  date: {
 	    getFormatType: function getFormatType() {
-	      var type = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : im_const.DateFormat.default;
+	      var type = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : im_const.DateFormat["default"];
 	      var localize = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 
 	      if (!localize) {
@@ -52461,7 +52458,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var localize = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
 
 	      if (!format) {
-	        format = this.getFormatType(im_const.DateFormat.default, localize);
+	        format = this.getFormatType(im_const.DateFormat["default"], localize);
 	      }
 
 	      return this.getDateFunction(localize).format(format, timestamp);
@@ -52642,7 +52639,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    var string = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
 	    var hash = 0;
 
-	    if (babelHelpers.typeof(string) === 'object' && string) {
+	    if (babelHelpers["typeof"](string) === 'object' && string) {
 	      string = JSON.stringify(string);
 	    } else if (typeof string !== 'string') {
 	      string = string.toString();
@@ -52653,8 +52650,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    }
 
 	    for (var i = 0; i < string.length; i++) {
-	      var char = string.charCodeAt(i);
-	      hash = (hash << 5) - hash + char;
+	      var _char = string.charCodeAt(i);
+
+	      hash = (hash << 5) - hash + _char;
 	      hash = hash & hash;
 	    }
 
@@ -52763,7 +52761,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        files = _params$files === void 0 ? null : _params$files;
 	    name = encodeURIComponent(name);
 
-	    if (data && !(data instanceof Array) && babelHelpers.typeof(data) === 'object') {
+	    if (data && !(data instanceof Array) && babelHelpers["typeof"](data) === 'object') {
 	      var dataArray = [];
 
 	      for (var _name in data) {
@@ -52985,7 +52983,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function validate(fields) {
 	      var result = {};
 
-	      if (babelHelpers.typeof(fields.common) === 'object' && fields.common) {
+	      if (babelHelpers["typeof"](fields.common) === 'object' && fields.common) {
 	        result.common = {};
 
 	        if (typeof fields.common.userId === 'number') {
@@ -52997,7 +52995,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        }
 	      }
 
-	      if (babelHelpers.typeof(fields.dialog) === 'object' && fields.dialog) {
+	      if (babelHelpers["typeof"](fields.dialog) === 'object' && fields.dialog) {
 	        result.dialog = {};
 
 	        if (typeof fields.dialog.dialogId === 'number') {
@@ -53040,7 +53038,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        }
 	      }
 
-	      if (babelHelpers.typeof(fields.disk) === 'object' && fields.disk) {
+	      if (babelHelpers["typeof"](fields.disk) === 'object' && fields.disk) {
 	        result.disk = {};
 
 	        if (typeof fields.disk.enabled === 'boolean') {
@@ -53052,7 +53050,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        }
 	      }
 
-	      if (babelHelpers.typeof(fields.call) === 'object' && fields.call) {
+	      if (babelHelpers["typeof"](fields.call) === 'object' && fields.call) {
 	        result.call = {};
 
 	        if (typeof fields.call.serverEnabled === 'boolean') {
@@ -53064,7 +53062,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        }
 	      }
 
-	      if (babelHelpers.typeof(fields.mobile) === 'object' && fields.mobile) {
+	      if (babelHelpers["typeof"](fields.mobile) === 'object' && fields.mobile) {
 	        result.mobile = {};
 
 	        if (typeof fields.mobile.keyboardShow === 'boolean') {
@@ -53072,7 +53070,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        }
 	      }
 
-	      if (babelHelpers.typeof(fields.device) === 'object' && fields.device) {
+	      if (babelHelpers["typeof"](fields.device) === 'object' && fields.device) {
 	        result.device = {};
 
 	        if (typeof fields.device.type === 'string' && typeof im_const.DeviceType[fields.device.type] !== 'undefined') {
@@ -53084,7 +53082,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        }
 	      }
 
-	      if (babelHelpers.typeof(fields.error) === 'object' && fields.error) {
+	      if (babelHelpers["typeof"](fields.error) === 'object' && fields.error) {
 	        if (typeof fields.error.active === 'boolean') {
 	          result.error = {
 	            active: fields.error.active,
@@ -53415,7 +53413,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  return ConferenceModel;
 	}(ui_vue_vuex.WidgetVuexBuilderModel);
 
-	function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
@@ -53799,7 +53797,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	          return true;
 	        },
-	        delete: function _delete(store, payload) {
+	        "delete": function _delete(store, payload) {
 	          if (!(payload.id instanceof Array)) {
 	            payload.id = [payload.id];
 	          }
@@ -54140,7 +54138,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            }
 	          }
 	        },
-	        delete: function _delete(state, payload) {
+	        "delete": function _delete(state, payload) {
 	          _this3.initCollection(state, {
 	            chatId: payload.chatId
 	          });
@@ -54555,7 +54553,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        }
 	      }
 
-	      if (babelHelpers.typeof(fields.params) === "object" && fields.params !== null) {
+	      if (babelHelpers["typeof"](fields.params) === "object" && fields.params !== null) {
 	        var params = this.validateParams(fields.params, options);
 
 	        if (params) {
@@ -54758,7 +54756,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        item.forEach(function (arrayElement) {
 	          arrayElement = _this4.decodeAttach(arrayElement);
 	        });
-	      } else if (babelHelpers.typeof(item) === 'object' && item !== null) {
+	      } else if (babelHelpers["typeof"](item) === 'object' && item !== null) {
 	        for (var prop in item) {
 	          if (item.hasOwnProperty(prop)) {
 	            item[prop] = this.decodeAttach(item[prop]);
@@ -55075,7 +55073,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  return MessagesModel;
 	}(ui_vue_vuex.WidgetVuexBuilderModel);
 
-	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
 
@@ -55155,9 +55153,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          leave: true,
 	          leaveOwner: true,
 	          rename: true,
-	          send: true
+	          send: true,
+	          userList: true,
+	          mute: true,
+	          call: true
 	        },
-	        public: {
+	        "public": {
 	          code: '',
 	          link: ''
 	        }
@@ -55280,7 +55281,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          });
 	          return true;
 	        },
-	        delete: function _delete(store, payload) {
+	        "delete": function _delete(store, payload) {
 	          store.commit('delete', payload.dialogId);
 	          return true;
 	        },
@@ -55531,7 +55532,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	          _this3.saveState(state);
 	        },
-	        delete: function _delete(state, payload) {
+	        "delete": function _delete(state, payload) {
 	          delete state.collection[payload.dialogId]; // TODO if payload.dialogId is IMOL, skip update cache
 
 	          _this3.saveState(state);
@@ -55744,7 +55745,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              result.muteList.push(userId);
 	            }
 	          });
-	        } else if (babelHelpers.typeof(fields.muteList) === 'object') {
+	        } else if (babelHelpers["typeof"](fields.muteList) === 'object') {
 	          Object.entries(fields.muteList).forEach(function (entry) {
 	            if (entry[1] === true) {
 	              var userId = parseInt(entry[0]);
@@ -55857,7 +55858,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        result.dateLastOpen = im_lib_utils.Utils.date.cast(fields.dateLastOpen);
 	      }
 
-	      if (babelHelpers.typeof(fields.restrictions) === 'object' && fields.restrictions) {
+	      if (babelHelpers["typeof"](fields.restrictions) === 'object' && fields.restrictions) {
 	        result.restrictions = {};
 
 	        if (typeof fields.restrictions.avatar === 'boolean') {
@@ -55883,17 +55884,29 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        if (typeof fields.restrictions.send === 'boolean') {
 	          result.restrictions.send = fields.restrictions.send;
 	        }
-	      }
 
-	      if (babelHelpers.typeof(fields.public) === 'object' && fields.public) {
-	        result.public = {};
-
-	        if (typeof fields.public.code === 'string') {
-	          result.public.code = fields.public.code;
+	        if (typeof fields.restrictions.user_list === 'boolean') {
+	          result.restrictions.userList = fields.restrictions.user_list;
 	        }
 
-	        if (typeof fields.public.link === 'string') {
-	          result.public.link = fields.public.link;
+	        if (typeof fields.restrictions.mute === 'boolean') {
+	          result.restrictions.mute = fields.restrictions.mute;
+	        }
+
+	        if (typeof fields.restrictions.call === 'boolean') {
+	          result.restrictions.call = fields.restrictions.call;
+	        }
+	      }
+
+	      if (babelHelpers["typeof"](fields["public"]) === 'object' && fields["public"]) {
+	        result["public"] = {};
+
+	        if (typeof fields["public"].code === 'string') {
+	          result["public"].code = fields["public"].code;
+	        }
+
+	        if (typeof fields["public"].link === 'string') {
+	          result["public"].link = fields["public"].link;
 	        }
 	      }
 
@@ -55903,7 +55916,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  return DialoguesModel;
 	}(ui_vue_vuex.WidgetVuexBuilderModel);
 
-	function _createForOfIteratorHelper$2(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$2(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper$2(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$2(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray$2(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$2(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$2(o, minLen); }
 
@@ -56080,7 +56093,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          });
 	          return true;
 	        },
-	        delete: function _delete(store, payload) {
+	        "delete": function _delete(store, payload) {
 	          store.commit('delete', payload.id);
 	          return true;
 	        },
@@ -56200,7 +56213,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	          _this3.saveState(state);
 	        },
-	        delete: function _delete(state, payload) {
+	        "delete": function _delete(state, payload) {
 	          delete state.collection[payload.id];
 
 	          _this3.saveState(state);
@@ -56421,7 +56434,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        }
 	      }
 
-	      if (babelHelpers.typeof(fields.phones) === 'object' && fields.phones) {
+	      if (babelHelpers["typeof"](fields.phones) === 'object' && fields.phones) {
 	        result.phones = {};
 
 	        if (typeof fields.phones.work_phone !== "undefined") {
@@ -56605,7 +56618,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  return UsersModel;
 	}(ui_vue_vuex.WidgetVuexBuilderModel);
 
-	function _createForOfIteratorHelper$3(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$3(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper$3(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$3(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray$3(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$3(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$3(o, minLen); }
 
@@ -56824,7 +56837,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	          return true;
 	        },
-	        delete: function _delete(store, payload) {
+	        "delete": function _delete(store, payload) {
 	          store.commit('delete', {
 	            id: payload.id,
 	            chatId: payload.chatId
@@ -56916,7 +56929,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            _this3.saveState(state);
 	          }
 	        },
-	        delete: function _delete(state, payload) {
+	        "delete": function _delete(state, payload) {
 	          _this3.initCollection(state, payload);
 
 	          state.collection[payload.chatId] = state.collection[payload.chatId].filter(function (element) {
@@ -56945,11 +56958,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "getLoadedState",
 	    value: function getLoadedState(state) {
-	      if (!state || babelHelpers.typeof(state) !== 'object') {
+	      if (!state || babelHelpers["typeof"](state) !== 'object') {
 	        return state;
 	      }
 
-	      if (babelHelpers.typeof(state.collection) !== 'object') {
+	      if (babelHelpers["typeof"](state.collection) !== 'object') {
 	        return state;
 	      }
 
@@ -57112,7 +57125,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	      if (typeof fields.image === 'boolean') {
 	        result.image = false;
-	      } else if (babelHelpers.typeof(fields.image) === 'object' && fields.image) {
+	      } else if (babelHelpers["typeof"](fields.image) === 'object' && fields.image) {
 	        result.image = {
 	          width: 0,
 	          height: 0
@@ -57171,7 +57184,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        }
 	      }
 
-	      if (babelHelpers.typeof(fields.viewerAttrs) === 'object') {
+	      if (babelHelpers["typeof"](fields.viewerAttrs) === 'object') {
 	        if (result.type === 'image' && !im_lib_utils.Utils.platform.isBitrixMobile()) {
 	          result.viewerAttrs = fields.viewerAttrs;
 	        }
@@ -57500,7 +57513,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        clearPlaceholders: function clearPlaceholders(store) {
 	          store.commit('clearPlaceholders');
 	        },
-	        delete: function _delete(store, payload) {
+	        "delete": function _delete(store, payload) {
 	          if (typeof payload.id === 'string' && !payload.id.startsWith('chat') && payload.id !== 'notify') {
 	            payload.id = parseInt(payload.id);
 	          }
@@ -57530,7 +57543,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        update: function update(state, payload) {
 	          state.collection.splice(payload.index, 1, Object.assign({}, state.collection[payload.index], payload.fields));
 	        },
-	        delete: function _delete(state, payload) {
+	        "delete": function _delete(state, payload) {
 	          state.collection.splice(payload.index, 1);
 	        },
 	        addPlaceholder: function addPlaceholder(state, payload) {
@@ -57704,7 +57717,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  return RecentModel;
 	}(ui_vue_vuex.WidgetVuexBuilderModel); //raw input object for validation
 
-	function _createForOfIteratorHelper$4(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$4(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper$4(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$4(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray$4(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$4(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$4(o, minLen); }
 
@@ -57948,7 +57961,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        readAll: function readAll(store, payload) {
 	          store.commit('readAll');
 	        },
-	        delete: function _delete(store, payload) {
+	        "delete": function _delete(store, payload) {
 	          var existingItem = _this2.findItemInArr(store.state.collection, payload.id);
 
 	          if (existingItem.element) {
@@ -58080,7 +58093,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          var collectionName = payload.searchCollection ? 'searchCollection' : 'collection';
 	          ui_vue.WidgetVue.set(state[collectionName], payload.index, Object.assign({}, state[collectionName][payload.index], payload.fields));
 	        },
-	        delete: function _delete(state, payload) {
+	        "delete": function _delete(state, payload) {
 	          var collectionName = payload.searchCollection ? 'searchCollection' : 'collection';
 	          state[collectionName].splice(payload.index, 1);
 	        },
@@ -58618,16 +58631,16 @@ this.BX.Messenger = this.BX.Messenger || {};
 	ui_vue.WidgetBitrixVue.component('bx-audioplayer', {
 	  props: {
 	    id: {
-	      default: 0
+	      "default": 0
 	    },
 	    src: {
-	      default: ''
+	      "default": ''
 	    },
 	    autoPlayNext: {
-	      default: true
+	      "default": true
 	    },
 	    background: {
-	      default: 'light'
+	      "default": 'light'
 	    }
 	  },
 	  data: function data() {
@@ -59024,28 +59037,28 @@ this.BX.Messenger = this.BX.Messenger || {};
 	ui_vue.WidgetBitrixVue.component('bx-socialvideo', {
 	  props: {
 	    id: {
-	      default: 0
+	      "default": 0
 	    },
 	    src: {
-	      default: ''
+	      "default": ''
 	    },
 	    preview: {
-	      default: ''
+	      "default": ''
 	    },
 	    autoplay: {
-	      default: true
+	      "default": true
 	    },
 	    containerClass: {
-	      default: null
+	      "default": null
 	    },
 	    containerStyle: {
-	      default: null
+	      "default": null
 	    },
 	    elementStyle: {
-	      default: null
+	      "default": null
 	    },
 	    showControls: {
-	      default: true
+	      "default": true
 	    }
 	  },
 	  data: function data() {
@@ -59389,14 +59402,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 (function (exports,ui_progressbarjs_uploader,ui_vue_vuex,im_model,im_const,ui_vue_components_audioplayer,ui_vue_directives_lazyload,ui_icons,ui_vue_components_socialvideo,im_lib_utils,ui_vue) {
 	'use strict';
 
-	/**
-	 * Bitrix Messenger
-	 * File element Vue component
-	 *
-	 * @package bitrix
-	 * @subpackage im
-	 * @copyright 2001-2019 Bitrix
-	 */
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.WidgetBitrixVue.component('bx-im-view-element-file', {
 	  /*
 	   * @emits 'uploadCancel' {file: object, event: MouseEvent}
@@ -59409,14 +59417,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  },
 	  props: {
 	    userId: {
-	      default: 0
+	      "default": 0
 	    },
 	    messageType: {
-	      default: im_const.MessageType.self
+	      "default": im_const.MessageType.self
 	    },
 	    file: {
 	      type: Object,
-	      default: im_model.FilesModel.create().getElementState
+	      "default": im_model.FilesModel.create().getElementState
 	    }
 	  },
 	  methods: {
@@ -59575,7 +59583,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      return true;
 	    }
 	  },
-	  computed: babelHelpers.objectSpread({
+	  computed: _objectSpread({
 	    FileStatus: function FileStatus() {
 	      return im_const.FileStatus;
 	    },
@@ -59781,11 +59789,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    props: {
 	      config: {
 	        type: Object,
-	        default: {}
+	        "default": {}
 	      },
 	      color: {
 	        type: String,
-	        default: 'transparent'
+	        "default": 'transparent'
 	      }
 	    },
 	    computed: {
@@ -59817,11 +59825,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    props: {
 	      config: {
 	        type: Object,
-	        default: {}
+	        "default": {}
 	      },
 	      color: {
 	        type: String,
-	        default: 'transparent'
+	        "default": 'transparent'
 	      }
 	    },
 	    methods: {
@@ -59947,11 +59955,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    props: {
 	      config: {
 	        type: Object,
-	        default: {}
+	        "default": {}
 	      },
 	      color: {
 	        type: String,
-	        default: 'transparent'
+	        "default": 'transparent'
 	      }
 	    },
 	    created: function created() {
@@ -60018,11 +60026,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    props: {
 	      config: {
 	        type: Object,
-	        default: {}
+	        "default": {}
 	      },
 	      color: {
 	        type: String,
-	        default: 'transparent'
+	        "default": 'transparent'
 	      }
 	    },
 	    template: "<div class=\"bx-im-element-attach-type-html\" v-html=\"config.HTML\"></div>"
@@ -60046,11 +60054,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    props: {
 	      config: {
 	        type: Object,
-	        default: {}
+	        "default": {}
 	      },
 	      color: {
 	        type: String,
-	        default: 'transparent'
+	        "default": 'transparent'
 	      }
 	    },
 	    methods: {
@@ -60153,11 +60161,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    props: {
 	      config: {
 	        type: Object,
-	        default: {}
+	        "default": {}
 	      },
 	      color: {
 	        type: String,
-	        default: 'transparent'
+	        "default": 'transparent'
 	      }
 	    },
 	    methods: {
@@ -60203,11 +60211,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    props: {
 	      config: {
 	        type: Object,
-	        default: {}
+	        "default": {}
 	      },
 	      color: {
 	        type: String,
-	        default: 'transparent'
+	        "default": 'transparent'
 	      }
 	    },
 	    computed: {
@@ -60248,11 +60256,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    props: {
 	      config: {
 	        type: Object,
-	        default: {}
+	        "default": {}
 	      },
 	      color: {
 	        type: String,
-	        default: 'transparent'
+	        "default": 'transparent'
 	      }
 	    },
 	    methods: {
@@ -60296,11 +60304,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    props: {
 	      config: {
 	        type: Object,
-	        default: {}
+	        "default": {}
 	      },
 	      color: {
 	        type: String,
-	        default: 'transparent'
+	        "default": 'transparent'
 	      }
 	    },
 	    methods: {
@@ -60325,7 +60333,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }
 	};
 
-	function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
@@ -60339,11 +60347,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  props: {
 	    config: {
 	      type: Object,
-	      default: {}
+	      "default": {}
 	    },
 	    baseColor: {
 	      type: String,
-	      default: '#17a3ea'
+	      "default": '#17a3ea'
 	    }
 	  },
 	  methods: {
@@ -60416,18 +60424,18 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  props: {
 	    buttons: {
 	      type: Array,
-	      default: function _default() {
+	      "default": function _default() {
 	        return [];
 	      }
 	    },
 	    messageId: {
-	      default: 0
+	      "default": 0
 	    },
 	    userId: {
-	      default: 0
+	      "default": 0
 	    },
 	    dialogId: {
-	      default: 0
+	      "default": 0
 	    }
 	  },
 	  data: function data() {
@@ -60579,13 +60587,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	   */
 	  props: {
 	    messageCounter: {
-	      default: 0
+	      "default": 0
 	    },
 	    messageLastDate: {
-	      default: 0
+	      "default": 0
 	    },
 	    languageId: {
-	      default: 'en'
+	      "default": 'en'
 	    }
 	  },
 	  computed: {
@@ -60634,13 +60642,13 @@ this.BX.Messenger = this.BX.Messenger || {};
 	   */
 	  props: {
 	    values: {
-	      default: {}
+	      "default": {}
 	    },
 	    userId: {
-	      default: 0
+	      "default": 0
 	    },
 	    openList: {
-	      default: true
+	      "default": true
 	    }
 	  },
 	  data: function data() {
@@ -60764,15 +60772,19 @@ this.BX.Messenger = this.BX.Messenger || {};
 (function (exports,im_view_element_media,im_view_element_attach,im_view_element_keyboard,im_view_element_chatteaser,ui_vue_components_reaction,ui_vue,ui_vue_vuex,im_model,im_const,im_lib_utils,main_core) {
 	'use strict';
 
-	function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
 	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var BX = window.BX;
 
 	var _ContentType = Object.freeze({
-	  default: 'default',
+	  "default": 'default',
 	  progress: 'progress',
 	  image: 'image',
 	  audio: 'audio',
@@ -60791,35 +60803,35 @@ this.BX.Messenger = this.BX.Messenger || {};
 	   */
 	  props: {
 	    userId: {
-	      default: 0
+	      "default": 0
 	    },
 	    dialogId: {
-	      default: '0'
+	      "default": '0'
 	    },
 	    chatId: {
-	      default: 0
+	      "default": 0
 	    },
 	    messageType: {
-	      default: im_const.MessageType.self
+	      "default": im_const.MessageType.self
 	    },
 	    message: {
 	      type: Object,
-	      default: im_model.MessagesModel.create().getElementState
+	      "default": im_model.MessagesModel.create().getElementState
 	    },
 	    enableReactions: {
-	      default: true
+	      "default": true
 	    },
 	    showName: {
-	      default: true
+	      "default": true
 	    },
 	    showAvatar: {
-	      default: true
+	      "default": true
 	    },
 	    referenceContentBodyClassName: {
-	      default: ''
+	      "default": ''
 	    },
 	    referenceContentNameClassName: {
-	      default: ''
+	      "default": ''
 	    }
 	  },
 	  created: function created() {
@@ -60840,7 +60852,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      });
 	    },
 	    clickByKeyboardButton: function clickByKeyboardButton(event) {
-	      this.$emit('clickByKeyboardButton', babelHelpers.objectSpread({
+	      this.$emit('clickByKeyboardButton', _objectSpread({
 	        message: event.message
 	      }, event.event));
 	    },
@@ -60886,7 +60898,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      return im_lib_utils.Utils.platform.isBitrixMobile();
 	    }
 	  },
-	  computed: babelHelpers.objectSpread({
+	  computed: _objectSpread({
 	    MessageType: function MessageType() {
 	      return im_const.MessageType;
 	    },
@@ -60958,7 +60970,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        }
 	      }
 
-	      return _ContentType.default;
+	      return _ContentType["default"];
 	    },
 	    formattedDate: function formattedDate() {
 	      return this.formatDate(this.message.date);
@@ -61010,7 +61022,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      return this.message.params.IS_DELETED === 'Y';
 	    },
 	    chatColor: function chatColor() {
-	      return this.dialog.type !== im_const.DialogType.private ? this.dialog.color : this.user.color;
+	      return this.dialog.type !== im_const.DialogType["private"] ? this.dialog.color : this.user.color;
 	    },
 	    dialog: function dialog() {
 	      var dialog = this.$store.getters['dialogues/get'](this.dialogId);
@@ -61225,59 +61237,59 @@ this.BX.Messenger = this.BX.Messenger || {};
 	   */
 	  props: {
 	    userId: {
-	      default: 0
+	      "default": 0
 	    },
 	    dialogId: {
-	      default: 0
+	      "default": 0
 	    },
 	    chatId: {
-	      default: 0
+	      "default": 0
 	    },
 	    enableReactions: {
-	      default: true
+	      "default": true
 	    },
 	    enableDateActions: {
-	      default: true
+	      "default": true
 	    },
 	    enableCreateContent: {
-	      default: true
+	      "default": true
 	    },
 	    enableGestureQuote: {
-	      default: true
+	      "default": true
 	    },
 	    enableGestureQuoteFromRight: {
-	      default: true
+	      "default": true
 	    },
 	    enableGestureMenu: {
-	      default: false
+	      "default": false
 	    },
 	    showAvatar: {
-	      default: true
+	      "default": true
 	    },
 	    showMenu: {
-	      default: true
+	      "default": true
 	    },
 	    showName: {
-	      default: true
+	      "default": true
 	    },
 	    showLargeFont: {
-	      default: true
+	      "default": true
 	    },
 	    capturedMoveEvent: {
-	      default: null
+	      "default": null
 	    },
 	    referenceContentClassName: {
-	      default: ''
+	      "default": ''
 	    },
 	    referenceContentBodyClassName: {
-	      default: ''
+	      "default": ''
 	    },
 	    referenceContentNameClassName: {
-	      default: ''
+	      "default": ''
 	    },
 	    message: {
 	      type: Object,
-	      default: im_model.MessagesModel.create().getElementState
+	      "default": im_model.MessagesModel.create().getElementState
 	    }
 	  },
 	  data: function data() {
@@ -61904,7 +61916,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            _this.createFileFromUploadedChunks();
 	          }
 	        }
-	      }).catch(function (err) {
+	      })["catch"](function (err) {
 	        _this.status = Uploader.STATUSES.FAILED;
 
 	        _this.listener('onUploadFileError', {
@@ -61946,7 +61958,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        return response.json();
 	      }).then(function (result) {
 	        return console.log(result);
-	      }).catch(function (err) {
+	      })["catch"](function (err) {
 	        return console.error(err);
 	      });
 	    }
@@ -62015,7 +62027,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            result: result
 	          });
 	        }
-	      }).catch(function (err) {
+	      })["catch"](function (err) {
 	        _this2.status = Uploader.STATUSES.FAILED;
 
 	        _this2.listener('onCreateFileError', {
@@ -62131,7 +62143,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              return _this3.getImageDimensions(blob);
 	            }).then(function (result) {
 	              return resolve(result);
-	            }).catch(function (reason) {
+	            })["catch"](function (reason) {
 	              return reject(reason);
 	            });
 	          } else if (file.type.startsWith('image')) {
@@ -62374,7 +62386,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        }
 
 	        _this9.emit('onSelectFile', data);
-	      }).catch(function (err) {
+	      })["catch"](function (err) {
 	        console.warn("Couldn't get preview for file ".concat(file.name, ". Error: ").concat(err));
 
 	        _this9.emit('onSelectFile', data);
@@ -62464,6 +62476,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 (function (exports,ui_vue_vuex,ui_vue,im_lib_timer,im_lib_clipboard,im_lib_utils,main_core_events,im_const,im_lib_uploader,im_lib_logger) {
 	'use strict';
 
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	/**
 	 * @notice you need to provide this.userId and this.dialogId
 	 */
@@ -62526,7 +62541,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    openDialog: function openDialog() {//TODO
 	    }
 	  },
-	  computed: babelHelpers.objectSpread({
+	  computed: _objectSpread(_objectSpread({
 	    dialog: function dialog() {
 	      var dialog = this.$store.getters['dialogues/get'](this.application.dialog.dialogId);
 	      return dialog ? dialog : this.$store.getters['dialogues/getBlank']();
@@ -62570,14 +62585,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    application: function application(state) {
 	      return state.application;
 	    }
-	  }), {
+	  })), {}, {
 	    localize: function localize() {
 	      return ui_vue.WidgetBitrixVue.getFilteredPhrases(['IM_DIALOG_', 'IM_UTILS_', 'IM_MESSENGER_DIALOG_', 'IM_QUOTE_'], this);
 	    }
 	  })
 	};
 
-	function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
@@ -62600,7 +62615,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var event = _ref.data;
 	      this.readMessage(event.id).then(function () {
 	        return im_lib_logger.Logger.log('Read message complete');
-	      }).catch(function () {
+	      })["catch"](function () {
 	        return im_lib_logger.Logger.error('Read message failed');
 	      });
 	    },
@@ -62626,7 +62641,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        _this.timer.start('readMessage', _this.chatId, .1, function () {
 	          _this.readMessageRequest(skipAjax).then(function (result) {
 	            return resolve(result);
-	          }).catch(reject);
+	          })["catch"](reject);
 	        });
 	      });
 	    },
@@ -62690,9 +62705,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              return resolve({
 	                lastId: lastId
 	              });
-	            }).catch(reject);
+	            })["catch"](reject);
 	          });
-	        }).catch(reject);
+	        })["catch"](reject);
 	      });
 	    }
 	  }
@@ -63000,7 +63015,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var event = _ref.data;
 	      this.joinParentChat(event.message.id, 'chat' + event.message.params.CHAT_ID).then(function (dialogId) {
 	        _this.openDialog(dialogId);
-	      }).catch(function () {});
+	      })["catch"](function () {});
 	      return true;
 	    },
 	    joinParentChat: function joinParentChat(messageId, dialogId) {
@@ -63026,7 +63041,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          _this2.tempJoinChat['wait'] = false;
 	          _this2.tempJoinChat[dialogId] = true;
 	          return resolve(dialogId);
-	        }).catch(function () {
+	        })["catch"](function () {
 	          _this2.tempJoinChat['wait'] = false;
 	          return reject();
 	        });
@@ -63197,7 +63212,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (!this.diskFolderId) {
 	        this.requestDiskFolderId().then(function () {
 	          _this2.processMessagesToSendQueue();
-	        }).catch(function (error) {
+	        })["catch"](function (error) {
 	          im_lib_logger.Logger.warn('processMessagesToSendQueue error', error);
 	          return false;
 	        });
@@ -63258,7 +63273,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            chatId: element.chatId
 	          });
 	        });
-	      }).catch(function (error) {
+	      })["catch"](function (error) {
 	        im_lib_logger.Logger.warn('Error during adding message');
 	      });
 	      return true;
@@ -63282,7 +63297,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      this.timer.start('writesSend', dialogId, 5, function () {
 	        _this4.getRestClient().callMethod(im_const.RestMethod.imDialogWriting, {
 	          'DIALOG_ID': dialogId
-	        }).catch(function () {
+	        })["catch"](function () {
 	          _this4.timer.stop('writes', dialogId);
 	        });
 	      });
@@ -63314,7 +63329,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          _this5.executeRestAnswer(im_const.RestMethodHandler.imDiskFolderGet, response);
 
 	          resolve();
-	        }).catch(function (error) {
+	        })["catch"](function (error) {
 	          _this5.flagRequestDiskFolderIdSended = false;
 
 	          _this5.executeRestAnswer(im_const.RestMethodHandler.imDiskFolderGet, error);
@@ -63536,7 +63551,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        file_template_id: params.fileId
 	      }, null, null).then(function (response) {
 	        _this2.executeRestAnswer(im_const.RestMethodHandler.imDiskFileCommit, response, message);
-	      }).catch(function (error) {
+	      })["catch"](function (error) {
 	        _this2.executeRestAnswer(im_const.RestMethodHandler.imDiskFileCommit, error, message);
 	      });
 	      return true;
@@ -63674,6 +63689,9 @@ this.BX = this.BX || {};
 	  template: "\n\t\t<div :class=\"itemClasses\" :key=\"element.templateId\">\n\t\t\t<div v-if=\"mode === 'opponent'\" class=\"im-skeleton-logo\"></div>\n\t\t\t<div class=\"im-skeleton-content\">\n\t\t\t\t<div class=\"im-skeleton-line-row\">\n\t\t\t\t\t<div style=\"max-width: 35%\" class=\"im-skeleton-line\"></div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"im-skeleton-line-row\">\n\t\t\t\t\t<div style=\"max-width: 100%\" class=\"im-skeleton-line\"></div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"im-skeleton-line-row\">\n\t\t\t\t\t<div style=\"max-width: 55%\" class=\"im-skeleton-line\"></div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"im-skeleton-line-row\">\n\t\t\t\t\t<div style=\"max-width: 26px; margin-left: auto;\" class=\"im-skeleton-line\"></div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"im-skeleton-like\"></div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var MessageList = {
 	  /**
 	   * @emits EventType.dialog.readMessage
@@ -63694,55 +63712,55 @@ this.BX = this.BX || {};
 	  props: {
 	    userId: {
 	      type: Number,
-	      default: 0
+	      "default": 0
 	    },
 	    dialogId: {
 	      type: String,
-	      default: "0"
+	      "default": "0"
 	    },
 	    messageLimit: {
 	      type: Number,
-	      default: 50
+	      "default": 50
 	    },
 	    enableReadMessages: {
 	      type: Boolean,
-	      default: true
+	      "default": true
 	    },
 	    enableReactions: {
 	      type: Boolean,
-	      default: true
+	      "default": true
 	    },
 	    enableDateActions: {
 	      type: Boolean,
-	      default: true
+	      "default": true
 	    },
 	    enableCreateContent: {
 	      type: Boolean,
-	      default: true
+	      "default": true
 	    },
 	    enableGestureQuote: {
 	      type: Boolean,
-	      default: true
+	      "default": true
 	    },
 	    enableGestureQuoteFromRight: {
 	      type: Boolean,
-	      default: true
+	      "default": true
 	    },
 	    enableGestureMenu: {
 	      type: Boolean,
-	      default: false
+	      "default": false
 	    },
 	    showMessageUserName: {
 	      type: Boolean,
-	      default: true
+	      "default": true
 	    },
 	    showMessageAvatar: {
 	      type: Boolean,
-	      default: true
+	      "default": true
 	    },
 	    showMessageMenu: {
 	      type: Boolean,
-	      default: true
+	      "default": true
 	    }
 	  },
 	  components: {
@@ -63796,7 +63814,7 @@ this.BX = this.BX || {};
 	      });
 	    }
 	  },
-	  computed: babelHelpers.objectSpread({
+	  computed: _objectSpread({
 	    TemplateType: function TemplateType() {
 	      return im_const.DialogTemplateType;
 	    },
@@ -63892,7 +63910,7 @@ this.BX = this.BX || {};
 
 	      var text = '';
 
-	      if (this.dialog.type === im_const.DialogType.private) {
+	      if (this.dialog.type === im_const.DialogType["private"]) {
 	        var record = this.dialog.readedList[0];
 
 	        if (record.messageId === this.lastMessageId && record.userId !== this.lastMessageAuthorId) {
@@ -64566,14 +64584,14 @@ this.BX = this.BX || {};
 	        this.forceScrollToPosition(body.scrollHeight - body.clientHeight);
 	      } //with animation
 	      else {
-	          var scrollParams = {};
+	        var scrollParams = {};
 
-	          if (duration) {
-	            scrollParams.duration = duration;
-	          }
-
-	          this.animatedScrollToPosition(babelHelpers.objectSpread({}, scrollParams));
+	        if (duration) {
+	          scrollParams.duration = duration;
 	        }
+
+	        this.animatedScrollToPosition(_objectSpread({}, scrollParams));
+	      }
 	    },
 	    scrollToFirstUnreadMessage: function scrollToFirstUnreadMessage() {
 	      var unreadId = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
@@ -64613,8 +64631,8 @@ this.BX = this.BX || {};
 	          end = 10;
 	        } //if no element and stickToTop = false - scroll to bottom
 	        else {
-	            end = body.scrollHeight - body.clientHeight;
-	          }
+	          end = body.scrollHeight - body.clientHeight;
+	        }
 	      } else if (stickToTop) {
 	        //message will be at the top of screen (+little offset)
 	        end = element.offsetTop - this.messageScrollOffset / 2;
@@ -64816,7 +64834,7 @@ this.BX = this.BX || {};
 	        _this12.pagesLoaded += 1;
 	        im_lib_logger.Logger.warn('History page loaded. Total loaded - ', _this12.pagesLoaded);
 	        return _this12.onAfterHistoryRequest();
-	      }).catch(function (result) {
+	      })["catch"](function (result) {
 	        im_lib_logger.Logger.warn('Request history error', result);
 	      });
 	    },
@@ -64929,7 +64947,7 @@ this.BX = this.BX || {};
 	        _this15.pagesLoaded += 1;
 	        im_lib_logger.Logger.warn('Unread page loaded. Total loaded - ', _this15.pagesLoaded);
 	        return _this15.onAfterUnreadRequest();
-	      }).catch(function (result) {
+	      })["catch"](function (result) {
 	        im_lib_logger.Logger.warn('Unread history error', result);
 	      });
 	    },
@@ -65057,7 +65075,7 @@ this.BX = this.BX || {};
 
 	        _this18.stopHistoryLoading = false;
 	        _this18.isScrolling = false;
-	      }).catch(function (result) {
+	      })["catch"](function (result) {
 	        im_lib_logger.Logger.warn('Unread history error', result);
 	      });
 	    },
@@ -65297,8 +65315,11 @@ this.BX = this.BX || {};
 	  template: "\n\t<div class=\"bx-im-dialog\" @click=\"onDialogClick\" @touchmove=\"onDialogMove\" ref=\"container\">\n\t\t<div :class=\"bodyClasses\" @scroll.passive=\"onScroll\" ref=\"body\">\n\t\t\t<!-- Main elements loop -->\n\t\t\t<template v-for=\"(element, index) in formattedCollection\">\n\t\t\t\t<!-- Message -->\n\t\t\t\t<template v-if=\"element.templateType === TemplateType.message\">\n\t\t\t\t\t<div\n\t\t\t\t\t\t:class=\"getElementClass(element.id)\"\n\t\t\t\t\t\t:data-message-id=\"element.id\"\n\t\t\t\t\t\t:data-template-id=\"element.templateId\"\n\t\t\t\t\t\t:data-type=\"element.templateType\" \n\t\t\t\t\t\t:key=\"element.templateId\"\n\t\t\t\t\t\tv-bx-im-directive-dialog-observer=\"element.unread? ObserverType.read: ObserverType.none\"\n\t\t\t\t\t>\t\t\t\t\n<!--\t\t\t\t\t  <div style=\"width: 200px; height: 50px; margin-top: 5px; background: #000; color: #fff;\">{{ element.textConverted }}</div>-->\n\t\t\t\t\t\t<component :is=\"element.params.COMPONENT_ID\"\n\t\t\t\t\t\t\t:userId=\"userId\" \n\t\t\t\t\t\t\t:dialogId=\"dialogId\"\n\t\t\t\t\t\t\t:chatId=\"chatId\"\n\t\t\t\t\t\t\t:message=\"element\"\n\t\t\t\t\t\t\t:enableReactions=\"enableReactions\"\n\t\t\t\t\t\t\t:enableDateActions=\"enableDateActions\"\n\t\t\t\t\t\t\t:enableCreateContent=\"showMessageMenu\"\n\t\t\t\t\t\t\t:enableGestureQuote=\"enableGestureQuote\"\n\t\t\t\t\t\t\t:enableGestureQuoteFromRight=\"enableGestureQuoteFromRight\"\n\t\t\t\t\t\t\t:enableGestureMenu=\"enableGestureMenu\"\n\t\t\t\t\t\t\t:showName=\"showMessageUserName\"\n\t\t\t\t\t\t\t:showAvatar=\"showMessageAvatar\"\n\t\t\t\t\t\t\t:showMenu=\"showMessageMenu\"\n\t\t\t\t\t\t\t:capturedMoveEvent=\"capturedMoveEvent\"\n\t\t\t\t\t\t\t:referenceContentClassName=\"DialogReferenceClassName.listItem\"\n\t\t\t\t\t\t\t:referenceContentBodyClassName=\"DialogReferenceClassName.listItemBody\"\n\t\t\t\t\t\t\t:referenceContentNameClassName=\"DialogReferenceClassName.listItemName\"\n\t\t\t\t\t\t\t@clickByUserName=\"onClickOnUserName\"\n\t\t\t\t\t\t\t@clickByUploadCancel=\"onClickOnUploadCancel\"\n\t\t\t\t\t\t\t@clickByKeyboardButton=\"onClickOnKeyboardButton\"\n\t\t\t\t\t\t\t@clickByChatTeaser=\"onClickOnChatTeaser\"\n\t\t\t\t\t\t\t@clickByMessageMenu=\"onClickOnMessageMenu\"\n\t\t\t\t\t\t\t@clickByMessageRetry=\"onClickOnMessageRetry\"\n\t\t\t\t\t\t\t@setMessageReaction=\"onMessageReactionSet\"\n\t\t\t\t\t\t\t@openMessageReactionList=\"onMessageReactionListOpen\"\n\t\t\t\t\t\t\t@dragMessage=\"onDragMessage\"\n\t\t\t\t\t\t\t@quoteMessage=\"onQuoteMessage\"\n\t\t\t\t\t\t/>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<!-- Date groups -->\n\t\t\t\t<template v-else-if=\"element.templateType === TemplateType.group\">\n\t\t\t\t\t<div class=\"bx-im-dialog-group\" :data-template-id=\"element.templateId\" :data-type=\"element.templateType\" :key=\"element.templateId\">\n\t\t\t\t\t\t<div class=\"bx-im-dialog-group-date\">{{ element.text }}</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<!-- Delimiters -->\n\t\t\t\t<template v-else-if=\"element.templateType === TemplateType.delimiter\">\n\t\t\t\t\t<div class=\"bx-im-dialog-delimiter\" :data-template-id=\"element.templateId\" :data-type=\"element.templateType\" :key=\"element.templateId\"></div>\n\t\t\t\t</template>\n\t\t\t\t<!-- Placeholders -->\n\t\t\t\t<template v-else-if=\"element.templateType === TemplateType.placeholder\">\n\t\t\t\t\t<component :is=\"'Placeholder'+element.placeholderType\" :element=\"element\"/>\n\t\t\t\t</template>\n\t\t\t</template>\n\t\t\t<!-- Writing and readed statuses -->\n\t\t\t<transition name=\"bx-im-dialog-status\">\n\t\t\t\t<template v-if=\"writingStatusText\">\n\t\t\t\t\t<div class=\"bx-im-dialog-status\">\n\t\t\t\t\t\t<span class=\"bx-im-dialog-status-writing\"></span>\n\t\t\t\t\t\t{{ writingStatusText }}\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<template v-else-if=\"statusReaded\">\n\t\t\t\t\t<div class=\"bx-im-dialog-status\" @click=\"onClickOnReadList\">\n\t\t\t\t\t\t{{ statusReaded }}\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</transition>\n\t\t\t<div v-if=\"showStatusPlaceholder\" class=\"bx-im-dialog-status-placeholder\"></div>\n\t\t</div>\n\t\t<!-- Scroll button -->\n\t\t<transition name=\"bx-im-dialog-scroll-button\">\n\t\t\t<div v-show=\"showScrollButton || (unreadCounter > 0 && !isLastIdInCollection)\" class=\"bx-im-dialog-scroll-button-box\" @click=\"onScrollButtonClick\">\n\t\t\t\t<div class=\"bx-im-dialog-scroll-button\">\n\t\t\t\t\t<div v-show=\"unreadCounter\" class=\"bx-im-dialog-scroll-button-counter\">\n\t\t\t\t\t\t<div class=\"bx-im-dialog-scroll-button-counter-digit\">{{ formattedUnreadCounter }}</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"bx-im-dialog-scroll-button-arrow\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\n\t</div>\n"
 	};
 
+	function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var ErrorState = {
-	  computed: babelHelpers.objectSpread({}, ui_vue_vuex.WidgetVuex.mapState({
+	  computed: _objectSpread$1({}, ui_vue_vuex.WidgetVuex.mapState({
 	    application: function application(state) {
 	      return state.application;
 	    }
@@ -65363,7 +65384,7 @@ this.BX = this.BX || {};
 	  props: {
 	    quotePanelData: {
 	      type: Object,
-	      default: function _default() {
+	      "default": function _default() {
 	        return {
 	          id: 0,
 	          title: '',
@@ -65373,7 +65394,7 @@ this.BX = this.BX || {};
 	      }
 	    },
 	    canClose: {
-	      default: true
+	      "default": true
 	    }
 	  },
 	  methods: {
@@ -65411,34 +65432,34 @@ this.BX = this.BX || {};
 	  },
 	  props: {
 	    userId: {
-	      default: 0
+	      "default": 0
 	    },
 	    dialogId: {
-	      default: 0
+	      "default": 0
 	    },
 	    skipDataRequest: {
-	      default: false
+	      "default": false
 	    },
 	    showLoadingState: {
-	      default: true
+	      "default": true
 	    },
 	    showEmptyState: {
-	      default: true
+	      "default": true
 	    },
 	    enableGestureQuote: {
-	      default: true
+	      "default": true
 	    },
 	    enableGestureQuoteFromRight: {
-	      default: true
+	      "default": true
 	    },
 	    enableGestureMenu: {
-	      default: false
+	      "default": false
 	    },
 	    showMessageUserName: {
-	      default: true
+	      "default": true
 	    },
 	    showMessageAvatar: {
-	      default: true
+	      "default": true
 	    }
 	  },
 	  data: function data() {
@@ -65845,14 +65866,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 (function (exports,ui_vue,im_lib_localstorage,im_lib_utils,main_core,ui_vue_vuex,main_core_events,im_const) {
 	'use strict';
 
-	/**
-	 * Bitrix Messenger
-	 * Textarea Vue component
-	 *
-	 * @package bitrix
-	 * @subpackage im
-	 * @copyright 2001-2019 Bitrix
-	 */
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.WidgetBitrixVue.component('bx-im-component-textarea', {
 	  /**
 	   * @emits 'send' {text: string}
@@ -65867,41 +65883,41 @@ this.BX.Messenger = this.BX.Messenger || {};
 	   */
 	  props: {
 	    siteId: {
-	      default: 'default'
+	      "default": 'default'
 	    },
 	    userId: {
-	      default: 0
+	      "default": 0
 	    },
 	    dialogId: {
-	      default: 0
+	      "default": 0
 	    },
 	    enableCommand: {
-	      default: true
+	      "default": true
 	    },
 	    enableMention: {
-	      default: true
+	      "default": true
 	    },
 	    desktopMode: {
-	      default: false
+	      "default": false
 	    },
 	    enableEdit: {
-	      default: false
+	      "default": false
 	    },
 	    enableFile: {
-	      default: false
+	      "default": false
 	    },
 	    sendByEnter: {
-	      default: true
+	      "default": true
 	    },
 	    autoFocus: {
-	      default: null
+	      "default": null
 	    },
 	    writesEventLetter: {
-	      default: 0
+	      "default": 0
 	    },
 	    styles: {
 	      type: Object,
-	      default: function _default() {
+	      "default": function _default() {
 	        return {};
 	      }
 	    }
@@ -65938,7 +65954,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    this.localStorage.set(this.siteId, this.userId, 'textarea-history', this.textareaHistory);
 	    this.localStorage = null;
 	  },
-	  computed: babelHelpers.objectSpread({
+	  computed: _objectSpread({
 	    textareaClassName: function textareaClassName() {
 	      return ['bx-im-textarea', {
 	        'bx-im-textarea-dark-background': this.isDarkBackground,
@@ -66385,7 +66401,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  guest: 'guest'
 	});
 	var SessionStatus = Object.freeze({
-	  new: 0,
+	  "new": 0,
 	  skip: 5,
 	  answer: 10,
 	  client: 20,
@@ -66401,14 +66417,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  requestShowForm: 'IMOL.Widget:requestShowForm'
 	});
 
-	/**
-	 * Bitrix Messenger
-	 * Message Vue component
-	 *
-	 * @package bitrix
-	 * @subpackage im
-	 * @copyright 2001-2019 Bitrix
-	 */
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var FormType$1 = Object.freeze({
 	  none: 'none',
 	  like: 'like',
@@ -66441,7 +66452,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  created: function created() {
 	    this.checkMessageParamsForForm();
 	  },
-	  computed: babelHelpers.objectSpread({
+	  computed: _objectSpread({
 	    dialogNumber: function dialogNumber() {
 	      if (!this.message.params) {
 	        return false;
@@ -66482,14 +66493,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 (function (exports,ui_vue,ui_vue_vuex) {
     'use strict';
 
-    /**
-     * Bitrix Messenger
-     * Form Vue component
-     *
-     * @package bitrix
-     * @subpackage im
-     * @copyright 2001-2019 Bitrix
-     */
+    function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+    function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
     var EVENT_POSTFIX = 'Openlines';
     var LIVECHAT_PREFIX = 'livechat';
     ui_vue.WidgetBitrixVue.component('bx-imopenlines-form', {
@@ -66510,7 +66516,7 @@ this.BX.Messenger = this.BX.Messenger || {};
           this.formSuccess = true;
         }
       },
-      computed: babelHelpers.objectSpread({
+      computed: _objectSpread({
         chatId: function chatId() {
           return this.application.dialog.chatId;
         },
@@ -66580,7 +66586,7 @@ this.BX.Messenger = this.BX.Messenger || {};
           return new Promise(function (resolve, reject) {
             _this.$Bitrix.RestClient.get().callMethod('imopenlines.widget.crm.bindings.get', {
               'OPENLINES_CODE': _this.buildOpenlinesCode()
-            }).then(resolve).catch(reject);
+            }).then(resolve)["catch"](reject);
           });
         },
         onBeforeFormSubmit: function onBeforeFormSubmit(eventData) {
@@ -66608,23 +66614,23 @@ this.BX.Messenger = this.BX.Messenger || {};
                 _this2.getApplication().requestData();
               } // we have user and chat so we can just resolve form promise instantly
               else {
-                  // request current crm bindings and attach them to form
-                  if (_this2.widget.common.crmFormsSettings.welcomeFormDelay) {
-                    _this2.getCrmBindings().then(function (result) {
-                      _this2.signedEntities = result.data();
+                // request current crm bindings and attach them to form
+                if (_this2.widget.common.crmFormsSettings.welcomeFormDelay) {
+                  _this2.getCrmBindings().then(function (result) {
+                    _this2.signedEntities = result.data();
 
-                      _this2.setFormProperties();
-
-                      return resolve();
-                    }).catch(function (error) {
-                      console.error('Error getting CRM bindings', error);
-                    });
-                  } else {
                     _this2.setFormProperties();
 
                     return resolve();
-                  }
+                  })["catch"](function (error) {
+                    console.error('Error getting CRM bindings', error);
+                  });
+                } else {
+                  _this2.setFormProperties();
+
+                  return resolve();
                 }
+              }
             });
           });
         },
@@ -66719,11 +66725,11 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	    var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	    babelHelpers.classCallCheck(this, BaseRestHandler);
 
-	    if (babelHelpers.typeof(params.controller) === 'object' && params.controller) {
+	    if (babelHelpers["typeof"](params.controller) === 'object' && params.controller) {
 	      this.controller = params.controller;
 	    }
 
-	    if (babelHelpers.typeof(params.store) === 'object' && params.store) {
+	    if (babelHelpers["typeof"](params.store) === 'object' && params.store) {
 	      this.store = params.store;
 	    }
 	  }
@@ -66752,14 +66758,9 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	  return BaseRestHandler;
 	}();
 
-	/**
-	 * Bitrix Messenger
-	 * Im rest answers (Rest Answer Handler)
-	 *
-	 * @package bitrix
-	 * @subpackage im
-	 * @copyright 2001-2019 Bitrix
-	 */
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 
 	var CoreRestHandler = /*#__PURE__*/function (_BaseRestHandler) {
 	  babelHelpers.inherits(CoreRestHandler, _BaseRestHandler);
@@ -66914,7 +66915,7 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	          }));
 	        }
 
-	        recent.push(babelHelpers.objectSpread({}, item, {
+	        recent.push(_objectSpread(_objectSpread({}, item), {}, {
 	          avatar: item.avatar.url,
 	          color: item.avatar.color,
 	          userId: userId,
@@ -67386,6 +67387,9 @@ this.BX.Ui.Vue.Components = this.BX.Ui.Vue.Components || {};
 (function (exports,ui_vue) {
     'use strict';
 
+    function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+    function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
     var loadAppPromise = null;
     ui_vue.WidgetVue.component('bx-crm-form', {
       props: {
@@ -67400,19 +67404,19 @@ this.BX.Ui.Vue.Components = this.BX.Ui.Vue.Components || {};
         lang: {
           type: String,
           required: true,
-          default: 'en'
+          "default": 'en'
         },
         address: {
           type: String,
           required: true,
-          default: function _default() {
+          "default": function _default() {
             return window.location.origin;
           }
         },
         design: {
           type: Object,
           required: false,
-          default: function _default() {
+          "default": function _default() {
             return {
               compact: true
             };
@@ -67438,7 +67442,7 @@ this.BX.Ui.Vue.Components = this.BX.Ui.Vue.Components || {};
           _this.isLoading = false;
           _this.message = '';
           _this.obj.config.data.node = _this.$el;
-          _this.obj.config.data.design = babelHelpers.objectSpread({}, _this.obj.config.data.design, _this.design);
+          _this.obj.config.data.design = _objectSpread(_objectSpread({}, _this.obj.config.data.design), _this.design);
           _this.obj.instance = window.b24form.App.createForm24(_this.obj.config, _this.obj.config.data);
 
           _this.obj.instance.subscribeAll(function (data, instance, type) {
@@ -67498,10 +67502,10 @@ this.BX.Ui.Vue.Components = this.BX.Ui.Vue.Components || {};
             });
           }
 
-          loadAppPromise.then(loadForm).catch(function (e) {
+          loadAppPromise.then(loadForm)["catch"](function (e) {
             _this.message = 'App load failed:' + e;
           });
-        }).catch(function (error) {
+        })["catch"](function (error) {
           _this.isLoading = false;
           _this.message = error;
         });
@@ -67522,14 +67526,9 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 (function (exports,ui_vue_vuex,im_const,im_lib_logger,main_core_events,pull_client) {
 	'use strict';
 
-	/**
-	 * Bitrix Messenger
-	 * Im base pull commands (Pull Command Handler)
-	 *
-	 * @package bitrix
-	 * @subpackage im
-	 * @copyright 2001-2020 Bitrix
-	 */
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var ImBasePullHandler = /*#__PURE__*/function () {
 	  babelHelpers.createClass(ImBasePullHandler, null, [{
 	    key: "create",
@@ -67543,17 +67542,17 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	    var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	    babelHelpers.classCallCheck(this, ImBasePullHandler);
 
-	    if (babelHelpers.typeof(params.controller) === 'object' && params.controller) {
+	    if (babelHelpers["typeof"](params.controller) === 'object' && params.controller) {
 	      this.controller = params.controller;
 	    }
 
-	    if (babelHelpers.typeof(params.store) === 'object' && params.store) {
+	    if (babelHelpers["typeof"](params.store) === 'object' && params.store) {
 	      this.store = params.store;
 	    }
 
-	    this.option = babelHelpers.typeof(params.store) === 'object' && params.store ? params.store : {};
+	    this.option = babelHelpers["typeof"](params.store) === 'object' && params.store ? params.store : {};
 
-	    if (!(babelHelpers.typeof(this.option.handlingDialog) === 'object' && this.option.handlingDialog && this.option.handlingDialog.chatId && this.option.handlingDialog.dialogId)) {
+	    if (!(babelHelpers["typeof"](this.option.handlingDialog) === 'object' && this.option.handlingDialog && this.option.handlingDialog.chatId && this.option.handlingDialog.dialogId)) {
 	      this.option.handlingDialog = false;
 	    }
 	  }
@@ -67648,11 +67647,11 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	          this.store.dispatch('dialogues/set', chatToAdd);
 	        } //otherwise - update it
 	        else {
-	            this.store.dispatch('dialogues/update', {
-	              dialogId: params.dialogId,
-	              fields: params.chat[params.chatId]
-	            });
-	          }
+	          this.store.dispatch('dialogues/update', {
+	            dialogId: params.dialogId,
+	            fields: params.chat[params.chatId]
+	          });
+	        }
 	      }
 
 	      var recentItem = this.store.getters['recent/get'](params.dialogId); //add recent item if there is no one
@@ -67662,24 +67661,24 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	        this.store.dispatch('recent/set', [newRecentItem]);
 	      } //otherwise - update it
 	      else {
-	          this.store.dispatch('recent/update', {
-	            id: params.dialogId,
-	            fields: {
-	              lines: params.lines || {
-	                id: 0
-	              },
-	              message: {
-	                id: params.message.id,
-	                text: params.message.textOriginal,
-	                date: params.message.date,
-	                senderId: params.message.senderId,
-	                withFile: typeof params.message.params['FILE_ID'] !== 'undefined',
-	                withAttach: typeof params.message.params['ATTACH'] !== 'undefined'
-	              },
-	              counter: params.counter
-	            }
-	          });
-	        } //set users
+	        this.store.dispatch('recent/update', {
+	          id: params.dialogId,
+	          fields: {
+	            lines: params.lines || {
+	              id: 0
+	            },
+	            message: {
+	              id: params.message.id,
+	              text: params.message.textOriginal,
+	              date: params.message.date,
+	              senderId: params.message.senderId,
+	              withFile: typeof params.message.params['FILE_ID'] !== 'undefined',
+	              withAttach: typeof params.message.params['ATTACH'] !== 'undefined'
+	            },
+	            counter: params.counter
+	          }
+	        });
+	      } //set users
 
 
 	      if (params.users) {
@@ -67713,7 +67712,7 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	        this.store.dispatch('messages/update', {
 	          id: message.id,
 	          chatId: message.chatId,
-	          fields: babelHelpers.objectSpread({}, params.message, {
+	          fields: _objectSpread(_objectSpread({}, params.message), {}, {
 	            sending: false,
 	            error: false
 	          })
@@ -67728,18 +67727,18 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      } //if we dont have message and we have all pages - add new message and send newMessage event (handles scroll stuff)
 	      //we dont do anything if we dont have message and there are unloaded messages
 	      else if (this.controller.application.isUnreadMessagesLoaded()) {
-	          im_lib_logger.Logger.warn('New message pull handler: we dont have this message', params.message);
-	          this.store.dispatch('messages/setAfter', babelHelpers.objectSpread({}, params.message, {
-	            unread: true
-	          })).then(function () {
-	            if (!params.message.push) {
-	              main_core_events.EventEmitter.emit(im_const.EventType.dialog.newMessage, {
-	                chatId: params.message.chatId,
-	                messageId: params.message.id
-	              });
-	            }
-	          });
-	        } //stop writing event
+	        im_lib_logger.Logger.warn('New message pull handler: we dont have this message', params.message);
+	        this.store.dispatch('messages/setAfter', _objectSpread(_objectSpread({}, params.message), {}, {
+	          unread: true
+	        })).then(function () {
+	          if (!params.message.push) {
+	            main_core_events.EventEmitter.emit(im_const.EventType.dialog.newMessage, {
+	              chatId: params.message.chatId,
+	              messageId: params.message.id
+	            });
+	          }
+	        });
+	      } //stop writing event
 
 
 	      this.controller.application.stopOpponentWriting({
@@ -67772,11 +67771,11 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	        }
 	      } //increase the counter if message is not ours
 	      else if (params.message.senderId !== this.controller.application.getUserId()) {
-	          this.store.dispatch('dialogues/increaseCounter', {
-	            dialogId: params.dialogId,
-	            count: 1
-	          });
-	        } //set new lastMessageId (used for pagination)
+	        this.store.dispatch('dialogues/increaseCounter', {
+	          dialogId: params.dialogId,
+	          count: 1
+	        });
+	      } //set new lastMessageId (used for pagination)
 
 
 	      this.store.dispatch('dialogues/update', {
@@ -68051,7 +68050,7 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	          id: params.dialogId,
 	          fields: {
 	            counter: params.counter,
-	            message: babelHelpers.objectSpread({}, message, {
+	            message: _objectSpread(_objectSpread({}, message), {}, {
 	              status: 'delivered'
 	            })
 	          }
@@ -68201,14 +68200,9 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	  return ImBasePullHandler;
 	}();
 
-	/**
-	 * Bitrix Messenger
-	 * Im call pull commands (Pull Command Handler)
-	 *
-	 * @package bitrix
-	 * @subpackage im
-	 * @copyright 2001-2020 Bitrix
-	 */
+	function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var ImCallPullHandler = /*#__PURE__*/function () {
 	  babelHelpers.createClass(ImCallPullHandler, null, [{
 	    key: "create",
@@ -68222,19 +68216,19 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	    var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	    babelHelpers.classCallCheck(this, ImCallPullHandler);
 
-	    if (babelHelpers.typeof(params.application) === 'object' && params.application) {
+	    if (babelHelpers["typeof"](params.application) === 'object' && params.application) {
 	      this.application = params.application;
 	    }
 
-	    if (babelHelpers.typeof(params.controller) === 'object' && params.controller) {
+	    if (babelHelpers["typeof"](params.controller) === 'object' && params.controller) {
 	      this.controller = params.controller;
 	    }
 
-	    if (babelHelpers.typeof(params.store) === 'object' && params.store) {
+	    if (babelHelpers["typeof"](params.store) === 'object' && params.store) {
 	      this.store = params.store;
 	    }
 
-	    this.option = babelHelpers.typeof(params.store) === 'object' && params.store ? params.store : {};
+	    this.option = babelHelpers["typeof"](params.store) === 'object' && params.store ? params.store : {};
 	  }
 
 	  babelHelpers.createClass(ImCallPullHandler, [{
@@ -68255,7 +68249,7 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      }
 
 	      var users = Object.values(params.users).map(function (user) {
-	        return babelHelpers.objectSpread({}, user, {
+	        return _objectSpread$1(_objectSpread$1({}, user), {}, {
 	          lastActivityDate: new Date()
 	        });
 	      });
@@ -68314,7 +68308,7 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	        this.store.dispatch('dialogues/update', {
 	          dialogId: params.dialogId,
 	          fields: {
-	            public: {
+	            "public": {
 	              code: params.newCode,
 	              link: params.newLink
 	            }
@@ -68363,7 +68357,7 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	  return ImCallPullHandler;
 	}();
 
-	function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
@@ -68381,19 +68375,19 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	    var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	    babelHelpers.classCallCheck(this, ImNotificationsPullHandler);
 
-	    if (babelHelpers.typeof(params.application) === 'object' && params.application) {
+	    if (babelHelpers["typeof"](params.application) === 'object' && params.application) {
 	      this.application = params.application;
 	    }
 
-	    if (babelHelpers.typeof(params.controller) === 'object' && params.controller) {
+	    if (babelHelpers["typeof"](params.controller) === 'object' && params.controller) {
 	      this.controller = params.controller;
 	    }
 
-	    if (babelHelpers.typeof(params.store) === 'object' && params.store) {
+	    if (babelHelpers["typeof"](params.store) === 'object' && params.store) {
 	      this.store = params.store;
 	    }
 
-	    this.option = babelHelpers.typeof(params.store) === 'object' && params.store ? params.store : {};
+	    this.option = babelHelpers["typeof"](params.store) === 'object' && params.store ? params.store : {};
 	  }
 
 	  babelHelpers.createClass(ImNotificationsPullHandler, [{
@@ -68923,7 +68917,7 @@ this.BX = this.BX || {};
 	      this.timer.start('writesSend', dialogId, 5, function (id) {
 	        _this3.controller.restClient.callMethod(im_const.RestMethod.imDialogWriting, {
 	          'DIALOG_ID': dialogId
-	        }).catch(function () {
+	        })["catch"](function () {
 	          _this3.timer.stop('writes', dialogId);
 	        });
 	      });
@@ -68960,7 +68954,7 @@ this.BX = this.BX || {};
 	          _this4.tempJoinChat['wait'] = false;
 	          _this4.tempJoinChat[dialogId] = true;
 	          return resolve(dialogId);
-	        }).catch(function () {
+	        })["catch"](function () {
 	          _this4.tempJoinChat['wait'] = false;
 	          return reject();
 	        });
@@ -69095,7 +69089,7 @@ this.BX = this.BX || {};
 	                  dialogId: dialogId,
 	                  lastId: lastId
 	                });
-	              }).catch(function () {
+	              })["catch"](function () {
 	                return resolve({
 	                  dialogId: dialogId,
 	                  lastId: lastId
@@ -69103,7 +69097,7 @@ this.BX = this.BX || {};
 	              });
 	            });
 	          }
-	        }).catch(function () {
+	        })["catch"](function () {
 	          resolve();
 	        });
 	      });
@@ -69158,7 +69152,7 @@ this.BX = this.BX || {};
 	            'MESSAGE_ID': _this7.messageLastReadId[chatId]
 	          });
 	        }
-	      }).catch(function () {});
+	      })["catch"](function () {});
 	    }
 	  }, {
 	    key: "shareMessage",
@@ -69200,14 +69194,9 @@ this.BX = this.BX || {};
 	  return ApplicationController;
 	}();
 
-	/**
-	 * Bitrix im
-	 * Core controller class
-	 *
-	 * @package bitrix
-	 * @subpackage mobile
-	 * @copyright 2001-2020 Bitrix
-	 */
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var Controller = /*#__PURE__*/function () {
 	  /* region 01. Initialize and store data */
 	  function Controller() {
@@ -69240,7 +69229,7 @@ this.BX = this.BX || {};
 	      return _this.initEnvironment();
 	    }).then(function () {
 	      return _this.initComplete();
-	    }).catch(function (error) {
+	    })["catch"](function (error) {
 	      im_lib_logger.Logger.error('error initializing core controller', error);
 	    });
 	  }
@@ -69259,7 +69248,7 @@ this.BX = this.BX || {};
 	        this.localize = params.localize;
 	      } else {
 	        if (typeof BX !== 'undefined') {
-	          this.localize = babelHelpers.objectSpread({}, BX.message);
+	          this.localize = _objectSpread({}, BX.message);
 	        } else {
 	          this.localize = {};
 	        }
@@ -69411,12 +69400,12 @@ this.BX = this.BX || {};
 	        host: this.getHost()
 	      })).addModel(im_model.FilesModel.create().useDatabase(this.vuexBuilder.database).setVariables({
 	        host: this.getHost(),
-	        default: {
+	        "default": {
 	          name: 'File is deleted'
 	        }
 	      })).addModel(im_model.UsersModel.create().useDatabase(this.vuexBuilder.database).setVariables({
 	        host: this.getHost(),
-	        default: {
+	        "default": {
 	          name: 'Anonymous'
 	        }
 	      })).addModel(im_model.RecentModel.create().useDatabase(false).setVariables({
@@ -69786,7 +69775,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "addLocalize",
 	    value: function addLocalize(phrases) {
-	      if (babelHelpers.typeof(phrases) !== "object" || !phrases) {
+	      if (babelHelpers["typeof"](phrases) !== "object" || !phrases) {
 	        return false;
 	      }
 
@@ -70010,7 +69999,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  guest: 'guest'
 	});
 	var SessionStatus = Object.freeze({
-	  new: 0,
+	  "new": 0,
 	  skip: 5,
 	  answer: 10,
 	  client: 20,
@@ -70539,7 +70528,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function setAuthId(authId) {
 	      var customAuthId = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
 
-	      if (babelHelpers.typeof(this.queryParams) !== 'object') {
+	      if (babelHelpers["typeof"](this.queryParams) !== 'object') {
 	        this.queryParams = {};
 	      }
 
@@ -70559,7 +70548,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "getAuthId",
 	    value: function getAuthId() {
-	      if (babelHelpers.typeof(this.queryParams) !== 'object') {
+	      if (babelHelpers["typeof"](this.queryParams) !== 'object') {
 	        this.queryParams = {};
 	      }
 
@@ -70583,7 +70572,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      this.restClient.callMethod(method, params, null, sendCallback, logTag).then(function (result) {
 	        _this.queryAuthRestore = false;
 	        promise.fulfill(result);
-	      }).catch(function (result) {
+	      })["catch"](function (result) {
 	        var error = result.error();
 
 	        if (error.ex.error == 'LIVECHAT_AUTH_WIDGET_USER') {
@@ -70603,7 +70592,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            _this.restClient.callMethod(method, params, null, sendCallback, logTag).then(function (result) {
 	              _this.queryAuthRestore = false;
 	              promise.fulfill(result);
-	            }).catch(function (result) {
+	            })["catch"](function (result) {
 	              _this.queryAuthRestore = false;
 	              promise.reject(result);
 	            });
@@ -70985,14 +70974,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  return WidgetImopenlinesPullCommandHandler;
 	}();
 
-	/**
-	 * Bitrix OpenLines widget
-	 * Widget private interface (base class)
-	 *
-	 * @package bitrix
-	 * @subpackage imopenlines
-	 * @copyright 2001-2020 Bitrix
-	 */
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 
 	var Widget = /*#__PURE__*/function () {
 	  /* region 01. Initialize and store data */
@@ -71041,8 +71025,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      this.language = this.params.language || 'en';
 	      this.copyright = this.params.copyright !== false;
 	      this.copyrightUrl = this.copyright && this.params.copyrightUrl ? this.params.copyrightUrl : '';
-	      this.buttonInstance = babelHelpers.typeof(this.params.buttonInstance) === 'object' && this.params.buttonInstance !== null ? this.params.buttonInstance : null;
-	      this.pageMode = babelHelpers.typeof(this.params.pageMode) === 'object' && this.params.pageMode;
+	      this.buttonInstance = babelHelpers["typeof"](this.params.buttonInstance) === 'object' && this.params.buttonInstance !== null ? this.params.buttonInstance : null;
+	      this.pageMode = babelHelpers["typeof"](this.params.pageMode) === 'object' && this.params.pageMode;
 
 	      if (this.pageMode) {
 	        this.pageMode.useBitrixLocalize = this.params.pageMode.useBitrixLocalize === true;
@@ -71075,7 +71059,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	      this.localize = this.pageMode && this.pageMode.useBitrixLocalize ? window.BX.message : {};
 
-	      if (babelHelpers.typeof(this.params.localize) === 'object') {
+	      if (babelHelpers["typeof"](this.params.localize) === 'object') {
 	        this.addLocalize(this.params.localize);
 	      }
 
@@ -71397,7 +71381,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	            _this4.fireInitEvent();
 	          }
-	        }).catch(function (result) {
+	        })["catch"](function (result) {
 	          _this4.configRequestXhr = null;
 
 	          _this4.setError(result.error().ex.error, result.error().ex.error_description);
@@ -71445,7 +71429,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          convert_text: 'Y'
 	        }];
 	      } else {
-	        query[RestMethod.widgetUserRegister] = [RestMethod.widgetUserRegister, babelHelpers.objectSpread({
+	        query[RestMethod.widgetUserRegister] = [RestMethod.widgetUserRegister, _objectSpread({
 	          config_id: '$result[' + RestMethod.widgetConfigGet + '][configId]'
 	        }, this.getUserRegisterFields())];
 	        query[im_const.RestMethodHandler.imChatGet] = [im_const.RestMethod.imChatGet, {
@@ -71587,7 +71571,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	        _this5.startPullClient(config).then(function () {
 	          _this5.processSendMessages();
-	        }).catch(function (error) {
+	        })["catch"](function (error) {
 	          _this5.setError(error.ex.error, error.ex.error_description);
 	        });
 
@@ -71719,9 +71703,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        this.template.$Bitrix.PullClient.set(this.pullClient);
 	      }
 
-	      this.pullClient.start(babelHelpers.objectSpread({}, config, {
+	      this.pullClient.start(_objectSpread(_objectSpread({}, config), {}, {
 	        skipReconnectToLastSession: true
-	      })).catch(function () {
+	      }))["catch"](function () {
 	        promise.reject({
 	          ex: {
 	            error: 'PULL_CONNECTION_ERROR',
@@ -71765,7 +71749,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            _this8.controller.pullBaseHandler.option.skip = false;
 
 	            _this8.processSendMessages();
-	          }).catch(function () {
+	          })["catch"](function () {
 	            _this8.controller.pullBaseHandler.option.skip = false;
 	          });
 	          this.pullRequestMessage = false;
@@ -71985,7 +71969,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      if (!this.getDiskFolderId()) {
 	        this.requestDiskFolderId().then(function () {
 	          _this11.processSendMessages();
-	        }).catch(function () {
+	        })["catch"](function () {
 	          im_lib_logger.Logger.warn('uploadFile', 'Error get disk folder id');
 	          return false;
 	        });
@@ -72046,7 +72030,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        dialog: this.getDialogData()
 	      })).then(function (response) {
 	        _this12.controller.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, response, message);
-	      }).catch(function (error) {
+	      })["catch"](function (error) {
 	        _this12.controller.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, error, message);
 	      });
 	      return true;
@@ -72115,7 +72099,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	          _this13.flagRequestDiskFolderIdSended = false;
 	          resolve();
-	        }).catch(function (error) {
+	        })["catch"](function (error) {
 	          _this13.flagRequestDiskFolderIdSended = false;
 
 	          _this13.controller.executeRestAnswer(im_const.RestMethodHandler.imDiskFolderGet, error);
@@ -72144,7 +72128,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        dialog: this.getDialogData()
 	      })).then(function (response) {
 	        _this14.controller.executeRestAnswer(im_const.RestMethodHandler.imDiskFileCommit, response, message);
-	      }).catch(function (error) {
+	      })["catch"](function (error) {
 	        _this14.controller.executeRestAnswer(im_const.RestMethodHandler.imDiskFileCommit, error, message);
 	      });
 	      return true;
@@ -72166,7 +72150,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        _this15.template.$emit(im_const.EventType.dialog.requestHistoryResult, {
 	          count: result.data().messages.length
 	        });
-	      }).catch(function (result) {
+	      })["catch"](function (result) {
 	        _this15.template.$emit(im_const.EventType.dialog.requestHistoryResult, {
 	          error: result.error().ex
 	        });
@@ -72347,7 +72331,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      this.controller.restClient.callMethod(RestMethod.widgetVoteSend, {
 	        'SESSION_ID': this.getSessionId(),
 	        'ACTION': result
-	      }).catch(function (result) {
+	      })["catch"](function (result) {
 	        _this17.controller.getStore().commit('widget/dialog', {
 	          userVote: VoteType.none
 	        });
@@ -72393,7 +72377,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        } else {
 	          console.error('Unknown error.');
 	        }
-	      }).catch(function () {
+	      })["catch"](function () {
 	        return console.error('Fetch error.');
 	      });
 	    }
@@ -72790,7 +72774,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	      if (params instanceof Array) {
 	        params.forEach(function (element) {
-	          if (element && babelHelpers.typeof(element) === 'object') {
+	          if (element && babelHelpers["typeof"](element) === 'object') {
 	            result.push(element);
 	          }
 	        });
@@ -72875,7 +72859,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }
 
 	      if (typeof params.callback !== 'function') {
-	        console.error("%cLiveChatWidget.subscribe: callback is not a function (%c".concat(babelHelpers.typeof(params.callback), "%c)"), "color: black;", "font-weight: bold; color: red", "color: black");
+	        console.error("%cLiveChatWidget.subscribe: callback is not a function (%c".concat(babelHelpers["typeof"](params.callback), "%c)"), "color: black;", "font-weight: bold; color: red", "color: black");
 	        return false;
 	      }
 
@@ -72905,7 +72889,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        return false;
 	      }
 
-	      if (babelHelpers.typeof(params.data) !== 'object' || !params.data) {
+	      if (babelHelpers["typeof"](params.data) !== 'object' || !params.data) {
 	        params.data = {};
 	      }
 
@@ -72929,7 +72913,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "addLocalize",
 	    value: function addLocalize(phrases) {
-	      if (babelHelpers.typeof(phrases) !== "object" || !phrases) {
+	      if (babelHelpers["typeof"](phrases) !== "object" || !phrases) {
 	        return false;
 	      }
 
@@ -73101,14 +73085,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  return WidgetPublicManager;
 	}();
 
-	/**
-	 * Bitrix OpenLines widget
-	 * LiveChat base component (Vue component)
-	 *
-	 * @package bitrix
-	 * @subpackage imopenlines
-	 * @copyright 2001-2019 Bitrix
-	 */
+	function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	/**
 	 * @notice Do not mutate or clone this component! It is under development.
 	 */
@@ -73176,7 +73155,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    main_core_events.EventEmitter.unsubscribe(EventType.requestShowForm, this.onRequestShowForm);
 	    this.onTextareaDragEventRemove();
 	  },
-	  computed: babelHelpers.objectSpread({
+	  computed: _objectSpread$1({
 	    FormType: function FormType$$1() {
 	      return FormType;
 	    },
@@ -73267,7 +73246,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          if (navigator.userAgent.toString().includes('iPhone')) {
 	            return true;
 	          } else {
-	            return !(babelHelpers.typeof(window.screen) === 'object' && window.screen.availHeight >= 800);
+	            return !(babelHelpers["typeof"](window.screen) === 'object' && window.screen.availHeight >= 800);
 	          }
 	        }
 	      }
@@ -73945,16 +73924,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-show\" leave-active-class=\"bx-livechat-close\" @after-leave=\"onAfterClose\">\n\t\t\t<div :class=\"widgetClassName\" v-if=\"widget.common.showed\" :style=\"{height: widgetHeightStyle, width: widgetWidthStyle, userSelect: userSelectStyle}\" ref=\"widgetWrapper\">\n\t\t\t\t<div class=\"bx-livechat-box\">\n\t\t\t\t\t<div v-if=\"isBottomLocation\" class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t<bx-livechat-head :isWidgetDisabled=\"widgetMobileDisabled\" @like=\"showLikeForm\" @openMenu=\"onOpenMenu\" @close=\"close\"/>\n\t\t\t\t\t<template v-if=\"widgetMobileDisabled\">\n\t\t\t\t\t\t<bx-livechat-body-orientation-disabled/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"application.error.active\">\n\t\t\t\t\t\t<bx-livechat-body-error/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"!widget.common.configId\">\n\t\t\t\t\t\t<div class=\"bx-livechat-body\" key=\"loading-body\">\n\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<div v-show=\"!widget.common.dialogStart\" class=\"bx-livechat-body\" :class=\"{'bx-livechat-body-with-scroll': showWelcomeForm}\" key=\"welcome-body\">\n\t\t\t\t\t\t\t<bx-imopenlines-form\n\t\t\t\t\t\t\t  v-show=\"showWelcomeForm\"\n\t\t\t\t\t\t\t  @formSendSuccess=\"onWelcomeFormSendSuccess\"\n\t\t\t\t\t\t\t  @formSendError=\"onWelcomeFormSendError\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t<template v-if=\"!showWelcomeForm\">\n\t\t\t\t\t\t\t\t<bx-livechat-body-operators/>\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm === FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<template v-if=\"widget.common.dialogStart\">\n\t\t\t\t\t\t\t<bx-pull-component-status :canReconnect=\"true\" @reconnect=\"onPullRequestConfig\"/>\n\t\t\t\t\t\t\t<div :class=\"['bx-livechat-body', {'bx-livechat-body-with-message': showMessageDialog}]\" key=\"with-message\">\n\t\t\t\t\t\t\t\t<template v-if=\"showMessageDialog\">\n\t\t\t\t\t\t\t\t\t<div class=\"bx-livechat-dialog\">\n\t\t\t\t\t\t\t\t\t\t<bx-im-component-dialog\n\t\t\t\t\t\t\t\t\t\t\t:userId=\"application.common.userId\"\n\t\t\t\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t\t\t\t:messageLimit=\"application.dialog.messageLimit\"\n\t\t\t\t\t\t\t\t\t\t\t:enableReactions=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableDateActions=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableCreateContent=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureQuote=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureMenu=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageAvatar=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageMenu=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:skipDataRequest=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:showLoadingState=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:showEmptyState=\"false\"\n\t\t\t\t\t\t\t\t\t\t />\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t\t\t</template>\n\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm === FormType.like && widget.common.vote.enable\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-vote/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.welcome\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-welcome/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.offline\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-offline/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.history\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-history/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t\t<div v-if=\"showTextarea\" class=\"bx-livechat-textarea\" :style=\"[textareaHeightStyle, textareaBottomMargin]\" ref=\"textarea\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-textarea-resize-handle\" @mousedown=\"onTextareaStartDrag\" @touchstart=\"onTextareaStartDrag\"></div>\n\t\t\t\t\t\t\t<bx-im-component-textarea\n\t\t\t\t\t\t\t\t:siteId=\"application.common.siteId\"\n\t\t\t\t\t\t\t\t:userId=\"application.common.userId\"\n\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t:writesEventLetter=\"3\"\n\t\t\t\t\t\t\t\t:enableEdit=\"true\"\n\t\t\t\t\t\t\t\t:enableCommand=\"false\"\n\t\t\t\t\t\t\t\t:enableMention=\"false\"\n\t\t\t\t\t\t\t\t:enableFile=\"application.disk.enabled\"\n\t\t\t\t\t\t\t\t:autoFocus=\"application.device.type !== DeviceType.mobile\"\n\t\t\t\t\t\t\t\t:styles=\"{button: {backgroundColor: widget.common.styles.backgroundColor, iconColor: widget.common.styles.iconColor}}\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div v-if=\"!widget.common.copyright && !isBottomLocation\" class=\"bx-livechat-nocopyright-resize-wrap\" style=\"position: relative;\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<bx-livechat-form-consent @agree=\"agreeConsentWidow\" @disagree=\"disagreeConsentWidow\"/>\n\t\t\t\t\t\t<template v-if=\"widget.common.copyright\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-copyright\">\n\t\t\t\t\t\t\t\t<template v-if=\"widget.common.copyrightUrl\">\n\t\t\t\t\t\t\t\t\t<a class=\"bx-livechat-copyright-link\" :href=\"widget.common.copyrightUrl\" target=\"_blank\">\n\t\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<div v-if=\"!isBottomLocation\" class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</template>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\n\t"
 	});
 
-	/**
-	 * Bitrix OpenLines widget
-	 * Body error component (Vue component)
-	 *
-	 * @package bitrix
-	 * @subpackage imopenlines
-	 * @copyright 2001-2019 Bitrix
-	 */
+	function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread$2(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$2(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$2(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.WidgetBitrixVue.component('bx-livechat-body-error', {
-	  computed: babelHelpers.objectSpread({}, ui_vue_vuex.WidgetVuex.mapState({
+	  computed: _objectSpread$2({}, ui_vue_vuex.WidgetVuex.mapState({
 	    application: function application(state) {
 	      return state.application;
 	    }
@@ -73962,14 +73936,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  template: "\n\t\t<div class=\"bx-livechat-body\" key=\"error-body\">\n\t\t\t<div class=\"bx-livechat-warning-window\">\n\t\t\t\t<div class=\"bx-livechat-warning-icon\"></div>\n\t\t\t\t<template v-if=\"application.error.description\"> \n\t\t\t\t\t<div class=\"bx-livechat-help-title bx-livechat-help-title-sm bx-livechat-warning-msg\" v-html=\"application.error.description\"></div>\n\t\t\t\t</template> \n\t\t\t\t<template v-else>\n\t\t\t\t\t<div class=\"bx-livechat-help-title bx-livechat-help-title-md bx-livechat-warning-msg\">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_ERROR_TITLE')}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-help-title bx-livechat-help-title-sm bx-livechat-warning-msg\">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_ERROR_DESC')}}</div>\n\t\t\t\t</template> \n\t\t\t</div>\n\t\t</div>\n\t"
 	});
 
-	/**
-	 * Bitrix OpenLines widget
-	 * Head component (Vue component)
-	 *
-	 * @package bitrix
-	 * @subpackage imopenlines
-	 * @copyright 2001-2019 Bitrix
-	 */
+	function ownKeys$3(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread$3(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$3(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$3(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.WidgetBitrixVue.component('bx-livechat-head', {
 	  /**
 	   * @emits 'close'
@@ -73978,7 +73947,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	   */
 	  props: {
 	    isWidgetDisabled: {
-	      default: false
+	      "default": false
 	    }
 	  },
 	  methods: {
@@ -73992,7 +73961,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      this.$emit('openMenu', event);
 	    }
 	  },
-	  computed: babelHelpers.objectSpread({
+	  computed: _objectSpread$3({
 	    VoteType: function VoteType$$1() {
 	      return VoteType;
 	    },
@@ -74092,16 +74061,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  template: "\n\t\t<div class=\"bx-livechat-loading-window\">\n\t\t\t<svg class=\"bx-livechat-loading-circular\" viewBox=\"25 25 50 50\">\n\t\t\t\t<circle class=\"bx-livechat-loading-path\" cx=\"50\" cy=\"50\" r=\"20\" fill=\"none\" stroke-miterlimit=\"10\"/>\n\t\t\t\t<circle class=\"bx-livechat-loading-inner-path\" cx=\"50\" cy=\"50\" r=\"20\" fill=\"none\" stroke-miterlimit=\"10\"/>\n\t\t\t</svg>\n\t\t\t<h3 class=\"bx-livechat-help-title bx-livechat-help-title-md bx-livechat-loading-msg\">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_LOADING')}}</h3>\n\t\t</div>\n\t"
 	});
 
-	/**
-	 * Bitrix OpenLines widget
-	 * Body operators component (Vue component)
-	 *
-	 * @package bitrix
-	 * @subpackage imopenlines
-	 * @copyright 2001-2019 Bitrix
-	 */
+	function ownKeys$4(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread$4(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$4(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$4(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.WidgetBitrixVue.component('bx-livechat-body-operators', {
-	  computed: babelHelpers.objectSpread({}, ui_vue_vuex.WidgetVuex.mapState({
+	  computed: _objectSpread$4({}, ui_vue_vuex.WidgetVuex.mapState({
 	    widget: function widget(state) {
 	      return state.widget;
 	    }
@@ -74121,20 +74085,15 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  template: "\n\t\t<div class=\"bx-livechat-body\" key=\"orientation-head\">\n\t\t\t<div class=\"bx-livechat-mobile-orientation-box\">\n\t\t\t\t<div class=\"bx-livechat-mobile-orientation-icon\"></div>\n\t\t\t\t<div class=\"bx-livechat-mobile-orientation-text\">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_MOBILE_ROTATE')}}</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	});
 
-	/**
-	 * Bitrix OpenLines widget
-	 * Form consent component (Vue component)
-	 *
-	 * @package bitrix
-	 * @subpackage imopenlines
-	 * @copyright 2001-2019 Bitrix
-	 */
+	function ownKeys$5(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread$5(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$5(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$5(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.WidgetBitrixVue.component('bx-livechat-form-consent', {
 	  /**
 	   * @emits 'agree' {event: object} -- 'event' - click event
 	   * @emits 'disagree' {event: object} -- 'event' - click event
 	   */
-	  computed: babelHelpers.objectSpread({}, ui_vue_vuex.WidgetVuex.mapState({
+	  computed: _objectSpread$5({}, ui_vue_vuex.WidgetVuex.mapState({
 	    widget: function widget(state) {
 	      return state.widget;
 	    }
@@ -74205,16 +74164,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  template: "\n\t\t<transition @enter=\"onShow\" @leave=\"onHide\">\n\t\t\t<template v-if=\"widget.common.showConsent && widget.common.consentUrl\">\n\t\t\t\t<div class=\"bx-livechat-consent-window\">\n\t\t\t\t\t<div class=\"bx-livechat-consent-window-title\">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_CONSENT_TITLE')}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-consent-window-content\">\n\t\t\t\t\t\t<iframe class=\"bx-livechat-consent-window-content-iframe\" ref=\"iframe\" frameborder=\"0\" marginheight=\"0\"  marginwidth=\"0\" allowtransparency=\"allow-same-origin\" seamless=\"true\" :src=\"widget.common.consentUrl\" @keydown=\"onKeyDown\"></iframe>\n\t\t\t\t\t</div>\t\t\t\t\t\t\t\t\n\t\t\t\t\t<div class=\"bx-livechat-consent-window-btn-box\">\n\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-success\" ref=\"success\" @click=\"agree\" @keydown=\"onKeyDown\" v-focus>{{$Bitrix.Loc.getMessage('BX_LIVECHAT_CONSENT_AGREE')}}</button>\n\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-cancel\" ref=\"cancel\" @click=\"disagree\" @keydown=\"onKeyDown\">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_CONSENT_DISAGREE')}}</button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</transition>\n\t"
 	});
 
-	/**
-	 * Bitrix OpenLines widget
-	 * Form vote component (Vue component)
-	 *
-	 * @package bitrix
-	 * @subpackage imopenlines
-	 * @copyright 2001-2019 Bitrix
-	 */
+	function ownKeys$6(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread$6(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$6(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$6(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.WidgetBitrixVue.component('bx-livechat-form-vote', {
-	  computed: babelHelpers.objectSpread({
+	  computed: _objectSpread$6({
 	    VoteType: function VoteType$$1() {
 	      return VoteType;
 	    }

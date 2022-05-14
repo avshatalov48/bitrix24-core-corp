@@ -122,9 +122,10 @@ class RolePermission
 	 *
 	 * @param string $entityId
 	 * @param array $permissionSet it is an array like [roleId => ["READ" => ["-" => "X"], ...]]]
+	 * @param bool $skipAdminRoles Skip roles with "Allow edit config" checkbox to avoid decreasing permissions level in them
 	 * @return Main\Result
 	 */
-	public static function setByEntityId(string $entityId, array $permissionSet)
+	public static function setByEntityId(string $entityId, array $permissionSet, $skipAdminRoles = false)
 	{
 		static::$cache = null;
 
@@ -133,7 +134,11 @@ class RolePermission
 		$role = new \CCrmRole();
 		foreach (self::getAll() as $roleId => $entities)
 		{
-			if (array_key_exists("CONFIG", $entities) && array_key_exists("WRITE", $entities["CONFIG"]))
+			if (
+				$skipAdminRoles
+				&& array_key_exists("CONFIG", $entities)
+				&& array_key_exists("WRITE", $entities["CONFIG"])
+			)
 			{
 				$perms = reset($entities["CONFIG"]["WRITE"]);
 				if ($perms >= BX_CRM_PERM_ALL)

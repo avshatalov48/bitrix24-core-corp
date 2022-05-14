@@ -34,6 +34,61 @@ $APPLICATION->IncludeComponent(
 	false
 );
 
+// This is a temporary code section.
+// The old funnel is an unsupported report. It should be removed in future releases.
+$showOldFunnel = function() {
+	if (\COption::getOptionString('intranet', 'new_portal_structure', 'N') === 'Y')
+	{
+		return false;
+	}
+
+	if (Loader::includeModule('bitrix24'))
+	{
+		$targetTime = strtotime('2022-06-24');
+		$createTime = \CBitrix24::getCreateTime();
+		if ($createTime && $createTime > $targetTime)
+		{
+			return false;
+		}
+	}
+
+	$isAdmin = CCrmPerms::isAdmin();
+	$userPermissions = CCrmPerms::getCurrentUserPermissions();
+
+	return $isAdmin || CCrmDeal::checkReadPermission(0, $userPermissions);
+};
+
+if ($showOldFunnel()):
+?>
+<script>
+(function() {
+	const table = document.querySelector('#reports_list_table_crm .reports-list-table:last-child');
+	if (!table)
+	{
+		return;
+	}
+
+	const lastRow = table.querySelector('tr:last-child');
+	if (!lastRow)
+	{
+		return;
+	}
+
+	const newRow = lastRow.cloneNode(true);
+	newRow.querySelector('.reports-first-column').innerHTML = `
+		<a href="<?=SITE_DIR?>crm/reports/" class="reports-title-link"><?=GetMessage('CRM_REPORT_LIST_OLD_FUNNEL')?></a>
+	`;
+	newRow.querySelector('.reports-menu-column').innerHTML = '';
+	newRow.querySelector('.reports-second-column').innerHTML = '';
+	newRow.querySelector('.reports-date-column').innerHTML = '';
+
+	table.appendChild(newRow);
+
+})();
+</script>
+<?
+endif;
+
 if ($isReportsRestricted)
 {
 	return;

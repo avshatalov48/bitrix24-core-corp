@@ -326,8 +326,16 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 			return $result;
 		}
 
-		$task = \CTaskItem::getInstance($taskId, $this->userId);
-		$task->startWatch();
+		try
+		{
+			$task = \CTaskItem::getInstance($taskId, $this->userId);
+			$task->startWatch();
+		}
+		catch (Bitrix\Tasks\Exception $e)
+		{
+			$this->errorCollection->add('ACTION_ERROR.UNEXPECTED_ERROR', $e->getFirstErrorMessage(), false, ['ui' => 'notification']);
+			return $result;
+		}
 
 		return $result;
 	}
@@ -369,8 +377,16 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 			return $result;
 		}
 
-		$task = \CTaskItem::getInstance($taskId, $this->userId);
-		$task->stopWatch();
+		try
+		{
+			$task = \CTaskItem::getInstance($taskId, $this->userId);
+			$task->stopWatch();
+		}
+		catch (Bitrix\Tasks\Exception $e)
+		{
+			$this->errorCollection->add('ACTION_ERROR.UNEXPECTED_ERROR', $e->getFirstErrorMessage(), false, ['ui' => 'notification']);
+			return $result;
+		}
 
 		return $result;
 	}

@@ -1,0 +1,13 @@
+.crm-item-automation-subtitle {
+	display: flex;
+	align-items: center;
+	position: relative;
+	vertical-align: middle;
+	color: #525c69;
+	padding-top: 5px;
+	font: 300 13px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.bitrix24-light-theme .crm-item-automation-subtitle {
+	color: #fff;
+}

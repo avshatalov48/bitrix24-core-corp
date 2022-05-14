@@ -95,9 +95,21 @@ class Template extends Base
 	{
 		$fields = $this->cleanDataToCopy($fields);
 
+		$dictionary = $container->getDictionary();
+
 		if (!empty($container->getParentId()))
 		{
-			$fields["BASE_TEMPLATE_ID"] = $container->getParentId();
+			$fields['BASE_TEMPLATE_ID'] = $container->getParentId();
+		}
+
+		if ($taskId = $dictionary->get('TASK_ID'))
+		{
+			$fields['TASK_ID'] = $taskId;
+		}
+
+		if ($taskId = $dictionary->get('GROUP_ID'))
+		{
+			$fields['GROUP_ID'] = $taskId;
 		}
 
 		return $fields;

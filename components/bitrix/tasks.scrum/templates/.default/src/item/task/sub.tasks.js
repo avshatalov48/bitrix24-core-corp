@@ -1,4 +1,4 @@
-import {Dom, Event, Tag} from 'main.core';
+import {Dom, Event, Tag, Type} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 import {Loader} from 'main.loader';
 
@@ -10,6 +10,8 @@ export class SubTasks extends EventEmitter
 	{
 		super();
 
+		this.setEventNamespace('BX.Tasks.Scrum.SubTasks');
+
 		this.parentItem = parentItem;
 
 		this.list = new Map();
@@ -17,7 +19,7 @@ export class SubTasks extends EventEmitter
 		this.node = null;
 	}
 
-	render()
+	render(): HTMLElement
 	{
 		this.node = Tag.render`<div class="tasks-scrum__item-sub-tasks"></div>`;
 
@@ -69,6 +71,11 @@ export class SubTasks extends EventEmitter
 
 	show()
 	{
+		if (Type.isNull(this.getNode()))
+		{
+			return;
+		}
+
 		if (this.list.size)
 		{
 			this.hideLoader();
@@ -80,21 +87,28 @@ export class SubTasks extends EventEmitter
 			this.showLoader();
 		}
 
-		this.getNode().style.height = `${ this.getNode().scrollHeight }px`;
+		Dom.style(this.getNode(), 'height', `${ this.getNode().scrollHeight }px`);
 	}
 
 	hide()
 	{
+		if (Type.isNull(this.getNode()))
+		{
+			return;
+		}
+
 		this.hideLoader();
 
+		/* eslint-disable */
 		this.getNode().style.height = `${ this.getNode().scrollHeight }px`;
 		this.getNode().clientHeight;
 		this.getNode().style.height = '0';
+		/* eslint-enable */
 	}
 
 	isShown(): boolean
 	{
-		return this.node !== null;
+		return !Type.isNull(this.node);
 	}
 
 	renderSubTasks()
@@ -141,7 +155,7 @@ export class SubTasks extends EventEmitter
 
 	onTransitionEnd(node: HTMLElement)
 	{
-		const isHide = (node.style.height === '0px');
+		const isHide = (Dom.style(node, 'height') === '0px');
 
 		if (isHide)
 		{
@@ -149,7 +163,7 @@ export class SubTasks extends EventEmitter
 		}
 		else
 		{
-			node.style.height = 'auto';
+			Dom.style(node, 'height', 'auto');
 		}
 	}
 }

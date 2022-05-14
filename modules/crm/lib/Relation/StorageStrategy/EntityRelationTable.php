@@ -114,5 +114,4 @@ class EntityRelationTable extends StorageStrategy
 
 		return new Result();
 	}
-
 }

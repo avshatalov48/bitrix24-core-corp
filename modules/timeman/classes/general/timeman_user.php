@@ -749,7 +749,7 @@ class CTimeManUser
 						'ID' => $arRes['ID'],
 						'PRIORITY' => $arRes['PRIORITY'],
 						'STATUS' => $arRes['STATUS'],
-						'TITLE' => $arRes['TITLE'],
+						'TITLE' => \Bitrix\Main\Text\Emoji::decode($arRes['TITLE']),
 						'TASK_CONTROL' => $arRes['TASK_CONTROL'],
 						'URL' => str_replace(
 							['#USER_ID#', '#TASK_ID#'],

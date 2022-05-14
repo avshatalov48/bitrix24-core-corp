@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\Main;
+use Bitrix\Crm\Multifield;
 
 if (!defined('CACHED_b_field_multi')) define('CACHED_b_field_multi', 360000);
 
@@ -14,11 +15,11 @@ class CCrmFieldMulti
 	private static $ENTITY_TYPES = null;
 	private static $ENTITY_TYPE_INFOS = null;
 
-	const PHONE = 'PHONE';
-	const EMAIL = 'EMAIL';
-	const WEB = 'WEB';
-	const IM = 'IM';
-	const LINK = 'LINK';
+	const PHONE = Multifield\Type\Phone::ID;
+	const EMAIL = Multifield\Type\Email::ID;
+	const WEB = Multifield\Type\Web::ID;
+	const IM = Multifield\Type\Im::ID;
+	const LINK = Multifield\Type\Link::ID;
 
 	function __construct()
 	{
@@ -71,184 +72,184 @@ class CCrmFieldMulti
 		if(self::$ENTITY_TYPES === null)
 		{
 			self::$ENTITY_TYPES = Array(
-				'PHONE' => [
-					'WORK' => [
+				Multifield\Type\Phone::ID => [
+					Multifield\Type\Phone::VALUE_TYPE_WORK => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_PHONE_WORK'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_PHONE_WORK_SHORT'),
 						'ABBR' => GetMessage('CRM_FM_ENTITY_PHONE_WORK_ABBR'),
 						'TEMPLATE' => '<a href="' . CCrmCallToUrl::Format('#VALUE#') . '">#VALUE_HTML#</a>',
 					],
-					'MOBILE' => [
+					Multifield\Type\Phone::VALUE_TYPE_MOBILE => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_PHONE_MOBILE'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_PHONE_MOBILE_SHORT'),
 						'ABBR' => GetMessage('CRM_FM_ENTITY_PHONE_MOBILE_ABBR'),
 						'TEMPLATE' => '<a href="' . CCrmCallToUrl::Format('#VALUE#') . '">#VALUE_HTML#</a>',
 					],
-					'FAX' => [
+					Multifield\Type\Phone::VALUE_TYPE_FAX => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_PHONE_FAX'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_PHONE_FAX_SHORT'),
 						'ABBR' => GetMessage('CRM_FM_ENTITY_PHONE_FAX_ABBR'),
 						'TEMPLATE' => '<a href="' . CCrmCallToUrl::Format('#VALUE#') . '">#VALUE_HTML#</a>',
 					],
-					'HOME' => [
+					Multifield\Type\Phone::VALUE_TYPE_HOME => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_PHONE_HOME'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_PHONE_HOME_SHORT'),
 						'ABBR' => GetMessage('CRM_FM_ENTITY_PHONE_HOME_ABBR'),
 						'TEMPLATE' => '<a href="' . CCrmCallToUrl::Format('#VALUE#') . '">#VALUE_HTML#</a>',
 					],
-					'PAGER' => [
+					Multifield\Type\Phone::VALUE_TYPE_PAGER => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_PHONE_PAGER'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_PHONE_PAGER_SHORT'),
 						'ABBR' => GetMessage('CRM_FM_ENTITY_PHONE_PAGER_ABBR'),
 						'TEMPLATE' => '<a href="' . CCrmCallToUrl::Format('#VALUE#') . '">#VALUE_HTML#</a>',
 					],
-					'MAILING' => [
+					Multifield\Type\Phone::VALUE_TYPE_MAILING => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_PHONE_MAILING'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_PHONE_MAILING_SHORT'),
 						'ABBR' => GetMessage('CRM_FM_ENTITY_PHONE_MAILING_ABBR'),
 						'TEMPLATE' => '<a href="' . CCrmCallToUrl::Format('#VALUE#') . '">#VALUE_HTML#</a>',
 					],
-					'OTHER' => [
+					Multifield\Type\Phone::VALUE_TYPE_OTHER => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_PHONE_OTHER'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_PHONE_OTHER_SHORT'),
 						'ABBR' => GetMessage('CRM_FM_ENTITY_PHONE_OTHER_ABBR'),
 						'TEMPLATE' => '<a href="' . CCrmCallToUrl::Format('#VALUE#') . '">#VALUE_HTML#</a>',
 					],
 				],
-				'WEB' => [
-					'WORK' => [
+				Multifield\Type\Web::ID => [
+					Multifield\Type\Web::VALUE_TYPE_WORK => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_WEB_WORK'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_WEB_WORK_SHORT'),
 						'TEMPLATE' => '<a href="http://#VALUE_URL#" target="_blank">#VALUE_HTML#</a>',
 					],
-					'HOME' => [
+					Multifield\Type\Web::VALUE_TYPE_HOME => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_WEB_HOME'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_WEB_HOME_SHORT'),
 						'TEMPLATE' => '<a href="http://#VALUE_URL#" target="_blank">#VALUE_HTML#</a>',
 					],
-					'FACEBOOK' => [
+					Multifield\Type\Web::VALUE_TYPE_FACEBOOK => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_WEB_FACEBOOK'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_WEB_FACEBOOK_SHORT'),
 						'TEMPLATE' => '<a href="http://www.facebook.com/#VALUE_URL#/" target="_blank">#VALUE_HTML#</a>',
 					],
-					'VK' => [
+					Multifield\Type\Web::VALUE_TYPE_VK => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_WEB_VK'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_WEB_VK_SHORT'),
 						'TEMPLATE' => '<a href="https://vk.com/#VALUE_URL#" target="_blank">#VALUE_HTML#</a>',
 					],
-					'LIVEJOURNAL' => [
+					Multifield\Type\Web::VALUE_TYPE_LIVEJOURNAL => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_WEB_LIVEJOURNAL'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_WEB_LIVEJOURNAL_SHORT'),
 						'TEMPLATE' => '<a href="http://#VALUE_URL#.livejournal.com/" target="_blank">#VALUE_HTML#</a>',
 					],
-					'TWITTER' => [
+					Multifield\Type\Web::VALUE_TYPE_TWITTER => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_WEB_TWITTER'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_WEB_TWITTER_SHORT'),
 						'TEMPLATE' => '<a href="http://twitter.com/#VALUE_URL#/" target="_blank">#VALUE_HTML#</a>',
 					],
-					'OTHER' => [
+					Multifield\Type\Web::VALUE_TYPE_OTHER => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_WEB_OTHER'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_WEB_OTHER_SHORT'),
 						'TEMPLATE' => '<a href="http://#VALUE_URL#" target="_blank">#VALUE_HTML#</a>',
 					],
 				],
-				'EMAIL' => [
-					'WORK' => [
+				Multifield\Type\Email::ID => [
+					Multifield\Type\Email::VALUE_TYPE_WORK => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_EMAIL_WORK'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_EMAIL_WORK_SHORT'),
 						'ABBR' => GetMessage('CRM_FM_ENTITY_EMAIL_WORK_ABBR'),
 						'TEMPLATE' => '<a href="mailto:#VALUE_URL#">#VALUE_HTML#</a>',
 					],
-					'HOME' => [
+					Multifield\Type\Email::VALUE_TYPE_HOME => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_EMAIL_HOME'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_EMAIL_HOME_SHORT'),
 						'ABBR' => GetMessage('CRM_FM_ENTITY_EMAIL_HOME_ABBR'),
 						'TEMPLATE' => '<a href="mailto:#VALUE_URL#">#VALUE_HTML#</a>',
 					],
-					'MAILING' => [
+					Multifield\Type\Email::VALUE_TYPE_MAILING => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_EMAIL_MAILING1'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_EMAIL_MAILING_SHORT'),
 						'ABBR' => GetMessage('CRM_FM_ENTITY_EMAIL_MAILING_ABBR'),
 						'TEMPLATE' => '<a href="mailto:#VALUE_URL#">#VALUE_HTML#</a>',
 					],
-					'OTHER' => [
+					Multifield\Type\Email::VALUE_TYPE_OTHER => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_EMAIL_OTHER'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_EMAIL_OTHER_SHORT'),
 						'ABBR' => GetMessage('CRM_FM_ENTITY_EMAIL_OTHER_ABBR'),
 						'TEMPLATE' => '<a href="mailto:#VALUE_URL#">#VALUE_HTML#</a>',
 					],
 				],
-				'IM' => [
-					'FACEBOOK' => [
+				Multifield\Type\Im::ID => [
+					Multifield\Type\Im::VALUE_TYPE_FACEBOOK => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_IM_FACEBOOK'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_IM_FACEBOOK_SHORT'),
 						'TEMPLATE' => '<a href="https://m.me/#VALUE_URL#" target="_blank">#VALUE_HTML#</a>',
 					],
-					'TELEGRAM' => [
+					Multifield\Type\Im::VALUE_TYPE_TELEGRAM => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_IM_TELEGRAM'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_IM_TELEGRAM_SHORT'),
 						'TEMPLATE' => '<a href="https://t.me/#VALUE_URL#" target="_blank">#VALUE_HTML#</a>',
 					],
-					'VK' => [
+					Multifield\Type\Im::VALUE_TYPE_VK => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_IM_VK'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_IM_VK_SHORT'),
 						'TEMPLATE' => '<a href="https://vk.com/#VALUE_URL#" target="_blank">#VALUE_HTML#</a>',
 					],
-					'SKYPE' => [
+					Multifield\Type\Im::VALUE_TYPE_SKYPE => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_IM_SKYPE'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_IM_SKYPE_SHORT'),
 						'TEMPLATE' => '<a href="skype:#VALUE_URL#?chat">#VALUE_HTML#</a>',
 					],
-					'VIBER' => [
+					Multifield\Type\Im::VALUE_TYPE_VIBER => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_IM_VIBER'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_IM_VIBER_SHORT'),
 						'TEMPLATE' => '<a href="viber://chat?number=#VALUE_URL#" target="_blank">#VALUE_HTML#</a>',
 					],
-					'INSTAGRAM' => [
+					Multifield\Type\Im::VALUE_TYPE_INSTAGRAM => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_IM_INSTAGRAM'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_IM_INSTAGRAM_SHORT'),
 						'TEMPLATE' => '<a href="https://www.instagram.com/#VALUE_URL#"'
 							. ' target="_blank">#VALUE_HTML#</a>',
 					],
-					'BITRIX24' => [
+					Multifield\Type\Im::VALUE_TYPE_BITRIX24 => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_IM_BITRIX24'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_IM_BITRIX24_SHORT'),
 						'TEMPLATE' => '#VALUE_HTML#',
 					],
-					'OPENLINE' => [
+					Multifield\Type\Im::VALUE_TYPE_OPENLINE => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_IM_WIDGET'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_IM_WIDGET'),
 						'TEMPLATE' => '#VALUE_HTML#',
 					],
-					'IMOL' => [
+					Multifield\Type\Im::VALUE_TYPE_IMOL => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_IM_OPENLINE'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_IM_OPENLINE_SHORT'),
 						'TEMPLATE' => '#VALUE_HTML#',
 					],
-					'ICQ' => [
+					Multifield\Type\Im::VALUE_TYPE_ICQ => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_IM_ICQ'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_IM_ICQ_SHORT'),
 						'TEMPLATE' => '<a href="http://www.icq.com/people/#VALUE_URL#/"'
 							. ' target="_blank">#VALUE_HTML#</a>',
 					],
-					'MSN' => [
+					Multifield\Type\Im::VALUE_TYPE_MSN => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_IM_MSN'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_IM_MSN_SHORT'),
 						'TEMPLATE' => '<a href="msn:#VALUE_URL#">#VALUE_HTML#</a>',
 					],
-					'JABBER' => [
+					Multifield\Type\Im::VALUE_TYPE_JABBER => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_IM_JABBER'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_IM_JABBER_SHORT'),
 						'TEMPLATE' => '#VALUE_HTML#',
 					],
-					'OTHER' => [
+					Multifield\Type\Im::VALUE_TYPE_OTHER => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_IM_OTHER'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_IM_OTHER_SHORT'),
 						'TEMPLATE' => '#VALUE_HTML#',
 					],
 				],
-				'LINK' => [
-					'USER' => [
+				Multifield\Type\Link::ID => [
+					Multifield\Type\Link::VALUE_TYPE_USER => [
 						'FULL' => GetMessage('CRM_FM_ENTITY_LINK_USER'),
 						'SHORT' => GetMessage('CRM_FM_ENTITY_LINK_USER_SHORT'),
 						'ABBR' => GetMessage('CRM_FM_ENTITY_LINK_USER_ABBR'),

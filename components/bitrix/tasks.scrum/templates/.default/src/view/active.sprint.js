@@ -3,21 +3,20 @@ import {BaseEvent, EventEmitter} from 'main.core.events';
 
 import {SidePanel} from '../service/side.panel';
 
-import {View} from './view';
-import {ActiveSprintActionButton} from './header/active.sprint.action.button';
+import {View, Views} from './view';
+import {CompleteSprintButton} from './header/complete.sprint.button';
 import {RobotButton} from './header/robot.button';
 
 import {SprintSidePanel} from '../entity/sprint/sprint.side.panel';
 
 import {StatsBuilder} from '../entity/sprint/stats/stats.builder';
 
-import type {Views} from './view';
-
 type Params = {
 	activeSprintId: number,
 	views: Views,
 	taskLimitExceeded: 'Y' | 'N',
-	canUseAutomation: 'Y' | 'N'
+	canUseAutomation: 'Y' | 'N',
+	canCompleteSprint: 'Y' | 'N'
 }
 
 export class ActiveSprint extends View
@@ -61,20 +60,26 @@ export class ActiveSprint extends View
 			return;
 		}
 
-		const robotButton = new RobotButton({
-			sidePanel: this.sidePanel,
-			groupId: this.getCurrentGroupId(),
-			isTaskLimitsExceeded: this.isTaskLimitsExceeded(),
-			canUseAutomation: this.isCanUseAutomation()
-		});
+		if (this.canCompleteSprint) // todo change to can robot access
+		{
+			const robotButton = new RobotButton({
+				sidePanel: this.sidePanel,
+				groupId: this.getCurrentGroupId(),
+				isTaskLimitsExceeded: this.isTaskLimitsExceeded(),
+				canUseAutomation: this.isCanUseAutomation()
+			});
 
-		const activeSprintActionButton = new ActiveSprintActionButton();
-		activeSprintActionButton.subscribe('completeSprint', this.onCompleteSprint.bind(this));
+			Dom.append(robotButton.render(), container);
+		}
+
+		const completeSprintButton = new CompleteSprintButton({
+			canCompleteSprint: this.canCompleteSprint
+		});
+		completeSprintButton.subscribe('completeSprint', this.onCompleteSprint.bind(this));
+
+		Dom.append(completeSprintButton.render(), container);
 
 		Dom.addClass(container, '--without-bg');
-
-		Dom.append(robotButton.render(), container);
-		Dom.append(activeSprintActionButton.render(), container);
 	}
 
 	setParams(params: Params)
@@ -85,6 +90,8 @@ export class ActiveSprint extends View
 		this.setCanUseAutomation(params.canUseAutomation);
 
 		this.views = params.views;
+
+		this.canCompleteSprint = (params.canCompleteSprint === 'Y');
 	}
 
 	setTaskLimitsExceeded(limitExceeded: string)

@@ -65,6 +65,8 @@ class CDavCrmCompanies
 	protected function LoadCrmResourceEntitiesListByParams($order, $filter, $selectParams = array(), $maxCount)
 	{
 		$filter['PERMISSION'] = array('EXPORT');
+		$filter['@CATEGORY_ID'] = 0;
+
 		return CCrmCompany::GetListEx(
 			$order,
 			$filter,

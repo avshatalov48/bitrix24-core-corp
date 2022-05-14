@@ -33,7 +33,7 @@ class Company extends EntityBase
 	{
 		return CompanyTable::getEntity();
 	}
-	protected function getDbTableAlias()
+	public function getDbTableAlias()
 	{
 		return \CCrmCompany::TABLE_ALIAS;
 	}

@@ -24,9 +24,11 @@ class Sites extends Social
 				'menu_all_groups',
 			],
 			'menu_company',
-			"menu_bizproc_sect",
+			'menu_bizproc_sect',
+			'menu_automation',
 			'menu_marketplace_group' => [
-				'menu_marketplace_sect'
+				'menu_marketplace_sect',
+				'menu_devops_sect',
 			],
 		],
 		'hidden' => [
@@ -42,7 +44,6 @@ class Sites extends Social
 			"menu_onec_sect",
 			"menu_tariff",
 			"menu_updates",
-			'menu_devops_sect',
 			'menu_knowledge',
 			'menu_conference',
 			'menu_configs_sect',

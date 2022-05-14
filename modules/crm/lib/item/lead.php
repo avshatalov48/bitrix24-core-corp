@@ -15,6 +15,7 @@ use Bitrix\Main\Localization\Loc;
 class Lead extends Item
 {
 	public const FIELD_NAME_COMPANY_TITLE = 'COMPANY_TITLE';
+	public const FIELD_NAME_DATE_CLOSED = 'DATE_CLOSED';
 
 	//lead entity field names for common fields
 	public const FIELD_NAME_STATUS_ID = 'STATUS_ID';
@@ -23,7 +24,6 @@ class Lead extends Item
 	public const FIELD_NAME_MODIFY_BY_ID = 'MODIFY_BY_ID';
 	public const FIELD_NAME_DATE_CREATE = 'DATE_CREATE';
 	public const FIELD_NAME_DATE_MODIFY = 'DATE_MODIFY';
-	public const FIELD_NAME_DATE_CLOSED = 'DATE_CLOSED';
 
 	protected function compilePrimaryForBinding(array $contactBinding): array
 	{

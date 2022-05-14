@@ -991,20 +991,9 @@ elseif ($action === 'PREPARE_BATCH_CONVERSION')
 
 		if(empty($filter))
 		{
-			$entityTypeId = CCrmOwnerType::Lead;
-
-			$filterOptions = new \Bitrix\Main\UI\Filter\Options($gridID);
-			$filter = $filterOptions->getFilter();
-
-			$entityFilter = \Bitrix\Crm\Filter\Factory::createEntityFilter(
-				\Bitrix\Crm\Filter\Factory::createEntitySettings($entityTypeId, $gridID)
-			);
-			$entityFilter->prepareListFilterParams($filter);
-
-			\Bitrix\Crm\Search\SearchEnvironment::convertEntityFilterValues($entityTypeId, $filter);
-			\CCrmEntityHelper::PrepareMultiFieldFilter($filter, [], '=%', false);
-			$entity = \Bitrix\Crm\Entity\EntityManager::resolveByTypeID($entityTypeId);
-			$entity->prepareFilter($filter);
+			$filter = \Bitrix\Crm\Filter\Factory::createEntityFilter(
+				\Bitrix\Crm\Filter\Factory::getSettingsByGridId(CCrmOwnerType::Lead, (string)$gridID)
+			)->getValue();
 		}
 
 		$progressData['FILTER'] = $filter;

@@ -56,6 +56,10 @@ export class FilterHandler
 				if (!entity.isCompleted())
 				{
 					entity.removeItem(item);
+					if (item.isShownSubTasks())
+					{
+						item.hideSubTasks();
+					}
 					item.removeYourself();
 				}
 			});

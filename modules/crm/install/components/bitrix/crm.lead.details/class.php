@@ -652,17 +652,19 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 		//endregion
 
 		//region Wait Target Dates
-		$this->arResult['WAIT_TARGET_DATES'] = array();
-		$userFields = $this->userType->GetFields();
-		foreach($userFields as $userField)
+		$this->arResult['WAIT_TARGET_DATES'] = [];
+		if ($this->userType)
 		{
-			if($userField['USER_TYPE_ID'] === 'date')
+			$userFields = $this->userType->GetFields();
+			foreach($userFields as $userField)
 			{
-				$this->arResult['WAIT_TARGET_DATES'][] = array(
-					'name' => $userField['FIELD_NAME'],
-					'caption' => isset($userField['EDIT_FORM_LABEL'])
-						? $userField['EDIT_FORM_LABEL'] : $userField['FIELD_NAME']
-				);
+				if($userField['USER_TYPE_ID'] === 'date' && $userField['MULTIPLE'] !== 'Y')
+				{
+					$this->arResult['WAIT_TARGET_DATES'][] = [
+						'name' => $userField['FIELD_NAME'],
+						'caption' => $userField['EDIT_FORM_LABEL'] ?? $userField['FIELD_NAME']
+					];
+				}
 			}
 		}
 		//endregion

@@ -373,14 +373,15 @@ export class ItemMover extends EventEmitter
 
 		const dropPreview = this.draggableItems.getDropPreview();
 
+
 		const width = sourceContainer.isEqualNode(enterContainer)
-			? parseInt(dropPreview.style.width, 10)
+			? parseInt(Dom.style(dropPreview, 'width'), 10)
 			: enterContainer.clientWidth
 		;
 
 		Dom.style(dropPreview, {
 			width: `${width}px`,
-			top: `${parseInt(dropPreview.style.top, 10) + enterContainer.scrollTop}px`
+			top: `${parseInt(Dom.style(dropPreview, 'top'), 10) + enterContainer.scrollTop}px`
 		});
 	}
 
@@ -405,7 +406,7 @@ export class ItemMover extends EventEmitter
 		Dom.style(dropPreview, {
 			width: `${dragOutEvent.out.offsetWidth}px`,
 			height: `${dragOutEvent.out.offsetHeight}px`,
-			top: `${parseInt(dropPreview.style.top, 10) + dragOutEvent.outContainer.scrollTop}px`
+			top: `${parseInt(Dom.style(dropPreview, 'top'), 10) + dragOutEvent.outContainer.scrollTop}px`
 		});
 	}
 

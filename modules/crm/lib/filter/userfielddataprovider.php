@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Filter;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\UserField\Types\ElementType;
 use Bitrix\Main\Localization\Loc;
 
@@ -57,4 +58,22 @@ class UserFieldDataProvider extends \Bitrix\Main\Filter\EntityUFDataProvider
 
 		return parent::prepareFieldData($fieldID);
 	}
+
+	public function prepareFilterValue(array $rawFilterValue): array
+	{
+		global $USER_FIELD_MANAGER;
+
+		$filterValue = parent::prepareFilterValue($rawFilterValue);
+
+		$factory = Container::getInstance()->getFactory($this->getSettings()->getEntityTypeID());
+		if (!$factory)
+		{
+			return $filterValue;
+		}
+
+		$USER_FIELD_MANAGER->AdminListAddFilter($factory->getUserFieldEntityId(), $filterValue);
+
+		return $filterValue;
+	}
+
 }

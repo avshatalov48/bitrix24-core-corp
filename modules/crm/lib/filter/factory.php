@@ -198,8 +198,85 @@ class Factory
 		return Crm\Service\Container::getInstance()->getFilterFactory()->getFilter($settings);
 	}
 
-	public static function createEntitySettings($entityTypeID, $filterID)
+	public static function createEntitySettings($entityTypeID, $filterID, array $parameters = [])
 	{
-		return Crm\Service\Container::getInstance()->getFilterFactory()->getSettings($entityTypeID, $filterID);
+		return Crm\Service\Container::getInstance()->getFilterFactory()->getSettings($entityTypeID, $filterID, $parameters);
+	}
+
+	/**
+	 * Convert $parameters in suitable for EntitySettings format
+	 * @param int $entityTypeId
+	 * @param array $parameters
+	 * @return array
+	 */
+	public static function convertSettingsParams(int $entityTypeId, array $parameters): array
+	{
+		if ($entityTypeId === \CCrmOwnerType::Deal)
+		{
+			if (!isset($parameters['flags']))
+			{
+				$parameters['flags'] = DealSettings::FLAG_NONE | DealSettings::FLAG_ENABLE_CLIENT_FIELDS;
+			}
+			if (isset($parameters['IS_RECURRING']))
+			{
+				if ($parameters['IS_RECURRING'] === 'Y')
+				{
+					$parameters['flags'] |= DealSettings::FLAG_RECURRING;
+				}
+				unset($parameters['IS_RECURRING']);
+			}
+		}
+		if (isset($parameters['CATEGORY_ID']))
+		{
+			$parameters['categoryID'] = $parameters['CATEGORY_ID'];
+			unset($parameters['CATEGORY_ID']);
+		}
+
+		return $parameters;
+	}
+
+	/**
+	 * Get Settings object with correct parameters according to $gridId
+	 * @param int $entityTypeId
+	 * @param string $gridId
+	 * @return EntitySettings
+	 * @throws Main\NotSupportedException
+	 */
+	public static function getSettingsByGridId(int $entityTypeId, string $gridId): EntitySettings
+	{
+		$parameters = self::extractSettingsParamsFromGridId($entityTypeId, $gridId);
+		$parameters = self::convertSettingsParams($entityTypeId, $parameters);
+
+		return Crm\Service\Container::getInstance()->getFilterFactory()->getSettings($entityTypeId, $gridId, $parameters);
+	}
+
+	protected static function extractSettingsParamsFromGridId(int $entityTypeId, string $gridId): array
+	{
+		$parameters = [];
+		if ($entityTypeId === \CCrmOwnerType::Deal && mb_strpos($gridId, 'CRM_DEAL_RECUR') === 0)
+		{
+			$parameters['IS_RECURRING'] = 'Y';
+		}
+		$factory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+		if ($factory && $factory->isCategoriesEnabled())
+		{
+			if (in_array($entityTypeId, [\CCrmOwnerType::Contact, \CCrmOwnerType::Company]))
+				// category = 0 should be used by default in contacts and companies only
+			{
+				$parameters['CATEGORY_ID'] = 0;
+			}
+			// Deal, Contacts, Companies format:
+			if (preg_match('/_C_(\d+)$/', $gridId, $matches))
+			{
+				$parameters['CATEGORY_ID'] = (int)$matches[1];
+			}
+			// Smart processes format:
+			if (preg_match('/^crm-type-item-list-(\d+)-(\d+)$/', $gridId, $matches))
+			{
+				$parameters['CATEGORY_ID'] = (int)$matches[2];
+			}
+		}
+
+		return $parameters;
 	}
 }

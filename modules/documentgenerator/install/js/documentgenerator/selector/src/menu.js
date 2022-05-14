@@ -262,8 +262,8 @@ export class Menu
 					data: {
 						select: ['id', 'number', 'title'],
 						filter: {
-							provider: this.provider.replace(/\\/g, '\\\\'),
-							value: this.value
+							"=provider": this.provider.toLowerCase(),
+							"=value": this.value
 						},
 						order: {id: 'desc'}
 					},

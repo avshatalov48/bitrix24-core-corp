@@ -105,7 +105,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 	</div>
 
 <!-- statistic-->
-<? if($arResult['SHOW_STATISTICS'] && count($arResult['STATISTICS']) > 0): ?>
+<? if($arResult['SHOW_STATISTICS'] && !empty($arResult['STATISTICS'])): ?>
 	<div class="tel-inner-right">
 		<div class="tel-history-block">
 			<div class="tel-history-title"><?=GetMessage(!in_array($arResult['LANG'], Array('ua', 'kz'))? 'TELEPHONY_HISTORY_2': 'TELEPHONY_HISTORY_3')?></div>

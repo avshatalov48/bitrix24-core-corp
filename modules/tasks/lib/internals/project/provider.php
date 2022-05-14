@@ -6,8 +6,10 @@ use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Query;
 use Bitrix\Main\Entity\Query\Join;
 use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Main\Loader;
 use Bitrix\Socialnetwork\Helper\Workgroup;
 use Bitrix\Socialnetwork\UserToGroupTable;
+use Bitrix\Socialnetwork\WorkgroupSiteTable;
 use Bitrix\Socialnetwork\WorkgroupTable;
 use Bitrix\Socialnetwork\WorkgroupTagTable;
 use Bitrix\Tasks\Integration\SocialNetwork;
@@ -72,6 +74,15 @@ class Provider
 
 	public function getPrimaryProjectsQuery(array $select): Query
 	{
+		$siteId = SITE_ID;
+		if (
+			Loader::includeModule('extranet')
+			&& !\CExtranet::IsIntranetUser($siteId, $this->userId)
+		)
+		{
+			$siteId = \CExtranet::GetExtranetSiteID();
+		}
+
 		$query = WorkgroupTable::query();
 		$query
 			->setSelect($select)
@@ -91,6 +102,15 @@ class Provider
 					ProjectLastActivityTable::getEntity(),
 					Join::on('this.ID', 'ref.PROJECT_ID'),
 					['join_type' => 'left']
+				)
+			)
+			->registerRuntimeField(
+				'GS',
+				new ReferenceField(
+					'GS',
+					WorkgroupSiteTable::getEntity(),
+					Join::on('this.ID', 'ref.GROUP_ID')->where('ref.SITE_ID', $siteId),
+					['join_type' => 'inner']
 				)
 			)
 			->registerRuntimeField(
@@ -239,13 +259,26 @@ class Provider
 		);
 		$avatars = UI::getAvatars($imageIds);
 
+		$scrumMasters = [];
+		foreach ($projectIds as $projectId)
+		{
+			$group = \Bitrix\Socialnetwork\Item\Workgroup::getById($projectId);
+			if ($group && $group->isScrumProject())
+			{
+				$scrumMasters[$projectId] = (int) $group->getScrumMaster();
+			}
+		}
+
 		foreach ($resultMembers as $member)
 		{
-			$memberId = (int)$member['USER_ID'];
-			$projectId = (int)$member['GROUP_ID'];
+			$memberId = (int) $member['USER_ID'];
+			$projectId = (int) $member['GROUP_ID'];
+
+			$isScrumProject = array_key_exists($projectId, $scrumMasters);
 
 			$isOwner = ($member['ROLE'] === UserToGroupTable::ROLE_OWNER);
 			$isModerator = ($member['ROLE'] === UserToGroupTable::ROLE_MODERATOR);
+			$isScrumMaster = ($isScrumProject && $scrumMasters[$projectId] === $memberId);
 			$isAccessRequesting = ($member['ROLE'] === UserToGroupTable::ROLE_REQUEST);
 			$isAccessRequestingByMe = (
 				$isAccessRequesting && $member['INITIATED_BY_TYPE'] === UserToGroupTable::INITIATED_BY_USER
@@ -256,6 +289,7 @@ class Provider
 				'ID' => $memberId,
 				'IS_OWNER' => ($isOwner ? 'Y' : 'N'),
 				'IS_MODERATOR' => ($isModerator ? 'Y' : 'N'),
+				'IS_SCRUM_MASTER' => ($isScrumMaster ? 'Y' : 'N'),
 				'IS_ACCESS_REQUESTING' => ($isAccessRequesting ? 'Y' : 'N'),
 				'IS_ACCESS_REQUESTING_BY_ME' => ($isAccessRequestingByMe ? 'Y' : 'N'),
 				'IS_AUTO_MEMBER' => $member['AUTO_MEMBER'],

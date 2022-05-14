@@ -30,7 +30,7 @@
 	      }
 
 	      main_core.Event.bind(this.categorySelect, 'change', this.filter.bind(this));
-	      this.filter(this.categorySelect.value);
+	      this.filter();
 	    }
 	  }, {
 	    key: "filter",

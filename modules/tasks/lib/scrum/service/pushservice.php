@@ -8,22 +8,14 @@ use Bitrix\Tasks\Scrum\Form\ItemForm;
 
 class PushService
 {
-	public function sendAddItemEvent(ItemForm $item): void
+	public function sendAddItemEvent(ItemForm $addedItem): void
 	{
 		$entityService = new EntityService();
-		$entity = $entityService->getEntityById($item->getEntityId());
+
+		$entity = $entityService->getEntityById($addedItem->getEntityId());
 		if ($entityService->getErrors() || $entity->isEmpty())
 		{
 			return;
-		}
-
-		$itemService = new ItemService();
-		$userService = new UserService();
-
-		$taskService = null;
-		if ($item->getSourceId())
-		{
-			$taskService = new TaskService($item->getCreatedBy());
 		}
 
 		$tag = 'itemActions_' . $entity->getGroupId();
@@ -33,7 +25,10 @@ class PushService
 			[
 				'module_id' => 'tasks',
 				'command' => 'itemAdded',
-				'params' => $this->getItemData($item, $itemService, $taskService, $userService),
+				'params' => [
+					'id' => $addedItem->getId(),
+					'groupId' => $entity->getGroupId(),
+				],
 			]
 		);
 	}
@@ -41,22 +36,11 @@ class PushService
 	public function sendUpdateItemEvent(ItemForm $updatedItem): void
 	{
 		$entityService = new EntityService();
+
 		$entity = $entityService->getEntityById($updatedItem->getEntityId());
 		if ($entityService->getErrors() || $entity->isEmpty())
 		{
 			return;
-		}
-
-		$itemService = new ItemService();
-		$userService = new UserService();
-
-		$item = $itemService->getItemById($updatedItem->getId());
-		$item->setTmpId($updatedItem->getTmpId());
-
-		$taskService = null;
-		if ($item->getSourceId())
-		{
-			$taskService = new TaskService($item->getCreatedBy());
 		}
 
 		$tag = 'itemActions_' . $entity->getGroupId();
@@ -66,7 +50,11 @@ class PushService
 			[
 				'module_id' => 'tasks',
 				'command' => 'itemUpdated',
-				'params' => $this->getItemData($item, $itemService, $taskService, $userService),
+				'params' => [
+					'id' => $updatedItem->getId(),
+					'groupId' => $entity->getGroupId(),
+					'tmpId' => $updatedItem->getTmpId(),
+				],
 			]
 		);
 	}
@@ -89,7 +77,8 @@ class PushService
 				'module_id' => 'tasks',
 				'command' => 'itemRemoved',
 				'params' => [
-					'itemId' => $removedItem->getId(),
+					'id' => $removedItem->getId(),
+					'groupId' => $entity->getGroupId(),
 				],
 			]
 		);
@@ -171,75 +160,35 @@ class PushService
 
 	public function sendAddSprintEvent(EntityForm $inputSprint)
 	{
-		$sprintService = new SprintService();
-		$sprint = $sprintService->getSprintById($inputSprint->getId());
-		if ($sprintService->getErrors() || $sprint->isEmpty())
-		{
-			return;
-		}
-
-		$sprint->setTmpId($inputSprint->getTmpId());
-
-		$tag = 'entityActions_' . $sprint->getGroupId();
-
-		$sprintData = $sprintService->getSprintData($sprint);
-		$sprintData['groupId'] = $sprint->getGroupId();
+		$tag = 'entityActions_' . $inputSprint->getGroupId();
 
 		\CPullWatch::addToStack(
 			$tag,
 			[
 				'module_id' => 'tasks',
 				'command' => 'sprintAdded',
-				'params' => $sprintData,
+				'params' => [
+					'id' => $inputSprint->getId(),
+					'groupId' => $inputSprint->getGroupId(),
+					'tmpId' => $inputSprint->getTmpId(),
+				],
 			]
 		);
 	}
 
 	public function sendUpdateSprintEvent(EntityForm $inputSprint)
 	{
-		$sprintService = new SprintService();
-		$sprint = $sprintService->getSprintById($inputSprint->getId());
-		if ($sprintService->getErrors() || $sprint->isEmpty())
-		{
-			return;
-		}
-
-		$entityService = new EntityService();
-		$kanbanService = new KanbanService();
-		$itemService = new ItemService();
-
-		$sprintData = $sprintService->getSprintData($sprint);
-
-		$entityCounters = $entityService->getCounters(
-			$sprint->getGroupId(),
-			$sprint->getId(),
-			new TaskService($sprint->getCreatedBy()),
-			(!$sprint->isActiveSprint())
-		);
-
-		$sprintData['storyPoints'] = $entityCounters['storyPoints'];
-		$sprintData['completedStoryPoints'] = $sprintService->getCompletedStoryPoints(
-			$sprint,
-			$kanbanService,
-			$itemService
-		);
-		$sprintData['uncompletedStoryPoints'] = $sprintService->getUnCompletedStoryPoints(
-			$sprint,
-			$kanbanService,
-			$itemService
-		);
-
-		$sprintData['completedTasks'] = count($kanbanService->getFinishedTaskIdsInSprint($sprint->getId()));
-		$sprintData['uncompletedTasks'] = count($kanbanService->getUnfinishedTaskIdsInSprint($sprint->getId()));
-
-		$tag = 'entityActions_' . $sprint->getGroupId();
+		$tag = 'entityActions_' . $inputSprint->getGroupId();
 
 		\CPullWatch::addToStack(
 			$tag,
 			[
 				'module_id' => 'tasks',
 				'command' => 'sprintUpdated',
-				'params' => $sprintData,
+				'params' => [
+					'id' => $inputSprint->getId(),
+					'groupId' => $inputSprint->getGroupId(),
+				],
 			]
 		);
 	}
@@ -254,99 +203,10 @@ class PushService
 				'module_id' => 'tasks',
 				'command' => 'sprintRemoved',
 				'params' => [
-					'sprintId' => $inputSprint->getId(),
+					'id' => $inputSprint->getId(),
+					'groupId' => $inputSprint->getGroupId(),
 				],
 			]
 		);
-	}
-
-	private function getItemData(
-		ItemForm $item,
-		ItemService $itemService,
-		TaskService $taskService = null,
-		UserService $userService = null
-	): array
-	{
-		$itemData = $itemService->getItemData($item);
-
-		if ($item->getEpicId())
-		{
-			$epicService = new EpicService();
-
-			$epic = $epicService->getEpic($item->getEpicId());
-
-			$epicData = $epic->getId() ? $epic->toArray() : [];
-
-			$itemData['epic'] = $epicData;
-		}
-
-		$taskId = $item->getSourceId();
-		if ($taskService && $taskId)
-		{
-			$itemData = $itemData + $taskService->getItemsData([$taskId])[$taskId];
-
-			$itemData = $taskService->getItemsDynamicData([$taskId], [$taskId => $itemData])[$taskId];
-
-			$entityService = new EntityService();
-
-			$entity = $entityService->getEntityById($item->getEntityId());
-
-			if ($entity->isActiveSprint())
-			{
-				if ($itemData['isParentTask'] === 'N' && !empty($itemData['completedSubTasksInfo']))
-				{
-					$itemData['isParentTask'] = 'Y';
-				}
-
-				if ($itemData['isParentTask'] === 'Y')
-				{
-					$kanbanService = new KanbanService();
-
-					foreach ($itemData['completedSubTasksInfo'] as $sourceId => $subTaskInfo)
-					{
-						if ($kanbanService->isTaskInKanban($entity->getId(), $sourceId))
-						{
-							$itemData['subTasksInfo'][$sourceId] = $subTaskInfo;
-						}
-					}
-
-					$itemData['isParentTask'] = ($itemData['subTasksInfo'] ? 'Y' : 'N');
-					$itemData['subTasksCount'] = count($itemData['subTasksInfo']);
-					$itemData['subTasksInfo'] = $this->getSubStoryPoints($itemData['subTasksInfo'], $itemService);
-				}
-			}
-			else if ($entity->isCompletedSprint())
-			{
-				if ($itemData['isSubTask'] === 'Y')
-				{
-					$itemData['isSubTask'] = 'N';
-				}
-			}
-			else
-			{
-				if ($itemData['isParentTask'] === 'Y')
-				{
-					$itemData['subTasksInfo'] = $this->getSubStoryPoints($itemData['subTasksInfo'], $itemService);
-				}
-			}
-		}
-
-		if ($userService && isset($itemData['responsibleId']))
-		{
-			$itemData['responsible'] = $userService->getInfoAboutUsers([$itemData['responsibleId']]);
-		}
-
-		return $itemData;
-	}
-
-	private function getSubStoryPoints(array $subTasksInfo, ItemService $itemService): array
-	{
-		foreach ($subTasksInfo as $sourceId => $subTaskInfo)
-		{
-			$itemsStoryPoints = $itemService->getItemsStoryPointsBySourceId([$sourceId]);
-			$subTasksInfo[$sourceId]['storyPoints'] = $itemsStoryPoints[$sourceId];
-		}
-
-		return $subTasksInfo;
 	}
 }

@@ -86,6 +86,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 			'NAME_TEMPLATE' => ($this->arParams['~NAME_TEMPLATE'] ?? ''),
 			'PATH_TO_IMPORT' => ($this->arParams['PATH_TO_IMPORT'] ?? ''),
 			'ONLY_COLUMNS' => ($this->arParams['ONLY_COLUMNS'] ?? 'N'),
+			'ONLY_ITEMS' => ($this->arParams['ONLY_ITEMS'] ?? 'N'),
 			'CATEGORY_ID' => (int)($this->arParams['EXTRA']['CATEGORY_ID'] ?? 0),
 		];
 		$this->kanban = Kanban\Desktop::getInstance($type, $params);
@@ -441,6 +442,7 @@ class CrmKanbanComponent extends \CBitrixComponent
 		$this->arResult['FIELDS_DISABLED'] = $this->componentParams['FIELDS_DISABLED'];
 		$this->arResult['CATEGORIES'] = $this->componentParams['CATEGORIES'];
 		$this->arResult['FIELDS_SECTIONS'] = $this->componentParams['FIELDS_SECTIONS'];
+		//$this->arResult['STUB'] = $this->getStub(); TODO: исправить, когда по€в€тс€ актуальные тексты
 
 		$context = Application::getInstance()->getContext();
 		$request = $context->getRequest();
@@ -1385,5 +1387,48 @@ class CrmKanbanComponent extends \CBitrixComponent
 				$this->arResult['DEFAULT_HEADER_SECTION_ID'] = $section['id'];
 			}
 		}
+	}
+
+	private function getStub(): array
+	{
+		$type = $this->getEntity()->getTypeName();
+
+		// TODO: исправить, когда по€в€тс€ актуальные тексты
+		if ($type === CCrmOwnerType::LeadName)
+		{
+			return [
+				'title' => Loc::getMessage('CRM_KANBAN_TITLE_LEAD'),
+				'description' => Loc::getMessage('CRM_KANBAN_NO_DATA_TEXT')
+			];
+		}
+
+		if ($type === CCrmOwnerType::DealName)
+		{
+			return [
+				'title' => Loc::getMessage('CRM_KANBAN_TITLE_DEAL'),
+				'description' => Loc::getMessage('CRM_KANBAN_NO_DATA_TEXT')
+			];
+		}
+
+		if ($type === CCrmOwnerType::InvoiceName)
+		{
+			return [
+				'title' => Loc::getMessage('CRM_KANBAN_TITLE_INVOICE'),
+				'description' => Loc::getMessage('CRM_KANBAN_NO_DATA_TEXT')
+			];
+		}
+
+		if ($type === CCrmOwnerType::QuoteName)
+		{
+			return [
+				'title' => Loc::getMessage('CRM_KANBAN_TITLE_QUOTE'),
+				'description' => Loc::getMessage('CRM_KANBAN_NO_DATA_TEXT')
+			];
+		}
+
+		return [
+			'title' => '',
+			'description' => Loc::getMessage('CRM_KANBAN_NO_DATA_TEXT')
+		];
 	}
 }

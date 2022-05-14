@@ -187,7 +187,7 @@ class VoximplantNumbersComponent extends \CBitrixComponent
 			$possibleNumbers[] = trim($filter['EXTENSION']) .'%';
 		}
 
-		if(count($possibleNumbers) > 0)
+		if(!empty($possibleNumbers))
 		{
 			$result['%=UF_PHONE_INNER'] = $possibleNumbers;
 		}

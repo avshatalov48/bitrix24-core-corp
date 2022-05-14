@@ -7,6 +7,11 @@ export class StatsCalculator
 			return 0;
 		}
 
+		if (first === '')
+		{
+			return 100;
+		}
+
 		const result = Math.round(second * 100 / first);
 
 		return (isNaN(result) ? 0 : result);

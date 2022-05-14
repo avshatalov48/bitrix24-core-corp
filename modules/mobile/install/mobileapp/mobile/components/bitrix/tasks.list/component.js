@@ -6,6 +6,8 @@ include('InAppNotifier');
 	const platform = Application.getPlatform();
 	const caches = new Map();
 
+	const { EntityReady } = jn.require('entity-ready');
+
 	class Util
 	{
 		static debounce(fn, timeout, ctx)
@@ -681,7 +683,7 @@ include('InAppNotifier');
 			this.setCounterValue(this.cache.get().counterValue || 0);
 			this.setVisualCounters();
 
-			ChatReadyCheck.wait().then(() => this.updateCounters());
+			EntityReady.wait('chat').then(() => this.updateCounters());
 		}
 
 		updateCounters()

@@ -14,6 +14,7 @@ use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
+use Bitrix\Tasks\Internals\Log\Log;
 use Bitrix\Tasks\Item\Result;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Internals\Runtime;
@@ -61,7 +62,16 @@ final class Task extends \Bitrix\Tasks\Item\Access
 	{
 		$accessController = $this->getAccessController($item->getUserId());
 		$res = $accessController->check(ActionDictionary::ACTION_TASK_SAVE, TaskModel::createNew(), $this->getTaskModel($item));
-		return $this->makeResult($res, 'update');
+		if (!$res)
+		{
+			(new Log('DEBUG_TASKS_TASK_FROM_TEMPLATE_ACCESS'))->collect([
+				$accessController->getErrors(),
+				$item->getUserId(),
+				$item->getRawValues(),
+			]);
+		}
+
+		return $this->makeResult($res, 'create');
 	}
 
 	public function canUpdate($item, $userId = 0)

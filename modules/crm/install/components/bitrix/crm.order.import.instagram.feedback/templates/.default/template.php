@@ -24,7 +24,7 @@ $APPLICATION->SetTitle(\Bitrix\Main\Localization\Loc::getMessage('CRM_OIIF_FEEDB
 		s.src = u + '?' + (1 * new Date());
 		var h = d.getElementsByTagName('script')[0];
 		h.parentNode.insertBefore(s, h);
-	})(window, document, 'https://landing.bitrix24.ru/bitrix/js/crm/form_loader.js', 'b24form');
+	})(window, document, 'https://product-feedback.bitrix24.com/bitrix/js/crm/form_loader.js', 'b24form');
 </script>
 <div class="import-instagram-limit-container">
 	<div class="import-instagram-limit-inner" id="import-instagram-feedback-form">

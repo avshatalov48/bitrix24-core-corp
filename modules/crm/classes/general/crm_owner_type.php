@@ -109,25 +109,50 @@ class CCrmOwnerType
 	private static $COMPANY_TYPE = null;
 	private static $COMPANY_INDUSTRY = null;
 
-	public static function IsDefined($typeID): bool
+	/**
+	 * Return true if entity with $typeId exists.
+	 *
+	 * @param int $entityTypeId
+	 * @return bool
+	 */
+	public static function IsDefined($entityTypeId): bool
 	{
-		$typeID = (int)$typeID;
+		$entityTypeId = (int)$entityTypeId;
 
-		$isStatic = $typeID === self::System
-			|| ($typeID >= self::FirstOwnerType && $typeID <= self::LastOwnerType);
+		$isStatic = $entityTypeId === self::System
+			|| ($entityTypeId >= self::FirstOwnerType && $entityTypeId <= self::LastOwnerType);
 
 		if ($isStatic)
 		{
 			return true;
 		}
 
-		if (!static::isPossibleDynamicTypeId($typeID) && !static::isPossibleSuspendedDynamicTypeId($typeID))
+		if (!static::isPossibleDynamicTypeId($entityTypeId) && !static::isPossibleSuspendedDynamicTypeId($entityTypeId))
 		{
 			return false;
 		}
 
 		return (
-			Container::getInstance()->getTypeByEntityTypeId(static::getRealDynamicTypeId($typeID)) !== null
+			Container::getInstance()->getTypeByEntityTypeId(static::getRealDynamicTypeId($entityTypeId)) !== null
+		);
+	}
+
+	/**
+	 * Return true if $entityTypeId is a correct identifier (entity with such entityTypeId can exist).
+	 *
+	 * @param int $entityTypeId
+	 * @return bool
+	 */
+	public static function isCorrectEntityTypeId(int $entityTypeId): bool
+	{
+		return (
+			$entityTypeId === self::System
+			|| (
+				$entityTypeId >= self::FirstOwnerType
+				&& $entityTypeId <= self::LastOwnerType
+			)
+			|| static::isPossibleDynamicTypeId($entityTypeId)
+			|| static::isPossibleSuspendedDynamicTypeId($entityTypeId)
 		);
 	}
 
@@ -3344,6 +3369,7 @@ class CCrmOwnerType
 	{
 		return (
 			self::isUseDynamicTypeBasedApproach($entityTypeId)
+			|| $entityTypeId === self::Lead
 			|| $entityTypeId === self::Deal
 			|| $entityTypeId === self::Quote
 		);

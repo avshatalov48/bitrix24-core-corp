@@ -25,7 +25,7 @@ if(isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")
 					if(w[b]['forms']) return;
 					var s=d.createElement('script');s.async=1;s.src=u+'?'+(1*new Date());
 					var h=d.getElementsByTagName('script')[0];h.parentNode.insertBefore(s,h);
-				})(window,document,'https://landing.bitrix24.ru/bitrix/js/crm/form_loader.js','B24DocGenFeedback');
+				})(window,document,'https://product-feedback.bitrix24.com/bitrix/js/crm/form_loader.js','B24DocGenFeedback');
 			</script>
 			<?$APPLICATION->ShowHead(); ?>
 		</head>
@@ -49,7 +49,7 @@ else
 			if(w[b]['forms']) return;
 			var s=d.createElement('script');s.async=1;s.src=u+'?'+(1*new Date());
 			var h=d.getElementsByTagName('script')[0];h.parentNode.insertBefore(s,h);
-		})(window,document,'https://landing.bitrix24.ru/bitrix/js/crm/form_loader.js','B24DocGenFeedback');
+		})(window,document,'https://product-feedback.bitrix24.com/bitrix/js/crm/form_loader.js','B24DocGenFeedback');
 	</script>
 	<div class="document-limit-container"><?
 }

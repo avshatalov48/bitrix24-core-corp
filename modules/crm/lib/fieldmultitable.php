@@ -4,6 +4,7 @@ namespace Bitrix\Crm;
 
 use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields;
+use Bitrix\Main\ORM\Query\Result;
 use Bitrix\Main\PhoneNumber\Parser;
 
 /**
@@ -139,5 +140,27 @@ class FieldMultiTable extends DataManager
 		}
 
 		return $result;
+	}
+
+	final public static function fetchByOwner(ItemIdentifier $owner): Result
+	{
+		return static::getList([
+			'select' => ['*'],
+			'filter' => [
+				'=ENTITY_ID' => \CCrmOwnerType::ResolveName($owner->getEntityTypeId()),
+				'=ELEMENT_ID' => $owner->getEntityId(),
+			],
+		]);
+	}
+
+	final public static function fetchByMultipleOwners(int $entityTypeId, array $entityIds): Result
+	{
+		return static::getList([
+			'select' => ['*'],
+			'filter' => [
+				'=ENTITY_ID' => \CCrmOwnerType::ResolveName($entityTypeId),
+				'@ELEMENT_ID' => $entityIds,
+			],
+		]);
 	}
 }

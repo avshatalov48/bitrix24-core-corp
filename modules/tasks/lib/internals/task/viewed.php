@@ -9,6 +9,7 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\Tasks\Integration\Forum;
 use Bitrix\Tasks\Integration\Pull\PushService;
 use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Internals\TaskDataManager;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\MemberTable;
 use Exception;
@@ -23,16 +24,16 @@ use Bitrix\Tasks\Internals\Counter\CounterDictionary;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_Viewed_Query query()
- * @method static EO_Viewed_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Viewed_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_Viewed_Result getById($id)
- * @method static EO_Viewed_Result getList(array $parameters = array())
+ * @method static EO_Viewed_Result getList(array $parameters = [])
  * @method static EO_Viewed_Entity getEntity()
  * @method static \Bitrix\Tasks\Internals\Task\EO_Viewed createObject($setDefaultValues = true)
  * @method static \Bitrix\Tasks\Internals\Task\EO_Viewed_Collection createCollection()
  * @method static \Bitrix\Tasks\Internals\Task\EO_Viewed wakeUpObject($row)
  * @method static \Bitrix\Tasks\Internals\Task\EO_Viewed_Collection wakeUpCollection($rows)
  */
-class ViewedTable extends Main\Entity\DataManager
+class ViewedTable extends TaskDataManager
 {
 	private const STEP_LIMIT = 5000;
 

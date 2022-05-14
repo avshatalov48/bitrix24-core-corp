@@ -59,7 +59,6 @@ export class CreateLine
 
 	onSuccess(data: {})
 	{
-		BX.SidePanel.Instance.close();
 		BX.SidePanel.Instance.open(
 			this.path.replace('#LINE#', data.config_id),
 			{ width: 700, cacheable: false }

@@ -47,7 +47,7 @@ class CVoxImplantOutgoing
 			{
 				$userDefaultLine = $defaultPortalLine;
 			}
-			else if(count($portalLines) > 0)
+			else if(!empty($portalLines))
 			{
 				reset($portalLines);
 				$userDefaultLine = key($portalLines);

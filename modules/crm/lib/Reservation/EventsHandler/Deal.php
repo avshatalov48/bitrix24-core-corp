@@ -60,6 +60,10 @@ final class Deal
 		if ($semanticId === Crm\PhaseSemantics::SUCCESS)
 		{
 			$processInventoryManagementResult = self::ship($dealId);
+			if ($processInventoryManagementResult->isSuccess())
+			{
+				$processInventoryManagementResult = self::unReserve($dealId);
+			}
 		}
 		elseif ($semanticId === Crm\PhaseSemantics::FAILURE)
 		{
@@ -95,18 +99,19 @@ final class Deal
 
 		$basketReservation = new Crm\Reservation\BasketReservation();
 		$basketReservation->addProducts($dealProducts);
-		$reservationMap = $basketReservation->getReservationMap();
+		$reservedProducts = $basketReservation->getReservedProducts();
 
 		$defaultStore = Catalog\StoreTable::getDefaultStoreId();
 		foreach ($dealProducts as $product)
 		{
-			$storeId = (int)$product['STORE_ID'] > 0 ? $product['STORE_ID'] : $defaultStore;
+			$reservedProduct = $reservedProducts[$product['ID']] ?? null;
+			$storeId = $reservedProduct ? $reservedProduct['STORE_ID'] : $defaultStore;
 
 			$xmlId = null;
-			if (isset($reservationMap[$product['ID']]))
+			if ($reservedProduct)
 			{
 				$basketReservationData = Sale\Reservation\Internals\BasketReservationTable::getById(
-					$reservationMap[$product['ID']]
+					$reservedProduct['RESERVE_ID']
 				)->fetch();
 				if ($basketReservationData)
 				{

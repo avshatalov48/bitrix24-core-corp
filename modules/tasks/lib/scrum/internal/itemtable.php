@@ -22,9 +22,9 @@ use Bitrix\Tasks\Scrum\Service\PushService;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_Item_Query query()
- * @method static EO_Item_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Item_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_Item_Result getById($id)
- * @method static EO_Item_Result getList(array $parameters = array())
+ * @method static EO_Item_Result getList(array $parameters = [])
  * @method static EO_Item_Entity getEntity()
  * @method static \Bitrix\Tasks\Scrum\Internal\EO_Item createObject($setDefaultValues = true)
  * @method static \Bitrix\Tasks\Scrum\Internal\EO_Item_Collection createCollection()
@@ -36,11 +36,6 @@ class ItemTable extends Entity\DataManager
 	public static function getTableName()
 	{
 		return 'b_tasks_scrum_item';
-	}
-
-	public static function getCollectionClass()
-	{
-		return Items::class;
 	}
 
 	/**

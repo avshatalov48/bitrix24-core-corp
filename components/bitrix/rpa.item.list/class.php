@@ -20,13 +20,14 @@ class RpaItemListComponent extends \Bitrix\Rpa\Components\ItemList
 	{
 		$this->init();
 
-		if($this->getErrors())
+		if ($this->getErrors())
 		{
 			$this->includeComponentTemplate();
 			return;
 		}
 		\Bitrix\Rpa\Driver::getInstance()->getUrlManager()->setUserItemListView($this->type->getId(), \Bitrix\Rpa\UrlManager::ITEMS_LIST_VIEW_LIST);
 		$this->getApplication()->setTitle(htmlspecialcharsbx($this->type->getTitle()));
+		$this->processGridActions();
 
 		$this->arResult['FILTER'] = $this->prepareFilter();
 		$this->arResult['GRID'] = $this->prepareGrid();
@@ -37,6 +38,45 @@ class RpaItemListComponent extends \Bitrix\Rpa\Components\ItemList
 		];
 
 		$this->includeComponentTemplate();
+	}
+
+	protected function processGridActions(): void
+	{
+		$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
+		if (
+			$request->getRequestMethod() !== 'POST'
+			|| !check_bitrix_sessid()
+		)
+		{
+			return;
+		}
+		$removeActionButtonParamName = 'action_button_' . $this->getGridId();
+		if ($request->getPost($removeActionButtonParamName) === 'delete')
+		{
+			$ids = $request->getPost('ID');
+			if (!is_array($ids))
+			{
+				return;
+			}
+			$userPermissions = Driver::getInstance()->getUserPermissions();
+			\Bitrix\Main\Type\Collection::normalizeArrayValuesByInt($ids);
+			if (empty($ids))
+			{
+				return;
+			}
+			$items = $this->type->getItems([
+				'filter' => [
+					'@ID' => $ids,
+				],
+			]);
+			foreach ($items as $item)
+			{
+				if ($userPermissions->canDeleteItem($item))
+				{
+					Driver::getInstance()->getFactory()->getDeleteCommand($item)->run();
+				}
+			}
+		}
 	}
 
 	protected function prepareGrid(): array
@@ -100,10 +140,20 @@ class RpaItemListComponent extends \Bitrix\Rpa\Components\ItemList
 		$grid['AJAX_OPTION_HISTORY'] = "N";
 		$grid['AJAX_ID'] = \CAjax::GetComponentID("bitrix:main.ui.grid", '', '');
 		$grid['SHOW_PAGESIZE'] = true;
-		$grid['PAGE_SIZES'] = [['NAME' => 10, 'VALUE' => 10], ['NAME' => 20, 'VALUE' => 20], ['NAME' => 50, 'VALUE' => 50]];
-		$grid['SHOW_ROW_CHECKBOXES'] = false;
-		$grid['SHOW_CHECK_ALL_CHECKBOXES'] = false;
-		$grid['SHOW_ACTION_PANEL'] = false;
+		$grid['PAGE_SIZES'] = [['NAME' => '10', 'VALUE' => '10'], ['NAME' => '20', 'VALUE' => '20'], ['NAME' => '50', 'VALUE' => '50']];
+		$grid['SHOW_ROW_CHECKBOXES'] = true;
+		$grid['SHOW_CHECK_ALL_CHECKBOXES'] = true;
+		$grid['SHOW_ACTION_PANEL'] = true;
+		$snippet = new \Bitrix\Main\Grid\Panel\Snippet();
+		$grid['ACTION_PANEL'] = [
+			'GROUPS' => [
+				[
+					'ITEMS' => [
+						$snippet->getRemoveButton(),
+					],
+				],
+			]
+		];
 
 		return $grid;
 	}

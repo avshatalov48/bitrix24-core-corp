@@ -65,6 +65,11 @@ class WebFormList
 		let switchers = container.querySelectorAll('[' + switcherAttr + ']');
 		switchers = Array.prototype.slice.call(switchers);
 		switchers.forEach(node => {
+			if (node.querySelector('.crm-webform-qr-btn'))
+			{
+				return;
+			}
+
 			const data = JSON.parse(node.getAttribute(switcherAttr));
 			(new BX.Crm.Form.Qr({link: data.path})).renderTo(node);
 		});
@@ -462,7 +467,7 @@ class WebFormList
 			if (switcher)
 			{
 				nodeText.textContent = switcher.isChecked()
-					? data.dateToday
+					? BX.date.format(BX.date.convertBitrixFormat(BX.message("FORMAT_DATE")))
 					: Loc.getMessage('CRM_WEBFORM_LIST_NOT_ACTIVE')
 				;
 				switcher.setLoading(false)

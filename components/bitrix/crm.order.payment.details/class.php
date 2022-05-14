@@ -366,20 +366,18 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 		//endregion
 
 		//region WAIT TARGET DATES
-		$this->arResult['WAIT_TARGET_DATES'] = array();
-
+		$this->arResult['WAIT_TARGET_DATES'] = [];
 		if ($this->userType)
 		{
 			$userFields = $this->userType->GetFields();
 			foreach($userFields as $userField)
 			{
-				if($userField['USER_TYPE_ID'] === 'date')
+				if($userField['USER_TYPE_ID'] === 'date' && $userField['MULTIPLE'] !== 'Y')
 				{
-					$this->arResult['WAIT_TARGET_DATES'][] = array(
+					$this->arResult['WAIT_TARGET_DATES'][] = [
 						'name' => $userField['FIELD_NAME'],
-						'caption' => isset($userField['EDIT_FORM_LABEL'])
-							? $userField['EDIT_FORM_LABEL'] : $userField['FIELD_NAME']
-					);
+						'caption' => $userField['EDIT_FORM_LABEL'] ?? $userField['FIELD_NAME']
+					];
 				}
 			}
 		}

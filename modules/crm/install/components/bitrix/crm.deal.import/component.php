@@ -187,6 +187,8 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 
 				if ($currentKey == 'TYPE_ID')
 				{
+					$data = htmlspecialcharsbx($data);
+
 					if(isset($arStatus['TYPE_LIST'][$data]))
 					{
 						// 1. Try to interpret value as ID
@@ -267,6 +269,8 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 				}
 				elseif ($currentKey == 'SOURCE_ID')
 				{
+					$data = htmlspecialcharsbx($data);
+
 					if(isset($arStatus['SOURCE_LIST'][$data]))
 					{
 						// 1. Try to interpret value as ID
@@ -322,6 +326,8 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 				}
 				elseif ($currentKey  == 'EVENT_ID')
 				{
+					$data = htmlspecialcharsbx($data);
+
 					if(isset($arStatus['EVENT_LIST'][$data]))
 					{
 						$arDeal[$currentKey] = $data;

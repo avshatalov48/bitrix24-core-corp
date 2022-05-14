@@ -175,12 +175,15 @@ class All extends Queue
 					{
 						$leaveTransfer = (string)$this->config['WELCOME_BOT_LEFT'] === Config::BOT_LEFT_CLOSE && Im\User::getInstance($this->session['OPERATOR_ID'])->isBot()? 'N':'Y';
 
-						$this->chat->transfer([
-							'FROM' => $this->session['OPERATOR_ID'],
-							'TO' => $resultOperatorQueue['OPERATOR_ID'],
-							'MODE' => Chat::TRANSFER_MODE_AUTO,
-							'LEAVE' => $leaveTransfer
-						]);
+						$this->chat->transfer(
+							[
+								'FROM' => $this->session['OPERATOR_ID'],
+								'TO' => $resultOperatorQueue['OPERATOR_ID'],
+								'MODE' => Chat::TRANSFER_MODE_AUTO,
+								'LEAVE' => $leaveTransfer
+							],
+							$this->sessionManager
+						);
 					}
 
 					$updateSessionCheck['UNDISTRIBUTED'] = 'N';

@@ -25,3 +25,4 @@ $MESS["SHOP_MENU_SHOP_MARKETING"] = "Online store marketing";
 $MESS["SHOP_MENU_SHOP_TITLE"] = "Online stores";
 $MESS["SHOP_MENU_SITES"] = "Sites";
 $MESS["SHOP_MENU_WEBFORMS"] = "CRM forms";
+$MESS["SHOP_MENU_PAY_SYSTEMS_DELIVERY"] = "Payment systems and Delivery";

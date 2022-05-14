@@ -601,6 +601,12 @@ elseif($action === 'SAVE')
 					$fields['EXCH_RATE'] = CCrmCurrency::GetExchangeRate($fields['CURRENCY_ID']);
 				}
 
+				$notChangeStatus = ($_POST['NOT_CHANGE_STATUS'] ?? 'N');
+				if ($notChangeStatus === 'Y')
+				{
+					unset($fields['STATUS_ID']);
+				}
+
 				$options = array('REGISTER_SONET_EVENT' => true, 'FIELD_CHECK_OPTIONS' => $fieldCheckOptions);
 				if(!$enableRequiredUserFieldCheck)
 				{

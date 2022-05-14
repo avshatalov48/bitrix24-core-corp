@@ -14,9 +14,9 @@ use Bitrix\Main\Entity\EnumField;
 use Bitrix\Main\Localization\Loc;
 
 use Bitrix\Main\ORM\Fields\Relations\OneToMany;
-use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Tasks\Internals\Task\Result\ResultTable;
+use Bitrix\Tasks\Internals\Task\TagTable;
 use Bitrix\Tasks\Util\Entity\DateTimeField;
 use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\UserField;
@@ -30,32 +30,20 @@ Loc::loadMessages(__FILE__);
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_Task_Query query()
- * @method static EO_Task_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Task_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_Task_Result getById($id)
- * @method static EO_Task_Result getList(array $parameters = array())
+ * @method static EO_Task_Result getList(array $parameters = [])
  * @method static EO_Task_Entity getEntity()
  * @method static \Bitrix\Tasks\Internals\TaskObject createObject($setDefaultValues = true)
  * @method static \Bitrix\Tasks\Internals\EO_Task_Collection createCollection()
  * @method static \Bitrix\Tasks\Internals\TaskObject wakeUpObject($row)
  * @method static \Bitrix\Tasks\Internals\EO_Task_Collection wakeUpCollection($rows)
  */
-class TaskTable extends Entity\DataManager
+class TaskTable extends TaskDataManager
 {
 	public static function getObjectClass()
 	{
 		return TaskObject::class;
-	}
-
-	public static function deleteList(array $filter)
-	{
-		$entity = static::getEntity();
-		$connection = $entity->getConnection();
-
-		return $connection->query(sprintf(
-			'DELETE FROM %s WHERE %s',
-			$connection->getSqlHelper()->quote($entity->getDbTableName()),
-			Query::buildFilterSql($entity, $filter)
-		));
 	}
 
 	/**
@@ -290,7 +278,8 @@ class TaskTable extends Entity\DataManager
 				'default_value' => '1',
 			),
 
-			(new OneToMany("MEMBER_LIST", MemberTable::class, "TASK"))->configureJoinType("inner")
+			(new OneToMany("MEMBER_LIST", MemberTable::class, "TASK"))->configureJoinType("inner"),
+			(new OneToMany("TAG_LIST", TagTable::class, "TASK")),
 
 		);
 	}

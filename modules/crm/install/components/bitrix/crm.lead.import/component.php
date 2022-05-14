@@ -509,10 +509,14 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 
 				if ($currentKey == 'HONORIFIC')
 				{
+					$data = htmlspecialcharsbx($data);
+
 					$arLead[$currentKey] = isset($arStatus['HONORIFIC'][$data]) ? $data : array_search($data, $arStatus['HONORIFIC']);
 				}
 				elseif ($currentKey == 'STATUS_ID')
 				{
+					$data = htmlspecialcharsbx($data);
+
 					if(isset($arStatus['STATUS_LIST'][$data]))
 					{
 						// 1. Try to interpret value as ID
@@ -534,6 +538,8 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 				}
 				elseif ($currentKey == 'SOURCE_ID')
 				{
+					$data = htmlspecialcharsbx($data);
+
 					if(isset($arStatus['SOURCE_LIST'][$data]))
 					{
 						// 1. Try to interpret value as ID

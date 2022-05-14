@@ -29,14 +29,23 @@ class CCrmActivityTask
 			$arFields['MULTIPLE'] = 'Y';
 			$CAllUserTypeEntity = new CUserTypeEntity();
 			$CAllUserTypeEntity->Add($arFields);		
-		}		
-				
-		if (isset($arFilter['ENTITY_TYPE']) && isset($arFilter['ENTITY_ID']))
+		}
+
+		$entityTypeId = \CCrmOwnerType::ResolveID($arFilter['ENTITY_TYPE'] ?? '');
+		if (
+			$entityTypeId > 0
+			&& isset($arFilter['ENTITY_ID'])
+			&& (int)$arFilter['ENTITY_ID'] > 0
+		)
 		{
-			$arFilter['ENTITY_TYPE'] = CUserTypeCrm::GetShortEntityType($arFilter['ENTITY_TYPE']);
-			$arFilter['UF_CRM_TASK'] = $arFilter['ENTITY_TYPE'].'_'.$arFilter['ENTITY_ID'];
-			unset($arFilter['ENTITY_TYPE'], $arFilter['ENTITY_ID']);			
-		} 
+			$arFilter['UF_CRM_TASK'] = \Bitrix\Crm\UserField\Types\ElementType::getValueByIdentifier(
+				new \Bitrix\Crm\ItemIdentifier(
+					(int)$arFilter['ENTITY_TYPE'],
+					(int)$arFilter['ENTITY_ID']
+				)
+			);
+			unset($arFilter['ENTITY_TYPE'], $arFilter['ENTITY_ID']);
+		}
 		else if (isset($arFilter['ENTITY_TYPE']))
 		{
 

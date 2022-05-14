@@ -228,20 +228,17 @@ $sortBpLog = false;
 	</form>
 </div>
 <? } ?>
-<?
-$showBpUri = (clone $currentUri);
-$showBpUri->addParams(['action' => 'showBp',]);
-?>
 
 <script type="text/javascript">
 	BX(function () {
+		const location = "<?= $arResult['PATH_TO_FILE_VIEW'] ?>";
 		BX.Disk['FileViewClass_<?= $component->getComponentId() ?>'] = new BX.Disk.FileViewClass({
 			withoutEventBinding: true,
 			object: {
 				id: <?= $arResult['FILE']['ID'] ?>
 			},
 			urls: {
-				fileShowBp: '<?=\CUtil::JSUrlEscape($showBpUri) ?>'
+				fileShowBp: BX.util.add_url_param(location, {action: 'showBp'})
 			}
 		});
 

@@ -370,8 +370,13 @@ class ChannelOpenLine implements iProvider
 
 				$portalCode = Notifications\Alias::getCodeForScenario(Notifications\Settings::SCENARIO_VIRTUAL_WHATSAPP);
 				$url = ImConnector\Tools\Connectors\Notifications::getVirtualWhatsappLink($portalCode, $lang);
+				$onclick = method_exists(ImConnector\Tools\Connectors\Notifications::class, "getVirtualWhatsappOnClick")
+					? ImConnector\Tools\Connectors\Notifications::getVirtualWhatsappOnClick($url)
+					: ""
+				;
 				$widgetParams = [
 					'url' => $url,
+					'onclick' => $onclick,
 					'messages' => ImConnector\Tools\Connectors\Notifications::getWidgetLocalization($lang),
 					'disclaimerUrl' => ImConnector\Tools\Connectors\Notifications::getWidgetDisclaimerUrl($lang),
 				];

@@ -46,6 +46,7 @@ if ($arResult['MYCOMPANY_MODE'] === 'Y')
 $arDefaultUrlTemplates404 = array(
 	'index' => 'index.php',
 	'list' => 'list/',
+	'category' => 'category/#category_id#/',
 	'import' => 'import/',
 	'edit' => 'edit/#company_id#/',
 	'show' => 'show/#company_id#/',
@@ -175,7 +176,7 @@ if(isset($_GET['redirect_to']))
 }
 
 $arResult['NAVIGATION_CONTEXT_ID'] = 'COMPANY';
-if($componentPage === 'index')
+if($componentPage === 'index' || $componentPage === 'category')
 {
 	$componentPage = 'list';
 }

@@ -389,7 +389,7 @@ $arNavParams = array(
 );
 
 $gridOptions = new \Bitrix\Main\Grid\Options($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
-$filterOptions = new \Bitrix\Main\UI\Filter\Options($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
+$filterOptions = new \Bitrix\Crm\Filter\UiFilterOptions($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
 $arFilter += $filterOptions->getFilter($arResult['FILTER']);
 
 foreach ($arFilter as $k => $v)
@@ -732,6 +732,10 @@ if ($arResult['EVENT_ENTITY_LINK'] == 'Y')
 			continue;
 		}
 		$entityTypeId = \CCrmOwnerType::ResolveID($typeName);
+		if ($entityTypeId === CCrmOwnerType::Order)
+		{
+			continue;
+		}
 		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($entityTypeId);
 		if (!$factory)
 		{

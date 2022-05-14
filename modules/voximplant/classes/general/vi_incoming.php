@@ -270,7 +270,7 @@ class CVoxImplantIncoming
 			if ($queryResult === false)
 			{
 				$httpClientErrors = $http->getError();
-				if(count($httpClientErrors) > 0)
+				if(!empty($httpClientErrors))
 				{
 					foreach ($httpClientErrors as $code => $message)
 					{

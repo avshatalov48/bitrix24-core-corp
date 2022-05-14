@@ -19,11 +19,6 @@ class Quote extends Entity
 		return \CCrmOwnerType::QuoteName;
 	}
 
-	public function getStatusEntityId(): string
-	{
-		return 'QUOTE_STATUS';
-	}
-
 	public function getItemsSelectPreset(): array
 	{
 		return ['ID', 'STATUS_ID', 'TITLE', 'DATE_CREATE', 'BEGINDATE', 'CLOSEDATE', 'OPPORTUNITY', 'OPPORTUNITY_ACCOUNT', 'CURRENCY_ID', 'ACCOUNT_CURRENCY_ID', 'CONTACT_ID', 'COMPANY_ID', 'MODIFY_BY_ID', 'ASSIGNED_BY'];

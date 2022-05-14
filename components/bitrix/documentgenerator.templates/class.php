@@ -10,7 +10,6 @@ use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Error;
-use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Web\Uri;
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
@@ -111,6 +110,10 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 						$this->arResult['TEMPLATE']['NUMERATOR_ID'] = $template->NUMERATOR_ID;
 						$this->arResult['TEMPLATE']['WITH_STAMPS'] = $template->WITH_STAMPS;
 						$this->arResult['TEMPLATE']['PROVIDERS'] = [];
+						if (empty($this->arParams['MODULE']))
+						{
+							$this->arParams['MODULE'] = $template->MODULE_ID;
+						}
 						foreach($template->getDataProviders() as $provider)
 						{
 							$this->arResult['TEMPLATE']['PROVIDERS'][] = $this->arResult['PROVIDERS'][$provider];
@@ -230,7 +233,7 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 	{
 		if(Loader::includeModule('documentgenerator') && Loader::includeModule('socialnetwork'))
 		{
-			if(empty($this->arParams['MODULE']) || (ModuleManager::isModuleInstalled($this->arParams['MODULE'])) && Loader::includeModule($this->arParams['MODULE']))
+			if(empty($this->arParams['MODULE']) || Loader::includeModule($this->arParams['MODULE']))
 			{
 				return true;
 			}
@@ -402,7 +405,7 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 		$grid['AJAX_OPTION_HISTORY'] = "N";
 		$grid['AJAX_ID'] = \CAjax::GetComponentID("bitrix:main.ui.grid", '', '');
 		$grid['SHOW_PAGESIZE'] = true;
-		$grid['PAGE_SIZES'] = [['NAME' => 10, 'VALUE' => 10], ['NAME' => 20, 'VALUE' => 20], ['NAME' => 50, 'VALUE' => 50]];
+		$grid['PAGE_SIZES'] = [['NAME' => '10', 'VALUE' => '10'], ['NAME' => '20', 'VALUE' => '20'], ['NAME' => '50', 'VALUE' => '50']];
 		$grid['ACTIONS'] = [
 			'delete' => true,
 		];

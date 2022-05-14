@@ -17,7 +17,7 @@ $canEdit = $arResult['CAN_EDIT'];
 			$items = [];
 			foreach ($arResult['VALUE'] as $tag)
 			{
-				$items[] = '<a data-slider-ignore-autobinding="true" target="_top" href="'.$arResult['PATH_TO_TASKS'] . '?apply_filter=Y&TAG=' . $tag.'">' . $tag . '</a>';
+				$items[] = '<a data-slider-ignore-autobinding="true" target="_top" href="'.$arResult['PATH_TO_TASKS'] . '?apply_filter=Y&TAG=' . urlencode($tag).'">' . $tag . '</a>';
 			}
 			echo implode(', ', $items);
 			unset($items);

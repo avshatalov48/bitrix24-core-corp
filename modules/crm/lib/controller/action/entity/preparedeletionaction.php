@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Controller\Action\Entity;
 
+use Bitrix\Crm\Filter\Factory;
 use Bitrix\Main;
 use Bitrix\Crm;
 
@@ -55,27 +56,18 @@ class PrepareDeletionAction extends Main\Engine\Action
 		}
 		else
 		{
-			$filterFields = isset($params['filter']) && is_array($params['filter']) ? $params['filter'] : array();
-			if(empty($filterFields))
-			{
-				$filterOptions = new Main\UI\Filter\Options($gridID);
-				$filterFields = $filterOptions->getFilter();
-				$entityFilter = Crm\Filter\Factory::createEntityFilter(
-					Crm\Filter\Factory::createEntitySettings($entityTypeID, $gridID)
-				);
+			$filterFields = isset($params['filter']) && is_array($params['filter']) ? $params['filter'] : null;
 
-				$entityFilter->prepareListFilterParams($filterFields);
-				Crm\Search\SearchEnvironment::convertEntityFilterValues($entityTypeID, $filterFields);
-				\CCrmEntityHelper::PrepareMultiFieldFilter($filterFields, array(), '=%', false);
-
-				$entityFilter->clearServiceUiFilterFields($filterFields);
-			}
-
-			$entity = Crm\Entity\EntityManager::resolveByTypeID($entityTypeID);
-			if($entity)
-			{
-				$entity->prepareFilter($filterFields, $params);
-			}
+			$filterFields = Factory::createEntityFilter(
+				Factory::createEntitySettings(
+					$entityTypeID,
+					$gridID,
+					Factory::convertSettingsParams(
+						$entityTypeID,
+						(isset($params['extras']) && is_array($params['extras']) ? $params['extras'] : [])
+					)
+				)
+			)->getValue($filterFields);
 
 			ksort($filterFields, SORT_STRING);
 			$hash = md5(

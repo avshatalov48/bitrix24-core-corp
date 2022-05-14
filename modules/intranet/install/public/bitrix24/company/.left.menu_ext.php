@@ -4,7 +4,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-use Bitrix\Intranet\Site\Sections\AutomationSection;
 use Bitrix\Intranet\Site\Sections\TimemanSection;
 use Bitrix\Landing\Rights;
 use Bitrix\Main\Loader;
@@ -36,23 +35,6 @@ $aMenuLinks = [
 	],
 ];
 
-// OLD MENU
-if (Loader::includeModule('intranet'))
-{
-	$item = AutomationSection::getLists();
-	if ($item['available'])
-	{
-		$aMenuLinks[] = [
-			$item['title'] ?? '',
-			$item['url'] ?? '',
-			$item['extraUrls'] ?? [],
-			$item['menuData'] ?? [],
-			'',
-		];
-	}
-}
-
-/* NEW MENU
 if (Loader::includeModule('intranet') && TimemanSection::isAvailable())
 {
 	$aMenuLinks[] = TimemanSection::getRootMenuItem();
@@ -84,4 +66,3 @@ if (\Bitrix\Main\ModuleManager::isModuleInstalled('im'))
 		''
 	];
 }
-*/

@@ -26,6 +26,11 @@ class ItemSettings extends EntitySettings
 		return $this->type;
 	}
 
+	public function getEntityTypeID()
+	{
+		return $this->getType()->getEntityTypeId();
+	}
+
 	public function getEntityTypeName(): string
 	{
 		return Container::getInstance()->getFactory($this->type->getEntityTypeId())->getUserFieldEntityId();

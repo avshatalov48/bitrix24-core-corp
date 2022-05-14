@@ -1,0 +1,5 @@
+<?php
+$MESS['CRM_IMCONNECTOR_TELEGRAM_ORDER'] = 'Заказ №#ORDER_ID# от #DATE# на сумму #SUM_WITH_CURRENCY# оформлен';
+$MESS['CRM_IMCONNECTOR_TELEGRAM_PAYMENT_PAID'] = 'Заказ №#ORDER_ID# от #DATE# на сумму #SUM_WITH_CURRENCY# оплачен';
+$MESS['CRM_IMCONNECTOR_TELEGRAM_SHIPMENT_DEDUCTED'] = 'Заказ №#ORDER_ID# от #DATE# на сумму #SUM_WITH_CURRENCY# отгружен';
+$MESS['CRM_IMCONNECTOR_TELEGRAM_SHIPMENT_READY'] = 'Заказ №#ORDER_ID# от #DATE# на сумму #SUM_WITH_CURRENCY# можно будет забрать со склада по адресу "#STORE_ADDRESS#"';

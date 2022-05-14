@@ -10,5 +10,6 @@ $MESS["CRM_DEAL_MODIFICATION_IS_MANUAL_OPPORTUNITY"] = "Изменен режи�
 $MESS["CRM_DEAL_MODIFICATION_IS_MANUAL_OPPORTUNITY_N"] = "На основе стоимости товаров";
 $MESS["CRM_DEAL_MODIFICATION_IS_MANUAL_OPPORTUNITY_Y"] = "Вручную";
 $MESS["CRM_DEAL_SUMMARY_ORDER"] = "Заказ №#ORDER_ID# от #ORDER_DATE#";
+$MESS["CRM_DEAL_SUMMARY_ORDER_WITHOUT_DATE"] = "Заказ №#ORDER_ID#";
 $MESS["CRM_DEAL_CHECK_TITLE"] = "Чек \"#NAME#\" от #DATE_PRINT#";
 ?>

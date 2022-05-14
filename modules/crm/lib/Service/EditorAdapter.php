@@ -12,6 +12,7 @@ use Bitrix\Crm\Controller\Action\Entity\SearchAction;
 use Bitrix\Crm\Controller\Entity;
 use Bitrix\Crm\Conversion\EntityConversionWizard;
 use Bitrix\Crm\Currency;
+use Bitrix\Crm\Entity\EntityEditor;
 use Bitrix\Crm\Entity\Traits\VisibilityConfig;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\EO_Status_Collection;
@@ -25,7 +26,6 @@ use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Currency\CurrencyTable;
-use Bitrix\Main\Error;
 use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -89,11 +89,22 @@ class EditorAdapter
 		$this->dependantFieldsMap = $dependantFieldsMap;
 	}
 
+	/**
+	 * Return true if method processByItem has been invoked.
+	 *
+	 * @return bool
+	 */
 	public function hasData(): bool
 	{
 		return !empty($this->processedEntityFields);
 	}
 
+	/**
+	 * Return true if new products list enabled.
+	 *
+	 * @return bool
+	 * @throws \Bitrix\Main\LoaderException
+	 */
 	public static function isProductListEnabled(): bool
 	{
 		return (
@@ -102,6 +113,16 @@ class EditorAdapter
 		);
 	}
 
+	/**
+	 * Process information on $item that can be placed on $stages with $componentParameters.
+	 * This method does not change $item.
+	 *
+	 * @param Item $item
+	 * @param EO_Status_Collection $stages
+	 * @param array $componentParameters
+	 * @return $this
+	 * @throws \Bitrix\Main\ArgumentException
+	 */
 	public function processByItem(Item $item, EO_Status_Collection $stages, array $componentParameters = []): self
 	{
 		$mode = (int)($componentParameters['mode'] ?? ComponentMode::VIEW);
@@ -270,7 +291,7 @@ class EditorAdapter
 
 		$srcItemData = [];
 		$srcItemUserFieldsData = [];
-		\Bitrix\Crm\Entity\EntityEditor::prepareConvesionMap(
+		EntityEditor::prepareConvesionMap(
 			$conversionWizard,
 			$destinationItem->getEntityTypeId(),
 			$srcItemData,
@@ -325,7 +346,6 @@ class EditorAdapter
 	/**
 	 * @param int $childEntityTypeId
 	 * @param string|null $context
-	 * @throws InvalidOperationException
 	 */
 	protected function addParentRelationFields(int $childEntityTypeId, ?string $context = null): void
 	{
@@ -337,6 +357,12 @@ class EditorAdapter
 		}
 	}
 
+	/**
+	 * Add additional $field to entityFields.
+	 *
+	 * @param array $field
+	 * @return $this
+	 */
 	public function addEntityField(array $field): self
 	{
 		$this->additionalFields[$field['name']] = $field;
@@ -344,6 +370,13 @@ class EditorAdapter
 		return $this;
 	}
 
+	/**
+	 * Return processed entityData.
+	 * If processByItem has not been invoked - throws InvalidOperationException.
+	 *
+	 * @return array
+	 * @throws InvalidOperationException
+	 */
 	public function getEntityFields(): array
 	{
 		if (!$this->hasData())
@@ -353,6 +386,15 @@ class EditorAdapter
 		return $this->processedEntityFields;
 	}
 
+	/**
+	 * Add additional $value by $name to entityData.
+	 * If processByItem has not been invoked - throws InvalidOperationException.
+	 *
+	 * @param $name
+	 * @param $value
+	 * @return $this
+	 * @throws InvalidOperationException
+	 */
 	public function addEntityData($name, $value): self
 	{
 		if (!$this->hasData())
@@ -364,6 +406,13 @@ class EditorAdapter
 		return $this;
 	}
 
+	/**
+	 * Return processed entityData.
+	 * If processByItem has not been invoked - throws InvalidOperationException.
+	 *
+	 * @return array
+	 * @throws InvalidOperationException
+	 */
 	public function getEntityData(): array
 	{
 		if (!$this->hasData())
@@ -691,15 +740,24 @@ class EditorAdapter
 		return false;
 	}
 
+	/**
+	 * Return field description for CLIENT field (with embedded editor)
+	 *
+	 * @param string $title
+	 * @param string|null $fieldName
+	 * @param string|null $fieldDataName
+	 * @param array $options
+	 * @return array
+	 */
 	public static function getClientField(
 		string $title,
-		?string $fieldName = null,
-		?string $fieldDataName = null,
+		?string $fieldName = self::FIELD_CLIENT,
+		?string $fieldDataName = self::FIELD_CLIENT_DATA_NAME,
 		array $options = []
 	): array
 	{
-		$fieldName = $fieldName ?? static::FIELD_CLIENT;
 		$showAlways = (bool)($options['showAlways'] ?? true);
+		$enableTooltip = !isset($options['enableTooltip']) || (bool)$options['enableTooltip'];
 
 		return [
 			'name' => $fieldName,
@@ -722,7 +780,7 @@ class EditorAdapter
 						'tagName' => \CCrmOwnerType::ContactName,
 					],
 				],
-				'map' => ['data' => $fieldDataName ?? static::FIELD_CLIENT_DATA_NAME],
+				'map' => ['data' => $fieldDataName],
 				'info' => $fieldName . '_INFO',
 				'lastCompanyInfos' => static::LAST_COMPANY_INFOS,
 				'lastContactInfos' => static::LAST_CONTACT_INFOS,
@@ -750,6 +808,7 @@ class EditorAdapter
 				],
 				'useExternalRequisiteBinding' => true,
 				'enableRequisiteSelection' => true,
+				'enableTooltip' => $enableTooltip,
 			],
 		];
 	}
@@ -821,6 +880,13 @@ class EditorAdapter
 		];
 	}
 
+	/**
+	 * Return entityField for product_row_summary field.
+	 *
+	 * @param string $title
+	 * @param string|null $fieldName
+	 * @return array
+	 */
 	public static function getProductRowSummaryField(string $title, ?string $fieldName = null): array
 	{
 		return [
@@ -835,6 +901,14 @@ class EditorAdapter
 		];
 	}
 
+	/**
+	 * Return entityField for Opportunity field.
+	 *
+	 * @param string $title
+	 * @param string|null $fieldName
+	 * @param bool $isPaymentsEnabled
+	 * @return array
+	 */
 	public static function getOpportunityField(
 		string $title,
 		?string $fieldName = null,
@@ -859,10 +933,18 @@ class EditorAdapter
 				'formatted' => 'FORMATTED_' . Item::FIELD_NAME_OPPORTUNITY,
 				'formattedWithCurrency' => 'FORMATTED_' . static::FIELD_OPPORTUNITY,
 				'isShowPaymentDocuments' => $isPaymentsEnabled,
+				'isWithOrdersMode' => \CCrmSaleHelper::isWithOrdersMode(),
 			],
 		];
 	}
 
+	/**
+	 * Return entityField for UTM field.
+	 *
+	 * @param string $title
+	 * @param string|null $fieldName
+	 * @return array
+	 */
 	public static function getUtmField(string $title, ?string $fieldName = null): array
 	{
 		if (!$fieldName)
@@ -881,6 +963,12 @@ class EditorAdapter
 		];
 	}
 
+	/**
+	 * Return entityField for Location field.
+	 *
+	 * @param Field $field
+	 * @return array
+	 */
 	public static function getLocationFieldDescription(Field $field): array
 	{
 		return [
@@ -914,6 +1002,8 @@ class EditorAdapter
 
 	protected static function getCurrencies(): array
 	{
+		$currencyList = [];
+
 		if (Loader::includeModule('currency'))
 		{
 			$currencyIterator = CurrencyTable::getList([
@@ -935,11 +1025,9 @@ class EditorAdapter
 					],
 				];
 			}
-
-			return $currencyList;
 		}
 
-		return [];
+		return $currencyList;
 	}
 
 	protected static function getOrderList(Item $item): array
@@ -953,6 +1041,13 @@ class EditorAdapter
 		])->fetchAll();
 	}
 
+	/**
+	 * Return description for product_row_proxy editor controller.
+	 *
+	 * @param string $productEditorId
+	 * @param string|null $fieldName
+	 * @return array
+	 */
 	public static function getProductRowProxyController(
 		string $productEditorId,
 		?string $fieldName = 'PRODUCT_ROW_PROXY'
@@ -967,6 +1062,14 @@ class EditorAdapter
 		];
 	}
 
+	/**
+	 * Return description for product_list editor controller.
+	 *
+	 * @param string $productListId
+	 * @param string $currencyId
+	 * @param string|null $fieldName
+	 * @return array
+	 */
 	public static function getProductListController(
 		string $productListId,
 		string $currencyId,
@@ -1012,6 +1115,16 @@ class EditorAdapter
 		return $emptyValuesCount === count($itemFieldNames);
 	}
 
+	/**
+	 * Generates entityField of the editor for $userFields with $visibilityConfig on item with $entityTypeId and $entityId.
+	 *
+	 * @param array $userFields
+	 * @param array $visibilityConfig
+	 * @param int $entityTypeId
+	 * @param int $entityId
+	 * @param string $fileHandlerUrl
+	 * @return array
+	 */
 	public static function prepareEntityUserFields(
 		array $userFields,
 		array $visibilityConfig,
@@ -1246,6 +1359,7 @@ class EditorAdapter
 	}
 
 	/**
+	 * @param Item $item
 	 * @param array $entityFields
 	 * @param array $entityData
 	 * @return array
@@ -1338,7 +1452,8 @@ class EditorAdapter
 		}
 		$entityData[$key] = $value;
 
-		$infoKey = $field['data']['info'] ?? ($field . '_INFO');
+		$fieldName = $field['name'];
+		$infoKey = $field['data']['info'] ?? ($fieldName . '_INFO');
 		if($value > 0)
 		{
 			$entityData[$infoKey] = $this->prepareCrmEntityData($field, $value);
@@ -1347,7 +1462,7 @@ class EditorAdapter
 		return $entityData;
 	}
 
-	protected function prepareCrmEntityData(array $field, int $entityId): ?array
+	public function prepareCrmEntityData(array $field, int $entityId, array $entityRequisiteData = null): ?array
 	{
 		$entityTypeId = $field['data']['typeId'] ?? null;
 		if (!\CCrmOwnerType::IsEntity($entityTypeId))
@@ -1360,6 +1475,10 @@ class EditorAdapter
 		$canRead = EntityAuthorization::checkReadPermission($entityTypeId, $entityId);
 
 		$requireEditRequisiteData = (isset($field['data']['enableMyCompanyOnly']) && $field['data']['enableMyCompanyOnly'] === true);
+		if ($requireEditRequisiteData && $entityRequisiteData === null)
+		{
+			$entityRequisiteData = $this->getMyCompanyRequisitesEntityData();
+		}
 
 		$data = \CCrmEntitySelectorHelper::PrepareEntityInfo(
 			$entityTypeName,
@@ -1375,43 +1494,40 @@ class EditorAdapter
 		);
 
 		//in data selected always default requisites, we have to actualize it manually
-		if ($requireEditRequisiteData)
+		if (
+			$requireEditRequisiteData
+			&& isset($data['advancedInfo']['requisiteData'])
+			&& is_array($data['advancedInfo']['requisiteData'])
+		)
 		{
-			if (
-				isset($data['advancedInfo']['requisiteData'])
-				&& is_array($data['advancedInfo']['requisiteData'])
-			)
+			if ($entityRequisiteData[static::FIELD_MY_COMPANY_REQUISITE_ID] <= 0)
 			{
-				$entityRequisiteData = $this->getMyCompanyRequisitesEntityData();
-				if ($entityRequisiteData[static::FIELD_MY_COMPANY_REQUISITE_ID] <= 0)
+				return $data;
+			}
+			foreach ($data['advancedInfo']['requisiteData'] as &$requisiteData)
+			{
+				$isSelected = (
+					(int)$requisiteData['requisiteId']
+					=== (int)$entityRequisiteData[static::FIELD_MY_COMPANY_REQUISITE_ID]
+				);
+				$requisiteData['selected'] = $isSelected;
+				$requisiteData['bankDetailIdSelected'] = $entityRequisiteData[static::FIELD_MY_COMPANY_BANK_DETAIL_ID];
+				if (
+					$entityRequisiteData[static::FIELD_MY_COMPANY_BANK_DETAIL_ID] > 0
+					&& $isSelected
+					&& $requisiteData['requisiteData']
+				)
 				{
-					return $data;
-				}
-				foreach ($data['advancedInfo']['requisiteData'] as &$requisiteData)
-				{
-					$isSelected = (
-						(int)$requisiteData['requisiteId']
-						=== (int)$entityRequisiteData[static::FIELD_MY_COMPANY_REQUISITE_ID]
-					);
-					$requisiteData['selected'] = $isSelected;
-					$requisiteData['bankDetailIdSelected'] = $entityRequisiteData[static::FIELD_MY_COMPANY_BANK_DETAIL_ID];
-					if (
-						$entityRequisiteData[static::FIELD_MY_COMPANY_BANK_DETAIL_ID] > 0
-						&& $isSelected
-						&& $requisiteData['requisiteData']
-					)
+					$parsedRequisiteData = Json::decode($requisiteData['requisiteData']);
+					if(is_array($parsedRequisiteData['bankDetailViewDataList']))
 					{
-						$parsedRequisiteData = Json::decode($requisiteData['requisiteData']);
-						if(is_array($parsedRequisiteData['bankDetailViewDataList']))
+						foreach($parsedRequisiteData['bankDetailViewDataList'] as &$bankDetailData)
 						{
-							foreach($parsedRequisiteData['bankDetailViewDataList'] as &$bankDetailData)
-							{
-								$bankDetailData['selected'] = ((int)$bankDetailData['pseudoId'] === $entityRequisiteData[static::FIELD_MY_COMPANY_BANK_DETAIL_ID]);
-							}
-							unset($bankDetailData);
+							$bankDetailData['selected'] = ((int)$bankDetailData['pseudoId'] === (int)$entityRequisiteData[static::FIELD_MY_COMPANY_BANK_DETAIL_ID]);
 						}
-						$requisiteData['requisiteData'] = Json::encode($parsedRequisiteData);
+						unset($bankDetailData);
 					}
+					$requisiteData['requisiteData'] = Json::encode($parsedRequisiteData);
 				}
 			}
 		}
@@ -1506,8 +1622,19 @@ class EditorAdapter
 		return $opportunityEntityData;
 	}
 
+	/**
+	 * Return processed before entityData for Client field.
+	 * If processByItem has not been invoked - throws InvalidOperationException.
+	 *
+	 * @return array
+	 * @throws InvalidOperationException
+	 */
 	public function getClientEntityData(): array
 	{
+		if (!$this->hasData())
+		{
+			throw new InvalidOperationException('call EditorAdapter::processByItem() first');
+		}
 		return $this->clientEntityData;
 	}
 
@@ -1548,6 +1675,27 @@ class EditorAdapter
 	}
 
 	protected function generateClientInfo(
+		int $clientEntityTypeId,
+		int $clientEntityId,
+		bool $isEditRequisiteDataRequired = true
+	): array
+	{
+		return $this->getDataForClientField(
+			$clientEntityTypeId,
+			$clientEntityId,
+			$isEditRequisiteDataRequired
+		);
+	}
+
+	/**
+	 * Return entityField for Client field.
+	 *
+	 * @param int $clientEntityTypeId
+	 * @param int $clientEntityId
+	 * @param bool $isEditRequisiteDataRequired
+	 * @return array
+	 */
+	public function getDataForClientField(
 		int $clientEntityTypeId,
 		int $clientEntityId,
 		bool $isEditRequisiteDataRequired = true
@@ -1595,6 +1743,12 @@ class EditorAdapter
 		return $APPLICATION;
 	}
 
+	/**
+	 * Return entityData for UTM field.
+	 *
+	 * @param Item $item
+	 * @return string
+	 */
 	public static function getUtmEntityData(Item $item): string
 	{
 		ob_start();
@@ -1610,6 +1764,13 @@ class EditorAdapter
 		return ob_get_clean();
 	}
 
+	/**
+	 * Return html for location field.
+	 *
+	 * @param Item $item
+	 * @param string $fieldName
+	 * @return string|null
+	 */
 	public static function getLocationFieldHtml(Item $item, string $fieldName): ?string
 	{
 		if (!Loader::includeModule('sale'))
@@ -1683,10 +1844,37 @@ class EditorAdapter
 	 */
 	public function saveClientData(Item $item, string $clientJson): Result
 	{
+		$result = $this->getClientDataFromEmbeddedEditor($clientJson);
+		if ($result->isSuccess())
+		{
+			$data = $result->getData();
+			if (isset($data[Item::FIELD_NAME_COMPANY_ID]))
+			{
+				$item->setCompanyId($data[Item::FIELD_NAME_COMPANY_ID]);
+			}
+			if (isset($data[Item::FIELD_NAME_CONTACTS]))
+			{
+				$item->setContactIds($data[Item::FIELD_NAME_CONTACTS]);
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Parses $json with data from Client field from editor, saves data about company and contacts from it.
+	 * Return information about new field values, processed entities and requisiteBindings.
+	 *
+	 * @param string $json
+	 * @return Result
+	 */
+	public function getClientDataFromEmbeddedEditor(string $json): Result
+	{
 		$processedEntities = [];
 
+		$resultData = [];
 		/** @var array $clientData */
-		$clientData = \CUtil::JsObjectToPhp($clientJson);
+		$clientData = \CUtil::JsObjectToPhp($json);
 		if (!is_array($clientData))
 		{
 			$clientData = [];
@@ -1694,19 +1882,20 @@ class EditorAdapter
 
 		$requisiteBinding = null;
 		$companyData = $clientData['COMPANY_DATA'][0] ?? [];
+		$resultData[Item::FIELD_NAME_COMPANY_ID] = 0;
 		if ($companyData)
 		{
 			$entityResult = $this->saveClientEntity(\CCrmOwnerType::Company, $companyData);
-			$resultData = $entityResult->getData();
-			$companyId = (int)($resultData['id'] ?? 0);
-			if ($entityResult->isSuccess() && $companyId > 0)
+			$entityResultData = $entityResult->getData();
+			$companyId = (int)($entityResultData['id'] ?? 0);
+			if ($companyId > 0 && $entityResult->isSuccess())
 			{
-				$item->setCompanyId($companyId);
+				$resultData[Item::FIELD_NAME_COMPANY_ID] = $companyId;
 				$processedEntities[] = new ItemIdentifier(\CCrmOwnerType::Company, $companyId);
 
 				$requisiteBinding = $this->extractRequisiteBinding(
 					$companyData,
-					$resultData,
+					$entityResultData,
 					[
 						static::FIELD_REQUISITE_ID,
 						static::FIELD_BANK_DETAIL_ID,
@@ -1714,12 +1903,8 @@ class EditorAdapter
 				);
 			}
 		}
-		elseif (!empty($item->getCompanyId()))
-		{
-			// $companyData was not sent, but a company is bound with the item. It means the company was unbound from the item.
-			$item->setCompanyId(0);
-		}
 
+		$contactIds = [];
 		$contactData = array_values((array)($clientData['CONTACT_DATA'] ?? []));
 		if (!empty($contactData))
 		{
@@ -1730,15 +1915,15 @@ class EditorAdapter
 				{
 					continue;
 				}
-				$resultData = $entityResult->getData();
-				$contactId = (int)($resultData['id'] ?? 0);
+				$entityResultData = $entityResult->getData();
+				$contactId = (int)($entityResultData['id'] ?? 0);
 				if ($contactId > 0)
 				{
 					if ($contactIndex === 0 && $requisiteBinding === null)
 					{
 						$requisiteBinding = $this->extractRequisiteBinding(
 							$contact,
-							$resultData,
+							$entityResultData,
 							[
 								static::FIELD_REQUISITE_ID,
 								static::FIELD_BANK_DETAIL_ID,
@@ -1748,25 +1933,17 @@ class EditorAdapter
 
 					$contact['id'] = $contactId;
 					$processedEntities[] = new ItemIdentifier(\CCrmOwnerType::Contact, $contact['id']);
+					$contactIds[] = $contactId;
 				}
 			}
 			unset($contact);
-
-			$contactBindings = EntityBinding::prepareEntityBindings(\CCrmOwnerType::Contact, array_column($contactData, 'id'));
-			$item->bindContacts($contactBindings);
 		}
 
-		if (!empty($item->getContacts()) && count($item->getContacts()) > 0)
-		{
-			$deletedContactIds = $this->findDeletedEntries($item->getContacts(), $contactData, 'id');
-			$deletedContactsBindings = EntityBinding::prepareEntityBindings(\CCrmOwnerType::Contact, $deletedContactIds);
-			$item->unbindContacts($deletedContactsBindings);
-		}
+		$resultData[Item::FIELD_NAME_CONTACTS] = $contactIds;
+		$resultData['processedEntities'] = $processedEntities;
+		$resultData['requisiteBinding'] = $requisiteBinding;
 
-		return (new Result())->setData([
-			'processedEntities' => $processedEntities,
-			'requisiteBinding' => $requisiteBinding,
-		]);
+		return (new Result())->setData($resultData);
 	}
 
 	protected function saveClientEntity(int $entityTypeId, array $data): Result
@@ -1959,7 +2136,7 @@ class EditorAdapter
 
 		$parentEntityTypeId = (int)$data[static::CONTEXT_PARENT_TYPE_ID];
 		$parentEntityId = (int)$data[static::CONTEXT_PARENT_ID];
-		if (\CCrmOwnerType::IsDefined($parentEntityTypeId) && $parentEntityId > 0)
+		if ($parentEntityId > 0 && \CCrmOwnerType::IsDefined($parentEntityTypeId))
 		{
 			$parentFieldName = ParentFieldManager::getParentFieldName($parentEntityTypeId);
 			if (!array_key_exists($parentFieldName, $data))
@@ -1982,11 +2159,12 @@ class EditorAdapter
 	{
 		$name = $description['name'] ?? Item::FIELD_NAME_MYCOMPANY_ID;
 		$title = $description['title'] ?? Loc::getMessage('CRM_TYPE_ITEM_FIELD_MYCOMPANY_ID');
-		$editable = isset($description['editable']) ? (bool)$description['editable'] : true;
+		$editable = !isset($description['editable']) || (bool)$description['editable'];
 		$companyLegend = $description['companyLegend'] ?? null;
 		$fieldDataName = $description['fieldDataName'] ?? static::FIELD_MY_COMPANY_DATA_NAME;
 		$infoName = $description['infoName'] ?? static::FIELD_MY_COMPANY_DATA_INFO;
-		$showAlways = isset($description['showAlways']) ? (bool)$description['showAlways'] : true;
+		$showAlways = !isset($description['showAlways']) || (bool)$description['showAlways'];
+		$enableTooltip = !isset($description['enableTooltip']) || (bool)$description['enableTooltip'];
 
 		return [
 			'name' => $name,
@@ -2027,6 +2205,7 @@ class EditorAdapter
 					],
 				],
 				'useExternalRequisiteBinding' => true,
+				'enableTooltip' => $enableTooltip,
 			],
 		];
 	}
@@ -2065,11 +2244,22 @@ class EditorAdapter
 					$this->prepareCrmEntityData(
 						$editorField,
 						$myCompanyId,
+						$this->getMyCompanyRequisitesEntityData()
 					),
 				],
 			];
 		}
 
+		$this->entityData[static::LAST_MYCOMPANY_INFOS] = $this->getLastMyCompanyInfos();
+	}
+
+	/**
+	 * Return entityData for last myCompany elements.
+	 *
+	 * @return array
+	 */
+	public function getLastMyCompanyInfos(): array
+	{
 		$myCompanyItems = [];
 		$collection = \Bitrix\Crm\CompanyTable::getList([
 			'select' => ['ID'],
@@ -2091,7 +2281,7 @@ class EditorAdapter
 			];
 		}
 
-		$this->entityData[static::LAST_MYCOMPANY_INFOS] = SearchAction::prepareSearchResultsJson($myCompanyItems);
+		return SearchAction::prepareSearchResultsJson($myCompanyItems);
 	}
 
 	/**
@@ -2103,6 +2293,28 @@ class EditorAdapter
 	 */
 	public function saveMyCompanyDataFromEmbeddedEditor(Item $item, string $json): Result
 	{
+		$result = $this->getMyCompanyDataFromEmbeddedEditor($json);
+		if ($result->isSuccess())
+		{
+			$data = $result->getData();
+			if (isset($data[Item::FIELD_NAME_MYCOMPANY_ID]))
+			{
+				$item->setMycompanyId($data[Item::FIELD_NAME_MYCOMPANY_ID]);
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Parses $json with data from myCompany field with embedded editor, saves data about myCompany from it.
+	 * Return information about new field value and myCompany requisite bindings.
+	 *
+	 * @param string $json
+	 * @return Result
+	 */
+	public function getMyCompanyDataFromEmbeddedEditor(string $json): Result
+	{
 		$result = new Result();
 
 		$data = \CUtil::JsObjectToPhp($json);
@@ -2111,16 +2323,17 @@ class EditorAdapter
 			$data = [];
 		}
 
+		$resultData = [];
 		$companyData = $data['COMPANY_DATA'][0] ?? [];
 		if ($companyData)
 		{
 			$companyData['isMyCompany'] = true;
 			$entityResult = $this->saveClientEntity(\CCrmOwnerType::Company, $companyData);
-			$resultData = $entityResult->getData();
-			$companyId = (int)($resultData['id'] ?? 0);
-			if ($entityResult->isSuccess() && $companyId > 0)
+			$entityData = $entityResult->getData();
+			$companyId = (int)($entityData['id'] ?? 0);
+			if ($companyId > 0 && $entityResult->isSuccess())
 			{
-				$item->setMycompanyId($companyId);
+				$resultData[Item::FIELD_NAME_MYCOMPANY_ID] = $companyId;
 				$requisiteBinding = $this->extractRequisiteBinding(
 					$companyData,
 					$resultData,
@@ -2132,17 +2345,17 @@ class EditorAdapter
 
 				if (count($requisiteBinding) > 0)
 				{
-					$result->setData($requisiteBinding);
+					$resultData += $requisiteBinding;
 				}
 			}
 		}
-		elseif (!empty($item->getMycompanyId()))
+		else
 		{
 			// $companyData was not sent, but a company is bound with the item. It means the company was unbound from the item.
-			$item->setMycompanyId(0);
+			$resultData[Item::FIELD_NAME_MYCOMPANY_ID] = 0;
 		}
 
-		return $result;
+		return $result->setData($resultData);
 	}
 
 	/**
@@ -2150,6 +2363,7 @@ class EditorAdapter
 	 *
 	 * @param array $entityData
 	 * @param array $resultData
+	 * @param array $fieldNames
 	 * @return array
 	 */
 	public function extractRequisiteBinding(array $entityData, array $resultData, array $fieldNames): array

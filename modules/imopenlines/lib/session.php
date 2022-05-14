@@ -35,7 +35,7 @@ class Session
 	private $user = [];
 	private $connectorId = '';
 
-	/* @var \Bitrix\ImOpenLines\Chat */
+	/* @var Chat */
 	public $chat = null;
 
 	private $action = 'none';
@@ -94,12 +94,14 @@ class Session
 
 	/**
 	 * Session constructor.
-	 * @param array $config
-	 * @throws Main\LoaderException
+	 * @param array $config An array describing the setting of an open line.
 	 */
-	public function __construct($config = [])
+	public function __construct($config = null)
 	{
-		$this->config = $config;
+		if (is_array($config))
+		{
+			$this->config = $config;
+		}
 
 		Loader::includeModule('im');
 	}
@@ -109,7 +111,7 @@ class Session
 	 *
 	 * @param array $session Array describing the session.
 	 * @param array $config An array describing the setting of an open line.
-	 * @param array $chat An array describing the chat.
+	 * @param Chat $chat The chat instance.
 	 */
 	public function loadByArray($session, $config, $chat)
 	{
@@ -202,10 +204,10 @@ class Session
 		$params['SKIP_CREATE'] =  $params['SKIP_CREATE'] === 'Y'? 'Y': 'N';
 		$params['REOPEN'] =  $params['REOPEN'] === 'Y'? 'Y': 'N';
 
-		$configManager = new Config();
 		//Check open line configuration load
 		if (empty($this->config) && !empty($fields['CONFIG_ID']))
 		{
+			$configManager = new Config();
 			$this->config = $configManager->get($fields['CONFIG_ID']);
 		}
 		if (empty($this->config))
@@ -213,28 +215,29 @@ class Session
 			$result->addError(new Error(Loc::getMessage('IMOL_SESSION_ERROR_NO_IMOL_CONFIGURATION'), 'NO IMOL CONFIGURATION', __METHOD__, $params));
 		}
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
-			if($this->prepareUserChat($params) !== true || empty($this->chat))
+			if ($this->prepareUserChat($params) !== true || empty($this->chat))
 			{
 				$result->addError(new Error(Loc::getMessage('IMOL_SESSION_ERROR_NO_CHAT'), 'NO CHAT', __METHOD__, $params));
 			}
 		}
 		//END params
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			//Load session
 			$resultReading = $this->readingSession($fields, $params);
 
-			if($resultReading->isSuccess())
+			if ($resultReading->isSuccess())
 			{
-				if($resultReading->getResult() == true)
+				if ($resultReading->getResult() == true)
 				{
 					$result->setResult(true);
 				}
 				//If you do create a session
-				elseif(
+				elseif
+				(
 					$params['SKIP_CREATE'] !== 'Y' &&
 					!$this->isCloseVote()
 				)
@@ -268,11 +271,6 @@ class Session
 	 * @param $fields
 	 * @param $params
 	 * @return Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	protected function createSession($fields, $params)
 	{
@@ -564,10 +562,6 @@ class Session
 	/**
 	 * @param array $params
 	 * @return Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function getLast(array $params): Result
 	{
@@ -611,11 +605,6 @@ class Session
 	 * @param $fields
 	 * @param $params
 	 * @return Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	protected function readingSession($fields, $params)
 	{
@@ -734,11 +723,17 @@ class Session
 				}
 			}
 
-			if($result->isSuccess())
+			if ($result->isSuccess())
 			{
-				$this->chat = new Chat($this->session['CHAT_ID']);
+				if (
+					!($this->chat instanceof Chat)
+					|| ($this->chat->getData('ID') != $this->session['CHAT_ID'])
+				)
+				{
+					$this->chat = new Chat($this->session['CHAT_ID']);
+				}
 
-				if(
+				if (
 					$params['VOTE_SESSION'] === 'Y'
 					&& $loadSession['DATE_CLOSE_VOTE'] !== null
 					&& $loadSession['DATE_CLOSE_VOTE'] instanceof DateTime
@@ -837,9 +832,6 @@ class Session
 	 * @param $params
 	 * @param int $count
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	private function prepareUserChat($params, $count = 0)
 	{
@@ -850,7 +842,13 @@ class Session
 		{
 			if ($resultUserRelation['CHAT_ID'])
 			{
-				$this->chat = new Chat($resultUserRelation['CHAT_ID'], $params);
+				if (
+					!($this->chat instanceof Chat)
+					|| ($this->chat->getData('ID') != $resultUserRelation['CHAT_ID'])
+				)
+				{
+					$this->chat = new Chat($resultUserRelation['CHAT_ID'], $params);
+				}
 				if ($this->chat->isDataLoaded())
 				{
 					$this->user = $resultUserRelation;
@@ -904,11 +902,6 @@ class Session
 
 	/**
 	 * @param $userId
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function answer($userId): void
 	{
@@ -980,11 +973,6 @@ class Session
 
 	/**
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function markSpam()
 	{
@@ -1504,11 +1492,6 @@ class Session
 	 * @param bool $waitAnswer
 	 * @param bool $autoMode
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function setOperatorId($id, $waitAnswer = false, $autoMode = false)
 	{
@@ -2181,11 +2164,6 @@ class Session
 	 * Send notification about unavailability of the operator.
 	 *
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function sendMessageNoAnswer()
 	{
@@ -2227,11 +2205,6 @@ class Session
 	 * @param int $idConfigTask
 	 * @param array|bool $configTask
 	 * @return Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function sendAutomaticMessage($idTask, $idConfigTask, $configTask = []): Result
 	{
@@ -2247,7 +2220,7 @@ class Session
 			&& $this->session['PAUSE'] !== 'Y'
 			&& $this->session['STATUS'] < self::STATUS_WAIT_CLIENT
 			&& !empty($configTask)
-			&& !empty($configTask['ACTIVE'] === 'Y')
+			&& $configTask['ACTIVE'] === 'Y'
 			&& Loader::includeModule('imconnector')
 			&& $this->isEnableSendSystemMessage()
 		)
@@ -2435,7 +2408,6 @@ class Session
 	/**
 	 * @param string $type
 	 * @return bool
-	 * @throws Main\SystemException
 	 */
 	public static function getQueueFlagCache($type = "")
 	{
@@ -2451,9 +2423,22 @@ class Session
 		return $result;
 	}
 
+	/**
+	 * @return Chat
+	 */
 	public function getChat()
 	{
 		return $this->chat;
+	}
+
+	/**
+	 * @param Chat $chat
+	 */
+	public function setChat(Chat $chat): self
+	{
+		$this->chat = $chat;
+
+		return $this;
 	}
 
 	public function getAction()
@@ -2477,7 +2462,6 @@ class Session
 	 * To add users to the chat.
 	 *
 	 * @return bool
-	 * @throws Main\LoaderException
 	 */
 	public function joinUser()
 	{
@@ -2505,11 +2489,6 @@ class Session
 	/**
 	 * @param $fields
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function updateCrmFlags($fields)
 	{
@@ -2746,10 +2725,6 @@ class Session
 	 * @param null $commentValue
 	 * @param null $userId
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public static function voteAsHead($sessionId, $voteValue = null, $commentValue = null, $userId = null)
 	{
@@ -2888,7 +2863,6 @@ class Session
 	 * @param $duplicateSession
 	 * @param $actualSession
 	 * @return Result
-	 * @throws \Exception
 	 */
 	protected static function closeDuplicate($duplicateSession, $actualSession)
 	{
@@ -3089,11 +3063,6 @@ class Session
 	 * @param $nextExec
 	 * @param $offset
 	 * @return string
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public static function transferToNextInQueueAgent($nextExec, $offset = 0)
 	{
@@ -3105,11 +3074,6 @@ class Session
 	 *
 	 * @param $nextExec
 	 * @return string
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public static function closeByTimeAgent($nextExec)
 	{
@@ -3121,11 +3085,6 @@ class Session
 	 *
 	 * @param $nextExec
 	 * @return string
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public static function mailByTimeAgent($nextExec)
 	{
@@ -3148,9 +3107,6 @@ class Session
 	 * @param $sessionId
 	 *
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public static function deleteSession($sessionId)
 	{

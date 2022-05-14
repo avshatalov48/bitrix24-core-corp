@@ -231,7 +231,10 @@
 			}
 			this.showImageNode();
 			this.onReady(params);
-			this.hideLoader();
+			if (this.loader && this.loader.isShown())
+			{
+				this.loader.hide();
+			}
 		}
 	};
 

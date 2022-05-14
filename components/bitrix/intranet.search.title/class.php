@@ -466,29 +466,31 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 
 		$result = array();
 
-		$arMenuResult = $APPLICATION->IncludeComponent(
-			"bitrix:menu",
-			"left_vertical",
-			array(
-				"ROOT_MENU_TYPE" => file_exists($_SERVER["DOCUMENT_ROOT"].SITE_DIR.".superleft.menu_ext.php")
-					? "superleft" : "top",
-				"MENU_CACHE_TYPE" => "Y",
-				"MENU_CACHE_TIME" => "604800",
-				"MENU_CACHE_USE_GROUPS" => "N",
-				"MENU_CACHE_USE_USERS" => "Y",
-				"CACHE_SELECTED_ITEMS" => "N",
-				"MENU_CACHE_GET_VARS" => array(),
-				"MAX_LEVEL" => "2",
-				"CHILD_MENU_TYPE" => "left", // may be 'top' for b24
-				"USE_EXT" => "Y",
-				"DELAY" => "N",
-				"ALLOW_MULTI_SELECT" => "N",
-				"RETURN" => "Y"
-			),
+		$isBitrix24 = file_exists($_SERVER["DOCUMENT_ROOT"] . SITE_DIR . ".superleft.menu_ext.php");
+		$menuTypes = $isBitrix24 ? ['superleft', 'left', 'sub'] : ['top', 'left', 'sub'];
+
+		$arMenuResult = $APPLICATION->includeComponent(
+			'bitrix:menu',
+			'left_vertical',
+			[
+				'MENU_TYPES' => $menuTypes,
+				'MENU_CACHE_TYPE' => 'Y',
+				'MENU_CACHE_TIME' => '604800',
+				'MENU_CACHE_USE_GROUPS' => 'N',
+				'MENU_CACHE_USE_USERS' => 'Y',
+				'CACHE_SELECTED_ITEMS' => 'N',
+				'MENU_CACHE_GET_VARS' => [],
+				'MAX_LEVEL' => '3',
+				'USE_EXT' => 'Y',
+				'DELAY' => 'N',
+				'ALLOW_MULTI_SELECT' => 'N',
+				'RETURN' => 'Y',
+			],
 			false,
-			array("HIDE_ICONS" => "Y")
+			["HIDE_ICONS" => "Y"]
 		);
 
+		$itemCache = [];
 		foreach($arMenuResult as $menuItem)
 		{
 			if (empty($menuItem['LINK']))
@@ -499,17 +501,28 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 				|| mb_strpos(ToLower($menuItem['TEXT']), ToLower($searchString)) !== false
 			)
 			{
+				$url = isset($menuItem['PARAMS']) && isset($menuItem['PARAMS']["real_link"]) ?
+					$menuItem['PARAMS']["real_link"] :
+					$menuItem['LINK']
+				;
+
+				$hash = md5($menuItem['TEXT'] . '~' . $url);
+				if (isset($itemCache[$hash]))
+				{
+					continue;
+				}
+
+				$itemCache[$hash] = true;
+
 				$result[] = array(
 					'NAME' => $menuItem['TEXT'],
-					'URL' =>
-						isset($menuItem['PARAMS']) && isset($menuItem['PARAMS']["real_link"]) ?
-							$menuItem['PARAMS']["real_link"] :
-							$menuItem['LINK'],
+					'URL' => $url,
 					'CHAIN' => (!empty($menuItem['CHAIN']) && is_array($menuItem['CHAIN']) ? $menuItem['CHAIN'] : array($menuItem['TEXT'])),
 					'MODULE_ID' => '',
 					'PARAM1' => '',
 					'ITEM_ID' => 'M'.$menuItem['LINK'],
-					'ICON' => ''
+					'ICON' => '',
+					'ON_CLICK' => $menuItem['PARAMS']['onclick'] ?? '',
 				);
 			}
 		}

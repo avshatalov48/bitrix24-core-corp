@@ -1,7 +1,7 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
-use Bitrix\Crm\Restriction\RestrictionManager;
+use Bitrix\Crm\Category\EditorHelper;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Main;
@@ -77,6 +77,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 	/** @var bool */
 	private $isLocationModuleIncluded = false;
 	private $editorAdapter;
+	private $factory;
 
 	public function __construct($component = null)
 	{
@@ -93,10 +94,10 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 
 		$this->multiFieldInfos = CCrmFieldMulti::GetEntityTypeInfos();
 		$this->multiFieldValueTypeInfos = CCrmFieldMulti::GetEntityTypes();
-		$factory = Container::getInstance()->getFactory(\CCrmOwnerType::Contact);
-		if ($factory)
+		$this->factory = Container::getInstance()->getFactory(\CCrmOwnerType::Contact);
+		if ($this->factory)
 		{
-			$this->editorAdapter = $factory->getEditorAdapter();
+			$this->editorAdapter = $this->factory->getEditorAdapter();
 		}
 	}
 	public function initializeParams(array $params)
@@ -277,11 +278,18 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 		}
 		//endregion
 
+		$this->arResult['CATEGORY_ID'] = $this->getCategoryId();
+
+		if(!isset($this->arResult['CONTEXT']['PARAMS']['CATEGORY_ID']))
+		{
+			$this->arResult['CONTEXT']['PARAMS']['CATEGORY_ID'] = $this->arResult['CATEGORY_ID'];
+		}
+
 		//region Permissions check
 		if($this->isCopyMode)
 		{
-			if(!(\CCrmContact::CheckReadPermission($this->entityID, $this->userPermissions)
-				&& \CCrmContact::CheckCreatePermission($this->userPermissions))
+			if(!(\CCrmContact::CheckReadPermission($this->entityID, $this->userPermissions, $this->arResult['CATEGORY_ID'])
+				&& \CCrmContact::CheckCreatePermission($this->userPermissions, $this->arResult['CATEGORY_ID']))
 			)
 			{
 				ShowError(GetMessage('CRM_PERMISSION_DENIED'));
@@ -290,11 +298,11 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 		}
 		elseif($this->isEditMode)
 		{
-			if(\CCrmContact::CheckUpdatePermission($this->entityID, $this->userPermissions))
+			if(\CCrmContact::CheckUpdatePermission($this->entityID, $this->userPermissions, $this->arResult['CATEGORY_ID']))
 			{
 				$this->arResult['READ_ONLY'] = false;
 			}
-			elseif(\CCrmContact::CheckReadPermission($this->entityID, $this->userPermissions))
+			elseif(\CCrmContact::CheckReadPermission($this->entityID, $this->userPermissions, $this->arResult['CATEGORY_ID']))
 			{
 				$this->arResult['READ_ONLY'] = true;
 			}
@@ -306,7 +314,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 		}
 		else
 		{
-			if(\CCrmContact::CheckCreatePermission($this->userPermissions))
+			if(\CCrmContact::CheckCreatePermission($this->userPermissions, $this->arResult['CATEGORY_ID']))
 			{
 				$this->arResult['READ_ONLY'] = false;
 			}
@@ -326,8 +334,9 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 		$this->arResult['GUID'] = $this->arParams['GUID'] ?? "contact_{$this->entityID}_details";
 		$this->guid = $this->arResult['GUID'];
 
-		$this->arResult['EDITOR_CONFIG_ID'] = isset($this->arParams['EDITOR_CONFIG_ID'])
-			? $this->arParams['EDITOR_CONFIG_ID'] : $this->getDefaultConfigID();
+		$this->arResult['EDITOR_CONFIG_ID'] = $this->getEditorConfigId(
+			(string)($this->arParams['EDITOR_CONFIG_ID'] ?? '')
+		);
 		//endregion
 
 		//region Entity Info
@@ -359,7 +368,10 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 		$this->arResult['ENTITY_FIELDS'] = $this->prepareFieldInfos();
 		$this->arResult['ENTITY_ATTRIBUTE_SCOPE'] = FieldAttributeManager::resolveEntityScope(
 			CCrmOwnerType::Contact,
-			$this->entityID
+			$this->entityID,
+			[
+				'CATEGORY_ID' => $this->arResult['CATEGORY_ID'],
+			]
 		);
 		//endregion
 
@@ -557,21 +569,27 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 				)
 			);
 			$this->arResult['TABS'][] = $this->getEventTabParams();
-			$this->arResult['TABS'][] = array(
-				'id' => 'tab_portrait',
-				'name' => Loc::getMessage('CRM_CONTACT_TAB_PORTRAIT'),
-				'loader' => array(
-					'serviceUrl' => '/bitrix/components/bitrix/crm.client.portrait/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
-					'componentData' => array(
-						'template' => '.default',
-						'params' => array(
-							'ELEMENT_ID' => $this->entityID,
-							'ELEMENT_TYPE' => CCrmOwnerType::Contact,
-							'IS_FRAME' => 'Y'
-						)
-					)
-				)
-			);
+			if (!$this->arResult['CATEGORY_ID'])
+			{
+				$this->arResult['TABS'][] = [
+					'id' => 'tab_portrait',
+					'name' => Loc::getMessage('CRM_CONTACT_TAB_PORTRAIT'),
+					'loader' => [
+						'serviceUrl' => '/bitrix/components/bitrix/crm.client.portrait/lazyload.ajax.php?&site='
+							. SITE_ID
+							. '&'
+							. bitrix_sessid_get(),
+						'componentData' => [
+							'template' => '.default',
+							'params' => [
+								'ELEMENT_ID' => $this->entityID,
+								'ELEMENT_TYPE' => CCrmOwnerType::Contact,
+								'IS_FRAME' => 'Y'
+							]
+						]
+					]
+				];
+			}
 			if (CModule::IncludeModule('lists'))
 			{
 				$listIblock = CLists::getIblockAttachedCrm(CCrmOwnerType::ContactName);
@@ -655,7 +673,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 	}
 	public function getDefaultConfigID()
 	{
-		return 'contact_details';
+		return $this->getEditorConfigId();
 	}
 	public function prepareConfiguration()
 	{
@@ -751,6 +769,12 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 
 		$this->entityData = null;
 	}
+
+	public function setCategoryID(int $categoryID): void
+	{
+		$this->arResult['CATEGORY_ID'] = $categoryID;
+	}
+
 	public function prepareEntityDataScheme()
 	{
 		if($this->entityDataScheme === null)
@@ -1111,7 +1135,8 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 				CCrmOwnerType::Contact,
 				FieldAttributeManager::resolveEntityScope(
 					CCrmOwnerType::Contact,
-					$this->entityID
+					$this->entityID,
+					['CATEGORY_ID' => $this->arResult['CATEGORY_ID']]
 				)
 			);
 		}
@@ -1583,6 +1608,11 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 		}
 		//endregion
 
+		if(isset($this->entityData['CATEGORY_ID']))
+		{
+			$this->arResult['CATEGORY_ID'] = (int)$this->entityData['CATEGORY_ID'];
+		}
+
 		//region User Fields
 		foreach($this->userFields as $fieldName => $userField)
 		{
@@ -1987,5 +2017,38 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 			'ENTITY_DATA' => $this->prepareEntityData(),
 			'ENTITY_INFO' => $this->prepareEntityInfo()
 		];
+	}
+
+	protected function getCategoryId(): int
+	{
+		$categoryId = 0;
+		if ($this->entityID > 0)
+		{
+			return (int)Container::getInstance()->getFactory(CCrmOwnerType::Contact)->getItemCategoryId($this->entityID);
+		}
+
+		if (isset($this->request['category_id']))
+		{
+			$categoryId = (int)$this->request['category_id'];
+		}
+		elseif ($this->conversionWizard !== null)
+		{
+			// get category from conversion context:
+			$categoryId = $this->arResult['CONTEXT']['PARAMS']['CATEGORY_ID'] ?? $categoryId;
+		}
+
+		if ($categoryId && !($this->factory && $this->factory->isCategoryAvailable($categoryId)))
+		{
+			$categoryId = 0;
+		}
+
+		return $categoryId;
+	}
+
+	public function getEditorConfigId(string $sourceId = ''): string
+	{
+		$sourceId = ($sourceId === '') ? 'contact_details' : $sourceId;
+
+		return (new EditorHelper(\CCrmOwnerType::Contact))->getEditorConfigId($this->arResult['CATEGORY_ID'], $sourceId);
 	}
 }

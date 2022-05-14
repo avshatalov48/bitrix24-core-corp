@@ -361,7 +361,7 @@ class CVoxImplantCrmHelper
 		CVoxImplantHistory::WriteToLog($registeredEntites, "Created CRM entities");
 
 		$call->addCrmEntities($registeredEntites);
-		if(count($registeredEntites) > 0)
+		if(!empty($registeredEntites))
 		{
 			$call->updateCrmBindings($entityManager->getActivityBindings());
 		}
@@ -397,7 +397,7 @@ class CVoxImplantCrmHelper
 		CVoxImplantHistory::WriteToLog($callFields, 'CRM ADD CALL');
 
 		$bindings = $additionalParams['CRM_BINDINGS'];
-		if(!is_array($bindings) || count($bindings) == 0)
+		if(!is_array($bindings) || empty($bindings))
 		{
 			$entityManager = new \Bitrix\Crm\EntityManageFacility();
 			$entityManager->getSelector()->appendPhoneCriterion($callFields['PHONE_NUMBER']);
@@ -405,7 +405,7 @@ class CVoxImplantCrmHelper
 			$bindings = $entityManager->getActivityBindings();
 		}
 
-		if(count($bindings) == 0 && isset($callFields['CRM_ENTITY_TYPE']) && isset($callFields['CRM_ENTITY_ID']))
+		if(empty($bindings) && isset($callFields['CRM_ENTITY_TYPE']) && isset($callFields['CRM_ENTITY_ID']))
 		{
 			$entityManager = new \Bitrix\Crm\EntityManageFacility();
 			$entityManager->getSelector()->setEntity(
@@ -418,7 +418,7 @@ class CVoxImplantCrmHelper
 
 		$bindings = array_values($bindings);
 
-		if (count($bindings) == 0)
+		if (empty($bindings))
 		{
 			static::$lastError = 'Could not find associated crm entity for the current call';
 			return false;
@@ -608,7 +608,7 @@ class CVoxImplantCrmHelper
 		{
 			return false;
 		}
-		if(count($call->getCreatedCrmEntities()) > 0)
+		if(!empty($call->getCreatedCrmEntities()))
 		{
 			return false;
 		}
@@ -795,7 +795,7 @@ class CVoxImplantCrmHelper
 					$arFields['STORAGE_TYPE_ID'] = $activityFields['STORAGE_TYPE_ID'] ?: CCrmActivity::GetDefaultStorageTypeID();
 					$doSave = true;
 				}
-				else if($params['CALL_RECORD_ID'] > 0 && count($storageElementIds) == 0)
+				else if($params['CALL_RECORD_ID'] > 0 && empty($storageElementIds))
 				{
 					$storageElementIds[] = $params['CALL_RECORD_ID'];
 					$arFields['STORAGE_TYPE_ID'] = \Bitrix\Crm\Integration\StorageType::File;
@@ -1079,7 +1079,7 @@ class CVoxImplantCrmHelper
 		}, $crmEntities);
 
 		CVoxImplantHistory::WriteToLog($bindings, "Starting call trigger for call " . $call->getCallId() . "; bindings:");
-		if(is_array($bindings) && count($bindings) > 0)
+		if(!empty($bindings) && is_array($bindings))
 		{
 			\Bitrix\Crm\Automation\Trigger\CallTrigger::execute($bindings, ['LINE_NUMBER' => $call->getPortalNumber()]);
 		}
@@ -1106,7 +1106,7 @@ class CVoxImplantCrmHelper
 		}, $crmEntities);
 
 		CVoxImplantHistory::WriteToLog($bindings, "Starting missed call trigger for call " . $call->getCallId() . "; bindings:");
-		if(is_array($bindings) && count($bindings) > 0)
+		if(!empty($bindings) && is_array($bindings))
 		{
 			\Bitrix\Crm\Automation\Trigger\MissedCallTrigger::execute($bindings, ['LINE_NUMBER' => $call->getPortalNumber()]);
 		}
@@ -1581,9 +1581,9 @@ class CVoxImplantCrmHelper
 				$companyIds[] = $entity['ID'];
 		}
 
-		$contactFields = count($contactIds) > 0 ? static::resolveContactsFields($contactIds) : array();
-		$leadFields = count($leadIds) > 0 ? static::resolveLeadsFields($leadIds) : array();
-		$companyFields = count($companyIds) > 0 ? static::resolveCompaniesFields($companyIds): array();
+		$contactFields = !empty($contactIds) ? static::resolveContactsFields($contactIds) : array();
+		$leadFields = !empty($leadIds) ? static::resolveLeadsFields($leadIds) : array();
+		$companyFields = !empty($companyIds) ? static::resolveCompaniesFields($companyIds): array();
 
 		$result = array();
 		foreach ($entities as $entity)

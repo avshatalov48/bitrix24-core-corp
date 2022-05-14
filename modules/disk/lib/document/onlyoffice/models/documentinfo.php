@@ -276,7 +276,7 @@ final class DocumentInfo extends Model
 
 	public static function loadById($id, array $with = [])
 	{
-		return static::load(['EXTERNAL_HASH' => $id], $with);
+		return static::load(['=EXTERNAL_HASH' => $id], $with);
 	}
 
 	public static function getMapAttributes()

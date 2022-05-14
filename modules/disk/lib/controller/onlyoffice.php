@@ -27,6 +27,7 @@ use Bitrix\Main\Engine\Response;
 use Bitrix\Main\Engine\Router;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Error;
+use Bitrix\Main\HttpRequest;
 use Bitrix\Main\HttpResponse;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Security\Cipher;
@@ -626,6 +627,13 @@ final class OnlyOffice extends Engine\Controller
 			return false;
 		}
 
+		if (empty($payloadData['url']))
+		{
+			$this->addError(new Error("Could not find 'url' in payload. Status: {$payloadData['status']}"));
+
+			return false;
+		}
+
 		if (!$documentSession->getObject())
 		{
 			$this->addError(new Error('Could not find file.'));
@@ -633,13 +641,11 @@ final class OnlyOffice extends Engine\Controller
 			return false;
 		}
 
-		$downloadUri = $payloadData['url'];
-		$httpClient = new HttpClient();
-		$tmpFile = \CTempFile::getFileName(uniqid('_wd', true));
-		checkDirPath($tmpFile);
-
-		if ($httpClient->download($downloadUri, $tmpFile) !== false)
+		$fileDownloader = new Document\OnlyOffice\FileDownloader($payloadData['url']);
+		$downloadResult = $fileDownloader->download();
+		if ($downloadResult->isSuccess())
 		{
+			$tmpFile = $downloadResult->getData()['file'];
 			$tmpFileArray = \CFile::makeFileArray($tmpFile);
 			if ($tmpFileArray['type'] === 'application/encrypted')
 			{

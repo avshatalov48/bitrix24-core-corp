@@ -496,7 +496,8 @@ if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
 				CONTEXT: this.getModel().getOwnerInfo().ownerType.toLowerCase(),
 				IS_DELIVERY_AVAILABLE: this._schemeElement.getDataBooleanParam('isDeliveryAvailable', false),
 				PARENT_CONTEXT: this,
-				PHRASES: this._schemeElement.getDataObjectParam('paymentDocumentsPhrases', {})
+				PHRASES: this._schemeElement.getDataObjectParam('paymentDocumentsPhrases', {}),
+				IS_WITH_ORDERS_MODE: this._schemeElement.getDataBooleanParam('isWithOrdersMode', false)
 			};
 			this._paymentDocumentsControl = new BX.Crm.EntityEditorPaymentDocuments(paymentDocumentsOptions);
 		}

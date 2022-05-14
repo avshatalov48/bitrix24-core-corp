@@ -1013,7 +1013,7 @@ class Helper
 		if ($queryResult === false)
 		{
 			$httpClientErrors = $httpClient->getError();
-			if(count($httpClientErrors) > 0)
+			if(!empty($httpClientErrors))
 			{
 				foreach ($httpClientErrors as $code => $message)
 				{
@@ -1063,7 +1063,7 @@ class Helper
 
 		//check for http errors once more
 		$httpClientErrors = $httpClient->getError();
-		if(count($httpClientErrors) > 0)
+		if(!empty($httpClientErrors))
 		{
 			foreach ($httpClientErrors as $code => $message)
 			{

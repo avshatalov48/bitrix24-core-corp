@@ -328,6 +328,17 @@ class Input extends Base\Input
 				if ($messageParamService instanceof \Bitrix\Im\Services\MessageParam)
 				{
 					$messageParamService->setParam((int)$params['MESSAGE_ID'], 'IMOL_VOTE', $params['ACTION'], true);
+
+					// global $USER_FIELD_MANAGER;
+					// if (
+					// 	$USER_FIELD_MANAGER instanceof \CUserTypeManager
+					// 	&& isset($params['VOTE_IP'])
+					// 	&& is_string($params['VOTE_IP'])
+					// 	&& array_key_exists('UF_VOTE_IP', $USER_FIELD_MANAGER->GetUserFields(SessionTable::getUfId()))
+					// )
+					// {
+					// 	$USER_FIELD_MANAGER->Update(SessionTable::getUfId(), $params['SESSION_ID'], ['UF_VOTE_IP' => $params['VOTE_IP']]);
+					// }
 				}
 			}
 			else

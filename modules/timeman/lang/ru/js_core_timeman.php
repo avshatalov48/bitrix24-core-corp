@@ -124,4 +124,5 @@ $MESS["JS_CORE_TM_MONITOR_UPDATE_DESKTOP"] = "Вам доступен Персо
 $MESS["JS_CORE_TM_MONITOR_REPORT_NOTIFICATION"] = "Не забудьте поделиться отчетом о рабочем времени с руководителем.";
 $MESS["JS_CORE_TM_MONITOR_REPORT_NOTIFICATION_DESKTOP_DISABLED"] = "Не забудьте поделиться отчетом о рабочем времени с руководителем в приложении Битрикс24.";
 $MESS["JS_CORE_TM_MONITOR_REPORT_OPEN"] = "Посмотреть";
+$MESS["JS_CORE_TMR_REPORT_FULL_NONE"] = "Отчет не требуется";
 ?>

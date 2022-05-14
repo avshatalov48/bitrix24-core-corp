@@ -130,17 +130,11 @@ class TaskService implements Errorable
 	{
 		try
 		{
-			$tags = $this->cleanTagsInTaskFields($taskFields['TAGS']);
-
 			$taskItemObject = \CTaskItem::add($taskFields, $this->executiveUserId);
 
 			$taskId = $taskItemObject->getId();
 
-			if ($taskId > 0)
-			{
-				$this->addTags($taskId, $tags);
-			}
-			else
+			if (!$taskId)
 			{
 				if ($exception = $this->application->getException())
 				{
@@ -1204,7 +1198,6 @@ class TaskService implements Errorable
 				'ID' => $parentIds,
 				'GROUP_ID' => $groupId,
 				'CHECK_PERMISSIONS' => 'Y',
-				'!=STATUS' => \CTasks::STATE_COMPLETED,
 			],
 		]);
 
@@ -1388,7 +1381,14 @@ class TaskService implements Errorable
 		catch (\Exception $exception)
 		{
 			$message = $exception->getMessage().$exception->getTraceAsString();
-			$this->errorCollection->setError(new Error($message, self::ERROR_COULD_NOT_READ_LIST_TASK));
+
+			$this->errorCollection->setError(
+				new Error(
+					$message,
+					self::ERROR_COULD_NOT_READ_LIST_TASK
+				)
+			);
+
 			return [];
 		}
 	}
@@ -1402,14 +1402,6 @@ class TaskService implements Errorable
 			$tags = $matches[1];
 		}
 		return [$name, $tags];
-	}
-
-	private function cleanTagsInTaskFields(array &$fieldTags): array
-	{
-		$tags = $fieldTags;
-		$fieldTags = [];
-
-		return $tags;
 	}
 
 	private function addTags(int $taskId, array $tags): void
@@ -1436,12 +1428,25 @@ class TaskService implements Errorable
 			$parentScrumItem = $itemService->getItemBySourceId($parentTaskId);
 			if (!$parentScrumItem->isEmpty())
 			{
+				$taskService = new TaskService(Util\User::getId());
 				$entityService = new EntityService();
 
 				$entity = $entityService->getEntityById($parentScrumItem->getEntityId());
 				if (!$entity->isEmpty())
 				{
-					self::createItem($entity, $taskId, $fields, $previousFields, $parentScrumItem->getEpicId());
+					$parentTaskId = $parentScrumItem->getSourceId();
+
+					$sort = count($taskService->getSubTasksInfo([$parentTaskId])[$parentTaskId]);
+					$sort = ($sort === 0 ? 1 : $sort);
+
+					self::createItem(
+						$entity,
+						$taskId,
+						$fields,
+						$previousFields,
+						$parentScrumItem->getEpicId(),
+						$sort
+					);
 
 					$isBacklogTarget = false;
 				}
@@ -1465,7 +1470,8 @@ class TaskService implements Errorable
 		int $taskId,
 		array $fields,
 		array $previousFields = [],
-		int $epicId = 0
+		int $epicId = 0,
+		int $sort = 1
 	): void
 	{
 		$itemService = new ItemService();
@@ -1481,7 +1487,7 @@ class TaskService implements Errorable
 			$scrumItem->setCreatedBy($createdBy);
 			$scrumItem->setEntityId($entity->getId());
 			$scrumItem->setSourceId($taskId);
-			$scrumItem->setSort(1);
+			$scrumItem->setSort($sort);
 			$scrumItem->setEpicId($epicId);
 
 			$itemService->createTaskItem($scrumItem, $pushService);

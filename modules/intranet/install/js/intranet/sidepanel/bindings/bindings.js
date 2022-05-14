@@ -76,10 +76,34 @@
 			{
 				condition: [
 					'/company/personal/user/(\\d+)/tasks/task/view/(\\d+)/',
-					'/company/personal/user/(\\d+)/tasks/templates/template/view/(\\d+)/',
-					// '/company/personal/user/(\\d+)/tasks/report/view/(\\d+)/',
 					'/workgroups/group/(\\d+)/tasks/task/view/(\\d+)/',
-					'/extranet/contacts/personal/user/(\\d+)/tasks/task/view/(\\d+)/'
+					'/extranet/contacts/personal/user/(\\d+)/tasks/task/view/(\\d+)/',
+				],
+				loader: 'task-view-loader',
+				stopParameters: [
+					'PAGEN_(\\d+)',
+				],
+				options: {
+					label: {
+						text: BX.message('INTRANET_BINDINGS_TASK'),
+						bgColor: '#2FC6F6',
+					},
+					events: {
+						onCloseComplete: function() {
+							BX.Runtime.loadExtension('bitrix24.feedbackcollector').then(function(exports) {
+								var feedbackCollectorClass = exports.FeedbackCollector;
+								if (feedbackCollectorClass)
+								{
+									(new feedbackCollectorClass({feedbackId: 'tasksFeedbackSliderClose'})).run();
+								}
+							});
+						},
+					},
+				},
+			},
+			{
+				condition: [
+					'/company/personal/user/(\\d+)/tasks/templates/template/view/(\\d+)/',
 				],
 				loader: 'task-view-loader',
 				stopParameters: [
@@ -95,17 +119,39 @@
 			{
 				condition: [
 					'/company/personal/user/(\\d+)/tasks/task/edit/0/',
-					'/company/personal/user/(\\d+)/tasks/templates/template/edit/0/',
 					'/workgroups/group/(\\d+)/tasks/task/edit/0/',
 					'/extranet/contacts/personal/user/(\\d+)/tasks/task/edit/0/'
 				],
 				loader: 'task-new-loader',
 				options: {
 					label: {
-						text: BX.message("INTRANET_BINDINGS_TASK"),
-						bgColor: "#2FC6F6"
-					}
-				}
+						text: BX.message('INTRANET_BINDINGS_TASK'),
+						bgColor: '#2FC6F6',
+					},
+					events: {
+						onCloseComplete: function() {
+							BX.Runtime.loadExtension('bitrix24.feedbackcollector').then(function(exports) {
+								var feedbackCollectorClass = exports.FeedbackCollector;
+								if (feedbackCollectorClass)
+								{
+									(new feedbackCollectorClass({feedbackId: 'tasksFeedbackSliderClose'})).run();
+								}
+							});
+						},
+					},
+				},
+			},
+			{
+				condition: [
+					'/company/personal/user/(\\d+)/tasks/templates/template/edit/0/',
+				],
+				loader: 'task-new-loader',
+				options: {
+					label: {
+						text: BX.message('INTRANET_BINDINGS_TASK'),
+						bgColor: '#2FC6F6',
+					},
+				},
 			},
 			{
 				condition: [
@@ -568,9 +614,10 @@
 				condition: [
 					'^' + siteDir + 'mail(\/|$)',
 				],
-				// loader: "/bitrix/images/mail/mail-loader.svg",
 				options: {
+					//loading animation is assigned to this class
 					contentClassName: "mail-loader-modifier",
+					//replacing the standard loader with an empty element
 					loader: this.mailLoader,
 					cacheable: false,
 					customLeftBoundary: 0,

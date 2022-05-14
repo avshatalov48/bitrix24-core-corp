@@ -300,4 +300,32 @@ class Helper
 		$groups = array_map('intval', $groups);
 		return in_array(1, $groups, true);
 	}
+
+	/**
+	 * List of administrator users.
+	 * @return int[]
+	 */
+	public static function getAdministrators(): array
+	{
+		static $users;
+		if ($users === null)
+		{
+			$users = [];
+
+			if (\Bitrix\Main\Loader::includeModule('bitrix24'))
+			{
+				$users = \CBitrix24::getAllAdminId();
+			}
+			else
+			{
+				$res = \CGroup::getGroupUserEx(1);
+				while ($row = $res->fetch())
+				{
+					$users[] = (int)$row["USER_ID"];
+				}
+			}
+		}
+
+		return $users;
+	}
 }

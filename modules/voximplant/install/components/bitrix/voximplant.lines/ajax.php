@@ -255,7 +255,7 @@ class VoximplantLinesAjaxController extends \Bitrix\Main\Engine\Controller
 		foreach ($numbers as $numberFields)
 		{
 			$newConfigResult = \Bitrix\Voximplant\ConfigTable::add($configFields);
-			if(!$newConfigResult)
+			if(!$newConfigResult->isSuccess())
 			{
 				$this->errorCollection[] = new \Bitrix\Main\Error("Database error");
 				return null;

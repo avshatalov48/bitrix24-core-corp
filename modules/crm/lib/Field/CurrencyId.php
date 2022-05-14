@@ -14,11 +14,6 @@ class CurrencyId extends Field
 	{
 		$result = parent::processLogic($item, $context);
 
-		if (empty($item->get($this->getName())))
-		{
-			$item->set($this->getName(), Currency::getBaseCurrencyId());
-		}
-
 		if (!in_array($item->get($this->getName()), Currency::getCurrencyIds(), true))
 		{
 			$result->addError($this->getValueNotValidError());

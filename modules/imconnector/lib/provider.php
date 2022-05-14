@@ -11,6 +11,7 @@ class Provider
 	protected const PROVIDER = [
 		'imconnectorserver' =>
 			[
+				'imconnectorserver',//common for all
 				'whatsappbytwilio',
 				'avito',
 				'viber',
@@ -40,18 +41,18 @@ class Provider
 
 	protected static function loadProvider()
 	{
-		if(empty(self::$loadProvider))
+		if (empty(self::$loadProvider))
 		{
 			$provider = self::PROVIDER;
 
-			if(Loader::includeModule('notifications'))
+			if (Loader::includeModule('notifications'))
 			{
 				$provider['notifications'] = [Library::ID_NOTIFICATIONS_CONNECTOR];
 			}
 
 			$customConnectors = CustomConnectors::getListConnectorId();
 
-			if($customConnectors)
+			if ($customConnectors)
 			{
 				$provider['custom'] = $customConnectors;
 			}
@@ -78,11 +79,11 @@ class Provider
 	{
 		$result = '';
 
-		foreach (Provider::getAllIdsProvider() as $provider=>$providerConnectors)
+		foreach (self::getAllIdsProvider() as $provider=>$providerConnectors)
 		{
 			foreach ($providerConnectors as $providerConnector)
 			{
-				if($providerConnector === $connector)
+				if ($providerConnector === $connector)
 				{
 					$result = $provider;
 					break 2;
@@ -128,7 +129,7 @@ class Provider
 
 		if(!empty($direction))
 		{
-			if(empty(Provider::getAllIdsProvider()[$idProvider]))
+			if (empty(self::getAllIdsProvider()[$idProvider]))
 			{
 				$result->addError(new Error(
 					Loc::getMessage('IMCONNECTOR_ERROR_NO_CORRECT_PROVIDER'),
@@ -141,7 +142,7 @@ class Provider
 			{
 				$nameClassProvider = 'Bitrix\\ImConnector\\Provider\\' . $idProvider . '\\' . $direction;
 
-				if(class_exists($nameClassProvider))
+				if (class_exists($nameClassProvider))
 				{
 					$provider = new $nameClassProvider('all');
 
@@ -176,15 +177,20 @@ class Provider
 
 		$idProvider = self::getIdProvider(Connector::getConnectorRealId($connector));
 
-		if(empty($idProvider))
+		if (empty($idProvider))
 		{
-			$result->addError(new Error(Loc::getMessage('IMCONNECTOR_ERROR_NO_CORRECT_PROVIDER'), Library::ERROR_IMCONNECTOR_NO_CORRECT_PROVIDER, __METHOD__, $connector));
+			$result->addError(new Error(
+				Loc::getMessage('IMCONNECTOR_ERROR_NO_CORRECT_PROVIDER'),
+				Library::ERROR_IMCONNECTOR_NO_CORRECT_PROVIDER,
+				__METHOD__,
+				$connector
+			));
 		}
 		else
 		{
 			$nameClassProvider = 'Bitrix\\ImConnector\\Provider\\' . $idProvider . '\\' . $direction;
 
-			if(class_exists($nameClassProvider))
+			if (class_exists($nameClassProvider))
 			{
 				$provider = new $nameClassProvider(...$arguments);
 
@@ -192,7 +198,12 @@ class Provider
 			}
 			else
 			{
-				$result->addError(new Error(Loc::getMessage('IMCONNECTOR_ERROR_COULD_NOT_GET_PROVIDER_OBJECT'), Library::ERROR_IMCONNECTOR_COULD_NOT_GET_PROVIDER_OBJECT, __METHOD__, $connector));
+				$result->addError(new Error(
+					Loc::getMessage('IMCONNECTOR_ERROR_COULD_NOT_GET_PROVIDER_OBJECT'),
+					Library::ERROR_IMCONNECTOR_COULD_NOT_GET_PROVIDER_OBJECT,
+					__METHOD__,
+					$connector
+				));
 			}
 		}
 
@@ -213,7 +224,7 @@ class Provider
 		{
 			$provider = self::getProviderForAll($idProvider, 'output');
 
-			if($provider->isSuccess())
+			if ($provider->isSuccess())
 			{
 				$result[] = $provider->getResult();
 			}

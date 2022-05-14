@@ -4,8 +4,6 @@ namespace Bitrix\Crm\Reservation;
 
 use Bitrix\Main;
 use Bitrix\Crm;
-use Bitrix\Crm\Order\BasketItem;
-use Bitrix\Crm\Order\ShipmentItem;
 use Bitrix\Catalog;
 
 class ProductManager extends Crm\Order\ProductManager

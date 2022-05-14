@@ -170,6 +170,9 @@ Class voximplant extends CModule
 		$eventManager->registerEventHandler('report', 'onAnalyticPageCollect', 'voximplant', '\Bitrix\Voximplant\Integration\Report\EventHandler', 'onAnalyticPageCollect');
 		$eventManager->registerEventHandler('report', 'onAnalyticPageBatchCollect', 'voximplant', '\Bitrix\Voximplant\Integration\Report\EventHandler', 'onAnalyticPageBatchCollect');
 
+		$eventManager->registerEventHandler('disk', 'onAfterDeleteFile', 'voximplant', '\Bitrix\Voximplant\Integration\Disk\EventHandler', 'onAfterDeleteFile');
+		$eventManager->registerEventHandler('main', 'OnFileDelete', 'voximplant', '\Bitrix\Voximplant\Integration\Main\EventHandler', 'onFileDelete');
+
 		if (!IsModuleInstalled('bitrix24'))
 		{
 			CAgent::AddAgent("CVoxImplantPhone::SynchronizeUserPhones();", "voximplant", "N", 300);
@@ -607,6 +610,9 @@ Class voximplant extends CModule
 		$eventManager->unRegisterEventHandler('report', 'onDefaultBoardsCollect', 'voximplant', '\Bitrix\Voximplant\Integration\Report\EventHandler', 'onDefaultBoardsCollect');
 		$eventManager->unRegisterEventHandler('report', 'onAnalyticPageCollect', 'voximplant', '\Bitrix\Voximplant\Integration\Report\EventHandler', 'onAnalyticPageCollect');
 		$eventManager->unRegisterEventHandler('report', 'onAnalyticPageBatchCollect', 'voximplant', '\Bitrix\Voximplant\Integration\Report\EventHandler', 'onAnalyticPageBatchCollect');
+
+		$eventManager->unRegisterEventHandler('disk', 'onAfterDeleteFile', 'voximplant', '\Bitrix\Voximplant\Integration\Disk\EventHandler', 'onAfterDeleteFile');
+		$eventManager->unRegisterEventHandler('main', 'OnFileDelete', 'voximplant', '\Bitrix\Voximplant\Integration\Main\EventHandler', 'onFileDelete');
 
 		CAgent::RemoveAgent("CVoxImplantPhone::SynchronizeUserPhones();", "voximplant");
 		CAgent::RemoveAgent("\\Bitrix\\Voximplant\\Agent\\CallCleaner::finishStaleCalls();", "voximplant");

@@ -9,17 +9,22 @@ namespace Bitrix\Crm;
 
 use Bitrix\Crm\History\Entity\LeadStatusHistoryTable;
 use Bitrix\Crm\History\Entity\LeadStatusHistoryWithSupposedTable;
-use Bitrix\Crm\Observer\Entity\ObserverTable;
-use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Settings\LeadSettings;
 use Bitrix\Main;
-use Bitrix\Main\Entity\IntegerField;
-use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Event;
 use Bitrix\Main\ORM\EventResult;
+use Bitrix\Main\ORM\Fields\BooleanField;
+use Bitrix\Main\ORM\Fields\DateField;
 use Bitrix\Main\ORM\Fields\DatetimeField;
+use Bitrix\Main\ORM\Fields\ExpressionField;
+use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\Relations\CascadePolicy;
 use Bitrix\Main\ORM\Fields\Relations\OneToMany;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
+use Bitrix\Main\ORM\Fields\StringField;
+use Bitrix\Main\ORM\Fields\TextField;
+use Bitrix\Main\ORM\Query\Join;
 
 Loc::loadMessages(__FILE__);
 
@@ -58,422 +63,431 @@ class LeadTable extends Main\ORM\Data\DataManager
 
 	public static function getMap()
 	{
-		Container::getInstance()->getLocalization()->loadMessages();
-
 		global $DB;
 
-		$map = array(
-			'ID' => array(
-				'data_type' => 'integer',
-				'primary' => true,
-				'autocomplete' => true,
-			),
-			'TITLE' => array(
-				'data_type' => 'string'
-			),
-			'STATUS_ID' => array(
-				'data_type' => 'string'
-			),
-			'STATUS_BY' => array(
-				'data_type' => 'Status',
-				'reference' => array(
-					'=this.STATUS_ID' => 'ref.STATUS_ID',
-					'=ref.ENTITY_ID' => array('?', 'STATUS')
-				)
-			),
-			'STATUS_DESCRIPTION' => array(
-				'data_type' => 'string'
-			),
-			'IS_CONVERT' => array(
-				'data_type' => 'boolean',
-				'expression' => array(
-					'CASE WHEN %s = \'CONVERTED\' THEN 1 ELSE 0 END',
-					'STATUS_ID'
-				),
-				'values' => array(0, 1)
-			),
-			'PRODUCT_ID' => array(
-				'data_type' => 'string'
-			),
-			'OPPORTUNITY' => array(
-				'data_type' => 'float'
-			),
-			'IS_MANUAL_OPPORTUNITY' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y')
-			),
-			'CURRENCY_ID' => array(
-				'data_type' => 'string'
-			),
-			'OPPORTUNITY_ACCOUNT' => array(
-				'data_type' => 'float'
-			),
-			'ACCOUNT_CURRENCY_ID' => array(
-				'data_type' => 'string'
-			),
-			'COMMENTS' => array(
-				'data_type' => 'string'
-			),
-			'NAME' => array(
-				'data_type' => 'string'
-			),
-			'LAST_NAME' => array(
-				'data_type' => 'string'
-			),
-			'SECOND_NAME' => array(
-				'data_type' => 'string'
-			),
-			'SHORT_NAME' => array(
-				'data_type' => 'string',
-				'expression' => array(
-					$DB->concat("%s","' '", "UPPER(".$DB->substr("%s", 1, 1).")", "'.'"),
-					'LAST_NAME', 'NAME'
-				)
-			),
-			'LOGIN' => array(
-				'data_type' => 'string',
-				'expression' => array('NULL')
-			),
-			'COMPANY_TITLE' => array(
-				'data_type' => 'string'
-			),
-			'POST' => array(
-				'data_type' => 'string'
-			),
-			'ADDRESS' => array(
-				'data_type' => 'string'
-			),
-			'SOURCE_ID' => array(
-				'data_type' => 'string'
-			),
-			'SOURCE_BY' => array(
-				'data_type' => 'Status',
-				'reference' => array(
-					'=this.SOURCE_ID' => 'ref.STATUS_ID',
-					'=ref.ENTITY_ID' => array('?', 'SOURCE')
-				)
-			),
-			'SOURCE_DESCRIPTION' => array(
-				'data_type' => 'string'
-			),
-			'COMPANY_ID' => array(
-				'data_type' => 'integer'
-			),
+		$fieldRepository = Main\DI\ServiceLocator::getInstance()->get('crm.model.fieldRepository');
 
-			'CONTACT_ID' => array(
-				'data_type' => 'integer'
-			),
-			'OPENED' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y')
-			),
-			'IS_RETURN_CUSTOMER' => array(
-				'data_type' => 'string'
-			),
+		$map = [
+			//fields here are sorted by b_crm_lead columns order in install.sql. Please, keep it that way
 
-			'DATE_CREATE' => array(
-				'data_type' => 'datetime'
-			),
-			'DATE_CREATE_SHORT' => array(
-				'data_type' => 'datetime',
-				'expression' => array(
-					$DB->datetimeToDateFunction('%s'), 'DATE_CREATE'
-				)
-			),
-			'DATE_MODIFY' => array(
-				'data_type' => 'datetime'
-			),
-			'DATE_MODIFY_SHORT' => array(
-				'data_type' => 'datetime',
-				'expression' => array(
-					$DB->datetimeToDateFunction('%s'), 'DATE_MODIFY'
-				)
-			),
-			'DATE_CLOSED' => array(
-				'data_type' => 'datetime'
-			),
-			'ASSIGNED_BY_ID' => array(
-				'data_type' => 'integer'
-			),
-			'ASSIGNED_BY' => array(
-				'data_type' => 'Bitrix\Main\User',
-				'reference' => array('=this.ASSIGNED_BY_ID' => 'ref.ID')
-			),
-			'CREATED_BY_ID' => array(
-				'data_type' => 'integer'
-			),
-			'CREATED_BY' => array(
-				'data_type' => 'Bitrix\Main\User',
-				'reference' => array('=this.CREATED_BY_ID' => 'ref.ID')
-			),
-			'MODIFY_BY_ID' => array(
-				'data_type' => 'integer'
-			),
-			'MODIFY_BY' => array(
-				'data_type' => 'Bitrix\Main\User',
-				'reference' => array('=this.MODIFY_BY_ID' => 'ref.ID')
-			),
-			'BIRTHDATE' => array(
-				'data_type' => 'date'
-			),
-			'HONORIFIC' => array(
-				'data_type' => 'string'
-			),
-			'EVENT_RELATION' => array(
-				'data_type' => 'EventRelations',
-				'reference' => array('=this.ID' => 'ref.ENTITY_ID')
-			),
-			'STATUS_SEMANTIC_ID' => array(
-				'data_type' => 'string'
-			),
-			'ORIGIN_ID' => array(
-				'data_type' => 'string'
-			),
-			'ORIGINATOR_ID' => array(
-				'data_type' => 'string'
-			),
-			'HAS_EMAIL' => array(
-				'data_type' => 'boolean',
-				'default_value' => 'N',
-				'values' => array('N', 'Y')
-			),
-			'HAS_PHONE' => array(
-				'data_type' => 'boolean',
-				'default_value' => 'N',
-				'values' => array('N', 'Y')
-			),
-			'HAS_IMOL' => array(
-				'data_type' => 'boolean',
-				'default_value' => 'N',
-				'values' => array('N', 'Y')
-			),
-			'PHONE_MOBILE' => array(
-				'data_type' => 'string',
-				'expression' => array(
-					'('.$DB->TopSql(
-						'SELECT FM.VALUE '.
-						'FROM b_crm_field_multi FM '.
-						'WHERE FM.ENTITY_ID = \'LEAD\' '.
-						'AND FM.ELEMENT_ID = %s '.
-						'AND FM.TYPE_ID = \'PHONE\' '.
-						'AND FM.VALUE_TYPE = \'MOBILE\' '.
-						'ORDER BY FM.ID', 1
-					).')',
-					'ID'
-				)
-			),
-			'PHONE_WORK' => array(
-				'data_type' => 'string',
-				'expression' => array(
-					'('.$DB->TopSql(
-						'SELECT FM.VALUE '.
-						'FROM b_crm_field_multi FM '.
-						'WHERE FM.ENTITY_ID = \'LEAD\' '.
-						'AND FM.ELEMENT_ID = %s '.
-						'AND FM.TYPE_ID = \'PHONE\' '.
-						'AND FM.VALUE_TYPE = \'WORK\' '.
-						'ORDER BY FM.ID', 1
-					).')',
-					'ID'
-				)
-			),
-			'PHONE_MAILING' => array(
-				'data_type' => 'string',
-				'expression' => array(
-					'('.$DB->TopSql(
-						'SELECT FM.VALUE '.
-						'FROM b_crm_field_multi FM '.
-						'WHERE FM.ENTITY_ID = \'LEAD\' '.
-						'AND FM.ELEMENT_ID = %s '.
-						'AND FM.TYPE_ID = \'PHONE\' '.
-						'AND FM.VALUE_TYPE = \'MAILING\' '.
-						'ORDER BY FM.ID', 1
-					).')',
-					'ID'
-				)
-			),
-			'EMAIL_HOME' => array(
-				'data_type' => 'string',
-				'expression' => array(
-					'('.$DB->TopSql(
-						'SELECT FM.VALUE '.
-						'FROM b_crm_field_multi FM '.
-						'WHERE FM.ENTITY_ID = \'LEAD\' '.
-						'AND FM.ELEMENT_ID = %s '.
-						'AND FM.TYPE_ID = \'EMAIL\' '.
-						'AND FM.VALUE_TYPE = \'HOME\' '.
-						'ORDER BY FM.ID', 1
-					).')',
-					'ID'
-				)
-			),
-			'EMAIL_WORK' => array(
-				'data_type' => 'string',
-				'expression' => array(
-					'('.$DB->TopSql(
-						'SELECT FM.VALUE '.
-						'FROM b_crm_field_multi FM '.
-						'WHERE FM.ENTITY_ID = \'LEAD\' '.
-						'AND FM.ELEMENT_ID = %s '.
-						'AND FM.TYPE_ID = \'EMAIL\' '.
-						'AND FM.VALUE_TYPE = \'WORK\' '.
-						'ORDER BY FM.ID', 1
-					).')',
-					'ID'
-				)
-			),
-			'EMAIL_MAILING' => array(
-				'data_type' => 'string',
-				'expression' => array(
-					'('.$DB->TopSql(
-						'SELECT FM.VALUE '.
-						'FROM b_crm_field_multi FM '.
-						'WHERE FM.ENTITY_ID = \'LEAD\' '.
-						'AND FM.ELEMENT_ID = %s '.
-						'AND FM.TYPE_ID = \'EMAIL\' '.
-						'AND FM.VALUE_TYPE = \'MAILING\' '.
-						'ORDER BY FM.ID', 1
-					).')',
-					'ID'
-				)
-			),
-			'SKYPE' => array(
-				'data_type' => 'string',
-				'expression' => array(
-					'('.$DB->TopSql(
-						'SELECT FM.VALUE '.
-						'FROM b_crm_field_multi FM '.
-						'WHERE FM.ENTITY_ID = \'LEAD\' '.
-						'AND FM.ELEMENT_ID = %s '.
-						'AND FM.TYPE_ID = \'IM\' '.
-						'AND FM.VALUE_TYPE = \'SKYPE\' '.
-						'ORDER BY FM.ID', 1
-					).')',
-					'ID'
-				)
-			),
-			'ICQ' => array(
-				'data_type' => 'string',
-				'expression' => array(
-					'('.$DB->TopSql(
-						'SELECT FM.VALUE '.
-						'FROM b_crm_field_multi FM '.
-						'WHERE FM.ENTITY_ID = \'LEAD\' '.
-						'AND FM.ELEMENT_ID = %s '.
-						'AND FM.TYPE_ID = \'IM\' '.
-						'AND FM.VALUE_TYPE = \'ICQ\' '.
-						'ORDER BY FM.ID', 1
-					).')',
-					'ID'
-				)
-			),
-			'IMOL' => array(
-				'data_type' => 'string',
-				'expression' => array(
-					'('.$DB->TopSql(
-						'SELECT FM.VALUE '.
-						'FROM b_crm_field_multi FM '.
-						'WHERE FM.ENTITY_ID = \'LEAD\' '.
-						'AND FM.ELEMENT_ID = %s '.
-						'AND FM.TYPE_ID = \'IM\' '.
-						'AND FM.VALUE LIKE \'imol|%%\' '.
-						'ORDER BY FM.ID', 1
-					).')',
-					'ID'
-				)
-			),
-			'EMAIL' => array(
-				'data_type' => 'string',
-				'expression' => array(
-					'('.$DB->TopSql(
-						'SELECT FM.VALUE '.
-						'FROM b_crm_field_multi FM '.
-						'WHERE FM.ENTITY_ID = \'LEAD\' '.
-						'AND FM.ELEMENT_ID = %s '.
-						'AND FM.TYPE_ID = \'EMAIL\' '.
-						'ORDER BY FM.ID', 1
-					).')',
-					'ID'
-				)
-			),
-			'PHONE' => array(
-				'data_type' => 'string',
-				'expression' => array(
-					'('.$DB->TopSql(
-						'SELECT FM.VALUE '.
-						'FROM b_crm_field_multi FM '.
-						'WHERE FM.ENTITY_ID = \'LEAD\' '.
-						'AND FM.ELEMENT_ID = %s '.
-						'AND FM.TYPE_ID = \'PHONE\' '.
-						'ORDER BY FM.ID', 1
-					).')',
-					'ID'
-				)
-			),
-			'SEARCH_CONTENT' => array(
-				'data_type' => 'string'
-			),
-			new Main\Entity\IntegerField('FACE_ID'),
+			$fieldRepository->getId(),
 
-			(new IntegerField('MOVED_BY_ID'))
+			$fieldRepository->getCreatedTime('DATE_CREATE'),
+
+			$fieldRepository->getShortDate(
+				'DATE_CREATE_SHORT',
+				['DATE_CREATE'],
+			)
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_DATE_CREATE_SHORT_FIELD'))
+			,
+
+			$fieldRepository->getUpdatedTime('DATE_MODIFY'),
+
+			$fieldRepository->getShortDate(
+				'DATE_MODIFY_SHORT',
+				['DATE_MODIFY'],
+			)
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_DATE_MODIFY_SHORT_FIELD'))
+			,
+
+			$fieldRepository->getCreatedBy('CREATED_BY_ID'),
+
+			(new Reference(
+				'CREATED_BY',
+				Main\UserTable::class,
+				Join::on('this.CREATED_BY_ID', 'ref.ID'),
+			))
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_CREATED_BY_FIELD'))
+			,
+
+			$fieldRepository->getUpdatedBy('MODIFY_BY_ID'),
+
+			(new Reference(
+				'MODIFY_BY',
+				Main\UserTable::class,
+				Join::on('this.MODIFY_BY_ID', 'ref.ID'),
+			))
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_MODIFY_BY_FIELD'))
+			,
+
+			$fieldRepository->getAssigned(),
+
+			(new Reference(
+				'ASSIGNED_BY',
+				Main\UserTable::class,
+				Join::on('this.ASSIGNED_BY_ID', 'ref.ID'),
+			))
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_ASSIGNED_BY_FIELD'))
+			,
+
+			$fieldRepository->getOpened()
 				->configureDefaultValue(static function () {
-					return Container::getInstance()->getContext()->getUserId();
+					return LeadSettings::getCurrent()->getOpenedFlag();
 				})
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_MOVED_BY'))
 			,
 
-			(new DatetimeField('MOVED_TIME'))
+			$fieldRepository->getCompanyId(),
+
+			$fieldRepository->getContactId(),
+
+			$fieldRepository->getStageId('STATUS_ID', \CCrmOwnerType::Lead),
+
+			(new Reference(
+				'STATUS_BY',
+				StatusTable::class,
+				Join::on('this.STATUS_ID', 'ref.STATUS_ID')
+					->where('ref.ENTITY_ID', '=', 'STATUS')
+				,
+			))
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_STATUS_BY_FIELD'))
+			,
+
+			(new ExpressionField(
+				'IS_CONVERT',
+				'CASE WHEN %s = \'CONVERTED\' THEN 1 ELSE 0 END',
+				['STATUS_ID'],
+			))
+				->configureValueType(BooleanField::class)
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_IS_CONVERT_FIELD'))
+			,
+
+			(new TextField('STATUS_DESCRIPTION'))
 				->configureNullable()
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_MOVED_TIME'))
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_STATUS_DESCRIPTION_FIELD'))
 			,
 
-			new Main\Entity\ReferenceField('ADDRESS_ENTITY', AddressTable::getEntity(), array(
-				'=this.ID' => 'ref.ENTITY_ID',
-				'=ref.TYPE_ID' => new Main\DB\SqlExpression('?', EntityAddressType::Primary),
-				'=ref.ENTITY_TYPE_ID' => new Main\DB\SqlExpression('?', \CCrmOwnerType::Lead)
+			$fieldRepository->getStageSemanticId('STATUS_SEMANTIC_ID'),
+
+			/** @deprecated */
+			$fieldRepository->getProductId()
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_PRODUCT_ID_FIELD'))
+			,
+
+			$fieldRepository->getOpportunity(),
+
+			$fieldRepository->getCurrencyId(),
+
+			$fieldRepository->getOpportunityAccount(),
+
+			$fieldRepository->getAccountCurrencyId(),
+
+			$fieldRepository->getSourceId(),
+
+			$fieldRepository->getSourceBy(),
+
+			$fieldRepository->getSourceDescription(),
+
+			$fieldRepository->getTitle(),
+
+			(new StringField('FULL_NAME'))
+				->configureNullable()
+				->configureSize(100)
+			,
+
+			(new StringField('NAME'))
+				->configureNullable()
+				->configureSize(50)
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_NAME_FIELD'))
+			,
+
+			(new StringField('LAST_NAME'))
+				->configureNullable()
+				->configureSize(50)
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_LAST_NAME_FIELD'))
+			,
+
+			(new StringField('SECOND_NAME'))
+				->configureNullable()
+				->configureSize(50)
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_SECOND_NAME_FIELD'))
+			,
+
+			(new ExpressionField(
+				'SHORT_NAME',
+				$DB->concat("%s","' '", "UPPER(".$DB->substr("%s", 1, 1).")", "'.'"),
+				['LAST_NAME', 'NAME'],
+			))
+				->configureValueType(StringField::class)
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_SHORT_NAME_FIELD'))
+			,
+
+			(new StringField('COMPANY_TITLE'))
+				->configureNullable()
+				->configureSize(255)
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_COMPANY_TITLE_FIELD'))
+			,
+
+			(new StringField('POST'))
+				->configureNullable()
+				->configureSize(255)
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_POST_FIELD'))
+			,
+
+			(new TextField('ADDRESS'))
+				->configureNullable()
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_ADDRESS_FIELD'))
+			,
+
+			$fieldRepository->getComments(),
+
+			/** @deprecated */
+			$fieldRepository->getExchRate(),
+
+			$fieldRepository->getWebformId(),
+
+			$fieldRepository->getOriginatorId(),
+
+			$fieldRepository->getOriginId(),
+
+			(new DatetimeField('DATE_CLOSED'))
+				->configureNullable()
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_DATE_CLOSED_FIELD'))
+			,
+
+			(new DateField('BIRTHDATE'))
+				->configureNullable()
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_BIRTHDATE_FIELD'))
+			,
+
+			(new IntegerField('BIRTHDAY_SORT'))
+				->configureRequired()
+				->configureDefaultValue(1024)
+			,
+
+			(new StringField('HONORIFIC'))
+				->configureNullable()
+				->configureSize(128)
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_HONORIFIC_FIELD'))
+			,
+
+			(new BooleanField('HAS_PHONE'))
+				->configureRequired()
+				->configureStorageValues('N', 'Y')
+				->configureDefaultValue(false)
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_HAS_PHONE_FIELD'))
+			,
+
+			(new BooleanField('HAS_EMAIL'))
+				->configureRequired()
+				->configureStorageValues('N', 'Y')
+				->configureDefaultValue(false)
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_HAS_EMAIL_FIELD'))
+			,
+
+			(new BooleanField('HAS_IMOL'))
+				->configureRequired()
+				->configureStorageValues('N', 'Y')
+				->configureDefaultValue(false)
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_HAS_IMOL_FIELD'))
+			,
+
+			(new ExpressionField(
+				'LOGIN',
+				'NULL'
+			))
+				->configureValueType(StringField::class)
+			,
+
+			$fieldRepository->getIsReturnCustomer()
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_IS_RETURN_CUSTOMER_FIELD'))
+			,
+
+			(new IntegerField('FACE_ID'))
+				->configureNullable()
+			,
+
+			$fieldRepository->getSearchContent(),
+
+			$fieldRepository->getIsManualOpportunity(),
+
+			$fieldRepository->getMovedBy('MOVED_BY_ID'),
+
+			$fieldRepository->getMovedTime(),
+
+			(new Reference(
+				'EVENT_RELATION',
+				EventRelationsTable::class,
+				Join::on('this.ID', 'ref.ENTITY_ID'),
+			))
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_EVENT_RELATION_FIELD'))
+			,
+
+			static::getMultifieldValueExpression(
+				'PHONE_MOBILE',
+				'PHONE',
+				'MOBILE',
+			)
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_PHONE_MOBILE_FIELD'))
+			,
+
+			static::getMultifieldValueExpression(
+				'PHONE_WORK',
+				'PHONE',
+				'WORK',
+			)
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_PHONE_WORK_FIELD'))
+			,
+
+			static::getMultifieldValueExpression(
+				'PHONE_MAILING',
+				'PHONE',
+				'MAILING'
+			),
+
+			static::getMultifieldValueExpression(
+				'EMAIL_HOME',
+				'EMAIL',
+				'HOME'
+			)
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_EMAIL_HOME_FIELD'))
+			,
+
+			static::getMultifieldValueExpression(
+				'EMAIL_WORK',
+				'EMAIL',
+				'WORK',
+			)
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_EMAIL_WORK_FIELD'))
+			,
+
+			static::getMultifieldValueExpression(
+				'EMAIL_MAILING',
+				'EMAIL',
+				'MAILING'
+			),
+
+			static::getMultifieldValueExpression(
+				'SKYPE',
+				'IM',
+				'SKYPE'
+			)
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_SKYPE_FIELD'))
+			,
+
+			static::getMultifieldValueExpression(
+				'ICQ',
+				'IM',
+				'ICQ',
+			)
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_ICQ_FIELD'))
+			,
+
+			(new ExpressionField(
+				'IMOL',
+				'('.$DB->TopSql(
+					'SELECT FM.VALUE '.
+					'FROM b_crm_field_multi FM '.
+					'WHERE FM.ENTITY_ID = \'LEAD\' '.
+					'AND FM.ELEMENT_ID = %s '.
+					'AND FM.TYPE_ID = \'IM\' '.
+					'AND FM.VALUE LIKE \'imol|%%\' '.
+					'ORDER BY FM.ID', 1
+				).')',
+				['ID'],
+			))
+				->configureValueType(StringField::class)
+			,
+
+			static::getMultifieldValueExpression(
+				'EMAIL',
+				'EMAIL',
+			)
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_EMAIL_FIELD'))
+			,
+
+			static::getMultifieldValueExpression(
+				'PHONE',
+				'PHONE'
+			)
+				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_PHONE_FIELD'))
+			,
+
+			(new Reference(
+				'ADDRESS_ENTITY',
+				AddressTable::class,
+				Join::on('this.ID', 'ref.ENTITY_ID')
+					->where('ref.TYPE_ID', EntityAddressType::Primary)
+					->where('ref.ENTITY_TYPE_ID', \CCrmOwnerType::Lead)
+				,
 			)),
-			new Main\Entity\ReferenceField('PRODUCT_ROW', ProductRowTable::getEntity(), array(
-				'=this.ID' => 'ref.OWNER_ID',
-				'=ref.OWNER_TYPE' => new Main\DB\SqlExpression('?', \CCrmOwnerTypeAbbr::Lead),
+
+			(new Reference(
+				'PRODUCT_ROW',
+				ProductRowTable::class,
+				Join::on('this.ID', 'ref.OWNER_ID')
+					->where('ref.OWNER_TYPE', \CCrmOwnerTypeAbbr::Lead)
+				,
 			)),
-			new Main\Entity\ReferenceField(
+
+			(new Reference(
 				'HISTORY',
 				LeadStatusHistoryTable::class,
-				Main\ORM\Query\Join::on('this.ID', 'ref.OWNER_ID')
-			),
-			new ReferenceField(
+				Join::on('this.ID', 'ref.OWNER_ID'),
+			)),
+
+			(new Reference(
 				'FULL_HISTORY',
 				LeadStatusHistoryWithSupposedTable::class,
-				Main\ORM\Query\Join::on('this.ID', 'ref.OWNER_ID'),
-				array('join_type' => 'INNER')
-			),
-			new ReferenceField(
+				Join::on('this.ID', 'ref.OWNER_ID'),
+			))
+				->configureJoinType(Join::TYPE_INNER)
+			,
+
+			(new Reference(
 				'BINDING_CONTACT',
 				Binding\LeadContactTable::class,
-				Main\ORM\Query\Join::on('this.ID', 'ref.LEAD_ID')
-			),
-			new Main\Entity\IntegerField('WEBFORM_ID'),
-			(new OneToMany('CONTACT_BINDINGS', Binding\LeadContactTable::class, 'LEAD'))
-				->configureCascadeDeletePolicy(CascadePolicy::FOLLOW),
-			(new OneToMany('PRODUCT_ROWS', ProductRowTable::class, 'LEAD_OWNER'))
-				// products will be deleted in onAfterDelete, if it's needed
-				->configureCascadeDeletePolicy(CascadePolicy::NO_ACTION),
-			(new OneToMany('OBSERVER_IDS', ObserverTable::class, 'LEAD'))
-				->configureCascadeDeletePolicy(CascadePolicy::FOLLOW),
-		);
+				Join::on('this.ID', 'ref.LEAD_ID'),
+			)),
 
-		$codeList = UtmTable::getCodeList();
+			(new OneToMany(
+				'CONTACT_BINDINGS',
+				Binding\LeadContactTable::class,
+				'LEAD',
+			))
+				->configureCascadeDeletePolicy(CascadePolicy::FOLLOW)
+			,
 
-		foreach ($codeList as $fieldName)
+			$fieldRepository->getProductRows('LEAD_OWNER'),
+
+			$fieldRepository->getObservers('LEAD', 'OBSERVER_IDS'),
+		];
+
+		return array_merge($map, $fieldRepository->getUtm(\CCrmOwnerType::Lead));
+	}
+
+	private static function getMultifieldValueExpression(
+		string $fieldName,
+		string $typeId,
+		?string $valueType = null
+	): ExpressionField
+	{
+		global $DB;
+
+		$sqlHelper = Main\Application::getConnection()->getSqlHelper();
+
+		$sql =
+			'SELECT FM.VALUE ' .
+			'FROM b_crm_field_multi FM ' .
+			"WHERE FM.ENTITY_ID = 'LEAD' " .
+			'AND FM.ELEMENT_ID = %s ' .
+			'AND FM.TYPE_ID = ' . $sqlHelper->convertToDbString($typeId) . ' '
+		;
+
+		if (!is_null($valueType))
 		{
-			$map[] = new Main\Entity\ReferenceField($fieldName, UtmTable::getEntity(), array(
-				'=ref.ENTITY_TYPE_ID' => new Main\DB\SqlExpression('?', \CCrmOwnerType::Lead),
-				'=this.ID' => 'ref.ENTITY_ID',
-				'=ref.CODE' => new Main\DB\SqlExpression('?', $fieldName)
-			));
+			$sql .= 'AND FM.VALUE_TYPE = ' . $sqlHelper->convertToDbString($valueType) . ' ';
 		}
 
-		return $map;
+		$sql .= 'ORDER BY FM.ID';
+
+		return
+			(new ExpressionField(
+				$fieldName,
+				'(' . $DB->TopSql($sql, 1) . ')',
+				['ID'],
+			))
+				->configureValueType(StringField::class)
+		;
 	}
 
 	private static function ensureStatusesLoaded()

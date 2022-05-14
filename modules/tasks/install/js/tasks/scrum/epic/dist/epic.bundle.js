@@ -42,6 +42,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	}();
 
 	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7;
+
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var Epic = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Epic, _EventEmitter);
 
@@ -68,6 +72,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    _this.formData = null;
 	    _this.listData = null;
 	    _this.editorHandler = null;
+	    _this.colorPickers = new Map();
 	    _this.defaultColor = '#69dafc';
 	    _this.selectedColor = '';
 	    return _this;
@@ -244,7 +249,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }).then(function (response) {
 	        main_core_events.EventEmitter.emit(_this6.getEventNamespace() + ':' + 'afterRemove', response.data);
 	        return true;
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this6.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -300,7 +305,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        }).then(function (response) {
 	          _this9.formData = response.data;
 	          resolve(_this9.renderAddForm());
-	        }).catch(function (response) {
+	        })["catch"](function (response) {
 	          _this9.requestSender.showErrorAlert(response);
 	        });
 	      });
@@ -319,7 +324,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        }).then(function (response) {
 	          _this10.listData = response.data;
 	          resolve(_this10.renderList());
-	        }).catch(function (response) {
+	        })["catch"](function (response) {
 	          _this10.requestSender.showErrorAlert(response);
 	        });
 	      });
@@ -338,7 +343,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        }).then(function (response) {
 	          _this11.epicFiles = main_core.Type.isUndefined(response.data.html) ? '' : response.data.html;
 	          resolve(_this11.renderViewForm(epic));
-	        }).catch(function (response) {
+	        })["catch"](function (response) {
 	          _this11.requestSender.showErrorAlert(response);
 	        });
 	      });
@@ -362,7 +367,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            _this12.currentEpic = epic;
 	            _this12.formData = response.data;
 	            resolve(_this12.renderEditForm(epic));
-	          }).catch(function (response) {
+	          })["catch"](function (response) {
 	            _this12.requestSender.showErrorAlert(response);
 	          });
 	        });
@@ -406,7 +411,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        _this14.sidePanel.close(false, function () {
 	          main_core_events.EventEmitter.emit(_this14.getEventNamespace() + ':' + 'afterAdd', response.data);
 	        });
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this14.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -463,7 +468,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        _this16.sidePanel.close(false, function () {
 	          top.BX.Event.EventEmitter.emit(_this16.getEventNamespace() + ':' + 'afterEdit', response.data);
 	        });
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this16.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -480,7 +485,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        eventArgs.url = this.getListUrl();
 	      }
 
-	      eventArgs.data = babelHelpers.objectSpread({}, eventArgs.data, {
+	      eventArgs.data = _objectSpread(_objectSpread({}, eventArgs.data), {}, {
 	        groupId: this.groupId,
 	        gridId: this.gridId
 	      });
@@ -493,7 +498,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "renderAddForm",
 	    value: function renderAddForm() {
-	      return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-epic-form\">\n\t\t\t\t<div class=\"tasks-scrum-epic-form-container\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.renderNameField('', this.defaultColor), this.renderDescriptionField());
+	      return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-epic-form\">\n\t\t\t\t<div class=\"tasks-scrum-epic-form-container\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.renderNameField(0, '', this.defaultColor), this.renderDescriptionField());
 	    }
 	  }, {
 	    key: "renderList",
@@ -509,14 +514,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderEditForm",
 	    value: function renderEditForm(epic) {
 	      this.selectedColor = epic.color;
-	      return main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-epic-form\">\n\t\t\t\t<div class=\"tasks-scrum-epic-form-container\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.renderNameField(epic.name, this.selectedColor), this.renderDescriptionField());
+	      return main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-epic-form\">\n\t\t\t\t<div class=\"tasks-scrum-epic-form-container\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.renderNameField(epic.id, epic.name, this.selectedColor), this.renderDescriptionField());
 	    }
 	  }, {
 	    key: "renderNameField",
-	    value: function renderNameField(name, color) {
+	    value: function renderNameField(epicId, name, color) {
 	      var _this17 = this;
 
-	      var nameField = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-epic-form-header\">\n\t\t\t\t<div class=\"tasks-scrum-epic-form-header-title\">\n\t\t\t\t\t<input type=\"text\" name=\"name\" value=\"", "\" class=\n\t\t\t\t\t\t\"tasks-scrum-epic-form-header-title-control\" placeholder=\n\t\t\t\t\t\t\"", "\">\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-epic-form-header-separate\"></div>\n\t\t\t\t<div class=\"tasks-scrum-epic-header-color\">\n\t\t\t\t\t<div class=\"tasks-scrum-epic-header-color-current\" style=\n\t\t\t\t\t\t\"background-color: ", ";\">\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum-epic-header-color-btn-angle\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(name), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_ADD_EPIC_NAME_PLACEHOLDER'), main_core.Text.encode(color));
+	      var nameField = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-epic-form-header\">\n\t\t\t\t<div class=\"tasks-scrum-epic-form-header-title\">\n\t\t\t\t\t<input type=\"text\" name=\"name\" value=\"", "\" class=\n\t\t\t\t\t\t\"tasks-scrum-epic-form-header-title-control\" placeholder=\n\t\t\t\t\t\t\"", "\">\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-epic-form-header-separate\"></div>\n\t\t\t\t<div class=\"tasks-scrum-epic-header-color\">\n\t\t\t\t\t<div\n\t\t\t\t\t\tdata-epic-id=\"", "\"\n\t\t\t\t\t\tclass=\"tasks-scrum-epic-header-color-current\"\n\t\t\t\t\t\tstyle=\"background-color: ", ";\"\n\t\t\t\t\t>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum-epic-header-color-btn-angle\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(name), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_ADD_EPIC_NAME_PLACEHOLDER'), parseInt(epicId, 10), main_core.Text.encode(color));
 	      var pickerContainer = nameField.querySelector('.tasks-scrum-epic-header-color');
 	      main_core.Event.bind(pickerContainer, 'click', function () {
 	        var colorNode = pickerContainer.querySelector('.tasks-scrum-epic-header-color-current');
@@ -616,22 +621,33 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function getColorPicker(colorNode) {
 	      var _this21 = this;
 
-	      /* eslint-disable */
-	      return new top.BX.ColorPicker({
-	        bindElement: colorNode,
-	        defaultColor: this.defaultColor,
-	        selectedColor: this.selectedColor ? this.selectedColor : this.defaultColor,
-	        onColorSelected: function onColorSelected(color, picker) {
-	          _this21.selectedColor = color;
-	          colorNode.style.backgroundColor = color;
-	        },
-	        popupOptions: {
-	          className: 'tasks-scrum-epic-color-popup'
-	        },
-	        allowCustomColor: false,
-	        colors: [['#aae9fc', '#bbecf1', '#98e1dc', '#e3f299', '#ffee95', '#ffdd93', '#dfd3b6', '#e3c6bb'], ['#ffad97', '#ffbdbb', '#ffcbd8', '#ffc4e4', '#c4baed', '#dbdde0', '#bfc5cd', '#a2a8b0']]
-	      });
-	      /* eslint-enable */
+	      var epicId = main_core.Dom.attr(colorNode, 'data-epic-id');
+
+	      if (!this.colorPickers.has(epicId)) {
+	        /* eslint-disable */
+	        var picker = new top.BX.ColorPicker({
+	          bindElement: colorNode,
+	          defaultColor: this.defaultColor,
+	          selectedColor: this.selectedColor ? this.selectedColor : this.defaultColor,
+	          onColorSelected: function onColorSelected(color, picker) {
+	            _this21.selectedColor = color;
+	            colorNode.style.backgroundColor = color;
+	          },
+	          popupOptions: {
+	            angle: {
+	              position: 'top',
+	              offset: 33
+	            },
+	            className: 'tasks-scrum-epic-color-popup'
+	          },
+	          allowCustomColor: false,
+	          colors: [['#aae9fc', '#bbecf1', '#98e1dc', '#e3f299', '#ffee95', '#ffdd93', '#dfd3b6', '#e3c6bb'], ['#ffad97', '#ffbdbb', '#ffcbd8', '#ffc4e4', '#c4baed', '#dbdde0', '#bfc5cd', '#a2a8b0']]
+	        });
+	        this.colorPickers.set(epicId, picker);
+	        /* eslint-enable */
+	      }
+
+	      return this.colorPickers.get(epicId);
 	    }
 	  }, {
 	    key: "focusToName",

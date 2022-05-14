@@ -14,6 +14,8 @@ COption::SetOptionString("intranet", "tz_transition", "Y");
 COption::SetOptionString("intranet", "tz_transition_daylight", '<transitionRule month="3" day="su" weekdayOfMonth="last" /><transitionTime>2:0:0</transitionTime>');
 COption::SetOptionString("intranet", "tz_transition_standard", '<transitionRule month="10" day="su" weekdayOfMonth="last" /><transitionTime>3:0:0</transitionTime>');
 
+COption::SetOptionString('intranet', 'new_portal_structure', 'Y');
+
 //Composite
 CHTMLPagesCache::setEnabled(true, false);
 RegisterModuleDependences("main", "OnGetStaticCacheProvider", "intranet", "\\Bitrix\\Intranet\\Composite\\CacheProvider", "getObject");

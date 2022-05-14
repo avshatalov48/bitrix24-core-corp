@@ -11,10 +11,10 @@ use Bitrix\Crm\Model\Dynamic\TypeTable;
 use Bitrix\Crm\Relation\RelationManager;
 use Bitrix\Crm\Service\Factory\Dynamic;
 use Bitrix\Crm\Timeline;
-use Bitrix\Crm\Reservation;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\InvalidOperationException;
+use Bitrix\Main\Loader;
 
 class Container
 {
@@ -92,6 +92,15 @@ class Container
 		if ($entityTypeId === \CCrmOwnerType::Quote)
 		{
 			return ServiceLocator::getInstance()->get('crm.service.factory.quote');
+		}
+		if ($entityTypeId === \CCrmOwnerType::Order)
+		{
+			if (!Loader::includeModule('sale'))
+			{
+				return null;
+			}
+
+			return ServiceLocator::getInstance()->get('crm.service.factory.order');
 		}
 		if (\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
 		{
@@ -429,5 +438,10 @@ class Container
 	public function getConversionMapper(): Conversion\Mapper
 	{
 		return ServiceLocator::getInstance()->get('crm.conversion.mapper');
+	}
+
+	public function getMultifieldStorage(): MultifieldStorage
+	{
+		return ServiceLocator::getInstance()->get('crm.service.multifieldStorage');
 	}
 }

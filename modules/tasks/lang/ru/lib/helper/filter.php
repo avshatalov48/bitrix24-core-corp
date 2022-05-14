@@ -64,6 +64,9 @@ $MESS["TASKS_FILTER_START_DATE_PLAN"] = "Планируемая дата нач�
 $MESS["TASKS_FILTER_END_DATE_PLAN"] = "Планируемая дата завершения";
 $MESS["TASKS_FILTER_COMMENT"] = "Комментарий";
 $MESS["TASKS_FILTER_EPIC"] = "Эпик";
+$MESS["TASKS_FILTER_STORY_POINTS"] = "Стори Поинты";
+$MESS["TASKS_FILTER_STORY_POINTS_Y"] = "С оценкой";
+$MESS["TASKS_FILTER_STORY_POINTS_N"] = "Без оценки";
 
 $MESS["TASKS_PRESET_MY"] = "Мои";
 $MESS["TASKS_PRESET_I_DO"] = "Делаю";

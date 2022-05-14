@@ -3,7 +3,7 @@
 return [
 	'extensions' => [
 		'cache',
-		'chat/readycheck',
+		'entity-ready',
 		'files',
 		'notify',
 		'pull/client/events',

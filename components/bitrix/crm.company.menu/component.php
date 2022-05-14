@@ -11,10 +11,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
  * @var array $arResult
  */
 
+use Bitrix\Crm\Entity\Company;
 use Bitrix\Main\Localization\Loc;
 
 if (!CModule::IncludeModule('crm'))
 	return;
+
+\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
 
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
 $CrmPerms = CCrmPerms::GetCurrentUserPermissions();
@@ -33,6 +36,18 @@ $arParams['PATH_TO_MIGRATION'] = SITE_DIR."marketplace/category/migration/";
 $arParams['NAME_TEMPLATE'] = empty($arParams['NAME_TEMPLATE']) ? CSite::GetNameFormat(false) : str_replace(array("#NOBR#","#/NOBR#"), array("",""), $arParams["NAME_TEMPLATE"]);
 
 $arParams['ELEMENT_ID'] = isset($arParams['ELEMENT_ID']) ? intval($arParams['ELEMENT_ID']) : 0;
+
+if($arParams['ELEMENT_ID'] > 0)
+{
+	$arResult['CATEGORY_ID'] = (int)\Bitrix\Crm\Service\Container::getInstance()
+		->getFactory(CCrmOwnerType::Company)
+		->getItemCategoryId($arParams['ELEMENT_ID'])
+	;
+}
+else
+{
+	$arResult['CATEGORY_ID'] = (int)($arParams['CATEGORY_ID'] ?? 0);
+}
 
 $arResult['MYCOMPANY_MODE'] = (isset($arParams['MYCOMPANY_MODE']) && $arParams['MYCOMPANY_MODE'] === 'Y') ? 'Y' : 'N';
 $isMyCompanyMode = ($arResult['MYCOMPANY_MODE'] === 'Y');
@@ -56,14 +71,14 @@ $isInSlider = ($arParams['IN_SLIDER'] === 'Y');
 
 if ($arParams['TYPE'] == 'list')
 {
-	$bRead   = CCrmCompany::CheckReadPermission(0, $CrmPerms);
-	$bExport = CCrmCompany::CheckExportPermission($CrmPerms);
-	$bImport = CCrmCompany::CheckImportPermission($CrmPerms);
-	$bAdd    = CCrmCompany::CheckCreatePermission($CrmPerms);
-	$bWrite  = CCrmCompany::CheckUpdatePermission(0, $CrmPerms);
+	$bRead   = CCrmCompany::CheckReadPermission(0, $CrmPerms, $arResult['CATEGORY_ID']);
+	$bExport = CCrmCompany::CheckExportPermission($CrmPerms, $arResult['CATEGORY_ID']);
+	$bImport = CCrmCompany::CheckImportPermission($CrmPerms, $arResult['CATEGORY_ID']);
+	$bAdd    = CCrmCompany::CheckCreatePermission($CrmPerms, $arResult['CATEGORY_ID']);
+	$bWrite  = CCrmCompany::CheckUpdatePermission(0, $CrmPerms, $arResult['CATEGORY_ID']);
 	$bDelete = false;
 
-	$bDedupe = $bRead && $bWrite && CCrmCompany::CheckDeletePermission(0, $CrmPerms);
+	$bDedupe = $bRead && $bWrite && CCrmCompany::CheckDeletePermission(0, $CrmPerms, $arResult['CATEGORY_ID']);
 }
 else
 {
@@ -71,10 +86,10 @@ else
 	$bImport = false;
 	$bDedupe = false;
 
-	$bRead   = CCrmCompany::CheckReadPermission($arParams['ELEMENT_ID'], $CrmPerms);
-	$bAdd    = CCrmCompany::CheckCreatePermission($CrmPerms);
-	$bWrite  = CCrmCompany::CheckUpdatePermission($arParams['ELEMENT_ID'], $CrmPerms);
-	$bDelete = CCrmCompany::CheckDeletePermission($arParams['ELEMENT_ID'], $CrmPerms);
+	$bRead   = CCrmCompany::CheckReadPermission($arParams['ELEMENT_ID'], $CrmPerms, $arResult['CATEGORY_ID']);
+	$bAdd    = CCrmCompany::CheckCreatePermission($CrmPerms, $arResult['CATEGORY_ID']);
+	$bWrite  = CCrmCompany::CheckUpdatePermission($arParams['ELEMENT_ID'], $CrmPerms, $arResult['CATEGORY_ID']);
+	$bDelete = CCrmCompany::CheckDeletePermission($arParams['ELEMENT_ID'], $CrmPerms, $arResult['CATEGORY_ID']);
 }
 
 $isSliderEnabled = \CCrmOwnerType::IsSliderEnabled(\CCrmOwnerType::Company);
@@ -189,10 +204,13 @@ if($arParams['TYPE'] === 'list')
 		{
 			$createUrl = CHTTP::urlAddParams($createUrl, array('mycompany' => 'y'));
 		}
+		if ($arResult['CATEGORY_ID'] > 0)
+		{
+			$createUrl = CCrmUrlUtil::AddUrlParams($createUrl, ['category_id' => $arResult['CATEGORY_ID']]);
+		}
 
 		$arResult['BUTTONS'][] = array(
-			'TEXT' => GetMessage('COMPANY_ADD'),
-			'TITLE' => GetMessage('COMPANY_ADD_TITLE'),
+			'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
 			'LINK' => $createUrl,
 			'HIGHLIGHT' => true
 		);
@@ -201,10 +219,15 @@ if($arParams['TYPE'] === 'list')
 
 	if (!$isMyCompanyMode && $bImport && !$isInSlider)
 	{
+		$importUrl = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_COMPANY_IMPORT'], []);
+		if ($arResult['CATEGORY_ID'] > 0)
+		{
+			$importUrl = CCrmUrlUtil::AddUrlParams($importUrl, ['category_id' => $arResult['CATEGORY_ID']]);
+		}
 		$arResult['BUTTONS'][] = array(
 			'TEXT' => GetMessage('COMPANY_IMPORT'),
 			'TITLE' => GetMessage('COMPANY_IMPORT_TITLE'),
-			'LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_COMPANY_IMPORT'], array()),
+			'LINK' => $importUrl,
 			'ICON' => 'btn-import'
 		);
 
@@ -233,8 +256,12 @@ if($arParams['TYPE'] === 'list')
 			'PATH_TO_DEAL_EDIT' => $arParams['PATH_TO_DEAL_EDIT'],
 			'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
 			'MYCOMPANY_MODE' => ($isMyCompanyMode ? 'Y' : 'N'),
-			'NAVIGATION_CONTEXT_ID' => $entityType
+			'NAVIGATION_CONTEXT_ID' => $entityType,
+			'CATEGORY_ID' => $arResult['CATEGORY_ID'],
+			'GRID_ID_SUFFIX' => (new \Bitrix\Crm\Component\EntityList\GridId(CCrmOwnerType::Company))
+					->getDefaultSuffix($arResult['CATEGORY_ID']),
 		);
+
 		if (isset($_REQUEST['WG']) && mb_strtoupper($_REQUEST['WG']) === 'Y')
 		{
 			$widgetDataFilter = \Bitrix\Crm\Widget\Data\Company\DataSource::extractDetailsPageUrlParams($_REQUEST);
@@ -519,8 +546,7 @@ if ($bAdd && $arParams['TYPE'] != 'list' && $arParams['TYPE'] !== 'portrait')
 		$createUrl = CHTTP::urlAddParams($createUrl, array('mycompany' => 'y'));
 	}
 	$arResult['BUTTONS'][] = array(
-		'TEXT' => GetMessage('COMPANY_ADD'),
-		'TITLE' => GetMessage('COMPANY_ADD_TITLE'),
+		'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
 		'LINK' => $createUrl,
 		'TARGET' => '_blank',
 		'ICON' => 'btn-new'

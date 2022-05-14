@@ -292,6 +292,9 @@ this.BX = this.BX || {};
       }
     };
 
+    function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+    function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
     var Item = ui_vue.BitrixVue.localComponent('bx-timeman-monitor-report-group-item', {
       mixins: [Time],
       props: ['readOnly', 'group', 'privateCode', 'type', 'title', 'time', 'allowedTime', 'comment', 'hint'],
@@ -305,11 +308,11 @@ this.BX = this.BX || {};
           selectIntervalTimeout: null
         };
       },
-      computed: babelHelpers.objectSpread({}, ui_vuex.Vuex.mapGetters('monitor', ['getSiteDetailByPrivateCode']), ui_vuex.Vuex.mapState({
+      computed: _objectSpread(_objectSpread(_objectSpread({}, ui_vuex.Vuex.mapGetters('monitor', ['getSiteDetailByPrivateCode'])), ui_vuex.Vuex.mapState({
         monitor: function monitor(state) {
           return state.monitor;
         }
-      }), {
+      })), {}, {
         EntityType: function EntityType() {
           return timeman_const.EntityType;
         },
@@ -604,10 +607,13 @@ this.BX = this.BX || {};
     var Consent = ui_vue.BitrixVue.localComponent('bx-timeman-monitor-report-consent', {
       computed: {
         isWindows: function isWindows() {
-          return navigator.userAgent.toLowerCase().includes('windows') || !this.isMac() && !this.isLinux();
+          return navigator.userAgent.toLowerCase().includes('windows') || !this.isMac && !this.isLinux;
         },
         isMac: function isMac() {
           return navigator.userAgent.toLowerCase().includes('macintosh');
+        },
+        isLinux: function isLinux() {
+          return navigator.userAgent.toLowerCase().includes('linux');
         }
       },
       methods: {
@@ -617,6 +623,9 @@ this.BX = this.BX || {};
           this.grantPermission();
         },
         grantPermissionWindows: function grantPermissionWindows() {
+          this.grantPermission();
+        },
+        grantPermissionLinux: function grantPermissionLinux() {
           this.grantPermission();
         },
         grantPermission: function grantPermission() {
@@ -639,7 +648,7 @@ this.BX = this.BX || {};
         }
       },
       // language=Vue
-      template: "\n\t\t<div class=\"bx-timeman-monitor-report-consent\">\n\t\t\t<div class=\"pwt-report-header-container\">\n\t\t\t\t<div class=\"pwt-report-header-title\">\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_SLIDER_TITLE') }}\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"pwt-report-content-container\">\n\t\t\t\t<div class=\"pwt-report-content\">\n\t\t\t\t\t<div class=\"bx-timeman-monitor-report-consent-logo-container\">\n\t\t\t\t\t\t<svg class=\"bx-timeman-monitor-report-consent-logo\"/>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"bx-timeman-monitor-report-consent-description\">\n\t\t\t\t\t\t<p>{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PRODUCT_DESCRIPTION_1') }}</p>\n\t\t\t\t\t\t<p>{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PRODUCT_DESCRIPTION_2') }}</p>\n\t\t\t\t\t\t<p>{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PRODUCT_DESCRIPTION_3') }}</p>\n\t\t\t\t\t\t<p>{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PRODUCT_DESCRIPTION_4') }}</p>\n\t\t\t\t\t\t<p v-if=\"isMac\">\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PROVIDE_DESCRIPTION_MAC') + ' ' }}\n\t\t\t\t\t\t\t<span @click=\"openPermissionHelp\" class=\"bx-timeman-monitor-report-consent-link\">\n\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PROVIDE_DESCRIPTION_MAC_DETAIL') }}\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</p>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"pwt-report-button-panel-wrapper ui-pinner ui-pinner-bottom ui-pinner-full-width\" style=\"z-index: 0\">\n\t\t\t\t\t<div class=\"pwt-report-button-panel\">\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\tv-if=\"isMac\"\n\t\t\t\t\t\t\t@click=\"grantPermissionMac\"\n\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-success\"\n\t\t\t\t\t\t\tstyle=\"margin-left: 16px;\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PROVIDE') }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\tv-else-if=\"isWindows\"\n\t\t\t\t\t\t\t@click=\"grantPermissionWindows\"\n\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-success\"\n\t\t\t\t\t\t\tstyle=\"margin-left: 16px;\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PROVIDE') }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"showGrantingPermissionLater\"\n\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-light-border\"\n\t\t\t\t\t\t\tstyle=\"margin-left: 16px;\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PROVIDE_LATER') }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+      template: "\n\t\t<div class=\"bx-timeman-monitor-report-consent\">\n\t\t\t<div class=\"pwt-report-header-container\">\n\t\t\t\t<div class=\"pwt-report-header-title\">\n\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_SLIDER_TITLE') }}\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"pwt-report-content-container\">\n\t\t\t\t<div class=\"pwt-report-content\">\n\t\t\t\t\t<div class=\"bx-timeman-monitor-report-consent-logo-container\">\n\t\t\t\t\t\t<svg class=\"bx-timeman-monitor-report-consent-logo\"/>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"bx-timeman-monitor-report-consent-description\">\n\t\t\t\t\t\t<p>{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PRODUCT_DESCRIPTION_1') }}</p>\n\t\t\t\t\t\t<p>{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PRODUCT_DESCRIPTION_2') }}</p>\n\t\t\t\t\t\t<p>{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PRODUCT_DESCRIPTION_3') }}</p>\n\t\t\t\t\t\t<p>{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PRODUCT_DESCRIPTION_4') }}</p>\n\t\t\t\t\t\t<p v-if=\"isMac\">\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PROVIDE_DESCRIPTION_MAC') + ' ' }}\n\t\t\t\t\t\t\t<span @click=\"openPermissionHelp\" class=\"bx-timeman-monitor-report-consent-link\">\n\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PROVIDE_DESCRIPTION_MAC_DETAIL') }}\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</p>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"pwt-report-button-panel-wrapper ui-pinner ui-pinner-bottom ui-pinner-full-width\" style=\"z-index: 0\">\n\t\t\t\t\t<div class=\"pwt-report-button-panel\">\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\tv-if=\"isMac\"\n\t\t\t\t\t\t\t@click=\"grantPermissionMac\"\n\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-success\"\n\t\t\t\t\t\t\tstyle=\"margin-left: 16px;\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PROVIDE') }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\tv-else-if=\"isWindows\"\n\t\t\t\t\t\t\t@click=\"grantPermissionWindows\"\n\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-success\"\n\t\t\t\t\t\t\tstyle=\"margin-left: 16px;\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PROVIDE') }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\tv-else-if=\"isLinux\"\n\t\t\t\t\t\t\t@click=\"grantPermissionLinux\"\n\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-success\"\n\t\t\t\t\t\t\tstyle=\"margin-left: 16px;\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PROVIDE') }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t@click=\"showGrantingPermissionLater\"\n\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-light-border\"\n\t\t\t\t\t\t\tstyle=\"margin-left: 16px;\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('TIMEMAN_PWT_REPORT_CONSENT_PROVIDE_LATER') }}\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
     });
 
     var Timeline = ui_vue.BitrixVue.localComponent('bx-timeman-monitor-report-timeline', {
@@ -647,7 +656,7 @@ this.BX = this.BX || {};
         readOnly: Boolean,
         selectedPrivateCode: {
           type: String,
-          default: null
+          "default": null
         }
       },
       mixins: [Time],
@@ -806,7 +815,7 @@ this.BX = this.BX || {};
 
                     _this.createApp(_this.report);
                   }
-                }).catch(function (response) {
+                })["catch"](function (response) {
                   if (response.errors) {
                     response.errors.forEach(function (error) {
                       console.error(error.message);
@@ -938,7 +947,7 @@ this.BX = this.BX || {};
                       _this2.reports[_dateLog] = response.data;
                       _this2.dateLog = _dateLog;
                     }
-                  }).catch(function (response) {
+                  })["catch"](function (response) {
                     if (response.errors) {
                       response.errors.forEach(function (error) {
                         console.error(error.message);
@@ -967,6 +976,10 @@ this.BX = this.BX || {};
     var viewer = new Viewer();
 
     var _templateObject$1;
+
+    function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+    function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 
     var MonitorReport = /*#__PURE__*/function () {
       function MonitorReport() {
@@ -1096,7 +1109,7 @@ this.BX = this.BX || {};
                 selectIntervalTimeout: null
               };
             },
-            computed: babelHelpers.objectSpread({}, ui_vuex.Vuex.mapGetters('monitor', ['getWorkingEntities', 'getPersonalEntities', 'getReportComment', 'hasActivityOtherThanBitrix24']), {
+            computed: _objectSpread$1(_objectSpread$1({}, ui_vuex.Vuex.mapGetters('monitor', ['getWorkingEntities', 'getPersonalEntities', 'getReportComment', 'hasActivityOtherThanBitrix24'])), {}, {
               EntityGroup: function EntityGroup() {
                 return timeman_const.EntityGroup;
               },
@@ -1129,10 +1142,13 @@ this.BX = this.BX || {};
                 return timeman_timeformatter.TimeFormatter.toShort(pausedUntil);
               },
               isWindows: function isWindows() {
-                return navigator.userAgent.toLowerCase().includes('windows') || !this.isMac() && !this.isLinux();
+                return navigator.userAgent.toLowerCase().includes('windows') || !this.isMac && !this.isLinux;
               },
               isMac: function isMac() {
                 return navigator.userAgent.toLowerCase().includes('macintosh');
+              },
+              isLinux: function isLinux() {
+                return navigator.userAgent.toLowerCase().includes('linux');
               },
               hasActivity: function hasActivity() {
                 if (this.isMac) {
@@ -1313,7 +1329,7 @@ this.BX = this.BX || {};
               };
             },
             store: store,
-            computed: babelHelpers.objectSpread({}, ui_vuex.Vuex.mapGetters('monitor', ['getWorkingEntities', 'getReportComment']), {
+            computed: _objectSpread$1(_objectSpread$1({}, ui_vuex.Vuex.mapGetters('monitor', ['getWorkingEntities', 'getReportComment'])), {}, {
               EntityGroup: function EntityGroup() {
                 return timeman_const.EntityGroup;
               },

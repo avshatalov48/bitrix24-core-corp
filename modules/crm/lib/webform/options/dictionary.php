@@ -72,6 +72,16 @@ class Dictionary
 			],
 			'contentTypes' => [
 				['id' => 'image/*', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_IMAGE')],
+				[
+					'id' => 'x-bx/doc',
+					'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_DOC'),
+					'hint' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_DOC_HINT'),
+				],
+				[
+					'id' => 'x-bx/arc',
+					'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_ARCHIVE'),
+					'hint' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_ARCHIVE_HINT'),
+				],
 				['id' => 'audio/*', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_AUDIO')],
 				['id' => 'video/*', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_FIELD_FILE_CONTENT_TYPE_VIDEO')],
 			],

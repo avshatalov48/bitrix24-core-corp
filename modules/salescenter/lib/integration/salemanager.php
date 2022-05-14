@@ -748,6 +748,26 @@ class SaleManager extends Base
 		return false;
 	}
 
+	public function isTelegramOrder(Crm\Order\Order $order): bool
+	{
+		$collection = $order->getTradeBindingCollection();
+
+		/** @var Crm\Order\TradeBindingEntity $binding */
+		foreach ($collection as $binding)
+		{
+			$platform = $binding->getTradePlatform();
+			if (
+				$platform
+				&& $platform->getCode() === Crm\Order\TradingPlatform\Telegram\Telegram::TRADING_PLATFORM_CODE
+			)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	/**
 	 * @return array
 	 * @throws Main\ArgumentException

@@ -372,7 +372,7 @@ class Document extends Base
 			{
 				$filter = [];
 			}
-			$filter['template.moduleId'] = Driver::REST_MODULE_ID;
+			$filter['=template.moduleId'] = Driver::REST_MODULE_ID;
 		}
 		$this->prepareDateTimeFieldsForFilter($filter, ['createTime', 'updateTime']);
 		if(is_array($filter))

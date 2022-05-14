@@ -85,6 +85,19 @@ class documentgenerator extends CModule
 		$eventManager->registerEventHandler('rest', 'OnRestServiceBuildDescription', 'documentgenerator', '\Bitrix\DocumentGenerator\Driver', 'onRestServiceBuildDescription');
 		$eventManager->registerEventHandler('pull', 'OnGetDependentModule', 'documentgenerator', '\Bitrix\DocumentGenerator\Driver', 'onGetDependentModule', 800);
 
+		/**
+		 * @see \Bitrix\DocumentGenerator\Driver::installDefaultTemplatesForCurrentRegion()
+		 */
+		CAgent::AddAgent(
+			"\\Bitrix\\DocumentGenerator\\Driver::installDefaultTemplatesForCurrentRegion();",
+			"documentgenerator",
+			"N",
+			300,
+			'',
+			'Y',
+			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 300, 'FULL')
+		);
+
 		RegisterModule($this->MODULE_ID);
 
 		return true;

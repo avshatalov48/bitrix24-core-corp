@@ -107,21 +107,22 @@ $isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
 //region Filter Navgation Bar
 $navigationBarConfig = null;
 $navigationBarID = "{$filterIDLc}_nav_bar";
-if (isset($arParams['~DISABLE_NAVIGATION_BAR']) &&  $arParams['~DISABLE_NAVIGATION_BAR'] === 'Y')
+if(isset($arParams['~DISABLE_NAVIGATION_BAR']) &&  $arParams['~DISABLE_NAVIGATION_BAR'] === 'Y')
 {
-	$navigationBar = array();
+	$navigationBar = [];
 }
 else
 {
 	$navigationBar = isset($arParams['~NAVIGATION_BAR']) && is_array($arParams['~NAVIGATION_BAR'])
-		? $arParams['~NAVIGATION_BAR'] : array();
+		? $arParams['~NAVIGATION_BAR']
+		: [];
 }
 
-$navigationBarItems = isset($navigationBar['ITEMS']) ? $navigationBar['ITEMS'] : null;
-$hasNavigationBar = !empty($navigationBarItems);
-if($hasNavigationBar)
+$automationButton = [];
+$navigationBarItems = $navigationBar['ITEMS'] ?? null;
+if(isset($navigationBarItems))
 {
-	$navigationBarConfig = array('items' => array());
+	$navigationBarConfig = ['items' => []];
 	if(isset($navigationBar['BINDING']))
 	{
 		$navigationBarConfig['binding'] = $navigationBar['BINDING'];
@@ -131,9 +132,46 @@ if($hasNavigationBar)
 	{
 		$this->SetViewTarget('below_pagetitle', 100);
 	}
-	?><div class="crm-view-switcher pagetitle-align-right-container">
-<!--	<div class="crm-view-switcher-name">--><?//=GetMessage('CRM_INT_FILTER_NAV_BAR_TITLE')?><!--:</div>-->
-	<div class="crm-view-switcher-list"><?
+	?><div class="crm-view-switcher"><div class="crm-view-switcher-list"><?
+
+		$itemQty = 0;
+		foreach($navigationBarItems as $barItem)
+		{
+			$itemQty++;
+			$itemID = isset($barItem['id']) ? $barItem['id'] : $itemQty;
+			$itemName = isset($barItem['name']) ? $barItem['name'] : $itemID;
+			$itemUrl = isset($barItem['url']) ? $barItem['url'] : '';
+			if($itemID === 'automation')
+			{
+				$automationButton['url'] = $itemUrl;
+				$automationButton['name'] = $itemName;
+
+				continue;
+			}
+
+			$itemElementID = mb_strtolower("{$gridID}_{$itemID}");
+			$itemConfig = array('id' => $itemID, 'name' => $itemName, 'elementId' => $itemElementID, 'url' => $itemUrl);
+			$className = 'crm-view-switcher-list-item';
+			if(isset($barItem['active']) && $barItem['active'])
+			{
+				$itemConfig['active'] = true;
+				$className = "{$className} crm-view-switcher-list-item-active";
+			}
+			$navigationBarConfig['items'][] = $itemConfig;
+			?><div id="<?=htmlspecialcharsbx($itemElementID)?>" class="<?=$className?>">
+				<?=htmlspecialcharsbx($itemName)?>
+			</div><?
+		}
+		?></div>
+	</div><?
+
+	if($isBitrix24Template)
+	{
+		$this->EndViewTarget();
+		$this->SetViewTarget('below_pagetitle', 10000);
+	}
+
+	?><div class="crm-view-switcher-buttons pagetitle-align-right-container"><?
 
 		$bindingMenuMask = '/(lead|deal|invoice|quote|company|contact|order)/i';
 		if (
@@ -152,37 +190,13 @@ if($hasNavigationBar)
 			);
 		}
 
-		$itemQty = 0;
-		foreach($navigationBarItems as $barItem)
+		if(!empty($automationButton))
 		{
-			$itemQty++;
-			$itemID = isset($barItem['id']) ? $barItem['id'] : $itemQty;
-			$itemName = isset($barItem['name']) ? $barItem['name'] : $itemID;
-			$itemUrl = isset($barItem['url']) ? $barItem['url'] : '';
-
-			if ($itemID === 'automation')
-			{
-				?><a href="<?=htmlspecialcharsbx($itemUrl)?>" class="ui-btn ui-btn-light-border ui-btn-no-caps ui-btn-themes ui-btn-round crm-robot-btn">
-					<?=htmlspecialcharsbx($itemName)?>
-				</a><?
-				continue;
-			}
-
-			$itemElementID = mb_strtolower("{$gridID}_{$itemID}");
-			$itemConfig = array('id' => $itemID, 'name' => $itemName, 'elementId' => $itemElementID, 'url' => $itemUrl);
-			$className = 'crm-view-switcher-list-item';
-			if(isset($barItem['active']) && $barItem['active'])
-			{
-				$itemConfig['active'] = true;
-				$className = "{$className} crm-view-switcher-list-item-active";
-			}
-			$navigationBarConfig['items'][] = $itemConfig;
-			?><div id="<?=htmlspecialcharsbx($itemElementID)?>" class="<?=$className?>">
-				<?=htmlspecialcharsbx($itemName)?>
-			</div><?
+			?><a class="ui-btn ui-btn-light-border ui-btn-no-caps ui-btn-themes ui-btn-round crm-robot-btn" href="<?=htmlspecialcharsbx($automationButton['url'] )?>">
+				<?=htmlspecialcharsbx($automationButton['name'] )?>
+			</a><?
 		}
-		?></div>
-	</div>
+	?></div>
 	<script type="text/javascript">
 		BX.ready(
 			function()
@@ -214,23 +228,24 @@ $this->SetViewTarget($viewID, 0);
 $APPLICATION->IncludeComponent(
 	'bitrix:main.ui.filter',
 	'',
-	array(
+	[
 		'GRID_ID' => $gridID,
 		'FILTER_ID' => $filterID,
 		'FILTER' => $arParams['~FILTER'],
-		'FILTER_FIELDS' => isset($arParams['~FILTER_FIELDS']) ? $arParams['~FILTER_FIELDS'] : array(),
+		'FILTER_FIELDS' => $arParams['~FILTER_FIELDS'] ?? [],
 		'FILTER_PRESETS' => $arParams['~FILTER_PRESETS'],
 		'ENABLE_FIELDS_SEARCH' => (isset($arParams['~ENABLE_FIELDS_SEARCH']) && $arParams['~ENABLE_FIELDS_SEARCH'] === 'Y') ? 'Y' : 'N',
-		'HEADERS_SECTIONS' => isset($arParams['~HEADERS_SECTIONS']) ? $arParams['~HEADERS_SECTIONS']: [],
+		'HEADERS_SECTIONS' => $arParams['~HEADERS_SECTIONS'] ?? [],
 		'DISABLE_SEARCH' => isset($arParams['~DISABLE_SEARCH']) && $arParams['~DISABLE_SEARCH'] === true,
-		'LAZY_LOAD' => isset($arParams['~LAZY_LOAD']) ? $arParams['~LAZY_LOAD'] : null,
+		'LAZY_LOAD' => $arParams['~LAZY_LOAD'] ?? null,
 		'VALUE_REQUIRED_MODE' => isset($arParams['~VALUE_REQUIRED_MODE']) && $arParams['~VALUE_REQUIRED_MODE'] === true,
 		'ENABLE_LIVE_SEARCH' => isset($arParams['~ENABLE_LIVE_SEARCH']) && $arParams['~ENABLE_LIVE_SEARCH'] === true,
-		'LIMITS' => isset($arParams['~LIMITS']) ? $arParams['~LIMITS'] : null,
+		'LIMITS' => $arParams['~LIMITS'] ?? null,
 		'ENABLE_LABEL' => true,
 		'ENABLE_ADDITIONAL_FILTERS' => true,
-		'CONFIG' => isset($arParams['~CONFIG']) ? $arParams['~CONFIG'] : null,
-	),
+		'CONFIG' => $arParams['~CONFIG'] ?? null,
+		'THEME' => Bitrix\Main\UI\Filter\Theme::LIGHT,
+	],
 	$component
 );
 //endregion

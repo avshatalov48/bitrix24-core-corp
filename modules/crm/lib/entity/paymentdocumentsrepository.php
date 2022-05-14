@@ -27,7 +27,10 @@ class PaymentDocumentsRepository
 	private $ownerId = null;
 
 	/** @var float */
-	private $entityAmount = null;
+	private $entityAmount = 0.0;
+
+	/** @var array */
+	private $orders = [];
 
 	/** @var array */
 	private $documents = [];
@@ -43,6 +46,12 @@ class PaymentDocumentsRepository
 
 	/** @var bool */
 	private $isUsedInventoryManagement;
+
+	/** @var float */
+	private $paidSum = 0.0;
+
+	/** @var float */
+	private $totalSum = 0.0;
 
 	/**
 	 * @throws Main\LoaderException
@@ -72,6 +81,7 @@ class PaymentDocumentsRepository
 
 		if ($this->fetchEntity())
 		{
+			$this->fetchOrderIds();
 			$this->fetchOrders();
 			$this->fetchDocuments();
 			$this->subscribeToPullEvents();
@@ -90,50 +100,15 @@ class PaymentDocumentsRepository
 
 	private function fetchEntity(): bool
 	{
-		if ($this->ownerTypeId === \CCrmOwnerType::Deal)
-		{
-			return $this->fetchDeal();
-		}
-
-		if (\CCrmOwnerType::isUseDynamicTypeBasedApproach($this->ownerTypeId))
-		{
-			return $this->fetchDynamicEntity();
-		}
-
-		return false;
-	}
-
-	/**
-	 * @return bool
-	 */
-	private function fetchDeal(): bool
-	{
-		$filter = ['=ID' => $this->ownerId, 'CHECK_PERMISSIONS' => 'N'];
-		$select = ['ID', 'CATEGORY_ID', 'CURRENCY_ID', 'OPPORTUNITY'];
-
-		$deal = \CCrmDeal::GetListEx([], $filter, false, false, $select)->Fetch();
-
-		if ($deal)
-		{
-			$this->entityAmount = (float)$deal['OPPORTUNITY'];
-			$this->currencyId = $deal['CURRENCY_ID'];
-			$this->currencyFormat = \CCurrencyLang::GetFormatDescription($this->currencyId);
-			return true;
-		}
-
-		return false;
-	}
-
-	private function fetchDynamicEntity(): bool
-	{
 		$factory = Crm\Service\Container::getInstance()->getFactory($this->ownerTypeId);
 		if ($factory && $factory->isLinkWithProductsEnabled())
 		{
-			$dynamicEntity = $factory->getItem($this->ownerId);
-			if ($dynamicEntity)
+			$item = $factory->getItem($this->ownerId);
+			if ($item)
 			{
-				$this->entityAmount = $dynamicEntity->getOpportunity();
-				$this->currencyId = $dynamicEntity->getCurrencyId();
+				$this->entityAmount = $item->getOpportunity();
+				$this->totalSum = $this->entityAmount;
+				$this->currencyId = $item->getCurrencyId();
 				$this->currencyFormat = \CCurrencyLang::GetFormatDescription($this->currencyId);
 				return true;
 			}
@@ -145,12 +120,41 @@ class PaymentDocumentsRepository
 	/**
 	 * @return void
 	 */
-	private function fetchOrders()
+	private function fetchOrderIds(): void
 	{
 		$this->orderIds = Crm\Binding\OrderEntityTable::getOrderIdsByOwner(
 			$this->ownerId,
 			$this->ownerTypeId
 		);
+	}
+
+	private function fetchOrders(): void
+	{
+		if (count($this->orderIds) <= 0)
+		{
+			return;
+		}
+
+		$orders = Sale\Internals\OrderTable::getList([
+			'select' => ['ID', 'ACCOUNT_NUMBER', 'PRICE', 'CURRENCY'],
+			'filter' => [
+				'=ID' => $this->orderIds,
+			],
+		]);
+		while ($order = $orders->fetch())
+		{
+			$this->orders[] = [
+				'ID' => $order['ID'],
+				'ACCOUNT_NUMBER' => $order['ACCOUNT_NUMBER'],
+				'TITLE' => Main\Localization\Loc::getMessage(
+					'PAYMENT_DOCUMENT_REPOSITORY_ORDER_TITLE',
+					[
+						'#ACCOUNT_NUMBER#' => $order['ACCOUNT_NUMBER']
+					]
+				),
+				'PRICE_FORMAT' => \CCrmCurrency::MoneyToString($order['PRICE'], $order['CURRENCY']),
+			];
+		}
 	}
 
 	/**
@@ -173,6 +177,8 @@ class PaymentDocumentsRepository
 			}
 		}
 
+		$documents = array_merge($documents, $this->fetchCheckDocuments());
+
 		foreach ($documents as &$document)
 		{
 			if ($document['CURRENCY'] && $document['CURRENCY'] !== $this->currencyId)
@@ -185,7 +191,10 @@ class PaymentDocumentsRepository
 				$document['CURRENCY'] = $this->currencyId;
 			}
 
-			$document['FORMATTED_DATE'] = ConvertTimeStamp($document['DATE']->getTimestamp(), 'SHORT');
+			if (isset($document['DATE']))
+			{
+				$document['FORMATTED_DATE'] = ConvertTimeStamp($document['DATE']->getTimestamp(), 'SHORT');
+			}
 		}
 
 		$this->documents = $documents;
@@ -219,6 +228,12 @@ class PaymentDocumentsRepository
 			$payment['DATE'] = $payment['DATE_BILL'];
 
 			$payment['STAGE'] = ($payment['PAID'] === 'Y') ? PaymentStage::PAID : PaymentStage::NOT_PAID;
+
+			if ($payment['PAID'] === 'Y')
+			{
+				$this->paidSum += $payment['SUM'];
+				$this->totalSum -= $payment['SUM'];
+			}
 
 			$result[$payment['ID']] = $payment;
 		}
@@ -365,6 +380,24 @@ class PaymentDocumentsRepository
 		return $result;
 	}
 
+	private function fetchCheckDocuments(): array
+	{
+		$result = [];
+
+		if (empty($this->orderIds))
+		{
+			return $result;
+		}
+
+		foreach (Crm\Order\Manager::getCheckData($this->orderIds) as $check)
+		{
+			$check['TYPE'] = 'CHECK';
+			$result[] = $check;
+		}
+
+		return $result;
+	}
+
 	/**
 	 * @return void
 	 */
@@ -397,11 +430,14 @@ class PaymentDocumentsRepository
 		return [
 			'OWNER_ID' => $this->ownerId,
 			'OWNER_TYPE_ID' => $this->ownerTypeId,
-			'ENTITY_AMOUNT' => $this->entityAmount,
+			'ORDERS' => $this->orders,
 			'DOCUMENTS' => $this->documents,
 			'ORDER_IDS' => $this->orderIds,
 			'CURRENCY_ID' => $this->currencyId,
 			'CURRENCY_FORMAT' => $this->currencyFormat,
+			'ENTITY_AMOUNT' => $this->entityAmount,
+			'PAID_AMOUNT' => $this->paidSum,
+			'TOTAL_AMOUNT' => $this->totalSum > 0 ? $this->totalSum : 0.0,
 		];
 	}
 

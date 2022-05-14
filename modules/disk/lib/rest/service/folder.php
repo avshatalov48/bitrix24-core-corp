@@ -94,6 +94,11 @@ final class Folder extends BaseObject
 		{
 			throw new AccessException;
 		}
+		if ($rights && !$folder->canChangeRights($securityContext))
+		{
+			throw new AccessException;
+		}
+
 		$subFolder = $folder->addSubFolder(array(
 			'NAME' => $data['NAME'],
 			'CREATED_BY' => $this->userId
@@ -169,6 +174,11 @@ final class Folder extends BaseObject
 		{
 			throw new AccessException;
 		}
+		if ($rights && !$folder->canChangeRights($securityContext))
+		{
+			throw new AccessException;
+		}
+
 		$fileData = \CRestUtil::saveFile($fileContent);
 		if(!$fileData)
 		{
@@ -192,6 +202,10 @@ final class Folder extends BaseObject
 		$folder = $this->getFolderById($id);
 		$securityContext = $folder->getStorage()->getCurrentUserSecurityContext();
 		if(!$folder->canAdd($securityContext))
+		{
+			throw new AccessException;
+		}
+		if ($rights && !$folder->canChangeRights($securityContext))
 		{
 			throw new AccessException;
 		}

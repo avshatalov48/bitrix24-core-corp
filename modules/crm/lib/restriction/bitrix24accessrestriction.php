@@ -78,4 +78,22 @@ class Bitrix24AccessRestriction extends AccessRestriction
 			->setRestrictedValueHtmlReplacer('<img onclick="if(BX && BX.onCustomEvent){BX.onCustomEvent(window, \'onCrmRestrictedValueClick\')}" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4IiBoZWlnaHQ9IjEyIiB2aWV3Qm94PSIwIDAgMTI4IDEyIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxyZWN0IHg9IjQyIiB3aWR0aD0iMjIiIGhlaWdodD0iMTIiIGZpbGw9IiNFREVFRUYiLz48cmVjdCB4PSI2NCIgd2lkdGg9IjIwIiBoZWlnaHQ9IjEyIiBmaWxsPSIjRTdFOEVBIi8+PHJlY3QgeD0iODQiIHdpZHRoPSIyMiIgaGVpZ2h0PSIxMiIgZmlsbD0iI0VCRUNFRSIvPjxyZWN0IHg9IjEwNiIgd2lkdGg9IjIyIiBoZWlnaHQ9IjEyIiBmaWxsPSIjRjdGN0Y4Ii8+PHJlY3Qgd2lkdGg9IjQ0IiBoZWlnaHQ9IjEyIiBmaWxsPSIjRUFFQkVEIi8+PHJlY3Qgd2lkdGg9IjQ0IiBoZWlnaHQ9IjEyIiBmaWxsPSIjRUFFQkVEIi8+PC9zdmc+Cg=="/>')
 		;
 	}
+
+	/**
+	 * Get id for tariff slider
+	 * @return string
+	 */
+	public function getInfoHelperId(): string
+	{
+		return $this->restrictionInfo->getInfoHelperId();
+	}
+
+	/**
+	 * Get id for tariff slider in mobile app
+	 * @return string
+	 */
+	public function getMobileInfoHelperId(): string
+	{
+		return $this->restrictionInfo->getMobileInfoHelperId();
+	}
 }

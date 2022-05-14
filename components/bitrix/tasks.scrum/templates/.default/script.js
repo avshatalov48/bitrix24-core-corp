@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
-(function (exports,ui_shortView,ui_entitySelector,main_popup,ui_dialogs_messagebox,ui_draganddrop_draggable,pull_client,main_loader,main_core,main_core_events) {
+(function (exports,ui_shortView,ui_entitySelector,main_polyfill_intersectionobserver,main_popup,ui_dialogs_messagebox,ui_draganddrop_draggable,pull_client,main_loader,main_core,main_core_events) {
 	'use strict';
 
 	var SidePanel = /*#__PURE__*/function (_EventEmitter) {
@@ -143,12 +143,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	      var data = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	      var action = arguments.length > 1 ? arguments[1] : undefined;
+	      var analyticsLabel = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 	      data.debugMode = this.debugMode;
 	      return new Promise(function (resolve, reject) {
 	        main_core.ajax.runComponentAction('bitrix:tasks.scrum', action, {
 	          mode: 'class',
 	          signedParameters: _this2.signedParameters,
-	          data: data
+	          data: data,
+	          analyticsLabel: analyticsLabel
 	        }).then(resolve, reject);
 	      });
 	    }
@@ -185,7 +187,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "createTask",
 	    value: function createTask(data) {
-	      return this.sendRequestToComponent(data, 'createTask');
+	      return this.sendRequestToComponent(data, 'createTask', {
+	        scrum: 'Y',
+	        action: 'create_task'
+	      });
 	    }
 	  }, {
 	    key: "updateItem",
@@ -318,10 +323,19 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      return this.sendRequest('bitrix:tasks.scrum.epic.createEpic', data);
 	    }
 	  }, {
+	    key: "getItemData",
+	    value: function getItemData(data) {
+	      return this.sendRequestToComponent(data, 'getItemData');
+	    }
+	  }, {
+	    key: "getSprintData",
+	    value: function getSprintData(data) {
+	      return this.sendRequestToComponent(data, 'getSprintData');
+	    }
+	  }, {
 	    key: "showErrorAlert",
 	    value: function showErrorAlert(response, alertTitle) {
 	      if (main_core.Type.isUndefined(response.errors)) {
-	        console.log(response);
 	        return;
 	      }
 
@@ -689,11 +703,18 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.popup.show();
 	    }
 	  }, {
+	    key: "closeAttachmentMenu",
+	    value: function closeAttachmentMenu() {
+	      if (this.popup) {
+	        this.popup.close();
+	      }
+	    }
+	  }, {
 	    key: "openDiskFileDialog",
 	    value: function openDiskFileDialog() {
 	      var _this3 = this;
 
-	      if (BX.DiskFileDialog.popupWindow != null) {
+	      if (BX.DiskFileDialog.popupWindow !== null) {
 	        BX.DiskFileDialog.popupWindow.subscribe('onClose', function () {
 	          return _this3.popup.close();
 	        });
@@ -733,6 +754,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	    _this.visible = params.visible;
 	    _this.shown = false;
+	    _this.disabled = false;
 	    return _this;
 	  }
 
@@ -751,6 +773,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onClick",
 	    value: function onClick() {
+	      if (this.isDisabled()) {
+	        return;
+	      }
+
+	      this.disable();
+
 	      if (this.isShown()) {
 	        this.emit('hide');
 	      } else {
@@ -771,6 +799,21 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "isShown",
 	    value: function isShown() {
 	      return this.shown;
+	    }
+	  }, {
+	    key: "isDisabled",
+	    value: function isDisabled() {
+	      return this.disabled;
+	    }
+	  }, {
+	    key: "disable",
+	    value: function disable() {
+	      this.disabled = true;
+	    }
+	  }, {
+	    key: "unDisable",
+	    value: function unDisable() {
+	      this.disabled = false;
 	    }
 	  }]);
 	  return Toggle;
@@ -815,6 +858,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "getValue",
 	    value: function getValue() {
 	      return this.value;
+	    }
+	  }, {
+	    key: "setCompleted",
+	    value: function setCompleted(value) {
+	      this.completed = value;
 	    }
 	  }, {
 	    key: "strikeOut",
@@ -1185,7 +1233,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        return;
 	      }
 
-	      if (main_core.Type.isUndefined(storyPoints) || isNaN(parseFloat(storyPoints))) {
+	      if (main_core.Type.isUndefined(storyPoints) || main_core.Type.isFloat(storyPoints) && isNaN(parseFloat(storyPoints))) {
 	        return;
 	      }
 
@@ -1318,6 +1366,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	    babelHelpers.classCallCheck(this, SubTasks);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(SubTasks).call(this));
+
+	    _this.setEventNamespace('BX.Tasks.Scrum.SubTasks');
+
 	    _this.parentItem = parentItem;
 	    _this.list = new Map();
 	    _this.node = null;
@@ -1373,6 +1424,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "show",
 	    value: function show() {
+	      if (main_core.Type.isNull(this.getNode())) {
+	        return;
+	      }
+
 	      if (this.list.size) {
 	        this.hideLoader();
 	        this.renderSubTasks();
@@ -1380,20 +1435,27 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        this.showLoader();
 	      }
 
-	      this.getNode().style.height = "".concat(this.getNode().scrollHeight, "px");
+	      main_core.Dom.style(this.getNode(), 'height', "".concat(this.getNode().scrollHeight, "px"));
 	    }
 	  }, {
 	    key: "hide",
 	    value: function hide() {
+	      if (main_core.Type.isNull(this.getNode())) {
+	        return;
+	      }
+
 	      this.hideLoader();
+	      /* eslint-disable */
+
 	      this.getNode().style.height = "".concat(this.getNode().scrollHeight, "px");
 	      this.getNode().clientHeight;
 	      this.getNode().style.height = '0';
+	      /* eslint-enable */
 	    }
 	  }, {
 	    key: "isShown",
 	    value: function isShown() {
-	      return this.node !== null;
+	      return !main_core.Type.isNull(this.node);
 	    }
 	  }, {
 	    key: "renderSubTasks",
@@ -1436,12 +1498,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onTransitionEnd",
 	    value: function onTransitionEnd(node) {
-	      var isHide = node.style.height === '0px';
+	      var isHide = main_core.Dom.style(node, 'height') === '0px';
 
 	      if (isHide) {
 	        this.removeYourself();
 	      } else {
-	        node.style.height = 'auto';
+	        main_core.Dom.style(node, 'height', 'auto');
 	      }
 	    }
 	  }]);
@@ -1810,6 +1872,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var completed = value === 'Y';
 
 	      if (this.name) {
+	        this.name.setCompleted(completed);
+
 	        if (completed) {
 	          this.name.strikeOut();
 	        } else {
@@ -2059,6 +2123,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      main_core.Dom.removeClass(this.getNode(), '--open');
 	      this.toggle.hide();
 	      this.getSubTasks().hide();
+	      this.unDisableToggle();
+	    }
+	  }, {
+	    key: "cleanSubTasks",
+	    value: function cleanSubTasks() {
+	      this.getSubTasks().cleanTasks();
 	    }
 	  }, {
 	    key: "isShownSubTasks",
@@ -2205,7 +2275,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function onItemClick(event) {
 	      var target = event.target;
 
-	      if (target.classList.contains('tasks-scrum__item--link')) {
+	      if (main_core.Dom.hasClass(target, 'tasks-scrum__item--link')) {
 	        this.emit('showLinked');
 	        return;
 	      }
@@ -2334,6 +2404,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.hideSubTasks();
 	    }
 	  }, {
+	    key: "unDisableToggle",
+	    value: function unDisableToggle() {
+	      this.toggle.unDisable();
+	    }
+	  }, {
 	    key: "hasNode",
 	    value: function hasNode(parentNode, searchNode) {
 	      var _this10 = this;
@@ -2372,7 +2447,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        return;
 	      }
 
-	      if (typeof IntersectionObserver === "undefined") {
+	      if (main_core.Type.isUndefined(IntersectionObserver)) {
 	        return;
 	      }
 
@@ -2532,7 +2607,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "removeEpicFromSearcher",
 	    value: function removeEpicFromSearcher(epic) {
-	      this.allTags.delete('epic_' + epic.name);
+	      this.allTags["delete"]('epic_' + epic.name);
 	    }
 	  }, {
 	    key: "getAllList",
@@ -2746,7 +2821,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    }
 	  }, {
 	    key: "showTagsSearchDialog",
-	    value: function showTagsSearchDialog(inputObject, enteredHashTagName) {
+	    value: function showTagsSearchDialog(inputObject, enteredQuery) {
 	      var _this4 = this;
 
 	      var input = inputObject.getInputNode();
@@ -2764,27 +2839,19 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          multiple: false,
 	          dropdownMode: true,
 	          items: this.getTagsList(),
-	          searchOptions: {
-	            allowCreateItem: true,
-	            footerOptions: {
-	              label: main_core.Loc.getMessage('TASKS_SCRUM_SEARCHER_ACTIONS_TAG_ADD')
-	            }
-	          },
 	          events: {
-	            'Search:onItemCreateAsync': function SearchOnItemCreateAsync(event) {
-	              return new Promise(function (resolve) {
-	                var dialog = event.getTarget();
-	                dialog.hide();
-	                input.focus();
-	                resolve();
-	              });
-	            },
 	            'Item:onSelect': function ItemOnSelect(event) {
+	              var newValue = '';
+	              var regex = new RegExp('\\s|#$', 'm');
+	              var currentPiece = input.value.split(regex).pop();
+	              input.value.split(regex).forEach(function (pieceOfValue) {
+	                if (currentPiece !== pieceOfValue) {
+	                  newValue = newValue + ' ' + pieceOfValue;
+	                }
+	              });
 	              var selectedItem = event.getData().item;
-	              var selectedHashTag = '#' + selectedItem.getTitle();
-	              var hashTags = TagSearcher.getHashTagNamesFromText(input.value);
-	              var enteredHashTag = hashTags.length > 0 ? hashTags.pop() : '';
-	              input.value = input.value.replace(new RegExp('#' + enteredHashTag, 'g'), selectedHashTag);
+	              newValue = newValue + ' #' + selectedItem.getTitle();
+	              input.value = newValue.trim();
 	              input.focus();
 	              selectedItem.deselect();
 	            }
@@ -2793,16 +2860,29 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        this.tagSearchDialog.subscribe('onHide', function () {
 	          inputObject.setTagsSearchMode(false);
 	        });
-	        inputObject.subscribeOnce('onMetaEnter', function () {
-	          _this4.tagSearchDialog.hide();
+	        inputObject.subscribe('onEnter', function () {
+	          if (main_core.Type.isNil(_this4.tagSearchDialog)) {
+	            return;
+	          }
 
-	          input.focus();
+	          var searchTab = _this4.tagSearchDialog.getSearchTab();
+
+	          if (main_core.Type.isNil(searchTab)) {
+	            return;
+	          }
+
+	          if (searchTab.isEmptyResult()) {
+	            _this4.tagSearchDialog.hide();
+
+	            _this4.tagSearchDialog = null;
+	            input.focus();
+	          }
 	        });
 	      }
 
 	      inputObject.setTagsSearchMode(true);
 	      this.tagSearchDialog.show();
-	      this.tagSearchDialog.search(enteredHashTagName);
+	      this.tagSearchDialog.search(enteredQuery);
 	    }
 	  }, {
 	    key: "closeTagsSearchDialog",
@@ -2813,7 +2893,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    }
 	  }, {
 	    key: "showEpicSearchDialog",
-	    value: function showEpicSearchDialog(inputObject, enteredHashEpicName) {
+	    value: function showEpicSearchDialog(inputObject, enteredQuery) {
 	      var _this5 = this;
 
 	      var input = inputObject.getInputNode();
@@ -2821,6 +2901,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (this.epicSearchDialog && this.epicSearchDialog.getId() !== inputObject.getNodeId()) {
 	        this.epicSearchDialog = null;
 	      }
+
+	      this.epicEnteredQuery = enteredQuery;
 
 	      if (!this.epicSearchDialog) {
 	        this.epicSearchDialog = new ui_entitySelector.Dialog({
@@ -2840,24 +2922,28 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          events: {
 	            'Search:onItemCreateAsync': function SearchOnItemCreateAsync(event) {
 	              return new Promise(function (resolve) {
-	                var dialog = event.getTarget();
-
 	                var _event$getData2 = event.getData(),
 	                    searchQuery = _event$getData2.searchQuery;
 
-	                _this5.emit('createEpic', searchQuery.getQuery());
+	                var epicName = searchQuery.getQuery();
 
-	                dialog.hide();
+	                _this5.emit('createEpic', epicName);
+
+	                inputObject.setSelectedEpicLength(babelHelpers.toConsumableArray(epicName).length);
 	                input.focus();
+
+	                _this5.epicSearchDialog.hide();
+
 	                _this5.epicSearchDialog = null;
 	                resolve();
 	              });
 	            },
 	            'Item:onSelect': function ItemOnSelect(event) {
 	              var selectedItem = event.getData().item;
-	              var selectedHashEpic = '@' + selectedItem.getTitle();
-	              input.value = input.value.replace(selectedHashEpic === '' ? '@' : new RegExp(TagSearcher.epicRegExp, 'g'), '');
-	              input.value = input.value + selectedHashEpic;
+	              var epicName = selectedItem.getTitle();
+	              input.value = input.value.replace('@' + _this5.epicEnteredQuery, '').replace('@', '');
+	              input.value = input.value + '@' + epicName;
+	              inputObject.setSelectedEpicLength(babelHelpers.toConsumableArray(epicName).length);
 	              input.focus();
 	              selectedItem.deselect();
 	              inputObject.setEpic(_this5.getEpicByName(selectedItem.getTitle()));
@@ -2868,18 +2954,37 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          inputObject.setEpicSearchMode(false);
 	        });
 	        inputObject.subscribe('onMetaEnter', function () {
-	          _this5.emit('createEpic', _this5.epicSearchDialog.getSearchTab().getLastSearchQuery().getQuery());
+	          if (main_core.Type.isNil(_this5.epicSearchDialog)) {
+	            return;
+	          }
+
+	          var searchTab = _this5.epicSearchDialog.getSearchTab();
+
+	          if (main_core.Type.isNil(searchTab)) {
+	            return;
+	          }
+
+	          var lastSearchQuery = searchTab.getLastSearchQuery();
+
+	          if (main_core.Type.isNil(lastSearchQuery)) {
+	            return;
+	          }
+
+	          var epicName = lastSearchQuery.getQuery();
+
+	          _this5.emit('createEpic', epicName);
 
 	          _this5.epicSearchDialog.hide();
 
 	          _this5.epicSearchDialog = null;
+	          inputObject.setSelectedEpicLength(babelHelpers.toConsumableArray(epicName).length);
 	          input.focus();
 	        });
 	      }
 
 	      inputObject.setEpicSearchMode(true);
 	      this.epicSearchDialog.show();
-	      this.epicSearchDialog.search(enteredHashEpicName);
+	      this.epicSearchDialog.search(this.epicEnteredQuery);
 	    }
 	  }, {
 	    key: "closeEpicSearchDialog",
@@ -2917,7 +3022,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }]);
 	  return TagSearcher;
 	}(main_core_events.EventEmitter);
-	babelHelpers.defineProperty(TagSearcher, "tagRegExp", '#[^#@](?:[^#@]*[^\s#@])?');
+	babelHelpers.defineProperty(TagSearcher, "tagRegExp", '#([^\\s,\\[\\]<>]+)');
 	babelHelpers.defineProperty(TagSearcher, "epicRegExp", '@[^#@](?:[^#@]*[^\s#@])?');
 
 	var _templateObject$e;
@@ -2938,6 +3043,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    _this.value = '';
 	    _this.epic = null;
 	    _this.taskCreated = false;
+	    _this.selectedEpicLength = 0;
 	    return _this;
 	  }
 
@@ -2972,7 +3078,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var _this2 = this;
 
 	      this.nodeId = main_core.Text.getRandom();
-	      this.node = main_core.Tag.render(_templateObject$e || (_templateObject$e = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div id=\"", "\" class=\"tasks-scrum__item --add-block\">\n\t\t\t\t<textarea\n\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\tclass=\"tasks-scrum__item--textarea\"\n\t\t\t\t>", "</textarea>\n\t\t\t\t<div class=\"tasks-scrum__item--textarea-help\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(this.nodeId), main_core.Loc.getMessage('TASKS_SCRUM_TASK_ADD_INPUT_TASK_PLACEHOLDER'), main_core.Text.encode(this.value), main_core.Loc.getMessage('TASKS_SCRUM_TASK_ADD_INPUT_TASK_PLACEHOLDER_HELPER'));
+	      this.node = main_core.Tag.render(_templateObject$e || (_templateObject$e = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div id=\"", "\" class=\"tasks-scrum__input --add-block\">\n\t\t\t\t<textarea\n\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\tclass=\"tasks-scrum__input--textarea\"\n\t\t\t\t>", "</textarea>\n\t\t\t\t<div class=\"tasks-scrum__input--textarea-help\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Text.encode(this.nodeId), main_core.Loc.getMessage('TASKS_SCRUM_TASK_ADD_INPUT_TASK_PLACEHOLDER'), main_core.Text.encode(this.value), main_core.Loc.getMessage('TASKS_SCRUM_TASK_ADD_INPUT_TASK_PLACEHOLDER_HELPER'));
 	      main_core.Event.bind(this.getInputNode(), 'input', function (event) {
 	        _this2.onTagSearch(event);
 
@@ -3025,17 +3131,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onTagSearch",
 	    value: function onTagSearch(event) {
-	      var inputNode = event.target;
-	      var enteredHashTags = TagSearcher.getHashTagNamesFromText(inputNode.value);
+	      var currentPieceOfName = event.target.value.split(' ').pop();
+	      var enteredHashTags = TagSearcher.getHashTagNamesFromText(currentPieceOfName);
+	      var query = enteredHashTags.length ? enteredHashTags.pop() : '';
 
-	      if (event.data === '#') {
+	      if (query || event.data === '#') {
 	        this.setEpicSearchMode(false);
 	        this.setTagsSearchMode(true);
-	      }
-
-	      if (this.isTagsSearchMode()) {
-	        var enteredHashTagName = enteredHashTags.pop();
-	        this.emit('tagsSearchOpen', main_core.Type.isUndefined(enteredHashTagName) ? '' : enteredHashTagName);
+	        this.emit('tagsSearchOpen', query);
 	      } else {
 	        this.emit('tagsSearchClose');
 	      }
@@ -3045,15 +3148,18 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function onEpicSearch(event) {
 	      var inputNode = event.target;
 	      var enteredHashEpics = TagSearcher.getHashEpicNamesFromText(inputNode.value);
+	      var query = enteredHashEpics.length ? enteredHashEpics.pop() : '';
 
-	      if (event.data === '@') {
-	        this.setTagsSearchMode(false);
-	        this.setEpicSearchMode(true);
+	      if (this.selectedEpicLength > 0 && this.selectedEpicLength <= babelHelpers.toConsumableArray(query).length) {
+	        return;
 	      }
 
-	      if (this.isEpicSearchMode()) {
-	        var enteredHashTagName = enteredHashEpics.pop();
-	        this.emit('epicSearchOpen', main_core.Type.isUndefined(enteredHashTagName) ? '' : enteredHashTagName);
+	      this.selectedEpicLength = 0;
+
+	      if (query || event.data === '@') {
+	        this.setTagsSearchMode(false);
+	        this.setEpicSearchMode(true);
+	        this.emit('epicSearchOpen', query);
 	      } else {
 	        this.emit('epicSearchClose');
 	      }
@@ -3133,6 +3239,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "isEpicSearchMode",
 	    value: function isEpicSearchMode() {
 	      return main_core.Dom.attr(this.getInputNode(), 'data-epic-disabled');
+	    }
+	  }, {
+	    key: "setSelectedEpicLength",
+	    value: function setSelectedEpicLength(length) {
+	      this.selectedEpicLength = parseInt(length, 10);
 	    }
 	  }, {
 	    key: "createTaskItem",
@@ -3366,7 +3477,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var _this5 = this;
 
 	      if (this.items.has(item.getId())) {
-	        this.items.delete(item.getId());
+	        this.items["delete"](item.getId());
 	        item.unsubscribeAll();
 	        babelHelpers.toConsumableArray(this.items.values()).map(function (item) {
 	          _this5.setItemMoveActivity(item);
@@ -3391,7 +3502,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "isNodeCreated",
 	    value: function isNodeCreated() {
-	      return this.node !== null;
+	      return !main_core.Type.isNull(this.node);
 	    }
 	  }, {
 	    key: "setNumberTasks",
@@ -3576,7 +3687,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "removeItemFromGroupMode",
 	    value: function removeItemFromGroupMode(item) {
-	      this.groupModeItems.delete(item.getId());
+	      this.groupModeItems["delete"](item.getId());
 	      item.removeItemFromGroupMode();
 	    }
 	  }, {
@@ -3602,7 +3713,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        }
 	      }
 
-	      if (typeof IntersectionObserver === "undefined") {
+	      if (main_core.Type.isUndefined(IntersectionObserver)) {
 	        return;
 	      }
 
@@ -4198,6 +4309,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        return 0;
 	      }
 
+	      if (first === '') {
+	        return 100;
+	      }
+
 	      var result = Math.round(second * 100 / first);
 	      return isNaN(result) ? 0 : result;
 	    }
@@ -4758,7 +4873,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  babelHelpers.createClass(Button, [{
 	    key: "render",
 	    value: function render() {
-	      this.node = main_core.Tag.render(_templateObject$u || (_templateObject$u = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__sprint--btn-run ", "\" title=\"", "\">\n\t\t\t\t<span class=\"tasks-scrum__sprint--btn-run-text\">", "</span>\n\t\t\t</div>\n\t\t"])), this.getUiClasses(), this.getButtonText(), this.getButtonText());
+	      if (this.sprint.isCompleted()) {
+	        return this.node;
+	      }
+
+	      var disableUiClass = this.isAccessDenied() ? 'ui-btn-disabled' : '';
+	      this.node = main_core.Tag.render(_templateObject$u || (_templateObject$u = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div\n\t\t\t\tclass=\"tasks-scrum__sprint--btn-run ", " ", "\"\n\t\t\t\ttitle=\"", "\"\n\t\t\t>\n\t\t\t\t<span class=\"tasks-scrum__sprint--btn-run-text\">", "</span>\n\t\t\t</div>\n\t\t"])), this.getUiClasses(), disableUiClass, this.getButtonText(), this.getButtonText());
 	      main_core.Event.bind(this.node, 'click', this.onClick.bind(this));
 	      return this.node;
 	    }
@@ -4770,7 +4890,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onClick",
 	    value: function onClick() {
-	      if (this.disabled) {
+	      if (this.disabled || this.isAccessDenied()) {
 	        return;
 	      }
 
@@ -4800,9 +4920,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function unDisable() {
 	      this.disabled = false;
 
-	      if (this.node) {
+	      if (this.node && !this.isAccessDenied()) {
 	        main_core.Dom.removeClass(this.node, 'ui-btn-disabled');
 	      }
+	    }
+	  }, {
+	    key: "isAccessDenied",
+	    value: function isAccessDenied() {
+	      return this.sprint.isActive() && !this.sprint.canComplete() || this.sprint.isPlanned() && !this.sprint.canStart();
 	    }
 	  }]);
 	  return Button;
@@ -5103,6 +5228,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.setUncompletedTasks(params.uncompletedTasks);
 	      this.setItems(params.items);
 	      this.setInfo(params.info);
+	      this.setAllowedActions(params.allowedActions);
 	    }
 	  }, {
 	    key: "setHeader",
@@ -5363,6 +5489,29 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      };
 	    }
 	  }, {
+	    key: "setAllowedActions",
+	    value: function setAllowedActions(allowedActions) {
+	      this.allowedActions = {
+	        start: false,
+	        complete: false
+	      };
+
+	      if (main_core.Type.isPlainObject(allowedActions)) {
+	        this.allowedActions.start = allowedActions.start === true;
+	        this.allowedActions.complete = allowedActions.complete === true;
+	      }
+	    }
+	  }, {
+	    key: "canStart",
+	    value: function canStart() {
+	      return this.allowedActions.start === true;
+	    }
+	  }, {
+	    key: "canComplete",
+	    value: function canComplete() {
+	      return this.allowedActions.complete === true;
+	    }
+	  }, {
 	    key: "setNumberTasks",
 	    value: function setNumberTasks(numberTasks) {
 	      babelHelpers.get(babelHelpers.getPrototypeOf(Sprint.prototype), "setNumberTasks", this).call(this, numberTasks);
@@ -5485,9 +5634,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "removeYourself",
 	    value: function removeYourself() {
 	      main_core.Event.bind(this.node, 'transitionend', this.removeNode.bind(this));
+	      /* eslint-disable */
+
 	      this.node.style.height = "".concat(this.node.scrollHeight, "px");
 	      this.node.clientHeight;
 	      this.node.style.height = '0';
+	      /* eslint-enable */
 	    }
 	  }, {
 	    key: "removeNode",
@@ -5522,8 +5674,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        var parentItem = baseEvent.getTarget();
 	        var subTasks = baseEvent.getData();
 
-	        if (subTasks.isEmpty()) {
+	        if (!_this6.isSubTaskLoadingActive() && subTasks.isEmpty()) {
+	          _this6.subTaskLoadingActive = true;
+
 	          _this6.emit('getSubTasks', subTasks);
+	        } else {
+	          parentItem.unDisableToggle();
 	        }
 
 	        _this6.appendNodeAfterItem(subTasks.render(), parentItem.getNode());
@@ -5588,8 +5744,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onTransitionEnd",
 	    value: function onTransitionEnd(node) {
-	      if (node.style.height !== '0px') {
-	        node.style.height = 'auto';
+	      if (main_core.Dom.style(node, 'height') !== '0px') {
+	        main_core.Dom.style(node, 'height', 'auto');
 	      }
 
 	      this.emit('toggleVisibilityContent');
@@ -5615,7 +5771,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "showContent",
 	    value: function showContent(node) {
 	      this.hideCont = false;
-	      node.style.height = "".concat(node.scrollHeight, "px");
+
+	      if (node) {
+	        main_core.Dom.style(node, 'height', "".concat(node.scrollHeight, "px"));
+	      }
 
 	      if (this.header) {
 	        this.header.upTick();
@@ -5625,9 +5784,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "hideContent",
 	    value: function hideContent(node) {
 	      this.hideCont = true;
-	      node.style.height = "".concat(node.scrollHeight, "px");
-	      node.clientHeight;
-	      node.style.height = '0';
+
+	      if (node) {
+	        /* eslint-disable */
+	        node.style.height = "".concat(node.scrollHeight, "px");
+	        node.clientHeight;
+	        node.style.height = '0';
+	        /* eslint-enable */
+	      }
 
 	      if (this.header) {
 	        this.header.downTick();
@@ -5642,14 +5806,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "showSprint",
 	    value: function showSprint() {
 	      if (this.node) {
-	        this.node.style.display = 'block';
+	        main_core.Dom.style(this.node, 'display', 'block');
 	      }
 	    }
 	  }, {
 	    key: "hideSprint",
 	    value: function hideSprint() {
 	      if (this.node) {
-	        this.node.style.display = 'none';
+	        main_core.Dom.style(this.node, 'display', 'none');
 	      }
 	    }
 	  }, {
@@ -5670,6 +5834,17 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (!this.isCompleted()) {
 	        babelHelpers.get(babelHelpers.getPrototypeOf(Sprint.prototype), "fadeIn", this).call(this);
 	      }
+	    }
+	  }, {
+	    key: "deactivateSubTaskLoading",
+	    value: function deactivateSubTaskLoading(item) {
+	      this.subTaskLoadingActive = false;
+	      item.unDisableToggle();
+	    }
+	  }, {
+	    key: "isSubTaskLoadingActive",
+	    value: function isSubTaskLoadingActive() {
+	      return this.subTaskLoadingActive === true;
 	    }
 	  }], [{
 	    key: "buildSprint",
@@ -5713,7 +5888,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "removeSprint",
 	    value: function removeSprint(sprintId) {
-	      this.sprints.delete(sprintId);
+	      this.sprints["delete"](sprintId);
 	    }
 	  }, {
 	    key: "getBacklog",
@@ -5875,6 +6050,69 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return EntityStorage;
 	}();
 
+	var Scroller = /*#__PURE__*/function () {
+	  function Scroller(params) {
+	    babelHelpers.classCallCheck(this, Scroller);
+	    this.planBuilder = params.planBuilder;
+	    this.entityStorage = params.entityStorage;
+	  }
+
+	  babelHelpers.createClass(Scroller, [{
+	    key: "scrollToItem",
+	    value: function scrollToItem(item) {
+	      if (this.isItemInViewport(item)) {
+	        return;
+	      }
+
+	      var offset = 112;
+
+	      if (this.isBacklogItem(item)) {
+	        var scrollContainer = this.entityStorage.getBacklog().getListItemsNode();
+	        var itemTopPosition = main_core.Dom.getRelativePosition(item.getNode(), scrollContainer).top;
+	        scrollContainer.scrollTo({
+	          top: scrollContainer.scrollTop + itemTopPosition - offset,
+	          behavior: 'smooth'
+	        });
+	      } else {
+	        var sprintsContainer = this.planBuilder.getSprintsContainer();
+	        var _itemTopPosition = main_core.Dom.getRelativePosition(item.getNode(), sprintsContainer).top;
+	        sprintsContainer.scrollTo({
+	          top: sprintsContainer.scrollTop + _itemTopPosition - offset,
+	          behavior: 'smooth'
+	        });
+	      }
+	    }
+	  }, {
+	    key: "scrollToSprint",
+	    value: function scrollToSprint(sprint) {
+	      window.scrollTo({
+	        top: 240,
+	        behavior: 'smooth'
+	      }); // todo dynamic focus to sprint node (loadItems)
+
+	      var offset = 80;
+	      var sprintsContainer = this.planBuilder.getSprintsContainer();
+	      var position = main_core.Dom.getRelativePosition(sprint.getNode(), sprintsContainer).top;
+	      sprintsContainer.scrollTo({
+	        top: sprintsContainer.scrollTop + position - offset,
+	        behavior: 'smooth'
+	      });
+	    }
+	  }, {
+	    key: "isItemInViewport",
+	    value: function isItemInViewport(item) {
+	      var rect = item.getNode().getBoundingClientRect();
+	      return rect.top >= 0 && rect.left >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && rect.right <= (window.innerWidth || document.documentElement.clientWidth);
+	    }
+	  }, {
+	    key: "isBacklogItem",
+	    value: function isBacklogItem(item) {
+	      return this.entityStorage.getBacklog().hasItem(item);
+	    }
+	  }]);
+	  return Scroller;
+	}();
+
 	var _templateObject$y, _templateObject2$8, _templateObject3$3, _templateObject4$2, _templateObject5;
 	var CompletedSprints = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(CompletedSprints, _EventEmitter);
@@ -5923,7 +6161,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "onBtnClick",
 	    value: function onBtnClick(event) {
 	      var node = event.currentTarget;
-	      var isShown = node.classList.contains('--up');
+	      var isShown = main_core.Dom.hasClass(node, '--up');
 
 	      if (isShown) {
 	        main_core.Dom.removeClass(node, '--up');
@@ -5931,7 +6169,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        main_core.Dom.addClass(node, '--up');
 	        main_core.Dom.addClass(this.listNode, '--visible');
 
-	        if (!this.isSprintsUploaded() && this.loader === null) {
+	        if (!this.isSprintsUploaded() && main_core.Type.isNull(this.loader)) {
 	          this.loader = this.showLoader();
 	        }
 	      }
@@ -5969,7 +6207,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function bindLoad(loader) {
 	      var _this2 = this;
 
-	      if (typeof IntersectionObserver === "undefined") {
+	      if (main_core.Type.isUndefined(IntersectionObserver)) {
 	        return;
 	      }
 
@@ -5996,7 +6234,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.statsUploaded = true;
 	      this.requestSender.getCompletedSprintsStats().then(function (response) {
 	        _this3.updateStats(response.data);
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this3.statsUploaded = false;
 
 	        _this3.requestSender.showErrorAlert(response);
@@ -6009,7 +6247,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	      this.isActiveLoad = true;
 
-	      if (this.isSprintsUploaded() && this.loader === null) {
+	      if (this.isSprintsUploaded() && main_core.Type.isNull(this.loader)) {
 	        this.loader = this.showLoader();
 	      }
 
@@ -6034,7 +6272,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        if (_this4.loader) {
 	          _this4.loader.hide();
 	        }
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        if (_this4.loader) {
 	          _this4.loader.hide();
 	        }
@@ -6097,7 +6335,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function showList() {
 	      var parentNode = this.node.querySelector('.tasks-scrum__sprints--completed');
 	      main_core.Dom.addClass(parentNode, '--open');
-	      this.listNode.style.height = "".concat(this.listNode.scrollHeight, "px");
+	      main_core.Dom.style(this.listNode, 'height', "".concat(this.listNode.scrollHeight, "px"));
 	      this.emit('adjustWidth');
 	    }
 	  }, {
@@ -6105,19 +6343,22 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function hideList() {
 	      var parentNode = this.node.querySelector('.tasks-scrum__sprints--completed');
 	      main_core.Dom.removeClass(parentNode, '--open');
+	      /* eslint-disable */
+
 	      this.listNode.style.height = "".concat(this.listNode.scrollHeight, "px");
 	      this.listNode.clientHeight;
 	      this.listNode.style.height = '0';
+	      /* eslint-enable */
 	    }
 	  }, {
 	    key: "onTransitionEnd",
 	    value: function onTransitionEnd() {
-	      var isHide = this.listNode.style.height === '0px';
+	      var isHide = main_core.Dom.style(this.listNode, 'height') === '0px';
 
 	      if (isHide) {
 	        main_core.Dom.removeClass(this.listNode, '--visible');
 	      } else {
-	        this.listNode.style.height = 'auto';
+	        main_core.Dom.style(this.listNode, 'height', 'auto');
 	      }
 
 	      this.emit('adjustWidth');
@@ -6145,6 +6386,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    _this.displayPriority = params.displayPriority;
 	    _this.isShortView = params.isShortView;
 	    _this.mandatoryExists = params.mandatoryExists;
+	    _this.scroller = new Scroller({
+	      planBuilder: babelHelpers.assertThisInitialized(_this),
+	      entityStorage: _this.entityStorage
+	    });
 	    return _this;
 	  }
 
@@ -6255,12 +6500,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	        _this3.appendToPlannedContainer(sprint);
 
-	        _this3.scrollToSprint(sprint);
+	        _this3.scroller.scrollToSprint(sprint);
 
 	        _this3.emit('createSprint', sprint);
 
 	        return sprint;
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this3.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -6350,21 +6595,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }
 	    }
 	  }, {
-	    key: "scrollToSprint",
-	    value: function scrollToSprint(sprint) {
-	      // todo dynamic focus to sprint node (loadItems)
-	      window.scrollTo({
-	        top: 240,
-	        behavior: 'smooth'
-	      });
-	      var sprintsContainer = this.getSprintsContainer();
-	      var position = main_core.Dom.getRelativePosition(sprint.getNode(), sprintsContainer).bottom;
-	      sprintsContainer.scrollTo({
-	        top: sprintsContainer.scrollTop + position,
-	        behavior: 'smooth'
-	      });
-	    }
-	  }, {
 	    key: "updatePlannedSprints",
 	    value: function updatePlannedSprints(plannedSprints, existActiveSprint) {
 	      if (existActiveSprint) {
@@ -6401,6 +6631,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	}(main_core_events.EventEmitter);
 
 	var _templateObject$A, _templateObject2$a, _templateObject3$4, _templateObject4$3, _templateObject5$1, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12;
+
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var ActionPanel = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(ActionPanel, _EventEmitter);
 
@@ -6415,7 +6649,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    _this.entity = params.entity;
 	    _this.item = params.item;
 	    _this.bindElement = _this.item.getNode();
-	    _this.itemList = babelHelpers.objectSpread({}, {
+	    _this.itemList = _objectSpread(_objectSpread({}, {
 	      task: {
 	        activity: false
 	      },
@@ -6446,7 +6680,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      remove: {
 	        activity: false
 	      }
-	    }, params.itemList);
+	    }), params.itemList);
 	    _this.node = null;
 	    _this.isBlockBlur = false;
 
@@ -6471,6 +6705,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (this.observer) {
 	        this.observer.disconnect();
 	      }
+
+	      this.emit('onDestroy');
 	    }
 	  }, {
 	    key: "getNode",
@@ -6621,7 +6857,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function observeBindElement() {
 	      var _this3 = this;
 
-	      if (typeof IntersectionObserver === "undefined") {
+	      if (main_core.Type.isUndefined(IntersectionObserver)) {
 	        return;
 	      }
 
@@ -6657,9 +6893,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var top = "".concat(position.top, "px");
 	      var left = "".concat(position.left, "px");
 	      var fakePanel = panel.cloneNode(true);
-	      fakePanel.style.visibility = 'hidden';
-	      fakePanel.style.top = "".concat(position.top, "px");
-	      fakePanel.style.left = "".concat(position.left, "px");
+	      main_core.Dom.style(fakePanel, 'visibility', 'hidden');
+	      main_core.Dom.style(fakePanel, 'top', "".concat(position.top, "px"));
+	      main_core.Dom.style(fakePanel, 'left', "".concat(position.left, "px"));
 	      main_core.Dom.append(fakePanel, document.body);
 
 	      if (this.isPanelWiderThanViewport(fakePanel)) {
@@ -6669,9 +6905,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }
 
 	      main_core.Dom.remove(fakePanel);
-	      panel.style.top = top;
-	      panel.style.left = left;
-	      panel.style.zIndex = 1100;
+	      main_core.Dom.style(panel, 'top', top);
+	      main_core.Dom.style(panel, 'left', left);
+	      main_core.Dom.style(panel, 'zIndex', 1100);
 	      this.removeLastSeparator(panel);
 	      return panel;
 	    }
@@ -6690,7 +6926,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }
 
 	      var position = main_core.Dom.getPosition(this.bindElement);
-	      this.getNode().style.top = "".concat(position.top, "px");
+	      main_core.Dom.style(this.getNode(), 'top', "".concat(position.top, "px"));
 	    }
 	  }, {
 	    key: "removeLastSeparator",
@@ -6773,53 +7009,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }]);
 	  return SearchArrows;
 	}(main_core_events.EventEmitter);
-
-	var Scroller = /*#__PURE__*/function () {
-	  function Scroller(params) {
-	    babelHelpers.classCallCheck(this, Scroller);
-	    this.planBuilder = params.planBuilder;
-	    this.entityStorage = params.entityStorage;
-	  }
-
-	  babelHelpers.createClass(Scroller, [{
-	    key: "scrollToItem",
-	    value: function scrollToItem(item) {
-	      if (this.isItemInViewport(item)) {
-	        return;
-	      }
-
-	      var offset = 112;
-
-	      if (this.isBacklogItem(item)) {
-	        var scrollContainer = this.entityStorage.getBacklog().getListItemsNode();
-	        var itemTopPosition = main_core.Dom.getRelativePosition(item.getNode(), scrollContainer).top;
-	        scrollContainer.scrollTo({
-	          top: scrollContainer.scrollTop + itemTopPosition - offset,
-	          behavior: 'smooth'
-	        });
-	      } else {
-	        var sprintsContainer = this.planBuilder.getSprintsContainer();
-	        var _itemTopPosition = main_core.Dom.getRelativePosition(item.getNode(), sprintsContainer).top;
-	        sprintsContainer.scrollTo({
-	          top: sprintsContainer.scrollTop + _itemTopPosition - offset,
-	          behavior: 'smooth'
-	        });
-	      }
-	    }
-	  }, {
-	    key: "isItemInViewport",
-	    value: function isItemInViewport(item) {
-	      var rect = item.getNode().getBoundingClientRect();
-	      return rect.top >= 0 && rect.left >= 0 && rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) && rect.right <= (window.innerWidth || document.documentElement.clientWidth);
-	    }
-	  }, {
-	    key: "isBacklogItem",
-	    value: function isBacklogItem(item) {
-	      return this.entityStorage.getBacklog().hasItem(item);
-	    }
-	  }]);
-	  return Scroller;
-	}();
 
 	var SearchItems = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(SearchItems, _EventEmitter);
@@ -7123,7 +7312,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	      this.requestSender.updateSprintSort({
 	        sortInfo: this.calculateSprintSort()
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -7237,7 +7426,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            entity.setUncompletedStoryPoints(counters.uncompletedStoryPoints);
 	          }
 	        });
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -7245,6 +7434,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return EntityCounters;
 	}();
 
+	function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var ItemMover = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(ItemMover, _EventEmitter);
 
@@ -7534,10 +7726,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var sourceContainer = dragEnterContainerEvent.sourceContainer;
 	      var enterContainer = dragEnterContainerEvent.enter;
 	      var dropPreview = this.draggableItems.getDropPreview();
-	      var width = sourceContainer.isEqualNode(enterContainer) ? parseInt(dropPreview.style.width, 10) : enterContainer.clientWidth;
+	      var width = sourceContainer.isEqualNode(enterContainer) ? parseInt(main_core.Dom.style(dropPreview, 'width'), 10) : enterContainer.clientWidth;
 	      main_core.Dom.style(dropPreview, {
 	        width: "".concat(width, "px"),
-	        top: "".concat(parseInt(dropPreview.style.top, 10) + enterContainer.scrollTop, "px")
+	        top: "".concat(parseInt(main_core.Dom.style(dropPreview, 'top'), 10) + enterContainer.scrollTop, "px")
 	      });
 	    }
 	  }, {
@@ -7559,7 +7751,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      main_core.Dom.style(dropPreview, {
 	        width: "".concat(dragOutEvent.out.offsetWidth, "px"),
 	        height: "".concat(dragOutEvent.out.offsetHeight, "px"),
-	        top: "".concat(parseInt(dropPreview.style.top, 10) + dragOutEvent.outContainer.scrollTop, "px")
+	        top: "".concat(parseInt(main_core.Dom.style(dropPreview, 'top'), 10) + dragOutEvent.outContainer.scrollTop, "px")
 	      });
 	    }
 	  }, {
@@ -7579,7 +7771,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          _this6.moveItemFromEntityToEntity(item, sourceEntity, endEntity);
 
 	          _this6.moveInAnotherContainer(new Set([item.getId()]), sourceEntity, endEntity);
-	        }).catch(function () {
+	        })["catch"](function () {
 	          main_core.Dom.insertBefore(item.getNode(), sourceEntity.getListItemsNode().children[item.getSort() - 1]);
 	        });
 	      }
@@ -7592,10 +7784,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.requestSender.updateItemSort({
 	        entityId: entityTo.getId(),
 	        itemIds: [item.getId()],
-	        sortInfo: babelHelpers.objectSpread({}, this.calculateSort(entityTo.getListItemsNode(), new Set([item.getId()]), true), this.calculateSort(entityFrom.getListItemsNode(), new Set(), true))
+	        sortInfo: _objectSpread$1(_objectSpread$1({}, this.calculateSort(entityTo.getListItemsNode(), new Set([item.getId()]), true)), this.calculateSort(entityFrom.getListItemsNode(), new Set(), true))
 	      }).then(function () {
 	        _this7.updateEntityCounters(entityFrom, entityTo);
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this7.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -7701,7 +7893,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	            _this9.requestSender.updateItemSort({
 	              sortInfo: _this9.calculateSort(entity.getListItemsNode(), sortedItemsIds)
-	            }).catch(function (response) {
+	            })["catch"](function (response) {
 	              _this9.requestSender.showErrorAlert(response);
 	            });
 
@@ -7737,7 +7929,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	            _this9.requestSender.updateItemSort({
 	              sortInfo: _this9.calculateSort(entity.getListItemsNode(), sortedItemsIds)
-	            }).catch(function (response) {
+	            })["catch"](function (response) {
 	              _this9.requestSender.showErrorAlert(response);
 	            });
 
@@ -7776,8 +7968,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	      this.requestSender.updateItemSort({
 	        itemIds: [item.getId()],
-	        sortInfo: babelHelpers.objectSpread({}, this.calculateSort(listItemsNode, new Set([item.getId()])))
-	      }).catch(function (response) {
+	        sortInfo: _objectSpread$1({}, this.calculateSort(listItemsNode, new Set([item.getId()])))
+	      })["catch"](function (response) {
 	        _this10.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -7788,7 +7980,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	      return this.requestSender.updateItemSort({
 	        sortInfo: this.calculateSort(entity.getListItemsNode(), itemIds)
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this11.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -7803,7 +7995,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        sortInfo: this.calculateSort(endEntity.getListItemsNode(), itemIds, true)
 	      }).then(function () {
 	        return _this12.updateEntityCounters(sourceEntity, endEntity);
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        return _this12.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -7901,7 +8093,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        var message = main_core.Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_MOVE_TASKS_FROM_ACTIVE');
 	        this.onMoveConfirm(entityFrom, message).then(function () {
 	          _this15.moveToWithGroupMode(entityFrom, targetEntity, item, false, false);
-	        }).catch(function () {});
+	        })["catch"](function () {});
 	      }
 	    }
 	  }, {
@@ -7937,10 +8129,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.requestSender.updateItemSort({
 	        entityId: entityTo.getId(),
 	        itemIds: Array.from(sortedItemsIds),
-	        sortInfo: babelHelpers.objectSpread({}, this.calculateSort(entityTo.getListItemsNode(), sortedItemsIds, true), this.calculateSort(entityFrom.getListItemsNode(), new Set(), true))
+	        sortInfo: _objectSpread$1(_objectSpread$1({}, this.calculateSort(entityTo.getListItemsNode(), sortedItemsIds, true)), this.calculateSort(entityFrom.getListItemsNode(), new Set(), true))
 	      }).then(function () {
 	        _this16.updateEntityCounters(entityFrom, entityTo);
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this16.requestSender.showErrorAlert(response);
 	      });
 	      entityFrom.deactivateGroupMode();
@@ -8055,7 +8247,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	              _this17.onMoveConfirm(entityFrom, message).then(function () {
 	                _this17.moveToWithGroupMode(entityFrom, sprint, item, true, false);
-	              }).catch(function () {});
+	              })["catch"](function () {});
 
 	              menuItem.getMenuWindow().close();
 	            }
@@ -8182,7 +8374,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        entityIds: babelHelpers.toConsumableArray(entityIds.values())
 	      }).then(function (response) {
 	        _this2.listAllUsedColors = new Set(response.data);
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this2.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -8216,7 +8408,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	              item.setBorderColor(borderColor);
 	            });
-	          }).catch(function (response) {
+	          })["catch"](function (response) {
 	            _this3.requestSender.showErrorAlert(response);
 	          });
 	        });
@@ -8373,57 +8565,90 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onSprintAdded",
 	    value: function onSprintAdded(params) {
+	      var _this = this;
+
 	      if (this.groupId !== params.groupId) {
 	        return;
 	      }
 
-	      var sprint = Sprint.buildSprint(params);
-
-	      if (this.needSkipAdd(sprint)) {
-	        this.cleanSkipAdd(sprint);
+	      if (this.needSkipAdd(params.tmpId)) {
+	        this.cleanSkipAdd(params.tmpId);
 	        return;
 	      }
 
-	      this.planBuilder.createSprintNode(sprint);
+	      this.requestSender.getSprintData({
+	        sprintId: params.id
+	      }).then(function (response) {
+	        var sprint = Sprint.buildSprint(response.data);
+
+	        _this.planBuilder.createSprintNode(sprint);
+	      })["catch"](function (response) {});
 	    }
 	  }, {
 	    key: "onSprintUpdated",
 	    value: function onSprintUpdated(params) {
-	      var tmpSprint = Sprint.buildSprint(params);
+	      var _this2 = this;
 
-	      if (this.needSkipUpdate(tmpSprint)) {
-	        this.cleanSkipUpdate(tmpSprint);
+	      if (this.groupId !== params.groupId) {
 	        return;
 	      }
 
-	      var sprint = this.entityStorage.findEntityByEntityId(tmpSprint.getId());
-
-	      if (sprint) {
-	        if (tmpSprint.getStatus() !== sprint.getStatus()) {
-	          if (tmpSprint.getStatus() === 'active') {
-	            this.planBuilder.moveSprintToActiveListNode(sprint);
-	          }
-
-	          if (tmpSprint.getStatus() === 'completed') {
-	            this.planBuilder.moveSprintToCompletedListNode(sprint);
-	          }
-
-	          this.planBuilder.updatePlannedSprints(this.entityStorage.getPlannedSprints(), tmpSprint.getStatus() === 'active');
-	        }
-
-	        sprint.updateYourself(tmpSprint);
-	        this.planBuilder.updateSprintContainers();
+	      if (this.needSkipUpdate(params.id)) {
+	        this.cleanSkipUpdate(params.id);
+	        return;
 	      }
+
+	      this.requestSender.getSprintData({
+	        sprintId: params.id
+	      }).then(function (response) {
+	        var tmpSprint = Sprint.buildSprint(response.data);
+
+	        var sprint = _this2.entityStorage.findEntityByEntityId(tmpSprint.getId());
+
+	        if (sprint) {
+	          var currentStatus = sprint.getStatus();
+	          sprint.updateYourself(tmpSprint);
+
+	          if (tmpSprint.getStatus() !== currentStatus) {
+	            if (tmpSprint.getStatus() === 'active') {
+	              _this2.planBuilder.moveSprintToActiveListNode(sprint);
+	            }
+
+	            if (tmpSprint.getStatus() === 'completed') {
+	              sprint.getItems().forEach(function (item) {
+	                if (item.isShownSubTasks()) {
+	                  item.hideSubTasks();
+	                }
+
+	                sprint.removeItem(item);
+	                item.removeYourself();
+	              });
+	              sprint.setBlank(sprint);
+	              sprint.hideContent();
+
+	              _this2.planBuilder.moveSprintToCompletedListNode(sprint);
+	            }
+	          }
+
+	          _this2.planBuilder.updatePlannedSprints(_this2.entityStorage.getPlannedSprints(), !main_core.Type.isUndefined(_this2.entityStorage.getActiveSprint()));
+
+	          _this2.planBuilder.updateSprintContainers();
+	        }
+	      })["catch"](function (response) {});
 	    }
 	  }, {
 	    key: "onSprintRemoved",
 	    value: function onSprintRemoved(params) {
-	      if (this.needSkipRemove(params.sprintId)) {
-	        this.cleanSkipRemove(params.sprintId);
+	      if (this.groupId !== params.groupId) {
 	        return;
 	      }
 
-	      var sprint = this.entityStorage.findEntityByEntityId(params.sprintId);
+	      if (this.needSkipRemove(params.id)) {
+	        this.cleanSkipRemove(params.id);
+	        return;
+	      }
+
+	      var sprint = this.entityStorage.findEntityByEntityId(params.id);
 
 	      if (sprint) {
 	        sprint.removeYourself();
@@ -8447,23 +8672,23 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    }
 	  }, {
 	    key: "needSkipAdd",
-	    value: function needSkipAdd(sprint) {
-	      return this.listIdsToSkipAdding.has(sprint.getTmpId());
+	    value: function needSkipAdd(tmpId) {
+	      return this.listIdsToSkipAdding.has(tmpId);
 	    }
 	  }, {
 	    key: "cleanSkipAdd",
-	    value: function cleanSkipAdd(sprint) {
-	      this.listIdsToSkipAdding.delete(sprint.getTmpId());
+	    value: function cleanSkipAdd(tmpId) {
+	      this.listIdsToSkipAdding["delete"](tmpId);
 	    }
 	  }, {
 	    key: "needSkipUpdate",
-	    value: function needSkipUpdate(sprint) {
-	      return this.listIdsToSkipUpdating.has(sprint.getId());
+	    value: function needSkipUpdate(sprintId) {
+	      return this.listIdsToSkipUpdating.has(sprintId);
 	    }
 	  }, {
 	    key: "cleanSkipUpdate",
-	    value: function cleanSkipUpdate(sprint) {
-	      this.listIdsToSkipUpdating.delete(sprint.getId());
+	    value: function cleanSkipUpdate(sprintId) {
+	      this.listIdsToSkipUpdating["delete"](sprintId);
 	    }
 	  }, {
 	    key: "needSkipRemove",
@@ -8473,7 +8698,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "cleanSkipRemove",
 	    value: function cleanSkipRemove(sprintId) {
-	      this.listIdsToSkipRemoving.delete(sprintId);
+	      this.listIdsToSkipRemoving["delete"](sprintId);
 	    }
 	  }]);
 	  return PullSprint;
@@ -8488,7 +8713,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    this.tagSearcher = params.tagSearcher;
 	    this.itemMover = params.itemMover;
 	    this.currentUserId = params.currentUserId;
-	    this.listToAddAfterUpdate = new Map();
+	    this.groupId = params.groupId;
+	    this.listToAddAfterUpdate = new Set();
 	    this.listIdsToSkipAdding = new Set();
 	    this.listIdsToSkipUpdating = new Set();
 	    this.listIdsToSkipRemoving = new Set();
@@ -8514,61 +8740,88 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    }
 	  }, {
 	    key: "onItemAdded",
-	    value: function onItemAdded(itemData) {
+	    value: function onItemAdded(params) {
 	      var _this = this;
 
-	      var item = Item.buildItem(itemData);
-	      this.setDelayedAdd(item);
-	      this.externalAdd(item).finally(function () {
-	        return _this.cleanDelayedAdd(item);
+	      if (this.groupId !== params.groupId) {
+	        return;
+	      }
+
+	      this.setDelayedAdd(params.id);
+	      this.externalAdd(params.id)["finally"](function () {
+	        return _this.cleanDelayedAdd(params.id);
 	      }).then(function () {
-	        return _this.addItemToEntity(item);
-	      }).catch(function () {});
+	        _this.requestSender.getItemData({
+	          itemId: params.id
+	        }).then(function (response) {
+	          var item = Item.buildItem(response.data);
+
+	          _this.addItemToEntity(item);
+	        })["catch"](function (response) {});
+	      })["catch"](function () {});
 	    }
 	  }, {
 	    key: "onItemUpdated",
-	    value: function onItemUpdated(itemData) {
-	      var item = Item.buildItem(itemData);
+	    value: function onItemUpdated(params) {
+	      var _this2 = this;
 
-	      if (this.isDelayedAdd(item)) {
-	        this.cleanDelayedAdd(item);
+	      if (this.groupId !== params.groupId) {
+	        return;
+	      }
 
-	        if (this.needSkipAdd(item)) {
-	          this.cleanSkipAdd(item);
+	      this.requestSender.getItemData({
+	        itemId: params.id
+	      }).then(function (response) {
+	        var item = Item.buildItem(response.data);
+
+	        if (_this2.isDelayedAdd(item.getId())) {
+	          _this2.cleanDelayedAdd(item.getId());
+
+	          if (_this2.needSkipAdd(params.tmpId)) {
+	            _this2.cleanSkipAdd(params.tmpId);
+
+	            return;
+	          }
+
+	          _this2.addItemToEntity(item);
+
 	          return;
 	        }
 
-	        this.addItemToEntity(item);
-	        return;
-	      }
+	        if (_this2.needSkipUpdate(item)) {
+	          _this2.cleanSkipUpdate(item);
 
-	      if (this.needSkipUpdate(item)) {
-	        this.cleanSkipUpdate(item);
-	        return;
-	      }
+	          return;
+	        }
 
-	      this.updateItem(item);
+	        _this2.updateItem(item);
+	      })["catch"](function (response) {});
 	    }
 	  }, {
 	    key: "onItemRemoved",
 	    value: function onItemRemoved(params) {
-	      if (this.needSkipRemove(params.itemId)) {
-	        this.cleanSkipRemove(params.itemId);
+	      if (this.groupId !== params.groupId) {
 	        return;
 	      }
 
-	      var item = this.entityStorage.findItemByItemId(params.itemId);
+	      if (this.needSkipRemove(params.id)) {
+	        this.cleanSkipRemove(params.id);
+	        return;
+	      }
+
+	      var item = this.entityStorage.findItemByItemId(params.id);
 
 	      if (item) {
 	        var entity = this.entityStorage.findEntityByItemId(item.getId());
 	        entity.removeItem(item);
 	        item.removeYourself();
+	        this.updateEntityCounters(entity);
 	      }
 	    }
 	  }, {
 	    key: "onItemSortUpdated",
 	    value: function onItemSortUpdated(itemsSortInfo) {
-	      var _this2 = this;
+	      var _this3 = this;
 
 	      var itemsToSort = new Map();
 	      var itemsInfoToSort = new Map();
@@ -8577,15 +8830,15 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            itemId = _ref2[0],
 	            info = _ref2[1];
 
-	        var item = _this2.entityStorage.findItemByItemId(itemId);
+	        var item = _this3.entityStorage.findItemByItemId(itemId);
 
 	        if (item) {
-	          if (!_this2.needSkipSort(info.tmpId)) {
+	          if (!_this3.needSkipSort(info.tmpId)) {
 	            itemsToSort.set(item.getId(), item);
 	            itemsInfoToSort.set(item.getId(), info);
 	          }
 
-	          _this2.cleanSkipRemove(info.tmpId);
+	          _this3.cleanSkipRemove(info.tmpId);
 	        }
 	      });
 	      itemsToSort.forEach(function (item) {
@@ -8597,27 +8850,27 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	        item.setSort(itemInfoToSort.sort);
 
-	        var sourceEntity = _this2.entityStorage.findEntityByEntityId(item.getEntityId());
+	        var sourceEntity = _this3.entityStorage.findEntityByEntityId(item.getEntityId());
 
 	        if (sourceEntity) {
 	          var targetEntityId = main_core.Type.isUndefined(itemInfoToSort.entityId) ? item.getEntityId() : itemInfoToSort.entityId;
 
-	          var targetEntity = _this2.entityStorage.findEntityByEntityId(targetEntityId);
+	          var targetEntity = _this3.entityStorage.findEntityByEntityId(targetEntityId);
 
 	          if (!targetEntity || sourceEntity.getId() === targetEntity.getId()) {
 	            targetEntity = sourceEntity;
 	          }
 
-	          _this2.itemMover.moveToPosition(sourceEntity, targetEntity, item);
+	          _this3.itemMover.moveToPosition(sourceEntity, targetEntity, item);
 
-	          _this2.entityStorage.recalculateItemsSort();
+	          _this3.entityStorage.recalculateItemsSort();
 	        }
 	      });
 	    }
 	  }, {
 	    key: "onCommentAdd",
 	    value: function onCommentAdd(params) {
-	      var _this3 = this;
+	      var _this4 = this;
 
 	      var participants = main_core.Type.isArray(params.participants) ? params.participants : [];
 
@@ -8635,9 +8888,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            }).then(function (response) {
 	              var tmpItem = Item.buildItem(response.data.itemData);
 
-	              _this3.updateItem(tmpItem, item);
-	            }).catch(function (response) {
-	              _this3.requestSender.showErrorAlert(response);
+	              _this4.updateItem(tmpItem, item);
+	            })["catch"](function (response) {
+	              _this4.requestSender.showErrorAlert(response);
 	            });
 	          }
 	        }
@@ -8646,9 +8899,16 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "addItemToEntity",
 	    value: function addItemToEntity(item) {
-	      var _this4 = this;
+	      var _this5 = this;
 
 	      if (item.isSubTask()) {
+	        var parentItem = this.entityStorage.findItemBySourceId(item.getParentTaskId());
+
+	        if (parentItem) {
+	          parentItem.hideSubTasks();
+	          parentItem.cleanSubTasks();
+	        }
+
 	        return;
 	      }
 
@@ -8659,21 +8919,21 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          return;
 	        }
 
-	        var entity = _this4.entityStorage.findEntityByEntityId(item.getEntityId());
+	        var entity = _this5.entityStorage.findEntityByEntityId(item.getEntityId());
 
 	        if (!entity) {
 	          return;
 	        }
 
-	        _this4.itemMover.moveToPosition(entity, entity, item);
+	        _this5.itemMover.moveToPosition(entity, entity, item);
 
-	        _this4.entityStorage.recalculateItemsSort();
+	        _this5.entityStorage.recalculateItemsSort();
 
 	        item.getTags().getValue().forEach(function (tag) {
-	          _this4.tagSearcher.addTagToSearcher(tag);
+	          _this5.tagSearcher.addTagToSearcher(tag);
 	        });
-	      }).catch(function (response) {
-	        _this4.requestSender.showErrorAlert(response);
+	      })["catch"](function (response) {
+	        _this5.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
@@ -8738,7 +8998,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onCalculateSort",
 	    value: function onCalculateSort(baseEvent) {
-	      var _this5 = this;
+	      var _this6 = this;
 
 	      var listSortInfo = baseEvent.getData();
 	      Object.entries(listSortInfo).forEach(function (_ref3) {
@@ -8747,13 +9007,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            info = _ref4[1];
 
 	        if (Object.prototype.hasOwnProperty.call(info, 'tmpId')) {
-	          _this5.addTmpIdToSkipSorting(info.tmpId);
+	          _this6.addTmpIdToSkipSorting(info.tmpId);
 	        }
 	      });
 	    }
 	  }, {
-	    key: "addTmpIdsToSkipAdding",
-	    value: function addTmpIdsToSkipAdding(tmpId) {
+	    key: "addTmpIdToSkipAdding",
+	    value: function addTmpIdToSkipAdding(tmpId) {
 	      this.listIdsToSkipAdding.add(tmpId);
 	    }
 	  }, {
@@ -8773,39 +9033,39 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    }
 	  }, {
 	    key: "externalAdd",
-	    value: function externalAdd(item) {
-	      var _this6 = this;
+	    value: function externalAdd(itemId) {
+	      var _this7 = this;
 
 	      return new Promise(function (resolve, reject) {
 	        setTimeout(function () {
-	          return _this6.isDelayedAdd(item) ? resolve() : reject();
+	          return _this7.isDelayedAdd(itemId) ? resolve() : reject();
 	        }, 3000);
 	      });
 	    }
 	  }, {
 	    key: "isDelayedAdd",
-	    value: function isDelayedAdd(item) {
-	      return this.listToAddAfterUpdate.has(item.getId());
+	    value: function isDelayedAdd(itemId) {
+	      return this.listToAddAfterUpdate.has(itemId);
 	    }
 	  }, {
 	    key: "setDelayedAdd",
-	    value: function setDelayedAdd(item) {
-	      this.listToAddAfterUpdate.set(item.getId(), item);
+	    value: function setDelayedAdd(itemId) {
+	      this.listToAddAfterUpdate.add(itemId);
 	    }
 	  }, {
 	    key: "cleanDelayedAdd",
-	    value: function cleanDelayedAdd(item) {
-	      this.listToAddAfterUpdate.delete(item.getId());
+	    value: function cleanDelayedAdd(itemId) {
+	      this.listToAddAfterUpdate["delete"](itemId);
 	    }
 	  }, {
 	    key: "needSkipAdd",
-	    value: function needSkipAdd(item) {
-	      return this.listIdsToSkipAdding.has(item.getTmpId());
+	    value: function needSkipAdd(tmpId) {
+	      return this.listIdsToSkipAdding.has(tmpId);
 	    }
 	  }, {
 	    key: "cleanSkipAdd",
-	    value: function cleanSkipAdd(item) {
-	      this.listIdsToSkipAdding.delete(item.getTmpId());
+	    value: function cleanSkipAdd(tmpId) {
+	      this.listIdsToSkipAdding["delete"](tmpId);
 	    }
 	  }, {
 	    key: "needSkipUpdate",
@@ -8815,7 +9075,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "cleanSkipUpdate",
 	    value: function cleanSkipUpdate(item) {
-	      this.listIdsToSkipUpdating.delete(item.getId());
+	      this.listIdsToSkipUpdating["delete"](item.getId());
 	    }
 	  }, {
 	    key: "needSkipRemove",
@@ -8825,7 +9085,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "cleanSkipRemove",
 	    value: function cleanSkipRemove(itemId) {
-	      this.listIdsToSkipRemoving.delete(itemId);
+	      this.listIdsToSkipRemoving["delete"](itemId);
 	    }
 	  }, {
 	    key: "needSkipSort",
@@ -8835,7 +9095,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "cleanSkipSort",
 	    value: function cleanSkipSort(tmpId) {
-	      this.listIdsToSkipSorting.delete(tmpId);
+	      this.listIdsToSkipSorting["delete"](tmpId);
 	    }
 	  }]);
 	  return PullItem;
@@ -8927,7 +9187,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          taskId: item.getSourceId()
 	        }).then(function (response) {
 	          item.updateYourself(Item.buildItem(response.data.itemData));
-	        }).catch(function (response) {
+	        })["catch"](function (response) {
 	          _this.requestSender.showErrorAlert(response);
 	        });
 	      }
@@ -9070,6 +9330,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	          if (!entity.isCompleted()) {
 	            entity.removeItem(item);
+
+	            if (item.isShownSubTasks()) {
+	              item.hideSubTasks();
+	            }
+
 	            item.removeYourself();
 	          }
 	        });
@@ -9090,7 +9355,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        _this.fadeInAll();
 
 	        loader.hide();
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this.fadeInAll();
 
 	        loader.hide();
@@ -9148,6 +9413,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Decomposition;
 	}();
 
+	function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread$2(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$2(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$2(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var Plan = /*#__PURE__*/function (_View) {
 	  babelHelpers.inherits(Plan, _View);
 
@@ -9277,7 +9545,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      entityCounters: _this.entityCounters,
 	      tagSearcher: _this.tagSearcher,
 	      itemMover: _this.itemMover,
-	      currentUserId: _this.getCurrentUserId()
+	      currentUserId: _this.getCurrentUserId(),
+	      groupId: _this.getCurrentGroupId()
 	    });
 	    _this.pullEpic = new PullEpic({
 	      requestSender: _this.requestSender,
@@ -9334,7 +9603,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.planBuilder.setWidthPriority(value);
 	      this.requestSender.saveDisplayPriority({
 	        value: value
-	      }).then(function (response) {}).catch(function (response) {
+	      }).then(function (response) {})["catch"](function (response) {
 	        _this2.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -9544,11 +9813,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	      var input = baseEvent.getTarget();
 	      var entity = input.getEntity();
-	      var inputValue = baseEvent.getData();
 	      var newItem = null;
 
 	      try {
-	        newItem = this.createItem(inputValue);
+	        newItem = this.createItem(input);
 	      } catch (error) {
 	        this.showErrorAlert(error.message);
 	        input.removeYourself();
@@ -9582,7 +9850,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      } else {
 	        newItem.setEpic(input.getEpic());
 	        input.setEpic(null);
-	        this.fillItemBeforeCreation(entity, newItem, inputValue);
+	        newItem.setParentEntity(entity.getId(), entity.getEntityType());
+	        newItem.setSort(1);
+	        newItem.setResponsible(this.defaultResponsible);
 
 	        if (entity.isEmpty()) {
 	          main_core.Dom.insertBefore(newItem.render(), entity.getLoaderNode());
@@ -9591,7 +9861,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        }
 	      }
 
-	      this.pullItem.addTmpIdsToSkipAdding(newItem.getId());
+	      this.pullItem.addTmpIdToSkipAdding(newItem.getId());
 	      this.pullItem.addTmpIdToSkipSorting(newItem.getId());
 	      this.sendRequestToCreateTask(entity, newItem).then(function (response) {
 	        input.unDisable();
@@ -9625,7 +9895,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	              storyPoints: ''
 	            };
 
-	            _parentItem.setSubTasksInfo(babelHelpers.objectSpread({}, _parentItem.getSubTasksInfo(), subTaskInfo));
+	            _parentItem.setSubTasksInfo(_objectSpread$2(_objectSpread$2({}, _parentItem.getSubTasksInfo()), subTaskInfo));
 
 	            _parentItem.setParentTask('Y');
 
@@ -9636,7 +9906,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        entity.adjustListItemsWidth();
 
 	        _this6.planBuilder.adjustSprintListWidth();
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this6.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -9654,7 +9924,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        if (isStoryPointsUpdated) {
 	          _this7.updateEntityCounters(entity);
 	        }
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this7.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -9675,9 +9945,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          subTasks.addTask(subTaskItem);
 	        });
 	        subTasks.show();
+	        sprint.deactivateSubTaskLoading(subTasks.getParentItem());
 
 	        _this8.planBuilder.adjustSprintListWidth();
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this8.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -9691,7 +9962,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        itemId: baseEvent.getData().getId(),
 	        sourceId: baseEvent.getData().getSourceId(),
 	        responsible: baseEvent.getData().getResponsible().getValue()
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this9.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -9752,7 +10023,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        _this11.entityStorage.removeSprint(sprint.getId());
 
 	        _this11.planBuilder.adjustSprintListWidth();
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this11.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -9763,7 +10034,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	      var requestData = baseEvent.getData();
 	      this.pullSprint.addIdToSkipUpdating(requestData.sprintId);
-	      this.requestSender.changeSprintName(requestData).catch(function (response) {
+	      this.requestSender.changeSprintName(requestData)["catch"](function (response) {
 	        _this12.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -9772,9 +10043,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function onChangeSprintDeadline(baseEvent) {
 	      var _this13 = this;
 
+	      var sprint = baseEvent.getTarget();
 	      var requestData = baseEvent.getData();
 	      this.pullSprint.addIdToSkipUpdating(requestData.sprintId);
-	      this.requestSender.changeSprintDeadline(requestData).catch(function (response) {
+	      this.requestSender.changeSprintDeadline(requestData).then(function (response) {
+	        var sprintData = response.data;
+	        sprint.setDateStart(sprintData.dateStart);
+	        sprint.setDateEnd(sprintData.dateEnd);
+	      })["catch"](function (response) {
 	        _this13.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -9786,8 +10062,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var sprint = baseEvent.getTarget();
 	      var listItemsNode = sprint.getListItemsNode();
 	      var listPosition = main_core.Dom.getPosition(listItemsNode);
-	      sprint.getContentContainer().style.height = 'auto'; //todo ppc
-
+	      main_core.Dom.style(sprint.getContentContainer(), 'height', 'auto');
 	      var loader = new main_loader.Loader({
 	        size: 60,
 	        mode: 'inline',
@@ -9806,16 +10081,19 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        if (response.data.length > 0) {
 	          response.data.forEach(function (itemParams) {
 	            var item = Item.buildItem(itemParams);
-	            item.setDisableStatus(sprint.isDisabled());
-	            sprint.appendItemToList(item);
-	            sprint.setItem(item);
+
+	            if (!sprint.getItems().has(item.getId())) {
+	              item.setDisableStatus(sprint.isDisabled());
+	              sprint.appendItemToList(item);
+	              sprint.setItem(item);
+	            }
 	          });
 	        } else {
 	          sprint.showBlank();
 	        }
 
 	        sprint.showContent(sprint.getContentContainer());
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        loader.hide();
 
 	        _this14.requestSender.showErrorAlert(response);
@@ -9882,7 +10160,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.sprintAddMenu.getPopupWindow().subscribe('onShow', function () {
 	        var angle = _this15.sprintAddMenu.getMenuContainer().querySelector('.popup-window-angly');
 
-	        angle.style.pointerEvents = 'none';
+	        main_core.Dom.style(angle, 'pointerEvents', 'none');
 	      });
 	      this.sprintAddMenu.show();
 	    }
@@ -9950,7 +10228,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          _this16.input.setEpic(epic);
 
 	          _this16.epic.onAfterAdd(new main_core_events.BaseEvent().setData(epic));
-	        }).catch(function (response) {
+	        })["catch"](function (response) {
 	          _this16.requestSender.showErrorAlert(response);
 	        });
 	      });
@@ -10018,7 +10296,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        }
 
 	        loader.hide();
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        loader.hide();
 	        entity.setActiveLoadItems(false);
 
@@ -10061,7 +10339,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            entity.fadeIn();
 	          }
 	        });
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        entities.forEach(function (entity) {
 	          if (!entity.isCompleted()) {
 	            entity.fadeIn();
@@ -10156,7 +10434,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        }
 
 	        loader.hide();
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this19.requestSender.showErrorAlert(response);
 
 	        loader.hide();
@@ -10203,6 +10481,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        }
 	      }
 
+	      entity.adjustListItemsWidth();
 	      this.input.getInputNode().focus();
 	      this.scrollToInput();
 	    }
@@ -10284,6 +10563,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	                _this22.attachFilesToTask(entity, baseEvent.getData());
 	              });
 	              diskManager.showAttachmentMenu(event.currentTarget);
+
+	              _this22.actionPanel.subscribe('onDestroy', function () {
+	                return diskManager.closeAttachmentMenu();
+	              });
 	            }
 	          },
 	          dod: {
@@ -10433,11 +10716,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    }
 	  }, {
 	    key: "createItem",
-	    value: function createItem(value) {
-	      var valueWithoutTags = value.replace(new RegExp(TagSearcher.tagRegExp, 'g'), '').replace(new RegExp(TagSearcher.epicRegExp, 'g'), '');
+	    value: function createItem(input) {
+	      var epic = input.getEpic();
+	      var value = input.getInputNode().value.trim();
+	      var valueWithoutEpic = epic ? value.replace(new RegExp('@' + epic.name + '$', 'g'), '') : value;
 	      var item = Item.buildItem({
 	        'itemId': '',
-	        'name': valueWithoutTags
+	        'name': valueWithoutEpic
 	      });
 	      item.setShortView(this.isShortView);
 	      return item;
@@ -10453,31 +10738,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        'epicId': item.getEpic().getValue().id,
 	        'sort': item.getSort(),
 	        'storyPoints': item.getStoryPoints().getValue().getPoints(),
-	        'tags': item.getTags().getValue(),
 	        'parentTaskId': item.getParentTaskId(),
 	        'responsible': item.getResponsible().getValue(),
 	        'info': item.getInfo(),
 	        'sortInfo': this.itemMover.calculateSort(entity.getListItemsNode())
 	      };
 	      return this.requestSender.createTask(requestData);
-	    }
-	  }, {
-	    key: "fillItemBeforeCreation",
-	    value: function fillItemBeforeCreation(entity, item, value) {
-	      item.setParentEntity(entity.getId(), entity.getEntityType());
-	      item.setSort(1);
-	      item.setResponsible(this.defaultResponsible);
-	      var tags = TagSearcher.getHashTagNamesFromText(value);
-
-	      if (tags.length > 0) {
-	        item.setTags(tags);
-	      }
-
-	      var epicName = TagSearcher.getHashEpicNamesFromText(value).pop();
-
-	      if (epicName) {
-	        item.setEpic(this.tagSearcher.getEpicByName(epicName.trim()));
-	      }
 	    }
 	  }, {
 	    key: "fillItemAfterCreation",
@@ -10546,7 +10812,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        _this23.destroyActionPanel();
 
 	        entity.deactivateGroupMode();
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this23.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -10622,7 +10888,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            currentTags.push(tag);
 	            groupModeItem.setTags(currentTags);
 	          });
-	        }).catch(function (response) {
+	        })["catch"](function (response) {
 	          _this26.requestSender.showErrorAlert(response);
 	        });
 	      });
@@ -10645,7 +10911,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            currentTags.splice(currentTags.indexOf(tag), 1);
 	            groupModeItem.setTags(currentTags);
 	          });
-	        }).catch(function (response) {
+	        })["catch"](function (response) {
 	          _this26.requestSender.showErrorAlert(response);
 	        });
 	      });
@@ -10678,7 +10944,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        _this27.requestSender.updateItemEpics({
 	          itemIds: itemIds,
 	          epicId: epicId
-	        }).then(function (response) {}).catch(function (response) {
+	        }).then(function (response) {})["catch"](function (response) {
 	          _this27.requestSender.showErrorAlert(response);
 	        });
 	      });
@@ -10703,7 +10969,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      return this.requestSender.removeItems({
 	        itemIds: itemIds,
 	        sortInfo: this.itemMover.calculateSort(entity.getListItemsNode())
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this28.requestSender.showErrorAlert(response);
 	      });
 	    }
@@ -10761,7 +11027,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	              subTasks.addTask(subTaskItem);
 	            });
 	            renderInputAfterSubTasks(subTasks);
-	          }).catch(function (response) {
+	          })["catch"](function (response) {
 	            _this29.requestSender.showErrorAlert(response);
 	          });
 	        } else {
@@ -10778,34 +11044,38 @@ this.BX.Tasks = this.BX.Tasks || {};
 	}(View);
 
 	var _templateObject$C;
-	var ActiveSprintActionButton = /*#__PURE__*/function (_EventEmitter) {
-	  babelHelpers.inherits(ActiveSprintActionButton, _EventEmitter);
+	var CompleteSprintButton = /*#__PURE__*/function (_EventEmitter) {
+	  babelHelpers.inherits(CompleteSprintButton, _EventEmitter);
 
-	  function ActiveSprintActionButton() {
+	  function CompleteSprintButton(params) {
 	    var _this;
 
-	    babelHelpers.classCallCheck(this, ActiveSprintActionButton);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ActiveSprintActionButton).call(this));
+	    babelHelpers.classCallCheck(this, CompleteSprintButton);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(CompleteSprintButton).call(this));
+	    _this.canCompleteSprint = params.canCompleteSprint;
 
 	    _this.setEventNamespace('BX.Tasks.Scrum.ActiveSprintButton');
 
 	    return _this;
 	  }
 
-	  babelHelpers.createClass(ActiveSprintActionButton, [{
+	  babelHelpers.createClass(CompleteSprintButton, [{
 	    key: "render",
 	    value: function render() {
-	      var node = main_core.Tag.render(_templateObject$C || (_templateObject$C = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-btn ui-btn-sm ui-btn-primary ui-btn-xs ui-btn-round ui-btn-no-caps\">\n\t\t\t\t<span>\n\t\t\t\t\t", "\n\t\t\t\t</span>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_ACTIONS_COMPLETE_SPRINT'));
+	      var disableUiClass = this.canCompleteSprint ? '' : 'ui-btn-disabled';
+	      var node = main_core.Tag.render(_templateObject$C || (_templateObject$C = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-btn ui-btn-sm ui-btn-primary ui-btn-xs ui-btn-round ui-btn-no-caps ", "\">\n\t\t\t\t<span>\n\t\t\t\t\t", "\n\t\t\t\t</span>\n\t\t\t</div>\n\t\t"])), disableUiClass, main_core.Loc.getMessage('TASKS_SCRUM_ACTIONS_COMPLETE_SPRINT'));
 	      main_core.Event.bind(node, 'click', this.onCompleteSprintClick.bind(this));
 	      return node;
 	    }
 	  }, {
 	    key: "onCompleteSprintClick",
 	    value: function onCompleteSprintClick() {
-	      this.emit('completeSprint');
+	      if (this.canCompleteSprint) {
+	        this.emit('completeSprint');
+	      }
 	    }
 	  }]);
-	  return ActiveSprintActionButton;
+	  return CompleteSprintButton;
 	}(main_core_events.EventEmitter);
 
 	var _templateObject$D;
@@ -10908,17 +11178,23 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        return;
 	      }
 
-	      var robotButton = new RobotButton({
-	        sidePanel: this.sidePanel,
-	        groupId: this.getCurrentGroupId(),
-	        isTaskLimitsExceeded: this.isTaskLimitsExceeded(),
-	        canUseAutomation: this.isCanUseAutomation()
+	      if (this.canCompleteSprint) // todo change to can robot access
+	        {
+	          var robotButton = new RobotButton({
+	            sidePanel: this.sidePanel,
+	            groupId: this.getCurrentGroupId(),
+	            isTaskLimitsExceeded: this.isTaskLimitsExceeded(),
+	            canUseAutomation: this.isCanUseAutomation()
+	          });
+	          main_core.Dom.append(robotButton.render(), container);
+	        }
+
+	      var completeSprintButton = new CompleteSprintButton({
+	        canCompleteSprint: this.canCompleteSprint
 	      });
-	      var activeSprintActionButton = new ActiveSprintActionButton();
-	      activeSprintActionButton.subscribe('completeSprint', this.onCompleteSprint.bind(this));
+	      completeSprintButton.subscribe('completeSprint', this.onCompleteSprint.bind(this));
+	      main_core.Dom.append(completeSprintButton.render(), container);
 	      main_core.Dom.addClass(container, '--without-bg');
-	      main_core.Dom.append(robotButton.render(), container);
-	      main_core.Dom.append(activeSprintActionButton.render(), container);
 	    }
 	  }, {
 	    key: "setParams",
@@ -10927,6 +11203,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.setTaskLimitsExceeded(params.taskLimitExceeded);
 	      this.setCanUseAutomation(params.canUseAutomation);
 	      this.views = params.views;
+	      this.canCompleteSprint = params.canCompleteSprint === 'Y';
 	    }
 	  }, {
 	    key: "setTaskLimitsExceeded",
@@ -11270,5 +11547,5 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	exports.Entry = Entry;
 
-}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX.UI.ShortView,BX.UI.EntitySelector,BX.Main,BX.UI.Dialogs,BX.UI.DragAndDrop,BX,BX,BX,BX.Event));
+}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX.UI.ShortView,BX.UI.EntitySelector,BX,BX.Main,BX.UI.Dialogs,BX.UI.DragAndDrop,BX,BX,BX,BX.Event));
 //# sourceMappingURL=script.js.map

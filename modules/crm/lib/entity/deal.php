@@ -32,24 +32,11 @@ class Deal extends EntityBase
 	{
 		return Crm\DealTable::getEntity();
 	}
-	protected function getDbTableAlias()
+	public function getDbTableAlias()
 	{
 		return \CCrmDeal::TABLE_ALIAS;
 	}
 	//endregion
-
-	public function prepareFilter(array &$filterFields, array $params = null)
-	{
-		parent::prepareFilter($filterFields, $params);
-
-		$extras = isset($params['extras']) && is_array($params['extras']) ? $params['extras'] : array();
-		if(isset($extras['CATEGORY_ID']) && $extras['CATEGORY_ID'] >= 0)
-		{
-			$filterFields['CATEGORY_ID'] = (int)$extras['CATEGORY_ID'];
-		}
-
-		$filterFields['IS_RECURRING'] = isset($extras['IS_RECURRING']) && $extras['IS_RECURRING'] === 'Y' ? 'Y' : 'N';
-	}
 
 	//region Permissions
 	public function checkReadPermission($entityID = 0, $userPermissions = null)

@@ -12,7 +12,9 @@ use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\Type\Dictionary;
 use Bitrix\Tasks\Copy\Task as TaskCopier;
+use Bitrix\Tasks\Copy\Template as TemplateCopier;
 use Bitrix\Tasks\Integration\Forum\Task\Comment;
+use Bitrix\Tasks\TemplateTable;
 use Bitrix\Tasks\Util\Type\DateTime as TasksDateTime;
 
 Loc::loadMessages(__FILE__);
@@ -30,13 +32,13 @@ class Task extends Base
 	const DESC_FORMAT_HTML = \CTaskItem::DESCR_FORMAT_HTML;
 	const DESC_FORMAT_PLAIN_TEXT = \CTaskItem::DESCR_FORMAT_PLAIN_TEXT;
 
-	/**
-	 * @var TaskCopier|null
-	 */
+	/** @var ?TaskCopier */
 	private $taskCopier = null;
-	/**
-	 * @var EntityCopier|null
-	 */
+
+	/** @var ?TemplateCopier*/
+	private $templateCopier = null;
+
+	/** @var ?EntityCopier*/
 	private $topicCopier = null;
 
 	private $targetGroupId;
@@ -71,6 +73,16 @@ class Task extends Base
 	public function setTopicCopier(EntityCopier $topicCopier): void
 	{
 		$this->topicCopier = $topicCopier;
+	}
+
+	/**
+	 * To copy the task recurrence setting, you need to copy the template.
+	 *
+	 * @param ?TemplateCopier $templateCopier
+	 */
+	public function setTemplateCopier(TemplateCopier $templateCopier): void
+	{
+		$this->templateCopier = $templateCopier;
 	}
 
 	/**
@@ -205,7 +217,10 @@ class Task extends Base
 	public function prepareFieldsToCopy(Container $container, array $fields)
 	{
 		$dictionary = $container->getDictionary();
+
 		$dictionary["FORUM_TOPIC_ID"] = $fields["FORUM_TOPIC_ID"];
+		$dictionary["REPLICATE"] = ($fields["REPLICATE"] === "Y" ? "Y" : "N");
+
 		$container->setDictionary($dictionary);
 
 		if ($this->targetGroupId)
@@ -280,6 +295,8 @@ class Task extends Base
 		$results[] = $this->copyChildTasks($entityId, $copiedEntityId);
 
 		$results[] = $this->copyComments($container, $entityId, $copiedEntityId);
+
+		$results[] = $this->copyReplica($container, $entityId, $copiedEntityId);
 
 		return $this->getResult($results);
 	}
@@ -383,14 +400,14 @@ class Task extends Base
 		return $fields;
 	}
 
-	private function copyComments(Container $container, int $taskId, int $copiedTaskId)
+	private function copyComments(Container $parentContainer, int $taskId, int $copiedTaskId)
 	{
 		if (!$this->topicCopier)
 		{
 			return new Result();
 		}
 
-		$dictionary = $container->getDictionary();
+		$dictionary = $parentContainer->getDictionary();
 		if (empty($dictionary["FORUM_TOPIC_ID"]))
 		{
 			return new Result();
@@ -420,6 +437,52 @@ class Task extends Base
 			}
 
 			return $result;
+		}
+
+		return new Result();
+	}
+
+	private function copyReplica(Container $parentContainer, int $taskId, int $copiedTaskId)
+	{
+		if (!$this->templateCopier)
+		{
+			return new Result();
+		}
+
+		$parentDictionary = $parentContainer->getDictionary();
+		if ($parentDictionary->get('REPLICATE') !== 'Y')
+		{
+			return new Result();
+		}
+
+		$containerCollection = new ContainerCollection();
+
+		$dictionary = new Dictionary();
+		$dictionary->set('TASK_ID', $copiedTaskId);
+		if ($this->targetGroupId)
+		{
+			$dictionary->set('GROUP_ID', $this->targetGroupId);
+		}
+
+		$queryObject = TemplateTable::getList([
+			'select' => ['ID'],
+			'filter' => [
+				'TASK_ID' => $taskId,
+				'REPLICATE' => 'Y',
+			],
+		]);
+		while ($templateData = $queryObject->fetch())
+		{
+			$container = new Container($templateData['ID']);
+
+			$container->setDictionary($dictionary);
+
+			$containerCollection[] = $container;
+		}
+
+		if (!$containerCollection->isEmpty())
+		{
+			return $this->templateCopier->copy($containerCollection);
 		}
 
 		return new Result();
@@ -508,6 +571,7 @@ class Task extends Base
 
 			$oldStartPoint = ($projectTerm["old_start_point"] ? $projectTerm["old_start_point"] : $taskCreatedDate);
 			$oldStartPointTime = TasksDateTime::createFrom($oldStartPoint);
+			$oldStartPointTime->setTime(0, 0);
 
 			$currentFieldDateTime = TasksDateTime::createFrom($currentFieldDate);
 
@@ -568,6 +632,7 @@ class Task extends Base
 			$startPointTime = TasksDateTime::createFrom($startPoint);
 
 			$createdDate = TasksDateTime::createFrom($taskCreatedDate);
+			$createdDate->setTime(0, 0);
 			$currentDeadlineTime = TasksDateTime::createFrom($currentDeadline);
 			$startPointTime->add("PT".($currentDeadlineTime->getTimestamp()-$createdDate->getTimestamp())."S");
 

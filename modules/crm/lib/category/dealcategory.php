@@ -1064,24 +1064,17 @@ class DealCategory
 
 	/**
 	 * Prepare Form ID fom specified category
-	 * @param int $ID Entry ID.
-	 * @param int $sourceFormID Initial form ID.
+	 *
+	 * @param int $categoryId Entry ID.
+	 * @param int $sourceFormId Initial form ID.
 	 * @return string
 	 */
-	public static function prepareFormID($ID, $sourceFormID, $useUpperCase = true)
+	public static function prepareFormID($categoryId, $sourceFormId, $useUpperCase = true)
 	{
-		if(!is_int($ID))
-		{
-			$ID = (int)$ID;
-		}
+		$categoryId = (int)$categoryId;
+		$sourceFormId = (string)$sourceFormId;
 
-		if($ID <= 0)
-		{
-			return $sourceFormID;
-		}
-
-		$key = $useUpperCase ? 'C' : 'c';
-		return "{$sourceFormID}_{$key}_{$ID}";
+		return (new EditorHelper(\CCrmOwnerType::Deal))->getEditorConfigId($categoryId, $sourceFormId, $useUpperCase);
 	}
 
 	public static function getPermissionEntityTypeList()
@@ -1216,7 +1209,7 @@ class DealCategory
 		$permissionEntity = DealCategory::convertToPermissionEntityType($id);
 		$donorPermissionEntity = DealCategory::convertToPermissionEntityType($donorId);
 		$permissionSet = RolePermission::getByEntityId($donorPermissionEntity);
-		return RolePermission::setByEntityId($permissionEntity, $permissionSet);
+		return RolePermission::setByEntityId($permissionEntity, $permissionSet, true);
 	}
 
 	/**

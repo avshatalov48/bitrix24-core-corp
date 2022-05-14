@@ -100,7 +100,7 @@ class SalesCenterFeedbackComponent extends CBitrixComponent
 		}
 		else
 		{
-			$this->arResult['domain'] = 'https://landing.bitrix24.ru';
+			$this->arResult['domain'] = 'https://product-feedback.bitrix24.com';
 			$this->arResult['presets'] = [
 				'from_domain' => defined('BX24_HOST_NAME') ? BX24_HOST_NAME : Option::get('main', 'server_name', ''),
 				'b24_plan' => Bitrix24Manager::getInstance()->getLicenseType(),

@@ -2006,31 +2006,21 @@ var Vue = exports.Vue;
       }
     };
 
-    function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
-
-    function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-
-    var _namespace = /*#__PURE__*/new WeakMap();
-
-    var _subscribers = /*#__PURE__*/new WeakMap();
-
-    var _emittedOnce = /*#__PURE__*/new WeakMap();
-
     var Event = /*#__PURE__*/function () {
       function Event() {
         babelHelpers.classCallCheck(this, Event);
 
-        _classPrivateFieldInitSpec(this, _namespace, {
+        _namespace.set(this, {
           writable: true,
           value: []
         });
 
-        _classPrivateFieldInitSpec(this, _subscribers, {
+        _subscribers.set(this, {
           writable: true,
           value: []
         });
 
-        _classPrivateFieldInitSpec(this, _emittedOnce, {
+        _emittedOnce.set(this, {
           writable: true,
           value: []
         });
@@ -2111,6 +2101,12 @@ var Vue = exports.Vue;
       }]);
       return Event;
     }();
+
+    var _namespace = new WeakMap();
+
+    var _subscribers = new WeakMap();
+
+    var _emittedOnce = new WeakMap();
 
     var Item = /*#__PURE__*/function (_Event) {
       babelHelpers.inherits(Item, _Event);
@@ -2681,10 +2677,6 @@ var Vue = exports.Vue;
       return restore()['name'][fieldName] || '';
     }
 
-    function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
-
-    function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-
     function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
     var DefaultOptions = {
       type: 'string',
@@ -2694,8 +2686,6 @@ var Vue = exports.Vue;
       visible: true,
       required: false
     };
-
-    var _prepareValues = /*#__PURE__*/new WeakSet();
 
     var Controller = /*#__PURE__*/function (_Event) {
       babelHelpers.inherits(Controller, _Event);
@@ -2739,7 +2729,7 @@ var Vue = exports.Vue;
         babelHelpers.classCallCheck(this, Controller);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller).call(this, options));
 
-        _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _prepareValues);
+        _prepareValues.add(babelHelpers.assertThisInitialized(_this));
 
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "events", {
           blur: 'blur',
@@ -3062,7 +3052,9 @@ var Vue = exports.Vue;
       return Controller;
     }(Event);
 
-    function _prepareValues2(values) {
+    var _prepareValues = new WeakSet();
+
+    var _prepareValues2 = function _prepareValues2(values) {
       var _this8 = this;
 
       return values.filter(function (value) {
@@ -3074,7 +3066,7 @@ var Vue = exports.Vue;
       }).filter(function (value) {
         return _this8.validate(value);
       });
-    }
+    };
 
     var Dropdown = {
       props: ['marginTop', 'maxHeight', 'width', 'visible', 'title'],
@@ -3517,7 +3509,9 @@ var Vue = exports.Vue;
       }
     };
     var Normalizer = {
-      Email: Filter.Email,
+      Email: function Email(value) {
+        return Filter.Email(value).replace(/\.{2,}/g, '.').replace(/^\.+/g, '');
+      },
       Double: function Double(value) {
         return Filter.Double(value).replace(/,/g, '.');
       },
@@ -3971,7 +3965,12 @@ var Vue = exports.Vue;
 
     var FieldFileItem = {
       props: ['field', 'itemIndex', 'item'],
-      template: "\n\t\t<div>\n\t\t\t<div v-if=\"file.content\" class=\"b24-form-control-file-item\">\n\t\t\t\t<div class=\"b24-form-control-file-item-preview\">\n\t\t\t\t\t<img class=\"b24-form-control-file-item-preview-image\" \n\t\t\t\t\t\t:src=\"fileIcon\"\n\t\t\t\t\t\tv-if=\"hasIcon\"\n\t\t\t\t\t>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"b24-form-control-file-item-name\">\n\t\t\t\t\t<span class=\"b24-form-control-file-item-name-text\">\n\t\t\t\t\t\t{{ file.name }}\n\t\t\t\t\t</span>\n\t\t\t\t\t<div style=\"display: none;\" class=\"b24-form-control-file-item-preview-image-popup\">\n\t\t\t\t\t\t<img>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div @click.prevent=\"removeFile\" class=\"b24-form-control-file-item-remove\"></div>\n\t\t\t</div>\n\t\t\t<div v-show=\"!file.content\" class=\"b24-form-control-file-item-empty\">\n\t\t\t\t<label class=\"b24-form-control\">\n\t\t\t\t\t{{ field.messages.get('fieldFileChoose') }}\n\t\t\t\t\t<input type=\"file\" style=\"display: none;\"\n\t\t\t\t\t\tref=\"inputFiles\"\n\t\t\t\t\t\t:accept=\"field.getAcceptTypes()\"\n\t\t\t\t\t\t@change=\"setFiles\"\n\t\t\t\t\t\t@blur=\"$emit('input-blur')\"\n\t\t\t\t\t\t@focus=\"$emit('input-focus')\"\n\t\t\t\t\t>\n\t\t\t\t</label>\n\t\t\t</div>\n\t\t</div>\n\t",
+      data: function data() {
+        return {
+          errorTextTypeFile: null
+        };
+      },
+      template: "\n\t\t<div>\n\t\t\t<div v-if=\"file.content\" class=\"b24-form-control-file-item\">\n\t\t\t\t<div class=\"b24-form-control-file-item-preview\">\n\t\t\t\t\t<img class=\"b24-form-control-file-item-preview-image\" \n\t\t\t\t\t\t:src=\"fileIcon\"\n\t\t\t\t\t\tv-if=\"hasIcon\"\n\t\t\t\t\t>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"b24-form-control-file-item-name\">\n\t\t\t\t\t<span class=\"b24-form-control-file-item-name-text\">\n\t\t\t\t\t\t{{ file.name }}\n\t\t\t\t\t</span>\n\t\t\t\t\t<div style=\"display: none;\" class=\"b24-form-control-file-item-preview-image-popup\">\n\t\t\t\t\t\t<img>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div @click.prevent=\"removeFile\" class=\"b24-form-control-file-item-remove\"></div>\n\t\t\t</div>\n\t\t\t<div \n\t\t\t\tclass=\"b24-form-control-file-item-empty\"\n\t\t\t\t:class=\"{'b24-form-control-alert': !!errorTextTypeFile}\"\n\t\t\t\tv-show=\"!file.content\" \n\t\t\t>\n\t\t\t\t<label class=\"b24-form-control\">\n\t\t\t\t\t{{ field.messages.get('fieldFileChoose') }}\n\t\t\t\t\t<input type=\"file\" style=\"display: none;\"\n\t\t\t\t\t\tref=\"inputFiles\"\n\t\t\t\t\t\t:accept=\"field.getAcceptTypes()\"\n\t\t\t\t\t\t@change=\"setFiles\"\n\t\t\t\t\t\t@blur=\"$emit('input-blur')\"\n\t\t\t\t\t\t@focus=\"$emit('input-focus')\"\n\t\t\t\t\t>\n\t\t\t\t</label>\n\t\t\t\t<div class=\"b24-form-control-alert-message\"\n\t\t\t\t\t@click=\"errorTextTypeFile = null\"\n\t\t\t\t>{{errorTextTypeFile}}</div>\n\t\t\t</div>\n\t\t</div>\n\t",
       computed: {
         value: {
           get: function get() {
@@ -4009,12 +4008,21 @@ var Vue = exports.Vue;
         setFiles: function setFiles() {
           var _this = this;
 
+          this.errorTextTypeFile = null;
           var file = this.$refs.inputFiles.files[0];
 
-          if (file && this.field.contentTypes.length > 0) {
-            var isTypeValid = this.field.contentTypes.some(function (type) {
+          if (!file) {
+            return;
+          }
+
+          var fileType = file.type || '';
+          var fileExt = (file.name || '').split('.').pop();
+          var acceptTypes = this.field.getAcceptTypes();
+          acceptTypes = acceptTypes ? acceptTypes.split(',') : [];
+
+          if (file && acceptTypes.length > 0) {
+            var isTypeValid = acceptTypes.some(function (type) {
               type = type || '';
-              var fileType = file.type || '';
 
               if (type === fileType) {
                 return true;
@@ -4022,6 +4030,8 @@ var Vue = exports.Vue;
 
               if (type.indexOf('*') >= 0) {
                 return fileType.indexOf(type.replace(/\*/g, '')) >= 0;
+              } else if (type.indexOf('.') === 0) {
+                return type === '.' + fileExt;
               }
 
               return false;
@@ -4029,6 +4039,13 @@ var Vue = exports.Vue;
 
             if (!isTypeValid) {
               file = null;
+              var extensions = acceptTypes.filter(function (item) {
+                return item.indexOf('/') < 0;
+              }).join(', ');
+              this.errorTextTypeFile = (this.field.messages.get('fieldFileErrorType') || this.field.messages.get('fieldErrorInvalid')).replace('%extensions%', extensions);
+              setTimeout(function () {
+                return _this.errorTextTypeFile = null;
+              }, 15000);
             }
           }
 
@@ -4045,6 +4062,7 @@ var Vue = exports.Vue;
                 type: result[0].split(':')[1],
                 content: result[1].split(',')[1]
               };
+              _this.$refs.inputFiles.value = null;
             };
 
             reader.readAsDataURL(file);
@@ -4241,14 +4259,34 @@ var Vue = exports.Vue;
         babelHelpers.classCallCheck(this, Controller$$1);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).call(this, options));
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "contentTypes", []);
-        _this.contentTypes = options.contentTypes || [];
+        _this.contentTypes = (Array.isArray(options.contentTypes) ? options.contentTypes : []) || [];
         return _this;
       }
 
       babelHelpers.createClass(Controller$$1, [{
         key: "getAcceptTypes",
         value: function getAcceptTypes() {
-          return this.contentTypes.join(',');
+          return this.contentTypes.map(function (item) {
+            switch (item) {
+              case 'image/*':
+                return [item, '.jpeg', '.png', '.ico'];
+
+              case 'video/*':
+                return [item, '.mp4', '.avi'];
+
+              case 'audio/*':
+                return [item, '.mp3', '.ogg', '.wav'];
+
+              case 'x-bx/doc':
+                return ['application/pdf', 'application/msword', 'text/csv', 'text/plain', 'application/vnd.*', '.pdf', '.doc', '.docx', '.txt', '.ppt', '.pptx', '.xls', '.xlsx', '.csv', '.vsd', '.vsdx'].join(',');
+
+              case 'x-bx/arc':
+                return ['application/zip', 'application/gzip', 'application/x-tar', 'application/x-rar-compressed', '.zip', '.7z', '.tar', '.gzip', '.rar'].join(',');
+
+              default:
+                return item;
+            }
+          }).join(',');
         }
       }]);
       return Controller$$1;
@@ -5836,10 +5874,6 @@ var Vue = exports.Vue;
     }();
 
     var _OppositeActionTypes;
-
-    function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
-
-    function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     var ConditionEvents = {
       change: 'change'
     };
@@ -5865,27 +5899,21 @@ var Vue = exports.Vue;
     };
     var OppositeActionTypes = (_OppositeActionTypes = {}, babelHelpers.defineProperty(_OppositeActionTypes, ActionTypes.hide, ActionTypes.show), babelHelpers.defineProperty(_OppositeActionTypes, ActionTypes.show, ActionTypes.hide), _OppositeActionTypes);
 
-    var _form = /*#__PURE__*/new WeakMap();
-
-    var _list = /*#__PURE__*/new WeakMap();
-
-    var _groups = /*#__PURE__*/new WeakMap();
-
     var Manager = /*#__PURE__*/function () {
       function Manager(form) {
         babelHelpers.classCallCheck(this, Manager);
 
-        _classPrivateFieldInitSpec$1(this, _form, {
+        _form.set(this, {
           writable: true,
           value: void 0
         });
 
-        _classPrivateFieldInitSpec$1(this, _list, {
+        _list.set(this, {
           writable: true,
           value: []
         });
 
-        _classPrivateFieldInitSpec$1(this, _groups, {
+        _groups.set(this, {
           writable: true,
           value: []
         });
@@ -6138,6 +6166,12 @@ var Vue = exports.Vue;
       return Manager;
     }();
 
+    var _form = new WeakMap();
+
+    var _list = new WeakMap();
+
+    var _groups = new WeakMap();
+
     var ConditionOperations = [];
 
     for (var operationName in Operations) {
@@ -6148,31 +6182,21 @@ var Vue = exports.Vue;
       ConditionOperations.push(Operations[_operationName]);
     }
 
-    function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
-
-    function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-
-    var _form$1 = /*#__PURE__*/new WeakMap();
-
-    var _isStartSent = /*#__PURE__*/new WeakMap();
-
-    var _filledFields = /*#__PURE__*/new WeakMap();
-
     var Analytics$1 = /*#__PURE__*/function () {
       function Analytics$$1(form) {
         babelHelpers.classCallCheck(this, Analytics$$1);
 
-        _classPrivateFieldInitSpec$2(this, _form$1, {
+        _form$1.set(this, {
           writable: true,
           value: void 0
         });
 
-        _classPrivateFieldInitSpec$2(this, _isStartSent, {
+        _isStartSent.set(this, {
           writable: true,
           value: false
         });
 
-        _classPrivateFieldInitSpec$2(this, _filledFields, {
+        _filledFields.set(this, {
           writable: true,
           value: []
         });
@@ -6260,52 +6284,42 @@ var Vue = exports.Vue;
       return Analytics$$1;
     }();
 
-    function _classPrivateFieldInitSpec$3(obj, privateMap, value) { _checkPrivateRedeclaration$4(obj, privateMap); privateMap.set(obj, value); }
+    var _form$1 = new WeakMap();
 
-    function _checkPrivateRedeclaration$4(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    var _isStartSent = new WeakMap();
 
-    var _key = /*#__PURE__*/new WeakMap();
-
-    var _use = /*#__PURE__*/new WeakMap();
-
-    var _widgetId = /*#__PURE__*/new WeakMap();
-
-    var _response = /*#__PURE__*/new WeakMap();
-
-    var _target = /*#__PURE__*/new WeakMap();
-
-    var _callback = /*#__PURE__*/new WeakMap();
+    var _filledFields = new WeakMap();
 
     var ReCaptcha$1 = /*#__PURE__*/function () {
       function ReCaptcha$$1() {
         babelHelpers.classCallCheck(this, ReCaptcha$$1);
 
-        _classPrivateFieldInitSpec$3(this, _key, {
+        _key.set(this, {
           writable: true,
           value: void 0
         });
 
-        _classPrivateFieldInitSpec$3(this, _use, {
+        _use.set(this, {
           writable: true,
           value: false
         });
 
-        _classPrivateFieldInitSpec$3(this, _widgetId, {
+        _widgetId.set(this, {
           writable: true,
           value: void 0
         });
 
-        _classPrivateFieldInitSpec$3(this, _response, {
+        _response.set(this, {
           writable: true,
           value: void 0
         });
 
-        _classPrivateFieldInitSpec$3(this, _target, {
+        _target.set(this, {
           writable: true,
           value: void 0
         });
 
-        _classPrivateFieldInitSpec$3(this, _callback, {
+        _callback.set(this, {
           writable: true,
           value: void 0
         });
@@ -6399,24 +6413,28 @@ var Vue = exports.Vue;
       return ReCaptcha$$1;
     }();
 
-    function _classPrivateFieldInitSpec$4(obj, privateMap, value) { _checkPrivateRedeclaration$5(obj, privateMap); privateMap.set(obj, value); }
+    var _key = new WeakMap();
 
-    function _checkPrivateRedeclaration$5(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    var _use = new WeakMap();
 
-    var _currency = /*#__PURE__*/new WeakMap();
+    var _widgetId = new WeakMap();
 
-    var _fields = /*#__PURE__*/new WeakMap();
+    var _response = new WeakMap();
+
+    var _target = new WeakMap();
+
+    var _callback = new WeakMap();
 
     var Basket = /*#__PURE__*/function () {
       function Basket(fields, currency) {
         babelHelpers.classCallCheck(this, Basket);
 
-        _classPrivateFieldInitSpec$4(this, _currency, {
+        _currency.set(this, {
           writable: true,
           value: void 0
         });
 
-        _classPrivateFieldInitSpec$4(this, _fields, {
+        _fields.set(this, {
           writable: true,
           value: []
         });
@@ -6493,6 +6511,602 @@ var Vue = exports.Vue;
       }]);
       return Basket;
     }();
+
+    var _currency = new WeakMap();
+
+    var _fields = new WeakMap();
+
+    /*! 
+     * portal-vue © Thorsten L?nborg, 2019 
+     * 
+     * Version: 2.1.7
+     * 
+     * LICENCE: MIT 
+     * 
+     * https://github.com/linusborg/portal-vue
+     * 
+    */
+    function _typeof(obj) {
+      if (typeof Symbol === "function" && babelHelpers.typeof(Symbol.iterator) === "symbol") {
+        _typeof = function _typeof(obj) {
+          return babelHelpers.typeof(obj);
+        };
+      } else {
+        _typeof = function _typeof(obj) {
+          return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : babelHelpers.typeof(obj);
+        };
+      }
+
+      return _typeof(obj);
+    }
+
+    function _toConsumableArray(arr) {
+      return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread();
+    }
+
+    function _arrayWithoutHoles(arr) {
+      if (Array.isArray(arr)) {
+        for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) {
+          arr2[i] = arr[i];
+        }
+
+        return arr2;
+      }
+    }
+
+    function _iterableToArray(iter) {
+      if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter);
+    }
+
+    function _nonIterableSpread() {
+      throw new TypeError("Invalid attempt to spread non-iterable instance");
+    }
+
+    var inBrowser = typeof window !== 'undefined';
+
+    function freeze(item) {
+      if (Array.isArray(item) || _typeof(item) === 'object') {
+        return Object.freeze(item);
+      }
+
+      return item;
+    }
+
+    function combinePassengers(transports) {
+      var slotProps = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      return transports.reduce(function (passengers, transport) {
+        var temp = transport.passengers[0];
+        var newPassengers = typeof temp === 'function' ? temp(slotProps) : transport.passengers;
+        return passengers.concat(newPassengers);
+      }, []);
+    }
+
+    function stableSort(array, compareFn) {
+      return array.map(function (v, idx) {
+        return [idx, v];
+      }).sort(function (a, b) {
+        return compareFn(a[1], b[1]) || a[0] - b[0];
+      }).map(function (c) {
+        return c[1];
+      });
+    }
+
+    function pick(obj, keys) {
+      return keys.reduce(function (acc, key) {
+        if (obj.hasOwnProperty(key)) {
+          acc[key] = obj[key];
+        }
+
+        return acc;
+      }, {});
+    }
+
+    var transports = {};
+    var targets = {};
+    var sources = {};
+    var Wormhole = Vue.extend({
+      data: function data() {
+        return {
+          transports: transports,
+          targets: targets,
+          sources: sources,
+          trackInstances: inBrowser
+        };
+      },
+      methods: {
+        open: function open(transport) {
+          if (!inBrowser) return;
+          var to = transport.to,
+              from = transport.from,
+              passengers = transport.passengers,
+              _transport$order = transport.order,
+              order = _transport$order === void 0 ? Infinity : _transport$order;
+          if (!to || !from || !passengers) return;
+          var newTransport = {
+            to: to,
+            from: from,
+            passengers: freeze(passengers),
+            order: order
+          };
+          var keys = Object.keys(this.transports);
+
+          if (keys.indexOf(to) === -1) {
+            Vue.set(this.transports, to, []);
+          }
+
+          var currentIndex = this.$_getTransportIndex(newTransport); // Copying the array here so that the PortalTarget change event will actually contain two distinct arrays
+
+          var newTransports = this.transports[to].slice(0);
+
+          if (currentIndex === -1) {
+            newTransports.push(newTransport);
+          } else {
+            newTransports[currentIndex] = newTransport;
+          }
+
+          this.transports[to] = stableSort(newTransports, function (a, b) {
+            return a.order - b.order;
+          });
+        },
+        close: function close(transport) {
+          var force = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+          var to = transport.to,
+              from = transport.from;
+          if (!to || !from && force === false) return;
+
+          if (!this.transports[to]) {
+            return;
+          }
+
+          if (force) {
+            this.transports[to] = [];
+          } else {
+            var index = this.$_getTransportIndex(transport);
+
+            if (index >= 0) {
+              // Copying the array here so that the PortalTarget change event will actually contain two distinct arrays
+              var newTransports = this.transports[to].slice(0);
+              newTransports.splice(index, 1);
+              this.transports[to] = newTransports;
+            }
+          }
+        },
+        registerTarget: function registerTarget(target, vm, force) {
+          if (!inBrowser) return;
+
+          if (this.trackInstances && !force && this.targets[target]) {
+            console.warn("[portal-vue]: Target ".concat(target, " already exists"));
+          }
+
+          this.$set(this.targets, target, Object.freeze([vm]));
+        },
+        unregisterTarget: function unregisterTarget(target) {
+          this.$delete(this.targets, target);
+        },
+        registerSource: function registerSource(source, vm, force) {
+          if (!inBrowser) return;
+
+          if (this.trackInstances && !force && this.sources[source]) {
+            console.warn("[portal-vue]: source ".concat(source, " already exists"));
+          }
+
+          this.$set(this.sources, source, Object.freeze([vm]));
+        },
+        unregisterSource: function unregisterSource(source) {
+          this.$delete(this.sources, source);
+        },
+        hasTarget: function hasTarget(to) {
+          return !!(this.targets[to] && this.targets[to][0]);
+        },
+        hasSource: function hasSource(to) {
+          return !!(this.sources[to] && this.sources[to][0]);
+        },
+        hasContentFor: function hasContentFor(to) {
+          return !!this.transports[to] && !!this.transports[to].length;
+        },
+        // Internal
+        $_getTransportIndex: function $_getTransportIndex(_ref) {
+          var to = _ref.to,
+              from = _ref.from;
+
+          for (var i in this.transports[to]) {
+            if (this.transports[to][i].from === from) {
+              return +i;
+            }
+          }
+
+          return -1;
+        }
+      }
+    });
+    var wormhole = new Wormhole(transports);
+    var _id = 1;
+    var Portal = Vue.extend({
+      name: 'portal',
+      props: {
+        disabled: {
+          type: Boolean
+        },
+        name: {
+          type: String,
+          default: function _default() {
+            return String(_id++);
+          }
+        },
+        order: {
+          type: Number,
+          default: 0
+        },
+        slim: {
+          type: Boolean
+        },
+        slotProps: {
+          type: Object,
+          default: function _default() {
+            return {};
+          }
+        },
+        tag: {
+          type: String,
+          default: 'DIV'
+        },
+        to: {
+          type: String,
+          default: function _default() {
+            return String(Math.round(Math.random() * 10000000));
+          }
+        }
+      },
+      created: function created() {
+        var _this = this;
+
+        this.$nextTick(function () {
+          wormhole.registerSource(_this.name, _this);
+        });
+      },
+      mounted: function mounted() {
+        if (!this.disabled) {
+          this.sendUpdate();
+        }
+      },
+      updated: function updated() {
+        if (this.disabled) {
+          this.clear();
+        } else {
+          this.sendUpdate();
+        }
+      },
+      beforeDestroy: function beforeDestroy() {
+        wormhole.unregisterSource(this.name);
+        this.clear();
+      },
+      watch: {
+        to: function to(newValue, oldValue) {
+          oldValue && oldValue !== newValue && this.clear(oldValue);
+          this.sendUpdate();
+        }
+      },
+      methods: {
+        clear: function clear(target) {
+          var closer = {
+            from: this.name,
+            to: target || this.to
+          };
+          wormhole.close(closer);
+        },
+        normalizeSlots: function normalizeSlots() {
+          return this.$scopedSlots.default ? [this.$scopedSlots.default] : this.$slots.default;
+        },
+        normalizeOwnChildren: function normalizeOwnChildren(children) {
+          return typeof children === 'function' ? children(this.slotProps) : children;
+        },
+        sendUpdate: function sendUpdate() {
+          var slotContent = this.normalizeSlots();
+
+          if (slotContent) {
+            var transport = {
+              from: this.name,
+              to: this.to,
+              passengers: _toConsumableArray(slotContent),
+              order: this.order
+            };
+            wormhole.open(transport);
+          } else {
+            this.clear();
+          }
+        }
+      },
+      render: function render(h) {
+        var children = this.$slots.default || this.$scopedSlots.default || [];
+        var Tag = this.tag;
+
+        if (children && this.disabled) {
+          return children.length <= 1 && this.slim ? this.normalizeOwnChildren(children)[0] : h(Tag, [this.normalizeOwnChildren(children)]);
+        } else {
+          return this.slim ? h() : h(Tag, {
+            class: {
+              'v-portal': true
+            },
+            style: {
+              display: 'none'
+            },
+            key: 'v-portal-placeholder'
+          });
+        }
+      }
+    });
+    var PortalTarget = Vue.extend({
+      name: 'portalTarget',
+      props: {
+        multiple: {
+          type: Boolean,
+          default: false
+        },
+        name: {
+          type: String,
+          required: true
+        },
+        slim: {
+          type: Boolean,
+          default: false
+        },
+        slotProps: {
+          type: Object,
+          default: function _default() {
+            return {};
+          }
+        },
+        tag: {
+          type: String,
+          default: 'div'
+        },
+        transition: {
+          type: [String, Object, Function]
+        }
+      },
+      data: function data() {
+        return {
+          transports: wormhole.transports,
+          firstRender: true
+        };
+      },
+      created: function created() {
+        var _this = this;
+
+        this.$nextTick(function () {
+          wormhole.registerTarget(_this.name, _this);
+        });
+      },
+      watch: {
+        ownTransports: function ownTransports() {
+          this.$emit('change', this.children().length > 0);
+        },
+        name: function name(newVal, oldVal) {
+          /**
+           * TODO
+           * This should warn as well ...
+           */
+          wormhole.unregisterTarget(oldVal);
+          wormhole.registerTarget(newVal, this);
+        }
+      },
+      mounted: function mounted() {
+        var _this2 = this;
+
+        if (this.transition) {
+          this.$nextTick(function () {
+            // only when we have a transition, because it causes a re-render
+            _this2.firstRender = false;
+          });
+        }
+      },
+      beforeDestroy: function beforeDestroy() {
+        wormhole.unregisterTarget(this.name);
+      },
+      computed: {
+        ownTransports: function ownTransports() {
+          var transports = this.transports[this.name] || [];
+
+          if (this.multiple) {
+            return transports;
+          }
+
+          return transports.length === 0 ? [] : [transports[transports.length - 1]];
+        },
+        passengers: function passengers() {
+          return combinePassengers(this.ownTransports, this.slotProps);
+        }
+      },
+      methods: {
+        // can't be a computed prop because it has to "react" to $slot changes.
+        children: function children() {
+          return this.passengers.length !== 0 ? this.passengers : this.$scopedSlots.default ? this.$scopedSlots.default(this.slotProps) : this.$slots.default || [];
+        },
+        // can't be a computed prop because it has to "react" to this.children().
+        noWrapper: function noWrapper() {
+          var noWrapper = this.slim && !this.transition;
+
+          if (noWrapper && this.children().length > 1) {
+            console.warn('[portal-vue]: PortalTarget with `slim` option received more than one child element.');
+          }
+
+          return noWrapper;
+        }
+      },
+      render: function render(h) {
+        var noWrapper = this.noWrapper();
+        var children = this.children();
+        var Tag = this.transition || this.tag;
+        return noWrapper ? children[0] : this.slim && !Tag ? h() : h(Tag, {
+          props: {
+            // if we have a transition component, pass the tag if it exists
+            tag: this.transition && this.tag ? this.tag : undefined
+          },
+          class: {
+            'vue-portal-target': true
+          }
+        }, children);
+      }
+    });
+    var _id$1 = 0;
+    var portalProps = ['disabled', 'name', 'order', 'slim', 'slotProps', 'tag', 'to'];
+    var targetProps = ['multiple', 'transition'];
+    var MountingPortal = Vue.extend({
+      name: 'MountingPortal',
+      inheritAttrs: false,
+      props: {
+        append: {
+          type: [Boolean, String]
+        },
+        bail: {
+          type: Boolean
+        },
+        mountTo: {
+          type: String,
+          required: true
+        },
+        // Portal
+        disabled: {
+          type: Boolean
+        },
+        // name for the portal
+        name: {
+          type: String,
+          default: function _default() {
+            return 'mounted_' + String(_id$1++);
+          }
+        },
+        order: {
+          type: Number,
+          default: 0
+        },
+        slim: {
+          type: Boolean
+        },
+        slotProps: {
+          type: Object,
+          default: function _default() {
+            return {};
+          }
+        },
+        tag: {
+          type: String,
+          default: 'DIV'
+        },
+        // name for the target
+        to: {
+          type: String,
+          default: function _default() {
+            return String(Math.round(Math.random() * 10000000));
+          }
+        },
+        // Target
+        multiple: {
+          type: Boolean,
+          default: false
+        },
+        targetSlim: {
+          type: Boolean
+        },
+        targetSlotProps: {
+          type: Object,
+          default: function _default() {
+            return {};
+          }
+        },
+        targetTag: {
+          type: String,
+          default: 'div'
+        },
+        transition: {
+          type: [String, Object, Function]
+        }
+      },
+      created: function created() {
+        if (typeof document === 'undefined') return;
+        var el = document.querySelector(this.mountTo);
+
+        if (!el) {
+          console.error("[portal-vue]: Mount Point '".concat(this.mountTo, "' not found in document"));
+          return;
+        }
+
+        var props = this.$props; // Target already exists
+
+        if (wormhole.targets[props.name]) {
+          if (props.bail) {
+            console.warn("[portal-vue]: Target ".concat(props.name, " is already mounted.\n        Aborting because 'bail: true' is set"));
+          } else {
+            this.portalTarget = wormhole.targets[props.name];
+          }
+
+          return;
+        }
+
+        var append = props.append;
+
+        if (append) {
+          var type = typeof append === 'string' ? append : 'DIV';
+          var mountEl = document.createElement(type);
+          el.appendChild(mountEl);
+          el = mountEl;
+        } // get props for target from $props
+        // we have to rename a few of them
+
+
+        var _props = pick(this.$props, targetProps);
+
+        _props.slim = this.targetSlim;
+        _props.tag = this.targetTag;
+        _props.slotProps = this.targetSlotProps;
+        _props.name = this.to;
+        this.portalTarget = new PortalTarget({
+          el: el,
+          parent: this.$parent || this,
+          propsData: _props
+        });
+      },
+      beforeDestroy: function beforeDestroy() {
+        var target = this.portalTarget;
+
+        if (this.append) {
+          var el = target.$el;
+          el.parentNode.removeChild(el);
+        }
+
+        target.$destroy();
+      },
+      render: function render(h) {
+        if (!this.portalTarget) {
+          console.warn("[portal-vue] Target wasn't mounted");
+          return h();
+        } // if there's no "manual" scoped slot, so we create a <Portal> ourselves
+
+
+        if (!this.$scopedSlots.manual) {
+          var props = pick(this.$props, portalProps);
+          return h(Portal, {
+            props: props,
+            attrs: this.$attrs,
+            on: this.$listeners,
+            scopedSlots: this.$scopedSlots
+          }, this.$slots.default);
+        } // else, we render the scoped slot
+
+
+        var content = this.$scopedSlots.manual({
+          to: this.to
+        }); // if user used <template> for the scoped slot
+        // content will be an array
+
+        if (Array.isArray(content)) {
+          content = content[0];
+        }
+
+        if (!content) return h();
+        return content;
+      }
+    });
 
     var Scrollable = {
       props: ['show', 'enabled', 'zIndex', 'text', 'topIntersected', 'bottomIntersected'],
@@ -6601,16 +7215,42 @@ var Vue = exports.Vue;
       }
     };
 
+    function getPortalSelector(mountId) {
+      var className = 'b24-window-mounts';
+      mountId = mountId || "empty";
+      mountId = "b24-window-mount-".concat(mountId);
+      var selector = "#".concat(mountId);
+
+      if (document.getElementById(mountId)) {
+        return selector;
+      }
+
+      var wrapper = document.querySelector(".".concat(className));
+
+      if (!wrapper) {
+        wrapper = document.createElement('div');
+        wrapper.classList.add(className);
+        document.body.appendChild(wrapper);
+      }
+
+      var container = document.createElement('div');
+      container.id = mountId;
+      container.classList.add('b24-form');
+      wrapper.appendChild(container);
+      return selector;
+    }
+
     var Overlay = {
       props: ['show', 'background'],
       components: {},
       template: "\n\t\t<transition name=\"b24-a-fade\" appear>\n\t\t\t<div class=\"b24-window-overlay\"\n\t\t\t\t:style=\"{ backgroundColor: background }\" \n\t\t\t\t@click=\"$emit('click')\"\n\t\t\t\tv-show=\"show\"\n\t\t\t></div>\n\t\t</transition>\n\t"
     };
     var windowMixin = {
-      props: ['show', 'title', 'position', 'vertical', 'maxWidth', 'zIndex', 'scrollDown', 'scrollDownText'],
+      props: ['show', 'title', 'position', 'vertical', 'maxWidth', 'zIndex', 'scrollDown', 'scrollDownText', 'mountId'],
       components: {
         'b24-overlay': Overlay,
-        'b24-scrollable': Scrollable
+        'b24-scrollable': Scrollable,
+        MountingPortal: MountingPortal
       },
       data: function data() {
         return {
@@ -6637,6 +7277,9 @@ var Vue = exports.Vue;
           }
 
           this.show ? document.addEventListener('keydown', this.escHandler) : document.removeEventListener('keydown', this.escHandler);
+        },
+        getMountTo: function getMountTo(mountId) {
+          return getPortalSelector(mountId);
         }
       },
       mounted: function mounted() {
@@ -6655,7 +7298,7 @@ var Vue = exports.Vue;
     };
     var Popup = {
       mixins: [windowMixin],
-      template: "\n\t\t<div class=\"b24-window\">\n\t\t\t<b24-overlay :show=\"show\" @click=\"hide()\"></b24-overlay>\n\t\t\t<transition :name=\"getTransitionName()\" appear>\n\t\t\t\t<div class=\"b24-window-popup\" \n\t\t\t\t\t:class=\"classes()\"\n\t\t\t\t\t@click.self.prevent=\"hide()\"\n\t\t\t\t\tv-show=\"show\"\n\t\t\t\t>\n\t\t\t\t\t<div class=\"b24-window-popup-wrapper\" \n\t\t\t\t\t\t:style=\"{ maxWidth: maxWidth + 'px' }\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<button @click=\"hide()\" type=\"button\" class=\"b24-window-close\" :style=\"{ zIndex: zIndexComputed + 20}\" ></button>\n\t\t\t\t\t\t<b24-scrollable\n\t\t\t\t\t\t\t:show=\"show\"\n\t\t\t\t\t\t\t:enabled=\"scrollDown\"\n\t\t\t\t\t\t\t:zIndex=\"zIndex\"\n\t\t\t\t\t\t\t:text=\"scrollDownText\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div v-if=\"title\" class=\"b24-window-popup-head\">\n\t\t\t\t\t\t\t\t<div class=\"b24-window-popup-title\">{{ title }}</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"b24-window-popup-body\">\n\t\t\t\t\t\t\t\t<slot></slot>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</b24-scrollable>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</transition>\n\t\t</div>\n\t",
+      template: "\n\t\t<MountingPortal\n\t\t\tappend\n\t\t\t:disabled=\"!mountId\"\n\t\t\t:mountTo=\"getMountTo(mountId)\"\n\t\t>\n\t\t\t<div class=\"b24-window\">\n\t\t\t\t<b24-overlay :show=\"show\" @click=\"hide()\"></b24-overlay>\n\t\t\t\t<transition :name=\"getTransitionName()\" appear>\n\t\t\t\t\t<div class=\"b24-window-popup\" \n\t\t\t\t\t\t:class=\"classes()\"\n\t\t\t\t\t\t@click.self.prevent=\"hide()\"\n\t\t\t\t\t\tv-show=\"show\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div class=\"b24-window-popup-wrapper\" \n\t\t\t\t\t\t\t:style=\"{ maxWidth: maxWidth + 'px' }\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button @click=\"hide()\" type=\"button\" class=\"b24-window-close\" :style=\"{ zIndex: zIndexComputed + 20}\" ></button>\n\t\t\t\t\t\t\t<b24-scrollable\n\t\t\t\t\t\t\t\t:show=\"show\"\n\t\t\t\t\t\t\t\t:enabled=\"scrollDown\"\n\t\t\t\t\t\t\t\t:zIndex=\"zIndex\"\n\t\t\t\t\t\t\t\t:text=\"scrollDownText\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<div v-if=\"title\" class=\"b24-window-popup-head\">\n\t\t\t\t\t\t\t\t\t<div class=\"b24-window-popup-title\">{{ title }}</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"b24-window-popup-body\">\n\t\t\t\t\t\t\t\t\t<slot></slot>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</b24-scrollable>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</transition>\n\t\t\t</div>\n\t\t</MountingPortal>\n\t",
       methods: {
         getTransitionName: function getTransitionName() {
           return 'b24-a-slide-' + (this.vertical || 'bottom');
@@ -6707,7 +7350,7 @@ var Vue = exports.Vue;
 
     var AgreementBlock = {
       mixins: [],
-      props: ['messages', 'view', 'fields', 'visible', 'title', 'html', 'field'],
+      props: ['messages', 'view', 'fields', 'visible', 'title', 'html', 'field', 'formId'],
       components: Object.assign(Components.Definition, {
         'field': Factory.getComponent()
       }),
@@ -6720,7 +7363,7 @@ var Vue = exports.Vue;
           maxWidth: 600
         };
       },
-      template: "\n\t\t<div>\n\t\t\t<component v-bind:is=\"'field'\"\n\t\t\t\tv-for=\"field in fields\"\n\t\t\t\tv-bind:key=\"field.id\"\n\t\t\t\tv-bind:field=\"field\"\n\t\t\t></component>\n\n\t\t\t<b24-popup\n\t\t\t\t:show=\"visible\" \n\t\t\t\t:title=\"title\" \n\t\t\t\t:maxWidth=\"maxWidth\" \n\t\t\t\t:zIndex=\"199999\"\n\t\t\t\t:scrollDown=\"true\"\n\t\t\t\t:scrollDownText=\"messages.get('consentReadAll')\"\n\t\t\t\t@hide=\"reject\"\n\t\t\t>\n\t\t\t\t<div style=\"padding: 0 12px 12px;\">\n\t\t\t\t\t<div v-html=\"html\"></div>\n\t\t\t\t\t\n\t\t\t\t\t<div class=\"b24-form-btn-container\" style=\"padding: 12px 0 0;\">\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\t@click.prevent=\"apply\"\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ messages.get('consentAccept') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\t@click.prevent=\"reject\"\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn b24-form-btn-white b24-form-btn-border\">\n\t\t\t\t\t\t\t\t{{ messages.get('consentReject') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</b24-popup>\n\t\t</div>\n\t",
+      template: "\n\t\t<div>\n\t\t\t<component v-bind:is=\"'field'\"\n\t\t\t\tv-for=\"field in fields\"\n\t\t\t\tv-bind:key=\"field.id\"\n\t\t\t\tv-bind:field=\"field\"\n\t\t\t></component>\n\n\t\t\t<b24-popup\n\t\t\t\t:mountId=\"formId\"\n\t\t\t\t:show=\"visible\" \n\t\t\t\t:title=\"title\" \n\t\t\t\t:maxWidth=\"maxWidth\" \n\t\t\t\t:zIndex=\"199999\"\n\t\t\t\t:scrollDown=\"true\"\n\t\t\t\t:scrollDownText=\"messages.get('consentReadAll')\"\n\t\t\t\t@hide=\"reject\"\n\t\t\t>\n\t\t\t\t<div style=\"padding: 0 12px 12px;\">\n\t\t\t\t\t<div v-html=\"html\"></div>\n\t\t\t\t\t\n\t\t\t\t\t<div class=\"b24-form-btn-container\" style=\"padding: 12px 0 0;\">\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\t@click.prevent=\"apply\"\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ messages.get('consentAccept') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\t@click.prevent=\"reject\"\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn b24-form-btn-white b24-form-btn-border\">\n\t\t\t\t\t\t\t\t{{ messages.get('consentReject') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</b24-popup>\n\t\t</div>\n\t",
       mounted: function mounted() {
         this.$root.$on('consent:request', this.showPopup);
       },
@@ -6885,7 +7528,7 @@ var Vue = exports.Vue;
         'basket-block': BasketBlock,
         'recaptcha-block': ReCaptcha$2
       },
-      template: "\n\t\t<div class=\"b24-form-wrapper\"\n\t\t\t:class=\"classes()\"\n\t\t>\n\t\t\t<div v-if=\"form.title || form.desc\" class=\"b24-form-header b24-form-padding-side\">\n\t\t\t\t<div v-if=\"form.title\" class=\"b24-form-header-title\">{{ form.title }}</div>\n\t\t\t\t<div class=\"b24-form-header-description\"\n\t\t\t\t\tv-if=\"form.desc\"\n\t\t\t\t\tv-html=\"form.desc\"\n\t\t\t\t></div>\n\t\t\t</div>\n\t\t\t<div v-else class=\"b24-form-header-padding\"></div>\n\n\t\t\t<div class=\"b24-form-content b24-form-padding-side\">\n\t\t\t\t<form \n\t\t\t\t\tmethod=\"post\"\n\t\t\t\t\tnovalidate\n\t\t\t\t\t@submit=\"submit\"\n\t\t\t\t\tv-if=\"form.pager\"\n\t\t\t\t>\n\t\t\t\t\t<component v-bind:is=\"'pager-block'\"\n\t\t\t\t\t\tv-bind:key=\"form.id\"\n\t\t\t\t\t\tv-bind:pager=\"form.pager\"\n\t\t\t\t\t\tv-if=\"form.pager.iterable()\"\n\t\t\t\t\t></component>\n\t\t\t\t\t\t\t\t\n\t\t\t\t\t<div v-if=\"!form.disabled\">\t\t\n\t\t\t\t\t\t<component v-bind:is=\"'field'\"\n\t\t\t\t\t\t\tv-for=\"field in form.pager.current().fields\"\n\t\t\t\t\t\t\tv-bind:key=\"field.id\"\n\t\t\t\t\t\t\tv-bind:field=\"field\"\n\t\t\t\t\t\t></component>\n\t\t\t\t\t</div>\t\n\t\t\t\t\t\n\t\t\t\t\t<component v-bind:is=\"'agreement-block'\"\n\t\t\t\t\t\tv-bind:key=\"form.id\"\n\t\t\t\t\t\tv-bind:fields=\"form.agreements\"\n\t\t\t\t\t\tv-bind:view=\"form.view\"\n\t\t\t\t\t\tv-bind:messages=\"form.messages\"\n\t\t\t\t\t\tv-if=\"form.pager.ended()\"\n\t\t\t\t\t></component>\n\t\t\t\t\t\n\t\t\t\t\t<component v-bind:is=\"'basket-block'\"\n\t\t\t\t\t\tv-bind:key=\"form.id\"\n\t\t\t\t\t\tv-bind:basket=\"form.basket\"\n\t\t\t\t\t\tv-bind:messages=\"form.messages\"\n\t\t\t\t\t></component>\n\t\t\t\t\t\n\t\t\t\t\t<div class=\"b24-form-btn-container\">\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"!form.pager.beginning()\" \n\t\t\t\t\t\t\t@click.prevent=\"prevPage()\"\t\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn b24-form-btn-white b24-form-btn-border\">\n\t\t\t\t\t\t\t\t{{ form.messages.get('navBack') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"!form.pager.ended()\"\n\t\t\t\t\t\t\t@click.prevent=\"nextPage()\"\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ form.messages.get('navNext') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"form.pager.ended()\"\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"submit\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ form.buttonCaption || form.messages.get('defButton') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t\n\t\t\t\t\t<span style=\"color: red;\" v-show=\"false && hasErrors\">\n\t\t\t\t\t\tDebug: fill fields\n\t\t\t\t\t</span>\n\t\t\t\t</form>\n\t\t\t</div>\n\t\t\t\n\t\t\t<state-block v-bind:key=\"form.id\" v-bind:form=\"form\"></state-block>\n\t\t\t\n\t\t\t<recaptcha-block :form=\"form\"></recaptcha-block>\n\t\t\t\n\t\t\t<div class=\"b24-form-sign\" v-if=\"form.useSign\">\n\t\t\t\t<select v-show=\"false\" v-model=\"form.messages.language\">\n\t\t\t\t\t<option v-for=\"language in form.languages\" \n\t\t\t\t\t\tv-bind:value=\"language\"\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ language }}\n\t\t\t\t\t</option>\t\t\t\t\n\t\t\t\t</select>\n\t\t\t\n\t\t\t\t<span class=\"b24-form-sign-text\">{{ form.messages.get('sign') }}</span>\n\t\t\t\t<span class=\"b24-form-sign-bx\">{{ getSignBy() }}</span>\n\t\t\t\t<span class=\"b24-form-sign-24\">24</span>\t\t\t\n\t\t\t</div>\t\t\t\n\t\t</div>\n\t",
+      template: "\n\t\t<div class=\"b24-form-wrapper\"\n\t\t\t:class=\"classes()\"\n\t\t>\n\t\t\t<div v-if=\"form.title || form.desc\" class=\"b24-form-header b24-form-padding-side\">\n\t\t\t\t<div v-if=\"form.title\" class=\"b24-form-header-title\">{{ form.title }}</div>\n\t\t\t\t<div class=\"b24-form-header-description\"\n\t\t\t\t\tv-if=\"form.desc\"\n\t\t\t\t\tv-html=\"form.desc\"\n\t\t\t\t></div>\n\t\t\t</div>\n\t\t\t<div v-else class=\"b24-form-header-padding\"></div>\n\n\t\t\t<div class=\"b24-form-content b24-form-padding-side\">\n\t\t\t\t<form \n\t\t\t\t\tmethod=\"post\"\n\t\t\t\t\tnovalidate\n\t\t\t\t\t@submit=\"submit\"\n\t\t\t\t\tv-if=\"form.pager\"\n\t\t\t\t>\n\t\t\t\t\t<component \n\t\t\t\t\t\t:is=\"'pager-block'\"\n\t\t\t\t\t\t:pager=\"form.pager\"\n\t\t\t\t\t\tv-if=\"form.pager.iterable()\"\n\t\t\t\t\t></component>\n\t\t\t\t\t\t\t\t\n\t\t\t\t\t<div v-if=\"!form.disabled\">\t\t\n\t\t\t\t\t\t<component \n\t\t\t\t\t\t\t:is=\"'field'\"\n\t\t\t\t\t\t\tv-for=\"field in form.pager.current().fields\"\n\t\t\t\t\t\t\t:key=\"field.id\"\n\t\t\t\t\t\t\t:field=\"field\"\n\t\t\t\t\t\t></component>\n\t\t\t\t\t</div>\t\n\t\t\t\t\t\n\t\t\t\t\t<component \n\t\t\t\t\t\t:is=\"'agreement-block'\"\n\t\t\t\t\t\t:formId=\"form.getId()\"\n\t\t\t\t\t\t:fields=\"form.agreements\"\n\t\t\t\t\t\t:view=\"form.view\"\n\t\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t\tv-if=\"form.pager.ended()\"\n\t\t\t\t\t></component>\n\t\t\t\t\t\n\t\t\t\t\t<component \n\t\t\t\t\t\t:is=\"'basket-block'\"\n\t\t\t\t\t\t:basket=\"form.basket\"\n\t\t\t\t\t\t:messages=\"form.messages\"\n\t\t\t\t\t></component>\n\t\t\t\t\t\n\t\t\t\t\t<div class=\"b24-form-btn-container\">\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"!form.pager.beginning()\" \n\t\t\t\t\t\t\t@click.prevent=\"prevPage()\"\t\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn b24-form-btn-white b24-form-btn-border\">\n\t\t\t\t\t\t\t\t{{ form.messages.get('navBack') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"!form.pager.ended()\"\n\t\t\t\t\t\t\t@click.prevent=\"nextPage()\"\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"button\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ form.messages.get('navNext') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"b24-form-btn-block\"\n\t\t\t\t\t\t\tv-if=\"form.pager.ended()\"\t\t\t\t\t\t\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button type=\"submit\" class=\"b24-form-btn\">\n\t\t\t\t\t\t\t\t{{ form.buttonCaption || form.messages.get('defButton') }}\n\t\t\t\t\t\t\t</button>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t\n\t\t\t\t\t<span style=\"color: red;\" v-show=\"false && hasErrors\">\n\t\t\t\t\t\tDebug: fill fields\n\t\t\t\t\t</span>\n\t\t\t\t</form>\n\t\t\t</div>\n\t\t\t\n\t\t\t<state-block :form=\"form\" />\n\t\t\t\n\t\t\t<recaptcha-block :form=\"form\" />\n\t\t\t\n\t\t\t<div class=\"b24-form-sign\" v-if=\"form.useSign\">\n\t\t\t\t<select v-show=\"false\" v-model=\"form.messages.language\">\n\t\t\t\t\t<option \n\t\t\t\t\t\tv-for=\"language in form.languages\" \n\t\t\t\t\t\t:value=\"language\"\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n\t\t\t\t\t>\n\t\t\t\t\t\t{{ language }}\n\t\t\t\t\t</option>\t\t\t\t\n\t\t\t\t</select>\n\t\t\t\n\t\t\t\t<span class=\"b24-form-sign-text\">{{ form.messages.get('sign') }}</span>\n\t\t\t\t<span class=\"b24-form-sign-bx\">{{ getSignBy() }}</span>\n\t\t\t\t<span class=\"b24-form-sign-24\">24</span>\t\t\t\n\t\t\t</div>\t\t\t\n\t\t</div>\n\t",
       computed: {
         hasErrors: function hasErrors() {
           return this.form.validated && !this.form.valid();
@@ -7053,7 +7696,7 @@ var Vue = exports.Vue;
           }
 
           if (css) {
-            css = ".b24-form #b24-".concat(this.form.getId(), ", .b24-form #b24-").concat(this.form.getId(), ".b24-form-dark\n\t\t\t\t {\n\t\t\t\t\t").concat(css, "\n\t\t\t\t}");
+            css = "\n\t\t\t\t.b24-window-mounts #b24-window-mount-".concat(this.form.getId(), ",\n\t\t\t\t.b24-form #b24-").concat(this.form.getId(), ", \n\t\t\t\t.b24-form #b24-").concat(this.form.getId(), ".b24-form-dark {\n\t\t\t\t\t").concat(css, "\n\t\t\t\t}");
             this.designStyleNode.textContent = '';
             this.designStyleNode.appendChild(document.createTextNode(css));
             document.head.appendChild(this.designStyleNode);
@@ -7106,24 +7749,9 @@ var Vue = exports.Vue;
       'b24-form-widget': Widget$1
     };
 
-    function _classPrivateFieldInitSpec$5(obj, privateMap, value) { _checkPrivateRedeclaration$6(obj, privateMap); privateMap.set(obj, value); }
-
-    function _checkPrivateRedeclaration$6(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     var DefaultOptions$4 = {
       view: 'inline'
     };
-
-    var _id = /*#__PURE__*/new WeakMap();
-
-    var _fields$1 = /*#__PURE__*/new WeakMap();
-
-    var _dependence = /*#__PURE__*/new WeakMap();
-
-    var _properties = /*#__PURE__*/new WeakMap();
-
-    var _personalisation = /*#__PURE__*/new WeakMap();
-
-    var _vue = /*#__PURE__*/new WeakMap();
 
     var Controller$o = /*#__PURE__*/function (_Event) {
       babelHelpers.inherits(Controller$$1, _Event);
@@ -7135,7 +7763,7 @@ var Vue = exports.Vue;
         babelHelpers.classCallCheck(this, Controller$$1);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).call(this, options));
 
-        _classPrivateFieldInitSpec$5(babelHelpers.assertThisInitialized(_this), _id, {
+        _id$2.set(babelHelpers.assertThisInitialized(_this), {
           writable: true,
           value: void 0
         });
@@ -7149,17 +7777,17 @@ var Vue = exports.Vue;
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "languages", []);
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "language", 'en');
 
-        _classPrivateFieldInitSpec$5(babelHelpers.assertThisInitialized(_this), _fields$1, {
+        _fields$1.set(babelHelpers.assertThisInitialized(_this), {
           writable: true,
           value: []
         });
 
-        _classPrivateFieldInitSpec$5(babelHelpers.assertThisInitialized(_this), _dependence, {
+        _dependence.set(babelHelpers.assertThisInitialized(_this), {
           writable: true,
           value: void 0
         });
 
-        _classPrivateFieldInitSpec$5(babelHelpers.assertThisInitialized(_this), _properties, {
+        _properties.set(babelHelpers.assertThisInitialized(_this), {
           writable: true,
           value: {}
         });
@@ -7177,7 +7805,7 @@ var Vue = exports.Vue;
           format: '$#'
         });
 
-        _classPrivateFieldInitSpec$5(babelHelpers.assertThisInitialized(_this), _personalisation, {
+        _personalisation.set(babelHelpers.assertThisInitialized(_this), {
           writable: true,
           value: {
             title: '',
@@ -7197,7 +7825,7 @@ var Vue = exports.Vue;
           handler: null
         });
 
-        _classPrivateFieldInitSpec$5(babelHelpers.assertThisInitialized(_this), _vue, {
+        _vue.set(babelHelpers.assertThisInitialized(_this), {
           writable: true,
           value: void 0
         });
@@ -7213,7 +7841,7 @@ var Vue = exports.Vue;
         _this.emit(EventTypes.initBefore, options);
 
         options = _this.adjust(options);
-        babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _id, options.id || Math.random().toString().split('.')[1] + Math.random().toString().split('.')[1]);
+        babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _id$2, options.id || Math.random().toString().split('.')[1] + Math.random().toString().split('.')[1]);
         _this.provider = options.provider || {};
         _this.analyticsHandler = options.analyticsHandler || {};
 
@@ -7657,7 +8285,7 @@ var Vue = exports.Vue;
       }, {
         key: "getId",
         value: function getId() {
-          return babelHelpers.classPrivateFieldGet(this, _id);
+          return babelHelpers.classPrivateFieldGet(this, _id$2);
         }
       }, {
         key: "valid",
@@ -7744,6 +8372,18 @@ var Vue = exports.Vue;
       }]);
       return Controller$$1;
     }(Event);
+
+    var _id$2 = new WeakMap();
+
+    var _fields$1 = new WeakMap();
+
+    var _dependence = new WeakMap();
+
+    var _properties = new WeakMap();
+
+    var _personalisation = new WeakMap();
+
+    var _vue = new WeakMap();
 
     function performEventOfWidgetFormInit(b24options, options) {
       var compatibleData = createEventData(b24options, options);
@@ -7856,24 +8496,16 @@ var Vue = exports.Vue;
         applyOldenLoaderData: applyOldenLoaderData
     });
 
-    function _classPrivateFieldInitSpec$6(obj, privateMap, value) { _checkPrivateRedeclaration$7(obj, privateMap); privateMap.set(obj, value); }
-
-    function _checkPrivateRedeclaration$7(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-
-    var _forms = /*#__PURE__*/new WeakMap();
-
-    var _userProviderPromise = /*#__PURE__*/new WeakMap();
-
     var Application = /*#__PURE__*/function () {
       function Application() {
         babelHelpers.classCallCheck(this, Application);
 
-        _classPrivateFieldInitSpec$6(this, _forms, {
+        _forms.set(this, {
           writable: true,
           value: []
         });
 
-        _classPrivateFieldInitSpec$6(this, _userProviderPromise, {
+        _userProviderPromise.set(this, {
           writable: true,
           value: void 0
         });
@@ -8208,6 +8840,10 @@ var Vue = exports.Vue;
       }]);
       return Application;
     }();
+
+    var _forms = new WeakMap();
+
+    var _userProviderPromise = new WeakMap();
 
     var App = new Application();
 

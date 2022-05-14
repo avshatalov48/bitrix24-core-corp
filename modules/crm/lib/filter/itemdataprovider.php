@@ -1009,4 +1009,13 @@ class ItemDataProvider extends EntityDataProvider
 			], $semanticFilter);
 		}
 	}
+
+	protected function applySettingsDependantFilter(array &$filterFields): void
+	{
+		$categoryId = $this->getSettings()->getCategoryId();
+		if ($categoryId > 0)
+		{
+			$filterFields['=CATEGORY_ID'] = $categoryId;
+		}
+	}
 }

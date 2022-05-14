@@ -136,6 +136,13 @@ final class Manager
 			return $result;
 		}
 
+		$needEnableAutomation = false;
+		if (Sale\Configuration::isEnableAutomaticReservation())
+		{
+			Sale\Configuration::disableAutomaticReservation();
+			$needEnableAutomation = true;
+		}
+
 		$orderList = $this->getEntityOrderList();
 
 		// get products and their quantity from shipments
@@ -194,7 +201,7 @@ final class Manager
 					}
 
 					$storeId = null;
-					$basketXmlId = $shipmentItem->getBasketItem()->getField('XML_ID');
+					$basketXmlId = (string)$shipmentItem->getBasketItem()->getField('XML_ID');
 					$product = $this->getEntity()->getProducts()[$basketXmlId];
 					if ($product)
 					{
@@ -216,26 +223,7 @@ final class Manager
 			}
 		}
 
-		$productsIdWithQuantityByStoreFromShipment = $this->getProductIdWithQuantityByStoreFromShipment($orderList);
-		$storeIds = array_keys($productsIdWithQuantityByStoreFromShipment);
-
-		$productIds = [];
-		foreach ($productsIdWithQuantityByStoreFromShipment as $productIdWithQuantityByStoreFromShipment)
-		{
-			$productIds[] = array_keys($productIdWithQuantityByStoreFromShipment);
-		}
-
-		if ($productIds)
-		{
-			$productIds = array_unique(array_merge(...$productIds));
-		}
-
-		$productsIdWithQuantityByStore = $this->getProductIdWithQuantityByStore($productIds, $storeIds);
-
-		$checkAvailabilityProductsOnStore = $this->checkAvailabilityProductsOnStore(
-			$productsIdWithQuantityByStoreFromShipment,
-			$productsIdWithQuantityByStore
-		);
+		$checkAvailabilityProductsOnStore = $this->checkAvailabilityProductsOnStore($orderList);
 		if (!$checkAvailabilityProductsOnStore->isSuccess())
 		{
 			$result->addErrors($checkAvailabilityProductsOnStore->getErrors());
@@ -262,15 +250,26 @@ final class Manager
 					}
 				}
 			}
+		}
 
-			if ($order->isChanged())
+		if ($result->isSuccess())
+		{
+			foreach ($orderList as $order)
 			{
-				$saveOrderResult = $order->save();
-				if (!$saveOrderResult->isSuccess())
+				if ($order->isChanged())
 				{
-					$result->addErrors($saveOrderResult->getErrors());
+					$saveOrderResult = $order->save();
+					if (!$saveOrderResult->isSuccess())
+					{
+						$result->addErrors($saveOrderResult->getErrors());
+					}
 				}
 			}
+		}
+
+		if ($needEnableAutomation)
+		{
+			Sale\Configuration::enableAutomaticReservation();
 		}
 
 		return $result;
@@ -367,13 +366,18 @@ final class Manager
 		return $result;
 	}
 
-	private function getProductIdWithQuantityByStoreFromShipment(array $orderList): array
+	private function checkAvailabilityProductsOnStore(array $orderList): Main\Result
 	{
-		$shipmentStoreQuantityProducts = [];
+		$result = new Main\Result();
+
+		/** @var Sale\Reservation\BasketReservationService $basketReservation */
+		$basketReservation = Main\DI\ServiceLocator::getInstance()->get('sale.basketReservation');
 
 		/** @var Crm\Order\Order $order */
 		foreach ($orderList as $order)
 		{
+			$products = [];
+
 			/** @var Crm\Order\Shipment $shipment */
 			foreach ($order->getShipmentCollection()->getNotSystemItems() as $shipment)
 			{
@@ -389,72 +393,67 @@ final class Manager
 					/** @var Crm\Order\ShipmentItemStore $shipmentItemStore */
 					foreach ($item->getShipmentItemStoreCollection() as $shipmentItemStore)
 					{
-						$storeId = $shipmentItemStore->getStoreId();
+						$basketCode = $item->getBasketCode();
 						$productId = $item->getProductId();
+						$storeId = $shipmentItemStore->getStoreId();
 						$quantity = $shipmentItemStore->getQuantity();
 
-						if (isset($shipmentStoreQuantityProducts[$storeId][$productId]))
+						if (isset($products[$basketCode]) && $products[$basketCode]['storeId'] === $storeId)
 						{
-							$shipmentStoreQuantityProducts[$storeId][$productId] += $quantity;
+							$products[$basketCode]['quantity'] += $quantity;
 						}
 						else
 						{
-							$shipmentStoreQuantityProducts[$storeId][$productId] = $quantity;
+							$products[$basketCode] = [
+								'quantity' => $quantity,
+								'storeId' => $storeId,
+								'productId' => $productId,
+							];
 						}
 					}
 				}
 			}
-		}
 
-		return $shipmentStoreQuantityProducts;
-	}
-
-	private function getProductIdWithQuantityByStore(array $productIds, array $storeIds): array
-	{
-		$storeProducts = [];
-
-		if (empty($storeIds))
-		{
-			return $storeProducts;
-		}
-
-		$storeProductIterator = Catalog\StoreProductTable::getList([
-			'select' => ['PRODUCT_ID', 'AMOUNT', 'STORE_ID'],
-			'filter' => [
-				'=PRODUCT_ID' => $productIds,
-				'@STORE_ID' => $storeIds,
-			],
-		]);
-		while ($storeProduct = $storeProductIterator->fetch())
-		{
-			$storeProducts[$storeProduct['STORE_ID']][$storeProduct['PRODUCT_ID']] = (float)$storeProduct['AMOUNT'];
-		}
-
-		return $storeProducts;
-	}
-
-	private function checkAvailabilityProductsOnStore(array $shipmentProducts, array $storeProducts): Main\Result
-	{
-		$result = new Main\Result();
-
-		foreach ($shipmentProducts as $storeId => $shipmentProduct)
-		{
-			foreach ($shipmentProduct as $productId => $quantity)
+			foreach ($products as $basketCode => $product)
 			{
-				if (isset($storeProducts[$storeId][$productId]))
+				$storeId = $product['storeId'];
+				$quantity = $product['quantity'];
+				$productId = $product['productId'];
+
+				$availableQuantity = $quantity;
+
+				if ((int)$basketCode > 0)
 				{
-					$storeQuantity = $storeProducts[$storeId][$productId];
-					if ($quantity > $storeQuantity)
-					{
-						$result->addError(
-							new Main\Error("For product with id {$productId} quantity in shipment more than store")
-						);
-					}
+					$availableQuantity = $basketReservation->getAvailableCountForBasketItem(
+						(int)$basketCode,
+						$storeId
+					);
 				}
 				else
 				{
+					$storeQuantityRow = Catalog\StoreProductTable::getRow([
+						'select' => [
+							'AMOUNT',
+							'QUANTITY_RESERVED',
+						],
+						'filter' => [
+							'=STORE_ID' => $storeId,
+							'=PRODUCT_ID' => $productId,
+						],
+					]);
+					if ($storeQuantityRow)
+					{
+						$availableQuantity = min(
+							$quantity,
+							$storeQuantityRow['AMOUNT'] - $storeQuantityRow['QUANTITY_RESERVED']
+						);
+					}
+				}
+
+				if ($quantity > $availableQuantity)
+				{
 					$result->addError(
-						new Main\Error("Product with id {$productId} has empty store")
+						new Main\Error("For product with id {$productId} quantity in shipment more than store")
 					);
 				}
 			}

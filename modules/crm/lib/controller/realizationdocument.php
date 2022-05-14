@@ -30,17 +30,6 @@ class RealizationDocument extends Main\Engine\Controller
 			return false;
 		}
 
-		if (!Catalog\Component\UseStore::isUsed())
-		{
-			$this->addError(
-				new Main\Error(
-					Main\Localization\Loc::getMessage('CRM_CONTROLLER_REALIZATION_DOCUMENT_NOT_USED_INVENTORY_MANAGEMENT'),
-					self::REALIZATION_NOT_USED_INVENTORY_MANAGEMENT_ERROR_CODE
-				)
-			);
-			return [];
-		}
-
 		$actionArguments = $action->getArguments();
 		$id = $actionArguments['id'] ? (int)$actionArguments['id'] : null;
 		if (!$this->checkPermission($id))
@@ -193,6 +182,17 @@ class RealizationDocument extends Main\Engine\Controller
 	 */
 	public function setShippedAction(int $id, string $value): void
 	{
+		if (!Catalog\Component\UseStore::isUsed())
+		{
+			$this->addError(
+				new Main\Error(
+					Main\Localization\Loc::getMessage('CRM_CONTROLLER_REALIZATION_DOCUMENT_NOT_USED_INVENTORY_MANAGEMENT'),
+					self::REALIZATION_NOT_USED_INVENTORY_MANAGEMENT_ERROR_CODE
+				)
+			);
+			return;
+		}
+
 		$shipmentResult = $this->prepareShipment($id);
 		if (!$shipmentResult->isSuccess())
 		{

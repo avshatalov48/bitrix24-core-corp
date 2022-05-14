@@ -814,6 +814,9 @@ class crm extends CModule
 		global $DB, $APPLICATION, $CACHE_MANAGER, $stackCacheManager, $USER_FIELD_MANAGER;
 		$this->errors = false;
 
+		// register types factories before deleting events.
+		\Bitrix\Main\UserField\Internal\Registry::getInstance();
+
 		$this->uninstallEventHandlers();
 
 		if (!array_key_exists('savedata', $arParams) || $arParams['savedata'] != 'Y')

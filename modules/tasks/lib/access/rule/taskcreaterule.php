@@ -17,6 +17,7 @@ class TaskCreateRule extends \Bitrix\Main\Access\Rule\AbstractRule
 	{
 		if (!$task)
 		{
+			$this->controller->addError(static::class, 'Incorrect task');
 			return false;
 		}
 
@@ -41,6 +42,7 @@ class TaskCreateRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		$group = $task->getGroup();
 		if (!$group)
 		{
+			$this->controller->addError(static::class, 'Unable to load group info');
 			return false;
 		}
 
@@ -51,11 +53,23 @@ class TaskCreateRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			|| $group['CLOSED'] === 'Y'
 		)
 		{
+			$this->controller->addError(static::class, 'Unable to create task bc group is closed or tasks disabled');
 			return false;
 		}
 
 		// default access for group
-		return Loader::includeModule('socialnetwork')
-			&& \CSocNetFeaturesPerms::CanPerformOperation($this->user->getUserId(), SONET_ENTITY_GROUP, $task->getGroupId(), "tasks", "create_tasks");
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			$this->controller->addError(static::class, 'Unable to load socialnetwork');
+			return false;
+		}
+
+		if (!\CSocNetFeaturesPerms::CanPerformOperation($this->user->getUserId(), SONET_ENTITY_GROUP, $task->getGroupId(), "tasks", "create_tasks"))
+		{
+			$this->controller->addError(static::class, 'Access to create task denied by group permissions');
+			return false;
+		}
+
+		return true;
 	}
 }

@@ -273,4 +273,9 @@ class Invoice extends Entity
 			["STATUS_ID{$stageId}"]
 		);
 	}
+
+	public function isCategoriesSupported(): bool
+	{
+		return false;
+	}
 }

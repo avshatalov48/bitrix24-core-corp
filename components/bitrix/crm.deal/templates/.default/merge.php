@@ -20,6 +20,8 @@ $APPLICATION->IncludeComponent(
 			'HEADER_TEMPLATE' => GetMessage('CRM_DEAL_MERGE_HEADER_TEMPLATE'),
 			'RESULT_LEGEND' => GetMessage('CRM_DEAL_MERGE_RESULT_LEGEND'),
 		],
-		'USE_PADDING' => false
+		'USE_PADDING' => false,
+		'PAGE_MODE' => false,
+		'PAGE_MODE_OFF_BACK_URL' => '/crm/deal/'
 	]
 );

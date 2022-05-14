@@ -393,6 +393,17 @@ class Router
 		}
 
 		$entityName = mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId));
+
+		if (
+			($entityTypeId === \CCrmOwnerType::Contact || $entityTypeId === \CCrmOwnerType::Company)
+			&& $categoryId > 0
+		)
+		{
+			$template = Option::get(self::MODULE_ID, "path_to_{$entityName}_category");
+
+			return new Uri(\CComponentEngine::makePathFromTemplate($template, ['category_id' => $categoryId]));
+		}
+
 		$template = Option::get(static::MODULE_ID, "path_to_{$entityName}_list");
 		if (empty($template))
 		{

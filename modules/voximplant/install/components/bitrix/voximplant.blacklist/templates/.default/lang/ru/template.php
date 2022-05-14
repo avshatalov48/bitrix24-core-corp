@@ -7,6 +7,7 @@ $MESS["BLACKLIST_DELETE_CONFIRM"] = "Вы уверены, что хотите у
 $MESS["BLACKLIST_DELETE_ERROR"] = "Ошибка удаления номера";
 $MESS["BLACKLIST_ENABLE"] = "Автоматически блокировать телефонные номера злоумышленников в нерабочее время.";
 $MESS["BLACKLIST_ENABLE_TEXT"] = "Нерабочее время указывается отдельно для каждого номера на странице \"Настроек телефонии\".";
+$MESS["BLACKLIST_REGISTER_IN_CRM"] = "Регистрировать в CRM звонки с номеров из черного списка";
 $MESS["BLACKLIST_TEXT1"] = "Если звонок поступает с одного номера";
 $MESS["BLACKLIST_TEXT2"] = "раз подряд в интервале";
 $MESS["BLACKLIST_TEXT3"] = "минут.";

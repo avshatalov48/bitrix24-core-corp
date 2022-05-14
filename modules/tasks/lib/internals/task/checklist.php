@@ -12,9 +12,9 @@ use Bitrix\Main;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_CheckList_Query query()
- * @method static EO_CheckList_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_CheckList_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_CheckList_Result getById($id)
- * @method static EO_CheckList_Result getList(array $parameters = array())
+ * @method static EO_CheckList_Result getList(array $parameters = [])
  * @method static EO_CheckList_Entity getEntity()
  * @method static \Bitrix\Tasks\Internals\Task\EO_CheckList createObject($setDefaultValues = true)
  * @method static \Bitrix\Tasks\Internals\Task\EO_CheckList_Collection createCollection()

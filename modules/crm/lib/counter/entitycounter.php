@@ -1,7 +1,9 @@
 <?php
 namespace Bitrix\Crm\Counter;
 use Bitrix\Crm\CompanyTable;
+use Bitrix\Crm\ContactTable;
 use Bitrix\Crm\Order\OrderStatus;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\DB\SqlExpression;
@@ -323,6 +325,7 @@ class EntityCounter extends CounterBase
 	 */
 	public static function prepareEntityQueries($entityTypeID, $entityCounterTypeID, $userID, array $options = null)
 	{
+		$entityTypeID = (int)$entityTypeID;
 		if(!is_array($options))
 		{
 			$options = array();
@@ -340,41 +343,62 @@ class EntityCounter extends CounterBase
 			$distinct = $options['DISTINCT'];
 		}
 
-		$results = array();
+		$results = [];
 
+		$factory = Container::getInstance()->getFactory($entityTypeID);
+		if (!$factory || !$factory->isCountersEnabled())
+		{
+			return $results;
+		}
+
+		$countersSettings = $factory->getCountersSettings();
 		foreach(EntityCounterType::splitType($entityCounterTypeID) as $typeID)
 		{
-			if($typeID === EntityCounterType::IDLE)
+			if (!$countersSettings->isCounterTypeEnabled($typeID))
 			{
-				if(!\CCrmUserCounterSettings::GetValue(\CCrmUserCounterSettings::ReckonActivitylessItems, true)
-					|| ($entityTypeID !== \CCrmOwnerType::Deal && $entityTypeID !== \CCrmOwnerType::Lead && $entityTypeID !== \CCrmOwnerType::Order))
+				continue;
+			}
+			$query = new Query($factory->getDataClass()::getEntity());
+
+			if($entityTypeID === \CCrmOwnerType::Deal)
+			{
+				$query->addFilter('=STAGE_SEMANTIC_ID', PhaseSemantics::PROCESS);
+			}
+			else if($entityTypeID === \CCrmOwnerType::Contact)
+			{
+				if (isset($options['CATEGORY_ID']))
+				{
+					$query->where('CATEGORY_ID', $options['CATEGORY_ID']);
+				}
+			}
+			else if($entityTypeID === \CCrmOwnerType::Company)
+			{
+				$query->addFilter('=IS_MY_COMPANY', 'N');
+				if (isset($options['CATEGORY_ID']))
+				{
+					$query->where('CATEGORY_ID', $options['CATEGORY_ID']);
+				}
+			}
+			elseif($entityTypeID === \CCrmOwnerType::Order)
+			{
+				if(!Main\Loader::includeModule('sale'))
 				{
 					continue;
 				}
+				$query->addFilter('=CANCELED', 'N');
+				$query->addFilter('@STATUS_ID', OrderStatus::getSemanticProcessStatuses());
+			}
+			elseif($entityTypeID === \CCrmOwnerType::Lead)
+			{
+				$query->addFilter('=STATUS_SEMANTIC_ID', PhaseSemantics::PROCESS);
+			}
+			elseif(\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeID) && isset($options['CATEGORY_ID']))
+			{
+				$query->where('CATEGORY_ID', $options['CATEGORY_ID']);
+			}
 
-				/** @var Query|null $query */
-				if($entityTypeID === \CCrmOwnerType::Deal)
-				{
-					$query = new Query(DealTable::getEntity());
-					$query->addFilter('=STAGE_SEMANTIC_ID', 'P');
-				}
-				elseif($entityTypeID === \CCrmOwnerType::Order)
-				{
-					if(!Main\Loader::includeModule('sale'))
-					{
-						continue;
-					}
-
-					$query = new Query(\Bitrix\Sale\Internals\OrderTable::getEntity());
-					$query->addFilter('=CANCELED', 'N');
-					$query->addFilter('@STATUS_ID', OrderStatus::getSemanticProcessStatuses());
-				}
-				else//if($entityTypeID === \CCrmOwnerType::Lead)
-				{
-					$query = new Query(LeadTable::getEntity());
-					$query->addFilter('=STATUS_SEMANTIC_ID', 'P');
-				}
-
+			if($typeID === EntityCounterType::IDLE)
+			{
 				if($select === 'ENTY')
 				{
 					$query->addSelect('ID', 'ENTY');
@@ -440,272 +464,102 @@ class EntityCounter extends CounterBase
 			}
 			else if($typeID === EntityCounterType::PENDING || $typeID === EntityCounterType::OVERDUE)
 			{
-				if($entityTypeID === \CCrmOwnerType::Deal || $entityTypeID === \CCrmOwnerType::Lead
-					|| $entityTypeID === \CCrmOwnerType::Company || $entityTypeID === \CCrmOwnerType::Order)
+				$query->registerRuntimeField(
+					'',
+					new ReferenceField('B',
+						ActivityBindingTable::getEntity(),
+						array(
+							'=ref.OWNER_ID' => 'this.ID',
+							'=ref.OWNER_TYPE_ID' => new SqlExpression($entityTypeID)
+						),
+						array('join_type' => 'INNER')
+					)
+				);
+
+				//region Activity (inner join with correlated query for fix issue #109347)
+				$activityQuery = new Main\Entity\Query(ActivityTable::getEntity());
+
+				if(is_array($userID))
 				{
-					/** @var Query|null $query */
-					if($entityTypeID === \CCrmOwnerType::Deal)
+					$userCount = count($userID);
+					if($userCount > 1)
 					{
-						$query = new Query(DealTable::getEntity());
-						$query->addFilter('=STAGE_SEMANTIC_ID', PhaseSemantics::PROCESS);
+						$activityQuery->addFilter('@RESPONSIBLE_ID', $userID);
 					}
-					else if($entityTypeID === \CCrmOwnerType::Contact)
+					elseif($userCount === 1)
 					{
-						$query->where('CATEGORY_ID', 0);
+						$activityQuery->addFilter('=RESPONSIBLE_ID', $userID[0]);
 					}
-					else if($entityTypeID === \CCrmOwnerType::Company)
+				}
+				elseif($userID > 0)
+				{
+					$activityQuery->addFilter('=RESPONSIBLE_ID', $userID);
+				}
+
+				if($typeID === EntityCounterType::PENDING)
+				{
+					$lowBound = self::getUserTime($userID);
+					$lowBound->setTime(0, 0, 0);
+					$activityQuery->addFilter('>=DEADLINE', $lowBound);
+
+					$highBound = self::getUserTime($userID);
+					$highBound->setTime(23, 59, 59);
+					$activityQuery->addFilter('<=DEADLINE', $highBound);
+				}
+				elseif($typeID === EntityCounterType::OVERDUE)
+				{
+					$highBound = self::getUserTime($userID);
+					$highBound->setTime(0, 0, 0);
+					$activityQuery->addFilter('<DEADLINE', $highBound);
+				}
+				if (isset($options['PROVIDER_ID']))
+				{
+					if (is_array($options['PROVIDER_ID']))
 					{
-						$query = new Query(CompanyTable::getEntity());
-						$query->addFilter('=IS_MY_COMPANY', 'N');
-						$query->where('CATEGORY_ID', 0);
-					}
-					elseif($entityTypeID === \CCrmOwnerType::Order)
-					{
-						if(!Main\Loader::includeModule('sale'))
-						{
-							continue;
-						}
-
-						$query = new Query(\Bitrix\Sale\Internals\OrderTable::getEntity());
-						$query->addFilter('=CANCELED', 'N');
-						$query->addFilter('@STATUS_ID', OrderStatus::getSemanticProcessStatuses());
-
-					}
-					else//if($entityTypeID === \CCrmOwnerType::Lead)
-					{
-						$query = new Query(LeadTable::getEntity());
-						$query->addFilter('=STATUS_SEMANTIC_ID', PhaseSemantics::PROCESS);
-					}
-
-					$query->registerRuntimeField(
-						'',
-						new ReferenceField('B',
-							ActivityBindingTable::getEntity(),
-							array(
-								'=ref.OWNER_ID' => 'this.ID',
-								'=ref.OWNER_TYPE_ID' => new SqlExpression($entityTypeID)
-							),
-							array('join_type' => 'INNER')
-						)
-					);
-
-					//region Activity (inner join with correlated query for fix issue #109347)
-					$activityQuery = new Main\Entity\Query(ActivityTable::getEntity());
-
-					if(is_array($userID))
-					{
-						$userCount = count($userID);
-						if($userCount > 1)
-						{
-							$activityQuery->addFilter('@RESPONSIBLE_ID', $userID);
-						}
-						elseif($userCount === 1)
-						{
-							$activityQuery->addFilter('=RESPONSIBLE_ID', $userID[0]);
-						}
-					}
-					elseif($userID > 0)
-					{
-						$activityQuery->addFilter('=RESPONSIBLE_ID', $userID);
-					}
-
-					if($typeID === EntityCounterType::PENDING)
-					{
-						$lowBound = self::getUserTime($userID);
-						$lowBound->setTime(0, 0, 0);
-						$activityQuery->addFilter('>=DEADLINE', $lowBound);
-
-						$highBound = self::getUserTime($userID);
-						$highBound->setTime(23, 59, 59);
-						$activityQuery->addFilter('<=DEADLINE', $highBound);
-					}
-					elseif($typeID === EntityCounterType::OVERDUE)
-					{
-						$highBound = self::getUserTime($userID);
-						$highBound->setTime(0, 0, 0);
-						$activityQuery->addFilter('<DEADLINE', $highBound);
-					}
-					if (isset($options['PROVIDER_ID']))
-					{
-						if (is_array($options['PROVIDER_ID']))
-						{
-							$activityQuery->whereIn('PROVIDER_ID', $options['PROVIDER_ID']);
-						}
-						else
-						{
-							$activityQuery->where('PROVIDER_ID', (string)$options['PROVIDER_ID']);
-						}
-					}
-					if (isset($options['PROVIDER_TYPE_ID']))
-					{
-						if (is_array($options['PROVIDER_TYPE_ID']))
-						{
-							$activityQuery->whereIn('PROVIDER_TYPE_ID', $options['PROVIDER_TYPE_ID']);
-						}
-						else
-						{
-							$activityQuery->where('PROVIDER_TYPE_ID', (string)$options['PROVIDER_TYPE_ID']);
-						}
-					}
-
-					$activityQuery->addFilter('=COMPLETED', 'N');
-					$activityQuery->addSelect('ID');
-
-					$query->registerRuntimeField(
-						'',
-						new ReferenceField('A',
-							Main\Entity\Base::getInstanceByQuery($activityQuery),
-							array('=ref.ID' => 'this.B.ACTIVITY_ID'),
-							array('join_type' => 'INNER')
-						)
-					);
-					//endregion
-
-					//region Activity (standard inner join)
-					/*
-					$query->registerRuntimeField(
-						'',
-						new ReferenceField('A',
-							ActivityTable::getEntity(),
-							array('=ref.ID' => 'this.B.ACTIVITY_ID'),
-							array('join_type' => 'INNER')
-						)
-					);
-
-					//Replace by IS_HANDLEABLE for ignore pseudo activities (like WAIT)
-					//$query->addFilter('=A.IS_HANDLEABLE', 'Y');
-					$query->addFilter('=A.COMPLETED', 'N');
-
-					if(is_array($userID))
-					{
-						$userCount = count($userID);
-						if($userCount > 1)
-						{
-							$query->addFilter('@A.RESPONSIBLE_ID', $userID);
-						}
-						elseif($userCount === 1)
-						{
-							$query->addFilter('=A.RESPONSIBLE_ID', $userID[0]);
-						}
-					}
-					elseif($userID > 0)
-					{
-						$query->addFilter('=A.RESPONSIBLE_ID', $userID);
-					}
-
-					if($typeID === EntityCounterType::PENDING)
-					{
-						$lowBound = new DateTime();
-						$lowBound->setTime(0, 0, 0);
-						$query->addFilter('>=A.DEADLINE', $lowBound);
-
-						$highBound = new DateTime();
-						$highBound->setTime(23, 59, 59);
-						$query->addFilter('<=A.DEADLINE', $highBound);
-					}
-					elseif($typeID === EntityCounterType::OVERDUE)
-					{
-						$highBound = new DateTime();
-						$highBound->setTime(0, 0, 0);
-						$query->addFilter('<A.DEADLINE', $highBound);
-					}
-					*/
-					//endregion
-
-					if($select === 'ENTY')
-					{
-						$query->addSelect('B.OWNER_ID', 'ENTY');
-						if($distinct)
-						{
-							$query->addGroup('B.OWNER_ID');
-						}
+						$activityQuery->whereIn('PROVIDER_ID', $options['PROVIDER_ID']);
 					}
 					else
 					{
-						$query->registerRuntimeField('', new ExpressionField('QTY', 'COUNT(DISTINCT %s)', 'ID'));
-						$query->addSelect('QTY');
+						$activityQuery->where('PROVIDER_ID', (string)$options['PROVIDER_ID']);
+					}
+				}
+				if (isset($options['PROVIDER_TYPE_ID']))
+				{
+					if (is_array($options['PROVIDER_TYPE_ID']))
+					{
+						$activityQuery->whereIn('PROVIDER_TYPE_ID', $options['PROVIDER_TYPE_ID']);
+					}
+					else
+					{
+						$activityQuery->where('PROVIDER_TYPE_ID', (string)$options['PROVIDER_TYPE_ID']);
+					}
+				}
+
+				$activityQuery->addFilter('=COMPLETED', 'N');
+				$activityQuery->addSelect('ID');
+
+				$query->registerRuntimeField(
+					'',
+					new ReferenceField('A',
+						Main\Entity\Base::getInstanceByQuery($activityQuery),
+						array('=ref.ID' => 'this.B.ACTIVITY_ID'),
+						array('join_type' => 'INNER')
+					)
+				);
+				//endregion
+
+				if($select === 'ENTY')
+				{
+					$query->addSelect('B.OWNER_ID', 'ENTY');
+					if($distinct)
+					{
+						$query->addGroup('B.OWNER_ID');
 					}
 				}
 				else
 				{
-					$query = new Query(ActivityTable::getEntity());
-
-					if($select === 'ENTY')
-					{
-						$query->addSelect('BINDINGS.OWNER_ID', 'ENTY');
-						if($distinct)
-						{
-							$query->addGroup('BINDINGS.OWNER_ID');
-						}
-					}
-					else
-					{
-						$query->registerRuntimeField('', new ExpressionField('QTY', 'COUNT(DISTINCT %s)', 'BINDINGS.OWNER_ID'));
-						$query->addSelect('QTY');
-					}
-
-					$query->addFilter('=BINDINGS.OWNER_TYPE_ID', $entityTypeID);
-
-					if(is_array($userID))
-					{
-						$userCount = count($userID);
-						if($userCount > 1)
-						{
-							$query->addFilter('@RESPONSIBLE_ID', $userID);
-						}
-						elseif($userCount === 1)
-						{
-							$query->addFilter('=RESPONSIBLE_ID', $userID[0]);
-						}
-					}
-					elseif($userID > 0)
-					{
-						$query->addFilter('=RESPONSIBLE_ID', $userID);
-					}
-
-					//Replaced by IS_HANDLEABLE for WAIT activities
-					//$query->addFilter('=IS_HANDLEABLE', 'Y');
-					$query->addFilter('=COMPLETED', 'N');
-
-					if($typeID === EntityCounterType::PENDING)
-					{
-						$lowBound = new DateTime();
-						$lowBound->setTime(0, 0, 0);
-						$query->addFilter('>=DEADLINE', $lowBound);
-
-						$highBound = new DateTime();
-						$highBound->setTime(23, 59, 59);
-						$query->addFilter('<=DEADLINE', $highBound);
-					}
-					elseif($typeID === EntityCounterType::OVERDUE)
-					{
-						$highBound = new DateTime();
-						$highBound->setTime(0, 0, 0);
-						$query->addFilter('<DEADLINE', $highBound);
-					}
-
-					if (isset($options['PROVIDER_ID']))
-					{
-						if (is_array($options['PROVIDER_ID']))
-						{
-							$query->whereIn('PROVIDER_ID', $options['PROVIDER_ID']);
-						}
-						else
-						{
-							$query->where('PROVIDER_ID', (string)$options['PROVIDER_ID']);
-						}
-					}
-					if (isset($options['PROVIDER_TYPE_ID']))
-					{
-						if (is_array($options['PROVIDER_TYPE_ID']))
-						{
-							$query->whereIn('PROVIDER_TYPE_ID', $options['PROVIDER_TYPE_ID']);
-						}
-						else
-						{
-							$query->where('PROVIDER_TYPE_ID', (string)$options['PROVIDER_TYPE_ID']);
-						}
-					}
+					$query->registerRuntimeField('', new ExpressionField('QTY', 'COUNT(DISTINCT %s)', 'ID'));
+					$query->addSelect('QTY');
 				}
 
 				$results[] = $query;
@@ -733,6 +587,11 @@ class EntityCounter extends CounterBase
 		else
 		{
 			$userIDs = array($this->userID);
+		}
+		$categoryId = $this->getIntegerExtraParam('CATEGORY_ID', null);
+		if (!is_null($categoryId) && $categoryId >= 0)
+		{
+			$options['CATEGORY_ID'] = $categoryId;
 		}
 
 		return self::prepareEntityQueries($this->entityTypeID, $this->typeID, $userIDs, $options);

@@ -1,10 +1,11 @@
-<?
+<?php
 namespace Bitrix\Tasks\Internals\Task;
 
 use Bitrix\Main\Application;
 use Bitrix\Main\Entity;
 use Bitrix\Main\HttpApplication;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Internals\TaskDataManager;
 use CTaskFilterCtrl;
 
 Loc::loadMessages(__FILE__);
@@ -16,16 +17,16 @@ Loc::loadMessages(__FILE__);
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_Sorting_Query query()
- * @method static EO_Sorting_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Sorting_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_Sorting_Result getById($id)
- * @method static EO_Sorting_Result getList(array $parameters = array())
+ * @method static EO_Sorting_Result getList(array $parameters = [])
  * @method static EO_Sorting_Entity getEntity()
  * @method static \Bitrix\Tasks\Internals\Task\EO_Sorting createObject($setDefaultValues = true)
  * @method static \Bitrix\Tasks\Internals\Task\EO_Sorting_Collection createCollection()
  * @method static \Bitrix\Tasks\Internals\Task\EO_Sorting wakeUpObject($row)
  * @method static \Bitrix\Tasks\Internals\Task\EO_Sorting_Collection wakeUpCollection($rows)
  */
-class SortingTable extends Entity\DataManager
+class SortingTable extends TaskDataManager
 {
 	const MAX_LENGTH_BATCH_MYSQL_QUERY = 2048;
 	const SORT_INDEX_INCREMENT = 1024;
@@ -239,7 +240,7 @@ class SortingTable extends Entity\DataManager
 		$prevTaskSort = $lastSortedItem ? intval($lastSortedItem["SORT"]) : 0;
 		$prevTaskId = $lastSortedItem && $lastSortedItem["TASK_ID"] ? $lastSortedItem["TASK_ID"] : 0;
 
-		list($items, $targetFound) = static::getSortedItems($result, $userId, $groupId, $prevTaskSort, $prevTaskId, $sourceId, $targetId);
+		[$items, $targetFound] = static::getSortedItems($result, $userId, $groupId, $prevTaskSort, $prevTaskId, $sourceId, $targetId);
 		static::insertBatch($items);
 
 		if (count($items) > 0)

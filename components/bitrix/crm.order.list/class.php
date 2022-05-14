@@ -27,6 +27,8 @@ class CCrmOrderListComponent extends \CBitrixComponent
 	/** @var null|\Bitrix\Iblock\Url\AdminPage\BaseBuilder  */
 	private $urlBuilder = null;
 
+	public const RUNTIME_ORDER_CHECK_PRINTED = 'ORDER_CHECK_PRINTED';
+
 	public function getEntityTypeId()
 	{
 		return \CCrmOwnerType::Order;
@@ -770,23 +772,18 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			{
 				if ($v === 'Y')
 				{
-					$result['ORDER_CHECK_PRINTED.STATUS'] = 'Y';
+					$result[self::RUNTIME_ORDER_CHECK_PRINTED . '.STATUS'] = 'Y';
 				}
 				else
 				{
 					$result[] = [
 						'LOGIC' => 'OR',
-						'=ORDER_CHECK_PRINTED.STATUS' => null,
-						'@ORDER_CHECK_PRINTED.STATUS' => ['N', 'P', 'E']
+						'=' . self::RUNTIME_ORDER_CHECK_PRINTED . '.STATUS' => null,
+						'@' . self::RUNTIME_ORDER_CHECK_PRINTED . '.STATUS' => ['N', 'P', 'E']
 					];
 				}
 
-				$runtime[] = new Main\ORM\Fields\Relations\Reference(
-					'ORDER_CHECK_PRINTED',
-					\Bitrix\Sale\Cashbox\Internals\CashboxCheckTable::getEntity(),
-					['=ref.ORDER_ID' => 'this.ID',],
-					['join_type' => 'LEFT',]
-				);
+				$runtime[] = self::getCheckPrintedRuntime();
 			}
 			elseif ($name === 'USER')
 			{
@@ -1686,8 +1683,6 @@ class CCrmOrderListComponent extends \CBitrixComponent
 		}
 		$_SESSION['CRM_GRID_DATA'][$this->arResult['GRID_ID']] = array(
 			'FILTER' => $glFilter,
-			'SELECT' => $arSelect,
-			'RUNTIME' => $runtime
 		);
 		//endregion
 
@@ -1767,13 +1762,13 @@ class CCrmOrderListComponent extends \CBitrixComponent
 
 			$arOrder['~CONTACT_FORMATTED_NAME'] = $contactID <= 0 ? ''
 				: CCrmContact::PrepareFormattedName(
-						array(
-							'HONORIFIC' => isset($arOrder['~CONTACT_HONORIFIC']) ? $arOrder['~CONTACT_HONORIFIC'] : '',
-							'NAME' => isset($arOrder['~CONTACT_NAME']) ? $arOrder['~CONTACT_NAME'] : '',
-							'LAST_NAME' => isset($arOrder['~CONTACT_LAST_NAME']) ? $arOrder['~CONTACT_LAST_NAME'] : '',
-							'SECOND_NAME' => isset($arOrder['~CONTACT_SECOND_NAME']) ? $arOrder['~CONTACT_SECOND_NAME'] : ''
-						)
-					);
+					array(
+						'HONORIFIC' => isset($arOrder['~CONTACT_HONORIFIC']) ? $arOrder['~CONTACT_HONORIFIC'] : '',
+						'NAME' => isset($arOrder['~CONTACT_NAME']) ? $arOrder['~CONTACT_NAME'] : '',
+						'LAST_NAME' => isset($arOrder['~CONTACT_LAST_NAME']) ? $arOrder['~CONTACT_LAST_NAME'] : '',
+						'SECOND_NAME' => isset($arOrder['~CONTACT_SECOND_NAME']) ? $arOrder['~CONTACT_SECOND_NAME'] : ''
+					)
+				);
 			$arOrder['CONTACT_FORMATTED_NAME'] = htmlspecialcharsbx($arOrder['~CONTACT_FORMATTED_NAME']);
 
 			$arOrder['~CONTACT_FULL_NAME'] = $contactID <= 0 ? ''
@@ -1993,7 +1988,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 					$this->getTradingPlatformName(
 						$arOrder['TRADING_PLATFORM_CODE'],
 						$arOrder['TRADING_PLATFORM_CLASS']
-				));
+					));
 			}
 
 			$originatorID = isset($arOrder['~ORIGINATOR_ID']) ? $arOrder['~ORIGINATOR_ID'] : '';
@@ -2193,9 +2188,9 @@ class CCrmOrderListComponent extends \CBitrixComponent
 		}
 
 		$this->arResult['NEED_FOR_REBUILD_ORDER_ATTRS'] =
-			$this->arResult['NEED_FOR_REBUILD_ORDER_SEMANTICS'] =
-			$this->arResult['NEED_FOR_REBUILD_SEARCH_CONTENT'] =
-			$this->arResult['NEED_FOR_BUILD_TIMELINE'] = false;
+		$this->arResult['NEED_FOR_REBUILD_ORDER_SEMANTICS'] =
+		$this->arResult['NEED_FOR_REBUILD_SEARCH_CONTENT'] =
+		$this->arResult['NEED_FOR_BUILD_TIMELINE'] = false;
 
 		if(!$this->isInternal)
 		{
@@ -2289,10 +2284,10 @@ class CCrmOrderListComponent extends \CBitrixComponent
 		}
 
 		$res = Bitrix\Crm\Order\Order::getList(array(
-			'filter' => $glFilter,
-			'select' => $arSelect,
-			'count_total' => true,
-			'runtime' => $runtime)
+				'filter' => $glFilter,
+				'select' => $arSelect,
+				'count_total' => true,
+				'runtime' => $runtime)
 		);
 
 		$total = $res->getCount();
@@ -2767,6 +2762,47 @@ class CCrmOrderListComponent extends \CBitrixComponent
 	{
 		return Order\Order::load($orderId);
 	}
-}
-?>
 
+	/**
+	 * @return Main\ORM\Fields\Relations\Reference
+	 */
+	public static function getCheckPrintedRuntime(): Main\ORM\Fields\Relations\Reference
+	{
+		return new Main\ORM\Fields\Relations\Reference(
+			self::RUNTIME_ORDER_CHECK_PRINTED,
+			\Bitrix\Sale\Cashbox\Internals\CashboxCheckTable::getEntity(),
+			['=ref.ORDER_ID' => 'this.ID',],
+			['join_type' => 'LEFT',]
+		);
+	}
+
+	/**
+	 * @param string $runtimeField
+	 * @param array $filter
+	 * @return bool
+	 */
+	public static function isFilteredByRuntimeField(string $runtimeField, array $filter): bool
+	{
+		foreach ($filter as $filterKey => $filterItem)
+		{
+			if (is_string($filterKey))
+			{
+				if (mb_strpos($filterKey, $runtimeField) !== false)
+				{
+					return true;
+				}
+
+			}
+			elseif (is_int($filterKey) && is_array($filterItem))
+			{
+				$result = self::isFilteredByRuntimeField($runtimeField, $filterItem);
+				if ($result)
+				{
+					return $result;
+				}
+			}
+		}
+
+		return false;
+	}
+}

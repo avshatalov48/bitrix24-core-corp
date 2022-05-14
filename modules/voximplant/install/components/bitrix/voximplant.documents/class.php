@@ -27,7 +27,7 @@ class CVoxImplantComponentDocuments extends CBitrixComponent
 		$request = Bitrix\Main\Context::getCurrent()->getRequest();
 
 		$this->arResult['DOCUMENTS'] = $documents->GetStatus();
-		if(is_array($this->arResult['DOCUMENTS']) && count($this->arResult['DOCUMENTS']) > 0)
+		if(is_array($this->arResult['DOCUMENTS']) && !empty($this->arResult['DOCUMENTS']))
 		{
 			foreach($this->arResult['DOCUMENTS'] as $key => $verification)
 			{

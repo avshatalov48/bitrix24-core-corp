@@ -35,6 +35,7 @@ use Bitrix\Crm;
 $arDefaultUrlTemplates404 = array(
 	'index' => 'index.php',
 	'list' => 'list/',
+	'category' => 'category/#category_id#/',
 	'service' => 'service/',
 	'import' => 'import/',
 	'importvcard' => 'importvcard/',
@@ -167,7 +168,7 @@ if(isset($_GET['redirect_to']))
 }
 
 $arResult['NAVIGATION_CONTEXT_ID'] = 'CONTACT';
-if($componentPage === 'index')
+if($componentPage === 'index' || $componentPage === 'category')
 {
 	$componentPage = 'list';
 }

@@ -78,6 +78,30 @@ namespace.EntityEditor.prototype =
 				}.bind(this)
 			);
 		}
+
+		if (document.querySelector('#show-ru-meta-notification'))
+		{
+			var cb = BX.debounce(function(eventName, editor) {
+				var fb = editor._container.querySelector('[data-cid="UF_FACEBOOK"]');
+				var isVisible = false;
+				if (fb)
+				{
+					isVisible = fb.style.display !== 'none' && !BX.hasClass(fb, 'ui-entity-card-content-hide');
+				}
+				document.querySelector('#show-ru-meta-notification').style.display = isVisible ? 'inherit' : 'none';
+			}.bind(this), 100);
+			[
+				"BX.UI.EntityEditor:onRefreshLayout",
+				"BX.UI.EntityEditor:onLayout",
+				"BX.UI.EntityEditorSection:onLayout",
+				"BX.UI.EntityEditorSection:onChildMenuItemSelect",
+				"BX.UI.EntityEditorField:onChildMenuItemDeselect"
+			].forEach((eventName) => {
+				BX.addCustomEvent(eventName, function() {
+					cb.apply(this, [eventName, ...arguments]);
+				});
+			});
+		}
 	},
 
 	userProfileEntity: function (type, controlId, settings)

@@ -38,6 +38,9 @@ final class Driver
 	protected $templateClassName;
 	protected $userPermissionsClassName;
 
+	/** @var Bitrix24Manager */
+	protected $bitrix24Manager = Bitrix24Manager::class;
+
 	/** @var  Driver */
 	private static $instance;
 
@@ -277,6 +280,11 @@ final class Driver
 				'TITLE' => Loc::getMessage('DOCUMENTGENERATOR_REGIONS_BR'),
 				'LANGUAGE_ID' => 'br',
 			],
+			'sp' => [
+				'CODE' => 'sp',
+				'TITLE' => Loc::getMessage('DOCUMENTGENERATOR_REGIONS_SP'),
+				'LANGUAGE_ID' => 'la',
+			],
 			'mx' => [
 				'CODE' => 'mx',
 				'TITLE' => Loc::getMessage('DOCUMENTGENERATOR_REGIONS_MX'),
@@ -292,11 +300,6 @@ final class Driver
 				'TITLE' => Loc::getMessage('DOCUMENTGENERATOR_REGIONS_FR'),
 				'LANGUAGE_ID' => 'fr',
 			],
-			'sp' => [
-				'CODE' => 'sp',
-				'TITLE' => Loc::getMessage('DOCUMENTGENERATOR_REGIONS_SP'),
-				'LANGUAGE_ID' => 'la',
-			],
 		];
 	}
 
@@ -308,16 +311,23 @@ final class Driver
 	{
 		$region = [];
 
-		if(Bitrix24Manager::isEnabled())
+		if($this->bitrix24Manager::isEnabled())
 		{
-			$region = \CBitrix24::getPortalZone();
+			$region = $this->bitrix24Manager::getPortalZone();
 			if(empty($region))
 			{
-				$region = $this->getRegionByLanguageId(Bitrix24Manager::getDefaultLanguage());
+				$region = $this->getRegionByLanguageId($this->bitrix24Manager::getDefaultLanguage());
 			}
 			else
 			{
-				$region = $this->getRegionByLanguageId($region);
+				if (isset($this->getRegionsList()[$region]))
+				{
+					$region = $this->getRegionsList()[$region];
+				}
+				else
+				{
+					$region = $this->getRegionByLanguageId($region);
+				}
 			}
 		}
 		if(empty($region))
@@ -428,7 +438,7 @@ final class Driver
 	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 * @throws \Bitrix\Main\LoaderException
 	 */
-	public static function installDefaultTemplatesForCurrentRegion($rewrite = false)
+	public static function installDefaultTemplatesForCurrentRegion()
 	{
 		global $DB;
 		if(!$DB->TableExists(TemplateTable::getTableName()) || !$DB->TableExists(FileTable::getTableName()))
@@ -443,10 +453,14 @@ final class Driver
 		{
 			foreach($result->getData() as $template)
 			{
-				if(!$rewrite && $template['ID'] > 0)
-				{
-					continue;
-				}
+				if (
+					!isset($template['ID'])
+					|| $template['ID'] <= 0
+					|| (
+						isset($template['IS_DELETED'])
+						&& $template['IS_DELETED'] === 'Y'
+					)
+				)
 				$controller->installDefaultTemplate($template);
 			}
 		}

@@ -520,4 +520,9 @@ abstract class Body
 
 		return $result;
 	}
+
+	public static function detectHtml(string $string): bool
+	{
+		return (preg_match('/(<\s?[^\>]*\/?\s?>(.+)<\/?\s?[^\>]*\/?\s?>)|(<br\s?\/?>)/is', $string) != false);
+	}
 }

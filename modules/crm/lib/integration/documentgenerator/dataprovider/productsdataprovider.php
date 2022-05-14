@@ -521,11 +521,17 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 		return null;
 	}
 
-	protected function prepareTransactionData(): Barcode\Payment\TransactionData
+	public function prepareTransactionData(): Barcode\Payment\TransactionData
 	{
 		$transactionData = parent::prepareTransactionData();
 
 		$sum = $this->getRawValue('TOTAL_SUM');
+		$optionValues = $this->getOptions()['VALUES'] ?? [];
+		$templatePlaceholder = DataProviderManager::getInstance()->valueToPlaceholder('TOTAL_SUM');
+		if (isset($optionValues[$templatePlaceholder]))
+		{
+			$sum = $optionValues[$templatePlaceholder];
+		}
 
 		if (is_numeric($sum))
 		{

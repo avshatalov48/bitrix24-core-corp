@@ -14,29 +14,32 @@ class IsRepeatedApproach extends Field
 {
 	protected function processLogic(Item $item, Context $context = null): Result
 	{
-		$result = new Result();
+		$isRepeatedApproach = (
+			!$item->isClientEmpty()
+			&& $this->isReturnCustomerByParentLead($item)
+			&& !$this->isPreviousSuccessfulItemExists($item)
+		);
 
-		if ($item->isClientEmpty())
-		{
-			$item->set($this->getName(), false);
+		$item->set($this->getName(), $isRepeatedApproach);
 
-			return $result;
-		}
+		return new Result();
+	}
 
+	private function isReturnCustomerByParentLead(Item $item): bool
+	{
 		$leadId = $item->hasField(Item::FIELD_NAME_LEAD_ID) ? $item->getLeadId() : null;
-		if ($leadId < 0)
+		if ($leadId <= 0)
 		{
-			return $result;
+			return false;
 		}
+
 		$lead = Container::getInstance()->getLeadBroker()->getById((int)$leadId);
-		if (!$lead || $lead->getIsReturnCustomer() !== 'Y')
+		if (!$lead)
 		{
-			return $result;
+			return false;
 		}
 
-		$item->set($this->getName(), !$this->isPreviousSuccessfulItemExists($item));
-
-		return $result;
+		return (bool)$lead->getIsReturnCustomer();
 	}
 
 	private function isPreviousSuccessfulItemExists(Item $item): bool

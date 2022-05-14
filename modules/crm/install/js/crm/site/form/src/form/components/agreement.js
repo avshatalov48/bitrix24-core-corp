@@ -3,7 +3,7 @@ import * as Window from "../../window/registry";
 
 const AgreementBlock = {
 	mixins: [],
-	props: ['messages', 'view', 'fields', 'visible', 'title', 'html', 'field'],
+	props: ['messages', 'view', 'fields', 'visible', 'title', 'html', 'field', 'formId'],
 	components: Object.assign(
 		Window.Components.Definition,
 		{
@@ -28,6 +28,7 @@ const AgreementBlock = {
 			></component>
 
 			<b24-popup
+				:mountId="formId"
 				:show="visible" 
 				:title="title" 
 				:maxWidth="maxWidth" 

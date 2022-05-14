@@ -26,6 +26,7 @@ class EntityBinding extends StorageStrategy
 	 * @param callable $getChildIds function(int $parentEntityId): int[]
 	 * @param callable $bindParentIds function(int $childEntityId, int[] $parentIds): void
 	 * @param callable $unbindParentIds function(int $childEntityId, int[] $parentIds): void
+	 * @param callable $replaceBindings function(int $childEntityId, int $parentEntityId): void
 	 */
 	public function __construct(
 		callable $getParentIds,

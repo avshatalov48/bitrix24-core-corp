@@ -16,13 +16,13 @@ $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_CONNECT_FACEBOOK_PAGE"] = "При
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_CONNECT_HELP"] = "<div class=\"imconnector-field-button-subtitle\">Я хочу</div><div class=\"imconnector-field-button-name\"><span class=\"imconnector-field-box-text-bold\">Підключити</span> бізнес-акаунт</div>";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_CONVERT_TO_BUSINESS_HELP"] = "Як конвертувати в бізнес-акаунт?";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_DEL_REFERENCE"] = "Видалити прив'язку";
-$MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_DESCRIPTION_NEW"] = "\"<p class=\"\"im-connector-settings-header-description\"\">Підключіть бізнес-акаунт Instagram, щоб приймати повідомлення ваших клієнтів у робочому чаті Бітрікс24. Для підключення необхідно створити публічну сторінку Facebook або підключити вже існуючу, де ви є адміністратором і до якої підключений бізнес-акаунт Instagram.</p>
-				<ul class=\"\"im-connector-settings-header-list\"\">
-					<li class=\"\"im-connector-settings-header-list-item\"\">миттєві комунікації з відвідувачами вашого акаунта Instagram</li>
-					<li class=\"\"im-connector-settings-header-list-item\"\">автоматичний розподіл звернень за правилами черги</li>
-					<li class=\"\"im-connector-settings-header-list-item\"\">спілкування в звичному робочому чаті Бітрікс24</li>
-					<li class=\"\"im-connector-settings-header-list-item\"\">автоматичне збереження клієнтів у CRM</li>
-				</ul>\"";
+$MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_DESCRIPTION_NEW"] = "<p class=\"im-connector-settings-header-description\">Підключіть бізнес-акаунт Instagram, щоб приймати повідомлення ваших клієнтів у робочому чаті Бітрікс24. Для підключення необхідно створити публічну сторінку Facebook або підключити вже існуючу, де ви є адміністратором і до якої підключений бізнес-акаунт Instagram.</p>
+				<ul class=\"im-connector-settings-header-list\">
+					<li class=\"im-connector-settings-header-list-item\">миттєві комунікації з відвідувачами вашого акаунта Instagram</li>
+					<li class=\"im-connector-settings-header-list-item\">автоматичний розподіл звернень за правилами черги</li>
+					<li class=\"im-connector-settings-header-list-item\">спілкування в звичному робочому чаті Бітрікс24</li>
+					<li class=\"im-connector-settings-header-list-item\">автоматичне збереження клієнтів у CRM</li>
+				</ul>";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_EXPIRED_ACCOUNT_TOKEN"] = "Якщо необхідно внести зміни, авторизуйтесь під своїм акаунтом Facebook";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_EXPIRED_ACCOUNT_TOKEN_WARNING"] = "Зверніть увагу! Якщо ви авторізуетесь під іншим акаунтом, до якого не прив'язана поточна сторінка, то вона буде відключена від відкритої лінії Бітрікс24";
 $MESS["IMCONNECTOR_COMPONENT_FBINSTAGRAMDIRECT_INDEX_ADDITIONAL_DESCRIPTION"] = "Для підключення необхідно створити публічну сторінку Facebook або підключити вже існуючу, де ви є адміністратором і до якої підключений бізнес-акаунт Instagram.";

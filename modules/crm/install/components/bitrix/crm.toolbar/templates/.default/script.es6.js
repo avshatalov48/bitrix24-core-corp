@@ -1,6 +1,6 @@
-import {Reflection, Event, ajax as Ajax, Text} from "main.core";
+import {Reflection, Event, ajax as Ajax, Text, Dom} from "main.core";
 import {EventEmitter} from "main.core.events";
-import {BaseButton, ButtonManager} from "ui.buttons";
+import {BaseButton} from "ui.buttons";
 import {Router} from "crm.router";
 import {Menu} from "main.popup";
 
@@ -44,8 +44,9 @@ class ToolbarComponent extends EventEmitter
 		const buttonNode = document.querySelector('[data-role="bx-crm-toolbar-categories-button"]');
 		if (buttonNode)
 		{
+			const toolbar =	BX.UI.ToolbarManager.getDefaultToolbar();
+			const button = toolbar.getButton(Dom.attr(buttonNode, 'data-btn-uniqid'));
 			const entityTypeId = Number(buttonNode.dataset.entityTypeId);
-			const button = ButtonManager.createFromNode(buttonNode);
 			if (button && entityTypeId > 0)
 			{
 				this.subscribeCategoriesUpdatedEvent(() => {

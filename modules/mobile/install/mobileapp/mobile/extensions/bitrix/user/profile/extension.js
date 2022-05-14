@@ -167,11 +167,10 @@
 						},
 					};
 					section.height = 40;
-					section.backgroundColor = "#f0f0f0";
-
 					return section;
 				});
 			let excludedFields = ["PERSONAL_PHOTO_ORIGINAL","PERSONAL_PHOTO", "NAME", "LAST_NAME", "SECOND_NAME","WORK_POSITION", "NAME_FORMATTED"];
+
 			Object.keys(this.fieldsValues).forEach(fieldName =>
 			{
 				if(excludedFields.indexOf(fieldName)<0)
@@ -180,6 +179,18 @@
 					{
 						if(this.fieldsValues[fieldName])
 						{
+							if (this.formFields[fieldName]["asterix"]) {
+								this.formFields[fieldName]['title'] =  this.formFields[fieldName]['title']+"*"
+								let sectionIndex = this.formSections.findIndex( section => section.id === this.formFields[fieldName]['sectionCode'])
+								if (!this.formSections[sectionIndex]["footer"]) {
+									this.formSections[sectionIndex]["footer"] = this.formFields[fieldName]["asterix"];
+								}
+								else
+								{
+									this.formSections[sectionIndex]["footer"]+="\n"+this.formFields[fieldName]["asterix"];
+								}
+							}
+
 							if(fieldName == "PERSONAL_GENDER")
 							{
 								this.formFields[fieldName]["subtitle"] = (this.fieldsValues[fieldName] == "F")
@@ -894,6 +905,18 @@
 					this.formFields[fieldName]["value"] = this.fieldsValues[fieldName];
 				}
 
+				if (this.formFields[fieldName]["asterix"]) {
+					this.formFields[fieldName]['title'] =  this.formFields[fieldName]['title']+"*"
+					let sectionIndex = this.formSections.findIndex( section => section.id === this.formFields[fieldName]['sectionCode'])
+					if (!this.formSections[sectionIndex]["footer"]) {
+						this.formSections[sectionIndex]["footer"] = this.formFields[fieldName]["asterix"];
+					}
+					else
+					{
+						this.formSections[sectionIndex]["footer"]+="\n"+this.formFields[fieldName]["asterix"];
+					}
+				}
+
 				this.formFields[fieldName].styles = {
 					'title': {
 						'font': {
@@ -909,7 +932,6 @@
 					delete this.formFields[fieldName]
 				}
 			});
-
 
 			let imageUrl = this.fieldsValues["PERSONAL_PHOTO"]
 					?encodeURI(this.fieldsValues["PERSONAL_PHOTO"])

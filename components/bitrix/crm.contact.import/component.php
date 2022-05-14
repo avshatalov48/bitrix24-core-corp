@@ -656,7 +656,7 @@ if(!function_exists('__CrmImportContactAddressesToRequisite'))
 			{
 				$clientFullName = CCrmContact::PrepareFormattedName(
 					array(
-						'HONORIFIC' => isset($contactFields['HONORIFIC']) ? $contactFields['HONORIFIC'] : '',
+						'HONORIFIC' => $contactFields['HONORIFIC'] ?? '',
 						'NAME' => isset($contactFields['NAME']) ? $contactFields['NAME'] : '',
 						'LAST_NAME' => isset($contactFields['LAST_NAME']) ? $contactFields['LAST_NAME'] : '',
 						'SECOND_NAME' => isset($contactFields['SECOND_NAME']) ? $contactFields['SECOND_NAME'] : ''
@@ -1195,14 +1195,20 @@ elseif (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 
 					if ($currentKey == 'TYPE_ID')
 					{
+						$data = htmlspecialcharsbx($data);
+
 						$arContact[$currentKey] = isset($arStatus['TYPE_LIST'][$data]) ? $data : array_search($data, $arStatus['TYPE_LIST']);
 					}
 					elseif ($currentKey == 'SOURCE_ID')
 					{
+						$data = htmlspecialcharsbx($data);
+
 						$arContact[$currentKey] = isset($arStatus['SOURCE_LIST'][$data]) ? $data : array_search($data, $arStatus['SOURCE_LIST']);
 					}
 					elseif ($currentKey == 'HONORIFIC')
 					{
+						$data = htmlspecialcharsbx($data);
+
 						$arContact[$currentKey] = isset($arStatus['HONORIFIC'][$data]) ? $data : array_search($data, $arStatus['HONORIFIC']);
 					}
 					elseif ($currentKey == 'PHOTO')
@@ -1374,14 +1380,22 @@ elseif (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 			}
 		}
 
-		if (!isset($arContact['TYPE_ID']) && $defaultContactTypeID !== '')
+		// empty => $arContact['TYPE_ID'] not set
+		// 			OR $arContact['TYPE_ID'] === ''
+		//			OR $arContact['TYPE_ID'] === false (result of array_search)
+		if (empty($arContact['TYPE_ID']) && $defaultContactTypeID !== '')
 		{
 			$arContact['TYPE_ID'] = $defaultContactTypeID;
 		}
-		if (!isset($arContact['SOURCE_ID']) && $defaultSourceID !== '')
+
+		// empty => $arContact['SOURCE_ID'] not set
+		// 			OR $arContact['SOURCE_ID'] === ''
+		//			OR $arContact['SOURCE_ID'] === false (result of array_search)
+		if (empty($arContact['SOURCE_ID']) && $defaultSourceID !== '')
 		{
 			$arContact['SOURCE_ID'] = $defaultSourceID;
 		}
+
 		if (!isset($arContact['SOURCE_DESCRIPTION']) && $defaultSourceDescription !== '')
 		{
 			$arContact['SOURCE_DESCRIPTION'] = $defaultSourceDescription;

@@ -147,7 +147,7 @@ abstract class TrackedObject
 	protected function getEntityTitle(): string
 	{
 		$methodName = static::getEntityTitleMethod();
-		return $this->objectBeforeSave->$methodName();
+		return (string)$this->objectBeforeSave->$methodName();
 	}
 
 	/**

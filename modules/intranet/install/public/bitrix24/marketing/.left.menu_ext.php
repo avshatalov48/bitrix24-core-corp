@@ -106,7 +106,7 @@ if (\Bitrix\Sender\Security\Access::current()->canViewBlacklist())
 	);
 }
 
-if (\Bitrix\Sender\Security\Access::current()->canViewSegments())
+if (\Bitrix\Sender\Security\Access::current()->canViewSegmentContact())
 {
 	$aMenuLinks[] = Array(
 		GetMessage('SERVICES_MENU_MARKETING_CONTACT'),

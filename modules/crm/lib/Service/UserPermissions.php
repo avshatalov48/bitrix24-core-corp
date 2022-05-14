@@ -136,25 +136,35 @@ class UserPermissions
 	}
 
 	/**
-	 * Check that user can view items in the category.
-	 * If categoryId = 0, then we should check all categories of this type,
+	 * Check that user can view items.
+	 * If entity support categories, we should check all categories of this type,
 	 * and return true if user can view items in at least one of them.
+	 *
+	 * @param int $entityTypeId - Type identifier.
+	 * @return bool
+	 */
+	public function canReadType(int $entityTypeId): bool
+	{
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+		if ($factory && $factory->isCategoriesSupported())
+		{
+			return $this->hasPermissionInAtLeastOneCategory($factory, static::OPERATION_READ);
+		}
+
+		$entityName = static::getPermissionEntityType($entityTypeId);
+
+		return \CCrmAuthorizationHelper::CheckReadPermission($entityName, 0, $this->getCrmPermissions());
+	}
+
+	/**
+	 * Check that user can view items in the category.
 	 *
 	 * @param int $entityTypeId - Type identifier.
 	 * @param int $categoryId Category identifier.
 	 * @return bool
 	 */
-	public function canReadType(int $entityTypeId, int $categoryId = 0): bool
+	public function canReadTypeInCategory(int $entityTypeId, int $categoryId): bool
 	{
-		if ($categoryId === 0)
-		{
-			$factory = Container::getInstance()->getFactory($entityTypeId);
-			if ($factory && $factory->isCategoriesSupported())
-			{
-				return $this->hasPermissionInAtLeastOneCategory($factory, static::OPERATION_READ);
-			}
-		}
-
 		$entityName = static::getPermissionEntityType($entityTypeId, $categoryId);
 
 		return \CCrmAuthorizationHelper::CheckReadPermission($entityName, 0, $this->getCrmPermissions());
@@ -178,12 +188,36 @@ class UserPermissions
 	 */
 	public function canUpdateType(int $entityTypeId): bool
 	{
-		if ($entityTypeId === \CCrmOwnerType::SmartInvoice)
+		if (\CCrmOwnerType::isDynamicTypeBasedStaticEntity($entityTypeId))
 		{
 			return false;
 		}
 
 		return $this->canWriteConfig();
+	}
+
+	/**
+	 * Return true if user can export items of type $entityTypeId in any category
+	 *
+	 * @param int $entityTypeId
+	 * @return bool
+	 */
+	public function canExportType(int $entityTypeId): bool
+	{
+		if ($this->isAdmin())
+		{
+			return true;
+		}
+
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+		if ($factory && $factory->isCategoriesSupported())
+		{
+			return $this->hasPermissionInAtLeastOneCategory($factory, static::OPERATION_EXPORT);
+		}
+
+		$entityName = static::getPermissionEntityType($entityTypeId);
+
+		return \CCrmAuthorizationHelper::CheckExportPermission($entityName, $this->getCrmPermissions());
 	}
 
 	/**
@@ -193,19 +227,11 @@ class UserPermissions
 	 * @param int $categoryId
 	 * @return bool
 	 */
-	public function canExportType(int $entityTypeId, int $categoryId = 0): bool
+	public function canExportTypeInCategory(int $entityTypeId, int $categoryId): bool
 	{
 		if ($this->isAdmin())
 		{
 			return true;
-		}
-		if ($categoryId === 0)
-		{
-			$factory = Container::getInstance()->getFactory($entityTypeId);
-			if ($factory && $factory->isCategoriesSupported())
-			{
-				return $this->hasPermissionInAtLeastOneCategory($factory, static::OPERATION_EXPORT);
-			}
 		}
 
 		$entityName = static::getPermissionEntityType($entityTypeId, $categoryId);
@@ -224,25 +250,38 @@ class UserPermissions
 	}
 
 	/**
+	 * Returns true if user has permission to add new item to type $entityTypeId for at least one category
+	 *
+	 * @param int $entityTypeId
+	 * @return bool
+	 */
+	protected function canAddToType(int $entityTypeId): bool
+	{
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+
+		if ($factory && $factory->isCategoriesSupported())
+		{
+			return $this->hasPermissionInAtLeastOneCategory($factory, static::OPERATION_ADD);
+		}
+
+		$entityName = static::getPermissionEntityType($entityTypeId);
+
+		return !$this->getCrmPermissions()->HavePerm(
+			$entityName,
+			BX_CRM_PERM_NONE,
+			static::OPERATION_ADD
+		);
+	}
+
+	/**
 	 * Returns true if user has permission to add new item to type $entityTypeId and $categoryId
-	 * If category is not specified, checks access for at least one category
 	 *
 	 * @param int $entityTypeId
 	 * @param int $categoryId
 	 * @return bool
 	 */
-	protected function canAddToType(int $entityTypeId, int $categoryId = 0): bool
+	protected function canAddToTypeInCategory(int $entityTypeId, int $categoryId): bool
 	{
-		if ($categoryId === 0)
-		{
-			$factory = Container::getInstance()->getFactory($entityTypeId);
-
-			if ($factory && $factory->isCategoriesSupported())
-			{
-				return $this->hasPermissionInAtLeastOneCategory($factory, static::OPERATION_ADD);
-			}
-		}
-
 		$entityName = static::getPermissionEntityType($entityTypeId, $categoryId);
 
 		return !$this->getCrmPermissions()->HavePerm(
@@ -278,16 +317,22 @@ class UserPermissions
 	 * If $stageId is not specified than checks access for at least one stage.
 	 *
 	 * @param int $entityTypeId
-	 * @param int $categoryId
+	 * @param int|null $categoryId
 	 * @param string|null $stageId
 	 * @return bool
 	 */
-	public function checkAddPermissions(int $entityTypeId, int $categoryId = 0, ?string $stageId = null): bool
+	public function checkAddPermissions(int $entityTypeId, ?int $categoryId = null, ?string $stageId = null): bool
 	{
 		if (is_null($stageId))
 		{
-			return $this->canAddToType($entityTypeId, $categoryId);
+			return
+				is_null($categoryId)
+				? $this->canAddToType($entityTypeId)
+				: $this->canAddToTypeInCategory($entityTypeId, $categoryId)
+			;
 		}
+
+		$categoryId = $categoryId ?? 0;
 
 		$entityName = static::getPermissionEntityType($entityTypeId, $categoryId);
 
@@ -308,12 +353,16 @@ class UserPermissions
 	 *
 	 * @param int $entityTypeId
 	 * @param int $id
-	 * @param int $categoryId
+	 * @param int|null $categoryId
 	 * @return bool
 	 */
-	public function checkExportPermissions(int $entityTypeId, int $id = 0, int $categoryId = 0): bool
+	public function checkExportPermissions(int $entityTypeId, int $id = 0, ?int $categoryId = null): bool
 	{
-		$canExportType = $this->canExportType($entityTypeId, $categoryId);
+		$canExportType = is_null($categoryId)
+			? $this->canExportType($entityTypeId)
+			: $this->canExportTypeInCategory($entityTypeId, $categoryId)
+		;
+
 		if (!$canExportType)
 		{
 			return false;
@@ -324,7 +373,7 @@ class UserPermissions
 			return $canExportType;
 		}
 
-		if ($id > 0 && $categoryId === 0)
+		if ($id > 0 && $categoryId === null)
 		{
 			$categoryId = $this->getItemCategoryIdOrDefault($entityTypeId, $id);
 		}
@@ -390,15 +439,16 @@ class UserPermissions
 
 	/**
 	 * Returns true if user has permission to update an item with $id of type $entityTypeId in $categoryId.
+	 * If $categoryId not defined, value will be loaded from DB for item $id
 	 *
 	 * @param int $entityTypeId
 	 * @param int $id
-	 * @param int $categoryId
+	 * @param int|null $categoryId
 	 * @return bool
 	 */
-	public function checkUpdatePermissions(int $entityTypeId, int $id, int $categoryId = 0): bool
+	public function checkUpdatePermissions(int $entityTypeId, int $id, ?int $categoryId = null): bool
 	{
-		if ($categoryId === 0)
+		if (is_null($categoryId))
 		{
 			$categoryId = $this->getItemCategoryIdOrDefault($entityTypeId, $id);
 		}
@@ -428,12 +478,12 @@ class UserPermissions
 	 *
 	 * @param int $entityTypeId
 	 * @param int $id
-	 * @param int $categoryId
+	 * @param int|null $categoryId
 	 * @return bool
 	 */
-	public function checkDeletePermissions(int $entityTypeId, int $id, int $categoryId = 0): bool
+	public function checkDeletePermissions(int $entityTypeId, int $id = 0, ?int $categoryId = null): bool
 	{
-		if ($categoryId === 0)
+		if ($id === 0 && is_null($categoryId))
 		{
 			$factory = Container::getInstance()->getFactory($entityTypeId);
 
@@ -442,6 +492,8 @@ class UserPermissions
 				return $this->hasPermissionInAtLeastOneCategory($factory, static::OPERATION_DELETE);
 			}
 		}
+
+		$categoryId = $categoryId ?? 0;
 
 		$entityName = static::getPermissionEntityType($entityTypeId, $categoryId);
 
@@ -474,14 +526,29 @@ class UserPermissions
 		return $this->checkDeletePermissions($item->getEntityTypeId(), $item->getId(), $item->getCategoryIdForPermissions());
 	}
 
-	public function checkReadPermissions(int $entityTypeId, int $id = 0, int $categoryId = 0): bool
+	/**
+	 * Return true if user has permission to read element of type $entityTypeId
+	 * If $id is defined, access checked for this element
+	 * If $categoryId is defined, access checked for this category
+	 * Otherwise, check read access for at least one category
+	 *
+	 *
+	 * @param int $entityTypeId
+	 * @param int $id
+	 * @param int|null $categoryId
+	 * @return bool
+	 */
+	public function checkReadPermissions(int $entityTypeId, int $id = 0, ?int $categoryId = null): bool
 	{
 		if ($id === 0)
 		{
-			return $this->canReadType($entityTypeId, $categoryId);
+			return is_null($categoryId)
+				? $this->canReadType($entityTypeId)
+				: $this->canReadTypeInCategory($entityTypeId, $categoryId)
+			;
 		}
 
-		if ($id > 0 && $categoryId === 0)
+		if ($id > 0 && is_null($categoryId))
 		{
 			$categoryId = $this->getItemCategoryIdOrDefault($entityTypeId, $id);
 		}
@@ -577,7 +644,13 @@ class UserPermissions
 
 	public static function getItemPermissionEntityType(Item $item): string
 	{
-		return static::getPermissionEntityType($item->getEntityTypeId(), $item->getCategoryIdForPermissions());
+		$categoryId = $item->getCategoryIdForPermissions();
+		if (is_null($categoryId))
+		{
+			$categoryId = 0;
+		}
+
+		return static::getPermissionEntityType($item->getEntityTypeId(), $categoryId);
 	}
 
 	public static function getPermissionEntityType(int $entityTypeId, int $categoryId = 0): string

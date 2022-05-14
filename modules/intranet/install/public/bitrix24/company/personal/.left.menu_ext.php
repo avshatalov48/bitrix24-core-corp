@@ -17,5 +17,5 @@ elseif (preg_match("~^/company/personal/user/".$userId."/calendar/~i", $_SERVER[
 elseif (preg_match("~^/company/personal/(bizproc|processes)/~i", $_SERVER["REQUEST_URI"]))
 {
 	include($_SERVER["DOCUMENT_ROOT"]."/bizproc/.left.menu_ext.php");
-	$APPLICATION->SetPageProperty("topMenuSectionDir", "/bizproc/");
+	$APPLICATION->SetPageProperty("topMenuSectionDir", "/automation/");
 }

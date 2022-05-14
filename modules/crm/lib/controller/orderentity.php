@@ -258,7 +258,7 @@ class OrderEntity extends Controller
 	{
 		if($name == 'deletebyfilter')
 		{
-			$r = $this->checkReadPermissionEntity();
+			$r = $this->checkModifyPermissionEntity();
 		}
 		else
 		{
@@ -269,11 +269,25 @@ class OrderEntity extends Controller
 
 	protected function checkReadPermissionEntity(): Result
 	{
-		return new Result();
+		$r = new Result();
+
+		$saleModulePermissions = self::getApplication()->GetGroupRight("sale");
+		if ($saleModulePermissions  == "D")
+		{
+			$r->addError(new Error('Access Denied', 200040300010));
+		}
+		return $r;
 	}
 
 	protected function checkModifyPermissionEntity(): Result
 	{
-		return new Result();
+		$r = new Result();
+
+		$saleModulePermissions = self::getApplication()->GetGroupRight("sale");
+		if ($saleModulePermissions  < "W")
+		{
+			$r->addError(new Error('Access Denied', 200040300020));
+		}
+		return $r;
 	}
 }

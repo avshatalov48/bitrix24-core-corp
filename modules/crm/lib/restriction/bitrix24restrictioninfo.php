@@ -67,4 +67,14 @@ class Bitrix24RestrictionInfo
 			? Integration\Bitrix24Manager::prepareLicenseInfoHtml($this->htmlInfo)
 			: '';
 	}
+
+	public function getInfoHelperId(): string
+	{
+		return  (string)$this->popupInfo['ID'];
+	}
+
+	public function getMobileInfoHelperId(): string
+	{
+		return  (string)($this->popupInfo['MOBILE_ID'] ?? $this->getInfoHelperId() . '_mobile');
+	}
 }

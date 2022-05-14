@@ -633,7 +633,7 @@ final class Manager
 		return $director->createOrder($orderBuilder, $fields);
 	}
 
-	public static function getCheckData($orderId): array
+	public static function getCheckData(array $orderIds): array
 	{
 		$culture = Context::getCurrent()->getCulture();
 		$result = [];
@@ -646,7 +646,7 @@ final class Manager
 		$dbRes = CheckManager::getList([
 			'select' => ['ID'],
 			'filter' => [
-				'=ORDER_ID' => $orderId,
+				'=ORDER_ID' => $orderIds,
 				'=STATUS' => 'Y'
 			]
 		]);
@@ -662,7 +662,8 @@ final class Manager
 						'#NAME#' => $check::getName(),
 						'#DATE_PRINT#' => FormatDate($culture->getLongDateFormat(), $check->getField('DATE_CREATE')->getTimestamp())
 					]),
-					'URL' => $check->getUrl()
+					'URL' => $check->getUrl(),
+					'STATUS' => $check->getField('STATUS'),
 				];
 			}
 		}

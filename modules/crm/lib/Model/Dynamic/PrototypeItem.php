@@ -4,27 +4,18 @@ namespace Bitrix\Crm\Model\Dynamic;
 
 use Bitrix\Crm\CompanyTable;
 use Bitrix\Crm\ContactTable;
-use Bitrix\Crm\Currency;
 use Bitrix\Crm\Model\AssignedTable;
 use Bitrix\Crm\ProductRowTable;
-use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM;
 use Bitrix\Main\ORM\Event;
-use Bitrix\Main\ORM\Fields\BooleanField;
-use Bitrix\Main\ORM\Fields\DateField;
-use Bitrix\Main\ORM\Fields\DatetimeField;
 use Bitrix\Main\ORM\Fields\DecimalField;
 use Bitrix\Main\ORM\Fields\ExpressionField;
-use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Fields\StringField;
-use Bitrix\Main\ORM\Fields\TextField;
 use Bitrix\Main\ORM\Query\Join;
-use Bitrix\Main\Type\Date;
-use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UserField\Internal\UserFieldHelper;
 
 abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataManager
@@ -42,128 +33,125 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 	{
 		Container::getInstance()->getLocalization()->loadMessages();
 
+		$fieldRepository = Main\DI\ServiceLocator::getInstance()->get('crm.model.fieldRepository');
+
 		return [
-			(new IntegerField('ID'))
-				->configurePrimary()
-				->configureAutocomplete(),
+			// be aware that this field map is used for DDL and sql table generation!
+			/** @see ORM\Entity::createDbTable() */
+			// do not use EnumFields here, since they generate wrong column types
+
+			$fieldRepository->getId(),
+
 			(new StringField('XML_ID'))
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_XML_ID')),
-			(new StringField('TITLE'))
-				->configureTitle(Loc::getMessage('CRM_COMMON_TITLE')),
-			(new IntegerField('CREATED_BY'))
-				->configureRequired()
-				->configureDefaultValue(static function()
-				{
-					return Container::getInstance()->getContext()->getUserId();
-				})
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_CREATED_BY')),
-			(new IntegerField('UPDATED_BY'))
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_UPDATED_BY')),
-			(new IntegerField('MOVED_BY'))
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_MOVED_BY')),
-			(new DatetimeField('CREATED_TIME'))
-				->configureRequired()
-				->configureDefaultValue(static function()
-				{
-					return new DateTime();
-				})
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_CREATED_TIME')),
-			(new DatetimeField('UPDATED_TIME'))
-				->configureDefaultValue(static function()
-				{
-					return new DateTime();
-				})
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_UPDATED_TIME')),
-			(new DatetimeField('MOVED_TIME'))
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_MOVED_TIME')),
-			(new IntegerField('CATEGORY_ID'))
-				->configureTitle(Loc::getMessage('CRM_COMMON_CATEGORY'))
-				->configureRequired()
-				->configureDefaultValue([static::class, 'getDefaultCategoryId']),
-			(new BooleanField('OPENED'))
-				->configureStorageValues('N', 'Y')
-				->configureDefaultValue('N')
-				->configureRequired()
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_OPENED')),
-			(new StringField('STAGE_ID'))
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_STAGE_ID'))
-				->configureDefaultValue([static::class, 'getDefaultStageId']),
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_XML_ID'))
+			,
+
+			$fieldRepository->getTitle(),
+
+			$fieldRepository->getCreatedBy(),
+
+			$fieldRepository->getUpdatedBy()
+				->configureRequired(false)
+			,
+
+			$fieldRepository->getMovedBy(),
+
+			$fieldRepository->getCreatedTime(),
+
+			$fieldRepository->getUpdatedTime()
+				->configureRequired(false)
+			,
+
+			$fieldRepository->getMovedTime(),
+
+			$fieldRepository->getCategoryId()
+				// when getMap is called, we yet to know entityTypeId. postpone it to later moment
+				->configureDefaultValue([static::class, 'getDefaultCategoryId'])
+			,
+
+			$fieldRepository->getOpened()
+				->configureDefaultValue(false)
+			,
+
+			$fieldRepository->getStageId()
+				// when getMap is called, we yet to know entityTypeId. postpone it to later moment
+				->configureDefaultValue([static::class, 'getDefaultStageId'])
+			,
+
 			(new StringField('PREVIOUS_STAGE_ID'))
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_PREVIOUS_STAGE_ID')),
-			(new DateField('BEGINDATE'))
-				->configureRequired()
-				->configureDefaultValue(static function()
-				{
-					return new Date();
-				})
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_BEGINDATE')),
-			(new DateField('CLOSEDATE'))
-				->configureRequired()
-				->configureDefaultValue([static::class, 'getDefaultCloseDate'])
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_CLOSEDATE')),
-			(new IntegerField('COMPANY_ID'))
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_COMPANY_ID')),
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_PREVIOUS_STAGE_ID'))
+			,
+
+			$fieldRepository->getBeginDate(),
+
+			$fieldRepository->getCloseDate(),
+
+			$fieldRepository->getCompanyId(),
+
 			(new Reference('COMPANY', CompanyTable::class, Join::on('this.COMPANY_ID', 'ref.ID'))),
-			(new IntegerField('CONTACT_ID'))
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_CONTACT_ID')),
+
+			$fieldRepository->getContactId(),
+
 			(new Reference('CONTACT', ContactTable::class, Join::on('this.CONTACT_ID', 'ref.ID'))),
+
+			// common fields are float because of backward compatibility
+			// these fields are decimal to define appropriate column type on DDL generation
 			(new DecimalField('OPPORTUNITY'))
 				->configurePrecision(18)
 				->configureScale(2)
-				->configureDefaultValue(0.00)
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_OPPORTUNITY')),
-			(new BooleanField('IS_MANUAL_OPPORTUNITY'))
-				->configureStorageValues('N', 'Y')
-				->configureDefaultValue('N')
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_IS_MANUAL_OPPORTUNITY')),
+				->configureDefaultValue($fieldRepository->getOpportunity()->getDefaultValue())
+				->configureTitle($fieldRepository->getOpportunity()->getTitle())
+			,
+
+			$fieldRepository->getIsManualOpportunity()
+				->configureRequired(false)
+			,
+
 			(new DecimalField('TAX_VALUE'))
 				->configurePrecision(18)
 				->configureScale(2)
-				->configureDefaultValue(0.00)
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_TAX_VALUE')),
-			(new StringField('CURRENCY_ID'))
-				->configureSize(50)
-				->configureDefaultValue(Currency::getBaseCurrencyId())
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_CURRENCY_ID')),
+				->configureDefaultValue($fieldRepository->getTaxValue()->getDefaultValue())
+				->configureTitle($fieldRepository->getTaxValue()->getTitle())
+			,
+
+			$fieldRepository->getCurrencyId(),
+
 			(new DecimalField('OPPORTUNITY_ACCOUNT'))
 				->configurePrecision(18)
 				->configureScale(2)
-				->configureDefaultValue(0.00)
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_OPPORTUNITY_ACCOUNT')),
+				->configureDefaultValue($fieldRepository->getOpportunityAccount()->getDefaultValue())
+				->configureTitle($fieldRepository->getOpportunityAccount()->getTitle())
+			,
+
 			(new DecimalField('TAX_VALUE_ACCOUNT'))
 				->configurePrecision(18)
 				->configureScale(2)
-				->configureDefaultValue(0.00)
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_TAX_VALUE_ACCOUNT')),
-			(new StringField('ACCOUNT_CURRENCY_ID'))
-				->configureSize(50)
-				->configureDefaultValue(Currency::getAccountCurrencyId())
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_ACCOUNT_CURRENCY_ID')),
-			(new IntegerField('MYCOMPANY_ID'))
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_MYCOMPANY_ID'))
-				->configureDefaultValue(static function() {
-					$defaultMyCompanyId = (int)EntityLink::getDefaultMyCompanyId();
-					if ($defaultMyCompanyId > 0)
-					{
-						return $defaultMyCompanyId;
-					}
+				->configureDefaultValue($fieldRepository->getTaxValueAccount()->getDefaultValue())
+				->configureTitle($fieldRepository->getTaxValueAccount()->getTitle())
+			,
 
-					return null;
-				}),
+			$fieldRepository->getAccountCurrencyId(),
+
+			$fieldRepository->getMyCompanyId(),
+
 			(new Reference('MYCOMPANY', CompanyTable::class, Join::on('this.MYCOMPANY_ID', 'ref.ID'))),
-			(new StringField('SOURCE_ID'))
-				->configureSize(50)
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_SOURCE_ID')),
-			(new TextField('SOURCE_DESCRIPTION'))
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_SOURCE_DESCRIPTION')),
-			(new IntegerField('WEBFORM_ID'))
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_WEBFORM_ID')),
+
+			$fieldRepository->getSourceId(),
+
+			$fieldRepository->getSourceDescription(),
+
+			$fieldRepository->getWebformId(),
 		];
 	}
 
 	public static function getFactory(): ?\Bitrix\Crm\Service\Factory
 	{
-		return Container::getInstance()->getFactory((int) static::getType()['ENTITY_TYPE_ID']);
+		return Container::getInstance()->getFactory(static::getEntityTypeId());
+	}
+
+	protected static function getEntityTypeId(): int
+	{
+		return (int)static::getType()['ENTITY_TYPE_ID'];
 	}
 
 	public static function getList(array $parameters = []): ORM\Query\Result
@@ -359,41 +347,20 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 
 	public static function getDefaultCategoryId(): ?int
 	{
-		$factory = static::getFactory();
+		$fieldRepository = Main\DI\ServiceLocator::getInstance()->get('crm.model.fieldRepository');
 
-		if($factory)
-		{
-			return $factory->createDefaultCategoryIfNotExist()->getId();
-		}
+		$resolver = $fieldRepository->getDefaultCategoryIdResolver(static::getEntityTypeId());
 
-		return null;
+		return $resolver();
 	}
 
 	public static function getDefaultStageId(): ?string
 	{
-		$factory = static::getFactory();
-		if ($factory)
-		{
-			$categoryId = $factory->createDefaultCategoryIfNotExist()->getId();
-			$stages = $factory->getStages($categoryId);
-			$firstStage = $stages->getAll()[0] ?? null;
+		$fieldRepository = Main\DI\ServiceLocator::getInstance()->get('crm.model.fieldRepository');
 
-			return $firstStage ? $firstStage->getStatusId() : null;
-		}
+		$resolver = $fieldRepository->getDefaultStageIdResolver(static::getEntityTypeId());
 
-		return null;
-	}
-
-	public static function getDefaultCloseDate(): Date
-	{
-		$currentDate = new Date();
-
-		return $currentDate->add(static::getCloseDateOffset());
-	}
-
-	protected static function getCloseDateOffset(): string
-	{
-		return '7D';
+		return $resolver();
 	}
 
 	protected static function convertValuesBeforeSave(array $data, array $userFields): array

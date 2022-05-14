@@ -495,7 +495,7 @@ if($topCount > 0)
 }
 
 $gridOptions = new \Bitrix\Main\Grid\Options($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
-$filterOptions = new \Bitrix\Main\UI\Filter\Options($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
+$filterOptions = new \Bitrix\Crm\Filter\UiFilterOptions($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
 $arNavParams = $gridOptions->GetNavParams($arNavParams);
 $arNavParams['bShowAll'] = false;
 

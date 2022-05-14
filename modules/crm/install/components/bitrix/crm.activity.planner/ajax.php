@@ -135,11 +135,11 @@ switch ($action)
 	case 'PLANNER_UPDATE':
 		if (CModule::IncludeModule("calendar"))
 		{
-			$result = array(
-				'entries' => array(),
-				'accessibility' => array()
-			);
-			$userIds = array();
+			$result = [
+				'entries' => [],
+				'accessibility' => []
+			];
+			$userIds = [];
 
 			if (isset($_REQUEST['entries']) && is_array($_REQUEST['entries']))
 			{
@@ -147,13 +147,13 @@ switch ($action)
 				{
 					$userIds[] = $user;
 					$arUser = CCalendar::GetUser($user);
-					$result['entries'][] = array(
+					$result['entries'][] = [
 						'type' => 'user',
 						'id' => $user,
 						'name' => CCalendar::GetUserName($arUser),
 						'status' => '',
 						'avatar' => CCalendar::GetUserAvatarSrc($arUser)
-					);
+					];
 				}
 			}
 			$from = CCalendar::Date(CCalendar::Timestamp($_REQUEST['from']), false);
@@ -169,29 +169,33 @@ switch ($action)
 				}
 			}
 
-			$accessibility = CCalendar::GetAccessibilityForUsers(array(
+			$result['dayOfWeekMonthFormat'] = \Bitrix\Main\Context::getCurrent()
+				->getCulture()
+				->getDayOfWeekMonthFormat();
+
+			$accessibility = CCalendar::GetAccessibilityForUsers([
 					'users' => $userIds,
 					'from' => $from, // date or datetime in UTC
 					'to' => $to, // date or datetime in UTC
 					'curEventId' => $currentEventId,
 					'getFromHR' => true
-			));
+			]);
 
-			$result['accessibility'] = array();
 			foreach($accessibility as $userId => $entries)
 			{
-				$result['accessibility'][$userId] = array();
+				$result['accessibility'][$userId] = [];
 
 				foreach($entries as $entry)
 				{
 					if (isset($entry['DT_FROM']) && !isset($entry['DATE_FROM']))
 					{
-						$result['accessibility'][$userId][] = array(
+						$result['accessibility'][$userId][] = [
 							'id' => $entry['ID'],
 							'dateFrom' => $entry['DT_FROM'],
 							'dateTo' => $entry['DT_TO'],
-							'type' => $entry['FROM_HR'] ? 'hr' : 'event'
-						);
+							'type' => $entry['FROM_HR'] ? 'hr' : 'event',
+							'title' => $entry['NAME']
+						];
 					}
 					else
 					{
@@ -202,16 +206,17 @@ switch ($action)
 							$fromTs -= $entry['~USER_OFFSET_FROM'];
 							$toTs -= $entry['~USER_OFFSET_TO'];
 						}
-						$result['accessibility'][$userId][] = array(
+						$result['accessibility'][$userId][] = [
 							'id' => $entry['ID'],
 							'dateFrom' => CCalendar::Date($fromTs, $entry['DT_SKIP_TIME'] != 'Y'),
 							'dateTo' => CCalendar::Date($toTs, $entry['DT_SKIP_TIME'] != 'Y'),
-							'type' => $entry['FROM_HR'] ? 'hr' : 'event'
-						);
+							'type' => $entry['FROM_HR'] ? 'hr' : 'event',
+							'title' => $entry['NAME']
+						];
 					}
 				}
 			}
-			$sendResponse(array("DATA" => $result, 'ERRORS' => array()), array(), true);
+			$sendResponse(["DATA" => $result, 'ERRORS' => []], [], true);
 		}
 		break;
 

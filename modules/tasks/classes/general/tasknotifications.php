@@ -1409,7 +1409,7 @@ class CTaskNotifications
 				'select' => ['ID'],
 				'filter' => [
 					'ID' => $users,
-					'EXTERNAL_AUTH_ID' => 'email',
+					'=EXTERNAL_AUTH_ID' => 'email',
 				],
 			])->fetchAll(),
 			'ID'
@@ -3004,7 +3004,10 @@ class CTaskNotifications
 
 	protected static function placeLinkAnchor($message, $url, $mode = 'NONE')
 	{
-		if($mode == 'BBCODE')
+		if(
+			$mode === 'BBCODE'
+			&& !empty($url)
+		)
 		{
 			$message = str_replace(
 				array(
@@ -3032,7 +3035,10 @@ class CTaskNotifications
 				$message
 			);
 
-			if($mode == 'EMAIL')
+			if(
+				$mode === 'EMAIL'
+				&& !empty($url)
+			)
 			{
 				$message .= ' #BR# '.GetMessage('TASKS_MESSAGE_LINK_GENERAL').': '.$url; // #BR# will be converted to \n by IM
 			}

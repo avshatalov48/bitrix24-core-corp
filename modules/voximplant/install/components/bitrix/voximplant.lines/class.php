@@ -162,7 +162,7 @@ class VoximplantLinesComponent extends \CBitrixComponent
 			});
 			$numbers = array_values($numbers);
 
-			if(count($numbers) == 0)
+			if(empty($numbers))
 			{
 				return null;
 			}
@@ -417,7 +417,7 @@ class VoximplantLinesComponent extends \CBitrixComponent
 		];
 
 		$groups = $this->getGroups();
-		if(count($groups) > 0)
+		if(!empty($groups))
 		{
 			$groupMenuItems = array_map(function($g) use($number)
 			{

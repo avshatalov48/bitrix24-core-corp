@@ -16,6 +16,7 @@ export class Toggle extends EventEmitter
 		this.visible = params.visible;
 
 		this.shown = false;
+		this.disabled = false;
 	}
 
 	render(): HTMLElement
@@ -36,6 +37,13 @@ export class Toggle extends EventEmitter
 
 	onClick()
 	{
+		if (this.isDisabled())
+		{
+			return;
+		}
+
+		this.disable();
+
 		if (this.isShown())
 		{
 			this.emit('hide');
@@ -59,5 +67,20 @@ export class Toggle extends EventEmitter
 	isShown(): boolean
 	{
 		return this.shown;
+	}
+
+	isDisabled(): boolean
+	{
+		return this.disabled;
+	}
+
+	disable()
+	{
+		this.disabled = true;
+	}
+
+	unDisable()
+	{
+		this.disabled = false;
 	}
 }

@@ -1,10 +1,10 @@
 <?
 /**
  * Class implements all further interactions with "rest" module considering userfields.
- * 
+ *
  * This class is for internal use only, not a part of public API.
  * It can be changed at any time without notification.
- * 
+ *
  * @access private
  */
 
@@ -13,8 +13,8 @@ namespace Bitrix\Tasks\Integration\Rest;
 use Bitrix\Tasks\Integration\Disk\Rest\Attachment;
 
 use Bitrix\Rest\UserFieldProxy;
+use Bitrix\Main\EO_UserField_Result;
 use Bitrix\Main\UserFieldTable;
-use Bitrix\Tasks\Util\User;
 
 abstract class UserField extends UserFieldProxy
 {
@@ -58,17 +58,18 @@ abstract class UserField extends UserFieldProxy
 
 	/**
 	 * Returns list of user fields in ORM way
-	 * 
-	 * @param mixed[] A standard ORM getList() first agrument
-	 * 
-	 * @return DBResult
+	 *
+	 * @param array $parameters A standard ORM getList() first argument
 	 */
-	public static function getFieldList($parameters = array())
+	public static function getFieldList(array $parameters = [])
 	{
-		if(!is_array($parameters))
-			$parameters = array();
+		if (!is_array($parameters))
+		{
+			$parameters = [];
+		}
 
 		$parameters['filter']['=ENTITY_ID'] = static::getTargetEntityId();
+		$parameters['cache'] = ['ttl' => 3600];
 
 		return UserFieldTable::getList($parameters);
 	}

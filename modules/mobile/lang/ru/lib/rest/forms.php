@@ -28,3 +28,4 @@ $MESS["MAIN"] = "Основное";
 $MESS["EXTRA"] = "Дополнительно";
 $MESS["ACCOUNT"] = "Учетная запись";
 $MESS["DEPARTMENTS"] = "Подразделения";
+$MESS['META_RESTRICTED_ORGANIZATION_MESSAGE'] = '* Деятельность Meta Platforms Inc. (Facebook, Instagram) запрещена на территории Российской Федерации';

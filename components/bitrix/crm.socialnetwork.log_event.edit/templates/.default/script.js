@@ -167,10 +167,7 @@ if(typeof(BX.CrmSonetEventEditor) === "undefined")
 
 			if(visible)
 			{
-				BX.adjust(
-					this._resolveElement("button_block"),
-					{ style: { height: "auto", opacity: "1" } }
-				);
+				this._resolveElement('button_block').classList.remove('crm-feed-post-form-block-hidden');
 
 				var editor = window.BXHtmlEditor.Get(this._editorName);
 				if(editor)
@@ -180,10 +177,7 @@ if(typeof(BX.CrmSonetEventEditor) === "undefined")
 			}
 			else
 			{
-				BX.adjust(
-					this._resolveElement("button_block"),
-					{ style: { height: "0", opacity: "0" } }
-				);
+				this._resolveElement('button_block').classList.add('crm-feed-post-form-block-hidden');
 
 				if(this._isMsgTitleEnabled)
 				{

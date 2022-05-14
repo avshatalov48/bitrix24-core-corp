@@ -87,7 +87,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    babelHelpers.classCallCheck(this, MobileRestAnswerHandler);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(MobileRestAnswerHandler).call(this, params));
 
-	    if (babelHelpers.typeof(params.context) === 'object' && params.context) {
+	    if (babelHelpers["typeof"](params.context) === 'object' && params.context) {
 	      _this.context = params.context;
 	    }
 
@@ -175,8 +175,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  template: "\n\t\t<div class=\"bx-mobilechat-loading-window\">\n\t\t\t<svg class=\"bx-mobilechat-loading-circular\" viewBox=\"25 25 50 50\">\n\t\t\t\t<circle class=\"bx-mobilechat-loading-path\" cx=\"50\" cy=\"50\" r=\"20\" fill=\"none\" stroke-miterlimit=\"10\"/>\n\t\t\t\t<circle class=\"bx-mobilechat-loading-inner-path\" cx=\"50\" cy=\"50\" r=\"20\" fill=\"none\" stroke-miterlimit=\"10\"/>\n\t\t\t</svg>\n\t\t\t<h3 class=\"bx-mobilechat-help-title bx-mobilechat-help-title-md bx-mobilechat-loading-msg\">{{$Bitrix.Loc.getMessage('MOBILE_CHAT_LOADING')}}</h3>\n\t\t</div>\n\t"
 	};
 
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var ErrorStatus = {
-	  computed: babelHelpers.objectSpread({}, ui_vue_vuex.Vuex.mapState({
+	  computed: _objectSpread({}, ui_vue_vuex.Vuex.mapState({
 	    application: function application(state) {
 	      return state.application;
 	    }
@@ -203,14 +206,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-consent-window-show\" leave-active-class=\"bx-livechat-form-close\">\n\t\t\t<div class=\"bx-messenger-alert-box bx-livechat-alert-box-zero-padding bx-livechat-form-show\" key=\"vote\">\n\t\t\t\t<div class=\"bx-livechat-alert-close\" @click=\"hideSmiles\"></div>\n\t\t\t\t<div class=\"bx-messenger-smiles-box\">\n\t\t\t\t\t<bx-smiles\n\t\t\t\t\t\t@selectSmile=\"onSelectSmile\"\n\t\t\t\t\t\t@selectSet=\"onSelectSet\"\n\t\t\t\t\t/>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\n\t"
 	};
 
-	/**
-	 * Bitrix im dialog mobile
-	 * Dialog vue component
-	 *
-	 * @package bitrix
-	 * @subpackage mobile
-	 * @copyright 2001-2019 Bitrix
-	 */
+	function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	/**
 	 * @notice Do not clone this component! It is under development.
 	 */
@@ -228,7 +226,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      dialogState: 'none'
 	    };
 	  },
-	  computed: babelHelpers.objectSpread({
+	  computed: _objectSpread$1({
 	    EventType: function EventType() {
 	      return im_const.EventType;
 	    },
@@ -481,7 +479,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var event = _ref13.data;
 	      this.$Bitrix.Data.get('controller').application.joinParentChat(event.message.id, 'chat' + event.message.params.CHAT_ID).then(function (dialogId) {
 	        _this3.getApplication().openDialog(dialogId);
-	      }).catch(function () {});
+	      })["catch"](function () {});
 	    },
 	    onClickOnDialog: function onClickOnDialog(_ref14) {//this.getApplication().controller.hideSmiles();
 
@@ -516,14 +514,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  immutable: true
 	});
 
-	/**
-	 * Bitrix Im mobile
-	 * Dialog application
-	 *
-	 * @package bitrix
-	 * @subpackage mobile
-	 * @copyright 2001-2020 Bitrix
-	 */
+	function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread$2(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$2(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$2(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var STORAGE_PREFIX = 'chatBackgroundQueue';
 	var FILES_STORAGE_NAME = 'uploadTasks';
 	var MESSAGES_STORAGE_NAME = 'tasks';
@@ -770,7 +763,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	              main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollOnStart, {
 	                chatId: _this6.controller.application.getChatId()
 	              });
-	            }).catch(function () {
+	            })["catch"](function () {
 	              _this6.processSendMessages();
 	            });
 	          }
@@ -801,7 +794,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          moduleId: _this6.pullMobileHandler.getModuleId(),
 	          data: {
 	            command: 'messageAdd',
-	            params: babelHelpers.objectSpread({}, params, {
+	            params: _objectSpread$2(_objectSpread$2({}, params), {}, {
 	              optionImportant: true
 	            })
 	          }
@@ -1566,7 +1559,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      app.exec("openComponent", {
 	        name: "JSStackComponent",
 	        componentCode: 'im.dialog.list',
-	        scriptPath: "/mobileapp/jn/im.chat.user.list/?version=" + BX.componentParameters.get('WIDGET_CHAT_USERS_VERSION', '1.0.0'),
+	        scriptPath: "/mobileapp/jn/im:im.chat.user.list/?version=" + BX.componentParameters.get('WIDGET_CHAT_USERS_VERSION', '1.0.0'),
 	        params: {
 	          "DIALOG_ID": this.controller.application.getDialogId(),
 	          "DIALOG_OWNER_ID": this.controller.application.getDialogData().ownerId,
@@ -1689,7 +1682,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      app.exec("openComponent", {
 	        name: "JSStackComponent",
 	        componentCode: "im.chat.user.selector",
-	        scriptPath: "/mobileapp/jn/im.chat.user.selector/?version=" + BX.componentParameters.get('WIDGET_CHAT_RECIPIENTS_VERSION', '1.0.0'),
+	        scriptPath: "/mobileapp/jn/im:im.chat.user.selector/?version=" + BX.componentParameters.get('WIDGET_CHAT_RECIPIENTS_VERSION', '1.0.0'),
 	        params: {
 	          "DIALOG_ID": this.controller.application.getDialogId(),
 	          "USER_ID": this.controller.application.getUserId(),
@@ -1857,7 +1850,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollOnStart, {
 	              chatId: _this16.controller.application.getChatId()
 	            });
-	          }).catch(function () {
+	          })["catch"](function () {
 	            _this16.controller.pullBaseHandler.option.skip = false;
 
 	            _this16.processSendMessages();
@@ -2212,7 +2205,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        authorName: this.controller.application.getCurrentUser().name,
 	        urlPreview: !file.preview ? '' : file.preview.url
 	      })).then(function (fileId) {
-	        return _this19.addMessage(text, babelHelpers.objectSpread({
+	        return _this19.addMessage(text, _objectSpread$2({
 	          id: fileId
 	        }, file), fileMessageUuid);
 	      });
@@ -2434,7 +2427,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        _this23.flagRequestDiskFolderIdSended = false;
 
 	        _this23.processSendMessages();
-	      }).catch(function (error) {
+	      })["catch"](function (error) {
 	        _this23.flagRequestDiskFolderIdSended = false;
 
 	        _this23.controller.executeRestAnswer(im_const.RestMethodHandler.imDiskFolderGet, error);
@@ -2455,7 +2448,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }).then(function (result) {
 	        _this24.controller.executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGet, result); // this.controller.application.emit(EventType.dialog.requestHistoryResult, {count: result.data().messages.length});
 
-	      }).catch(function (result) {// this.controller.emit(EventType.dialog.requestHistoryResult, {error: result.error().ex});
+	      })["catch"](function (result) {// this.controller.emit(EventType.dialog.requestHistoryResult, {error: result.error().ex});
 	      });
 	    }
 	  }, {
@@ -3123,7 +3116,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "isBackground",
 	    value: function isBackground() {
-	      if ((typeof BXMobileAppContext === "undefined" ? "undefined" : babelHelpers.typeof(BXMobileAppContext)) !== "object") {
+	      if ((typeof BXMobileAppContext === "undefined" ? "undefined" : babelHelpers["typeof"](BXMobileAppContext)) !== "object") {
 	        return false;
 	      }
 

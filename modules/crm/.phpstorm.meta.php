@@ -12,6 +12,7 @@ namespace PHPSTORM_META
 		'crm.service.factory.contact',
 		'crm.service.factory.company',
 		'crm.service.factory.smartInvoice',
+		'crm.service.factory.order',
 		'crm.type.factory',
 		'crm.service.converter.ormObject',
 		'crm.service.converter.item',
@@ -39,6 +40,7 @@ namespace PHPSTORM_META
 		'crm.service.parentFieldManager',
 		'crm.service.accounting',
 		'crm.service.fileUploader',
+		'crm.service.multifieldStorage',
 		'crm.kanban.entity.lead',
 		'crm.kanban.entity.deal',
 		'crm.kanban.entity.invoice',
@@ -64,7 +66,8 @@ namespace PHPSTORM_META
 		'crm.timeline.pusher',
 		'crm.timeline.historyDataModel.maker',
 		'crm.conversion.mapper',
-		'crm.service.webform.scenario'
+		'crm.service.webform.scenario',
+		'crm.model.fieldRepository',
 	);
 
 	expectedArguments(\Bitrix\Main\DI\ServiceLocator::get(), 0, argumentsSet('bitrix_crm_serviceLocator_codes'));
@@ -80,6 +83,7 @@ namespace PHPSTORM_META
 		'crm.service.factory.contact' => \Bitrix\Crm\Service\Factory\Contact::class,
 		'crm.service.factory.company' => \Bitrix\Crm\Service\Factory\Company::class,
 		'crm.service.factory.smartInvoice' => \Bitrix\Crm\Service\Factory\SmartInvoice::class,
+		'crm.service.factory.order' => \Bitrix\Crm\Service\Factory\Order::class,
 		'crm.type.factory' => \Bitrix\Crm\Model\Dynamic\Factory::class,
 		'crm.service.converter.ormObject' => \Bitrix\Crm\Service\Converter\OrmObject::class,
 		'crm.service.converter.item' => \Bitrix\Crm\Service\Converter\Item::class,
@@ -107,6 +111,7 @@ namespace PHPSTORM_META
 		'crm.service.parentFieldManager' => \Bitrix\Crm\Service\ParentFieldManager::class,
 		'crm.service.accounting' => \Bitrix\Crm\Service\Accounting::class,
 		'crm.service.fileUploader' => \Bitrix\Crm\Service\FileUploader::class,
+		'crm.service.multifieldStorage' => \Bitrix\Crm\Service\MultifieldStorage::class,
 		'crm.kanban.entity.lead' => \Bitrix\Crm\Kanban\Entity\Lead::class,
 		'crm.kanban.entity.deal' => \Bitrix\Crm\Kanban\Entity\Deal::class,
 		'crm.kanban.entity.invoice' => \Bitrix\Crm\Kanban\Entity\Invoice::class,
@@ -133,5 +138,6 @@ namespace PHPSTORM_META
 		'crm.timeline.historyDataModel.maker' => \Bitrix\Crm\Timeline\HistoryDataModel\Maker::class,
 		'crm.conversion.mapper' => \Bitrix\Crm\Conversion\Mapper::class,
 		'crm.service.webform.scenario' => \Bitrix\Crm\Service\WebForm\WebFormScenarioService::class,
+		'crm.model.fieldRepository' => \Bitrix\Crm\Model\FieldRepository::class,
 	]));
 }

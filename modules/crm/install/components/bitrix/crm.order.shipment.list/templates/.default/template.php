@@ -173,7 +173,7 @@ foreach($arResult['ORDER_SHIPMENT'] as $sKey => $arOrderShipment)
 			'SHIPMENT_SUMMARY' => CCrmViewHelper::RenderInfo(
 				$arOrderShipment['PATH_TO_ORDER_SHIPMENT_DETAILS'],
 				\Bitrix\Main\Localization\Loc::getMessage('CRM_ORDER_SHIPMENT_SUMMARY',array(
-					'#NUMBER#' => $arOrderShipment['ACCOUNT_NUMBER'],
+					'#NUMBER#' => htmlspecialcharsbx($arOrderShipment['ACCOUNT_NUMBER']),
 					'#DATE#' => $arOrderShipment['DATE_INSERT']
 				)),
 				'', // type

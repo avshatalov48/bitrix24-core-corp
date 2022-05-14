@@ -24,11 +24,39 @@ class Deal extends Base
 
 	public function getEntityProducts(): array
 	{
-		$dealProducts = [];
+		static $dealProducts = [];
 
-		foreach (\CCrmDeal::LoadProductRows($this->ownerId) as $dealProduct)
+		if ($dealProducts)
 		{
-			$dealProducts[$dealProduct['ID']] = $dealProduct;
+			return $dealProducts;
+		}
+
+		$basketReservation = new Crm\Reservation\BasketReservation();
+		$dealProductRows = \CCrmDeal::LoadProductRows($this->ownerId);
+
+		foreach ($dealProductRows as $dealProduct)
+		{
+			$basketReservation->addProduct($dealProduct);
+		}
+
+		$reservedProducts = $basketReservation->getReservedProducts();
+		if ($reservedProducts)
+		{
+			foreach ($dealProductRows as $dealProduct)
+			{
+				$reservedProductData = $reservedProducts[$dealProduct['ID']] ?? null;
+				if ($reservedProductData)
+				{
+					$dealProducts[$dealProduct['ID']] = array_merge($dealProduct, $reservedProductData);
+				}
+			}
+		}
+		else
+		{
+			foreach ($dealProductRows as $dealProduct)
+			{
+				$dealProducts[$dealProduct['ID']] = $dealProduct;
+			}
 		}
 
 		return $dealProducts;

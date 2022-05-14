@@ -1,5 +1,6 @@
 <?php
 use Bitrix\Main\Localization\Loc;
+$APPLICATION->SetPageProperty("BodyClass", "bx-disk-404-align-center");
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var array $arParams */
@@ -17,12 +18,12 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
 <div class="bx-disk-grid">
 	<div class="bx-disk-404-container">
-		<div class="bx-disk-404-image"><img src="/bitrix/components/bitrix/disk.error.page/templates/.default/images/404.png"></div>
-		<div class="bx-disk-404-title"><?= Loc::getMessage('DISK_ERROR_PAGE_TITLE') ?></div>
+		<div class="bx-disk-404-image">
+			<img alt="" src="/bitrix/components/bitrix/disk.error.page/templates/.default/images/disk-error-page.svg">
+		</div>
+		<div class="bx-disk-404-title"><?= Loc::getMessage('DISK_ERROR_PAGE_TITLE_V2') ?></div>
 		<div class="bx-disk-404-description">
-			<p><?= Loc::getMessage('DISK_ERROR_PAGE_BASE_DESCRIPTION') ?></p>
-			<p><?= Loc::getMessage('DISK_ERROR_PAGE_BASE_SOLUTION_1') ?></p>
-			<p><?= Loc::getMessage('DISK_ERROR_PAGE_BASE_SOLUTION_2') ?></p>
+			<p><?= Loc::getMessage('DISK_ERROR_PAGE_BASE_DESCRIPTION_V2') ?></p>
 		</div>
 	</div>
 </div>

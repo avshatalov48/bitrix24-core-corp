@@ -704,20 +704,18 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 		//endregion
 
 		//region WAIT TARGET DATES
-		$this->arResult['WAIT_TARGET_DATES'] = array();
-
+		$this->arResult['WAIT_TARGET_DATES'] = [];
 		if ($this->userType)
 		{
 			$userFields = $this->userType->GetFields();
 			foreach($userFields as $userField)
 			{
-				if($userField['USER_TYPE_ID'] === 'date')
+				if($userField['USER_TYPE_ID'] === 'date' && $userField['MULTIPLE'] !== 'Y')
 				{
-					$this->arResult['WAIT_TARGET_DATES'][] = array(
+					$this->arResult['WAIT_TARGET_DATES'][] = [
 						'name' => $userField['FIELD_NAME'],
-						'caption' => isset($userField['EDIT_FORM_LABEL'])
-							? $userField['EDIT_FORM_LABEL'] : $userField['FIELD_NAME']
-					);
+						'caption' => $userField['EDIT_FORM_LABEL'] ?? $userField['FIELD_NAME']
+					];
 				}
 			}
 		}
@@ -1712,7 +1710,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 
 			$fields = array(
 				'NUMBER_AND_DATE' => Loc::getMessage('CRM_ORDER_SHIPMENT_SUBTITLE_MASK', array(
-					'#ID#' => $shipment->getField('ACCOUNT_NUMBER'),
+					'#ID#' => htmlspecialcharsbx($shipment->getField('ACCOUNT_NUMBER')),
 					'#DATE_BILL#' => CCrmComponentHelper::TrimDateTimeString(
 						ConvertTimeStamp(
 							MakeTimeStamp(
@@ -2123,7 +2121,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 					'PAY_SYSTEM_LOGO_PATH' => $paySystemLogoPath,
 					'DATE_PAID' => $payment->getField('DATE_PAID'),
 					'NUMBER_AND_DATE' => Loc::getMessage('CRM_ORDER_PAYMENT_SUBTITLE_MASK', array(
-						'#ID#' => $payment->getField('ACCOUNT_NUMBER'),
+						'#ID#' => htmlspecialcharsbx($payment->getField('ACCOUNT_NUMBER')),
 						'#DATE_BILL#' => CCrmComponentHelper::TrimDateTimeString(
 							ConvertTimeStamp(
 								MakeTimeStamp(

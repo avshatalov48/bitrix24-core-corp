@@ -156,7 +156,7 @@ this.BX = this.BX || {};
 	                  titleBar: main_core.Loc.getMessage("MENU_CUSTOM_PRESET_POPUP_TITLE"),
 	                  content: main_core.Loc.getMessage("MENU_CUSTOM_PRESET_SUCCESS")
 	                }).show();
-	              }).catch(function () {
+	              })["catch"](function () {
 	                console.log('Error!!');
 	              });
 	            });
@@ -421,7 +421,7 @@ this.BX = this.BX || {};
 	                } else {
 	                  document.location.reload();
 	                }
-	              }).catch(Utils.catchError);
+	              })["catch"](Utils.catchError);
 	            });
 	          }
 	        }), new ui_buttons.CancelButton({
@@ -1183,7 +1183,7 @@ this.BX = this.BX || {};
 	                resolve(itemInfoToSave);
 
 	                _this5.popup.close();
-	              }).catch(Utils.catchError);
+	              })["catch"](Utils.catchError);
 	            }
 	          }
 	        }), new ui_buttons.CancelButton({
@@ -1312,13 +1312,13 @@ this.BX = this.BX || {};
 	      contextMenuItems.push({
 	        text: main_core.Loc.getMessage("MENU_RENAME_ITEM"),
 	        onclick: function onclick() {
-	          _this2.constructor.showUpdate(_this2).then(_this2.update.bind(_this2)).catch(_this2.showError);
+	          _this2.constructor.showUpdate(_this2).then(_this2.update.bind(_this2))["catch"](_this2.showError);
 	        }
 	      });
 	      contextMenuItems.push({
 	        text: main_core.Loc.getMessage("MENU_REMOVE_STANDARD_ITEM"),
 	        onclick: function onclick() {
-	          _this2.delete();
+	          _this2["delete"]();
 	        }
 	      });
 
@@ -1343,7 +1343,7 @@ this.BX = this.BX || {};
 
 	              _this2.container.dataset.storage = _this2.storage.join(',');
 	              main_core_events.EventEmitter.emit(_this2, Options.eventName('onItemConvert'), _this2);
-	            }).catch(_this2.showError);
+	            })["catch"](_this2.showError);
 	          }
 	        });
 	      }
@@ -1356,8 +1356,8 @@ this.BX = this.BX || {};
 	      return Backend.updateFavoritesItemMenu(itemInfoToSave);
 	    }
 	  }, {
-	    key: "searchCurrentPageInTopMenu",
-	    value: function searchCurrentPageInTopMenu() {
+	    key: "getActiveTopMenuItem",
+	    value: function getActiveTopMenuItem() {
 	      if (_classStaticPrivateFieldSpecGet$2(this, ItemUserFavorites, _currentPageInTopMenu)) {
 	        return _classStaticPrivateFieldSpecGet$2(this, ItemUserFavorites, _currentPageInTopMenu);
 	      }
@@ -1366,26 +1366,26 @@ this.BX = this.BX || {};
 	        return null;
 	      }
 
-	      var firstTopMenuItem = Array.from(Object.values(BX.Main.interfaceButtonsManager.getObjects())).shift();
+	      var firstTopMenuInstance = Array.from(Object.values(BX.Main.interfaceButtonsManager.getObjects())).shift();
 
-	      if (firstTopMenuItem) {
-	        var pointNotItem = firstTopMenuItem.getActive();
+	      if (firstTopMenuInstance) {
+	        var topMenuItem = firstTopMenuInstance.getActive();
 
-	        if (pointNotItem && babelHelpers.typeof(pointNotItem) === "object") {
+	        if (topMenuItem && babelHelpers["typeof"](topMenuItem) === "object") {
 	          var link = document.createElement("a");
-	          link.href = pointNotItem.URL; //IE11 omits slash in the pathname
+	          link.href = topMenuItem['URL']; //IE11 omits slash in the pathname
 
 	          var path = link.pathname[0] !== "/" ? "/" + link.pathname : link.pathname;
 
 	          _classStaticPrivateFieldSpecSet$2(this, ItemUserFavorites, _currentPageInTopMenu, {
-	            ID: pointNotItem['ID'] || null,
-	            NODE: pointNotItem['NODE'] || null,
-	            URL: main_core.Text.encode(path + link.search),
-	            TEXT: main_core.Text.encode(pointNotItem['TEXT']),
-	            DATA_ID: pointNotItem['DATA_ID'],
-	            COUNTER_ID: pointNotItem['COUNTER_ID'],
-	            COUNTER: pointNotItem['COUNTER'],
-	            SUB_LINK: pointNotItem['SUB_LINK']
+	            ID: topMenuItem['ID'] || null,
+	            NODE: topMenuItem['NODE'] || null,
+	            URL: path + link.search,
+	            TEXT: topMenuItem['TEXT'],
+	            DATA_ID: topMenuItem['DATA_ID'],
+	            COUNTER_ID: topMenuItem['COUNTER_ID'],
+	            COUNTER: topMenuItem['COUNTER'],
+	            SUB_LINK: topMenuItem['SUB_LINK']
 	          });
 	        }
 	      }
@@ -1394,12 +1394,10 @@ this.BX = this.BX || {};
 	    }
 	  }, {
 	    key: "isCurrentPageStandard",
-	    value: function isCurrentPageStandard() {
-	      var topPoint = this.searchCurrentPageInTopMenu();
-
-	      if (topPoint) {
+	    value: function isCurrentPageStandard(topMenuPoint) {
+	      if (topMenuPoint && topMenuPoint['URL']) {
 	        var currentFullPath = document.location.pathname + document.location.search;
-	        return topPoint.URL === currentFullPath && topPoint.URL.indexOf('workgroups') < 0;
+	        return topMenuPoint.URL === currentFullPath && topMenuPoint.URL.indexOf('workgroups') < 0;
 	      }
 
 	      return false;
@@ -1411,21 +1409,21 @@ this.BX = this.BX || {};
 
 	      var pageTitle = _ref.pageTitle,
 	          pageLink = _ref.pageLink;
-	      var topPoint = this.searchCurrentPageInTopMenu();
+	      var topMenuPoint = this.getActiveTopMenuItem();
 	      var itemInfo, startX, startY;
 
-	      if (this.isCurrentPageStandard() && topPoint && topPoint.NODE && (pageLink === Utils.getCurPage() || pageLink === topPoint.URL || !pageLink)) {
-	        var menuNodeCoord = topPoint.NODE.getBoundingClientRect();
+	      if (topMenuPoint && topMenuPoint.NODE && this.isCurrentPageStandard(topMenuPoint) && (pageLink === Utils.getCurPage() || pageLink === topMenuPoint.URL || !pageLink)) {
+	        var menuNodeCoord = topMenuPoint.NODE.getBoundingClientRect();
 	        startX = menuNodeCoord.left;
 	        startY = menuNodeCoord.top;
 	        itemInfo = {
-	          id: topPoint.DATA_ID,
-	          text: pageTitle || topPoint.TEXT,
-	          link: Utils.getCurPage() || topPoint.URL,
-	          counterId: topPoint.COUNTER_ID,
-	          counterValue: topPoint.COUNTER,
+	          id: topMenuPoint.DATA_ID,
+	          text: pageTitle || topMenuPoint.TEXT,
+	          link: Utils.getCurPage() || topMenuPoint.URL,
+	          counterId: topMenuPoint.COUNTER_ID,
+	          counterValue: topMenuPoint.COUNTER,
 	          isStandardItem: true,
-	          subLink: topPoint.SUB_LINK
+	          subLink: topMenuPoint.SUB_LINK
 	        };
 	      } else {
 	        itemInfo = {
@@ -1456,12 +1454,12 @@ this.BX = this.BX || {};
 	    key: "deleteCurrentPage",
 	    value: function deleteCurrentPage(_ref3) {
 	      var pageLink = _ref3.pageLink;
-	      var topPoint = this.searchCurrentPageInTopMenu();
+	      var topPoint = this.getActiveTopMenuItem();
 	      var itemInfo = {},
 	          startX,
 	          startY;
 
-	      if (this.isCurrentPageStandard() && topPoint) {
+	      if (topPoint && this.isCurrentPageStandard(topPoint)) {
 	        itemInfo['id'] = topPoint.DATA_ID;
 	        var menuNodeCoord = topPoint.NODE.getBoundingClientRect();
 	        startX = menuNodeCoord.left;
@@ -1506,7 +1504,7 @@ this.BX = this.BX || {};
 	          URL = _ref5.URL;
 	      var itemInfo = {
 	        id: DATA_ID,
-	        text: main_core.Text.encode(TEXT),
+	        text: TEXT,
 	        link: URL,
 	        subLink: SUB_LINK,
 	        counterId: COUNTER_ID,
@@ -1520,7 +1518,7 @@ this.BX = this.BX || {};
 	        itemInfo.id = itemId;
 	        itemInfo.topMenuId = itemInfo.id;
 
-	        var topPoint = _this4.searchCurrentPageInTopMenu();
+	        var topPoint = _this4.getActiveTopMenuItem();
 
 	        BX.onCustomEvent("BX.Bitrix24.LeftMenuClass:onMenuItemAdded", [itemInfo, _this4]);
 	        BX.onCustomEvent('BX.Bitrix24.LeftMenuClass:onStandardItemChangedSuccess', [{
@@ -1596,7 +1594,7 @@ this.BX = this.BX || {};
 	        main_core_events.EventEmitter.emit(_this, Options.eventName('onItemDelete'), {
 	          animate: true
 	        });
-	      }).catch(this.showError);
+	      })["catch"](this.showError);
 	    }
 	  }, {
 	    key: "getDropDownActions",
@@ -1607,14 +1605,14 @@ this.BX = this.BX || {};
 	      contextMenuItems.push({
 	        text: main_core.Loc.getMessage("MENU_EDIT_ITEM"),
 	        onclick: function onclick() {
-	          _this2.constructor.showUpdate(_this2).then(_this2.update.bind(_this2)).catch(_this2.showError);
+	          _this2.constructor.showUpdate(_this2).then(_this2.update.bind(_this2))["catch"](_this2.showError);
 	        }
 	      });
 	      contextMenuItems.push({
 	        text: main_core.Loc.getMessage('MENU_DELETE_SELF_ITEM'),
 	        onclick: function onclick() {
 	          ui_dialogs_messagebox.MessageBox.confirm(main_core.Loc.getMessage('MENU_DELETE_SELF_ITEM_CONFIRM'), main_core.Loc.getMessage('MENU_DELETE_SELF_ITEM'), function (messageBox) {
-	            _this2.delete();
+	            _this2["delete"]();
 
 	            messageBox.close();
 	          }, main_core.Loc.getMessage('MENU_DELETE'));
@@ -1642,7 +1640,7 @@ this.BX = this.BX || {};
 
 	              _this2.container.dataset.storage = _this2.storage.join(',');
 	              main_core_events.EventEmitter.emit(_this2, Options.eventName('onItemConvert'), _this2);
-	            }).catch(_this2.showError);
+	            })["catch"](_this2.showError);
 	          }
 	        });
 	      }
@@ -1728,7 +1726,7 @@ this.BX = this.BX || {};
 	        main_core_events.EventEmitter.emit(_this, Options.eventName('onItemDelete'), {
 	          animate: true
 	        });
-	      }).catch(this.showError);
+	      })["catch"](this.showError);
 	    }
 	  }, {
 	    key: "getDropDownActions",
@@ -1756,7 +1754,7 @@ this.BX = this.BX || {};
 	      }).length > 0) {
 	        contextMenuItems.push({
 	          text: main_core.Loc.getMessage('MENU_REMOVE_STANDARD_ITEM'),
-	          onclick: this.delete.bind(this)
+	          onclick: this["delete"].bind(this)
 	        });
 	        contextMenuItems.push({
 	          text: main_core.Loc.getMessage('MENU_DELETE_CUSTOM_ITEM_FROM_ALL'),
@@ -1770,13 +1768,13 @@ this.BX = this.BX || {};
 	                return v !== codeToConvert;
 	              }).join(',');
 	              main_core_events.EventEmitter.emit(_this2, Options.eventName('onItemConvert'), _this2);
-	            }).catch(_this2.showError);
+	            })["catch"](_this2.showError);
 	          }
 	        });
 	      } else {
 	        contextMenuItems.push({
 	          text: main_core.Loc.getMessage("MENU_DELETE_CUSTOM_ITEM_FROM_ALL"),
-	          onclick: this.delete.bind(this)
+	          onclick: this["delete"].bind(this)
 	        });
 	      }
 
@@ -1817,7 +1815,7 @@ this.BX = this.BX || {};
 	          main_core_events.EventEmitter.emit(_this, Options.eventName('onItemDelete'), {
 	            animate: true
 	          });
-	        }).catch(this.showError);
+	        })["catch"](this.showError);
 	      }
 	    }
 	  }, {
@@ -1828,7 +1826,7 @@ this.BX = this.BX || {};
 	      if (this.canDelete()) {
 	        actions.push({
 	          text: main_core.Loc.getMessage("MENU_DELETE_ITEM_FROM_ALL"),
-	          onclick: this.delete.bind(this)
+	          onclick: this["delete"].bind(this)
 	        });
 	      }
 
@@ -2470,7 +2468,7 @@ this.BX = this.BX || {};
 	        return;
 	      }
 
-	      this.items.delete(item.getId());
+	      this.items["delete"](item.getId());
 	      babelHelpers.classPrivateFieldGet(this, _activeItem).checkAndUnset(item, item.getSimilarToUrl(Utils.getCurUri()));
 	      main_core_events.EventEmitter.unsubscribeAll(item, Options.eventName('onItemDelete'));
 	      main_core_events.EventEmitter.unsubscribeAll(item, Options.eventName('onItemConvert'));
@@ -2782,7 +2780,7 @@ this.BX = this.BX || {};
 	      var _this6 = this;
 
 	      var animate = _ref11.animate;
-	      this.items.delete(item.getId());
+	      this.items["delete"](item.getId());
 	      babelHelpers.classPrivateFieldGet(this, _activeItem).checkAndUnset(item);
 
 	      if (item instanceof ItemUserFavorites || animate) {
@@ -3483,7 +3481,7 @@ this.BX = this.BX || {};
 	      return ItemUserFavorites.saveCurrentPage(page).then(function (data) {
 	        main_core_events.EventEmitter.emit(_this, Options.eventName('onItemHasBeenAdded'), data);
 	        return data;
-	      }).catch(Utils.catchError);
+	      })["catch"](Utils.catchError);
 	    }
 	  }, {
 	    key: "saveStandardPage",
@@ -3493,7 +3491,7 @@ this.BX = this.BX || {};
 	      return ItemUserFavorites.saveStandardPage(topItem).then(function (data) {
 	        main_core_events.EventEmitter.emit(_this2, Options.eventName('onItemHasBeenAdded'), data);
 	        return data;
-	      }).catch(Utils.catchError);
+	      })["catch"](Utils.catchError);
 	    }
 	  }, {
 	    key: "deleteCurrentPage",
@@ -3506,7 +3504,7 @@ this.BX = this.BX || {};
 	      }).then(function (data) {
 	        main_core_events.EventEmitter.emit(_this3, Options.eventName('onItemHasBeenDeleted'), data);
 	        return data;
-	      }).catch(Utils.catchError);
+	      })["catch"](Utils.catchError);
 	    }
 	  }, {
 	    key: "deleteStandardPage",
@@ -3516,7 +3514,7 @@ this.BX = this.BX || {};
 	      return ItemUserFavorites.deleteStandardPage(topItem).then(function (data) {
 	        main_core_events.EventEmitter.emit(_this4, Options.eventName('onItemHasBeenDeleted'), data);
 	        return data;
-	      }).catch(Utils.catchError);
+	      })["catch"](Utils.catchError);
 	    }
 	  }, {
 	    key: "showAddToSelf",
@@ -3525,7 +3523,7 @@ this.BX = this.BX || {};
 
 	      ItemUserSelf.showAdd(bindElement).then(function (data) {
 	        main_core_events.EventEmitter.emit(_this5, Options.eventName('onItemHasBeenAdded'), data);
-	      }).catch(Utils.catchError);
+	      })["catch"](Utils.catchError);
 	    }
 	  }]);
 	  return ItemDirector;
@@ -3583,7 +3581,7 @@ this.BX = this.BX || {};
 	      return false;
 	    }
 
-	    params = babelHelpers.typeof(params) === "object" ? params : {};
+	    params = babelHelpers["typeof"](params) === "object" ? params : {};
 	    Options.isExtranet = params.isExtranet === 'Y';
 	    Options.isAdmin = params.isAdmin;
 	    Options.isCustomPresetRestricted = params.isCustomPresetAvailable !== 'Y';
@@ -3740,7 +3738,7 @@ this.BX = this.BX || {};
 	            onPresetIsSet: function onPresetIsSet(_ref4) {
 	              var data = _ref4.data;
 
-	              var _this5$getItemsContro = _this5.getItemsController().export(),
+	              var _this5$getItemsContro = _this5.getItemsController()["export"](),
 	                  saveSortItems = _this5$getItemsContro.saveSortItems,
 	                  firstItemLink = _this5$getItemsContro.firstItemLink,
 	                  customItems = _this5$getItemsContro.customItems;
@@ -3863,13 +3861,16 @@ this.BX = this.BX || {};
 	        }
 	      }); //When clicked on a start Favorites like
 
-	      BX.addCustomEvent('UI.Toolbar:onStarClick', function (params) {
+	      main_core_events.EventEmitter.subscribe('UI.Toolbar:onStarClick', function (_ref8) {
+	        var _ref8$compatData = babelHelpers.slicedToArray(_ref8.compatData, 1),
+	            params = _ref8$compatData[0];
+
 	        if (params.isActive) {
 	          _this7.getItemDirector().deleteCurrentPage({
 	            context: params.context,
 	            pageLink: params.pageLink
-	          }).then(function (_ref8) {
-	            var itemInfo = _ref8.itemInfo;
+	          }).then(function (_ref9) {
+	            var itemInfo = _ref9.itemInfo;
 	            BX.onCustomEvent("BX.Bitrix24.LeftMenuClass:onMenuItemDeleted", [itemInfo, _this7]);
 	            BX.onCustomEvent('BX.Bitrix24.LeftMenuClass:onStandardItemChangedSuccess', [{
 	              isActive: false,
@@ -3880,8 +3881,8 @@ this.BX = this.BX || {};
 	          _this7.getItemDirector().saveCurrentPage({
 	            pageTitle: params.pageTitle,
 	            pageLink: params.pageLink
-	          }).then(function (_ref9) {
-	            var itemInfo = _ref9.itemInfo;
+	          }).then(function (_ref10) {
+	            var itemInfo = _ref10.itemInfo;
 	            BX.onCustomEvent("BX.Bitrix24.LeftMenuClass:onMenuItemAdded", [itemInfo, _this7]);
 	            BX.onCustomEvent('BX.Bitrix24.LeftMenuClass:onStandardItemChangedSuccess', [{
 	              isActive: true,
@@ -3890,7 +3891,10 @@ this.BX = this.BX || {};
 	          });
 	        }
 	      });
-	      BX.addCustomEvent("BX.Main.InterfaceButtons:onBeforeResetMenu", function (promises) {
+	      main_core_events.EventEmitter.subscribe('BX.Main.InterfaceButtons:onBeforeResetMenu', function (_ref11) {
+	        var _ref11$compatData = babelHelpers.slicedToArray(_ref11.compatData, 1),
+	            promises = _ref11$compatData[0];
+
 	        promises.push(function () {
 	          var p = new BX.Promise();
 	          Backend.clearCache().then(function () {
@@ -3899,8 +3903,8 @@ this.BX = this.BX || {};
 	            p.reject("Error: " + response.errors[0].message);
 	          });
 	          return p;
-	        }.bind(this));
-	      }.bind(this));
+	        });
+	      });
 	    }
 	  }, {
 	    key: "isEditMode",
@@ -4005,7 +4009,7 @@ this.BX = this.BX || {};
 	    value: function onGettingSettingMenuItems() {
 	      var _this8 = this;
 
-	      var topPoint = ItemUserFavorites.searchCurrentPageInTopMenu();
+	      var topPoint = ItemUserFavorites.getActiveTopMenuItem();
 	      var menuItemWithAddingToFavorites = null;
 
 	      if (topPoint) {
@@ -4613,7 +4617,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "initPagetitleStar",
 	    value: function initPagetitleStar() {
-	      return ItemUserFavorites.isCurrentPageStandard();
+	      return ItemUserFavorites.isCurrentPageStandard(ItemUserFavorites.getActiveTopMenuItem());
 	    }
 	  }, {
 	    key: "getStructureForHelper",
@@ -4633,10 +4637,10 @@ this.BX = this.BX || {};
 	    }
 	  }, {
 	    key: "showItemWarning",
-	    value: function showItemWarning(_ref10) {
-	      var itemId = _ref10.itemId,
-	          title = _ref10.title,
-	          events = _ref10.events;
+	    value: function showItemWarning(_ref12) {
+	      var itemId = _ref12.itemId,
+	          title = _ref12.title,
+	          events = _ref12.events;
 
 	      if (this.getItemsController().items.has(itemId)) {
 	        this.getItemsController().items.get(itemId).showWarning(title, events);
@@ -4688,11 +4692,11 @@ this.BX = this.BX || {};
 	  return Menu;
 	}();
 
-	function _getLeftMenuItemByTopMenuItem2(_ref11) {
+	function _getLeftMenuItemByTopMenuItem2(_ref13) {
 	  var _item;
 
-	  var DATA_ID = _ref11.DATA_ID,
-	      NODE = _ref11.NODE;
+	  var DATA_ID = _ref13.DATA_ID,
+	      NODE = _ref13.NODE;
 	  var item = this.getItemsController().items.get(DATA_ID);
 
 	  if (!item) {
@@ -4731,8 +4735,8 @@ this.BX = this.BX || {};
 	  var _this11 = this;
 
 	  if (!this['menuAdjustAdminPanel']) {
-	    this['menuAdjustAdminPanel'] = function (_ref12) {
-	      var data = _ref12.data;
+	    this['menuAdjustAdminPanel'] = function (_ref14) {
+	      var data = _ref14.data;
 	      _this11.menuContainer.style.top = [data, 'px'].join('');
 	    };
 

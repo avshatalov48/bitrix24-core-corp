@@ -868,7 +868,7 @@ class CVoxImplantPhone
 		if($allowDelete)
 		{
 			$numbersToDelete = array_diff($localNumbers, $remoteNumbers);
-			if(count($numbersToDelete) > 0)
+			if(!empty($numbersToDelete))
 			{
 				static::deleteLocal($numbersToDelete);
 

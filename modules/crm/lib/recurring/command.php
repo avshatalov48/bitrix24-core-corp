@@ -10,9 +10,8 @@ class Command
 	/**
 	 * @param string $type
 	 * @param string $operation
-	 * @param $data
+	 * @param array $data
 	 *
-	 * @return Result|DB\Result
 	 */
 	public static function execute($type = "", $operation = "", array $data = array())
 	{

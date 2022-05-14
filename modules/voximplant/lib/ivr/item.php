@@ -410,7 +410,7 @@ final class Item
 				$action = Action::createFromArray($action);
 			}
 
-			if($action->getId() > 0 && count($oldActions) > 0)
+			if($action->getId() > 0 && !empty($oldActions))
 			{
 				if(isset($oldActions[$action->getId()]))
 				{

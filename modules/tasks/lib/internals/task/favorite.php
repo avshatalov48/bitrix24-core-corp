@@ -1,10 +1,10 @@
-<?
+<?php
 namespace Bitrix\Tasks\Internals\Task;
 
 use Bitrix\Main\HttpApplication;
-use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
 
+use Bitrix\Tasks\Internals\TaskDataManager;
 use Bitrix\Tasks\Util\Assert;
 use Bitrix\Tasks\TaskTable;
 
@@ -25,9 +25,9 @@ Loc::loadMessages(__FILE__);
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_Favorite_Query query()
- * @method static EO_Favorite_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Favorite_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_Favorite_Result getById($id)
- * @method static EO_Favorite_Result getList(array $parameters = array())
+ * @method static EO_Favorite_Result getList(array $parameters = [])
  * @method static EO_Favorite_Entity getEntity()
  * @method static \Bitrix\Tasks\Internals\Task\EO_Favorite createObject($setDefaultValues = true)
  * @method static \Bitrix\Tasks\Internals\Task\EO_Favorite_Collection createCollection()
@@ -35,7 +35,7 @@ Loc::loadMessages(__FILE__);
  * @method static \Bitrix\Tasks\Internals\Task\EO_Favorite_Collection wakeUpCollection($rows)
  */
 
-class FavoriteTable extends Entity\DataManager
+class FavoriteTable extends TaskDataManager
 {
 	/**
 	 * Returns DB table name for entity.

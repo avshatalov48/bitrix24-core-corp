@@ -16,6 +16,8 @@ use Bitrix\Main\Localization\Loc;
 if (!CModule::IncludeModule('crm'))
 	return;
 
+\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
+
 $CrmPerms = new CCrmPerms($USER->GetID());
 if ($CrmPerms->HavePerm('INVOICE', BX_CRM_PERM_NONE))
 	return;
@@ -87,8 +89,7 @@ if($arParams['TYPE'] === 'list')
 			)
 		);
 		$addButton  = [
-			'TEXT' => GetMessage('INVOICE_ADD'),
-			'TITLE' => GetMessage('INVOICE_ADD_TITLE'),
+			'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
 			'LINK' => $addLink,
 			'HIGHLIGHT' => true
 		];

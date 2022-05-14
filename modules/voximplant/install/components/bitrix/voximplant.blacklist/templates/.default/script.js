@@ -179,6 +179,30 @@
 						children: [
 							BX.create("input", {
 								props: {
+									id: "voximplant-blacklist-settings-register-crm",
+									className: "voximplant-blacklist-checkbox",
+									type: "checkbox",
+									checked: this.data.registerInCRM == "Y"
+								},
+								events: {
+									bxchange: function(e)
+									{
+										this.data.registerInCRM = e.currentTarget.checked ? "Y" : "N";
+									}.bind(this)
+								}
+							}),
+							BX.create("label", {
+								attrs: {for: "voximplant-blacklist-settings-register-crm"},
+								props: {className: "voximplant-blacklist-label"},
+								text: BX.message("BLACKLIST_REGISTER_IN_CRM")
+							})
+						]
+					}),
+					BX.create("div", {
+						props: {className: "voximplant-blacklist-input-box"},
+						children: [
+							BX.create("input", {
+								props: {
 									id: "voximplant-blacklist-settings-auto-block",
 									className: "voximplant-blacklist-checkbox",
 									type: "checkbox",
@@ -216,18 +240,7 @@
 												this.data.ringsCount = parseInt(e.currentTarget.value);
 											}.bind(this)
 										},
-										children: [
-											this.renderRingCountOption(1),
-											this.renderRingCountOption(2),
-											this.renderRingCountOption(3),
-											this.renderRingCountOption(4),
-											this.renderRingCountOption(5),
-											this.renderRingCountOption(6),
-											this.renderRingCountOption(7),
-											this.renderRingCountOption(8),
-											this.renderRingCountOption(9),
-											this.renderRingCountOption(10),
-										]
+										children: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(this.renderRingCountOption.bind(this))
 									})
 								]
 							}),
@@ -246,14 +259,7 @@
 												this.data.interval = parseInt(e.currentTarget.value);
 											}.bind(this)
 										},
-										children: [
-											this.renderIntervalOption(1),
-											this.renderIntervalOption(5),
-											this.renderIntervalOption(10),
-											this.renderIntervalOption(15),
-											this.renderIntervalOption(30),
-											this.renderIntervalOption(60)
-										]
+										children: [1, 5, 10, 15, 30, 60].map(this.renderIntervalOption.bind(this))
 									})
 								]
 							}),

@@ -547,7 +547,7 @@ HTML;
 		);
 		$permissionSet = RolePermission::getByEntityId($donorPermissionEntity);
 
-		$result = RolePermission::setByEntityId($permissionEntity, $permissionSet);
+		$result = RolePermission::setByEntityId($permissionEntity, $permissionSet, true);
 		if (!$result->isSuccess())
 		{
 			$this->addErrors($result->getErrors());

@@ -4,3 +4,4 @@ $MESS["CRM_GDIA_ENTITY_EXISTENCE_ERROR"] = "The filters you selected produced no
 $MESS["CRM_GDIA_ENTITY_TYPE_ERROR"] = "Incorrect entity type selected";
 $MESS["CRM_GDIA_FILTERING_FIELDS_PROPERTY"] = "Field filter";
 $MESS["CRM_GDIA_RETURN_FIELDS_SELECTION"] = "Select fields";
+$MESS["CRM_GDIA_TYPE_ID"] = "CRM item type";

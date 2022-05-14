@@ -19,6 +19,7 @@ else
 				'REPORT_GROUPS' => [
 					'crm_general',
 					'sales_general',
+					'catalog_general',
 				],
 			],
 			//'PLAIN_VIEW' => true,

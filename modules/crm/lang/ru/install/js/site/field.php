@@ -29,3 +29,4 @@ $MESS["CRM_SITE_FORM_FIELD_DATE_MONTH_9"] = "Сентябрь";
 $MESS["CRM_SITE_FORM_FIELD_DATE_MONTH_10"] = "Октябрь";
 $MESS["CRM_SITE_FORM_FIELD_DATE_MONTH_11"] = "Ноябрь";
 $MESS["CRM_SITE_FORM_FIELD_DATE_MONTH_12"] = "Декабрь";
+$MESS["CRM_SITE_FORM_FIELD_FILE_ERROR_TYPE"] = "Выбран файл неподходящего типа. Попробуйте файлы с расширениями %extensions%";

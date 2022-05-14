@@ -328,7 +328,7 @@ BX.Disk.InformationPopups = (function ()
 						className: "popup-window-button-accept",
 						events: {
 							click: function () {
-								document.location.href = (BX.browser.IsMac() ? "http://dl.bitrix24.com/b24/bitrix24_desktop.dmg" : "http://dl.bitrix24.com/b24/bitrix24_desktop.exe");
+								document.location.href = (BX.browser.IsMac() ? "https://dl.bitrix24.com/b24/bitrix24_desktop.dmg" : "https://dl.bitrix24.com/b24/bitrix24_desktop.exe");
 							}
 						}
 					}),

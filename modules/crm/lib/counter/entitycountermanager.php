@@ -1,6 +1,6 @@
 <?php
 namespace Bitrix\Crm\Counter;
-use Bitrix\Main;
+use Bitrix\Crm\Service\Container;
 
 class EntityCounterManager
 {
@@ -21,7 +21,8 @@ class EntityCounterManager
 			$result['ENTITY_TYPE_ID'] = \CCrmOwnerType::ResolveID($parts[1]);
 		}
 
-		if($result['ENTITY_TYPE_ID'] === \CCrmOwnerType::Deal && $qty >= 4)
+		$factory = Container::getInstance()->getFactory($result['ENTITY_TYPE_ID']);
+		if($factory && $factory->isCategoriesSupported() && $qty >= 4)
 		{
 			$categoryID = -1;
 			if(preg_match('/c([0-9]+)/i', $parts[2], $m) === 1)
@@ -30,7 +31,12 @@ class EntityCounterManager
 			}
 			if($categoryID >= 0)
 			{
-				$result['EXTRAS']['DEAL_CATEGORY_ID'] = $categoryID;
+				$extrasCategoryKey =
+					$result['ENTITY_TYPE_ID'] === \CCrmOwnerType::Deal
+					? 'DEAL_CATEGORY_ID'
+					: 'CATEGORY_ID'
+				;
+				$result['EXTRAS'][$extrasCategoryKey] = $categoryID;
 			}
 
 			$result['TYPE_ID'] = EntityCounterType::resolveID($parts[3]);
@@ -43,81 +49,75 @@ class EntityCounterManager
 	}
 	public static function prepareCode($entityTypeID, $typeID, array $extras = null)
 	{
-		$codes = self::prepareCodes($entityTypeID, array($typeID), $extras);
+		$codes = self::prepareCodes($entityTypeID, [$typeID], $extras);
+
 		return isset($codes[0]) ? $codes[0] : '';
 	}
+
 	public static function prepareCodes($entityTypeID, $typeIDs, array $extras = null)
 	{
-		if(!is_int($entityTypeID))
-		{
-			$entityTypeID = (int)$entityTypeID;
-		}
+		$entityTypeID = (int)$entityTypeID;
 
 		if(!is_array($typeIDs))
 		{
-			$typeIDs = array($typeIDs);
+			$typeIDs = [$typeIDs];
 		}
 
 		if(!is_array($extras))
 		{
-			$extras = array();
+			$extras = [];
 		}
 
-		$results = array();
-		if($entityTypeID === \CCrmOwnerType::Deal)
+		$factory = Container::getInstance()->getFactory($entityTypeID);
+		if (!$factory || !$factory->isCountersEnabled())
 		{
-			$categoryID = isset($extras['DEAL_CATEGORY_ID']) ? (int)$extras['DEAL_CATEGORY_ID'] : -1;
-			if($categoryID < 0)
+			return [];
+		}
+
+		$entityName = mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeID));
+
+		$results = [];
+
+		$categoryId = null;
+		if ($factory->isCategoriesSupported())
+		{
+			$categoryId = $extras['CATEGORY_ID'] ?? $extras['DEAL_CATEGORY_ID'] ?? null;
+			if (!is_null($categoryId))
 			{
-				$entityID = isset($extras['ENTITY_ID']) ? (int)$extras['ENTITY_ID'] : 0;
-				if($entityID > 0)
+				$categoryId = (int)$categoryId;
+				if ($categoryId < 0) // compatibility with $categoryId=-1 for all deal categories
 				{
-					$categoryID = \CCrmDeal::GetCategoryID($entityID);
+					$categoryId = null;
 				}
 			}
-
-			$entityName = mb_strtolower(\CCrmOwnerType::DealName);
-			$extendedMode = isset($extras['EXTENDED_MODE']) && $extras['EXTENDED_MODE'] === true;
-			foreach($typeIDs as $typeID)
+			if (is_null($categoryId))
 			{
-				$typeName = mb_strtolower(EntityCounterType::resolveName($typeID));
-				if($typeName === '')
+				$entityId = (int)($extras['ENTITY_ID'] ?? 0);
+				if ($entityId > 0)
 				{
-					continue;
-				}
-
-				if($categoryID >= 0)
-				{
-					$results[] = "crm_{$entityName}_c{$categoryID}_{$typeName}";
-					if($extendedMode)
-					{
-						$results[] = "crm_{$entityName}_{$typeName}";
-					}
-				}
-				else
-				{
-					$results[] = "crm_{$entityName}_{$typeName}";
+					$categoryId = $factory->getItemCategoryId($entityId);
 				}
 			}
 		}
-		else
+
+		foreach($typeIDs as $typeID)
 		{
-			$entityName = mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeID));
-			if($entityName !== '')
+			$typeName = mb_strtolower(EntityCounterType::resolveName($typeID));
+			if($typeName === '')
 			{
-				foreach($typeIDs as $typeID)
-				{
-					$typeName = mb_strtolower(EntityCounterType::resolveName($typeID));
-					if($typeName !== '')
-					{
-						$results[] = "crm_{$entityName}_{$typeName}";
-					}
-				}
+				continue;
 			}
+
+			if(!is_null($categoryId)) // counter for definite category
+			{
+				$results[] = "crm_{$entityName}_c{$categoryId}_{$typeName}";
+			}
+			$results[] = "crm_{$entityName}_{$typeName}";
 		}
 
 		return $results;
 	}
+
 	public static function prepareValue($code, $userID = 0)
 	{
 		$counter = EntityCounterFactory::createNamed($code);
@@ -186,7 +186,7 @@ class EntityCounterManager
 			$codes = self::prepareCodes(
 				\CCrmOwnerType::Deal,
 				array(EntityCounterType::IDLE, EntityCounterType::ALL),
-				array('DEAL_CATEGORY_ID' => $categoryID)
+				array('CATEGORY_ID' => $categoryID)
 			);
 			foreach($codes as $code)
 			{

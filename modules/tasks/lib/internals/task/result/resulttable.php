@@ -10,6 +10,22 @@ namespace Bitrix\Tasks\Internals\Task\Result;
 
 use Bitrix\Main\Entity\DataManager;
 
+/**
+ * Class ResultTable
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Result_Query query()
+ * @method static EO_Result_Result getByPrimary($primary, array $parameters = [])
+ * @method static EO_Result_Result getById($id)
+ * @method static EO_Result_Result getList(array $parameters = [])
+ * @method static EO_Result_Entity getEntity()
+ * @method static \Bitrix\Tasks\Internals\Task\Result\Result createObject($setDefaultValues = true)
+ * @method static \Bitrix\Tasks\Internals\Task\Result\EO_Result_Collection createCollection()
+ * @method static \Bitrix\Tasks\Internals\Task\Result\Result wakeUpObject($row)
+ * @method static \Bitrix\Tasks\Internals\Task\Result\EO_Result_Collection wakeUpCollection($rows)
+ */
 class ResultTable extends DataManager
 {
 	public const UF_FILE_NAME = 'UF_RESULT_FILES';

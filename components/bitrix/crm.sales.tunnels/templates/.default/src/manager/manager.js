@@ -395,6 +395,7 @@ export default class Manager
 							}
 
 							this.adjustCategoryStub();
+							Marker.adjustLinks();
 						});
 						this.isChanged = true;
 					})

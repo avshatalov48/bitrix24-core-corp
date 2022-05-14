@@ -7,6 +7,12 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'n
 $this->getComponent()->addToolbar($this);
 $this->getComponent()->addTopPanel($this);
 
+$this->setViewTarget("inside_pagetitle_below", 100); ?>
+<div class="crm-item-automation-subtitle">
+	<?= htmlspecialcharsbx($arResult['PAGE_SUBTITLE']) ?>
+</div>
+<? $this->endViewTarget();
+
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.automation',
 	'',
