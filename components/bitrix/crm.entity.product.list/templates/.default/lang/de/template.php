@@ -23,6 +23,7 @@ $MESS["CRM_ENTITY_PL_DISCOUNT"] = "Rabatt";
 $MESS["CRM_ENTITY_PL_DISCOUNTS_ABSENT"] = "Keine gültigen Rabatte";
 $MESS["CRM_ENTITY_PL_DISCOUNT_PRICE"] = "Gesamtbetrag nach Abzug des Rabatts";
 $MESS["CRM_ENTITY_PL_IS_LESS_QUANTITY_THEN_RESERVED"] = "Sie können nicht mehr Produktelemente reservieren, als es im Feld \"Menge\" angegeben ist.";
+$MESS["CRM_ENTITY_PL_IS_LESS_QUANTITY_WITH_DEDUCTED_THEN_RESERVED"] = "Sie können nicht mehr Produktelemente reservieren, als es im Feld \"Menge\" angegeben und vom Lager ausgeliefert ist.";
 $MESS["CRM_ENTITY_PL_NEGATIVE_PRICE_NOTICE"] = "Preis kann nicht negativ sein.";
 $MESS["CRM_ENTITY_PL_NO"] = "Keine";
 $MESS["CRM_ENTITY_PL_ORDER_DISCOUNT"] = "Rabatte";

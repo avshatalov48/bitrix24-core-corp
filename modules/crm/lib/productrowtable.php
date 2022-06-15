@@ -7,10 +7,12 @@
  */
 namespace Bitrix\Crm;
 
+use Bitrix\Crm\Reservation\Internals\ProductRowReservationTable;
 use Bitrix\Main\Application;
 use Bitrix\Main\IO\Path;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Data\DataManager;
+use Bitrix\Main\ORM\Data\DeleteResult;
 use Bitrix\Main\ORM\EntityError;
 use Bitrix\Main\ORM\EventResult;
 use Bitrix\Main\ORM\Fields\BooleanField;
@@ -150,6 +152,11 @@ class ProductRowTable extends DataManager
 				->configureDefaultValue(''),
 			(new IntegerField('SORT'))
 				->configureDefaultValue(0),
+			(new Reference(
+				'RESERVATION',
+				ProductRowReservationTable::class,
+				Join::on('this.ID', 'ref.ROW_ID')
+			)),
 		];
 	}
 
@@ -159,6 +166,17 @@ class ProductRowTable extends DataManager
 		$helper = $connection->getSqlHelper();
 
 		$ownerType = \CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId);
+
+		/** @noinspection SqlResolve */
+		$connection->query(sprintf(
+			'DELETE FROM %s WHERE ROW_ID IN (
+				SELECT ID FROM %s WHERE OWNER_TYPE = %s AND OWNER_ID = %d
+			)',
+			$helper->quote(Reservation\Internals\ProductRowReservationTable::getTableName()),
+			$helper->quote(static::getTableName()),
+			$helper->convertToDbString($ownerType),
+			$helper->convertToDbInteger($entityId)
+		));
 
 		/** @noinspection SqlResolve */
 		$connection->query(sprintf(
@@ -175,6 +193,21 @@ class ProductRowTable extends DataManager
 			$helper->convertToDbString($ownerType),
 			$helper->convertToDbInteger($entityId)
 		));
+	}
+
+	/**
+	 * Deletes product row with reserve data
+	 *
+	 * @param mixed $primary
+	 *
+	 * @return DeleteResult
+	 *
+	 * @throws \Exception
+	 */
+	public static function delete($primary)
+	{
+		Reservation\Internals\ProductRowReservationTable::deleteByRowId($primary);
+		return parent::delete($primary);
 	}
 
 	/**

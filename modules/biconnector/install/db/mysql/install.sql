@@ -1,0 +1,81 @@
+CREATE TABLE b_biconnector_key
+(
+	ID INT AUTO_INCREMENT NOT NULL,
+	DATE_CREATE DATETIME NOT NULL,
+	CREATED_BY INT NOT NULL,
+	TIMESTAMP_X TIMESTAMP NOT NULL,
+	ACCESS_KEY VARCHAR(64) NOT NULL,
+	CONNECTION VARCHAR(50) NOT NULL,
+	ACTIVE CHAR(1) NOT NULL DEFAULT 'Y',
+	APP_ID INT NULL,
+	INDEX ix_b_biconnector_key(ACCESS_KEY),
+	INDEX ix_b_biconnector_key_app(APP_ID),
+	PRIMARY KEY pk_b_biconnector_key(ID)
+);
+
+CREATE TABLE b_biconnector_key_user
+(
+	ID INT AUTO_INCREMENT NOT NULL,
+	TIMESTAMP_X TIMESTAMP NOT NULL,
+	CREATED_BY INT NOT NULL,
+	KEY_ID INT NOT NULL,
+	USER_ID varchar(50) NOT NULL,
+	INDEX ix_b_biconnector_key_user(USER_ID, KEY_ID),
+	INDEX ix_b_biconnector_key_user_1(KEY_ID, USER_ID),
+	PRIMARY KEY pk_b_biconnector_key_user(ID)
+);
+
+CREATE TABLE b_biconnector_dashboard
+(
+	ID INT AUTO_INCREMENT NOT NULL,
+	DATE_CREATE DATETIME NOT NULL,
+	TIMESTAMP_X TIMESTAMP NOT NULL,
+	CREATED_BY INT NOT NULL,
+	NAME VARCHAR(50) NOT NULL,
+	URL VARCHAR(1024) NOT NULL,
+	PRIMARY KEY pk_b_biconnector_dashboard(ID)
+);
+
+CREATE TABLE b_biconnector_dashboard_user
+(
+	ID INT AUTO_INCREMENT NOT NULL,
+	TIMESTAMP_X TIMESTAMP NOT NULL,
+	CREATED_BY INT NOT NULL,
+	DASHBOARD_ID INT NOT NULL,
+	USER_ID varchar(50) NOT NULL,
+	INDEX ix_b_biconnector_dashboard_user(USER_ID, DASHBOARD_ID),
+	INDEX ix_b_biconnector_dashboard_user_1(DASHBOARD_ID, USER_ID),
+	PRIMARY KEY pk_b_biconnector_dashboard_user(ID)
+);
+
+CREATE TABLE b_biconnector_dictionary_cache
+(
+	DICTIONARY_ID INT NOT NULL,
+	UPDATE_DATE DATETIME NOT NULL,
+	TTL INT NOT NULL,
+	PRIMARY KEY pk_b_biconnector_dictionary_cache(DICTIONARY_ID)
+);
+
+CREATE TABLE b_biconnector_dictionary_data
+(
+	DICTIONARY_ID INT NOT NULL,
+	VALUE_ID INT NOT NULL,
+	VALUE_STR VARCHAR(500),
+	PRIMARY KEY pk_b_biconnector_dictionary_data(DICTIONARY_ID, VALUE_ID)
+);
+
+CREATE TABLE b_biconnector_log
+(
+	ID INT AUTO_INCREMENT NOT NULL,
+	TIMESTAMP_X TIMESTAMP NOT NULL,
+	KEY_ID INT NOT NULL,
+	SERVICE_ID varchar(150) NOT NULL,
+	SOURCE_ID varchar(150) NOT NULL,
+	FIELDS text,
+	FILTERS text,
+	ROW_NUM INT,
+	REAL_TIME DOUBLE,
+	INDEX ix_b_biconnector_log_time(TIMESTAMP_X, ROW_NUM),
+	INDEX ix_b_biconnector_log_key(KEY_ID, TIMESTAMP_X),
+	PRIMARY KEY pk_b_biconnector_log(ID)
+);

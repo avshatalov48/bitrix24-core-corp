@@ -1574,6 +1574,30 @@ class crm extends CModule
 			'\Bitrix\Crm\Integration\Sale\ShipmentDocumentAnalytics',
 			'onSaleShipmentEntitySaved'
 		);
+
+		$eventManager->registerEventHandler(
+			'crm',
+			'OnAfterCrmDealProductRowsSave',
+			'crm',
+			'\Bitrix\Crm\Reservation\EventsHandler\Deal',
+			'OnAfterCrmDealProductRowsSave'
+		);
+
+		$eventManager->registerEventHandler(
+			'sale',
+			'OnSalePaymentEntitySaved',
+			'crm',
+			'\Bitrix\Crm\Reservation\EventsHandler\Payment',
+			'OnSalePaymentEntitySaved'
+		);
+
+		$eventManager->registerEventHandler(
+			'sale',
+			'OnReservationSettingsBuild',
+			'crm',
+			'\Bitrix\Crm\Integration\Sale\Reservation\Event\ReservationSettingsBuildEventHandler',
+			'OnReservationSettingsBuild'
+		);
 	}
 
 	private function installAgents()
@@ -2074,6 +2098,30 @@ class crm extends CModule
 			'crm',
 			'\Bitrix\Crm\Integration\Sale\ShipmentDocumentAnalytics',
 			'onSaleShipmentEntitySaved'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'crm',
+			'OnAfterCrmDealProductRowsSave',
+			'crm',
+			'\Bitrix\Crm\Reservation\EventsHandler\Deal',
+			'OnAfterCrmDealProductRowsSave'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'sale',
+			'OnSalePaymentEntitySaved',
+			'crm',
+			'\Bitrix\Crm\Reservation\EventsHandler\Payment',
+			'OnSalePaymentEntitySaved'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'sale',
+			'OnReservationSettingsBuild',
+			'crm',
+			'\Bitrix\Crm\Integration\Sale\Reservation\Event\ReservationSettingsBuildEventHandler',
+			'OnReservationSettingsBuild'
 		);
 	}
 

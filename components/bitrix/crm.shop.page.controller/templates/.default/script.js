@@ -117,7 +117,17 @@
 							"/crm/configs/ps/add/",
 							"/crm/configs/ps/edit/(\\d+)/"
 						]
-					}
+					},
+					{
+						condition: [
+							"/crm/configs/catalog/",
+						],
+						options: {
+							width: 1000,
+							allowChangeHistory: false,
+							cacheable: false,
+						}
+					},
 				]
 			});
 		}

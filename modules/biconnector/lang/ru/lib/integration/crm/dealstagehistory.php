@@ -1,0 +1,20 @@
+<?php
+$MESS['CRM_BIC_DSH_TABLE'] = "Сделка: история стадий";
+$MESS['CRM_BIC_DSH_FIELD_ID'] = "Уникальный ключ";
+$MESS['CRM_BIC_DSH_FIELD_TYPE_ID'] = "Тип записи";
+$MESS['CRM_BIC_DSH_FIELD_DEAL_ID'] = "Идентификатор сделки";
+$MESS['CRM_BIC_DSH_FIELD_DATE_CREATE'] = "Время создания";
+$MESS['CRM_BIC_DSH_FIELD_START_DATE'] = "Дата начала";
+$MESS['CRM_BIC_DSH_FIELD_END_DATE'] = "Дата конца";
+$MESS['CRM_BIC_DSH_FIELD_ASSIGNED_BY_ID'] = "Идентификатор ответственного";
+$MESS['CRM_BIC_DSH_FIELD_ASSIGNED_BY_NAME'] = "Имя ответственного";
+$MESS['CRM_BIC_DSH_FIELD_ASSIGNED_BY_ID_FULL'] = "Идентификатор пользователя, назначенного ответственным за сделку";
+$MESS['CRM_BIC_DSH_FIELD_ASSIGNED_BY'] = "Ответственный";
+$MESS['CRM_BIC_DSH_FIELD_ASSIGNED_BY_FULL'] = "Идентификатор и имя пользователя, назначенного ответственным за сделку";
+$MESS['CRM_BIC_DSH_FIELD_ASSIGNED_BY_DEPARTMENT'] = "Отдел ответственного";
+$MESS['CRM_BIC_DSH_FIELD_ASSIGNED_BY_DEPARTMENT_FULL'] = "Путь в иерархии отделов компании";
+$MESS['CRM_BIC_DSH_FIELD_STAGE_SEMANTIC_ID'] = "Идентификатор типа стадии";
+$MESS['CRM_BIC_DSH_FIELD_STAGE_SEMANTIC'] = "Тип стадии";
+$MESS['CRM_BIC_DSH_FIELD_STAGE_ID'] = "Идентификатор стадии";
+$MESS['CRM_BIC_DSH_FIELD_STAGE_NAME'] = "Название стадии";
+$MESS['CRM_BIC_DSH_FIELD_STAGE'] = "Стадия";

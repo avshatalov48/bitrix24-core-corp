@@ -13,6 +13,8 @@ use Bitrix\Crm\Component\ComponentError;
 use Bitrix\Crm\Component\EntityDetails\ComponentMode;
 use Bitrix\Catalog;
 use Bitrix\UI;
+use Bitrix\Crm\Integration\DocumentGeneratorManager;
+use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\ShipmentDocumentRealization;
 
 if (!Main\Loader::includeModule('crm'))
 {
@@ -175,6 +177,12 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 		else
 		{
 			$this->order = Crm\Order\Manager::createEmptyOrder($this->getSiteId());
+
+			$bindingEntity = $this->getOwnerEntity();
+			if ($bindingEntity)
+			{
+				$this->order->setFieldNoDemand('CURRENCY', $bindingEntity->getCurrencyId());
+			}
 		}
 
 		if ($this->order)
@@ -221,6 +229,8 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 		{
 			$this->arResult['EDITOR_CONFIG_ID'] = 'realization_document_shipment_details';
 		}
+
+		$this->arResult['TOOLBAR_ID'] = "toolbar_realization_document_{$this->entityID}";
 		//endregion
 
 		//region Entity Info
@@ -290,9 +300,32 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 
 		$this->checkIfInventoryManagementIsUsed();
 
+		$this->arResult['BUTTONS'] = $this->getToolbarButtons();
 		$this->arResult['COMPONENT_PRODUCTS'] = $this->getDocumentProducts();
 
 		$this->includeComponentTemplate();
+	}
+
+	/**
+	 * @return array
+	 */
+	private function getToolbarButtons(): array
+	{
+		$result = [];
+
+		if (DocumentGeneratorManager::getInstance()->isDocumentButtonAvailable())
+		{
+			$result[] = [
+				'TEXT' => Loc::getMessage('CRM_STORE_DOCUMENT_SHIPMENT_DOCUMENT_BUTTON'),
+				'TYPE' => 'crm-document-button',
+				'PARAMS' => DocumentGeneratorManager::getInstance()->getDocumentButtonParameters(
+					ShipmentDocumentRealization::class,
+					$this->entityID
+				),
+			];
+		}
+
+		return $result;
 	}
 
 	private function needDeliveryBlock(): bool
@@ -600,7 +633,14 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 
 		if (!isset($this->entityData['CURRENCY']) || $this->entityData['CURRENCY'] === '')
 		{
-			$this->entityData['CURRENCY'] = \CCrmCurrency::GetBaseCurrencyID();
+			if ($this->order->getCurrency())
+			{
+				$this->entityData['CURRENCY'] = $this->order->getCurrency();
+			}
+			else
+			{
+				$this->entityData['CURRENCY'] = \CCrmCurrency::GetBaseCurrencyID();
+			}
 		}
 
 		if ($this->mode === ComponentMode::CREATION)
@@ -1317,6 +1357,11 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 						$availableQuantity = $storeQuantityRow['AMOUNT'] - $storeQuantityRow['QUANTITY_RESERVED'];
 						$quantity = min($quantity, $availableQuantity);
 					}
+				}
+
+				if ($quantity <= 0)
+				{
+					continue;
 				}
 
 				$products[] = [

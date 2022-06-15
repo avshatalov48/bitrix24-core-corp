@@ -1,0 +1,5 @@
+<?php
+$MESS["CRM_DOCGEN_DATAPROVIDER_SHPD_RLZ_TITLE"] = "Реализация";
+$MESS["CRM_DOCGEN_DATAPROVIDER_SHPD_RLZ_ARRIVAL_FLD_DOCUMENT_NUMBER"] = "Номер";
+$MESS["CRM_DOCGEN_DATAPROVIDER_SHPD_RLZ_ARRIVAL_FLD_DOCUMENT_CREATE_TIME"] = "Дата создания";
+$MESS["CRM_DOCGEN_DATAPROVIDER_SHPD_RLZ_MULTI_STORE_PRINT_NOT_AVAILABLE"] = "В документе указано несколько складов. Возможность печати таких документов появится позже.";

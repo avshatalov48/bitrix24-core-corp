@@ -8,6 +8,10 @@ $deal = 'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Deal';
 $invoice = 'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Invoice';
 $quote = 'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Quote';
 $smartInvoice = 'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\SmartInvoice';
+$storeDocumentStoreAdjustment = 'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\StoreDocumentStoreAdjustment';
+$storeDocumentArrival = 'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\StoreDocumentArrival';
+$storeDocumentMoving = 'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\StoreDocumentMoving';
+$shipmentDocumentRealization = 'Bitrix\Crm\Integration\DocumentGenerator\DataProvider\ShipmentDocumentRealization';
 $invoiceAndDeal = [$deal, $invoice, $smartInvoice];
 $quoteAndDeal = [$deal, $quote];
 
@@ -20,7 +24,7 @@ return [
 		'MODULE_ID' => 'crm',
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/act_ru.docx',
-		'PROVIDERS' => $invoiceAndDeal,
+		'PROVIDERS' => array_merge($invoiceAndDeal, [$shipmentDocumentRealization]),
 	],
 	[
 		'REGION' => 'ru',
@@ -111,6 +115,46 @@ return [
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/upd_ru.docx',
 		'PROVIDERS' => [$deal],
+	],
+	[
+		'REGION' => 'ru',
+		'NAME' => Loc::getMessage('DOCGEN_TEMPLATE_STORE_DOC_STORE_ADJUSTMENT_RU_NAME'),
+		'CODE' => 'STORE_DOC_STORE_ADJUSTMENT',
+		'SORT' => 1200,
+		'MODULE_ID' => 'crm',
+		'BODY_TYPE' => Docx::class,
+		'FILE' => '/bitrix/modules/documentgenerator/data/templates/store_doc_store_adjustment_ru.docx',
+		'PROVIDERS' => [$storeDocumentStoreAdjustment],
+	],
+	[
+		'REGION' => 'ru',
+		'NAME' => Loc::getMessage('DOCGEN_TEMPLATE_STORE_DOC_ARRIVAL_RU_NAME'),
+		'CODE' => 'STORE_DOC_ARRIVAL',
+		'SORT' => 1300,
+		'MODULE_ID' => 'crm',
+		'BODY_TYPE' => Docx::class,
+		'FILE' => '/bitrix/modules/documentgenerator/data/templates/store_doc_arrival_ru.docx',
+		'PROVIDERS' => [$storeDocumentArrival],
+	],
+	[
+		'REGION' => 'ru',
+		'NAME' => Loc::getMessage('DOCGEN_TEMPLATE_STORE_DOC_MOVING_RU_NAME'),
+		'CODE' => 'STORE_DOC_MOVING',
+		'SORT' => 1400,
+		'MODULE_ID' => 'crm',
+		'BODY_TYPE' => Docx::class,
+		'FILE' => '/bitrix/modules/documentgenerator/data/templates/store_doc_moving_ru.docx',
+		'PROVIDERS' => [$storeDocumentMoving],
+	],
+	[
+		'REGION' => 'ru',
+		'NAME' => Loc::getMessage('DOCGEN_TEMPLATE_SHIPMENT_DOC_REALIZATION_RU_NAME'),
+		'CODE' => 'STORE_SHIPMENT_DOC_REALIZATION',
+		'SORT' => 1500,
+		'MODULE_ID' => 'crm',
+		'BODY_TYPE' => Docx::class,
+		'FILE' => '/bitrix/modules/documentgenerator/data/templates/shipment_doc_realization_ru.docx',
+		'PROVIDERS' => [$shipmentDocumentRealization],
 	],
 	[
 		'REGION' => 'by',

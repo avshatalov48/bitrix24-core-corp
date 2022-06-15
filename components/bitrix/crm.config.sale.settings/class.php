@@ -694,11 +694,14 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 			"name" => Loc::getMessage("CRM_COMMON_TAB_TITLE_SALE"),
 			"fields" => $this->getSaleOptions()
 		);
-		$settings["TABS"][] = array(
-			"id" => "csc_catalog",
-			"name" => Loc::getMessage("CRM_COMMON_TAB_TITLE_CATALOG"),
-			"fields" => $this->getCatalogOptions()
-		);
+		if (\CCrmSaleHelper::isWithOrdersMode())
+		{
+			$settings["TABS"][] = array(
+				"id" => "csc_catalog",
+				"name" => Loc::getMessage("CRM_COMMON_TAB_TITLE_CATALOG"),
+				"fields" => $this->getCatalogOptions()
+			);
+		}
 
 		return $settings;
 	}
@@ -870,23 +873,26 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 		}
 
 		/* Reserve section */
-		$options[] = array(
-			"id" => "sale_reserve_condition_section",
-			"name" => Loc::getMessage("CRM_CF_SECTION_RESERVATION"),
-			"type" => "section"
-		);
-		$options[] = array(
-			"id" => $this->optionPrefix."product_reserve_condition",
-			"name" => Loc::getMessage("CRM_CF_PRODUCT_RESERVE_CONDITION"),
-			"type" => "list",
-			"items" => $listProductReserveCondition,
-			"value" => Option::get("sale", "product_reserve_condition")
-		);
-		$options[] = array(
-			"id" => $this->optionPrefix."product_reserve_clear_period",
-			"name" => Loc::getMessage("CRM_CF_PRODUCT_RESERVE_CLEAR_PERIOD"),
-			"value" => Option::get("sale", "product_reserve_clear_period", "3")
-		);
+		if (\CCrmSaleHelper::isWithOrdersMode())
+		{
+			$options[] = array(
+				"id" => "sale_reserve_condition_section",
+				"name" => Loc::getMessage("CRM_CF_SECTION_RESERVATION"),
+				"type" => "section"
+			);
+			$options[] = array(
+				"id" => $this->optionPrefix."product_reserve_condition",
+				"name" => Loc::getMessage("CRM_CF_PRODUCT_RESERVE_CONDITION"),
+				"type" => "list",
+				"items" => $listProductReserveCondition,
+				"value" => Option::get("sale", "product_reserve_condition")
+			);
+			$options[] = array(
+				"id" => $this->optionPrefix."product_reserve_clear_period",
+				"name" => Loc::getMessage("CRM_CF_PRODUCT_RESERVE_CLEAR_PERIOD"),
+				"value" => Option::get("sale", "product_reserve_clear_period", "3")
+			);
+		}
 
 		/* Weight section */
 		$options[] = array(

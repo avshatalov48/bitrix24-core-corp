@@ -322,7 +322,7 @@ if($arParams['TYPE'] === 'list')
 	}
 }
 
-if ($bConfig)
+if ($bConfig && \CCrmSaleHelper::isWithOrdersMode())
 {
 	$arResult['BUTTONS'][] = array('NEWBAR' => true);
 	$scenarioSelectionPath = CComponentEngine::makeComponentPath('bitrix:crm.scenario_selection');

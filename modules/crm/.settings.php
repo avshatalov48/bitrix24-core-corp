@@ -260,6 +260,31 @@ return array(
 			'crm.model.fieldRepository' => [
 				'className' => '\\Bitrix\\Crm\\Model\\FieldRepository',
 			],
+			'crm.shipment.product' => [
+				'className' => \Bitrix\Crm\Service\Sale\Shipment\ProductService::class,
+				// TODO: 'autowire' => true,
+				'constructorParams' => static function() {
+					return [
+						\Bitrix\Main\DI\ServiceLocator::getInstance()->get('crm.basket'),
+					];
+				},
+			],
+			'crm.reservation' => [
+				'className' => \Bitrix\Crm\Service\Sale\Reservation\ReservationService::class,
+			],
+			'crm.basket' => [
+				'className' => \Bitrix\Crm\Service\Sale\BasketService::class,
+			],
+			'crm.reservation.shipment' => [
+				'className' => \Bitrix\Crm\Service\Sale\Reservation\ShipmentService::class,
+				// TODO: 'autowire' => true,
+				'constructorParams' => static function() {
+					return [
+						\Bitrix\Main\DI\ServiceLocator::getInstance()->get('crm.basket'),
+						\Bitrix\Main\DI\ServiceLocator::getInstance()->get('crm.shipment.product'),
+					];
+				},
+			],
 		],
 		'readonly' => true,
 	],

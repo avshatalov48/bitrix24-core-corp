@@ -2,6 +2,10 @@ this.BX = this.BX || {};
 (function (exports,main_popup,ui_dialogs_messagebox,main_core,main_core_events,ui_label,currency_currencyCore) {
 	'use strict';
 
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+
 	var DocumentManager = /*#__PURE__*/function () {
 	  function DocumentManager() {
 	    babelHelpers.classCallCheck(this, DocumentManager);
@@ -16,7 +20,7 @@ this.BX = this.BX || {};
 	      return new Promise(function (resolve, reject) {
 	        DocumentManager.openSlider(url.toString(), sliderOptions).then(function (slider) {
 	          resolve(slider.getData());
-	        }).catch(function (reason) {});
+	        })["catch"](function (reason) {});
 	      });
 	    }
 	  }, {
@@ -34,7 +38,7 @@ this.BX = this.BX || {};
 	      return new Promise(function (resolve, reject) {
 	        DocumentManager.openSlider(url.toString(), sliderOptions).then(function (slider) {
 	          resolve(slider.getData());
-	        }).catch(function (reason) {});
+	        })["catch"](function (reason) {});
 	      });
 	    }
 	  }, {
@@ -44,11 +48,11 @@ this.BX = this.BX || {};
 	        options = {};
 	      }
 
-	      options = babelHelpers.objectSpread({}, {
+	      options = _objectSpread(_objectSpread({}, {
 	        cacheable: false,
 	        allowChangeHistory: false,
 	        events: {}
-	      }, options);
+	      }), options);
 	      return new Promise(function (resolve) {
 	        if (main_core.Type.isString(url) && url.length > 1) {
 	          options.events.onClose = function (event) {
@@ -87,85 +91,7 @@ this.BX = this.BX || {};
 	  return DocumentManager;
 	}();
 
-	function _templateObject8() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-total\">\n\t\t\t\t<span>\n\t\t\t\t\t", "\n\t\t\t\t\t<span data-hint=\"", "\"></span>\n\t\t\t\t</span>\n\t\t\t\t<span class=\"crm-entity-widget-payment-text\">", "</span>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject8 = function _templateObject8() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject7() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-add-box\">\n\t\t\t\t<a href=\"#\" class=\"crm-entity-widget-payment-add\" onclick=\"", "\">\n\t\t\t\t\t+ ", "\n\t\t\t\t</a>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject7 = function _templateObject7() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject6() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-detail\">\n\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t", " (", ")\n\t\t\t\t</a>\n\t\t\t\t<div class=\"crm-entity-widget-payment-detail-inner\">\n\t\t\t\t\t<div class=\"ui-label ui-label-md ui-label-light crm-entity-widget-payment-action\" onclick=\"", "\">\n\t\t\t\t\t\t<span class=\"ui-label-inner\">", "</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject6 = function _templateObject6() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject5() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-detail\">\n\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t", " (", ", ", ")\n\t\t\t\t</a>\n\t\t\t\t<div class=\"crm-entity-widget-payment-detail-inner\">\n\t\t\t\t\t<div class=\"ui-label ui-label-md ui-label-light crm-entity-widget-payment-action\" onclick=\"", "\">\n\t\t\t\t\t\t<span class=\"ui-label-inner\">", "</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject5 = function _templateObject5() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-detail\">\n\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">", " (", ")</a>\n\t\t\t\t<div class=\"crm-entity-widget-payment-detail-inner\">\n\t\t\t\t\t<div class=\"ui-label ui-label-md ui-label-light crm-entity-widget-payment-action\" onclick=\"", "\">\n\t\t\t\t\t\t<span class=\"ui-label-inner\">", "</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject4 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-detail\">\n\t\t\t\t<div class=\"crm-entity-widget-payment-detail-caption\">", "</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject3 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-entity-widget-content-block-inner-container\">\n\t\t\t\t\t<div class=\"crm-entity-widget-payment\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"", "\"></div>"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8;
 	var SPECIFIC_REALIZATION_ERROR_CODES = ['REALIZATION_ACCESS_DENIED', 'REALIZATION_CANNOT_DELETE', 'REALIZATION_ALREADY_DEDUCTED', 'REALIZATION_NOT_DEDUCTED', 'REALIZATION_PRODUCT_NOT_FOUND', 'SHIPMENT_ACCESS_DENIED', 'PAYMENT_ACCESS_DENIED'];
 	var SPECIFIC_ERROR_CODES = SPECIFIC_REALIZATION_ERROR_CODES.concat(['DEDUCTION_STORE_ERROR1', 'SALE_PROVIDER_SHIPMENT_QUANTITY_NOT_ENOUGH', 'SALE_SHIPMENT_EXIST_SHIPPED', 'SALE_PAYMENT_DELETE_EXIST_PAID', 'DDCT_DEDUCTION_QUANTITY_STORE_ERROR']);
 	var EntityEditorPaymentDocuments = /*#__PURE__*/function () {
@@ -181,7 +107,7 @@ this.BX = this.BX || {};
 	    this._isDeliveryAvailable = this._options.IS_DELIVERY_AVAILABLE;
 	    this._parentContext = options.PARENT_CONTEXT;
 	    this._callContext = options.CONTEXT;
-	    this._rootNode = main_core.Tag.render(_templateObject(), this.constructor._rootNodeClass);
+	    this._rootNode = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div class=\"", "\"></div>"])), this.constructor._rootNodeClass);
 	    this._menus = [];
 	    this._isUsedInventoryManagement = this._options.IS_USED_INVENTORY_MANAGEMENT;
 	    this._isInventoryManagementRestricted = this._options.IS_INVENTORY_MANAGEMENT_RESTRICTED;
@@ -209,7 +135,7 @@ this.BX = this.BX || {};
 	      if (this._isUsedInventoryManagement || this.hasContent()) {
 	        this._rootNode.classList.remove('is-hidden');
 
-	        this._rootNode.append(main_core.Tag.render(_templateObject2(), this._renderTitle(), this._renderDocuments(), this._renderAddDocument(), this._renderTotalSum()));
+	        this._rootNode.append(main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-entity-widget-content-block-inner-container\">\n\t\t\t\t\t<div class=\"crm-entity-widget-payment\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), this._renderTitle(), this._renderDocuments(), this._renderAddDocument(), this._renderTotalSum()));
 	      } else {
 	        this._rootNode.classList.add('is-hidden');
 	      }
@@ -274,7 +200,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_renderTitle",
 	    value: function _renderTitle() {
-	      return main_core.Tag.render(_templateObject3(), this._getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TITLE'));
+	      return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-detail\">\n\t\t\t\t<div class=\"crm-entity-widget-payment-detail-caption\">", "</div>\n\t\t\t</div>\n\t\t"])), this._getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TITLE'));
 	    }
 	  }, {
 	    key: "_renderDocuments",
@@ -407,7 +333,7 @@ this.BX = this.BX || {};
 	        _this3._menus.push(popupMenu);
 	      };
 
-	      return main_core.Tag.render(_templateObject4(), openSlider, title, sum, openMenu, main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ACTIONS_MENU'), new ui_label.Label(labelOptions).render());
+	      return main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-detail\">\n\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">", " (", ")</a>\n\t\t\t\t<div class=\"crm-entity-widget-payment-detail-inner\">\n\t\t\t\t\t<div class=\"ui-label ui-label-md ui-label-light crm-entity-widget-payment-action\" onclick=\"", "\">\n\t\t\t\t\t\t<span class=\"ui-label-inner\">", "</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openSlider, title, sum, openMenu, main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ACTIONS_MENU'), new ui_label.Label(labelOptions).render());
 	    }
 	  }, {
 	    key: "_renderDeliveryDocument",
@@ -497,7 +423,7 @@ this.BX = this.BX || {};
 	        _this4._menus.push(popupMenu);
 	      };
 
-	      return main_core.Tag.render(_templateObject5(), openSlider, title, doc.DELIVERY_NAME, sum, openMenu, main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ACTIONS_MENU'), new ui_label.Label(labelOptions).render());
+	      return main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-detail\">\n\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t", " (", ", ", ")\n\t\t\t\t</a>\n\t\t\t\t<div class=\"crm-entity-widget-payment-detail-inner\">\n\t\t\t\t\t<div class=\"ui-label ui-label-md ui-label-light crm-entity-widget-payment-action\" onclick=\"", "\">\n\t\t\t\t\t\t<span class=\"ui-label-inner\">", "</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openSlider, title, doc.DELIVERY_NAME, sum, openMenu, main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ACTIONS_MENU'), new ui_label.Label(labelOptions).render());
 	    }
 	  }, {
 	    key: "_renderRealizationDocument",
@@ -600,7 +526,7 @@ this.BX = this.BX || {};
 	        _this5._menus.push(popupMenu);
 	      };
 
-	      return main_core.Tag.render(_templateObject6(), openSlider, title, sum, openMenu, main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ACTIONS_MENU'), new ui_label.Label(labelOptions).render());
+	      return main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-detail\">\n\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t", " (", ")\n\t\t\t\t</a>\n\t\t\t\t<div class=\"crm-entity-widget-payment-detail-inner\">\n\t\t\t\t\t<div class=\"ui-label ui-label-md ui-label-light crm-entity-widget-payment-action\" onclick=\"", "\">\n\t\t\t\t\t\t<span class=\"ui-label-inner\">", "</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openSlider, title, sum, openMenu, main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ACTIONS_MENU'), new ui_label.Label(labelOptions).render());
 	    }
 	  }, {
 	    key: "_renderAddDocument",
@@ -625,7 +551,9 @@ this.BX = this.BX || {};
 	        });
 	      }
 
-	      if (this._isUsedInventoryManagement) {
+	      var isAvailableInventoryManagement = this._isUsedInventoryManagement && !this._isWithOrdersMode;
+
+	      if (isAvailableInventoryManagement) {
 	        var menuItem = {
 	          text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DOCUMENT_TYPE_SHIPMENT_DOCUMENT')
 	        };
@@ -657,13 +585,13 @@ this.BX = this.BX || {};
 	        _this6._menus.push(popupMenu);
 	      };
 
-	      return main_core.Tag.render(_templateObject7(), openMenu, main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CREATE_DOCUMENT'));
+	      return main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-add-box\">\n\t\t\t\t<a href=\"#\" class=\"crm-entity-widget-payment-add\" onclick=\"", "\">\n\t\t\t\t\t+ ", "\n\t\t\t\t</a>\n\t\t\t</div>\n\t\t"])), openMenu, main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CREATE_DOCUMENT'));
 	    }
 	  }, {
 	    key: "_renderTotalSum",
 	    value: function _renderTotalSum() {
 	      var totalSum = this._options.TOTAL_AMOUNT;
-	      var node = main_core.Tag.render(_templateObject8(), this._getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TOTAL_SUM'), this._getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TOTAL_SUM_TOOLTIP'), this._renderMoney(totalSum));
+	      var node = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-total\">\n\t\t\t\t<span>\n\t\t\t\t\t", "\n\t\t\t\t\t<span data-hint=\"", "\"></span>\n\t\t\t\t</span>\n\t\t\t\t<span class=\"crm-entity-widget-payment-text\">", "</span>\n\t\t\t</div>\n\t\t"])), this._getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TOTAL_SUM'), this._getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TOTAL_SUM_TOOLTIP'), this._renderMoney(totalSum));
 	      BX.UI.Hint.init(node);
 	      return node;
 	    }
@@ -882,7 +810,12 @@ this.BX = this.BX || {};
 
 	      this.render();
 
-	      var doNothingOnSuccess = function doNothingOnSuccess(response) {};
+	      var callEventOnSuccess = function callEventOnSuccess(response) {
+	        main_core_events.EventEmitter.emit('PaymentDocuments.EntityEditor:changePaymentPaidStatus', {
+	          entityTypeId: _this7._options.OWNER_TYPE_ID,
+	          entityId: _this7._options.OWNER_ID
+	        });
+	      };
 
 	      var reloadModelOnError = function reloadModelOnError(response) {
 	        _this7._showErrorOnAction(response);
@@ -901,7 +834,7 @@ this.BX = this.BX || {};
 	          id: payment.ID,
 	          value: strPaid
 	        }
-	      }).then(doNothingOnSuccess, reloadModelOnError);
+	      }).then(callEventOnSuccess, reloadModelOnError);
 	    }
 	  }, {
 	    key: "_setShipmentShippedStatus",
@@ -923,7 +856,12 @@ this.BX = this.BX || {};
 
 	      this.render();
 
-	      var doNothingOnSuccess = function doNothingOnSuccess(response) {};
+	      var callEventOnSuccess = function callEventOnSuccess(response) {
+	        main_core_events.EventEmitter.emit('PaymentDocuments.EntityEditor:changeShipmentShippedStatus', {
+	          entityTypeId: _this8._options.OWNER_TYPE_ID,
+	          entityId: _this8._options.OWNER_ID
+	        });
+	      };
 
 	      var reloadModelOnError = function reloadModelOnError(response) {
 	        _this8._showShipmentStatusError(response, shipment.ID);
@@ -942,7 +880,7 @@ this.BX = this.BX || {};
 	          id: shipment.ID,
 	          value: strShipped
 	        }
-	      }).then(doNothingOnSuccess, reloadModelOnError);
+	      }).then(callEventOnSuccess, reloadModelOnError);
 	    }
 	  }, {
 	    key: "_setRealizationDeductedStatus",
@@ -964,7 +902,12 @@ this.BX = this.BX || {};
 
 	      this.render();
 
-	      var doNothingOnSuccess = function doNothingOnSuccess(response) {};
+	      var callEventOnSuccess = function callEventOnSuccess(response) {
+	        main_core_events.EventEmitter.emit('PaymentDocuments.EntityEditor:changeRealizationDeductedStatus', {
+	          entityTypeId: _this9._options.OWNER_TYPE_ID,
+	          entityId: _this9._options.OWNER_ID
+	        });
+	      };
 
 	      var reloadModelOnError = function reloadModelOnError(response) {
 	        _this9._showErrorOnAction(response);
@@ -977,7 +920,7 @@ this.BX = this.BX || {};
 	          id: shipment.ID,
 	          value: strShipped
 	        }
-	      }).then(doNothingOnSuccess, reloadModelOnError);
+	      }).then(callEventOnSuccess, reloadModelOnError);
 	    }
 	  }, {
 	    key: "_removeDocument",
@@ -1213,145 +1156,7 @@ this.BX = this.BX || {};
 	}();
 	babelHelpers.defineProperty(EntityEditorPaymentDocuments, "_rootNodeClass", 'crm-entity-widget-inner crm-entity-widget-inner--payment');
 
-	function _templateObject14() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-document-table-order-group crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-description\">\n\t\t\t\t\t<span>", "</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-cost\">\n\t\t\t\t\t<span class=\"crm-entity-stream-content-detail-cost-current\">", "</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject14 = function _templateObject14() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject13() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-entity-stream-content-detail-notice\">", "</div>"]);
-
-	  _templateObject13 = function _templateObject13() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject12() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<span>", "</span>"]);
-
-	  _templateObject12 = function _templateObject12() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject11() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<a href=\"", "\" target=\"_blank\">", "</a>"]);
-
-	  _templateObject11 = function _templateObject11() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject10() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row crm-entity-stream-content-detail-table-row-total\">\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-description\">\n\t\t\t\t\t<span>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-cost\">\n\t\t\t\t\t<span>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject10 = function _templateObject10() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject9() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-document-description\">\n\t\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t\t", " (", ")\n\t\t\t\t\t</a>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject9 = function _templateObject9() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject8$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-document-description\">\n\t\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t\t", " (", ", ", ")\n\t\t\t\t\t</a>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject8$1 = function _templateObject8() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject7$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-document-description\">\n\t\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">", " (", ")</a>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject7$1 = function _templateObject7() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject6$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row crm-entity-stream-content-document-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-description\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-cost\">\n\t\t\t\t\t<span>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject6$1 = function _templateObject6() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject5$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row crm-entity-stream-content-document-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-description\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-cost\">\n\t\t\t\t\t<span>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject5$1 = function _templateObject5() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject4$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t", "\n\t\t\t\t<div class=\"crm-entity-stream-content-document-table-group\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-entity-stream-content-document-table-group\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject4$1 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t", "\n\t\t\t\t<div class=\"crm-entity-stream-content-document-table-group\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-entity-stream-content-document-table-group\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject3$1 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div></div>"]);
-
-	  _templateObject2$1 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"crm-entity-stream-content-document-table-group\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t"]);
-
-	  _templateObject$1 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$1, _templateObject2$1, _templateObject3$1, _templateObject4$1, _templateObject5$1, _templateObject6$1, _templateObject7$1, _templateObject8$1, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14;
 	var TimelineSummaryDocuments = /*#__PURE__*/function (_EntityEditorPaymentD) {
 	  babelHelpers.inherits(TimelineSummaryDocuments, _EntityEditorPaymentD);
 
@@ -1385,7 +1190,7 @@ this.BX = this.BX || {};
 	        var checkExists = this._isCheckExists();
 
 	        if (checkExists) {
-	          this._rootNode.append(main_core.Tag.render(_templateObject$1(), this._renderChecksDocument()));
+	          this._rootNode.append(main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"crm-entity-stream-content-document-table-group\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t"])), this._renderChecksDocument()));
 	        }
 	      } else {
 	        this._rootNode.classList.add('is-hidden');
@@ -1399,7 +1204,7 @@ this.BX = this.BX || {};
 	    value: function _renderDocumentWithOrdersMode() {
 	      var _this = this;
 
-	      var orderDocument = main_core.Tag.render(_templateObject2$1());
+	      var orderDocument = main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["<div></div>"])));
 
 	      this._orders().forEach(function (order) {
 	        var documents = _this._renderDocumentsByOrder(order.ID);
@@ -1412,12 +1217,12 @@ this.BX = this.BX || {};
 	        }
 	      });
 
-	      this._rootNode.append(main_core.Tag.render(_templateObject3$1(), orderDocument, this._renderEntityTotalSum(), this._renderEntityPaidSum(), this._renderTotalSum()));
+	      this._rootNode.append(main_core.Tag.render(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t", "\n\t\t\t\t<div class=\"crm-entity-stream-content-document-table-group\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-entity-stream-content-document-table-group\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), orderDocument, this._renderEntityTotalSum(), this._renderEntityPaidSum(), this._renderTotalSum()));
 	    }
 	  }, {
 	    key: "_renderDocumentWithoutOrdersMode",
 	    value: function _renderDocumentWithoutOrdersMode() {
-	      this._rootNode.append(main_core.Tag.render(_templateObject4$1(), this._renderDocuments(), this._renderEntityTotalSum(), this._renderEntityPaidSum(), this._renderTotalSum()));
+	      this._rootNode.append(main_core.Tag.render(_templateObject4$1 || (_templateObject4$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t", "\n\t\t\t\t<div class=\"crm-entity-stream-content-document-table-group\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-entity-stream-content-document-table-group\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this._renderDocuments(), this._renderEntityTotalSum(), this._renderEntityPaidSum(), this._renderTotalSum()));
 	    }
 	  }, {
 	    key: "_renderDocumentsByOrder",
@@ -1450,12 +1255,12 @@ this.BX = this.BX || {};
 	        phrase = 'CRM_ENTITY_ED_PAYMENT_DOCUMENTS_INVOICE_SUM';
 	      }
 
-	      return main_core.Tag.render(_templateObject5$1(), main_core.Loc.getMessage(phrase), this._renderMoney(this._options.ENTITY_AMOUNT));
+	      return main_core.Tag.render(_templateObject5$1 || (_templateObject5$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row crm-entity-stream-content-document-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-description\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-cost\">\n\t\t\t\t\t<span>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage(phrase), this._renderMoney(this._options.ENTITY_AMOUNT));
 	    }
 	  }, {
 	    key: "_renderEntityPaidSum",
 	    value: function _renderEntityPaidSum() {
-	      return main_core.Tag.render(_templateObject6$1(), main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ENTITY_PAID_SUM'), this._renderMoney(this._options.PAID_AMOUNT));
+	      return main_core.Tag.render(_templateObject6$1 || (_templateObject6$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row crm-entity-stream-content-document-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-description\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-cost\">\n\t\t\t\t\t<span>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ENTITY_PAID_SUM'), this._renderMoney(this._options.PAID_AMOUNT));
 	    }
 	  }, {
 	    key: "_renderPaymentDocument",
@@ -1485,7 +1290,7 @@ this.BX = this.BX || {};
 	        return _this3._resendPaymentSlider(doc.ORDER_ID, doc.ID);
 	      };
 
-	      return main_core.Tag.render(_templateObject7$1(), openSlider, title, sum, new ui_label.Label(labelOptions).render());
+	      return main_core.Tag.render(_templateObject7$1 || (_templateObject7$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-document-description\">\n\t\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">", " (", ")</a>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openSlider, title, sum, new ui_label.Label(labelOptions).render());
 	    }
 	  }, {
 	    key: "_renderDeliveryDocument",
@@ -1511,7 +1316,7 @@ this.BX = this.BX || {};
 	        return _this4._viewDeliverySlider(doc.ORDER_ID, doc.ID);
 	      };
 
-	      return main_core.Tag.render(_templateObject8$1(), openSlider, title, doc.DELIVERY_NAME, sum, new ui_label.Label(labelOptions).render());
+	      return main_core.Tag.render(_templateObject8$1 || (_templateObject8$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-document-description\">\n\t\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t\t", " (", ", ", ")\n\t\t\t\t\t</a>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openSlider, title, doc.DELIVERY_NAME, sum, new ui_label.Label(labelOptions).render());
 	    }
 	  }, {
 	    key: "_renderRealizationDocument",
@@ -1545,7 +1350,7 @@ this.BX = this.BX || {};
 	        return _this5._viewRealizationSlider(doc.ID);
 	      };
 
-	      return main_core.Tag.render(_templateObject9(), openSlider, title, sum, new ui_label.Label(labelOptions).render());
+	      return main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-document-description\">\n\t\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t\t", " (", ")\n\t\t\t\t\t</a>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openSlider, title, sum, new ui_label.Label(labelOptions).render());
 	    }
 	  }, {
 	    key: "_renderTotalSum",
@@ -1556,7 +1361,7 @@ this.BX = this.BX || {};
 	        phrase = 'CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TOTAL_INVOICE_SUM';
 	      }
 
-	      return main_core.Tag.render(_templateObject10(), main_core.Loc.getMessage(phrase), this._renderTotalMoney(this._options.TOTAL_AMOUNT));
+	      return main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row crm-entity-stream-content-detail-table-row-total\">\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-description\">\n\t\t\t\t\t<span>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-cost\">\n\t\t\t\t\t<span>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage(phrase), this._renderTotalMoney(this._options.TOTAL_AMOUNT));
 	    }
 	  }, {
 	    key: "_renderTotalMoney",
@@ -1589,17 +1394,17 @@ this.BX = this.BX || {};
 	      var link;
 
 	      if (doc.URL) {
-	        link = main_core.Tag.render(_templateObject11(), doc.URL, doc.TITLE);
+	        link = main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["<a href=\"", "\" target=\"_blank\">", "</a>"])), doc.URL, doc.TITLE);
 	      } else {
-	        link = main_core.Tag.render(_templateObject12(), doc.TITLE);
+	        link = main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["<span>", "</span>"])), doc.TITLE);
 	      }
 
-	      return main_core.Tag.render(_templateObject13(), link);
+	      return main_core.Tag.render(_templateObject13 || (_templateObject13 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-entity-stream-content-detail-notice\">", "</div>"])), link);
 	    }
 	  }, {
 	    key: "_renderOrderDetailBlock",
 	    value: function _renderOrderDetailBlock(doc) {
-	      return main_core.Tag.render(_templateObject14(), doc.TITLE, doc.PRICE_FORMAT);
+	      return main_core.Tag.render(_templateObject14 || (_templateObject14 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-document-table-order-group crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-description\">\n\t\t\t\t\t<span>", "</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-entity-stream-content-detail-cost\">\n\t\t\t\t\t<span class=\"crm-entity-stream-content-detail-cost-current\">", "</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), doc.TITLE, doc.PRICE_FORMAT);
 	    }
 	  }, {
 	    key: "_filterSuccessfulDocuments",

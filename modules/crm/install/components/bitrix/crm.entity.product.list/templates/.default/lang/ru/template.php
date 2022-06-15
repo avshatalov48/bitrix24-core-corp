@@ -46,6 +46,7 @@ $MESS["CRM_ENTITY_PL_SMALL_PRICE_NOTICE"] = "Цена < 1 в некоторых 
 $MESS["CRM_ENTITY_PL_NEGATIVE_PRICE_NOTICE"] = "Цена не может быть отрицательной.";
 $MESS["CRM_ENTITY_PL_RESERVED_DATE"] = "до #FINAL_RESERVATION_DATE#";
 $MESS["CRM_ENTITY_PL_IS_LESS_QUANTITY_THEN_RESERVED"] = "Вы не можете резервировать большее число товара, чем указано в поле «Количество»";
+$MESS["CRM_ENTITY_PL_IS_LESS_QUANTITY_WITH_DEDUCTED_THEN_RESERVED"] = "Вы не можете резервировать большее число товара, чем указано в поле «Количество» и уже отгружено со склада";
 $MESS["CRM_ENTITY_PL_DATE_IN_PAST"] = "Дата резервации меньше текущей даты";
 $MESS["CRM_ENTITY_CARD_WAREHOUSE_ENABLED"] = "Складской учёт включён";
 $MESS["CRM_ENTITY_CARD_WAREHOUSE_DISABLED"] = "Складской учёт выключен";

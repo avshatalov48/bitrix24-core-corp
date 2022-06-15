@@ -787,6 +787,19 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 				"items_id" => "orders",
 			);
 		}
+		else
+		{
+			$result[] = [
+				"parent_menu" => "menu_sale_settings",
+				"sort" => 710.07,
+				"text" => GetMessage("SHOP_MENU_SETTINGS_CATALOG_SETTINGS"),
+				"title" => GetMessage("SHOP_MENU_SETTINGS_CATALOG_SETTINGS"),
+				"additional" => "Y",
+				"url" => "/crm/configs/catalog/",
+				"url_constant" => true,
+				"items_id" => "csc_catalog_settings",
+			];
+		}
 
 		$isAdmin = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->isAdmin();
 		$userPermissions = CCrmPerms::GetCurrentUserPermissions();

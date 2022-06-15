@@ -14,6 +14,7 @@ use Bitrix\Crm\Order\Permissions;
 use Bitrix\Sale\Delivery;
 use Bitrix\Sale\Helpers\Order\Builder;
 use Bitrix\Catalog;
+use Bitrix\Crm\Service\Sale\Reservation\ShipmentService;
 use Bitrix\Salescenter;
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
@@ -202,12 +203,60 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 
 	protected function saveAndDeductAction(): void
 	{
-		$this->saveOrder([
-			'DEDUCTED' => 'Y',
-		]);
+		$result = $this->saveOrder();
+		if (!is_null($result))
+		{
+			[$orderId, $shipmentId] = $result;
+
+			$shipment = Crm\Order\Manager::getShipmentObject($shipmentId);
+			if (!$shipment)
+			{
+				$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_SHIPMENT_NOT_FOUND'));
+				return;
+			}
+
+			$order = $shipment->getOrder();
+			if (!$order)
+			{
+				return;
+			}
+
+			$needEnableAutomation = false;
+			try
+			{
+				if (Sale\Configuration::isEnableAutomaticReservation())
+				{
+					Sale\Configuration::disableAutomaticReservation();
+					$needEnableAutomation = true;
+				}
+
+				$setFieldResult = $shipment->setField('DEDUCTED', 'Y');
+				if ($setFieldResult->isSuccess())
+				{
+					$saveOrderResult = $order->save();
+					if (!$saveOrderResult->isSuccess())
+					{
+						$this->addErrors($saveOrderResult->getErrors());
+						return;
+					}
+				}
+				else
+				{
+					$this->addErrors($setFieldResult->getErrors());
+					return;
+				}
+			}
+			finally
+			{
+				if ($needEnableAutomation)
+				{
+					Sale\Configuration::enableAutomaticReservation();
+				}
+			}
+		}
 	}
 
-	private function saveOrder(array $additionalFields = []): void
+	private function saveOrder(array $additionalFields = [])
 	{
 		$orderId = (int)$this->request['ORDER_ID'] > 0 ? (int)$this->request['ORDER_ID'] : 0;
 		$shipmentId = (int)$this->request['ID'] > 0 ? (int)$this->request['ID'] : 0;
@@ -553,6 +602,8 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 				),
 			]);
 		}
+
+		return [$order->getId(), $shipment->getId()];
 	}
 
 	protected function deductAction(): void
@@ -680,6 +731,14 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 		{
 			$saveOrderResult = $order->save();
 
+			if ($saveOrderResult->isSuccess())
+			{
+				if ($value === 'N')
+				{
+					ShipmentService::getInstance()->reserveCanceledShipment($shipment);
+				}
+			}
+
 			if ($needEnableAutomation)
 			{
 				Sale\Configuration::enableAutomaticReservation();
@@ -765,6 +824,11 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 
 		$formData['ID'] = $orderId;
 		unset($formData['ORDER_ID'], $formData['STATUS_ID']);
+
+		if (empty($formData['ID']) && empty($formData['CURRENCY']))
+		{
+			$formData['CURRENCY'] = \CCrmCurrency::GetBaseCurrencyID();
+		}
 
 		if (
 			!empty($formData['CLIENT'])

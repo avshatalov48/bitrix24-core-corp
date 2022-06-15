@@ -28,6 +28,28 @@
 	border: 1px solid #e0e0e0;
 }
 
+.popup-window-content a.crm-entity-product-helper-link {
+	color: #2fc6f6 !important;
+	position: relative;
+	text-decoration: none !important;
+	display: inline-block;
+}
+
+.popup-window-content a.crm-entity-product-helper-link:before {
+	content: "";
+	position: absolute;
+	bottom: -1px;
+	width: 100%;
+	height: 1px;
+	background-color: #2fc6f6;
+	opacity: 0.4;
+	transition: opacity 180ms linear;
+}
+
+.popup-window-content a.crm-entity-product-helper-link:hover:before {
+	opacity: 1;
+}
+
 .crm-entity-product-info-image {
 	position: absolute;
 	top: 50%;
@@ -671,7 +693,7 @@
 }
 
 .crm-entity-product-list-wrapper .ui-ctl-element[disabled] .main-grid-editor-money-price {
-	background: inherit;
+	background: #f4f4f4;
 	cursor: not-allowed;
 }
 
@@ -745,12 +767,36 @@ select.crm-entity-product-control-select-field:hover {
 	padding-left: 46px;
 }
 
+.main-grid-cell-right.main-grid-cell-head[data-name="STORE_AVAILABLE"] .main-grid-head-title,
+.main-grid-cell-right.main-grid-cell-head[data-name="ROW_RESERVED"] .main-grid-head-title,
+.main-grid-cell-right.main-grid-cell-head[data-name="DEDUCTED_INFO"] .main-grid-head-title {
+	padding-right: 0;
+}
+
 .main-grid-cell-head[data-name="MAIN_INFO"] {
 	min-width: 420px !important;
 }
 
 .main-grid-cell-head[data-name="STORE_INFO"] {
 	min-width: 300px !important;
+}
+
+.main-grid-cell-head[data-name="RESERVE_INFO"] {
+	min-width: 140px !important;
+}
+
+.main-grid-cell-head[data-name="STORE_AVAILABLE"],
+.main-grid-cell-head[data-name="STORE_AVAILABLE"] .main-grid-cell-inner {
+	min-width: 180px !important;
+}
+
+.main-grid-cell-head[data-name="RESERVE_SHOWED"] {
+	min-width: 140px !important;
+}
+
+.main-grid-cell-head[data-name="ROW_RESERVED"],
+.main-grid-cell-head[data-name="ROW_RESERVED"] .main-grid-cell-inner {
+	min-width: 220px !important;
 }
 
 .catalog-product-edit {
@@ -768,6 +814,14 @@ select.crm-entity-product-control-select-field:hover {
 
 .main-grid-editor.main-grid-editor-custom[data-name="MAIN_INFO"] {
 	display: flex;
+}
+
+.main-grid-editor.main-grid-editor-custom[data-name="RESERVE_INFO"] {
+	text-align: right;
+}
+
+.ui-ctl-element.ui-ctl-textbox[data-name="INPUT_RESERVE_QUANTITY"] {
+	text-align: right;
 }
 
 .crm-entity-product-list-locked-header {

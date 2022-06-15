@@ -2,6 +2,8 @@
 
 namespace Bitrix\DocumentGenerator;
 
+use Bitrix\Main\Result;
+
 abstract class DataProvider
 {
 	public const FIELD_TYPE_IMAGE = 'IMAGE';
@@ -144,5 +146,13 @@ abstract class DataProvider
 	public function isRootProvider()
 	{
 		return false;
+	}
+
+	/**
+	 * @return Result
+	 */
+	public function isPrintable(): Result
+	{
+		return new Result();
 	}
 }

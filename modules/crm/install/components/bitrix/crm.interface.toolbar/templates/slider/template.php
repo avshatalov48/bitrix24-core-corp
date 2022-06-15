@@ -79,98 +79,98 @@ if (preg_match($bindingMenuMask, $arParams['TOOLBAR_ID'], $bindingMenuMatches) &
 
 if($communicationPanel)
 {
-		$data = isset($communicationPanel['DATA']) && is_array($communicationPanel['DATA']) ? $communicationPanel['DATA'] : array();
-		$multifields = isset($data['MULTIFIELDS']) && is_array($data['MULTIFIELDS']) ? $data['MULTIFIELDS'] : array();
+	$data = isset($communicationPanel['DATA']) && is_array($communicationPanel['DATA']) ? $communicationPanel['DATA'] : array();
+	$multifields = isset($data['MULTIFIELDS']) && is_array($data['MULTIFIELDS']) ? $data['MULTIFIELDS'] : array();
 
-		$enableCall = !(isset($data['ENABLE_CALL']) && $data['ENABLE_CALL'] === false);
+	$enableCall = !(isset($data['ENABLE_CALL']) && $data['ENABLE_CALL'] === false);
 
-		$phones = isset($multifields['PHONE']) && is_array($multifields['PHONE']) ? $multifields['PHONE'] : array();
-		$emails = isset($multifields['EMAIL']) && is_array($multifields['EMAIL']) ? $multifields['EMAIL'] : array();
-		$messengers = isset($multifields['IM']) && is_array($multifields['IM']) ? $multifields['IM'] : array();
+	$phones = isset($multifields['PHONE']) && is_array($multifields['PHONE']) ? $multifields['PHONE'] : array();
+	$emails = isset($multifields['EMAIL']) && is_array($multifields['EMAIL']) ? $multifields['EMAIL'] : array();
+	$messengers = isset($multifields['IM']) && is_array($multifields['IM']) ? $multifields['IM'] : array();
 
-		$callButtonId = "{$toolbarID}_call" ;
-		$messengerButtonId = "{$toolbarID}_messenger" ;
-		$emailButtonId = "{$toolbarID}_email" ;
+	$callButtonId = "{$toolbarID}_call" ;
+	$messengerButtonId = "{$toolbarID}_messenger" ;
+	$emailButtonId = "{$toolbarID}_email" ;
 
-		$ownerInfo = isset($data['OWNER_INFO']) && is_array($data['OWNER_INFO']) ? $data['OWNER_INFO'] : array();
-		?>
-		<div class="crm-entity-actions-container">
-			<?if(!$enableCall || empty($phones))
-			{
-				?><div id="<?=htmlspecialcharsbx($callButtonId)?>" class="ui-btn ui-btn-light-border ui-btn-icon-phone-call ui-btn-disabled ui-btn-themes"></div><?
-			}
-			else
-			{
-				?><div id="<?=htmlspecialcharsbx($callButtonId)?>" class="ui-btn ui-btn-light-border ui-btn-icon-phone-call ui-btn-themes"></div><?
-			}?>
-			<script type="text/javascript">
-				BX.ready(
-					function()
-					{
-						BX.InterfaceToolBarPhoneButton.messages =
+	$ownerInfo = isset($data['OWNER_INFO']) && is_array($data['OWNER_INFO']) ? $data['OWNER_INFO'] : array();
+	?>
+	<div class="crm-entity-actions-container">
+		<?if(!$enableCall || empty($phones))
+		{
+			?><div id="<?=htmlspecialcharsbx($callButtonId)?>" class="ui-btn ui-btn-light-border ui-btn-icon-phone-call ui-btn-disabled ui-btn-themes"></div><?
+		}
+		else
+		{
+			?><div id="<?=htmlspecialcharsbx($callButtonId)?>" class="ui-btn ui-btn-light-border ui-btn-icon-phone-call ui-btn-themes"></div><?
+		}?>
+		<script type="text/javascript">
+			BX.ready(
+				function()
+				{
+					BX.InterfaceToolBarPhoneButton.messages =
 						{
 							telephonyNotSupported: "<?=GetMessageJS('CRM_TOOLBAR_TELEPHONY_NOT_SUPPORTED')?>"
 						};
-						BX.InterfaceToolBarPhoneButton.create(
-							this._id + "_call",
-							{
-								button: BX("<?=CUtil::JSEscape($callButtonId)?>"),
-								data: <?=CUtil::PhpToJSObject($phones)?>,
-								ownerInfo: <?=CUtil::PhpToJSObject($ownerInfo)?>
-							}
-						);
-					}
-				);
-			</script>
-			<!--<div class="webform-small-button webform-small-button-transparent crm-contact-menu-sms-icon-not-available"></div>-->
-			<?if(empty($emails))
-			{
-				?><div id="<?=htmlspecialcharsbx($emailButtonId)?>" class="ui-btn ui-btn-light-border ui-btn-icon-mail ui-btn-disabled ui-btn-themes"></div><?
-			}
-			else
-			{
-				?><div id="<?=htmlspecialcharsbx($emailButtonId)?>" class="ui-btn ui-btn-light-border ui-btn-icon-mail ui-btn-themes"></div><?
-			}?>
-			<script type="text/javascript">
-				BX.ready(
-					function()
-					{
-						BX.InterfaceToolBarEmailButton.create(
-							this._id + "_email",
-							{
-								button: BX("<?=CUtil::JSEscape($emailButtonId)?>"),
-								data: <?=CUtil::PhpToJSObject($emails)?>,
-								ownerInfo: <?=CUtil::PhpToJSObject($ownerInfo)?>
-							}
-						);
-					}
-				);
-			</script>
-			<?if(empty($messengers))
-			{
-				?><div id="<?=htmlspecialcharsbx($messengerButtonId)?>" class="ui-btn ui-btn-light-border ui-btn-icon-chat ui-btn-disabled ui-btn-themes"></div><?
-			}
-			else
-			{
-				?><div id="<?=htmlspecialcharsbx($messengerButtonId)?>" class="ui-btn ui-btn-light-border ui-btn-icon-chat ui-btn-themes"></div><?
-			}?>
-			<script type="text/javascript">
-				BX.ready(
-					function()
-					{
-						BX.InterfaceToolBarMessengerButton.create(
-							this._id + "_im",
-							{
-								button: BX("<?=CUtil::JSEscape($messengerButtonId)?>"),
-								data: <?=CUtil::PhpToJSObject($messengers)?>,
-								ownerInfo: <?=CUtil::PhpToJSObject($ownerInfo)?>
-							}
-						);
-					}
-				);
-			</script>
-		</div>
-		<?
+					BX.InterfaceToolBarPhoneButton.create(
+						this._id + "_call",
+						{
+							button: BX("<?=CUtil::JSEscape($callButtonId)?>"),
+							data: <?=CUtil::PhpToJSObject($phones)?>,
+							ownerInfo: <?=CUtil::PhpToJSObject($ownerInfo)?>
+						}
+					);
+				}
+			);
+		</script>
+		<!--<div class="webform-small-button webform-small-button-transparent crm-contact-menu-sms-icon-not-available"></div>-->
+		<?if(empty($emails))
+		{
+			?><div id="<?=htmlspecialcharsbx($emailButtonId)?>" class="ui-btn ui-btn-light-border ui-btn-icon-mail ui-btn-disabled ui-btn-themes"></div><?
+		}
+		else
+		{
+			?><div id="<?=htmlspecialcharsbx($emailButtonId)?>" class="ui-btn ui-btn-light-border ui-btn-icon-mail ui-btn-themes"></div><?
+		}?>
+		<script type="text/javascript">
+			BX.ready(
+				function()
+				{
+					BX.InterfaceToolBarEmailButton.create(
+						this._id + "_email",
+						{
+							button: BX("<?=CUtil::JSEscape($emailButtonId)?>"),
+							data: <?=CUtil::PhpToJSObject($emails)?>,
+							ownerInfo: <?=CUtil::PhpToJSObject($ownerInfo)?>
+						}
+					);
+				}
+			);
+		</script>
+		<?if(empty($messengers))
+		{
+			?><div id="<?=htmlspecialcharsbx($messengerButtonId)?>" class="ui-btn ui-btn-light-border ui-btn-icon-chat ui-btn-disabled ui-btn-themes"></div><?
+		}
+		else
+		{
+			?><div id="<?=htmlspecialcharsbx($messengerButtonId)?>" class="ui-btn ui-btn-light-border ui-btn-icon-chat ui-btn-themes"></div><?
+		}?>
+		<script type="text/javascript">
+			BX.ready(
+				function()
+				{
+					BX.InterfaceToolBarMessengerButton.create(
+						this._id + "_im",
+						{
+							button: BX("<?=CUtil::JSEscape($messengerButtonId)?>"),
+							data: <?=CUtil::PhpToJSObject($messengers)?>,
+							ownerInfo: <?=CUtil::PhpToJSObject($ownerInfo)?>
+						}
+					);
+				}
+			);
+		</script>
+	</div>
+	<?
 }
 if($enableMoreButton)
 {
@@ -232,30 +232,30 @@ foreach($items as $item)
 		$menuItems = isset($item['ITEMS']) && is_array($item['ITEMS']) ? $item['ITEMS'] : array();
 
 		?><div class="webform-small-button webform-small-button-blue webform-button-icon-triangle-down crm-btn-toolbar-menu"<?=$onClick !== '' ? " onclick=\"{$onClick}; return false;\"" : ''?>>
-			<span class="webform-small-button-text"><?=$text?></span>
-			<span class="webform-button-icon-triangle"></span>
-		</div><?
+		<span class="webform-small-button-text"><?=$text?></span>
+		<span class="webform-button-icon-triangle"></span>
+	</div><?
 
 		if(!empty($menuItems))
 		{
 			?><script type="text/javascript">
-				BX.ready(
-					function()
-					{
-						BX.InterfaceToolBar.create(
-							"<?=CUtil::JSEscape($toolbarID)?>",
-							BX.CrmParamBag.create(
-								{
-									"containerId": "<?=CUtil::JSEscape($toolbarID)?>",
-									"prefix": "",
-									"menuButtonClassName": "crm-btn-toolbar-menu",
-									"items": <?=CUtil::PhpToJSObject($menuItems)?>
-								}
-							)
-						);
-					}
-				);
-			</script><?
+			BX.ready(
+				function()
+				{
+					BX.InterfaceToolBar.create(
+						"<?=CUtil::JSEscape($toolbarID)?>",
+						BX.CrmParamBag.create(
+							{
+								"containerId": "<?=CUtil::JSEscape($toolbarID)?>",
+								"prefix": "",
+								"menuButtonClassName": "crm-btn-toolbar-menu",
+								"items": <?=CUtil::PhpToJSObject($menuItems)?>
+							}
+						)
+					);
+				}
+			);
+		</script><?
 		}
 	}
 	elseif($type == 'toolbar-conv-scheme')
@@ -296,9 +296,9 @@ foreach($items as $item)
 		}
 
 		?><div class="ui-btn-split ui-btn-primary">
-			<button id="<?=htmlspecialcharsbx($labelID);?>" class="ui-btn-main"><?=htmlspecialcharsbx($schemeDescr)?></button>
-			<button id="<?=htmlspecialcharsbx($buttonID);?>" class="ui-btn-extra"></button>
-		</div>
+		<button id="<?=htmlspecialcharsbx($labelID);?>" class="ui-btn-main"><?=htmlspecialcharsbx($schemeDescr)?></button>
+		<button id="<?=htmlspecialcharsbx($buttonID);?>" class="ui-btn-extra"></button>
+	</div>
 		<script type="text/javascript">
 			BX.ready(
 				function()
@@ -307,74 +307,74 @@ foreach($items as $item)
 					<?$selectorID = CUtil::JSEscape($name);?>
 					<?$originUrl = CUtil::JSEscape($originUrl);?>
 					<?if($isPermitted):?>
-						<?if($entityTypeID === CCrmOwnerType::Lead):?>
-							BX.CrmLeadConversionSchemeSelector.create(
-								"<?=$selectorID?>",
-								{
-									typeId: <?=$typeID?>,
-									entityId: <?=$entityID?>,
-									scheme: "<?=$schemeName?>",
-									containerId: "<?=$labelID?>",
-									labelId: "<?=$labelID?>",
-									buttonId: "<?=$buttonID?>",
-									originUrl: "<?=$originUrl?>",
-									enableHint: <?=CUtil::PhpToJSObject($enableHint)?>,
-									hintMessages: <?=CUtil::PhpToJSObject($hint)?>
-								}
-							);
-						<?elseif($entityTypeID === CCrmOwnerType::Deal):?>
-							<?php //everything now is initialized in crm.deal.details ?>
-						<?elseif($entityTypeID === CCrmOwnerType::Quote):?>
-							BX.CrmQuoteConversionSchemeSelector.create(
-								"<?=$selectorID?>",
-								{
-									entityId: <?=$entityID?>,
-									scheme: "<?=$schemeName?>",
-									containerId: "<?=$labelID?>",
-									labelId: "<?=$labelID?>",
-									buttonId: "<?=$buttonID?>",
-									originUrl: "<?=$originUrl?>",
-									enableHint: <?=CUtil::PhpToJSObject($enableHint)?>,
-									hintMessages: <?=CUtil::PhpToJSObject($hint)?>
-								}
-							);
-
-							BX.addCustomEvent(window,
-								"CrmCreateDealFromQuote",
-								function()
-								{
-									BX.CrmQuoteConverter.getCurrent().convert(
-										<?=$entityID?>,
-										BX.CrmQuoteConversionScheme.createConfig(BX.CrmQuoteConversionScheme.deal),
-										"<?=$originUrl?>"
-									);
-								}
-							);
-
-							BX.addCustomEvent(window,
-								"CrmCreateInvoiceFromQuote",
-								function()
-								{
-									BX.CrmQuoteConverter.getCurrent().convert(
-										<?=$entityID?>,
-										BX.CrmQuoteConversionScheme.createConfig(BX.CrmQuoteConversionScheme.invoice),
-										"<?=$originUrl?>"
-									);
-								}
-							);
-						<?endif;?>
-					<?elseif($lockScript !== ''):?>
-						var showLockInfo = function()
+					<?if($entityTypeID === CCrmOwnerType::Lead):?>
+					BX.CrmLeadConversionSchemeSelector.create(
+						"<?=$selectorID?>",
 						{
-							<?=$lockScript?>
-						};
-						BX.bind(BX("<?=$labelID?>"), "click", showLockInfo );
-						<?if($entityTypeID === CCrmOwnerType::Deal):?>
-							<?php //everything now is initialized in crm.deal.details ?>
-						<?elseif($entityTypeID === CCrmOwnerType::Quote):?>
-							BX.addCustomEvent(window, "CrmCreateDealFromQuote", showLockInfo);
-							BX.addCustomEvent(window, "CrmCreateInvoiceFromQuote", showLockInfo);
-						<?endif;?>
+							typeId: <?=$typeID?>,
+							entityId: <?=$entityID?>,
+							scheme: "<?=$schemeName?>",
+							containerId: "<?=$labelID?>",
+							labelId: "<?=$labelID?>",
+							buttonId: "<?=$buttonID?>",
+							originUrl: "<?=$originUrl?>",
+							enableHint: <?=CUtil::PhpToJSObject($enableHint)?>,
+							hintMessages: <?=CUtil::PhpToJSObject($hint)?>
+						}
+					);
+					<?elseif($entityTypeID === CCrmOwnerType::Deal):?>
+					<?php //everything now is initialized in crm.deal.details ?>
+					<?elseif($entityTypeID === CCrmOwnerType::Quote):?>
+					BX.CrmQuoteConversionSchemeSelector.create(
+						"<?=$selectorID?>",
+						{
+							entityId: <?=$entityID?>,
+							scheme: "<?=$schemeName?>",
+							containerId: "<?=$labelID?>",
+							labelId: "<?=$labelID?>",
+							buttonId: "<?=$buttonID?>",
+							originUrl: "<?=$originUrl?>",
+							enableHint: <?=CUtil::PhpToJSObject($enableHint)?>,
+							hintMessages: <?=CUtil::PhpToJSObject($hint)?>
+						}
+					);
+
+					BX.addCustomEvent(window,
+						"CrmCreateDealFromQuote",
+						function()
+						{
+							BX.CrmQuoteConverter.getCurrent().convert(
+								<?=$entityID?>,
+								BX.CrmQuoteConversionScheme.createConfig(BX.CrmQuoteConversionScheme.deal),
+								"<?=$originUrl?>"
+							);
+						}
+					);
+
+					BX.addCustomEvent(window,
+						"CrmCreateInvoiceFromQuote",
+						function()
+						{
+							BX.CrmQuoteConverter.getCurrent().convert(
+								<?=$entityID?>,
+								BX.CrmQuoteConversionScheme.createConfig(BX.CrmQuoteConversionScheme.invoice),
+								"<?=$originUrl?>"
+							);
+						}
+					);
+					<?endif;?>
+					<?elseif($lockScript !== ''):?>
+					var showLockInfo = function()
+					{
+						<?=$lockScript?>
+					};
+					BX.bind(BX("<?=$labelID?>"), "click", showLockInfo );
+					<?if($entityTypeID === CCrmOwnerType::Deal):?>
+					<?php //everything now is initialized in crm.deal.details ?>
+					<?elseif($entityTypeID === CCrmOwnerType::Quote):?>
+					BX.addCustomEvent(window, "CrmCreateDealFromQuote", showLockInfo);
+					BX.addCustomEvent(window, "CrmCreateInvoiceFromQuote", showLockInfo);
+					<?endif;?>
 					<?endif;?>
 					//endregion
 				}
@@ -383,12 +383,12 @@ foreach($items as $item)
 	}
 	elseif($type == 'bizproc-starter-button')
 	{
-		$hasTemplates = is_array($item['DATA']['templates']) && count($item['DATA']['templates']) > 0;
-		if ($hasTemplates):
+	$hasTemplates = is_array($item['DATA']['templates']) && count($item['DATA']['templates']) > 0;
+	if ($hasTemplates):
 
-			CJSCore::Init('bp_starter');
-			$starterButtonId = "{$toolbarID}_bp_starter";
-		?>
+	CJSCore::Init('bp_starter');
+	$starterButtonId = "{$toolbarID}_bp_starter";
+	?>
 		<button class="ui-btn ui-btn-md ui-btn-light-border ui-btn-themes crm-bizproc-starter-icon"
 				id="<?=htmlspecialcharsbx($starterButtonId)?>" title="<?=GetMessage('CRM_TOOLBAR_BIZPROC_STARTER_LABEL')?>"></button>
 		<script type="text/javascript">
@@ -411,8 +411,8 @@ foreach($items as $item)
 				}
 			);
 		</script>
-		<?
-		endif;
+	<?
+	endif;
 	}
 	else
 	{

@@ -56,7 +56,30 @@ class Register
 		$errorPhoneItems = [];
 		$phoneCnt = 0;
 		$emailCnt = 0;
+		$dailyPhoneLimit = (
+			Loader::includeModule('bitrix24')
+			&& \CBitrix24::getLicenseType() === 'project'
+				? 10
+				: 0 // unlimited
+		);
 
+		$date = new DateTime();
+		$date->add('-1 days');
+
+		$pastPhoneInvitationNumber = 0;
+		if ($dailyPhoneLimit > 0)
+		{
+			$pastPhoneInvitationNumber = InvitationTable::getList([
+				'select' => [ 'ID' ],
+				'filter' => [
+					'=INVITATION_TYPE' => \Bitrix\Intranet\Invitation::TYPE_PHONE,
+					'>DATE_CREATE' => $date,
+				],
+				'count_total' => true,
+			])->getCount();
+		}
+
+		$dailyPhoneLimitExceeded = false;
 		foreach ($items as $item)
 		{
 			if (isset($item["PHONE"]))
@@ -64,8 +87,19 @@ class Register
 				$item["PHONE"] = trim($item["PHONE"]);
 				if (self::checkPhone($item))
 				{
-					$phoneItems[] = $item;
-					$phoneCnt++;
+					if (
+						$dailyPhoneLimit <= 0
+						|| ($pastPhoneInvitationNumber + $phoneCnt) <= $dailyPhoneLimit
+					)
+					{
+						$phoneItems[] = $item;
+						$phoneCnt++;
+					}
+					else
+					{
+						$dailyPhoneLimitExceeded = true;
+//						$errorPhoneItems[] = $item["PHONE"];
+					}
 				}
 				else
 				{
@@ -85,6 +119,14 @@ class Register
 					$errorEmailItems[] = $item["EMAIL"];
 				}
 			}
+		}
+
+		if (
+			$dailyPhoneLimitExceeded
+			&& $pastPhoneInvitationNumber >= $dailyPhoneLimit
+		)
+		{
+			$errors[] = Loc::getMessage("INTRANET_INVITATION_DAILY_PHONE_LIMIT_EXCEEDED");
 		}
 
 		if ($phoneCnt >= 5)

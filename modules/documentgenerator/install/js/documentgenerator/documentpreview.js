@@ -370,22 +370,51 @@
 		}
 	};
 
-	BX.DocumentGenerator.Document.onBeforeCreate = function(viewUrl, params, loaderPath)
+	BX.DocumentGenerator.Document.onBeforeCreate = function(viewUrl, params, loaderPath, moduleId)
 	{
 		var urlParams = BX.DocumentGenerator.parseUrl(viewUrl, 'params');
-		if(!urlParams.hasOwnProperty('documentId'))
-		{
-			var provider = decodeURIComponent(urlParams.providerClassName).toLowerCase();
-			var templateId = urlParams.templateId;
-			var value = urlParams.value;
-			BX.DocumentGenerator.Document.askAboutUsingPreviousDocumentNumber(provider, templateId, value, function(previousNumber)
-			{
-				if(previousNumber)
-				{
-					viewUrl = BX.util.add_url_param(viewUrl, {number: previousNumber});
-				}
+		var provider = decodeURIComponent(urlParams.providerClassName).toLowerCase();
+		var templateId = urlParams.templateId;
+		var value = urlParams.value;
 
-				BX.DocumentGenerator.openUrl(viewUrl, loaderPath);
+		if (!urlParams.hasOwnProperty('documentId'))
+		{
+			BX.ajax.runAction('documentgenerator.api.dataprovider.isPrintable', {
+				data: {
+					provider: provider,
+					value: value,
+					options: {},
+					module: moduleId,
+				}
+			}).then(function(response)
+			{
+				if(!urlParams.hasOwnProperty('documentId'))
+				{
+					BX.DocumentGenerator.Document.askAboutUsingPreviousDocumentNumber(provider, templateId, value, function(previousNumber)
+					{
+						if(previousNumber)
+						{
+							viewUrl = BX.util.add_url_param(viewUrl, {number: previousNumber});
+						}
+
+						BX.DocumentGenerator.openUrl(viewUrl, loaderPath);
+					});
+				}
+				else
+				{
+					BX.DocumentGenerator.openUrl(viewUrl, loaderPath);
+				}
+			}).catch(function(reason)
+			{
+				BX.DocumentGenerator.showMessage(
+					reason.errors.map(function (error) { return error.message; }).join("<br>"),
+					[new BX.PopupWindowButton({
+						text : BX.message('DOCGEN_POPUP_CONTINUE_BUTTON'),
+						className : "ui-btn ui-btn-md ui-btn-success",
+						events : { click : function(e) { this.popupWindow.close(); BX.PreventDefault(e) } }
+					})],
+					BX.message('DOCGEN_POPUP_PRINT_TITLE')
+				);
 			});
 		}
 		else
@@ -701,7 +730,12 @@
 				this.links.templates[i] = {
 					text: BX.util.htmlspecialchars(response.data.templates[i]['name']),
 					title: BX.util.htmlspecialchars(response.data.templates[i]['name']),
-					onclick: 'BX.DocumentGenerator.Document.onBeforeCreate(\'' + url + '\', {}, \'' + this.loaderPath + '\')'
+					onclick: 'BX.DocumentGenerator.Document.onBeforeCreate(' +
+						'\'' + url + '\',' +
+						'{},' +
+						'\'' + this.loaderPath + '\',' +
+						'\'' + this.moduleId
+					+ '\')'
 				};
 			}
 		}

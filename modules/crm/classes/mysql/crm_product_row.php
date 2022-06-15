@@ -14,13 +14,22 @@ class CCrmProductRow extends CAllCrmProductRow
 	// Contract -->
 	public static function DeleteByOwner($ownerType, $ownerID)
 	{
-		$ownerType = strval($ownerType);
-		$ownerID = intval($ownerID);
+		$ownerType = (string)($ownerType);
+		$ownerID = (int)($ownerID);
 
 		global $DB;
 		$ownerType = $DB->ForSql($ownerType);
 
 		$tableName = self::TABLE_NAME;
+
+		$reservationTableName = \Bitrix\Crm\Reservation\Internals\ProductRowReservationTable::getTableName();
+		$DB->Query(
+			"DELETE FROM {$reservationTableName} WHERE ROW_ID IN (
+					SELECT ID FROM {$tableName} WHERE OWNER_TYPE = '{$ownerType}' AND OWNER_ID = {$ownerID}
+			)",
+			true
+		);
+
 		$DB->Query(
 			"DELETE FROM {$tableName} WHERE OWNER_TYPE = '{$ownerType}' AND OWNER_ID = {$ownerID}", false, 'File: '.__FILE__.'<br/>Line: '.__LINE__);
 	}
@@ -78,6 +87,12 @@ class CCrmProductRow extends CAllCrmProductRow
 		{
 			$scriptValues = implode(',', $deleteRows);
 			$DB->Query("DELETE FROM {$tableName} WHERE ID IN ({$scriptValues})", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+
+			$reservationTableName = \Bitrix\Crm\Reservation\Internals\ProductRowReservationTable::getTableName();
+			$DB->Query(
+				"DELETE FROM {$reservationTableName} WHERE ROW_ID IN ({$scriptValues})",
+				true
+			);
 		}
 		if(!empty($updateRows))
 		{

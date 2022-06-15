@@ -1,7 +1,5 @@
 <? if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
-use Bitrix\Main\Localization\Loc;
-
 Bitrix\Main\Page\Asset::getInstance()->addJs("/bitrix/js/main/hot_keys.js");
 
 $selfFolderUrl = "/shop/settings/";

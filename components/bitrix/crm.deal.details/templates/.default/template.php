@@ -279,3 +279,21 @@ if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && $conversionC
 		);
 	</script><?
 endif;
+?>
+<script type="text/javascript">
+	(function() {
+		var listener = function(e) {
+			if (BX.Main && BX.Main.gridManager)
+			{
+				var grid = BX.Main.gridManager.getInstanceById('CCrmEntityProductListComponent');
+				if (grid)
+				{
+					grid.reload();
+				}
+			}
+		};
+		BX.Event.EventEmitter.subscribe('PaymentDocuments.EntityEditor:changePaymentPaidStatus', listener);
+		BX.Event.EventEmitter.subscribe('PaymentDocuments.EntityEditor:changeShipmentShippedStatus', listener);
+		BX.Event.EventEmitter.subscribe('PaymentDocuments.EntityEditor:changeRealizationDeductedStatus', listener);
+	})();
+</script>

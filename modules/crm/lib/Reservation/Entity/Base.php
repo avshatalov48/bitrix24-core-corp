@@ -41,7 +41,7 @@ abstract class Base
 			throw new Main\SystemException(implode("\n", $checkLoadedEntityResult->getErrorMessages()));
 		}
 
-		$this->entityProducts = $this->getEntityProducts();
+		$this->entityProducts = $this->loadEntityProducts();
 
 		$this->defaultStore = Catalog\StoreTable::getDefaultStoreId();
 	}
@@ -76,7 +76,20 @@ abstract class Base
 	/**
 	 * @return array
 	 */
-	abstract public function getEntityProducts(): array;
+	public function getEntityProducts(): array
+	{
+		if (!$this->entityProducts)
+		{
+			$this->entityProducts = $this->loadEntityProducts();
+		}
+
+		return $this->entityProducts;
+	}
+
+	/**
+	 * @return array
+	 */
+	abstract public function loadEntityProducts(): array;
 
 	/**
 	 * @param Crm\Reservation\Product $product

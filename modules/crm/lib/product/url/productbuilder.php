@@ -49,6 +49,28 @@ if (Loader::includeModule('catalog'))
 
 			$result = [];
 
+			if (!\CCrmSaleHelper::isWithOrdersMode()
+			)
+			{
+				$result[] = [
+					'TEXT' => Loc::getMessage('CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_SETTINGS'),
+					'TITLE' => Loc::getMessage('CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_SETTINGS'),
+					'ONCLICK' => "openConfigSlider('/crm/configs/catalog/')"
+				];
+			}
+
+			$sliderPath = \CComponentEngine::makeComponentPath('bitrix:catalog.warehouse.master.clear');
+			$sliderPath = getLocalPath('components' . $sliderPath . '/slider.php');
+
+			if (!Catalog\Component\UseStore::isUsed())
+			{
+				$result[] = [
+					'TEXT' => Loc::getMessage('CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_WAREHOUSE_NAME_Y'),
+					'TITLE' => Loc::getMessage('CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_WAREHOUSE_TITLE_Y'),
+					'ONCLICK' => "openWarehousePanel('".$sliderPath."')"
+				];
+			}
+
 			$importUrl = $this->fillUrlTemplate(
 				$this->getUrlTemplate(self::PAGE_CSV_IMPORT),
 				$this->templateVariables
@@ -65,18 +87,6 @@ if (Loader::includeModule('catalog'))
 			if (!empty($items))
 			{
 				$result = array_merge($result, $items);
-			}
-
-			$sliderPath = \CComponentEngine::makeComponentPath('bitrix:catalog.warehouse.master.clear');
-			$sliderPath = getLocalPath('components' . $sliderPath . '/slider.php');
-
-			if(!Catalog\Component\UseStore::isUsed())
-			{
-				$result[] = [
-					'TEXT' => Loc::getMessage('CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_WAREHOUSE_NAME_Y'),
-					'TITLE' => Loc::getMessage('CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_WAREHOUSE_TITLE_Y'),
-					'ONCLICK' => "openWarehousePanel('".$sliderPath."')"
-				];
 			}
 
 			return (!empty($result) ? $result: null);

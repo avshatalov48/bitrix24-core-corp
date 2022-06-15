@@ -8,6 +8,7 @@ import {CurrencyCore} from 'currency.currency-core';
 import {ProductSelector} from 'catalog.product-selector';
 import HintPopup from './hint.popup';
 import {ProductModel} from "catalog.product-model";
+import {PULL} from 'pull.client';
 
 const GRID_TEMPLATE_ROW = 'template_0';
 const DEFAULT_PRECISION: number = 2;
@@ -62,6 +63,7 @@ export class Editor
 	onProductChangeHandler = this.handleOnProductChange.bind(this);
 	onProductClearHandler = this.handleOnProductClear.bind(this);
 	dropdownChangeHandler = this.handleDropdownChange.bind(this);
+	pullReloadGrid = null;
 
 	changeProductFieldHandler = this.handleFieldChange.bind(this);
 	updateTotalDataDelayedHandler = Runtime.debounce(this.updateTotalDataDelayed, 1000, this);
@@ -98,7 +100,7 @@ export class Editor
 			const container = this.getContainer();
 			headersToLock.forEach((headerId) => {
 				const header = container?.querySelector(`.main-grid-cell-head[data-name="${headerId}"] .main-grid-cell-head-container`);
-				let lock = Tag.render`<span class="crm-entity-product-list-locked-header"></span>`;
+				const lock = Tag.render`<span class="crm-entity-product-list-locked-header"></span>`;
 				lock.onclick = () => top.BX.UI.InfoHelper.show('limit_store_crm_integration');
 				header?.insertBefore(lock, header.firstChild);
 			});
@@ -107,6 +109,7 @@ export class Editor
 
 	subscribeDomEvents()
 	{
+		this.unsubscribeDomEvents();
 		const container = this.getContainer();
 
 		if (Type.isElementNode(container))
@@ -171,6 +174,7 @@ export class Editor
 
 	subscribeCustomEvents()
 	{
+		this.unsubscribeCustomEvents();
 		EventEmitter.subscribe('CrmProductSearchDialog_SelectProduct', this.onDialogSelectProductHandler);
 		EventEmitter.subscribe('BX.Crm.EntityEditor:onSave', this.onSaveHandler);
 		EventEmitter.subscribe('onCrmEntityUpdate', this.onEntityUpdateHandler);
@@ -183,6 +187,21 @@ export class Editor
 		EventEmitter.subscribe('BX.Catalog.ProductSelector:onChange', this.onProductChangeHandler);
 		EventEmitter.subscribe('BX.Catalog.ProductSelector:onClear', this.onProductClearHandler);
 		EventEmitter.subscribe('Dropdown::change', this.dropdownChangeHandler);
+		if (PULL)
+		{
+			this.pullReloadGrid = PULL.subscribe({
+				moduleId: 'crm',
+				callback: (data) => {
+					if (
+						data.command === 'onCatalogInventoryManagementEnabled'
+						|| data.command === 'onCatalogInventoryManagementDisabled'
+					)
+					{
+						this.reloadGrid(false);
+					}
+				}
+			}).bind(this);
+		}
 	}
 
 	unsubscribeCustomEvents()
@@ -199,6 +218,10 @@ export class Editor
 		EventEmitter.unsubscribe('BX.Catalog.ProductSelector:onChange', this.onProductChangeHandler);
 		EventEmitter.unsubscribe('BX.Catalog.ProductSelector:onClear', this.onProductClearHandler);
 		EventEmitter.unsubscribe('Dropdown::change', this.dropdownChangeHandler);
+		if (!Type.isNil(this.pullReloadGrid))
+		{
+			this.pullReloadGrid();
+		}
 	}
 
 	#initSupportCustomRowActions()
@@ -291,6 +314,12 @@ export class Editor
 		}
 
 		this.setGridChanged(false);
+
+		EventEmitter.subscribeOnce(
+			this,
+			'onGridReloaded',
+			() => this.actionUpdateTotalData({isInternalChanging: true})
+		)
 		this.reloadGrid(false);
 	}
 
@@ -325,7 +354,7 @@ export class Editor
 		this.getGrid().reloadTable(
 			'POST',
 			{useProductsFromRequest},
-			() => this.actionUpdateTotalData({isInternalChanging})
+			() => EventEmitter.emit(this, 'onGridReloaded')
 		);
 	}
 
@@ -356,7 +385,7 @@ export class Editor
 		eventArgs.data = {
 			...eventArgs.data,
 			signedParameters: this.getSignedParameters(),
-			products: useProductsFromRequest ? this.getProductsFields() : null,
+			products: useProductsFromRequest ? this.getProductsFields(Editor.#getAjaxFields()) : null,
 			locationId: this.getLocationId(),
 			currencyId: this.getCurrencyId(),
 		};
@@ -472,12 +501,7 @@ export class Editor
 	unsubscribeProductsEvents()
 	{
 		this.products.forEach((current) => {
-			const productSelector = this.getProductSelector(current.getField('ID'));
-			// Used to avoid dependence on catalog 21.100.0
-			if (productSelector && typeof productSelector.unsubscribeEvents !== 'undefined')
-			{
-				productSelector.unsubscribeEvents();
-			}
+			current.unsubscribeCustomEvents();
 		});
 	}
 
@@ -598,7 +622,7 @@ export class Editor
 		this.products.forEach(product => product.getModel()?.setOption('currency', currencyId));
 	}
 
-	isLocationDependantTaxesEnabled(): bool
+	isLocationDependantTaxesEnabled(): boolean
 	{
 		return this.getSettingValue('isLocationDependantTaxesEnabled', false);
 	}
@@ -998,10 +1022,13 @@ export class Editor
 
 		if (Type.isElementNode(container) && Type.isStringFilled(fieldName))
 		{
-			container.appendChild(Dom.create(
-				'input',
-				{attrs: {type: "hidden", name: fieldName}}
-			));
+			Dom.append(
+				Dom.create(
+					'input',
+					{attrs: {type: "hidden", name: fieldName}}
+				),
+				container
+			)
 		}
 	}
 
@@ -1066,7 +1093,7 @@ export class Editor
 
 		const isReserveBlocked = this.getSettingValue('isReserveBlocked', false);
 
-		for (let item of list)
+		for (const item of list)
 		{
 			const fields = {...item.fields};
 			const settings = {
@@ -1228,19 +1255,19 @@ export class Editor
 			zIndex: 800
 		});
 
-		EventEmitter.subscribe(popup, 'onWindowRegister', BX.defer(() => {
+		EventEmitter.subscribeOnce(popup, 'onWindowRegister', BX.defer(() => {
 			popup.Get().style.position = 'fixed';
 			popup.Get().style.top = (parseInt(popup.Get().style.top) - BX.GetWindowScrollPos().scrollTop) + 'px';
 			popup.OVERLAY.style.zIndex = 798;
 		}));
 
-		EventEmitter.subscribe(window, 'EntityProductListController:onInnerCancel', BX.defer(() => {
+		EventEmitter.subscribeOnce(window, 'EntityProductListController:onInnerCancel', BX.defer(() => {
 			popup.Close();
 		}));
 
-		if (typeof BX.Crm.EntityEvent !== "undefined")
+		if (!Type.isUndefined(BX.Crm.EntityEvent))
 		{
-			EventEmitter.subscribe(window, BX.Crm.EntityEvent.names.update, BX.defer(() => {
+			EventEmitter.subscribeOnce(window, BX.Crm.EntityEvent.names.update, BX.defer(() => {
 				requestAnimationFrame(() => {
 					popup.Close()
 				}, 0);
@@ -1570,6 +1597,13 @@ export class Editor
 
 				fields['CATALOG_PRICE'] = fields['BASE_PRICE'];
 				fields['ENTERED_PRICE'] = fields['BASE_PRICE'];
+
+				if (productRow.getField('OFFER_ID') !== fields.ID)
+				{
+					fields['ROW_RESERVED'] = 0;
+					fields['DEDUCTED_QUANTITY'] = 0;
+				}
+
 				Object.keys(fields).forEach((key) => {
 					productRow.updateFieldValue(key, fields[key]);
 				});
@@ -1581,7 +1615,9 @@ export class Editor
 
 				productRow.setField('IS_NEW', data.isNew ? 'Y' : 'N');
 
+				productRow.layoutReserveControl();
 				productRow.initHandlersForSelectors();
+				productRow.updateUiStoreAmountData();
 				productRow.modifyBasePriceInput();
 				productRow.executeExternalActions();
 				this.getGrid().tableUnfade();
@@ -1600,6 +1636,7 @@ export class Editor
 		const product = this.getProductByRowId(rowId);
 		if (product)
 		{
+			product.layoutReserveControl();
 			product.initHandlersForSelectors();
 			product.changeEnteredPrice(0);
 			product.modifyBasePriceInput();
@@ -1642,22 +1679,53 @@ export class Editor
 			const productData = [];
 
 			this.products.forEach((item) => {
-				const itemFields = item.getFields();
+				const saveFields = item.getFields(Editor.#getAjaxFields());
 
-				if (!/^[0-9]+$/.test(itemFields['ID']))
+				if (!/^[0-9]+$/.test(saveFields['ID']))
 				{
-					itemFields['ID'] = 0;
+					saveFields['ID'] = 0;
 				}
 
-				itemFields['CUSTOMIZED'] = 'Y';
+				saveFields['CUSTOMIZED'] = 'Y';
 
-				productData.push(itemFields);
+				productData.push(saveFields);
 			});
 
 			productDataValue = JSON.stringify(productData);
 		}
 
 		return productDataValue;
+	}
+
+	static #getAjaxFields(): []
+	{
+		return [
+			'ID',
+			'PRODUCT_ID',
+			'PRODUCT_NAME',
+			'QUANTITY',
+			'TAX_RATE',
+			'TAX_INCLUDED',
+			'PRICE_EXCLUSIVE',
+			'PRICE_NETTO',
+			'PRICE_BRUTTO',
+			'PRICE',
+			'CUSTOMIZED',
+			'BASE_PRICE',
+			'ENTERED_PRICE',
+			'DISCOUNT_ROW',
+			'DISCOUNT_SUM',
+			'DISCOUNT_TYPE_ID',
+			'DISCOUNT_RATE',
+			'CURRENCY',
+			'STORE_ID',
+			'INPUT_RESERVE_QUANTITY',
+			'RESERVE_QUANTITY',
+			'DATE_RESERVE_END',
+			'SORT',
+			'MEASURE_CODE',
+			'MEASURE_NAME',
+		];
 	}
 
 	/* actions */
@@ -1675,7 +1743,7 @@ export class Editor
 			.length > 0
 		;
 
-		for (let item of actions)
+		for (const item of actions)
 		{
 			if (
 				!Type.isPlainObject(item)
@@ -1759,7 +1827,7 @@ export class Editor
 
 		this.updateFieldForList = item.field;
 
-		for (let row of this.products)
+		for (const row of this.products)
 		{
 			row.updateFieldByName(item.field, item.value);
 		}
@@ -1850,7 +1918,7 @@ export class Editor
 	{
 		const productFields = [];
 
-		for (let item of this.products)
+		for (const item of this.products)
 		{
 			productFields.push(item.getFields(fields));
 		}
@@ -1945,7 +2013,7 @@ export class Editor
 			}
 		).then(
 			(response) => this.ajaxResultSuccess(response, data.options),
-			(response) => this.ajaxResultFailure(response)
+			(response) => this.ajaxResultFailure(response, data.options)
 		);
 	}
 
@@ -1989,23 +2057,21 @@ export class Editor
 					currentBalloon,
 					BX.UI.Notification.Event.getFullName('onClose'),
 					() => {
-						EventEmitter.subscribeOnce(this, 'onAjaxSuccess', () => {
-							setTimeout(resolve, 100);
-						});
+						setTimeout(resolve, 500);
 					}
 				);
 				currentBalloon.close();
 			}
 			else
 			{
-				resolve()
+				setTimeout(resolve(), 50);
 			}
 		});
 	}
 
-	ajaxResultFailure(response)
+	ajaxResultFailure(response, requestOptions)
 	{
-
+		this.ajaxPool.delete(requestOptions.ACTION);
 	}
 
 	ajaxResultCommonCheck(responce)

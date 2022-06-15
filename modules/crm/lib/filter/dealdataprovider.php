@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Filter;
 
+use Bitrix\Catalog\Config\State;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Main;
@@ -341,6 +342,16 @@ class DealDataProvider extends EntityDataProvider
 					'partial' => true,
 				]
 			);
+
+			if (Loader::includeModule('catalog') && State::isUsedInventoryManagement() && !\CCrmSaleHelper::isWithOrdersMode())
+			{
+				$result['IS_PRODUCT_RESERVED'] = $this->createField(
+					'IS_PRODUCT_RESERVED',
+					[
+						'type' => 'checkbox'
+					]
+				);
+			}
 
 			$result['ORIGINATOR_ID'] = $this->createField(
 				'ORIGINATOR_ID',

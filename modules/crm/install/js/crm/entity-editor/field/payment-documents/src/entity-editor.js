@@ -591,7 +591,8 @@ export class EntityEditorPaymentDocuments
 			});
 		}
 
-		if (this._isUsedInventoryManagement)
+		let isAvailableInventoryManagement = this._isUsedInventoryManagement && !this._isWithOrdersMode;
+		if (isAvailableInventoryManagement)
 		{
 			let menuItem = {
 				text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DOCUMENT_TYPE_SHIPMENT_DOCUMENT'),
@@ -858,7 +859,12 @@ export class EntityEditorPaymentDocuments
 		});
 		this.render();
 
-		const doNothingOnSuccess = response => {};
+		const callEventOnSuccess = response => {
+			EventEmitter.emit('PaymentDocuments.EntityEditor:changePaymentPaidStatus', {
+				entityTypeId: this._options.OWNER_TYPE_ID,
+				entityId: this._options.OWNER_ID,
+			});
+		};
 		const reloadModelOnError = response => {
 			this._showErrorOnAction(response);
 			this.reloadModel();
@@ -875,7 +881,7 @@ export class EntityEditorPaymentDocuments
 				id: payment.ID,
 				value: strPaid,
 			}
-		}).then(doNothingOnSuccess, reloadModelOnError);
+		}).then(callEventOnSuccess, reloadModelOnError);
 	}
 
 	_setShipmentShippedStatus(shipment: PaymentDocument, isShipped: boolean)
@@ -894,7 +900,12 @@ export class EntityEditorPaymentDocuments
 		});
 		this.render();
 
-		const doNothingOnSuccess = response => {};
+		const callEventOnSuccess = response => {
+			EventEmitter.emit('PaymentDocuments.EntityEditor:changeShipmentShippedStatus', {
+				entityTypeId: this._options.OWNER_TYPE_ID,
+				entityId: this._options.OWNER_ID,
+			});
+		};
 		const reloadModelOnError = response => {
 			this._showShipmentStatusError(response, shipment.ID);
 			this.reloadModel();
@@ -911,7 +922,7 @@ export class EntityEditorPaymentDocuments
 				id: shipment.ID,
 				value: strShipped,
 			}
-		}).then(doNothingOnSuccess, reloadModelOnError);
+		}).then(callEventOnSuccess, reloadModelOnError);
 	}
 
 	_setRealizationDeductedStatus(shipment: PaymentDocument, isShipped: boolean)
@@ -930,7 +941,12 @@ export class EntityEditorPaymentDocuments
 		});
 		this.render();
 
-		const doNothingOnSuccess = response => {};
+		const callEventOnSuccess = response => {
+			EventEmitter.emit('PaymentDocuments.EntityEditor:changeRealizationDeductedStatus', {
+				entityTypeId: this._options.OWNER_TYPE_ID,
+				entityId: this._options.OWNER_ID,
+			});
+		};
 		const reloadModelOnError = response => {
 			this._showErrorOnAction(response);
 			this.reloadModel();
@@ -941,7 +957,7 @@ export class EntityEditorPaymentDocuments
 				id: shipment.ID,
 				value: strShipped,
 			}
-		}).then(doNothingOnSuccess, reloadModelOnError);
+		}).then(callEventOnSuccess, reloadModelOnError);
 	}
 
 	_removeDocument(doc: PaymentDocument)

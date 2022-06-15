@@ -1183,7 +1183,7 @@ class Order extends Sale\Order
 	}
 
 	/**
-	 * @return EntityBinding
+	 * @return EntityBinding|null
 	 */
 	public function getEntityBinding()
 	{

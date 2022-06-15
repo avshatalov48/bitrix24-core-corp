@@ -257,29 +257,52 @@ class SaleManager extends Base
 		return $result;
 	}
 
-	public static function OnPrintableCheckSend(Event $event): EventResult
+	/**
+	 * @param Event $event
+	 * @return EventResult|null
+	 */
+	public static function OnPrintableCheckSend(Event $event): ?EventResult
 	{
-		$result = new EventResult( EventResult::SUCCESS, null, 'sale');
-
 		$checkId = 0;
 		$check = $event->getParameter('CHECK');
-		if(is_array($check) && isset($check['ID']))
+		if (is_array($check) && isset($check['ID']))
 		{
 			$checkId = (int)$check['ID'];
 		}
-		if($checkId <= 0)
+
+		if ($checkId <= 0)
 		{
-			return $result;
+			return null;
 		}
 
+		/** @var Crm\Order\Payment $payment */
 		$payment = $event->getParameter('PAYMENT');
-
-		if ($payment instanceof Crm\Order\Payment)
+		if (!($payment instanceof Crm\Order\Payment))
 		{
-			ImOpenLinesManager::getInstance()->sendPaymentCheckNotify($checkId, $payment);
+			return null;
 		}
 
-		return $result;
+		$order = $payment->getOrder();
+
+		$ownerId = 0;
+		$entityBinding = $order->getEntityBinding();
+		if ($entityBinding)
+		{
+			$ownerId = $entityBinding->getOwnerId();
+		}
+
+		$sessionIds = ImOpenLinesManager::getInstance()->getSessionIdsByUserId($order->getUserId());
+		foreach ($sessionIds as $sessionId)
+		{
+			$crmInfo = ImOpenLinesManager::getInstance()->setSessionId($sessionId)->getCrmInfo();
+			if (!empty($crmInfo['DEAL']) && (int)$crmInfo['DEAL'] === $ownerId)
+			{
+				ImOpenLinesManager::getInstance()->sendPaymentCheckNotify($checkId, $payment);
+				return new EventResult( EventResult::SUCCESS, null, 'sale');
+			}
+		}
+
+		return null;
 	}
 
 	/**

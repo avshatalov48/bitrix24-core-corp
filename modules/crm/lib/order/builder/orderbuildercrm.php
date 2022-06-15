@@ -17,6 +17,7 @@ use Bitrix\Crm\Order\Order;
 use Bitrix\Crm\Order\BasketItem;
 use Bitrix\Crm\Order\ContactCompanyEntity;
 use Bitrix\Crm\Order\Matcher;
+use Bitrix\Crm\Order\PersonType;
 
 if (!Loader::includeModule('sale'))
 {
@@ -40,6 +41,35 @@ class OrderBuilderCrm extends OrderBuilder
 	{
 		parent::__construct($settings);
 		$this->setBasketBuilder(new BasketBuilderCrm($this));
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	protected function prepareFields(array $fields)
+	{
+		$fields = parent::prepareFields($fields);
+
+		if (empty($fields['SITE_ID']))
+		{
+			$fields['SITE_ID'] = SITE_ID;
+		}
+
+		if (!empty($fields['CLIENT']['COMPANY_ID']))
+		{
+			$fields['PERSON_TYPE_ID'] = PersonType::getCompanyPersonTypeId();
+		}
+		else
+		{
+			$fields['PERSON_TYPE_ID'] = PersonType::getContactPersonTypeId();
+		}
+
+		if (!isset($fields['RESPONSIBLE_ID']))
+		{
+			$fields['RESPONSIBLE_ID'] = \CCrmSecurityHelper::GetCurrentUserID();
+		}
+
+		return $fields;
 	}
 
 	public function build($data)

@@ -1,0 +1,32 @@
+.biconnector-key-edit-wrapper {
+	display: block;
+}
+
+.biconnector-key-edit-wrapper-form-inner {
+	max-width: 650px;
+}
+
+.biconnector-key-edit-wrapper-form-row {
+	margin-bottom: 24px;
+}
+
+.biconnector-key-edit-action-link {
+	padding: 0;
+	background: none;
+	margin: 0;
+	border: none;
+	border-bottom: 1px dashed;
+	font: 10px/12px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	color: #2066B0;
+	margin-left: 12px;
+	cursor: pointer;
+	transition: 170ms linear all;
+}
+
+.biconnector-key-edit-action-link:hover {
+	border-bottom-color: transparent;
+}
+
+.biconnector-key-edit-access-key[type='password'] {
+	font-family: Verdana;
+}

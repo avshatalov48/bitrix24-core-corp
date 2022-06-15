@@ -29,13 +29,16 @@ class EntityProductConverterWithReserve implements ProductConverter
 			'TAX_INCLUDED' => $product['TAX_INCLUDED'],
 		];
 
-		$reserveId = isset($product['RESERVE_ID']) && !empty($product['RESERVE_ID']) ? $product['RESERVE_ID'] : 'n1';
-		$result['RESERVE'][$reserveId] = [
-			'QUANTITY' => $product['RESERVE_QUANTITY'],
-			'STORE_ID' => $product['STORE_ID'],
-			'DATE_RESERVE_END' => $product['DATE_RESERVE_END'],
-			'RESERVED_BY' => \CCrmSecurityHelper::GetCurrentUser()->GetID(),
-		];
+		if (isset($product['RESERVE_QUANTITY'], $product['STORE_ID']))
+		{
+			$reserveId = isset($product['RESERVE_ID']) && !empty($product['RESERVE_ID']) ? $product['RESERVE_ID'] : 'n1';
+			$result['RESERVE'][$reserveId] = [
+				'QUANTITY' => $product['RESERVE_QUANTITY'],
+				'STORE_ID' => $product['STORE_ID'],
+				'DATE_RESERVE_END' => $product['DATE_RESERVE_END'],
+				'RESERVED_BY' => \CCrmSecurityHelper::GetCurrentUser()->GetID(),
+			];
+		}
 
 		return $result;
 	}

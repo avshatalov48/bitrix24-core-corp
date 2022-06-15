@@ -28,7 +28,7 @@ class DynamicEntity extends Base
 		return $result;
 	}
 
-	public function getEntityProducts(): array
+	public function loadEntityProducts(): array
 	{
 		$dynamicEntityProducts = [];
 

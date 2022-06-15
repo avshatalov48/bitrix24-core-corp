@@ -36,12 +36,17 @@ export class Row
 	storeSelector: ?StoreSelector;
 	fields: Object = {};
 	externalActions: Array<Action> = [];
-	onFocusUnchangeablePrice = this.#showChangePriceNotify.bind(this);
+
+	handleFocusUnchangeablePrice = this.#showChangePriceNotify.bind(this);
+	handleChangeStoreData = this.#onChangeStoreData.bind(this);
+	handleProductErrorsChange = Runtime.debounce(this.#onProductErrorsChange, 500, this);
+
 	cache = new Cache.MemoryCache();
 	modeChanges = {
 		EDIT: MODE_EDIT,
 		SET: MODE_SET,
 	};
+	onAfterExecuteExternalActions: ?CallableFunction;
 
 	constructor(id: string, fields: Object, settings: Settings, editor: Editor): void
 	{
@@ -150,7 +155,7 @@ export class Row
 	{
 		const editor = this.getEditor();
 
-		const selectorNames = ['MAIN_INFO', 'STORE_INFO'];
+		const selectorNames = ['MAIN_INFO', 'STORE_INFO', 'RESERVE_INFO'];
 
 		selectorNames.forEach((name) => {
 			this.getNode().querySelectorAll('[data-name="'+ name +'"] input[type="text"]').forEach(node => {
@@ -160,6 +165,55 @@ export class Row
 				Event.bind(node, 'mousedown', (event) => event.stopPropagation());
 			});
 		});
+	}
+
+	unsubscribeCustomEvents()
+	{
+		if (this.mainSelector)
+		{
+			this.mainSelector.unsubscribeEvents();
+			EventEmitter.unsubscribe(
+				this.mainSelector,
+				'onClear',
+				Runtime.debounce(this.#onMainSelectorClear.bind(this), 500, this)
+			);
+		}
+
+		if (this.storeSelector)
+		{
+			this.storeSelector.unsubscribeEvents();
+			EventEmitter.unsubscribe(
+				this.storeSelector,
+				'onChange',
+				Runtime.debounce(this.#onStoreFieldChange.bind(this), 500, this)
+			);
+
+			EventEmitter.unsubscribe(
+				this.storeSelector,
+				'onClear',
+				Runtime.debounce(this.#onStoreFieldClear.bind(this), 500, this)
+			);
+		}
+
+		if (this.reserveControl)
+		{
+			EventEmitter.unsubscribeAll(
+				this.reserveControl,
+				'onChange'
+			);
+		}
+
+		EventEmitter.unsubscribe(
+			this.model,
+			'onChangeStoreData',
+			this.handleChangeStoreData,
+		);
+
+		EventEmitter.unsubscribe(
+			this.model,
+			'onErrorsChange',
+			this.handleProductErrorsChange,
+		);
 	}
 
 	#initActions()
@@ -225,7 +279,7 @@ export class Row
 			;
 			if (!this.editor.getSettingValue('disableNotifyChangingPrice'))
 			{
-				Event.bind(priceNode, 'mouseenter', this.onFocusUnchangeablePrice);
+				Event.bind(priceNode, 'mouseenter', this.handleFocusUnchangeablePrice);
 			}
 		}
 		else
@@ -236,7 +290,7 @@ export class Row
 				.querySelector('.main-grid-editor-money-price')
 				?.removeAttribute('disabled')
 			;
-			Event.unbind(priceNode, 'mouseenter', this.onFocusUnchangeablePrice);
+			Event.unbind(priceNode, 'mouseenter', this.handleFocusUnchangeablePrice);
 		}
 	}
 
@@ -268,7 +322,7 @@ export class Row
 				const moreLink = Tag.render`
 					<span class="ui-notification-balloon-action">
 						${Loc.getMessage('CRM_ENTITY_MORE_LINK')}
-					</span>				
+					</span>
 				`;
 
 				Event.bind(moreLink, 'click', () => {
@@ -281,7 +335,7 @@ export class Row
 			const disableNotificationLink = Tag.render`
 				<span class="ui-notification-balloon-action">
 					${Loc.getMessage('CRM_ENTITY_DISABLE_NOTIFICATION')}
-				</span>				
+				</span>
 			`;
 
 			Event.bind(disableNotificationLink, 'click', () => {
@@ -375,8 +429,25 @@ export class Row
 				selectorWrapper = Tag.render`<div class="main-grid-row-product-selector"></div>`
 				mainInfoNode.appendChild(selectorWrapper)
 			}
+
+			this.mainSelector.skuTreeInstance = null;
 			this.mainSelector.renderTo(selectorWrapper);
 		}
+
+		EventEmitter.subscribe(
+			this.mainSelector,
+			'onClear',
+			Runtime.debounce(this.#onMainSelectorClear.bind(this), 500, this)
+		);
+	}
+
+	#onMainSelectorClear()
+	{
+		this.updateField('OFFER_ID', 0);
+		this.updateField('PRODUCT_NAME', '');
+		this.updateUiStoreAmountData();
+		this.updateField('DEDUCTED_QUANTITY', 0);
+		this.updateField('ROW_RESERVED', 0);
 	}
 
 	#initStoreSelector()
@@ -422,7 +493,7 @@ export class Row
 
 	#applyStoreSelectorRestrictionTweaks()
 	{
-		let storeSearchInput = this.storeSelector.searchInput;
+		const storeSearchInput = this.storeSelector.searchInput;
 		if (!storeSearchInput || !storeSearchInput.getNameInput())
 		{
 			return;
@@ -442,20 +513,62 @@ export class Row
 		const storeWrapper = this.getNode().querySelector('[data-name="RESERVE_INFO"]');
 		if (storeWrapper)
 		{
-			storeWrapper.innerHTML = '';
 			this.reserveControl = new ReserveControl({
 				model: this.getModel(),
+				isReserveEqualProductQuantity: this.#isReserveEqualProductQuantity(),
 				defaultDateReservation: this.editor.getSettingValue('defaultDateReservation'),
-				isInputDisabled: this.isReserveBlocked(),
+				isBlocked: this.isReserveBlocked(),
 			});
 
-			this.reserveControl.renderTo(storeWrapper);
 			EventEmitter.subscribe(
 				this.reserveControl,
 				'onChange',
 				(event) => {
 					const item = event.getData();
 					this.updateField(item.NAME, item.VALUE);
+				}
+			);
+
+			this.layoutReserveControl();
+		}
+
+		const quantityInput = this.getNode().querySelector('div[data-name="QUANTITY"] input');
+		if (quantityInput)
+		{
+			Event.bind(
+				quantityInput,
+				'change',
+				(event) => {
+					const isReserveEqualProductQuantity =
+						this.#isReserveEqualProductQuantity()
+						&& this.reserveControl?.isReserveEqualProductQuantity
+					;
+					if (isReserveEqualProductQuantity)
+					{
+						this.setReserveQuantity(this.getField('QUANTITY'));
+						return;
+					}
+
+					const value = Text.toNumber(event.target.value);
+					const errorNotifyId = 'quantityReservedCountError';
+					let notify = BX.UI.Notification.Center.getBalloonById(errorNotifyId);
+					if (value < this.getField('INPUT_RESERVE_QUANTITY'))
+					{
+						if (!notify)
+						{
+							const notificationOptions = {
+								id: errorNotifyId,
+								closeButton: true,
+								autoHideDelay: 3000,
+								content: Tag.render`<div>${Loc.getMessage('CRM_ENTITY_PL_IS_LESS_QUANTITY_THEN_RESERVED')}</div>`,
+							};
+
+							notify = BX.UI.Notification.Center.notify(notificationOptions);
+						}
+
+						this.setReserveQuantity(this.getField('QUANTITY'));
+						notify.show();
+					}
 				}
 			);
 		}
@@ -474,6 +587,17 @@ export class Row
 	#onStoreFieldClear(event)
 	{
 		this.initHandlersForSelectors();
+	}
+
+	layoutReserveControl()
+	{
+		const storeWrapper = this.getNode().querySelector('[data-name="RESERVE_INFO"]');
+		if (storeWrapper && this.reserveControl)
+		{
+			storeWrapper.innerHTML = '';
+			this.reserveControl.clearCache();
+			this.reserveControl.renderTo(storeWrapper);
+		}
 	}
 
 	setRowNumber(number)
@@ -805,7 +929,7 @@ export class Row
 			case 'STORE_TITLE':
 				this.changeStoreName(value);
 				break;
-			case 'RESERVE_QUANTITY':
+			case 'INPUT_RESERVE_QUANTITY':
 				this.changeReserveQuantity(value);
 				break;
 			case 'DATE_RESERVE_END':
@@ -814,10 +938,15 @@ export class Row
 			case 'BASE_PRICE':
 				this.setBasePrice(value);
 				break;
+			case 'DEDUCTED_QUANTITY':
+				this.setDeductedQuantity(value);
+				break;
+			case 'ROW_RESERVED':
+				this.setRowReserved(value);
+				break;
 			case 'SKU_TREE':
 			case 'DETAIL_URL':
 			case 'IMAGE_INFO':
-			case 'COMMON_STORE_RESERVED':
 			case 'COMMON_STORE_AMOUNT':
 				this.setField(code, value);
 				break;
@@ -1096,7 +1225,7 @@ export class Row
 			return;
 		}
 
-		const storeId = this.getModel().getField('STORE_ID');
+		const storeId = this.getField('STORE_ID');
 		const currentAmount = this.getModel().getStoreCollection().getStoreAmount(storeId);
 
 		if (currentAmount <= 0 && this.getModel().isChanged())
@@ -1113,8 +1242,13 @@ export class Row
 
 	updateUiStoreAmountData()
 	{
+		const availableWrapper = this.getNode().querySelector('[data-name="STORE_AVAILABLE"]');
+		if (!Type.isDomNode(availableWrapper))
+		{
+			return;
+		}
+
 		const storeId = this.getField('STORE_ID');
-		const reserved = this.model.getStoreCollection().getStoreReserved(storeId);
 		const available = this.model.getStoreCollection().getStoreAvailableAmount(storeId);
 
 		const measureName =
@@ -1123,17 +1257,62 @@ export class Row
 				: this.editor.getDefaultMeasure()?.SYMBOL || ''
 		;
 
-		const amountWrapper = this.getNode().querySelector('[data-name="STORE_RESERVED"]');
-		if (amountWrapper)
+		if (!this.getModel().isCatalogExisted())
 		{
-			amountWrapper.innerHTML = Text.toNumber(reserved) + ' ' + Text.encode(measureName);
+			availableWrapper.innerHTML = '';
 		}
-
-		const availableWrapper = this.getNode().querySelector('[data-name="STORE_AVAILABLE"]');
-		if (availableWrapper)
+		else
 		{
 			availableWrapper.innerHTML = Text.toNumber(available) + ' ' + Text.encode(measureName);
 		}
+	}
+
+	setRowReserved(value)
+	{
+		this.setField('ROW_RESERVED', value)
+		const reserveWrapper = this.getNode().querySelector('[data-name="ROW_RESERVED"]');
+		if (!Type.isDomNode(reserveWrapper))
+		{
+			return;
+		}
+
+		if (!this.getModel().isCatalogExisted())
+		{
+			reserveWrapper.innerHTML = '';
+			return;
+		}
+
+		const measureName =
+			Type.isStringFilled(this.model.getField('MEASURE_NAME'))
+				? this.model.getField('MEASURE_NAME')
+				: this.editor.getDefaultMeasure()?.SYMBOL || ''
+		;
+
+		reserveWrapper.innerHTML = Text.toNumber(this.getField('ROW_RESERVED')) + ' ' + Text.encode(measureName);
+	}
+
+	setDeductedQuantity(value)
+	{
+		this.setField('DEDUCTED_QUANTITY', value);
+		const deductedWrapper = this.getNode().querySelector('[data-name="DEDUCTED_QUANTITY"]');
+		if (!Type.isDomNode(deductedWrapper))
+		{
+			return;
+		}
+
+		if (!this.getModel().isCatalogExisted())
+		{
+			deductedWrapper.innerHTML = '';
+			return;
+		}
+
+		const measureName =
+			Type.isStringFilled(this.model.getField('MEASURE_NAME'))
+				? this.model.getField('MEASURE_NAME')
+				: this.editor.getDefaultMeasure()?.SYMBOL || ''
+		;
+
+		deductedWrapper.innerHTML = Text.toNumber(this.getField('DEDUCTED_QUANTITY')) + ' ' + Text.encode(measureName);
 	}
 
 	changeStoreName(value: number)
@@ -1153,13 +1332,31 @@ export class Row
 	changeReserveQuantity(value: number)
 	{
 		const preparedValue = Text.toNumber(value);
-		this.setField('RESERVE_QUANTITY', preparedValue);
+		const reserveDifference = preparedValue - this.getField('INPUT_RESERVE_QUANTITY');
+
+		if (reserveDifference == 0 || isNaN(reserveDifference))
+		{
+			return;
+		}
+		const newReserve = this.getField('ROW_RESERVED') + reserveDifference;
+
+		this.setField('ROW_RESERVED', newReserve);
+		this.setField('RESERVE_QUANTITY', Math.max(newReserve, 0));
+		this.setField('INPUT_RESERVE_QUANTITY', preparedValue);
+
 		this.addActionProductChange();
+	}
+
+	resetReserveFields()
+	{
+		this.setField('ROW_RESERVED', null);
+		this.setField('RESERVE_QUANTITY', null);
+		this.setField('INPUT_RESERVE_QUANTITY', null);
 	}
 
 	refreshFieldsLayout(exceptFields: Array<string> = []): void
 	{
-		for (let field in this.fields)
+		for (const field in this.fields)
 		{
 			if (this.fields.hasOwnProperty(field) && !exceptFields.includes(field))
 			{
@@ -1215,16 +1412,24 @@ export class Row
 			}
 		}
 
+		if (this.#isReserveEqualProductQuantity())
+		{
+			if (!this.getModel().getField('DATE_RESERVE_END'))
+			{
+				this.setField('DATE_RESERVE_END', this.editor.getSettingValue('defaultDateReservation'));
+			}
+		}
+
 		EventEmitter.subscribe(
 			this.model,
 			'onErrorsChange',
-			Runtime.debounce(this.#handleProductErrorsChange, 500, this)
+			this.handleProductErrorsChange,
 		);
 
 		EventEmitter.subscribe(
 			this.model,
 			'onChangeStoreData',
-			this.#onChangeStoreData.bind(this)
+			this.handleChangeStoreData,
 		);
 	}
 
@@ -1233,7 +1438,7 @@ export class Row
 		return this.model;
 	}
 
-	#handleProductErrorsChange()
+	#onProductErrorsChange()
 	{
 		this.getEditor().handleProductErrorsChange();
 	}
@@ -1244,12 +1449,30 @@ export class Row
 
 		if (isChangedValue)
 		{
+			this.getModel().setOption('isSimpleModel', value <= 0 && Type.isStringFilled(this.getField('NAME')));
 			this.setField('PRODUCT_ID', value, false);
 			this.setField('OFFER_ID', value, false);
 			this.storeSelector?.setProductId(value);
 
 			this.addActionProductChange();
 			this.addActionUpdateTotal();
+
+			if (this.#isReserveEqualProductQuantity())
+			{
+				if (!this.getModel().getField('DATE_RESERVE_END'))
+				{
+					this.setField('DATE_RESERVE_END', this.editor.getSettingValue('defaultDateReservation'));
+				}
+
+				this.resetReserveFields();
+
+				this.onAfterExecuteExternalActions = () => {
+					this.reserveControl?.setReservedQuantity(
+						this.getField('QUANTITY'),
+						true
+					);
+				};
+			}
 		}
 	}
 
@@ -1349,31 +1572,10 @@ export class Row
 		}
 
 		const isChangedValue = this.getField('QUANTITY') !== value;
-		const errorNotifyId = 'quantityReservedCountError';
-		let notify = BX.UI.Notification.Center.getBalloonById(errorNotifyId);
-		if (value < this.getField('RESERVE_QUANTITY'))
+		if (isChangedValue)
 		{
-			if (!notify)
-			{
-				const notificationOptions = {
-					id: errorNotifyId,
-					closeButton: true,
-					autoHideDelay: 3000,
-					content: Tag.render`<div>${Loc.getMessage('CRM_ENTITY_PL_IS_LESS_QUANTITY_THEN_RESERVED')}</div>`,
-					events: {
-						onClose: () => {
-							this.updateUiInputField('QUANTITY', this.getField('QUANTITY'));
-						}
-					}
-				};
-
-				notify = BX.UI.Notification.Center.notify(notificationOptions);
-			}
-
-			notify.show();
-		}
-		else if (isChangedValue)
-		{
+			const errorNotifyId = 'quantityReservedCountError';
+			const notify = BX.UI.Notification.Center.getBalloonById(errorNotifyId);
 			if (notify)
 			{
 				notify.close();
@@ -1388,17 +1590,18 @@ export class Row
 		}
 	}
 
-	setReserveQuantity(value, mode = MODE_SET)
+	setReserveQuantity(value)
 	{
-		if (mode === MODE_EDIT)
+		const node = this.getNode().querySelector('[data-name="RESERVE_INFO"]');
+		const input = node?.querySelector('input[name="INPUT_RESERVE_QUANTITY"]');
+		if (Type.isElementNode(input))
 		{
-			const node = this.getNode().querySelector('[data-name="RESERVE_INFO"]');
-			const input = node?.querySelector('input[name="RESERVE_QUANTITY"]');
-			if (Type.isElementNode(input))
-			{
-				input.value = value;
-				this.reserveControl?.changeInputValue(value);
-			}
+			input.value = value;
+			this.reserveControl?.changeInputValue(value);
+		}
+		else
+		{
+			this.changeReserveQuantity(value)
 		}
 	}
 
@@ -1581,7 +1784,12 @@ export class Row
 
 	updateUiDiscountTypeField(name: string, value: number): void
 	{
-		let text = value === DiscountType.MONETARY ? this.getEditor().getCurrencyText() : '%';
+		const text =
+			value === DiscountType.MONETARY
+				? this.getEditor().getCurrencyText()
+				: '%'
+		;
+
 		this.updateUiMoneyField(name, value, text);
 	}
 
@@ -1597,7 +1805,7 @@ export class Row
 
 	updateMoneyFieldUiWithDropdownApi(dropdown: BX.Main.dropdown, value: number | string)
 	{
-		if (dropdown.getValue() == value)
+		if (dropdown.getValue() === value)
 		{
 			return;
 		}
@@ -1952,6 +2160,12 @@ export class Row
 
 		this.getEditor().executeActions(this.externalActions);
 		this.resetExternalActions();
+
+		if (this.onAfterExecuteExternalActions)
+		{
+			this.onAfterExecuteExternalActions.call();
+			this.onAfterExecuteExternalActions = null;
+		}
 	}
 
 	isEmpty()
@@ -1966,5 +2180,10 @@ export class Row
 	isReserveBlocked()
 	{
 		return this.getSettingValue('isReserveBlocked', false);
+	}
+
+	#isReserveEqualProductQuantity(): Boolean
+	{
+		return this.editor.getSettingValue('isReserveEqualProductQuantity', false);
 	}
 }

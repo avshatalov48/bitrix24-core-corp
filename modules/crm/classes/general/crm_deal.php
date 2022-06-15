@@ -729,15 +729,71 @@ class CAllCrmDeal
 		}
 
 		// Applying filter by PRODUCT_ID
+		$productId = 0;
 		$operationInfo = Crm\UI\Filter\EntityHandler::findFieldOperation('PRODUCT_ROW_PRODUCT_ID', $arFilter);
 		if(is_array($operationInfo))
 		{
-			$prodID = (int)$operationInfo['CONDITION'];
-			if($prodID > 0 && $operationInfo['OPERATION'] === '=')
+			$productFilter = '';
+			$productId = $operationInfo['CONDITION'];
+			if (is_array($productId))
+			{
+				\Bitrix\Main\Type\Collection::normalizeArrayValuesByInt($productId);
+				$productIds = implode(',', $productId);
+				$productFilter = "and DP.PRODUCT_ID in ({$productIds})";
+			}
+			else
+			{
+				$productId = (int)$productId;
+				if ($productId > 0)
+				{
+					$productFilter = "and DP.PRODUCT_ID = {$productId}";
+				}
+			}
+			if (!empty($productFilter) && $operationInfo['OPERATION'] === '=')
 			{
 				$tableAlias = $sender->GetTableAlias();
-				$sqlData['WHERE'][] = "{$tableAlias}.ID IN (SELECT DP.OWNER_ID from b_crm_product_row DP where DP.OWNER_TYPE = 'D' and DP.OWNER_ID = {$tableAlias}.ID and DP.PRODUCT_ID = {$prodID})";
+				$sqlData['WHERE'][] = "{$tableAlias}.ID IN (
+					SELECT DP.OWNER_ID from b_crm_product_row DP
+					where DP.OWNER_TYPE = 'D'
+					and DP.OWNER_ID = {$tableAlias}.ID
+					{$productFilter}
+				)";
 			}
+		}
+
+		$operationInfo = Crm\UI\Filter\EntityHandler::findFieldOperation('IS_PRODUCT_RESERVED', $arFilter);
+		if (is_array($operationInfo) && \Bitrix\Main\Loader::includeModule('sale'))
+		{
+			$productFilter = '';
+			if (is_array($productId))
+			{
+				\Bitrix\Main\Type\Collection::normalizeArrayValuesByInt($productId);
+				$productIds = implode(',', $productId);
+				$productFilter = "and DP.PRODUCT_ID in ({$productIds})";
+			}
+			elseif ($productId > 0)
+			{
+				$productFilter ="AND DP.PRODUCT_ID = {$productId}";
+			}
+
+			$inCondition = $operationInfo['CONDITION'] === 'Y' ? 'IN' : 'NOT IN';
+			$reserveStoreFilter = '';
+			$reserveStoreIdOperationInfo = Crm\UI\Filter\EntityHandler::findFieldOperation('RESERVE_STORE_ID', $arFilter);
+			if (is_array($reserveStoreIdOperationInfo))
+			{
+				$reserveStoreId = (int)$reserveStoreIdOperationInfo['CONDITION'];
+				$reserveStoreFilter = "AND BR.STORE_ID = {$reserveStoreId}";
+			}
+			$tableAlias = $sender->GetTableAlias();
+			$sqlData['WHERE'][] = "{$tableAlias}.ID {$inCondition} (
+				SELECT DP.OWNER_ID FROM b_crm_product_row DP
+				INNER JOIN b_crm_product_reservation_map RM ON RM.PRODUCT_ROW_ID = DP.ID
+				INNER JOIN b_sale_basket_reservation BR ON RM.BASKET_RESERVATION_ID = BR.ID
+				WHERE DP.OWNER_TYPE = 'D'
+				AND BR.QUANTITY > 0
+				{$productFilter}
+				{$reserveStoreFilter}
+			)";
 		}
 
 		$operationInfo = Crm\UI\Filter\EntityHandler::findFieldOperation('ASSOCIATED_CONTACT_ID', $arFilter);

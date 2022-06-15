@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Order;
 
 use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Main\Type\Date;
 use Bitrix\Sale;
 
 Main\Localization\Loc::loadMessages(__FILE__);
@@ -308,7 +309,40 @@ class ProductManager
 	 */
 	protected function getDealProductList(): array
 	{
-		return \CCrmDeal::LoadProductRows($this->ownerId);
+		$rows = \CCrmDeal::LoadProductRows($this->ownerId);
+		if (!$rows)
+		{
+			return [];
+		}
+
+		$rowIds = array_column($rows, 'ID');
+		$reserveData = Crm\Reservation\Internals\ProductRowReservationTable::getList([
+			'filter' => ['=ROW_ID' => $rowIds],
+		]);
+
+		$reserveRowMap = [];
+		while ($reservation = $reserveData->fetch())
+		{
+			$rowId = $reservation['ROW_ID'];
+			unset($reservation['ID'], $reservation['ROW_ID']);
+
+			if ($reservation['DATE_RESERVE_END'] instanceof Date)
+			{
+				$reservation['DATE_RESERVE_END'] = $reservation['DATE_RESERVE_END']->toString();
+			}
+			$reserveRowMap[$rowId] = $reservation;
+		}
+
+		foreach ($rows as &$row)
+		{
+			$id = $row['ID'];
+			if (is_array($reserveRowMap[$id]))
+			{
+				$row += $reserveRowMap[$id];
+			}
+		}
+
+		return $rows;
 	}
 
 	/**
@@ -449,11 +483,11 @@ class ProductManager
 		$usedIndexes = [];
 		foreach ($basketProducts as $product)
 		{
-			$productId = $product['skuId'] ?? $product['productId'];
+			$productId = (int)($product['skuId'] ?? $product['productId']);
 
 			if (
 				!empty($product['additionalFields']['originBasketId'])
-				&& $product['additionalFields']['originBasketId'] !== $product['code']
+				&& (string)$product['additionalFields']['originBasketId'] !== (string)$product['code']
 			)
 			{
 				$basketProduct = $this->getOrderProductByBasketCode($orderProducts, $product['additionalFields']['originBasketId']);
@@ -468,7 +502,7 @@ class ProductManager
 			}
 			elseif (
 				!empty($product['additionalFields']['originProductId'])
-				&& $product['additionalFields']['originProductId'] !== $productId
+				&& (int)$product['additionalFields']['originProductId'] !== $productId
 			)
 			{
 				$index = $this->searchProductById($resultProductList, $product['additionalFields']['originProductId'], $usedIndexes);
@@ -488,7 +522,10 @@ class ProductManager
 				$index = $this->searchProductById($resultProductList, $productId, $usedIndexes);
 				if ($index !== false)
 				{
-					$basketProduct = $this->getOrderProductByXmlId($orderProducts, $product['innerId']);
+					$basketProduct =
+						$this->getOrderProductByXmlId($orderProducts, $product['innerId'])
+						?: $this->getOrderProductByBasketCode($orderProducts, $product['code'])
+					;
 					if ($basketProduct)
 					{
 						if ($resultProductList[$index]['QUANTITY'] < $basketProduct['QUANTITY'])

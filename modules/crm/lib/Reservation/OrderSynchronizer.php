@@ -17,6 +17,9 @@ use Bitrix\Salescenter\Builder\SettingsContainer;
 use Bitrix\SalesCenter\Integration\CrmManager;
 use Bitrix\Catalog\v2\Helpers\PropertyValue;
 use Bitrix\Catalog\StoreTable;
+use Bitrix\Crm\Service\Sale\Reservation\ReservationService;
+use Bitrix\Main\Loader;
+use CCrmOwnerType;
 
 class OrderSynchronizer
 {
@@ -39,6 +42,10 @@ class OrderSynchronizer
 	 */
 	public function __construct(int $dealId, array $dealProducts, int $orderId)
 	{
+		Loader::requireModule('catalog');
+		Loader::requireModule('sale');
+		Loader::requireModule('salescenter');
+
 		$this->dealId = $dealId;
 		$this->dealFields = \CCrmDeal::GetByID($dealId);
 
@@ -112,7 +119,11 @@ class OrderSynchronizer
 
 		self::disableContactAutoCreationModeByOrder($order);
 
-		$order->save();
+		$result = $order->save();
+		if ($result->isSuccess())
+		{
+			ReservationService::getInstance()->mappingReservations(CCrmOwnerType::Deal, $this->dealId, $order);
+		}
 
 		if ($wasAutomaticReservationEnabled)
 		{
@@ -240,11 +251,22 @@ class OrderSynchronizer
 			'OWNER_ID' => $this->dealId,
 			'OWNER_TYPE_ID' => \CCrmOwnerType::Deal,
 			'RESPONSIBLE_ID' => $this->dealFields['ASSIGNED_BY_ID'],
+			'CURRENCY' => $this->dealFields['CURRENCY_ID'],
 		];
 
 		if ($this->order)
 		{
 			$result['ID'] = $this->order->getId();
+
+			if ($this->order->getCurrency())
+			{
+				$result['CURRENCY'] = $this->order->getCurrency();
+			}
+
+			if ($this->order->getUserId())
+			{
+				$result['USER_ID'] = $this->order->getUserId();
+			}
 		}
 
 		$result['PRODUCT'] = $this->prepareProductsForBuilder($products);

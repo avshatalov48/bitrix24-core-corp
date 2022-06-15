@@ -198,6 +198,34 @@ class ImOpenLinesManager extends Base
 	}
 
 	/**
+	 * @param $userId
+	 * @return array
+	 */
+	public function getSessionIdsByUserId($userId): array
+	{
+		if (!$this->isEnabled())
+		{
+			return [];
+		}
+
+		$dialogs = [];
+		$sessionInfoRaw = SessionTable::getList([
+			'select' => ['ID'],
+			'filter' => [
+				'=USER_ID' => $userId,
+				'=CLOSED' => 'N'
+			]
+		]);
+
+		while ($sessionInfo = $sessionInfoRaw->fetch())
+		{
+			$dialogs[] = (int)$sessionInfo['ID'];
+		}
+
+		return $dialogs;
+	}
+
+	/**
 	 * @return array|false
 	 */
 	public function getSessionInfo()

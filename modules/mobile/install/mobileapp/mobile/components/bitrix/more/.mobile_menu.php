@@ -429,7 +429,7 @@ if (CModule::IncludeModule("rest"))
 					"attrs" => [
 						"cache" => false,
 						"id" => $apps["ID"],
-						"url" => "/mobile/marketplace/?id=" . $apps["ID"],
+						"url" => $siteDir . "mobile/marketplace/?id=" . $apps["ID"],
 					]
 				];
 			}

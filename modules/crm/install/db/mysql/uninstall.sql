@@ -189,3 +189,4 @@ DROP TABLE IF EXISTS b_crm_call_list_created;
 DROP TABLE IF EXISTS b_crm_call_list_item;
 DROP TABLE IF EXISTS b_crm_webform_agreement;
 DROP TABLE IF EXISTS b_crm_webform_field_dep_group;
+DROP TABLE IF EXISTS b_crm_product_row_reservation;

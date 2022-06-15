@@ -5,6 +5,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 } 
 
 $APPLICATION->SetAdditionalCSS("/bitrix/js/crm/css/crm.css");
+Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
 
 $isBitrix24 = SITE_TEMPLATE_ID === "bitrix24";
 if ($isBitrix24)

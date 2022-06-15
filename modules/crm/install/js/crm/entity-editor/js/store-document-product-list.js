@@ -123,7 +123,22 @@ if (typeof BX.Crm.EntityStoreDocumentProductListController === "undefined")
 
 	BX.Crm.EntityStoreDocumentProductListController.prototype.onBeforeSubmit = function ()
 	{
-		if (this.productList && (this.isChanged() || this._editor.isNew()))
+		if (this._editor.hasOwnProperty('_ajaxForm'))
+		{
+			var ajaxForm = this._editor._ajaxForm;
+			if (ajaxForm.hasOwnProperty('_config'))
+			{
+				var action = ajaxForm._config.data.ACTION;
+			}
+		}
+
+		var validated = true;
+		if (action === 'saveAndDeduct')
+		{
+			validated = this.validateProductList();
+		}
+
+		if (this.productList && (this.isChanged() || this._editor.isNew()) && validated)
 		{
 			this.productList.compileProductData();
 		}
@@ -147,6 +162,52 @@ if (typeof BX.Crm.EntityStoreDocumentProductListController === "undefined")
 
 	BX.Crm.EntityStoreDocumentProductListController.prototype.setTotal = function (totalData)
 	{};
+
+	BX.Crm.EntityStoreDocumentProductListController.prototype.validateProductList = function ()
+	{
+		this.clearErrorCollection();
+		if (this.productList)
+		{
+			const errorsArray = this.productList.validate();
+			if (errorsArray.length > 0)
+			{
+				this.addErrorCollection(errorsArray);
+				this._editor._toolPanel.clearErrors();
+				if (this._editor.hasOwnProperty('_toolPanel'))
+				{
+					BX.onCustomEvent(window, 'onProductsCheckFailed', this._tabShowHandler);
+					return false;
+				}
+			}
+		}
+
+		return true;
+	};
+
+	BX.Crm.EntityStoreDocumentProductListController.prototype.getErrorCollection = function ()
+	{
+		if (this.errorCollection instanceof Array)
+		{
+			return this.errorCollection;
+		}
+		else
+		{
+			return [];
+		}
+	}
+
+	BX.Crm.EntityStoreDocumentProductListController.prototype.addErrorCollection = function (errorCollection)
+	{
+		if (errorCollection instanceof Array)
+		{
+			this.errorCollection = [...this.errorCollection, ...errorCollection];
+		}
+	}
+
+	BX.Crm.EntityStoreDocumentProductListController.prototype.clearErrorCollection = function ()
+	{
+		this.errorCollection = [];
+	}
 
 	BX.Crm.EntityStoreDocumentProductListController.create = function(id, settings)
 	{

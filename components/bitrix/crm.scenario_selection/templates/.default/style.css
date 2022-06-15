@@ -140,3 +140,14 @@
 .crm-scenario-selection-info-checkbox input {
 	margin: 3px 8px 0 0;
 }
+
+.bx-popup-crm-scenario-selection-popup .popup-window-content {
+	color: #333;
+	padding-bottom: 0;
+}
+
+.bx-popup-crm-scenario-selection-popup-content-text {
+	padding-bottom: 20px;
+	display: block;
+	border-bottom: 1px solid #eff1f3;
+}

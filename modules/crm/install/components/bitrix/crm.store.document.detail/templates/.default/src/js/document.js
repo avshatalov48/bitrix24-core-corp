@@ -23,12 +23,27 @@ export class Document extends BaseCard
 		EventEmitter.subscribe('BX.Crm.EntityEditor:onFailedValidation', (event) => {
 			EventEmitter.emit('BX.Catalog.EntityCard.TabManager:onOpenTab', {tabId: 'main'});
 		});
+		EventEmitter.subscribe('onProductsCheckFailed', (event) => {
+			EventEmitter.emit('BX.Catalog.EntityCard.TabManager:onOpenTab', {tabId: 'tab_products'});
+		});
 
 		EventEmitter.subscribe('BX.Crm.EntityEditor:onSave', (event) => {
-			let eventEditor = event.data[0];
+			const eventEditor = event.data[0];
 			if (eventEditor && eventEditor._ajaxForm)
 			{
 				const action = eventEditor._ajaxForm?._actionName === 'SAVE' ? 'save' : eventEditor._ajaxForm?._config.data.ACTION;
+				if (action === Document.saveAndDeductAction)
+				{
+					const controllersErrorCollection = this.getControllersIssues(eventEditor.getControllers());
+					if (controllersErrorCollection.length > 0)
+					{
+						event.data[1].cancel = true;
+						eventEditor._toolPanel?.setLocked(false);
+						eventEditor._toolPanel?.addError(controllersErrorCollection[0]);
+						return;
+					}
+				}
+
 				let urlParams = {
 					isNewDocument: this.entityId <= 0 ? 'Y' : 'N',
 				};
@@ -57,6 +72,22 @@ export class Document extends BaseCard
 
 		BX.UI.SidePanel.Wrapper.setParam("closeAfterSave", true);
 		this.showNotificationOnClose = false;
+	}
+
+	getControllersIssues(controllers)
+	{
+		let validateErrorCollection = [];
+		if (controllers instanceof Array)
+		{
+			controllers.forEach((controller) => {
+				if (controller instanceof BX.Crm.EntityStoreDocumentProductListController)
+				{
+					validateErrorCollection.push(...controller.getErrorCollection());
+				}
+			});
+		}
+
+		return validateErrorCollection;
 	}
 
 	static getInstance()
@@ -168,13 +199,37 @@ export class Document extends BaseCard
 				button.setState(ButtonState.CLOCKING);
 				savePanel.setLocked(true);
 
+				const actionName = this.isDocumentDeducted ? Document.cancelDeductAction : Document.deductAction;
+				if (actionName === Document.deductAction)
+				{
+					const controllers = editor.getControllers();
+					let errorCollection = [];
+					controllers.forEach((controller) => {
+						if (controller instanceof BX.Crm.EntityStoreDocumentProductListController)
+						{
+							if (!controller.validateProductList())
+							{
+								errorCollection.push(...controller.getErrorCollection());
+							}
+						}
+					})
+
+					if (errorCollection.length > 0)
+					{
+						savePanel.clearErrors();
+						savePanel.addError(errorCollection[0]);
+						savePanel.setLocked(false);
+						button.setActive(true);
+						return;
+					}
+				}
+
 				let formData = {};
 				if (window.EntityEditorDocumentOrderShipmentController)
 				{
 					formData = window.EntityEditorDocumentOrderShipmentController.demandFormData();
 				}
 
-				const actionName = this.isDocumentDeducted ? Document.cancelDeductAction : Document.deductAction;
 				let deductDocumentAjaxForm = editor.createAjaxForm(
 					{
 						actionName: actionName,

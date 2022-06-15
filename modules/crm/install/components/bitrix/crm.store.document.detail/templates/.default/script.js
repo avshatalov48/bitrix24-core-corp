@@ -36,6 +36,11 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	        tabId: 'main'
 	      });
 	    });
+	    main_core_events.EventEmitter.subscribe('onProductsCheckFailed', function (event) {
+	      main_core_events.EventEmitter.emit('BX.Catalog.EntityCard.TabManager:onOpenTab', {
+	        tabId: 'tab_products'
+	      });
+	    });
 	    main_core_events.EventEmitter.subscribe('BX.Crm.EntityEditor:onSave', function (event) {
 	      var eventEditor = event.data[0];
 
@@ -43,6 +48,20 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	        var _eventEditor$_ajaxFor, _eventEditor$_ajaxFor2;
 
 	        var action = ((_eventEditor$_ajaxFor = eventEditor._ajaxForm) === null || _eventEditor$_ajaxFor === void 0 ? void 0 : _eventEditor$_ajaxFor._actionName) === 'SAVE' ? 'save' : (_eventEditor$_ajaxFor2 = eventEditor._ajaxForm) === null || _eventEditor$_ajaxFor2 === void 0 ? void 0 : _eventEditor$_ajaxFor2._config.data.ACTION;
+
+	        if (action === Document.saveAndDeductAction) {
+	          var controllersErrorCollection = _this.getControllersIssues(eventEditor.getControllers());
+
+	          if (controllersErrorCollection.length > 0) {
+	            var _eventEditor$_toolPan, _eventEditor$_toolPan2;
+
+	            event.data[1].cancel = true;
+	            (_eventEditor$_toolPan = eventEditor._toolPanel) === null || _eventEditor$_toolPan === void 0 ? void 0 : _eventEditor$_toolPan.setLocked(false);
+	            (_eventEditor$_toolPan2 = eventEditor._toolPanel) === null || _eventEditor$_toolPan2 === void 0 ? void 0 : _eventEditor$_toolPan2.addError(controllersErrorCollection[0]);
+	            return;
+	          }
+	        }
+
 	        var urlParams = {
 	          isNewDocument: _this.entityId <= 0 ? 'Y' : 'N'
 	        };
@@ -76,6 +95,21 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	  }
 
 	  babelHelpers.createClass(Document, [{
+	    key: "getControllersIssues",
+	    value: function getControllersIssues(controllers) {
+	      var validateErrorCollection = [];
+
+	      if (controllers instanceof Array) {
+	        controllers.forEach(function (controller) {
+	          if (controller instanceof BX.Crm.EntityStoreDocumentProductListController) {
+	            validateErrorCollection.push.apply(validateErrorCollection, babelHelpers.toConsumableArray(controller.getErrorCollection()));
+	          }
+	        });
+	      }
+
+	      return validateErrorCollection;
+	    }
+	  }, {
 	    key: "openMasterSlider",
 	    value: function openMasterSlider() {
 	      var card = this;
@@ -179,13 +213,34 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 
 	          button.setState(ui_buttons.ButtonState.CLOCKING);
 	          savePanel.setLocked(true);
+	          var actionName = _this2.isDocumentDeducted ? Document.cancelDeductAction : Document.deductAction;
+
+	          if (actionName === Document.deductAction) {
+	            var controllers = editor.getControllers();
+	            var errorCollection = [];
+	            controllers.forEach(function (controller) {
+	              if (controller instanceof BX.Crm.EntityStoreDocumentProductListController) {
+	                if (!controller.validateProductList()) {
+	                  errorCollection.push.apply(errorCollection, babelHelpers.toConsumableArray(controller.getErrorCollection()));
+	                }
+	              }
+	            });
+
+	            if (errorCollection.length > 0) {
+	              savePanel.clearErrors();
+	              savePanel.addError(errorCollection[0]);
+	              savePanel.setLocked(false);
+	              button.setActive(true);
+	              return;
+	            }
+	          }
+
 	          var formData = {};
 
 	          if (window.EntityEditorDocumentOrderShipmentController) {
 	            formData = window.EntityEditorDocumentOrderShipmentController.demandFormData();
 	          }
 
-	          var actionName = _this2.isDocumentDeducted ? Document.cancelDeductAction : Document.deductAction;
 	          var deductDocumentAjaxForm = editor.createAjaxForm({
 	            actionName: actionName,
 	            enableRequiredUserFieldCheck: false,

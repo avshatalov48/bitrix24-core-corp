@@ -303,8 +303,12 @@ if ($arParams['TYPE'] == 'show' && !empty($arParams['ELEMENT_ID']) && $arParams[
 		$menuItems[] = [
 			'text' => GetMessage('INVOICE_PAYMENT_HTML'),
 			'title' => GetMessage('INVOICE_PAYMENT_HTML_TITLE'),
-			'onclick' => 'BX.DocumentGenerator.Document.onBeforeCreate(\''.\CUtil::JSEscape($href).'\', '.
-				\CUtil::PhpToJSObject(['checkNumber' => true]).');'
+			'onclick' => 'BX.DocumentGenerator.Document.onBeforeCreate(\''
+				. \CUtil::JSEscape($href).'\', '
+				. \CUtil::PhpToJSObject(['checkNumber' => true]) . ', '
+				. 'null, '
+				. '\'crm\''
+				.');'
 		];
 
 		unset($componentPath, $params, $res, $data, $uri, $href);

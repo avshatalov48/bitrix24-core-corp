@@ -48,7 +48,7 @@ final class EntityBuilder
 		$entity = null;
 		if ($this->isDeal())
 		{
-			$entity = new Deal($this->ownerTypeId, $this->ownerId);
+			$entity = new Deal($this->ownerId);
 		}
 		elseif ($this->isDynamicEntity())
 		{

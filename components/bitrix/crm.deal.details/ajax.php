@@ -945,15 +945,34 @@ elseif($action === 'SAVE')
 			__CrmDealDetailsEndJsonResonse($responseData);
 		}
 
+		$isSaveSupplementReserveData =
+			Bitrix\Main\Loader::includeModule('catalog')
+			&& Bitrix\Main\Loader::includeModule('salescenter')
+			&& Bitrix\Catalog\Component\UseStore::isUsed()
+			&& !\CCrmSaleHelper::isWithOrdersMode()
+			&& Crm\Restriction\RestrictionManager::getInventoryControlIntegrationRestriction()->hasPermission()
+		;
+
 		Crm\Reservation\DealProductsHitDataSupplement::getInstance()->setProductRows((int)$ID, $productRows);
 		$productRowsSaveTookPlace = false;
 		if (!$isExternal && $enableProductRows && (!$isNew || !empty($productRows)))
 		{
+			if ($isSaveSupplementReserveData)
+			{
+				\Bitrix\Crm\Reservation\EventsHandler\Deal::disableReservationAfterCrmDealProductRowsSave();
+			}
+
 			CCrmProductRow::setPerRowInsert(true);
 			$saveProductRowsResult = \CCrmDeal::SaveProductRows($ID, $productRows, true, true, false);
 			$productRowsSaveTookPlace = true;
 			CCrmProductRow::setPerRowInsert(false);
 			Crm\Reservation\DealProductsHitDataSupplement::getInstance()->readDealSaveData((int)$ID);
+
+			if ($isSaveSupplementReserveData)
+			{
+				\Bitrix\Crm\Reservation\EventsHandler\Deal::enableReservationAfterCrmDealProductRowsSave();
+			}
+
 			if(!$saveProductRowsResult)
 			{
 				__CrmDealDetailsEndJsonResonse(array('ERROR' => GetMessage('CRM_DEAL_PRODUCT_ROWS_SAVING_ERROR')));
@@ -965,23 +984,14 @@ elseif($action === 'SAVE')
 				$productRowsSaveTookPlace
 				|| !empty($productRows)
 			)
-			&& Bitrix\Main\Loader::includeModule('catalog')
-			&& Bitrix\Main\Loader::includeModule('salescenter')
-			&& Bitrix\Catalog\Component\UseStore::isUsed()
-			&& !\CCrmSaleHelper::isWithOrdersMode()
-			&& Crm\Restriction\RestrictionManager::getInventoryControlIntegrationRestriction()->hasPermission()
+			&& $isSaveSupplementReserveData
 		)
 		{
+			Crm\Reservation\DealProductsHitDataSupplement::getInstance()->saveSupplementReserveData((int)$ID);
 			$enrichedProductRows = Crm\Reservation\DealProductsHitDataSupplement::getInstance()->getSupplementedProductRows((int)$ID);
-			$orderIds = OrderEntityTable::getOrderIdsByOwner($ID, \CCrmOwnerType::Deal);
-			$orderId = $orderIds ? (int)$orderIds[0] : 0;
-			if ($orderId || !empty($enrichedProductRows))
+			if ($enrichedProductRows)
 			{
-				(new Crm\Reservation\OrderSynchronizer(
-					(int)$ID,
-					$enrichedProductRows,
-					$orderId
-				))->synchronize();
+				Crm\Service\Sale\Reservation\ReservationService::getInstance()->synchronizeOrderForDeal($ID, $enrichedProductRows);
 			}
 		}
 

@@ -7,6 +7,11 @@ use Bitrix\Crm;
 
 class Deal extends Base
 {
+	public function __construct(int $ownerId)
+	{
+		parent::__construct(\CCrmOwnerType::Deal, $ownerId);
+	}
+
 	protected function checkLoadedEntity(): Main\Result
 	{
 		$result = new Main\Result();
@@ -22,40 +27,24 @@ class Deal extends Base
 		return $result;
 	}
 
-	public function getEntityProducts(): array
+	public function loadEntityProducts(): array
 	{
-		static $dealProducts = [];
+		$dealProducts = [];
 
-		if ($dealProducts)
-		{
-			return $dealProducts;
-		}
+		$dealProductRows = \CCrmDeal::LoadProductRows($this->ownerId);
 
 		$basketReservation = new Crm\Reservation\BasketReservation();
-		$dealProductRows = \CCrmDeal::LoadProductRows($this->ownerId);
+		$basketReservation->addProducts($dealProductRows);
+		$reservedProducts = $basketReservation->getReservedProducts();
 
 		foreach ($dealProductRows as $dealProduct)
 		{
-			$basketReservation->addProduct($dealProduct);
-		}
+			$dealProducts[$dealProduct['ID']] = $dealProduct;
 
-		$reservedProducts = $basketReservation->getReservedProducts();
-		if ($reservedProducts)
-		{
-			foreach ($dealProductRows as $dealProduct)
+			$reservedProductData = $reservedProducts[$dealProduct['ID']] ?? null;
+			if ($reservedProductData)
 			{
-				$reservedProductData = $reservedProducts[$dealProduct['ID']] ?? null;
-				if ($reservedProductData)
-				{
-					$dealProducts[$dealProduct['ID']] = array_merge($dealProduct, $reservedProductData);
-				}
-			}
-		}
-		else
-		{
-			foreach ($dealProductRows as $dealProduct)
-			{
-				$dealProducts[$dealProduct['ID']] = $dealProduct;
+				$dealProducts[$dealProduct['ID']] = array_merge($dealProduct, $reservedProductData);
 			}
 		}
 

@@ -23,6 +23,7 @@ $MESS["CRM_ENTITY_PL_DISCOUNT"] = "discount";
 $MESS["CRM_ENTITY_PL_DISCOUNTS_ABSENT"] = "No applicable discounts";
 $MESS["CRM_ENTITY_PL_DISCOUNT_PRICE"] = "Total amount for products after discount";
 $MESS["CRM_ENTITY_PL_IS_LESS_QUANTITY_THEN_RESERVED"] = "You cannot reserve more product items than specified in the \"Quantity\" field.";
+$MESS["CRM_ENTITY_PL_IS_LESS_QUANTITY_WITH_DEDUCTED_THEN_RESERVED"] = "You cannot reserve more product items than specified in the \"Quantity\" field and already shipped from warehouse.";
 $MESS["CRM_ENTITY_PL_NEGATIVE_PRICE_NOTICE"] = "Price cannot be negative.";
 $MESS["CRM_ENTITY_PL_NO"] = "None";
 $MESS["CRM_ENTITY_PL_ORDER_DISCOUNT"] = "Discounts";

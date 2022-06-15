@@ -21,3 +21,4 @@ $MESS["DOCGEN_TAX_INCLUDED_NOT_VAT"] = "Налог (не НДС) включен 
 $MESS["DOCGEN_TAX_NOT_INCLUDED_NOT_VAT"] = "Налог (не НДС) не включен в цену";
 $MESS["DOCGEN_UF_TYPE_BOOLEAN_YES"] = "Да";
 $MESS["DOCGEN_UF_TYPE_BOOLEAN_NO"] = "Нет";
+$MESS["CRM_DOCGEN_CRMENTITYDATAPROVIDER_CLIENT_NAME"] = "Клиент";

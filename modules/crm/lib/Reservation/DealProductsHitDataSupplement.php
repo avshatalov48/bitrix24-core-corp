@@ -2,6 +2,9 @@
 
 namespace Bitrix\Crm\Reservation;
 
+use Bitrix\Crm\Service\Sale\Reservation\ReservationService;
+use Bitrix\Main\Type\Date;
+
 class DealProductsHitDataSupplement
 {
 	/** @var array */
@@ -82,5 +85,43 @@ class DealProductsHitDataSupplement
 		}
 
 		return null;
+	}
+
+	/**
+	 * Save reserve data sorted by ORIGINAL_ROW in supplement
+	 *
+	 * @param int $dealId
+	 * @return void
+	 */
+	public function saveSupplementReserveData(int $dealId): void
+	{
+		$productRows = $this->getSupplementedProductRows($dealId);
+		if (!$productRows)
+		{
+			return;
+		}
+
+		$service = ReservationService::getInstance();
+		foreach ($productRows as $row)
+		{
+			if (!isset($row['INPUT_RESERVE_QUANTITY']))
+			{
+				// regardless of the quantity, save it to remember the selected store.
+				$row['INPUT_RESERVE_QUANTITY'] = 0;
+			}
+
+			$dateEndReserve = null;
+			if (!empty($row['DATE_RESERVE_END']))
+			{
+				$dateEndReserve = Date::createFromText($row['DATE_RESERVE_END']);
+			}
+
+			$service->reservationProductRow(
+				$row['ID'],
+				$row['INPUT_RESERVE_QUANTITY'],
+				$row['STORE_ID'] ?? null,
+				$dateEndReserve
+			);
+		}
 	}
 }

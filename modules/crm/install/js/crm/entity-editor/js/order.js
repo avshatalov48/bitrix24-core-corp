@@ -1281,10 +1281,9 @@ if(typeof BX.Crm.EntityEditorDocumentOrderShipmentController === "undefined")
 			this.setCustomPriceDelivery();
 		}
 
-		this.setFormField(
-			this.getConfigStringParam("productDataFieldName", ""),
-			'['+JSON.stringify(this.demandFormData())+']'
-		);
+		var productDataFieldName = this.getConfigStringParam("productDataFieldName", "");
+		this.setFormField(productDataFieldName, '');
+		this.setFormField(productDataFieldName,'['+JSON.stringify(this.demandFormData())+']');
 	};
 
 	BX.Crm.EntityEditorDocumentOrderShipmentController.prototype.setFormField = function(fieldName, value)

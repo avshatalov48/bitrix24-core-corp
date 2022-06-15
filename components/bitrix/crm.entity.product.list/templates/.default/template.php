@@ -133,6 +133,7 @@ $editorConfig = [
 	'items' => [],
 
 	'isReserveBlocked' => $arResult['IS_RESERVE_BLOCKED'],
+	'isReserveEqualProductQuantity' => $arResult['IS_RESERVE_EQUAL_PRODUCT_QUANTITY'],
 ];
 
 $productIdMask = '#PRODUCT_ID_MASK#';
@@ -164,12 +165,14 @@ $grid['ROWS']['template_0'] = [
 	'SUM' => 0,
 	'STORE_ID' => $arResult['DEFAULT_STORE_ID'],
 	'STORE_TITLE' => $stores[$arResult['DEFAULT_STORE_ID']]['TITLE'] ?? '',
-	'STORE_RESERVED' => 0,
-	'STORE_AVAILABLE' => 0,
+	'STORE_AVAILABLE' => null,
 	'STORE_AMOUNT' => 0,
 	'COMMON_STORE_AMOUNT' => 0,
 	'COMMON_STORE_RESERVED' => 0,
-	'RESERVE_QUANTITY' => 0,
+	'RESERVE_QUANTITY' => null,
+	'ROW_RESERVED' => null,
+	'INPUT_RESERVE_QUANTITY' => null,
+	'DEDUCTED_QUANTITY' => null,
 	'DATE_RESERVE' => '',
 	'DATE_RESERVE_END' => '',
 	'CUSTOMIZED' => 'N',
@@ -243,11 +246,13 @@ foreach ($grid['ROWS'] as $product)
 		'STORE_ID' => $rawProduct['STORE_ID'],
 		'STORE_TITLE' => $rawProduct['STORE_TITLE'],
 		'STORE_AVAILABLE' => $rawProduct['STORE_AVAILABLE'],
-		'STORE_RESERVED' => $rawProduct['STORE_RESERVED'],
 		'STORE_AMOUNT' => $rawProduct['STORE_AMOUNT'],
 		'COMMON_STORE_AMOUNT' => $rawProduct['COMMON_STORE_AMOUNT'],
 		'COMMON_STORE_RESERVED' => $rawProduct['COMMON_STORE_RESERVED'],
 		'RESERVE_QUANTITY' => $rawProduct['RESERVE_QUANTITY'],
+		'ROW_RESERVED' => $rawProduct['ROW_RESERVED'],
+		'INPUT_RESERVE_QUANTITY' => $rawProduct['INPUT_RESERVE_QUANTITY'],
+		'DEDUCTED_QUANTITY' => $rawProduct['DEDUCTED_QUANTITY'],
 		'DATE_RESERVE' => $rawProduct['DATE_RESERVE'],
 		'DATE_RESERVE_END' => $rawProduct['DATE_RESERVE_END'],
 		'RESERVE_ID' => $rawProduct['RESERVE_ID'],
@@ -465,12 +470,34 @@ foreach ($grid['ROWS'] as $product)
 	];
 	// end region SUM
 
+	$reserveInfo =
+		$rawProduct['INPUT_RESERVE_QUANTITY'] !== null
+			? $rawProduct['INPUT_RESERVE_QUANTITY'] . " " . $measureName
+			: ''
+	;
+	$deductedInfo =
+		$rawProduct['DEDUCTED_QUANTITY'] !== null
+			? $rawProduct['DEDUCTED_QUANTITY'] . " " . $measureName
+			: ''
+	;
+	$rowReserved =
+		$rawProduct['ROW_RESERVED'] !== null
+			? $rawProduct['ROW_RESERVED'] . " " . $measureName
+			: ''
+	;
+	$storeAvailable =
+		$rawProduct['STORE_AVAILABLE'] !== null
+			? $rawProduct['STORE_AVAILABLE'] . " " . $measureName
+			: ''
+	;
+
 	$columns = [
 		'MAIN_INFO' => $mainInfoColumn,
 		'STORE_INFO' => HtmlFilter::encode($product['STORE_TITLE']),
-		'RESERVE_INFO' => "<span data-name='RESERVE_QUANTITY'>" . $rawProduct['RESERVE_QUANTITY'] . " " . $measureName . "</span>",
-		'STORE_RESERVED' => "<span data-name='STORE_RESERVED'>" . $rawProduct['STORE_RESERVED'] . " " . $measureName . "</span>",
-		'STORE_AVAILABLE' => "<span data-name='STORE_AVAILABLE'>" . $rawProduct['STORE_AVAILABLE'] . " " . $measureName . "</span>",
+		'RESERVE_INFO' => "<span data-name='INPUT_RESERVE_QUANTITY'>{$reserveInfo}</span>",
+		'DEDUCTED_INFO' => "<span data-name='DEDUCTED_QUANTITY'>{$deductedInfo}</span>",
+		'ROW_RESERVED' => "<span data-name='ROW_RESERVED'>{$rowReserved}</span>",
+		'STORE_AVAILABLE' => "<span data-name='STORE_AVAILABLE'>{$storeAvailable}</span>",
 		'PRICE' => $priceColumn,
 		'QUANTITY' => $quantityColumn,
 		'SUM' => $sumColumn,

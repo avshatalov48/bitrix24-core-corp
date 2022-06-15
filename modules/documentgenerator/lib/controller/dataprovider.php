@@ -41,6 +41,40 @@ class DataProvider extends Base
 	}
 
 	/**
+	 * @param $provider
+	 * @param string $value
+	 * @param array $options
+	 * @param string $module
+	 */
+	public function isPrintableAction($provider, $value = '', array $options = [], $module = '')
+	{
+		if (
+			!empty($module)
+			&& !(ModuleManager::isModuleInstalled($module)
+			&& Loader::includeModule($module))
+		)
+		{
+			$this->errorCollection[] = new Error('cant load module '.$module);
+			return null;
+		}
+
+		if (!DataProviderManager::checkProviderName($provider, $module))
+		{
+			$this->errorCollection[] = new Error($provider.' is not a DataProvider');
+			return null;
+		}
+
+		/** @var \Bitrix\DocumentGenerator\DataProvider $dataProvider */
+		$dataProvider = new $provider($value, $options);
+		$isPrintableResult = $dataProvider->isPrintable();
+		if (!$isPrintableResult->isSuccess())
+		{
+			$this->errorCollection->add($isPrintableResult->getErrors());
+			return null;
+		}
+	}
+
+	/**
 	 * @param \Bitrix\DocumentGenerator\DataProvider $dataProvider
 	 * @return array
 	 */

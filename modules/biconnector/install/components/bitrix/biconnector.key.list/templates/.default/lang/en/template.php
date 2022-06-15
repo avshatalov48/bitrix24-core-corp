@@ -1,0 +1,9 @@
+<?php
+$MESS["CT_BBKL_COLUMN_ACCESS_KEY"] = "Key";
+$MESS["CT_BBKL_COLUMN_ACTIVE"] = "Active";
+$MESS["CT_BBKL_COLUMN_CONNECTION"] = "Connection";
+$MESS["CT_BBKL_COLUMN_CREATED_BY"] = "Administrator";
+$MESS["CT_BBKL_COLUMN_DATE_CREATE"] = "Created on";
+$MESS["CT_BBKL_COLUMN_ID"] = "ID";
+$MESS["CT_BBKL_TOOLBAR_ADD"] = "Add key";
+$MESS["CT_BBKL_COLUMN_APPLICATION"] = "Application";

@@ -1,5 +1,10 @@
 <?php
 
+if (!\Bitrix\Main\Loader::includeModule('intranet'))
+{
+	return false;
+}
+
 $arClasses = [
 	"CExtranet" => "classes/general/extranet.php",
 	"CUsersInMyGroupsCache" => "classes/general/extranet.php",

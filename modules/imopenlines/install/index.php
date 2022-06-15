@@ -246,21 +246,36 @@ final class imopenlines extends \CModule
 
 		$this->InstallEvents();
 
-		$this->installPreset();
+		/** @see \imopenlines::delayInstall */
+		\CAgent::AddAgent('\imopenlines::delayInstall(0);', 'imopenlines', 'N', 60, '', 'Y', \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+120, "FULL"));
 
 		\Bitrix\ImOpenLines\Integrations\Report\Statistic::bind();
 
 		return true;
 	}
 
-	public function installPreset()
+	/**
+	 * Delayed action until
+	 * @param int $retry
+	 * @return string
+	 */
+	public static function delayInstall($retry = 0)
 	{
-		if (!\Bitrix\Main\Loader::includeModule('imopenlines'))
+		$retry ++;
+
+		// wait for all necessary modules
+		if (
+			\Bitrix\Main\Loader::includeModule('imopenlines')
+			&& \Bitrix\Main\Loader::includeModule('crm')
+			&& \Bitrix\Main\Loader::includeModule('sale')
+			&& (count(\Bitrix\ImOpenlines\Security\Helper::getAdministrators()) > 0)
+		)
 		{
-			return false;
+			(new \Bitrix\ImOpenLines\Config)->createPreset();
+			return '';
 		}
 
-		return (new \Bitrix\ImOpenLines\Config)->createPreset();
+		return $retry <= 100 ? __METHOD__. "({$retry});" : '';
 	}
 
 	public function InstallFiles()

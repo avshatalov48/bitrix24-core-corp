@@ -10,6 +10,7 @@ use Bitrix\Catalog\v2\IoC\ServiceContainer;
 use Bitrix\Crm;
 use Bitrix\Crm\Discount;
 use Bitrix\Crm\Product\Url\ProductBuilder;
+use Bitrix\Crm\Component\EntityDetails\ProductList;
 use Bitrix\Iblock;
 use Bitrix\Iblock\Url\AdminPage\BuilderManager;
 use Bitrix\Main;
@@ -21,6 +22,9 @@ use Bitrix\Main\Web\Json;
 use Bitrix\Sale;
 use Bitrix\Catalog;
 use Bitrix\Catalog\StoreTable;
+use Bitrix\Crm\Service\Container;
+use Bitrix\UI\Util;
+use Bitrix\Crm\Service\Sale\Reservation\ReservationService;
 
 if (!Loader::includeModule('crm'))
 {
@@ -953,15 +957,27 @@ final class CCrmEntityProductListComponent
 			return;
 		}
 
+		$shippedRowMap = Container::getInstance()->getShipmentProductService()->getShippedQuantityByEntity(
+			$this->entity['TYPE_ID'],
+			$this->entity['ID']
+		);
+
 		if (is_array($this->arParams['~PRODUCTS']))
 		{
 			$this->rows = $this->arParams['~PRODUCTS'];
 
-			foreach ($this->rows as $index => $row)
+			foreach ($this->rows as $index => &$row)
 			{
 				if (!isset($row['ID']))
 				{
-					$this->rows[$index]['ID'] = $this->getNewRowId();
+					$row['ID'] = $this->getNewRowId();
+				}
+
+				$id = $row['ID'];
+				$row['DEDUCTED_QUANTITY'] = null;
+				if ((int)$row['PRODUCT_ID'] > 0)
+				{
+					$row['DEDUCTED_QUANTITY'] = $shippedRowMap[$id] ?? 0.0;
 				}
 
 				$intFields = [
@@ -1005,10 +1021,55 @@ final class CCrmEntityProductListComponent
 					}
 				}
 			}
+
+			$this->rows = ReservationService::getInstance()->fillBasketReserves($this->rows);
 		}
 		elseif ($this->entity['ID'] > 0)
 		{
 			$this->rows = CCrmProductRow::LoadRows($this->entity['TYPE_CODE'], $this->entity['ID']);
+			if ($this->rows && $this->isAllowedInventoryManagement())
+			{
+				$reserveData = \Bitrix\Crm\Reservation\Internals\ProductRowReservationTable::getList([
+					'filter' => [
+						'=ROW_ID' => array_column($this->rows, 'ID'),
+					],
+					'select' => [
+						'INPUT_RESERVE_QUANTITY' => 'RESERVE_QUANTITY',
+						'DATE_RESERVE_END',
+						'ROW_ID',
+						'STORE_ID',
+					],
+				]);
+
+				$reserveRowMap = [];
+				while ($reservation = $reserveData->fetch())
+				{
+					$rowId = $reservation['ROW_ID'];
+					unset($reservation['ROW_ID']);
+
+					if ($reservation['DATE_RESERVE_END'] instanceof Date)
+					{
+						$reservation['DATE_RESERVE_END'] = $reservation['DATE_RESERVE_END']->toString();
+					}
+					$reserveRowMap[$rowId] = $reservation;
+				}
+
+				foreach ($this->rows as &$row)
+				{
+					$id = $row['ID'];
+
+					if ($reserveRowMap[$id])
+					{
+						$row += $reserveRowMap[$id];
+					}
+
+					$row['DEDUCTED_QUANTITY'] = null;
+					if ((int)$row['PRODUCT_ID'] > 0)
+					{
+						$row['DEDUCTED_QUANTITY'] = $shippedRowMap[$id] ?? 0.0;
+					}
+				}
+			}
 		}
 	}
 
@@ -1085,12 +1146,17 @@ final class CCrmEntityProductListComponent
 
 		$this->arResult['URL_BUILDER_CONTEXT'] = ProductBuilder::TYPE_ID;
 		$this->arResult['PRODUCT_DATA_FIELD_NAME'] = $this->arParams['PRODUCT_DATA_FIELD_NAME'];
-		$reserveClearPeriod = Sale\Configuration::getProductReserveClearPeriod();
-		$this->arResult['DEFAULT_DATE_RESERVATION'] =
-			(new Date())
-				->add($reserveClearPeriod . 'D')
-				->toString()
-		;
+		$this->arResult['DEFAULT_DATE_RESERVATION'] = (string)ReservationService::getInstance()->getDefaultDateReserveEnd();
+
+		if(
+			Bitrix\Main\Loader::includeModule('pull')
+			&& $this->entity['TYPE_NAME'] === CCrmOwnerType::DealName
+			&& !$this->isAllowedInventoryManagement()
+		)
+		{
+			global $USER;
+			\CPullWatch::Add($USER->GetID(), 'CATALOG_INVENTORY_MANAGEMENT_CHANGED');
+		}
 	}
 
 	protected function getGridActionPanel(): array
@@ -1392,14 +1458,12 @@ final class CCrmEntityProductListComponent
 			'id' => 'MAIN_INFO',
 			'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_MAIN_INFO'),
 			'sort' => 'NAME',
-			'default' => true,
 		];
 
 		$result['PRICE'] = [
 			'id' => 'PRICE',
 			'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_PRICE'),
 			'sort' => 'PRICE',
-			'default' => true,
 			'editable' => [
 				'TYPE' => Types::MONEY,
 				'CURRENCY_LIST' => $this->getCurrencyListForMoneyField(),
@@ -1417,7 +1481,6 @@ final class CCrmEntityProductListComponent
 			'id' => 'QUANTITY',
 			'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_QUANTITY'),
 			'sort' => 'QUANTITY',
-			'default' => true,
 			'editable' => [
 				'TYPE' => Types::MONEY,
 				'CURRENCY_LIST' => $this->getMeasureListForMoneyField(),
@@ -1433,7 +1496,6 @@ final class CCrmEntityProductListComponent
 		$result['DISCOUNT_PRICE'] = [
 			'id' => 'DISCOUNT_PRICE',
 			'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_DISCOUNT_PRICE'),
-			'default' => false,
 			'editable' => [
 				'TYPE' => Types::MONEY,
 				'CURRENCY_LIST' => $this->getDiscountListForMoneyField(),
@@ -1450,7 +1512,6 @@ final class CCrmEntityProductListComponent
 		$result['DISCOUNT_ROW'] = [
 			'id' => 'DISCOUNT_ROW',
 			'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_DISCOUNT_ROW'),
-			'default' => false,
 			'editable' => [
 				'TYPE' => Types::MONEY,
 				'CURRENCY_LIST' => $this->getCurrencyListForMoneyField(),
@@ -1470,19 +1531,16 @@ final class CCrmEntityProductListComponent
 			$result['TAX_RATE'] = [
 				'id' => 'TAX_RATE',
 				'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_TAX_RATE'),
-				'default' => false,
 				'width' => $columnDefaultWidth,
 			];
 			$result['TAX_INCLUDED'] = [
 				'id' => 'TAX_INCLUDED',
 				'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_TAX_INCLUDED'),
-				'default' => false,
 				'width' => $columnDefaultWidth,
 			];
 			$result['TAX_SUM'] = [
 				'id' => 'TAX_SUM',
 				'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_TAX_SUM'),
-				'default' => false,
 				'editable' => false,
 				'align' =>
 					$this->isReadOnly()
@@ -1499,44 +1557,76 @@ final class CCrmEntityProductListComponent
 				'id' => 'STORE_INFO',
 				'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_STORE_FROM_TITLE'),
 				'title' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_STORE_FROM_INFO'),
-				'hint' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_STORE_FROM_INFO'),
+				'hint' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_STORE_FROM_INFO_HINT'),
+				'hintHtml' => true,
+				'hintInteractivity' => true,
 				'sort' => 'STORE_ID',
-				'default' => true,
+				'align' => 'right',
 			];
+
+			$linkUrl = Util::getArticleUrlByCode(14826418);
+			$linkTitle = Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_HINT_ABOUT_TITLE');
+			$articleLinkHtml = "<a class='crm-entity-product-helper-link' href='{$linkUrl}'target='blank'>{$linkTitle}</a>";
 
 			$result['STORE_AVAILABLE'] = [
 				'id' => 'STORE_AVAILABLE',
 				'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_AVAILABLE'),
 				'title' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_AVAILABLE'),
+				'hint' => Loc::getMessage(
+					'CRM_ENTITY_PRODUCT_LIST_COLUMN_AVAILABLE_HINT_2',
+					[
+						'#HELPER_HTML_LINK#' => $articleLinkHtml
+					]
+				),
+				'hintHtml' => true,
+				'hintInteractivity' => true,
 				'sort' => 'STORE_AVAILABLE',
-				'default' => true,
 				'editable' => false,
-				'width' => $columnDefaultWidth,
-			];
-
-			$result['STORE_RESERVED'] = [
-				'id' => 'STORE_RESERVED',
-				'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_STORE_FROM_RESERVED'),
-				'title' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_STORE_FROM_RESERVED'),
-				'sort' => 'STORE_RESERVED',
-				'default' => false,
-				'editable' => false,
+				'align' => 'right',
 				'width' => $columnDefaultWidth,
 			];
 
 			$result['RESERVE_INFO'] = [
 				'id' => 'RESERVE_INFO',
-				'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_RESERVED'),
-				'title' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_STORE_FROM_INFO'),
-				'sort' => 'RESERVE_QUANTITY',
-				'default' => true,
+				'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_STORE_FROM_RESERVED'),
+				'title' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_STORE_FROM_RESERVED'),
+				'hint' => Loc::getMessage(
+					'CRM_ENTITY_PRODUCT_LIST_COLUMN_STORE_FROM_RESERVED_HINT',
+					[
+						'#HELPER_HTML_LINK#' => $articleLinkHtml
+					]
+				),
+				'hintHtml' => true,
+				'hintInteractivity' => true,
+				'sort' => 'INPUT_RESERVE_QUANTITY',
+				'align' => 'right',
+			];
+
+			$result['ROW_RESERVED'] = [
+				'id' => 'ROW_RESERVED',
+				'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_RESERVED_INTO_DEAL'),
+				'title' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_RESERVED_INTO_DEAL'),
+				'hint' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_RESERVED_INTO_DEAL_HINT'),
+				'hintInteractivity' => true,
+				'sort' => 'ROW_RESERVED',
+				'align' => 'right',
+				'editable' => false,
+				'width' => $columnDefaultWidth,
+			];
+
+			$result['DEDUCTED_INFO'] = [
+				'id' => 'DEDUCTED_INFO',
+				'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_DEDUCTED'),
+				'title' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_DEDUCTED'),
+				'sort' => 'DEDUCTED_QUANTITY',
+				'align' => 'right',
+				'editable' => false,
 			];
 		}
 
 		$result['SUM'] = [
 			'id' => 'SUM',
 			'name' => Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_COLUMN_SUMM'),
-			'default' => true,
 			'editable' => [
 				'TYPE' => Types::MONEY,
 				'CURRENCY_LIST' => $this->getCurrencyListForMoneyField(),
@@ -1551,8 +1641,10 @@ final class CCrmEntityProductListComponent
 			'width' => $columnDefaultWidth,
 		];
 
-		foreach ($result as &$item)
+		$headerDefaultMap = Crm\Component\EntityDetails\ProductList::getHeaderDefaultMap();
+		foreach ($result as $key => &$item)
 		{
+			$item['default'] = $headerDefaultMap[$key];
 			if (empty($item['editable']) && $item['editable'] !== false)
 			{
 				$item['editable'] = [
@@ -1665,6 +1757,7 @@ final class CCrmEntityProductListComponent
 		$this->crmSettings['COMMON_PRECISION'] = 2;
 
 		$this->crmSettings['IS_RESERVE_BLOCKED'] = $this->isReservationRestrictedByPlan();
+		$this->crmSettings['IS_RESERVE_EQUAL_PRODUCT_QUANTITY'] = $this->isReserveEqualProductQuantity();
 
 		unset($taxList);
 	}
@@ -1701,6 +1794,7 @@ final class CCrmEntityProductListComponent
 		$this->arResult['COMMON_PRECISION'] = $this->crmSettings['COMMON_PRECISION'];
 
 		$this->arResult['IS_RESERVE_BLOCKED'] = $this->crmSettings['IS_RESERVE_BLOCKED'];
+		$this->arResult['IS_RESERVE_EQUAL_PRODUCT_QUANTITY'] = $this->crmSettings['IS_RESERVE_EQUAL_PRODUCT_QUANTITY'];
 		$this->arResult['ALLOW_CATALOG_PRICE_EDIT'] = $this->crmSettings['ALLOW_CATALOG_PRICE_EDIT'];
 		$this->arResult['ALLOW_CATALOG_PRICE_SAVE'] = $this->crmSettings['ALLOW_CATALOG_PRICE_SAVE'];
 		$this->arResult['CATALOG_PRICE_EDIT_ARTICLE_CODE'] = $this->crmSettings['CATALOG_PRICE_EDIT_ARTICLE_CODE'];
@@ -2027,6 +2121,14 @@ final class CCrmEntityProductListComponent
 	/**
 	 * @return bool
 	 */
+	private function isReserveEqualProductQuantity(): bool
+	{
+		return ReservationService::getInstance()->isReserveEqualProductQuantity();
+	}
+
+	/**
+	 * @return bool
+	 */
 	private function isAllowedInventoryManagement(): bool
 	{
 		return
@@ -2097,7 +2199,6 @@ final class CCrmEntityProductListComponent
 					'BASE_PRICE_ID' => $basePriceId,
 					'DETAIL_URL' => '',
 					'STORE_AVAILABLE' => 0,
-					'STORE_RESERVED' => 0,
 					'STORE_AMOUNT' => 0,
 					'COMMON_STORE_RESERVED' => 0,
 					'COMMON_STORE_AMOUNT' => 0,
@@ -2173,12 +2274,14 @@ final class CCrmEntityProductListComponent
 					)
 					{
 						$storeInfo = $storeOfferMap[$data['OFFER_ID']][$storeId];
-						$replace['STORE_RESERVED'] = $storeInfo['QUANTITY_RESERVED'];
 						$replace['STORE_AMOUNT'] = $storeInfo['AMOUNT'];
 						$replace['STORE_AVAILABLE'] = $storeInfo['AMOUNT'] - $storeInfo['QUANTITY_RESERVED'];
 					}
 
-					$this->rows[$index]['RESERVE_QUANTITY'] = $this->rows[$index]['RESERVE_QUANTITY'] ?? 0;
+					$this->rows[$index]['INPUT_RESERVE_QUANTITY'] = (float)($this->rows[$index]['INPUT_RESERVE_QUANTITY'] ?? 0);
+					$this->rows[$index]['RESERVE_QUANTITY'] = (float)($this->rows[$index]['RESERVE_QUANTITY'] ?? 0);
+					$this->rows[$index]['ROW_RESERVED'] = (float)($this->rows[$index]['RESERVE_QUANTITY'] ?? 0);
+					$this->rows[$index]['DEDUCTED_QUANTITY'] = (float)($this->rows[$index]['DEDUCTED_QUANTITY'] ?? 0);
 					$this->rows[$index]['DATE_RESERVE'] = $this->rows[$index]['DATE_RESERVE'] ?? '';
 					$this->rows[$index]['DATE_RESERVE_END'] = $this->rows[$index]['DATE_RESERVE_END'] ?? '';
 					$this->rows[$index]['SKY_TREE'] = $this->rows[$index]['SKY_TREE'] ?? [];
@@ -2330,12 +2433,10 @@ final class CCrmEntityProductListComponent
 			'MEASURE_RATIO' => 1,
 			'VAT' => 0, // fix it - \Bitrix\Sale\BasketItemBase::getVat
 			'TYPE' => null,
-			//'FIELDS_VALUES' => '{"ID":"83","LID":"s1","MODULE":"catalog","PRODUCT_ID":"116072","QUANTITY":"1.0000","WEIGHT":"0.00","DELAY":"N","CAN_BUY":"Y","PRICE":777.90999999999997,"CUSTOM_PRICE":"Y","BASE_PRICE":777.90999999999997,"PRODUCT_PRICE_ID":"115358","PRICE_TYPE_ID":"1","CURRENCY":"RUB","BARCODE_MULTI":"N","RESERVED":"N","NAME":"\\u0415\\u0449\\u0435 \\u0442\\u043e\\u0432\\u0430\\u0440 \\u0441 \\u043a\\u0430\\u0440\\u0442\\u0438\\u043d\\u043a\\u043e\\u0439","CATALOG_XML_ID":"FUTURE-1C-CATALOG","VAT_RATE":"0.0000","NOTES":"\\u0420\\u043e\\u0437\\u043d\\u0438\\u0447\\u043d\\u0430\\u044f \\u0446\\u0435\\u043d\\u0430","PRODUCT_PROVIDER_CLASS":"\\\\Bitrix\\\\Catalog\\\\Product\\\\CatalogProvider","DIMENSIONS":"a:3:{s:5:\\u0022WIDTH\\u0022;N;s:6:\\u0022HEIGHT\\u0022;N;s:6:\\u0022LENGTH\\u0022;N;}","DETAIL_PAGE_URL":"\\/tests\\/detail.php?ID=116072","FUSER_ID":"2","MEASURE_CODE":"796","MEASURE_NAME":"\\u0448\\u0442","ORDER_ID":"41","DATE_INSERT":{},"DATE_UPDATE":{},"PRODUCT_XML_ID":"116072","SUBSCRIBE":"N","VAT_INCLUDED":"Y","SORT":"200","XML_ID":"bx_5e6f420ac0507","BASKET_CODE":83}',
 			'FIELDS_VALUES' => '', // fix it
 			'CURRENCY' => $this->arParams['CURRENCY_ID'], // fix it
 			'NOTES' => '',
 			'BASKET_CODE' => '', // fix it!!!
-			//  '/bitrix/components/bitrix/crm.order.product.list/class.php?&site=s1&sessid=c9f29db445055f152d6812ba5647d45f&action_crm_order_product_list=delete&ID=83&sessid=c9f29db445055f152d6812ba5647d45f',
 			'PATH_TO_DELETE' => '' // fix it
 		];
 
@@ -2558,38 +2659,14 @@ final class CCrmEntityProductListComponent
 
 		if (!empty($headers))
 		{
-			$this->fillSettings();
-
-			$options = new \Bitrix\Main\Grid\Options($this->getGridId());
-			$allUsedColumns = $options->getUsedColumns();
-
-			if (empty($allUsedColumns))
-			{
-				$allUsedColumns = $currentHeaders;
-			}
-
 			if ($selected === 'true')
 			{
-				// sort new columns by default grid column sort
-				$defaultHeaders = array_column($this->getGridColumnsDescription(), 'id');
-				$currentHeadersInDefaultPosition = array_values(
-					array_intersect($defaultHeaders, array_merge($allUsedColumns, $headers))
-				);
-				$headers = array_values(array_intersect($defaultHeaders, $headers));
-
-				foreach ($headers as $header)
-				{
-					$insertPosition = array_search($header, $currentHeadersInDefaultPosition, true);
-					array_splice($allUsedColumns, $insertPosition, 0, $header);
-				}
+				ProductList::addGridHeaders($headers);
 			}
 			else
 			{
-				$allUsedColumns = array_diff($allUsedColumns, $headers);
+				ProductList::removeGridHeaders($headers);
 			}
-
-			$options->setColumns(implode(',', $allUsedColumns));
-			$options->save();
 		}
 
 		return Bitrix\Main\Engine\Response\AjaxJson::createSuccess();

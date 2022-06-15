@@ -15,6 +15,7 @@ $MESS["SHOP_MENU_SETTINGS_STATUS"] = "Статусы";
 $MESS["SHOP_MENU_SETTINGS_STATUS_ORDER"] = "Статусы заказа";
 $MESS["SHOP_MENU_SETTINGS_STATUS_ORDER_SHIPMENT"] = "Статусы доставки";
 $MESS["SHOP_MENU_SETTINGS_SALE_SETTINGS"] = "Настройки магазина";
+$MESS["SHOP_MENU_SETTINGS_CATALOG_SETTINGS"] = "Складской учёт и товары";
 $MESS["SHOP_MENU_SETTINGS_USER_FIELDS"] = "Пользовательские поля";
 $MESS["SHOP_MENU_SITES"] = "Сайты";
 $MESS["SHOP_MENU_WEBFORMS"] = "Формы";

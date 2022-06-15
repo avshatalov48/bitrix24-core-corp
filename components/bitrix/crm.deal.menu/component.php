@@ -643,14 +643,16 @@ if($arParams['TYPE'] === 'list')
 			'TITLE' => GetMessage('DEAL_CRM_TYPE'),
 			'ONCLICK' => \Bitrix\Crm\Settings\LeadSettings::showCrmTypePopup()
 		);
-
-		$scenarioSelectionPath = CComponentEngine::makeComponentPath('bitrix:crm.scenario_selection');
-		$scenarioSelectionPath = getLocalPath('components'.$scenarioSelectionPath.'/slider.php');
-		$arResult['BUTTONS'][] = [
-			'TEXT' => Loc::getMessage('DEAL_ORDER_SCENARIO'),
-			'TITLE' => Loc::getMessage('DEAL_ORDER_SCENARIO'),
-			'ONCLICK' => 'BX.SidePanel.Instance.open("' . $scenarioSelectionPath .'", {width: 900, cacheable: false});'
-		];
+		if (\CCrmSaleHelper::isWithOrdersMode())
+		{
+			$scenarioSelectionPath = CComponentEngine::makeComponentPath('bitrix:crm.scenario_selection');
+			$scenarioSelectionPath = getLocalPath('components'.$scenarioSelectionPath.'/slider.php');
+			$arResult['BUTTONS'][] = [
+				'TEXT' => Loc::getMessage('DEAL_ORDER_SCENARIO'),
+				'TITLE' => Loc::getMessage('DEAL_ORDER_SCENARIO'),
+				'ONCLICK' => 'BX.SidePanel.Instance.open("' . $scenarioSelectionPath .'", {width: 900, cacheable: false});'
+			];
+		}
 	}
 
 	if(is_array($arParams['ADDITIONAL_SETTINGS_MENU_ITEMS']) && !$isInSlider)

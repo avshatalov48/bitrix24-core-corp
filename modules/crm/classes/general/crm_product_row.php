@@ -363,6 +363,8 @@ class CAllCrmProductRow
 			return false;
 		}
 
+		\Bitrix\Crm\Reservation\Internals\ProductRowReservationTable::deleteByRowId($ID);
+
 		CCrmEntityHelper::RemoveCached(self::CACHE_NAME, $ID);
 		if(isset($arParams['OWNER_TYPE']) && isset($arParams['OWNER_ID']))
 		{
@@ -672,8 +674,6 @@ class CAllCrmProductRow
 			}
 		}
 
-		$basketReservation = new \Bitrix\Crm\Reservation\BasketReservation();
-
 		$measurelessProductIDs = array();
 		$dbRes = self::GetList(array('SORT' => 'ASC', 'ID'=>'ASC'), $filter);
 		$results = array();
@@ -701,6 +701,8 @@ class CAllCrmProductRow
 			$ary['MEASURE_CODE'] = isset($ary['MEASURE_CODE']) ? (int)$ary['MEASURE_CODE'] : 0;
 			$ary['MEASURE_NAME'] = isset($ary['MEASURE_NAME']) ? $ary['MEASURE_NAME'] : '';
 
+			$ary['RESERVE_ID'] = null;
+
 			if($productID > 0 && $ary['MEASURE_CODE'] <= 0)
 			{
 				if(!in_array($productID, $measurelessProductIDs, true))
@@ -721,8 +723,6 @@ class CAllCrmProductRow
 				}
 			}
 
-			$basketReservation->addProduct($ary);
-
 			if($assoc)
 			{
 				$results[(int)$ary['ID']] = $ary;
@@ -733,18 +733,7 @@ class CAllCrmProductRow
 			}
 		}
 
-		$reservedProducts = $basketReservation->getReservedProducts();
-		if ($reservedProducts)
-		{
-			foreach ($results as $index => $row)
-			{
-				$reservedProductData = $reservedProducts[$row['ID']] ?? null;
-				if ($reservedProductData)
-				{
-					$results[$index] = array_merge($row, $reservedProductData);
-				}
-			}
-		}
+		$results = \Bitrix\Crm\Service\Sale\Reservation\ReservationService::getInstance()->fillBasketReserves($results);
 
 		if(!empty($measurelessProductIDs))
 		{
@@ -1837,7 +1826,7 @@ class CAllCrmProductRow
 			"DELETE FROM {$tableName} WHERE OWNER_TYPE = '{$newOwnerType}' AND OWNER_ID = {$newOwnerID}"
 		);
 		$connection->queryExecute(
-			"UPDATE {$tableName} SET OWNER_TYPE = '{$newOwnerType}', OWNER_ID = {$newOwnerID} 
+			"UPDATE {$tableName} SET OWNER_TYPE = '{$newOwnerType}', OWNER_ID = {$newOwnerID}
 					WHERE OWNER_TYPE = '{$oldOwnerType}' AND OWNER_ID = {$oldOwnerID}"
 		);
 	}

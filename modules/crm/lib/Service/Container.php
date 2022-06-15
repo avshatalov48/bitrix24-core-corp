@@ -10,6 +10,7 @@ use Bitrix\Crm\Model\Dynamic\Type;
 use Bitrix\Crm\Model\Dynamic\TypeTable;
 use Bitrix\Crm\Relation\RelationManager;
 use Bitrix\Crm\Service\Factory\Dynamic;
+use Bitrix\Crm\Service\Sale\Shipment\ProductService;
 use Bitrix\Crm\Timeline;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DI\ServiceLocator;
@@ -443,5 +444,10 @@ class Container
 	public function getMultifieldStorage(): MultifieldStorage
 	{
 		return ServiceLocator::getInstance()->get('crm.service.multifieldStorage');
+	}
+	
+	public function getShipmentProductService(): ProductService
+	{
+		return ServiceLocator::getInstance()->get('crm.shipment.product');
 	}
 }

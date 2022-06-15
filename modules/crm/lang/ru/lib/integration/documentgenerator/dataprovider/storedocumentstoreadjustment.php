@@ -1,0 +1,2 @@
+<?php
+$MESS["CRM_DOCGEN_DATAPROVIDER_SD_ADJUSTMENT_TITLE"] = "Оприходование";

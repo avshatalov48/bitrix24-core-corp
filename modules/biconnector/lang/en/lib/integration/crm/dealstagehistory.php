@@ -1,0 +1,20 @@
+<?php
+$MESS["CRM_BIC_DSH_FIELD_ASSIGNED_BY"] = "Responsible person";
+$MESS["CRM_BIC_DSH_FIELD_ASSIGNED_BY_DEPARTMENT"] = "Responsible person's department";
+$MESS["CRM_BIC_DSH_FIELD_ASSIGNED_BY_DEPARTMENT_FULL"] = "Path in the company structure";
+$MESS["CRM_BIC_DSH_FIELD_ASSIGNED_BY_FULL"] = "The ID and name of the user who was assigned as responsible for the deal";
+$MESS["CRM_BIC_DSH_FIELD_ASSIGNED_BY_ID"] = "Responsible person ID";
+$MESS["CRM_BIC_DSH_FIELD_ASSIGNED_BY_ID_FULL"] = "The ID of the user who was assigned as responsible for the deal";
+$MESS["CRM_BIC_DSH_FIELD_ASSIGNED_BY_NAME"] = "Responsible person";
+$MESS["CRM_BIC_DSH_FIELD_DATE_CREATE"] = "Created on";
+$MESS["CRM_BIC_DSH_FIELD_DEAL_ID"] = "Deal ID";
+$MESS["CRM_BIC_DSH_FIELD_END_DATE"] = "End date";
+$MESS["CRM_BIC_DSH_FIELD_ID"] = "Unique key";
+$MESS["CRM_BIC_DSH_FIELD_STAGE"] = "Stage";
+$MESS["CRM_BIC_DSH_FIELD_STAGE_ID"] = "Stage ID";
+$MESS["CRM_BIC_DSH_FIELD_STAGE_NAME"] = "Stage name";
+$MESS["CRM_BIC_DSH_FIELD_STAGE_SEMANTIC"] = "Stage type";
+$MESS["CRM_BIC_DSH_FIELD_STAGE_SEMANTIC_ID"] = "Stage type ID";
+$MESS["CRM_BIC_DSH_FIELD_START_DATE"] = "Start date";
+$MESS["CRM_BIC_DSH_FIELD_TYPE_ID"] = "Record type";
+$MESS["CRM_BIC_DSH_TABLE"] = "Deal: stage history";

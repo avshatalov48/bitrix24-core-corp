@@ -145,6 +145,10 @@ abstract class EntityBase
 
 	protected function areFieldsCompatibleWithOrm(array $fields): bool
 	{
+		$notCompatibleFields = [
+			'SEARCH_CONTENT',
+		];
+
 		$dbEntity = $this->getDbEntity();
 		$sqlWhere = new \CSQLWhere();
 		try
@@ -152,6 +156,10 @@ abstract class EntityBase
 			foreach ($fields as $field)
 			{
 				$field = $sqlWhere->makeOperation($field)['FIELD']; // remove filter operations like >, <, % etc
+				if (in_array($field, $notCompatibleFields))
+				{
+					return false;
+				}
 				\Bitrix\Main\ORM\Query\Chain::getChainByDefinition($dbEntity, $field);
 			}
 		}

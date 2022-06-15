@@ -6,6 +6,7 @@ use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Sale;
 use Bitrix\Catalog;
+use Bitrix\Crm\Service\Sale\Reservation\ShipmentService;
 
 Main\Localization\Loc::loadLanguageFile(__FILE__);
 
@@ -298,7 +299,14 @@ class RealizationDocument extends Main\Engine\Controller
 		if ($this->errorCollection->isEmpty())
 		{
 			$saveOrderResult = $order->save();
-			if (!$saveOrderResult->isSuccess())
+			if ($saveOrderResult->isSuccess())
+			{
+				if ($value === 'N')
+				{
+					ShipmentService::getInstance()->reserveCanceledShipment($shipment);
+				}
+			}
+			else
 			{
 				$this->addErrors($saveOrderResult->getErrors());
 			}

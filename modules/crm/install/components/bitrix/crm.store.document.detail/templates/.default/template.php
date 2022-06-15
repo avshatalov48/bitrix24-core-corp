@@ -18,6 +18,7 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'n
 
 Extension::load([
 	'catalog.entity-card',
+	'catalog.document-card',
 	'crm.entity-selector',
 ]);
 
@@ -27,6 +28,20 @@ if (
 )
 {
 	Extension::load('sale.address');
+}
+
+if (isset($arResult['TOOLBAR_ID']))
+{
+	$APPLICATION->IncludeComponent(
+		'bitrix:crm.interface.toolbar',
+		(SITE_TEMPLATE_ID === 'bitrix24' ? 'slider' : 'type2'),
+		[
+			'TOOLBAR_ID' => $arResult['TOOLBAR_ID'],
+			'BUTTONS' => $arResult['BUTTONS'] ?? []
+		],
+		$component,
+		['HIDE_ICONS' => 'Y']
+	);
 }
 
 if ((int)$arResult['ENTITY_DATA']['ID'] > 0)
@@ -185,5 +200,11 @@ $tabContainerClassName .= ' ui-entity-stream-section-planned-above-overlay';
 
 	BX.ready(function () {
 		BX.Crm.Store.DocumentCard.Document.Instance.adjustToolPanel();
+		<?if (isset($arResult['TOOLBAR_ID'])):?>
+			BX.Catalog.DocumentCard.FeedbackButton.render(
+				document.getElementById('<?=CUtil::JSEscape($arResult['TOOLBAR_ID'])?>'),
+				<?=CUtil::JSEscape(((int)$arResult['DOCUMENT_ID'] <= 0))?>
+			);
+		<?endif;?>
 	});
 </script>

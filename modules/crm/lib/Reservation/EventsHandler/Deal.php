@@ -5,13 +5,36 @@ namespace Bitrix\Crm\Reservation\EventsHandler;
 use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Catalog;
+use Bitrix\Crm\Service\Sale\Reservation\ReservationService;
 use Bitrix\Sale;
+use CCrmSaleHelper;
 
 Main\Localization\Loc::loadLanguageFile(__FILE__);
 
 final class Deal
 {
 	private static $isProcessInventoryManagementExecuting = false;
+	private static $isReservationAfterCrmDealProductRowsSave = true;
+
+	/**
+	 * Enable process reservation product rows on event `OnAfterCrmDealProductRowsSave`.
+	 *
+	 * @return void
+	 */
+	public static function enableReservationAfterCrmDealProductRowsSave(): void
+	{
+		self::$isReservationAfterCrmDealProductRowsSave = true;
+	}
+
+	/**
+	 * Disable process reservation product rows on event `OnAfterCrmDealProductRowsSave`.
+	 *
+	 * @return void
+	 */
+	public static function disableReservationAfterCrmDealProductRowsSave(): void
+	{
+		self::$isReservationAfterCrmDealProductRowsSave = false;
+	}
 
 	/**
 	 * @param array $dealFields
@@ -187,6 +210,15 @@ final class Deal
 			self::isUsedInventoryManagement()
 			&& !self::isInventoryManagementIntegrationRestricted()
 			&& Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled()
+			&& !\CCrmSaleHelper::isWithOrdersMode()
 		);
+	}
+
+	public static function OnAfterCrmDealProductRowsSave(int $dealId)
+	{
+		if (self::$isReservationAfterCrmDealProductRowsSave)
+		{
+			ReservationService::getInstance()->reservationProductsByDeal($dealId);
+		}
 	}
 }

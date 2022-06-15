@@ -1,0 +1,11 @@
+.biconnector-dashboard-edit-wrapper {
+	display: block;
+}
+
+.biconnector-dashboard-edit-wrapper-form-inner {
+	max-width: 650px;
+}
+
+.biconnector-dashboard-edit-wrapper-form-row {
+	margin-bottom: 24px;
+}

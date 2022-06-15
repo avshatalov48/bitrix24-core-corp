@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Controller;
 
 use Bitrix\Crm\Component\EntityDetails\FactoryBased;
 use Bitrix\Crm\Field;
+use Bitrix\Crm\Multifield\Assembler;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\EditorAdapter;
@@ -459,6 +460,30 @@ class Item extends Base
 			return null;
 		}
 
+		$fmValues = [];
+		if ($factory->isMultiFieldsEnabled())
+		{
+			$ormObjectConverter = Container::getInstance()->getOrmObjectConverter();
+			$ormObjectConverter->convertFieldNameFromUpperCaseToCamelCase('VALUE');
+			$ormObjectConverter->convertFieldNameFromUpperCaseToCamelCase('VALUE_TYPE');
+
+			$fmTypes = array_keys(\CCrmFieldMulti::GetEntityTypes());
+			foreach ($fmTypes as $fmType)
+			{
+				$ormObjectConverter->convertFieldNameFromUpperCaseToCamelCase($fmType);
+
+				if (isset($fields[$fmType]))
+				{
+					$index = 0;
+					$fmValues[$fmType] = [];
+					foreach ($fields[$fmType] as $fmValue)
+					{
+						$fmValues[$fmType]['n' . $index++] = $fmValue;
+					}
+				}
+			}
+		}
+
 		if ($this->shouldUseDeprecatedImportApi($entityTypeId))
 		{
 			return $this->importViaDeprecatedApi($entityTypeId, $fields);
@@ -468,6 +493,13 @@ class Item extends Base
 
 		$fields = $this->convertKeysToUpper($fields);
 		$this->processFields($item, $fields, $factory->getFieldsCollection());
+
+		if (!empty($fmValues) && $item->hasField(\Bitrix\Crm\Item::FIELD_NAME_FM))
+		{
+			$fmCollection = $item->get(\Bitrix\Crm\Item::FIELD_NAME_FM);
+			Assembler::updateCollectionByArray($fmCollection, $fmValues);
+			$item->set(\Bitrix\Crm\Item::FIELD_NAME_FM, $fmCollection);
+		}
 
 		if (!Container::getInstance()->getUserPermissions()->canImportItem($item))
 		{

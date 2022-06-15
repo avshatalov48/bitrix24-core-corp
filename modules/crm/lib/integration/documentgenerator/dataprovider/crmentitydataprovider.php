@@ -6,6 +6,8 @@ namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 
 use Bitrix\Crm\Automation\Trigger\DocumentCreateTrigger;
 use Bitrix\Crm\Automation\Trigger\DocumentViewTrigger;
+use Bitrix\Crm\CompanyTable;
+use Bitrix\Crm\ContactTable;
 use Bitrix\Crm\Conversion\Entity\EntityConversionMapTable;
 use Bitrix\Crm\EntityBankDetail;
 use Bitrix\Crm\EntityRequisite;
@@ -378,6 +380,10 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 			'FORMAT' => [
 				'mfirst' => true,
 			],
+		];
+		$fields['CLIENT_NAME'] = [
+			'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_CLIENT_NAME'),
+			'VALUE' => [$this, 'getClientName'],
 		];
 
 		if($this->hasLeadField())
@@ -1575,6 +1581,114 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 	public function getClientWeb()
 	{
 		return $this->getMultiFields('WEB');
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getClientName()
+	{
+		$result = $this->getClientNameFromRequisites();
+		if ($result)
+		{
+			return $result;
+		}
+
+		$result = $this->getClientNameFromCompany();
+		if ($result)
+		{
+			return $result;
+		}
+
+		return $this->getClientNameFromContact();
+	}
+
+	/**
+	 * @return string
+	 */
+	private function getClientNameFromRequisites(): string
+	{
+		$result = '';
+
+		$requisiteIds = $this->getRequisiteId();
+		$requisiteId = (int)(is_array($requisiteIds) ? key($requisiteIds) : $requisiteIds);
+		if ($requisiteId)
+		{
+			$requisite = EntityRequisite::getSingleInstance()->getList([
+				'filter' => ['=ID' => $requisiteId]
+			])->fetch();
+
+			if ($requisite)
+			{
+				if (!empty($requisite['RQ_COMPANY_NAME']))
+				{
+					$result = $requisite['RQ_COMPANY_NAME'];
+				}
+				else
+				{
+					if (!empty($requisite['RQ_FIRST_NAME']) && !empty($requisite['RQ_LAST_NAME']))
+					{
+						$result = \CCrmContact::PrepareFormattedName(
+							[
+								'NAME' => $requisite['RQ_FIRST_NAME'],
+								'LAST_NAME' => $requisite['RQ_LAST_NAME'],
+								'SECOND_NAME' => $requisite['RQ_SECOND_NAME'],
+							],
+							static::getNameFormat()
+						);
+					}
+				}
+			}
+		}
+
+		return (string)$result;
+	}
+
+	/**
+	 * @return string
+	 */
+	private function getClientNameFromCompany(): string
+	{
+		$result = '';
+
+		$companyId = (int)$this->getCompanyId();
+		if ($companyId)
+		{
+			$company = CompanyTable::getById($companyId)->fetch();
+			if ($company)
+			{
+				$result = $company['TITLE'];
+			}
+		}
+
+		return (string)$result;
+	}
+
+	/**
+	 * @return string
+	 */
+	private function getClientNameFromContact(): string
+	{
+		$result = '';
+
+		$contactId = (int)$this->getContactId();
+		if ($contactId)
+		{
+			$contact = ContactTable::getById($contactId)->fetch();
+			if ($contact && !empty($contact['NAME']) && !empty($contact['LAST_NAME']))
+			{
+				$result = \CCrmContact::PrepareFormattedName(
+					[
+						'NAME' => $contact['NAME'],
+						'LAST_NAME' => $contact['LAST_NAME'],
+						'SECOND_NAME' => $contact['SECOND_NAME'],
+					],
+					static::getNameFormat()
+				);
+			}
+		}
+
+		return (string)$result;
 	}
 
 	/**

@@ -1,5 +1,6 @@
 if (typeof (BX.CrmScenarioSelection) === 'undefined')
 {
+	const ORDER_MODE_HELP_ARTICLE_ID = 13632830;
 	BX.namespace('BX.CrmScenarioSelection');
 	BX.CrmScenarioSelection = {
 		selectedScenario: '',
@@ -10,6 +11,7 @@ if (typeof (BX.CrmScenarioSelection) === 'undefined')
 		ordersModeInfo: null,
 		dealListUrl: null,
 		isOrdersInfoAlwaysHidden: false,
+		popupConfirm: null,
 
 		init: function(params)
 		{
@@ -85,14 +87,25 @@ if (typeof (BX.CrmScenarioSelection) === 'undefined')
 				var target = event.target;
 				if (target.classList.contains('crm-scenario-selection-btn') && this.dataset.scenario !== selectScenarioReference.selectedScenario)
 				{
-					selectScenarioReference.selectScenario(this.dataset.scenario);
-					if (this.dataset.scenario === selectScenarioReference.initialScenario)
+					if (selectScenarioReference.initialScenario === 'order_deal' && this.dataset.scenario === 'deal')
 					{
-						BX.UI.ButtonPanel.hide();
-					}
-					else
-					{
-						BX.UI.ButtonPanel.show();
+						selectScenarioReference.warnOnDealModeSwitch(
+							BX.delegate(function()
+							{
+								selectScenarioReference.selectScenario(this.dataset.scenario);
+								if (this.dataset.scenario === selectScenarioReference.initialScenario)
+								{
+									BX.UI.ButtonPanel.hide();
+								}
+								else
+								{
+									BX.UI.ButtonPanel.show();
+								}
+							}, this),
+							BX.delegate(function()
+							{
+							}, this)
+						);
 					}
 				}
 			}
@@ -133,6 +146,86 @@ if (typeof (BX.CrmScenarioSelection) === 'undefined')
 					}
 				}
 			});
+		},
+
+		warnOnDealModeSwitch: function(onConfirm, onClose)
+		{
+			var buttons = [
+				new BX.PopupWindowButton({
+					text: BX.message('CRM_SCENARIO_SELECTION_TO_DEAL_MODE_OK_BUTTON'),
+					className: 'ui-btn ui-btn-md ui-btn-primary',
+					events: {
+						click: function()
+						{
+							onClose();
+							this.popupWindow.destroy();
+						}
+					}
+				}),
+				new BX.PopupWindowButton({
+					text: BX.message('CRM_SCENARIO_SELECTION_TO_DEAL_MODE_CANCEL_BUTTON'),
+					className: 'ui-btn ui-btn-md',
+					events: {
+						click : function()
+						{
+							onConfirm();
+							this.popupWindow.destroy();
+						}}
+				})
+			];
+
+			if (this.popupConfirm != null)
+			{
+				this.popupConfirm.destroy();
+			}
+
+			var contentNode = document.createElement('div');
+			contentNode.innerHTML = '<div>'
+				+ BX.message('CRM_SCENARIO_SELECTION_TO_DEAL_MODE_TEXT_1')
+				+ '</div><br/><br/><div>'
+				+ BX.message('CRM_SCENARIO_SELECTION_TO_DEAL_MODE_TEXT_2')
+				+ ' '
+				+ '<a onclick="top.BX.Helper.show(\'redirect=detail&code=' + ORDER_MODE_HELP_ARTICLE_ID + '\'); return false;" href="javascript: void();" target="_blank">' + BX.message('CRM_SCENARIO_SELECTION_TO_DEAL_MODE_TEXT_3_PART_1') + '</a>'
+				+ ' '
+				+ BX.message('CRM_SCENARIO_SELECTION_TO_DEAL_MODE_TEXT_3_PART_2')
+				+ '</div>';
+
+			this.popupConfirm = new BX.PopupWindow(
+				'bx-popup-documentgenerator-popup',
+				null,
+				{
+					autoHide: true,
+					closeByEsc: true,
+					buttons: buttons,
+					closeIcon: true,
+					overlay: true,
+					events: {
+						onPopupClose: function()
+						{
+							if (BX.type.isFunction(onClose))
+							{
+								onClose();
+							}
+							this.destroy();
+						},
+						onPopupDestroy: BX.delegate(function()
+						{
+							this.popupConfirm = null;
+						}, this)
+					},
+					content: BX.create('span', {
+						attrs: {
+							className: 'bx-popup-crm-scenario-selection-popup-content-text'
+						},
+						children: [contentNode],
+					}),
+					titleBar: BX.message('CRM_SCENARIO_SELECTION_TO_DEAL_MODE_TITLE'),
+					contentColor: 'white',
+					className: 'bx-popup-crm-scenario-selection-popup',
+					maxWidth: 600
+				}
+			);
+			this.popupConfirm.show();
 		},
 
 		closeSlider: function()
