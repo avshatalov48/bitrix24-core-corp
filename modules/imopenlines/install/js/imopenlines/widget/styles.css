@@ -1834,6 +1834,51 @@ button.ui-icon > i:active,
 .ui-icon-service-light-box {
 	--ui-icon-service-bg-image: url(/bitrix/js/ui/icons/service/images/ui-service-light-box.svg);
 }
+/*777777*/
+.ui-icon-service-message-widget {
+	--ui-icon-service-bg-color: #3fe5aa;
+	--ui-icon-service-bg-image: url(/bitrix/js/ui/icons/service/images/ui-service-message-widget.svg);
+}
+
+.ui-icon-service-light-message-widget {
+	--ui-icon-service-bg-image: url(/bitrix/js/ui/icons/service/images/ui-service-light-message-widget.svg);
+}
+
+.ui-icon-service-code {
+	 --ui-icon-service-bg-color: #3fe5aa;
+	 --ui-icon-service-bg-image: url(/bitrix/js/ui/icons/service/images/ui-service-code.svg);
+ }
+
+.ui-icon-service-light-code {
+	--ui-icon-service-bg-image: url(/bitrix/js/ui/icons/service/images/ui-service-light-code.svg);
+}
+
+.ui-icon-service-click {
+	--ui-icon-service-bg-color: #3fe5aa;
+	--ui-icon-service-bg-image: url(/bitrix/js/ui/icons/service/images/ui-service-click.svg);
+}
+
+.ui-icon-service-light-click {
+	--ui-icon-service-bg-image: url(/bitrix/js/ui/icons/service/images/ui-service-light-click.svg);
+}
+
+.ui-icon-service-clock {
+	--ui-icon-service-bg-color: #28D1A9;
+	--ui-icon-service-bg-image: url(/bitrix/js/ui/icons/service/images/ui-service-clock.svg);
+}
+
+.ui-icon-service-light-clock {
+	--ui-icon-service-bg-image: url(/bitrix/js/ui/icons/service/images/ui-service-light-clock.svg);
+}
+
+.ui-icon-service-linked-link {
+	--ui-icon-service-bg-color: #28D1A9;
+	--ui-icon-service-bg-image: url(/bitrix/js/ui/icons/service/images/ui-service-linked-link.svg);
+}
+
+.ui-icon-service-light-linked-link {
+	--ui-icon-service-bg-image: url(/bitrix/js/ui/icons/service/images/ui-service-light-linked-link.svg);
+}
 
 
 /* docs*/
@@ -1932,6 +1977,14 @@ button.ui-icon > i:active,
 
 .ui-icon.ui-icon-service-light-call-out {
 	--ui-icon-service-bg-image: url(/bitrix/js/ui/icons/service/images/ui-service-light-call-out.svg);
+}
+
+.ui-icon.ui-icon-service-settings {
+	--ui-icon-service-bg-image: url(/bitrix/js/ui/icons/service/images/ui-service-settings.svg);
+}
+
+.ui-icon.ui-icon-service-light-settings {
+	--ui-icon-service-bg-image: url(/bitrix/js/ui/icons/service/images/ui-service-light-settings.svg);
 }
 
 /*endregion*/
@@ -5419,6 +5472,13 @@ temporary
 	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2216%22%20height%3D%2213%22%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M8.01%205.99l3.245-2.409a.795.795%200%200%201%201.126.182.836.836%200%200%201-.178%201.152L8.562%207.619a.79.79%200%200%201-.552.153.79.79%200%200%201-.552-.153L3.817%204.915a.836.836%200%200%201-.178-1.152.795.795%200%200%201%201.126-.182l3.245%202.41zM1.445.016h13.141c.774%200%201.402.641%201.402%201.433v9.85c0%20.79-.628%201.432-1.402%201.432H1.445c-.774%200-1.402-.641-1.402-1.433v-9.85C.043.658.671.016%201.445.016zm.79%201.648c-.291%200-.527.24-.527.537v8.344c0%20.297.236.538.526.538h11.563c.29%200%20.525-.24.525-.538V2.2a.532.532%200%200%200-.525-.537H2.234z%22/%3E%3C/svg%3E') center no-repeat;
 }
 .bx-livechat-bright-header .bx-livechat-control-btn-mail { background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2216%22%20height%3D%2213%22%3E%3Cpath%20fill%3D%22%23333%22%20d%3D%22M8.01%205.99l3.245-2.409a.795.795%200%200%201%201.126.182.836.836%200%200%201-.178%201.152L8.562%207.619a.79.79%200%200%201-.552.153.79.79%200%200%201-.552-.153L3.817%204.915a.836.836%200%200%201-.178-1.152.795.795%200%200%201%201.126-.182l3.245%202.41zM1.445.016h13.141c.774%200%201.402.641%201.402%201.433v9.85c0%20.79-.628%201.432-1.402%201.432H1.445c-.774%200-1.402-.641-1.402-1.433v-9.85C.043.658.671.016%201.445.016zm.79%201.648c-.291%200-.527.24-.527.537v8.344c0%20.297.236.538.526.538h11.563c.29%200%20.525-.24.525-.538V2.2a.532.532%200%200%200-.525-.537H2.234z%22/%3E%3C/svg%3E') center no-repeat; }
+
+.bx-livechat-control-btn-list {
+	width: 14px;
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='12'%3E%3Cpath fill='%23FFF' fill-rule='evenodd' d='M15.1 10a.9.9 0 010 1.8H.9a.9.9 0 010-1.8h14.2zm0-5a.9.9 0 010 1.8H.9A.9.9 0 01.9 5h14.2zm0-5a.9.9 0 010 1.8H.9A.9.9 0 01.9 0h14.2z'/%3E%3C/svg%3E") center no-repeat;
+}
+.bx-livechat-bright-header .bx-livechat-control-btn-list { background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='12'%3E%3Cpath fill='%23FFF' fill-rule='evenodd' d='M15.1 10a.9.9 0 010 1.8H.9a.9.9 0 010-1.8h14.2zm0-5a.9.9 0 010 1.8H.9A.9.9 0 01.9 5h14.2zm0-5a.9.9 0 010 1.8H.9A.9.9 0 01.9 0h14.2z'/%3E%3C/svg%3E") center no-repeat; }
+
 
 .bx-livechat-control-btn-menu {
 	width: 14px;

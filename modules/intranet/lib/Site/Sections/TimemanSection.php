@@ -239,19 +239,35 @@ class TimemanSection
 
 	public static function getMeetings(): array
 	{
-		$available =
-			static::isBitrix24()
-				? static::isMeetingAvailable()
-				: static::isMeetingInstalled() && \CBXFeatures::isFeatureEnabled('Meeting')
-		;
+		$locked = false;
+		$meetingUrl = SITE_DIR . 'timeman/meeting/';
+		$onclick = '';
+
+		if (static::isBitrix24())
+		{
+			$available = static::isMeetingAvailable();
+			if (!static::isTimemanInstalled())
+			{
+				$locked = true;
+				$meetingUrl = '';
+				$onclick = 'javascript:BX.UI.InfoHelper.show("limit_office_meetings");';
+			}
+		}
+		else
+		{
+			$available = static::isMeetingInstalled() && \CBXFeatures::isFeatureEnabled('Meeting');
+		}
 
 		return [
 			'id' => 'meetings',
 			'title' => Loc::getMessage('TIMEMAN_SECTION_MEETINGS_ITEM_TITLE'),
 			'available' => $available,
-			'url' => SITE_DIR . 'timeman/meeting/',
+			'url' => $meetingUrl,
+			'locked' => $locked,
 			'menuData' => [
 				'menu_item_id' => 'menu_meeting',
+				'is_locked' => $locked,
+				'onclick' => $onclick,
 			],
 		];
 	}

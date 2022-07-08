@@ -240,7 +240,6 @@
 /* socialnetwork.log.ex */
 .feed-post-block {
 	background-color: #fff;
-	margin-bottom: 15px;
 }
 
 .feed-add-post-block {
@@ -441,7 +440,7 @@
 	border-top: 1px solid rgba(220,226,230,.5);
 }
 
-/* crm.entity.counter.panel */
+/* crm.entity.counter.panel (not used, will be removed as soon as possible) */
 
 .crm-counter,
 .crm-counter-text,

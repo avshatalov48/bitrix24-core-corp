@@ -258,22 +258,24 @@ class Docx extends ZipDocument
 		/** @var \DOMDocument $document */
 		$document = $relationshipsData['document'];
 		$relFilesToDelete = $nodesToDelete = [];
-		foreach($imageData as $fieldName => $data)
+		foreach ($imageData as $fieldName => $data)
 		{
-			if(!isset($data['innerIDs']))
+			$isDeleteImages = true;
+			if (!isset($data['innerIDs']))
 			{
 				continue;
 			}
-			if(isset($data['values']) && is_array($data['values']))
+			if (isset($data['values']) && is_array($data['values']))
 			{
+				$isDeleteImages = false;
 				// these are new images created from array values
 				// copy original relationship data, fill data
 				// delete original node
 				$originalImageID = $originalNode = false;
-				foreach($data['values'] as $imageID => $path)
+				foreach ($data['values'] as $imageID => $path)
 				{
 					$originalImageID = $data['originalId'][$imageID];
-					if(!isset($relData[static::REL_TYPE_IMAGE][$originalImageID]))
+					if (!isset($relData[static::REL_TYPE_IMAGE][$originalImageID]))
 					{
 						continue;
 					}
@@ -290,19 +292,20 @@ class Docx extends ZipDocument
 						$this->excludedPlaceholders[] = $fieldName;
 					}
 				}
-				if($originalImageID)
+				if ($originalImageID)
 				{
 					$relFilesToDelete[] = 'word/'.$relData[static::REL_TYPE_IMAGE][$originalImageID]['target'];
 				}
-				if($originalNode)
+				if ($originalNode)
 				{
 					$nodesToDelete[] = $originalNode;
 				}
 			}
-			elseif(isset($this->values[$fieldName]) && !empty(trim($this->values[$fieldName])))
+			if (isset($this->values[$fieldName]) && !empty(trim($this->values[$fieldName])))
 			{
+				$isDeleteImages = false;
 				$image = $this->getImage($this->values[$fieldName]);
-				if(!$image && $this->isArrayValue($this->values[$fieldName], $fieldName))
+				if (!$image && $this->isArrayValue($this->values[$fieldName], $fieldName))
 				{
 					$placeholder = $data['placeholder'] ?? '';
 					$modifier = static::getModifierFromPlaceholder($placeholder);
@@ -314,7 +317,7 @@ class Docx extends ZipDocument
 					$arrayProvider = $this->values[$valueNameParts[0]];
 					$image = $this->getImage($this->printArrayValueByIndex($arrayProvider, $fieldName, $name, $index, $modifier));
 				}
-				if($image && $image->isExists() && $image->isReadable())
+				if ($image && $image->isExists() && $image->isReadable())
 				{
 					$originalImageID = $originalNode = false;
 					foreach($data['innerIDs'] as $imageID)
@@ -336,17 +339,17 @@ class Docx extends ZipDocument
 						$isDocumentChanged = true;
 						$this->excludedPlaceholders[] = $fieldName;
 					}
-					if($originalImageID)
+					if ($originalImageID)
 					{
 						$relFilesToDelete[] = 'word/'.$relData[static::REL_TYPE_IMAGE][$originalImageID]['target'];
 					}
-					if($originalNode)
+					if ($originalNode)
 					{
 						$nodesToDelete[] = $originalNode;
 					}
 				}
 			}
-			else
+			if ($isDeleteImages)
 			{
 				foreach($data['innerIDs'] as $imageID)
 				{

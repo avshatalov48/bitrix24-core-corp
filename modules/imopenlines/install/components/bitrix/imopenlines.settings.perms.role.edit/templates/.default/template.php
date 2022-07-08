@@ -21,7 +21,11 @@ if($arResult['ERRORS'] && $arResult['ERRORS'] instanceof \Bitrix\Main\ErrorColle
 
 \CJSCore::init('sidepanel');
 $APPLICATION->IncludeComponent('bitrix:ui.info.helper', '', []);
-Extension::load('ui.alerts');
+Extension::load([
+	'ui.alerts',
+	'ui.forms',
+	'ui.design-tokens',
+]);
 ?>
 <script type="text/javascript">
 	function openTrialInfoHelper(dialogId)
@@ -33,10 +37,14 @@ Extension::load('ui.alerts');
 	<input type="hidden" name="act" value="save">
 	<input type="hidden" name="ID" value="<?=htmlspecialcharsbx($arResult['ID'])?>">
 	<?echo bitrix_sessid_post()?>
-	<label for="form-input-name"><?=Loc::getMessage('IMOL_ROLE_LABEL')?>:</label>
-	<input id="form-input-name" name="NAME" value="<?=htmlspecialcharsbx($arResult['NAME'])?>">
-	<br>
-	<br>
+
+	<div style="display: flex; align-items:center; margin: 0 0 20px 10px;">
+		<label for="form-input-name"><?=Loc::getMessage('IMOL_ROLE_LABEL')?>: &nbsp;</label>
+		<div class="ui-ctl ui-ctl-textbox">
+			<input class="ui-ctl-element" id="form-input-name" name="NAME" value="<?=htmlspecialcharsbx($arResult['NAME'])?>">
+		</div>
+	</div>
+
 	<table class="table-blue-wrapper">
 		<tr>
 			<td>

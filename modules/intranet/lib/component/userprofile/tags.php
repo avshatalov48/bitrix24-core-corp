@@ -270,7 +270,8 @@ class Tags
 			{
 				$result[$tagName] = [
 					'COUNT' => $count,
-					'USERS' => (!empty($usersTopData[$tagName]) ? $usersTopData[$tagName] : [])
+					'USERS' => (!empty($usersTopData[$tagName]) ? $usersTopData[$tagName] : []),
+					'CHECKSUM' => md5($tagName),
 				];
 			}
 		}

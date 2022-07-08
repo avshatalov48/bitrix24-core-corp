@@ -18,7 +18,7 @@
 .sidebar-widget-top {
 	height: 40px;
 	position: relative;
-	border-radius: var(--sidebar-widget-top, var(--ui-theme-radius-md, 0));
+	border-radius: var(--sidebar-widget-border-radius, var(--ui-border-radius-md, 0));
 	border-bottom-left-radius: 0;
 	border-bottom-right-radius: 0;
 }
@@ -34,7 +34,7 @@
 
 .sidebar-widget-content, .sidebar-widget-item-wrap {
 	background: #fff;
-	border-radius: var(--sidebar-widget-content, var(--ui-theme-radius-md, 0));
+	border-radius: var(--sidebar-widget-border-radius, var(--ui-border-radius-md, 0));
 	border-top-left-radius: 0;
 	border-top-right-radius: 0;
 	padding-top: 10px;
@@ -259,11 +259,17 @@
 	line-height: 40px;
 	padding-left: 20px;
 	text-transform: uppercase;
+	border-radius: var(--sidebar-widget-border-radius, var(--ui-border-radius-md, 0));
+	border-bottom-left-radius: 0;
+	border-bottom-right-radius: 0;
 }
 .sidebar-imp-mess {
 	background-color: #fff3a7;
 	min-height: 183px;
 	position: relative;
+	border-radius: var(--sidebar-widget-border-radius, var(--ui-border-radius-md, 0));
+	border-top-left-radius: 0;
+	border-top-right-radius: 0;
 }
 .sidebar-imp-mess-wrap {
 	display: none;

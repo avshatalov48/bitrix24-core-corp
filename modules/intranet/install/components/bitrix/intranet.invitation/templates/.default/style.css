@@ -13,6 +13,7 @@
 	margin-bottom: 15px;
 	padding: 13px 23px 26px 23px;
 	background-color: #fff;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .invite-body {
@@ -252,6 +253,7 @@
 	align-items: center;
 	justify-content: space-between;
 	margin-bottom: 23px;
+	border-radius: var(--ui-border-radius-sm);
 }
 
 .invite-dialog-fast-reg-control-container.disallow-registration {
@@ -330,7 +332,7 @@
 /*region counters*/
 .invite-limit-counters-container {
 	background: rgba(255, 255, 255, 0.53);
-	border-radius: 3px;
+	border-radius: var(--ui-border-radius-sm, 3px);
 	padding: 0 12px;
 }
 

@@ -768,6 +768,45 @@ class CCrmProduct
 		}
 		unset($data);
 
+		if (!$existProduct)
+		{
+			if (Catalog\Product\SystemField\ProductMapping::isAllowed())
+			{
+				$fieldName = Catalog\Product\SystemField\ProductMapping::getUserFieldBaseParam()['FIELD_NAME'];
+				if (!array_key_exists($fieldName, $fields))
+				{
+					$userField = Catalog\Product\SystemField\ProductMapping::load();
+					if (!empty($userField))
+					{
+						$value = (!empty($userField['SETTINGS']['DEFAULT_VALUE']) && is_array($userField['SETTINGS']['DEFAULT_VALUE'])
+							? $userField['SETTINGS']['DEFAULT_VALUE']
+							: null
+						);
+						if ($value === null)
+						{
+							/** @var Catalog\Product\SystemField\Type\HighloadBlock $className */
+							$className = Catalog\Product\SystemField\ProductMapping::getTypeId();
+
+							$list = $className::getIdByXmlId(
+								$userField['SETTINGS']['HLBLOCK_ID'],
+								[Catalog\Product\SystemField\ProductMapping::MAP_LANDING]
+							);
+							if (isset($list[Catalog\Product\SystemField\ProductMapping::MAP_LANDING]))
+							{
+								$value = [
+									$list[Catalog\Product\SystemField\ProductMapping::MAP_LANDING],
+								];
+							}
+						}
+						if ($value !== null)
+						{
+							$fields[$fieldName] = $value;
+						}
+					}
+				}
+			}
+		}
+
 		$result = $existProduct
 			? Catalog\Model\Product::update($fields['ID'], $fields)
 			: Catalog\Model\Product::add($fields)

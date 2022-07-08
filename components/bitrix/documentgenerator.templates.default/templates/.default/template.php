@@ -3,10 +3,14 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
-\Bitrix\Main\UI\Extension::load("ui.buttons");
-\Bitrix\Main\UI\Extension::load("ui.buttons.icons");
-\Bitrix\Main\UI\Extension::load("ui.notification");
-\CJSCore::init("sidepanel");
+
+\Bitrix\Main\UI\Extension::load([
+	'ui.buttons',
+	'ui.notification',
+	'ui.buttons.icons',
+	'sidepanel',
+	'ui.design-tokens',
+]);
 
 if($arResult['IS_SLIDER'])
 {

@@ -11,20 +11,20 @@ $APPLICATION->SetTitle(GetMessage("CT_MAIN_REG_INIT_TITLE"));?>
 
 		<div class="">
 			<div class="login-item">
-				<span class="login-item-alignment"></span><span class="login-label"><?echo GetMessage("CT_MAIN_REG_INIT_LOGIN_TITLE")?>:&nbsp;</span><span class="login-email-text"><?echo htmlspecialcharsbx($arResult["USER"]["LOGIN"])?></span>
+				<span class="login-label"><?echo GetMessage("CT_MAIN_REG_INIT_LOGIN_TITLE")?>:&nbsp;</span><span class="login-email-text"><?echo htmlspecialcharsbx($arResult["USER"]["~LOGIN"])?></span>
 			</div>
 			<div class="login-item">
-				<span class="login-item-alignment"></span><span class="login-label"><?echo GetMessage("CT_MAIN_REG_INIT_NAME_TITLE")?>:</span><input class="login-inp"  type="text" name="NAME"  maxlength="50" value="<?echo htmlspecialcharsbx($arResult["USER"]["NAME"])?>" size="17"/>
+				<span class="login-label"><?echo GetMessage("CT_MAIN_REG_INIT_NAME_TITLE")?>:</span><input class="login-inp"  type="text" name="NAME"  maxlength="50" value="<?echo htmlspecialcharsbx($arResult["USER"]["~NAME"])?>" size="17"/>
 			</div>
 			<div class="login-item">
-				<span class="login-item-alignment"></span><span class="login-label"><?echo GetMessage("CT_MAIN_REG_INIT_LAST_NAME_TITLE")?>:</span><input class="login-inp" type="text" name="LAST_NAME" maxlength="50" value="<?echo htmlspecialcharsbx($arResult["USER"]["LAST_NAME"])?>" size="17"/>
+				<span class="login-label"><?echo GetMessage("CT_MAIN_REG_INIT_LAST_NAME_TITLE")?>:</span><input class="login-inp" type="text" name="LAST_NAME" maxlength="50" value="<?echo htmlspecialcharsbx($arResult["USER"]["~LAST_NAME"])?>" size="17"/>
 			</div>
 			<div class="login-item">
 				<div style="display: none;"><input type="text" name="LOGIN_PSEUDO" value="<?echo htmlspecialcharsbx($arResult["USER"]["LOGIN"])?>" size="1" readonly /></div>
-				<span class="login-item-alignment"></span><span class="login-label"><?echo GetMessage("CT_MAIN_REG_INIT_PASSWORD_TITLE")?>:</span><input class="login-inp" type="password" name="PASSWORD"  maxlength="50" value="<?echo $arResult["PASSWORD"]?>" size="12"/>
+				<span class="login-label"><?echo GetMessage("CT_MAIN_REG_INIT_PASSWORD_TITLE")?>:</span><input class="login-inp" type="password" name="PASSWORD"  maxlength="50" value="<?echo $arResult["PASSWORD"]?>" size="12"/>
 			</div>
 			<div class="login-item">
-				<span class="login-item-alignment"></span><span class="login-label"><?echo GetMessage("CT_MAIN_REG_INIT_CONFIRM_PASSWORD_TITLE")?>:</span><input class="login-inp" type="password" name="CONFIRM_PASSWORD" maxlength="50" value="<?echo $arResult["CONFIRM_PASSWORD"]?>" size="12"/>
+				<span class="login-label"><?echo GetMessage("CT_MAIN_REG_INIT_CONFIRM_PASSWORD_TITLE")?>:</span><input class="login-inp" type="password" name="CONFIRM_PASSWORD" maxlength="50" value="<?echo $arResult["CONFIRM_PASSWORD"]?>" size="12"/>
 			</div>
 
 			<div class="login-item">

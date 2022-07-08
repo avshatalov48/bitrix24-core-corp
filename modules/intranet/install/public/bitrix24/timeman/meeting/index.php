@@ -35,7 +35,7 @@ elseif (!(!IsModuleInstalled("meeting") && in_array($licenseType, array("company
 	?>
 	<p><?=GetMessage("TARIFF_RESTRICTION_TEXT")?></p>
 	<div style="text-align: center;"><img src="images/<?=$lang?>/meeting.png"/></div>
-	<p><?=GetMessage("TARIFF_RESTRICTION_TEXT2")?></p>
+	<p><?=GetMessage("TARIFF_RESTRICTION_TEXT3")?></p>
 	<br/>
 	<div style="text-align: center;"><?CBitrix24::showTariffRestrictionButtons("meeting")?></div>
 	<?

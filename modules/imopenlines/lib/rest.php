@@ -68,7 +68,9 @@ class Rest extends \IRestService
 
 				'imopenlines.widget.config.get' => ['callback' => [__CLASS__, 'widgetConfigGet'], 'options' => []],
 				'imopenlines.widget.dialog.get' => ['callback' => [__CLASS__, 'widgetDialogGet'], 'options' => []],
+				'imopenlines.widget.dialog.list' => ['callback' => [__CLASS__, 'widgetDialogList'], 'options' => []],
 				'imopenlines.widget.user.register' => ['callback' => [__CLASS__, 'widgetUserRegister'], 'options' => []],
+				'imopenlines.widget.chat.create' => ['callback' => [__CLASS__, 'widgetChatCreate'], 'options' => []],
 				'imopenlines.widget.user.consent.apply' => ['callback' => [__CLASS__, 'widgetUserConsentApply'], 'options' => []],
 				'imopenlines.widget.user.get' => ['callback' => [__CLASS__, 'widgetUserGet'], 'options' => []],
 				'imopenlines.widget.operator.get' => ['callback' => [__CLASS__, 'widgetOperatorGet'], 'options' => []],
@@ -181,8 +183,9 @@ class Rest extends \IRestService
 			$crmBindings = $operatorChat->getFieldData(Chat::FIELD_CRM);
 
 			$signedData = new WebForm\Embed\Sign();
-			$signedData->setProperty('eventNamePostfix', FormHandler::EVENT_POSTFIX)
-					 ->setProperty('openlinesCode', $session->getData('USER_CODE'));
+			$signedData->setProperty('eventNamePostfix', FormHandler::EVENT_POSTFIX);
+			$userCode = FormHandler::encodeConnectorName($session->getData('USER_CODE'));
+			$signedData->setProperty('openlinesCode', $userCode);
 
 			foreach ($crmBindings as $bindingType => $bindingId)
 			{
@@ -824,18 +827,96 @@ class Rest extends \IRestService
 
 		$_SESSION['LIVECHAT']['REGISTER'] = $result;
 
-		// check if welcome form needed (if we have name/lastName and email - we dont show form)
-		if (
-			($userDataFields['NAME'] !== '' || $userDataFields['LAST_NAME'] !== '')
-			&& $userDataFields['EMAIL'] !== '')
-		{
-			$clientChat = new Chat($dialogData['CHAT_ID']);
-			$clientChat->updateFieldData([Chat::FIELD_LIVECHAT => ['WELCOME_FORM_NEEDED' => 'N']]);
-		}
+		self::checkWelcomeFormNeeded($params, (int)$dialogData['CHAT_ID']);
 
 		Widget\Cache::set($userData['ID'], [
 			'TRACE_DATA' => (string)$params['TRACE_DATA'],
 	 		'CUSTOM_DATA' => (string)$params['CUSTOM_DATA'],
+		]);
+
+		return $result;
+	}
+
+	public static function widgetChatCreate($params, $n, \CRestServer $server)
+	{
+		// method disabled because of beta status
+		throw new RestException('Method is unavailable', 'WRONG_REQUEST', \CRestServer::STATUS_FORBIDDEN);
+
+		if ($server->getAuthType() !== Widget\Auth::AUTH_TYPE)
+		{
+			throw new RestException('Access for this method allowed only by livechat authorization.', 'WRONG_AUTH_TYPE', \CRestServer::STATUS_FORBIDDEN);
+		}
+
+		$params = array_change_key_case($params, CASE_UPPER);
+
+		$params['CONFIG_ID'] = (int)$params['CONFIG_ID'];
+		if ($params['CONFIG_ID'] <= 0)
+		{
+			throw new RestException('Config id is not specified.', 'CONFIG_ID_EMPTY', \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		$config = Model\ConfigTable::getById($params['CONFIG_ID'])->fetch();
+		if (!$config)
+		{
+			throw new RestException('Config is not found.', 'CONFIG_NOT_FOUND', \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		if (
+			$_SESSION['LIVECHAT']['REGISTER']
+			&& !(
+				isset($params['USER_HASH']) && trim($params['USER_HASH']) && preg_match("/^[a-fA-F0-9]{32}$/i", $params['USER_HASH'])
+			)
+		)
+		{
+			$params['USER_HASH'] = $_SESSION['LIVECHAT']['REGISTER']['hash'];
+		}
+
+		global $USER;
+		$userData = [];
+		if ($USER->IsAuthorized())
+		{
+			$userData = [
+				'ID' => $USER->getId(),
+				'HASH' => $params['USER_HASH']
+			];
+		}
+
+		if (count($userData) === 0)
+		{
+			throw new RestException(
+				Widget\User::getError()->msg,
+				Widget\User::getError()->code,
+				\CRestServer::STATUS_WRONG_REQUEST
+			);
+		}
+
+		$dialogData = Widget\Dialog::register($userData['ID'], $config['ID']);
+		if (!$dialogData)
+		{
+			throw new RestException(
+				Widget\Dialog::getError()->msg,
+				Widget\Dialog::getError()->code,
+				\CRestServer::STATUS_WRONG_REQUEST
+			);
+		}
+
+		Widget\Auth::authorizeById($userData['ID'], true, true);
+
+		$result = [
+			'id' => (int)$userData['ID'],
+			'hash' => $userData['HASH'],
+			'chatId' => (int)$dialogData['CHAT_ID'],
+			'dialogId' => 'chat'.$dialogData['CHAT_ID'],
+			'userConsent' => false,
+		];
+
+		$_SESSION['LIVECHAT']['REGISTER'] = $result;
+
+		self::checkWelcomeFormNeeded($params, (int)$dialogData['CHAT_ID']);
+
+		Widget\Cache::set($userData['ID'], [
+			'TRACE_DATA' => (string)$params['TRACE_DATA'],
+			'CUSTOM_DATA' => (string)$params['CUSTOM_DATA'],
 		]);
 
 		return $result;
@@ -1032,6 +1113,22 @@ class Rest extends \IRestService
 		return self::objectEncode($result);
 	}
 
+	/**
+	 * 	Check if welcome form needed (if we have name/lastName and email - we dont show form)
+	 * @param array $params
+	 * @param int $chatId
+	 *
+	 * @return void
+	 */
+	private static function checkWelcomeFormNeeded(array $params, int $chatId): void
+	{
+		if (($params['NAME'] !== '' || $params['LAST_NAME'] !== '') && $params['EMAIL'] !== '')
+		{
+			$clientChat = new Chat($chatId);
+			$clientChat->updateFieldData([Chat::FIELD_LIVECHAT => ['WELCOME_FORM_NEEDED' => 'N']]);
+		}
+	}
+
 	public function widgetOperatorGet($params, $n, \CRestServer $server)
 	{
 		$params = array_change_key_case($params, CASE_UPPER);
@@ -1137,8 +1234,51 @@ class Rest extends \IRestService
 	 		'CUSTOM_DATA' => (string)$params['CUSTOM_DATA'],
 		]);
 
-		$result = Widget\Dialog::get($USER->GetID(), $params['CONFIG_ID']);
+		$chatId = isset($params['CHAT_ID']) ? (int)$params['CHAT_ID'] : 0;
+		$result = Widget\Dialog::get($USER->GetID(), $params['CONFIG_ID'], $chatId);
 		if (!$result)
+		{
+			throw new RestException(
+				Widget\Dialog::getError()->msg,
+				Widget\Dialog::getError()->code,
+				\CRestServer::STATUS_WRONG_REQUEST
+			);
+		}
+
+		return self::objectEncode($result);
+	}
+
+	public static function widgetDialogList($params, $offset = 0, \CRestServer $server)
+	{
+		// method disabled because of beta status
+		throw new RestException('Method is unavailable', 'WRONG_REQUEST', \CRestServer::STATUS_FORBIDDEN);
+
+		if ($server->getAuthType() !== Widget\Auth::AUTH_TYPE)
+		{
+			throw new RestException('Access for this method allowed only by livechat authorization.', 'WRONG_AUTH_TYPE', \CRestServer::STATUS_FORBIDDEN);
+		}
+
+		global $USER;
+		if (!$USER->IsAuthorized())
+		{
+			throw new RestException('Access for this method allowed only for authorized users.', 'WRONG_AUTH_TYPE', \CRestServer::STATUS_FORBIDDEN);
+		}
+
+		$params = array_change_key_case($params, CASE_UPPER);
+
+		$params['CONFIG_ID'] = (int)$params['CONFIG_ID'];
+		if ($params['CONFIG_ID'] <= 0)
+		{
+			throw new RestException('Config id is not specified.', 'WRONG_REQUEST', \CRestServer::STATUS_WRONG_REQUEST);
+		}
+
+		if ($offset > 0)
+		{
+			$params['OFFSET'] = $offset;
+		}
+
+		$result = Widget\Dialog::getList($USER->GetID(), $params);
+		if (!is_array($result))
 		{
 			throw new RestException(
 				Widget\Dialog::getError()->msg,

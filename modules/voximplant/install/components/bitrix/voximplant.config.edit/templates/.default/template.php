@@ -415,6 +415,15 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 							<label for="vi_recording_notice"
 								   class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_EDIT_RECORD_NOTICE") ?></label>
 						</div>
+						<div class="voximplant-number-settings-choice" id="vi-recording-stereo-container">
+							<input id="vi_recording_stereo" type="checkbox" name="RECORDING_STEREO"
+								   <? if ($arResult["ITEM"]["RECORDING_STEREO"] == "Y") { ?>checked<? } ?> value="Y"
+								   class="voximplant-number-settings-checkbox">
+							<label for="vi_recording_stereo"
+								   class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_EDIT_RECORD_STEREO") ?>
+								<span data-hint="<?= Loc::getMessage("VI_CONFIG_EDIT_RECORD_STEREO_HINT") ?>"></span>
+							</label>
+						</div>
 
 						<? if ($arResult["SHOW_TRANSCRIPTION"]): ?>
 							<div class="voximplant-number-settings-choice">
@@ -984,5 +993,6 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 			portalMode: '<?= CUtil::JSEscape($arResult['ITEM']['PORTAL_MODE'])?>',
 			sipConfig: <?= CUtil::PhpToJSObject($arResult['SIP_CONFIG'])?>
 		});
+		BX.UI.Hint.init(BX('vi-recording-stereo-container'));
 	});
 </script>

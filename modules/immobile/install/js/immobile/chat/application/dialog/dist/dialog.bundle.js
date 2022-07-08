@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
-(function (exports,immobile_chat_application_core,main_date,mobile_pull_client,im_model,im_provider_rest,im_lib_localstorage,im_lib_timer,pull_component_status,ui_vue,im_lib_logger,im_const,im_lib_utils,im_component_dialog,im_view_quotepanel,main_core_events,ui_vue_vuex,ui_vue_components_smiles,im_mixin) {
+(function (exports,immobile_chat_application_core,main_date,mobile_pull_client,im_model,im_provider_rest,im_lib_localstorage,pull_component_status,ui_vue,im_component_dialog,im_view_quotepanel,ui_vue_vuex,ui_vue_components_smiles,im_lib_utils,main_core_events,im_const,im_eventHandler,im_lib_logger,im_lib_timer) {
 	'use strict';
 
 	/**
@@ -206,6 +206,191 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-consent-window-show\" leave-active-class=\"bx-livechat-form-close\">\n\t\t\t<div class=\"bx-messenger-alert-box bx-livechat-alert-box-zero-padding bx-livechat-form-show\" key=\"vote\">\n\t\t\t\t<div class=\"bx-livechat-alert-close\" @click=\"hideSmiles\"></div>\n\t\t\t\t<div class=\"bx-messenger-smiles-box\">\n\t\t\t\t\t<bx-smiles\n\t\t\t\t\t\t@selectSmile=\"onSelectSmile\"\n\t\t\t\t\t\t@selectSet=\"onSelectSet\"\n\t\t\t\t\t/>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\n\t"
 	};
 
+	var MobileQuoteHandler = /*#__PURE__*/function (_QuoteHandler) {
+	  babelHelpers.inherits(MobileQuoteHandler, _QuoteHandler);
+
+	  function MobileQuoteHandler() {
+	    babelHelpers.classCallCheck(this, MobileQuoteHandler);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(MobileQuoteHandler).apply(this, arguments));
+	  }
+
+	  babelHelpers.createClass(MobileQuoteHandler, [{
+	    key: "quoteMessage",
+	    value: function quoteMessage(messageId) {
+	      var _this = this;
+
+	      this.store.dispatch('dialogues/update', {
+	        dialogId: this.getDialogId(),
+	        fields: {
+	          quoteId: messageId
+	        }
+	      }).then(function () {
+	        if (_this.store.state.application.mobile.keyboardShow) {
+	          return;
+	        }
+
+	        main_core_events.EventEmitter.emit(im_const.EventType.mobile.textarea.setFocus);
+	        setTimeout(function () {
+	          main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollToBottom, {
+	            chatId: _this.getChatId(),
+	            duration: 300,
+	            cancelIfScrollChange: false,
+	            force: true
+	          });
+	        }, 300);
+	      });
+	    }
+	  }, {
+	    key: "clearQuote",
+	    value: function clearQuote() {
+	      main_core_events.EventEmitter.emit(im_const.EventType.mobile.textarea.setText, {
+	        text: ''
+	      });
+	      this.store.dispatch('dialogues/update', {
+	        dialogId: this.getDialogId(),
+	        fields: {
+	          quoteId: 0,
+	          editId: 0
+	        }
+	      });
+	    }
+	  }, {
+	    key: "getChatId",
+	    value: function getChatId() {
+	      return this.store.state.application.dialog.chatId;
+	    }
+	  }]);
+	  return MobileQuoteHandler;
+	}(im_eventHandler.QuoteHandler);
+
+	var MobileReactionHandler = /*#__PURE__*/function (_ReactionHandler) {
+	  babelHelpers.inherits(MobileReactionHandler, _ReactionHandler);
+
+	  function MobileReactionHandler($Bitrix) {
+	    var _this;
+
+	    babelHelpers.classCallCheck(this, MobileReactionHandler);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(MobileReactionHandler).call(this, $Bitrix));
+	    _this.loc = $Bitrix.Loc.messages;
+	    return _this;
+	  }
+
+	  babelHelpers.createClass(MobileReactionHandler, [{
+	    key: "reactToMessage",
+	    value: function reactToMessage(messageId, reaction) {
+	      var action = reaction.action || im_eventHandler.ReactionHandler.actions.auto;
+
+	      if (action !== im_eventHandler.ReactionHandler.actions.auto) {
+	        action = action === im_eventHandler.ReactionHandler.actions.set ? im_eventHandler.ReactionHandler.actions.plus : im_eventHandler.ReactionHandler.actions.minus;
+	      }
+
+	      var eventParameters = ['reactMessage', "reactMessage|".concat(messageId), {
+	        messageId: messageId,
+	        action: action
+	      }, false, 1000];
+	      BXMobileApp.Events.postToComponent('chatbackground::task::action', eventParameters, 'background');
+
+	      if (reaction.action === im_eventHandler.ReactionHandler.actions.set) {
+	        setTimeout(function () {
+	          return app.exec('callVibration');
+	        }, 200);
+	      }
+	    }
+	  }, {
+	    key: "openMessageReactionList",
+	    value: function openMessageReactionList(id, reactions) {
+	      if (!im_lib_utils.Utils.dialog.isChatId(this.getDialogId())) {
+	        return;
+	      }
+
+	      var users = [];
+	      Object.keys(reactions).forEach(function (reaction) {
+	        users = [].concat(babelHelpers.toConsumableArray(users), babelHelpers.toConsumableArray(reactions[reaction]));
+	      });
+	      main_core_events.EventEmitter.emit(im_const.EventType.mobile.openUserList, {
+	        users: users,
+	        title: this.loc['MOBILE_MESSAGE_LIST_LIKE']
+	      });
+	    }
+	  }, {
+	    key: "onSetMessageReaction",
+	    value: function onSetMessageReaction(_ref) {
+	      var data = _ref.data;
+	      this.reactToMessage(data.message.id, data.reaction);
+	    }
+	  }, {
+	    key: "getDialogId",
+	    value: function getDialogId() {
+	      return this.store.state.application.dialog.dialogId;
+	    }
+	  }]);
+	  return MobileReactionHandler;
+	}(im_eventHandler.ReactionHandler);
+
+	var MobileReadingHandler = /*#__PURE__*/function (_ReadingHandler) {
+	  babelHelpers.inherits(MobileReadingHandler, _ReadingHandler);
+
+	  function MobileReadingHandler() {
+	    babelHelpers.classCallCheck(this, MobileReadingHandler);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(MobileReadingHandler).apply(this, arguments));
+	  }
+
+	  babelHelpers.createClass(MobileReadingHandler, [{
+	    key: "onReadMessage",
+	    value: function onReadMessage(_ref) {
+	      var _this = this;
+
+	      var _ref$data = _ref.data,
+	          _ref$data$id = _ref$data.id,
+	          id = _ref$data$id === void 0 ? null : _ref$data$id,
+	          _ref$data$skipAjax = _ref$data.skipAjax,
+	          skipAjax = _ref$data$skipAjax === void 0 ? false : _ref$data$skipAjax;
+	      return this.readMessage(id, true, true).then(function (messageData) {
+	        if (messageData.lastId <= 0 || skipAjax) {
+	          return;
+	        }
+
+	        _this.addTaskToReadMessage(messageData);
+	      });
+	    }
+	  }, {
+	    key: "processMessagesToRead",
+	    value: function processMessagesToRead(chatId) {
+	      var _this2 = this;
+	      var lastMessageToRead = this.getMaxMessageIdFromQueue(chatId);
+	      var dialogId = this.getDialogId();
+	      delete this.messagesToRead[chatId];
+
+	      if (lastMessageToRead <= 0) {
+	        return Promise.resolve({
+	          dialogId: dialogId,
+	          lastId: lastMessageToRead
+	        });
+	      }
+
+	      return new Promise(function (resolve, reject) {
+	        _this2.readMessageOnClient(chatId, lastMessageToRead).then(function (readResult) {
+	          return _this2.decreaseChatCounter(chatId, readResult.count);
+	        }).then(function () {
+	          resolve({
+	            dialogId: dialogId,
+	            lastId: lastMessageToRead
+	          });
+	        })["catch"](function (error) {
+	          im_lib_logger.Logger.error('Reading messages error', error);
+	          reject();
+	        });
+	      });
+	    }
+	  }, {
+	    key: "addTaskToReadMessage",
+	    value: function addTaskToReadMessage(messageData) {
+	      BXMobileApp.Events.postToComponent('chatbackground::task::action', ['readMessage', "readMessage|".concat(messageData.dialogId), messageData, false, 200], 'background');
+	    }
+	  }]);
+	  return MobileReadingHandler;
+	}(im_eventHandler.ReadingHandler);
+
 	function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 
 	function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
@@ -214,7 +399,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	 */
 
 	ui_vue.BitrixVue.component('bx-mobile-im-component-dialog', {
-	  mixins: [im_mixin.DialogCore, im_mixin.DialogReadMessages, im_mixin.DialogQuoteMessage, im_mixin.DialogClickOnCommand, im_mixin.DialogClickOnMention, im_mixin.DialogClickOnUserName, im_mixin.DialogClickOnMessageMenu, im_mixin.DialogClickOnMessageRetry, im_mixin.DialogClickOnUploadCancel, im_mixin.DialogClickOnReadList, im_mixin.DialogSetMessageReaction, im_mixin.DialogOpenMessageReactionList, im_mixin.DialogClickOnKeyboardButton, im_mixin.DialogClickOnChatTeaser, im_mixin.DialogClickOnDialog],
 	  components: {
 	    LoadingStatus: LoadingStatus,
 	    ErrorStatus: ErrorStatus,
@@ -315,6 +499,31 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }
 
 	      return result;
+	    },
+	    dialog: function dialog() {
+	      var dialog = this.$store.getters['dialogues/get'](this.application.dialog.dialogId);
+	      return dialog || this.$store.getters['dialogues/getBlank']();
+	    },
+	    chatId: function chatId() {
+	      if (this.application) {
+	        return this.application.dialog.chatId;
+	      }
+	    },
+	    diskFolderId: function diskFolderId() {
+	      return this.application.dialog.diskFolderId;
+	    },
+	    isDialogShowingMessages: function isDialogShowingMessages() {
+	      var messagesNotEmpty = this.messageCollection && this.messageCollection.length > 0;
+
+	      if (messagesNotEmpty) {
+	        this.dialogState = im_const.DialogState.show;
+	      } else if (this.dialog && this.dialog.init) {
+	        this.dialogState = im_const.DialogState.empty;
+	      } else {
+	        this.dialogState = im_const.DialogState.loading;
+	      }
+
+	      return messagesNotEmpty;
 	    }
 	  }, ui_vue_vuex.Vuex.mapState({
 	    application: function application(state) {
@@ -324,7 +533,56 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      return state.messages.collection[state.application.dialog.chatId];
 	    }
 	  })),
+	  created: function created() {
+	    this.timer = new im_lib_timer.Timer();
+	    this.initEventHandlers();
+	    this.subscribeToEvents();
+	  },
+	  beforeDestroy: function beforeDestroy() {
+	    this.unsubscribeEvents();
+	    this.destroyHandlers();
+	  },
 	  methods: {
+	    initEventHandlers: function initEventHandlers() {
+	      this.quoteHandler = new MobileQuoteHandler(this.$Bitrix);
+	      this.reactionHandler = new MobileReactionHandler(this.$Bitrix);
+	      this.readingHandler = new MobileReadingHandler(this.$Bitrix);
+	    },
+	    destroyHandlers: function destroyHandlers() {
+	      this.quoteHandler.destroy();
+	      this.reactionHandler.destroy();
+	      this.readingHandler.destroy();
+	    },
+	    subscribeToEvents: function subscribeToEvents() {
+	      main_core_events.EventEmitter.subscribe(im_const.EventType.mobile.textarea.setText, this.onSetText);
+	      main_core_events.EventEmitter.subscribe(im_const.EventType.mobile.textarea.setFocus, this.onSetFocus);
+	      main_core_events.EventEmitter.subscribe(im_const.EventType.mobile.openUserList, this.onOpenUserList);
+	      main_core_events.EventEmitter.subscribe(im_const.EventType.dialog.clickOnUploadCancel, this.onClickOnUploadCancel);
+	      main_core_events.EventEmitter.subscribe(im_const.EventType.dialog.clickOnMessageRetry, this.onClickOnMessageRetry);
+	      main_core_events.EventEmitter.subscribe(im_const.EventType.dialog.clickOnDialog, this.onClickOnDialog);
+	      main_core_events.EventEmitter.subscribe(im_const.EventType.dialog.clickOnChatTeaser, this.onClickOnChatTeaser);
+	      main_core_events.EventEmitter.subscribe(im_const.EventType.dialog.clickOnKeyboardButton, this.onClickOnKeyboardButton);
+	      main_core_events.EventEmitter.subscribe(im_const.EventType.dialog.clickOnReadList, this.onClickOnReadList);
+	      main_core_events.EventEmitter.subscribe(im_const.EventType.dialog.clickOnMessageMenu, this.onClickOnMessageMenu);
+	      main_core_events.EventEmitter.subscribe(im_const.EventType.dialog.clickOnUserName, this.onClickOnUserName);
+	      main_core_events.EventEmitter.subscribe(im_const.EventType.dialog.clickOnMention, this.onClickOnMention);
+	      main_core_events.EventEmitter.subscribe(im_const.EventType.dialog.clickOnCommand, this.onClickOnCommand);
+	    },
+	    unsubscribeEvents: function unsubscribeEvents() {
+	      main_core_events.EventEmitter.unsubscribe(im_const.EventType.mobile.textarea.setText, this.onSetText);
+	      main_core_events.EventEmitter.unsubscribe(im_const.EventType.mobile.textarea.setFocus, this.onSetFocus);
+	      main_core_events.EventEmitter.unsubscribe(im_const.EventType.mobile.openUserList, this.onOpenUserList);
+	      main_core_events.EventEmitter.unsubscribe(im_const.EventType.dialog.clickOnUploadCancel, this.onClickOnUploadCancel);
+	      main_core_events.EventEmitter.unsubscribe(im_const.EventType.dialog.clickOnMessageRetry, this.onClickOnMessageRetry);
+	      main_core_events.EventEmitter.unsubscribe(im_const.EventType.dialog.clickOnDialog, this.onClickOnDialog);
+	      main_core_events.EventEmitter.unsubscribe(im_const.EventType.dialog.clickOnChatTeaser, this.onClickOnChatTeaser);
+	      main_core_events.EventEmitter.unsubscribe(im_const.EventType.dialog.clickOnKeyboardButton, this.onClickOnKeyboardButton);
+	      main_core_events.EventEmitter.unsubscribe(im_const.EventType.dialog.clickOnReadList, this.onClickOnReadList);
+	      main_core_events.EventEmitter.unsubscribe(im_const.EventType.dialog.clickOnMessageMenu, this.onClickOnMessageMenu);
+	      main_core_events.EventEmitter.unsubscribe(im_const.EventType.dialog.clickOnUserName, this.onClickOnUserName);
+	      main_core_events.EventEmitter.unsubscribe(im_const.EventType.dialog.clickOnMention, this.onClickOnMention);
+	      main_core_events.EventEmitter.unsubscribe(im_const.EventType.dialog.clickOnCommand, this.onClickOnCommand);
+	    },
 	    getApplication: function getApplication() {
 	      return this.$Bitrix.Application.get();
 	    },
@@ -383,30 +641,21 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      im_lib_logger.Logger.warn('Message retry:', event);
 	      this.getApplication().retrySendMessage(event.message);
 	    },
-	    onReadMessage: function onReadMessage(_ref7) {
+	    onClickOnReadList: function onClickOnReadList(_ref7) {
 	      var event = _ref7.data;
-	      this.getApplication().readMessage(event.id);
-	    },
-	    onClickOnReadList: function onClickOnReadList(_ref8) {
-	      var event = _ref8.data;
 	      this.getApplication().openReadedList(event.list);
 	    },
-	    onQuoteMessage: function onQuoteMessage(_ref9) {
-	      var event = _ref9.data;
-	      this.getApplication().quoteMessage(event.message.id);
+	    onSetFocus: function onSetFocus() {
+	      this.getApplication().setTextFocus();
 	    },
-	    onSetMessageReaction: function onSetMessageReaction(_ref10) {
-	      var event = _ref10.data;
-	      this.getApplication().reactMessage(event.message.id, event.reaction);
+	    onSetText: function onSetText(_ref8) {
+	      var event = _ref8.data;
+	      this.getApplication().setText(event.text);
 	    },
-	    onOpenMessageReactionList: function onOpenMessageReactionList(_ref11) {
-	      var event = _ref11.data;
-	      this.getApplication().openMessageReactionList(event.message.id, event.values);
-	    },
-	    onClickOnKeyboardButton: function onClickOnKeyboardButton(_ref12) {
+	    onClickOnKeyboardButton: function onClickOnKeyboardButton(_ref9) {
 	      var _this2 = this;
 
-	      var event = _ref12.data;
+	      var event = _ref9.data;
 
 	      if (event.action === 'ACTION') {
 	        var _event$params = event.params,
@@ -473,20 +722,17 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	      return false;
 	    },
-	    onClickOnChatTeaser: function onClickOnChatTeaser(_ref13) {
+	    onClickOnChatTeaser: function onClickOnChatTeaser(_ref10) {
 	      var _this3 = this;
 
-	      var event = _ref13.data;
+	      var event = _ref10.data;
 	      this.$Bitrix.Data.get('controller').application.joinParentChat(event.message.id, 'chat' + event.message.params.CHAT_ID).then(function (dialogId) {
 	        _this3.getApplication().openDialog(dialogId);
 	      })["catch"](function () {});
 	    },
-	    onClickOnDialog: function onClickOnDialog(_ref14) {//this.getApplication().controller.hideSmiles();
+	    onClickOnDialog: function onClickOnDialog(_ref11) {//this.getApplication().controller.hideSmiles();
 
-	      var event = _ref14.data;
-	    },
-	    onQuotePanelClose: function onQuotePanelClose() {
-	      this.getApplication().quoteMessageClear();
+	      var event = _ref11.data;
 	    },
 	    onSmilesSelectSmile: function onSmilesSelectSmile(event) {
 	      console.warn('Smile selected:', event);
@@ -501,6 +747,51 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    onHideSmiles: function onHideSmiles() {
 	      //this.getApplication().controller.hideSmiles();
 	      this.getApplication().setTextFocus();
+	    },
+	    onOpenUserList: function onOpenUserList(_ref12) {
+	      var event = _ref12.data;
+	      this.getApplication().openUserList(event);
+	    },
+	    getController: function getController() {
+	      return this.$Bitrix.Data.get('controller');
+	    },
+	    getApplicationController: function getApplicationController() {
+	      return this.getController().application;
+	    },
+	    getRestClient: function getRestClient() {
+	      return this.$Bitrix.RestClient.get();
+	    },
+	    getCurrentUser: function getCurrentUser() {
+	      return this.$store.getters['users/get'](this.application.common.userId, true);
+	    },
+	    executeRestAnswer: function executeRestAnswer(method, queryResult, extra) {
+	      this.getController().executeRestAnswer(method, queryResult, extra);
+	    },
+	    isUnreadMessagesLoaded: function isUnreadMessagesLoaded() {
+	      if (!this.dialog) {
+	        return true;
+	      }
+
+	      if (this.dialog.lastMessageId <= 0) {
+	        return true;
+	      }
+
+	      if (!this.messageCollection || this.messageCollection.length <= 0) {
+	        return true;
+	      }
+
+	      var lastElementId = 0;
+
+	      for (var index = this.messageCollection.length - 1; index >= 0; index--) {
+	        var lastElement = this.messageCollection[index];
+
+	        if (typeof lastElement.id === "number") {
+	          lastElementId = lastElement.id;
+	          break;
+	        }
+	      }
+
+	      return lastElementId >= this.dialog.lastMessageId;
 	    }
 	  },
 	  watch: {
@@ -922,7 +1213,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    value: function initUnsentStorage() {
 	      var _this9 = this;
 
-	      console.log('6. initUnsentStorage.');
+	      console.log('6. initUnsentStorage');
 	      return new Promise(function (resolve) {
 	        var filesPromise = _this9.loadUnsentFiles();
 
@@ -1857,7 +2148,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          });
 	          this.pullRequestMessage = false;
 	        } else {
-	          this.readMessage();
+	          main_core_events.EventEmitter.emit(im_const.EventType.dialog.readMessage);
 	          this.processSendMessages();
 	        }
 	      } else if (data.status === mobile_pull_client.PullClient.PullStatus.Offline) {
@@ -2476,7 +2767,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        return this.promiseGetDialogUnread;
 	      }
 
-	      this.controller.application.readMessage(lastId, true, true).then(function () {
+	      main_core_events.EventEmitter.emitAsync(im_const.EventType.dialog.readMessage, {
+	        id: lastId,
+	        skipAjax: true
+	      }).then(function () {
 	        var _query2;
 
 	        _this25.timer.start('data', 'load', .5, function () {
@@ -2675,7 +2969,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        } else if (params.id === 'unread') {
 	          _this26.unreadMessage(message.id);
 	        } else if (params.id === 'read') {
-	          _this26.readMessage(message.id);
+	          main_core_events.EventEmitter.emit(im_const.EventType.dialog.readMessage, {
+	            id: message.id
+	          });
 	        } else if (params.id === 'share') {
 	          var _dialog = _this26.controller.application.getDialogData();
 
@@ -2817,22 +3113,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      return this.controller.application.shareMessage(messageId, type);
 	    }
 	  }, {
-	    key: "readMessage",
-	    value: function readMessage(messageId) {
-	      // if (this.controller.isOnline())
-	      // {
-	      // 	return false;
-	      // }
-	      this.controller.application.readMessage(messageId, true, true).then(function (result) {
-	        if (result.lastId <= 0) {
-	          return true;
-	        }
-
-	        BXMobileApp.Events.postToComponent('chatbackground::task::action', ['readMessage', 'readMessage|' + result.dialogId, result, false, 200], 'background');
-	      });
-	      return true;
-	    }
-	  }, {
 	    key: "unreadMessage",
 	    value: function unreadMessage(messageId) {
 	      if (!this.controller.isOnline()) {
@@ -2935,42 +3215,6 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            });
 	          }, 300);
 	        }
-	      });
-	    }
-	  }, {
-	    key: "reactMessage",
-	    value: function reactMessage(id, reaction) {
-	      BXMobileApp.Events.postToComponent('chatbackground::task::action', ['reactMessage', 'reactMessage|' + id, {
-	        messageId: id,
-	        action: reaction.action === 'auto' ? 'auto' : reaction.action === 'set' ? 'plus' : 'minus'
-	      }, false, 1000], 'background');
-
-	      if (reaction.action === 'set') {
-	        setTimeout(function () {
-	          return app.exec("callVibration");
-	        }, 200);
-	      }
-	    }
-	  }, {
-	    key: "openMessageReactionList",
-	    value: function openMessageReactionList(id, reactions) {
-	      if (!im_lib_utils.Utils.dialog.isChatId(this.controller.application.getDialogId())) {
-	        return false;
-	      }
-
-	      var users = [];
-
-	      for (var reaction in reactions) {
-	        if (!reactions.hasOwnProperty(reaction)) {
-	          continue;
-	        }
-
-	        users = users.concat(reactions[reaction]);
-	      }
-
-	      this.openUserList({
-	        users: users,
-	        title: this.getLocalize('MOBILE_MESSAGE_LIST_LIKE')
 	      });
 	    }
 	  }, {
@@ -3258,5 +3502,5 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	exports.MobileDialogApplication = MobileDialogApplication;
 
-}((this.BX.Messenger.Application = this.BX.Messenger.Application || {}),BX.Messenger.Application,BX,BX,BX.Messenger.Model,BX.Messenger.Provider.Rest,BX.Messenger.Lib,BX.Messenger.Lib,window,BX,BX.Messenger.Lib,BX.Messenger.Const,BX.Messenger.Lib,BX.Messenger,BX,BX.Event,BX,window,BX.Messenger.Mixin));
+}((this.BX.Messenger.Application = this.BX.Messenger.Application || {}),BX.Messenger.Application,BX,BX,BX.Messenger.Model,BX.Messenger.Provider.Rest,BX.Messenger.Lib,window,BX,BX.Messenger,BX,BX,window,BX.Messenger.Lib,BX.Event,BX.Messenger.Const,BX.Messenger,BX.Messenger.Lib,BX.Messenger.Lib));
 //# sourceMappingURL=dialog.bundle.js.map

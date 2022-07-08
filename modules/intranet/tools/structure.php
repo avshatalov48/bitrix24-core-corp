@@ -186,32 +186,40 @@ else
 			<tr valign="bottom">
 				<td>
 					<div style="font-size:14px;font-weight:bold;padding-bottom:8px"><label for="NAME"><?echo GetMessage("INTR_STRUCTURE_NAME")?></label></div>
-					<input type="text" value="<?if (isset($_POST['NAME'])) echo htmlspecialcharsbx($_POST['NAME']); elseif (isset($arSection["NAME"])) echo htmlspecialcharsbx($arSection["NAME"])?>" name="NAME" id="NAME" style="width:100%;font-size:14px;border:1px #c8c8c8 solid;">
+					<div class="ui-ctl ui-ctl-textbox ui-ctl-sm">
+						<input type="text"
+							class="ui-ctl-element"
+							value="<?if (isset($_POST['NAME'])) echo htmlspecialcharsbx($_POST['NAME']); elseif (isset($arSection["NAME"])) echo htmlspecialcharsbx($arSection["NAME"])?>" name="NAME" id="NAME">
+					</div>
 				</td>
 			</tr>
 			<?if (!(isset($arParams["UF_DEPARTMENT_ID"]) && empty($arSection["IBLOCK_SECTION_ID"])))://for top department no parent department?>
 			<tr valign="bottom">
 				<td>
 					<div style="font-size:14px;font-weight:bold;padding-bottom:8px"><label for="IBLOCK_SECTION_ID"><?echo GetMessage("INTR_STRUCTURE_DEPARTMENT")?></label></div>
-					<select name="IBLOCK_SECTION_ID" id="IBLOCK_SECTION_ID" style="width:100%;font-size:14px;border:1px #c8c8c8 solid;">
-						<?
-						$rsDepartments = CIBlockSection::GetTreeList(array(
-							"IBLOCK_ID"=>intval(COption::GetOptionInt('intranet', 'iblock_structure', false)),
-						));
-						$CurrentIblockSectionID = "";
-						if (isset($arSection["IBLOCK_SECTION_ID"]) && intval($arSection["IBLOCK_SECTION_ID"]) > 0)
-							$CurrentIblockSectionID = intval($arSection["IBLOCK_SECTION_ID"]);
-						elseif (isset($_POST['IBLOCK_SECTION_ID']) && intval($_POST['IBLOCK_SECTION_ID']) > 0)
-							$CurrentIblockSectionID = intval($_POST['IBLOCK_SECTION_ID']);
-						elseif (!isset($arParams["UF_DEPARTMENT_ID"]) && isset($arParams['IBLOCK_SECTION_ID']) && intval($arParams['IBLOCK_SECTION_ID']) > 0)
-							$CurrentIblockSectionID = intval($arParams['IBLOCK_SECTION_ID']);
-						elseif (isset($_GET["IBLOCK_SECTION_ID"]) && intval($_GET["IBLOCK_SECTION_ID"]) > 0)
-							$CurrentIblockSectionID = intval($_GET["IBLOCK_SECTION_ID"]);
-						while($arDepartment = $rsDepartments->GetNext()):
-							?><option value="<?echo $arDepartment["ID"]?>" <?if($CurrentIblockSectionID==$arDepartment["ID"]) echo "selected"?>><?echo str_repeat("&nbsp;.&nbsp;", $arDepartment["DEPTH_LEVEL"])?><?echo $arDepartment["NAME"]?></option><?
-						endwhile;
-						?>
-					</select>
+
+					<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-sm">
+						<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+						<select class="ui-ctl-element" name="IBLOCK_SECTION_ID" id="IBLOCK_SECTION_ID">
+							<?
+							$rsDepartments = CIBlockSection::GetTreeList(array(
+								"IBLOCK_ID"=>intval(COption::GetOptionInt('intranet', 'iblock_structure', false)),
+							));
+							$CurrentIblockSectionID = "";
+							if (isset($arSection["IBLOCK_SECTION_ID"]) && intval($arSection["IBLOCK_SECTION_ID"]) > 0)
+								$CurrentIblockSectionID = intval($arSection["IBLOCK_SECTION_ID"]);
+							elseif (isset($_POST['IBLOCK_SECTION_ID']) && intval($_POST['IBLOCK_SECTION_ID']) > 0)
+								$CurrentIblockSectionID = intval($_POST['IBLOCK_SECTION_ID']);
+							elseif (!isset($arParams["UF_DEPARTMENT_ID"]) && isset($arParams['IBLOCK_SECTION_ID']) && intval($arParams['IBLOCK_SECTION_ID']) > 0)
+								$CurrentIblockSectionID = intval($arParams['IBLOCK_SECTION_ID']);
+							elseif (isset($_GET["IBLOCK_SECTION_ID"]) && intval($_GET["IBLOCK_SECTION_ID"]) > 0)
+								$CurrentIblockSectionID = intval($_GET["IBLOCK_SECTION_ID"]);
+							while($arDepartment = $rsDepartments->GetNext()):
+								?><option value="<?echo $arDepartment["ID"]?>" <?if($CurrentIblockSectionID==$arDepartment["ID"]) echo "selected"?>><?echo str_repeat("&nbsp;.&nbsp;", $arDepartment["DEPTH_LEVEL"])?><?echo $arDepartment["NAME"]?></option><?
+							endwhile;
+							?>
+						</select>
+					</div>
 				</td>
 			</tr>
 			<?endif;?>

@@ -110,6 +110,68 @@ final class Crm
 		return InvoiceSettings::getCurrent()->isSmartInvoiceEnabled();
 	}
 
+	public function redirectToFirstAvailableEntity(): void
+	{
+		LocalRedirect($this->getDefaultRedirectUrl());
+	}
+
+	private function getDefaultRedirectUrl(): string
+	{
+		$mainPageUrl = '/';
+		if (!$this->includeCrm() || !$this->isCrmServiceApiAvailable())
+		{
+			return $mainPageUrl;
+		}
+
+		$defaultEntityTypeId = $this->getFirstAvailableEntityTypeId();
+		if ($defaultEntityTypeId)
+		{
+			return Container::getInstance()->getRouter()->getItemListUrl($defaultEntityTypeId);
+		}
+
+		return $mainPageUrl;
+	}
+
+	private function getFirstAvailableEntityTypeId(): ?int
+	{
+		$container = Container::getInstance();
+
+		$userPermissions = $container->getUserPermissions();
+		if (\Bitrix\Crm\Settings\LeadSettings::isEnabled() && $userPermissions->canReadType(\CCrmOwnerType::Lead))
+		{
+			return \CCrmOwnerType::Lead;
+		}
+
+		$availableEntityTypeIds = [
+			\CCrmOwnerType::Deal,
+			\CCrmOwnerType::Contact,
+			\CCrmOwnerType::Company,
+			\CCrmOwnerType::Quote,
+		];
+		foreach ($availableEntityTypeIds as $availableEntityTypeId)
+		{
+			if ($userPermissions->canReadType($availableEntityTypeId))
+			{
+				return $availableEntityTypeId;
+			}
+		}
+
+		$dynamicTypesMap = $container->getDynamicTypesMap();
+		$dynamicTypesMap->load([
+			'isLoadStages' => false,
+			'isLoadCategories' => false,
+		]);
+		foreach ($dynamicTypesMap->getTypes() as $type)
+		{
+			if ($userPermissions->canReadType($type->getEntityTypeId()))
+			{
+				return $type->getEntityTypeId();
+			}
+		}
+
+		return null;
+	}
+
 	private function isCrmServiceApiAvailable(): bool
 	{
 		return class_exists('\Bitrix\Crm\Service\Container');

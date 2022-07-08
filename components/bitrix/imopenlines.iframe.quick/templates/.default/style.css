@@ -1,6 +1,6 @@
 .imopenlines-iframe-quick {
 	--bg-color: #fff;
-	--inp-color: #d0d3d7;
+	--inp-color: #181818;
 	--inp-border: #d0d3d7;
 	--inp-bg-color: unset;
 	--inp-focus-border: #687580;
@@ -28,6 +28,7 @@
 	height: 100%;
 	margin: 0;
 	padding: 0;
+	font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
 }
 
 .imopenlines-iframe-quick.imopenlines-iframe-quick-dark {

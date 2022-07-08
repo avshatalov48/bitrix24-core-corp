@@ -209,11 +209,13 @@ $groupsData = array(
 	),
 );
 global $APPLICATION;
+$groupList = [];
 foreach ($groupsData as $groupData)
 {
 	$groupId = $groupObject->add($groupData);
 	if ($groupObject->LAST_ERROR == '' && $groupId)
 	{
+		$groupList[] = $groupId;
 		foreach($groupData["BASE_RIGHTS"] as $moduleId => $letter)
 		{
 			$APPLICATION->setGroupRight($moduleId, $groupId, $letter, false);
@@ -241,5 +243,6 @@ $group->Update(2, array(
 ));
 
 // Admin is portal administrator
-CUser::AppendUserGroup(1, 12);
+$groupList[] = 12;
+CUser::AppendUserGroup(1, $groupList);
 ?>

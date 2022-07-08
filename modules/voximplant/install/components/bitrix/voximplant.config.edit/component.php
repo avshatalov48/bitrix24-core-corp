@@ -327,6 +327,7 @@ if ($request->isPost() && check_bitrix_sessid())
 		"FORWARD_LINE" => isset($post["FORWARD_LINE_ENABLED"]) ? $post["FORWARD_LINE"] : CVoxImplantConfig::FORWARD_LINE_DEFAULT,
 		"RECORDING" => $post["RECORDING"] === "Y" ? "Y" : "N",
 		"RECORDING_NOTICE" => ($post["RECORDING"] === "Y" && $post["RECORDING_NOTICE"] === "Y") ? "Y" : "N",
+		"RECORDING_STEREO" => ($post["RECORDING"] === "Y" && $post["RECORDING_STEREO"] === "Y") ? "Y" : "N",
 		"VOTE" => \Bitrix\Voximplant\Limits::canVote() && $post["VOTE"] === "Y" ? "Y" : "N",
 		"MELODY_LANG" => $post["MELODY_LANG"],
 		"MELODY_WELCOME_ENABLE" => $post["MELODY_WELCOME_ENABLE"] === "Y" ? "Y" : "N",

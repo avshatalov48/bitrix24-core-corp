@@ -1025,6 +1025,8 @@ class Session
 				$lastMessageId = 0;
 			}
 
+			/*
+			todo: Make new session config option to select that to set as date close - the last massage date either current date.
 			if (
 				$auto
 				&& $lastMessageId > 0
@@ -1036,14 +1038,14 @@ class Session
 					$currentDate = clone $messageData['DATE_CREATE'];
 				}
 			}
+			*/
 
 			$userViewChat = \CIMContactList::InRecent($this->session['OPERATOR_ID'], IM_MESSAGE_OPEN_LINE, $this->session['CHAT_ID']);
 
 			if (
 				$this->session['CLOSED'] === 'Y'
 				|| $this->session['SPAM'] === 'Y'
-				|| $this->session['WAIT_ACTION'] === 'Y'
-				&& $this->session['WAIT_ANSWER'] === 'N'
+				|| ($this->session['WAIT_ACTION'] === 'Y' && $this->session['WAIT_ANSWER'] === 'N')
 			)
 			{
 				$update['WAIT_ACTION'] = 'N';
@@ -1261,7 +1263,10 @@ class Session
 								'TO_CHAT_ID' => $this->session['CHAT_ID'],
 								'FROM_USER_ID' => $this->session['OPERATOR_ID'],
 								'RECENT_ADD' => $userViewChat? 'Y': 'N',
-								'MESSAGE' => Loc::getMessage('IMOL_SESSION_CLOSE_' . $userSkip->getGender(), ['#USER#' => '[USER=' . $userSkip->getId().'][/USER]']),
+								'MESSAGE' => Loc::getMessage(
+									'IMOL_SESSION_CLOSE_' . $userSkip->getGender(),
+									['#USER#' => '[USER=' . $userSkip->getId().'][/USER]']
+								),
 								'SYSTEM' => 'Y',
 								'PARAMS' => $params
 							]);
@@ -1283,9 +1288,9 @@ class Session
 						{
 							$update['DATE_OPERATOR_CLOSE'] = $currentDate;
 						}
-						if ($this->session['DATE_CREATE'])
+						if ($this->session['DATE_CREATE'] instanceof DateTime)
 						{
-							$update['TIME_CLOSE'] = $currentDate->getTimestamp()-$this->session['DATE_CREATE']->getTimestamp();
+							$update['TIME_CLOSE'] = $currentDate->getTimestamp() - $this->session['DATE_CREATE']->getTimestamp();
 						}
 					}
 				}
@@ -1307,18 +1312,18 @@ class Session
 				$update['DATE_CLOSE'] = $currentDate;
 				if (
 					$this->session['TIME_CLOSE'] <= 0
-					&& $this->session['DATE_CREATE']
+					&& $this->session['DATE_CREATE'] instanceof DateTime
 				)
 				{
-					$update['TIME_CLOSE'] = $update['DATE_CLOSE']->getTimestamp()-$this->session['DATE_CREATE']->getTimestamp();
+					$update['TIME_CLOSE'] = $update['DATE_CLOSE']->getTimestamp() - $this->session['DATE_CREATE']->getTimestamp();
 				}
 				if (
-					$this->session['DATE_CREATE']
+					$this->session['DATE_CREATE'] instanceof DateTime
 					&& $this->session['TIME_BOT'] <= 0
 					&& User::getInstance($this->session['OPERATOR_ID'])->isBot()
 				)
 				{
-					$update['TIME_BOT'] = $update['DATE_CLOSE']->getTimestamp()-$this->session['DATE_CREATE']->getTimestamp();
+					$update['TIME_BOT'] = $update['DATE_CLOSE']->getTimestamp() - $this->session['DATE_CREATE']->getTimestamp();
 				}
 
 				if ($this->session['CHAT_ID'])

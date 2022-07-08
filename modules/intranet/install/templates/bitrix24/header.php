@@ -44,7 +44,8 @@ CModule::IncludeModule('intranet');
 	"socialnetwork.slider",
 	"calendar.sliderloader",
 	"ui.notification",
-	"ui.info-helper"
+	"ui.info-helper",
+	"ui.design-tokens",
 ]);
 
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . '/bitrix/templates/' . SITE_TEMPLATE_ID . '/header.php');

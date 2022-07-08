@@ -659,6 +659,7 @@ class DataProviderManager
 
 		$sourceFields = $this->getProviderPlaceholders($providerClassName, $placeholders, $mainProviderOptions, $isCopyFields);
 		$documentFields = $this->getProviderPlaceholders(DataProvider\Document::class);
+		unset($documentFields['Source']);
 		if($isAddRootGroups)
 		{
 			Loc::loadLanguageFile(__DIR__.'/document.php');

@@ -1151,7 +1151,7 @@ RecentList.refresh = function(params)
 		if (this.isRecent() && params.start)
 		{
 			this.ready = true;
-			BX.postComponentEvent("ImRecent::ready", []);
+			BX.postComponentEvent('EntityReady::ready', ['chat']);
 		}
 
 	}, false, (xhr) => {
@@ -4365,10 +4365,23 @@ RecentList.search.getUserCarouselItem = function() {
 		return true;
 	});
 
+	employees =
+		employees
+			.filter(element => element.userId != this.base.userId)
+			.sort((a, b) => {
+				if (a.message && a.message.date && b.message && b.message.date)
+				{
+					return b.message.date - a.message.date;
+				}
+
+				return 0;
+			})
+	;
+
 	return {
 		type: 'carousel',
 		sectionCode: 'custom',
-		childItems: employees.filter(element => element.userId != this.base.userId),
+		childItems: employees,
 		hideBottomLine: true,
 	};
 }

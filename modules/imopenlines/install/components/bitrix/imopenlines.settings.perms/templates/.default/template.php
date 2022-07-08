@@ -11,9 +11,15 @@ use \Bitrix\Imopenlines\Limit;
  */
 Asset::getInstance()->addCss('/bitrix/css/main/table/style.css');
 
-CUtil::InitJSCore(['access', 'sidepanel']);
+Extension::load([
+	'ui.alerts',
+	'access',
+	'sidepanel',
+	'ui.design-tokens',
+]);
+
 $APPLICATION->IncludeComponent('bitrix:ui.info.helper', '', []);
-Extension::load('ui.alerts');
+
 ?>
 
 <script type="text/javascript">

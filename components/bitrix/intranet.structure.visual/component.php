@@ -822,7 +822,7 @@ if ($mode == 'subtree' || $mode == 'reload')
 }
 else
 {
-	CJSCore::Init(array('ajax', 'popup'));
+	CJSCore::Init(array('ajax', 'popup', 'ui.forms'));
 
 	if ($arResult['CAN_EDIT'])
 	{

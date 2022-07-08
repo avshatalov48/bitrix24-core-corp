@@ -53,7 +53,7 @@
 	align-items: center;
 	height: 56px;
 	border-bottom: 1px solid #D7D9DE;
-	border-radius: var(profile-menu-top, var(--ui-theme-radius-md, 0));
+	border-radius: var(--profile-menu-top-border-radius, var(--ui-border-radius-md, 0));
 	border-bottom-left-radius: 0;
 	border-bottom-right-radius: 0;
 }
@@ -151,9 +151,20 @@
 	width: 13px;
 }
 
-.profile-menu-top-extranet .profile-menu-group-info:before,
 .profile-menu-user-info-extranet:before {
 	background: url("../images/template_sprite.png?10") no-repeat -35px -1607px;
+}
+
+.profile-menu-top-extranet .profile-menu-group-info:before {
+	background-image: url("data:image/svg+xml,%3Csvg width='13' height='13' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M6.298.667a5.631 5.631 0 1 0 0 11.262 5.631 5.631 0 0 0 0-11.262ZM2.523 9.526c-.014.012-.077.06-.156.118a5.137 5.137 0 0 1-1.182-4.059c.295.382.618.898.73 1.052.18.253.383.501.56.758.296.432.606 1.023.448 1.56a1.21 1.21 0 0 1-.4.57Zm5.947-4.18s.268 1.05 1.415.963c.362-.027.339.943.107 1.343-.286.496-.212 1.085-.483 1.58-.17.312-.46.543-.69.81-.287.333-.609.655-1.088.614-.315-.028-.446-.377-.508-.626-.153-.62-.26-1.886-.26-1.886s-.445-.962-1.45-.668c-1.007.293-1.212-.486-1.24-1.228-.068-1.827 1.47-2.02 1.647-1.988.256.045 1.005.174 1.193.278.638.352 1.29-.133 1.24-.39-.052-.257-1.636-.626-2.198-.666-.561-.04-.613.16-.767-.01-.125-.136-.01-.353.077-.468.62-.817 1.654-1.014 2.528-1.44.013-.006.034-.053.057-.123a5.147 5.147 0 0 1 1.897 1.207 5.147 5.147 0 0 1 1.263 2.06c-.186.11.185-.037-.79.19-.974.226-1.95.448-1.95.448Z' fill='%23d9930a'/%3E%3C/svg%3E");
+}
+
+.ui-page-slider-wrapper .profile-menu-top-extranet .profile-menu-group-info:before {
+	background-image: url("data:image/svg+xml,%3Csvg width='13' height='13' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M6.298.667a5.631 5.631 0 1 0 0 11.262 5.631 5.631 0 0 0 0-11.262ZM2.523 9.526c-.014.012-.077.06-.156.118a5.137 5.137 0 0 1-1.182-4.059c.295.382.618.898.73 1.052.18.253.383.501.56.758.296.432.606 1.023.448 1.56a1.21 1.21 0 0 1-.4.57Zm5.947-4.18s.268 1.05 1.415.963c.362-.027.339.943.107 1.343-.286.496-.212 1.085-.483 1.58-.17.312-.46.543-.69.81-.287.333-.609.655-1.088.614-.315-.028-.446-.377-.508-.626-.153-.62-.26-1.886-.26-1.886s-.445-.962-1.45-.668c-1.007.293-1.212-.486-1.24-1.228-.068-1.827 1.47-2.02 1.647-1.988.256.045 1.005.174 1.193.278.638.352 1.29-.133 1.24-.39-.052-.257-1.636-.626-2.198-.666-.561-.04-.613.16-.767-.01-.125-.136-.01-.353.077-.468.62-.817 1.654-1.014 2.528-1.44.013-.006.034-.053.057-.123a5.147 5.147 0 0 1 1.897 1.207 5.147 5.147 0 0 1 1.263 2.06c-.186.11.185-.037-.79.19-.974.226-1.95.448-1.95.448Z' fill='%23333'/%3E%3C/svg%3E");
+}
+
+.ui-page-slider-wrapper.bitrix24-light-theme .profile-menu-top-extranet .profile-menu-group-info:before {
+	background-image: url("data:image/svg+xml,%3Csvg width='13' height='13' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M6.298.667a5.631 5.631 0 1 0 0 11.262 5.631 5.631 0 0 0 0-11.262ZM2.523 9.526c-.014.012-.077.06-.156.118a5.137 5.137 0 0 1-1.182-4.059c.295.382.618.898.73 1.052.18.253.383.501.56.758.296.432.606 1.023.448 1.56a1.21 1.21 0 0 1-.4.57Zm5.947-4.18s.268 1.05 1.415.963c.362-.027.339.943.107 1.343-.286.496-.212 1.085-.483 1.58-.17.312-.46.543-.69.81-.287.333-.609.655-1.088.614-.315-.028-.446-.377-.508-.626-.153-.62-.26-1.886-.26-1.886s-.445-.962-1.45-.668c-1.007.293-1.212-.486-1.24-1.228-.068-1.827 1.47-2.02 1.647-1.988.256.045 1.005.174 1.193.278.638.352 1.29-.133 1.24-.39-.052-.257-1.636-.626-2.198-.666-.561-.04-.613.16-.767-.01-.125-.136-.01-.353.077-.468.62-.817 1.654-1.014 2.528-1.44.013-.006.034-.053.057-.123a5.147 5.147 0 0 1 1.897 1.207 5.147 5.147 0 0 1 1.263 2.06c-.186.11.185-.037-.79.19-.974.226-1.95.448-1.95.448Z' fill='%23fff'/%3E%3C/svg%3E");
 }
 
 .profile-menu-user-info-email:before {
@@ -161,10 +172,6 @@
 }
 
 .profile-menu-top-extranet .profile-menu-group-info:before {
-	top: 8px;
-}
-
-.ui-page-slider-wrapper .profile-menu-top-extranet .profile-menu-group-info:before {
 	top: 13px;
 }
 
@@ -173,7 +180,7 @@
 	top: 7px;
 }
 
-.profile-menu-top-extranet .profile-menu-group-info .profile-menu-name,
+.page-navigation .profile-menu-top-extranet .profile-menu-group-info .profile-menu-name,
 .profile-menu-user-info-extranet .profile-menu-name,
 .profile-menu-user-info-email .profile-menu-name {
 	color: #d9930a !important;
@@ -211,11 +218,11 @@
 	color: #fff;
 }
 
-.profile-menu-group .profile-menu-top.profile-menu-top-extranet .profile-menu-name {
+.page-navigation .profile-menu-group .profile-menu-top.profile-menu-top-extranet .profile-menu-name {
 	color: #ffad00;
 }
 
-.bitrix24-dark-theme .profile-menu-group .profile-menu-top.profile-menu-top-extranet .profile-menu-name {
+.page-navigation .bitrix24-dark-theme .profile-menu-group .profile-menu-top.profile-menu-top-extranet .profile-menu-name {
 	color: #d59000;
 }
 

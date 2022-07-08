@@ -505,10 +505,20 @@ final class CB24SearchTitle
 
 				$itemCache[$hash] = true;
 
+				$chain = (
+					!empty($menuItem['CHAIN']) && is_array($menuItem['CHAIN'])
+						? $menuItem['CHAIN']
+						: [ $menuItem['TEXT'] ]
+				);
+
+				$chain = array_map(static function($item) {
+					return htmlspecialcharsback($item);
+				}, $chain);
+
 				$result[] = array(
 					'NAME' => $menuItem['TEXT'],
 					'URL' => $url,
-					'CHAIN' => (!empty($menuItem['CHAIN']) && is_array($menuItem['CHAIN']) ? $menuItem['CHAIN'] : array($menuItem['TEXT'])),
+					'CHAIN' => $chain,
 					'MODULE_ID' => '',
 					'PARAM1' => '',
 					'ITEM_ID' => 'M'.$menuItem['LINK'],

@@ -1,4 +1,4 @@
-<?
+<?php
 use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
 
@@ -8,8 +8,13 @@ if($_GET['IFRAME'] !== 'Y')
 {
 	IncludeModuleLangFile($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/intranet/public_bitrix24/contact_center/index.php');
 	$APPLICATION->SetTitle(Loc::getMessage('TITLE'));
-}?>
-<?if($_GET['IFRAME'] !== 'Y')
+}
+
+$showConnector = Context::getCurrent()->getRequest()->get('showConnectorInNewSlider') !== 'Y'
+	&& Context::getCurrent()->getRequest()->get('IFRAME') === 'Y'
+;
+
+if (!$showConnector)
 {
 	$APPLICATION->IncludeComponent(
 		'bitrix:intranet.contact_center.menu.top',
@@ -21,49 +26,44 @@ if($_GET['IFRAME'] !== 'Y')
 		false
 	);
 
-	$APPLICATION->IncludeComponent(
-		'bitrix:intranet.popup.provider',
-		'',
-		[
-			'COMPONENT_NAME' => 'bitrix:intranet.contact_center.list',
-			'COMPONENT_TEMPLATE_NAME' => '',
-			'COMPONENT_POPUP_TEMPLATE_NAME' => 'contact_center',
-			'COMPONENT_PARAMS' => []
-		],
-		false
-	);?>
-<?
-	$width = 700;
-	/*if(
-		!empty($_REQUEST['ID'])
-		&& $_REQUEST['ID'] === 'facebook'
-	)
-	{
-		$width = 1000;
-	}*/
-?>
-	<script>
-		BX.ready(function () {
-			BX.SidePanel.Instance.open(
-				'<?=CUtil::JSescape(Context::getCurrent()->getServer()->getRequestUri())?>',
-				{
-					cacheable: false,
-					allowChangeHistory: true,
-					width: <?=$width?>,
-					events: {
-						onCloseComplete: function(event) {
-							setTimeout(function() {
-								window.history.replaceState({}, '', '/contact_center/');
-							}, 500);
-						}
+	$url = CUtil::JSescape((new \Bitrix\Main\Web\Uri(Context::getCurrent()->getServer()->getRequestUri()))
+		->deleteParams(['showConnectorInNewSlider'])
+		->getUri())
+	;
+	$APPLICATION->addViewContent('below_pagetitle', <<<HTML
+<script>
+	BX.ready(function () {
+		BX.SidePanel.Instance.open(
+			'{$url}',
+			{
+				cacheable: false,
+				allowChangeHistory: true,
+				width: 700,
+				events: {
+					onCloseComplete: function(event) {
+						setTimeout(function() {
+							window.history.replaceState({}, '', '/contact_center/');
+						}, 500);
 					}
 				}
-			);
-		});
-	</script>
-<?
-} ?>
-<?if($_GET['IFRAME'] === 'Y')
+			}
+		);
+	});
+</script>
+HTML
+	);
+
+	$APPLICATION->IncludeComponent(
+		'bitrix:ui.sidepanel.wrapper',
+		'',
+		[
+			'POPUP_COMPONENT_NAME' => 'bitrix:intranet.contact_center.list',
+			"USE_PADDING" => false,
+		]
+	);
+
+}
+else
 {
 	$APPLICATION->IncludeComponent('bitrix:ui.sidepanel.wrapper',
 		'',
@@ -75,5 +75,5 @@ if($_GET['IFRAME'] !== 'Y')
 		]
 	);
 }
-?>
-<?require($_SERVER['DOCUMENT_ROOT'].'/bitrix/footer.php');?>
+
+require($_SERVER['DOCUMENT_ROOT'].'/bitrix/footer.php');

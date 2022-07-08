@@ -74,7 +74,7 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 		{
 			$this->arParams['USER_PROFILE_URL'] = \Bitrix\Main\Config\Option::get('intranet', 'path_user', '/company/personal/user/#USER_ID#/', SITE_ID);
 		}
-		if($this->getTemplateName() == 'upload')
+		if ($this->getTemplateName() === 'upload')
 		{
 			$this->arResult['TITLE'] = Loc::getMessage('DOCGEN_TEMPLATE_DOWNLOAD_ADD_TEMPLATE');
 			$this->arResult['PROVIDERS'] = $this->getProviders();
@@ -148,20 +148,7 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 		}
 		else
 		{
-			if($request->getRequestMethod() == 'POST' &&
-				!empty($request->getPost('action_button_'.$this->gridId)) && check_bitrix_sessid())
-			{
-				if($request->getPost('action_button_'.$this->gridId) == 'delete')
-				{
-					foreach($request->getPost("ID") as $id)
-					{
-						if(Driver::getInstance()->getUserPermissions()->canModifyTemplate($id))
-						{
-							TemplateTable::delete($id);
-						}
-					}
-				}
-			}
+			$this->processGridActions($request);
 
 			$this->arResult['params'] = [];
 			$this->arResult['params']['uploadUri'] = $this->arParams['UPLOAD_URI'];
@@ -261,6 +248,7 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 				'name' => Loc::getMessage('DOCGEN_TEMPLATE_LIST_NAME'),
 				'default' => true,
 				'sort' => 'NAME',
+				'editable' => true,
 			],
 			[
 				'id' => 'PROVIDERS',
@@ -297,12 +285,14 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 				'name' => Loc::getMessage('DOCGEN_TEMPLATE_LIST_SORT'),
 				'default' => false,
 				'sort' => 'SORT',
+				'editable' => true,
 			],
 			[
 				'id' => 'ACTIVE',
 				'name' => Loc::getMessage('DOCGEN_TEMPLATE_LIST_ACTIVE'),
 				'default' => false,
 				'sort' => 'ACTIVE',
+				'editable' => true,
 			],
 			[
 				'id' => 'CREATED_BY',
@@ -418,6 +408,7 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 				[
 					'ITEMS' => [
 						$snippet->getRemoveButton(),
+						$snippet->getEditButton(),
 					],
 				],
 			]
@@ -737,5 +728,67 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 		}
 
 		return $users;
+	}
+
+	protected function processGridActions(\Bitrix\Main\Request $request): void
+	{
+		if(
+			$request->getRequestMethod() !== 'POST'
+			|| empty($request->getPost('action_button_'.$this->gridId))
+			|| !check_bitrix_sessid()
+		)
+		{
+			return;
+		}
+		$actionName = $request->getPost('action_button_' . $this->gridId);
+		if ($actionName === 'delete')
+		{
+			foreach ($request->getPost("ID") as $id)
+			{
+				if (Driver::getInstance()->getUserPermissions()->canModifyTemplate($id))
+				{
+					TemplateTable::delete($id);
+				}
+			}
+		}
+		elseif ($actionName === 'edit')
+		{
+			$data = $request->getPost('FIELDS');
+			if (empty($data))
+			{
+				return;
+			}
+			$templateIds = array_keys($data);
+			$templates = TemplateTable::getList([
+				'filter' => [
+					'@ID' => $templateIds,
+				],
+			])->fetchCollection();
+			foreach ($templates as $template)
+			{
+				$templateData = $data[$template->getId()] ?? null;
+				if (empty($templateData))
+				{
+					continue;
+				}
+				$isChanged = false;
+				$sort = (int)($templateData['SORT'] ?? 0);
+				if ($sort > 0)
+				{
+					$template->setSort($sort);
+					$isChanged = true;
+				}
+				$name = (string)($templateData['NAME'] ?? '');
+				if (!empty($name))
+				{
+					$template->setName($name);
+					$isChanged = true;
+				}
+				if ($isChanged)
+				{
+					$template->save();
+				}
+			}
+		}
 	}
 }

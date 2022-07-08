@@ -164,6 +164,10 @@ class ConfigTable extends Data\DataManager
 				'title' => Loc::getMessage('INCOMING_CONFIG_ENTITY_RECORDING_NOTICE_FIELD'),
 				'default_value' => 'N',
 			)),
+			'RECORDING_STEREO' => new Entity\BooleanField('RECORDING_STEREO', [
+				'values' => ['N', 'Y'],
+				'default_value' => 'N',
+			]),
 			'FORWARD_LINE' => new Entity\StringField('FORWARD_LINE', array(
 				'default_value' => 'default',
 				'size' => 255,

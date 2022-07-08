@@ -16,6 +16,8 @@ COption::SetOptionString("intranet", "tz_transition_standard", '<transitionRule 
 
 COption::SetOptionString('intranet', 'new_portal_structure', 'Y');
 
+\Bitrix\Main\Config\Option::set('ui', 'design_tokens:custom_extension', 'intranet.design-tokens.bitrix24');
+
 //Composite
 CHTMLPagesCache::setEnabled(true, false);
 RegisterModuleDependences("main", "OnGetStaticCacheProvider", "intranet", "\\Bitrix\\Intranet\\Composite\\CacheProvider", "getObject");

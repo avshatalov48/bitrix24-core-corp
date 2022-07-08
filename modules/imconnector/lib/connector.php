@@ -2,6 +2,7 @@
 namespace Bitrix\ImConnector;
 
 use Bitrix\ImConnector\Tools\Connectors\Messageservice;
+use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Main\Context;
@@ -25,96 +26,87 @@ Library::loadMessages();
  */
 class Connector
 {
-	const ERROR_CHOICE_DOMAIN_FOR_FEEDBACK = 'CHOICE_DOMAIN_FOR_FEEDBACK';
-
 	/** @var Connectors\Base[] */
 	private static $connectors = [];
 
 	/**
-	 * @param string $idConnector
+	 * @param string $connectorId
 	 * @return Connectors\Facebook|Connectors\|Connectors\FacebookComments|Connectors\FbInstagram|Connectors\IMessage|Connectors\Olx|Connectors\Viber|Connectors\Network
 	 */
-	public static function initConnectorHandler($idConnector = '')
+	public static function initConnectorHandler($connectorId = '')
 	{
 		if (
-			!isset(self::$connectors[$idConnector])
-			|| !(self::$connectors[$idConnector] instanceof Connectors\Base)
+			!isset(self::$connectors[$connectorId])
+			|| !(self::$connectors[$connectorId] instanceof Connectors\Base)
 		)
 		{
-			$class = 'Bitrix\\ImConnector\\Connectors\\Base';
-
-			if (
-				!empty($idConnector) &&
-				self::isConnector($idConnector)
-			)
-			{
-				$realIdConnector = self::getConnectorRealId($idConnector);
-				$className = 'Bitrix\\ImConnector\\Connectors\\'.$realIdConnector;
-				if (class_exists($className, true))
-				{
-					$class = $className;
-				}
-			}
-			self::$connectors[$idConnector] = new $class($idConnector);
+			$class = self::getConnectorHandlerClass($connectorId);
+			self::$connectors[$connectorId] = new $class($connectorId);
 		}
 
-		return self::$connectors[$idConnector];
+		return self::$connectors[$connectorId];
 	}
 
 	/**
-	 * @param string $idConnector
+	 * Detects connector's class name.
+	 *
+	 * @param string $connectorId Mnemonic connector name.
+	 * @return string|Connectors\Base
+	 */
+	public static function getConnectorHandlerClass($connectorId): string
+	{
+		static $handlers = [];
+		$classDefault = '\\Bitrix\\ImConnector\\Connectors\\Base';
+		if (!isset($handlers[$connectorId]) && !empty($connectorId))
+		{
+			$class = $classDefault;
+			$realIdConnector = self::getConnectorRealId($connectorId);
+			$className = '\\Bitrix\\ImConnector\\Connectors\\' . $realIdConnector;
+			if (
+				class_exists($className, true)
+				&& is_subclass_of($className, $classDefault)
+			)
+			{
+				$class = $className;
+			}
+			$handlers[$connectorId] = $class;
+		}
+
+		return $handlers[$connectorId] ?? $classDefault;
+	}
+
+	/**
+	 * @param string $connectorId Mnemonic connector name.
 	 * @param Connectors\Base
 	 */
-	public static function setConnectorHandler(string $idConnector, Connectors\Base $connector): void
+	public static function setConnectorHandler(string $connectorId, Connectors\Base $connector): void
 	{
-		self::$connectors[$idConnector] = $connector;
+		self::$connectors[$connectorId] = $connector;
 	}
 
+	//region Connector and Portal region
+
 	/**
-	 * @param $connector
+	 * @param string $connectorId Mnemonic connector name.
+	 * @param string $region Portal region.
 	 * @return bool
 	 */
-	protected static function isConnectorZoneEnable($connector): bool
+	public static function isAllowedConnectorInRegion(string $connectorId, string $region): bool
 	{
 		$result = true;
 
-		if(!empty(Library::connectorPortalZoneLimit[$connector]))
+		if (!empty($region) && !empty(Library::CONNECTOR_PER_REGION_LIMITATION[$connectorId]))
 		{
-			$allow = Library::connectorPortalZoneLimit[$connector]['allow'];
-			$deny = Library::connectorPortalZoneLimit[$connector]['deny'];
+			$allow = Library::CONNECTOR_PER_REGION_LIMITATION[$connectorId]['allow'] ?? null;
+			$deny = Library::CONNECTOR_PER_REGION_LIMITATION[$connectorId]['deny'] ?? null;
 
-			$zone = '';
-			if(Loader::includeModule('bitrix24'))
+			if (!empty($deny) && in_array($region, $deny))
 			{
-				$zone = \CBitrix24::getPortalZone();
+				$result = false;
 			}
-			elseif(Loader::includeModule('intranet'))
+			elseif (!empty($allow) && !in_array($region, $allow))
 			{
-				$portalZone = \CIntranetUtils::getPortalZone();
-
-				if(in_array($portalZone, Library::portalZoneNotCloud, false))
-				{
-					$zone = $portalZone;
-				}
-			}
-
-			if(
-				!empty($zone)
-			)
-			{
-				if(
-					(
-						!empty($deny) &&
-						in_array($zone, $deny, false)
-					) ||
-					(
-						!empty($allow) &&
-						!in_array($zone, $allow, false)
-					)
-				)
-				{
-					$result = false;
-				}
+				$result = false;
 			}
 		}
 
@@ -125,11 +117,12 @@ class Connector
 	 * @param array $connectors
 	 * @return array
 	 */
-	public static function removeConnectorsZonesPortal($connectors = []): array
+	public static function filterConnectorsByPortalRegion($connectors = [], $portalRegion = ''): array
 	{
+		$portalRegion = $portalRegion ?: self::getPortalRegion();
 		foreach ($connectors as $connector => $name)
 		{
-			if(!self::isConnectorZoneEnable($connector))
+			if (!self::isAllowedConnectorInRegion($connector, $portalRegion))
 			{
 				unset($connectors[$connector]);
 			}
@@ -138,6 +131,8 @@ class Connector
 		return $connectors;
 	}
 
+	//endregion
+
 	/**
 	 * @return array
 	 */
@@ -145,17 +140,18 @@ class Connector
 	{
 		$serviceLocator = ServiceLocator::getInstance();
 
+		$connectors = [];
 		$connectors['livechat'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_LIVECHAT');
 		$connectors['whatsappbytwilio'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_WHATSAPPBYTWILIO');
 		$connectors['avito'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_AVITO');
 		$connectors['viber'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_VIBER_BOT');
 		$connectors['telegrambot'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_TELEGRAM_BOT');
 		$connectors['imessage'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_IMESSAGE_NEW');
-		if($serviceLocator->has('ImConnector.toolsWeChat'))
+		if ($serviceLocator->has('ImConnector.toolsWeChat'))
 		{
 			/** @var \Bitrix\ImConnector\Tools\Connectors\WeChat $toolsWeChat */
 			$toolsWeChat = $serviceLocator->get('ImConnector.toolsWeChat');
-			if($toolsWeChat->isEnabled())
+			if ($toolsWeChat->isEnabled())
 			{
 				$connectors['wechat'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_WECHAT');
 			}
@@ -169,7 +165,7 @@ class Connector
 					Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAMDIRECT');
 		$connectors['fbinstagram'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_FBINSTAGRAM');
 		$connectors['network'] = Loc::getMessage('IMCONNECTOR_NAME_CONNECTOR_NETWORK');
-		if($serviceLocator->has('ImConnector.toolsNotifications'))
+		if ($serviceLocator->has('ImConnector.toolsNotifications'))
 		{
 			/** @var \Bitrix\ImConnector\Tools\Connectors\Notifications $toolsNotifications */
 			$toolsNotifications = $serviceLocator->get('ImConnector.toolsNotifications');
@@ -255,7 +251,6 @@ class Connector
 	 * @param bool $customConnectorsEnable Return custom connectors
 	 *
 	 * @return array.
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function getListConnector($reduced = false, $customConnectorsEnable = true): array
 	{
@@ -270,7 +265,7 @@ class Connector
 
 		$connectors = array_merge($connectors, $virtualConnector, $customConnectors);
 
-		$connectors = self::removeConnectorsZonesPortal($connectors);
+		$connectors = self::filterConnectorsByPortalRegion($connectors);
 
 		$connectors = self::getListReducedConnectorBase($reduced, $connectors);
 
@@ -298,7 +293,7 @@ class Connector
 
 		$connectors = array_merge($connectors, $virtualConnector, $customConnectors);
 
-		$connectors = self::removeConnectorsZonesPortal($connectors);
+		$connectors = self::filterConnectorsByPortalRegion($connectors);
 
 		$connectors = self::getListReducedConnectorBase($reduced, $connectors);
 
@@ -320,19 +315,9 @@ class Connector
 		return $connectors;
 	}
 
-	/**
-	 * TODO: Not relevant
-	 *
-	 * @return array
-	 */
-	public static function getListConnectorNoServer()
-	{
-		return array_merge(Library::$noServerConnectors, CustomConnectors::getListConnectorId());
-	}
 
 	/**
 	 * @return array
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function getListConnectorShowDeliveryStatus()
 	{
@@ -346,21 +331,22 @@ class Connector
 	 */
 	public static function getListComponentConnector(): array
 	{
-		$components['livechat'] = 'bitrix:imconnector.livechat';
-		$components['whatsappbytwilio'] = 'bitrix:imconnector.whatsappbytwilio';
-		$components['avito'] = 'bitrix:imconnector.avito';
-		$components['viber'] = 'bitrix:imconnector.viber';
-		$components['telegrambot'] = 'bitrix:imconnector.telegrambot';
-		$components['wechat'] = 'bitrix:imconnector.wechat';
-		$components['imessage'] = 'bitrix:imconnector.imessage';
-		$components['vkgroup'] = 'bitrix:imconnector.vkgroup';
-		$components['ok'] = 'bitrix:imconnector.ok';
-		$components['olx'] = 'bitrix:imconnector.olx';
-		$components['facebook'] = 'bitrix:imconnector.facebook';
-		$components['facebookcomments'] = 'bitrix:imconnector.facebookcomments';
+		$components = [];
+		$components[Library::ID_LIVE_CHAT_CONNECTOR] = 'bitrix:imconnector.livechat';
+		$components[Library::ID_WHATSAPPBYTWILIO_CONNECTOR] = 'bitrix:imconnector.whatsappbytwilio';
+		$components[Library::ID_AVITO_CONNECTOR] = 'bitrix:imconnector.avito';
+		$components[Library::ID_VIBER_CONNECTOR] = 'bitrix:imconnector.viber';
+		$components[Library::ID_TELEGRAMBOT_CONNECTOR] = 'bitrix:imconnector.telegrambot';
+		$components[Library::ID_WECHAT_CONNECTOR] = 'bitrix:imconnector.wechat';
+		$components[Library::ID_IMESSAGE_CONNECTOR] = 'bitrix:imconnector.imessage';
+		$components[Library::ID_VKGROUP_CONNECTOR] = 'bitrix:imconnector.vkgroup';
+		$components[Library::ID_OK_CONNECTOR] = 'bitrix:imconnector.ok';
+		$components[Library::ID_OLX_CONNECTOR] = 'bitrix:imconnector.olx';
+		$components[Library::ID_FB_MESSAGES_CONNECTOR] = 'bitrix:imconnector.facebook';
+		$components[Library::ID_FB_COMMENTS_CONNECTOR] = 'bitrix:imconnector.facebookcomments';
 		$components[Library::ID_FBINSTAGRAMDIRECT_CONNECTOR] = 'bitrix:imconnector.fbinstagramdirect';
-		$components['fbinstagram'] = 'bitrix:imconnector.fbinstagram';
-		$components['network'] = 'bitrix:imconnector.network';
+		$components[Library::ID_FBINSTAGRAM_CONNECTOR] = 'bitrix:imconnector.fbinstagram';
+		$components[Library::ID_NETWORK_CONNECTOR] = 'bitrix:imconnector.network';
 		$components['botframework'] = 'bitrix:imconnector.botframework';
 		$components[Library::ID_NOTIFICATIONS_CONNECTOR] = 'bitrix:imconnector.notifications';
 		$components[Library::ID_EDNA_WHATSAPP_CONNECTOR] = 'bitrix:imconnector.whatsappbyedna';
@@ -372,7 +358,7 @@ class Connector
 			$components = array_merge($customComponents, $components);
 		}
 
-		return self::removeConnectorsZonesPortal($components);
+		return self::filterConnectorsByPortalRegion($components);
 	}
 
 	/**
@@ -1148,7 +1134,7 @@ class Connector
 					}
 				}
 
-				if($result->isSuccess())
+				if ($result->isSuccess())
 				{
 					$status->setActive(true);
 					$status->setConnection(true);
@@ -1305,7 +1291,7 @@ class Connector
 					}
 				}
 
-				if($result->isSuccess())
+				if ($result->isSuccess())
 				{
 					$status->setActive(true);
 					$status->setConnection(true);
@@ -1567,17 +1553,18 @@ class Connector
 	 * Returns true if the connector is restricted in RU.
 	 *
 	 * @param string $connector Connector code.
-	 *
+	 * @param string $region Portal region.
+	 * @param string $lang Language.
 	 * @return bool
 	 */
-	public static function needRestrictionNote(string $connector, string $zone, string $lang): bool
+	public static function needRestrictionNote(string $connector, string $region, string $lang): bool
 	{
 		if (mb_strtolower($lang) !== 'ru')
 		{
 			return false;
 		}
 
-		if (mb_strtolower($zone) !== 'ru')
+		if (mb_strtolower($region) !== 'ru')
 		{
 			return false;
 		}
@@ -1590,19 +1577,13 @@ class Connector
 		return true;
 	}
 
-	public static function getPortalZone(): string
+	/**
+	 * Detects portal's region.
+	 * @return string
+	 */
+	public static function getPortalRegion(): string
 	{
-		$zone = '';
-		if (Loader::includeModule('bitrix24'))
-		{
-			$zone = \CBitrix24::getPortalZone();
-		}
-		elseif (Loader::includeModule('intranet'))
-		{
-			$zone = \CIntranetUtils::getPortalZone();
-		}
-
-		return $zone;
+		return Main\Application::getInstance()->getLicense()->getRegion() ?: '';
 	}
 
 	/**

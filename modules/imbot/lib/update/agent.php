@@ -108,7 +108,7 @@ final class Agent
 				SupportBox::addAgent([
 					'class' => SupportBox::class,
 					'agent' => 'refreshAgent()',
-					'regular' => true,
+					'regular' => false,
 					'delay' => random_int(60, 3600),
 				]);
 			}

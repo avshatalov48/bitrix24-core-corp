@@ -12,6 +12,7 @@ use Bitrix\ImOpenLines\BasicError;
 use Bitrix\ImOpenLines\Session;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\UserConsent\Consent;
 
 class Dialog
 {
@@ -36,15 +37,15 @@ class Dialog
 			return false;
 		}
 
-		$chat = \Bitrix\Im\Model\ChatTable::getList(array(
+		$chat = \Bitrix\Im\Model\ChatTable::getList([
 			'select' => ['ID', 'ENTITY_DATA_1', 'ENTITY_DATA_2', 'ENTITY_DATA_3'],
-			'filter' => array(
+			'filter' => [
 				'=ENTITY_TYPE' => 'LIVECHAT',
 				'=ENTITY_ID' => $configId.'|'.$userId
-			),
+			],
 			'limit' => 1
-		))->fetch();
-		if($chat)
+		])->fetch();
+		if ($chat)
 		{
 			return [
 				'CHAT_ID' => $chat['ID']
@@ -126,13 +127,15 @@ class Dialog
 	/**
 	 * @param $userId
 	 * @param $configId
+	 * @param int $chatId Uses to get chat by id, otherwise will be returned last chat.
+	 *
 	 * @return array|bool
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\LoaderException
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function get($userId, $configId)
+	public static function get($userId, $configId, int $chatId = 0)
 	{
 		$userId = intval($userId);
 		$configId = intval($configId);
@@ -152,12 +155,19 @@ class Dialog
 			return false;
 		}
 
+		$filterParams = [
+			'=ENTITY_TYPE' => 'LIVECHAT',
+			'=ENTITY_ID' => $configId . '|' . $userId
+		];
+		if ($chatId > 0)
+		{
+			$filterParams['ID'] = $chatId;
+		}
+
 		$chat = \Bitrix\Im\Model\ChatTable::getList([
 			'select' => ['ID', 'DISK_FOLDER_ID', 'ENTITY_DATA_1', 'ENTITY_DATA_2', 'ENTITY_DATA_3'],
-			'filter' => [
-				'=ENTITY_TYPE' => 'LIVECHAT',
-				'=ENTITY_ID' => $configId.'|'.$userId
-			],
+			'filter' => $filterParams,
+			'order' => ['ID' => 'DESC'],
 			'limit' => 1
 		])->fetch();
 		if (!$chat)
@@ -250,7 +260,7 @@ class Dialog
 		$userConsent = false;
 		if ($config['AGREEMENT_MESSAGE'] == 'Y')
 		{
-			$userConsent = \Bitrix\Main\UserConsent\Consent::getByContext(intval($config['AGREEMENT_ID']), 'imopenlines/livechat', $chatId);
+			$userConsent = Consent::getByContext((int)$config['AGREEMENT_ID'], 'imopenlines/livechat', $chatId);
 		}
 
 		return [
@@ -266,6 +276,52 @@ class Dialog
 			'OPERATOR' => $operator,
 			'OPERATOR_CHAT_ID' => $operatorChatId
 		];
+	}
+
+	public static function getList($userId, $params)
+	{
+		$userId = (int)$userId;
+		$configId = (int)$params['CONFIG_ID'];
+
+		self::clearError();
+
+		if (!\Bitrix\Main\Loader::includeModule('im'))
+		{
+			self::setError(__METHOD__, 'IM_NOT_FOUND', Loc::getMessage('IMOL_WIDGET_CONFIG_IM_NOT_FOUND'));
+			return false;
+		}
+
+		$config = \Bitrix\Imopenlines\Model\ConfigTable::getById($configId)->fetch();
+		if (!$config)
+		{
+			self::setError(__METHOD__, 'CONFIG_ERROR', Loc::getMessage('IMOL_WIDGET_CHAT_ERROR_CONFIG_NOT_FOUND'));
+			return false;
+		}
+
+		$chatRes = \Bitrix\Im\Model\ChatTable::getList([
+			'select' => ['ID', 'ENTITY_DATA_1', 'LAST_MESSAGE_ID'],
+			'filter' => [
+				'=ENTITY_TYPE' => 'LIVECHAT',
+				'=ENTITY_ID' => $configId . '|' . $userId
+			],
+			'order' => ['LAST_MESSAGE_ID' => 'DESC'],
+			'limit' => $params['LIMIT'] ? (int)$params['LIMIT'] : 25,
+			'offset' => $params['OFFSET'] ? (int)$params['OFFSET'] : 0,
+		]);
+
+		$dialogues = [];
+		while ($chat = $chatRes->fetch())
+		{
+			$sessionId = explode('|', $chat['ENTITY_DATA_1'])[3];
+
+			$dialogues[] = [
+				'CHAT_ID' => (int)$chat['ID'],
+				'DIALOG_ID' => 'chat' . $chat['ID'],
+				'SESSION_ID' => (int)$sessionId,
+			];
+		}
+
+		return $dialogues;
 	}
 
 	/**

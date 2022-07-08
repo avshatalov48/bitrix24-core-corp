@@ -1,4 +1,4 @@
-(function (exports,main_polyfill_customevent,pull_component_status,ui_vue_components_smiles,im_component_dialog,im_component_textarea,im_view_quotepanel,imopenlines_component_message,imopenlines_component_form,rest_client,im_provider_rest,main_date,pull_client,ui_vue_components_crm_form,im_controller,im_lib_cookie,im_lib_localstorage,im_lib_uploader,im_lib_utils,im_lib_logger,im_mixin,main_md5,main_core_events,im_const,main_core_minimal,ui_vue_vuex,ui_vue) {
+(function (exports,main_polyfill_customevent,pull_component_status,ui_vue_components_smiles,im_component_dialog,im_component_textarea,im_view_quotepanel,imopenlines_component_message,imopenlines_component_form,rest_client,im_provider_rest,main_date,pull_client,ui_vue_components_crm_form,im_controller,im_lib_cookie,im_lib_localstorage,im_lib_utils,main_md5,main_core,im_lib_logger,im_eventHandler,im_const,main_core_minimal,ui_vue_vuex,ui_vue,main_core_events) {
 	'use strict';
 
 	/**
@@ -58,6 +58,14 @@
 	  5: 'bottom-center',
 	  4: 'bottom-right'
 	});
+	var WidgetBaseSize = Object.freeze({
+	  width: 435,
+	  height: 557
+	});
+	var WidgetMinimumSize = Object.freeze({
+	  width: 340,
+	  height: 435
+	});
 	var SubscriptionType = Object.freeze({
 	  configLoaded: 'configLoaded',
 	  widgetOpen: 'widgetOpen',
@@ -75,8 +83,10 @@
 	var SubscriptionTypeCheck = GetObjectValues(SubscriptionType);
 	var RestMethod = Object.freeze({
 	  widgetUserRegister: 'imopenlines.widget.user.register',
+	  widgetChatCreate: 'imopenlines.widget.chat.create',
 	  widgetConfigGet: 'imopenlines.widget.config.get',
 	  widgetDialogGet: 'imopenlines.widget.dialog.get',
+	  widgetDialogList: 'imopenlines.widget.dialog.list',
 	  widgetUserGet: 'imopenlines.widget.user.get',
 	  widgetUserConsentApply: 'imopenlines.widget.user.consent.apply',
 	  widgetVoteSend: 'imopenlines.widget.vote.send',
@@ -101,8 +111,19 @@
 	  duplicate: 69,
 	  silentlyClose: 75
 	});
-	var EventType = Object.freeze({
-	  requestShowForm: 'IMOL.Widget:requestShowForm'
+	var WidgetEventType = Object.freeze({
+	  showForm: 'IMOL.Widget:showForm',
+	  hideForm: 'IMOL.Widget:hideForm',
+	  processMessagesToSendQueue: 'IMOL.Widget:processMessagesToSendQueue',
+	  requestData: 'IMOL.Widget:requestData',
+	  showConsent: 'IMOL.Widget:showConsent',
+	  acceptConsent: 'IMOL.Widget:acceptConsent',
+	  consentAccepted: 'IMOL.Widget:consentAccepted',
+	  declineConsent: 'IMOL.Widget:declineConsent',
+	  consentDeclined: 'IMOL.Widget:consentDeclined',
+	  sendDialogVote: 'IMOL.Widget:sendDialogVote',
+	  createSession: 'IMOL.Widget:createSession',
+	  openSession: 'IMOL.Widget:openSession'
 	});
 
 	/**
@@ -174,6 +195,7 @@
 	          dialogStart: false,
 	          watchTyping: false,
 	          showSessionId: false,
+	          isCreateSessionMode: false,
 	          crmFormsSettings: {
 	            useWelcomeForm: false,
 	            welcomeFormId: 0,
@@ -390,6 +412,10 @@
 	            if (typeof payload.crmFormsSettings.errorText === 'string' && payload.crmFormsSettings.errorText !== '') {
 	              state.common.crmFormsSettings.errorText = payload.crmFormsSettings.errorText;
 	            }
+	          }
+
+	          if (typeof payload.isCreateSessionMode === 'boolean') {
+	            state.common.isCreateSessionMode = payload.isCreateSessionMode;
 	          }
 
 	          if (_this.isSaveNeeded({
@@ -815,6 +841,28 @@
 	      });
 	    }
 	  }, {
+	    key: "handleImopenlinesWidgetChatCreateSuccess",
+	    value: function handleImopenlinesWidgetChatCreateSuccess(data) {
+	      this.widget.restClient.setAuthId(data.hash);
+	      this.store.commit('messages/initCollection', {
+	        chatId: data.chatId,
+	        messages: []
+	      });
+	      this.store.commit('dialogues/initCollection', {
+	        dialogId: data.dialogId,
+	        fields: {
+	          entityType: 'LIVECHAT',
+	          type: 'livechat'
+	        }
+	      });
+	      this.store.commit('application/set', {
+	        dialog: {
+	          chatId: data.chatId,
+	          dialogId: 'chat' + data.chatId
+	        }
+	      });
+	    }
+	  }, {
 	    key: "handleImopenlinesWidgetUserGetSuccess",
 	    value: function handleImopenlinesWidgetUserGetSuccess(data) {
 	      this.store.commit('widget/user', {
@@ -881,9 +929,6 @@
 	  }, {
 	    key: "handleImMessageAddSuccess",
 	    value: function handleImMessageAddSuccess(messageId, message) {
-	      this.widget.messagesQueue = this.widget.messagesQueue.filter(function (el) {
-	        return el.id != message.id;
-	      });
 	      this.widget.sendEvent({
 	        type: SubscriptionType.userMessage,
 	        data: {
@@ -893,18 +938,8 @@
 	      });
 	    }
 	  }, {
-	    key: "handleImMessageAddError",
-	    value: function handleImMessageAddError(error, message) {
-	      this.widget.messagesQueue = this.widget.messagesQueue.filter(function (el) {
-	        return el.id != message.id;
-	      });
-	    }
-	  }, {
 	    key: "handleImDiskFileCommitSuccess",
 	    value: function handleImDiskFileCommitSuccess(result, message) {
-	      this.widget.messagesQueue = this.widget.messagesQueue.filter(function (el) {
-	        return el.id != message.id;
-	      });
 	      this.widget.sendEvent({
 	        type: SubscriptionType.userFile,
 	        data: {}
@@ -1067,110 +1102,104 @@
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 
 	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-
 	var Widget = /*#__PURE__*/function () {
 	  /* region 01. Initialize and store data */
+	  // Vue instance
+	  // true if there are no initialization errors
+	  // true if all preparations are done
+	  // true if Pull-client is offline
+	  // XHR-request from widget.config.get, can be aborted before completion
+	  // this block can be set from public config
+	  // user info
+	  // additional info to send to server
+	  // external event subscribers
+	  // fields from params
+	  // livechat code
+	  // widget button
+	  // fullscreen livechat mode options
 	  function Widget() {
 	    var _this = this;
 
 	    var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	    babelHelpers.classCallCheck(this, Widget);
-	    this.params = params;
-	    this.template = null;
-	    this.rootNode = this.params.node || document.createElement('div');
-	    this.messagesQueue = [];
-	    this.ready = true;
-	    this.widgetDataRequested = false;
-	    this.offline = false;
-	    this.inited = false;
-	    this.initEventFired = false;
-	    this.restClient = null;
-	    this.userRegisterData = {};
-	    this.customData = [];
-	    this.options = {
+	    babelHelpers.defineProperty(this, "params", null);
+	    babelHelpers.defineProperty(this, "template", null);
+	    babelHelpers.defineProperty(this, "rootNode", null);
+	    babelHelpers.defineProperty(this, "restClient", null);
+	    babelHelpers.defineProperty(this, "pullClient", null);
+	    babelHelpers.defineProperty(this, "ready", true);
+	    babelHelpers.defineProperty(this, "inited", false);
+	    babelHelpers.defineProperty(this, "offline", false);
+	    babelHelpers.defineProperty(this, "widgetConfigRequest", null);
+	    babelHelpers.defineProperty(this, "userRegisterData", {});
+	    babelHelpers.defineProperty(this, "customData", []);
+	    babelHelpers.defineProperty(this, "options", {
 	      checkSameDomain: true
-	    };
-	    this.subscribers = {};
-	    this.configRequestXhr = null;
-	    this.initParams().then(function () {
-	      return _this.initRestClient();
-	    }).then(function () {
-	      return _this.initPullClient();
-	    }).then(function () {
-	      return _this.initCore();
-	    }).then(function () {
-	      return _this.initWidget();
-	    }).then(function () {
-	      return _this.initUploader();
-	    }).then(function () {
-	      return _this.initComplete();
+	    });
+	    babelHelpers.defineProperty(this, "subscribers", {});
+	    babelHelpers.defineProperty(this, "code", '');
+	    babelHelpers.defineProperty(this, "host", '');
+	    babelHelpers.defineProperty(this, "language", '');
+	    babelHelpers.defineProperty(this, "copyright", true);
+	    babelHelpers.defineProperty(this, "copyrightUrl", '');
+	    babelHelpers.defineProperty(this, "buttonInstance", null);
+	    babelHelpers.defineProperty(this, "localize", null);
+	    babelHelpers.defineProperty(this, "pageMode", null);
+	    this.params = params; //TODO: remove
+
+	    this.messagesQueue = [];
+	    main_core_events.EventEmitter.subscribe(WidgetEventType.requestData, this.requestData.bind(this));
+	    main_core_events.EventEmitter.subscribe(WidgetEventType.createSession, this.createChat.bind(this));
+	    main_core_events.EventEmitter.subscribe(WidgetEventType.openSession, this.openSession.bind(this));
+	    this.initParams();
+	    this.initRestClient();
+	    this.initPullClient();
+	    this.initCore().then(function () {
+	      _this.initWidget();
+
+	      _this.initComplete();
 	    });
 	  }
 
 	  babelHelpers.createClass(Widget, [{
 	    key: "initParams",
 	    value: function initParams() {
+	      this.rootNode = this.params.node || document.createElement('div');
 	      this.code = this.params.code || '';
 	      this.host = this.params.host || '';
 	      this.language = this.params.language || 'en';
 	      this.copyright = this.params.copyright !== false;
 	      this.copyrightUrl = this.copyright && this.params.copyrightUrl ? this.params.copyrightUrl : '';
-	      this.buttonInstance = babelHelpers["typeof"](this.params.buttonInstance) === 'object' && this.params.buttonInstance !== null ? this.params.buttonInstance : null;
-	      this.pageMode = babelHelpers["typeof"](this.params.pageMode) === 'object' && this.params.pageMode;
 
-	      if (this.pageMode) {
-	        this.pageMode.useBitrixLocalize = this.params.pageMode.useBitrixLocalize === true;
-	        this.pageMode.placeholder = document.getElementById(this.params.pageMode.placeholder);
+	      if (this.params.buttonInstance && babelHelpers["typeof"](this.params.buttonInstance) === 'object') {
+	        this.buttonInstance = this.params.buttonInstance;
 	      }
 
-	      if (typeof this.code === 'string') {
-	        if (this.code.length <= 0) {
-	          console.warn("%cLiveChatWidget.constructor: code is not correct (%c".concat(this.code, "%c)"), "color: black;", "font-weight: bold; color: red", "color: black");
-	          this.ready = false;
-	        }
+	      if (this.params.pageMode && babelHelpers["typeof"](this.params.pageMode) === 'object') {
+	        this.pageMode = {
+	          useBitrixLocalize: this.params.pageMode.useBitrixLocalize === true,
+	          placeholder: document.querySelector("#".concat(this.params.pageMode.placeholder))
+	        };
 	      }
 
-	      if (typeof this.host === 'string') {
-	        if (this.host.length <= 0 || !this.host.startsWith('http')) {
-	          console.warn("%cLiveChatWidget.constructor: host is not correct (%c".concat(this.host, "%c)"), "color: black;", "font-weight: bold; color: red", "color: black");
-	          this.ready = false;
-	        }
+	      var errors = this.checkRequiredFields();
+
+	      if (errors.length > 0) {
+	        errors.forEach(function (error) {
+	          return console.warn(error);
+	        });
+	        this.ready = false;
 	      }
 
-	      if (this.pageMode && this.pageMode.placeholder) {
-	        this.rootNode = this.pageMode.placeholder;
-	      } else {
-	        if (document.body.firstChild) {
-	          document.body.insertBefore(this.rootNode, document.body.firstChild);
-	        } else {
-	          document.body.appendChild(this.rootNode);
-	        }
-	      }
-
+	      this.setRootNode();
 	      this.localize = this.pageMode && this.pageMode.useBitrixLocalize ? window.BX.message : {};
-
-	      if (babelHelpers["typeof"](this.params.localize) === 'object') {
-	        this.addLocalize(this.params.localize);
-	      }
-
-	      var serverVariables = im_lib_localstorage.LocalStorage.get(this.getSiteId(), 0, 'serverVariables', false);
-
-	      if (serverVariables) {
-	        this.addLocalize(serverVariables);
-	      }
-
-	      return new Promise(function (resolve, reject) {
-	        return resolve();
-	      });
+	      this.setLocalize();
 	    }
 	  }, {
 	    key: "initRestClient",
 	    value: function initRestClient() {
 	      this.restClient = new WidgetRestClient({
-	        endpoint: this.host + '/rest'
-	      });
-	      return new Promise(function (resolve, reject) {
-	        return resolve();
+	        endpoint: "".concat(this.host, "/rest")
 	      });
 	    }
 	  }, {
@@ -1186,47 +1215,10 @@
 	        skipCheckRevision: true,
 	        getPublicListMethod: 'imopenlines.widget.operator.get'
 	      });
-	      this.pullClientInited = false;
-	      return new Promise(function (resolve, reject) {
-	        return resolve();
-	      });
 	    }
 	  }, {
 	    key: "initCore",
 	    value: function initCore() {
-	      var _this2 = this;
-
-	      var widgetVariables = {
-	        common: {
-	          host: this.getHost(),
-	          pageMode: this.pageMode !== false,
-	          copyright: this.copyright,
-	          copyrightUrl: this.copyrightUrl
-	        },
-	        vote: {
-	          messageText: this.getLocalize('BX_LIVECHAT_VOTE_TITLE'),
-	          messageLike: this.getLocalize('BX_LIVECHAT_VOTE_PLUS_TITLE'),
-	          messageDislike: this.getLocalize('BX_LIVECHAT_VOTE_MINUS_TITLE')
-	        },
-	        textMessages: {
-	          bxLivechatOnlineLine1: this.getLocalize('BX_LIVECHAT_ONLINE_LINE_1'),
-	          bxLivechatOnlineLine2: this.getLocalize('BX_LIVECHAT_ONLINE_LINE_2'),
-	          bxLivechatOffline: this.getLocalize('BX_LIVECHAT_OFFLINE')
-	        }
-	      };
-
-	      if (im_lib_utils.Utils.types.isPlainObject(this.params.styles) && (this.params.styles.backgroundColor || this.params.styles.iconColor)) {
-	        widgetVariables.styles = {};
-
-	        if (this.params.styles.backgroundColor) {
-	          widgetVariables.styles.backgroundColor = this.params.styles.backgroundColor;
-	        }
-
-	        if (this.params.styles.iconColor) {
-	          widgetVariables.styles.iconColor = this.params.styles.iconColor;
-	        }
-	      }
-
 	      this.controller = new im_controller.Controller({
 	        host: this.getHost(),
 	        siteId: this.getSiteId(),
@@ -1243,29 +1235,16 @@
 	          database: !im_lib_utils.Utils.browser.isIe(),
 	          databaseName: 'imol/widget',
 	          databaseType: ui_vue_vuex.VuexBuilder.DatabaseType.localStorage,
-	          models: [WidgetModel.create().setVariables(widgetVariables)]
+	          models: [WidgetModel.create().setVariables(this.getWidgetVariables())]
 	        }
 	      });
-	      return new Promise(function (resolve, reject) {
-	        _this2.controller.ready().then(function () {
-	          return resolve();
-	        });
-	      });
+	      return this.controller.ready();
 	    }
 	  }, {
 	    key: "initWidget",
 	    value: function initWidget() {
-	      if (this.isUserRegistered()) {
-	        this.restClient.setAuthId(this.getUserHash());
-	      } else {
-	        this.restClient.setAuthId(RestAuth.guest);
-	      }
-
-	      if (this.params.location && typeof LocationStyle[this.params.location] !== 'undefined') {
-	        this.controller.getStore().commit('widget/common', {
-	          location: this.params.location
-	        });
-	      }
+	      this.restClient.setAuthId(this.getRestAuthId());
+	      this.setModelData(); // TODO: move from controller
 
 	      this.controller.application.setPrepareFilesBeforeSaveFunction(this.prepareFileData.bind(this));
 	      this.controller.addRestAnswerHandler(WidgetRestAnswerHandler.create({
@@ -1273,144 +1252,9 @@
 	        store: this.controller.getStore(),
 	        controller: this.controller
 	      }));
-	      return new Promise(function (resolve, reject) {
-	        return resolve();
-	      });
-	    }
-	  }, {
-	    key: "initUploader",
-	    value: function initUploader() {
-	      var _this3 = this;
+	    } // if start or open methods were called before core init - we will have appropriate flags
+	    // for full-page livechat we always call open
 
-	      this.uploader = new im_lib_uploader.Uploader({
-	        generatePreview: true,
-	        sender: {
-	          host: this.host,
-	          customHeaders: {
-	            'Livechat-Auth-Id': this.getUserHash()
-	          },
-	          actionUploadChunk: 'imopenlines.widget.disk.upload',
-	          actionCommitFile: 'imopenlines.widget.disk.commit',
-	          actionRollbackUpload: 'imopenlines.widget.disk.rollbackUpload'
-	        }
-	      });
-	      this.uploader.subscribe('onStartUpload', function (event) {
-	        var eventData = event.getData();
-	        im_lib_logger.Logger.log('Uploader: onStartUpload', eventData);
-
-	        _this3.controller.getStore().dispatch('files/update', {
-	          chatId: _this3.getChatId(),
-	          id: eventData.id,
-	          fields: {
-	            status: im_const.FileStatus.upload,
-	            progress: 0
-	          }
-	        });
-	      });
-	      this.uploader.subscribe('onProgress', function (event) {
-	        var eventData = event.getData();
-	        im_lib_logger.Logger.log('Uploader: onProgress', eventData);
-
-	        _this3.controller.getStore().dispatch('files/update', {
-	          chatId: _this3.getChatId(),
-	          id: eventData.id,
-	          fields: {
-	            status: im_const.FileStatus.upload,
-	            progress: eventData.progress === 100 ? 99 : eventData.progress
-	          }
-	        });
-	      });
-	      this.uploader.subscribe('onSelectFile', function (event) {
-	        var eventData = event.getData();
-	        var file = eventData.file;
-	        im_lib_logger.Logger.log('Uploader: onSelectFile', eventData);
-	        var fileType = 'file';
-
-	        if (file.type.toString().startsWith('image')) {
-	          fileType = 'image';
-	        } else if (file.type.toString().startsWith('video')) {
-	          fileType = 'video';
-	        }
-
-	        _this3.controller.getStore().dispatch('files/add', {
-	          chatId: _this3.getChatId(),
-	          authorId: _this3.getUserId(),
-	          name: eventData.file.name,
-	          type: fileType,
-	          extension: file.name.split('.').splice(-1)[0],
-	          size: eventData.file.size,
-	          image: !eventData.previewData ? false : {
-	            width: eventData.previewDataWidth,
-	            height: eventData.previewDataHeight
-	          },
-	          status: im_const.FileStatus.upload,
-	          progress: 0,
-	          authorName: _this3.controller.application.getCurrentUser().name,
-	          urlPreview: eventData.previewData ? URL.createObjectURL(eventData.previewData) : ""
-	        }).then(function (fileId) {
-	          _this3.addMessage('', {
-	            id: fileId,
-	            source: eventData,
-	            previewBlob: eventData.previewData
-	          });
-	        });
-	      });
-	      this.uploader.subscribe('onComplete', function (event) {
-	        var eventData = event.getData();
-	        im_lib_logger.Logger.log('Uploader: onComplete', eventData);
-
-	        _this3.controller.getStore().dispatch('files/update', {
-	          chatId: _this3.getChatId(),
-	          id: eventData.id,
-	          fields: {
-	            status: im_const.FileStatus.wait,
-	            progress: 100
-	          }
-	        });
-
-	        var message = _this3.messagesQueue.find(function (message) {
-	          return message.file.id === eventData.id;
-	        });
-
-	        var fileType = _this3.controller.getStore().getters['files/get'](_this3.getChatId(), message.file.id, true).type;
-
-	        _this3.fileCommit({
-	          chatId: _this3.getChatId(),
-	          uploadId: eventData.result.data.file.id,
-	          messageText: message.text,
-	          messageId: message.id,
-	          fileId: message.file.id,
-	          fileType: fileType
-	        }, message);
-	      });
-	      this.uploader.subscribe('onUploadFileError', function (event) {
-	        var eventData = event.getData();
-	        im_lib_logger.Logger.log('Uploader: onUploadFileError', eventData);
-
-	        var message = _this3.messagesQueue.find(function (message) {
-	          return message.file.id === eventData.id;
-	        });
-
-	        if (typeof message === 'undefined') {
-	          return;
-	        }
-
-	        _this3.fileError(_this3.getChatId(), message.file.id, message.id);
-	      });
-	      this.uploader.subscribe('onCreateFileError', function (event) {
-	        var eventData = event.getData();
-	        im_lib_logger.Logger.log('Uploader: onCreateFileError', eventData);
-
-	        var message = _this3.messagesQueue.find(function (message) {
-	          return message.file.id === eventData.id;
-	        });
-
-	        _this3.fileError(_this3.getChatId(), message.file.id, message.id);
-	      });
-	      return new Promise(function (resolve, reject) {
-	        return resolve();
-	      });
-	    }
 	  }, {
 	    key: "initComplete",
 	    value: function initComplete() {
@@ -1429,119 +1273,270 @@
 	      if (this.pageMode || this.callOpenFlag) {
 	        this.open();
 	      }
+	    } // public method
+	    // initially called from imopenlines/lib/livechatmanager.php:16
+	    // if core is not ready yet - set flag and call start once again in this.initComplete()
 
-	      return new Promise(function (resolve, reject) {
-	        return resolve();
-	      });
+	  }, {
+	    key: "start",
+	    value: function start() {
+	      if (!this.controller || !this.controller.getStore()) {
+	        this.callStartFlag = true;
+	        return true;
+	      }
+
+	      if (this.isSessionActive()) {
+	        this.requestWidgetData();
+	      }
+
+	      return true;
+	    } // public method
+	    // if core is not ready yet - set flag and call start once again in this.initComplete()
+	    // if not inited yet - request widget data
+
+	  }, {
+	    key: "open",
+	    value: function open() {
+	      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+	      if (!this.controller.getStore()) {
+	        this.callOpenFlag = true;
+	        return true;
+	      }
+
+	      if (!params.openFromButton && this.buttonInstance) {
+	        this.buttonInstance.wm.showById('openline_livechat');
+	      }
+
+	      var _this$checkForErrorsB = this.checkForErrorsBeforeOpen(),
+	          error = _this$checkForErrorsB.error,
+	          stop = _this$checkForErrorsB.stop;
+
+	      if (stop) {
+	        return false;
+	      }
+
+	      if (!error && !this.inited) {
+	        this.requestWidgetData();
+	      }
+
+	      this.attachTemplate();
 	    }
 	  }, {
 	    key: "requestWidgetData",
 	    value: function requestWidgetData() {
-	      var _this4 = this;
+	      var _this2 = this;
 
-	      if (!this.isReady()) {
+	      if (!this.ready) {
 	        console.error('LiveChatWidget.start: widget code or host is not specified');
 	        return false;
-	      }
+	      } // if user is registered or we have its hash - proceed to getting chat and messages
 
-	      this.widgetDataRequested = true;
 
-	      if (!this.isUserRegistered() && (this.userRegisterData.hash || this.getUserHashCookie())) {
+	      if (this.isUserReady() || this.isHashAvailable()) {
 	        this.requestData();
 	        this.inited = true;
 	        this.fireInitEvent();
-	      } else if (this.isConfigDataLoaded() && this.isUserRegistered()) {
-	        this.requestData();
-	        this.inited = true;
-	        this.fireInitEvent();
-	      } else {
-	        this.controller.restClient.callMethod(RestMethod.widgetConfigGet, {
-	          code: this.code
-	        }, function (xhr) {
-	          _this4.configRequestXhr = xhr;
-	        }).then(function (result) {
-	          _this4.configRequestXhr = null;
+	        return true;
+	      } // if there is no info about user - we need to get config and wait for first message
 
-	          _this4.clearError();
 
-	          _this4.controller.executeRestAnswer(RestMethod.widgetConfigGet, result);
+	      this.controller.restClient.callMethod(RestMethod.widgetConfigGet, {
+	        code: this.code
+	      }, function (xhr) {
+	        _this2.widgetConfigRequest = xhr;
+	      }).then(function (result) {
+	        _this2.widgetConfigRequest = null;
 
-	          if (!_this4.inited) {
-	            _this4.inited = true;
+	        _this2.clearError();
 
-	            _this4.fireInitEvent();
-	          }
-	        })["catch"](function (result) {
-	          _this4.configRequestXhr = null;
+	        _this2.controller.executeRestAnswer(RestMethod.widgetConfigGet, result);
 
-	          _this4.setError(result.error().ex.error, result.error().ex.error_description);
-	        });
+	        if (!_this2.inited) {
+	          _this2.inited = true;
 
-	        if (this.isConfigDataLoaded()) {
-	          this.inited = true;
-	          this.fireInitEvent();
+	          _this2.fireInitEvent();
 	        }
+	      })["catch"](function (error) {
+	        _this2.widgetConfigRequest = null;
+
+	        _this2.setError(error.error().ex.error, error.error().ex.error_description);
+	      });
+
+	      if (this.isConfigDataLoaded()) {
+	        this.inited = true;
+	        this.fireInitEvent();
 	      }
-	    }
+	    } // get all other info (dialog, chat, messages etc)
+
 	  }, {
 	    key: "requestData",
 	    value: function requestData() {
-	      var _this5 = this;
-
 	      im_lib_logger.Logger.log('requesting data from widget');
 
 	      if (this.requestDataSend) {
 	        return true;
 	      }
 
-	      this.requestDataSend = true;
+	      this.requestDataSend = true; // if there is uncompleted widget.config.get request - abort it (because we will do it anyway)
 
-	      if (this.configRequestXhr) {
-	        this.configRequestXhr.abort();
+	      if (this.widgetConfigRequest) {
+	        this.widgetConfigRequest.abort();
 	      }
 
+	      var callback = this.handleBatchRequestResult.bind(this);
+	      this.controller.restClient.callBatch(this.getDataRequestQuery(), callback, false, false, im_lib_utils.Utils.getLogTrackingParams({
+	        name: 'widget.init.config',
+	        dialog: this.controller.application.getDialogData()
+	      }));
+	    }
+	  }, {
+	    key: "createChat",
+	    value: function createChat() {
+	      var _this3 = this;
+
+	      return new Promise(function (resolve, reject) {
+	        _this3.controller.restClient.callBatch(_this3.getCreateChatRequestQuery(), function (result) {
+	          _this3.handleBatchCreateChatRequestResult(result).then(function () {
+	            resolve();
+	          });
+	        }, false, false);
+	      });
+	    }
+	  }, {
+	    key: "handleBatchRequestResult",
+	    value: function handleBatchRequestResult(response) {
+	      var _this4 = this;
+
+	      if (!response) {
+	        this.requestDataSend = false;
+	        this.setError('EMPTY_RESPONSE', 'Server returned an empty response.');
+	        return false;
+	      }
+
+	      this.handleConfigGet(response).then(function () {
+	        return _this4.handleUserGet(response);
+	      }).then(function () {
+	        return _this4.handleChatGet(response);
+	      }).then(function () {
+	        return _this4.handleDialogGet(response);
+	      }).then(function () {
+	        return _this4.handleDialogMessagesGet(response);
+	      }).then(function () {
+	        return _this4.handleUserRegister(response);
+	      }).then(function () {
+	        return _this4.handlePullRequests(response);
+	      })["catch"](function (_ref) {
+	        var code = _ref.code,
+	            description = _ref.description;
+
+	        _this4.setError(code, description);
+	      })["finally"](function () {
+	        _this4.requestDataSend = false;
+	      });
+	    }
+	  }, {
+	    key: "handleBatchCreateChatRequestResult",
+	    value: function handleBatchCreateChatRequestResult(response) {
+	      var _this5 = this;
+
+	      if (!response) {
+	        this.requestDataSend = false;
+	        this.setError('EMPTY_RESPONSE', 'Server returned an empty response.');
+	        return false;
+	      }
+
+	      return this.handleChatCreate(response).then(function () {
+	        return _this5.handleChatGet(response);
+	      }).then(function () {
+	        return _this5.handleDialogGet(response);
+	      })["catch"](function (_ref2) {
+	        var code = _ref2.code,
+	            description = _ref2.description;
+
+	        _this5.setError(code, description);
+	      })["finally"](function () {
+	        _this5.requestDataSend = false;
+	      });
+	    }
+	  }, {
+	    key: "handleBatchOpenSessionRequestResult",
+	    value: function handleBatchOpenSessionRequestResult(response) {
+	      var _this6 = this;
+
+	      if (!response) {
+	        this.requestDataSend = false;
+	        this.setError('EMPTY_RESPONSE', 'Server returned an empty response.');
+	        return false;
+	      }
+
+	      return this.handleChatGet(response).then(function () {
+	        return _this6.handleDialogGet(response);
+	      }).then(function () {
+	        return _this6.handleDialogMessagesGet(response);
+	      })["catch"](function (_ref3) {
+	        var code = _ref3.code,
+	            description = _ref3.description;
+
+	        _this6.setError(code, description);
+	      })["finally"](function () {
+	        _this6.requestDataSend = false;
+	      });
+	    }
+	  }, {
+	    key: "getDataRequestQuery",
+	    value: function getDataRequestQuery() {
+	      // always widget.config.get
 	      var query = babelHelpers.defineProperty({}, RestMethod.widgetConfigGet, [RestMethod.widgetConfigGet, {
 	        code: this.code
 	      }]);
 
 	      if (this.isUserRegistered()) {
+	        // widget.dialog.get
 	        query[RestMethod.widgetDialogGet] = [RestMethod.widgetDialogGet, {
 	          config_id: this.getConfigId(),
 	          trace_data: this.getCrmTraceData(),
 	          custom_data: this.getCustomData()
-	        }];
+	        }]; // im.chat.get
+
 	        query[im_const.RestMethodHandler.imChatGet] = [im_const.RestMethod.imChatGet, {
-	          dialog_id: '$result[' + RestMethod.widgetDialogGet + '][dialogId]'
-	        }];
+	          dialog_id: "$result[".concat(RestMethod.widgetDialogGet, "][dialogId]")
+	        }]; // im.dialog.messages.get
+
 	        query[im_const.RestMethodHandler.imDialogMessagesGetInit] = [im_const.RestMethod.imDialogMessagesGet, {
-	          chat_id: '$result[' + RestMethod.widgetDialogGet + '][chatId]',
+	          chat_id: "$result[".concat(RestMethod.widgetDialogGet, "][chatId]"),
 	          limit: this.controller.application.getRequestMessageLimit(),
 	          convert_text: 'Y'
 	        }];
 	      } else {
+	        // widget.user.register
 	        query[RestMethod.widgetUserRegister] = [RestMethod.widgetUserRegister, _objectSpread({
-	          config_id: '$result[' + RestMethod.widgetConfigGet + '][configId]'
-	        }, this.getUserRegisterFields())];
+	          config_id: "$result[".concat(RestMethod.widgetConfigGet, "][configId]")
+	        }, this.getUserRegisterFields())]; // im.chat.get
+
 	        query[im_const.RestMethodHandler.imChatGet] = [im_const.RestMethod.imChatGet, {
-	          dialog_id: '$result[' + RestMethod.widgetUserRegister + '][dialogId]'
+	          dialog_id: "$result[".concat(RestMethod.widgetUserRegister, "][dialogId]")
 	        }];
 
 	        if (this.userRegisterData.hash || this.getUserHashCookie()) {
+	          // widget.dialog.get
 	          query[RestMethod.widgetDialogGet] = [RestMethod.widgetDialogGet, {
-	            config_id: '$result[' + RestMethod.widgetConfigGet + '][configId]',
+	            config_id: "$result[".concat(RestMethod.widgetConfigGet, "][configId]"),
 	            trace_data: this.getCrmTraceData(),
 	            custom_data: this.getCustomData()
-	          }];
+	          }]; // im.dialog.messages.get
+
 	          query[im_const.RestMethodHandler.imDialogMessagesGetInit] = [im_const.RestMethod.imDialogMessagesGet, {
-	            chat_id: '$result[' + RestMethod.widgetDialogGet + '][chatId]',
+	            chat_id: "$result[".concat(RestMethod.widgetDialogGet, "][chatId]"),
 	            limit: this.controller.application.getRequestMessageLimit(),
 	            convert_text: 'Y'
 	          }];
 	        }
 
 	        if (this.isUserAgreeConsent()) {
+	          // widget.user.consent.apply
 	          query[RestMethod.widgetUserConsentApply] = [RestMethod.widgetUserConsentApply, {
-	            config_id: '$result[' + RestMethod.widgetConfigGet + '][configId]',
+	            config_id: "$result[".concat(RestMethod.widgetConfigGet, "][configId]"),
 	            consent_url: location.href
 	          }];
 	        }
@@ -1552,153 +1547,250 @@
 	        'CACHE': 'N'
 	      }];
 	      query[RestMethod.widgetUserGet] = [RestMethod.widgetUserGet, {}];
-	      this.controller.restClient.callBatch(query, function (response) {
-	        if (!response) {
-	          _this5.requestDataSend = false;
+	      return query;
+	    }
+	  }, {
+	    key: "getOpenSessionQuery",
+	    value: function getOpenSessionQuery(chatId) {
+	      // imopenlines.widget.dialog.get
+	      var query = babelHelpers.defineProperty({}, RestMethod.widgetDialogGet, [RestMethod.widgetDialogGet, {
+	        config_id: this.getConfigId(),
+	        chat_id: chatId
+	      }]);
+	      query[im_const.RestMethodHandler.imChatGet] = [im_const.RestMethod.imChatGet, {
+	        dialog_id: "chat".concat(chatId)
+	      }]; // im.dialog.messages.get
 
-	          _this5.setError('EMPTY_RESPONSE', 'Server returned an empty response.');
+	      query[im_const.RestMethodHandler.imDialogMessagesGetInit] = [im_const.RestMethod.imDialogMessagesGet, {
+	        chat_id: chatId,
+	        limit: 50,
+	        convert_text: 'Y'
+	      }];
+	      return query;
+	    }
+	  }, {
+	    key: "getCreateChatRequestQuery",
+	    value: function getCreateChatRequestQuery() {
+	      var query = {}; // widget.chat.register
 
-	          return false;
-	        }
+	      query[RestMethod.widgetChatCreate] = [RestMethod.widgetChatCreate, _objectSpread({
+	        config_id: this.getConfigId()
+	      }, this.getUserRegisterFields())]; // im.chat.get
 
-	        var configGet = response[RestMethod.widgetConfigGet];
+	      query[im_const.RestMethodHandler.imChatGet] = [im_const.RestMethod.imChatGet, {
+	        dialog_id: "$result[".concat(RestMethod.widgetChatCreate, "][dialogId]")
+	      }]; // widget.dialog.get
 
-	        if (configGet && configGet.error()) {
-	          _this5.requestDataSend = false;
+	      query[RestMethod.widgetDialogGet] = [RestMethod.widgetDialogGet, {
+	        config_id: this.getConfigId(),
+	        trace_data: this.getCrmTraceData(),
+	        custom_data: this.getCustomData()
+	      }];
 
-	          _this5.setError(configGet.error().ex.error, configGet.error().ex.error_description);
+	      if (this.isUserAgreeConsent()) {
+	        // widget.user.consent.apply
+	        query[RestMethod.widgetUserConsentApply] = [RestMethod.widgetUserConsentApply, {
+	          config_id: this.getConfigId(),
+	          consent_url: location.href
+	        }];
+	      }
 
-	          return false;
-	        }
+	      query[RestMethod.pullServerTime] = [RestMethod.pullServerTime, {}];
+	      query[RestMethod.pullConfigGet] = [RestMethod.pullConfigGet, {
+	        'CACHE': 'N'
+	      }];
+	      query[RestMethod.widgetUserGet] = [RestMethod.widgetUserGet, {}];
+	      return query;
+	    }
+	  }, {
+	    key: "openSession",
+	    value: function openSession(event) {
+	      var _this7 = this;
 
-	        _this5.controller.executeRestAnswer(RestMethod.widgetConfigGet, configGet);
+	      var eventData = event.getData();
+	      return new Promise(function (resolve, reject) {
+	        var dialog = _this7.controller.getStore().getters['dialogues/get'](eventData.session.dialogId);
 
-	        var userGetResult = response[RestMethod.widgetUserGet];
-
-	        if (userGetResult.error()) {
-	          _this5.requestDataSend = false;
-
-	          _this5.setError(userGetResult.error().ex.error, userGetResult.error().ex.error_description);
-
-	          return false;
-	        }
-
-	        _this5.controller.executeRestAnswer(RestMethod.widgetUserGet, userGetResult);
-
-	        var chatGetResult = response[im_const.RestMethodHandler.imChatGet];
-
-	        if (chatGetResult.error()) {
-	          _this5.requestDataSend = false;
-
-	          _this5.setError(chatGetResult.error().ex.error, chatGetResult.error().ex.error_description);
-
-	          return false;
-	        }
-
-	        _this5.controller.executeRestAnswer(im_const.RestMethodHandler.imChatGet, chatGetResult);
-
-	        var dialogGetResult = response[RestMethod.widgetDialogGet];
-
-	        if (dialogGetResult) {
-	          if (dialogGetResult.error()) {
-	            _this5.requestDataSend = false;
-
-	            _this5.setError(dialogGetResult.error().ex.error, dialogGetResult.error().ex.error_description);
-
-	            return false;
-	          }
-
-	          _this5.controller.executeRestAnswer(RestMethod.widgetDialogGet, dialogGetResult);
-	        }
-
-	        var dialogMessagesGetResult = response[im_const.RestMethodHandler.imDialogMessagesGetInit];
-
-	        if (dialogMessagesGetResult) {
-	          if (dialogMessagesGetResult.error()) {
-	            _this5.requestDataSend = false;
-
-	            _this5.setError(dialogMessagesGetResult.error().ex.error, dialogMessagesGetResult.error().ex.error_description);
-
-	            return false;
-	          }
-
-	          _this5.controller.getStore().dispatch('dialogues/saveDialog', {
-	            dialogId: _this5.controller.application.getDialogId(),
-	            chatId: _this5.controller.application.getChatId()
+	        if (dialog) {
+	          _this7.controller.getStore().commit('application/set', {
+	            dialog: {
+	              chatId: eventData.session.chatId,
+	              dialogId: eventData.session.dialogId,
+	              diskFolderId: 0
+	            }
 	          });
 
-	          _this5.controller.executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGetInit, dialogMessagesGetResult);
+	          _this7.controller.getStore().commit('widget/common', {
+	            isCreateSessionMode: false
+	          });
+
+	          resolve();
+	          return;
 	        }
 
-	        var userRegisterResult = response[RestMethod.widgetUserRegister];
+	        _this7.controller.restClient.callBatch(_this7.getOpenSessionQuery(eventData.session.chatId), function (result) {
+	          _this7.handleBatchOpenSessionRequestResult(result).then(function () {
+	            _this7.controller.getStore().commit('widget/common', {
+	              isCreateSessionMode: false
+	            });
 
-	        if (userRegisterResult) {
-	          if (userRegisterResult.error()) {
-	            _this5.requestDataSend = false;
-
-	            _this5.setError(userRegisterResult.error().ex.error, userRegisterResult.error().ex.error_description);
-
-	            return false;
-	          }
-
-	          _this5.controller.executeRestAnswer(RestMethod.widgetUserRegister, userRegisterResult);
-	        }
-
-	        var timeShift = 0;
-	        var serverTimeResult = response[RestMethod.pullServerTime];
-
-	        if (serverTimeResult && !serverTimeResult.error()) {
-	          timeShift = Math.floor((new Date().getTime() - new Date(serverTimeResult.data()).getTime()) / 1000);
-	        }
-
-	        var config = null;
-	        var pullConfigResult = response[RestMethod.pullConfigGet];
-
-	        if (pullConfigResult && !pullConfigResult.error()) {
-	          config = pullConfigResult.data();
-	          config.server.timeShift = timeShift;
-	        }
-
-	        _this5.startPullClient(config).then(function () {
-	          _this5.processSendMessages();
-	        })["catch"](function (error) {
-	          _this5.setError(error.ex.error, error.ex.error_description);
-	        });
-
-	        _this5.requestDataSend = false;
-	      }, false, false, im_lib_utils.Utils.getLogTrackingParams({
-	        name: 'widget.init.config',
-	        dialog: this.controller.application.getDialogData()
-	      }));
+	            resolve();
+	          });
+	        }, false, false);
+	      });
 	    }
 	  }, {
 	    key: "prepareFileData",
 	    value: function prepareFileData(files) {
-	      var _this6 = this;
+	      var _this8 = this;
 
-	      if (!im_lib_utils.Utils.types.isArray(files)) {
+	      if (!Array.isArray(files)) {
 	        return files;
 	      }
 
 	      return files.map(function (file) {
-	        var hash = (window.md5 || main_md5.md5)(_this6.getUserId() + '|' + file.id + '|' + _this6.getUserHash());
-
-	        var urlParam = 'livechat_auth_id=' + hash + '&livechat_user_id=' + _this6.getUserId();
+	        var hash = (window.md5 || main_md5.md5)("".concat(_this8.getUserId(), "|").concat(file.id, "|").concat(_this8.getUserHash()));
+	        var urlParam = "livechat_auth_id=".concat(hash, "&livechat_user_id=").concat(_this8.getUserId());
 
 	        if (file.urlPreview) {
-	          file.urlPreview = file.urlPreview + '&' + urlParam;
+	          file.urlPreview = "".concat(file.urlPreview, "&").concat(urlParam);
 	        }
 
 	        if (file.urlShow) {
-	          file.urlShow = file.urlShow + '&' + urlParam;
+	          file.urlShow = "".concat(file.urlShow, "&").concat(urlParam);
 	        }
 
 	        if (file.urlDownload) {
-	          file.urlDownload = file.urlDownload + '&' + urlParam;
+	          file.urlDownload = "".concat(file.urlDownload, "&").concat(urlParam);
 	        }
 
 	        return file;
 	      });
+	    }
+	  }, {
+	    key: "checkRequiredFields",
+	    value: function checkRequiredFields() {
+	      var errors = [];
+
+	      if (typeof this.code === 'string' && this.code.length <= 0) {
+	        errors.push("LiveChatWidget.constructor: code is not correct (".concat(this.code, ")"));
+	      }
+
+	      if (typeof this.host === 'string' && (this.host.length <= 0 || !this.host.startsWith('http'))) {
+	        errors.push("LiveChatWidget.constructor: host is not correct (".concat(this.host, ")"));
+	      }
+
+	      return errors;
+	    }
+	  }, {
+	    key: "setRootNode",
+	    value: function setRootNode() {
+	      if (this.pageMode && this.pageMode.placeholder) {
+	        this.rootNode = this.pageMode.placeholder;
+	      } else if (document.body.firstChild) {
+	        document.body.insertBefore(this.rootNode, document.body.firstChild);
+	      } else {
+	        document.body.append(this.rootNode);
+	      }
+	    }
+	  }, {
+	    key: "setLocalize",
+	    value: function setLocalize() {
+	      if (babelHelpers["typeof"](this.params.localize) === 'object') {
+	        this.addLocalize(this.params.localize);
+	      }
+
+	      var serverVariables = im_lib_localstorage.LocalStorage.get(this.getSiteId(), 0, 'serverVariables', false);
+
+	      if (serverVariables) {
+	        this.addLocalize(serverVariables);
+	      }
+	    }
+	  }, {
+	    key: "getWidgetVariables",
+	    value: function getWidgetVariables() {
+	      var variables = {
+	        common: {
+	          host: this.getHost(),
+	          pageMode: !!this.pageMode,
+	          copyright: this.copyright,
+	          copyrightUrl: this.copyrightUrl
+	        },
+	        vote: {
+	          messageText: this.getLocalize('BX_LIVECHAT_VOTE_TITLE'),
+	          messageLike: this.getLocalize('BX_LIVECHAT_VOTE_PLUS_TITLE'),
+	          messageDislike: this.getLocalize('BX_LIVECHAT_VOTE_MINUS_TITLE')
+	        },
+	        textMessages: {
+	          bxLivechatOnlineLine1: this.getLocalize('BX_LIVECHAT_ONLINE_LINE_1'),
+	          bxLivechatOnlineLine2: this.getLocalize('BX_LIVECHAT_ONLINE_LINE_2'),
+	          bxLivechatOffline: this.getLocalize('BX_LIVECHAT_OFFLINE')
+	        }
+	      };
+
+	      if (this.params.styles) {
+	        variables.styles = {};
+
+	        if (this.params.styles.backgroundColor) {
+	          variables.styles.backgroundColor = this.params.styles.backgroundColor;
+	        }
+
+	        if (this.params.styles.iconColor) {
+	          variables.styles.iconColor = this.params.styles.iconColor;
+	        }
+	      }
+
+	      return variables;
+	    }
+	  }, {
+	    key: "getRestAuthId",
+	    value: function getRestAuthId() {
+	      return this.isUserRegistered() ? this.getUserHash() : RestAuth.guest;
+	    }
+	  }, {
+	    key: "setModelData",
+	    value: function setModelData() {
+	      if (this.params.location && LocationStyle[this.params.location]) {
+	        this.controller.getStore().commit('widget/common', {
+	          location: this.params.location
+	        });
+	      }
+	    }
+	  }, {
+	    key: "checkForErrorsBeforeOpen",
+	    value: function checkForErrorsBeforeOpen() {
+	      var result = {
+	        error: false,
+	        stop: false
+	      };
+
+	      if (!this.checkBrowserVersion()) {
+	        this.setError('OLD_BROWSER_LOCALIZED', this.localize.BX_LIVECHAT_OLD_BROWSER);
+	        result.error = true;
+	      } else if (im_lib_utils.Utils.versionCompare(ui_vue.Vue.version(), '2.1') < 0) {
+	        alert(this.localize.BX_LIVECHAT_OLD_VUE);
+	        console.error("LiveChatWidget.error: OLD_VUE_VERSION (".concat(this.localize.BX_LIVECHAT_OLD_VUE_DEV.replace('#CURRENT_VERSION#', ui_vue.Vue.version()), ")"));
+	        result.error = true;
+	        result.stop = true;
+	      } else if (this.isSameDomain()) {
+	        this.setError('LIVECHAT_SAME_DOMAIN', this.localize.BX_LIVECHAT_SAME_DOMAIN);
+	        result.error = true;
+	      }
+
+	      return result;
+	    }
+	  }, {
+	    key: "isSameDomain",
+	    value: function isSameDomain() {
+	      if (typeof BX === 'undefined' || !BX.isReady) {
+	        return false;
+	      }
+
+	      if (!this.options.checkSameDomain) {
+	        return false;
+	      }
+
+	      return this.host.lastIndexOf(".".concat(location.hostname)) > -1;
 	    }
 	  }, {
 	    key: "checkBrowserVersion",
@@ -1713,19 +1805,6 @@
 
 	      return true;
 	    }
-	  }, {
-	    key: "isSameDomain",
-	    value: function isSameDomain() {
-	      if (typeof BX === 'undefined' || !BX.isReady) {
-	        return false;
-	      }
-
-	      if (!this.options.checkSameDomain) {
-	        return false;
-	      }
-
-	      return this.host.lastIndexOf('.' + location.hostname) > -1;
-	    }
 	    /* endregion 01. Initialize and store data */
 
 	    /* region 02. Push & Pull */
@@ -1733,78 +1812,80 @@
 	  }, {
 	    key: "startPullClient",
 	    value: function startPullClient(config) {
-	      var _this7 = this;
+	      var _this9 = this;
 
-	      var promise = new BX.Promise();
-
-	      if (!this.getUserId() || !this.getSiteId() || !this.restClient) {
-	        promise.reject({
-	          ex: {
-	            error: 'WIDGET_NOT_LOADED',
-	            error_description: 'Widget is not loaded.'
-	          }
-	        });
-	        return promise;
-	      }
-
-	      if (this.pullClientInited) {
-	        if (!this.pullClient.isConnected()) {
-	          this.pullClient.scheduleReconnect();
+	      return new Promise(function (resolve, reject) {
+	        if (!_this9.getUserId() || !_this9.getSiteId() || !_this9.restClient) {
+	          return reject({
+	            ex: {
+	              error: 'WIDGET_NOT_LOADED',
+	              error_description: 'Widget is not loaded.'
+	            }
+	          });
 	        }
 
-	        promise.resolve(true);
-	        return promise;
-	      }
-
-	      this.controller.userId = this.getUserId();
-	      this.pullClient.userId = this.getUserId();
-	      this.pullClient.configTimestamp = config ? config.server.config_timestamp : 0;
-	      this.pullClient.skipStorageInit = false;
-	      this.pullClient.storage = pull_client.PullClient.StorageManager({
-	        userId: this.getUserId(),
-	        siteId: this.getSiteId()
-	      });
-	      this.pullClient.subscribe(new WidgetImPullCommandHandler({
-	        store: this.controller.getStore(),
-	        controller: this.controller,
-	        widget: this
-	      }));
-	      this.pullClient.subscribe(new WidgetImopenlinesPullCommandHandler({
-	        store: this.controller.getStore(),
-	        controller: this.controller,
-	        widget: this
-	      }));
-	      this.pullClient.subscribe({
-	        type: pull_client.PullClient.SubscriptionType.Status,
-	        callback: this.eventStatusInteraction.bind(this)
-	      });
-	      this.pullConnectedFirstTime = this.pullClient.subscribe({
-	        type: pull_client.PullClient.SubscriptionType.Status,
-	        callback: function callback(result) {
-	          if (result.status === pull_client.PullClient.PullStatus.Online) {
-	            promise.resolve(true);
-
-	            _this7.pullConnectedFirstTime();
+	        if (_this9.pullClientInited) {
+	          if (!_this9.pullClient.isConnected()) {
+	            _this9.pullClient.scheduleReconnect();
 	          }
+
+	          return resolve(true);
 	        }
-	      });
 
-	      if (this.template) {
-	        this.template.$Bitrix.PullClient.set(this.pullClient);
-	      }
+	        _this9.controller.userId = _this9.getUserId();
+	        _this9.pullClient.userId = _this9.getUserId();
+	        _this9.pullClient.configTimestamp = config ? config.server.config_timestamp : 0;
+	        _this9.pullClient.skipStorageInit = false;
+	        _this9.pullClient.storage = pull_client.PullClient.StorageManager({
+	          userId: _this9.getUserId(),
+	          siteId: _this9.getSiteId()
+	        });
 
-	      this.pullClient.start(_objectSpread(_objectSpread({}, config), {}, {
-	        skipReconnectToLastSession: true
-	      }))["catch"](function () {
-	        promise.reject({
-	          ex: {
-	            error: 'PULL_CONNECTION_ERROR',
-	            error_description: 'Pull is not connected.'
+	        _this9.pullClient.subscribe(new WidgetImPullCommandHandler({
+	          store: _this9.controller.getStore(),
+	          controller: _this9.controller,
+	          widget: _this9
+	        }));
+
+	        _this9.pullClient.subscribe(new WidgetImopenlinesPullCommandHandler({
+	          store: _this9.controller.getStore(),
+	          controller: _this9.controller,
+	          widget: _this9
+	        }));
+
+	        _this9.pullClient.subscribe({
+	          type: pull_client.PullClient.SubscriptionType.Status,
+	          callback: _this9.eventStatusInteraction.bind(_this9)
+	        });
+
+	        _this9.pullConnectedFirstTime = _this9.pullClient.subscribe({
+	          type: pull_client.PullClient.SubscriptionType.Status,
+	          callback: function callback(result) {
+	            if (result.status === pull_client.PullClient.PullStatus.Online) {
+	              resolve(true);
+
+	              _this9.pullConnectedFirstTime();
+	            }
 	          }
 	        });
+
+	        if (_this9.template) {
+	          _this9.template.$Bitrix.PullClient.set(_this9.pullClient);
+	        }
+
+	        _this9.pullClient.start(_objectSpread(_objectSpread({}, config), {}, {
+	          skipReconnectToLastSession: true
+	        }))["catch"](function () {
+	          reject({
+	            ex: {
+	              error: 'PULL_CONNECTION_ERROR',
+	              error_description: 'Pull is not connected.'
+	            }
+	          });
+	        });
+
+	        _this9.pullClientInited = true;
 	      });
-	      this.pullClientInited = true;
-	      return promise;
 	    }
 	  }, {
 	    key: "stopPullClient",
@@ -1822,34 +1903,38 @@
 	  }, {
 	    key: "eventStatusInteraction",
 	    value: function eventStatusInteraction(data) {
-	      var _this8 = this;
-
 	      if (data.status === pull_client.PullClient.PullStatus.Online) {
-	        this.offline = false;
-
-	        if (this.pullRequestMessage) {
-	          this.controller.pullBaseHandler.option.skip = true;
-	          im_lib_logger.Logger.warn('Requesting getDialogUnread after going online');
-	          main_core_events.EventEmitter.emitAsync(im_const.EventType.dialog.requestUnread, {
-	            chatId: this.controller.application.getChatId()
-	          }).then(function () {
-	            main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollOnStart, {
-	              chatId: _this8.controller.application.getChatId()
-	            });
-	            _this8.controller.pullBaseHandler.option.skip = false;
-
-	            _this8.processSendMessages();
-	          })["catch"](function () {
-	            _this8.controller.pullBaseHandler.option.skip = false;
-	          });
-	          this.pullRequestMessage = false;
-	        } else {
-	          this.readMessage();
-	          this.processSendMessages();
-	        }
+	        this.onPullOnlineStatus();
 	      } else if (data.status === pull_client.PullClient.PullStatus.Offline) {
 	        this.pullRequestMessage = true;
 	        this.offline = true;
+	      }
+	    }
+	  }, {
+	    key: "onPullOnlineStatus",
+	    value: function onPullOnlineStatus() {
+	      var _this10 = this;
+
+	      this.offline = false; // if we go online after going offline - we need to request messages
+
+	      if (this.pullRequestMessage) {
+	        this.controller.pullBaseHandler.option.skip = true;
+	        im_lib_logger.Logger.warn('Requesting getDialogUnread after going online');
+	        main_core_events.EventEmitter.emitAsync(im_const.EventType.dialog.requestUnread, {
+	          chatId: this.controller.application.getChatId()
+	        }).then(function () {
+	          main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollOnStart, {
+	            chatId: _this10.controller.application.getChatId()
+	          });
+	          _this10.controller.pullBaseHandler.option.skip = false;
+	          main_core_events.EventEmitter.emit(WidgetEventType.processMessagesToSendQueue);
+	        })["catch"](function () {
+	          _this10.controller.pullBaseHandler.option.skip = false;
+	        });
+	        this.pullRequestMessage = false;
+	      } else {
+	        main_core_events.EventEmitter.emit(im_const.EventType.dialog.readMessage);
+	        main_core_events.EventEmitter.emit(WidgetEventType.processMessagesToSendQueue);
 	      }
 	    }
 	    /* endregion 02. Push & Pull */
@@ -1867,7 +1952,7 @@
 	      }
 
 	      this.rootNode.innerHTML = '';
-	      this.rootNode.appendChild(document.createElement('div'));
+	      this.rootNode.append(document.createElement('div'));
 	      var application = this;
 	      return this.controller.createVue(application, {
 	        el: this.rootNode.firstChild,
@@ -1910,7 +1995,8 @@
 
 	      this.template.$destroy();
 	      return true;
-	    }
+	    } // public method
+
 	  }, {
 	    key: "mutateTemplateComponent",
 	    value: function mutateTemplateComponent(id, params) {
@@ -1918,649 +2004,9 @@
 	    }
 	    /* endregion 03. Template engine */
 
-	    /* region 04. Rest methods */
+	    /* region 04. Widget interaction and utils */
+	    // public method
 
-	  }, {
-	    key: "addMessage",
-	    value: function addMessage() {
-	      var _this9 = this;
-
-	      var text = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-	      var file = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
-
-	      if (!text && !file) {
-	        return false;
-	      }
-
-	      var quoteId = this.controller.getStore().getters['dialogues/getQuoteId'](this.controller.application.getDialogId());
-
-	      if (quoteId) {
-	        var quoteMessage = this.controller.getStore().getters['messages/getMessage'](this.controller.application.getChatId(), quoteId);
-
-	        if (quoteMessage) {
-	          var user = null;
-
-	          if (quoteMessage.authorId) {
-	            user = this.controller.getStore().getters['users/get'](quoteMessage.authorId);
-	          }
-
-	          var files = this.controller.getStore().getters['files/getList'](this.controller.application.getChatId());
-	          var message = [];
-	          message.push('-'.repeat(54));
-	          message.push((user && user.name ? user.name : this.getLocalize('BX_LIVECHAT_SYSTEM_MESSAGE')) + ' [' + im_lib_utils.Utils.date.format(quoteMessage.date, null, this.getLocalize()) + ']');
-	          message.push(im_lib_utils.Utils.text.quote(quoteMessage.text, quoteMessage.params, files, this.getLocalize()));
-	          message.push('-'.repeat(54));
-	          message.push(text);
-	          text = message.join("\n");
-	          this.quoteMessageClear();
-	        }
-	      }
-
-	      im_lib_logger.Logger.warn('addMessage', text, file);
-
-	      if (!this.controller.application.isUnreadMessagesLoaded()) {
-	        this.sendMessage({
-	          id: 0,
-	          text: text,
-	          file: file
-	        });
-	        this.processSendMessages();
-	        return true;
-	      }
-
-	      var params = {};
-
-	      if (file) {
-	        params.FILE_ID = [file.id];
-	      }
-
-	      this.controller.getStore().dispatch('messages/add', {
-	        chatId: this.getChatId(),
-	        authorId: this.getUserId(),
-	        text: text,
-	        params: params,
-	        sending: !file
-	      }).then(function (messageId) {
-	        if (!_this9.isDialogStart()) {
-	          _this9.controller.getStore().commit('widget/common', {
-	            dialogStart: true
-	          });
-	        }
-
-	        main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollToBottom, {
-	          chatId: _this9.getChatId(),
-	          cancelIfScrollChange: true
-	        });
-
-	        _this9.messagesQueue.push({
-	          id: messageId,
-	          text: text,
-	          file: file,
-	          sending: false
-	        });
-
-	        if (_this9.getChatId()) {
-	          _this9.processSendMessages();
-	        } else {
-	          _this9.requestData();
-	        }
-	      });
-	      return true;
-	    }
-	  }, {
-	    key: "uploadFile",
-	    value: function uploadFile(event) {
-	      if (!event) {
-	        return false;
-	      }
-
-	      if (!this.getChatId()) {
-	        this.requestData();
-	      }
-
-	      this.uploader.addFilesFromEvent(event);
-	    }
-	  }, {
-	    key: "cancelUploadFile",
-	    value: function cancelUploadFile(fileId) {
-	      var _this10 = this;
-
-	      var element = this.messagesQueue.find(function (element) {
-	        return element.file && element.file.id === fileId;
-	      });
-
-	      if (element) {
-	        this.uploader.deleteTask(fileId);
-
-	        if (element.xhr) {
-	          element.xhr.abort();
-	        }
-
-	        this.controller.getStore().dispatch('messages/delete', {
-	          chatId: this.getChatId(),
-	          id: element.id
-	        }).then(function () {
-	          _this10.controller.getStore().dispatch('files/delete', {
-	            chatId: _this10.getChatId(),
-	            id: element.file.id
-	          });
-
-	          _this10.messagesQueue = _this10.messagesQueue.filter(function (el) {
-	            return el.id !== element.id;
-	          });
-	        });
-	      }
-	    }
-	  }, {
-	    key: "processSendMessages",
-	    value: function processSendMessages() {
-	      var _this11 = this;
-
-	      if (!this.getDiskFolderId()) {
-	        this.requestDiskFolderId().then(function () {
-	          _this11.processSendMessages();
-	        })["catch"](function () {
-	          im_lib_logger.Logger.warn('uploadFile', 'Error get disk folder id');
-	          return false;
-	        });
-	        return false;
-	      }
-
-	      if (this.offline) {
-	        return false;
-	      }
-
-	      this.messagesQueue.filter(function (element) {
-	        return !element.sending;
-	      }).forEach(function (element) {
-	        element.sending = true;
-
-	        if (element.file) {
-	          _this11.sendMessageWithFile(element);
-	        } else {
-	          _this11.sendMessage(element);
-	        }
-	      });
-	      return true;
-	    }
-	  }, {
-	    key: "sendMessage",
-	    value: function sendMessage(message) {
-	      var _this12 = this;
-
-	      this.controller.application.stopWriting();
-	      var quiteId = this.controller.getStore().getters['dialogues/getQuoteId'](this.getDialogId());
-
-	      if (quiteId) {
-	        var quoteMessage = this.controller.getStore().getters['messages/getMessage'](this.getChatId(), quiteId);
-
-	        if (quoteMessage) {
-	          var user = this.controller.getStore().getters['users/get'](quoteMessage.authorId);
-	          var newMessage = [];
-	          newMessage.push("------------------------------------------------------");
-	          newMessage.push(user.name ? user.name : this.getLocalize('BX_LIVECHAT_SYSTEM_MESSAGE'));
-	          newMessage.push(quoteMessage.text);
-	          newMessage.push('------------------------------------------------------');
-	          newMessage.push(message.text);
-	          message.text = newMessage.join("\n");
-	          this.quoteMessageClear();
-	        }
-	      }
-
-	      message.chatId = this.getChatId();
-	      this.controller.restClient.callMethod(im_const.RestMethod.imMessageAdd, {
-	        'TEMPLATE_ID': message.id,
-	        'CHAT_ID': message.chatId,
-	        'MESSAGE': message.text
-	      }, null, null, im_lib_utils.Utils.getLogTrackingParams({
-	        name: im_const.RestMethod.imMessageAdd,
-	        data: {
-	          timMessageType: 'text'
-	        },
-	        dialog: this.getDialogData()
-	      })).then(function (response) {
-	        _this12.controller.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, response, message);
-	      })["catch"](function (error) {
-	        _this12.controller.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, error, message);
-	      });
-	      return true;
-	    }
-	  }, {
-	    key: "sendMessageWithFile",
-	    value: function sendMessageWithFile(message) {
-	      this.controller.application.stopWriting();
-	      var diskFolderId = this.getDiskFolderId();
-	      message.chatId = this.getChatId();
-	      this.uploader.senderOptions.customHeaders['Livechat-Dialog-Id'] = this.getDialogId();
-	      this.uploader.senderOptions.customHeaders['Livechat-Auth-Id'] = this.getUserHash();
-	      this.uploader.addTask({
-	        taskId: message.file.id,
-	        fileData: message.file.source.file,
-	        fileName: message.file.source.file.name,
-	        generateUniqueName: true,
-	        diskFolderId: diskFolderId,
-	        previewBlob: message.file.previewBlob,
-	        chunkSize: this.localize.isCloud ? im_lib_uploader.Uploader.CLOUD_MAX_CHUNK_SIZE : im_lib_uploader.Uploader.BOX_MIN_CHUNK_SIZE
-	      });
-	    }
-	  }, {
-	    key: "fileError",
-	    value: function fileError(chatId, fileId) {
-	      var messageId = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
-	      this.controller.getStore().dispatch('files/update', {
-	        chatId: chatId,
-	        id: fileId,
-	        fields: {
-	          status: im_const.FileStatus.error,
-	          progress: 0
-	        }
-	      });
-
-	      if (messageId) {
-	        this.controller.getStore().dispatch('messages/actionError', {
-	          chatId: chatId,
-	          id: messageId,
-	          retry: false
-	        });
-	      }
-	    }
-	  }, {
-	    key: "requestDiskFolderId",
-	    value: function requestDiskFolderId() {
-	      var _this13 = this;
-
-	      if (this.requestDiskFolderPromise) {
-	        return this.requestDiskFolderPromise;
-	      }
-
-	      this.requestDiskFolderPromise = new Promise(function (resolve, reject) {
-	        if (_this13.flagRequestDiskFolderIdSended || _this13.getDiskFolderId()) {
-	          _this13.flagRequestDiskFolderIdSended = false;
-	          resolve();
-	          return true;
-	        }
-
-	        _this13.flagRequestDiskFolderIdSended = true;
-
-	        _this13.controller.restClient.callMethod(im_const.RestMethod.imDiskFolderGet, {
-	          chat_id: _this13.controller.application.getChatId()
-	        }).then(function (response) {
-	          _this13.controller.executeRestAnswer(im_const.RestMethodHandler.imDiskFolderGet, response);
-
-	          _this13.flagRequestDiskFolderIdSended = false;
-	          resolve();
-	        })["catch"](function (error) {
-	          _this13.flagRequestDiskFolderIdSended = false;
-
-	          _this13.controller.executeRestAnswer(im_const.RestMethodHandler.imDiskFolderGet, error);
-
-	          reject();
-	        });
-	      });
-	      return this.requestDiskFolderPromise;
-	    }
-	  }, {
-	    key: "fileCommit",
-	    value: function fileCommit(params, message) {
-	      var _this14 = this;
-
-	      this.controller.restClient.callMethod(im_const.RestMethod.imDiskFileCommit, {
-	        chat_id: params.chatId,
-	        upload_id: params.uploadId,
-	        message: params.messageText,
-	        template_id: params.messageId,
-	        file_template_id: params.fileId
-	      }, null, null, im_lib_utils.Utils.getLogTrackingParams({
-	        name: im_const.RestMethod.imDiskFileCommit,
-	        data: {
-	          timMessageType: params.fileType
-	        },
-	        dialog: this.getDialogData()
-	      })).then(function (response) {
-	        _this14.controller.executeRestAnswer(im_const.RestMethodHandler.imDiskFileCommit, response, message);
-	      })["catch"](function (error) {
-	        _this14.controller.executeRestAnswer(im_const.RestMethodHandler.imDiskFileCommit, error, message);
-	      });
-	      return true;
-	    }
-	  }, {
-	    key: "getDialogHistory",
-	    value: function getDialogHistory(lastId) {
-	      var _this15 = this;
-
-	      var limit = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.controller.application.getRequestMessageLimit();
-	      this.controller.restClient.callMethod(im_const.RestMethod.imDialogMessagesGet, {
-	        'CHAT_ID': this.getChatId(),
-	        'LAST_ID': lastId,
-	        'LIMIT': limit,
-	        'CONVERT_TEXT': 'Y'
-	      }).then(function (result) {
-	        _this15.controller.executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGet, result);
-
-	        _this15.template.$emit(im_const.EventType.dialog.requestHistoryResult, {
-	          count: result.data().messages.length
-	        });
-	      })["catch"](function (result) {
-	        _this15.template.$emit(im_const.EventType.dialog.requestHistoryResult, {
-	          error: result.error().ex
-	        });
-	      });
-	    }
-	  }, {
-	    key: "getDialogUnread",
-	    value: function getDialogUnread(lastId) {
-	      var _this16 = this;
-
-	      var limit = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.controller.application.getRequestMessageLimit();
-	      var promise = new BX.Promise();
-
-	      if (!lastId) {
-	        lastId = this.controller.getStore().getters['messages/getLastId'](this.controller.application.getChatId());
-	      }
-
-	      if (!lastId) {
-	        this.template.$emit(im_const.EventType.dialog.requestUnreadResult, {
-	          error: {
-	            error: 'LAST_ID_EMPTY',
-	            error_description: 'LastId is empty.'
-	          }
-	        });
-	        promise.reject();
-	        return promise;
-	      }
-
-	      this.controller.application.readMessage(lastId, true, true).then(function () {
-	        var _query2;
-
-	        var query = (_query2 = {}, babelHelpers.defineProperty(_query2, im_const.RestMethodHandler.imDialogRead, [im_const.RestMethod.imDialogRead, {
-	          dialog_id: _this16.getDialogId(),
-	          message_id: lastId
-	        }]), babelHelpers.defineProperty(_query2, im_const.RestMethodHandler.imChatGet, [im_const.RestMethod.imChatGet, {
-	          dialog_id: _this16.getDialogId()
-	        }]), babelHelpers.defineProperty(_query2, im_const.RestMethodHandler.imDialogMessagesGetUnread, [im_const.RestMethod.imDialogMessagesGet, {
-	          chat_id: _this16.getChatId(),
-	          first_id: lastId,
-	          limit: limit,
-	          convert_text: 'Y'
-	        }]), _query2);
-
-	        _this16.controller.restClient.callBatch(query, function (response) {
-	          if (!response) {
-	            _this16.template.$emit(im_const.EventType.dialog.requestUnreadResult, {
-	              error: {
-	                error: 'EMPTY_RESPONSE',
-	                error_description: 'Server returned an empty response.'
-	              }
-	            });
-
-	            promise.reject();
-	            return false;
-	          }
-
-	          var chatGetResult = response[im_const.RestMethodHandler.imChatGet];
-
-	          if (!chatGetResult.error()) {
-	            _this16.controller.executeRestAnswer(im_const.RestMethodHandler.imChatGet, chatGetResult);
-	          }
-
-	          var dialogMessageUnread = response[im_const.RestMethodHandler.imDialogMessagesGetUnread];
-
-	          if (dialogMessageUnread.error()) {
-	            _this16.template.$emit(im_const.EventType.dialog.requestUnreadResult, {
-	              error: dialogMessageUnread.error().ex
-	            });
-	          } else {
-	            _this16.controller.executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGetUnread, dialogMessageUnread);
-
-	            _this16.template.$emit(im_const.EventType.dialog.requestUnreadResult, {
-	              firstMessageId: dialogMessageUnread.data().messages.length > 0 ? dialogMessageUnread.data().messages[0].id : 0,
-	              count: dialogMessageUnread.data().messages.length
-	            });
-	          }
-
-	          promise.fulfill(response);
-	        }, false, false, im_lib_utils.Utils.getLogTrackingParams({
-	          name: im_const.RestMethodHandler.imDialogMessagesGetUnread,
-	          dialog: _this16.getDialogData()
-	        }));
-	      });
-	      return promise;
-	    }
-	  }, {
-	    key: "retrySendMessage",
-	    value: function retrySendMessage(message) {
-	      if (this.messagesQueue.find(function (el) {
-	        return el.id === message.id;
-	      })) {
-	        return false;
-	      }
-
-	      this.messagesQueue.push({
-	        id: message.id,
-	        text: message.text,
-	        sending: false
-	      });
-	      this.controller.application.setSendingMessageFlag(message.id);
-	      this.processSendMessages();
-	    }
-	  }, {
-	    key: "readMessage",
-	    value: function readMessage(messageId) {
-	      if (this.offline) {
-	        return false;
-	      }
-
-	      return this.controller.application.readMessage(messageId);
-	    }
-	  }, {
-	    key: "reactMessage",
-	    value: function reactMessage(id, reaction) {
-	      this.controller.application.reactMessage(id, reaction.type, reaction.action);
-	    }
-	  }, {
-	    key: "execMessageKeyboardCommand",
-	    value: function execMessageKeyboardCommand(data) {
-	      if (data.action === 'ACTION' && data.params.action === 'LIVECHAT') {
-	        var _data$params = data.params,
-	            _dialogId = _data$params.dialogId,
-	            _messageId = _data$params.messageId;
-	        var values = JSON.parse(data.params.value);
-	        var sessionId = parseInt(values.SESSION_ID);
-
-	        if (sessionId !== this.getSessionId() || this.isSessionClose()) {
-	          alert(this.localize.BX_LIVECHAT_ACTION_EXPIRED);
-	          return false;
-	        }
-
-	        this.controller.restClient.callMethod(RestMethod.widgetActionSend, {
-	          'MESSAGE_ID': _messageId,
-	          'DIALOG_ID': _dialogId,
-	          'ACTION_VALUE': data.params.value
-	        });
-	        return true;
-	      }
-
-	      if (data.action !== 'COMMAND') {
-	        return false;
-	      }
-
-	      var _data$params2 = data.params,
-	          dialogId = _data$params2.dialogId,
-	          messageId = _data$params2.messageId,
-	          botId = _data$params2.botId,
-	          command = _data$params2.command,
-	          params = _data$params2.params;
-	      this.controller.restClient.callMethod(im_const.RestMethod.imMessageCommand, {
-	        'MESSAGE_ID': messageId,
-	        'DIALOG_ID': dialogId,
-	        'BOT_ID': botId,
-	        'COMMAND': command,
-	        'COMMAND_PARAMS': params
-	      });
-	      return true;
-	    }
-	  }, {
-	    key: "quoteMessageClear",
-	    value: function quoteMessageClear() {
-	      this.controller.getStore().dispatch('dialogues/update', {
-	        dialogId: this.controller.application.getDialogId(),
-	        fields: {
-	          quoteId: 0
-	        }
-	      });
-	    }
-	  }, {
-	    key: "sendDialogVote",
-	    value: function sendDialogVote(result) {
-	      var _this17 = this;
-
-	      if (!this.getSessionId()) {
-	        return false;
-	      }
-
-	      this.controller.restClient.callMethod(RestMethod.widgetVoteSend, {
-	        'SESSION_ID': this.getSessionId(),
-	        'ACTION': result
-	      })["catch"](function (result) {
-	        _this17.controller.getStore().commit('widget/dialog', {
-	          userVote: VoteType.none
-	        });
-	      });
-	      this.sendEvent({
-	        type: SubscriptionType.userVote,
-	        data: {
-	          vote: result
-	        }
-	      });
-	    }
-	  }, {
-	    key: "getHtmlHistory",
-	    value: function getHtmlHistory() {
-	      var chatId = this.getChatId();
-
-	      if (chatId <= 0) {
-	        console.error('Incorrect chatId value');
-	      }
-
-	      var config = {
-	        chatId: this.getChatId()
-	      };
-	      this.requestControllerAction('imopenlines.widget.history.download', config).then(function (response) {
-	        var contentType = response.headers.get('Content-Type');
-
-	        if (contentType.startsWith('application/json')) {
-	          return response.json();
-	        }
-
-	        return response.blob();
-	      }).then(function (result) {
-	        if (result instanceof Blob) {
-	          var url = window.URL.createObjectURL(result);
-	          var a = document.createElement('a');
-	          a.href = url;
-	          a.download = chatId + '.html';
-	          document.body.appendChild(a);
-	          a.click();
-	          a.remove();
-	        } else if (result.hasOwnProperty('errors')) {
-	          console.error(result.errors[0]);
-	        } else {
-	          console.error('Unknown error.');
-	        }
-	      })["catch"](function () {
-	        return console.error('Fetch error.');
-	      });
-	    }
-	    /**
-	     * Basic method to run actions.
-	     * If you need to extend it, check BX.ajax.runAction to extend this method.
-	     */
-
-	  }, {
-	    key: "requestControllerAction",
-	    value: function requestControllerAction(action, config) {
-	      var host = this.host ? this.host : '';
-	      var ajaxEndpoint = '/bitrix/services/main/ajax.php';
-	      var url = new URL(ajaxEndpoint, host);
-	      url.searchParams.set('action', action);
-	      var formData = new FormData();
-
-	      for (var key in config) {
-	        if (config.hasOwnProperty(key)) {
-	          formData.append(key, config[key]);
-	        }
-	      }
-
-	      return fetch(url, {
-	        method: 'POST',
-	        headers: {
-	          'Livechat-Auth-Id': this.getUserHash()
-	        },
-	        body: formData
-	      });
-	    }
-	  }, {
-	    key: "sendConsentDecision",
-	    value: function sendConsentDecision(result) {
-	      result = result === true;
-	      this.controller.getStore().commit('widget/dialog', {
-	        userConsent: result
-	      });
-
-	      if (result && this.isUserRegistered()) {
-	        this.controller.restClient.callMethod(RestMethod.widgetUserConsentApply, {
-	          config_id: this.getConfigId(),
-	          consent_url: location.href
-	        });
-	      }
-	    }
-	    /* endregion 05. Templates and template interaction */
-
-	    /* region 05. Widget interaction and utils */
-
-	  }, {
-	    key: "start",
-	    value: function start() {
-	      if (!this.controller || !this.controller.getStore()) {
-	        this.callStartFlag = true;
-	        return true;
-	      }
-
-	      if (this.isSessionActive()) {
-	        this.requestWidgetData();
-	      }
-
-	      return true;
-	    }
-	  }, {
-	    key: "open",
-	    value: function open() {
-	      var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-	      clearTimeout(this.openTimeout);
-
-	      if (!this.controller.getStore()) {
-	        this.callOpenFlag = true;
-	        return true;
-	      }
-
-	      if (!params.openFromButton && this.buttonInstance) {
-	        this.buttonInstance.wm.showById('openline_livechat');
-	      }
-
-	      if (!this.checkBrowserVersion()) {
-	        this.setError('OLD_BROWSER_LOCALIZED', this.localize.BX_LIVECHAT_OLD_BROWSER);
-	      } else if (im_lib_utils.Utils.versionCompare(ui_vue.Vue.version(), '2.1') < 0) {
-	        alert(this.localize.BX_LIVECHAT_OLD_VUE);
-	        console.error("LiveChatWidget.error: OLD_VUE_VERSION (".concat(this.localize.BX_LIVECHAT_OLD_VUE_DEV.replace('#CURRENT_VERSION#', ui_vue.Vue.version()), ")"));
-	        return false;
-	      } else if (this.isSameDomain()) {
-	        this.setError('LIVECHAT_SAME_DOMAIN', this.localize.BX_LIVECHAT_SAME_DOMAIN);
-	      } else if (!this.isWidgetDataRequested()) {
-	        this.requestWidgetData();
-	      }
-
-	      this.attachTemplate();
-	    }
 	  }, {
 	    key: "close",
 	    value: function close() {
@@ -2573,18 +2019,6 @@
 	      }
 
 	      this.detachTemplate();
-	    }
-	  }, {
-	    key: "showNotification",
-	    value: function showNotification(params) {
-	      if (!this.controller || !this.controller.getStore()) {
-	        console.error('LiveChatWidget.showNotification: method can be called after fired event - onBitrixLiveChat');
-	        return false;
-	      } // TODO show popup notification and set badge on button
-	      // operatorName
-	      // notificationText
-	      // counter
-
 	    }
 	  }, {
 	    key: "fireInitEvent",
@@ -2603,17 +2037,6 @@
 	      }
 
 	      this.initEventFired = true;
-	      return true;
-	    }
-	  }, {
-	    key: "isReady",
-	    value: function isReady() {
-	      return this.ready;
-	    }
-	  }, {
-	    key: "isInited",
-	    value: function isInited() {
-	      return this.inited;
 	    }
 	  }, {
 	    key: "isUserRegistered",
@@ -2624,11 +2047,6 @@
 	    key: "isConfigDataLoaded",
 	    value: function isConfigDataLoaded() {
 	      return this.controller.getStore().state.widget.common.configId;
-	    }
-	  }, {
-	    key: "isWidgetDataRequested",
-	    value: function isWidgetDataRequested() {
-	      return this.widgetDataRequested;
 	    }
 	  }, {
 	    key: "isChatLoaded",
@@ -2681,6 +2099,16 @@
 	    key: "isUserLoaded",
 	    value: function isUserLoaded() {
 	      return this.controller.getStore().state.widget.user.id > 0;
+	    }
+	  }, {
+	    key: "isUserReady",
+	    value: function isUserReady() {
+	      return this.isConfigDataLoaded() && this.isUserRegistered();
+	    }
+	  }, {
+	    key: "isHashAvailable",
+	    value: function isHashAvailable() {
+	      return !this.isUserRegistered() && (this.userRegisterData.hash || this.getUserHashCookie());
 	    }
 	  }, {
 	    key: "getSiteId",
@@ -2792,7 +2220,8 @@
 	    key: "getWidgetLocationCode",
 	    value: function getWidgetLocationCode() {
 	      return LocationStyle[this.controller.getStore().state.widget.common.location];
-	    }
+	    } // public method
+
 	  }, {
 	    key: "setUserRegisterData",
 	    value: function setUserRegisterData(params) {
@@ -2845,13 +2274,15 @@
 	        path: '/'
 	      });
 	      this.controller.restClient.setAuthId(RestAuth.guest, authToken);
-	    }
+	    } // public method
+
 	  }, {
 	    key: "setOption",
 	    value: function setOption(name, value) {
 	      this.options[name] = value;
 	      return true;
-	    }
+	    } // public method
+
 	  }, {
 	    key: "setCustomData",
 	    value: function setCustomData(params) {
@@ -2928,12 +2359,7 @@
 	          description: ''
 	        }
 	      });
-	    }
-	    /**
-	     *
-	     * @param params {Object}
-	     * @returns {Function|Boolean} - Unsubscribe callback function or False
-	     */
+	    } // public method
 
 	  }, {
 	    key: "subscribe",
@@ -2964,12 +2390,6 @@
 	        });
 	      }.bind(this);
 	    }
-	    /**
-	     *
-	     * @param params {Object}
-	     * @returns {boolean}
-	     */
-
 	  }, {
 	    key: "sendEvent",
 	    value: function sendEvent(params) {
@@ -2999,7 +2419,8 @@
 	      }
 
 	      return true;
-	    }
+	    } // public method
+
 	  }, {
 	    key: "addLocalize",
 	    value: function addLocalize(phrases) {
@@ -3030,7 +2451,200 @@
 
 	      return phrase;
 	    }
-	    /* endregion 05. Widget interaction and utils */
+	    /* endregion 04. Widget interaction and utils */
+
+	    /* region 05. Rest batch handlers */
+
+	  }, {
+	    key: "handleConfigGet",
+	    value: function handleConfigGet(response) {
+	      var _this11 = this;
+
+	      return new Promise(function (resolve, reject) {
+	        var configGet = response[RestMethod.widgetConfigGet];
+
+	        if (configGet && configGet.error()) {
+	          return reject({
+	            code: configGet.error().ex.error,
+	            description: configGet.error().ex.error_description
+	          });
+	        }
+
+	        _this11.controller.executeRestAnswer(RestMethod.widgetConfigGet, configGet);
+
+	        resolve();
+	      });
+	    }
+	  }, {
+	    key: "handleUserGet",
+	    value: function handleUserGet(response) {
+	      var _this12 = this;
+
+	      return new Promise(function (resolve, reject) {
+	        var userGetResult = response[RestMethod.widgetUserGet];
+
+	        if (userGetResult.error()) {
+	          return reject({
+	            code: userGetResult.error().ex.error,
+	            description: userGetResult.error().ex.error_description
+	          });
+	        }
+
+	        _this12.controller.executeRestAnswer(RestMethod.widgetUserGet, userGetResult);
+
+	        resolve();
+	      });
+	    }
+	  }, {
+	    key: "handleChatGet",
+	    value: function handleChatGet(response) {
+	      var _this13 = this;
+
+	      return new Promise(function (resolve, reject) {
+	        var chatGetResult = response[im_const.RestMethodHandler.imChatGet];
+
+	        if (chatGetResult.error()) {
+	          return reject({
+	            code: chatGetResult.error().ex.error,
+	            description: chatGetResult.error().ex.error_description
+	          });
+	        }
+
+	        _this13.controller.executeRestAnswer(im_const.RestMethodHandler.imChatGet, chatGetResult);
+
+	        resolve();
+	      });
+	    }
+	  }, {
+	    key: "handleDialogGet",
+	    value: function handleDialogGet(response) {
+	      var _this14 = this;
+
+	      return new Promise(function (resolve, reject) {
+	        var dialogGetResult = response[RestMethod.widgetDialogGet];
+
+	        if (!dialogGetResult) {
+	          return resolve();
+	        }
+
+	        if (dialogGetResult.error()) {
+	          return reject({
+	            code: dialogGetResult.error().ex.error,
+	            description: dialogGetResult.error().ex.error_description
+	          });
+	        }
+
+	        _this14.controller.executeRestAnswer(RestMethod.widgetDialogGet, dialogGetResult);
+
+	        resolve();
+	      });
+	    }
+	  }, {
+	    key: "handleDialogMessagesGet",
+	    value: function handleDialogMessagesGet(response) {
+	      var _this15 = this;
+
+	      return new Promise(function (resolve, reject) {
+	        var dialogMessagesGetResult = response[im_const.RestMethodHandler.imDialogMessagesGetInit];
+
+	        if (!dialogMessagesGetResult) {
+	          return resolve();
+	        }
+
+	        if (dialogMessagesGetResult.error()) {
+	          return reject({
+	            code: dialogMessagesGetResult.error().ex.error,
+	            description: dialogMessagesGetResult.error().ex.error_description
+	          });
+	        }
+
+	        _this15.controller.getStore().dispatch('dialogues/saveDialog', {
+	          dialogId: _this15.controller.application.getDialogId(),
+	          chatId: _this15.controller.application.getChatId()
+	        });
+
+	        _this15.controller.executeRestAnswer(im_const.RestMethodHandler.imDialogMessagesGetInit, dialogMessagesGetResult);
+
+	        resolve();
+	      });
+	    }
+	  }, {
+	    key: "handleUserRegister",
+	    value: function handleUserRegister(response) {
+	      var _this16 = this;
+
+	      return new Promise(function (resolve, reject) {
+	        var userRegisterResult = response[RestMethod.widgetUserRegister];
+
+	        if (!userRegisterResult) {
+	          return resolve();
+	        }
+
+	        if (userRegisterResult.error()) {
+	          return reject({
+	            code: userRegisterResult.error().ex.error,
+	            description: userRegisterResult.error().ex.error_description
+	          });
+	        }
+
+	        _this16.controller.executeRestAnswer(RestMethod.widgetUserRegister, userRegisterResult);
+
+	        resolve();
+	      });
+	    }
+	  }, {
+	    key: "handleChatCreate",
+	    value: function handleChatCreate(response) {
+	      var _this17 = this;
+
+	      return new Promise(function (resolve, reject) {
+	        var chatCreateResult = response[RestMethod.widgetChatCreate];
+
+	        if (!chatCreateResult) {
+	          return resolve();
+	        }
+
+	        if (chatCreateResult.error()) {
+	          return reject({
+	            code: chatCreateResult.error().ex.error,
+	            description: chatCreateResult.error().ex.error_description
+	          });
+	        }
+
+	        _this17.controller.executeRestAnswer(RestMethod.widgetChatCreate, chatCreateResult);
+
+	        resolve();
+	      });
+	    }
+	  }, {
+	    key: "handlePullRequests",
+	    value: function handlePullRequests(response) {
+	      var _this18 = this;
+
+	      return new Promise(function (resolve) {
+	        var timeShift = 0;
+	        var serverTimeResult = response[RestMethod.pullServerTime];
+
+	        if (serverTimeResult && !serverTimeResult.error()) {
+	          timeShift = Math.floor((Date.now() - new Date(serverTimeResult.data()).getTime()) / 1000);
+	        }
+
+	        var config = null;
+	        var pullConfigResult = response[RestMethod.pullConfigGet];
+
+	        if (pullConfigResult && !pullConfigResult.error()) {
+	          config = pullConfigResult.data();
+	          config.server.timeShift = timeShift;
+	        }
+
+	        _this18.startPullClient(config).then(function () {
+	          main_core_events.EventEmitter.emit(WidgetEventType.processMessagesToSendQueue);
+	        })["catch"](function (error) {
+	          _this18.setError(error.ex.error, error.ex.error_description);
+	        })["finally"](resolve);
+	      });
+	    }
+	    /* endregion 05. Rest batch handlers */
 
 	  }]);
 	  return Widget;
@@ -3175,75 +2789,1181 @@
 	  return WidgetPublicManager;
 	}();
 
+	var WidgetSendMessageHandler = /*#__PURE__*/function (_SendMessageHandler) {
+	  babelHelpers.inherits(WidgetSendMessageHandler, _SendMessageHandler);
+
+	  function WidgetSendMessageHandler($Bitrix) {
+	    var _this;
+
+	    babelHelpers.classCallCheck(this, WidgetSendMessageHandler);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WidgetSendMessageHandler).call(this, $Bitrix));
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "application", null);
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "storedMessage", null);
+	    _this.application = $Bitrix.Application.get();
+	    _this.onProcessQueueHandler = _this.processQueue.bind(babelHelpers.assertThisInitialized(_this));
+	    _this.onConsentAcceptedHandler = _this.onConsentAccepted.bind(babelHelpers.assertThisInitialized(_this));
+	    _this.onConsentDeclinedHandler = _this.onConsentDeclined.bind(babelHelpers.assertThisInitialized(_this));
+	    main_core_events.EventEmitter.subscribe(WidgetEventType.processMessagesToSendQueue, _this.onProcessQueueHandler);
+	    main_core_events.EventEmitter.subscribe(WidgetEventType.consentAccepted, _this.onConsentAcceptedHandler);
+	    main_core_events.EventEmitter.subscribe(WidgetEventType.consentDeclined, _this.onConsentDeclinedHandler);
+	    return _this;
+	  }
+
+	  babelHelpers.createClass(WidgetSendMessageHandler, [{
+	    key: "destroy",
+	    value: function destroy() {
+	      babelHelpers.get(babelHelpers.getPrototypeOf(WidgetSendMessageHandler.prototype), "destroy", this).call(this);
+	      main_core_events.EventEmitter.unsubscribe(WidgetEventType.processMessagesToSendQueue, this.onProcessQueueHandler);
+	      main_core_events.EventEmitter.unsubscribe(WidgetEventType.consentAccepted, this.onConsentAcceptedHandler);
+	      main_core_events.EventEmitter.unsubscribe(WidgetEventType.consentDeclined, this.onConsentDeclinedHandler);
+	    }
+	  }, {
+	    key: "onSendMessage",
+	    value: function onSendMessage(_ref) {
+	      var _this2 = this;
+
+	      var event = _ref.data;
+	      event.focus = event.focus !== false; //hide smiles
+
+	      if (this.getWidgetData().common.showForm === FormType.smile) {
+	        main_core_events.EventEmitter.emit(WidgetEventType.hideForm);
+	      } //show consent window if needed
+
+
+	      if (!this.getWidgetData().dialog.userConsent && this.getWidgetData().common.consentUrl) {
+	        if (event.text) {
+	          this.storedMessage = event.text;
+	        }
+
+	        main_core_events.EventEmitter.emit(WidgetEventType.showConsent);
+	        return false;
+	      }
+
+	      event.text = event.text ? event.text : this.storedMessage;
+
+	      if (!event.text && !event.file) {
+	        return false;
+	      }
+
+	      main_core_events.EventEmitter.emit(WidgetEventType.hideForm);
+
+	      if (this.isCreateSessionMode()) {
+	        main_core_events.EventEmitter.emit(WidgetEventType.hideForm);
+	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.stopWriting);
+	        main_core_events.EventEmitter.emitAsync(WidgetEventType.createSession).then(function () {
+	          _this2.store.commit('widget/common', {
+	            isCreateSessionMode: false
+	          });
+
+	          _this2.sendMessage(event.text, event.file);
+	        });
+	      } else {
+	        this.sendMessage(event.text, event.file);
+	      }
+
+	      if (event.focus) {
+	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
+	      }
+
+	      return true;
+	    }
+	  }, {
+	    key: "sendMessage",
+	    value: function sendMessage() {
+	      var _this3 = this;
+
+	      var text = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+	      var file = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+
+	      if (!text && !file) {
+	        return false;
+	      }
+
+	      var quoteId = this.store.getters['dialogues/getQuoteId'](this.getDialogId());
+
+	      if (quoteId) {
+	        var quoteMessage = this.store.getters['messages/getMessage'](this.getChatId(), quoteId);
+
+	        if (quoteMessage) {
+	          text = this.getMessageTextWithQuote(quoteMessage, text);
+	          main_core_events.EventEmitter.emit(im_const.EventType.dialog.quotePanelClose);
+	        }
+	      }
+
+	      if (!this.controller.application.isUnreadMessagesLoaded()) {
+	        this.sendMessageToServer({
+	          id: 0,
+	          chatId: this.getChatId(),
+	          dialogId: this.getDialogId(),
+	          text: text,
+	          file: file
+	        });
+	        this.processQueue();
+	        return true;
+	      }
+
+	      var params = {};
+
+	      if (file) {
+	        params.FILE_ID = [file.id];
+	      }
+
+	      this.addMessageToModel({
+	        text: text,
+	        params: params,
+	        sending: !file
+	      }).then(function (messageId) {
+	        if (!_this3.isDialogStart()) {
+	          _this3.store.commit('widget/common', {
+	            dialogStart: true
+	          });
+	        }
+
+	        main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollToBottom, {
+	          chatId: _this3.getChatId(),
+	          cancelIfScrollChange: true
+	        });
+
+	        _this3.addMessageToQueue({
+	          messageId: messageId,
+	          text: text,
+	          file: file
+	        });
+
+	        if (_this3.getChatId()) {
+	          _this3.processQueue();
+	        } else {
+	          main_core_events.EventEmitter.emit(WidgetEventType.requestData);
+	        }
+	      });
+	      return true;
+	    }
+	  }, {
+	    key: "onClickOnKeyboard",
+	    value: function onClickOnKeyboard(_ref2) {
+	      var event = _ref2.data;
+
+	      if (event.action === 'ACTION' && event.params.action === 'LIVECHAT') {
+	        var _event$params = event.params,
+	            dialogId = _event$params.dialogId,
+	            messageId = _event$params.messageId,
+	            value = _event$params.value;
+	        var values = JSON.parse(value);
+	        var sessionId = Number.parseInt(values.SESSION_ID, 10);
+
+	        if (sessionId !== this.getSessionId() || this.isSessionClose()) {
+	          console.error('WidgetSendMessageHandler', this.loc['BX_LIVECHAT_ACTION_EXPIRED']);
+	          return false;
+	        }
+
+	        this.restClient.callMethod(RestMethod.widgetActionSend, {
+	          'MESSAGE_ID': messageId,
+	          'DIALOG_ID': dialogId,
+	          'ACTION_VALUE': value
+	        });
+	      }
+
+	      if (event.action === 'COMMAND') {
+	        var _event$params2 = event.params,
+	            _dialogId = _event$params2.dialogId,
+	            _messageId = _event$params2.messageId,
+	            botId = _event$params2.botId,
+	            command = _event$params2.command,
+	            params = _event$params2.params;
+	        this.restClient.callMethod(im_const.RestMethod.imMessageCommand, {
+	          'MESSAGE_ID': _messageId,
+	          'DIALOG_ID': _dialogId,
+	          'BOT_ID': botId,
+	          'COMMAND': command,
+	          'COMMAND_PARAMS': params
+	        })["catch"](function (error) {
+	          return console.error('WidgetSendMessageHandler: command processing error', error);
+	        });
+	      }
+	    }
+	  }, {
+	    key: "getWidgetData",
+	    value: function getWidgetData() {
+	      return this.store.state.widget;
+	    }
+	  }, {
+	    key: "getChatId",
+	    value: function getChatId() {
+	      return this.store.state.application.dialog.chatId;
+	    }
+	  }, {
+	    key: "getDialogId",
+	    value: function getDialogId() {
+	      return this.store.state.application.dialog.dialogId;
+	    }
+	  }, {
+	    key: "getUserId",
+	    value: function getUserId() {
+	      return this.store.state.widget.user.id;
+	    }
+	  }, {
+	    key: "getMessageTextWithQuote",
+	    value: function getMessageTextWithQuote(quoteMessage, text) {
+	      var user = null;
+
+	      if (quoteMessage.authorId) {
+	        user = this.store.getters['users/get'](quoteMessage.authorId);
+	      }
+
+	      var files = this.store.getters['files/getList'](this.getChatId());
+	      var quoteDelimiter = '-'.repeat(54);
+	      var quoteTitle = user && user.name ? user.name : this.loc['BX_LIVECHAT_SYSTEM_MESSAGE'];
+	      var quoteDate = im_lib_utils.Utils.date.format(quoteMessage.date, null, this.loc);
+	      var quoteContent = im_lib_utils.Utils.text.quote(quoteMessage.text, quoteMessage.params, files, this.loc);
+	      var message = [];
+	      message.push(quoteDelimiter);
+	      message.push("".concat(quoteTitle, " [").concat(quoteDate, "]"));
+	      message.push(quoteContent);
+	      message.push(quoteDelimiter);
+	      message.push(text);
+	      return message.join("\n");
+	    }
+	  }, {
+	    key: "addMessageToQueue",
+	    value: function addMessageToQueue(_ref3) {
+	      var messageId = _ref3.messageId,
+	          text = _ref3.text,
+	          file = _ref3.file;
+	      this.messagesToSend.push({
+	        id: messageId,
+	        chatId: this.getChatId(),
+	        dialogId: this.getDialogId(),
+	        text: text,
+	        file: file,
+	        sending: false
+	      });
+	    }
+	  }, {
+	    key: "sendMessageToServer",
+	    value: function sendMessageToServer(message) {
+	      var _this4 = this;
+
+	      main_core_events.EventEmitter.emit(im_const.EventType.textarea.stopWriting); // first message, when we didn't have chat
+
+	      if (message.chatId === 0) {
+	        message.chatId = this.getChatId();
+	      }
+
+	      this.restClient.callMethod(im_const.RestMethod.imMessageAdd, {
+	        'TEMPLATE_ID': message.id,
+	        'CHAT_ID': message.chatId,
+	        'MESSAGE': message.text
+	      }, null, null, im_lib_utils.Utils.getLogTrackingParams({
+	        name: im_const.RestMethod.imMessageAdd,
+	        data: {
+	          timMessageType: 'text'
+	        },
+	        dialog: this.getDialogData()
+	      })).then(function (response) {
+	        _this4.controller.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, response, message);
+	      })["catch"](function (error) {
+	        _this4.controller.executeRestAnswer(im_const.RestMethodHandler.imMessageAdd, error, message);
+
+	        im_lib_logger.Logger.warn('Error during sending message', error);
+	      });
+	      return true;
+	    }
+	  }, {
+	    key: "isDialogStart",
+	    value: function isDialogStart() {
+	      return this.store.state.widget.common.dialogStart;
+	    }
+	  }, {
+	    key: "isCreateSessionMode",
+	    value: function isCreateSessionMode() {
+	      return this.store.state.widget.common.isCreateSessionMode;
+	    }
+	  }, {
+	    key: "getDialogData",
+	    value: function getDialogData() {
+	      var dialogId = this.getDialogId();
+	      return this.store.state.dialogues.collection[dialogId];
+	    }
+	  }, {
+	    key: "getApplicationModel",
+	    value: function getApplicationModel() {
+	      return this.store.state.application;
+	    }
+	  }, {
+	    key: "getSessionId",
+	    value: function getSessionId() {
+	      return this.store.state.widget.dialog.sessionId;
+	    }
+	  }, {
+	    key: "isSessionClose",
+	    value: function isSessionClose() {
+	      return this.store.state.widget.dialog.sessionClose;
+	    }
+	  }, {
+	    key: "processQueue",
+	    value: function processQueue() {
+	      var _this5 = this;
+
+	      if (this.application.offline) {
+	        return false;
+	      }
+
+	      this.messagesToSend.filter(function (element) {
+	        return !element.sending;
+	      }).forEach(function (element) {
+	        _this5.deleteFromQueue(element.id);
+
+	        element.sending = true;
+
+	        if (element.file) {
+	          main_core_events.EventEmitter.emit(im_const.EventType.textarea.stopWriting);
+	          main_core_events.EventEmitter.emit(im_const.EventType.uploader.addMessageWithFile, element);
+	        } else {
+	          _this5.sendMessageToServer(element);
+	        }
+	      });
+	    }
+	  }, {
+	    key: "onConsentAccepted",
+	    value: function onConsentAccepted() {
+	      if (!this.storedMessage) {
+	        return;
+	      }
+
+	      var isFocusNeeded = this.getApplicationModel().device.type !== im_const.DeviceType.mobile;
+	      this.onSendMessage({
+	        data: {
+	          focus: isFocusNeeded
+	        }
+	      });
+	      this.storedMessage = '';
+	    }
+	  }, {
+	    key: "onConsentDeclined",
+	    value: function onConsentDeclined() {
+	      if (!this.storedMessage) {
+	        return;
+	      }
+
+	      main_core_events.EventEmitter.emit(im_const.EventType.textarea.insertText, {
+	        text: this.storedMessage,
+	        focus: this.getApplicationModel().device.type !== im_const.DeviceType.mobile
+	      });
+	      this.storedMessage = '';
+	    }
+	  }]);
+	  return WidgetSendMessageHandler;
+	}(im_eventHandler.SendMessageHandler);
+
+	var WidgetTextareaHandler = /*#__PURE__*/function (_TextareaHandler) {
+	  babelHelpers.inherits(WidgetTextareaHandler, _TextareaHandler);
+
+	  function WidgetTextareaHandler($Bitrix) {
+	    var _this;
+
+	    babelHelpers.classCallCheck(this, WidgetTextareaHandler);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WidgetTextareaHandler).call(this, $Bitrix));
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "application", null);
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "pullClient", null);
+	    _this.application = $Bitrix.Application.get();
+	    _this.pullClient = $Bitrix.PullClient.get();
+	    return _this;
+	  }
+
+	  babelHelpers.createClass(WidgetTextareaHandler, [{
+	    key: "onAppButtonClick",
+	    value: function onAppButtonClick(_ref) {
+	      var event = _ref.data;
+
+	      if (event.appId === FormType.smile) {
+	        if (this.getWidgetModel().common.showForm === FormType.smile) {
+	          main_core_events.EventEmitter.emit(WidgetEventType.hideForm);
+	        } else {
+	          main_core_events.EventEmitter.emit(WidgetEventType.showForm, {
+	            type: FormType.smile
+	          });
+	        }
+	      } else {
+	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
+	      }
+	    }
+	  }, {
+	    key: "onFocus",
+	    value: function onFocus() {
+	      var _this2 = this;
+
+	      if (this.getWidgetModel().common.copyright && this.getApplicationModel().device.type === im_const.DeviceType.mobile) {
+	        this.getWidgetModel().common.copyright = false;
+	      }
+
+	      if (im_lib_utils.Utils.device.isMobile()) {
+	        clearTimeout(this.onFocusScrollTimeout);
+	        this.onScrollHandler = this.onScroll.bind(this);
+	        this.onFocusScrollTimeout = setTimeout(function () {
+	          document.addEventListener('scroll', _this2.onScrollHandler);
+	        }, 1000);
+	      }
+	    }
+	  }, {
+	    key: "onBlur",
+	    value: function onBlur() {
+	      var _this3 = this;
+
+	      if (!this.getWidgetModel().common.copyright && this.getWidgetModel().common.copyright !== this.application.copyright) {
+	        this.getWidgetModel().common.copyright = this.application.copyright;
+	        setTimeout(function () {
+	          main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollToBottom, {
+	            chatId: _this3.getChatId(),
+	            force: true
+	          });
+	        }, 100);
+	      }
+
+	      if (im_lib_utils.Utils.device.isMobile()) {
+	        clearTimeout(this.onFocusScrollTimeout);
+	        document.removeEventListener('scroll', this.onScrollHandler);
+	      }
+	    } // send typed client message to operator
+
+	  }, {
+	    key: "onKeyUp",
+	    value: function onKeyUp(_ref2) {
+	      var event = _ref2.data;
+
+	      if (this.canSendTypedText()) {
+	        var sessionId = this.getWidgetModel().dialog.sessionId;
+	        var chatId = this.getChatId();
+	        var userId = this.getWidgetModel().user.id;
+	        var infoString = main_md5.md5("".concat(sessionId, "/").concat(chatId, "/").concat(userId));
+	        var operatorId = this.getWidgetModel().dialog.operator.id;
+	        var operatorChatId = this.getWidgetModel().dialog.operatorChatId;
+	        this.pullClient.sendMessage([operatorId], 'imopenlines', 'linesMessageWrite', {
+	          text: event.text,
+	          infoString: infoString,
+	          operatorChatId: operatorChatId
+	        });
+	      }
+	    }
+	  }, {
+	    key: "canSendTypedText",
+	    value: function canSendTypedText() {
+	      return this.getWidgetModel().common.watchTyping && this.getWidgetModel().dialog.sessionId && !this.getWidgetModel().dialog.sessionClose && this.getWidgetModel().dialog.operator.id && this.getWidgetModel().dialog.operatorChatId && this.pullClient.isPublishingEnabled();
+	    }
+	  }, {
+	    key: "onScroll",
+	    value: function onScroll() {
+	      clearTimeout(this.onScrollTimeout);
+	      this.onScrollTimeout = setTimeout(function () {
+	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.setBlur, true);
+	      }, 50);
+	    }
+	  }, {
+	    key: "getWidgetModel",
+	    value: function getWidgetModel() {
+	      return this.store.state.widget;
+	    }
+	  }, {
+	    key: "getApplicationModel",
+	    value: function getApplicationModel() {
+	      return this.store.state.application;
+	    }
+	  }]);
+	  return WidgetTextareaHandler;
+	}(im_eventHandler.TextareaHandler);
+
+	var WidgetTextareaUploadHandler = /*#__PURE__*/function (_TextareaUploadHandle) {
+	  babelHelpers.inherits(WidgetTextareaUploadHandler, _TextareaUploadHandle);
+
+	  function WidgetTextareaUploadHandler($Bitrix) {
+	    var _this;
+
+	    babelHelpers.classCallCheck(this, WidgetTextareaUploadHandler);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WidgetTextareaUploadHandler).call(this, $Bitrix));
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "storedFile", null);
+	    _this.onConsentAcceptedHandler = _this.onConsentAccepted.bind(babelHelpers.assertThisInitialized(_this));
+	    _this.onConsentDeclinedHandler = _this.onConsentDeclined.bind(babelHelpers.assertThisInitialized(_this));
+	    main_core_events.EventEmitter.subscribe(WidgetEventType.consentAccepted, _this.onConsentAcceptedHandler);
+	    main_core_events.EventEmitter.subscribe(WidgetEventType.consentDeclined, _this.onConsentDeclinedHandler);
+	    return _this;
+	  }
+
+	  babelHelpers.createClass(WidgetTextareaUploadHandler, [{
+	    key: "destroy",
+	    value: function destroy() {
+	      babelHelpers.get(babelHelpers.getPrototypeOf(WidgetTextareaUploadHandler.prototype), "destroy", this).call(this);
+	      main_core_events.EventEmitter.unsubscribe(WidgetEventType.consentAccepted, this.onConsentAcceptedHandler);
+	      main_core_events.EventEmitter.unsubscribe(WidgetEventType.consentDeclined, this.onConsentDeclinedHandler);
+	    }
+	  }, {
+	    key: "getUserId",
+	    value: function getUserId() {
+	      return this.controller.store.state.widget.user.id;
+	    }
+	  }, {
+	    key: "getUserHash",
+	    value: function getUserHash() {
+	      return this.controller.store.state.widget.user.hash;
+	    }
+	  }, {
+	    key: "getHost",
+	    value: function getHost() {
+	      return this.controller.store.state.widget.common.host;
+	    }
+	  }, {
+	    key: "addMessageWithFile",
+	    value: function addMessageWithFile(event) {
+	      var _this2 = this;
+
+	      var message = event.getData();
+
+	      if (!this.getDiskFolderId()) {
+	        this.requestDiskFolderId(message.chatId).then(function () {
+	          _this2.addMessageWithFile(event);
+	        })["catch"](function (error) {
+	          im_lib_logger.Logger.error('addMessageWithFile error', error);
+	          return false;
+	        });
+	        return false;
+	      }
+
+	      this.uploader.senderOptions.customHeaders['Livechat-Dialog-Id'] = this.getDialogId();
+	      this.uploader.senderOptions.customHeaders['Livechat-Auth-Id'] = this.getUserHash();
+	      this.uploader.addTask({
+	        taskId: message.file.id,
+	        fileData: message.file.source.file,
+	        fileName: message.file.source.file.name,
+	        generateUniqueName: true,
+	        diskFolderId: this.getDiskFolderId(),
+	        previewBlob: message.file.previewBlob
+	      });
+	    }
+	  }, {
+	    key: "onTextareaFileSelected",
+	    value: function onTextareaFileSelected() {
+	      var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+	          event = _ref.data;
+
+	      var fileInputEvent = null;
+
+	      if (event && event.fileChangeEvent && event.fileChangeEvent.target.files.length > 0) {
+	        fileInputEvent = event.fileChangeEvent;
+	      } else {
+	        fileInputEvent = this.storedFile;
+	      }
+
+	      if (!fileInputEvent) {
+	        return false;
+	      }
+
+	      if (!this.controller.store.state.widget.dialog.userConsent && this.controller.store.state.widget.common.consentUrl) {
+	        this.storedFile = event.fileChangeEvent;
+	        main_core_events.EventEmitter.emit(WidgetEventType.showConsent);
+	        return false;
+	      }
+
+	      this.uploadFile(fileInputEvent);
+	    }
+	  }, {
+	    key: "uploadFile",
+	    value: function uploadFile(event) {
+	      if (!event) {
+	        return false;
+	      }
+
+	      if (!this.getChatId()) {
+	        main_core_events.EventEmitter.emit(WidgetEventType.requestData);
+	      }
+
+	      this.uploader.addFilesFromEvent(event);
+	    }
+	  }, {
+	    key: "onConsentAccepted",
+	    value: function onConsentAccepted() {
+	      if (!this.storedFile) {
+	        return;
+	      }
+
+	      this.onTextareaFileSelected();
+	      this.storedFile = '';
+	    }
+	  }, {
+	    key: "onConsentDeclined",
+	    value: function onConsentDeclined() {
+	      if (!this.storedFile) {
+	        return;
+	      }
+
+	      this.storedFile = '';
+	    }
+	  }, {
+	    key: "getUploaderSenderOptions",
+	    value: function getUploaderSenderOptions() {
+	      return {
+	        host: this.getHost(),
+	        customHeaders: {
+	          'Livechat-Auth-Id': this.getUserHash()
+	        },
+	        actionUploadChunk: 'imopenlines.widget.disk.upload',
+	        actionCommitFile: 'imopenlines.widget.disk.commit',
+	        actionRollbackUpload: 'imopenlines.widget.disk.rollbackUpload'
+	      };
+	    }
+	  }]);
+	  return WidgetTextareaUploadHandler;
+	}(im_eventHandler.TextareaUploadHandler);
+
+	var WidgetReadingHandler = /*#__PURE__*/function (_ReadingHandler) {
+	  babelHelpers.inherits(WidgetReadingHandler, _ReadingHandler);
+
+	  function WidgetReadingHandler($Bitrix) {
+	    var _this;
+
+	    babelHelpers.classCallCheck(this, WidgetReadingHandler);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WidgetReadingHandler).call(this, $Bitrix));
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "application", null);
+	    _this.application = $Bitrix.Application.get();
+	    return _this;
+	  }
+
+	  babelHelpers.createClass(WidgetReadingHandler, [{
+	    key: "readMessage",
+	    value: function readMessage(messageId) {
+	      var skipTimer = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+	      var skipAjax = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+
+	      if (this.application.offline) {
+	        return false;
+	      }
+
+	      return babelHelpers.get(babelHelpers.getPrototypeOf(WidgetReadingHandler.prototype), "readMessage", this).call(this, messageId, skipTimer, skipAjax);
+	    }
+	  }]);
+	  return WidgetReadingHandler;
+	}(im_eventHandler.ReadingHandler);
+
+	var WidgetResizeHandler = /*#__PURE__*/function (_EventEmitter) {
+	  babelHelpers.inherits(WidgetResizeHandler, _EventEmitter);
+
+	  function WidgetResizeHandler(_ref) {
+	    var _this;
+
+	    var widgetLocation = _ref.widgetLocation,
+	        availableWidth = _ref.availableWidth,
+	        availableHeight = _ref.availableHeight,
+	        events = _ref.events;
+	    babelHelpers.classCallCheck(this, WidgetResizeHandler);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WidgetResizeHandler).call(this));
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "isResizing", false);
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "widgetLocation", null);
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "availableWidth", null);
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "availableHeight", null);
+
+	    _this.setEventNamespace('BX.IMOL.WidgetResizeHandler');
+
+	    _this.subscribeToEvents(events);
+
+	    _this.widgetLocation = widgetLocation;
+	    _this.availableWidth = availableWidth;
+	    _this.availableHeight = availableHeight;
+	    return _this;
+	  }
+
+	  babelHelpers.createClass(WidgetResizeHandler, [{
+	    key: "subscribeToEvents",
+	    value: function subscribeToEvents(configEvents) {
+	      var _this2 = this;
+
+	      var events = main_core.Type.isObject(configEvents) ? configEvents : {};
+	      Object.entries(events).forEach(function (_ref2) {
+	        var _ref3 = babelHelpers.slicedToArray(_ref2, 2),
+	            name = _ref3[0],
+	            callback = _ref3[1];
+
+	        if (main_core.Type.isFunction(callback)) {
+	          _this2.subscribe(name, callback);
+	        }
+	      });
+	    }
+	  }, {
+	    key: "startResize",
+	    value: function startResize(event, currentHeight, currentWidth) {
+	      if (this.isResizing) {
+	        return false;
+	      }
+
+	      this.isResizing = true;
+	      event = event.changedTouches ? event.changedTouches[0] : event;
+	      this.cursorStartPointY = event.clientY;
+	      this.cursorStartPointX = event.clientX;
+	      this.heightStartPoint = currentHeight;
+	      this.widthStartPoint = currentWidth;
+	      this.addWidgetResizeEvents();
+	    }
+	  }, {
+	    key: "onContinueResize",
+	    value: function onContinueResize(event) {
+	      if (!this.isResizing) {
+	        return false;
+	      }
+
+	      event = event.changedTouches ? event.changedTouches[0] : event;
+	      this.cursorControlPointY = event.clientY;
+	      this.cursorControlPointX = event.clientX;
+	      var maxHeight = this.isBottomLocation() ? Math.min(this.heightStartPoint + this.cursorStartPointY - this.cursorControlPointY, this.availableHeight) : Math.min(this.heightStartPoint - this.cursorStartPointY + this.cursorControlPointY, this.availableHeight);
+	      var height = Math.max(maxHeight, WidgetMinimumSize.height);
+	      var maxWidth = this.isLeftLocation() ? Math.min(this.widthStartPoint - this.cursorStartPointX + this.cursorControlPointX, this.availableWidth) : Math.min(this.widthStartPoint + this.cursorStartPointX - this.cursorControlPointX, this.availableWidth);
+	      var width = Math.max(maxWidth, WidgetMinimumSize.width);
+	      this.emit(WidgetResizeHandler.events.onSizeChange, {
+	        newHeight: height,
+	        newWidth: width
+	      });
+	    }
+	  }, {
+	    key: "onStopResize",
+	    value: function onStopResize() {
+	      if (!this.isResizing) {
+	        return false;
+	      }
+
+	      this.isResizing = false;
+	      this.removeWidgetResizeEvents();
+	      this.emit(WidgetResizeHandler.events.onStopResize);
+	    }
+	  }, {
+	    key: "setAvailableWidth",
+	    value: function setAvailableWidth(width) {
+	      this.availableWidth = width;
+	    }
+	  }, {
+	    key: "setAvailableHeight",
+	    value: function setAvailableHeight(height) {
+	      this.availableHeight = height;
+	    }
+	  }, {
+	    key: "addWidgetResizeEvents",
+	    value: function addWidgetResizeEvents() {
+	      this.onContinueResizeHandler = this.onContinueResize.bind(this);
+	      this.onStopResizeHandler = this.onStopResize.bind(this);
+	      document.addEventListener('mousemove', this.onContinueResizeHandler);
+	      document.addEventListener('mouseup', this.onStopResizeHandler);
+	      document.addEventListener('mouseleave', this.onStopResizeHandler);
+	    }
+	  }, {
+	    key: "removeWidgetResizeEvents",
+	    value: function removeWidgetResizeEvents() {
+	      document.removeEventListener('mousemove', this.onContinueResizeHandler);
+	      document.removeEventListener('mouseup', this.onStopResizeHandler);
+	      document.removeEventListener('mouseleave', this.onStopResizeHandler);
+	    }
+	  }, {
+	    key: "isBottomLocation",
+	    value: function isBottomLocation() {
+	      return [LocationType.bottomLeft, LocationType.bottomMiddle, LocationType.bottomRight].includes(this.widgetLocation);
+	    }
+	  }, {
+	    key: "isLeftLocation",
+	    value: function isLeftLocation() {
+	      return [LocationType.bottomLeft, LocationType.topLeft, LocationType.topMiddle].includes(this.widgetLocation);
+	    }
+	  }, {
+	    key: "destroy",
+	    value: function destroy() {
+	      this.removeWidgetResizeEvents();
+	    }
+	  }]);
+	  return WidgetResizeHandler;
+	}(main_core_events.EventEmitter);
+	babelHelpers.defineProperty(WidgetResizeHandler, "events", {
+	  onSizeChange: 'onSizeChange',
+	  onStopResize: 'onStopResize'
+	});
+
+	var WidgetConsentHandler = /*#__PURE__*/function () {
+	  function WidgetConsentHandler($Bitrix) {
+	    babelHelpers.classCallCheck(this, WidgetConsentHandler);
+	    babelHelpers.defineProperty(this, "store", null);
+	    babelHelpers.defineProperty(this, "restClient", null);
+	    babelHelpers.defineProperty(this, "application", null);
+	    this.store = $Bitrix.Data.get('controller').store;
+	    this.restClient = $Bitrix.RestClient.get();
+	    this.application = $Bitrix.Application.get();
+	    this.subscribeToEvents();
+	  }
+
+	  babelHelpers.createClass(WidgetConsentHandler, [{
+	    key: "subscribeToEvents",
+	    value: function subscribeToEvents() {
+	      this.showConsentHandler = this.onShowConsent.bind(this);
+	      this.acceptConsentHandler = this.onAcceptConsent.bind(this);
+	      this.declineConsentHandler = this.onDeclineConsent.bind(this);
+	      main_core_events.EventEmitter.subscribe(WidgetEventType.showConsent, this.showConsentHandler);
+	      main_core_events.EventEmitter.subscribe(WidgetEventType.acceptConsent, this.acceptConsentHandler);
+	      main_core_events.EventEmitter.subscribe(WidgetEventType.declineConsent, this.declineConsentHandler);
+	    }
+	  }, {
+	    key: "onShowConsent",
+	    value: function onShowConsent() {
+	      this.showConsent();
+	    }
+	  }, {
+	    key: "onAcceptConsent",
+	    value: function onAcceptConsent() {
+	      this.acceptConsent();
+	    }
+	  }, {
+	    key: "onDeclineConsent",
+	    value: function onDeclineConsent() {
+	      this.declineConsent();
+	    }
+	  }, {
+	    key: "showConsent",
+	    value: function showConsent() {
+	      this.store.commit('widget/common', {
+	        showConsent: true
+	      });
+	    }
+	  }, {
+	    key: "hideConsent",
+	    value: function hideConsent() {
+	      this.store.commit('widget/common', {
+	        showConsent: false
+	      });
+	    }
+	  }, {
+	    key: "acceptConsent",
+	    value: function acceptConsent() {
+	      this.hideConsent();
+	      this.sendConsentDecision(true);
+	      main_core_events.EventEmitter.emit(WidgetEventType.consentAccepted);
+
+	      if (this.getWidgetModel().common.showForm === FormType.none) {
+	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
+	      }
+	    }
+	  }, {
+	    key: "declineConsent",
+	    value: function declineConsent() {
+	      main_core_events.EventEmitter.emit(WidgetEventType.hideForm);
+	      this.hideConsent();
+	      this.sendConsentDecision(false);
+	      main_core_events.EventEmitter.emit(WidgetEventType.consentDeclined);
+
+	      if (this.getApplicationModel().device.type !== im_const.DeviceType.mobile) {
+	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
+	      }
+	    }
+	  }, {
+	    key: "sendConsentDecision",
+	    value: function sendConsentDecision(result) {
+	      this.store.commit('widget/dialog', {
+	        userConsent: result
+	      });
+
+	      if (result && this.application.isUserRegistered()) {
+	        this.restClient.callMethod(RestMethod.widgetUserConsentApply, {
+	          config_id: this.getWidgetModel().common.configId,
+	          consent_url: location.href
+	        });
+	      }
+	    }
+	  }, {
+	    key: "getWidgetModel",
+	    value: function getWidgetModel() {
+	      return this.store.state.widget;
+	    }
+	  }, {
+	    key: "getApplicationModel",
+	    value: function getApplicationModel() {
+	      return this.store.state.application;
+	    }
+	  }, {
+	    key: "destroy",
+	    value: function destroy() {
+	      main_core_events.EventEmitter.unsubscribe(WidgetEventType.showConsent, this.showConsentHandler);
+	      main_core_events.EventEmitter.unsubscribe(WidgetEventType.acceptConsent, this.acceptConsentHandler);
+	      main_core_events.EventEmitter.unsubscribe(WidgetEventType.declineConsent, this.declineConsentHandler);
+	    }
+	  }]);
+	  return WidgetConsentHandler;
+	}();
+
+	var WidgetFormHandler = /*#__PURE__*/function () {
+	  function WidgetFormHandler($Bitrix) {
+	    babelHelpers.classCallCheck(this, WidgetFormHandler);
+	    babelHelpers.defineProperty(this, "store", null);
+	    babelHelpers.defineProperty(this, "application", null);
+	    babelHelpers.defineProperty(this, "restClient", null);
+	    this.store = $Bitrix.Data.get('controller').store;
+	    this.restClient = $Bitrix.RestClient.get();
+	    this.application = $Bitrix.Application.get();
+	    this.showFormHandler = this.onShowForm.bind(this);
+	    this.hideFormHandler = this.onHideForm.bind(this);
+	    this.sendVoteHandler = this.onSendVote.bind(this);
+	    main_core_events.EventEmitter.subscribe(WidgetEventType.showForm, this.showFormHandler);
+	    main_core_events.EventEmitter.subscribe(WidgetEventType.hideForm, this.hideFormHandler);
+	    main_core_events.EventEmitter.subscribe(WidgetEventType.sendDialogVote, this.sendVoteHandler);
+	  }
+
+	  babelHelpers.createClass(WidgetFormHandler, [{
+	    key: "onShowForm",
+	    value: function onShowForm(_ref) {
+	      var _this = this;
+
+	      var event = _ref.data;
+	      clearTimeout(this.showFormTimeout);
+
+	      if (event.type === FormType.like) {
+	        if (event.delayed) {
+	          this.showFormTimeout = setTimeout(function () {
+	            _this.showLikeForm();
+	          }, 5000);
+	        } else {
+	          this.showLikeForm();
+	        }
+	      } else if (event.type === FormType.smile) {
+	        this.showSmiles();
+	      }
+	    }
+	  }, {
+	    key: "onHideForm",
+	    value: function onHideForm() {
+	      this.hideForm();
+	    }
+	  }, {
+	    key: "onSendVote",
+	    value: function onSendVote(_ref2) {
+	      var vote = _ref2.data.vote;
+	      console.warn('VOTE', vote);
+	      this.sendVote(vote);
+	    }
+	  }, {
+	    key: "showLikeForm",
+	    value: function showLikeForm() {
+	      if (this.application.offline) {
+	        return false;
+	      }
+
+	      clearTimeout(this.showFormTimeout);
+
+	      if (!this.getWidgetModel().common.vote.enable) {
+	        return false;
+	      }
+
+	      if (this.getWidgetModel().dialog.sessionClose && this.getWidgetModel().dialog.userVote !== VoteType.none) {
+	        return false;
+	      }
+
+	      this.store.commit('widget/common', {
+	        showForm: FormType.like
+	      });
+	    }
+	  }, {
+	    key: "showSmiles",
+	    value: function showSmiles() {
+	      this.store.commit('widget/common', {
+	        showForm: FormType.smile
+	      });
+	    }
+	  }, {
+	    key: "sendVote",
+	    value: function sendVote(vote) {
+	      var _this2 = this;
+
+	      var sessionId = this.getWidgetModel().dialog.sessionId;
+
+	      if (!sessionId) {
+	        return false;
+	      }
+
+	      this.restClient.callMethod(RestMethod.widgetVoteSend, {
+	        'SESSION_ID': sessionId,
+	        'ACTION': vote
+	      })["catch"](function () {
+	        _this2.store.commit('widget/dialog', {
+	          userVote: VoteType.none
+	        });
+	      });
+	      this.application.sendEvent({
+	        type: SubscriptionType.userVote,
+	        data: {
+	          vote: vote
+	        }
+	      });
+	    }
+	  }, {
+	    key: "hideForm",
+	    value: function hideForm() {
+	      clearTimeout(this.showFormTimeout);
+
+	      if (this.getWidgetModel().common.showForm !== FormType.none) {
+	        this.store.commit('widget/common', {
+	          showForm: FormType.none
+	        });
+	      }
+	    }
+	  }, {
+	    key: "getWidgetModel",
+	    value: function getWidgetModel() {
+	      return this.store.state.widget;
+	    }
+	  }, {
+	    key: "destroy",
+	    value: function destroy() {
+	      main_core_events.EventEmitter.unsubscribe(WidgetEventType.showForm, this.showFormHandler);
+	      main_core_events.EventEmitter.unsubscribe(WidgetEventType.hideForm, this.hideFormHandler);
+	      main_core_events.EventEmitter.unsubscribe(WidgetEventType.sendDialogVote, this.sendVoteHandler);
+	    }
+	  }]);
+	  return WidgetFormHandler;
+	}();
+
+	var WidgetReactionHandler = /*#__PURE__*/function (_ReactionHandler) {
+	  babelHelpers.inherits(WidgetReactionHandler, _ReactionHandler);
+
+	  function WidgetReactionHandler() {
+	    babelHelpers.classCallCheck(this, WidgetReactionHandler);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WidgetReactionHandler).apply(this, arguments));
+	  }
+
+	  babelHelpers.createClass(WidgetReactionHandler, [{
+	    key: "onOpenMessageReactionList",
+	    value: function onOpenMessageReactionList(_ref) {
+	      var data = _ref.data;
+	      im_lib_logger.Logger.warn('Reactions list is blocked for the widget', data);
+	    }
+	  }]);
+	  return WidgetReactionHandler;
+	}(im_eventHandler.ReactionHandler);
+
+	var WidgetHistoryHandler = /*#__PURE__*/function () {
+	  function WidgetHistoryHandler($Bitrix) {
+	    babelHelpers.classCallCheck(this, WidgetHistoryHandler);
+	    babelHelpers.defineProperty(this, "store", null);
+	    babelHelpers.defineProperty(this, "application", null);
+	    this.store = $Bitrix.Data.get('controller').store;
+	    this.application = $Bitrix.Application.get();
+	  }
+
+	  babelHelpers.createClass(WidgetHistoryHandler, [{
+	    key: "getHtmlHistory",
+	    value: function getHtmlHistory() {
+	      var chatId = this.getChatId();
+
+	      if (chatId <= 0) {
+	        console.error('WidgetHistoryHandler: Incorrect chatId value');
+	      }
+
+	      var config = {
+	        chatId: this.getChatId()
+	      };
+	      this.requestControllerAction('imopenlines.widget.history.download', config).then(this.handleRequest.bind(this)).then(this.downloadHistory.bind(this))["catch"](function (error) {
+	        return console.error('WidgetHistoryHandler: fetch error.', error);
+	      });
+	    }
+	  }, {
+	    key: "requestControllerAction",
+	    value: function requestControllerAction(action, config) {
+	      var host = this.application.host ? this.application.host : '';
+	      var ajaxEndpoint = '/bitrix/services/main/ajax.php';
+	      var url = new URL(ajaxEndpoint, host);
+	      url.searchParams.set('action', action);
+	      var formData = new FormData();
+
+	      for (var key in config) {
+	        if (config.hasOwnProperty(key)) {
+	          formData.append(key, config[key]);
+	        }
+	      }
+
+	      return fetch(url, {
+	        method: 'POST',
+	        headers: {
+	          'Livechat-Auth-Id': this.getUserHash()
+	        },
+	        body: formData
+	      });
+	    }
+	  }, {
+	    key: "handleRequest",
+	    value: function handleRequest(response) {
+	      var contentType = response.headers.get('Content-Type');
+
+	      if (contentType.startsWith('application/json')) {
+	        return response.json();
+	      }
+
+	      return response.blob();
+	    }
+	  }, {
+	    key: "downloadHistory",
+	    value: function downloadHistory(result) {
+	      if (result instanceof Blob) {
+	        var url = window.URL.createObjectURL(result);
+	        var a = document.createElement('a');
+	        a.href = url;
+	        a.download = "".concat(this.getChatId(), ".html");
+	        document.body.append(a);
+	        a.click();
+	        a.remove();
+	      } else if (result.hasOwnProperty('errors')) {
+	        console.error("WidgetHistoryHandler: ".concat(result.errors[0]));
+	      } else {
+	        console.error('WidgetHistoryHandler: unknown error.');
+	      }
+	    }
+	  }, {
+	    key: "getChatId",
+	    value: function getChatId() {
+	      return this.store.state.application.dialog.chatId;
+	    }
+	  }, {
+	    key: "getUserHash",
+	    value: function getUserHash() {
+	      return this.store.state.widget.user.hash;
+	    }
+	  }, {
+	    key: "destroy",
+	    value: function destroy() {//
+	    }
+	  }]);
+	  return WidgetHistoryHandler;
+	}();
+
+	var WidgetDialogActionHandler = /*#__PURE__*/function (_DialogActionHandler) {
+	  babelHelpers.inherits(WidgetDialogActionHandler, _DialogActionHandler);
+
+	  function WidgetDialogActionHandler() {
+	    babelHelpers.classCallCheck(this, WidgetDialogActionHandler);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WidgetDialogActionHandler).apply(this, arguments));
+	  }
+
+	  babelHelpers.createClass(WidgetDialogActionHandler, [{
+	    key: "onClickOnDialog",
+	    value: function onClickOnDialog() {
+	      main_core_events.EventEmitter.emit(WidgetEventType.hideForm);
+	    }
+	  }]);
+	  return WidgetDialogActionHandler;
+	}(im_eventHandler.DialogActionHandler);
+
 	function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 
 	function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-	/**
-	 * @notice Do not mutate or clone this component! It is under development.
-	 */
-
 	ui_vue.BitrixVue.component('bx-livechat', {
-	  mixins: [im_mixin.DialogCore, im_mixin.TextareaCore, im_mixin.TextareaUploadFile, im_mixin.DialogReadMessages, im_mixin.DialogClickOnCommand, im_mixin.DialogClickOnUserName, im_mixin.DialogClickOnKeyboardButton, im_mixin.DialogClickOnMessageMenu, im_mixin.DialogClickOnMessageRetry, im_mixin.DialogSetMessageReaction, im_mixin.DialogClickOnUploadCancel],
 	  data: function data() {
 	    return {
-	      viewPortMetaSiteNode: null,
-	      viewPortMetaWidgetNode: null,
-	      storedMessage: '',
-	      storedFile: null,
-	      widgetMinimumHeight: 435,
-	      widgetMinimumWidth: 340,
-	      widgetBaseHeight: 557,
-	      widgetBaseWidth: 435,
-	      widgetMargin: 50,
+	      // sizes
 	      widgetAvailableHeight: 0,
 	      widgetAvailableWidth: 0,
 	      widgetCurrentHeight: 0,
 	      widgetCurrentWidth: 0,
-	      widgetDrag: false,
-	      textareaFocused: false,
-	      textareaDrag: false,
+	      widgetIsResizing: false,
 	      textareaHeight: 100,
-	      textareaMinimumHeight: 100,
-	      textareaMaximumHeight: im_lib_utils.Utils.device.isMobile() ? 200 : 300,
-	      zIndexStackInstance: null,
-	      welcomeFormFilled: false
+	      // welcome form
+	      welcomeFormFilled: false,
+	      // multi dialog
+	      startNewChatMode: false
 	    };
-	  },
-	  created: function created() {
-	    im_lib_logger.Logger.warn('bx-livechat created');
-	    this.onCreated();
-	    document.addEventListener('keydown', this.onWindowKeyDown);
-
-	    if (!im_lib_utils.Utils.device.isMobile() && !this.widget.common.pageMode) {
-	      window.addEventListener('resize', this.getAvailableSpaceFunc = im_lib_utils.Utils.throttle(this.getAvailableSpace, 50));
-	    }
-
-	    main_core_events.EventEmitter.subscribe(EventType.requestShowForm, this.onRequestShowForm);
-	  },
-	  mounted: function mounted() {
-	    if (this.widget.user.id > 0) {
-	      this.welcomeFormFilled = true;
-	    }
-
-	    this.zIndexStackInstance = this.$Bitrix.Data.get('zIndexStack');
-
-	    if (this.zIndexStackInstance && !!this.$refs.widgetWrapper) {
-	      this.zIndexStackInstance.register(this.$refs.widgetWrapper);
-	    }
-	  },
-	  beforeDestroy: function beforeDestroy() {
-	    if (this.zIndexStackInstance) {
-	      this.zIndexStackInstance.unregister(this.$refs.widgetWrapper);
-	    }
-
-	    document.removeEventListener('keydown', this.onWindowKeyDown);
-
-	    if (!im_lib_utils.Utils.device.isMobile() && !this.widget.common.pageMode) {
-	      window.removeEventListener('resize', this.getAvailableSpaceFunc);
-	    }
-
-	    main_core_events.EventEmitter.unsubscribe(EventType.requestShowForm, this.onRequestShowForm);
-	    this.onTextareaDragEventRemove();
 	  },
 	  computed: _objectSpread$1({
 	    FormType: function FormType$$1() {
@@ -3255,34 +3975,35 @@
 	    DeviceType: function DeviceType() {
 	      return im_const.DeviceType;
 	    },
-	    EventType: function EventType$$1() {
+	    EventType: function EventType() {
 	      return im_const.EventType;
 	    },
 	    showTextarea: function showTextarea() {
+	      if (this.widget.common.isCreateSessionMode) {
+	        return this.startNewChatMode;
+	      }
+
 	      var crmFormsSettings = this.widget.common.crmFormsSettings; // show if we dont use welcome form
 
 	      if (!crmFormsSettings.useWelcomeForm || !crmFormsSettings.welcomeFormId) {
 	        return true;
 	      } else {
-	        // show if we use welcome form with delay
-	        if (crmFormsSettings.welcomeFormDelay) {
-	          return true;
-	        } else {
-	          return this.welcomeFormFilled;
-	        }
+	        // show if we use welcome form with delay, otherwise check if it was filled
+	        return crmFormsSettings.welcomeFormDelay ? true : this.welcomeFormFilled;
 	      }
 	    },
+	    // for welcome CRM-form before dialog start
 	    showWelcomeForm: function showWelcomeForm() {
-	      //we are using welcome form, it has delay and it was not already filled
+	      //we are using welcome form, it doesnt have delay and it was not already filled
 	      return this.widget.common.crmFormsSettings.useWelcomeForm && !this.widget.common.crmFormsSettings.welcomeFormDelay && this.widget.common.crmFormsSettings.welcomeFormId && !this.welcomeFormFilled;
 	    },
 	    textareaHeightStyle: function textareaHeightStyle() {
 	      return {
-	        flex: '0 0 ' + this.textareaHeight + 'px'
+	        flex: "0 0 ".concat(this.textareaHeight, "px")
 	      };
 	    },
 	    textareaBottomMargin: function textareaBottomMargin() {
-	      if (!this.widget.common.copyright && !this.isBottomLocation) {
+	      if (!this.widget.common.copyright && !this.isBottomLocation()) {
 	        return {
 	          marginBottom: '5px'
 	        };
@@ -3290,92 +4011,72 @@
 
 	      return '';
 	    },
-	    widgetBaseSizes: function widgetBaseSizes() {
-	      return {
-	        width: this.widgetBaseWidth,
-	        height: this.widgetBaseHeight
-	      };
-	    },
 	    widgetHeightStyle: function widgetHeightStyle() {
 	      if (im_lib_utils.Utils.device.isMobile() || this.widget.common.pageMode) {
 	        return;
 	      }
 
-	      if (this.widgetAvailableHeight < this.widgetBaseSizes.height || this.widgetAvailableHeight < this.widgetCurrentHeight) {
-	        this.widgetCurrentHeight = Math.max(this.widgetAvailableHeight, this.widgetMinimumHeight);
+	      if (this.widgetAvailableHeight < WidgetBaseSize.height || this.widgetAvailableHeight < this.widgetCurrentHeight) {
+	        this.widgetCurrentHeight = Math.max(this.widgetAvailableHeight, WidgetMinimumSize.height);
 	      }
 
-	      return this.widgetCurrentHeight + 'px';
+	      return "".concat(this.widgetCurrentHeight, "px");
 	    },
 	    widgetWidthStyle: function widgetWidthStyle() {
 	      if (im_lib_utils.Utils.device.isMobile() || this.widget.common.pageMode) {
 	        return;
 	      }
 
-	      if (this.widgetAvailableWidth < this.widgetBaseSizes.width || this.widgetAvailableWidth < this.widgetCurrentWidth) {
-	        this.widgetCurrentWidth = Math.max(this.widgetAvailableWidth, this.widgetMinimumWidth);
+	      if (this.widgetAvailableWidth < WidgetBaseSize.width || this.widgetAvailableWidth < this.widgetCurrentWidth) {
+	        this.widgetCurrentWidth = Math.max(this.widgetAvailableWidth, WidgetMinimumSize.width);
 	      }
 
-	      return this.widgetCurrentWidth + 'px';
+	      return "".concat(this.widgetCurrentWidth, "px");
 	    },
 	    userSelectStyle: function userSelectStyle() {
-	      return this.widgetDrag ? 'none' : 'auto';
+	      return this.widgetIsResizing ? 'none' : 'auto';
 	    },
-	    isBottomLocation: function isBottomLocation() {
-	      return [LocationType.bottomLeft, LocationType.bottomMiddle, LocationType.bottomRight].includes(this.widget.common.location);
-	    },
-	    isLeftLocation: function isLeftLocation() {
-	      return [LocationType.bottomLeft, LocationType.topLeft, LocationType.topMiddle].includes(this.widget.common.location);
-	    },
-	    localize: function localize() {
-	      return ui_vue.BitrixVue.getFilteredPhrases('BX_LIVECHAT_', this);
-	    },
-	    widgetMobileDisabled: function widgetMobileDisabled(state) {
-	      if (state.application.device.type === im_const.DeviceType.mobile) {
-	        if (navigator.userAgent.toString().includes('iPad')) ; else if (state.application.device.orientation === im_const.DeviceOrientation.horizontal) {
-	          if (navigator.userAgent.toString().includes('iPhone')) {
-	            return true;
-	          } else {
-	            return !(babelHelpers["typeof"](window.screen) === 'object' && window.screen.availHeight >= 800);
-	          }
-	        }
+	    widgetMobileDisabled: function widgetMobileDisabled() {
+	      if (this.application.device.type !== im_const.DeviceType.mobile) {
+	        return false;
 	      }
 
-	      return false;
-	    },
-	    widgetClassName: function widgetClassName(state) {
-	      var className = ['bx-livechat-wrapper'];
-	      className.push('bx-livechat-show');
+	      if (this.application.device.orientation !== im_const.DeviceOrientation.horizontal) {
+	        return false;
+	      }
 
-	      if (state.widget.common.pageMode) {
+	      if (navigator.userAgent.toString().includes('iPhone')) {
+	        return true;
+	      } else {
+	        return babelHelpers["typeof"](window.screen) !== 'object' || window.screen.availHeight < 800;
+	      }
+	    },
+	    widgetPositionClass: function widgetPositionClass() {
+	      var className = [];
+
+	      if (this.widget.common.pageMode) {
 	        className.push('bx-livechat-page-mode');
 	      } else {
-	        className.push('bx-livechat-position-' + LocationStyle[state.widget.common.location]);
+	        className.push("bx-livechat-position-".concat(LocationStyle[this.widget.common.location]));
 	      }
 
-	      if (state.application.common.languageId === LanguageType.russian) {
+	      return className;
+	    },
+	    widgetLanguageClass: function widgetLanguageClass() {
+	      var className = [];
+
+	      if (this.application.common.languageId === LanguageType.russian) {
 	        className.push('bx-livechat-logo-ru');
-	      } else if (state.application.common.languageId === LanguageType.ukraine) {
+	      } else if (this.application.common.languageId === LanguageType.ukraine) {
 	        className.push('bx-livechat-logo-ua');
 	      } else {
 	        className.push('bx-livechat-logo-en');
 	      }
 
-	      if (!state.widget.common.online) {
-	        className.push('bx-livechat-offline-state');
-	      }
-
-	      if (state.widget.common.dragged) {
-	        className.push('bx-livechat-drag-n-drop');
-	      }
-
-	      if (state.widget.common.dialogStart) {
-	        className.push('bx-livechat-chat-start');
-	      }
-
-	      if (state.widget.dialog.operator.name && !(state.application.device.type === im_const.DeviceType.mobile && state.application.device.orientation === im_const.DeviceOrientation.horizontal)) {
-	        className.push('bx-livechat-has-operator');
-	      }
+	      return className;
+	    },
+	    widgetPlatformClass: function widgetPlatformClass() {
+	      var className = [];
 
 	      if (im_lib_utils.Utils.device.isMobile()) {
 	        className.push('bx-livechat-mobile');
@@ -3391,14 +4092,39 @@
 	        className.push('bx-livechat-custom-scroll');
 	      }
 
-	      if (state.widget.common.styles.backgroundColor && im_lib_utils.Utils.isDarkColor(state.widget.common.styles.iconColor)) {
+	      return className;
+	    },
+	    widgetClassName: function widgetClassName() {
+	      var className = [];
+	      className.push.apply(className, babelHelpers.toConsumableArray(this.widgetPositionClass).concat(babelHelpers.toConsumableArray(this.widgetLanguageClass), babelHelpers.toConsumableArray(this.widgetPlatformClass)));
+
+	      if (!this.widget.common.online) {
+	        className.push('bx-livechat-offline-state');
+	      }
+
+	      if (this.widget.common.dragged) {
+	        className.push('bx-livechat-drag-n-drop');
+	      }
+
+	      if (this.widget.common.dialogStart) {
+	        className.push('bx-livechat-chat-start');
+	      }
+
+	      if (this.widget.dialog.operator.name && !(this.application.device.type === im_const.DeviceType.mobile && this.application.device.orientation === im_const.DeviceOrientation.horizontal)) {
+	        className.push('bx-livechat-has-operator');
+	      }
+
+	      if (this.widget.common.styles.backgroundColor && im_lib_utils.Utils.isDarkColor(this.widget.common.styles.iconColor)) {
 	        className.push('bx-livechat-bright-header');
 	      }
 
-	      return className.join(' ');
+	      return className;
 	    },
 	    showMessageDialog: function showMessageDialog() {
 	      return this.messageCollection.length > 0;
+	    },
+	    localize: function localize() {
+	      return ui_vue.BitrixVue.getFilteredPhrases('BX_LIVECHAT_', this);
 	    }
 	  }, ui_vue_vuex.Vuex.mapState({
 	    widget: function widget(state) {
@@ -3414,227 +4140,166 @@
 	      return state.messages.collection[state.application.dialog.chatId];
 	    }
 	  })),
-	  watch: {
-	    sessionClose: function sessionClose(value) {
-	      im_lib_logger.Logger.log('sessionClose change', value);
-	    },
-	    //Redefined for uploadFile mixin
-	    dialogInited: function dialogInited(newValue) {
-	      return false;
+	  created: function created() {
+	    var _this = this;
+
+	    im_lib_logger.Logger.warn('Livechat component created'); // we need to wait for initialization and widget opening to init logic handlers
+
+	    this.onCreated().then(function () {
+	      _this.subscribeToEvents();
+
+	      _this.initEventHandlers();
+	    });
+	  },
+	  mounted: function mounted() {
+	    if (this.widget.user.id > 0) {
+	      this.welcomeFormFilled = true;
 	    }
+
+	    this.registerZIndex();
+	  },
+	  beforeDestroy: function beforeDestroy() {
+	    this.unsubscribeEvents();
+	    this.destroyHandlers();
+	    this.unregisterZIndex();
 	  },
 	  methods: {
-	    getRestClient: function getRestClient() {
-	      return this.$Bitrix.RestClient.get();
+	    // region initialization
+	    initEventHandlers: function initEventHandlers() {
+	      this.sendMessageHandler = new WidgetSendMessageHandler(this.$Bitrix);
+	      this.textareaHandler = new WidgetTextareaHandler(this.$Bitrix);
+	      this.textareaUploadHandler = new WidgetTextareaUploadHandler(this.$Bitrix);
+	      this.readingHandler = new WidgetReadingHandler(this.$Bitrix);
+	      this.consentHandler = new WidgetConsentHandler(this.$Bitrix);
+	      this.formHandler = new WidgetFormHandler(this.$Bitrix);
+	      this.textareaDragHandler = this.getTextareaDragHandler();
+	      this.resizeHandler = this.getWidgetResizeHandler();
+	      this.reactionHandler = new WidgetReactionHandler(this.$Bitrix);
+	      this.historyHandler = new WidgetHistoryHandler(this.$Bitrix);
+	      this.dialogActionHandler = new WidgetDialogActionHandler(this.$Bitrix);
 	    },
-	    getApplication: function getApplication() {
-	      return this.$Bitrix.Application.get();
+	    destroyHandlers: function destroyHandlers() {
+	      this.sendMessageHandler.destroy();
+	      this.textareaHandler.destroy();
+	      this.textareaUploadHandler.destroy();
+	      this.readingHandler.destroy();
+	      this.consentHandler.destroy();
+	      this.formHandler.destroy();
+	      this.textareaDragHandler.destroy();
+	      this.resizeHandler.destroy();
+	      this.reactionHandler.destroy();
+	      this.historyHandler.destroy();
+	      this.dialogActionHandler.destroy();
 	    },
-	    onSendMessage: function onSendMessage(_ref) {
-	      var event = _ref.data;
-	      event.focus = event.focus !== false;
+	    subscribeToEvents: function subscribeToEvents() {
+	      document.addEventListener('keydown', this.onWindowKeyDown);
 
-	      if (this.widget.common.showForm === FormType.smile) {
-	        this.$store.commit('widget/common', {
-	          showForm: FormType.none
-	        });
-	      } //show consent window if needed
-
-
-	      if (!this.widget.dialog.userConsent && this.widget.common.consentUrl) {
-	        if (event.text) {
-	          this.storedMessage = event.text;
-	        }
-
-	        this.showConsentWidow();
-	        return false;
+	      if (!im_lib_utils.Utils.device.isMobile() && !this.widget.common.pageMode) {
+	        this.getAvailableSpaceFunc = im_lib_utils.Utils.throttle(this.getAvailableSpace, 50);
+	        window.addEventListener('resize', this.getAvailableSpaceFunc);
 	      }
-
-	      event.text = event.text ? event.text : this.storedMessage;
-
-	      if (!event.text) {
-	        return false;
-	      }
-
-	      this.hideForm();
-	      this.getApplication().addMessage(event.text);
-
-	      if (event.focus) {
-	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
-	      }
-
-	      return true;
 	    },
-	    close: function close(event) {
-	      if (this.widget.common.pageMode) {
-	        return false;
-	      }
+	    unsubscribeEvents: function unsubscribeEvents() {
+	      document.removeEventListener('keydown', this.onWindowKeyDown);
 
-	      this.onBeforeClose();
-	      this.$store.commit('widget/common', {
-	        showed: false
+	      if (!im_lib_utils.Utils.device.isMobile() && !this.widget.common.pageMode) {
+	        window.removeEventListener('resize', this.getAvailableSpaceFunc);
+	      }
+	    },
+	    initMobileEnv: function initMobileEnv() {
+	      var _this2 = this;
+
+	      var metaTags = document.head.querySelectorAll('meta');
+	      var viewPortMetaSiteNode = babelHelpers.toConsumableArray(metaTags).find(function (element) {
+	        return element.name === 'viewport';
 	      });
-	    },
-	    getAvailableSpace: function getAvailableSpace() {
-	      if (this.isBottomLocation) {
-	        var bottomPosition = this.$refs.widgetWrapper.getBoundingClientRect().bottom;
-	        var widgetBottomMargin = window.innerHeight - bottomPosition;
-	        this.widgetAvailableHeight = window.innerHeight - this.widgetMargin - widgetBottomMargin;
+
+	      if (viewPortMetaSiteNode) {
+	        // save tag and remove it from DOM
+	        this.viewPortMetaSiteNode = viewPortMetaSiteNode;
+	        this.viewPortMetaSiteNode.remove();
 	      } else {
-	        var topPosition = this.$refs.widgetWrapper.getBoundingClientRect().top;
-	        this.widgetAvailableHeight = window.innerHeight - this.widgetMargin - topPosition;
+	        this.createViewportMeta();
 	      }
 
-	      this.widgetAvailableWidth = window.innerWidth - this.widgetMargin * 2;
-	    },
-	    showLikeForm: function showLikeForm() {
-	      if (this.offline) {
-	        return false;
+	      if (!this.viewPortMetaWidgetNode) {
+	        this.viewPortMetaWidgetNode = document.createElement('meta');
+	        this.viewPortMetaWidgetNode.setAttribute('name', 'viewport');
+	        this.viewPortMetaWidgetNode.setAttribute('content', 'width=device-width, initial-scale=1.0, user-scalable=0');
+	        document.head.append(this.viewPortMetaWidgetNode);
 	      }
 
-	      clearTimeout(this.showFormTimeout);
+	      document.body.classList.add('bx-livechat-mobile-state');
 
-	      if (!this.widget.common.vote.enable) {
-	        return false;
+	      if (im_lib_utils.Utils.browser.isSafariBased()) {
+	        document.body.classList.add('bx-livechat-mobile-safari-based');
 	      }
 
-	      if (this.widget.dialog.sessionClose && this.widget.dialog.userVote !== VoteType.none) {
-	        return false;
-	      }
-
-	      this.$store.commit('widget/common', {
-	        showForm: FormType.like
+	      return new Promise(function (resolve) {
+	        setTimeout(function () {
+	          _this2.$store.dispatch('widget/show').then(resolve);
+	        }, 50);
 	      });
 	    },
-	    onOpenMenu: function onOpenMenu(event) {
-	      this.getApplication().getHtmlHistory();
+	    createViewportMeta: function createViewportMeta() {
+	      var contentWidth = document.body.offsetWidth;
+
+	      if (contentWidth < window.innerWidth) {
+	        contentWidth = window.innerWidth;
+	      }
+
+	      if (contentWidth < 1024) {
+	        contentWidth = 1024;
+	      }
+
+	      this.viewPortMetaSiteNode = document.createElement('meta');
+	      this.viewPortMetaSiteNode.setAttribute('name', 'viewport');
+	      this.viewPortMetaSiteNode.setAttribute('content', "width=".concat(contentWidth, ", initial-scale=1.0, user-scalable=1"));
 	    },
-	    hideForm: function hideForm() {
-	      clearTimeout(this.showFormTimeout);
+	    removeMobileEnv: function removeMobileEnv() {
+	      document.body.classList.remove('bx-livechat-mobile-state');
 
-	      if (this.widget.common.showForm !== FormType.none) {
-	        this.$store.commit('widget/common', {
-	          showForm: FormType.none
-	        });
-	      }
-	    },
-	    showConsentWidow: function showConsentWidow() {
-	      this.$store.commit('widget/common', {
-	        showConsent: true
-	      });
-	    },
-	    agreeConsentWidow: function agreeConsentWidow() {
-	      this.$store.commit('widget/common', {
-	        showConsent: false
-	      });
-	      this.getApplication().sendConsentDecision(true);
-
-	      if (this.storedMessage || this.storedFile) {
-	        if (this.storedMessage) {
-	          this.onSendMessage({
-	            data: {
-	              focus: this.application.device.type !== im_const.DeviceType.mobile
-	            }
-	          });
-	          this.storedMessage = '';
-	        }
-
-	        if (this.storedFile) {
-	          this.onTextareaFileSelected();
-	          this.storedFile = '';
-	        }
-	      } else if (this.widget.common.showForm === FormType.none) {
-	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
-	      }
-	    },
-	    disagreeConsentWidow: function disagreeConsentWidow() {
-	      this.$store.commit('widget/common', {
-	        showForm: FormType.none
-	      });
-	      this.$store.commit('widget/common', {
-	        showConsent: false
-	      });
-	      this.getApplication().sendConsentDecision(false);
-
-	      if (this.storedMessage) {
-	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.insertText, {
-	          text: this.storedMessage,
-	          focus: this.application.device.type !== im_const.DeviceType.mobile
-	        });
-	        this.storedMessage = '';
+	      if (im_lib_utils.Utils.browser.isSafariBased()) {
+	        document.body.classList.remove('bx-livechat-mobile-safari-based');
 	      }
 
-	      if (this.storedFile) {
-	        this.storedFile = '';
+	      if (this.viewPortMetaWidgetNode) {
+	        this.viewPortMetaWidgetNode.remove();
+	        this.viewPortMetaWidgetNode = null;
 	      }
 
-	      if (this.application.device.type !== im_const.DeviceType.mobile) {
-	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
+	      if (this.viewPortMetaSiteNode) {
+	        document.head.append(this.viewPortMetaSiteNode);
+	        this.viewPortMetaSiteNode = null;
 	      }
-	    },
-	    logEvent: function logEvent(name) {
-	      for (var _len = arguments.length, params = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-	        params[_key - 1] = arguments[_key];
-	      }
-
-	      im_lib_logger.Logger.info.apply(im_lib_logger.Logger, [name].concat(params));
 	    },
 	    onCreated: function onCreated() {
-	      var _this = this;
+	      var _this3 = this;
 
-	      if (im_lib_utils.Utils.device.isMobile()) {
-	        var viewPortMetaSiteNode = Array.from(document.head.getElementsByTagName('meta')).filter(function (element) {
-	          return element.name === 'viewport';
-	        })[0];
-
-	        if (viewPortMetaSiteNode) {
-	          this.viewPortMetaSiteNode = viewPortMetaSiteNode;
-	          document.head.removeChild(this.viewPortMetaSiteNode);
+	      return new Promise(function (resolve) {
+	        if (im_lib_utils.Utils.device.isMobile()) {
+	          _this3.initMobileEnv().then(resolve);
 	        } else {
-	          var contentWidth = document.body.offsetWidth;
+	          _this3.$store.dispatch('widget/show').then(function () {
+	            _this3.widgetCurrentHeight = WidgetBaseSize.height;
+	            _this3.widgetCurrentWidth = WidgetBaseSize.width;
 
-	          if (contentWidth < window.innerWidth) {
-	            contentWidth = window.innerWidth;
-	          }
+	            _this3.getAvailableSpace(); // restore widget size from cache
 
-	          if (contentWidth < 1024) {
-	            contentWidth = 1024;
-	          }
 
-	          this.viewPortMetaSiteNode = document.createElement('meta');
-	          this.viewPortMetaSiteNode.setAttribute('name', 'viewport');
-	          this.viewPortMetaSiteNode.setAttribute('content', "width=".concat(contentWidth, ", initial-scale=1.0, user-scalable=1"));
-	        }
+	            _this3.widgetCurrentHeight = _this3.widget.common.widgetHeight || _this3.widgetCurrentHeight;
+	            _this3.widgetCurrentWidth = _this3.widget.common.widgetWidth || _this3.widgetCurrentWidth;
+	            resolve();
+	          });
+	        } // restore textarea size from cache
 
-	        if (!this.viewPortMetaWidgetNode) {
-	          this.viewPortMetaWidgetNode = document.createElement('meta');
-	          this.viewPortMetaWidgetNode.setAttribute('name', 'viewport');
-	          this.viewPortMetaWidgetNode.setAttribute('content', 'width=device-width, initial-scale=1.0, user-scalable=0');
-	          document.head.appendChild(this.viewPortMetaWidgetNode);
-	        }
 
-	        document.body.classList.add('bx-livechat-mobile-state');
+	        _this3.textareaHeight = _this3.widget.common.textareaHeight || _this3.textareaHeight;
 
-	        if (im_lib_utils.Utils.browser.isSafariBased()) {
-	          document.body.classList.add('bx-livechat-mobile-safari-based');
-	        }
-
-	        setTimeout(function () {
-	          _this.$store.dispatch('widget/show');
-	        }, 50);
-	      } else {
-	        this.$store.dispatch('widget/show').then(function () {
-	          _this.widgetCurrentHeight = _this.widgetBaseSizes.height;
-	          _this.widgetCurrentWidth = _this.widgetBaseSizes.width;
-
-	          _this.getAvailableSpace();
-
-	          _this.widgetCurrentHeight = _this.widget.common.widgetHeight || _this.widgetCurrentHeight;
-	          _this.widgetCurrentWidth = _this.widget.common.widgetWidth || _this.widgetCurrentWidth;
-	        });
-	      }
-
-	      this.textareaHeight = this.widget.common.textareaHeight || this.textareaHeight;
+	        _this3.initCollections();
+	      });
+	    },
+	    initCollections: function initCollections() {
 	      this.$store.commit('files/initCollection', {
 	        chatId: this.getApplication().getChatId()
 	      });
@@ -3649,259 +4314,20 @@
 	        }
 	      });
 	    },
+	    // endregion initialization
+	    // region events
 	    onBeforeClose: function onBeforeClose() {
 	      if (im_lib_utils.Utils.device.isMobile()) {
-	        document.body.classList.remove('bx-livechat-mobile-state');
-
-	        if (im_lib_utils.Utils.browser.isSafariBased()) {
-	          document.body.classList.remove('bx-livechat-mobile-safari-based');
-	        }
-
-	        if (this.viewPortMetaWidgetNode) {
-	          document.head.removeChild(this.viewPortMetaWidgetNode);
-	          this.viewPortMetaWidgetNode = null;
-	        }
-
-	        if (this.viewPortMetaSiteNode) {
-	          document.head.appendChild(this.viewPortMetaSiteNode);
-	          this.viewPortMetaSiteNode = null;
-	        }
+	        this.removeMobileEnv();
 	      }
 	    },
 	    onAfterClose: function onAfterClose() {
 	      this.getApplication().close();
 	    },
-	    onRequestShowForm: function onRequestShowForm(_ref2) {
-	      var _this2 = this;
-
-	      var event = _ref2.data;
-	      clearTimeout(this.showFormTimeout);
-
-	      if (event.type === FormType.like) {
-	        if (event.delayed) {
-	          this.showFormTimeout = setTimeout(function () {
-	            _this2.showLikeForm();
-	          }, 5000);
-	        } else {
-	          this.showLikeForm();
-	        }
-	      }
+	    onOpenMenu: function onOpenMenu() {
+	      this.historyHandler.getHtmlHistory();
 	    },
-	    onDialogRequestHistory: function onDialogRequestHistory(event) {
-	      this.getApplication().getDialogHistory(event.lastId);
-	    },
-	    onDialogRequestUnread: function onDialogRequestUnread(event) {
-	      this.getApplication().getDialogUnread(event.lastId);
-	    },
-	    onClickOnUserName: function onClickOnUserName(_ref3) {
-	      var event = _ref3.data;
-	      // TODO name push to auto-replace mention holder - User Name -> [USER=274]User Name[/USER]
-	      main_core_events.EventEmitter.emit(im_const.EventType.textarea.insertText, {
-	        text: event.user.name + ', '
-	      });
-	    },
-	    onClickOnUploadCancel: function onClickOnUploadCancel(_ref4) {
-	      var event = _ref4.data;
-	      this.getApplication().cancelUploadFile(event.file.id);
-	    },
-	    onClickOnKeyboardButton: function onClickOnKeyboardButton(_ref5) {
-	      var event = _ref5.data;
-	      this.getApplication().execMessageKeyboardCommand(event);
-	    },
-	    onClickOnCommand: function onClickOnCommand(_ref6) {
-	      var event = _ref6.data;
-
-	      if (event.type === 'put') {
-	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.insertText, {
-	          text: event.value + ' '
-	        });
-	      } else if (event.type === 'send') {
-	        this.getApplication().addMessage(event.value);
-	      } else {
-	        im_lib_logger.Logger.warn('Unprocessed command', event);
-	      }
-	    },
-	    onClickOnMessageMenu: function onClickOnMessageMenu(_ref7) {
-	      var event = _ref7.data;
-	      im_lib_logger.Logger.warn('Message menu:', event);
-	    },
-	    onClickOnMessageRetry: function onClickOnMessageRetry(_ref8) {
-	      var event = _ref8.data;
-	      im_lib_logger.Logger.warn('Message retry:', event);
-	      this.getApplication().retrySendMessage(event.message);
-	    },
-	    onReadMessage: function onReadMessage(_ref9) {
-	      var event = _ref9.data;
-	      this.getApplication().readMessage(event.id);
-	    },
-	    onSetMessageReaction: function onSetMessageReaction(_ref10) {
-	      var event = _ref10.data;
-	      this.getApplication().reactMessage(event.message.id, event.reaction);
-	    },
-	    onClickOnDialog: function onClickOnDialog(_ref11) {
-	      var event = _ref11.data;
-
-	      if (this.widget.common.showForm !== FormType.none) {
-	        this.$store.commit('widget/common', {
-	          showForm: FormType.none
-	        });
-	      }
-	    },
-	    onTextareaKeyUp: function onTextareaKeyUp(_ref12) {
-	      var event = _ref12.data;
-
-	      if (this.widget.common.watchTyping && this.widget.dialog.sessionId && !this.widget.dialog.sessionClose && this.widget.dialog.operator.id && this.widget.dialog.operatorChatId && this.$Bitrix.PullClient.get().isPublishingEnabled()) {
-	        var infoString = main_md5.md5(this.widget.dialog.sessionId + '/' + this.application.dialog.chatId + '/' + this.widget.user.id);
-	        this.$Bitrix.PullClient.get().sendMessage([this.widget.dialog.operator.id], 'imopenlines', 'linesMessageWrite', {
-	          text: event.text,
-	          infoString: infoString,
-	          operatorChatId: this.widget.dialog.operatorChatId
-	        });
-	      }
-	    },
-	    onTextareaFocus: function onTextareaFocus(_ref13) {
-	      var _this3 = this;
-
-	      var event = _ref13.data;
-
-	      if (this.widget.common.copyright && this.application.device.type === im_const.DeviceType.mobile) {
-	        this.widget.common.copyright = false;
-	      }
-
-	      if (im_lib_utils.Utils.device.isMobile()) {
-	        clearTimeout(this.onTextareaFocusScrollTimeout);
-	        this.onTextareaFocusScrollTimeout = setTimeout(function () {
-	          document.addEventListener('scroll', _this3.onWindowScroll);
-	        }, 1000);
-	      }
-
-	      this.textareaFocused = true;
-	    },
-	    onTextareaBlur: function onTextareaBlur(_ref14) {
-	      var _this4 = this;
-
-	      var event = _ref14.data;
-
-	      if (!this.widget.common.copyright && this.widget.common.copyright !== this.getApplication().copyright) {
-	        this.widget.common.copyright = this.getApplication().copyright;
-	        this.$nextTick(function () {
-	          main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollToBottom, {
-	            chatId: _this4.chatId,
-	            force: true
-	          });
-	        });
-	      }
-
-	      if (im_lib_utils.Utils.device.isMobile()) {
-	        clearTimeout(this.onTextareaFocusScrollTimeout);
-	        document.removeEventListener('scroll', this.onWindowScroll);
-	      }
-
-	      this.textareaFocused = false;
-	    },
-	    onTextareaStartDrag: function onTextareaStartDrag(event) {
-	      if (this.textareaDrag) {
-	        return;
-	      }
-
-	      im_lib_logger.Logger.log('Livechat: textarea drag started');
-	      this.textareaDrag = true;
-	      event = event.changedTouches ? event.changedTouches[0] : event;
-	      this.textareaDragCursorStartPoint = event.clientY;
-	      this.textareaDragHeightStartPoint = this.textareaHeight;
-	      this.onTextareaDragEventAdd();
-	      main_core_events.EventEmitter.emit(im_const.EventType.textarea.setBlur, true);
-	    },
-	    onTextareaContinueDrag: function onTextareaContinueDrag(event) {
-	      if (!this.textareaDrag) {
-	        return;
-	      }
-
-	      event = event.changedTouches ? event.changedTouches[0] : event;
-	      this.textareaDragCursorControlPoint = event.clientY;
-	      var textareaHeight = Math.max(Math.min(this.textareaDragHeightStartPoint + this.textareaDragCursorStartPoint - this.textareaDragCursorControlPoint, this.textareaMaximumHeight), this.textareaMinimumHeight);
-	      im_lib_logger.Logger.log('Livechat: textarea drag', 'new: ' + textareaHeight, 'curr: ' + this.textareaHeight);
-
-	      if (this.textareaHeight !== textareaHeight) {
-	        this.textareaHeight = textareaHeight;
-	      }
-	    },
-	    onTextareaStopDrag: function onTextareaStopDrag() {
-	      if (!this.textareaDrag) {
-	        return;
-	      }
-
-	      im_lib_logger.Logger.log('Livechat: textarea drag ended');
-	      this.textareaDrag = false;
-	      this.onTextareaDragEventRemove();
-	      this.$store.commit('widget/common', {
-	        textareaHeight: this.textareaHeight
-	      });
-	      main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollToBottom, {
-	        chatId: this.chatId,
-	        force: true
-	      });
-	    },
-	    onTextareaDragEventAdd: function onTextareaDragEventAdd() {
-	      document.addEventListener('mousemove', this.onTextareaContinueDrag);
-	      document.addEventListener('touchmove', this.onTextareaContinueDrag);
-	      document.addEventListener('touchend', this.onTextareaStopDrag);
-	      document.addEventListener('mouseup', this.onTextareaStopDrag);
-	      document.addEventListener('mouseleave', this.onTextareaStopDrag);
-	    },
-	    onTextareaDragEventRemove: function onTextareaDragEventRemove() {
-	      document.removeEventListener('mousemove', this.onTextareaContinueDrag);
-	      document.removeEventListener('touchmove', this.onTextareaContinueDrag);
-	      document.removeEventListener('touchend', this.onTextareaStopDrag);
-	      document.removeEventListener('mouseup', this.onTextareaStopDrag);
-	      document.removeEventListener('mouseleave', this.onTextareaStopDrag);
-	    },
-	    onTextareaFileSelected: function onTextareaFileSelected() {
-	      var _ref15 = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-	          event = _ref15.data;
-
-	      var fileInputEvent = null;
-
-	      if (event && event.fileChangeEvent && event.fileChangeEvent.target.files.length > 0) {
-	        fileInputEvent = event.fileChangeEvent;
-	      } else {
-	        fileInputEvent = this.storedFile;
-	      }
-
-	      if (!fileInputEvent) {
-	        return false;
-	      }
-
-	      if (!this.widget.dialog.userConsent && this.widget.common.consentUrl) {
-	        this.storedFile = event.fileChangeEvent;
-	        this.showConsentWidow();
-	        return false;
-	      }
-
-	      this.getApplication().uploadFile(fileInputEvent);
-	    },
-	    onTextareaAppButtonClick: function onTextareaAppButtonClick(_ref16) {
-	      var event = _ref16.data;
-
-	      if (event.appId === FormType.smile) {
-	        if (this.widget.common.showForm === FormType.smile) {
-	          this.$store.commit('widget/common', {
-	            showForm: FormType.none
-	          });
-	        } else {
-	          this.$store.commit('widget/common', {
-	            showForm: FormType.smile
-	          });
-	        }
-	      } else {
-	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
-	      }
-	    },
-	    onTextareaEdit: function onTextareaEdit(_ref17) {
-	      var event = _ref17.data;
-	      this.logEvent('edit message', event);
-	    },
-	    onPullRequestConfig: function onPullRequestConfig(event) {
+	    onPullRequestConfig: function onPullRequestConfig() {
 	      this.getApplication().recoverPullConnection();
 	    },
 	    onSmilesSelectSmile: function onSmilesSelectSmile(event) {
@@ -3913,94 +4339,32 @@
 	      main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
 	    },
 	    onWidgetStartDrag: function onWidgetStartDrag(event) {
-	      if (this.widgetDrag) {
-	        return;
-	      }
-
-	      this.widgetDrag = true;
-	      event = event.changedTouches ? event.changedTouches[0] : event;
-	      this.widgetDragCursorStartPointY = event.clientY;
-	      this.widgetDragCursorStartPointX = event.clientX;
-	      this.widgetDragHeightStartPoint = this.widgetCurrentHeight;
-	      this.widgetDragWidthStartPoint = this.widgetCurrentWidth;
-	      this.onWidgetDragEventAdd();
-	    },
-	    onWidgetContinueDrag: function onWidgetContinueDrag(event) {
-	      if (!this.widgetDrag) {
-	        return;
-	      }
-
-	      event = event.changedTouches ? event.changedTouches[0] : event;
-	      this.widgetDragCursorControlPointY = event.clientY;
-	      this.widgetDragCursorControlPointX = event.clientX;
-	      var widgetHeight = 0;
-
-	      if (this.isBottomLocation) {
-	        widgetHeight = Math.max(Math.min(this.widgetDragHeightStartPoint + this.widgetDragCursorStartPointY - this.widgetDragCursorControlPointY, this.widgetAvailableHeight), this.widgetMinimumHeight);
-	      } else {
-	        widgetHeight = Math.max(Math.min(this.widgetDragHeightStartPoint - this.widgetDragCursorStartPointY + this.widgetDragCursorControlPointY, this.widgetAvailableHeight), this.widgetMinimumHeight);
-	      }
-
-	      var widgetWidth = 0;
-
-	      if (this.isLeftLocation) {
-	        widgetWidth = Math.max(Math.min(this.widgetDragWidthStartPoint - this.widgetDragCursorStartPointX + this.widgetDragCursorControlPointX, this.widgetAvailableWidth), this.widgetMinimumWidth);
-	      } else {
-	        widgetWidth = Math.max(Math.min(this.widgetDragWidthStartPoint + this.widgetDragCursorStartPointX - this.widgetDragCursorControlPointX, this.widgetAvailableWidth), this.widgetMinimumWidth);
-	      }
-
-	      if (this.widgetCurrentHeight !== widgetHeight) {
-	        this.widgetCurrentHeight = widgetHeight;
-	      }
-
-	      if (this.widgetCurrentWidth !== widgetWidth) {
-	        this.widgetCurrentWidth = widgetWidth;
-	      }
-	    },
-	    onWidgetStopDrag: function onWidgetStopDrag() {
-	      if (!this.widgetDrag) {
-	        return;
-	      }
-
-	      this.widgetDrag = false;
-	      this.onWidgetDragEventRemove();
-	      this.$store.commit('widget/common', {
-	        widgetHeight: this.widgetCurrentHeight,
-	        widgetWidth: this.widgetCurrentWidth
-	      });
-	    },
-	    onWidgetDragEventAdd: function onWidgetDragEventAdd() {
-	      document.addEventListener('mousemove', this.onWidgetContinueDrag);
-	      document.addEventListener('mouseup', this.onWidgetStopDrag);
-	      document.addEventListener('mouseleave', this.onWidgetStopDrag);
-	    },
-	    onWidgetDragEventRemove: function onWidgetDragEventRemove() {
-	      document.removeEventListener('mousemove', this.onWidgetContinueDrag);
-	      document.removeEventListener('mouseup', this.onWidgetStopDrag);
-	      document.removeEventListener('mouseleave', this.onWidgetStopDrag);
+	      this.resizeHandler.startResize(event, this.widgetCurrentHeight, this.widgetCurrentWidth);
+	      this.widgetIsResizing = true;
+	      main_core_events.EventEmitter.emit(im_const.EventType.textarea.setBlur, true);
 	    },
 	    onWindowKeyDown: function onWindowKeyDown(event) {
-	      if (event.keyCode === 27) {
-	        if (this.widget.common.showForm !== FormType.none) {
-	          this.$store.commit('widget/common', {
-	            showForm: FormType.none
-	          });
-	        } else if (this.widget.common.showConsent) {
-	          this.disagreeConsentWidow();
-	        } else {
-	          this.close();
-	        }
+	      // not escape
+	      if (event.keyCode !== 27) {
+	        return;
+	      } // hide form
 
-	        event.preventDefault();
-	        event.stopPropagation();
-	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
+
+	      if (this.widget.common.showForm !== FormType.none) {
+	        this.$store.commit('widget/common', {
+	          showForm: FormType.none
+	        });
+	      } // decline consent
+	      else if (this.widget.common.showConsent) {
+	        main_core_events.EventEmitter.emit(WidgetEventType.declineConsent);
+	      } // close widget
+	      else {
+	        this.close();
 	      }
-	    },
-	    onWindowScroll: function onWindowScroll(event) {
-	      clearTimeout(this.onWindowScrollTimeout);
-	      this.onWindowScrollTimeout = setTimeout(function () {
-	        main_core_events.EventEmitter.emit(im_const.EventType.textarea.setBlur, true);
-	      }, 50);
+
+	      event.preventDefault();
+	      event.stopPropagation();
+	      main_core_events.EventEmitter.emit(im_const.EventType.textarea.setFocus);
 	    },
 	    onWelcomeFormSendSuccess: function onWelcomeFormSendSuccess() {
 	      this.welcomeFormFilled = true;
@@ -4008,10 +4372,129 @@
 	    onWelcomeFormSendError: function onWelcomeFormSendError(error) {
 	      console.error('onWelcomeFormSendError', error);
 	      this.welcomeFormFilled = true;
-	    }
+	    },
+	    onTextareaStartDrag: function onTextareaStartDrag(event) {
+	      this.textareaDragHandler.onStartDrag(event, this.textareaHeight);
+	      main_core_events.EventEmitter.emit(im_const.EventType.textarea.setBlur, true);
+	    },
+	    openDialogList: function openDialogList() {
+	      this.$store.commit('widget/common', {
+	        isCreateSessionMode: !this.widget.common.isCreateSessionMode
+	      });
+	      this.startNewChatMode = false;
+	    },
+	    onStartNewChat: function onStartNewChat() {
+	      this.startNewChatMode = true;
+	    },
+	    // endregion events
+	    // region helpers
+	    getApplication: function getApplication() {
+	      return this.$Bitrix.Application.get();
+	    },
+	    close: function close() {
+	      if (this.widget.common.pageMode) {
+	        return false;
+	      }
+
+	      this.onBeforeClose();
+	      this.$store.commit('widget/common', {
+	        showed: false
+	      });
+	    },
+	    // how much width and height we have for resizing
+	    getAvailableSpace: function getAvailableSpace() {
+	      var widgetMargin = 50;
+
+	      if (this.isBottomLocation()) {
+	        var bottomPosition = this.$refs.widgetWrapper.getBoundingClientRect().bottom;
+	        var widgetBottomMargin = window.innerHeight - bottomPosition;
+	        this.widgetAvailableHeight = window.innerHeight - widgetMargin - widgetBottomMargin;
+	      } else {
+	        var topPosition = this.$refs.widgetWrapper.getBoundingClientRect().top;
+	        this.widgetAvailableHeight = window.innerHeight - widgetMargin - topPosition;
+	      }
+
+	      this.widgetAvailableWidth = window.innerWidth - widgetMargin * 2;
+
+	      if (this.resizeHandler) {
+	        this.resizeHandler.setAvailableWidth(this.widgetAvailableWidth);
+	        this.resizeHandler.setAvailableHeight(this.widgetAvailableHeight);
+	      }
+	    },
+	    getTextareaDragHandler: function getTextareaDragHandler() {
+	      var _this4 = this,
+	          _TextareaDragHandler;
+
+	      return new im_eventHandler.TextareaDragHandler((_TextareaDragHandler = {}, babelHelpers.defineProperty(_TextareaDragHandler, im_eventHandler.TextareaDragHandler.events.onHeightChange, function (_ref) {
+	        var data = _ref.data;
+	        var newHeight = data.newHeight;
+
+	        if (_this4.textareaHeight !== newHeight) {
+	          _this4.textareaHeight = newHeight;
+	        }
+	      }), babelHelpers.defineProperty(_TextareaDragHandler, im_eventHandler.TextareaDragHandler.events.onStopDrag, function () {
+	        _this4.$store.commit('widget/common', {
+	          textareaHeight: _this4.textareaHeight
+	        });
+
+	        main_core_events.EventEmitter.emit(im_const.EventType.dialog.scrollToBottom, {
+	          chatId: _this4.chatId,
+	          force: true
+	        });
+	      }), _TextareaDragHandler));
+	    },
+	    getWidgetResizeHandler: function getWidgetResizeHandler() {
+	      var _this5 = this,
+	          _events;
+
+	      return new WidgetResizeHandler({
+	        widgetLocation: this.widget.common.location,
+	        availableWidth: this.widgetAvailableWidth,
+	        availableHeight: this.widgetAvailableHeight,
+	        events: (_events = {}, babelHelpers.defineProperty(_events, WidgetResizeHandler.events.onSizeChange, function (_ref2) {
+	          var data = _ref2.data;
+	          var newHeight = data.newHeight,
+	              newWidth = data.newWidth;
+
+	          if (_this5.widgetCurrentHeight !== newHeight) {
+	            _this5.widgetCurrentHeight = newHeight;
+	          }
+
+	          if (_this5.widgetCurrentWidth !== newWidth) {
+	            _this5.widgetCurrentWidth = newWidth;
+	          }
+	        }), babelHelpers.defineProperty(_events, WidgetResizeHandler.events.onStopResize, function () {
+	          _this5.widgetIsResizing = false;
+
+	          _this5.$store.commit('widget/common', {
+	            widgetHeight: _this5.widgetCurrentHeight,
+	            widgetWidth: _this5.widgetCurrentWidth
+	          });
+	        }), _events)
+	      });
+	    },
+	    isBottomLocation: function isBottomLocation() {
+	      return [LocationType.bottomLeft, LocationType.bottomMiddle, LocationType.bottomRight].includes(this.widget.common.location);
+	    },
+	    isPageMode: function isPageMode() {
+	      return this.widget.common.pageMode;
+	    },
+	    registerZIndex: function registerZIndex() {
+	      this.zIndexStackInstance = this.$Bitrix.Data.get('zIndexStack');
+
+	      if (this.zIndexStackInstance && !!this.$refs.widgetWrapper) {
+	        this.zIndexStackInstance.register(this.$refs.widgetWrapper);
+	      }
+	    },
+	    unregisterZIndex: function unregisterZIndex() {
+	      if (this.zIndexStackInstance) {
+	        this.zIndexStackInstance.unregister(this.$refs.widgetWrapper);
+	      }
+	    } // endregion helpers
+
 	  },
 	  // language=Vue
-	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-show\" leave-active-class=\"bx-livechat-close\" @after-leave=\"onAfterClose\">\n\t\t\t<div :class=\"widgetClassName\" v-if=\"widget.common.showed\" :style=\"{height: widgetHeightStyle, width: widgetWidthStyle, userSelect: userSelectStyle}\" ref=\"widgetWrapper\">\n\t\t\t\t<div class=\"bx-livechat-box\">\n\t\t\t\t\t<div v-if=\"isBottomLocation\" class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t<bx-livechat-head :isWidgetDisabled=\"widgetMobileDisabled\" @like=\"showLikeForm\" @openMenu=\"onOpenMenu\" @close=\"close\"/>\n\t\t\t\t\t<template v-if=\"widgetMobileDisabled\">\n\t\t\t\t\t\t<bx-livechat-body-orientation-disabled/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"application.error.active\">\n\t\t\t\t\t\t<bx-livechat-body-error/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"!widget.common.configId\">\n\t\t\t\t\t\t<div class=\"bx-livechat-body\" key=\"loading-body\">\n\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<div v-show=\"!widget.common.dialogStart\" class=\"bx-livechat-body\" :class=\"{'bx-livechat-body-with-scroll': showWelcomeForm}\" key=\"welcome-body\">\n\t\t\t\t\t\t\t<bx-imopenlines-form\n\t\t\t\t\t\t\t  v-show=\"showWelcomeForm\"\n\t\t\t\t\t\t\t  @formSendSuccess=\"onWelcomeFormSendSuccess\"\n\t\t\t\t\t\t\t  @formSendError=\"onWelcomeFormSendError\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t<template v-if=\"!showWelcomeForm\">\n\t\t\t\t\t\t\t\t<bx-livechat-body-operators/>\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm === FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<template v-if=\"widget.common.dialogStart\">\n\t\t\t\t\t\t\t<bx-pull-component-status :canReconnect=\"true\" @reconnect=\"onPullRequestConfig\"/>\n\t\t\t\t\t\t\t<div :class=\"['bx-livechat-body', {'bx-livechat-body-with-message': showMessageDialog}]\" key=\"with-message\">\n\t\t\t\t\t\t\t\t<template v-if=\"showMessageDialog\">\n\t\t\t\t\t\t\t\t\t<div class=\"bx-livechat-dialog\">\n\t\t\t\t\t\t\t\t\t\t<bx-im-component-dialog\n\t\t\t\t\t\t\t\t\t\t\t:userId=\"application.common.userId\"\n\t\t\t\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t\t\t\t:messageLimit=\"application.dialog.messageLimit\"\n\t\t\t\t\t\t\t\t\t\t\t:enableReactions=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableDateActions=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableCreateContent=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureQuote=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureMenu=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageAvatar=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageMenu=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:skipDataRequest=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:showLoadingState=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:showEmptyState=\"false\"\n\t\t\t\t\t\t\t\t\t\t />\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t\t\t</template>\n\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm === FormType.like && widget.common.vote.enable\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-vote/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.welcome\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-welcome/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.offline\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-offline/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.history\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-history/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t\t<div v-if=\"showTextarea\" class=\"bx-livechat-textarea\" :style=\"[textareaHeightStyle, textareaBottomMargin]\" ref=\"textarea\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-textarea-resize-handle\" @mousedown=\"onTextareaStartDrag\" @touchstart=\"onTextareaStartDrag\"></div>\n\t\t\t\t\t\t\t<bx-im-component-textarea\n\t\t\t\t\t\t\t\t:siteId=\"application.common.siteId\"\n\t\t\t\t\t\t\t\t:userId=\"application.common.userId\"\n\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t:writesEventLetter=\"3\"\n\t\t\t\t\t\t\t\t:enableEdit=\"true\"\n\t\t\t\t\t\t\t\t:enableCommand=\"false\"\n\t\t\t\t\t\t\t\t:enableMention=\"false\"\n\t\t\t\t\t\t\t\t:enableFile=\"application.disk.enabled\"\n\t\t\t\t\t\t\t\t:autoFocus=\"application.device.type !== DeviceType.mobile\"\n\t\t\t\t\t\t\t\t:styles=\"{button: {backgroundColor: widget.common.styles.backgroundColor, iconColor: widget.common.styles.iconColor}}\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div v-if=\"!widget.common.copyright && !isBottomLocation\" class=\"bx-livechat-nocopyright-resize-wrap\" style=\"position: relative;\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<bx-livechat-form-consent @agree=\"agreeConsentWidow\" @disagree=\"disagreeConsentWidow\"/>\n\t\t\t\t\t\t<template v-if=\"widget.common.copyright\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-copyright\">\n\t\t\t\t\t\t\t\t<template v-if=\"widget.common.copyrightUrl\">\n\t\t\t\t\t\t\t\t\t<a class=\"bx-livechat-copyright-link\" :href=\"widget.common.copyrightUrl\" target=\"_blank\">\n\t\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<div v-if=\"!isBottomLocation\" class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</template>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\n\t"
+	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-show\" leave-active-class=\"bx-livechat-close\" @after-leave=\"onAfterClose\">\n\t\t\t<div\n\t\t\t\t:class=\"widgetClassName\"\n\t\t\t\tv-if=\"widget.common.showed\"\n\t\t\t\t:style=\"{height: widgetHeightStyle, width: widgetWidthStyle, userSelect: userSelectStyle}\"\n\t\t\t\tclass=\"bx-livechat-wrapper bx-livechat-show\"\n\t\t\t\tref=\"widgetWrapper\"\n\t\t\t>\n\t\t\t\t<div class=\"bx-livechat-box\">\n\t\t\t\t\t<div v-if=\"isBottomLocation() && !isPageMode()\" class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t<bx-livechat-head \n\t\t\t\t\t\t:isWidgetDisabled=\"widgetMobileDisabled\" \n\t\t\t\t\t\t@openMenu=\"onOpenMenu\" \n\t\t\t\t\t\t@close=\"close\"\n\t\t\t\t\t\t@openDialogList=\"openDialogList\"\n\t\t\t\t\t/>\n\t\t\t\t\t<template v-if=\"widgetMobileDisabled\">\n\t\t\t\t\t\t<bx-livechat-body-orientation-disabled/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"application.error.active\">\n\t\t\t\t\t\t<bx-livechat-body-error/>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else-if=\"!widget.common.configId\">\n\t\t\t\t\t\t<div class=\"bx-livechat-body\" key=\"loading-body\">\n\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<div v-show=\"!widget.common.dialogStart\" class=\"bx-livechat-body\" :class=\"{'bx-livechat-body-with-scroll': showWelcomeForm}\" key=\"welcome-body\">\n\t\t\t\t\t\t\t<bx-imopenlines-form\n\t\t\t\t\t\t\t  v-show=\"showWelcomeForm\"\n\t\t\t\t\t\t\t  @formSendSuccess=\"onWelcomeFormSendSuccess\"\n\t\t\t\t\t\t\t  @formSendError=\"onWelcomeFormSendError\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t\t<template v-if=\"!showWelcomeForm\">\n\t\t\t\t\t\t\t\t<bx-livechat-body-operators/>\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm === FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<template v-if=\"widget.common.dialogStart\">\n\t\t\t\t\t\t\t<bx-pull-component-status :canReconnect=\"true\" @reconnect=\"onPullRequestConfig\"/>\n\t\t\t\t\t\t\t<div :class=\"['bx-livechat-body', {'bx-livechat-body-with-message': showMessageDialog}]\" key=\"with-message\">\n\t\t\t\t\t\t\t\t<template v-if=\"widget.common.isCreateSessionMode\">\n\t\t\t\t\t\t\t\t\t<bx-livechat-dialogues-list @startNewChat=\"onStartNewChat\"/>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else-if=\"showMessageDialog\">\n\t\t\t\t\t\t\t\t\t<div class=\"bx-livechat-dialog\">\n\t\t\t\t\t\t\t\t\t\t<bx-im-component-dialog\n\t\t\t\t\t\t\t\t\t\t\t:userId=\"application.common.userId\"\n\t\t\t\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t\t\t\t:messageLimit=\"application.dialog.messageLimit\"\n\t\t\t\t\t\t\t\t\t\t\t:enableReactions=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableDateActions=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableCreateContent=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureQuote=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:enableGestureMenu=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageAvatar=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:showMessageMenu=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:skipDataRequest=\"true\"\n\t\t\t\t\t\t\t\t\t\t\t:showLoadingState=\"false\"\n\t\t\t\t\t\t\t\t\t\t\t:showEmptyState=\"false\"\n\t\t\t\t\t\t\t\t\t\t />\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<bx-livechat-body-loading/>\n\t\t\t\t\t\t\t\t</template>\n\n\t\t\t\t\t\t\t\t<keep-alive include=\"bx-livechat-smiles\">\n\t\t\t\t\t\t\t\t\t<template v-if=\"widget.common.showForm === FormType.like && widget.common.vote.enable\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-vote/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.welcome\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-welcome/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.offline\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-offline/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.history\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-form-history/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t\t<template v-else-if=\"widget.common.showForm === FormType.smile\">\n\t\t\t\t\t\t\t\t\t\t<bx-livechat-smiles @selectSmile=\"onSmilesSelectSmile\" @selectSet=\"onSmilesSelectSet\"/>\n\t\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t</keep-alive>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t\t<div v-if=\"showTextarea || startNewChatMode\" class=\"bx-livechat-textarea\" :style=\"[textareaHeightStyle, textareaBottomMargin]\" ref=\"textarea\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-textarea-resize-handle\" @mousedown=\"onTextareaStartDrag\" @touchstart=\"onTextareaStartDrag\"></div>\n\t\t\t\t\t\t\t<bx-im-component-textarea\n\t\t\t\t\t\t\t\t:siteId=\"application.common.siteId\"\n\t\t\t\t\t\t\t\t:userId=\"application.common.userId\"\n\t\t\t\t\t\t\t\t:dialogId=\"application.dialog.dialogId\"\n\t\t\t\t\t\t\t\t:writesEventLetter=\"3\"\n\t\t\t\t\t\t\t\t:enableEdit=\"true\"\n\t\t\t\t\t\t\t\t:enableCommand=\"false\"\n\t\t\t\t\t\t\t\t:enableMention=\"false\"\n\t\t\t\t\t\t\t\t:enableFile=\"application.disk.enabled\"\n\t\t\t\t\t\t\t\t:autoFocus=\"application.device.type !== DeviceType.mobile\"\n\t\t\t\t\t\t\t\t:styles=\"{button: {backgroundColor: widget.common.styles.backgroundColor, iconColor: widget.common.styles.iconColor}}\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div v-if=\"!widget.common.copyright && !isBottomLocation\" class=\"bx-livechat-nocopyright-resize-wrap\" style=\"position: relative;\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<bx-livechat-form-consent />\n\t\t\t\t\t\t<template v-if=\"widget.common.copyright\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-copyright\">\n\t\t\t\t\t\t\t\t<template v-if=\"widget.common.copyrightUrl\">\n\t\t\t\t\t\t\t\t\t<a class=\"bx-livechat-copyright-link\" :href=\"widget.common.copyrightUrl\" target=\"_blank\">\n\t\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-name\">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>\n\t\t\t\t\t\t\t\t\t<span class=\"bx-livechat-logo-icon\"></span>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<div v-if=\"!isBottomLocation() && !isPageMode()\" class=\"bx-livechat-widget-resize-handle\" @mousedown=\"onWidgetStartDrag\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</template>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\n\t"
 	});
 
 	function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -4040,12 +4523,24 @@
 	      "default": false
 	    }
 	  },
+	  data: function data() {
+	    return {
+	      multiDialog: false // disabled because of beta status
+
+	    };
+	  },
 	  methods: {
+	    openDialogList: function openDialogList() {
+	      main_core_events.EventEmitter.emit(WidgetEventType.hideForm);
+	      this.$emit('openDialogList');
+	    },
 	    close: function close(event) {
 	      this.$emit('close');
 	    },
-	    like: function like(event) {
-	      this.$emit('like');
+	    like: function like() {
+	      main_core_events.EventEmitter.emit(WidgetEventType.showForm, {
+	        type: FormType.like
+	      });
 	    },
 	    openMenu: function openMenu(event) {
 	      this.$emit('openMenu', event);
@@ -4136,7 +4631,7 @@
 	    }
 	  },
 	  //language=Vue
-	  template: "\n\t\t<div class=\"bx-livechat-head-wrap\">\n\t\t\t<template v-if=\"isWidgetDisabled\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\t\n\t\t\t</template>\n\t\t\t<template v-else-if=\"application.error.active\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-else-if=\"!widget.common.configId\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\t\t\t\n\t\t\t<template v-else>\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<template v-if=\"!showName\">\n\t\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<div class=\"bx-livechat-user bx-livechat-status-online\">\n\t\t\t\t\t\t\t<template v-if=\"widget.dialog.operator.avatar\">\n\t\t\t\t\t\t\t\t<div class=\"bx-livechat-user-icon\" :style=\"'background-image: url('+encodeURI(widget.dialog.operator.avatar)+')'\">\n\t\t\t\t\t\t\t\t\t<div v-if=\"widget.dialog.operator.online\" class=\"bx-livechat-user-status\" :style=\"customBackgroundOnlineStyle\"></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t<div class=\"bx-livechat-user-icon\">\n\t\t\t\t\t\t\t\t\t<div v-if=\"widget.dialog.operator.online\" class=\"bx-livechat-user-status\" :style=\"customBackgroundOnlineStyle\"></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-livechat-user-info\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-user-name\">{{operatorName}}</div>\n\t\t\t\t\t\t\t<div class=\"bx-livechat-user-position\">{{operatorDescription}}</div>\t\t\t\t\t\t\t\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<span class=\"bx-livechat-control-box-active\" v-if=\"widget.common.dialogStart && widget.dialog.sessionId\">\n\t\t\t\t\t\t\t<button v-if=\"widget.common.vote.enable && voteActive\" :class=\"'bx-livechat-control-btn bx-livechat-control-btn-like bx-livechat-dialog-vote-'+(widget.dialog.userVote)\" :title=\"localize.BX_LIVECHAT_VOTE_BUTTON\" @click=\"like\"></button>\n\t\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t\tv-if=\"!ie11 && application.dialog.chatId > 0\"\n\t\t\t\t\t\t\t\tclass=\"bx-livechat-control-btn bx-livechat-control-btn-menu\"\n\t\t\t\t\t\t\t\t@click=\"openMenu\"\n\t\t\t\t\t\t\t\t:title=\"localize.BX_LIVECHAT_DOWNLOAD_HISTORY\"\n\t\t\t\t\t\t\t></button>\n\t\t\t\t\t\t</span>\t\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"bx-livechat-head-wrap\">\n\t\t\t<template v-if=\"isWidgetDisabled\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\t\n\t\t\t</template>\n\t\t\t<template v-else-if=\"application.error.active\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-else-if=\"!widget.common.configId\">\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\t\t\t\n\t\t\t<template v-else>\n\t\t\t\t<div class=\"bx-livechat-head\" :style=\"customBackgroundStyle\">\n\t\t\t\t\t<template v-if=\"!showName\">\n\t\t\t\t\t\t<div class=\"bx-livechat-title\">{{chatTitle}}</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t<div class=\"bx-livechat-user bx-livechat-status-online\">\n\t\t\t\t\t\t\t<template v-if=\"widget.dialog.operator.avatar\">\n\t\t\t\t\t\t\t\t<div class=\"bx-livechat-user-icon\" :style=\"'background-image: url('+encodeURI(widget.dialog.operator.avatar)+')'\">\n\t\t\t\t\t\t\t\t\t<div v-if=\"widget.dialog.operator.online\" class=\"bx-livechat-user-status\" :style=\"customBackgroundOnlineStyle\"></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t<div class=\"bx-livechat-user-icon\">\n\t\t\t\t\t\t\t\t\t<div v-if=\"widget.dialog.operator.online\" class=\"bx-livechat-user-status\" :style=\"customBackgroundOnlineStyle\"></div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"bx-livechat-user-info\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-user-name\">{{operatorName}}</div>\n\t\t\t\t\t\t\t<div class=\"bx-livechat-user-position\">{{operatorDescription}}</div>\t\t\t\t\t\t\t\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<div class=\"bx-livechat-control-box\">\n\t\t\t\t\t\t<span class=\"bx-livechat-control-box-active\" v-if=\"widget.common.dialogStart && widget.dialog.sessionId\">\n\t\t\t\t\t\t\t<button v-if=\"widget.common.vote.enable && voteActive\" :class=\"'bx-livechat-control-btn bx-livechat-control-btn-like bx-livechat-dialog-vote-'+(widget.dialog.userVote)\" :title=\"localize.BX_LIVECHAT_VOTE_BUTTON\" @click=\"like\"></button>\n\t\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t\tv-if=\"!ie11 && application.dialog.chatId > 0\"\n\t\t\t\t\t\t\t\tclass=\"bx-livechat-control-btn bx-livechat-control-btn-menu\"\n\t\t\t\t\t\t\t\t@click=\"openMenu\"\n\t\t\t\t\t\t\t\t:title=\"localize.BX_LIVECHAT_DOWNLOAD_HISTORY\"\n\t\t\t\t\t\t\t></button>\n\t\t\t\t\t\t\t<button\n\t\t\t\t\t\t\t\tv-if=\"multiDialog && application.dialog.chatId > 0\"\n\t\t\t\t\t\t\t\tclass=\"bx-livechat-control-btn bx-livechat-control-btn-list\"\n\t\t\t\t\t\t\t\t@click=\"openDialogList\"\n\t\t\t\t\t\t\t></button>\n\t\t\t\t\t\t</span>\t\n\t\t\t\t\t\t<button v-if=\"!widget.common.pageMode\" class=\"bx-livechat-control-btn bx-livechat-control-btn-close\" :title=\"localize.BX_LIVECHAT_CLOSE_BUTTON\" @click=\"close\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</div>\n\t"
 	});
 
 	/**
@@ -4163,6 +4658,88 @@
 	  template: "\n\t\t<div class=\"bx-livechat-help-container\">\n\t\t\t<transition name=\"bx-livechat-animation-fade\">\n\t\t\t\t<h2 v-if=\"widget.common.online\" key=\"online\" class=\"bx-livechat-help-title bx-livechat-help-title-lg\">{{widget.common.textMessages.bxLivechatOnlineLine1}}<div class=\"bx-livechat-help-subtitle\">{{widget.common.textMessages.bxLivechatOnlineLine2}}</div></h2>\n\t\t\t\t<h2 v-else key=\"offline\" class=\"bx-livechat-help-title bx-livechat-help-title-sm\">{{widget.common.textMessages.bxLivechatOffline}}</h2>\n\t\t\t</transition>\t\n\t\t\t<div class=\"bx-livechat-help-user\">\n\t\t\t\t<template v-for=\"operator in widget.common.operators\">\n\t\t\t\t\t<div class=\"bx-livechat-user\" :key=\"operator.id\">\n\t\t\t\t\t\t<template v-if=\"operator.avatar\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-user-icon\" :style=\"'background-image: url('+encodeURI(operator.avatar)+')'\"></div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t<div class=\"bx-livechat-user-icon\"></div>\n\t\t\t\t\t\t</template>\t\n\t\t\t\t\t\t<div class=\"bx-livechat-user-info\">\n\t\t\t\t\t\t\t<div class=\"bx-livechat-user-name\">{{operator.firstName? operator.firstName: operator.name}}</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\t\n\t\t\t</div>\n\t\t</div>\n\t"
 	});
 
+	function ownKeys$5(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread$5(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$5(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$5(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+	ui_vue.BitrixVue.component('bx-livechat-dialogues-list', {
+	  data: function data() {
+	    return {
+	      newChatMode: false,
+	      sessionList: [],
+	      isLoading: false,
+	      pagesLoaded: 0,
+	      hasMoreItemsToLoad: true,
+	      itemsPerPage: 25
+	    };
+	  },
+	  computed: _objectSpread$5({}, ui_vue_vuex.Vuex.mapState({
+	    dialogues: function dialogues(state) {
+	      return state.dialogues;
+	    }
+	  })),
+	  mounted: function mounted() {
+	    this.requestDialogList();
+	  },
+	  methods: {
+	    requestDialogList: function requestDialogList() {
+	      var _this = this;
+
+	      var offset = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+	      this.isLoading = true;
+	      var requestParams = {
+	        'CONFIG_ID': this.$Bitrix.Application.get().getConfigId()
+	      };
+
+	      if (offset > 0) {
+	        requestParams['OFFSET'] = offset;
+	      }
+
+	      return this.$Bitrix.Application.get().controller.restClient.callMethod(RestMethod.widgetDialogList, requestParams).then(function (result) {
+	        if (result.data().length === 0 || result.data().length < _this.itemsPerPage) {
+	          _this.hasMoreItemsToLoad = false;
+	        }
+
+	        _this.pagesLoaded++;
+	        _this.isLoading = false;
+	        _this.sessionList = [].concat(babelHelpers.toConsumableArray(_this.sessionList), babelHelpers.toConsumableArray(_this.prepareSessionList(result.data())));
+	      })["catch"](function (error) {
+	        console.warn('error', error);
+	      });
+	    },
+	    prepareSessionList: function prepareSessionList(sessionList) {
+	      return Object.values(sessionList).map(function (dialog) {
+	        return {
+	          chatId: dialog.chatId,
+	          dialogId: dialog.dialogId,
+	          name: "Dialog #".concat(dialog.sessionId)
+	        };
+	      });
+	    },
+	    openSession: function openSession(event) {
+	      main_core_events.EventEmitter.emit(WidgetEventType.openSession, event);
+	    },
+	    startNewChat: function startNewChat(event) {
+	      this.newChatMode = true;
+	      this.$emit('startNewChat', event);
+	    },
+	    isOneScreenRemaining: function isOneScreenRemaining(event) {
+	      return event.target.scrollTop + event.target.clientHeight >= event.target.scrollHeight - event.target.clientHeight;
+	    },
+	    onScroll: function onScroll(event) {
+	      if (this.isOneScreenRemaining(event)) {
+	        if (this.isLoading || !this.hasMoreItemsToLoad) {
+	          return;
+	        }
+
+	        var offset = this.itemsPerPage * this.pagesLoaded;
+	        this.requestDialogList(offset);
+	      }
+	    }
+	  },
+	  // language=Vue
+	  template: "\n\t<div class=\"bx-livechat-help-container\" style=\" height: 100%; display: flex; flex-direction: column; justify-content: space-between;\">\n\t\t<div \n\t\t\tstyle=\"margin-top: 25px;overflow-y: scroll;position:relative\"\n\t\t\t:style=\"{marginBottom: newChatMode ? 0 : '10px'}\"\n\t\t\t@scroll=\"onScroll\"\n\t\t>\n\t\t\t<div\n\t\t\t\tv-for=\"session in sessionList\"\n\t\t\t\t:key=\"session.chatId\"\n\t\t\t\tclass=\"bx-livechat-help-subtitle\"\n\t\t\t\t@click=\"openSession({event: $event, session: session})\"\n\t\t\t\tstyle=\"cursor: pointer; border: solid 1px black;border-radius: 10px;margin: 10px;padding: 5px;background-color: #0ae4ff\">\n\t\t\t\t{{ session.name }}\n\t\t\t</div>\n\t\t\t<div v-if=\"isLoading\" style=\"margin: 10px\">Loading</div>\n\t\t</div>\n\t\t\n\t\t<div v-if=\"!newChatMode\" style=\"margin-bottom: 10px;\">\n\t\t\t<button \n\t\t\t\tclass=\"bx-livechat-btn\" \n\t\t\t\tstyle=\"background-color: rgb(23, 163, 234); border-radius: 5px;width: 150px;\" \n\t\t\t\t@click=\"startNewChat\">\n\t\t\t\tStart new chat!\n\t\t\t</button>\n\t\t</div>\n\t</div>\n\t"
+	});
+
 	/**
 	 * Bitrix OpenLines widget
 	 * Body orientation disabled component (Vue component)
@@ -4175,29 +4752,21 @@
 	  template: "\n\t\t<div class=\"bx-livechat-body\" key=\"orientation-head\">\n\t\t\t<div class=\"bx-livechat-mobile-orientation-box\">\n\t\t\t\t<div class=\"bx-livechat-mobile-orientation-icon\"></div>\n\t\t\t\t<div class=\"bx-livechat-mobile-orientation-text\">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_MOBILE_ROTATE')}}</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	});
 
-	function ownKeys$5(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function ownKeys$6(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 
-	function _objectSpread$5(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$5(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$5(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+	function _objectSpread$6(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$6(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$6(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.BitrixVue.component('bx-livechat-form-consent', {
-	  /**
-	   * @emits 'agree' {event: object} -- 'event' - click event
-	   * @emits 'disagree' {event: object} -- 'event' - click event
-	   */
-	  computed: _objectSpread$5({}, ui_vue_vuex.Vuex.mapState({
+	  computed: _objectSpread$6({}, ui_vue_vuex.Vuex.mapState({
 	    widget: function widget(state) {
 	      return state.widget;
 	    }
 	  })),
 	  methods: {
-	    agree: function agree(event) {
-	      this.$emit('agree', {
-	        event: event
-	      });
+	    agree: function agree() {
+	      main_core_events.EventEmitter.emit(WidgetEventType.acceptConsent);
 	    },
-	    disagree: function disagree(event) {
-	      this.$emit('disagree', {
-	        event: event
-	      });
+	    disagree: function disagree() {
+	      main_core_events.EventEmitter.emit(WidgetEventType.declineConsent);
 	    },
 	    onShow: function onShow(element, done) {
 	      element.classList.add('bx-livechat-consent-window-show');
@@ -4254,11 +4823,11 @@
 	  template: "\n\t\t<transition @enter=\"onShow\" @leave=\"onHide\">\n\t\t\t<template v-if=\"widget.common.showConsent && widget.common.consentUrl\">\n\t\t\t\t<div class=\"bx-livechat-consent-window\">\n\t\t\t\t\t<div class=\"bx-livechat-consent-window-title\">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_CONSENT_TITLE')}}</div>\n\t\t\t\t\t<div class=\"bx-livechat-consent-window-content\">\n\t\t\t\t\t\t<iframe class=\"bx-livechat-consent-window-content-iframe\" ref=\"iframe\" frameborder=\"0\" marginheight=\"0\"  marginwidth=\"0\" allowtransparency=\"allow-same-origin\" seamless=\"true\" :src=\"widget.common.consentUrl\" @keydown=\"onKeyDown\"></iframe>\n\t\t\t\t\t</div>\t\t\t\t\t\t\t\t\n\t\t\t\t\t<div class=\"bx-livechat-consent-window-btn-box\">\n\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-success\" ref=\"success\" @click=\"agree\" @keydown=\"onKeyDown\" v-focus>{{$Bitrix.Loc.getMessage('BX_LIVECHAT_CONSENT_AGREE')}}</button>\n\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-cancel\" ref=\"cancel\" @click=\"disagree\" @keydown=\"onKeyDown\">{{$Bitrix.Loc.getMessage('BX_LIVECHAT_CONSENT_DISAGREE')}}</button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</transition>\n\t"
 	});
 
-	function ownKeys$6(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+	function ownKeys$7(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 
-	function _objectSpread$6(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$6(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$6(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+	function _objectSpread$7(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$7(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$7(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	ui_vue.BitrixVue.component('bx-livechat-form-vote', {
-	  computed: _objectSpread$6({
+	  computed: _objectSpread$7({
 	    VoteType: function VoteType$$1() {
 	      return VoteType;
 	    }
@@ -4269,16 +4838,16 @@
 	  })),
 	  methods: {
 	    userVote: function userVote(vote) {
-	      this.$store.commit('widget/common', {
-	        showForm: FormType.none
-	      });
+	      main_core_events.EventEmitter.emit(WidgetEventType.hideForm);
 	      this.$store.commit('widget/dialog', {
 	        userVote: vote
 	      });
-	      this.$Bitrix.Application.get().sendDialogVote(vote);
+	      main_core_events.EventEmitter.emit(WidgetEventType.sendDialogVote, {
+	        vote: vote
+	      });
 	    },
-	    hideForm: function hideForm(event) {
-	      this.$parent.hideForm();
+	    hideForm: function hideForm() {
+	      main_core_events.EventEmitter.emit(WidgetEventType.hideForm);
 	    }
 	  },
 	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-consent-window-show\" leave-active-class=\"bx-livechat-form-close\">\n\t\t\t<div class=\"bx-livechat-alert-box bx-livechat-form-rate-show\" key=\"vote\">\n\t\t\t\t<div class=\"bx-livechat-alert-close\" @click=\"hideForm\"></div>\n\t\t\t\t<div class=\"bx-livechat-alert-rate-box\">\n\t\t\t\t\t<h4 class=\"bx-livechat-alert-title bx-livechat-alert-title-mdl\">{{widget.common.vote.messageText}}</h4>\n\t\t\t\t\t<div class=\"bx-livechat-btn-box\">\n\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-like\" @click=\"userVote(VoteType.like)\" :title=\"widget.common.vote.messageLike\"></button>\n\t\t\t\t\t\t<button class=\"bx-livechat-btn bx-livechat-btn-dislike\" @click=\"userVote(VoteType.dislike)\" :title=\"widget.common.vote.messageDislike\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\t\n\t"
@@ -4294,8 +4863,8 @@
 	 */
 	ui_vue.Vue.cloneComponent('bx-livechat-smiles', 'bx-smiles', {
 	  methods: {
-	    hideForm: function hideForm(event) {
-	      this.$parent.hideForm();
+	    hideForm: function hideForm() {
+	      main_core_events.EventEmitter.emit(WidgetEventType.hideForm);
 	    }
 	  },
 	  template: "\n\t\t<transition enter-active-class=\"bx-livechat-consent-window-show\" leave-active-class=\"bx-livechat-form-close\">\n\t\t\t<div class=\"bx-livechat-alert-box bx-livechat-alert-box-zero-padding bx-livechat-form-show\" key=\"vote\">\n\t\t\t\t<div class=\"bx-livechat-alert-close\" @click=\"hideForm\"></div>\n\t\t\t\t<div class=\"bx-livechat-alert-smiles-box\">\n\t\t\t\t\t#PARENT_TEMPLATE#\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</transition>\n\t"
@@ -4318,5 +4887,5 @@
 	  detail: {}
 	}));
 
-}((this.window = this.window || {}),BX,window,window,BX.Messenger,window,BX,window,window,BX,BX.Messenger.Provider.Rest,BX,BX,BX.Ui.Vue.Components.Crm,BX.Messenger,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Mixin,BX,BX.Event,BX.Messenger.Const,BX,BX,BX));
+}((this.window = this.window || {}),BX,window,window,BX.Messenger,window,BX,window,window,BX,BX.Messenger.Provider.Rest,BX.Main,BX,BX.Ui.Vue.Components.Crm,BX.Messenger,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX,BX,BX.Messenger.Lib,BX.Messenger,BX.Messenger.Const,BX,BX,BX,BX.Event));
 //# sourceMappingURL=widget.bundle.js.map

@@ -17,17 +17,6 @@ Library::loadMessages();
 
 class Input
 {
-	public const AVAILABLE_BASE_METHODS_RECEIVING =
-		[
-			'testConnect',
-			'receivingMessage',
-			'receivingStatusDelivery',
-			'receivingStatusReading',
-			'receivingError',
-			'receivingStatusBlock',
-			'deactivateConnector'
-		];
-
 	protected const TYPE_BITRIX24 = 'B24';
 	protected const TYPE_CP = 'CP';
 

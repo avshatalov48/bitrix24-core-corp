@@ -36,6 +36,7 @@
 	padding: 20px;
 	width: 100%;
 	background-color: #fae5e8;
+	border-radius: var(--ui-border-radius-2xs);
 	color: #d0011b;
 	box-sizing: border-box;
 	font: 400 14px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;

@@ -5,9 +5,13 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Location\Entity\Source\ConfigItem;
 use Bitrix\Location;
 
-\CJsCore::init(array('access'));
-
-\Bitrix\Main\UI\Extension::load(['ui.hint', 'ui.dialogs.messagebox']);
+\Bitrix\Main\UI\Extension::load([
+	'access',
+	'ui.hint',
+	'ui.dialogs.messagebox',
+	'ui.forms',
+	'ui.alerts'
+]);
 
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 
@@ -36,26 +40,38 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 		<?if ($arResult["IS_BITRIX24"]):?>
 		<tr>
 			<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_COMPANY_NAME')?></td>
-			<td class="content-edit-form-field-input"><input type="text" name="logo_name" value="<?=htmlspecialcharsbx(COption::GetOptionString("main", "site_name", ""));?>"  class="content-edit-form-field-input-text"/></td>
+			<td class="content-edit-form-field-input">
+				<div class="ui-ctl ui-ctl-textbox">
+					<input type="text" class="ui-ctl-element" name="logo_name" value="<?=htmlspecialcharsbx(COption::GetOptionString("main", "site_name", ""));?>"/>
+				</div>
+			</td>
 			<td class="content-edit-form-field-error"></td>
 		</tr>
 		<?endif?>
 
 		<tr>
 			<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_COMPANY_TITLE_NAME')?></td>
-			<td class="content-edit-form-field-input"><input type="text" name="site_title" value="<?=htmlspecialcharsbx(COption::GetOptionString("bitrix24", "site_title", ""));?>"  class="content-edit-form-field-input-text"/></td>
+			<td class="content-edit-form-field-input">
+				<div class="ui-ctl ui-ctl-textbox">
+					<input type="text" class="ui-ctl-element" name="site_title" value="<?=htmlspecialcharsbx(COption::GetOptionString("bitrix24", "site_title", ""));?>" />
+				</div>
+			</td>
 			<td class="content-edit-form-field-error"></td>
 		</tr>
 
 		<tr>
 			<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('config_rating_label_likeY')?></td>
-			<td class="content-edit-form-field-input"><input type="text" name="rating_text_like_y" value="<?=htmlspecialcharsbx(COption::GetOptionString("main", "rating_text_like_y", ""));?>"  class="content-edit-form-field-input-text"/></td>
+			<td class="content-edit-form-field-input">
+				<div class="ui-ctl ui-ctl-textbox">
+					<input class="ui-ctl-element" type="text" name="rating_text_like_y" value="<?=htmlspecialcharsbx(COption::GetOptionString("main", "rating_text_like_y", ""));?>" />
+				</div>
+			</td>
 			<td class="content-edit-form-field-error"></td>
 		</tr>
 		<!--
 		<tr>
 			<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('config_rating_label_likeN')?></td>
-			<td class="content-edit-form-field-input"><input type="text" name="rating_text_like_n" value="<?=htmlspecialcharsbx(COption::GetOptionString("main", "rating_text_like_n", ""));?>"  class="content-edit-form-field-input-text"/></td>
+			<td class="content-edit-form-field-input"><input type="text" name="rating_text_like_n" value="<?=htmlspecialcharsbx(COption::GetOptionString("main", "rating_text_like_n", ""));?>"/></td>
 			<td class="content-edit-form-field-error"></td>
 		</tr>
 		-->
@@ -63,7 +79,11 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 		<?if ($arResult["IS_BITRIX24"]):?>
 		<tr>
 			<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_EMAIL_FROM')?></td>
-			<td class="content-edit-form-field-input"><input type="text" name="email_from" value="<?=htmlspecialcharsbx(COption::GetOptionString("main", "email_from", ""));?>"  class="content-edit-form-field-input-text"/></td>
+			<td class="content-edit-form-field-input">
+				<div class="ui-ctl ui-ctl-textbox">
+					<input class="ui-ctl-element" type="text" name="email_from" value="<?=htmlspecialcharsbx(COption::GetOptionString("main", "email_from", ""));?>"/>
+				</div>
+			</td>
 			<td class="content-edit-form-field-error"></td>
 		</tr>
 		<?endif?>
@@ -98,19 +118,22 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 		<tr data-field-id="congig_date">
 			<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_DATE_FORMAT')?></td>
 			<td class="content-edit-form-field-input">
-				<select name="cultureId" data-role="culture-selector">
-					<?foreach($arResult['CULTURES'] as $culture):?>
-					<option
-						value="<?=$culture['ID']?>"
-						data-value="<?=$culture['CODE']?>"
-						<?if ($culture['ID'] === $arResult['CURRENT_CULTURE_ID']) echo 'selected'?>
-					>
-						<?=$culture['NAME']?>
-					</option>
-					<?endforeach?>
-				</select>
-				<div class="config_notify_message">
-					<?=Loc::getMessage('CONFIG_EXAMPLE')?>:
+				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown">
+					<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+					<select name="cultureId" data-role="culture-selector" class="ui-ctl-element">
+						<?foreach($arResult['CULTURES'] as $culture):?>
+						<option
+							value="<?=$culture['ID']?>"
+							data-value="<?=$culture['CODE']?>"
+							<?if ($culture['ID'] === $arResult['CURRENT_CULTURE_ID']) echo 'selected'?>
+						>
+							<?=$culture['NAME']?>
+						</option>
+						<?endforeach?>
+					</select>
+				</div>
+				<div class="ui-alert ui-alert-warning" style="margin-top: 5px">
+					<div class="ui-alert-message"><?=Loc::getMessage('CONFIG_EXAMPLE')?>:
 					<div>
 						<span data-role="culture-short-date-format">
 							<?=$arResult['CULTURES'][$arResult['CURRENT_CULTURE_ID']]['SHORT_DATE_FORMAT']?>
@@ -121,6 +144,7 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 							<?=$arResult['CULTURES'][$arResult['CURRENT_CULTURE_ID']]['LONG_DATE_FORMAT']?>
 						</span>
 					</div>
+				</div>
 				</div>
 			</td>
 			<td class="content-edit-form-field-error"></td>
@@ -141,21 +165,27 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 		<tr data-field-id="config_time">
 			<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_NAME_FORMAT')?></td>
 			<td class="content-edit-form-field-input">
-				<select name="" onchange="if(this.value != 'other'){this.form.FORMAT_NAME.value = this.value;this.form.FORMAT_NAME.style.display='none';} else {this.form.FORMAT_NAME.style.display='block';}">
-					<?
-					$formatExists = false;
-					foreach ($arResult["NAME_FORMATS"] as $template => $value)
-					{
-						if ($template == $arResult["CUR_NAME_FORMAT"])
-							$formatExists = true;
+				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown">
+					<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+					<select class="ui-ctl-element" name="" onchange="if(this.value != 'other'){this.form.FORMAT_NAME.value = this.value;this.form.FORMAT_NAME.parentNode.parentNode.style.display='none';} else {this.form.FORMAT_NAME.parentNode.parentNode.style.display='block';}">
+						<?
+						$formatExists = false;
+						foreach ($arResult["NAME_FORMATS"] as $template => $value)
+						{
+							if ($template == $arResult["CUR_NAME_FORMAT"])
+								$formatExists = true;
 
-						echo '<option value="'.$template.'"'.($template == $arResult["CUR_NAME_FORMAT"] ? ' selected' : '').'>'.htmlspecialcharsex($value).'</option>'."\n";
-					}
-					?>
-					<option value="other" <?=($formatExists ? '' : "selected")?>><?echo GetMessage("CONFIG_CULTURE_OTHER")?></option>
-				</select>
-
-				<input type="text" style="margin-top: 10px;<?=($formatExists ? 'display:none' : '')?>" name="FORMAT_NAME"  value="<?=htmlspecialcharsbx($arResult["CUR_NAME_FORMAT"])?>" class="content-edit-form-field-input-text" />
+							echo '<option value="'.$template.'"'.($template == $arResult["CUR_NAME_FORMAT"] ? ' selected' : '').'>'.htmlspecialcharsex($value).'</option>'."\n";
+						}
+						?>
+						<option value="other" <?=($formatExists ? '' : "selected")?>><?echo GetMessage("CONFIG_CULTURE_OTHER")?></option>
+					</select>
+				</div>
+				<div style="margin-top: 10px;<?=($formatExists ? 'display:none' : '')?>">
+					<div class="ui-ctl ui-ctl-textbox">
+						<input class="ui-ctl-element" type="text" name="FORMAT_NAME" value="<?=htmlspecialcharsbx($arResult["CUR_NAME_FORMAT"])?>" />
+					</div>
+				</div>
 			</td>
 			<td class="content-edit-form-field-error"></td>
 		</tr>
@@ -163,14 +193,17 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 		<tr data-field-id="config_week_start">
 			<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_WEEK_START')?></td>
 			<td class="content-edit-form-field-input">
-				<select name="WEEK_START">
-					<?
-					for ($i = 0; $i < 7; $i++)
-					{
-						echo '<option value="'.$i.'"'.($i == $arResult["WEEK_START"] ? ' selected="selected"' : '').'>'.GetMessage('DAY_OF_WEEK_' .$i).'</option>';
-					}
-					?>
-				</select>
+				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown">
+					<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+					<select name="WEEK_START" class="ui-ctl-element">
+						<?
+						for ($i = 0; $i < 7; $i++)
+						{
+							echo '<option value="'.$i.'"'.($i == $arResult["WEEK_START"] ? ' selected="selected"' : '').'>'.GetMessage('DAY_OF_WEEK_' .$i).'</option>';
+						}
+						?>
+					</select>
+				</div>
 			</td>
 			<td class="content-edit-form-field-error"></td>
 		</tr>
@@ -178,46 +211,59 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 		<tr data-field-id="config_time">
 			<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_WORK_TIME')?></td>
 			<td class="content-edit-form-field-input">
-				<select name="work_time_start">
-					<?foreach($arResult["WORKTIME_LIST"] as $key => $val):?>
-						<option value="<?= $key?>" <? if ($arResult["CALENDAT_SET"]['work_time_start'] == $key) echo ' selected="selected" ';?>><?= $val?></option>
-					<?endforeach;?>
-				</select>
-				-
-				<select name="work_time_end">
-					<?foreach($arResult["WORKTIME_LIST"] as $key => $val):?>
-						<option value="<?= $key?>" <? if ($arResult["CALENDAT_SET"]['work_time_end'] == $key) echo ' selected="selected" ';?>><?= $val?></option>
-					<?endforeach;?>
-				</select>
+				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-inline">
+					<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+					<select name="work_time_start" class="ui-ctl-element">
+						<?foreach($arResult["WORKTIME_LIST"] as $key => $val):?>
+							<option value="<?= $key?>" <? if ($arResult["CALENDAT_SET"]['work_time_start'] == $key) echo ' selected="selected" ';?>><?= $val?></option>
+						<?endforeach;?>
+					</select>
+				</div>
+				&nbsp;&nbsp;&mdash;
+				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-inline">
+					<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+					<select name="work_time_end" class="ui-ctl-element">
+						<?foreach($arResult["WORKTIME_LIST"] as $key => $val):?>
+							<option value="<?= $key?>" <? if ($arResult["CALENDAT_SET"]['work_time_end'] == $key) echo ' selected="selected" ';?>><?= $val?></option>
+						<?endforeach;?>
+					</select>
+				</div>
 			</td>
 			<td class="content-edit-form-field-error"></td>
 		</tr>
 		<tr data-field-id="config_time">
 			<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_WEEK_HOLIDAYS')?></td>
 			<td class="content-edit-form-field-input">
-				<select size="7" multiple=true id="cal_week_holidays" name="week_holidays[]">
-					<?foreach($arResult["WEEK_DAYS"] as $day):?>
-						<option value="<?= $day?>" <?if (in_array($day, $arResult["CALENDAT_SET"]['week_holidays']))echo ' selected="selected"';?>><?= GetMessage('CAL_OPTION_FIRSTDAY_'.$day)?></option>
-					<?endforeach;?>
-				</select>
+				<div class="ui-ctl ui-ctl-multiple-select">
+					<select class="ui-ctl-element" size="7" multiple id="cal_week_holidays" name="week_holidays[]">
+						<?foreach($arResult["WEEK_DAYS"] as $day):?>
+							<option value="<?= $day?>" <?if (in_array($day, $arResult["CALENDAT_SET"]['week_holidays']))echo ' selected="selected"';?>><?= GetMessage('CAL_OPTION_FIRSTDAY_'.$day)?></option>
+						<?endforeach;?>
+					</select>
+				</div>
 			</td>
 			<td class="content-edit-form-field-error"></td>
 		</tr>
 		<tr data-field-id="config_time">
 			<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_YEAR_HOLIDAYS')?></td>
 			<td class="content-edit-form-field-input">
-				<input name="year_holidays" type="text" value="<?= htmlspecialcharsbx($arResult["CALENDAT_SET"]['year_holidays'])?>" id="cal_year_holidays" size="60" class="content-edit-form-field-input-text"/>
+				<div class="ui-ctl ui-ctl-textbox">
+					<input class="ui-ctl-element" name="year_holidays" type="text" value="<?= htmlspecialcharsbx($arResult["CALENDAT_SET"]['year_holidays'])?>" id="cal_year_holidays" size="60" />
+				</div>
 			</td>
 			<td class="content-edit-form-field-error"></td>
 		</tr>
 		<tr>
 			<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_PHONE_NUMBER_DEFAULT_COUNTRY')?></td>
 			<td class="content-edit-form-field-input">
-				<select name="phone_number_default_country">
-					<?foreach($arResult["COUNTRIES"] as $key => $val):?>
-						<option value="<?= $key?>" <? if ($arResult["PHONE_NUMBER_DEFAULT_COUNTRY"] == $key) echo ' selected="selected" ';?>><?= $val?></option>
-					<?endforeach;?>
-				</select>
+				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown">
+					<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+					<select class="ui-ctl-element" name="phone_number_default_country">
+						<?foreach($arResult["COUNTRIES"] as $key => $val):?>
+							<option value="<?= $key?>" <? if ($arResult["PHONE_NUMBER_DEFAULT_COUNTRY"] == $key) echo ' selected="selected" ';?>><?= $val?></option>
+						<?endforeach;?>
+					</select>
+				</div>
 			</td>
 		</tr>
 
@@ -225,18 +271,20 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 			<tr>
 				<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_LOCATION_ADDRESS_FORMAT')?></td>
 				<td class="content-edit-form-field-input">
-					<select id="location_address_format_select" name="address_format_code">
-					<?foreach($arResult['LOCATION_ADDRESS_FORMAT_LIST'] as $code => $name):?>
-						<option
-								value="<?=htmlspecialcharsbx($code)?>"
-								<?=$arResult['LOCATION_ADDRESS_FORMAT_CODE'] === $code ? ' selected' : ''?>>
-								<?=htmlspecialcharsbx($name)?>
-						</option>
-					<?endforeach;?>
-					</select>
-
-					<div class="config_notify_message" id="location_address_format_description">
-						<?=$arResult['LOCATION_ADDRESS_FORMAT_DESCRIPTION']?>
+					<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown">
+						<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+						<select class="ui-ctl-element" id="location_address_format_select" name="address_format_code">
+						<?foreach($arResult['LOCATION_ADDRESS_FORMAT_LIST'] as $code => $name):?>
+							<option
+									value="<?=htmlspecialcharsbx($code)?>"
+									<?=$arResult['LOCATION_ADDRESS_FORMAT_CODE'] === $code ? ' selected' : ''?>>
+									<?=htmlspecialcharsbx($name)?>
+							</option>
+						<?endforeach;?>
+						</select>
+					</div>
+					<div class="ui-alert ui-alert-warning" id="location_address_format_description" style="margin-top: 5px">
+						<span class="ui-alert-message"><?=$arResult['LOCATION_ADDRESS_FORMAT_DESCRIPTION']?></span>
 					</div>
 
 				</td>
@@ -278,11 +326,14 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 		<tr data-field-id="congig_date">
 			<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_DISK_VIEWER_SERVICE')?></td>
 			<td class="content-edit-form-field-input">
-				<select name="default_viewer_service">
-					<?foreach($arResult["DISK_VIEWER_SERVICE"] as $code => $name):?>
-						<option value="<?=$code?>" <?if ($code == $arResult["DISK_VIEWER_SERVICE_DEFAULT"]) echo "selected"?>><?=$name?></option>
-					<?endforeach?>
-				</select>
+				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown">
+					<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+					<select class="ui-ctl-element" name="default_viewer_service">
+						<?foreach($arResult["DISK_VIEWER_SERVICE"] as $code => $name):?>
+							<option value="<?=$code?>" <?if ($code == $arResult["DISK_VIEWER_SERVICE_DEFAULT"]) echo "selected"?>><?=$name?></option>
+						<?endforeach?>
+					</select>
+				</div>
 			</td>
 			<td class="content-edit-form-field-error"></td>
 		</tr>
@@ -342,11 +393,14 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 				?>
 			</td>
 			<td class="content-edit-form-field-input">
-				<select name="disk_version_limit_per_file" <?if ($arResult["IS_BITRIX24"] && !Feature::isFeatureEnabled("disk_version_limit_per_file")) echo "disabled";?>>
-					<?foreach($arResult["DISK_LIMIT_PER_FILE"] as $code => $name):?>
-						<option value="<?=$code?>" <?if ($code == $arResult["DISK_LIMIT_PER_FILE_SELECTED"]) echo "selected"?>><?=$name?></option>
-					<?endforeach?>
-				</select>
+				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown">
+					<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+					<select class="ui-ctl-element" name="disk_version_limit_per_file" <?if ($arResult["IS_BITRIX24"] && !Feature::isFeatureEnabled("disk_version_limit_per_file")) echo "disabled";?>>
+						<?foreach($arResult["DISK_LIMIT_PER_FILE"] as $code => $name):?>
+							<option value="<?=$code?>" <?if ($code == $arResult["DISK_LIMIT_PER_FILE_SELECTED"]) echo "selected"?>><?=$name?></option>
+						<?endforeach?>
+					</select>
+				</div>
 			</td>
 			<td class="content-edit-form-field-error"></td>
 		</tr>
@@ -671,7 +725,9 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 			<tr>
 				<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_NAME_FILEMAN_YANDEX_MAP_API_KEY')?></td>
 				<td class="content-edit-form-field-input">
-					<input class="content-edit-form-field-input-text" name="yandex_map_api_key" value="<?=\Bitrix\Main\Text\HtmlFilter::encode($arResult['YANDEX_MAP_API_KEY'])?>">
+					<div class="ui-ctl ui-ctl-textbox">
+						<input class="ui-ctl-element" name="yandex_map_api_key" value="<?=\Bitrix\Main\Text\HtmlFilter::encode($arResult['YANDEX_MAP_API_KEY'])?>">
+					</div>
 				</td>
 				<td class="content-edit-form-field-error"></td>
 			</tr>
@@ -681,25 +737,27 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 			<tr>
 				<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_NAME_FILEMAN_GOOGLE_API_KEY')?></td>
 				<td class="content-edit-form-field-input">
-					<input class="content-edit-form-field-input-text" name="google_api_key" value="<?=\Bitrix\Main\Text\HtmlFilter::encode($arResult['GOOGLE_API_KEY'])?>">
+					<div class="ui-ctl ui-ctl-textbox">
+						<input class="ui-ctl-element" name="google_api_key" value="<?=\Bitrix\Main\Text\HtmlFilter::encode($arResult['GOOGLE_API_KEY'])?>">
+					</div>
 				</td>
 				<td class="content-edit-form-field-error"></td>
 			</tr>
 			<?/*if($arResult['GOOGLE_API_KEY_HOST'] <> '' && $arResult['GOOGLE_API_KEY'] <> ''):?>
 				<tr>
-					<td colspan="3">
-						<div class="config_notify_message" style="margin: 10px 20px 10px 20px">
-							<?=GetMessage("CONFIG_NAME_GOOGLE_API_HOST_HINT", array(
+					<td colspan="3" style="padding: 10px 20px">
+						<div class="ui-alert ui-alert-warning">
+							<span class="ui-alert-message"><?=GetMessage("CONFIG_NAME_GOOGLE_API_HOST_HINT", array(
 								'#domain#' => \Bitrix\Main\Text\HtmlFilter::encode($arResult['GOOGLE_API_KEY_HOST'])
-							))?>
+							))?></span>
 						</div>
 					</td>
 				</tr>
 			<?else:?>
 				<tr>
-					<td colspan="3">
-						<div class="config_notify_message" style="margin: 10px 20px 10px 20px">
-							<?=GetMessage("CONFIG_NAME_GOOGLE_API_KEY_HINT")?>
+					<td colspan="3" style="padding: 10px 20px">
+						<div class="ui-alert ui-alert-warning">
+							<span class="ui-alert-message"><?=GetMessage("CONFIG_NAME_GOOGLE_API_KEY_HINT")?></span>
 						</div>
 					</td>
 				</tr>
@@ -747,17 +805,29 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 			</tr>
 			<tr data-role="gdpr-data" <?if (!$isGdprDataShown):?>style="visibility:collapse"<?endif?>>
 				<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_GDRP_LABEL4')?></td>
-				<td class="content-edit-form-field-input"><input type="text" name="gdpr_legal_name" value="<?=htmlspecialcharsbx(isset($_POST["gdpr_legal_name"]) ? $_POST["gdpr_legal_name"] : COption::GetOptionString("bitrix24", "gdpr_legal_name", ""))?>" class="content-edit-form-field-input-text" size="60"></td>
+				<td class="content-edit-form-field-input">
+					<div class="ui-ctl ui-ctl-textbox">
+						<input class="ui-ctl-element" type="text" name="gdpr_legal_name" value="<?=htmlspecialcharsbx(isset($_POST["gdpr_legal_name"]) ? $_POST["gdpr_legal_name"] : COption::GetOptionString("bitrix24", "gdpr_legal_name", ""))?>" size="60">
+					</div>
+				</td>
 				<td class="content-edit-form-field-error"></td>
 			</tr>
 			<tr data-role="gdpr-data" <?if (!$isGdprDataShown):?>style="visibility:collapse"<?endif?>>
 				<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_GDRP_LABEL5')?></td>
-				<td class="content-edit-form-field-input"><input type="text" name="gdpr_contact_name" value="<?=htmlspecialcharsbx(isset($_POST["gdpr_contact_name"]) ? $_POST["gdpr_contact_name"] : COption::GetOptionString("bitrix24", "gdpr_contact_name", ""))?>" class="content-edit-form-field-input-text" size="60"></td>
+				<td class="content-edit-form-field-input">
+					<div class="ui-ctl ui-ctl-textbox">
+						<input class="ui-ctl-element" type="text" name="gdpr_contact_name" value="<?=htmlspecialcharsbx(isset($_POST["gdpr_contact_name"]) ? $_POST["gdpr_contact_name"] : COption::GetOptionString("bitrix24", "gdpr_contact_name", ""))?>" size="60">
+					</div>
+				</td>
 				<td class="content-edit-form-field-error"></td>
 			</tr>
 			<tr data-role="gdpr-data" <?if (!$isGdprDataShown):?>style="visibility:collapse"<?endif?>>
 				<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_GDRP_LABEL6')?></td>
-				<td class="content-edit-form-field-input"><input type="text" name="gdpr_title" value="<?=htmlspecialcharsbx(isset($_POST["gdpr_title"]) ? $_POST["gdpr_title"] : COption::GetOptionString("bitrix24", "gdpr_title", ""))?>" class="content-edit-form-field-input-text" size="60"></td>
+				<td class="content-edit-form-field-input">
+					<div class="ui-ctl ui-ctl-textbox">
+						<input class="ui-ctl-element" type="text" name="gdpr_title" value="<?=htmlspecialcharsbx(isset($_POST["gdpr_title"]) ? $_POST["gdpr_title"] : COption::GetOptionString("bitrix24", "gdpr_title", ""))?>" size="60">
+					</div>
+				</td>
 				<td class="content-edit-form-field-error"></td>
 			</tr>
 			<tr data-role="gdpr-data" <?if (!$isGdprDataShown):?>style="visibility:collapse"<?endif?>>
@@ -781,18 +851,24 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 			</tr>
 			<tr data-role="gdpr-data" <?if (!$isGdprDataShown):?>style="visibility:collapse"<?endif?>>
 				<td class="content-edit-form-field-name content-edit-form-field-name-left"><?=GetMessage('CONFIG_GDRP_LABEL8')?></td>
-				<td class="content-edit-form-field-input"><input type="text" name="gdpr_notification_email" value="<?=htmlspecialcharsbx(isset($_POST["gdpr_notification_email"]) ? $_POST["gdpr_notification_email"] : COption::GetOptionString("bitrix24", "gdpr_notification_email", ""))?>" class="content-edit-form-field-input-text" size="60"></td>
+				<td class="content-edit-form-field-input">
+					<div class="ui-ctl ui-ctl-textbox">
+						<input class="ui-ctl-element" type="text" name="gdpr_notification_email" value="<?=htmlspecialcharsbx(isset($_POST["gdpr_notification_email"]) ? $_POST["gdpr_notification_email"] : COption::GetOptionString("bitrix24", "gdpr_notification_email", ""))?>" size="60">
+					</div>
+				</td>
 				<td class="content-edit-form-field-error"></td>
 			</tr>
 
 			<?\CJSCore::init("sidepanel");?>
 			<tr>
-				<td colspan="3">
-					<div class="config_notify_message" style="margin: 10px 20px 10px 20px">
+				<td colspan="3" style="padding: 10px 20px">
+					<div class="ui-alert ui-alert-warning">
+						<span class="ui-alert-message">
 						<?=GetMessage("CONFIG_GDRP_TITLE3")?><br/>
 						<a href="javascript:void(0)" onclick="BX.SidePanel.Instance.open('/marketplace/detail/integrations24.gdprstaff/');"><?=GetMessage("CONFIG_GDRP_APP1")?></a>
 						<br/>
 						<a href="javascript:void(0)" onclick="BX.SidePanel.Instance.open('/marketplace/detail/integrations24.gdpr/');"><?=GetMessage("CONFIG_GDRP_APP2")?></a>
+						</span>
 					</div>
 				</td>
 			</tr>
@@ -833,14 +909,16 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 				<?=GetMessage('CONFIG_OTP_SECURITY_DAYS')?>
 			</td>
 			<td class="content-edit-form-field-input">
-				<select id="security_otp_days" name="security_otp_days">
-					<?for($i=5; $i<=10; $i++):?>
-						<option
-							value="<?=$i?>"
-							<?if ($arResult["SECURITY_OTP_DAYS"] == $i) echo 'selected="selected"';?>
-						><?=FormatDate("ddiff", time()-60*60*24*$i)?></option>
-					<?endfor;?>
-				</select>
+				<div class="ui-ctl ui-ctl-dropdown">
+					<select id="security_otp_days" name="security_otp_days" class="ui-ctl-element">
+						<?for($i=5; $i<=10; $i++):?>
+							<option
+								value="<?=$i?>"
+								<?if ($arResult["SECURITY_OTP_DAYS"] == $i) echo 'selected="selected"';?>
+							><?=FormatDate("ddiff", time()-60*60*24*$i)?></option>
+						<?endfor;?>
+					</select>
+				</div>
 			</td>
 			<td class="content-edit-form-field-error"></td>
 		</tr>
@@ -857,14 +935,16 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 		}
 		?>
 		<tr>
-			<td colspan="3">
-				<div class="config_notify_message" style="margin: 10px 20px 10px 20px">
+			<td colspan="3" style="padding: 10px 20px">
+				<div class="ui-alert ui-alert-warning">
+					<span class="ui-alert-message">
 					<?=GetMessage("CONFIG_OTP_SECURITY_INFO")?>
 					<a href="javascript:void(0)" onclick="BX.nextSibling(this).style.display='block'; BX.remove(this)"><?=GetMessage("CONFIG_MORE")?></a>
 					<span style="display: none">
 						<?=GetMessage("CONFIG_OTP_SECURITY_INFO_1")?>
 						<?=!$arResult["IS_BITRIX24"] ? GetMessage("CONFIG_OTP_SECURITY_INFO_2") : "";?>
 						<?=GetMessage("CONFIG_OTP_SECURITY_INFO_3")?>
+					</span>
 					</span>
 				</div>
 			</td>
@@ -958,9 +1038,9 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 		</tr>
 
 		<tr>
-			<td colspan="3">
-				<div class="config_notify_message" style="margin: 10px 20px 10px 20px">
-					<?=Loc::getMessage("CONFIG_IP_HELP_TEXT2")?>
+			<td colspan="3" style="padding: 10px 20px">
+				<div class="ui-alert ui-alert-warning">
+					<span class="ui-alert-message"><?=Loc::getMessage("CONFIG_IP_HELP_TEXT2")?></span>
 				</div>
 			</td>
 		</tr>
@@ -998,9 +1078,9 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 			</td>
 		</tr>
 		<tr>
-			<td colspan="3">
-				<div class="config_notify_message" style="margin: 10px 20px 10px 20px">
-					<?=GetMessage("CONFIG_NAME_CHANGE_INFO")?>
+			<td colspan="3" style="padding: 10px 20px">
+				<div class="ui-alert ui-alert-warning">
+					<span class="ui-alert-message"><?=GetMessage("CONFIG_NAME_CHANGE_INFO")?></span>
 				</div>
 			</td>
 		</tr>
@@ -1071,7 +1151,9 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 						</td>
 						<td class="content-edit-form-field-input" colspan="2">
 							<?if ($configItem->getType() == ConfigItem::STRING_TYPE):?>
-								<input class="content-edit-form-field-input-text" type="text" name="<?=htmlspecialcharsbx($inputName)?>" value="<?=htmlspecialcharsbx($configItem->getValue())?>">
+								<div class="ui-ctl ui-ctl-textbox">
+									<input type="text" class="ui-ctl-element" name="<?=htmlspecialcharsbx($inputName)?>" value="<?=htmlspecialcharsbx($configItem->getValue())?>">
+								</div>
 							<?elseif ($configItem->getType() == ConfigItem::BOOL_TYPE):?>
 								<input type="hidden" name="<?=htmlspecialcharsbx($inputName)?>" value="N">
 								<input type="checkbox" name="<?=htmlspecialcharsbx($inputName)?>" value="Y" <?=($configItem->getValue() ? ' checked' : '')?> >
@@ -1083,9 +1165,9 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 
 			<?if ($note):?>
 				<tr>
-					<td colspan="3">
-						<div class="config_notify_message" style="margin: 10px 20px 10px 20px">
-							<?=$note?>
+					<td colspan="3" style="padding: 10px 20px">
+						<div class="ui-alert ui-alert-warning">
+							<span class="ui-alert-message"><?=$note?></span>
 						</div>
 					</td>
 				</tr>

@@ -495,7 +495,7 @@
 	width: 100%;
 	outline: none;
 	border: 1px solid #c6cdd3;
-	border-radius: 2px;
+	border-radius: var(--ui-field-border-radius, 2px);
 	background-color: #fff;
 	color: #424956;
 	vertical-align: middle;
@@ -689,6 +689,7 @@
 	background: #fff;
 	padding: 20px 14px 10px 25px;
 	margin-bottom: 15px;
+	border-radius: var(--imopenlines-form-settings-section-border-radius, var(--ui-border-radius-md));
 }
 
 .imopenlines-form-settings-block + .imopenlines-form-settings-block {

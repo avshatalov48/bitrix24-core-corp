@@ -8,14 +8,16 @@
  */
 
 import {Vue} from "ui.vue";
+import { EventEmitter } from "main.core.events";
+import { WidgetEventType } from "../const";
 
 Vue.cloneComponent('bx-livechat-smiles', 'bx-smiles',
 {
 	methods:
 	{
-		hideForm(event)
+		hideForm()
 		{
-			this.$parent.hideForm();
+			EventEmitter.emit(WidgetEventType.hideForm);
 		},
 	},
 	template: `

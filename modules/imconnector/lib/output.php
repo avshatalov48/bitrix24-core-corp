@@ -46,7 +46,6 @@ Library::loadMessages();
  *
  * @package Bitrix\ImConnector
  * @final
- * @internal
  */
 final class Output
 {
@@ -54,7 +53,7 @@ final class Output
 	protected $result;
 
 	/**
-	 * @var Provider\ImConnectorServer\Output|Provider\LiveChat\Output|Provider\Network\Output|Provider\Custom\Output
+	 * @var Provider\Base\Output|Provider\ImConnectorServer\Output|Provider\LiveChat\Output|Provider\Network\Output|Provider\Custom\Output
 	 */
 	protected $provider;
 
@@ -64,7 +63,7 @@ final class Output
 	 * @param string|bool $line ID open line.
 	 * @param bool $ignoreDeactivatedConnector
 	 */
-	function __construct($connector, $line = false, $ignoreDeactivatedConnector = false)
+	public function __construct($connector, $line = false, $ignoreDeactivatedConnector = false)
 	{
 		$this->result = new Result();
 
@@ -81,6 +80,7 @@ final class Output
 
 			if ($provider->isSuccess())
 			{
+				/** @var Provider\Base\Output $this->provider */
 				$this->provider = $provider->getResult();
 			}
 			else

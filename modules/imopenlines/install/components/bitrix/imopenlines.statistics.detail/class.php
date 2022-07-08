@@ -241,6 +241,12 @@ class ImOpenLinesComponentStatisticsDetail extends \CBitrixComponent
 	 */
 	protected function checkModules(): bool
 	{
+		if (!Loader::includeModule('im'))
+		{
+			\ShowError(Loc::getMessage('OL_COMPONENT_MODULE_NOT_INSTALLED'));
+			return false;
+		}
+
 		if (!Loader::includeModule('imopenlines'))
 		{
 			\ShowError(Loc::getMessage('OL_COMPONENT_MODULE_NOT_INSTALLED'));
@@ -2069,7 +2075,11 @@ class ImOpenLinesComponentStatisticsDetail extends \CBitrixComponent
 		}
 		$selectHeaders = array_intersect(SessionTable::getSelectFieldsPerformance(), $gridHeaders);
 
-		$requiredHeaders = ['ID', 'USER_CODE', 'CLOSED', 'CHAT_ID', 'CHAT_OPERATOR_ID' => 'CHAT.AUTHOR_ID'];
+		$requiredHeaders = ['ID', 'USER_CODE', 'CLOSED', 'CHAT_ID'];
+		if (Loader::includeModule('im'))
+		{
+			$requiredHeaders['CHAT_OPERATOR_ID'] = 'CHAT.AUTHOR_ID';
+		}
 		$selectHeaders = array_merge($requiredHeaders, $selectHeaders);
 
 		foreach ($gridHeaders as $gridHeader)

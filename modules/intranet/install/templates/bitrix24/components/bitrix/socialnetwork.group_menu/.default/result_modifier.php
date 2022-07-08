@@ -322,13 +322,21 @@ if ($USER->isAuthorized())
 }
 
 if (
-	$arResult["CurrentUserPerms"]["UserRole"] == UserToGroupTable::ROLE_REQUEST
+	$arResult["CurrentUserPerms"]["UserRole"] === UserToGroupTable::ROLE_REQUEST
 	&& $arResult["Group"]["VISIBLE"] === "Y"
 	&& !$arResult["HideArchiveLinks"]
 )
 {
 	$arResult["bShowRequestSentMessage"] = $arResult["CurrentUserPerms"]["InitiatedByType"];
-
+/*
+	if (\Bitrix\Socialnetwork\Helper\UserToGroup\RequestPopup::checkHideRequestPopup([
+		'userId' => (int)$USER->getId(),
+		'groupId' => (int)$arResult['Group']['ID'],
+	]))
+	{
+		$arResult["bShowRequestSentMessage"] = false;
+	}
+*/
 	$arResult["UserRelationId"] = false;
 	$res = \Bitrix\Socialnetwork\UserToGroupTable::getList(array(
 		'filter' => array(

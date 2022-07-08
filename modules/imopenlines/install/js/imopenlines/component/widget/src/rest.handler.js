@@ -64,6 +64,26 @@ class WidgetRestAnswerHandler extends BaseRestHandler
 		}});
 	}
 
+	handleImopenlinesWidgetChatCreateSuccess(data)
+	{
+		this.widget.restClient.setAuthId(data.hash);
+
+		this.store.commit('messages/initCollection', {chatId: data.chatId, messages: []});
+		this.store.commit('dialogues/initCollection', {
+			dialogId: data.dialogId, fields: {
+				entityType: 'LIVECHAT',
+				type: 'livechat'
+			}
+		});
+
+		this.store.commit('application/set', {
+			dialog: {
+				chatId: data.chatId,
+				dialogId: 'chat' + data.chatId
+			}
+		});
+	}
+
 	handleImopenlinesWidgetUserGetSuccess(data)
 	{
 		this.store.commit('widget/user', {
@@ -128,8 +148,6 @@ class WidgetRestAnswerHandler extends BaseRestHandler
 
 	handleImMessageAddSuccess(messageId, message)
 	{
-		this.widget.messagesQueue = this.widget.messagesQueue.filter(el => el.id != message.id);
-
 		this.widget.sendEvent({
 			type: SubscriptionType.userMessage,
 			data: {
@@ -139,15 +157,8 @@ class WidgetRestAnswerHandler extends BaseRestHandler
 		});
 	}
 
-	handleImMessageAddError(error, message)
-	{
-		this.widget.messagesQueue = this.widget.messagesQueue.filter(el => el.id != message.id);
-	}
-
 	handleImDiskFileCommitSuccess(result, message)
 	{
-		this.widget.messagesQueue = this.widget.messagesQueue.filter(el => el.id != message.id);
-
 		this.widget.sendEvent({
 			type: SubscriptionType.userFile,
 			data: {}

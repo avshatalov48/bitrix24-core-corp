@@ -33,6 +33,7 @@ import "./component/bx-livechat-body-error";
 import "./component/bx-livechat-body-head";
 import "./component/bx-livechat-body-loading";
 import "./component/bx-livechat-body-operators";
+import "./component/bx-livechat-dialogues-list";
 import "./component/bx-livechat-body-orientation-disabled";
 import "./component/bx-livechat-form-consent";
 import "./component/bx-livechat-form-vote";

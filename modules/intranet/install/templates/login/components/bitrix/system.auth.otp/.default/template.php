@@ -22,16 +22,19 @@ if ($arResult['REQUIRED_BY_MANDATORY'] === true) {
 elseif (isset($_GET["help"]) && $_GET["help"] == "Y")
 {
 ?>
-	<div class="log-popup-header" style="text-align: left; display: inline-block; width:75%"><?=GetMessage("AUTH_OTP_HELP_TITLE")?></div>
-	<div class="log-header-additional-wrap" style="width:24%;"><a href="<?=htmlspecialcharsbx($arResult["AUTH_OTP_LINK"])?>" class="log-header-additional-text"><?=GetMessage("AUTH_OTP_BACK")?></a></div>
-
-	<hr class="b_line_gray">
-	<div class="login-text">
-		<?=GetMessage("AUTH_OTP_HELP_TEXT", array("#PATH#" => $this->GetFolder()))?>
-	<div class="log-popup-footer">
-		<a href="<?=htmlspecialcharsbx($arResult["AUTH_OTP_LINK"])?>" class="login-tr-btn"><?=GetMessage("AUTH_OTP_BACK")?></a>
+	<div class="login-inner">
+		<div class="log-header-box">
+			<div class="log-popup-header" style="text-align: left; display: inline-block; width:75%"><?=GetMessage("AUTH_OTP_HELP_TITLE")?></div>
+			<div class="log-header-additional-wrap" style="width:24%;"><a href="<?=htmlspecialcharsbx($arResult["AUTH_OTP_LINK"])?>" class="log-header-additional-text"><?=GetMessage("AUTH_OTP_BACK")?></a></div>
+		</div>
+		<hr class="b_line_gray">
+		<div class="login-text">
+			<?=GetMessage("AUTH_OTP_HELP_TEXT", array("#PATH#" => $this->GetFolder()))?>
+			<div class="log-popup-footer">
+				<a href="<?=htmlspecialcharsbx($arResult["AUTH_OTP_LINK"])?>" class="login-tr-btn"><?=GetMessage("AUTH_OTP_BACK")?></a>
+			</div>
+		</div>
 	</div>
-</div>
 <?
 }
 else
@@ -41,22 +44,22 @@ else
 	<input type="hidden" name="AUTH_FORM" value="Y" />
 	<input type="hidden" name="TYPE" value="OTP" />
 
-	<div class="log-popup-header" style="text-align: left; display: inline-block; width:49%"><?=GetMessage("AUTH_OTP_PLEASE_AUTH")?></div>
-	<?if ($arParams["NOT_SHOW_LINKS"] != "Y"):?>
-		<div class="log-header-additional-wrap" style="width:50%;">
-			<noindex>
-				<?if (!IsModuleInstalled("bitrix24")):?><a href="<?=$arResult["AUTH_LOGIN_URL"]?>" rel="nofollow" class="log-header-additional-text"><?echo GetMessage("AUTH_OTP_AUTH_BACK")?></a><?endif?>
-			</noindex>
-		</div>
-	<?endif?>
-
+	<div class="log-header-box">
+		<div class="log-popup-header" style="text-align: left; display: inline-block; width:49%"><?=GetMessage("AUTH_OTP_PLEASE_AUTH")?></div>
+		<?if ($arParams["NOT_SHOW_LINKS"] != "Y"):?>
+			<div class="log-header-additional-wrap" style="width:50%;">
+				<noindex>
+					<?if (!IsModuleInstalled("bitrix24")):?><a href="<?=$arResult["AUTH_LOGIN_URL"]?>" rel="nofollow" class="log-header-additional-text"><?echo GetMessage("AUTH_OTP_AUTH_BACK")?></a><?endif?>
+				</noindex>
+			</div>
+		<?endif?>
+	</div>
 	<hr class="b_line_gray">
 	<?
 	ShowMessage($arParams["~AUTH_RESULT"]);
 	?>
 	<div class="">
 		<div class="login-item">
-			<span class="login-item-alignment"></span>
 			<span class="login-label"><?=GetMessage("AUTH_OTP_OTP")?>:</span>
 			<input type="text" name="USER_OTP" class="login-inp" maxlength="50" value="" autocomplete="off" />
 		</div>

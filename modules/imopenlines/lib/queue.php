@@ -840,7 +840,12 @@ class Queue
 	 */
 	public static function getTimeLastActivityOperator()
 	{
-		return ModuleManager::isModuleInstalled('bitrix24')? 1440: 180;
+		if (ModuleManager::isModuleInstalled('bitrix24'))
+		{
+			return 1440;
+		}
+
+		return \CUser::getSecondsForLimitOnline();
 	}
 
 	/**
@@ -848,10 +853,6 @@ class Queue
 	 *
 	 * @param $id int The user ID of the operator.
 	 * @return bool|string
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function isOperatorOnline($id)
 	{

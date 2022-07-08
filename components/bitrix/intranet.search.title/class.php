@@ -19,11 +19,11 @@ use Bitrix\Socialnetwork\UserToGroupTable;
 
 class CIntranetSearchTitleComponent extends CBitrixComponent
 {
-	private function getUsers($searchString = false)
+	private function getUsers($searchString = false): array
 	{
-		global $USER, $DB;
+		global $USER;
 
-		$result = array();
+		$result = [];
 
 		if (!Loader::includeModule('socialnetwork'))
 		{
@@ -31,7 +31,7 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 		}
 
 		$searchStringOriginal = $searchString;
-		//		$searchString = str_replace('%', '', $searchString)."%";
+//		$searchString = str_replace('%', '', $searchString)."%";
 
 		$userNameTemplate = \CSite::GetNameFormat(false);
 		$userPageURLTemplate = Option::get('socialnetwork', 'user_page', SITE_DIR.'company/personal/', SITE_ID).'user/#user_id#/';
@@ -128,16 +128,13 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 					);
 				}
 			}
+			elseif ($extranetInstalled && !\CExtranet::isIntranetUser())
+			{
+				$userFilter['=ID'] = $USER->getId();
+			}
 			else
 			{
-				if ($extranetInstalled && !\CExtranet::isIntranetUser())
-				{
-					$userFilter['=ID'] = $USER->getId();
-				}
-				else
-				{
-					$userFilter['!UF_DEPARTMENT'] = false;
-				}
+				$userFilter['!UF_DEPARTMENT'] = false;
 			}
 		}
 
@@ -201,11 +198,11 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 		return $result;
 	}
 
-	private function getSonetGroups($searchString = false)
+	private function getSonetGroups($searchString = false): array
 	{
 		global $USER, $CACHE_MANAGER;
 
-		$result = array();
+		$result = [];
 
 		if (!$USER->isAuthorized())
 		{
@@ -239,7 +236,7 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 
 		if ($extranetUser)
 		{
-			$userGroupList = array();
+			$userGroupList = [];
 			$res = UserToGroupTable::getList(array(
 				'filter' => array(
 				   'USER_ID' => $USER->getId(),
@@ -250,7 +247,7 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 
 			while($relation = $res->fetch())
 			{
-				$userGroupList[] = intval($relation['GROUP_ID']);
+				$userGroupList[] = (int)$relation['GROUP_ID'];
 			}
 
 			if (empty($userGroupList))
@@ -399,7 +396,7 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 		return $result;
 	}
 
-	private function convertAjaxToClientDb($arEntity, $entityType)
+	private function convertAjaxToClientDb($arEntity, $entityType): array
 	{
 		static $timestamp = false;
 
@@ -409,7 +406,7 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 		}
 
 		$result = array();
-		if ($entityType == 'sonetgroups')
+		if ($entityType === 'sonetgroups')
 		{
 			$result = array(
 				'id' => 'G'.$arEntity["ID"],
@@ -424,7 +421,7 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 			$result['checksum'] = md5(serialize($result));
 			$result['timestamp'] = $timestamp;
 		}
-		elseif($entityType == 'menuitems')
+		elseif($entityType === 'menuitems')
 		{
 			$result = array(
 				'id' => 'M'.$arEntity["URL"],
@@ -441,7 +438,7 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 			$result['checksum'] = md5(serialize($result));
 			$result['timestamp'] = $timestamp;
 		}
-		elseif($entityType == 'users')
+		elseif($entityType === 'users')
 		{
 			$result = array(
 				'id' => 'U'.$arEntity["ID"],
@@ -460,7 +457,7 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 		return $result;
 	}
 
-	private function getMenuItems($searchString = false)
+	private function getMenuItems($searchString = false): array
 	{
 		global $APPLICATION;
 
@@ -494,7 +491,9 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 		foreach($arMenuResult as $menuItem)
 		{
 			if (empty($menuItem['LINK']))
+			{
 				continue;
+			}
 
 			if (
 				empty($searchString)
@@ -514,10 +513,20 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 
 				$itemCache[$hash] = true;
 
+				$chain = (
+					!empty($menuItem['CHAIN']) && is_array($menuItem['CHAIN'])
+						? $menuItem['CHAIN']
+						: [ $menuItem['TEXT'] ]
+				);
+
+				$chain = array_map(static function($item) {
+					return htmlspecialcharsback($item);
+				}, $chain);
+
 				$result[] = array(
 					'NAME' => $menuItem['TEXT'],
 					'URL' => $url,
-					'CHAIN' => (!empty($menuItem['CHAIN']) && is_array($menuItem['CHAIN']) ? $menuItem['CHAIN'] : array($menuItem['TEXT'])),
+					'CHAIN' => $chain,
 					'MODULE_ID' => '',
 					'PARAM1' => '',
 					'ITEM_ID' => 'M'.$menuItem['LINK'],
@@ -532,7 +541,7 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 		return $result;
 	}
 
-	private function customSearch($searchString)
+	private function customSearch($searchString): void
 	{
 		static $bSocialnetworkIncluded = null;
 		static $bExtranetSite = null;
@@ -568,7 +577,7 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 				);
 
 				if (
-					$categoryCode == 'custom_users'
+					$categoryCode === 'custom_users'
 					&& !$bExtranetSite
 				)
 				{
@@ -587,7 +596,7 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 					}
 				}
 				elseif (
-					$categoryCode == 'custom_sonetgroups'
+					$categoryCode === 'custom_sonetgroups'
 					&& $bSocialnetworkIncluded
 				)
 				{
@@ -605,7 +614,7 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 						$this->arResult["CATEGORIES"][$i]["ITEMS"][$key]['CHECKSUM'] = $clientDbItem['checksum'];
 					}
 				}
-				elseif ($categoryCode == 'custom_menuitems')
+				elseif ($categoryCode === 'custom_menuitems')
 				{
 					$this->arResult["CATEGORIES"][$i]["ITEMS"] = $this->getMenuItems($searchString);
 
@@ -676,7 +685,7 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 			{
 				$entitiesList = array();
 				$entity = $_REQUEST["get_all"];
-				if ($entity == 'sonetgroups')
+				if ($entity === 'sonetgroups')
 				{
 					$sonetGroupsList = $this->getSonetGroups();
 					foreach($sonetGroupsList as $group)
@@ -684,7 +693,7 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 						$entitiesList['G'.$group['ID']] = $this->convertAjaxToClientDb($group, $entity);
 					}
 				}
-				elseif ($entity == 'menuitems')
+				elseif ($entity === 'menuitems')
 				{
 					$menuItemsList = $this->getMenuItems();
 					foreach($menuItemsList as $menuItem)
@@ -740,9 +749,9 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 				foreach($this->arResult["CATEGORIES"]["others"]["ITEMS"] as $itemId => $arItem)
 				{
 					if (
-						intval($this->arResult["customUsersCategoryId"]) > 0
+						(int)$this->arResult["customUsersCategoryId"] > 0
 						&& !empty($this->arResult["CATEGORIES"][$this->arResult["customUsersCategoryId"]]["ITEMS"])
-						&& $arItem['MODULE_ID'] == 'intranet'
+						&& $arItem['MODULE_ID'] === 'intranet'
 						&& preg_match('/^U(\d+)$/i', $arItem['ITEM_ID'], $matches)
 					)
 					{
@@ -757,9 +766,9 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 					}
 
 					if (
-						intval($this->arResult["customSonetGroupsCategoryId"]) > 0
+						(int)$this->arResult["customSonetGroupsCategoryId"] > 0
 						&& !empty($this->arResult["CATEGORIES"][$this->arResult["customSonetGroupsCategoryId"]]["ITEMS"])
-						&& $arItem['MODULE_ID'] == 'socialnetwork'
+						&& $arItem['MODULE_ID'] === 'socialnetwork'
 						&& preg_match('/^G(\d+)$/i', $arItem['ITEM_ID'], $matches)
 					)
 					{
@@ -804,11 +813,13 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 			}
 		}
 
-		unset($this->arResult["customUsersCategoryId"]);
-		unset($this->arResult["customSonetGroupsCategoryId"]);
+		unset(
+			$this->arResult["customUsersCategoryId"],
+			$this->arResult["customSonetGroupsCategoryId"]
+		);
 	}
 
-	private function prepateGlobalSearchCategories()
+	private function prepateGlobalSearchCategories(): void
 	{
 		global $USER, $CACHE_MANAGER;
 
@@ -816,8 +827,8 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 
 		$this->arResult["IS_EXTRANET_SITE"] = (
 			Loader::includeModule('extranet')
-			? (SITE_ID == \CExtranet::getExtranetSiteID())
-			: false
+				? (SITE_ID === \CExtranet::getExtranetSiteID())
+				: false
 		);
 
 		$globalSearchCategories = array(
@@ -867,7 +878,7 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 						EntityViewSettings::KANBAN_VIEW => CrmCheckPath('PATH_TO_LEAD_KANBAN', "", SITE_DIR . 'crm/lead/kanban/')
 					);
 					$currentView = LeadSettings::getCurrent()->getCurrentListViewID();
-					$leadPath = isset($leadPaths[$currentView]) ? $leadPaths[$currentView] : $leadPaths[EntityViewSettings::LIST_VIEW];
+					$leadPath = $leadPaths[$currentView] ?? $leadPaths[EntityViewSettings::LIST_VIEW];
 
 					$globalCrmSearchCategories["lead"] = array(
 						"url" => $leadPath . "?apply_filter=Y&with_preset=Y&FIND=",
@@ -881,7 +892,7 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 						EntityViewSettings::KANBAN_VIEW => CrmCheckPath('PATH_TO_DEAL_KANBAN', "", SITE_DIR . 'crm/deal/kanban/')
 					);
 					$currentView = DealSettings::getCurrent()->getCurrentListViewID();
-					$dealPath = isset($dealPaths[$currentView]) ? $dealPaths[$currentView] : $dealPaths[EntityViewSettings::LIST_VIEW];
+					$dealPath = ($dealPaths[$currentView] ?? $dealPaths[EntityViewSettings::LIST_VIEW]);
 
 					$globalCrmSearchCategories["deal"] = array(
 						"url" => $dealPath . "?apply_filter=Y&with_preset=Y&FIND=",
@@ -890,14 +901,15 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 				}
 
 				$crm = \Bitrix\Intranet\Integration\Crm::getInstance();
-				if ($crm->isOldInvoicesEnabled() && ($isAdmin || !$userPermissions->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'READ'))) {
+				if ($crm->isOldInvoicesEnabled() && ($isAdmin || !$userPermissions->HavePerm('INVOICE', BX_CRM_PERM_NONE, 'READ')))
+				{
 					$invoicePaths = array(
 						EntityViewSettings::LIST_VIEW => CrmCheckPath('PATH_TO_INVOICE_LIST', "", SITE_DIR . 'crm/invoice/list/'),
 						EntityViewSettings::KANBAN_VIEW => CrmCheckPath('PATH_TO_INVOICE_KANBAN', "", SITE_DIR . 'crm/invoice/kanban/')
 					);
 
 					$currentView = InvoiceSettings::getCurrent()->getCurrentListViewID();
-					$invoicePath = isset($invoicePaths[$currentView]) ? $invoicePaths[$currentView] : $invoicePaths[EntityViewSettings::LIST_VIEW];
+					$invoicePath = ($invoicePaths[$currentView] ?? $invoicePaths[EntityViewSettings::LIST_VIEW]);
 
 					$globalCrmSearchCategories["invoice"] = array(
 						"url" => $invoicePath . "?apply_filter=Y&with_preset=Y&FIND=",
@@ -923,13 +935,14 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 					];
 				}
 
-				if ($isAdmin || CCrmQuote::CheckReadPermission(0, $userPermissions)) {
+				if ($isAdmin || CCrmQuote::CheckReadPermission(0, $userPermissions))
+				{
 					$quotePaths = array(
 						EntityViewSettings::LIST_VIEW => CrmCheckPath('PATH_TO_QUOTE_LIST', "", SITE_DIR . 'crm/quote/list/'),
 						EntityViewSettings::KANBAN_VIEW => CrmCheckPath('PATH_TO_QUOTE_KANBAN', "", SITE_DIR . 'crm/quote/kanban/')
 					);
 					$currentView = QuoteSettings::getCurrent()->getCurrentListViewID();
-					$quotePath = isset($quotePaths[$currentView]) ? $quotePaths[$currentView] : $quotePaths[EntityViewSettings::LIST_VIEW];
+					$quotePath = $quotePaths[$currentView] ?? $quotePaths[EntityViewSettings::LIST_VIEW];
 
 					$globalCrmSearchCategories["quote"] = array(
 						"url" => $quotePath . "?apply_filter=Y&with_preset=Y&FIND=",
@@ -937,14 +950,16 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 					);
 				}
 
-				if ($isAdmin || CCrmContact::CheckReadPermission(0, $userPermissions)) {
+				if ($isAdmin || CCrmContact::CheckReadPermission(0, $userPermissions))
+				{
 					$globalCrmSearchCategories["contact"] = array(
 						"url" => SITE_DIR . "crm/contact/list/?apply_filter=Y&with_preset=Y&FIND=",
 						"text" => GetMessage("CT_BST_GLOBAL_SEARCH_CRM_CONTACT")
 					);
 				}
 
-				if ($isAdmin || CCrmCompany::CheckReadPermission(0, $userPermissions)) {
+				if ($isAdmin || CCrmCompany::CheckReadPermission(0, $userPermissions))
+				{
 					$globalCrmSearchCategories["company"] = array(
 						"url" => SITE_DIR . "crm/company/list/?apply_filter=Y&with_preset=Y&FIND=",
 						"text" => GetMessage("CT_BST_GLOBAL_SEARCH_CRM_COMPANY")
@@ -1015,10 +1030,12 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 				break;
 		}
 
-		foreach($sort as $key)
+		foreach ($sort as $key)
 		{
 			if (!isset($globalSearchCategories[$key]))
+			{
 				continue;
+			}
 
 			$this->arResult["GLOBAL_SEARCH_CATEGORIES"][$key] = $globalSearchCategories[$key];
 		}
@@ -1048,20 +1065,24 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 			$this->arResult["alt_query"] = "";
 			$this->arResult["query"] = $query;
 
-			$this->arParams["NUM_CATEGORIES"] = intval($this->arParams["NUM_CATEGORIES"]);
-			if($this->arParams["NUM_CATEGORIES"] <= 0)
+			$this->arParams["NUM_CATEGORIES"] = (int)$this->arParams["NUM_CATEGORIES"];
+			if ($this->arParams["NUM_CATEGORIES"] <= 0)
+			{
 				$this->arParams["NUM_CATEGORIES"] = 1;
+			}
 
-			$this->arParams["TOP_COUNT"] = intval($this->arParams["TOP_COUNT"]);
-			if($this->arParams["TOP_COUNT"] <= 0)
+			$this->arParams["TOP_COUNT"] = (int)$this->arParams["TOP_COUNT"];
+			if ($this->arParams["TOP_COUNT"] <= 0)
+			{
 				$this->arParams["TOP_COUNT"] = 5;
+			}
 
-			for($i = 0; $i < $this->arParams["NUM_CATEGORIES"]; $i++)
+			for ($i = 0; $i < $this->arParams["NUM_CATEGORIES"]; $i++)
 			{
 				$bCustom = true;
-				if(is_array($this->arParams["CATEGORY_".$i]))
+				if (is_array($this->arParams["CATEGORY_".$i]))
 				{
-					foreach($this->arParams["CATEGORY_".$i] as $categoryCode)
+					foreach ($this->arParams["CATEGORY_".$i] as $categoryCode)
 					{
 						if ((mb_strpos($categoryCode, 'custom_') !== 0))
 						{
@@ -1076,18 +1097,26 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 				}
 
 				if ($bCustom)
+				{
 					continue;
+				}
 
 				$category_title = trim($this->arParams["CATEGORY_".$i."_TITLE"]);
-				if(empty($category_title))
+				if (empty($category_title))
 				{
-					if(is_array($this->arParams["CATEGORY_".$i]))
+					if (is_array($this->arParams["CATEGORY_".$i]))
+					{
 						$category_title = implode(", ", $this->arParams["CATEGORY_".$i]);
+					}
 					else
+					{
 						$category_title = trim($this->arParams["CATEGORY_".$i]);
+					}
 				}
-				if(empty($category_title))
+				if (empty($category_title))
+				{
 					continue;
+				}
 
 				$this->arResult["CATEGORIES"][$i] = array(
 					"TITLE" => htmlspecialcharsbx($category_title),
@@ -1120,14 +1149,13 @@ class CIntranetSearchTitleComponent extends CBitrixComponent
 			$APPLICATION->RestartBuffer();
 
 			if(!empty($query))
+			{
 				$this->IncludeComponentTemplate('ajax');
+			}
 			CMain::FinalActions();
-			die();
 		}
-		else
-		{
-			CUtil::InitJSCore(array('ajax'));
-			$this->IncludeComponentTemplate();
-		}
+
+		CUtil::InitJSCore(array('ajax'));
+		$this->IncludeComponentTemplate();
 	}
 }

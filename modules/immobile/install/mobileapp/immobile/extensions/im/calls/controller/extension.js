@@ -820,6 +820,7 @@
 				callInterface.indicator().imageUrl = associatedAvatar;
 				callInterface.indicator().show();
 				callInterface.indicator().once("tap", () => this.unfold());
+				device.setProximitySensorEnabled(false);
 
 				BX.postComponentEvent("CallEvents::viewClosed", []);
 				BX.postWebEvent("CallEvents::viewClosed", {});
@@ -834,6 +835,7 @@
 				return;
 			}
 			uicomponent.widgetLayer().show();
+			device.setProximitySensorEnabled(true);
 
 			BX.postComponentEvent("CallEvents::viewOpened", []);
 			BX.postWebEvent("CallEvents::viewOpened", {});

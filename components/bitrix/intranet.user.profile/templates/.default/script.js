@@ -64,7 +64,7 @@
 
 				this.initAvailableActions();
 				this.initAvatarLoader();
-				this.initAppsInstall();
+
 				if (this.isCloud)
 				{
 					this.initGdpr();
@@ -92,7 +92,7 @@
 				if (BX.type.isDomNode(bottomContainer) && BX.type.isDomNode(cardButton))
 				{
 					var cardButtonLink = cardButton.querySelector('.ui-entity-settings-link');
-					cardButtonLink.setAttribute('class', 'ui-btn ui-btn-xs ui-btn-light-border ui-btn-themes');
+					cardButtonLink.setAttribute('class', 'ui-btn ui-btn-sm ui-btn-light-border ui-btn-themes');
 					cardButton.parentNode.removeChild(cardButton);
 					bottomContainer.appendChild(cardButtonLink);
 				}
@@ -161,25 +161,6 @@
 					this.showConfirmPopup(BX.message("INTRANET_USER_PROFILE_PHOTO_DELETE_CONFIRM"), this.deletePhoto.bind(this));
 				}
 			}, this))
-		},
-
-		initAppsInstall: function()
-		{
-			var androidIcon = document.querySelector("[data-role='profile-android-app']");
-			if (BX.type.isDomNode(androidIcon))
-			{
-				BX.bind(androidIcon, "click", BX.proxy(function () {
-					this.showSmsPopup(this.personalMobile);
-				}, this));
-			}
-
-			var iosIcon = document.querySelector("[data-role='profile-ios-app']");
-			if (BX.type.isDomNode(iosIcon))
-			{
-				BX.bind(iosIcon, "click", BX.proxy(function () {
-					this.showSmsPopup(this.personalMobile);
-				}, this));
-			}
 		},
 
 		showActionPopup: function(bindElement)
@@ -882,83 +863,6 @@
 					params.callback();
 				}
 			}.bind(this));
-		},
-
-		showSmsPopup: function (personalMobile)
-		{
-			BX.PopupWindowManager.create({
-				id: "intranet-user-profile-sms-popup",
-				className: "intranet-user-profile-popup",
-				titleBar: BX.message("INTRANET_USER_PROFILE_APP_INSTALL"),
-				maxWidth: 450,
-				contentColor: "white",
-				content:
-					BX.create("div", {
-						children: [
-							BX.create("div", {
-								props: {
-									className: "intranet-user-profile-popup-title"
-								},
-								html: BX.message("INTRANET_USER_PROFILE_APP_PHONE")
-							}),
-							BX.create('div', {
-								props: {
-									className: 'ui-ctl ui-ctl-textbox ui-ctl-wa'
-								},
-								children: [
-									BX.create('input', {
-										props: {
-											value: personalMobile,
-											className: 'ui-ctl-element',
-											type: "text"
-										},
-										events: {
-											"input" : function () {
-												personalMobile = this.value;
-											}
-										}
-									})
-								]
-							}),
-							BX.create("div", {
-								props: {
-									className: "intranet-user-profile-popup-text"
-								},
-								html: BX.message("INTRANET_USER_PROFILE_APP_INSTALL_TEXT")
-							})
-						]
-					}),
-				closeIcon : true,
-				contentPadding: 10,
-				buttons: [
-					new BX.UI.CreateButton({
-						text: BX.message("INTRANET_USER_PROFILE_APP_SEND"),
-						className: "ui-btn-primary",
-						events: {
-							click: BX.proxy(function (button) {
-								button.setWaiting();
-								var popup = button.context;
-
-								BX.ajax.runAction('intranet.controller.sms.sendsmsforapp', {
-									data: {
-										phone: personalMobile
-									}
-								}).then(function (response) {
-									popup.close();
-								}.bind(this), function (response) {
-									popup.close();
-								}.bind(this));
-							}, this)
-						}
-					})
-				],
-				events : {
-					onPopupClose: function ()
-					{
-						this.destroy();
-					}
-				}
-			}).show();
 		},
 
 		changeGdpr: function (inputNode)

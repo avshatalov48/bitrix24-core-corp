@@ -1,6 +1,12 @@
 <? if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-\Bitrix\Main\UI\Extension::load(array("ui.graph.circle", "ui.icons.b24", "ui.fonts.opensans", "ui.hint"));
+\Bitrix\Main\UI\Extension::load([
+	"ui.graph.circle",
+	"ui.icons.b24",
+	"ui.fonts.opensans",
+	"ui.hint",
+	"ui.design-tokens"
+]);
 CJSCore::Init("finder");
 
 use Bitrix\Main\Localization\Loc;

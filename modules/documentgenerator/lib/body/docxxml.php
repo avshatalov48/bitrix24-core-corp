@@ -363,9 +363,10 @@ class DocxXml extends Xml
 					$multipleValues = array_fill_keys(array_keys($multipleValues), '');
 				}
 				$values = array_merge($this->values, $multipleValues);
+				$placeholdersWithHtmlValues = [];
 				$blockContent = preg_replace_callback(
 					static::$valuesPattern,
-					function($matches) use ($values) {
+					function($matches) use ($values, &$placeholdersWithHtmlValues) {
 						if($matches[2] && array_key_exists($matches[2], $values))
 						{
 							// multiply images
@@ -387,11 +388,18 @@ class DocxXml extends Xml
 								return static::EMPTY_IMAGE_PLACEHOLDER;
 							}
 
-							return $this->printValue($values[$matches[2]], $matches[2], $matches[3]);
+							if (!static::detectHtml((string)$values[$matches[2]]))
+							{
+								return $this->printValue($values[$matches[2]], $matches[2], $matches[3]);
+							}
+							$placeholdersWithHtmlValues[$matches[0]] = $matches;
+
+							return $matches[0];
 						}
 
 						return '';
-					}, $content
+					},
+					$content
 				);
 				$innerXml = new DocxXml($blockContent);
 				$imageData = $innerXml->findImages(true);
@@ -406,6 +414,19 @@ class DocxXml extends Xml
 						}
 					}
 				}
+
+				$temporaryPlaceholdersWithNodes = $this->replaceRealByTemporaryPlaceholers(
+					$placeholdersWithHtmlValues,
+					$innerXml,
+				);
+				$blockContent = $this->processContentWithTemporaryPlaceholders(
+					$innerXml->getContent(),
+					$temporaryPlaceholdersWithNodes,
+					$values,
+					false,
+				);
+				$innerXml = new DocxXml($blockContent);
+				$innerXml->initDomDocument();
 				$nodeToLoad = $block['nodes'][count($block['nodes']) - 1];
 				$blockDocument = $innerXml->getDomDocument();
 				foreach($blockDocument->childNodes as $blockNode)
@@ -421,9 +442,12 @@ class DocxXml extends Xml
 		}
 		foreach($block['nodes'] as $node)
 		{
-			$node->parentNode->removeChild($node);
+			if ($node->parentNode)
+			{
+				$node->parentNode->removeChild($node);
+			}
 		}
-		if(isset($block['endNode']) && $block['endNode'])
+		if(isset($block['endNode']) && $block['endNode'] && $block['endNode']->parentNode)
 		{
 			$block['endNode']->parentNode->removeChild($block['endNode']);
 		}
@@ -445,24 +469,24 @@ class DocxXml extends Xml
 	{
 		$result = [];
 		$startNode = $this->findPlaceholderNode($placeholder.'.'.static::BLOCK_START_PLACEHOLDER);
-		if(!$startNode)
+		if (!$startNode)
 		{
 			// try to find by magic
 			$tableRowNodes = [];
 			$linkedPlaceholders = $this->getLinkedPlaceholders($placeholder);
-			foreach($linkedPlaceholders as $linkedPlaceholder)
+			foreach ($linkedPlaceholders as $linkedPlaceholder)
 			{
 				$linkedPlaceholderNodes = $this->findPlaceholderNodes($linkedPlaceholder);
-				foreach($linkedPlaceholderNodes as $node)
+				foreach ($linkedPlaceholderNodes as $node)
 				{
-					if(mb_strpos($node->textContent, static::DO_NOT_INSERT_VALUE_MODIFIER) === false)
+					if (mb_strpos($node->textContent, static::DO_NOT_INSERT_VALUE_MODIFIER) === false)
 					{
 						$tableRowNodes[] = $this->getParentTableRowNode($node);
 					}
 				}
 			}
 			$tableRowNodes = $this->getUniqueObjects($tableRowNodes);
-			if(!empty($tableRowNodes))
+			if (!empty($tableRowNodes))
 			{
 				/** @var \DOMElement[] $tableRowNodes */
 				$result = [
@@ -472,31 +496,39 @@ class DocxXml extends Xml
 			}
 			return $result;
 		}
-		if(
+		if (
 			preg_match(static::$valuesPattern, $startNode->nodeValue, $placeholderData)
 			&& !empty($placeholderData[3])
 		)
 		{
 			$modifierData = Value::parseModifier($placeholderData[3]);
-			if(isset($modifierData[static::ARRAY_INDEX_MODIFIER]))
+			if (isset($modifierData[static::ARRAY_INDEX_MODIFIER]))
 			{
 				$result[static::ARRAY_INDEX_MODIFIER] = (int) $modifierData[static::ARRAY_INDEX_MODIFIER];
 			}
 		}
 
 		$startNode = $this->getParentParagraphNode($startNode);
-		if(!$startNode)
+		if (!$startNode)
 		{
 			return $result;
 		}
+		$result['startNode'] = $startNode;
 		$nodes = [];
 		$result['endNode'] = false;
-		$result['startNode'] = $startNode;
+		if (strpos($startNode->nodeValue, '{'.$placeholder.'.'.static::BLOCK_END_PLACEHOLDER.'}') !== false)
+		{
+			$result['endNode'] = $startNode;
+			$result['nodes'] = [$startNode];
+			$result['content'] = [$startNode->C14N()];
+
+			return $result;
+		}
 		$maxTags = 20;
 		$node = $startNode->nextSibling;
-		while($maxTags-- > 0 && $node)
+		while ($maxTags-- > 0 && $node)
 		{
-			if(strpos($node->nodeValue, '{'.$placeholder.'.'.static::BLOCK_END_PLACEHOLDER.'}') !== false)
+			if (strpos($node->nodeValue, '{'.$placeholder.'.'.static::BLOCK_END_PLACEHOLDER.'}') !== false)
 			{
 				$result['endNode'] = $node;
 				break;
@@ -504,11 +536,11 @@ class DocxXml extends Xml
 			$nodes[] = $node;
 			$node = $node->nextSibling;
 		}
-		if(!$result['endNode'])
+		if (!$result['endNode'])
 		{
 			$nodes = [];
 		}
-		foreach($nodes as $node)
+		foreach ($nodes as $node)
 		{
 			$result['content'][] = $node->C14N();
 			$result['nodes'][] = $node;
@@ -776,7 +808,7 @@ class DocxXml extends Xml
 				$context = [];
 				if(isset($params['currentNode']) && $params['currentNode'] instanceof \DOMElement)
 				{
-					$context['rowProperties'] = $this->getRowPropertyNodeValue($params['currentNode']);
+					$context['additionalNodes'] = $this->getRowPropertyNodes($params['currentNode']);
 				}
 				$value = $this->htmlToXml($value, $context);
 			}
@@ -882,14 +914,14 @@ class DocxXml extends Xml
 		{
 			$context['currentList'] = [
 				'type' => static::NUMBERING_TYPE_UNORDERED,
-				'id' => $this->getRandomId('numberingValue', false),
+				'id' => self::getRandomId('numberingValue', false),
 			];
 		}
 		elseif($nodeName === 'ol')
 		{
 			$context['currentList'] = [
 				'type' => static::NUMBERING_TYPE_ORDERED,
-				'id' => $this->getRandomId('numberingValue', false),
+				'id' => self::getRandomId('numberingValue', false),
 			];
 		}
 		elseif($nodeName === 'li')
@@ -936,6 +968,7 @@ class DocxXml extends Xml
 					$result .= '<w:ilvl w:val="0" />';
 					$result .= '<w:numId w:val="'.$context['currentList']['id'].'" />';
 					$result .= '</w:numPr>';
+					$result .= $this->addRowPropertiesTag($context);
 					$result .= '</w:pPr>';
 					unset($context['showNumber']);
 					$context['display'] = $displayProperties->getProperties()[DOM\DisplayProperties::DISPLAY];
@@ -1029,28 +1062,37 @@ class DocxXml extends Xml
 	protected function addRowPropertiesTag(array $properties): string
 	{
 		$displayProperties = $this->getDisplayProperties(new DOM\Element('stub'), $properties);
+
+		$additionalNodes = (array)($properties['additionalNodes'] ?? null);
+		unset(
+			$additionalNodes['w:b'],
+			$additionalNodes['w:i'],
+			$additionalNodes['w:strike'],
+			$additionalNodes['w:u'],
+		);
 		$result = '<w:rPr>';
-		$result .= '<w:rStyle w:val="Del" />';
-		if($displayProperties->isFontBold())
+		if (!isset($additionalNodes['w:rStyle']))
+		{
+			$result .= '<w:rStyle w:val="Del" />';
+		}
+		if ($displayProperties->isFontBold())
 		{
 			$result .= '<w:b/>';
 		}
-		if($displayProperties->isFontItalic())
+		if ($displayProperties->isFontItalic())
 		{
 			$result .= '<w:i/>';
 		}
-		if($displayProperties->isFontDeleted())
+		if ($displayProperties->isFontDeleted())
 		{
 			$result .= '<w:strike/>';
 		}
-		if($displayProperties->isFontUnderlined())
+		if ($displayProperties->isFontUnderlined())
 		{
 			$result .= '<w:u w:val="single" />';
 		}
-		if(isset($properties['rowProperties']) && is_string($properties['rowProperties']))
-		{
-			$result .= $properties['rowProperties'];
-		}
+
+		$result .= implode('', $additionalNodes);
 		$result .= '</w:rPr>';
 
 		return $result;
@@ -1060,7 +1102,7 @@ class DocxXml extends Xml
 	 * @param \DOMElement $node
 	 * @return string|null
 	 */
-	protected function getRowPropertyNodeValue(\DOMElement $node): ?string
+	protected function getRowPropertyNodes(\DOMElement $node): ?array
 	{
 		if($node->nodeName === 'w:t')
 		{
@@ -1079,7 +1121,13 @@ class DocxXml extends Xml
 				$propertyNode = $propertyNodes->item(0);
 				if($propertyNode)
 				{
-					return $propertyNode->nodeValue;
+					$result = [];
+					foreach ($propertyNode->childNodes as $childNode)
+					{
+						$result[$childNode->nodeName] = $childNode->C14N();
+					}
+
+					return $result;
 				}
 			}
 		}
@@ -1087,35 +1135,102 @@ class DocxXml extends Xml
 		return null;
 	}
 
-//  This is not ready yet
-//	/**
-//	 * @param array $params
-//	 * @return string
-//	 */
-//	protected function replacePlaceholders(array $params = [])
-//	{
-//		$placeholders = $this->getPlaceholders();
-//		$allNodes = array_fill_keys($placeholders, []);
-//		foreach($placeholders as $placeholder)
-//		{
-//			$allNodes[$placeholder] = $this->findPlaceholderNodes($placeholder);
-//		}
-//
-//		foreach($allNodes as $placeholder => $nodes)
-//		{
-//			foreach($nodes as $node)
-//			{
-//				/** @var \DOMNode $node */
-//				$textContent = parent::replacePlaceholders([
-//					'content' => $node->nodeValue,
-//					'currentNode' => $node,
-//				]);
-//			}
-//		}
-//
-//		$this->saveContent();
-//		return $this->content;
-//	}
+	/**
+	 * @param array $params
+	 * @return string
+	 */
+	protected function replacePlaceholders(array $params = [])
+	{
+		$placeholdersWithHtmlValues = [];
+
+		$this->content = preg_replace_callback(
+			static::$valuesPattern,
+			function(array $matches) use (&$placeholdersWithHtmlValues) {
+
+				$value = $this->values[$matches[2]] ?? null;
+				if (is_string($value) && static::detectHtml($value))
+				{
+					$placeholdersWithHtmlValues[$matches[0]] = $matches;
+					return $matches[0];
+				}
+
+				return $this->getReplaceValue($matches);
+			},
+			$this->content
+		);
+
+		if (empty($placeholdersWithHtmlValues))
+		{
+			return $this->content;
+		}
+
+		$this->initDomDocument();
+		$temporaryPlaceholdersWithNodes = $this->replaceRealByTemporaryPlaceholers($placeholdersWithHtmlValues, $this);
+		$this->content = $this->processContentWithTemporaryPlaceholders(
+			$this->content,
+			$temporaryPlaceholdersWithNodes,
+			$this->values
+		);
+
+		return $this->content;
+	}
+
+	protected function replaceRealByTemporaryPlaceholers(
+		array $placeholdersMatches,
+		DocxXml $document
+	): array
+	{
+		$temporaryPlaceholdersWithNodes = [];
+		foreach ($placeholdersMatches as $matches)
+		{
+			$placeholderNodes = $document->getXPath()->query('//w:t[text()[contains(.,"' . $matches[0] . '")]]');
+			/** @var \DOMNode $placeholderNode */
+			foreach ($placeholderNodes as $placeholderNode)
+			{
+				$uniqId = '{' . static::getRandomId('SystemHtmlValues', true) . '}';
+				$temporaryPlaceholdersWithNodes[$uniqId] = [
+					'originalMatches' => $matches,
+					'node' => $placeholderNode,
+				];
+				$placeholderNode->nodeValue = str_replace($matches[0], $uniqId, $placeholderNode->nodeValue);
+			}
+		}
+		if (!empty($temporaryPlaceholdersWithNodes))
+		{
+			$document->saveContent();
+		}
+
+		return $temporaryPlaceholdersWithNodes;
+	}
+
+	protected function processContentWithTemporaryPlaceholders(
+		string $content,
+		array $temporaryPlaceholdersWithNodes,
+		array $values,
+		bool $isPurgeEmptyValue = true
+	): string
+	{
+		return (string)preg_replace_callback(
+			static::$valuesPattern,
+			function($matches) use ($temporaryPlaceholdersWithNodes, $values, $isPurgeEmptyValue) {
+				if($matches[2] && array_key_exists($matches[0], $temporaryPlaceholdersWithNodes))
+				{
+					$originalMatches = $temporaryPlaceholdersWithNodes[$matches[0]]['originalMatches'];
+					return $this->printValue(
+						$values[$originalMatches[2]],
+						$originalMatches[2],
+						$originalMatches[3],
+						[
+							'currentNode' => $temporaryPlaceholdersWithNodes[$matches[0]]['node'],
+						]
+					);
+				}
+
+				return $isPurgeEmptyValue ? '' : $matches[0];
+			},
+			$content
+		);
+	}
 
 //	/**
 //	 * Generates simple spreadsheets for array values.

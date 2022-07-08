@@ -779,6 +779,7 @@ td.bx-layout-inner-inner-cont {
 
 #sidebar {
 	padding-left: 17px;
+	padding-right: var(--ui-space-inline-sm);
 	position: relative;
 	width: 280px;
 	float: right;
@@ -940,6 +941,14 @@ td.bx-layout-inner-inner-cont {
 	max-width: calc(100vw - 240px);
 }
 
+.page-navigation {
+	margin-right: var(--ui-space-inline-sm);
+}
+
+.pagetitle-below {
+	margin-right: var(--ui-space-inline-sm);
+}
+
 .menu-collapsed-mode .page-header {
 	min-width: 1000px;
 	max-width: calc(100vw - 66px);
@@ -1083,7 +1092,7 @@ td.bx-layout-inner-inner-cont {
 	z-index: 2;
 	white-space: nowrap;
 	padding-left: 20px;
-	padding-right: 11px;
+	padding-right: var(--ui-space-inline-none, 11px);
 }
 
 .pagetitle-menu-visible .pagetitle-menu {
@@ -1354,6 +1363,8 @@ td.bx-layout-inner-inner-cont {
 	overflow: hidden;
 	background-color: #fff;
 	height: 100%;
+	border-radius: var(--ui-border-radius-md);
+	margin-right: var(--ui-space-inline-sm);
 }
 
 .workarea-content-paddings {
@@ -1497,6 +1508,8 @@ br.sn-br {
 
 .sidebar-block {
 	background-color: #fff;
+	border-radius: var(--ui-border-radius-md);
+	margin-bottom: var(--ui-space-stack-md);
 }
 
 .sidebar-block-inner {
@@ -1664,6 +1677,7 @@ div.title-search-result {
 	overflow: hidden;
 	z-index: 305;
 	background-color: #fff;
+	border-radius: var(--title-search-result-border-radius, var(--ui-border-radius-md));
 }
 
 div.title-search-result-header {
@@ -2369,7 +2383,7 @@ div.microblog-post {
 
 .content-edit-form-header-wrap {
 	background-color: #e9e9e9;
-	border-radius: 1px;
+	border-radius: var(--ui-border-radius-sm, 1px);
 	color: #41474f;
 	display: block;
 	font: bold 13px/40px "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -2391,13 +2405,12 @@ div.microblog-post {
 .content-edit-form-field-name {
 	color: #525c69;
 	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
-	/*padding-bottom: 7px;*/
+	padding-bottom: 7px;
 	padding-right: 9px;
-	/*padding-top: 12px;*/
+	padding-top: 14px;
 	text-align: right;
-	vertical-align: middle;
-	white-space: nowrap;
-	width: 170px;
+	vertical-align: top;
+	width: 40%;
 }
 
 .content-edit-form-field-name-top {
@@ -2415,8 +2428,9 @@ div.microblog-post {
 	font: 14px/26px Arial, Helvetica, sans-serif;
 	padding-bottom: 7px;
 	padding-right: 17px;
-	padding-top: 6px;
+	padding-top: 12px;
 	width: 298px;
+	vertical-align: top;
 }
 
 .content-edit-form-field-input-sub {
@@ -2708,8 +2722,7 @@ div.microblog-post {
 
 .content-edit-form-field-input-text, .content-edit-form-field-input-textarea, .content-edit-form-field-input input.string {
 	border: 1px solid #b9bcbe;
-	border-radius: 2px;
-	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14) inset;
+	border-radius: var(--ui-field-border-radius, 2px);
 	color: #5b5b5b;
 	padding: 2px;
 }
@@ -2726,8 +2739,7 @@ div.microblog-post {
 .content-edit-form-chart {
 	background-color: #f5fae4;
 	border: 1px solid #dbded0;
-	border-radius: 3px;
-	box-shadow: 0 2px 2px -1px #dbded0 inset;
+	border-radius: var(--ui-border-radius-2xs, 3px);
 	height: 21px;
 	width: 341px;
 }
@@ -3872,7 +3884,7 @@ a.td1:hover {
 	-webkit-box-align: center;
 	-ms-flex-align: center;
 	align-items: center;
-	padding: 0 18px 0 13px;
+	padding: 0 var(--ui-space-inline-none, 18px) 0 13px;
 	min-height: 74px;
 	box-sizing: border-box;
 }

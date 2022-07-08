@@ -8,7 +8,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
 use Bitrix\Main;
 
-Main\UI\Extension::load('ui.textcrop');
+Main\UI\Extension::load(['ui.textcrop', 'ui.design-tokens']);
 
 $this->setFrameMode(true);
 
@@ -138,4 +138,9 @@ if(!empty($arResult["ADDITIONAL_STYLES"]))
 			?>
 		</div>
 	</div>
+	<?php if ($arResult['RULE_LINK'] !== ''): ?>
+		<div class="intranet-contact-center-rules">
+			<a class="intranet-contact-center-rules-link" href="<?= $arResult['RULE_LINK'] ?>" target="_blank"><?= Loc::getMessage("CONTACT_CENTER_RULES") ?></a>
+		</div>
+	<?php endif ?>
 </div>

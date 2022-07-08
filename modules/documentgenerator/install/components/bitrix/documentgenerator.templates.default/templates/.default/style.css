@@ -21,7 +21,7 @@
 .docs-template-info-message {
 	margin: 12px 0 3px;
 	padding: 14px 20px 14px 19px;
-	border-radius: 3px;
+	border-radius: var(--ui-border-radius-xs, 3px);
 	background-color: #f8f4bc;
 	color: #616a77;
 	font-size: 13px;

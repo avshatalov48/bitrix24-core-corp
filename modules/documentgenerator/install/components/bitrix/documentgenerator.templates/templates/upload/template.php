@@ -8,9 +8,18 @@ use Bitrix\DocumentGenerator\Integration\Bitrix24Manager;
 use Bitrix\Main\Localization\Loc;
 
 $this->IncludeLangFile();
-\CJSCore::init(["core", "sidepanel", "uploader", "popup", "socnetlogdest", "documentpreview"]);
-\Bitrix\Main\UI\Extension::load("ui.buttons");
-\Bitrix\Main\UI\Extension::load("ui.buttons.icons");
+
+\Bitrix\Main\UI\Extension::load([
+	'core',
+	'sidepanel',
+	'uploader',
+	'popup',
+	'socnetlogdest',
+	'documentpreview',
+	'ui.buttons',
+	'ui.buttons.icons',
+	'ui.design-tokens',
+]);
 
 if($arResult['IS_SLIDER'])
 {

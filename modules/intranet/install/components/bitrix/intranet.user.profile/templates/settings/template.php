@@ -1,8 +1,19 @@
 <?php
-use Bitrix\Main\Localization\Loc;
+
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Web\Json;
 
-\Bitrix\Main\UI\Extension::load(array("ui", "ui.buttons", "ui.common"));
+\Bitrix\Main\UI\Extension::load([
+	'ui.buttons',
+	'ui.common',
+	'ui.design-tokens'
+]);
+
 ?>
 <div id="intranet-profile-settings-popup"  style="margin: 20px;">
 	<div class="ui-title-1"><?=Loc::getMessage("INTRANET_USER_PROFILE_SETTINGS_TITLE")?></div>

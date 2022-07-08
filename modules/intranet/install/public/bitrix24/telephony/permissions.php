@@ -10,7 +10,6 @@ $APPLICATION->SetTitle(GetMessage("VI_PAGE_PERMISSIONS_TITLE"));
 	array(
 		"POPUP_COMPONENT_NAME" => "bitrix:voximplant.settings.perms",
 		"POPUP_COMPONENT_TEMPLATE_NAME" => "",
-		"USE_PADDING" => false
 	)
 );?>
 

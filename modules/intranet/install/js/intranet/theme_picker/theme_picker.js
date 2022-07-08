@@ -32,7 +32,7 @@ BX.Intranet.Bitrix24.ThemePicker = function(options)
 	this.popup = null;
 	this.loaderTimeout = null;
 	this.behaviour = BX.type.isNotEmptyString(options.behaviour) ? options.behaviour : 'apply';
-	this.returnValue = null;
+	this.returnValue = (this.needReturnValue() ? this.themeId : null);
 
 	this.newThemeDialog = new BX.Intranet.Bitrix24.NewThemeDialog(this);
 

@@ -22,7 +22,13 @@ abstract class ZipDocument extends Body
 	{
 		if($this->file)
 		{
-			$this->file->delete();
+			try
+			{
+				$this->file->delete();
+			}
+			catch (\Throwable $throwable)
+			{
+			}
 		}
 	}
 

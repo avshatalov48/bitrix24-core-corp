@@ -33,6 +33,8 @@ if (
 	return;
 }
 
+$userId = (int)$arResult['User']['ID'];
+$isCurrentUserPage = ($userId === (int)$USER->GetID());
 
 $this->addExternalCss(SITE_TEMPLATE_PATH."/css/profile_menu.css");
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
@@ -80,9 +82,9 @@ $profileItem = array(
 	),
 );
 
-if ($arResult['User']['ID'] !== $USER->GetID())
+if (!$isCurrentUserPage)
 {
-	$profileItem['profile']['URL'] = SITE_DIR . 'company/personal/user/' . $arResult['User']['ID'] . '/';
+	$profileItem['profile']['URL'] = SITE_DIR . "company/personal/user/{$userId}/";
 }
 
 $items = array_merge($items, $profileItem);
@@ -108,10 +110,15 @@ if (
 
 	if (!$arResult['isExtranetSite'])
 	{
-		$taskItem['tasks']['SUB_LINK'] = array(
+		$sublink = new Uri(SITE_DIR . "company/personal/user/{$userId}/tasks/task/edit/0/");
+		if (!$isCurrentUserPage)
+		{
+			$sublink->addParams(['RESPONSIBLE_ID' => $userId]);
+		}
+		$taskItem['tasks']['SUB_LINK'] = [
 			'CLASS' => '',
-			'URL' => SITE_DIR."company/personal/user/".$arResult["User"]["ID"]."/tasks/task/edit/0/"
-		);
+			'URL' => $sublink->getUri(),
+		];
 	}
 	$items = array_merge($items, $taskItem);
 }
@@ -180,8 +187,6 @@ if (
 		)
 	));
 }
-
-$userId = $arResult['User']['ID'];
 
 if (
 	is_array($arResult['CanView'])
@@ -264,7 +269,7 @@ if (
 		(
 			"ID" => "timeman",
 			"TEXT"     => GetMessage("SONET_UM_TIME"),
-			"ON_CLICK" => "BX.SidePanel.Instance.open('".SITE_DIR."timeman/timeman.php?USERS=U".$arResult["User"]["ID"]."&apply_filter=Y', { width: 1000, loader: 'intranet:worktime', })"
+			"ON_CLICK" => "BX.SidePanel.Instance.open('".SITE_DIR."timeman/timeman.php?USERS=U{$userId}&apply_filter=Y', { width: 1000, loader: 'intranet:worktime', })"
 		),
 		array
 		(
@@ -299,12 +304,12 @@ $APPLICATION->IncludeComponent(
 	"bitrix:main.interface.buttons",
 	"",
 	array(
-		"ID" => "socialnetwork_profile_menu_user_".$arResult["User"]["ID"],
+		"ID" => "socialnetwork_profile_menu_user_{$userId}",
 		"ITEMS" => $items,
 		"DISABLE_SETTINGS" => !(
 			$USER->isAuthorized()
 			&& (
-				(int)$USER->getId() === (int)$arResult["User"]["ID"]
+				$isCurrentUserPage
 				|| (
 					Loader::includeModule('socialnetwork')
 					&& CSocNetUser::isCurrentUserModuleAdmin()

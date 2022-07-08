@@ -8,7 +8,7 @@
 	height: 73px;
 	background-color: #fff;
 	box-sizing: border-box;
-	border-radius: var(--intranet-ustat-online-box, var(--ui-theme-radius-md, 0));
+	border-radius: var(--intranet-ustat-online-box-border-radius, var(--ui-border-radius-md, 0));
 }
 
 .intranet-ustat-online-badge {

@@ -196,12 +196,16 @@ class Im
 	}
 
 	/**
-	 * @param $chatId
+	 * @param int $chatId
 	 * @return bool
 	 */
 	public static function chatHide($chatId)
 	{
-		return \CIMChat::hide($chatId);
+		if (Loader::includeModule('im'))
+		{
+			return \CIMChat::hide($chatId);
+		}
+		return false;
 	}
 
 	/**

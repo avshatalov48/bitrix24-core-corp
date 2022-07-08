@@ -573,22 +573,21 @@ jn.define('im/chat/selector/providers/chat', (require, exports, module) => {
 				item.secondName = entity.customData.secondName;
 				item.shortTitle = entity.customData.name;
 				item.position = entity.customData.position;
-
-				item.color = entity.avatar.indexOf('upload') !== -1 ? colorWhite : entity.customData['imUser'].COLOR;
+				item.color = entity.avatar && entity.avatar.indexOf('upload') !== -1 ? colorWhite : entity.customData['imUser'].COLOR;
 			}
 			else if (entity.entityId === 'im-chat')
 			{
 				item.subtitle = this.getEntityOption(entity, 'subtitle', '');
 				item.shortTitle = entity.title;
 				item.styles.title.font.color = this.getEntityOption(entity, 'textColor', colorGray);
-				item.color = entity.avatar.indexOf('upload') !== -1 ? colorWhite : entity.customData['imChat'].COLOR;
+				item.color = entity.avatar && entity.avatar.indexOf('upload') !== -1 ? colorWhite : entity.customData['imChat'].COLOR;
 			}
 			else if (entity.entityId === 'im-bot')
 			{
 				item.subtitle = entity.customData['imUser'].WORK_POSITION;
 				item.shortTitle = entity.title;
 				item.styles.title.font.color = this.getEntityOption(entity, 'textColor', colorGray);
-				item.color = entity.avatar.indexOf('upload') !== -1 ? colorWhite : entity.customData['imUser'].COLOR;
+				item.color = entity.avatar && entity.avatar.indexOf('upload') !== -1 ? colorWhite : entity.customData['imUser'].COLOR;
 			}
 
 			return item;

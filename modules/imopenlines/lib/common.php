@@ -111,21 +111,26 @@ class Common
 			return self::MODE_AGENT;
 	}
 
-	public static function deleteBrokenSession()
+	/**
+	 * Agent clears broken session data.
+	 * @return string
+	 */
+	public static function deleteBrokenSession(): string
 	{
-		$orm = \Bitrix\ImOpenLines\Model\SessionTable::getList(array(
-			'select' => Array('ID'),
-			'filter' => Array('=CONFIG.ID' => '')
-		));
-		while ($session = $orm->fetch())
+		$sessList = \Bitrix\ImOpenLines\Model\SessionTable::getList([
+			'select' => ['ID', 'CHAT_ID'],
+			'filter' => ['=CONFIG.ID' => null]
+		]);
+		while ($session = $sessList->fetch())
 		{
+			Im::chatHide($session['CHAT_ID']);
 			Session::deleteSession($session['ID']);
 		}
 
-		$orm = \Bitrix\ImOpenLines\Model\SessionCheckTable::getList(array(
-			'filter' => Array('=SESSION.ID' => '')
-		));
-		while ($session = $orm->fetch())
+		$checkList = \Bitrix\ImOpenLines\Model\SessionCheckTable::getList([
+			'filter' => ['=SESSION.ID' => null]
+		]);
+		while ($session = $checkList->fetch())
 		{
 			\Bitrix\ImOpenLines\Model\SessionCheckTable::delete($session['SESSION_ID']);
 		}
@@ -135,7 +140,7 @@ class Common
 			\Bitrix\Pull\Event::send();
 		}
 
-		return '\Bitrix\ImOpenLines\Common::deleteBrokenSession();';
+		return __METHOD__. '();';
 	}
 
 	public static function setUserAgrees($params)

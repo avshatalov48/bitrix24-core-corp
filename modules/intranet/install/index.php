@@ -186,6 +186,8 @@ Class intranet extends CModule
 		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationEntity', 'intranet', '\Bitrix\Intranet\Integration\Rest\Configuration\Controller', 'getEntityList');
 		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationExport', 'intranet', '\Bitrix\Intranet\Integration\Rest\Configuration\Controller', 'onExport');
 		$eventManager->registerEventHandler('rest', 'OnRestApplicationConfigurationImport', 'intranet', '\Bitrix\Intranet\Integration\Rest\Configuration\Controller', 'onImport');
+		$eventManager->registerEventHandler('rest', 'onAfterPlacementAdd::LEFT_MENU', 'intranet', '\Bitrix\Intranet\Integration\Rest\EventHandler', 'onRegisterPlacementLeftMenu');
+		$eventManager->registerEventHandler('rest', 'onAfterPlacementDelete::LEFT_MENU', 'intranet', '\Bitrix\Intranet\Integration\Rest\EventHandler', 'onUnRegisterPlacementLeftMenu');
 
 		// for control button and secretary
 		$eventManager->registerEventHandler('tasks', 'onTaskUpdate', 'intranet', '\Bitrix\Intranet\Integration\Tasks', 'onTaskUpdate');

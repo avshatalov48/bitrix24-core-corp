@@ -1,4 +1,6 @@
-<?
+<?php
+use \Bitrix\Main\Page\Asset;
+
 define("PUBLIC_AJAX_MODE", true);
 define("NO_AGENT_CHECK", true);
 define("DisableEventsCheck", true);
@@ -7,7 +9,9 @@ require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_befo
 IncludeModuleLangFile(__FILE__);
 
 \Bitrix\Main\UI\Extension::load("ui.hint");
-
+Asset::getInstance()->addCSS(
+	'/bitrix/components/bitrix/intranet.user.selector.new/templates/.default/style.css'
+);
 $arParams = $_REQUEST['arParams'];
 
 $iblockID = isset($_REQUEST['IBLOCK_ID'])
@@ -190,14 +194,21 @@ else
 		elseif (isset($_POST['absence_element_id']))
 			die("close");
 	}
-?><div style="width: 450px; "><?
+?>
+<!DOCTYPE html>
+<html>
+<head>
+	<?$APPLICATION->ShowHead(); ?>
+</head>
+<body>
+<div style="width: 450px;"><?
 
 	if ($ID>1)
 	{
 	?>
 
 	<p><?=GetMessage("INTR_ABSENCE_SUCCESS")?></p>
-	<form method="POST" action="<?echo BX_ROOT."/tools/intranet_absence.php".($bIblockChanged?"?IBLOCK_ID=".$iblockID:"")?>" id="ABSENCE_FORM">
+	<form method="POST" action="<?=BX_ROOT."/tools/intranet_absence.php".($bIblockChanged?"?IBLOCK_ID=".$iblockID:"")?>" id="ABSENCE_FORM">
 		<input type="hidden" name="reload" value="Y">
 	</form><?
 	}
@@ -243,8 +254,6 @@ endif;
 
 					<?CUtil::InitJSCore(array('popup'));?>
 					<a href="javascript:void(0)" onclick="ShowSingleSelector" id="single-user-choice"><?=GetMessage("INTR_USER_CHOOSE")?></a>
-					<script type="text/javascript" src="/bitrix/components/bitrix/intranet.user.selector.new/templates/.default/users.js"></script>
-					<script type="text/javascript">BX.loadCSS('/bitrix/components/bitrix/intranet.user.selector.new/templates/.default/style.css');</script>
 					<script type="text/javascript">// user_selector:
 						var multiPopup, singlePopup, taskIFramePopup;
 						function onSingleSelect(arUser)
@@ -395,38 +404,32 @@ endif;
 <?
 	}
 ?>
-	<script type="text/javascript">
-		var myBX;
-		if(window.BX)
-			myBX = window.BX;
-		else if (window.top.BX)
-			myBX = window.top.BX;
-		else
-			myBX = null;
+<script type="text/javascript">
+(function(myBX) {
+	if (!myBX || !myBX.AbsenceCalendar)
+	{
+		return;
+	}
+	var myPopup = myBX.AbsenceCalendar.popup;
+	var myButton = myPopup.buttons[0];
+	<?if(isset($arParams["ABSENCE_ELEMENT_ID"]) && intval($arParams["ABSENCE_ELEMENT_ID"])>0 || isset($_POST['absence_element_id'])):?>
+	myButton.setName('<?=\CUtil::jsEscape(getMessage('INTR_ABSENCE_EDIT')) ?>');
+	myPopup.setTitleBar('<?=\CUtil::jsEscape(getMessage('INTR_EDIT_TITLE')) ?>');
+	<?elseif ($ID > 1):?>
+	myButton.setName('<?=\CUtil::jsEscape(getMessage('INTR_ABSENCE_ADD_MORE')) ?>');
+	myPopup.setTitleBar('<?=\CUtil::jsEscape(getMessage('INTR_ADD_TITLE')) ?>');
+	<?else:?>
+	myButton.setName('<?=\CUtil::jsEscape(getMessage('INTR_ABSENCE_ADD')) ?>');
+	myPopup.setTitleBar('<?=\CUtil::jsEscape(getMessage('INTR_ADD_TITLE')) ?>');
+	<?endif?>
 
-		var myPopup = myBX.AbsenceCalendar.popup;
-		var myButton = myPopup.buttons[0];
-		<?if(isset($arParams["ABSENCE_ELEMENT_ID"]) && intval($arParams["ABSENCE_ELEMENT_ID"])>0 || isset($_POST['absence_element_id'])):?>
-			myButton.setName('<?=\CUtil::jsEscape(getMessage('INTR_ABSENCE_EDIT')) ?>');
-			myPopup.setTitleBar('<?=\CUtil::jsEscape(getMessage('INTR_EDIT_TITLE')) ?>');
-		<?elseif ($ID > 1):?>
-			myButton.setName('<?=\CUtil::jsEscape(getMessage('INTR_ABSENCE_ADD_MORE')) ?>');
-			myPopup.setTitleBar('<?=\CUtil::jsEscape(getMessage('INTR_ADD_TITLE')) ?>');
-		<?else:?>
-			myButton.setName('<?=\CUtil::jsEscape(getMessage('INTR_ABSENCE_ADD')) ?>');
-			myPopup.setTitleBar('<?=\CUtil::jsEscape(getMessage('INTR_ADD_TITLE')) ?>');
-		<?endif?>
-
-		myPopup = null;
-		myButton = null;
-		myBX = null;
-
-		BX.ready(function() {
-			BX.UI.Hint.init(BX('intr-absence-name'));
-		})
-	</script>
+	BX.ready(function() {
+		BX.UI.Hint.init(BX('intr-absence-name'));
+	});
+})(window.BX || window.top.BX || null);
+</script>
 </div>
-<?
+</body>
+</html><?php
 }
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_admin_js.php");
-?>

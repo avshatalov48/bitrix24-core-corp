@@ -10,7 +10,7 @@
 import {BitrixVue} from "ui.vue";
 import {Vuex} from "ui.vue.vuex";
 import {Logger} from "im.lib.logger";
-import {EventType, RestMethod} from "im.const";
+import { DialogState, EventType, RestMethod } from "im.const";
 import {Utils} from "im.lib.utils";
 import "im.component.dialog";
 import "im.view.quotepanel";
@@ -22,22 +22,16 @@ import {ErrorStatus} from './error-status';
 import {EmptyStatus} from './empty-status';
 import {MobileSmiles} from './mobile-smiles';
 
-import {
-	DialogCore, DialogReadMessages, DialogQuoteMessage, DialogClickOnCommand, DialogClickOnMention, DialogClickOnUserName,
-	DialogClickOnMessageMenu, DialogClickOnMessageRetry, DialogClickOnUploadCancel, DialogClickOnReadList, DialogSetMessageReaction,
-	DialogOpenMessageReactionList, DialogClickOnKeyboardButton, DialogClickOnChatTeaser, DialogClickOnDialog
-} from 'im.mixin';
+import { MobileQuoteHandler } from './event-handler/mobile-quote-handler';
+import { MobileReactionHandler } from './event-handler/mobile-reaction-handler';
+import { MobileReadingHandler } from './event-handler/mobile-reading-handler';
+import { Timer } from 'im.lib.timer';
 
 /**
  * @notice Do not clone this component! It is under development.
  */
 BitrixVue.component('bx-mobile-im-component-dialog',
 {
-	mixins: [
-		DialogCore, DialogReadMessages, DialogQuoteMessage, DialogClickOnCommand, DialogClickOnMention, DialogClickOnUserName,
-		DialogClickOnMessageMenu, DialogClickOnMessageRetry, DialogClickOnUploadCancel, DialogClickOnReadList, DialogSetMessageReaction,
-		DialogOpenMessageReactionList, DialogClickOnKeyboardButton, DialogClickOnChatTeaser, DialogClickOnDialog
-	],
 	components: {LoadingStatus, ErrorStatus, EmptyStatus, MobileSmiles},
 	data: function()
 	{
@@ -159,13 +153,106 @@ BitrixVue.component('bx-mobile-im-component-dialog',
 
 			return result;
 		},
+
+		dialog()
+		{
+			const dialog = this.$store.getters['dialogues/get'](this.application.dialog.dialogId);
+
+			return dialog || this.$store.getters['dialogues/getBlank']();
+		},
+		chatId()
+		{
+			if (this.application)
+			{
+				return this.application.dialog.chatId;
+			}
+		},
+		diskFolderId()
+		{
+			return this.application.dialog.diskFolderId;
+		},
+
+		isDialogShowingMessages()
+		{
+			const messagesNotEmpty = this.messageCollection && this.messageCollection.length > 0;
+			if (messagesNotEmpty)
+			{
+				this.dialogState = DialogState.show;
+			}
+			else if (this.dialog && this.dialog.init)
+			{
+				this.dialogState = DialogState.empty;
+			}
+			else
+			{
+				this.dialogState = DialogState.loading;
+			}
+
+			return messagesNotEmpty;
+		},
 		...Vuex.mapState({
 			application: state => state.application,
 			messageCollection: state => state.messages.collection[state.application.dialog.chatId]
-		})
+		}),
+	},
+	created()
+	{
+		this.timer = new Timer();
+
+		this.initEventHandlers();
+		this.subscribeToEvents();
+	},
+	beforeDestroy()
+	{
+		this.unsubscribeEvents();
+		this.destroyHandlers();
 	},
 	methods:
 	{
+		initEventHandlers()
+		{
+			this.quoteHandler = new MobileQuoteHandler(this.$Bitrix);
+			this.reactionHandler = new MobileReactionHandler(this.$Bitrix);
+			this.readingHandler = new MobileReadingHandler(this.$Bitrix);
+		},
+		destroyHandlers()
+		{
+			this.quoteHandler.destroy();
+			this.reactionHandler.destroy();
+			this.readingHandler.destroy();
+		},
+		subscribeToEvents()
+		{
+			EventEmitter.subscribe(EventType.mobile.textarea.setText, this.onSetText);
+			EventEmitter.subscribe(EventType.mobile.textarea.setFocus, this.onSetFocus);
+			EventEmitter.subscribe(EventType.mobile.openUserList, this.onOpenUserList);
+			EventEmitter.subscribe(EventType.dialog.clickOnUploadCancel, this.onClickOnUploadCancel);
+			EventEmitter.subscribe(EventType.dialog.clickOnMessageRetry, this.onClickOnMessageRetry);
+			EventEmitter.subscribe(EventType.dialog.clickOnDialog, this.onClickOnDialog);
+			EventEmitter.subscribe(EventType.dialog.clickOnChatTeaser, this.onClickOnChatTeaser);
+			EventEmitter.subscribe(EventType.dialog.clickOnKeyboardButton, this.onClickOnKeyboardButton);
+			EventEmitter.subscribe(EventType.dialog.clickOnReadList, this.onClickOnReadList);
+			EventEmitter.subscribe(EventType.dialog.clickOnMessageMenu, this.onClickOnMessageMenu);
+			EventEmitter.subscribe(EventType.dialog.clickOnUserName, this.onClickOnUserName);
+			EventEmitter.subscribe(EventType.dialog.clickOnMention, this.onClickOnMention);
+			EventEmitter.subscribe(EventType.dialog.clickOnCommand, this.onClickOnCommand);
+		},
+		unsubscribeEvents()
+		{
+			EventEmitter.unsubscribe(EventType.mobile.textarea.setText, this.onSetText);
+			EventEmitter.unsubscribe(EventType.mobile.textarea.setFocus, this.onSetFocus);
+			EventEmitter.unsubscribe(EventType.mobile.openUserList, this.onOpenUserList);
+			EventEmitter.unsubscribe(EventType.dialog.clickOnUploadCancel, this.onClickOnUploadCancel);
+			EventEmitter.unsubscribe(EventType.dialog.clickOnMessageRetry, this.onClickOnMessageRetry);
+			EventEmitter.unsubscribe(EventType.dialog.clickOnDialog, this.onClickOnDialog);
+			EventEmitter.unsubscribe(EventType.dialog.clickOnChatTeaser, this.onClickOnChatTeaser);
+			EventEmitter.unsubscribe(EventType.dialog.clickOnKeyboardButton, this.onClickOnKeyboardButton);
+			EventEmitter.unsubscribe(EventType.dialog.clickOnReadList, this.onClickOnReadList);
+			EventEmitter.unsubscribe(EventType.dialog.clickOnMessageMenu, this.onClickOnMessageMenu);
+			EventEmitter.unsubscribe(EventType.dialog.clickOnUserName, this.onClickOnUserName);
+			EventEmitter.unsubscribe(EventType.dialog.clickOnMention, this.onClickOnMention);
+			EventEmitter.unsubscribe(EventType.dialog.clickOnCommand, this.onClickOnCommand);
+		},
 		getApplication()
 		{
 			return this.$Bitrix.Application.get();
@@ -230,25 +317,17 @@ BitrixVue.component('bx-mobile-im-component-dialog',
 			Logger.warn('Message retry:', event);
 			this.getApplication().retrySendMessage(event.message);
 		},
-		onReadMessage({data: event})
-		{
-			this.getApplication().readMessage(event.id);
-		},
 		onClickOnReadList({data: event})
 		{
 			this.getApplication().openReadedList(event.list);
 		},
-		onQuoteMessage({data: event})
+		onSetFocus()
 		{
-			this.getApplication().quoteMessage(event.message.id);
+			this.getApplication().setTextFocus();
 		},
-		onSetMessageReaction({data: event})
+		onSetText({data: event})
 		{
-			this.getApplication().reactMessage(event.message.id, event.reaction);
-		},
-		onOpenMessageReactionList({data: event})
-		{
-			this.getApplication().openMessageReactionList(event.message.id, event.values);
+			this.getApplication().setText(event.text);
 		},
 		onClickOnKeyboardButton({data: event})
 		{
@@ -322,10 +401,6 @@ BitrixVue.component('bx-mobile-im-component-dialog',
 		{
 			//this.getApplication().controller.hideSmiles();
 		},
-		onQuotePanelClose()
-		{
-			this.getApplication().quoteMessageClear();
-		},
 		onSmilesSelectSmile(event)
 		{
 			console.warn('Smile selected:', event);
@@ -340,7 +415,61 @@ BitrixVue.component('bx-mobile-im-component-dialog',
 		{
 			//this.getApplication().controller.hideSmiles();
 			this.getApplication().setTextFocus();
-		}
+		},
+		onOpenUserList({data: event})
+		{
+			this.getApplication().openUserList(event);
+		},
+		getController()
+		{
+			return this.$Bitrix.Data.get('controller');
+		},
+		getApplicationController()
+		{
+			return this.getController().application;
+		},
+		getRestClient()
+		{
+			return this.$Bitrix.RestClient.get();
+		},
+		getCurrentUser()
+		{
+			return this.$store.getters['users/get'](this.application.common.userId, true);
+		},
+		executeRestAnswer(method, queryResult, extra)
+		{
+			this.getController().executeRestAnswer(method, queryResult, extra);
+		},
+		isUnreadMessagesLoaded()
+		{
+			if (!this.dialog)
+			{
+				return true;
+			}
+
+			if (this.dialog.lastMessageId <= 0)
+			{
+				return true;
+			}
+
+			if (!this.messageCollection || this.messageCollection.length <= 0)
+			{
+				return true;
+			}
+
+			let lastElementId = 0;
+			for (let index = this.messageCollection.length-1; index >= 0; index--)
+			{
+				const lastElement = this.messageCollection[index];
+				if (typeof lastElement.id === "number")
+				{
+					lastElementId = lastElement.id;
+					break;
+				}
+			}
+
+			return lastElementId >= this.dialog.lastMessageId;
+		},
 	},
 	watch:
 	{

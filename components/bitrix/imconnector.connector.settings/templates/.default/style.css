@@ -7,6 +7,7 @@
 	margin: 0 0 10px 0;
 	padding: 20px 25px;
 	background: #fff;
+	border-radius: var(--imconnector-field-section-border-radius, var(--ui-border-radius-md));
 }
 
 .imconnector-field-main-title {
@@ -127,7 +128,7 @@
 	width: 100%;
 	outline: none;
 	border: 1px solid #c6cdd3;
-	border-radius: 2px;
+	border-radius: var(--ui-field-border-radius, 2px);
 	background-color: #fff;
 	color: #333;
 	vertical-align: middle;
@@ -193,7 +194,7 @@
 	padding: 13px 12px 13px 12px;
 	max-width: 70%;
 	height: 62px;
-	border-radius: 3px;
+	border-radius: var(--ui-border-radius-sm, 3px);
 	border: 1px solid rgba(47,198,246,.32);
 	background: rgba(93,212,249,.13);
 	transition: box-shadow .3s;

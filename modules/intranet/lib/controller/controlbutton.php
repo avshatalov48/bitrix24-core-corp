@@ -178,23 +178,10 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 			'DATE_FROM' => $entry['DATE_FROM'],
 			'DT_SKIP_TIME' => $entry['DT_SKIP_TIME'],
 			'RECURRENCE_ID' => $entry['RECURRENCE_ID'],
-			'USER_IDS' => [],
+			'USER_IDS' => is_array($entry['ATTENDEE_LIST']) ? array_column($entry['ATTENDEE_LIST'], 'id') : [$entry['CREATED_BY']],
 			'LINK' => $pathToEvent,
 			'URL' => $pathToEvent,
 		];
-
-		foreach($entry['ATTENDEE_LIST'] as $user)
-		{
-			if ((int)$user['id'] > 0)
-			{
-				$res['USER_IDS'][] = $user['id'];
-			}
-		}
-
-		if (empty($res['USER_IDS']))
-		{
-			$res['USER_IDS'][] = $entry['CREATED_BY'];
-		}
 
 		$this->checkUsers($res['USER_IDS']);
 
@@ -262,13 +249,18 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 
 		$chatId = '';
 
-		if (!Loader::includeModule('calendar') || !Loader::includeModule(	'im'))
+		if (!Loader::includeModule('calendar') || !Loader::includeModule('im'))
 		{
 			return $chatId;
 		}
 
 		$userId = $USER->GetId();
 		$calendarData = $this->getCalendarData($entityId, $entityData);
+
+		if (!in_array($userId, $calendarData['USER_IDS']))
+		{
+			return $chatId;
+		}
 
 		if ($calendarData['MEETING']['CHAT_ID'] > 0)
 		{
@@ -366,7 +358,6 @@ class ControlButton extends \Bitrix\Main\Engine\Controller
 			$this->addError(new Error(Loc::getMessage('INTRANET_CONTROL_BUTTON_VIDEOCALL_SELF_ERROR')));
 			return null;
 		}
-
 		return $this->getChatAction($entityType, $entityId);
 	}
 

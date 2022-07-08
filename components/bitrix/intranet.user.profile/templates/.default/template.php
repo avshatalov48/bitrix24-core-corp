@@ -26,6 +26,7 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '') . 
 	'ui.tooltip',
 	'ui.hint',
 	'ui.icons.b24',
+	'ui.design-tokens',
 ]);
 
 CJSCore::Init("loader");
@@ -352,66 +353,15 @@ if (
 		{
 			?>
 			<div class="intranet-user-profile-column-block">
-				<div class="intranet-user-profile-apps">
-					<div class="intranet-user-profile-apps-item">
-						<div class="intranet-user-profile-apps-title"><?=Loc::getMessage("INTRANET_USER_PROFILE_MOBILE_APP")?></div>
-						<?php
-						$classList = [
-							'intranet-user-profile-apps-icon',
-							'intranet-user-profile-apps-icon-android',
-							(
-								$arResult["User"]["APP_ANDROID_INSTALLED"]
-									? 'intranet-user-profile-apps-icon-active'
-									: 'intranet-user-profile-apps-icon-download'
-							)
-						];
-						?>
-						<span data-role="profile-android-app" class="<?= implode(' ', $classList) ?>"></span>
-						<?php
-						$classList = [
-							'intranet-user-profile-apps-icon',
-							'intranet-user-profile-apps-icon-appstore',
-							(
-								$arResult["User"]["APP_IOS_INSTALLED"]
-									? 'intranet-user-profile-apps-icon-active'
-									: 'intranet-user-profile-apps-icon-download'
-							)
-						];
-						?>
-						<span data-role="profile-ios-app" class="<?= implode(' ', $classList) ?>"></span>
-					</div>
-					<div class="intranet-user-profile-apps-item">
-						<div class="intranet-user-profile-apps-title"><?=Loc::getMessage("INTRANET_USER_PROFILE_DESKTOP_APP")?></div>
-						<?php
-						$classList = [
-							'intranet-user-profile-apps-icon',
-							'intranet-user-profile-apps-icon-windows',
-							(
-								$arResult["User"]["APP_WINDOWS_INSTALLED"]
-									? 'intranet-user-profile-apps-icon-active'
-									: 'intranet-user-profile-apps-icon-download'
-							)
-						];
-						?>
-						<a href="https://dl.bitrix24.com/b24/bitrix24_desktop.exe"
-						 target="_blank"
-						 class="<?= implode(' ', $classList) ?>"></a><?php
-
-						$classList = [
-							'intranet-user-profile-apps-icon',
-							'intranet-user-profile-apps-icon-iphone',
-							(
-								$arResult["User"]["APP_MAC_INSTALLED"]
-									? 'intranet-user-profile-apps-icon-active'
-									: 'intranet-user-profile-apps-icon-download'
-							)
-						];
-						?>
-						<a href="https://dl.bitrix24.com/b24/bitrix24_desktop.dmg"
-						 target="_blank"
-						 class="<?= implode(' ', $classList) ?>"></a>
-					</div>
-				</div>
+				<?php
+				$APPLICATION->IncludeComponent(
+					"bitrix:intranet.apps",
+					'',
+					[
+						'USER_ID' => $arResult['User']['ID'],
+					]
+				);
+				?>
 			</div>
 			<?php
 		}
@@ -826,7 +776,7 @@ if (
 	if ($arResult["IsOwnProfile"])
 	{
 		?>
-		<a class="ui-btn ui-btn-xs ui-btn-light-border ui-btn-themes" onclick="BX.Intranet.Bitrix24.ThemePicker.Singleton.showDialog()">
+		<a class="ui-btn ui-btn-sm ui-btn-light-border ui-btn-themes" onclick="BX.Intranet.Bitrix24.ThemePicker.Singleton.showDialog()">
 			<?=Loc::getMessage("INTRANET_USER_PROFILE_THEME")?>
 		</a>
 		<?php
@@ -936,10 +886,6 @@ if ($arResult["adminRightsRestricted"])
 		"INTRANET_USER_PROFILE_TAGS_POPUP_SEARCH_TITLE" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_TAGS_POPUP_SEARCH_TITLE")) ?>",
 		"INTRANET_USER_PROFILE_TAGS_POPUP_HINT_3" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_TAGS_POPUP_HINT_3")) ?>",
 		"INTRANET_USER_PROFILE_TAGS_POPUP_HINT_2" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_TAGS_POPUP_HINT_2")) ?>",
-		"INTRANET_USER_PROFILE_APP_INSTALL" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_APP_INSTALL")) ?>",
-		"INTRANET_USER_PROFILE_APP_SEND" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_APP_SEND")) ?>",
-		"INTRANET_USER_PROFILE_APP_INSTALL_TEXT" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_APP_INSTALL_TEXT")) ?>",
-		"INTRANET_USER_PROFILE_APP_PHONE" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_APP_PHONE")) ?>",
 		"INTRANET_USER_FIILDS_SETTINGS" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_FIILDS_SETTINGS")) ?>",
 		"INTRANET_USER_PROFILE_SET_INEGRATOR_RIGHTS" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_SET_INEGRATOR_RIGHTS")) ?>",
 		"INTRANET_USER_PROFILE_FIRE_INVITED_USER" : "<?= CUtil::JSEscape(Loc::getMessage("INTRANET_USER_PROFILE_FIRE_INVITED_USER")) ?>",

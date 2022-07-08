@@ -199,7 +199,6 @@ BX.ready(function(){
 
 			applyAction: function(actionName)
 			{
-				var errors = null;
 				var grid = this.getGridInstance();
 				if(grid)
 				{
@@ -210,12 +209,10 @@ BX.ready(function(){
 					{
 						var fields = {
 							idsSession: selectedIds
-							//idsChat: []
 						};
 
 						if (forAll)
 						{
-							//fields.idsChat = this.getChatSessionForAll();
 							fields.forAll = 'Y';
 						}
 
@@ -230,30 +227,27 @@ BX.ready(function(){
 						else if (actionName === "transfer")
 						{
 							var transferId = null;
-
-							if(this.getSelectedItemTransfer().entityId === 'user')
+							if (this.getSelectedItemTransfer())
 							{
-								transferId = this.getSelectedItemTransfer().id;
+								if(this.getSelectedItemTransfer().entityId === 'user')
+								{
+									transferId = this.getSelectedItemTransfer().id;
+								}
+								else if(this.getSelectedItemTransfer().entityId === 'open-line')
+								{
+									transferId = 'queue' + this.getSelectedItemTransfer().id;
+								}
 							}
-							else if(this.getSelectedItemTransfer().entityId === 'open-line')
-							{
-								transferId = 'queue' + this.getSelectedItemTransfer().id;
-							}
-
 							if(transferId !== null)
 							{
 								fields.transferId = transferId;
-
 								this.runTransfer(fields);
 							}
-
 							if(!!this.transferInputId)
 							{
 								this.destroyTransferDialogSelector();
 							}
 						}
-
-						//this.refreshGrid();
 					}
 				}
 			},
@@ -502,7 +496,6 @@ BX.ready(function(){
 				{
 					var forAll = this.getCheckBoxValue("actallrows");
 					var selectedIds = grid.getRows().getSelectedIds();
-					console.log(selectedIds);
 					if(selectedIds.length !== 0 || forAll)
 					{
 						if(actionName === "close") {

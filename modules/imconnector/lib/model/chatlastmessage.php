@@ -2,10 +2,8 @@
 namespace Bitrix\ImConnector\Model;
 
 use \Bitrix\Main\Entity;
-use	\Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Entity\Validator\Length;
 
-Loc::loadMessages(__FILE__);
 
 /**
  * Class ConnectorsInfoTable

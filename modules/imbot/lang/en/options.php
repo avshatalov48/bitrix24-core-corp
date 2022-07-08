@@ -1,6 +1,6 @@
 <?php
 $MESS["IMBOT_ACCOUNT_DEBUG"] = "Debug mode";
-$MESS["IMBOT_ACCOUNT_ERROR_PUBLIC"] = "No correct public address specified.";
+$MESS["IMBOT_ACCOUNT_ERROR_PUBLIC"] = "No correct public address specified";
 $MESS["IMBOT_ACCOUNT_ERROR_PUBLIC_CHECK"] = "Error checking public address: #ERROR#";
 $MESS["IMBOT_ACCOUNT_URL"] = "Website public address";
 $MESS["IMBOT_BOT_NOTICE"] = "Attention: disabling the chat bot will make it unavailable in the chats and delete all the associated message logs.";

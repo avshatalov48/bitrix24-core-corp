@@ -58,6 +58,14 @@
 	  5: 'bottom-center',
 	  4: 'bottom-right'
 	});
+	var WidgetBaseSize = Object.freeze({
+	  width: 435,
+	  height: 557
+	});
+	var WidgetMinimumSize = Object.freeze({
+	  width: 340,
+	  height: 435
+	});
 	var SubscriptionType = Object.freeze({
 	  configLoaded: 'configLoaded',
 	  widgetOpen: 'widgetOpen',
@@ -75,8 +83,10 @@
 	var SubscriptionTypeCheck = GetObjectValues(SubscriptionType);
 	var RestMethod = Object.freeze({
 	  widgetUserRegister: 'imopenlines.widget.user.register',
+	  widgetChatCreate: 'imopenlines.widget.chat.create',
 	  widgetConfigGet: 'imopenlines.widget.config.get',
 	  widgetDialogGet: 'imopenlines.widget.dialog.get',
+	  widgetDialogList: 'imopenlines.widget.dialog.list',
 	  widgetUserGet: 'imopenlines.widget.user.get',
 	  widgetUserConsentApply: 'imopenlines.widget.user.consent.apply',
 	  widgetVoteSend: 'imopenlines.widget.vote.send',
@@ -101,8 +111,19 @@
 	  duplicate: 69,
 	  silentlyClose: 75
 	});
-	var EventType = Object.freeze({
-	  requestShowForm: 'IMOL.Widget:requestShowForm'
+	var WidgetEventType = Object.freeze({
+	  showForm: 'IMOL.Widget:showForm',
+	  hideForm: 'IMOL.Widget:hideForm',
+	  processMessagesToSendQueue: 'IMOL.Widget:processMessagesToSendQueue',
+	  requestData: 'IMOL.Widget:requestData',
+	  showConsent: 'IMOL.Widget:showConsent',
+	  acceptConsent: 'IMOL.Widget:acceptConsent',
+	  consentAccepted: 'IMOL.Widget:consentAccepted',
+	  declineConsent: 'IMOL.Widget:declineConsent',
+	  consentDeclined: 'IMOL.Widget:consentDeclined',
+	  sendDialogVote: 'IMOL.Widget:sendDialogVote',
+	  createSession: 'IMOL.Widget:createSession',
+	  openSession: 'IMOL.Widget:openSession'
 	});
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -129,7 +150,7 @@
 
 	      if (this.message.params.IMOL_FORM === FormType$1.like) {
 	        if (parseInt(this.message.params.IMOL_VOTE) === this.widget.dialog.sessionId && this.widget.dialog.userVote === VoteType$1.none) {
-	          main_core_events.EventEmitter.emit(EventType.requestShowForm, {
+	          main_core_events.EventEmitter.emit(WidgetEventType.showForm, {
 	            type: FormType$1.like,
 	            delayed: true
 	          });

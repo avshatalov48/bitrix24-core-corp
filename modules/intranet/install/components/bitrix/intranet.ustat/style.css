@@ -1359,7 +1359,7 @@
 	cursor: pointer;
 	margin-bottom: 17px;
 	padding: 3px 3px 3px 7px;
-	border-radius: var(--sidebar-pulse-block, var(--ui-theme-radius-md, 0));
+	border-radius: var(--sidebar-pulse-block-border-radius, var(--ui-border-radius-md, 0));
 }
 
 .sidebar-pulse-text {
@@ -1384,7 +1384,7 @@
 
 .sidebar-pulse-nums {
 	background-color: #eef2f4;
-	border-radius: 2px;
+	border-radius: var(--sidebar-pulse-nums-border-radius, var(--ui-border-radius-xs, 2px));
 	height: 20px;
 	padding: 3px 0;
 	white-space: nowrap;

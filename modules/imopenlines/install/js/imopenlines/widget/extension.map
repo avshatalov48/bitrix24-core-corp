@@ -37,10 +37,6 @@ im.view.element.keyboard
 im.view.element.chatteaser
 ui.vue.components.reaction
 im.lib.animation
-im.mixin
-im.lib.timer
-im.lib.clipboard
-im.lib.uploader
 im.component.textarea
 im.lib.localstorage
 im.view.quotepanel
@@ -51,4 +47,8 @@ ui.vue.components.crm.form
 main.polyfill.promise
 im.controller
 im.provider.pull
+im.lib.timer
 im.lib.cookie
+im.event-handler
+im.lib.clipboard
+im.lib.uploader

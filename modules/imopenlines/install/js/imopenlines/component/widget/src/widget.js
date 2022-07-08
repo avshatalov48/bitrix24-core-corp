@@ -9,16 +9,16 @@
 
 // widget files
 import {
-	VoteType,
 	LocationStyle,
 	SubscriptionType,
 	SubscriptionTypeCheck,
 	RestMethod,
 	RestAuth,
+	WidgetEventType
 } from "./const";
 
 import {WidgetModel} from "./model";
-import {WidgetRestClient} from "./utils/restclient"
+import {WidgetRestClient} from "./utils/restclient";
 import {WidgetRestAnswerHandler} from "./rest.handler";
 import {WidgetImPullCommandHandler, WidgetImopenlinesPullCommandHandler} from "./pull.handler";
 
@@ -39,8 +39,7 @@ import {Controller} from 'im.controller';
 import {
 	RestMethod as ImRestMethod,
 	RestMethodHandler as ImRestMethodHandler,
-	EventType,
-	FileStatus
+	EventType
 } from 'im.const';
 
 import {Cookie} from "im.lib.cookie";
@@ -48,125 +47,98 @@ import {Utils} from "im.lib.utils";
 import {LocalStorage} from "im.lib.localstorage";
 import {Logger} from "im.lib.logger";
 
-import {Uploader} from "im.lib.uploader";
 import { EventEmitter } from "main.core.events";
 import { ZIndexManager } from "main.core.minimal";
-
-// TODO change BX.Promise, BX.Main.Date to IMPORT
 
 export class Widget
 {
 /* region 01. Initialize and store data */
+	params: Object = null;
+	template: Object = null; // Vue instance
+	rootNode: Object = null;
+
+	restClient: Object = null;
+	pullClient: Object = null;
+
+	ready: boolean = true; // true if there are no initialization errors
+	inited: boolean = false; // true if all preparations are done
+	offline: boolean = false; // true if Pull-client is offline
+	widgetConfigRequest: Object = null; // XHR-request from widget.config.get, can be aborted before completion
+
+	// this block can be set from public config
+	userRegisterData: Object = {}; // user info
+	customData: Array = []; // additional info to send to server
+	options: Object = { checkSameDomain: true };
+	subscribers: Object = {}; // external event subscribers
+
+	// fields from params
+	code: string = ''; // livechat code
+	host: string = '';
+	language: string = '';
+	copyright: boolean = true;
+	copyrightUrl: string = '';
+	buttonInstance: Object = null; // widget button
+	localize: Object = null;
+	pageMode: Object = null; // fullscreen livechat mode options
 
 	constructor(params = {})
 	{
 		this.params = params;
 
-		this.template = null;
-		this.rootNode = this.params.node || document.createElement('div');
-
+		//TODO: remove
 		this.messagesQueue = [];
 
-		this.ready = true;
-		this.widgetDataRequested = false;
-		this.offline = false;
+		EventEmitter.subscribe(WidgetEventType.requestData, this.requestData.bind(this));
+		EventEmitter.subscribe(WidgetEventType.createSession, this.createChat.bind(this));
+		EventEmitter.subscribe(WidgetEventType.openSession, this.openSession.bind(this));
 
-		this.inited = false;
-		this.initEventFired = false;
-
-		this.restClient = null;
-
-		this.userRegisterData = {};
-		this.customData = [];
-
-		this.options = {
-			checkSameDomain: true
-		};
-
-		this.subscribers = {};
-
-		this.configRequestXhr = null;
-
-		this.initParams()
-			.then(() => this.initRestClient())
-			.then(() => this.initPullClient())
-			.then(() => this.initCore())
-			.then(() => this.initWidget())
-			.then(() => this.initUploader())
-			.then(() => this.initComplete())
-		;
+		this.initParams();
+		this.initRestClient();
+		this.initPullClient();
+		this.initCore().then(() => {
+			this.initWidget();
+			this.initComplete();
+		});
 	}
 
 	initParams()
 	{
+		this.rootNode = this.params.node || document.createElement('div');
+
 		this.code = this.params.code || '';
 		this.host = this.params.host || '';
 		this.language = this.params.language || 'en';
 		this.copyright = this.params.copyright !== false;
-		this.copyrightUrl = this.copyright && this.params.copyrightUrl? this.params.copyrightUrl: '';
-		this.buttonInstance = typeof this.params.buttonInstance === 'object' && this.params.buttonInstance !== null? this.params.buttonInstance: null;
-
-		this.pageMode = typeof this.params.pageMode === 'object' && this.params.pageMode;
-		if (this.pageMode)
+		this.copyrightUrl = (this.copyright && this.params.copyrightUrl) ? this.params.copyrightUrl: '';
+		if (this.params.buttonInstance && typeof this.params.buttonInstance === 'object')
 		{
-			this.pageMode.useBitrixLocalize = this.params.pageMode.useBitrixLocalize === true;
-			this.pageMode.placeholder = document.getElementById(this.params.pageMode.placeholder);
+			this.buttonInstance = this.params.buttonInstance;
 		}
 
-		if (typeof this.code === 'string')
+		if (this.params.pageMode && typeof this.params.pageMode === 'object')
 		{
-			if (this.code.length <= 0)
-			{
-				console.warn(`%cLiveChatWidget.constructor: code is not correct (%c${this.code}%c)`, "color: black;", "font-weight: bold; color: red", "color: black");
-				this.ready = false;
-			}
+			this.pageMode = {
+				useBitrixLocalize: this.params.pageMode.useBitrixLocalize === true,
+				placeholder: document.querySelector(`#${this.params.pageMode.placeholder}`)
+			};
 		}
 
-		if (typeof this.host === 'string')
+		const errors = this.checkRequiredFields();
+		if (errors.length > 0)
 		{
-			if (this.host.length <= 0 || !this.host.startsWith('http'))
-			{
-				console.warn(`%cLiveChatWidget.constructor: host is not correct (%c${this.host}%c)`, "color: black;", "font-weight: bold; color: red", "color: black");
-				this.ready = false;
-			}
+			errors.forEach(error => console.warn(error));
+			this.ready = false;
 		}
 
-		if (this.pageMode && this.pageMode.placeholder)
-		{
-			this.rootNode = this.pageMode.placeholder;
-		}
-		else
-		{
-			if (document.body.firstChild)
-			{
-				document.body.insertBefore(this.rootNode, document.body.firstChild);
-			}
-			else
-			{
-				document.body.appendChild(this.rootNode);
-			}
-		}
+		this.setRootNode();
 
 		this.localize = this.pageMode && this.pageMode.useBitrixLocalize? window.BX.message: {};
-		if (typeof this.params.localize === 'object')
-		{
-			this.addLocalize(this.params.localize);
-		}
-
-		let serverVariables = LocalStorage.get(this.getSiteId(), 0, 'serverVariables', false);
-		if (serverVariables)
-		{
-			this.addLocalize(serverVariables);
-		}
-
-		return new Promise((resolve, reject) => resolve());
+		this.setLocalize();
 	}
 
 	initRestClient()
 	{
-		this.restClient = new WidgetRestClient({endpoint: this.host+'/rest'});
-
-		return new Promise((resolve, reject) => resolve());
+		this.restClient = new WidgetRestClient({endpoint: `${this.host}/rest`});
 	}
 
 	initPullClient()
@@ -181,47 +153,10 @@ export class Widget
 			skipCheckRevision: true,
 			getPublicListMethod: 'imopenlines.widget.operator.get',
 		});
-		this.pullClientInited = false;
-
-		return new Promise((resolve, reject) => resolve());
 	}
 
 	initCore()
 	{
-		let widgetVariables = {
-			common: {
-				host: this.getHost(),
-				pageMode: this.pageMode !== false,
-				copyright: this.copyright,
-				copyrightUrl: this.copyrightUrl,
-			},
-			vote: {
-				messageText: this.getLocalize('BX_LIVECHAT_VOTE_TITLE'),
-				messageLike: this.getLocalize('BX_LIVECHAT_VOTE_PLUS_TITLE'),
-				messageDislike: this.getLocalize('BX_LIVECHAT_VOTE_MINUS_TITLE'),
-			},
-			textMessages: {
-				bxLivechatOnlineLine1: this.getLocalize('BX_LIVECHAT_ONLINE_LINE_1'),
-				bxLivechatOnlineLine2: this.getLocalize('BX_LIVECHAT_ONLINE_LINE_2'),
-				bxLivechatOffline: this.getLocalize('BX_LIVECHAT_OFFLINE'),
-			}
-		};
-		if (
-			Utils.types.isPlainObject(this.params.styles)
-			&& (this.params.styles.backgroundColor || this.params.styles.iconColor)
-		)
-		{
-			widgetVariables.styles = {};
-			if (this.params.styles.backgroundColor)
-			{
-				widgetVariables.styles.backgroundColor = this.params.styles.backgroundColor;
-			}
-			if (this.params.styles.iconColor)
-			{
-				widgetVariables.styles.iconColor = this.params.styles.iconColor;
-			}
-		}
-
 		this.controller = new Controller({
 			host: this.getHost(),
 			siteId: this.getSiteId(),
@@ -235,32 +170,19 @@ export class Widget
 				databaseName: 'imol/widget',
 				databaseType: VuexBuilder.DatabaseType.localStorage,
 				models: [
-					WidgetModel.create().setVariables(widgetVariables)
+					WidgetModel.create().setVariables(this.getWidgetVariables())
 				],
 			}
 		});
 
-		return new Promise((resolve, reject) => {
-			this.controller.ready().then(() => resolve());
-		});
+		return this.controller.ready();
 	}
 
 	initWidget()
 	{
-		if (this.isUserRegistered())
-		{
-			this.restClient.setAuthId(this.getUserHash());
-		}
-		else
-		{
-			this.restClient.setAuthId(RestAuth.guest);
-		}
-
-		if (this.params.location && typeof LocationStyle[this.params.location] !== 'undefined')
-		{
-			this.controller.getStore().commit('widget/common', {location: this.params.location});
-		}
-
+		this.restClient.setAuthId(this.getRestAuthId());
+		this.setModelData();
+		// TODO: move from controller
 		this.controller.application.setPrepareFilesBeforeSaveFunction(this.prepareFileData.bind(this));
 
 		this.controller.addRestAnswerHandler(
@@ -270,146 +192,10 @@ export class Widget
 				controller: this.controller,
 			})
 		);
-
-		return new Promise((resolve, reject) => resolve());
 	}
 
-	initUploader()
-	{
-		this.uploader = new Uploader({
-			generatePreview: true,
-			sender: {
-				host: this.host,
-				customHeaders: {
-					'Livechat-Auth-Id': this.getUserHash()
-				},
-				actionUploadChunk: 'imopenlines.widget.disk.upload',
-				actionCommitFile: 'imopenlines.widget.disk.commit',
-				actionRollbackUpload: 'imopenlines.widget.disk.rollbackUpload',
-			}
-		});
-
-		this.uploader.subscribe('onStartUpload', event => {
-			const eventData = event.getData();
-			Logger.log('Uploader: onStartUpload', eventData);
-
-			this.controller.getStore().dispatch('files/update', {
-				chatId: this.getChatId(),
-				id: eventData.id,
-				fields: {
-					status: FileStatus.upload,
-					progress: 0
-				}
-			});
-		});
-
-		this.uploader.subscribe('onProgress', (event) => {
-			const eventData = event.getData();
-			Logger.log('Uploader: onProgress', eventData);
-
-			this.controller.getStore().dispatch('files/update', {
-				chatId: this.getChatId(),
-				id: eventData.id,
-				fields: {
-					status: FileStatus.upload,
-					progress: (eventData.progress === 100 ? 99 : eventData.progress),
-				}
-			});
-		});
-
-		this.uploader.subscribe('onSelectFile', (event) => {
-			const eventData = event.getData();
-			const file = eventData.file;
-			Logger.log('Uploader: onSelectFile', eventData);
-
-			let fileType = 'file';
-			if (file.type.toString().startsWith('image'))
-			{
-				fileType = 'image';
-			}
-			else if (file.type.toString().startsWith('video'))
-			{
-				fileType = 'video';
-			}
-
-			this.controller.getStore().dispatch('files/add', {
-				chatId: this.getChatId(),
-				authorId: this.getUserId(),
-				name: eventData.file.name,
-				type: fileType,
-				extension: file.name.split('.').splice(-1)[0],
-				size: eventData.file.size,
-				image: !eventData.previewData? false: {
-					width: eventData.previewDataWidth,
-					height: eventData.previewDataHeight,
-				},
-				status: FileStatus.upload,
-				progress: 0,
-				authorName: this.controller.application.getCurrentUser().name,
-				urlPreview: eventData.previewData? URL.createObjectURL(eventData.previewData) : "",
-			}).then(fileId => {
-				this.addMessage('', {id: fileId, source: eventData, previewBlob: eventData.previewData})
-			});
-		});
-
-		this.uploader.subscribe('onComplete', (event) => {
-			const eventData = event.getData();
-			Logger.log('Uploader: onComplete', eventData);
-
-			this.controller.getStore().dispatch('files/update', {
-				chatId: this.getChatId(),
-				id: eventData.id,
-				fields: {
-					status: FileStatus.wait,
-					progress: 100
-				}
-			});
-
-			const message = this.messagesQueue.find(message => {
-				return message.file.id === eventData.id
-			});
-			const fileType = this.controller.getStore().getters['files/get'](this.getChatId(), message.file.id, true).type;
-
-			this.fileCommit({
-				chatId: this.getChatId(),
-				uploadId: eventData.result.data.file.id,
-				messageText: message.text,
-				messageId: message.id,
-				fileId: message.file.id,
-				fileType
-			}, message);
-		});
-
-		this.uploader.subscribe('onUploadFileError', (event) => {
-			const eventData = event.getData();
-			Logger.log('Uploader: onUploadFileError', eventData);
-
-			const message = this.messagesQueue.find(message => {
-				return message.file.id === eventData.id
-			});
-
-			if (typeof message === 'undefined')
-			{
-				return;
-			}
-
-			this.fileError(this.getChatId(), message.file.id, message.id);
-		});
-
-		this.uploader.subscribe('onCreateFileError', (event) => {
-			const eventData = event.getData();
-			Logger.log('Uploader: onCreateFileError', eventData);
-
-			const message = this.messagesQueue.find(message => {
-				return message.file.id === eventData.id
-			});
-
-			this.fileError(this.getChatId(), message.file.id, message.id);
-		});
-
-		return new Promise((resolve, reject) => resolve());
-	}
-
+	// if start or open methods were called before core init - we will have appropriate flags
+	// for full-page livechat we always call open
 	initComplete()
 	{
 		window.dispatchEvent(new CustomEvent('onBitrixLiveChat', {detail: {
@@ -427,63 +213,104 @@ export class Widget
 		{
 			this.open();
 		}
+	}
 
-		return new Promise((resolve, reject) => resolve());
+	// public method
+	// initially called from imopenlines/lib/livechatmanager.php:16
+	// if core is not ready yet - set flag and call start once again in this.initComplete()
+	start()
+	{
+		if (!this.controller || !this.controller.getStore())
+		{
+			this.callStartFlag = true;
+			return true;
+		}
+
+		if (this.isSessionActive())
+		{
+			this.requestWidgetData();
+		}
+
+		return true;
+	}
+
+	// public method
+	// if core is not ready yet - set flag and call start once again in this.initComplete()
+	// if not inited yet - request widget data
+	open(params = {})
+	{
+		if (!this.controller.getStore())
+		{
+			this.callOpenFlag = true;
+			return true;
+		}
+
+		if (!params.openFromButton && this.buttonInstance)
+		{
+			this.buttonInstance.wm.showById('openline_livechat');
+		}
+
+		const {error, stop} = this.checkForErrorsBeforeOpen();
+		if (stop)
+		{
+			return false;
+		}
+
+		if (!error && !this.inited)
+		{
+			this.requestWidgetData();
+		}
+
+		this.attachTemplate();
 	}
 
 	requestWidgetData()
 	{
-		if (!this.isReady())
+		if (!this.ready)
 		{
 			console.error('LiveChatWidget.start: widget code or host is not specified');
 			return false;
 		}
 
-		this.widgetDataRequested = true;
-		if (
-			!this.isUserRegistered() && (
-				this.userRegisterData.hash
-				|| this.getUserHashCookie()
-			)
-		)
+		// if user is registered or we have its hash - proceed to getting chat and messages
+		if (this.isUserReady() || this.isHashAvailable())
 		{
 			this.requestData();
 			this.inited = true;
 			this.fireInitEvent();
+
+			return true;
 		}
-		else if (this.isConfigDataLoaded() && this.isUserRegistered())
-		{
-			this.requestData();
-			this.inited = true;
-			this.fireInitEvent();
-		}
-		else
-		{
-			this.controller.restClient.callMethod(RestMethod.widgetConfigGet, {code: this.code}, (xhr) => {this.configRequestXhr = xhr}).then((result) => {
-				this.configRequestXhr = null;
-				this.clearError();
 
-				this.controller.executeRestAnswer(RestMethod.widgetConfigGet, result);
+		// if there is no info about user - we need to get config and wait for first message
+		this.controller.restClient.callMethod(
+			RestMethod.widgetConfigGet,
+			{code: this.code},
+			(xhr) => { this.widgetConfigRequest = xhr; }
+		).then((result) => {
+			this.widgetConfigRequest = null;
+			this.clearError();
 
-				if (!this.inited)
-				{
-					this.inited = true;
-					this.fireInitEvent();
-				}
-			}).catch(result => {
-				this.configRequestXhr = null;
+			this.controller.executeRestAnswer(RestMethod.widgetConfigGet, result);
 
-				this.setError(result.error().ex.error, result.error().ex.error_description);
-			});
-
-			if (this.isConfigDataLoaded())
+			if (!this.inited)
 			{
 				this.inited = true;
 				this.fireInitEvent();
 			}
+		}).catch(error => {
+			this.widgetConfigRequest = null;
+			this.setError(error.error().ex.error, error.error().ex.error_description);
+		});
+
+		if (this.isConfigDataLoaded())
+		{
+			this.inited = true;
+			this.fireInitEvent();
 		}
 	}
 
+	// get all other info (dialog, chat, messages etc)
 	requestData()
 	{
 		Logger.log('requesting data from widget');
@@ -494,34 +321,194 @@ export class Widget
 
 		this.requestDataSend = true;
 
-		if (this.configRequestXhr)
+		// if there is uncompleted widget.config.get request - abort it (because we will do it anyway)
+		if (this.widgetConfigRequest)
 		{
-			this.configRequestXhr.abort();
+			this.widgetConfigRequest.abort();
 		}
 
-		let query = {
+		const callback = this.handleBatchRequestResult.bind(this);
+		this.controller.restClient.callBatch(
+			this.getDataRequestQuery(),
+			callback,
+			false,
+			false,
+			Utils.getLogTrackingParams(
+				{
+					name: 'widget.init.config',
+					dialog: this.controller.application.getDialogData()
+				}
+			)
+		);
+	}
+
+	createChat()
+	{
+		return new Promise((resolve, reject) => {
+			this.controller.restClient.callBatch(
+				this.getCreateChatRequestQuery(),
+				(result) => {
+					this.handleBatchCreateChatRequestResult(result).then(() => {
+						resolve();
+					});
+				},
+				false,
+				false,
+			);
+		});
+	}
+
+	handleBatchRequestResult(response)
+	{
+		if (!response)
+		{
+			this.requestDataSend = false;
+			this.setError('EMPTY_RESPONSE', 'Server returned an empty response.');
+			return false;
+		}
+
+		this.handleConfigGet(response)
+			.then(() => this.handleUserGet(response))
+			.then(() => this.handleChatGet(response))
+			.then(() => this.handleDialogGet(response))
+			.then(() => this.handleDialogMessagesGet(response))
+			.then(() => this.handleUserRegister(response))
+			.then(() => this.handlePullRequests(response))
+			.catch(({code, description}) => {
+				this.setError(code, description);
+			})
+			.finally(() => {
+				this.requestDataSend = false;
+			});
+	}
+
+	handleBatchCreateChatRequestResult(response)
+	{
+		if (!response)
+		{
+			this.requestDataSend = false;
+			this.setError('EMPTY_RESPONSE', 'Server returned an empty response.');
+			return false;
+		}
+
+		return this.handleChatCreate(response)
+			.then(() => this.handleChatGet(response))
+			.then(() => this.handleDialogGet(response))
+			.catch(({code, description}) => {
+				this.setError(code, description);
+			})
+			.finally(() => {
+				this.requestDataSend = false;
+			});
+	}
+
+	handleBatchOpenSessionRequestResult(response)
+	{
+		if (!response)
+		{
+			this.requestDataSend = false;
+			this.setError('EMPTY_RESPONSE', 'Server returned an empty response.');
+			return false;
+		}
+
+		return this.handleChatGet(response)
+			.then(() => this.handleDialogGet(response))
+			.then(() => this.handleDialogMessagesGet(response))
+			.catch(({code, description}) => {
+				this.setError(code, description);
+			})
+			.finally(() => {
+				this.requestDataSend = false;
+			});
+	}
+
+	getDataRequestQuery(): Object
+	{
+		// always widget.config.get
+		const query = {
 			[RestMethod.widgetConfigGet]: [RestMethod.widgetConfigGet, {code: this.code}]
 		};
 
 		if (this.isUserRegistered())
 		{
-			query[RestMethod.widgetDialogGet] = [RestMethod.widgetDialogGet, {config_id: this.getConfigId(), trace_data: this.getCrmTraceData(), custom_data: this.getCustomData()}];
-			query[ImRestMethodHandler.imChatGet] = [ImRestMethod.imChatGet, {dialog_id: '$result['+RestMethod.widgetDialogGet+'][dialogId]'}];
-			query[ImRestMethodHandler.imDialogMessagesGetInit] = [ImRestMethod.imDialogMessagesGet, {chat_id: '$result['+RestMethod.widgetDialogGet+'][chatId]', limit: this.controller.application.getRequestMessageLimit(), convert_text: 'Y'}];
+			// widget.dialog.get
+			query[RestMethod.widgetDialogGet] = [
+				RestMethod.widgetDialogGet,
+				{
+					config_id: this.getConfigId(),
+					trace_data: this.getCrmTraceData(),
+					custom_data: this.getCustomData()
+				}
+			];
+
+			// im.chat.get
+			query[ImRestMethodHandler.imChatGet] = [
+				ImRestMethod.imChatGet,
+				{
+					dialog_id: `$result[${RestMethod.widgetDialogGet}][dialogId]`
+				}
+			];
+
+			// im.dialog.messages.get
+			query[ImRestMethodHandler.imDialogMessagesGetInit] = [
+				ImRestMethod.imDialogMessagesGet,
+				{
+					chat_id: `$result[${RestMethod.widgetDialogGet}][chatId]`,
+					limit: this.controller.application.getRequestMessageLimit(),
+					convert_text: 'Y'
+				}
+			];
 		}
 		else
 		{
-			query[RestMethod.widgetUserRegister] = [RestMethod.widgetUserRegister, {config_id: '$result['+RestMethod.widgetConfigGet+'][configId]', ...this.getUserRegisterFields()}];
-			query[ImRestMethodHandler.imChatGet] = [ImRestMethod.imChatGet, {dialog_id: '$result['+RestMethod.widgetUserRegister+'][dialogId]'}];
+			// widget.user.register
+			query[RestMethod.widgetUserRegister] = [
+				RestMethod.widgetUserRegister,
+				{
+					config_id: `$result[${RestMethod.widgetConfigGet}][configId]`,
+					...this.getUserRegisterFields()
+				}
+			];
+
+			// im.chat.get
+			query[ImRestMethodHandler.imChatGet] = [
+				ImRestMethod.imChatGet,
+				{dialog_id: `$result[${RestMethod.widgetUserRegister}][dialogId]`}
+			];
 
 			if (this.userRegisterData.hash || this.getUserHashCookie())
 			{
-				query[RestMethod.widgetDialogGet] = [RestMethod.widgetDialogGet, {config_id: '$result['+RestMethod.widgetConfigGet+'][configId]', trace_data: this.getCrmTraceData(), custom_data: this.getCustomData()}];
-				query[ImRestMethodHandler.imDialogMessagesGetInit] = [ImRestMethod.imDialogMessagesGet, {chat_id: '$result['+RestMethod.widgetDialogGet+'][chatId]', limit: this.controller.application.getRequestMessageLimit(), convert_text: 'Y'}];
+				// widget.dialog.get
+				query[RestMethod.widgetDialogGet] = [
+					RestMethod.widgetDialogGet,
+					{
+						config_id: `$result[${RestMethod.widgetConfigGet}][configId]`,
+						trace_data: this.getCrmTraceData(),
+						custom_data: this.getCustomData()
+					}
+				];
+
+				// im.dialog.messages.get
+				query[ImRestMethodHandler.imDialogMessagesGetInit] = [
+					ImRestMethod.imDialogMessagesGet,
+					{
+						chat_id: `$result[${RestMethod.widgetDialogGet}][chatId]`,
+						limit: this.controller.application.getRequestMessageLimit(),
+						convert_text: 'Y'
+					}
+				];
 			}
+
 			if (this.isUserAgreeConsent())
 			{
-				query[RestMethod.widgetUserConsentApply] = [RestMethod.widgetUserConsentApply, {config_id: '$result['+RestMethod.widgetConfigGet+'][configId]', consent_url: location.href}];
+				// widget.user.consent.apply
+				query[RestMethod.widgetUserConsentApply] = [
+					RestMethod.widgetUserConsentApply,
+					{
+						config_id: `$result[${RestMethod.widgetConfigGet}][configId]`,
+						consent_url: location.href
+					}
+				];
 			}
 		}
 
@@ -529,138 +516,286 @@ export class Widget
 		query[RestMethod.pullConfigGet] = [RestMethod.pullConfigGet, {'CACHE': 'N'}];
 		query[RestMethod.widgetUserGet] = [RestMethod.widgetUserGet, {}];
 
-		this.controller.restClient.callBatch(query, (response) =>
+		return query;
+	}
+
+	getOpenSessionQuery(chatId): Object
+	{
+		// imopenlines.widget.dialog.get
+		const query = {
+			[RestMethod.widgetDialogGet]: [RestMethod.widgetDialogGet, {
+				config_id: this.getConfigId(),
+				chat_id: chatId
+			}]
+		};
+
+		query[ImRestMethodHandler.imChatGet] = [
+			ImRestMethod.imChatGet,
+			{
+				dialog_id: `chat${chatId}`
+			}
+		];
+
+		// im.dialog.messages.get
+		query[ImRestMethodHandler.imDialogMessagesGetInit] = [
+			ImRestMethod.imDialogMessagesGet,
+			{
+				chat_id: chatId,
+				limit: 50,
+				convert_text: 'Y'
+			}
+		];
+
+		return query;
+	}
+
+	getCreateChatRequestQuery(): Object
+	{
+		const query = {};
+
+		// widget.chat.register
+		query[RestMethod.widgetChatCreate] = [
+			RestMethod.widgetChatCreate,
+			{
+				config_id: this.getConfigId(),
+				...this.getUserRegisterFields()
+			}
+		];
+
+		// im.chat.get
+		query[ImRestMethodHandler.imChatGet] = [
+			ImRestMethod.imChatGet,
+			{dialog_id: `$result[${RestMethod.widgetChatCreate}][dialogId]`}
+		];
+
+		// widget.dialog.get
+		query[RestMethod.widgetDialogGet] = [
+			RestMethod.widgetDialogGet,
+			{
+				config_id: this.getConfigId(),
+				trace_data: this.getCrmTraceData(),
+				custom_data: this.getCustomData()
+			}
+		];
+
+		if (this.isUserAgreeConsent())
 		{
-			if (!response)
-			{
-				this.requestDataSend = false;
-				this.setError('EMPTY_RESPONSE', 'Server returned an empty response.');
-				return false;
-			}
-
-			let configGet = response[RestMethod.widgetConfigGet];
-			if (configGet && configGet.error())
-			{
-				this.requestDataSend = false;
-
-				this.setError(configGet.error().ex.error, configGet.error().ex.error_description);
-				return false;
-			}
-			this.controller.executeRestAnswer(RestMethod.widgetConfigGet, configGet);
-
-			let userGetResult = response[RestMethod.widgetUserGet];
-			if (userGetResult.error())
-			{
-				this.requestDataSend = false;
-				this.setError(userGetResult.error().ex.error, userGetResult.error().ex.error_description);
-				return false;
-			}
-			this.controller.executeRestAnswer(RestMethod.widgetUserGet, userGetResult);
-
-			let chatGetResult = response[ImRestMethodHandler.imChatGet];
-			if (chatGetResult.error())
-			{
-				this.requestDataSend = false;
-				this.setError(chatGetResult.error().ex.error, chatGetResult.error().ex.error_description);
-				return false;
-			}
-			this.controller.executeRestAnswer(ImRestMethodHandler.imChatGet, chatGetResult);
-
-			let dialogGetResult = response[RestMethod.widgetDialogGet];
-			if (dialogGetResult)
-			{
-				if (dialogGetResult.error())
+			// widget.user.consent.apply
+			query[RestMethod.widgetUserConsentApply] = [
+				RestMethod.widgetUserConsentApply,
 				{
-					this.requestDataSend = false;
-					this.setError(dialogGetResult.error().ex.error, dialogGetResult.error().ex.error_description);
-					return false;
+					config_id: this.getConfigId(),
+					consent_url: location.href
 				}
+			];
+		}
 
-				this.controller.executeRestAnswer(RestMethod.widgetDialogGet, dialogGetResult);
-			}
+		query[RestMethod.pullServerTime] = [RestMethod.pullServerTime, {}];
+		query[RestMethod.pullConfigGet] = [RestMethod.pullConfigGet, {'CACHE': 'N'}];
+		query[RestMethod.widgetUserGet] = [RestMethod.widgetUserGet, {}];
 
-			let dialogMessagesGetResult = response[ImRestMethodHandler.imDialogMessagesGetInit];
-			if (dialogMessagesGetResult)
+		return query;
+	}
+
+	openSession(event)
+	{
+		const eventData = event.getData();
+
+		return new Promise((resolve, reject) => {
+			const dialog = this.controller.getStore().getters['dialogues/get'](eventData.session.dialogId);
+			if (dialog)
 			{
-				if (dialogMessagesGetResult.error())
-				{
-					this.requestDataSend = false;
-					this.setError(dialogMessagesGetResult.error().ex.error, dialogMessagesGetResult.error().ex.error_description);
-					return false;
-				}
+				this.controller.getStore().commit('application/set', {dialog: {
+						chatId: eventData.session.chatId,
+						dialogId: eventData.session.dialogId,
+						diskFolderId: 0,
+					}});
 
-				this.controller.getStore().dispatch('dialogues/saveDialog', {
-					dialogId: this.controller.application.getDialogId(),
-					chatId: this.controller.application.getChatId(),
-				});
+				this.controller.getStore().commit('widget/common', {isCreateSessionMode: false});
 
-				this.controller.executeRestAnswer(ImRestMethodHandler.imDialogMessagesGetInit, dialogMessagesGetResult);
+				resolve();
+				return;
 			}
 
-			let userRegisterResult = response[RestMethod.widgetUserRegister];
-			if (userRegisterResult)
-			{
-				if (userRegisterResult.error())
-				{
-					this.requestDataSend = false;
-					this.setError(userRegisterResult.error().ex.error, userRegisterResult.error().ex.error_description);
-					return false;
-				}
-				this.controller.executeRestAnswer(RestMethod.widgetUserRegister, userRegisterResult);
-			}
-
-			let timeShift = 0;
-
-			let serverTimeResult = response[RestMethod.pullServerTime];
-			if (serverTimeResult && !serverTimeResult.error())
-			{
-				timeShift = Math.floor(((new Date()).getTime() - new Date(serverTimeResult.data()).getTime())/1000);
-			}
-
-			let config = null;
-			let pullConfigResult = response[RestMethod.pullConfigGet];
-			if (pullConfigResult && !pullConfigResult.error())
-			{
-				config = pullConfigResult.data();
-				config.server.timeShift = timeShift;
-			}
-
-			this.startPullClient(config).then(() => {
-				this.processSendMessages();
-			}).catch((error) => {
-				this.setError(error.ex.error, error.ex.error_description);
-			});
-
-			this.requestDataSend = false;
-		}, false, false, Utils.getLogTrackingParams({name: 'widget.init.config', dialog: this.controller.application.getDialogData()}));
+			this.controller.restClient.callBatch(
+				this.getOpenSessionQuery(eventData.session.chatId),
+				(result) => {
+					this.handleBatchOpenSessionRequestResult(result).then(() => {
+						this.controller.getStore().commit('widget/common', {isCreateSessionMode: false});
+						resolve();
+					});
+				},
+				false,
+				false,
+			);
+		});
 	}
 
 	prepareFileData(files)
 	{
-		if (!Utils.types.isArray(files))
+		if (!Array.isArray(files))
 		{
 			return files;
 		}
 
 		return files.map(file =>
 		{
-			let hash = (window.md5 || md5)(this.getUserId()+'|'+file.id+'|'+this.getUserHash());
-			let urlParam = 'livechat_auth_id='+hash+'&livechat_user_id='+this.getUserId();
+			const hash = (window.md5 || md5)(`${this.getUserId()}|${file.id}|${this.getUserHash()}`);
+			const urlParam = `livechat_auth_id=${hash}&livechat_user_id=${this.getUserId()}`;
 			if (file.urlPreview)
 			{
-				file.urlPreview = file.urlPreview+'&'+urlParam;
+				file.urlPreview = `${file.urlPreview}&${urlParam}`;
 			}
 			if (file.urlShow)
 			{
-				file.urlShow = file.urlShow+'&'+urlParam;
+				file.urlShow = `${file.urlShow}&${urlParam}`;
 			}
 			if (file.urlDownload)
 			{
-				file.urlDownload = file.urlDownload+'&'+urlParam;
+				file.urlDownload = `${file.urlDownload}&${urlParam}`;
 			}
 
 			return file;
 		});
+	}
+
+	checkRequiredFields(): Array
+	{
+		const errors = [];
+		if (typeof this.code === 'string' && this.code.length <= 0)
+		{
+			errors.push(`LiveChatWidget.constructor: code is not correct (${this.code})`);
+		}
+
+		if (typeof this.host === 'string' && (this.host.length <= 0 || !this.host.startsWith('http')))
+		{
+			errors.push(`LiveChatWidget.constructor: host is not correct (${this.host})`);
+		}
+
+		return errors;
+	}
+
+	setRootNode()
+	{
+		if (this.pageMode && this.pageMode.placeholder)
+		{
+			this.rootNode = this.pageMode.placeholder;
+		}
+		else if (document.body.firstChild)
+		{
+			document.body.insertBefore(this.rootNode, document.body.firstChild);
+		}
+		else
+		{
+			document.body.append(this.rootNode);
+		}
+	}
+
+	setLocalize()
+	{
+		if (typeof this.params.localize === 'object')
+		{
+			this.addLocalize(this.params.localize);
+		}
+
+		const serverVariables = LocalStorage.get(this.getSiteId(), 0, 'serverVariables', false);
+		if (serverVariables)
+		{
+			this.addLocalize(serverVariables);
+		}
+	}
+
+	getWidgetVariables(): Object
+	{
+		const variables = {
+			common: {
+				host: this.getHost(),
+				pageMode: !!this.pageMode,
+				copyright: this.copyright,
+				copyrightUrl: this.copyrightUrl,
+			},
+			vote: {
+				messageText: this.getLocalize('BX_LIVECHAT_VOTE_TITLE'),
+				messageLike: this.getLocalize('BX_LIVECHAT_VOTE_PLUS_TITLE'),
+				messageDislike: this.getLocalize('BX_LIVECHAT_VOTE_MINUS_TITLE'),
+			},
+			textMessages: {
+				bxLivechatOnlineLine1: this.getLocalize('BX_LIVECHAT_ONLINE_LINE_1'),
+				bxLivechatOnlineLine2: this.getLocalize('BX_LIVECHAT_ONLINE_LINE_2'),
+				bxLivechatOffline: this.getLocalize('BX_LIVECHAT_OFFLINE'),
+			}
+		};
+
+		if (this.params.styles)
+		{
+			variables.styles = {};
+			if (this.params.styles.backgroundColor)
+			{
+				variables.styles.backgroundColor = this.params.styles.backgroundColor;
+			}
+			if (this.params.styles.iconColor)
+			{
+				variables.styles.iconColor = this.params.styles.iconColor;
+			}
+		}
+
+		return variables;
+	}
+
+	getRestAuthId()
+	{
+		return this.isUserRegistered() ? this.getUserHash() : RestAuth.guest;
+	}
+
+	setModelData()
+	{
+		if (this.params.location && LocationStyle[this.params.location])
+		{
+			this.controller.getStore().commit('widget/common', {location: this.params.location});
+		}
+	}
+
+	checkForErrorsBeforeOpen()
+	{
+		const result = {
+			error: false,
+			stop: false
+		};
+
+		if (!this.checkBrowserVersion())
+		{
+			this.setError('OLD_BROWSER_LOCALIZED', this.localize.BX_LIVECHAT_OLD_BROWSER);
+			result.error = true;
+		}
+		else if (Utils.versionCompare(Vue.version(), '2.1') < 0)
+		{
+			alert(this.localize.BX_LIVECHAT_OLD_VUE);
+			console.error(`LiveChatWidget.error: OLD_VUE_VERSION (${this.localize.BX_LIVECHAT_OLD_VUE_DEV.replace('#CURRENT_VERSION#', Vue.version())})`);
+			result.error = true;
+			result.stop = true;
+		}
+		else if (this.isSameDomain())
+		{
+			this.setError('LIVECHAT_SAME_DOMAIN', this.localize.BX_LIVECHAT_SAME_DOMAIN);
+			result.error = true;
+		}
+
+		return result;
+	}
+
+	isSameDomain()
+	{
+		if (typeof BX === 'undefined' || !BX.isReady)
+		{
+			return false;
+		}
+
+		if (!this.options.checkSameDomain)
+		{
+			return false;
+		}
+
+		return this.host.lastIndexOf(`.${location.hostname}`) > -1;
 	}
 
 	checkBrowserVersion()
@@ -677,104 +812,85 @@ export class Widget
 		return true;
 	}
 
-	isSameDomain()
-	{
-		if (typeof BX === 'undefined' || !BX.isReady)
-		{
-			return false;
-		}
-
-		if (!this.options.checkSameDomain)
-		{
-			return false;
-		}
-
-		return this.host.lastIndexOf('.'+location.hostname) > -1;
-	}
-
 /* endregion 01. Initialize and store data */
 
 /* region 02. Push & Pull */
 
-	startPullClient(config)
+	startPullClient(config): Promise
 	{
-		let promise = new BX.Promise();
-
-		if (!this.getUserId() || !this.getSiteId() || !this.restClient)
-		{
-			promise.reject({
-				ex: { error: 'WIDGET_NOT_LOADED', error_description: 'Widget is not loaded.'}
-			});
-			return promise;
-		}
-
-		if (this.pullClientInited)
-		{
-			if (!this.pullClient.isConnected())
+		return new Promise((resolve, reject) => {
+			if (!this.getUserId() || !this.getSiteId() || !this.restClient)
 			{
-				this.pullClient.scheduleReconnect();
+				return reject({
+					ex: { error: 'WIDGET_NOT_LOADED', error_description: 'Widget is not loaded.'}
+				});
 			}
-			promise.resolve(true);
-			return promise;
-		}
 
-		this.controller.userId = this.getUserId();
-		this.pullClient.userId = this.getUserId();
-		this.pullClient.configTimestamp = config? config.server.config_timestamp: 0;
-		this.pullClient.skipStorageInit = false;
-		this.pullClient.storage = PullClient.StorageManager({
-			userId: this.getUserId(),
-			siteId: this.getSiteId()
-		});
-
-		this.pullClient.subscribe(
-			new WidgetImPullCommandHandler({
-				store: this.controller.getStore(),
-				controller: this.controller,
-				widget: this,
-			})
-		);
-		this.pullClient.subscribe(
-			new WidgetImopenlinesPullCommandHandler({
-				store: this.controller.getStore(),
-				controller: this.controller,
-				widget: this,
-			})
-		);
-
-		this.pullClient.subscribe({
-			type: PullClient.SubscriptionType.Status,
-			callback: this.eventStatusInteraction.bind(this)
-		});
-
-		this.pullConnectedFirstTime = this.pullClient.subscribe({
-			type: PullClient.SubscriptionType.Status,
-			callback: (result) => {
-				if (result.status === PullClient.PullStatus.Online)
+			if (this.pullClientInited)
+			{
+				if (!this.pullClient.isConnected())
 				{
-					promise.resolve(true);
-					this.pullConnectedFirstTime();
+					this.pullClient.scheduleReconnect();
 				}
+				return resolve(true);
 			}
-		});
 
-		if (this.template)
-		{
-			this.template.$Bitrix.PullClient.set(this.pullClient);
-		}
-
-		this.pullClient.start({
-			...config,
-			skipReconnectToLastSession: true
-		}).catch(function(){
-			promise.reject({
-				ex: { error: 'PULL_CONNECTION_ERROR', error_description: 'Pull is not connected.'}
+			this.controller.userId = this.getUserId();
+			this.pullClient.userId = this.getUserId();
+			this.pullClient.configTimestamp = config? config.server.config_timestamp: 0;
+			this.pullClient.skipStorageInit = false;
+			this.pullClient.storage = PullClient.StorageManager({
+				userId: this.getUserId(),
+				siteId: this.getSiteId()
 			});
+
+			this.pullClient.subscribe(
+				new WidgetImPullCommandHandler({
+					store: this.controller.getStore(),
+					controller: this.controller,
+					widget: this,
+				})
+			);
+			this.pullClient.subscribe(
+				new WidgetImopenlinesPullCommandHandler({
+					store: this.controller.getStore(),
+					controller: this.controller,
+					widget: this,
+				})
+			);
+
+			this.pullClient.subscribe({
+				type: PullClient.SubscriptionType.Status,
+				callback: this.eventStatusInteraction.bind(this)
+			});
+
+			this.pullConnectedFirstTime = this.pullClient.subscribe({
+				type: PullClient.SubscriptionType.Status,
+				callback: (result) => {
+					if (result.status === PullClient.PullStatus.Online)
+					{
+						resolve(true);
+						this.pullConnectedFirstTime();
+					}
+				}
+			});
+
+			if (this.template)
+			{
+				this.template.$Bitrix.PullClient.set(this.pullClient);
+			}
+
+			this.pullClient.start({
+				...config,
+				skipReconnectToLastSession: true
+			}).catch(() => {
+				reject({
+					ex: { error: 'PULL_CONNECTION_ERROR', error_description: 'Pull is not connected.'}
+				});
+			});
+
+			this.pullClientInited = true;
 		});
-
-		this.pullClientInited = true;
-
-		return promise;
 	}
 
 	stopPullClient()
@@ -795,34 +911,40 @@ export class Widget
 	{
 		if (data.status === PullClient.PullStatus.Online)
 		{
-			this.offline = false;
-
-			if (this.pullRequestMessage)
-			{
-				this.controller.pullBaseHandler.option.skip = true;
-
-				Logger.warn('Requesting getDialogUnread after going online');
-				EventEmitter.emitAsync(EventType.dialog.requestUnread, {chatId: this.controller.application.getChatId()}).then(() => {
-					EventEmitter.emit(EventType.dialog.scrollOnStart, {chatId: this.controller.application.getChatId()});
-					this.controller.pullBaseHandler.option.skip = false;
-					this.processSendMessages();
-				})
-				.catch(() => {
-					this.controller.pullBaseHandler.option.skip = false;
-				});
-
-				this.pullRequestMessage = false;
-			}
-			else
-			{
-				this.readMessage();
-				this.processSendMessages();
-			}
+			this.onPullOnlineStatus();
 		}
 		else if (data.status === PullClient.PullStatus.Offline)
 		{
 			this.pullRequestMessage = true;
 			this.offline = true;
+		}
+	}
+
+	onPullOnlineStatus()
+	{
+		this.offline = false;
+
+		// if we go online after going offline - we need to request messages
+		if (this.pullRequestMessage)
+		{
+			this.controller.pullBaseHandler.option.skip = true;
+
+			Logger.warn('Requesting getDialogUnread after going online');
+			EventEmitter.emitAsync(EventType.dialog.requestUnread, {chatId: this.controller.application.getChatId()}).then(() => {
+					EventEmitter.emit(EventType.dialog.scrollOnStart, {chatId: this.controller.application.getChatId()});
+					this.controller.pullBaseHandler.option.skip = false;
+					EventEmitter.emit(WidgetEventType.processMessagesToSendQueue);
+				})
+				.catch(() => {
+					this.controller.pullBaseHandler.option.skip = false;
+				});
+
+			this.pullRequestMessage = false;
+		}
+		else
+		{
+			EventEmitter.emit(EventType.dialog.readMessage);
+			EventEmitter.emit(WidgetEventType.processMessagesToSendQueue);
 		}
 	}
 
@@ -839,9 +961,9 @@ export class Widget
 		}
 
 		this.rootNode.innerHTML = '';
-		this.rootNode.appendChild(document.createElement('div'));
+		this.rootNode.append(document.createElement('div'));
 
-		let application = this;
+		const application = this;
 
 		return this.controller.createVue(application, {
 			el: this.rootNode.firstChild,
@@ -888,6 +1010,7 @@ export class Widget
 		return true;
 	}
 
+	// public method
 	mutateTemplateComponent(id, params)
 	{
 		return Vue.mutateComponent(id, params);
@@ -895,643 +1018,9 @@ export class Widget
 
 /* endregion 03. Template engine */
 
-/* region 04. Rest methods */
+/* region 04. Widget interaction and utils */
 
-	addMessage(text = '', file = null)
-	{
-		if (!text && !file)
-		{
-			return false;
-		}
-
-		const quoteId = this.controller.getStore().getters['dialogues/getQuoteId'](this.controller.application.getDialogId());
-		if (quoteId)
-		{
-			const quoteMessage = this.controller.getStore().getters['messages/getMessage'](this.controller.application.getChatId(), quoteId);
-			if (quoteMessage)
-			{
-				let user = null;
-				if (quoteMessage.authorId)
-				{
-					user = this.controller.getStore().getters['users/get'](quoteMessage.authorId);
-				}
-
-				const files = this.controller.getStore().getters['files/getList'](this.controller.application.getChatId());
-
-				const message = [];
-				message.push('-'.repeat(54));
-				message.push((user && user.name? user.name: this.getLocalize('BX_LIVECHAT_SYSTEM_MESSAGE'))+' ['+Utils.date.format(quoteMessage.date, null, this.getLocalize())+']');
-				message.push(Utils.text.quote(quoteMessage.text, quoteMessage.params, files, this.getLocalize()));
-				message.push('-'.repeat(54));
-				message.push(text);
-				text = message.join("\n");
-
-				this.quoteMessageClear();
-			}
-		}
-
-		Logger.warn('addMessage', text, file);
-
-		if (!this.controller.application.isUnreadMessagesLoaded())
-		{
-			this.sendMessage({id: 0, text, file});
-			this.processSendMessages();
-
-			return true;
-		}
-
-		let params = {};
-		if (file)
-		{
-			params.FILE_ID = [file.id];
-		}
-
-		this.controller.getStore().dispatch('messages/add', {
-			chatId: this.getChatId(),
-			authorId: this.getUserId(),
-			text: text,
-			params,
-			sending: !file,
-		}).then(messageId => {
-			if (!this.isDialogStart())
-			{
-				this.controller.getStore().commit('widget/common', {dialogStart:true});
-			}
-
-			EventEmitter.emit(EventType.dialog.scrollToBottom, {chatId: this.getChatId(), cancelIfScrollChange: true});
-
-			this.messagesQueue.push({
-				id: messageId,
-				text,
-				file,
-				sending: false
-			});
-
-			if (this.getChatId())
-			{
-				this.processSendMessages();
-			}
-			else
-			{
-				this.requestData();
-			}
-		});
-
-		return true;
-	}
-
-	uploadFile(event)
-	{
-		if (!event)
-		{
-			return false;
-		}
-
-		if (!this.getChatId())
-		{
-			this.requestData();
-		}
-
-		this.uploader.addFilesFromEvent(event);
-	}
-
-	cancelUploadFile(fileId)
-	{
-		let element = this.messagesQueue.find(element => element.file && element.file.id === fileId);
-		if (element)
-		{
-			this.uploader.deleteTask(fileId);
-
-			if (element.xhr)
-			{
-				element.xhr.abort();
-			}
-			this.controller.getStore().dispatch('messages/delete', {
-				chatId: this.getChatId(),
-				id: element.id,
-			}).then(() => {
-				this.controller.getStore().dispatch('files/delete', {
-					chatId: this.getChatId(),
-					id: element.file.id,
-				});
-				this.messagesQueue = this.messagesQueue.filter(el => el.id !== element.id);
-			});
-		}
-	}
-
-	processSendMessages()
-	{
-		if (!this.getDiskFolderId())
-		{
-			this.requestDiskFolderId().then(() => {
-				this.processSendMessages();
-			}).catch(() => {
-				Logger.warn('uploadFile', 'Error get disk folder id');
-				return false;
-			});
-
-			return false;
-		}
-
-		if (this.offline)
-		{
-			return false;
-		}
-
-		this.messagesQueue.filter(element => !element.sending).forEach(element => {
-			element.sending = true;
-			if (element.file)
-			{
-				this.sendMessageWithFile(element);
-			}
-			else
-			{
-				this.sendMessage(element);
-			}
-		});
-
-		return true;
-	}
-
-	sendMessage(message)
-	{
-		this.controller.application.stopWriting();
-
-		let quiteId = this.controller.getStore().getters['dialogues/getQuoteId'](this.getDialogId());
-		if (quiteId)
-		{
-			let quoteMessage = this.controller.getStore().getters['messages/getMessage'](this.getChatId(), quiteId);
-			if (quoteMessage)
-			{
-				let user = this.controller.getStore().getters['users/get'](quoteMessage.authorId);
-
-				let newMessage = [];
-				newMessage.push("------------------------------------------------------");
-				newMessage.push((user.name? user.name: this.getLocalize('BX_LIVECHAT_SYSTEM_MESSAGE')));
-				newMessage.push(quoteMessage.text);
-				newMessage.push('------------------------------------------------------');
-				newMessage.push(message.text);
-				message.text = newMessage.join("\n");
-
-				this.quoteMessageClear();
-			}
-		}
-
-		message.chatId = this.getChatId();
-
-		this.controller.restClient.callMethod(ImRestMethod.imMessageAdd, {
-			'TEMPLATE_ID': message.id,
-			'CHAT_ID': message.chatId,
-			'MESSAGE': message.text
-		}, null, null, Utils.getLogTrackingParams({
-			name: ImRestMethod.imMessageAdd,
-			data: {timMessageType: 'text'},
-			dialog: this.getDialogData()
-		})).then(response => {
-			this.controller.executeRestAnswer(ImRestMethodHandler.imMessageAdd, response, message);
-		}).catch(error => {
-			this.controller.executeRestAnswer(ImRestMethodHandler.imMessageAdd, error, message);
-		});
-
-		return true;
-	}
-
-	sendMessageWithFile(message)
-	{
-		this.controller.application.stopWriting();
-
-		const diskFolderId = this.getDiskFolderId();
-		message.chatId = this.getChatId();
-
-		this.uploader.senderOptions.customHeaders['Livechat-Dialog-Id'] = this.getDialogId();
-		this.uploader.senderOptions.customHeaders['Livechat-Auth-Id'] = this.getUserHash();
-
-		this.uploader.addTask({
-			taskId: message.file.id,
-			fileData: message.file.source.file,
-			fileName: message.file.source.file.name,
-			generateUniqueName: true,
-			diskFolderId: diskFolderId,
-			previewBlob: message.file.previewBlob,
-			chunkSize: this.localize.isCloud ? Uploader.CLOUD_MAX_CHUNK_SIZE : Uploader.BOX_MIN_CHUNK_SIZE,
-		});
-	}
-
-	fileError(chatId, fileId, messageId = 0)
-	{
-		this.controller.getStore().dispatch('files/update', {
-			chatId: chatId,
-			id: fileId,
-			fields: {
-				status: FileStatus.error,
-				progress: 0
-			}
-		});
-		if (messageId)
-		{
-			this.controller.getStore().dispatch('messages/actionError', {
-				chatId: chatId,
-				id: messageId,
-				retry: false,
-			});
-		}
-	}
-
-	requestDiskFolderId()
-	{
-		if (this.requestDiskFolderPromise)
-		{
-			return this.requestDiskFolderPromise;
-		}
-
-		this.requestDiskFolderPromise = new Promise((resolve, reject) =>
-		{
-			if (
-				this.flagRequestDiskFolderIdSended
-				|| this.getDiskFolderId()
-			)
-			{
-				this.flagRequestDiskFolderIdSended = false;
-				resolve();
-				return true;
-			}
-
-			this.flagRequestDiskFolderIdSended = true;
-
-			this.controller.restClient.callMethod(ImRestMethod.imDiskFolderGet, {chat_id: this.controller.application.getChatId()}).then(response => {
-				this.controller.executeRestAnswer(ImRestMethodHandler.imDiskFolderGet, response);
-				this.flagRequestDiskFolderIdSended = false;
-				resolve();
-			}).catch(error => {
-				this.flagRequestDiskFolderIdSended = false;
-				this.controller.executeRestAnswer(ImRestMethodHandler.imDiskFolderGet, error);
-				reject();
-			});
-		});
-
-		return this.requestDiskFolderPromise;
-	}
-
-	fileCommit(params, message)
-	{
-		this.controller.restClient.callMethod(ImRestMethod.imDiskFileCommit, {
-			chat_id: params.chatId,
-			upload_id: params.uploadId,
-			message: params.messageText,
-			template_id: params.messageId,
-			file_template_id: params.fileId,
-		}, null, null, Utils.getLogTrackingParams({
-			name: ImRestMethod.imDiskFileCommit,
-			data: {timMessageType: params.fileType},
-			dialog: this.getDialogData()
-		})).then(response => {
-			this.controller.executeRestAnswer(ImRestMethodHandler.imDiskFileCommit, response, message);
-		}).catch(error => {
-			this.controller.executeRestAnswer(ImRestMethodHandler.imDiskFileCommit, error, message);
-		});
-
-		return true;
-	}
-
-	getDialogHistory(lastId, limit = this.controller.application.getRequestMessageLimit())
-	{
-		this.controller.restClient.callMethod(ImRestMethod.imDialogMessagesGet, {
-			'CHAT_ID': this.getChatId(),
-			'LAST_ID': lastId,
-			'LIMIT': limit,
-			'CONVERT_TEXT': 'Y'
-		}).then(result => {
-			this.controller.executeRestAnswer(ImRestMethodHandler.imDialogMessagesGet, result);
-			this.template.$emit(EventType.dialog.requestHistoryResult, {count: result.data().messages.length});
-		}).catch(result => {
-			this.template.$emit(EventType.dialog.requestHistoryResult, {error: result.error().ex});
-		});
-	}
-
-	getDialogUnread(lastId, limit = this.controller.application.getRequestMessageLimit())
-	{
-		const promise = new BX.Promise();
-
-		if (!lastId)
-		{
-			lastId = this.controller.getStore().getters['messages/getLastId'](this.controller.application.getChatId());
-		}
-
-		if (!lastId)
-		{
-			this.template.$emit(EventType.dialog.requestUnreadResult, {error: {error: 'LAST_ID_EMPTY', error_description: 'LastId is empty.'}});
-			promise.reject();
-			return promise;
-		}
-
-		this.controller.application.readMessage(lastId, true, true).then(() =>
-		{
-			let query = {
-				[ImRestMethodHandler.imDialogRead]: [ImRestMethod.imDialogRead, {
-					dialog_id: this.getDialogId(),
-					message_id: lastId
-				}],
-				[ImRestMethodHandler.imChatGet]: [ImRestMethod.imChatGet, {
-					dialog_id: this.getDialogId()
-				}],
-				[ImRestMethodHandler.imDialogMessagesGetUnread]: [ImRestMethod.imDialogMessagesGet, {
-					chat_id: this.getChatId(),
-					first_id: lastId,
-					limit: limit,
-					convert_text: 'Y'
-				}]
-			};
-
-			this.controller.restClient.callBatch(query, (response) =>
-			{
-				if (!response)
-				{
-					this.template.$emit(EventType.dialog.requestUnreadResult, {error: {error: 'EMPTY_RESPONSE', error_description: 'Server returned an empty response.'}});
-
-					promise.reject();
-					return false;
-				}
-
-				let chatGetResult = response[ImRestMethodHandler.imChatGet];
-				if (!chatGetResult.error())
-				{
-					this.controller.executeRestAnswer(ImRestMethodHandler.imChatGet, chatGetResult);
-				}
-
-				let dialogMessageUnread = response[ImRestMethodHandler.imDialogMessagesGetUnread];
-				if (dialogMessageUnread.error())
-				{
-					this.template.$emit(EventType.dialog.requestUnreadResult, {error: dialogMessageUnread.error().ex});
-				}
-				else
-				{
-					this.controller.executeRestAnswer(ImRestMethodHandler.imDialogMessagesGetUnread, dialogMessageUnread);
-					this.template.$emit(EventType.dialog.requestUnreadResult, {
-						firstMessageId: dialogMessageUnread.data().messages.length > 0? dialogMessageUnread.data().messages[0].id: 0,
-						count: dialogMessageUnread.data().messages.length
-					});
-				}
-
-				promise.fulfill(response);
-
-			}, false, false, Utils.getLogTrackingParams({name: ImRestMethodHandler.imDialogMessagesGetUnread, dialog: this.getDialogData()}));
-		});
-
-		return promise;
-	}
-
-	retrySendMessage(message)
-	{
-		if (this.messagesQueue.find(el => el.id === message.id))
-		{
-			return false;
-		}
-
-		this.messagesQueue.push({
-			id: message.id,
-			text: message.text,
-			sending: false
-		});
-
-		this.controller.application.setSendingMessageFlag(message.id);
-
-		this.processSendMessages();
-	}
-
-	readMessage(messageId)
-	{
-		if (this.offline)
-		{
-			return false;
-		}
-
-		return this.controller.application.readMessage(messageId);
-	}
-
-	reactMessage(id, reaction)
-	{
-		this.controller.application.reactMessage(id, reaction.type, reaction.action);
-	}
-
-	execMessageKeyboardCommand(data)
-	{
-		if (data.action === 'ACTION' && data.params.action === 'LIVECHAT')
-		{
-			let {dialogId, messageId} = data.params;
-			let values = JSON.parse(data.params.value);
-
-			let sessionId = parseInt(values.SESSION_ID);
-			if (sessionId !== this.getSessionId() || this.isSessionClose())
-			{
-				alert(this.localize.BX_LIVECHAT_ACTION_EXPIRED);
-				return false;
-			}
-
-			this.controller.restClient.callMethod(RestMethod.widgetActionSend, {
-				'MESSAGE_ID': messageId,
-				'DIALOG_ID': dialogId,
-				'ACTION_VALUE': data.params.value,
-			});
-
-			return true;
-		}
-
-		if (data.action !== 'COMMAND')
-		{
-			return false;
-		}
-
-		let {dialogId, messageId, botId, command, params} = data.params;
-
-		this.controller.restClient.callMethod(ImRestMethod.imMessageCommand, {
-			'MESSAGE_ID': messageId,
-			'DIALOG_ID': dialogId,
-			'BOT_ID': botId,
-			'COMMAND': command,
-			'COMMAND_PARAMS': params,
-		});
-
-		return true;
-	}
-
-	quoteMessageClear()
-	{
-		this.controller.getStore().dispatch('dialogues/update', {
-			dialogId: this.controller.application.getDialogId(),
-			fields: {
-				quoteId: 0
-			}
-		});
-	}
-
-	sendDialogVote(result)
-	{
-		if (!this.getSessionId())
-		{
-			return false;
-		}
-
-		this.controller.restClient.callMethod(RestMethod.widgetVoteSend, {
-			'SESSION_ID': this.getSessionId(),
-			'ACTION': result
-		}).catch((result) => {
-			this.controller.getStore().commit('widget/dialog', {userVote: VoteType.none});
-		});
-
-		this.sendEvent({
-			type: SubscriptionType.userVote,
-			data: {
-				vote: result
-			}
-		});
-	}
-
-	getHtmlHistory()
-	{
-		const chatId = this.getChatId();
-		if (chatId <= 0)
-		{
-			console.error('Incorrect chatId value');
-		}
-
-		const config = {
-			chatId: this.getChatId()
-		};
-		this.requestControllerAction('imopenlines.widget.history.download', config)
-			.then(response => {
-				const contentType = response.headers.get('Content-Type');
-				if (contentType.startsWith('application/json'))
-				{
-					return response.json();
-				}
-
-				return response.blob();
-			})
-			.then(result => {
-				if (result instanceof Blob)
-				{
-					const url = window.URL.createObjectURL(result);
-					const a = document.createElement('a');
-					a.href = url;
-					a.download = chatId + '.html';
-					document.body.appendChild(a);
-					a.click();
-					a.remove();
-				}
-				else if (result.hasOwnProperty('errors'))
-				{
-					console.error(result.errors[0]);
-				}
-				else
-				{
-					console.error('Unknown error.');
-				}
-			})
-			.catch(() => console.error('Fetch error.'));
-	}
-
-	/**
-	 * Basic method to run actions.
-	 * If you need to extend it, check BX.ajax.runAction to extend this method.
-	 */
-	requestControllerAction(action, config)
-	{
-		const host = this.host ? this.host : '';
-		const ajaxEndpoint = '/bitrix/services/main/ajax.php';
-
-		const url = new URL(ajaxEndpoint, host);
-		url.searchParams.set('action', action);
-
-		const formData = new FormData();
-		for (const key in config)
-		{
-			if (config.hasOwnProperty(key))
-			{
-				formData.append(key, config[key]);
-			}
-		}
-
-		return fetch(url, {
-			method: 'POST',
-			headers: {
-				'Livechat-Auth-Id': this.getUserHash()
-			},
-			body: formData
-		})
-	}
-
-	sendConsentDecision(result)
-	{
-		result = result === true;
-
-		this.controller.getStore().commit('widget/dialog', {userConsent: result});
-
-		if (result && this.isUserRegistered())
-		{
-			this.controller.restClient.callMethod(RestMethod.widgetUserConsentApply, {
-				config_id: this.getConfigId(),
-				consent_url: location.href
-			});
-		}
-	}
-
-/* endregion 05. Templates and template interaction */
-
-/* region 05. Widget interaction and utils */
-
-	start()
-	{
-		if (!this.controller || !this.controller.getStore())
-		{
-			this.callStartFlag = true;
-			return true;
-		}
-
-		if (this.isSessionActive())
-		{
-			this.requestWidgetData();
-		}
-
-		return true;
-	}
-
-	open(params = {})
-	{
-		clearTimeout(this.openTimeout);
-		if (!this.controller.getStore())
-		{
-			this.callOpenFlag = true;
-			return true;
-		}
-
-		if (!params.openFromButton && this.buttonInstance)
-		{
-			this.buttonInstance.wm.showById('openline_livechat');
-		}
-
-		if (!this.checkBrowserVersion())
-		{
-			this.setError('OLD_BROWSER_LOCALIZED', this.localize.BX_LIVECHAT_OLD_BROWSER);
-		}
-		else if (Utils.versionCompare(Vue.version(), '2.1') < 0)
-		{
-			alert(this.localize.BX_LIVECHAT_OLD_VUE);
-			console.error(`LiveChatWidget.error: OLD_VUE_VERSION (${this.localize.BX_LIVECHAT_OLD_VUE_DEV.replace('#CURRENT_VERSION#', Vue.version())})`);
-
-			return false;
-		}
-		else if (this.isSameDomain())
-		{
-			this.setError('LIVECHAT_SAME_DOMAIN', this.localize.BX_LIVECHAT_SAME_DOMAIN);
-		}
-		else if (!this.isWidgetDataRequested())
-		{
-			this.requestWidgetData();
-		}
-
-		this.attachTemplate();
-	}
-
+	// public method
 	close()
 	{
 		if (this.pageMode)
@@ -1545,19 +1034,6 @@ export class Widget
 		}
 
 		this.detachTemplate();
-	}
-
-	showNotification(params)
-	{
-		if (!this.controller || !this.controller.getStore())
-		{
-			console.error('LiveChatWidget.showNotification: method can be called after fired event - onBitrixLiveChat');
-			return false;
-		}
-		// TODO show popup notification and set badge on button
-		// operatorName
-		// notificationText
-		// counter
 	}
 
 	fireInitEvent()
@@ -1578,18 +1054,6 @@ export class Widget
 		}
 
 		this.initEventFired = true;
-
-		return true;
-	}
-
-	isReady()
-	{
-		return this.ready;
-	}
-
-	isInited()
-	{
-		return this.inited;
 	}
 
 	isUserRegistered()
@@ -1600,11 +1064,6 @@ export class Widget
 	isConfigDataLoaded()
 	{
 		return this.controller.getStore().state.widget.common.configId;
-	}
-
-	isWidgetDataRequested()
-	{
-		return this.widgetDataRequested;
 	}
 
 	isChatLoaded()
@@ -1665,6 +1124,17 @@ export class Widget
 	isUserLoaded()
 	{
 		return this.controller.getStore().state.widget.user.id > 0;
+	}
+
+	isUserReady()
+	{
+		return this.isConfigDataLoaded() && this.isUserRegistered();
+	}
+
+	isHashAvailable()
+	{
+		return !this.isUserRegistered()
+			&& (this.userRegisterData.hash || this.getUserHashCookie());
 	}
 
 	getSiteId()
@@ -1773,7 +1243,7 @@ export class Widget
 			'consent_url': this.controller.getStore().state.widget.common.consentUrl? location.href: '',
 			'trace_data': this.getCrmTraceData(),
 			'custom_data': this.getCustomData()
-		}
+		};
 	}
 
 	getWidgetLocationCode()
@@ -1781,6 +1251,7 @@ export class Widget
 		return LocationStyle[this.controller.getStore().state.widget.common.location];
 	}
 
+	// public method
 	setUserRegisterData(params)
 	{
 		if (!this.controller || !this.controller.getStore())
@@ -1843,12 +1314,14 @@ export class Widget
 		this.controller.restClient.setAuthId(RestAuth.guest, authToken);
 	}
 
+	// public method
 	setOption(name, value)
 	{
 		this.options[name] = value;
 		return true;
 	}
 
+	// public method
 	setCustomData(params)
 	{
 		if (!this.controller || !this.controller.getStore())
@@ -1856,7 +1329,6 @@ export class Widget
 			console.error('LiveChatWidget.getUserData: method can be called after fired event - onBitrixLiveChat');
 			return false;
 		}
-
 
 		let result = [];
 		if (params instanceof Array)
@@ -1934,11 +1406,7 @@ export class Widget
 		});
 	}
 
-	/**
-	 *
-	 * @param params {Object}
-	 * @returns {Function|Boolean} - Unsubscribe callback function or False
-	 */
+	// public method
 	subscribe(params)
 	{
 		if (!Utils.types.isPlainObject(params))
@@ -1973,11 +1441,6 @@ export class Widget
 		}.bind(this);
 	}
 
-	/**
-	 *
-	 * @param params {Object}
-	 * @returns {boolean}
-	 */
 	sendEvent(params)
 	{
 		params = params || {};
@@ -2005,6 +1468,7 @@ export class Widget
 		return true;
 	}
 
+	// public method
 	addLocalize(phrases)
 	{
 		if (typeof phrases !== "object" || !phrases)
@@ -2042,5 +1506,185 @@ export class Widget
 		return phrase;
 	}
 
-/* endregion 05. Widget interaction and utils */
+/* endregion 04. Widget interaction and utils */
+
+/* region 05. Rest batch handlers */
+	handleConfigGet(response): Promise
+	{
+		return new Promise((resolve, reject) => {
+			const configGet = response[RestMethod.widgetConfigGet];
+			if (configGet && configGet.error())
+			{
+				return reject({
+					code: configGet.error().ex.error,
+					description: configGet.error().ex.error_description
+				});
+			}
+
+			this.controller.executeRestAnswer(RestMethod.widgetConfigGet, configGet);
+
+			resolve();
+		});
+	}
+
+	handleUserGet(response): Promise
+	{
+		return new Promise((resolve, reject) => {
+			const userGetResult = response[RestMethod.widgetUserGet];
+			if (userGetResult.error())
+			{
+				return reject({
+					code: userGetResult.error().ex.error,
+					description: userGetResult.error().ex.error_description
+				});
+			}
+
+			this.controller.executeRestAnswer(RestMethod.widgetUserGet, userGetResult);
+
+			resolve();
+		});
+	}
+
+	handleChatGet(response): Promise
+	{
+		return new Promise((resolve, reject) => {
+			const chatGetResult = response[ImRestMethodHandler.imChatGet];
+			if (chatGetResult.error())
+			{
+				return reject({
+					code: chatGetResult.error().ex.error,
+					description: chatGetResult.error().ex.error_description
+				});
+			}
+
+			this.controller.executeRestAnswer(ImRestMethodHandler.imChatGet, chatGetResult);
+
+			resolve();
+		});
+	}
+
+	handleDialogGet(response): Promise
+	{
+		return new Promise((resolve, reject) => {
+			const dialogGetResult = response[RestMethod.widgetDialogGet];
+			if (!dialogGetResult)
+			{
+				return resolve();
+			}
+
+			if (dialogGetResult.error())
+			{
+				return reject({
+					code: dialogGetResult.error().ex.error,
+					description: dialogGetResult.error().ex.error_description
+				});
+			}
+
+			this.controller.executeRestAnswer(RestMethod.widgetDialogGet, dialogGetResult);
+
+			resolve();
+		});
+	}
+
+	handleDialogMessagesGet(response): Promise
+	{
+		return new Promise((resolve, reject) => {
+			const dialogMessagesGetResult = response[ImRestMethodHandler.imDialogMessagesGetInit];
+			if (!dialogMessagesGetResult)
+			{
+				return resolve();
+			}
+
+			if (dialogMessagesGetResult.error())
+			{
+				return reject({
+					code: dialogMessagesGetResult.error().ex.error,
+					description: dialogMessagesGetResult.error().ex.error_description
+				});
+			}
+
+			this.controller.getStore().dispatch('dialogues/saveDialog', {
+				dialogId: this.controller.application.getDialogId(),
+				chatId: this.controller.application.getChatId(),
+			});
+
+			this.controller.executeRestAnswer(ImRestMethodHandler.imDialogMessagesGetInit, dialogMessagesGetResult);
+
+			resolve();
+		});
+	}
+
+	handleUserRegister(response): Promise
+	{
+		return new Promise((resolve, reject) => {
+			const userRegisterResult = response[RestMethod.widgetUserRegister];
+			if (!userRegisterResult)
+			{
+				return resolve();
+			}
+
+			if (userRegisterResult.error())
+			{
+				return reject({
+					code: userRegisterResult.error().ex.error,
+					description: userRegisterResult.error().ex.error_description
+				});
+			}
+
+			this.controller.executeRestAnswer(RestMethod.widgetUserRegister, userRegisterResult);
+
+			resolve();
+		});
+	}
+
+	handleChatCreate(response): Promise
+	{
+		return new Promise((resolve, reject) => {
+			const chatCreateResult = response[RestMethod.widgetChatCreate];
+			if (!chatCreateResult)
+			{
+				return resolve();
+			}
+
+			if (chatCreateResult.error())
+			{
+				return reject({
+					code: chatCreateResult.error().ex.error,
+					description: chatCreateResult.error().ex.error_description
+				});
+			}
+
+			this.controller.executeRestAnswer(RestMethod.widgetChatCreate, chatCreateResult);
+
+			resolve();
+		});
+	}
+
+	handlePullRequests(response): Promise
+	{
+		return new Promise((resolve) => {
+			let timeShift = 0;
+
+			const serverTimeResult = response[RestMethod.pullServerTime];
+			if (serverTimeResult && !serverTimeResult.error())
+			{
+				timeShift = Math.floor((Date.now() - new Date(serverTimeResult.data()).getTime()) / 1000);
+			}
+
+			let config = null;
+			const pullConfigResult = response[RestMethod.pullConfigGet];
+			if (pullConfigResult && !pullConfigResult.error())
+			{
+				config = pullConfigResult.data();
+				config.server.timeShift = timeShift;
+			}
+
+			this.startPullClient(config).then(() => {
+				EventEmitter.emit(WidgetEventType.processMessagesToSendQueue);
+			}).catch((error) => {
+				this.setError(error.ex.error, error.ex.error_description);
+			}).finally(resolve);
+		});
+	}
+/* endregion 05. Rest batch handlers */
 }

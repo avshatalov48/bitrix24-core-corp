@@ -9,13 +9,11 @@
 
 import {BitrixVue} from "ui.vue";
 import {Vuex} from "ui.vue.vuex";
+import { EventEmitter } from "main.core.events";
+import { WidgetEventType } from "../const";
 
 BitrixVue.component('bx-livechat-form-consent',
 {
-	/**
-	 * @emits 'agree' {event: object} -- 'event' - click event
-	 * @emits 'disagree' {event: object} -- 'event' - click event
-	 */
 	computed:
 	{
 		...Vuex.mapState({
@@ -24,13 +22,13 @@ BitrixVue.component('bx-livechat-form-consent',
 	},
 	methods:
 	{
-		agree(event)
+		agree()
 		{
-			this.$emit('agree', {event});
+			EventEmitter.emit(WidgetEventType.acceptConsent);
 		},
-		disagree(event)
+		disagree()
 		{
-			this.$emit('disagree', {event});
+			EventEmitter.emit(WidgetEventType.declineConsent);
 		},
 		onShow(element, done)
 		{

@@ -139,7 +139,10 @@ if (CModule::IncludeModule("crm") && CCrmPerms::IsAccessEnabled())
 	$arMenu[] = array(
 		GetMessage("MENU_CRM"),
 		"/crm/menu/",
-		["/crm/", "/shop/documents/"],
+		[
+			"/crm/",
+			"/shop/documents/",
+			\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24') ? '/contact_center/' : SITE_DIR . 'services/contact_center/'],
 		[
 			"real_link" => \Bitrix\Crm\Settings\EntityViewSettings::getDefaultPageUrl(),
 			"counter_id" => $counterId,

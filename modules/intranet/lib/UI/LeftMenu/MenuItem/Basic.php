@@ -77,6 +77,11 @@ abstract class Basic
 		return $this->errorCollection->isEmpty();
 	}
 
+	public function getErrorList(): array
+	{
+		return $this->errorCollection->getValues();
+	}
+
 	abstract public function canUserDelete(LeftMenu\User $user) :bool;
 
 	public function setSort(?int $sorting)

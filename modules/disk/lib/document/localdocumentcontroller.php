@@ -10,6 +10,8 @@ use Bitrix\Disk\Internals;
 use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Uf\FileUserType;
 use Bitrix\Disk\Version;
+use Bitrix\Main\Application;
+use Bitrix\Main\Engine\Response;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -180,11 +182,16 @@ class LocalDocumentController extends Internals\Controller
 
 	protected function processActionDownload()
 	{
-		if($this->isSpecificVersion())
+		if ($this->isSpecificVersion())
 		{
-			LocalRedirect(Driver::getInstance()->getUrlManager()->getUrlForDownloadVersion($this->version));
+			$response = Response\BFile::createByFileId($this->version->getFileId(), $this->version->getName());
 		}
-		LocalRedirect(Driver::getInstance()->getUrlManager()->getUrlForDownloadFile($this->file));
+		else
+		{
+			$response = Response\BFile::createByFileId($this->file->getFileId(), $this->file->getName());
+		}
+
+		Application::getInstance()->end(0, $response);
 	}
 
 	protected function processActionCommit()

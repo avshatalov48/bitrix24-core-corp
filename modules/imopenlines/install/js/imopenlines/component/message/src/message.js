@@ -12,7 +12,7 @@ import { Vuex } from "ui.vue.vuex";
 import './message.css';
 import 'im.view.message';
 import { EventEmitter } from "main.core.events";
-import { EventType as WidgetEventType } from "../../widget/src/const";
+import { WidgetEventType } from "../../widget/src/const";
 
 const FormType = Object.freeze({
 	none: 'none',
@@ -46,7 +46,7 @@ BitrixVue.cloneComponent('bx-imopenlines-message', 'bx-im-view-message',
 					&& this.widget.dialog.userVote === VoteType.none
 				)
 				{
-					EventEmitter.emit(WidgetEventType.requestShowForm, {
+					EventEmitter.emit(WidgetEventType.showForm, {
 						type: FormType.like,
 						delayed: true
 					});

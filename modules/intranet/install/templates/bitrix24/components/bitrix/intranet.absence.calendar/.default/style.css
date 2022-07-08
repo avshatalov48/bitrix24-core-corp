@@ -113,15 +113,25 @@ div.bx-calendar-filter div input{float: left;}
 div.bx-calendar-color-all {height: 20px;}
 
 div.bx-calendar-info {
-	background-color: white; position: absolute; border: solid 1px #A4ADB1; text-align: left !important;
+	background-color: white;
+	position: absolute;
+	border: solid 1px #a4adb1;
+	text-align: left !important;
+	border-radius: var(--ui-border-radius-md);
 }
 
 div.bx-calendar-info .bx-calendar-info-header {
-	height: 25px; background-color: #D8E3E8;
+	height: 25px;
+	background-color: #d8e3e8;
+	border-radius: var(--ui-border-radius-md);
+	border-bottom-right-radius: 0;
+	border-bottom-left-radius: 0;
 }
 
 div.bx-calendar-info .bx-calendar-info-header .bx-calendar-info-close {
-	height: 25px; width: 25px; float: right;
+	height: 25px;
+	width: 25px;
+	float: right;
 	background-image: url(images/close2.gif);
 	background-position: center center;
 	background-repeat: no-repeat;
@@ -152,12 +162,18 @@ div.bx-calendar-info .bx-calendar-info-data .bx-calendar-info-data-photo{
 	width: 104px;
 	border: 1px solid #C4C4C4;
 	text-align: center;
+	border-radius: 50%;
+}
+
+div.bx-calendar-info .bx-calendar-info-data .bx-calendar-info-data-photo img {
+	border-radius: 50%;
 }
 
 div.bx-calendar-info .bx-calendar-info-data .no-photo{
 	background-image: url(/bitrix/components/bitrix/intranet.absence.calendar/templates/.default/images/nopic_user_100_noborder.gif);
 	background-position: center center;
 	background-repeat: no-repeat;
+	border-radius: 50%;
 }
 
 div.bx-calendar-info .bx-calendar-info-data  .bx-calendar-info-data-cont{
@@ -191,6 +207,9 @@ div.bx-calendar-info .bx-calendar-info-footer {
 	background-color: #D8E3E8;
 	text-align: center;
 	padding: 8px;
+	border-radius: var(--ui-border-radius-md);
+	border-top-right-radius: 0;
+	border-top-left-radius: 0;
 }
 
 div.bx-calendar-info .bx-calendar-info-footer input {height: 24px; padding-bottom: 3px;}
@@ -206,19 +225,17 @@ a.bx-filter-close {display:block; width:13px; height:13px; background-image:url(
 body .bx-calendar-layout-table{border:0;}
 body .bx-calendar-layout-table .bx-table-datecontrol{border-left:1px solid #c2c2c2;border-right:1px solid #c2c2c2;}
 body .bx-calendar-layout table.bx-calendar-toolbar{
-	border-color:#b6bdbe #c9d1d2 #d6dfe0;
 	border-collapse:collapse;
 	border-spacing:0;
-	-webkit-box-shadow:0 1px 2px #C7D0D2 inset;
-	-moz-box-shadow:0 1px 2px #C7D0D2 inset;
-	box-shadow:0 1px 2px #C7D0D2 inset;
 	background-color:#eaeff0;
+	border: none;
+	border-radius: var(--ui-border-radius-sm);
 }
 body .bx-calendar-layout table.bx-calendar-toolbar td,
 body .bx-calendar-layout table.bx-calendar-toolbar td.bx-calendar-toolbar-delimiter,
 body .bx-calendar-layout table.bx-calendar-toolbar td.bx-calendar-toolbar-last{
 	border:0;
-	padding:10px;
+	padding: 14px;
 	vertical-align:middle;
 	font:14px/18px "Helvetica Neue",Helvetica,Arial,sans-serif;
 	color:#555;
@@ -241,7 +258,9 @@ body .bx-calendar-layout ul.bx-calendar-view-switcher span.bx-r{display:none;}
 body .bx-calendar-layout ul.bx-calendar-view-switcher span.bx-c{
 	border:1px solid #c2c2c2;
 	border-bottom:0;
-	-moz-border-radius:3px 3px 0 0;-webkit-border-radius:3px 3px 0 0;-khtml-border-radius:3px 3px 0 0;border-radius:3px 3px 0 0;
+	border-radius: var(--ui-border-radius-xs, 3px);
+	border-bottom-right-radius: 0;
+	border-bottom-left-radius: 0;
 	color:#555;
 	text-shadow:0 1px 1px #fff;
 	background:#fff;
@@ -257,15 +276,19 @@ body .bx-calendar-layout ul.bx-calendar-view-switcher  li.bx-absence-current-vie
 }
 body .bx-calendar-layout tbody td.bx-table-main{
 	border-collapse:separate;
-	border:1px solid #c2c2c2;
+	border: 1px solid #c2c2c2;
 	border-top:0;
-	-moz-border-radius:0 0 3px 3px;-webkit-border-radius:0 0 3px 3px;-khtml-border-radius:0 0 3px 3px;border-radius:0 0 3px 3px;
+	border-radius: var(--ui-border-radius-sm, 3px);
+	border-top-right-radius: 0;
+	border-top-left-radius: 0;
 }
 body .bx-calendar-layout-table thead td.bx-table-head{
 	height:7px;
 	border:1px solid #c2c2c2;
 	border-bottom:0;
-	-moz-border-radius:3px 3px 0 0;-webkit-border-radius:3px 3px 0 0;-khtml-border-radius:3px 3px 0 0;border-radius:3px 3px 0 0;
+	border-radius: var(--ui-border-radius-sm, 3px);
+	border-bottom-right-radius: 0;
+	border-bottom-left-radius: 0;
 	font-size:1px;
 	line-height:1px;
 	color:#bce4f2;

@@ -23,7 +23,7 @@ $arResult['LANG'] = $arParams['LANG']? $arParams['LANG']: $ViAccount->GetAccount
 if (in_array($arResult['LANG'], Array('ua', 'kz')))
 	return false;
 
-$arResult['NUMBERS'] = CVoxImplantPhone::GetRentNumbers();
+$arResult['NUMBERS'] = CVoxImplantPhone::GetRentNumbers() ?: [];
 
 $arResult['PAID_BEFORE'] = Array(
 	'TS' => 0,

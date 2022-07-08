@@ -10,7 +10,6 @@ $APPLICATION->SetTitle(GetMessage("VI_PAGE_EDIT_ROLE_TITLE"));
 	array(
 		"POPUP_COMPONENT_NAME" => "bitrix:voximplant.settings.perms.role.edit",
 		"POPUP_COMPONENT_TEMPLATE_NAME" => "",
-		"USE_PADDING" => false
 	)
 );?>
 

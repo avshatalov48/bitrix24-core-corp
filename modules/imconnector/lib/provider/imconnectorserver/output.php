@@ -1,12 +1,14 @@
 <?php
 namespace Bitrix\ImConnector\Provider\ImConnectorServer;
 
+use Bitrix\ImConnector\Connector;
 use Bitrix\ImConnector\Error;
 use Bitrix\ImConnector\Result;
 use Bitrix\ImConnector\Library;
 use Bitrix\ImConnector\Converter;
 use Bitrix\ImConnector\Provider\Base;
 
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Text\Encoding;
@@ -16,7 +18,20 @@ use Bitrix\Main\Localization\Loc;
 
 class Output extends Base\Output
 {
+	/** @var string */
 	protected $controllerUrl = '';
+
+	/** @var string */
+	protected $domain = '';
+
+	/** @var string */
+	protected $type = '';
+
+	/** @var string */
+	protected $licenceCode = '';
+
+	/** @var string */
+	protected $region = '';
 
 	/** @var array The list of methods that close the connection without waiting for a response from the server.*/
 	protected const LIST_COMMAND_NOT_WAIT_RESPONSE = [
@@ -28,60 +43,107 @@ class Output extends Base\Output
 		'initializereceivemessages'
 	];
 
-	/**
-	 * @return string
-	 */
-	protected function getControllerConnectorUrl(): string
-	{
-		$serverUri = Library::SERVER_URI;
+	private const SERVICE_MAP = [
+		'ru' => 'https://im-ru.bitrix.info',
+		'eu' => 'https://im.bitrix.info',
+	];
 
-		if (defined('CONTROLLER_CONNECTOR_URL'))
-		{
-			$serverUri = CONTROLLER_CONNECTOR_URL;
-		}
-		elseif ($uriServer = Option::get(Library::MODULE_ID, 'uri_server'))
-		{
-			$serverUri = $uriServer;
-		}
-
-		if (!(mb_strpos($serverUri, 'https://') === 0 || mb_strpos($serverUri, 'http://') === 0))
-		{
-			$serverUri = 'https://' . $serverUri;
-		}
-
-		$serverUri .= '/imwebhook/portal.php';
-
-		return $serverUri;
-	}
+	public const
+		ERROR_NETWORK = 'NETWORK_ERROR',
+		ERROR_ANSWER = 'ANSWER_MALFORMED';
 
 	/**
 	 * Output constructor.
-	 * @param string $connector ID connector.
-	 * @param string|bool $line ID open line.
+	 *
+	 * @param string $connectorId Mnemonic connector name.
+	 * @param string|bool $line Open line ID.
 	 */
-	public function __construct(string $connector, $line = false)
+	public function __construct(string $connectorId, $line = false)
 	{
-		parent::__construct($connector, $line);
+		parent::__construct($connectorId, $line);
 
-		$this->controllerUrl = $this->getControllerConnectorUrl();
+		$this->region = Connector::getPortalRegion();
+		$this->controllerUrl = $this->getControllerConnectorUrl($this->region);
+		$this->licenceCode = $this->getLicenceCode();
+		$this->type = $this->getPortalType();
+		$this->domain = Connector::getDomainDefault();
 
-		if(empty($this->controllerUrl))
+		if (empty($this->controllerUrl))
 		{
-			$this->result->addError(new Error(Loc::getMessage('IMCONNECTOR_ERROR_PROVIDER_CONTROLLER_CONNECTOR_URL'), Library::ERROR_IMCONNECTOR_PROVIDER_CONTROLLER_CONNECTOR_URL, __METHOD__, $connector));
+			$this->result->addError(new Error(
+				Loc::getMessage('IMCONNECTOR_ERROR_PROVIDER_CONTROLLER_CONNECTOR_URL'),
+				Library::ERROR_IMCONNECTOR_PROVIDER_CONTROLLER_CONNECTOR_URL,
+				__METHOD__,
+				$connectorId
+			));
 		}
-		if(empty($this->licenceCode))
+		if (empty($this->licenceCode))
 		{
-			$this->result->addError(new Error(Loc::getMessage('IMCONNECTOR_ERROR_PROVIDER_LICENCE_CODE_PORTAL'), Library::ERROR_IMCONNECTOR_PROVIDER_LICENCE_CODE_PORTAL, __METHOD__, $connector));
+			$this->result->addError(new Error(
+				Loc::getMessage('IMCONNECTOR_ERROR_PROVIDER_LICENCE_CODE_PORTAL'),
+				Library::ERROR_IMCONNECTOR_PROVIDER_LICENCE_CODE_PORTAL,
+				__METHOD__,
+				$connectorId
+			));
 		}
-		if(empty($this->type))
+		if (empty($this->type))
 		{
-			$this->result->addError(new Error(Loc::getMessage('IMCONNECTOR_ERROR_PROVIDER_TYPE_PORTAL'), Library::ERROR_IMCONNECTOR_PROVIDER_TYPE_PORTAL, __METHOD__, $connector));
+			$this->result->addError(new Error(
+				Loc::getMessage('IMCONNECTOR_ERROR_PROVIDER_TYPE_PORTAL'),
+				Library::ERROR_IMCONNECTOR_PROVIDER_TYPE_PORTAL,
+				__METHOD__,
+				$connectorId
+			));
 		}
-		if(empty($this->connector))
+		if (empty($this->connector))
 		{
-			$this->result->addError(new Error(Loc::getMessage('IMCONNECTOR_ERROR_PROVIDER_CONNECTOR'), Library::ERROR_IMCONNECTOR_PROVIDER_CONNECTOR, __METHOD__, $connector));
+			$this->result->addError(new Error(
+				Loc::getMessage('IMCONNECTOR_ERROR_PROVIDER_CONNECTOR'),
+				Library::ERROR_IMCONNECTOR_PROVIDER_CONNECTOR,
+				__METHOD__,
+				$connectorId
+			));
 		}
 	}
+
+	/**
+	 * Returns controller service endpoint url.
+	 *
+	 * @return string
+	 */
+	protected function getControllerConnectorUrl(string $region): string
+	{
+		if (defined('CONTROLLER_CONNECTOR_URL'))
+		{
+			$serviceEndpoint = \CONTROLLER_CONNECTOR_URL;
+		}
+		elseif ($uriServer = Option::get(Library::MODULE_ID, 'uri_server', ''))
+		{
+			$serviceEndpoint = $uriServer;
+		}
+		else
+		{
+			if (in_array($region, ['ru', 'by', 'kz'], true))
+			{
+				$serviceEndpoint = self::SERVICE_MAP['ru'];
+			}
+			else
+			{
+				$serviceEndpoint = self::SERVICE_MAP['eu'];
+			}
+		}
+
+		if (!(mb_strpos($serviceEndpoint, 'https://') === 0 || mb_strpos($serviceEndpoint, 'http://') === 0))
+		{
+			$serviceEndpoint = 'https://' . $serviceEndpoint;
+		}
+
+		$serviceEndpoint .= '/imwebhook/portal.php';
+
+		return $serviceEndpoint;
+	}
+
+	//region Commands
 
 	/**
 	 * @param array $data
@@ -91,7 +153,7 @@ class Output extends Base\Output
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			if (in_array($this->connector, Library::ENABLE_SETSTATUSREADING))
 			{
@@ -218,6 +280,8 @@ class Output extends Base\Output
 		return $result;
 	}
 
+	//endregion
+
 	/**
 	 * Query execution on a remote server.
 	 *
@@ -233,14 +297,21 @@ class Output extends Base\Output
 		{
 			if (empty($command))
 			{
-				$result->addError(new Error(Loc::getMessage('IMCONNECTOR_ERROR_INCORRECT_INCOMING_DATA'), Library::ERROR_IMCONNECTOR_PROVIDER_INCORRECT_INCOMING_DATA, __METHOD__, [$command, $data]));
+				$result->addError(new Error(
+					Loc::getMessage('IMCONNECTOR_ERROR_INCORRECT_INCOMING_DATA'),
+					Library::ERROR_IMCONNECTOR_PROVIDER_INCORRECT_INCOMING_DATA,
+					__METHOD__,
+					[$command, $data]
+				));
 			}
 			else
 			{
+				$params = [];
 				$params['BX_COMMAND'] = $command;
 				$params['BX_LICENCE'] = $this->licenceCode;
 				$params['BX_DOMAIN'] = $this->domain;
 				$params['BX_TYPE'] = $this->type;
+				$params['BX_REGION'] = $this->region;
 				$params['BX_VERSION'] = ModuleManager::getVersion(Library::MODULE_ID);
 				$params['CONNECTOR'] = $this->connector;
 				$params['LINE'] = $this->line;
@@ -250,7 +321,7 @@ class Output extends Base\Output
 				$params = Encoding::convertEncoding($params, SITE_CHARSET, 'UTF-8');
 
 				$params['DATA'] = \base64_encode(\serialize($params['DATA']));
-				$params['BX_HASH'] = self::requestSign($this->type, md5(implode('|', $params)));
+				$params['BX_HASH'] = self::requestSign($this->type, \md5(implode('|', $params)));
 
 				$waitResponse = true;
 				if (in_array(mb_strtolower($params['BX_COMMAND']), self::LIST_COMMAND_NOT_WAIT_RESPONSE))
@@ -258,28 +329,61 @@ class Output extends Base\Output
 					$waitResponse = false;
 				}
 
-				$httpClient = new HttpClient([
-					'socketTimeout' => 20,
-					'streamTimeout' => 60,
-					'waitResponse' => $waitResponse,
-					'disableSslVerification' => true //TODO: Enable if you have not signed the certificate
-				]);
+				$httpClient = $this->instanceHttpClient($waitResponse);
 
-				$httpClient->setHeader('User-Agent', 'Bitrix Connector Client');
-				$httpClient->setHeader('x-bitrix-licence', $this->licenceCode);
+				$response = $httpClient->post($this->controllerUrl, $params);
 
-				$request = $httpClient->post($this->controllerUrl, $params);
+				// Header 'x-bitrix-error' workaround.
+				$errorCode = $httpClient->getHeaders()->get('x-bitrix-error');
 
-				if ($waitResponse && $result->isSuccess())
+				// Network errors workaround.
+				if ($response === false)
 				{
-					try
+					// check for network errors
+					$errors = $httpClient->getError();
+					if (!empty($errors))
 					{
-						$request = Json::decode($request);
-						$result = Converter::convertArrayObject($request);
+						$result->addError(new Error(
+							'Network connection error',
+							self::ERROR_NETWORK,
+							__METHOD__,
+							$errors
+						));
 					}
-					catch (\Exception $e)
+				}
+				elseif ($waitResponse)
+				{
+					// try to parse result
+					if (is_string($response))
 					{
-						$result->addError(new Error($e->getMessage(), $e->getCode(), __METHOD__));
+						try
+						{
+							$response = Json::decode($response);
+							$result = Converter::convertArrayObject($response);
+						}
+						catch (ArgumentException $exception)
+						{
+							$result->addError(new Error(
+								'Server answer is malformed',
+								self::ERROR_ANSWER,
+								__METHOD__,
+								[$exception->getCode(), $exception->getMessage()]
+							));
+						}
+					}
+				}
+				// don't wait for response body
+				else
+				{
+					$response = ($response !== false);
+
+					if ($errorCode)
+					{
+						$result->addError(new Error(
+							'Something went wrong',
+							$errorCode,
+							__METHOD__
+						));
 					}
 				}
 			}
@@ -325,6 +429,104 @@ class Output extends Base\Output
 				$result = $this->query('startSession', [$messageData]);
 				break;
 			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @return HttpClient
+	 */
+	public function instanceHttpClient(bool $waitResponse = false): HttpClient
+	{
+		return new HttpClient([
+			'socketTimeout' => 20,
+			'streamTimeout' => 60,
+			'waitResponse' => $waitResponse,
+			'disableSslVerification' => true, //TODO: Enable if you have not signed the certificate
+			'headers' => [
+				'User-Agent' => 'Bitrix Connector Client',
+				'x-bitrix-licence' => $this->licenceCode,
+			]
+		]);
+	}
+
+	/**
+	 * Returns the type of the portal.
+	 *
+	 * @return string
+	 */
+	protected function getPortalType(): string
+	{
+		if (defined('BX24_HOST_NAME'))
+		{
+			$type = self::TYPE_BITRIX24;
+		}
+		else
+		{
+			$type = self::TYPE_CP;
+		}
+		return $type;
+	}
+
+	/**
+	 * The query hash of the license key.
+	 *
+	 * @param $type. The type of portal.
+	 * @param $str.
+	 * @return string
+	 */
+	protected function requestSign($type, $str): string
+	{
+		$result = '';
+
+		if (
+			$type == self::TYPE_BITRIX24 &&
+			function_exists('bx_sign')
+		)
+		{
+			$result = \bx_sign($str);
+		}
+		else
+		{
+			include($_SERVER['DOCUMENT_ROOT'] . '/bitrix/license_key.php');
+
+			/** @var string $LICENSE_KEY */
+			if (!empty($LICENSE_KEY))
+			{
+				$result = \md5($str. \md5($LICENSE_KEY));
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @return string
+	 */
+	protected function getLicenceCode(): string
+	{
+		$result = '';
+
+		if (defined('BX24_HOST_NAME'))
+		{
+			$result = \BX24_HOST_NAME;
+		}
+		else
+		{
+			$licenceCode = false;
+			require_once($_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/main/classes/general/update_client.php');
+
+			if (method_exists('CUpdateClient','GetLicenseKey'))
+			{
+				$licenceCode = \CUpdateClient::GetLicenseKey();
+			}
+
+			if (!empty($licenceCode))
+			{
+				$result = \md5('BITRIX' . \CUpdateClient::GetLicenseKey() . 'LICENCE');
+			}
+
 		}
 
 		return $result;

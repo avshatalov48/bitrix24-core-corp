@@ -101,6 +101,7 @@
 .imconnector-livechat-public-link-header {
 	padding: 10px 15px;
 	background: #eef4f4;
+	border-radius: var(--ui-border-radius-2xs);
 }
 .imconnector-livechat-public-link-code {
 	background: #ececec;
@@ -143,9 +144,7 @@
 	width: calc(100% - 248px);
 	height: 38px;
 	border: 1px solid #c1c5c8;
-	-webkit-border-radius: 2px;
-	-moz-border-radius: 2px;
-	border-radius: 2px;
+	border-radius: var(--ui-field-border-radius, 2px);
 	font: 14px/16px "Helvetica Neue", Arial, Helvetica, sans-serif;
 	-webkit-box-sizing: border-box;
 	-moz-box-sizing: border-box;
@@ -297,9 +296,7 @@
 	display: inline-block;
 	margin: 0 0 24px 0;
 	border: 1px solid #c6cdd3;
-	-webkit-border-radius: 2px;
-	-moz-border-radius: 2px;
-	border-radius: 2px;
+	border-radius: var(--ui-field-border-radius, 2px);
 	cursor: pointer;
 }
 
@@ -307,6 +304,7 @@
 	display: inline-block;
 	padding: 10px 20px;
 	border: 0;
+	border-radius: var(--ui-field-border-radius);
 	background: #fff;
 	font: bold 12px "Open Sans", "Helvetica Neue", Arial, Helvetica, sans-serif;
 	color: #535c69;
@@ -388,9 +386,7 @@
 	height: 38px;
 	width: 100%;
 	border: 1px solid #caced7;
-	-webkit-border-radius: 2px;
-	-moz-border-radius: 2px;
-	border-radius: 2px;
+	border-radius: var(--ui-field-border-radius, 2px);
 	font: 14px 'HelveticaNeue', Helvetica, Arial, sans-serif;
 	-webkit-box-sizing: border-box;
 	-moz-box-sizing: border-box;

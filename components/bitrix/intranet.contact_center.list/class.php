@@ -660,6 +660,63 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 		return $itemsList;
 	}
 
+	private function getRuleLink(): string
+	{
+		$region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion();
+
+		switch ($region)
+		{
+			case 'ru':
+				return 'http://bitrix24ru.smn/abuse/contact-center.php';
+			case 'en':
+				return 'https://www.bitrix24.com/terms/contact_center-rules.php';
+			case 'la':
+				return 'https://www.bitrix24.es/terms/contact_center-rules.php';
+			case 'br':
+				return 'https://www.bitrix24.com.br/terms/contact_center-rules.php';
+			case 'eu':
+				return 'https://www.bitrix24.eu/terms/contact_center-rules.php';
+			case 'de':
+				return 'https://www.bitrix24.de/terms/contact_center-rules.php';
+			case 'fr':
+				return 'https://www.bitrix24.fr/terms/contact_center-rules.php';
+			case 'pl':
+				return 'https://www.bitrix24.pl/terms/contact_center-rules.php';
+			case 'it':
+				return 'https://www.bitrix24.it/terms/contact_center-rules.php';
+			case 'in':
+				return 'https://www.bitrix24.in/terms/contact_center-rules.php';
+			case 'tr':
+				return 'https://www.bitrix24.com.tr/terms/contact_center-rules.php';
+			case 'cn':
+				return 'https://www.bitrix24.cn/terms/contact_center-rules.php';
+			case 'id':
+				return 'https://www.bitrix24.id/terms/contact_center-rules.php';
+			case 'ms':
+				return 'https://www.bitrix24.com/my/terms/contact_center-rules.php';
+			case 'th':
+				return 'https://www.bitrix24.com/th/terms/contact_center-rules.php';
+			case 'vn':
+				return 'https://www.bitrix24.vn/terms/contact_center-rules.php';
+			case 'jp':
+				return 'https://www.bitrix24.jp/terms/contact_center-rules.php';
+			case 'co':
+				return 'https://www.bitrix24.co/terms/contact_center-rules.php';
+			case 'mx':
+				return 'https://www.bitrix24.mx/terms/contact_center-rules.php';
+			case 'uk':
+				return 'https://www.bitrix24.uk/terms/contact_center-rules.php';
+			case 'by':
+				return 'https://www.bitrix24.by/abuse/contact-center.php';
+			case 'kz':
+				return 'https://www.bitrix24.kz/abuse/contact-center.php';
+			case 'ua':
+				return '';
+			default:
+				return 'https://www.bitrix24.com/terms/contact_center-rules.php';
+		}
+	}
+
 	public function getRestAppAction($code)
 	{
 		$row = \Bitrix\Rest\AppTable::getRow([
@@ -713,6 +770,7 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 			$this->arResult['REST_ITEMS'] = $this->getRestItems();
 			$this->arResult["JS_PARAMS"] = $this->getJsParams();
 			$this->arResult["ADDITIONAL_STYLES"] = $this->additionalStyles;
+			$this->arResult["RULE_LINK"] = $this->getRuleLink();
 
 			$this->includeComponentTemplate();
 		}

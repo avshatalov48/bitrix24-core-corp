@@ -89,7 +89,7 @@ class Register
 				{
 					if (
 						$dailyPhoneLimit <= 0
-						|| ($pastPhoneInvitationNumber + $phoneCnt) <= $dailyPhoneLimit
+						|| ($pastPhoneInvitationNumber + $phoneCnt) < $dailyPhoneLimit
 					)
 					{
 						$phoneItems[] = $item;
@@ -121,10 +121,7 @@ class Register
 			}
 		}
 
-		if (
-			$dailyPhoneLimitExceeded
-			&& $pastPhoneInvitationNumber >= $dailyPhoneLimit
-		)
+		if ($dailyPhoneLimitExceeded)
 		{
 			$errors[] = Loc::getMessage("INTRANET_INVITATION_DAILY_PHONE_LIMIT_EXCEEDED");
 		}

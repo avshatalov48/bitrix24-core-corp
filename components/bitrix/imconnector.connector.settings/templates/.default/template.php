@@ -46,7 +46,8 @@ UI\Extension::load([
 		'ui.hint',
 
 		'ui.entity-selector',
-		'ui.forms'
+		'ui.forms',
+		'ui.design-tokens',
 	]
 );
 \CJSCore::Init('loader');

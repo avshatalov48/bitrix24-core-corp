@@ -135,6 +135,11 @@ abstract class Xml extends Body
 		return $this->document;
 	}
 
+	public function getXPath(): \DOMXPath
+	{
+		return $this->xpath;
+	}
+
 	protected function saveContent()
 	{
 		$this->content = $this->document->saveXML();

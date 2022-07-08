@@ -1,18 +1,20 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Main\Loader;
-
-use \Bitrix\ImOpenLines\Config,
-	\Bitrix\ImOpenLines\QueueManager;
-
-use \Bitrix\UI\EntitySelector;
+use Bitrix\ImOpenLines\Config,
+	Bitrix\ImOpenLines\QueueManager;
+use Bitrix\UI\EntitySelector;
 
 class ImOpenLinesLinesEditAjaxController extends \Bitrix\Main\Engine\Controller
 {
 	/**
-	 * @param $configId
-	 * @param $sessid
+	 * @param int $configId
+	 * @param int $sessid
 	 * @return array|int
 	 */
 	public function addAvatarFileAction($configId)
@@ -51,8 +53,8 @@ class ImOpenLinesLinesEditAjaxController extends \Bitrix\Main\Engine\Controller
 	}
 
 	/**
-	 * @param $configId
-	 * @param $fileId
+	 * @param int $configId
+	 * @param int $fileId
 	 * @return array
 	 */
 	public function removeAvatarFileAction($configId, $fileId)
@@ -85,8 +87,8 @@ class ImOpenLinesLinesEditAjaxController extends \Bitrix\Main\Engine\Controller
 	}
 
 	/**
-	 * @param $configId
-	 * @param $queue
+	 * @param int $configId
+	 * @param int $queue
 	 * @return array
 	 */
 	public function getUsersQueueAction($configId, $queue): array
@@ -209,7 +211,6 @@ class ImOpenLinesLinesEditAjaxController extends \Bitrix\Main\Engine\Controller
 	 * @param $fileId
 	 *
 	 * @return array
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	private function getAvatarFilePath($fileId)
 	{
@@ -250,10 +251,6 @@ class ImOpenLinesLinesEditAjaxController extends \Bitrix\Main\Engine\Controller
 	/**
 	 * @param $configId
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function checkCanActiveLineAction($configId)
 	{
@@ -285,10 +282,6 @@ class ImOpenLinesLinesEditAjaxController extends \Bitrix\Main\Engine\Controller
 	/**
 	 * @param $configId
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function deleteOpenLineAction($configId)
 	{

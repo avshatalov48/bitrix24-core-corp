@@ -869,7 +869,8 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 		self::addAgent([
 			'agent' => 'refreshAgent()',
 			'class' => __CLASS__,
-			'regular' => true,
+			'regular' => false,
+			'delay' => random_int(30, 360),
 		]);
 
 		return true;

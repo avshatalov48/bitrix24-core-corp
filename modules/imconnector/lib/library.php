@@ -13,55 +13,65 @@ use Bitrix\Main\Text\UtfSafeString;
 /**
  * Class to store common information, methods, and constants language constants used in different parts of the module.
  *
- * Class Library
  * @package Bitrix\ImConnector
  */
 class Library
 {
-	const MODULE_ID = "imconnector";
-	const MODULE_ID_OPEN_LINES = "imopenlines";
-	const NAME_EXTERNAL_USER = "imconnector";
-	const SERVER_URI = "im.bitrix.info";
+	public const
+		MODULE_ID = 'imconnector',
+		MODULE_ID_OPEN_LINES = 'imopenlines',
+		NAME_EXTERNAL_USER = 'imconnector';
 
-	const ID_LIVE_CHAT_CONNECTOR = 'livechat';
-	const ID_FBINSTAGRAM_CONNECTOR = 'fbinstagram';
-	const ID_VIBER_CONNECTOR = 'viber';
-	const ID_WECHAT_CONNECTOR = 'wechat';
-	const ID_NETWORK_CONNECTOR = 'network';
-	const ID_FB_MESSAGES_CONNECTOR = 'facebook';
-	const ID_FB_COMMENTS_CONNECTOR = 'facebookcomments';
-	public const ID_FBINSTAGRAMDIRECT_CONNECTOR = 'fbinstagramdirect';
-	const ID_IMESSAGE_CONNECTOR = 'imessage';
-	const ID_OLX_CONNECTOR = 'olx';
-	public const ID_NOTIFICATIONS_CONNECTOR = 'notifications';
-	public const ID_EDNA_WHATSAPP_CONNECTOR = 'whatsappbyedna';
+	/* Connector's ids  */
+	public const
+		ID_LIVE_CHAT_CONNECTOR = 'livechat',
+		ID_FBINSTAGRAM_CONNECTOR = 'fbinstagram',
+		ID_VIBER_CONNECTOR = 'viber',
+		ID_WECHAT_CONNECTOR = 'wechat',
+		ID_NETWORK_CONNECTOR = 'network',
+		ID_FB_MESSAGES_CONNECTOR = 'facebook',
+		ID_FB_COMMENTS_CONNECTOR = 'facebookcomments',
+		ID_FBINSTAGRAMDIRECT_CONNECTOR = 'fbinstagramdirect',
+		ID_IMESSAGE_CONNECTOR = 'imessage',
+		ID_OLX_CONNECTOR = 'olx',
+		ID_NOTIFICATIONS_CONNECTOR = 'notifications',
+		ID_EDNA_WHATSAPP_CONNECTOR = 'whatsappbyedna',
+		ID_WHATSAPPBYTWILIO_CONNECTOR = 'whatsappbytwilio',
+		ID_VKGROUP_CONNECTOR = 'vkgroup',
+		ID_OK_CONNECTOR = 'ok',
+		ID_AVITO_CONNECTOR = 'avito',
+		ID_TELEGRAMBOT_CONNECTOR = 'telegrambot';
 
-	const COMPONENT_NAME_REST = 'bitrix:imconnector.rest';
+	// Rest
+	public const
+		COMPONENT_NAME_REST = 'bitrix:imconnector.rest',
+		SCOPE_REST_IMCONNECTOR = 'imopenlines';
 
-	const SCOPE_REST_IMCONNECTOR = 'imopenlines';
+	public const
+		BLOCK_REASON_DEFAULT = 'DEFAULT',
+		BLOCK_REASON_USER = 'USER';
 
-	public const BLOCK_REASON_DEFAULT = 'DEFAULT';
-	public const BLOCK_REASON_USER = 'USER';
+	// Components
+	public const
+		CACHE_DIR_COMPONENT = "/imconnector/component/",
+		CACHE_TIME_COMPONENT = "86400", //One day
+		//Information about the connectors
+		CACHE_DIR_INFO_CONNECTORS_LINE = "/imconnector/infoconnectorsline/",
+		CACHE_TIME_INFO_CONNECTORS_LINE = "86400", //One day
+		//The status of connectors
+		CACHE_DIR_STATUS = "/imconnector/status/",
+		CACHE_TIME_STATUS = "2678400"; //One month
 
-	//Components
-	const CACHE_DIR_COMPONENT = "/imconnector/component/";
-	const CACHE_TIME_COMPONENT = "86400"; //One day
-	//Information about the connectors
-	const CACHE_DIR_INFO_CONNECTORS_LINE = "/imconnector/infoconnectorsline/";
-	const CACHE_TIME_INFO_CONNECTORS_LINE = "86400"; //One day
-	//The status of connectors
-	const CACHE_DIR_STATUS = "/imconnector/status/";
-	const CACHE_TIME_STATUS = "2678400"; //One month
-
-	//Agent time constants
-	const GLOBAL_AGENT_EXEC_INTERVAL = 21600; //6 hours
-	const LOCAL_AGENT_EXEC_INTERVAL  = 30;
-	const INSTANT_AGENT_EXEC_INTERVAL  = 10;
+	// Agent time constants
+	public const
+		GLOBAL_AGENT_EXEC_INTERVAL = 21600, //6 hours
+		LOCAL_AGENT_EXEC_INTERVAL  = 30,
+		INSTANT_AGENT_EXEC_INTERVAL  = 10;
 
 	// Endpoint
 	public const PORTAL_PATH = '/pub/imconnector/index.php';
 
-	/** const error */
+	// Error codes
 	public const
 		ERROR_CONNECTOR_PROXY_NO_USER_IM = 'CONNECTOR_PROXY_NO_USER_IM',//Not the received user id of messenger
 		ERROR_CONNECTOR_PROXY_NO_ADD_USER = 'CONNECTOR_PROXY_NO_ADD_USER',//Failed to create or retrieve a user system associated with a user of the remote messenger
@@ -153,7 +163,7 @@ class Library
 
 	public const CODE_ID_ARTICLE_TIME_LIMIT = '10632966';
 	public const TIME_LIMIT_RESTRICTIONS = [
-		'facebook' => [
+		self::ID_FB_MESSAGES_CONNECTOR => [
 			'LIMIT_START_DATE' => 1583280001, //04 Mar 2020 00:00:01
 			'BLOCK_DATE' => null,
 			'BLOCK_REASON' => self::BLOCK_REASON_DEFAULT
@@ -163,7 +173,7 @@ class Library
 			'BLOCK_DATE' => null,
 			'BLOCK_REASON' => self::BLOCK_REASON_DEFAULT
 		],
-		'whatsappbytwilio' => [
+		self::ID_WHATSAPPBYTWILIO_CONNECTOR => [
 			'LIMIT_START_DATE' => 1575158401,
 			'BLOCK_DATE' => 86400,
 			'BLOCK_REASON' => self::BLOCK_REASON_DEFAULT
@@ -176,64 +186,52 @@ class Library
 	];
 
 	public const RU_RESTRICTED_META_CONNECTORS = [
-		Library::ID_FB_MESSAGES_CONNECTOR,
-		Library::ID_FB_COMMENTS_CONNECTOR,
-		Library::ID_FBINSTAGRAM_CONNECTOR,
-		Library::ID_FBINSTAGRAMDIRECT_CONNECTOR,
+		self::ID_FB_MESSAGES_CONNECTOR,
+		self::ID_FB_COMMENTS_CONNECTOR,
+		self::ID_FBINSTAGRAM_CONNECTOR,
+		self::ID_FBINSTAGRAMDIRECT_CONNECTOR,
 	];
 
 	public const AUTO_DELETE_BLOCK = [
-		'facebook',
-		'whatsappbytwilio',
-
-		'imessage',
-		'vkgroup',
-		'ok'
+		self::ID_FB_MESSAGES_CONNECTOR,
+		self::ID_WHATSAPPBYTWILIO_CONNECTOR,
+		self::ID_IMESSAGE_CONNECTOR,
+		self::ID_VKGROUP_CONNECTOR,
+		self::ID_OK_CONNECTOR,
 	];
 
-	public const portalZoneNotCloud = [
-		'ua',
-		'en',
-		'ru'
-	];
-
-	public const connectorPortalZoneLimit = [
-		'avito' => [
+	public const CONNECTOR_PER_REGION_LIMITATION = [
+		self::ID_AVITO_CONNECTOR => [
 			'allow' => ['ru', 'by'],
-			'deny' => [],
+			'deny' => ['ua'],
 		],
-		'vkgroup' => [
+		self::ID_VKGROUP_CONNECTOR => [
 			'allow' => ['ru', 'by', 'kz'],
 			'deny' => ['ua'],
 		],
-		'ok' => [
+		self::ID_OK_CONNECTOR => [
 			'allow' => ['ru', 'by', 'kz'],
 			'deny' => ['ua'],
 		],
-		'olx' => [
+		self::ID_OLX_CONNECTOR => [
 			'allow' => ['ua', 'pl'],
 			'deny' => [],
 		],
-		'whatsappbyedna' => [
+		self::ID_EDNA_WHATSAPP_CONNECTOR => [
 			'allow' => ['ru', 'by', 'kz'],
 			'deny' => [],
 		],
 	];
 
 	public const ENABLE_SETSTATUSREADING = [
-		'vkgroup',
-		'avito'
+		self::ID_VKGROUP_CONNECTOR,
+		self::ID_AVITO_CONNECTOR,
 	];
 
-	/** @var array A list of connectors, which works without servers */
-	public static $noServerConnectors = [
-		'livechat',
-		'network'
-	];
 
 	/** @var array A list of connectors, where it is not necessary to send system messages.*/
 	public static $listNotNeedSystemMessages = [
-		'facebookcomments',
+		self::ID_FB_COMMENTS_CONNECTOR,
 		self::ID_FBINSTAGRAM_CONNECTOR,
 	];
 
@@ -243,58 +241,58 @@ class Library
 
 	/** @var array A list of connectors, where it is impossible to send automatic newsletter.*/
 	public static $listNotNewsletterChats = [
-		'livechat',
-		'network',
-		'facebookcomments',
+		self::ID_LIVE_CHAT_CONNECTOR,
+		self::ID_NETWORK_CONNECTOR,
+		self::ID_FB_COMMENTS_CONNECTOR,
 		self::ID_FBINSTAGRAM_CONNECTOR,
 		self::ID_NOTIFICATIONS_CONNECTOR,
 	];
 
 	/** @var array */
 	public static $listConnectorEditInternalMessages = [
-		'vkgroup',
-		'facebookcomments',
-		'telegrambot',
+		self::ID_VKGROUP_CONNECTOR,
+		self::ID_FB_COMMENTS_CONNECTOR,
+		self::ID_TELEGRAMBOT_CONNECTOR,
 	];
 
 	/** @var array */
 	public static $listConnectorDelInternalMessages = [
-		'vkgroup',
-		'facebookcomments',
+		self::ID_VKGROUP_CONNECTOR,
+		self::ID_FB_COMMENTS_CONNECTOR,
 		self::ID_FBINSTAGRAM_CONNECTOR,
 	];
 
 	/** @var array */
 	public static $listConnectorDelExternalMessages = [
-		'facebookcomments',
+		self::ID_FB_COMMENTS_CONNECTOR,
 		self::ID_FBINSTAGRAM_CONNECTOR,
 	];
 
 	/** @var array A list of connectors, where it is not necessary to send the signature.*/
 	public static $listNotNeedSignature = [
-		'livechat',
-		'network',
-		'facebookcomments',
+		self::ID_LIVE_CHAT_CONNECTOR,
+		self::ID_NETWORK_CONNECTOR,
+		self::ID_FB_COMMENTS_CONNECTOR,
 		self::ID_FBINSTAGRAM_CONNECTOR,
-		'viber',
+		self::ID_VIBER_CONNECTOR,
 		self::ID_EDNA_WHATSAPP_CONNECTOR
 	];
 
 	/** @var array A list of connectors, where we use rich links on operator side.*/
 	public static $listConnectorWithRichLinks = [
-		'imessage'
+		self::ID_IMESSAGE_CONNECTOR
 	];
 
 	/** @var array A list of connectors, where we send writing status.*/
 	public static $listConnectorWritingStatus = [
-		'livechat',
-		'network',
-		'imessage',
-		'ok'
+		self::ID_LIVE_CHAT_CONNECTOR,
+		self::ID_NETWORK_CONNECTOR,
+		self::ID_IMESSAGE_CONNECTOR,
+		self::ID_OK_CONNECTOR,
 	];
 
 	public static $listSingleThreadGroupChats = [
-		'facebookcomments',
+		self::ID_FB_COMMENTS_CONNECTOR,
 		self::ID_FBINSTAGRAM_CONNECTOR,
 	];
 
@@ -1023,13 +1021,13 @@ class Library
 			if (preg_match('/^(?<domain>.+):(?<port>\d+)$/', $domain, $matches))
 			{
 				$domain = $matches['domain'];
-				$port = $matches['port'];
+				$port = (int)$matches['port'];
 			}
 			else
 			{
-				$port = $server->getServerPort();
+				$port = (int)$server->getServerPort();
 			}
-			$port = in_array($port, [80, 443]) ? '' : ':'.$port;
+			$port = in_array($port, [0, 80, 443]) ? '' : ':'.$port;
 
 			$url = $scheme.'://'.$domain.$port;
 		}
@@ -1068,9 +1066,9 @@ class Library
 	 */
 	public static function isEmpty($value): bool
 	{
-		if(empty($value))
+		if (empty($value))
 		{
-			if(
+			if (
 				isset($value) &&
 				(
 					$value === 0 ||
@@ -1198,7 +1196,7 @@ class Library
 
 			$httpClient->setHeader('User-Agent', 'Bitrix Connector Client');
 
-			if(
+			if (
 				!empty($file['headers'])
 				&& is_array($file['headers'])
 			)
@@ -1209,7 +1207,7 @@ class Library
 				}
 			}
 
-			if(self::isEmpty($file['name']))
+			if (self::isEmpty($file['name']))
 			{
 				$fileName = self::getNameFile($file['url'], true);
 			}
@@ -1220,12 +1218,12 @@ class Library
 
 			$tempFilePath = \CFile::GetTempName('', $fileName);
 
-			if(
+			if (
 				$httpClient->download($file['url'], $tempFilePath)
 				&& $httpClient->getStatus() == '200'
 			)
 			{
-				if(!empty($file['type']))
+				if (!empty($file['type']))
 				{
 					$type = $file['type'];
 				}
@@ -1252,14 +1250,14 @@ class Library
 					{
 						//Correct handling of links with redirect
 						$effectiveUrl = $httpClient->getEffectiveUrl();
-						if($effectiveUrl !== $file['url'])
+						if ($effectiveUrl !== $file['url'])
 						{
-							$fileName = Library::getNameFile($effectiveUrl);
+							$fileName = self::getNameFile($effectiveUrl);
 						}
 					}
 				}
 
-				if(
+				if (
 					empty($type)
 					|| $type === 'application/octet-stream'
 					|| $type === 'binary/octet-stream'
@@ -1270,7 +1268,7 @@ class Library
 				}
 
 				//The definition of the file extension, it is not specified.
-				if(
+				if (
 					!empty(self::$mimeTypeAssociationExtension[$type])
 					&& mb_strpos($fileName, '.') === false
 				)
@@ -1278,7 +1276,7 @@ class Library
 					$fileName .= self::$mimeTypeAssociationExtension[$type];
 				}
 
-				if(empty($type))
+				if (empty($type))
 				{
 					$type = 'application/octet-stream';
 				}

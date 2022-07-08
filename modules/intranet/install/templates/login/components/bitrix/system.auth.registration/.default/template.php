@@ -44,22 +44,22 @@ else
 
 			<div class="">
 				<div class="login-item">
-					<span class="login-item-alignment"></span><span class="login-label"><?=GetMessage("AUTH_NAME")?></span>
+					<span class="login-label"><?=GetMessage("AUTH_NAME")?></span>
 					<input type="text" name="USER_NAME" maxlength="50" value="<?=$arResult["USER_NAME"]?>" class="login-inp" />
 				</div>
 
 				<div class="login-item">
-					<span class="login-item-alignment"></span><span class="login-label"><?=GetMessage("AUTH_LAST_NAME")?></span>
+					<span class="login-label"><?=GetMessage("AUTH_LAST_NAME")?></span>
 					<input type="text" name="USER_LAST_NAME" maxlength="50" value="<?=$arResult["USER_LAST_NAME"]?>" class="login-inp" />
 				</div>
 
 				<div class="login-item">
-					<span class="login-item-alignment"></span><span class="login-label"><span class="starrequired">*</span><?=GetMessage("AUTH_LOGIN_MIN")?></span>
+					<span class="login-label"><span class="starrequired">*</span><?=GetMessage("AUTH_LOGIN_MIN")?></span>
 					<input type="text" name="USER_LOGIN" maxlength="50" value="<?=$arResult["USER_LOGIN"]?>" class="login-inp" />
 				</div>
 
 				<div class="login-item">
-					<span class="login-item-alignment"></span><span class="login-label"><span class="starrequired">*</span><?=GetMessage("AUTH_PASSWORD_REQ")?></span>
+					<span class="login-label"><span class="starrequired">*</span><?=GetMessage("AUTH_PASSWORD_REQ")?></span>
 					<input type="password" name="USER_PASSWORD" maxlength="255" value="<?=$arResult["USER_PASSWORD"]?>" class="login-inp" />
 					<?if($arResult["SECURE_AUTH"]):?>
 						<span class="bx-auth-secure" id="bx_auth_secure" title="<?echo GetMessage("AUTH_SECURE_NOTE")?>" style="display:none">
@@ -77,12 +77,12 @@ else
 				</div>
 
 				<div class="login-item">
-					<span class="login-item-alignment"></span><span class="login-label"><span class="starrequired">*</span><?=GetMessage("AUTH_CONFIRM")?></span>
+					<span class="login-label"><span class="starrequired">*</span><?=GetMessage("AUTH_CONFIRM")?></span>
 					<input type="password" name="USER_CONFIRM_PASSWORD" maxlength="255" value="<?=$arResult["USER_CONFIRM_PASSWORD"]?>" class="login-inp" />
 				</div>
 
 				<div class="login-item">
-					<span class="login-item-alignment"></span><span class="login-label"><?if($arResult["EMAIL_REQUIRED"]):?><span class="starrequired">*</span><?endif?><?=GetMessage("AUTH_EMAIL")?></span>
+					<span class="login-label"><?if($arResult["EMAIL_REQUIRED"]):?><span class="starrequired">*</span><?endif?><?=GetMessage("AUTH_EMAIL")?></span>
 					<input type="text" name="USER_EMAIL" maxlength="255" value="<?=$arResult["USER_EMAIL"]?>" class="login-inp" />
 				</div>
 
@@ -108,7 +108,7 @@ else
 			if ($arResult["USE_CAPTCHA"] == "Y")
 			{
 				?>
-				<div class="login-item">
+				<div class="login-item --flex-align-center">
 					<span class="login-item-alignment"></span><span class="login-label"><?=GetMessage("CAPTCHA_REGF_TITLE")?></span>
 					<input type="hidden" name="captcha_sid" value="<?=$arResult["CAPTCHA_CODE"]?>" class="login-inp"/>
 					<img src="/bitrix/tools/captcha.php?captcha_sid=<?=$arResult["CAPTCHA_CODE"]?>" width="180" height="40" alt="CAPTCHA" />

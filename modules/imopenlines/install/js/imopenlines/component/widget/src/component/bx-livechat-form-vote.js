@@ -9,7 +9,8 @@
 
 import {BitrixVue} from "ui.vue";
 import {Vuex} from "ui.vue.vuex";
-import {VoteType, FormType} from "../const";
+import { VoteType, WidgetEventType } from "../const";
+import { EventEmitter } from "main.core.events";
 
 BitrixVue.component('bx-livechat-form-vote',
 {
@@ -24,14 +25,14 @@ BitrixVue.component('bx-livechat-form-vote',
 	methods: {
 		userVote(vote)
 		{
-			this.$store.commit('widget/common', {showForm: FormType.none});
+			EventEmitter.emit(WidgetEventType.hideForm);
 			this.$store.commit('widget/dialog', {userVote: vote});
 
-			this.$Bitrix.Application.get().sendDialogVote(vote);
+			EventEmitter.emit(WidgetEventType.sendDialogVote, {vote});
 		},
-		hideForm(event)
+		hideForm()
 		{
-			this.$parent.hideForm();
+			EventEmitter.emit(WidgetEventType.hideForm);
 		},
 	},
 	template: `

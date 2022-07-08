@@ -772,7 +772,12 @@ class Network extends Base implements NetworkBot
 			return false;
 		}
 
-		if (!($parsedUrl = \parse_url($publicUrl)) || empty($parsedUrl['host']) || !in_array($parsedUrl['scheme'], ['http', 'https']))
+		if (
+			!($parsedUrl = \parse_url($publicUrl))
+			|| empty($parsedUrl['host'])
+			|| strpos($parsedUrl['host'], '.') === false
+			|| !in_array($parsedUrl['scheme'], ['http', 'https'])
+		)
 		{
 			$message = Loc::getMessage('IMBOT_NETWORK_ERROR_PUBLIC_URL_MALFORMED');
 			if (empty($message))
@@ -791,9 +796,8 @@ class Network extends Base implements NetworkBot
 		// check for local address
 		$host = $parsedUrl['host'];
 		if (
-			(
-				strtolower($host) == 'localhost'
-			)
+			strtolower($host) == 'localhost'
+			|| $host == '0.0.0.0'
 			||
 			(
 				preg_match('#^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$#', $host)
@@ -870,9 +874,18 @@ class Network extends Base implements NetworkBot
 			}
 		}
 
+		$port = '';
+		if (
+			isset($parsedUrl['port'])
+			&& (int)$parsedUrl['port'] > 0
+		)
+		{
+			$port = ':'.(int)$parsedUrl['port'];
+		}
+
 		$http = self::instanceHttpClient();
 
-		$http->setPortalDomain($parsedUrl['scheme'].'://'.$parsedUrl['host']);
+		$http->setPortalDomain($parsedUrl['scheme'].'://'.$parsedUrl['host']. $port);
 
 		$result = $http->query(self::COMMAND_CHECK_PUBLIC_URL, [], true);
 
@@ -1429,6 +1442,7 @@ class Network extends Base implements NetworkBot
 				'MESSAGE_ID' => $params['MESSAGE']['PARAMS'][self::MESSAGE_PARAM_CONNECTOR_MID][0],
 				'ACTION' => $params['ACTION'],
 				'USER_ID' => $params['USER_ID'],
+				'VOTE_IP' => $_SERVER['REMOTE_ADDR'],
 			],
 			false
 		);
@@ -3715,7 +3729,7 @@ class Network extends Base implements NetworkBot
 					$className.'::'.$agentName.';',
 					'imbot',
 					($regular ? 'Y' : 'N'),
-					($regular ? $interval : $delay),
+					$interval,
 					'',
 					'Y',
 					$nextExecutionTime

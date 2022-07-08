@@ -255,7 +255,16 @@ class Common
 				)
 			)
 			{
-				$entity->Update($id, $updateFields, true, true, $options);
+				if ($entity->Update($id, $updateFields, true, true, $options))
+				{
+					$errors = [];
+					\CCrmBizProcHelper::AutoStartWorkflows(
+						\CCrmOwnerType::ResolveID($type),
+						$id,
+						\CCrmBizProcEventType::Edit,
+						$errors
+					);
+				}
 
 				$result = true;
 			}

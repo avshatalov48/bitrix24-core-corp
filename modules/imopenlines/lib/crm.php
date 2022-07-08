@@ -2165,7 +2165,12 @@ class Crm
 
 			if (!empty($session))
 			{
-				if($session->getConfig('CRM') == 'Y' && $session->getConfig('CRM_TRANSFER_CHANGE') == 'Y' && $activityId = $session->getData('CRM_ACTIVITY_ID'))
+				if (
+					$session->getConfig('CRM') === 'Y'
+					&& $session->getConfig('CRM_TRANSFER_CHANGE') === 'Y'
+					&& $session->getData('CRM') === 'Y'
+					&& ($activityId = $session->getData('CRM_ACTIVITY_ID'))
+				)
 				{
 					if($autoMode === true)
 					{

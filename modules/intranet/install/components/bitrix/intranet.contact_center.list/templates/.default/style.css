@@ -31,7 +31,7 @@
 	width: 179px;
 	min-height: 122px;
 	height: 50px;
-	border-radius: 1px;
+	border-radius: var(--intranet-contact-item-border-radius, var(--ui-border-radius-md, 1px));
 	background-color: #fff;
 	display: flex;
 	flex-direction: column;
@@ -85,7 +85,7 @@
 
 .intranet-contact-item-selected {
 	border: none;
-	border-radius: 3px;
+	border-radius: var(--intranet-contact-item-border-radius, var(--ui-border-radius-md, 3px));;
 }
 
 .intranet-contact-item-selected:before {
@@ -393,4 +393,19 @@
 
 .intranet-contact-center-item-label-new-text-active {
 	color: #828B95;
+}
+
+.intranet-contact-center-rules {
+	display: flex;
+	justify-content: right;
+	margin-top: 29px;
+	margin-bottom: 19px;
+}
+
+.intranet-contact-center-rules-link:hover,
+.intranet-contact-center-rules-link:active,
+.intranet-contact-center-rules-link {
+	height: 16px;
+	color: #A8ADB4;
+	border-bottom: dashed 1px;
 }

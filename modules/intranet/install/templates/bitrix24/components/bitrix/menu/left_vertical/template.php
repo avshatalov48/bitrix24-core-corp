@@ -478,7 +478,11 @@ else if (isset($arResult["SHOW_IMPORT_CONFIGURATION"]))
 $js = <<<HTML
 
 <script>
-if (!BX.Intranet.LeftMenu.initPagetitleStar())
+if (
+	BX.Intranet
+	&& BX.Intranet.LeftMenu
+	&& !BX.Intranet.LeftMenu.initPagetitleStar()
+)
 {
 	BX.ready(function() {
 		BX.Intranet.LeftMenu.initPagetitleStar()

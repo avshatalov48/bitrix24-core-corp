@@ -24,7 +24,7 @@ use Bitrix\ImConnector\Connector;
 
 Loc::loadMessages(__FILE__);
 
-CJSCore::Init(['clipboard']);
+CJSCore::Init(['clipboard', 'ui.design-tokens']);
 
 if($arParams['INDIVIDUAL_USE'] !== 'Y')
 {

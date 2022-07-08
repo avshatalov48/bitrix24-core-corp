@@ -1408,6 +1408,7 @@
 					client.on(VIClient.Events.Failed, onFailed);
 					client.on(VIClient.Events.Connected, onConnected);
 					client.connect();
+					//client.connectWithConnectivityCheck(false, ["web-gw-yy-01-148.voximplant.com"]); // todo: remove
 				}
 			});
 		}

@@ -13,6 +13,8 @@ use Bitrix\Main\Config\Option;
 use Bitrix\Socialnetwork\UserToGroupTable;
 use Bitrix\Socialnetwork\Integration;
 
+\Bitrix\Main\UI\Extension::load('ui.design-tokens');
+
 CSocNetLogComponent::processDateTimeFormatParams($arParams);
 
 if (is_array($arResult["Owner"]))
@@ -20,7 +22,7 @@ if (is_array($arResult["Owner"]))
 	if (intval($arResult["Owner"]["USER_PERSONAL_PHOTO"]) > 0)
 	{
 		$arImage = CFile::ResizeImageGet(
-			$arResult["Owner"]["USER_PERSONAL_PHOTO"], 
+			$arResult["Owner"]["USER_PERSONAL_PHOTO"],
 			array("width" => 100, "height" => 100),
 			BX_RESIZE_IMAGE_EXACT
 		);
@@ -42,7 +44,7 @@ if (is_array($arResult["Moderators"]["List"]))
 			if (intval($arModerator["USER_PERSONAL_PHOTO"]) > 0)
 			{
 				$arImage = CFile::ResizeImageGet(
-					$arModerator["USER_PERSONAL_PHOTO"], 
+					$arModerator["USER_PERSONAL_PHOTO"],
 					array("width" => 100, "height" => 100),
 					BX_RESIZE_IMAGE_EXACT
 				);
@@ -66,7 +68,7 @@ if (is_array($arResult["Members"]["List"]))
 			if (intval($arMember["USER_PERSONAL_PHOTO"]) > 0)
 			{
 				$arImage = CFile::ResizeImageGet(
-					$arMember["USER_PERSONAL_PHOTO"], 
+					$arMember["USER_PERSONAL_PHOTO"],
 					array("width" => 100, "height" => 100),
 					BX_RESIZE_IMAGE_EXACT
 				);
@@ -75,7 +77,7 @@ if (is_array($arResult["Members"]["List"]))
 			{
 				$arImage = array("src" => "");
 			}
-			
+
 			$arResult["Members"]["List"][$key]["USER_PERSONAL_PHOTO_FILE"]["SRC"] = $arImage["src"];
 		}
 	}

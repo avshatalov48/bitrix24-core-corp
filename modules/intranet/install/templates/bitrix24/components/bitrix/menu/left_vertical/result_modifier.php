@@ -7,6 +7,7 @@
 
 use Bitrix\Main;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Type\Date;
 
@@ -119,6 +120,11 @@ if (
 }
 
 $shouldShowWhatsNew = function() {
+	if (Loader::includeModule('extranet') && \CExtranet::isExtranetSite())
+	{
+		return false;
+	}
+
 	if (\COption::getOptionString('intranet', 'new_portal_structure', 'N') === 'Y')
 	{
 		return false;

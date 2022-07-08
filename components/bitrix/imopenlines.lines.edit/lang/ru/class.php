@@ -20,6 +20,7 @@ $MESS['OL_COMPONENT_LE_QUICK_ANSWERS_STORAGE_CREATE_ERROR_UNIQUE'] = 'К это�
 $MESS['OL_COMPONENT_LE_MENU_QUEUE'] = 'Очередь';
 $MESS['OL_COMPONENT_LE_MENU_WORKTIME'] = 'Рабочее время';
 $MESS['OL_COMPONENT_LE_MENU_AGREEMENTS'] = 'Соглашения';
+$MESS['OL_COMPONENT_LE_MENU_AGREEMENTS_1'] = 'Соглашения';
 $MESS['OL_COMPONENT_LE_MENU_AUTOMATIC_ACTIONS'] = 'Автоматические действия';
 $MESS['OL_COMPONENT_LE_MENU_QUALITY_MARK'] = 'Оценка качества';
 $MESS['OL_COMPONENT_LE_MENU_BOTS'] = 'Чат-боты';

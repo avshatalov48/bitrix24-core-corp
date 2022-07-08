@@ -455,7 +455,18 @@
 					label: {
 						text: BX.message("INTRANET_BINDINGS_DEAL"),
 						bgColor: "#9985DD"
-					}
+					},
+					events: {
+						onCloseComplete: function() {
+							BX.Runtime.loadExtension('bitrix24.feedbackcollector').then(function(exports) {
+								var feedbackCollectorClass = exports["FeedbackCollector"];
+								if (feedbackCollectorClass)
+								{
+									(new feedbackCollectorClass({feedbackId: 'crmFeedbackSliderClose'})).run();
+								}
+							});
+						},
+					},
 				}
 			},
 			{

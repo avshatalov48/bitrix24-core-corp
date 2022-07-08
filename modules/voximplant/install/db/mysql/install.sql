@@ -58,6 +58,7 @@ CREATE TABLE IF NOT EXISTS b_voximplant_statistic
 	KEY IX_VI_ST_10 (CRM_ACTIVITY_ID),
 	KEY IX_VI_ST_11 (CALL_RECORD_ID),
 	KEY IX_VI_ST_12 (CALL_WEBDAV_ID),
+	KEY IX_VI_ST_13 (CRM_ENTITY_ID, CRM_ENTITY_TYPE),
     FULLTEXT INDEX IXF_VI_ST_1 (COMMENT)
 );
 
@@ -243,6 +244,7 @@ CREATE TABLE IF NOT EXISTS b_voximplant_config
 	RECORDING char(1) not null default 'Y',
 	RECORDING_NOTICE char(1) null default 'N',
 	RECORDING_TIME smallint(1) DEFAULT 0,
+	RECORDING_STEREO char(1) DEFAULT 'N',
 	VOTE char(1) null default 'N',
 	FORWARD_LINE varchar(255) default 'default',
 	TIMEMAN char(1) not null default 'N',

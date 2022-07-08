@@ -323,7 +323,13 @@ abstract class Body
 		{
 			foreach($fieldMatches as $fieldMatch)
 			{
-				$names[$fieldMatch[2]] = $fieldMatch[2];
+				if (
+					mb_strpos($fieldMatch[2], static::BLOCK_START_PLACEHOLDER) === false
+					&& mb_strpos($fieldMatch[2], static::BLOCK_END_PLACEHOLDER) === false
+				)
+				{
+					$names[$fieldMatch[2]] = $fieldMatch[2];
+				}
 			}
 		}
 
@@ -340,6 +346,54 @@ abstract class Body
 		return '';
 	}
 
+	protected function getStringValue($value, $placeholder, $modifier = '', array $params = []): string
+	{
+		if (mb_strpos($modifier, static::DO_NOT_INSERT_VALUE_MODIFIER) !== false)
+		{
+			return '';
+		}
+		if (is_object($value))
+		{
+			if ($value instanceof Value)
+			{
+				return $value->toString($modifier);
+			}
+			if (class_exists($value) && method_exists($value, '__toString'))
+			{
+				return $value->__toString();
+			}
+
+			return '';
+		}
+		if (is_array($value))
+		{
+			return '';
+		}
+		if ($this->isArrayValue($value, $placeholder))
+		{
+			$valueNameParts = explode('.', $value);
+			$name = implode('.', array_slice($valueNameParts, 2));
+			$modifierData = Value::parseModifier($modifier);
+			$index = 0;
+			/** @var ArrayDataProvider $innerProvider */
+			$arrayProvider = $this->values[$valueNameParts[0]];
+			if (isset($modifierData['all']))
+			{
+				$value = $this->printAllArrayValues($arrayProvider, $placeholder, $name, $modifier);
+			}
+			else
+			{
+				if (isset($modifierData[static::ARRAY_INDEX_MODIFIER]))
+				{
+					$index = (int) $modifierData[static::ARRAY_INDEX_MODIFIER];
+				}
+				$value = $this->printArrayValueByIndex($arrayProvider, $placeholder, $name, $index, $modifier);
+			}
+		}
+
+		return (string)$value;
+	}
+
 	/**
 	 * Generates string from value.
 	 *
@@ -351,52 +405,11 @@ abstract class Body
 	 */
 	protected function printValue($value, $placeholder, $modifier = '', array $params = [])
 	{
-		if(mb_strpos($modifier, static::DO_NOT_INSERT_VALUE_MODIFIER) !== false)
-		{
-			return '';
-		}
-		if(is_object($value))
-		{
-			if($value instanceof Value)
-			{
-				return $value->toString($modifier);
-			}
-			elseif(class_exists($value) && method_exists($value, '__toString'))
-			{
-				return $value->__toString();
-			}
-			else
-			{
-				$value = '';
-			}
-		}
-		elseif(is_array($value))
-		{
-			return '';
-		}
-		elseif($this->isArrayValue($value, $placeholder))
-		{
-			$valueNameParts = explode('.', $value);
-			$name = implode('.', array_slice($valueNameParts, 2));
-			$modifierData = Value::parseModifier($modifier);
-			$index = 0;
-			/** @var ArrayDataProvider $innerProvider */
-			$arrayProvider = $this->values[$valueNameParts[0]];
-			if(isset($modifierData['all']))
-			{
-				$value = $this->printAllArrayValues($arrayProvider, $placeholder, $name, $modifier);
-			}
-			else
-			{
-				if(isset($modifierData[static::ARRAY_INDEX_MODIFIER]))
-				{
-					$index = (int) $modifierData[static::ARRAY_INDEX_MODIFIER];
-				}
-				$value = $this->printArrayValueByIndex($arrayProvider, $placeholder, $name, $index, $modifier);
-			}
-		}
+		$value = $this->getStringValue($value, $placeholder, $modifier, $params);
 
-		return $value;
+		$stringValue = new Value\PlaneString($value);
+
+		return $stringValue->toString($modifier);
 	}
 
 	/**
@@ -413,7 +426,7 @@ abstract class Body
 		$modifier = preg_replace('#index=[\d]+#', '', $modifier);
 		if($innerProvider instanceof DataProvider)
 		{
-			$value = self::printValue($innerProvider->getValue($name), $placeholder, $modifier);
+			$value = $this->printValue($innerProvider->getValue($name), $placeholder, $modifier);
 		}
 		else
 		{
@@ -436,13 +449,14 @@ abstract class Body
 		[$outerModifier, $innerModifier] = explode('all', $modifier, 2);
 		$innerModifier = preg_replace('#^=[y,n]#', '', $innerModifier);
 		/** @var DataProvider $innerProvider */
-		foreach($arrayDataProvider as $innerProvider)
+		foreach ($arrayDataProvider as $innerProvider)
 		{
-			$value[] = self::printValue($innerProvider->getValue($name), $placeholder, $innerModifier);
+			$value[] = $this->printValue($innerProvider->getValue($name), $placeholder, $innerModifier);
 		}
 
 		$value = new Multiple($value);
-		return self::printValue($value, $placeholder, $outerModifier);
+
+		return $this->printValue($value, $placeholder, $outerModifier);
 	}
 
 	/**

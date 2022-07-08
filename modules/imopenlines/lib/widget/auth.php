@@ -31,6 +31,8 @@ class Auth
 	const METHODS_WITH_AUTH = [
 		// imopenlines
 		'imopenlines.widget.dialog.get',
+		'imopenlines.widget.dialog.list',
+		'imopenlines.widget.chat.create',
 		'imopenlines.widget.user.get',
 		'imopenlines.widget.operator.get',
 		'imopenlines.widget.user.consent.apply',

@@ -23,14 +23,17 @@ CGroup::SetSubordinateGroups(WIZARD_PORTAL_ADMINISTRATION_GROUP, Array(WIZARD_EM
 if(LANGUAGE_ID == "ru")
 {
 	$vendor = "1c_bitrix_portal";
+	$license = "~new_license22_0_sign";
 }
 elseif(LANGUAGE_ID == "ua")
 {
 	$vendor = "ua_bitrix_portal";
+	$license = "~new_license20_0_sign";
 }
 else
 {
 	$vendor = "bitrix_portal";
+	$license = "~new_license17_5_sign";
 }
 
 COption::SetOptionString("main", "templates_visual_editor", "Y");
@@ -42,6 +45,7 @@ COption::SetOptionString("main", "use_secure_password_cookies", "Y");
 COption::SetOptionString("main", "new_user_email_uniq_check", "Y");
 COption::SetOptionString("main", "auth_comp2", "Y");
 COption::SetOptionString("main", "vendor", $vendor);
+COption::SetOptionString("main", $license, "Y");
 COption::SetOptionString("main", "update_autocheck", "7");
 COption::SetOptionString("main", "use_digest_auth", "Y");
 COption::SetOptionString("main", "use_time_zones", "Y");

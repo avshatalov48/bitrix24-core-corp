@@ -67,6 +67,7 @@ export class WidgetModel extends VuexBuilderModel
 				dialogStart: false,
 				watchTyping: false,
 				showSessionId: false,
+				isCreateSessionMode: false,
 				crmFormsSettings: {
 					useWelcomeForm: false,
 					welcomeFormId: 0,
@@ -291,6 +292,11 @@ export class WidgetModel extends VuexBuilderModel
 					{
 						state.common.crmFormsSettings.errorText = payload.crmFormsSettings.errorText;
 					}
+				}
+
+				if (typeof payload.isCreateSessionMode === 'boolean')
+				{
+					state.common.isCreateSessionMode = payload.isCreateSessionMode;
 				}
 
 				if (this.isSaveNeeded({common: payload}))

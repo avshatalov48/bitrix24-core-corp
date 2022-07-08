@@ -79,7 +79,7 @@ class FormHandler
 		$this->errorCollection = new ErrorCollection();
 
 		$this->eventData = $eventData;
-		$this->userCode = $eventData['properties']['openlinesCode'];
+		$this->userCode = self::decodeConnectorName($eventData['properties']['openlinesCode']);
 
 		if (isset($eventData['properties']['messageId']))
 		{
@@ -132,7 +132,7 @@ class FormHandler
 	public static function onOpenlinesFormFill(Event $event): bool
 	{
 		$eventData = $event->getParameters();
-		$userCode = $eventData['properties']['openlinesCode'];
+		$userCode = self::decodeConnectorName($eventData['properties']['openlinesCode']);
 
 		$session = new Session();
 		$session->load([
@@ -210,13 +210,30 @@ class FormHandler
 	 */
 	private function initChat(): bool
 	{
-		$this->chat = new Chat();
-		$chatLoadResult = $this->chat->load(['USER_CODE' => $this->userCode, 'USER_ID' => $this->userId]);
-		if (!$chatLoadResult)
+		if (
+			$this->session instanceof Session
+			&& $this->session->getChat() instanceof Chat
+		)
 		{
-			$this->errorCollection->setError(new Error('Chat loading error', self::ERROR_CHAT_LOADING));
+			$this->chat = $this->session->getChat();
+		}
+		else
+		{
+			$this->chat = new Chat();
+			if ($this->session instanceof Session)
+			{
+				$this->session->setChat($this->chat);
+			}
+		}
+		if (!$this->chat->isDataLoaded())
+		{
+			$chatLoadResult = $this->chat->load(['USER_CODE' => $this->userCode, 'USER_ID' => $this->userId]);
+			if (!$chatLoadResult)
+			{
+				$this->errorCollection->setError(new Error('Chat loading error', self::ERROR_CHAT_LOADING));
 
-			return false;
+				return false;
+			}
 		}
 
 		$this->clientChat = new Chat($this->clientChatId);
@@ -350,10 +367,22 @@ class FormHandler
 		}
 
 		$this->session = new Session();
+		if ($this->chat instanceof Chat)
+		{
+			$this->session->setChat($this->chat);
+		}
 		$this->sessionStarted = $this->session->load([
 			'USER_CODE' => $this->chat->getData('ENTITY_ID'),
 			'SKIP_CREATE' => 'Y'
 		]);
+
+		if (
+			!($this->chat instanceof Chat)
+			&& ($this->session->getChat() instanceof Chat)
+		)
+		{
+			$this->chat = $this->session->getChat();
+		}
 
 		return true;
 	}
@@ -444,6 +473,7 @@ class FormHandler
 	private function addCrmBindingToLines(): bool
 	{
 		$updateFields = [];
+		$updateSession = [];
 		foreach ($this->crmEntities as $entity)
 		{
 			switch ($entity['ENTITY_TYPE'])
@@ -476,26 +506,37 @@ class FormHandler
 		{
 			$updateFields['ENTITY_TYPE'] = \CCrmOwnerType::DealName;
 			$updateFields['ENTITY_ID'] = $updateFields['DEAL'];
+			$updateSession['CRM_CREATE_DEAL'] = 'Y';
 		}
 		else if (!empty($updateFields['LEAD']))
 		{
 			$updateFields['ENTITY_TYPE'] = \CCrmOwnerType::LeadName;
 			$updateFields['ENTITY_ID'] = $updateFields['LEAD'];
+			$updateSession['CRM_CREATE_LEAD'] = 'Y';
 		}
 		else if (!empty($updateFields['COMPANY']))
 		{
 			$updateFields['ENTITY_TYPE'] = \CCrmOwnerType::CompanyName;
 			$updateFields['ENTITY_ID'] = $updateFields['COMPANY'];
+			$updateSession['CRM_CREATE_COMPANY'] = 'Y';
 		}
 		else if (!empty($updateFields['CONTACT']))
 		{
 			$updateFields['ENTITY_TYPE'] = \CCrmOwnerType::ContactName;
 			$updateFields['ENTITY_ID'] = $updateFields['CONTACT'];
+			$updateSession['CRM_CREATE_CONTACT'] = 'Y';
 		}
 
 		$updateFields['CRM'] = 'Y';
 
-		$this->chat->setCrmFlag($updateFields);
+		if ($this->chat instanceof Chat)
+		{
+			$this->chat->setCrmFlag($updateFields);
+		}
+		if ($this->session instanceof Session)
+		{
+			$this->session->updateCrmFlags($updateSession);
+		}
 
 		return true;
 	}
@@ -538,19 +579,26 @@ class FormHandler
 			['#LEAD_NAME#' => $this->chat->getData('TITLE'), '#CONNECTOR_NAME#' => CrmCommon::getSourceName($userCode)]
 		);
 
-		Crm\Activity::add([
-		  'LINE_ID' => $this->configId,
-		  'NAME' => $activityName,
-		  'SESSION_ID' => $this->session->getData('ID'),
-		  'MODE' => $this->session->getData('MODE'),
-		  'BINDINGS' => $bindings,
-		  'OPERATOR_ID' => $crmManager->getResponsibleCrmId(),
-		  'USER_CODE' => $userCode,
-		  'CONNECTOR_ID' => $this->connectorId,
-		  'ENTITES' => $entities
+		$result = Crm\Activity::add([
+			'LINE_ID' => $this->configId,
+			'NAME' => $activityName,
+			'SESSION_ID' => $this->session->getData('ID'),
+			'MODE' => $this->session->getData('MODE'),
+			'BINDINGS' => $bindings,
+			'OPERATOR_ID' => $crmManager->getResponsibleCrmId(),
+			'USER_CODE' => $userCode,
+			'CONNECTOR_ID' => $this->connectorId,
+			'ENTITES' => $entities
 		]);
 
-		return true;
+		if ($result->isSuccess())
+		{
+			$this->session->updateCrmFlags([
+				'CRM_ACTIVITY_ID' => $result->getResult()
+			]);
+		}
+
+		return $result->isSuccess();
 	}
 
 	/**
@@ -781,5 +829,22 @@ class FormHandler
 	public static function buildSentFormMessageForClient(string $formLink): string
 	{
 		return Loc::getMessage('IMOL_LCC_FILL_FORM') . '[BR]' . $formLink;
+	}
+
+	/**
+	 * Custom connector names can contain '_', which is reserved for CRM-forms personalization
+	 * After form is filled we will replace symbols again
+	 */
+	public static function encodeConnectorName(string $userCode): string
+	{
+		return str_replace('_', '!', $userCode);
+	}
+
+	/**
+	 * Restore original connector name
+	 */
+	public static function decodeConnectorName(string $userCode): string
+	{
+		return str_replace('!', '_', $userCode);
 	}
 }

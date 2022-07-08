@@ -190,7 +190,8 @@
 									click: function(e) {
 										this.removeTag({
 											tag: params.tag,
-											node: itemNode
+											node: itemNode,
+											checksum: params.tagData.CHECKSUM,
 										});
 										this.reindexUser();
 										e.stopPropagation();
@@ -281,9 +282,9 @@
 
 		removeTag: function(params)
 		{
-			var
-				node = (BX.type.isNotEmptyObject(params) ? BX(params.node) : null),
-				tag = (BX.type.isNotEmptyObject(params) && BX.type.isNotEmptyString(params.tag) ? params.tag : null);
+			var node = (BX.type.isNotEmptyObject(params) ? BX(params.node) : null);
+			var tag = (BX.type.isNotEmptyObject(params) && BX.type.isNotEmptyString(params.tag) ? params.tag : null);
+			var checksum = (BX.type.isNotEmptyObject(params) && BX.Type.isStringFilled(params.checksum) ? params.checksum : null);
 
 			if (
 				!node
@@ -294,6 +295,14 @@
 			}
 
 			this.removeTagNode(node);
+			if (checksum)
+			{
+				var tagUsersPopup = this.tagsUsersPopupInstanceList[checksum].popup;
+				if (tagUsersPopup)
+				{
+					tagUsersPopup.destroy();
+				}
+			}
 
 			BX.ajax.runComponentAction(this.managerInstance.componentName, 'removeTag', {
 				mode: 'class',

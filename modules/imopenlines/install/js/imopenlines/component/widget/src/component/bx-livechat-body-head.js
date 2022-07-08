@@ -7,11 +7,12 @@
  * @copyright 2001-2019 Bitrix
  */
 
-import {BitrixVue} from "ui.vue";
-import {Vuex} from "ui.vue.vuex";
-import { SessionStatus, VoteType } from "../const";
-import {EventType} from "im.const";
-import { Browser } from "main.core.minimal";
+import {BitrixVue} from 'ui.vue';
+import {Vuex} from 'ui.vue.vuex';
+import {WidgetEventType, FormType, SessionStatus, VoteType} from '../const';
+import {EventType} from 'im.const';
+import {Browser} from 'main.core.minimal';
+import {EventEmitter} from 'main.core.events';
 
 BitrixVue.component('bx-livechat-head',
 {
@@ -24,15 +25,28 @@ BitrixVue.component('bx-livechat-head',
 	{
 		isWidgetDisabled: { default: false },
 	},
+	data()
+	{
+		return {
+			multiDialog: false // disabled because of beta status
+		};
+	},
 	methods:
 	{
+		openDialogList()
+		{
+			EventEmitter.emit(WidgetEventType.hideForm);
+			this.$emit('openDialogList');
+		},
 		close(event)
 		{
 			this.$emit('close');
 		},
-		like(event)
+		like()
 		{
-			this.$emit('like');
+			EventEmitter.emit(WidgetEventType.showForm, {
+				type: FormType.like
+			});
 		},
 		openMenu(event)
 		{
@@ -206,6 +220,11 @@ BitrixVue.component('bx-livechat-head',
 								class="bx-livechat-control-btn bx-livechat-control-btn-menu"
 								@click="openMenu"
 								:title="localize.BX_LIVECHAT_DOWNLOAD_HISTORY"
+							></button>
+							<button
+								v-if="multiDialog && application.dialog.chatId > 0"
+								class="bx-livechat-control-btn bx-livechat-control-btn-list"
+								@click="openDialogList"
 							></button>
 						</span>	
 						<button v-if="!widget.common.pageMode" class="bx-livechat-control-btn bx-livechat-control-btn-close" :title="localize.BX_LIVECHAT_CLOSE_BUTTON" @click="close"></button>

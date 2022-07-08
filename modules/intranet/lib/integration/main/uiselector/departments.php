@@ -129,6 +129,8 @@ class Departments extends \Bitrix\Main\UI\Selector\EntityBase
 				{
 					$itemFlat = $item;
 					$itemFlat['id'] = $item['idFlat'];
+					$itemFlat['name'] = str_replace('#NAME#', $itemFlat['name'], Loc::getMessage('MAIN_UI_SELECTOR_DEPARTMENT_FLAT_PATTERN'));
+
 					unset($itemFlat['idFlat']);
 					unset($itemFlat['parent']);
 					$result['ITEMS'][$result['ITEMS'][$itemCode]['idFlat']] = $itemFlat;

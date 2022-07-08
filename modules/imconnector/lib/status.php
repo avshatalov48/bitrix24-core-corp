@@ -12,8 +12,9 @@ use Bitrix\ImConnector\Model\StatusConnectorsTable;
  */
 class Status
 {
-	/** @var array(\Bitrix\ImConnector\Status) */
+	/** @var Status[] */
 	private static $instance = [];
+
 	private static $flagEvent = false;
 	private static $flagGenerationUpdateEvent = false;
 	private static $rowsCacheTable = [];
@@ -29,8 +30,8 @@ class Status
 	/**
 	 * Receiving a state object of a specific connector all lines.
 	 *
-	 * @param $connector
-	 * @return array|mixed
+	 * @param string $connector
+	 * @return array|self[]
 	 */
 	public static function getInstanceAllLine($connector)
 	{
@@ -45,15 +46,15 @@ class Status
 			]
 		]);
 
-		while($row = $raw->fetch())
+		while ($row = $raw->fetch())
 		{
 			if (empty(self::$instance[$connector][$row['LINE']]) )
 			{
-				self::$instance[$connector][$row['LINE']] = new self($connector,$row['LINE']);
+				self::$instance[$connector][$row['LINE']] = new self($connector, $row['LINE']);
 			}
 		}
 
-		if(empty(self::$instance[$connector]))
+		if (empty(self::$instance[$connector]))
 		{
 			return [];
 		}
@@ -80,7 +81,7 @@ class Status
 		{
 			if (empty(self::$instance[$row['CONNECTOR']][$row['LINE']]) )
 			{
-				self::$instance[$row['CONNECTOR']][$row['LINE']] = new self($row['CONNECTOR'],$row['LINE']);
+				self::$instance[$row['CONNECTOR']][$row['LINE']] = new self($row['CONNECTOR'], $row['LINE']);
 			}
 		}
 
@@ -101,13 +102,13 @@ class Status
 	 * @param string $line
 	 * @return self
 	 */
-	public static function getInstance($connector, $line = '#empty#'): Status
+	public static function getInstance($connector, $line = '#empty#'): self
 	{
 		$connector = Connector::getConnectorRealId($connector);
 
-		if (empty(self::$instance[$connector][$line]) || !(self::$instance[$connector][$line] instanceof \Bitrix\ImConnector\Status))
+		if (empty(self::$instance[$connector][$line]) || !(self::$instance[$connector][$line] instanceof Status))
 		{
-			self::$instance[$connector][$line] = new self($connector,$line);
+			self::$instance[$connector][$line] = new self($connector, $line);
 		}
 
 		return self::$instance[$connector][$line];
@@ -116,7 +117,7 @@ class Status
 	/**
 	 * Sets a new state object for specific connector line.
 	 *
-	 * @param $connector
+	 * @param string $connector
 	 * @param string $line
 	 * @param self $status
 	 *
@@ -273,12 +274,19 @@ class Status
 
 	/**
 	 * Add a handler to the save changes.
+	 * @returm void
 	 */
-	public static function addEventHandlerSave()
+	public static function addEventHandlerSave(): void
 	{
-		if(empty(self::$flagEvent))
+		if (empty(self::$flagEvent))
 		{
-			EventManager::getInstance()->addEventHandler('main', 'OnAfterEpilog', [__CLASS__, 'save'], false, 1000);
+			EventManager::getInstance()->addEventHandler(
+				'main',
+				'OnAfterEpilog',
+				[__CLASS__, 'save'],
+				false,
+				1000
+			);
 
 			self::$flagEvent = true;
 		}
@@ -286,12 +294,19 @@ class Status
 
 	/**
 	 * Adding a handler to generate change events connector.
+	 * @returm void
 	 */
-	public static function addEventHandlerGenerationUpdateEvent()
+	public static function addEventHandlerGenerationUpdateEvent(): void
 	{
-		if(empty(self::$flagGenerationUpdateEvent))
+		if (empty(self::$flagGenerationUpdateEvent))
 		{
-			EventManager::getInstance()->addEventHandler('main', 'OnAfterEpilog', [__CLASS__, 'sendUpdateEvent'], false, 1000);
+			EventManager::getInstance()->addEventHandler(
+				'main',
+				'OnAfterEpilog',
+				[__CLASS__, 'sendUpdateEvent'],
+				false,
+				1000
+			);
 
 			self::$flagGenerationUpdateEvent = true;
 		}
@@ -317,8 +332,9 @@ class Status
 	 * A cache reset to the specific connector.
 	 * @param string $connector ID connector.
 	 * @param string $line ID line.
+	 * @returm void
 	 */
-	public static function cleanCache($connector, $line)
+	public static function cleanCache($connector, $line): void
 	{
 		$cache = Cache::createInstance();
 		$cache->clean(Connector::getCacheIdConnector($line, $connector), Library::CACHE_DIR_STATUS);
@@ -573,8 +589,9 @@ class Status
 	 * To set the activity status of the connector.
 	 *
 	 * @param bool $status Status.
+	 * @returm void
 	 */
-	public function setActive($status = false)
+	public function setActive($status = false): void
 	{
 		self::addEventHandlerGenerationUpdateEvent();
 
@@ -598,8 +615,9 @@ class Status
 	 * Set the connection state of the connector.
 	 *
 	 * @param bool $status Status.
+	 * @returm void
 	 */
-	public function setConnection($status = false)
+	public function setConnection($status = false): void
 	{
 		self::addEventHandlerGenerationUpdateEvent();
 

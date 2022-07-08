@@ -42,7 +42,7 @@ body {
 	font-family: 'Montserrat-medium', "Helvetica Neue", Helvetica, Arial, sans-serif;
 	min-height: 650px;
 	margin: 0;
-	min-width: 1024px;
+	/*min-width: 1024px;*/
 	padding: 0;
 }
 
@@ -74,6 +74,7 @@ body {
 }
 
 .log-main-table {
+	padding: 0 15px;
 	border-spacing: 0;
 	height: 100%;
 	overflow: hidden;
@@ -104,6 +105,7 @@ body {
 .log-popup-wrap {
 	display: inline-block;
 	position: relative;
+	width: 100%;
 }
 
 .log-popup {
@@ -111,14 +113,20 @@ body {
 	overflow: hidden;
 	background-color: #fff;
 	border-radius: 4px;
-	width: 650px;
+	max-width: 705px;
 	position: relative;
 	padding: 26px 45px;
+	box-sizing: border-box;
+}
+
+.log-popup form {
+	width: 100%;
 }
 
 .log-popup-wrap .log-popup {
 	display: flex;
-	flex-direction: row;
+	margin: 0 auto;
+	/*flex-direction: column;*/
 }
 
 .log-popup-text {
@@ -145,9 +153,15 @@ body {
 	border-color: #1ab8eb;
 }
 
+.log-header-box {
+	display: flex;
+	align-items: center;
+	/*justify-content: space-between;*/
+}
+
 .log-popup-header {
 	font-size: 27px;
-	line-height: 35px;
+	line-height: 33px;
 	color: #333;
 	font-family: 'Montserrat-medium', "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
@@ -174,11 +188,20 @@ body {
 	margin-bottom: 35px;
 }
 
-.login-item-alignment {
-	display: inline-block;
-	height: 40px;
-	vertical-align: middle;
-	width: 1px;
+.login-item.--flex-align-center {
+	display: flex;
+	align-items: center;
+}
+
+.login-item.--flex-align-center .login-label {
+	margin-right: 5px;
+}
+
+.login-forgotpass-item-box .login-item {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
 }
 
 .login-label {
@@ -186,6 +209,11 @@ body {
 	vertical-align: middle;
 	font-size: 19px;
 	font-family: 'Montserrat-medium', "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.login-item .login-label {
+	display: block;
+	margin-bottom: 5px;
 }
 
 .login-email-text {

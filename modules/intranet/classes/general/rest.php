@@ -6,6 +6,7 @@ class CIntranetRestService extends IRestService
 {
 	const CONTACT_CENTER_PLACEMENT = 'CONTACT_CENTER';
 	public const PAGE_BACKGROUND_WORKER_PLACEMENT = 'PAGE_BACKGROUND_WORKER';
+	public const LEFT_MENU = 'LEFT_MENU';
 
 	protected static $arAllowedDepartmentFields = array(
 		"ID", "NAME", "SORT", "PARENT", "UF_HEAD"
@@ -44,6 +45,7 @@ class CIntranetRestService extends IRestService
 							],
 						],
 					],
+					self::LEFT_MENU => [],
 				],
 			],
 		);

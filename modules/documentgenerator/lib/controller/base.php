@@ -6,10 +6,12 @@ use Bitrix\DocumentGenerator\Driver;
 use Bitrix\DocumentGenerator\Engine\CheckScope;
 use Bitrix\DocumentGenerator\Model\FileTable;
 use Bitrix\DocumentGenerator\Model\RoleTable;
+use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Intranet\ActionFilter;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 
 abstract class Base extends Controller
 {
@@ -35,37 +37,76 @@ abstract class Base extends Controller
 	/**
 	 * @return array|\Bitrix\Main\Engine\AutoWire\Parameter[]
 	 */
-	public function getAutoWiredParameters()
+	public function getAutoWiredParameters(Controller $controller = null)
 	{
 		return [
-			new \Bitrix\Main\Engine\AutoWire\ExactParameter(
+			new ExactParameter(
 				\Bitrix\DocumentGenerator\Document::class,
 				'document',
-				function($className, $id)
-				{
+				function($className, $id) use ($controller) {
+					if (!$controller)
+					{
+						$controller = $this;
+					}
 					/** @var \Bitrix\DocumentGenerator\Document $className */
-					return $className::loadById($id);
+					$document = $className::loadById($id);
+					if (!$document)
+					{
+						$controller->addError(
+							new Error(
+								Loc::getMessage('DOCGEN_CONTROLLER_DOCUMENT_NOT_FOUND_ERROR')
+							)
+						);
+					}
+
+					return $document;
 				}
 			),
-			new \Bitrix\Main\Engine\AutoWire\ExactParameter(
+			new ExactParameter(
 				\Bitrix\DocumentGenerator\Template::class,
 				'template',
-				function($className, $id)
-				{
+				function($className, $id) use ($controller) {
+					if (!$controller)
+					{
+						$controller = $this;
+					}
 					/** @var \Bitrix\DocumentGenerator\Template $className */
-					return $className::loadById($id);
+					$template = $className::loadById($id);
+					if (!$template)
+					{
+						$controller->addError(
+							new Error(
+								Loc::getMessage('DOCGEN_CONTROLLER_TEMPLATE_NOT_FOUND_ERROR')
+							)
+						);
+					}
+
+					return $template;
 				}
 			),
-			new \Bitrix\Main\Engine\AutoWire\ExactParameter(
+			new ExactParameter(
 				\Bitrix\DocumentGenerator\Template::class,
 				'template',
-				function($className, $templateId)
-				{
+				function($className, $templateId) use ($controller) {
+					if (!$controller)
+					{
+						$controller = $this;
+					}
 					/** @var \Bitrix\DocumentGenerator\Template $className */
-					return $className::loadById($templateId);
+					$template = $className::loadById($templateId);
+					if (!$template)
+					{
+						$controller->addError(
+							new Error(
+								Loc::getMessage('DOCGEN_CONTROLLER_TEMPLATE_NOT_FOUND_ERROR')
+							)
+						);
+					}
+
+					return $template;
 				}
 			),
-			new \Bitrix\Main\Engine\AutoWire\ExactParameter(
+			new ExactParameter(
 				\Bitrix\DocumentGenerator\Model\Role::class,
 				'role',
 				function($className, $id)
@@ -73,7 +114,7 @@ abstract class Base extends Controller
 					return RoleTable::getById($id)->fetchObject();
 				}
 			),
-			new \Bitrix\Main\Engine\AutoWire\ExactParameter(
+			new ExactParameter(
 				\Bitrix\Main\Numerator\Numerator::class,
 				'numerator',
 				function($className, $id)

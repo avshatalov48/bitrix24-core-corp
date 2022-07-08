@@ -1,32 +1,34 @@
 <?php
 namespace Bitrix\ImOpenLines\Model;
 
-use \Bitrix\Main,
-	\Bitrix\Main\Loader,
-	\Bitrix\Main\UserTable,
-	\Bitrix\Main\ORM\Event,
-	\Bitrix\Main\Type\DateTime,
-	\Bitrix\Main\ORM\Query\Join,
-	\Bitrix\Main\ORM\EventResult,
-	\Bitrix\Main\Localization\Loc,
-	\Bitrix\Main\Search\MapBuilder,
-	\Bitrix\Main\ORM\Fields\TextField,
-	\Bitrix\Main\ORM\Data\DataManager,
-	\Bitrix\Main\ORM\Fields\StringField,
-	\Bitrix\Main\ORM\Fields\IntegerField,
-	\Bitrix\Main\Entity\Validator\Length,
-	\Bitrix\Main\ORM\Fields\BooleanField,
-	\Bitrix\Main\ORM\Fields\DatetimeField,
-	\Bitrix\Main\ORM\Fields\UserTypeField,
-	\Bitrix\Main\ORM\Fields\ExpressionField,
-	\Bitrix\Main\ORM\Fields\Relations\Reference;
+use Bitrix\Main,
+	Bitrix\Main\Loader,
+	Bitrix\Main\UserTable,
+	Bitrix\Main\ORM\Event,
+	Bitrix\Main\ORM\Fields\Field,
+	Bitrix\Main\ORM\Fields\Validators\Validator,
+	Bitrix\Main\ORM\Fields\Validators\LengthValidator,
+	Bitrix\Main\Type\DateTime,
+	Bitrix\Main\ORM\Query\Join,
+	Bitrix\Main\ORM\EventResult,
+	Bitrix\Main\Localization\Loc,
+	Bitrix\Main\Search\MapBuilder,
+	Bitrix\Main\ORM\Fields\TextField,
+	Bitrix\Main\ORM\Data\DataManager,
+	Bitrix\Main\ORM\Fields\StringField,
+	Bitrix\Main\ORM\Fields\IntegerField,
+	Bitrix\Main\ORM\Fields\BooleanField,
+	Bitrix\Main\ORM\Fields\DatetimeField,
+	Bitrix\Main\ORM\Fields\UserTypeField,
+	Bitrix\Main\ORM\Fields\ExpressionField,
+	Bitrix\Main\ORM\Fields\Relations\Reference;
 
-use \Bitrix\ImOpenLines\Crm,
-	\Bitrix\ImOpenLines\Integrations\Report\Statistics;
+use Bitrix\ImOpenLines\Crm,
+	Bitrix\ImOpenLines\Integrations\Report\Statistics;
 
-use \Bitrix\Im,
-	\Bitrix\Im\Model\ChatTable,
-	\Bitrix\Im\Model\MessageTable;
+use Bitrix\Im,
+	Bitrix\Im\Model\ChatTable,
+	Bitrix\Im\Model\MessageTable;
 
 Loc::loadMessages(__FILE__);
 
@@ -72,7 +74,6 @@ Loc::loadMessages(__FILE__);
  * @method static EO_Session_Query query()
  * @method static EO_Session_Result getByPrimary($primary, array $parameters = array())
  * @method static EO_Session_Result getById($id)
- * @method static EO_Session_Result getList(array $parameters = array())
  * @method static EO_Session_Entity getEntity()
  * @method static \Bitrix\ImOpenLines\Model\EO_Session createObject($setDefaultValues = true)
  * @method static \Bitrix\ImOpenLines\Model\EO_Session_Collection createCollection()
@@ -94,10 +95,7 @@ class SessionTable extends DataManager
 	/**
 	 * Returns entity map definition.
 	 *
-	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\SystemException
+	 * @return Field[]
 	 */
 	public static function getMap()
 	{
@@ -391,15 +389,13 @@ class SessionTable extends DataManager
 			]),
 		];
 
-		if(Loader::includeModule('im'))
+		if (Loader::includeModule('im'))
 		{
-
 			$result[] = new Reference(
 				'CHAT',
 				ChatTable::class,
 				Join::on('this.CHAT_ID', 'ref.ID')
 			);
-
 		}
 
 		return $result;
@@ -418,9 +414,6 @@ class SessionTable extends DataManager
 
 	 * @param mixed $id Primary key of the entity
 	 * @return Main\ORM\Query\Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public static function getByIdPerformance($id)
 	{
@@ -433,8 +426,7 @@ class SessionTable extends DataManager
 	 * Returns fields for select without slow fields
 	 *
 	 * @param string $prefix
-	 * @return array
-	 * @throws Main\SystemException
+	 * @return string[]
 	 */
 	public static function getSelectFieldsPerformance($prefix = '')
 	{
@@ -456,7 +448,7 @@ class SessionTable extends DataManager
 			{
 				$ufMultiName = mb_substr($key, 0, -7);
 
-				if(self::getEntity()->hasField($ufMultiName) && self::getEntity()->getField($ufMultiName) instanceof UserTypeField)
+				if (self::getEntity()->hasField($ufMultiName) && self::getEntity()->getField($ufMultiName) instanceof UserTypeField)
 				{
 					continue;
 				}
@@ -471,14 +463,10 @@ class SessionTable extends DataManager
 	/**
 	 * @param array $parameters
 	 * @return Main\ORM\Query\Result
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public static function getList(array $parameters = [])
 	{
-		if(!empty($parameters['select']) && in_array('CHAT', array_map('mb_strtoupper', $parameters['select'])))
+		if (!empty($parameters['select']) && in_array('CHAT', array_map('mb_strtoupper', $parameters['select'])))
 		{
 			Loader::includeModule('im');
 		}
@@ -488,11 +476,7 @@ class SessionTable extends DataManager
 
 	/**
 	 * @param Event $event
-	 * @return EventResult|void
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
+	 * @return EventResult
 	 */
 	public static function onAfterAdd(Event $event)
 	{
@@ -512,11 +496,7 @@ class SessionTable extends DataManager
 
 	/**
 	 * @param Event $event
-	 * @return EventResult|void
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
+	 * @return EventResult
 	 */
 	public static function onAfterUpdate(Event $event)
 	{
@@ -529,16 +509,14 @@ class SessionTable extends DataManager
 
 	/**
 	 * @param $id
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public static function indexRecord($id)
 	{
 		$id = (int)$id;
-		if($id == 0)
+		if ($id == 0)
+		{
 			return;
+		}
 
 		$select = self::getSelectFieldsPerformance();
 		$select['CONFIG_LINE_NAME'] = 'CONFIG.LINE_NAME';
@@ -546,8 +524,10 @@ class SessionTable extends DataManager
 		$record = parent::getByPrimary($id, [
 			'select' => $select
 		])->fetch();
-		if(!is_array($record))
+		if (!is_array($record))
+		{
 			return;
+		}
 
 		SessionIndexTable::merge([
 			'SESSION_ID' => $id,
@@ -558,10 +538,6 @@ class SessionTable extends DataManager
 	/**
 	 * @param array $fields Record as returned by getList
 	 * @return string
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public static function generateSearchContent(array $fields)
 	{
@@ -569,7 +545,7 @@ class SessionTable extends DataManager
 
 		$userId = [];
 
-		if($fields['CHAT_ID'] > 0 && $fields['CLOSED'] == 'Y' && Loader::includeModule('im'))
+		if ($fields['CHAT_ID'] > 0 && $fields['CLOSED'] == 'Y' && Loader::includeModule('im'))
 		{
 			$userId[$fields['OPERATOR_ID']] = $fields['OPERATOR_ID'];
 			$userId[$fields['USER_ID']] = $fields['USER_ID'];
@@ -609,27 +585,27 @@ class SessionTable extends DataManager
 
 		$mapBuilderManager = MapBuilder::create();
 
-		if(!empty($userId))
+		if (!empty($userId))
 		{
 			$mapBuilderManager->addUser($userId);
 		}
-		if(!empty($crmCaption))
+		if (!empty($crmCaption))
 		{
 			foreach ($crmCaption as $item)
 			{
 				$mapBuilderManager->addText($item);
 			}
 		}
-		if(!empty($fields['EXTRA_URL']))
+		if (!empty($fields['EXTRA_URL']))
 		{
 			$mapBuilderManager->addText($fields['EXTRA_URL']);
 		}
-		if(!empty($fields['ID']))
+		if (!empty($fields['ID']))
 		{
 			$mapBuilderManager->addInteger($fields['ID']);
 			$mapBuilderManager->addText('imol|'.$fields['ID']);
 		}
-		if(!empty($transcriptLines))
+		if (!empty($transcriptLines))
 		{
 			$mapBuilderManager->addText($transcriptLines);
 		}
@@ -640,97 +616,96 @@ class SessionTable extends DataManager
 	/**
 	 * Returns validators for SOURCE field.
 	 *
-	 * @return array
-	 * @throws Main\ArgumentTypeException
+	 * @return Validator[]
 	 */
 	public static function validateSource()
 	{
 		return [
-			new Length(null, 255),
+			new LengthValidator(null, 255),
 		];
 	}
+
 	/**
 	 * Returns validators for SOURCE field.
 	 *
-	 * @return array
-	 * @throws Main\ArgumentTypeException
+	 * @return Validator[]
 	 */
 	public static function validateMode()
 	{
 		return [
-			new Length(null, 255),
+			new LengthValidator(null, 255),
 		];
 	}
+
 	/**
 	 * Returns validators for USER_CODE field.
 	 *
-	 * @return array
-	 * @throws Main\ArgumentTypeException
+	 * @return Validator[]
 	 */
 	public static function validateUserCode()
 	{
 		return [
-			new Length(null, 255),
+			new LengthValidator(null, 255),
 		];
 	}
+
 	/**
 	 * Returns validators for EXTRA_TARIFF field.
 	 *
-	 * @return array
-	 * @throws Main\ArgumentTypeException
+	 * @return Validator[]
 	 */
 	public static function validateExtraTariff()
 	{
 		return [
-			new Length(null, 255),
+			new LengthValidator(null, 255),
 		];
 	}
+
 	/**
 	 * Returns validators for EXTRA_USER_LEVEL field.
 	 *
-	 * @return array
-	 * @throws Main\ArgumentTypeException
+	 * @return Validator[]
 	 */
 	public static function validateExtraUserLevel()
 	{
 		return [
-			new Length(null, 255),
+			new LengthValidator(null, 255),
 		];
 	}
+
 	/**
 	 * Returns validators for EXTRA_PORTAL_TYPE field.
 	 *
-	 * @return array
-	 * @throws Main\ArgumentTypeException
+	 * @return Validator[]
 	 */
 	public static function validateExtraPortalType()
 	{
 		return [
-			new Length(null, 255),
+			new LengthValidator(null, 255),
 		];
 	}
+
 	/**
 	 * Returns validators for EXTRA_URL field.
 	 *
-	 * @return array
-	 * @throws Main\ArgumentTypeException
+	 * @return Validator[]
 	 */
 	public static function validateExtraUrl()
 	{
 		return [
-			new Length(null, 255),
+			new LengthValidator(null, 255),
 		];
 	}
+
 	/**
 	 * Returns validators for SEND_FORM field.
 	 *
-	 * @return array
-	 * @throws Main\ArgumentTypeException
+	 * @return Validator[]
 	 */
 	public static function validateSendForm()
 	{
 		return [
-			new Length(null, 255),
+			new LengthValidator(null, 255),
 		];
 	}
 
@@ -738,7 +713,6 @@ class SessionTable extends DataManager
 	 * Return current date for DATE_CREATE field.
 	 *
 	 * @return DateTime
-	 * @throws Main\ObjectException
 	 */
 	public static function getCurrentDate()
 	{

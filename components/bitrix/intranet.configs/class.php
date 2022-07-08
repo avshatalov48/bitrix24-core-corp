@@ -1029,7 +1029,6 @@ final class IntranetConfigsComponent extends CBitrixComponent
 			$this->arResult['SHOW_GOOGLE_API_KEY_FIELD'] = true;
 		}
 
-		$this->arResult['SHOW_YANDEX_MAP_KEY_FIELD'] = true;
 		$portalPrefix = '';
 
 		if (Loader::includeModule('bitrix24'))
@@ -1041,7 +1040,7 @@ final class IntranetConfigsComponent extends CBitrixComponent
 			$portalPrefix = CIntranetUtils::getPortalZone();
 		}
 
-		$this->arResult['SHOW_YANDEX_MAP_KEY_FIELD'] = ($portalPrefix !== 'ua');
+		$this->arResult['SHOW_YANDEX_MAP_KEY_FIELD'] = in_array($portalPrefix, ['ru', 'by', 'kz']);
 
 		$this->arResult['CULTURES'] = Culture::getCultures();
 

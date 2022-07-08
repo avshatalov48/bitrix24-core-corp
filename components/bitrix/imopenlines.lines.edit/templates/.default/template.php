@@ -15,7 +15,8 @@ Extension::load([
 
 	'ui.entity-selector',
 	'ui.buttons',
-	'ui.forms'
+	'ui.forms',
+	'ui.design-tokens',
 ]);
 CUtil::InitJSCore(['socnetlogdest', 'sidepanel']);
 if (Loader::includeModule('bitrix24'))

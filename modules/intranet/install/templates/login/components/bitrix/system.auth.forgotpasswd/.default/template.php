@@ -17,13 +17,13 @@ else
 		<input type="hidden" name="AUTH_FORM" value="Y">
 		<input type="hidden" name="TYPE" value="SEND_PWD">
 
-		<div class="">
+		<div class="login-forgotpass-item-box">
 			<div class="login-item">
-				<span class="login-item-alignment"></span><span class="login-label"><?=GetMessage("AUTH_LOGIN")?></span>
-				<input class="login-inp" type="text" name="USER_LOGIN" maxlength="50" value="<?=$arResult["LAST_LOGIN"]?>"/>&nbsp;<span class="login-label" style="margin-left: -50px"><?=GetMessage("AUTH_OR")?></span>
+				<span class="login-label"><?=GetMessage("AUTH_LOGIN")?></span>
+				<input class="login-inp" type="text" name="USER_LOGIN" maxlength="50" value="<?=$arResult["LAST_LOGIN"]?>"/><span class="login-label"><?=GetMessage("AUTH_OR")?></span>
 			</div>
 			<div class="login-item">
-				<span class="login-item-alignment"></span><span class="login-label"><?=GetMessage("AUTH_EMAIL")?></span>
+				<span class="login-label"><?=GetMessage("AUTH_EMAIL")?></span>
 				<input class="login-inp" type="text" name="USER_EMAIL" maxlength="255" />
 			</div>
 <?if ($arResult["USE_CAPTCHA"]):?>
@@ -32,7 +32,7 @@ else
 				<img src="/bitrix/tools/captcha.php?captcha_sid=<?echo $arResult["CAPTCHA_CODE"]?>" width="180" height="40" alt="CAPTCHA" />
 			</div>
 			<div class="login-item">
-				<span class="login-item-alignment"></span><span class="login-label"><?echo GetMessage("AUTH_CAPTCHA_PROMT")?></span>
+				<span class="login-label"><?echo GetMessage("AUTH_CAPTCHA_PROMT")?></span>
 				<input class="login-inp" type="text" name="captcha_word" maxlength="50" value="" size="15" autocomplete="off"/>
 			</div>
 <?endif?>

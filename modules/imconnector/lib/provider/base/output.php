@@ -11,27 +11,29 @@ use \Bitrix\Main\Event,
 
 class Output
 {
-	protected const TYPE_BITRIX24 = 'B24';
-	protected const TYPE_CP = 'CP';
-	protected const STATIC_FUNCTIONS = [
-		'deleteline',
-		'infoconnectorsline'
-	];
-	protected const DYNAMIC_FUNCTIONS = [
-		'sendmessage',
-		'updatemessage',
-		'deletemessage',
-	];
+	protected const
+		TYPE_BITRIX24 = 'B24',
+		TYPE_CP = 'CP',
+
+		STATIC_FUNCTIONS = [
+			'deleteline',
+			'infoconnectorsline'
+		],
+
+		DYNAMIC_FUNCTIONS = [
+			'sendmessage',
+			'updatemessage',
+			'deletemessage',
+		];
 
 	/** @var Result */
 	protected $result;
 
+	/** @var string */
 	protected $connector;
-	protected $line;
 
-	protected $licenceCode = '';
-	protected $domain = '';
-	protected $type = '';
+	/** @var string */
+	protected $line;
 
 	/**
 	 * Output constructor.
@@ -43,89 +45,37 @@ class Output
 		$this->result = new Result();
 		Library::loadMessages();
 
-		$this->licenceCode = $this->getLicenceCode();
-		$this->type = $this->getPortalType();
-		$this->domain = Connector::getDomainDefault();
-
 		$this->connector = $connector;
 		$this->line = $line;
 	}
 
+	//region Method call
+
 	/**
-	 * Returns the type of the portal.
+	 * Magic method for handling dynamic methods.
 	 *
-	 * @return string
+	 * @param string $name The name of the called method.
+	 * @param array $arguments The set of parameters passed to the method.
+	 * @return Result
 	 */
-	protected function getPortalType(): string
+	public function call($name, $arguments): Result
 	{
-		if(defined('BX24_HOST_NAME'))
-		{
-			$type = self::TYPE_BITRIX24;
-		}
-		else
-		{
-			$type = self::TYPE_CP;
-		}
-		return $type;
-	}
+		$result = clone $this->result;
 
-	/**
-	 * The query hash of the license key.
-	 *
-	 * @param $type. The type of portal.
-	 * @param $str.
-	 * @return string
-	 */
-	protected function requestSign($type, $str): string
-	{
-		$result = '';
-
-		if (
-			$type == self::TYPE_BITRIX24 &&
-			function_exists('bx_sign')
-		)
+		if ($result->isSuccess())
 		{
-			$result = bx_sign($str);
-		}
-		else
-		{
-			include($_SERVER['DOCUMENT_ROOT'] . '/bitrix/license_key.php');
-
-			if(!empty($LICENSE_KEY))
+			if (method_exists($this, $name))
 			{
-				$result = md5($str.md5($LICENSE_KEY));
+				$result = $this->validationMethodCall($name);
+				if ($result->isSuccess())
+				{
+					$result = call_user_func_array([$this, $name], $arguments);
+				}
 			}
-		}
-
-		return $result;
-	}
-
-	/**
-	 * @return string
-	 */
-	protected function getLicenceCode(): string
-	{
-		$result = '';
-
-		if(defined('BX24_HOST_NAME'))
-		{
-			$result = BX24_HOST_NAME;
-		}
-		else
-		{
-			$licenceCode = false;
-			require_once($_SERVER["DOCUMENT_ROOT"] . '/bitrix/modules/main/classes/general/update_client.php');
-
-			if(method_exists('CUpdateClient','GetLicenseKey'))
+			else
 			{
-				$licenceCode = \CUpdateClient::GetLicenseKey();
+				$result = $this->query($name, $arguments);
 			}
-
-			if(!empty($licenceCode))
-			{
-				$result = md5('BITRIX' . \CUpdateClient::GetLicenseKey() . 'LICENCE');
-			}
-
 		}
 
 		return $result;
@@ -139,11 +89,11 @@ class Output
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
-			if($this->connector === 'all')
+			if ($this->connector === 'all')
 			{
-				if(in_array(mb_strtolower($name), self::DYNAMIC_FUNCTIONS, false))
+				if (in_array(mb_strtolower($name), self::DYNAMIC_FUNCTIONS, false))
 				{
 					$result->addError(new Error(
 						Loc::getMessage('IMCONNECTOR_ERROR_PROVIDER_GENERAL_REQUEST_DYNAMIC_METHOD'),
@@ -153,7 +103,7 @@ class Output
 					));
 				}
 			}
-			elseif(in_array(mb_strtolower($name), self::STATIC_FUNCTIONS, false))
+			elseif (in_array(mb_strtolower($name), self::STATIC_FUNCTIONS, false))
 			{
 				$result->addError(new Error(
 					Loc::getMessage('IMCONNECTOR_ERROR_PROVIDER_GENERAL_REQUEST_NOT_DYNAMIC_METHOD'),
@@ -166,6 +116,20 @@ class Output
 
 		return $result;
 	}
+
+	/**
+	 * @param $command
+	 * @param array $data
+	 * @return Result
+	 */
+	protected function query($command, array $data): Result
+	{
+		return $this->result;
+	}
+
+	//endregion
+
+	//region Commands
 
 	/**
 	 * @param array $messages
@@ -210,52 +174,16 @@ class Output
 	}
 
 	/**
-	 * Magic method for handling dynamic methods.
-	 *
-	 * @param string $name The name of the called method.
-	 * @param array $arguments The set of parameters passed to the method.
-	 * @return Result
-	 */
-	public function call($name, $arguments): Result
-	{
-		$result = clone $this->result;
-
-		if($result->isSuccess())
-		{
-			if(method_exists($this, $name))
-			{
-				$result = $this->validationMethodCall($name);
-				if($result->isSuccess())
-				{
-					$result = call_user_func_array([$this, $name], $arguments);
-				}
-			}
-			else
-			{
-				$result = $this->query($name, $arguments);
-			}
-		}
-
-		return $result;
-	}
-
-	/**
 	 * Sending a message.
 	 *
 	 * @param array $data An array of data describing the message.
 	 * @return Result
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	protected function sendMessage(array $data): Result
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$data = $this->sendMessagesProcessing($data);
 
@@ -271,17 +199,12 @@ class Output
 	 *
 	 * @param array $data An array of data describing the message.
 	 * @return Result
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	protected function updateMessage(array $data): Result
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$data = $this->updateMessagesProcessing($data);
 
@@ -299,17 +222,12 @@ class Output
 	 * @return Result
 	 * @param array $data
 	 * @return Result
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	protected function deleteMessage(array $data): Result
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$data = $this->deleteMessagesProcessing($data);
 
@@ -348,7 +266,7 @@ class Output
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$event = new Event(Library::MODULE_ID, Library::EVENT_DELETE_LINE, ['LINE_ID' => $lineId]);
 			$event->send();
@@ -368,13 +286,5 @@ class Output
 		return $this->result;
 	}
 
-	/**
-	 * @param $command
-	 * @param array $data
-	 * @return Result
-	 */
-	protected function query($command, array $data): Result
-	{
-		return $this->result;
-	}
+	//endregion
 }

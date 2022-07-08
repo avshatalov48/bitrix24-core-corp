@@ -190,15 +190,6 @@ export const ContentComponent = {
 									{{ localize.INTRANET_LICENSE_WIDGET_DESCRIPTION_WHY }}
 								</span>
 								<a
-									v-else-if="license.isDemo"
-									key="licenseDesc"
-									:href="license.demoPath"
-									class="license-widget-item-link-text"
-									target="_blank"
-								>
-									{{ localize.INTRANET_LICENSE_WIDGET_DESCRIPTION_TARIFF }}
-								</a>
-								<a
 									v-else
 									key="licenseDesc"
 									class="license-widget-item-link-text"

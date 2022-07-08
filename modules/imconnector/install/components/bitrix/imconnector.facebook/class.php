@@ -58,8 +58,8 @@ class ImConnectorFacebook extends \CBitrixComponent
 		$this->arResult['REGISTER_STATUS'] = $this->status->getRegister();
 		$this->arResult['ERROR_STATUS'] = $this->status->getError();
 		$this->arResult['DATA_STATUS'] = $this->status->getData();
-		$zone = Connector::getPortalZone();
-		$this->arResult['NEED_META_RESTRICTION_NOTE'] = Connector::needRestrictionNote($this->connector, $zone, LANGUAGE_ID);
+		$region = Connector::getPortalRegion();
+		$this->arResult['NEED_META_RESTRICTION_NOTE'] = Connector::needRestrictionNote($this->connector, $region, LANGUAGE_ID);
 
 		$this->cacheId = Connector::getCacheIdConnector($this->arParams['LINE'], $this->connector);
 

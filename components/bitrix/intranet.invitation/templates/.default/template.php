@@ -14,8 +14,18 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 
-\Bitrix\Main\UI\Extension::load(["ui.forms", "ui.buttons", "ui.buttons.icons", "ui.alerts",
-	"ui.selector", "ui.hint", 'ui.entity-selector', 'ui.feedback.form']);
+\Bitrix\Main\UI\Extension::load([
+	"ui.forms",
+	"ui.buttons",
+	"ui.buttons.icons",
+	"ui.alerts",
+	"ui.selector",
+	"ui.hint",
+	'ui.entity-selector',
+	'ui.feedback.form',
+	'ui.design-tokens',
+]);
+
 \CJSCore::Init(['phone_number']);
 
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'no-background invite-body');

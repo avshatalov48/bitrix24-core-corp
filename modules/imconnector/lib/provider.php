@@ -12,34 +12,32 @@ class Provider
 		'imconnectorserver' =>
 			[
 				'imconnectorserver',//common for all
-				'whatsappbytwilio',
-				'avito',
-				'viber',
-				'telegrambot',
-				'imessage',
-				'wechat',
-				'vkgroup',
-				'ok',
-				'olx',
-				'facebook',
-				'facebookcomments',
-				'fbinstagram',
-				Library::ID_FBINSTAGRAMDIRECT_CONNECTOR
+				Library::ID_WHATSAPPBYTWILIO_CONNECTOR,
+				Library::ID_AVITO_CONNECTOR,
+				Library::ID_VIBER_CONNECTOR,
+				Library::ID_TELEGRAMBOT_CONNECTOR,
+				Library::ID_IMESSAGE_CONNECTOR,
+				Library::ID_WECHAT_CONNECTOR,
+				Library::ID_VKGROUP_CONNECTOR,
+				Library::ID_OK_CONNECTOR,
+				Library::ID_OLX_CONNECTOR,
+				Library::ID_FB_MESSAGES_CONNECTOR,
+				Library::ID_FB_COMMENTS_CONNECTOR,
+				Library::ID_FBINSTAGRAM_CONNECTOR,
+				Library::ID_FBINSTAGRAMDIRECT_CONNECTOR,
 			],
-		'livechat' =>
-			[
-				'livechat'
-			],
-		'network' =>
-			[
-				'network'
-			],
+		'livechat' => [Library::ID_LIVE_CHAT_CONNECTOR],
+		'network' => [Library::ID_NETWORK_CONNECTOR],
 		'messageservice' => [Library::ID_EDNA_WHATSAPP_CONNECTOR]
 	];
 
+	/** @var string[][] */
 	protected static $loadProvider;
 
-	protected static function loadProvider()
+	/**
+	 * @return string[][]
+	 */
+	protected static function getAllIdsProvider(): array
 	{
 		if (empty(self::$loadProvider))
 		{
@@ -59,14 +57,6 @@ class Provider
 
 			self::$loadProvider = $provider;
 		}
-	}
-
-	/**
-	 * @return string[][]
-	 */
-	protected static function getAllIdsProvider(): array
-	{
-		self::loadProvider();
 
 		return self::$loadProvider;
 	}
@@ -144,6 +134,7 @@ class Provider
 
 				if (class_exists($nameClassProvider))
 				{
+					/** @var Provider\Base\Input|Provider\Base\Output $provider */
 					$provider = new $nameClassProvider('all');
 
 					$result->setResult($provider);
@@ -179,48 +170,47 @@ class Provider
 
 		if (empty($idProvider))
 		{
-			$result->addError(new Error(
+			return $result->addError(new Error(
 				Loc::getMessage('IMCONNECTOR_ERROR_NO_CORRECT_PROVIDER'),
 				Library::ERROR_IMCONNECTOR_NO_CORRECT_PROVIDER,
 				__METHOD__,
 				$connector
 			));
 		}
+
+		$nameClassProvider = 'Bitrix\\ImConnector\\Provider\\' . $idProvider . '\\' . $direction;
+
+		if (class_exists($nameClassProvider))
+		{
+			/** @var Provider\Base\Input|Provider\Base\Output $provider */
+			$provider = new $nameClassProvider(...$arguments);
+
+			$result->setResult($provider);
+		}
 		else
 		{
-			$nameClassProvider = 'Bitrix\\ImConnector\\Provider\\' . $idProvider . '\\' . $direction;
-
-			if (class_exists($nameClassProvider))
-			{
-				$provider = new $nameClassProvider(...$arguments);
-
-				$result->setResult($provider);
-			}
-			else
-			{
-				$result->addError(new Error(
-					Loc::getMessage('IMCONNECTOR_ERROR_COULD_NOT_GET_PROVIDER_OBJECT'),
-					Library::ERROR_IMCONNECTOR_COULD_NOT_GET_PROVIDER_OBJECT,
-					__METHOD__,
-					$connector
-				));
-			}
+			$result->addError(new Error(
+				Loc::getMessage('IMCONNECTOR_ERROR_COULD_NOT_GET_PROVIDER_OBJECT'),
+				Library::ERROR_IMCONNECTOR_COULD_NOT_GET_PROVIDER_OBJECT,
+				__METHOD__,
+				$connector
+			));
 		}
 
 		return $result;
 	}
 
 	/**
-	 * @return Provider\ImConnectorServer\Output []
-	 * @return Provider\LiveChat\Output []
-	 * @return Provider\Network\Output []
-	 * @return Provider\Custom\Output []
+	 * @return Provider\ImConnectorServer\Output[]
+	 * @return Provider\LiveChat\Output[]
+	 * @return Provider\Network\Output[]
+	 * @return Provider\Custom\Output[]
 	 */
 	public static function getAllProviderForAllOutput(): array
 	{
 		$result = [];
 
-		foreach (self::getAllIdsProvider() as $idProvider=>$connectorsProvider)
+		foreach (self::getAllIdsProvider() as $idProvider => $connectorsProvider)
 		{
 			$provider = self::getProviderForAll($idProvider, 'output');
 
@@ -235,7 +225,7 @@ class Provider
 
 	/**
 	 * @param $connector
-	 * @param false $line
+	 * @param string|false $line
 	 * @return Result
 	 */
 	public static function getProviderForConnectorOutput($connector, $line = false): Result

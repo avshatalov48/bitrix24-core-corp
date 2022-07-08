@@ -62,6 +62,16 @@ export const LocationStyle = Object.freeze({
 	4: 'bottom-right',
 });
 
+export const WidgetBaseSize = Object.freeze({
+	width: 435,
+	height: 557
+});
+
+export const WidgetMinimumSize = Object.freeze({
+	width: 340,
+	height: 435
+});
+
 export const SubscriptionType = Object.freeze({
 	configLoaded: 'configLoaded',
 	widgetOpen: 'widgetOpen',
@@ -80,8 +90,10 @@ export const SubscriptionTypeCheck = GetObjectValues(SubscriptionType);
 
 export const RestMethod = Object.freeze({
 	widgetUserRegister: 'imopenlines.widget.user.register',
+	widgetChatCreate: 'imopenlines.widget.chat.create',
 	widgetConfigGet: 'imopenlines.widget.config.get',
 	widgetDialogGet: 'imopenlines.widget.dialog.get',
+	widgetDialogList: 'imopenlines.widget.dialog.list',
 	widgetUserGet: 'imopenlines.widget.user.get',
 	widgetUserConsentApply: 'imopenlines.widget.user.consent.apply',
 	widgetVoteSend: 'imopenlines.widget.vote.send',
@@ -109,6 +121,17 @@ export const SessionStatus = Object.freeze({
 	silentlyClose: 75,
 });
 
-export const EventType = Object.freeze({
-	requestShowForm: 'IMOL.Widget:requestShowForm',
+export const WidgetEventType = Object.freeze({
+	showForm: 'IMOL.Widget:showForm',
+	hideForm: 'IMOL.Widget:hideForm',
+	processMessagesToSendQueue: 'IMOL.Widget:processMessagesToSendQueue',
+	requestData: 'IMOL.Widget:requestData',
+	showConsent: 'IMOL.Widget:showConsent',
+	acceptConsent: 'IMOL.Widget:acceptConsent',
+	consentAccepted: 'IMOL.Widget:consentAccepted',
+	declineConsent: 'IMOL.Widget:declineConsent',
+	consentDeclined: 'IMOL.Widget:consentDeclined',
+	sendDialogVote: 'IMOL.Widget:sendDialogVote',
+	createSession: 'IMOL.Widget:createSession',
+	openSession: 'IMOL.Widget:openSession',
 });

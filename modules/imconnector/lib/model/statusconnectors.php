@@ -15,6 +15,7 @@ use \Bitrix\Main\Entity\TextField,
  * <li> ID int mandatory
  * <li> CONNECTOR string mandatory: ID connector
  * <li> LINE string optional: ID line
+ * <li> REGION string optional: Line region
  * <li> ACTIVE bool optional default 'N': A sign of activity connector
  * <li> CONNECTION bool optional default 'N': The connection tested successfully
  * <li> REGISTER bool optional default 'N': Registration was successful

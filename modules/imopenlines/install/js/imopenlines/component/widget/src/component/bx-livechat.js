@@ -7,94 +7,52 @@
  * @copyright 2001-2019 Bitrix
  */
 
-import {BitrixVue} from "ui.vue";
-import {Vuex} from "ui.vue.vuex";
-import {Utils} from "im.lib.utils";
-import {Logger} from "im.lib.logger";
-import {FormType, VoteType, LocationStyle, LocationType, LanguageType, EventType as WidgetEventType} from "../const";
-import { DeviceType, DeviceOrientation, EventType, RestMethod as ImRestMethod } from "im.const";
+import {BitrixVue} from 'ui.vue';
+import {Vuex} from 'ui.vue.vuex';
+import {Utils} from 'im.lib.utils';
+import {Logger} from 'im.lib.logger';
 import {
-	DialogCore, TextareaCore, TextareaUploadFile, DialogReadMessages, DialogClickOnCommand, DialogClickOnUserName,
-	DialogClickOnKeyboardButton, DialogClickOnMessageMenu, DialogClickOnMessageRetry, DialogSetMessageReaction,
-	DialogClickOnUploadCancel
-} from 'im.mixin';
-import {md5} from "main.md5";
-import {EventEmitter} from "main.core.events";
+	FormType,
+	VoteType,
+	LocationStyle,
+	LocationType,
+	LanguageType,
+	WidgetEventType,
+	WidgetBaseSize,
+	WidgetMinimumSize
+} from '../const';
+import {DeviceType, DeviceOrientation, EventType} from 'im.const';
+import {EventEmitter} from 'main.core.events';
 
-/**
- * @notice Do not mutate or clone this component! It is under development.
- */
+import {WidgetSendMessageHandler} from '../event-handler/widget-send-message-handler';
+import {WidgetTextareaHandler} from '../event-handler/widget-textarea-handler';
+import {WidgetTextareaUploadHandler} from '../event-handler/widget-textarea-upload-handler';
+import {WidgetReadingHandler} from '../event-handler/widget-reading-handler';
+import {WidgetResizeHandler} from '../event-handler/widget-resize-handler';
+import {WidgetConsentHandler} from '../event-handler/widget-consent-handler';
+import {WidgetFormHandler} from '../event-handler/widget-form-handler';
+import {TextareaDragHandler} from 'im.event-handler';
+import {WidgetReactionHandler} from '../event-handler/widget-reaction-handler';
+import {WidgetHistoryHandler} from '../event-handler/widget-history-handler';
+import {WidgetDialogActionHandler} from '../event-handler/widget-dialog-action-handler';
+
 BitrixVue.component('bx-livechat',
 {
-	mixins: [
-		DialogCore, TextareaCore, TextareaUploadFile, DialogReadMessages, DialogClickOnCommand, DialogClickOnUserName,
-		DialogClickOnKeyboardButton, DialogClickOnMessageMenu, DialogClickOnMessageRetry, DialogSetMessageReaction,
-		DialogClickOnUploadCancel
-	],
 	data()
 	{
 		return {
-			viewPortMetaSiteNode: null,
-			viewPortMetaWidgetNode: null,
-			storedMessage: '',
-			storedFile: null,
-			widgetMinimumHeight: 435,
-			widgetMinimumWidth: 340,
-			widgetBaseHeight: 557,
-			widgetBaseWidth: 435,
-			widgetMargin: 50,
+			// sizes
 			widgetAvailableHeight: 0,
 			widgetAvailableWidth: 0,
 			widgetCurrentHeight: 0,
 			widgetCurrentWidth: 0,
-			widgetDrag: false,
-			textareaFocused: false,
-			textareaDrag: false,
+			widgetIsResizing: false,
 			textareaHeight: 100,
-			textareaMinimumHeight: 100,
-			textareaMaximumHeight: Utils.device.isMobile()? 200: 300,
-			zIndexStackInstance: null,
-			welcomeFormFilled: false
-		}
-	},
-	created()
-	{
-		Logger.warn('bx-livechat created');
-		this.onCreated();
-
-		document.addEventListener('keydown', this.onWindowKeyDown);
-		if(!Utils.device.isMobile() && !this.widget.common.pageMode)
-		{
-			window.addEventListener('resize', this.getAvailableSpaceFunc = Utils.throttle(this.getAvailableSpace, 50));
-		}
-		EventEmitter.subscribe(WidgetEventType.requestShowForm, this.onRequestShowForm);
-	},
-	mounted()
-	{
-		if (this.widget.user.id > 0)
-		{
-			this.welcomeFormFilled = true;
-		}
-		this.zIndexStackInstance = this.$Bitrix.Data.get('zIndexStack');
-		if (this.zIndexStackInstance && !!this.$refs.widgetWrapper)
-		{
-			this.zIndexStackInstance.register(this.$refs.widgetWrapper);
-		}
-	},
-	beforeDestroy()
-	{
-		if (this.zIndexStackInstance)
-		{
-			this.zIndexStackInstance.unregister(this.$refs.widgetWrapper);
-		}
-		document.removeEventListener('keydown', this.onWindowKeyDown);
-		if(!Utils.device.isMobile() && !this.widget.common.pageMode)
-		{
-			window.removeEventListener('resize', this.getAvailableSpaceFunc);
-		}
-		EventEmitter.unsubscribe(WidgetEventType.requestShowForm, this.onRequestShowForm);
-
-		this.onTextareaDragEventRemove();
+			// welcome form
+			welcomeFormFilled: false,
+			// multi dialog
+			startNewChatMode: false,
+		};
 	},
 	computed:
 	{
@@ -105,7 +63,12 @@ BitrixVue.component('bx-livechat',
 
 		showTextarea()
 		{
-			const crmFormsSettings = this.widget.common.crmFormsSettings;
+			if (this.widget.common.isCreateSessionMode)
+			{
+				return this.startNewChatMode;
+			}
+
+			const {crmFormsSettings} = this.widget.common;
 
 			// show if we dont use welcome form
 			if (!crmFormsSettings.useWelcomeForm || !crmFormsSettings.welcomeFormId)
@@ -114,130 +77,108 @@ BitrixVue.component('bx-livechat',
 			}
 			else
 			{
-				// show if we use welcome form with delay
-				if (crmFormsSettings.welcomeFormDelay)
-				{
-					return true;
-				}
-				else
-				{
-					return this.welcomeFormFilled;
-				}
+				// show if we use welcome form with delay, otherwise check if it was filled
+				return crmFormsSettings.welcomeFormDelay ? true : this.welcomeFormFilled;
 			}
 		},
+		// for welcome CRM-form before dialog start
 		showWelcomeForm()
 		{
-			//we are using welcome form, it has delay and it was not already filled
+			//we are using welcome form, it doesnt have delay and it was not already filled
 			return this.widget.common.crmFormsSettings.useWelcomeForm
 				&& !this.widget.common.crmFormsSettings.welcomeFormDelay
 				&& this.widget.common.crmFormsSettings.welcomeFormId
-				&& !this.welcomeFormFilled
+				&& !this.welcomeFormFilled;
 		},
 		textareaHeightStyle()
 		{
-			return {flex: '0 0 '+this.textareaHeight+'px'};
+			return {flex: `0 0 ${this.textareaHeight}px`};
 		},
 		textareaBottomMargin()
 		{
-			if (!this.widget.common.copyright && !this.isBottomLocation)
+			if (!this.widget.common.copyright && !this.isBottomLocation())
 			{
 				return {marginBottom: '5px'};
 			}
 			return '';
 		},
-		widgetBaseSizes()
-		{
-			return {
-				width: this.widgetBaseWidth,
-				height: this.widgetBaseHeight,
-			}
-		},
 		widgetHeightStyle()
 		{
-			if(Utils.device.isMobile() || this.widget.common.pageMode)
+			if (Utils.device.isMobile() || this.widget.common.pageMode)
 			{
 				return;
 			}
 
-			if (this.widgetAvailableHeight < this.widgetBaseSizes.height || this.widgetAvailableHeight < this.widgetCurrentHeight)
+			if (this.widgetAvailableHeight < WidgetBaseSize.height || this.widgetAvailableHeight < this.widgetCurrentHeight)
 			{
-				this.widgetCurrentHeight = Math.max(this.widgetAvailableHeight, this.widgetMinimumHeight);
+				this.widgetCurrentHeight = Math.max(this.widgetAvailableHeight, WidgetMinimumSize.height);
 			}
 
-			return this.widgetCurrentHeight+'px';
+			return `${this.widgetCurrentHeight}px`;
 		},
 		widgetWidthStyle()
 		{
-			if(Utils.device.isMobile() || this.widget.common.pageMode)
+			if (Utils.device.isMobile() || this.widget.common.pageMode)
 			{
 				return;
 			}
 
-			if (this.widgetAvailableWidth < this.widgetBaseSizes.width || this.widgetAvailableWidth < this.widgetCurrentWidth)
+			if (this.widgetAvailableWidth < WidgetBaseSize.width || this.widgetAvailableWidth < this.widgetCurrentWidth)
 			{
-				this.widgetCurrentWidth = Math.max(this.widgetAvailableWidth, this.widgetMinimumWidth);
+				this.widgetCurrentWidth = Math.max(this.widgetAvailableWidth, WidgetMinimumSize.width);
 			}
 
-			return this.widgetCurrentWidth+'px';
+			return `${this.widgetCurrentWidth}px`;
 		},
 		userSelectStyle()
 		{
-			return this.widgetDrag ? 'none' : 'auto';
+			return this.widgetIsResizing ? 'none' : 'auto';
 		},
-		isBottomLocation()
+		widgetMobileDisabled()
 		{
-			return [LocationType.bottomLeft, LocationType.bottomMiddle, LocationType.bottomRight].includes(this.widget.common.location);
-		},
-		isLeftLocation()
-		{
-			return [LocationType.bottomLeft, LocationType.topLeft, LocationType.topMiddle].includes(this.widget.common.location);
-		},
-		localize()
-		{
-			return BitrixVue.getFilteredPhrases('BX_LIVECHAT_', this);
-		},
-		widgetMobileDisabled(state)
-		{
-			if (state.application.device.type === DeviceType.mobile)
+			if (this.application.device.type !== DeviceType.mobile)
 			{
-				if (navigator.userAgent.toString().includes('iPad'))
-				{
-				}
-				else if (state.application.device.orientation === DeviceOrientation.horizontal)
-				{
-					if (navigator.userAgent.toString().includes('iPhone'))
-					{
-						return true;
-					}
-					else
-					{
-						return !(typeof window.screen === 'object' && window.screen.availHeight >= 800);
-					}
-				}
+				return false;
 			}
 
-			return false;
+			if (this.application.device.orientation !== DeviceOrientation.horizontal)
+			{
+				return false;
+			}
+
+			if (navigator.userAgent.toString().includes('iPhone'))
+			{
+				return true;
+			}
+			else
+			{
+				return (typeof window.screen !== 'object') || window.screen.availHeight < 800;
+			}
 		},
-		widgetClassName(state)
+		widgetPositionClass()
 		{
-			let className = ['bx-livechat-wrapper'];
+			const className = [];
 
-			className.push('bx-livechat-show');
-
-			if (state.widget.common.pageMode)
+			if (this.widget.common.pageMode)
 			{
 				className.push('bx-livechat-page-mode');
 			}
 			else
 			{
-				className.push('bx-livechat-position-'+LocationStyle[state.widget.common.location]);
+				className.push(`bx-livechat-position-${LocationStyle[this.widget.common.location]}`);
 			}
 
-			if (state.application.common.languageId === LanguageType.russian)
+			return className;
+		},
+		widgetLanguageClass()
+		{
+			const className = [];
+
+			if (this.application.common.languageId === LanguageType.russian)
 			{
 				className.push('bx-livechat-logo-ru');
 			}
-			else if (state.application.common.languageId === LanguageType.ukraine)
+			else if (this.application.common.languageId === LanguageType.ukraine)
 			{
 				className.push('bx-livechat-logo-ua');
 			}
@@ -246,28 +187,11 @@ BitrixVue.component('bx-livechat',
 				className.push('bx-livechat-logo-en');
 			}
 
-			if (!state.widget.common.online)
-			{
-				className.push('bx-livechat-offline-state');
-			}
-
-			if (state.widget.common.dragged)
-			{
-				className.push('bx-livechat-drag-n-drop');
-			}
-
-			if (state.widget.common.dialogStart)
-			{
-				className.push('bx-livechat-chat-start');
-			}
-
-			if (
-				state.widget.dialog.operator.name
-				&& !(state.application.device.type === DeviceType.mobile && state.application.device.orientation === DeviceOrientation.horizontal)
-			)
-			{
-				className.push('bx-livechat-has-operator');
-			}
+			return className;
+		},
+		widgetPlatformClass()
+		{
+			const className = [];
 
 			if (Utils.device.isMobile())
 			{
@@ -291,16 +215,51 @@ BitrixVue.component('bx-livechat',
 				className.push('bx-livechat-custom-scroll');
 			}
 
-			if (state.widget.common.styles.backgroundColor && Utils.isDarkColor(state.widget.common.styles.iconColor))
+			return className;
+		},
+		widgetClassName()
+		{
+			const className = [];
+
+			className.push(...this.widgetPositionClass, ...this.widgetLanguageClass, ...this.widgetPlatformClass);
+
+			if (!this.widget.common.online)
+			{
+				className.push('bx-livechat-offline-state');
+			}
+
+			if (this.widget.common.dragged)
+			{
+				className.push('bx-livechat-drag-n-drop');
+			}
+
+			if (this.widget.common.dialogStart)
+			{
+				className.push('bx-livechat-chat-start');
+			}
+
+			if (
+				this.widget.dialog.operator.name
+				&& !(this.application.device.type === DeviceType.mobile && this.application.device.orientation === DeviceOrientation.horizontal)
+			)
+			{
+				className.push('bx-livechat-has-operator');
+			}
+
+			if (this.widget.common.styles.backgroundColor && Utils.isDarkColor(this.widget.common.styles.iconColor))
 			{
 				className.push('bx-livechat-bright-header');
 			}
 
-			return className.join(' ');
+			return className;
 		},
 		showMessageDialog()
 		{
 			return this.messageCollection.length > 0;
+		},
+		localize()
+		{
+			return BitrixVue.getFilteredPhrases('BX_LIVECHAT_', this);
 		},
 		...Vuex.mapState({
 			widget: state => state.widget,
@@ -309,545 +268,210 @@ BitrixVue.component('bx-livechat',
 			messageCollection: state => state.messages.collection[state.application.dialog.chatId]
 		})
 	},
-	watch:
+	created()
 	{
-		sessionClose(value)
+		Logger.warn('Livechat component created');
+		// we need to wait for initialization and widget opening to init logic handlers
+		this.onCreated().then(() => {
+			this.subscribeToEvents();
+			this.initEventHandlers();
+		});
+	},
+	mounted()
+	{
+		if (this.widget.user.id > 0)
 		{
-			Logger.log('sessionClose change', value);
-		},
-		//Redefined for uploadFile mixin
-		dialogInited(newValue)
-		{
-			return false;
+			this.welcomeFormFilled = true;
 		}
+		this.registerZIndex();
+	},
+	beforeDestroy()
+	{
+		this.unsubscribeEvents();
+		this.destroyHandlers();
+		this.unregisterZIndex();
 	},
 	methods:
 	{
-		getRestClient()
+		// region initialization
+		initEventHandlers()
 		{
-			return this.$Bitrix.RestClient.get();
+			this.sendMessageHandler = new WidgetSendMessageHandler(this.$Bitrix);
+			this.textareaHandler = new WidgetTextareaHandler(this.$Bitrix);
+			this.textareaUploadHandler = new WidgetTextareaUploadHandler(this.$Bitrix);
+			this.readingHandler = new WidgetReadingHandler(this.$Bitrix);
+			this.consentHandler = new WidgetConsentHandler(this.$Bitrix);
+			this.formHandler = new WidgetFormHandler(this.$Bitrix);
+			this.textareaDragHandler = this.getTextareaDragHandler();
+			this.resizeHandler = this.getWidgetResizeHandler();
+			this.reactionHandler = new WidgetReactionHandler(this.$Bitrix);
+			this.historyHandler = new WidgetHistoryHandler(this.$Bitrix);
+			this.dialogActionHandler = new WidgetDialogActionHandler(this.$Bitrix);
 		},
-		getApplication()
+		destroyHandlers()
 		{
-			return this.$Bitrix.Application.get();
+			this.sendMessageHandler.destroy();
+			this.textareaHandler.destroy();
+			this.textareaUploadHandler.destroy();
+			this.readingHandler.destroy();
+			this.consentHandler.destroy();
+			this.formHandler.destroy();
+			this.textareaDragHandler.destroy();
+			this.resizeHandler.destroy();
+			this.reactionHandler.destroy();
+			this.historyHandler.destroy();
+			this.dialogActionHandler.destroy();
 		},
-		onSendMessage({data: event})
+		subscribeToEvents()
 		{
-			event.focus = event.focus !== false;s
+			document.addEventListener('keydown', this.onWindowKeyDown);
 
-			//hide smiles
-			if (this.widget.common.showForm === FormType.smile)
+			if (!Utils.device.isMobile() && !this.widget.common.pageMode)
 			{
-				this.$store.commit('widget/common', {showForm: FormType.none});
+				this.getAvailableSpaceFunc = Utils.throttle(this.getAvailableSpace, 50);
+				window.addEventListener('resize', this.getAvailableSpaceFunc);
 			}
-
-			//show consent window if needed
-			if (!this.widget.dialog.userConsent && this.widget.common.consentUrl)
-			{
-				if (event.text)
-				{
-					this.storedMessage = event.text;
-				}
-				this.showConsentWidow();
-
-				return false;
-			}
-
-			event.text = event.text? event.text: this.storedMessage;
-			if (!event.text)
-			{
-				return false;
-			}
-
-			this.hideForm();
-			this.getApplication().addMessage(event.text);
-
-			if (event.focus)
-			{
-				EventEmitter.emit(EventType.textarea.setFocus);
-			}
-
-			return true;
 		},
-		close(event)
+		unsubscribeEvents()
 		{
-			if (this.widget.common.pageMode)
-			{
-				return false;
-			}
+			document.removeEventListener('keydown', this.onWindowKeyDown);
 
-			this.onBeforeClose();
-			this.$store.commit('widget/common', {showed: false});
-		},
-		getAvailableSpace()
-		{
-			if (this.isBottomLocation)
+			if (!Utils.device.isMobile() && !this.widget.common.pageMode)
 			{
-				let bottomPosition = this.$refs.widgetWrapper.getBoundingClientRect().bottom;
-				let widgetBottomMargin = window.innerHeight - bottomPosition;
-				this.widgetAvailableHeight = window.innerHeight - this.widgetMargin - widgetBottomMargin;
+				window.removeEventListener('resize', this.getAvailableSpaceFunc);
+			}
+		},
+		initMobileEnv(): Promise
+		{
+			const metaTags = document.head.querySelectorAll('meta');
+			const viewPortMetaSiteNode = [...metaTags].find(element => element.name === 'viewport');
+
+			if (viewPortMetaSiteNode)
+			{
+				// save tag and remove it from DOM
+				this.viewPortMetaSiteNode = viewPortMetaSiteNode;
+				this.viewPortMetaSiteNode.remove();
 			}
 			else
 			{
-				let topPosition = this.$refs.widgetWrapper.getBoundingClientRect().top;
-				this.widgetAvailableHeight = window.innerHeight - this.widgetMargin - topPosition;
+				this.createViewportMeta();
 			}
 
-			this.widgetAvailableWidth = window.innerWidth - this.widgetMargin * 2;
-		},
-		showLikeForm()
-		{
-			if (this.offline)
+			if (!this.viewPortMetaWidgetNode)
 			{
-				return false;
+				this.viewPortMetaWidgetNode = document.createElement('meta');
+				this.viewPortMetaWidgetNode.setAttribute('name', 'viewport');
+				this.viewPortMetaWidgetNode.setAttribute('content', 'width=device-width, initial-scale=1.0, user-scalable=0');
+				document.head.append(this.viewPortMetaWidgetNode);
 			}
 
-			clearTimeout(this.showFormTimeout);
-			if (!this.widget.common.vote.enable)
-			{
-				return false;
-			}
-			if (
-				this.widget.dialog.sessionClose
-				&& this.widget.dialog.userVote !== VoteType.none
-			)
-			{
-				return false;
-			}
-			this.$store.commit('widget/common', {showForm: FormType.like});
-		},
-		onOpenMenu(event)
-		{
-			this.getApplication().getHtmlHistory();
-		},
-		hideForm()
-		{
-			clearTimeout(this.showFormTimeout);
+			document.body.classList.add('bx-livechat-mobile-state');
 
-			if (this.widget.common.showForm !== FormType.none)
+			if (Utils.browser.isSafariBased())
 			{
-				this.$store.commit('widget/common', {showForm: FormType.none});
+				document.body.classList.add('bx-livechat-mobile-safari-based');
+			}
+
+			return new Promise((resolve) => {
+				setTimeout(() => {
+					this.$store.dispatch('widget/show').then(resolve);
+				}, 50);
+			});
+		},
+		createViewportMeta()
+		{
+			let contentWidth = document.body.offsetWidth;
+			if (contentWidth < window.innerWidth)
+			{
+				contentWidth = window.innerWidth;
+			}
+			if (contentWidth < 1024)
+			{
+				contentWidth = 1024;
+			}
+
+			this.viewPortMetaSiteNode = document.createElement('meta');
+			this.viewPortMetaSiteNode.setAttribute('name', 'viewport');
+			this.viewPortMetaSiteNode.setAttribute('content', `width=${contentWidth}, initial-scale=1.0, user-scalable=1`);
+		},
+		removeMobileEnv()
+		{
+			document.body.classList.remove('bx-livechat-mobile-state');
+
+			if (Utils.browser.isSafariBased())
+			{
+				document.body.classList.remove('bx-livechat-mobile-safari-based');
+			}
+
+			if (this.viewPortMetaWidgetNode)
+			{
+				this.viewPortMetaWidgetNode.remove();
+				this.viewPortMetaWidgetNode = null;
+			}
+
+			if (this.viewPortMetaSiteNode)
+			{
+				document.head.append(this.viewPortMetaSiteNode);
+				this.viewPortMetaSiteNode = null;
 			}
 		},
-		showConsentWidow()
+		onCreated(): Promise
 		{
-			this.$store.commit('widget/common', {showConsent: true});
-		},
-		agreeConsentWidow()
-		{
-			this.$store.commit('widget/common', {showConsent: false});
-
-			this.getApplication().sendConsentDecision(true);
-
-			if (this.storedMessage || this.storedFile)
-			{
-				if (this.storedMessage)
+			return new Promise((resolve) => {
+				if (Utils.device.isMobile())
 				{
-					this.onSendMessage({data: {focus: this.application.device.type !== DeviceType.mobile}});
-					this.storedMessage = '';
-				}
-				if (this.storedFile)
-				{
-					this.onTextareaFileSelected();
-					this.storedFile = '';
-				}
-			}
-			else if (this.widget.common.showForm === FormType.none)
-			{
-				EventEmitter.emit(EventType.textarea.setFocus);
-			}
-		},
-		disagreeConsentWidow()
-		{
-			this.$store.commit('widget/common', {showForm : FormType.none});
-			this.$store.commit('widget/common', {showConsent : false});
-
-			this.getApplication().sendConsentDecision(false);
-
-			if (this.storedMessage)
-			{
-				EventEmitter.emit(EventType.textarea.insertText, {
-					text: this.storedMessage,
-					focus: this.application.device.type !== DeviceType.mobile
-				});
-				this.storedMessage = '';
-			}
-			if (this.storedFile)
-			{
-				this.storedFile = '';
-			}
-
-			if (this.application.device.type !== DeviceType.mobile)
-			{
-				EventEmitter.emit(EventType.textarea.setFocus);
-			}
-		},
-		logEvent(name, ...params)
-		{
-			Logger.info(name, ...params);
-		},
-		onCreated()
-		{
-			if(Utils.device.isMobile())
-			{
-				let viewPortMetaSiteNode = Array.from(
-					document.head.getElementsByTagName('meta')
-				).filter(element => element.name === 'viewport')[0];
-
-				if (viewPortMetaSiteNode)
-				{
-					this.viewPortMetaSiteNode = viewPortMetaSiteNode;
-					document.head.removeChild(this.viewPortMetaSiteNode);
+					this.initMobileEnv().then(resolve);
 				}
 				else
 				{
-					let contentWidth = document.body.offsetWidth;
-					if (contentWidth < window.innerWidth)
-					{
-						contentWidth = window.innerWidth;
-					}
-					if (contentWidth < 1024)
-					{
-						contentWidth = 1024;
-					}
+					this.$store.dispatch('widget/show').then(() => {
+						this.widgetCurrentHeight = WidgetBaseSize.height;
+						this.widgetCurrentWidth = WidgetBaseSize.width;
+						this.getAvailableSpace();
 
-					this.viewPortMetaSiteNode = document.createElement('meta');
-					this.viewPortMetaSiteNode.setAttribute('name', 'viewport');
-					this.viewPortMetaSiteNode.setAttribute('content', `width=${contentWidth}, initial-scale=1.0, user-scalable=1`);
+						// restore widget size from cache
+						this.widgetCurrentHeight = this.widget.common.widgetHeight || this.widgetCurrentHeight;
+						this.widgetCurrentWidth = this.widget.common.widgetWidth || this.widgetCurrentWidth;
+
+						resolve();
+					});
 				}
 
-				if (!this.viewPortMetaWidgetNode)
-				{
-					this.viewPortMetaWidgetNode = document.createElement('meta');
-					this.viewPortMetaWidgetNode.setAttribute('name', 'viewport');
-					this.viewPortMetaWidgetNode.setAttribute('content', 'width=device-width, initial-scale=1.0, user-scalable=0');
-					document.head.appendChild(this.viewPortMetaWidgetNode);
-				}
-
-				document.body.classList.add('bx-livechat-mobile-state');
-
-				if (Utils.browser.isSafariBased())
-				{
-					document.body.classList.add('bx-livechat-mobile-safari-based');
-				}
-
-				setTimeout(() => {
-					this.$store.dispatch('widget/show');
-				}, 50);
-			}
-			else
-			{
-				this.$store.dispatch('widget/show').then(() => {
-					this.widgetCurrentHeight = this.widgetBaseSizes.height;
-					this.widgetCurrentWidth = this.widgetBaseSizes.width;
-					this.getAvailableSpace();
-
-					this.widgetCurrentHeight = this.widget.common.widgetHeight || this.widgetCurrentHeight;
-					this.widgetCurrentWidth = this.widget.common.widgetWidth || this.widgetCurrentWidth;
-				});
-			}
-
-			this.textareaHeight = this.widget.common.textareaHeight || this.textareaHeight;
-
-			this.$store.commit('files/initCollection', {chatId: this.getApplication().getChatId()});
-			this.$store.commit('messages/initCollection', {chatId: this.getApplication().getChatId()});
-			this.$store.commit('dialogues/initCollection', {dialogId: this.getApplication().getDialogId(), fields: {
-				entityType: 'LIVECHAT',
-				type: 'livechat'
-			}});
+				// restore textarea size from cache
+				this.textareaHeight = this.widget.common.textareaHeight || this.textareaHeight;
+				this.initCollections();
+			});
 		},
+		initCollections()
+		{
+			this.$store.commit('files/initCollection', { chatId: this.getApplication().getChatId() });
+			this.$store.commit('messages/initCollection', { chatId: this.getApplication().getChatId() });
+			this.$store.commit('dialogues/initCollection', {
+				dialogId: this.getApplication().getDialogId(),
+				fields: {
+					entityType: 'LIVECHAT',
+					type: 'livechat'
+				}
+			});
+		},
+		// endregion initialization
+		// region events
 		onBeforeClose()
 		{
-			if(Utils.device.isMobile())
+			if (Utils.device.isMobile())
 			{
-				document.body.classList.remove('bx-livechat-mobile-state');
-
-				if (Utils.browser.isSafariBased())
-				{
-					document.body.classList.remove('bx-livechat-mobile-safari-based');
-				}
-
-				if (this.viewPortMetaWidgetNode)
-				{
-					document.head.removeChild(this.viewPortMetaWidgetNode);
-					this.viewPortMetaWidgetNode = null;
-				}
-
-				if (this.viewPortMetaSiteNode)
-				{
-					document.head.appendChild(this.viewPortMetaSiteNode);
-					this.viewPortMetaSiteNode = null;
-				}
+				this.removeMobileEnv();
 			}
 		},
 		onAfterClose()
 		{
 			this.getApplication().close();
 		},
-		onRequestShowForm({data: event})
+		onOpenMenu()
 		{
-			clearTimeout(this.showFormTimeout);
-			if (event.type === FormType.like)
-			{
-				if (event.delayed)
-				{
-					this.showFormTimeout = setTimeout(() => {
-						this.showLikeForm();
-					}, 5000);
-				}
-				else
-				{
-					this.showLikeForm();
-				}
-			}
+			this.historyHandler.getHtmlHistory();
 		},
-		onDialogRequestHistory(event)
-		{
-			this.getApplication().getDialogHistory(event.lastId);
-		},
-		onDialogRequestUnread(event)
-		{
-			this.getApplication().getDialogUnread(event.lastId);
-		},
-		onClickOnUserName({data: event})
-		{
-			// TODO name push to auto-replace mention holder - User Name -> [USER=274]User Name[/USER]
-			EventEmitter.emit(EventType.textarea.insertText, {text: event.user.name + ', '});
-		},
-		onClickOnUploadCancel({data: event})
-		{
-			this.getApplication().cancelUploadFile(event.file.id);
-		},
-		onClickOnKeyboardButton({data: event})
-		{
-			this.getApplication().execMessageKeyboardCommand(event);
-		},
-		onClickOnCommand({data: event})
-		{
-			if (event.type === 'put')
-			{
-				EventEmitter.emit(EventType.textarea.insertText, {text: event.value + ' '});
-			}
-			else if (event.type === 'send')
-			{
-				this.getApplication().addMessage(event.value);
-			}
-			else
-			{
-				Logger.warn('Unprocessed command', event);
-			}
-		},
-		onClickOnMessageMenu({data: event})
-		{
-			Logger.warn('Message menu:', event);
-		},
-		onClickOnMessageRetry({data: event})
-		{
-			Logger.warn('Message retry:', event);
-			this.getApplication().retrySendMessage(event.message);
-		},
-		onReadMessage({data: event})
-		{
-			this.getApplication().readMessage(event.id);
-		},
-		onSetMessageReaction({data: event})
-		{
-			this.getApplication().reactMessage(event.message.id, event.reaction);
-		},
-		onClickOnDialog({data: event})
-		{
-			if (this.widget.common.showForm !== FormType.none)
-			{
-				this.$store.commit('widget/common', {showForm: FormType.none});
-			}
-		},
-		onTextareaKeyUp({data: event})
-		{
-			if (
-				this.widget.common.watchTyping
-				&& this.widget.dialog.sessionId
-				&& !this.widget.dialog.sessionClose
-				&& this.widget.dialog.operator.id
-				&& this.widget.dialog.operatorChatId
-				&& this.$Bitrix.PullClient.get().isPublishingEnabled()
-			)
-			{
-				let infoString = md5(
-					this.widget.dialog.sessionId
-					+ '/' + this.application.dialog.chatId
-					+ '/' + this.widget.user.id
-				);
-				this.$Bitrix.PullClient.get().sendMessage(
-					[this.widget.dialog.operator.id],
-					'imopenlines',
-					'linesMessageWrite',
-					{
-						text: event.text,
-						infoString,
-						operatorChatId: this.widget.dialog.operatorChatId
-					}
-				);
-			}
-		},
-		onTextareaFocus({data: event})
-		{
-			if (
-				this.widget.common.copyright &&
-				this.application.device.type === DeviceType.mobile
-			)
-			{
-				this.widget.common.copyright = false;
-			}
-			if (Utils.device.isMobile())
-			{
-				clearTimeout(this.onTextareaFocusScrollTimeout);
-				this.onTextareaFocusScrollTimeout = setTimeout(() => {
-					document.addEventListener('scroll', this.onWindowScroll);
-				}, 1000);
-			}
-			this.textareaFocused = true;
-		},
-		onTextareaBlur({data: event})
-		{
-			if (!this.widget.common.copyright && this.widget.common.copyright !== this.getApplication().copyright)
-			{
-				this.widget.common.copyright = this.getApplication().copyright;
-				this.$nextTick(() => {
-					EventEmitter.emit(EventType.dialog.scrollToBottom, {chatId: this.chatId, force: true});
-				});
-			}
-			if (Utils.device.isMobile())
-			{
-				clearTimeout(this.onTextareaFocusScrollTimeout);
-				document.removeEventListener('scroll', this.onWindowScroll);
-			}
-
-			this.textareaFocused = false;
-		},
-		onTextareaStartDrag(event)
-		{
-			if (this.textareaDrag)
-			{
-				return;
-			}
-
-			Logger.log('Livechat: textarea drag started');
-
-			this.textareaDrag = true;
-
-			event = event.changedTouches ? event.changedTouches[0] : event;
-
-			this.textareaDragCursorStartPoint = event.clientY;
-			this.textareaDragHeightStartPoint = this.textareaHeight;
-
-			this.onTextareaDragEventAdd();
-
-			EventEmitter.emit(EventType.textarea.setBlur, true);
-		},
-		onTextareaContinueDrag(event)
-		{
-			if (!this.textareaDrag)
-			{
-				return;
-			}
-
-			event = event.changedTouches ? event.changedTouches[0] : event;
-
-			this.textareaDragCursorControlPoint = event.clientY;
-
-			let textareaHeight = Math.max(
-				Math.min(this.textareaDragHeightStartPoint + this.textareaDragCursorStartPoint - this.textareaDragCursorControlPoint, this.textareaMaximumHeight)
-			, this.textareaMinimumHeight);
-
-			Logger.log('Livechat: textarea drag', 'new: '+textareaHeight, 'curr: '+this.textareaHeight);
-
-			if (this.textareaHeight !== textareaHeight)
-			{
-				this.textareaHeight = textareaHeight;
-			}
-		},
-		onTextareaStopDrag()
-		{
-			if (!this.textareaDrag)
-			{
-				return;
-			}
-
-			Logger.log('Livechat: textarea drag ended');
-
-			this.textareaDrag = false;
-
-			this.onTextareaDragEventRemove();
-
-			this.$store.commit('widget/common', {textareaHeight: this.textareaHeight});
-			EventEmitter.emit(EventType.dialog.scrollToBottom, {chatId: this.chatId, force: true});
-		},
-		onTextareaDragEventAdd()
-		{
-			document.addEventListener('mousemove', this.onTextareaContinueDrag);
-			document.addEventListener('touchmove', this.onTextareaContinueDrag);
-			document.addEventListener('touchend', this.onTextareaStopDrag);
-			document.addEventListener('mouseup', this.onTextareaStopDrag);
-			document.addEventListener('mouseleave', this.onTextareaStopDrag);
-		},
-		onTextareaDragEventRemove()
-		{
-			document.removeEventListener('mousemove', this.onTextareaContinueDrag);
-			document.removeEventListener('touchmove', this.onTextareaContinueDrag);
-			document.removeEventListener('touchend', this.onTextareaStopDrag);
-			document.removeEventListener('mouseup', this.onTextareaStopDrag);
-			document.removeEventListener('mouseleave', this.onTextareaStopDrag);
-		},
-		onTextareaFileSelected({data: event} = {})
-		{
-			let fileInputEvent = null;
-			if (event && event.fileChangeEvent && event.fileChangeEvent.target.files.length > 0)
-			{
-				fileInputEvent = event.fileChangeEvent;
-			}
-			else
-			{
-				fileInputEvent =  this.storedFile;
-			}
-
-			if (!fileInputEvent)
-			{
-				return false;
-			}
-
-			if (!this.widget.dialog.userConsent && this.widget.common.consentUrl)
-			{
-				this.storedFile = event.fileChangeEvent;
-				this.showConsentWidow();
-
-				return false;
-			}
-
-			this.getApplication().uploadFile(fileInputEvent);
-		},
-		onTextareaAppButtonClick({data: event})
-		{
-			if (event.appId === FormType.smile)
-			{
-				if (this.widget.common.showForm === FormType.smile)
-				{
-					this.$store.commit('widget/common', {showForm: FormType.none});
-				}
-				else
-				{
-					this.$store.commit('widget/common', {showForm: FormType.smile});
-				}
-			}
-			else
-			{
-				EventEmitter.emit(EventType.textarea.setFocus);
-			}
-		},
-		onTextareaEdit({data: event})
-		{
-			this.logEvent('edit message', event);
-		},
-		onPullRequestConfig(event)
+		onPullRequestConfig()
 		{
 			this.getApplication().recoverPullConnection();
 		},
@@ -861,131 +485,38 @@ BitrixVue.component('bx-livechat',
 		},
 		onWidgetStartDrag(event)
 		{
-			if (this.widgetDrag)
-			{
-				return;
-			}
-
-			this.widgetDrag = true;
-
-			event = event.changedTouches ? event.changedTouches[0] : event;
-
-			this.widgetDragCursorStartPointY = event.clientY;
-			this.widgetDragCursorStartPointX = event.clientX;
-			this.widgetDragHeightStartPoint = this.widgetCurrentHeight;
-			this.widgetDragWidthStartPoint = this.widgetCurrentWidth;
-
-			this.onWidgetDragEventAdd();
-		},
-		onWidgetContinueDrag(event)
-		{
-			if (!this.widgetDrag)
-			{
-				return;
-			}
-
-			event = event.changedTouches ? event.changedTouches[0] : event;
-
-			this.widgetDragCursorControlPointY = event.clientY;
-			this.widgetDragCursorControlPointX = event.clientX;
-
-			let widgetHeight = 0;
-
-			if (this.isBottomLocation)
-			{
-				widgetHeight = Math.max(
-					Math.min(this.widgetDragHeightStartPoint + this.widgetDragCursorStartPointY - this.widgetDragCursorControlPointY, this.widgetAvailableHeight),
-					this.widgetMinimumHeight
-				);
-			}
-			else
-			{
-				widgetHeight = Math.max(
-					Math.min(this.widgetDragHeightStartPoint - this.widgetDragCursorStartPointY + this.widgetDragCursorControlPointY, this.widgetAvailableHeight),
-					this.widgetMinimumHeight
-				);
-			}
-
-			let widgetWidth = 0;
-			if (this.isLeftLocation)
-			{
-				widgetWidth = Math.max(
-					Math.min(this.widgetDragWidthStartPoint - this.widgetDragCursorStartPointX + this.widgetDragCursorControlPointX, this.widgetAvailableWidth),
-					this.widgetMinimumWidth
-				);
-			}
-			else
-			{
-				widgetWidth = Math.max(
-					Math.min(this.widgetDragWidthStartPoint + this.widgetDragCursorStartPointX - this.widgetDragCursorControlPointX, this.widgetAvailableWidth),
-					this.widgetMinimumWidth
-				);
-			}
-
-			if (this.widgetCurrentHeight !== widgetHeight)
-			{
-				this.widgetCurrentHeight = widgetHeight;
-			}
-
-			if (this.widgetCurrentWidth !== widgetWidth)
-			{
-				this.widgetCurrentWidth = widgetWidth;
-			}
-		},
-		onWidgetStopDrag()
-		{
-			if (!this.widgetDrag)
-			{
-				return;
-			}
-
-			this.widgetDrag = false;
-
-			this.onWidgetDragEventRemove();
-
-			this.$store.commit('widget/common', {widgetHeight: this.widgetCurrentHeight, widgetWidth: this.widgetCurrentWidth});
-		},
-		onWidgetDragEventAdd()
-		{
-			document.addEventListener('mousemove', this.onWidgetContinueDrag);
-			document.addEventListener('mouseup', this.onWidgetStopDrag);
-			document.addEventListener('mouseleave', this.onWidgetStopDrag);
-		},
-		onWidgetDragEventRemove()
-		{
-			document.removeEventListener('mousemove', this.onWidgetContinueDrag);
-			document.removeEventListener('mouseup', this.onWidgetStopDrag);
-			document.removeEventListener('mouseleave', this.onWidgetStopDrag);
+			this.resizeHandler.startResize(event, this.widgetCurrentHeight, this.widgetCurrentWidth);
+			this.widgetIsResizing = true;
+			EventEmitter.emit(EventType.textarea.setBlur, true);
 		},
 		onWindowKeyDown(event)
 		{
-			if (event.keyCode === 27)
+			// not escape
+			if (event.keyCode !== 27)
 			{
-				if (this.widget.common.showForm !== FormType.none)
-				{
-					this.$store.commit('widget/common', {showForm: FormType.none});
-				}
-				else if (this.widget.common.showConsent)
-				{
-					this.disagreeConsentWidow();
-				}
-				else
-				{
-					this.close();
-				}
-
-				event.preventDefault();
-				event.stopPropagation();
-
-				EventEmitter.emit(EventType.textarea.setFocus);
+				return;
 			}
-		},
-		onWindowScroll(event)
-		{
-			clearTimeout(this.onWindowScrollTimeout);
-			this.onWindowScrollTimeout = setTimeout(() => {
-				EventEmitter.emit(EventType.textarea.setBlur, true);
-			}, 50);
+
+			// hide form
+			if (this.widget.common.showForm !== FormType.none)
+			{
+				this.$store.commit('widget/common', {showForm: FormType.none});
+			}
+			// decline consent
+			else if (this.widget.common.showConsent)
+			{
+				EventEmitter.emit(WidgetEventType.declineConsent);
+			}
+			// close widget
+			else
+			{
+				this.close();
+			}
+
+			event.preventDefault();
+			event.stopPropagation();
+
+			EventEmitter.emit(EventType.textarea.setFocus);
 		},
 		onWelcomeFormSendSuccess()
 		{
@@ -995,15 +526,145 @@ BitrixVue.component('bx-livechat',
 		{
 			console.error('onWelcomeFormSendError', error);
 			this.welcomeFormFilled = true;
+		},
+		onTextareaStartDrag(event)
+		{
+			this.textareaDragHandler.onStartDrag(event, this.textareaHeight);
+			EventEmitter.emit(EventType.textarea.setBlur, true);
+		},
+		openDialogList()
+		{
+			this.$store.commit('widget/common', {isCreateSessionMode: !this.widget.common.isCreateSessionMode});
+			this.startNewChatMode = false;
+		},
+		onStartNewChat()
+		{
+			this.startNewChatMode = true;
+		},
+		// endregion events
+		// region helpers
+		getApplication()
+		{
+			return this.$Bitrix.Application.get();
+		},
+		close()
+		{
+			if (this.widget.common.pageMode)
+			{
+				return false;
+			}
+
+			this.onBeforeClose();
+			this.$store.commit('widget/common', {showed: false});
+		},
+		// how much width and height we have for resizing
+		getAvailableSpace()
+		{
+			const widgetMargin = 50;
+			if (this.isBottomLocation())
+			{
+				const bottomPosition = this.$refs.widgetWrapper.getBoundingClientRect().bottom;
+				const widgetBottomMargin = window.innerHeight - bottomPosition;
+				this.widgetAvailableHeight = window.innerHeight - widgetMargin - widgetBottomMargin;
+			}
+			else
+			{
+				const topPosition = this.$refs.widgetWrapper.getBoundingClientRect().top;
+				this.widgetAvailableHeight = window.innerHeight - widgetMargin - topPosition;
+			}
+
+			this.widgetAvailableWidth = window.innerWidth - widgetMargin * 2;
+
+			if (this.resizeHandler)
+			{
+				this.resizeHandler.setAvailableWidth(this.widgetAvailableWidth);
+				this.resizeHandler.setAvailableHeight(this.widgetAvailableHeight);
+			}
+		},
+		getTextareaDragHandler(): TextareaDragHandler
+		{
+			return new TextareaDragHandler({
+				[TextareaDragHandler.events.onHeightChange]: ({data}) => {
+					const {newHeight} = data;
+					if (this.textareaHeight !== newHeight)
+					{
+						this.textareaHeight = newHeight;
+					}
+				},
+				[TextareaDragHandler.events.onStopDrag]: () => {
+					this.$store.commit('widget/common', {textareaHeight: this.textareaHeight});
+					EventEmitter.emit(EventType.dialog.scrollToBottom, {chatId: this.chatId, force: true});
+				}
+			});
+		},
+		getWidgetResizeHandler(): WidgetResizeHandler
+		{
+			return new WidgetResizeHandler({
+				widgetLocation: this.widget.common.location,
+				availableWidth: this.widgetAvailableWidth,
+				availableHeight: this.widgetAvailableHeight,
+				events: {
+					[WidgetResizeHandler.events.onSizeChange]: ({data}) => {
+						const {newHeight, newWidth} = data;
+						if (this.widgetCurrentHeight !== newHeight)
+						{
+							this.widgetCurrentHeight = newHeight;
+						}
+						if (this.widgetCurrentWidth !== newWidth)
+						{
+							this.widgetCurrentWidth = newWidth;
+						}
+					},
+					[WidgetResizeHandler.events.onStopResize]: () => {
+						this.widgetIsResizing = false;
+						this.$store.commit('widget/common', {widgetHeight: this.widgetCurrentHeight, widgetWidth: this.widgetCurrentWidth});
+					}
+				}
+			});
+		},
+		isBottomLocation()
+		{
+			return [LocationType.bottomLeft, LocationType.bottomMiddle, LocationType.bottomRight].includes(this.widget.common.location);
+		},
+		isPageMode()
+		{
+			return this.widget.common.pageMode;
+		},
+		registerZIndex()
+		{
+			this.zIndexStackInstance = this.$Bitrix.Data.get('zIndexStack');
+			if (this.zIndexStackInstance && !!this.$refs.widgetWrapper)
+			{
+				this.zIndexStackInstance.register(this.$refs.widgetWrapper);
+			}
+		},
+		unregisterZIndex()
+		{
+			if (this.zIndexStackInstance)
+			{
+				this.zIndexStackInstance.unregister(this.$refs.widgetWrapper);
+			}
 		}
+		// endregion helpers
 	},
 	// language=Vue
 	template: `
 		<transition enter-active-class="bx-livechat-show" leave-active-class="bx-livechat-close" @after-leave="onAfterClose">
-			<div :class="widgetClassName" v-if="widget.common.showed" :style="{height: widgetHeightStyle, width: widgetWidthStyle, userSelect: userSelectStyle}" ref="widgetWrapper">
+			<div
+				:class="widgetClassName"
+				v-if="widget.common.showed"
+				:style="{height: widgetHeightStyle, width: widgetWidthStyle, userSelect: userSelectStyle}"
+				class="bx-livechat-wrapper bx-livechat-show"
+				ref="widgetWrapper"
+			>
 				<div class="bx-livechat-box">
-					<div v-if="isBottomLocation" class="bx-livechat-widget-resize-handle" @mousedown="onWidgetStartDrag"></div>
-					<bx-livechat-head :isWidgetDisabled="widgetMobileDisabled" @like="showLikeForm" @openMenu="onOpenMenu" @close="close"/>
+					<div v-if="isBottomLocation() && !isPageMode()" class="bx-livechat-widget-resize-handle" @mousedown="onWidgetStartDrag"></div>
+					<bx-livechat-head 
+						:isWidgetDisabled="widgetMobileDisabled" 
+						@openMenu="onOpenMenu" 
+						@close="close"
+						@openDialogList="openDialogList"
+					/>
 					<template v-if="widgetMobileDisabled">
 						<bx-livechat-body-orientation-disabled/>
 					</template>
@@ -1034,7 +695,10 @@ BitrixVue.component('bx-livechat',
 						<template v-if="widget.common.dialogStart">
 							<bx-pull-component-status :canReconnect="true" @reconnect="onPullRequestConfig"/>
 							<div :class="['bx-livechat-body', {'bx-livechat-body-with-message': showMessageDialog}]" key="with-message">
-								<template v-if="showMessageDialog">
+								<template v-if="widget.common.isCreateSessionMode">
+									<bx-livechat-dialogues-list @startNewChat="onStartNewChat"/>
+								</template>
+								<template v-else-if="showMessageDialog">
 									<div class="bx-livechat-dialog">
 										<bx-im-component-dialog
 											:userId="application.common.userId"
@@ -1076,7 +740,7 @@ BitrixVue.component('bx-livechat',
 								</keep-alive>
 							</div>
 						</template>
-						<div v-if="showTextarea" class="bx-livechat-textarea" :style="[textareaHeightStyle, textareaBottomMargin]" ref="textarea">
+						<div v-if="showTextarea || startNewChatMode" class="bx-livechat-textarea" :style="[textareaHeightStyle, textareaBottomMargin]" ref="textarea">
 							<div class="bx-livechat-textarea-resize-handle" @mousedown="onTextareaStartDrag" @touchstart="onTextareaStartDrag"></div>
 							<bx-im-component-textarea
 								:siteId="application.common.siteId"
@@ -1094,7 +758,7 @@ BitrixVue.component('bx-livechat',
 						<div v-if="!widget.common.copyright && !isBottomLocation" class="bx-livechat-nocopyright-resize-wrap" style="position: relative;">
 							<div class="bx-livechat-widget-resize-handle" @mousedown="onWidgetStartDrag"></div>
 						</div>
-						<bx-livechat-form-consent @agree="agreeConsentWidow" @disagree="disagreeConsentWidow"/>
+						<bx-livechat-form-consent />
 						<template v-if="widget.common.copyright">
 							<div class="bx-livechat-copyright">
 								<template v-if="widget.common.copyrightUrl">
@@ -1107,7 +771,7 @@ BitrixVue.component('bx-livechat',
 									<span class="bx-livechat-logo-name">{{localize.BX_LIVECHAT_COPYRIGHT_TEXT}}</span>
 									<span class="bx-livechat-logo-icon"></span>
 								</template>
-								<div v-if="!isBottomLocation" class="bx-livechat-widget-resize-handle" @mousedown="onWidgetStartDrag"></div>
+								<div v-if="!isBottomLocation() && !isPageMode()" class="bx-livechat-widget-resize-handle" @mousedown="onWidgetStartDrag"></div>
 							</div>
 						</template>
 					</template>

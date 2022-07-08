@@ -8,9 +8,11 @@ namespace Bitrix\ImConnector;
 class Input
 {
 	protected $params = [];
+
 	/** @var Result */
 	protected $result;
-	/** @var Provider\ImConnectorServer\Input|Provider\LiveChat\Input|Provider\Network\Input|Provider\Custom\Input|Provider\Notifications\Input $provider */
+
+	/** @var Provider\Base\Input|Provider\ImConnectorServer\Input|Provider\LiveChat\Input|Provider\Network\Input|Provider\Custom\Input|Provider\Notifications\Input $provider */
 	protected $provider;
 
 	/**
@@ -27,6 +29,7 @@ class Input
 			$provider = Provider::getProviderForConnectorInput($this->params['CONNECTOR'], $this->params);
 			if($provider->isSuccess())
 			{
+				/** @var Provider\Base\Input $this->provider */
 				$this->provider = $provider->getResult();
 			}
 			else

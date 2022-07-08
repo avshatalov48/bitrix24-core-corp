@@ -484,6 +484,7 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 					{
 						$userFields['USER_AVATAR'] = Im\User::getInstance($key)->getAvatar();
 					}
+					$userFields['USER_AVATAR'] = \CHTTP::urnEncode($userFields['USER_AVATAR']);
 					$result['queueUsersFields'][$key] = $userFields;
 				}
 			}
@@ -491,6 +492,10 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 			//TODO ui 20.400.0
 			//$result['queueItems'] = $itemCollections->toArray();
 			$result['queueItems'] = array_map(static function(EntitySelector\Item $item) {
+				if($item->getAvatar())
+				{
+					$item->setAvatar(\CHTTP::urnEncode($item->getAvatar()));
+				}
 				return $item->jsonSerialize();
 			}, $itemCollections->getAll());
 		}
@@ -531,7 +536,7 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 				'entityId' => $item->getId(),
 				'entityType' => $item->getEntityId(),
 				'name' => $item->getTitle(),
-				'avatar' => $item->getAvatar(),
+				'avatar' => \CHTTP::urnEncode($item->getAvatar()),
 				'department' => $this->arResult['CONFIG']['QUEUE_FULL'][$item->getId()]['DEPARTMENT_ID']
 			];
 		}
@@ -557,7 +562,7 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 			],
 			'agreements' => [
 				'PAGE' => 'agreements.php',
-				'NAME' => Loc::getMessage('OL_COMPONENT_LE_MENU_AGREEMENTS')
+				'NAME' => Loc::getMessage('OL_COMPONENT_LE_MENU_AGREEMENTS_1')
 			],
 			'automatic-actions' => [
 				'PAGE' => 'automatic-actions.php',

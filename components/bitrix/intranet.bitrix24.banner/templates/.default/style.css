@@ -11,7 +11,7 @@
 	font-weight:bold;
 	text-transform:uppercase;
 	padding:7px 20px 6px;
-	border-radius: var(--b24-app-block-header, var(--ui-theme-radius-md, 0));
+	border-radius: var(--b24-app-block-header-border-radius, var(--ui-border-radius-md, 0));
 	border-bottom-left-radius: 0;
 	border-bottom-right-radius: 0;
 }
@@ -20,7 +20,7 @@
 
 .b24-app-block-content {
 	padding: 13px 8px;
-	border-radius: var(--b24-app-block-content, var(--ui-theme-radius-md, 0));
+	border-radius: var(--b24-app-block-content-border-radius, var(--ui-border-radius-md, 0));
 	border-top-left-radius: 0;
 	border-top-right-radius: 0;
 }

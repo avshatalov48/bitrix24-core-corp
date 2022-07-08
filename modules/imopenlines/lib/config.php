@@ -1199,20 +1199,20 @@ class Config
 	/**
 	 * @param $id
 	 * @return bool
-	 * @throws Main\ArgumentException
-	 * @throws Main\LoaderException
-	 * @throws Main\ObjectPropertyException
-	 * @throws Main\SystemException
 	 */
 	public function delete($id)
 	{
 		$id = (int)$id;
 		if (!$id)
+		{
 			return false;
+		}
 
-		$orm = Model\ConfigTable::getById($id);
-		if (!($config = $orm->fetch()))
+		$sessList = Model\ConfigTable::getById($id);
+		if (!($config = $sessList->fetch()))
+		{
 			return false;
+		}
 
 		Model\ConfigTable::delete($id);
 		ConfigStatistic::delete($id);
@@ -1222,11 +1222,11 @@ class Config
 			ListsDataManager::updateIblockRights($config['QUICK_ANSWERS_IBLOCK_ID']);
 		}
 
-		$orm = Model\QueueTable::getList([
+		$sessList = Model\QueueTable::getList([
 			'select' => ['ID'],
 			'filter' => ['=CONFIG_ID' => $id]
 		]);
-		while ($row = $orm->fetch())
+		while ($row = $sessList->fetch())
 		{
 			Model\QueueTable::delete($row['ID']);
 		}
@@ -1242,13 +1242,18 @@ class Config
 
 		$this->deleteAllAutomaticMessage($id);
 
-		$orm = Model\SessionTable::getList([
-			'select' => ['ID'],
+		$sessList = Model\SessionTable::getList([
+			'select' => ['ID', 'CHAT_ID', 'CLOSED'],
 			'filter' => ['=CONFIG_ID' => $id]
 		]);
-		while ($row = $orm->fetch())
+		while ($session = $sessList->fetch())
 		{
-			Session::deleteSession($row['ID']);
+			if ($session['CLOSED'] != 'Y')
+			{
+				Im::chatHide($session['CHAT_ID']);
+			}
+
+			Session::deleteSession($session['ID']);
 		}
 
 		try

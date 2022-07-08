@@ -31,8 +31,6 @@ $MESS["INTRANET_USER_PROFILE_LAST_SEEN_IDLE_M"] = "отошел #LAST_SEEN#";
 $MESS["INTRANET_USER_PROFILE_LAST_SEEN_IDLE_F"] = "отошла #LAST_SEEN#";
 $MESS["INTRANET_USER_PROFILE_LAST_SEEN_M"] = "заходил #LAST_SEEN#";
 $MESS["INTRANET_USER_PROFILE_LAST_SEEN_F"] = "заходила #LAST_SEEN#";
-$MESS["INTRANET_USER_PROFILE_MOBILE_APP"] = "Мобильное приложение";
-$MESS["INTRANET_USER_PROFILE_DESKTOP_APP"] = "Десктоп - приложение";
 $MESS["INTRANET_USER_PROFILE_MOBILE_APPSTORE_URL"] = "https://itunes.apple.com/ru/app/bitrix24/id561683423?l=ru&ls=1&mt=8";
 $MESS["INTRANET_USER_PROFILE_MOBILE_GOOGLE_PLAY_URL"] = "https://play.google.com/store/apps/details?id=com.bitrix24.android";
 $MESS["INTRANET_USER_PROFILE_PASSWORDS"] = "Пароли";
@@ -87,11 +85,7 @@ $MESS["INTRANET_USER_PROFILE_FIELD_LAST_NAME"] = "Фамилия";
 $MESS["INTRANET_USER_PROFILE_FIELD_SECOND_NAME"] = "Отчество";
 $MESS["INTRANET_USER_PROFILE_THEME"] = "Сменить фон";
 $MESS["INTRANET_USER_PROFILE_CHAT_HISTORY"] = "История переписки";
-$MESS["INTRANET_USER_PROFILE_APP_INSTALL"] = "Установка приложения";
-$MESS["INTRANET_USER_PROFILE_APP_PHONE"] = "Номер телефона";
-$MESS["INTRANET_USER_PROFILE_APP_SEND"] = "Отправить";
 $MESS["INTRANET_USER_FIILDS_SETTINGS"] = "Настройка показа полей";
-$MESS["INTRANET_USER_PROFILE_APP_INSTALL_TEXT"] = "На указанный вами номер мобильного телефона придет смс со ссылкой на скачивание и установку мобильного приложения Битрикс24.";
 $MESS["INTRANET_USER_PROFILE_SET_INEGRATOR_RIGHTS"] = "Сделать интегратором";
 $MESS["INTRANET_USER_PROFILE_VIEW_ACCESS_DENIED"] = "Доступ к просмотру профиля пользователя ограничен.";
 $MESS["INTRANET_USER_PROFILE_SET_INTEGRATOR_RIGHTS_CONFIRM"] = "Интегратор – это сертифицированный партнер Битрикс24. Интегратор поможет настроить ваш Битрикс24 под рабочие процессы именно вашей компании: CRM, открытые линии, документооборот, телефонию, отчеты и многое другое. 
@@ -111,6 +105,5 @@ $MESS["INTRANET_USER_PROFILE_DISK_INSTALLED"] = "Установлен Битри
 $MESS["INTRANET_USER_PROFILE_FIRE_INVITED_USER"] = "Вы не можете удалить приглашенного пользователя, так как он связан с другими инструментами.
 Деактивируйте (увольте) пользователя, чтобы закрыть ему доступ к этому Битрикс24.
 <br><br>Хотите уволить?";
-$MESS['INTRANET_USER_PROFILE_FACEBOOK_RESTRICTIONS_META_RU'] = '* Деятельность Meta Platforms Inc. (Facebook, Instagram) запрещена на территории Российской Федерации';
 
-?>
+$MESS['INTRANET_USER_PROFILE_FACEBOOK_RESTRICTIONS_META_RU'] = '* Деятельность Meta Platforms Inc. (Facebook, Instagram) запрещена на территории Российской Федерации';

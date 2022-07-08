@@ -407,6 +407,13 @@
 }
 .bx-livechat-bright-header .bx-livechat-control-btn-mail { background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2216%22%20height%3D%2213%22%3E%3Cpath%20fill%3D%22%23333%22%20d%3D%22M8.01%205.99l3.245-2.409a.795.795%200%200%201%201.126.182.836.836%200%200%201-.178%201.152L8.562%207.619a.79.79%200%200%201-.552.153.79.79%200%200%201-.552-.153L3.817%204.915a.836.836%200%200%201-.178-1.152.795.795%200%200%201%201.126-.182l3.245%202.41zM1.445.016h13.141c.774%200%201.402.641%201.402%201.433v9.85c0%20.79-.628%201.432-1.402%201.432H1.445c-.774%200-1.402-.641-1.402-1.433v-9.85C.043.658.671.016%201.445.016zm.79%201.648c-.291%200-.527.24-.527.537v8.344c0%20.297.236.538.526.538h11.563c.29%200%20.525-.24.525-.538V2.2a.532.532%200%200%200-.525-.537H2.234z%22/%3E%3C/svg%3E') center no-repeat; }
 
+.bx-livechat-control-btn-list {
+	width: 14px;
+	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='12'%3E%3Cpath fill='%23FFF' fill-rule='evenodd' d='M15.1 10a.9.9 0 010 1.8H.9a.9.9 0 010-1.8h14.2zm0-5a.9.9 0 010 1.8H.9A.9.9 0 01.9 5h14.2zm0-5a.9.9 0 010 1.8H.9A.9.9 0 01.9 0h14.2z'/%3E%3C/svg%3E") center no-repeat;
+}
+.bx-livechat-bright-header .bx-livechat-control-btn-list { background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='12'%3E%3Cpath fill='%23FFF' fill-rule='evenodd' d='M15.1 10a.9.9 0 010 1.8H.9a.9.9 0 010-1.8h14.2zm0-5a.9.9 0 010 1.8H.9A.9.9 0 01.9 5h14.2zm0-5a.9.9 0 010 1.8H.9A.9.9 0 01.9 0h14.2z'/%3E%3C/svg%3E") center no-repeat; }
+
+
 .bx-livechat-control-btn-menu {
 	width: 14px;
 	background: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='17' height='17'%3E%3Cpath fill='%23FFF' d='M14.252 7.958c1.681.106 2.586 1.973 1.384 3.152l-.115.105-5.601 4.777c-.75.637-1.899.675-2.693.112l-.144-.113-5.604-4.776c-1.37-1.17-.464-3.148 1.27-3.257l.15-.004 1.627-.001V1.807c0-.95.736-1.726 1.668-1.802L6.343 0h4.313c.953 0 1.736.729 1.812 1.66l.006.148v6.146h1.628l.15.005zm-3.378 1.596V1.807a.21.21 0 00-.16-.2l-.058-.008H6.343a.215.215 0 00-.21.153l-.007.055v7.747H2.899c-.403 0-.55.234-.423.4l.041.044 5.604 4.776c.172.147.474.165.68.055l.082-.056 5.6-4.775c.177-.151.078-.398-.278-.439l-.103-.005h-3.228z'/%3E%3C/svg%3E") center no-repeat;

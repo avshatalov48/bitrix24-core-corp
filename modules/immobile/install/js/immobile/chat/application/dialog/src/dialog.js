@@ -448,7 +448,7 @@ export class MobileDialogApplication
 
 	initUnsentStorage()
 	{
-		console.log('6. initUnsentStorage.');
+		console.log('6. initUnsentStorage');
 
 		return new Promise(resolve => {
 			const filesPromise = this.loadUnsentFiles();
@@ -1565,7 +1565,7 @@ export class MobileDialogApplication
 			}
 			else
 			{
-				this.readMessage();
+				EventEmitter.emit(EventType.dialog.readMessage);
 				this.processSendMessages();
 			}
 		}
@@ -2217,7 +2217,7 @@ export class MobileDialogApplication
 			return this.promiseGetDialogUnread;
 		}
 
-		this.controller.application.readMessage(lastId, true, true).then(() =>
+		EventEmitter.emitAsync(EventType.dialog.readMessage, {id: lastId, skipAjax: true}).then(() =>
 		{
 			this.timer.start('data', 'load', .5, () => {
 				console.warn("ChatDialog.requestData: slow connection show progress icon");
@@ -2483,7 +2483,7 @@ export class MobileDialogApplication
 				}
 				else if (params.id === 'read')
 				{
-					this.readMessage(message.id);
+					EventEmitter.emit(EventType.dialog.readMessage, {id: message.id});
 				}
 				else if (params.id === 'share')
 				{
@@ -2757,31 +2757,6 @@ export class MobileDialogApplication
 		return this.controller.application.shareMessage(messageId, type);
 	}
 
-	readMessage(messageId)
-	{
-		// if (this.controller.isOnline())
-		// {
-		// 	return false;
-		// }
-
-		this.controller.application.readMessage(messageId, true, true).then((result) =>
-		{
-			if (result.lastId <= 0)
-			{
-				return true;
-			}
-			BXMobileApp.Events.postToComponent('chatbackground::task::action', [
-				'readMessage',
-				'readMessage|'+result.dialogId,
-				result,
-				false,
-				200
-			], 'background');
-		});
-
-		return true;
-	}
-
 	unreadMessage(messageId)
 	{
 		if (!this.controller.isOnline())
@@ -2882,49 +2857,6 @@ export class MobileDialogApplication
 					});
 				}, 300);
 			}
-		});
-	}
-
-	reactMessage(id, reaction)
-	{
-		BXMobileApp.Events.postToComponent('chatbackground::task::action', [
-			'reactMessage',
-			'reactMessage|'+id,
-			{
-				messageId: id,
-				action: reaction.action === 'auto'? 'auto': (reaction.action === 'set'? 'plus': 'minus')
-			},
-			false,
-			1000
-		], 'background');
-
-		if (reaction.action === 'set')
-		{
-			setTimeout(() => app.exec("callVibration"), 200);
-		}
-	}
-
-	openMessageReactionList(id, reactions)
-	{
-		if (!Utils.dialog.isChatId(this.controller.application.getDialogId()))
-		{
-			return false;
-		}
-
-		let users = [];
-		for (let reaction in reactions)
-		{
-			if (!reactions.hasOwnProperty(reaction))
-			{
-				continue;
-			}
-
-			users = users.concat(reactions[reaction]);
-		}
-
-		this.openUserList({
-			users: users,
-			title: this.getLocalize('MOBILE_MESSAGE_LIST_LIKE')
 		});
 	}
 
